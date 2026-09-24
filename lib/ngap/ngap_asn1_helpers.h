@@ -29,6 +29,23 @@
 
 namespace ocudu::ocucp {
 
+/// \brief Converts a satellite RAT type into the RAT Information of a supported TA, as per TS 38.413,
+/// Section 9.3.1.125.
+inline asn1::ngap::rat_info_e satellite_rat_type_to_asn1(satellite_rat_type rat)
+{
+  switch (rat) {
+    case satellite_rat_type::nr_leo:
+      return asn1::ngap::rat_info_opts::nr_leo;
+    case satellite_rat_type::nr_meo:
+      return asn1::ngap::rat_info_opts::nr_meo;
+    case satellite_rat_type::nr_geo:
+      return asn1::ngap::rat_info_opts::nr_geo;
+    case satellite_rat_type::nr_othersat:
+      return asn1::ngap::rat_info_opts::nr_othersat;
+  }
+  return asn1::ngap::rat_info_opts::nulltype;
+}
+
 /// \brief Fills ASN.1 NGSetupRequest struct.
 /// \param[out] asn1_request The NGSetupRequest ASN.1 struct to fill.
 /// \param[in] ngap_ctxt The NGAP context.
@@ -68,6 +85,14 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
         asn1_broadcast_plmn_item.tai_slice_support_list.push_back(asn1_slice_support_item);
       }
       asn1_supported_ta_item.broadcast_plmn_list.push_back(asn1_broadcast_plmn_item);
+    }
+
+    // Fill the RAT Information of an NTN tracking area, from which the AMF derives the satellite RAT type of the UEs
+    // it serves (TS 23.501, Section 5.4.10).
+    if (supported_ta_item.satellite_rat.has_value()) {
+      asn1_supported_ta_item.ie_exts_present          = true;
+      asn1_supported_ta_item.ie_exts.rat_info_present = true;
+      asn1_supported_ta_item.ie_exts.rat_info         = satellite_rat_type_to_asn1(*supported_ta_item.satellite_rat);
     }
 
     asn1_request->supported_ta_list.push_back(asn1_supported_ta_item);
