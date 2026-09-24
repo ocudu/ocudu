@@ -425,8 +425,6 @@ bool sctp_socket::connectx(const std::vector<sockaddr_storage>& addrs, sctp_asso
     return false;
   }
 
-  fprintf(stderr, "sctp_connectx: rc=%d errno=%d assoc=%u\n", result, errno, assoc_id);
-
   logger.info("{}: Successfully connected to {} address(es) using sctp_connectx()", if_name, addrs.size());
 
   // Set socket to non-blocking after sctp_connectx() finishes.

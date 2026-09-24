@@ -82,8 +82,7 @@ private:
       return;
     }
 
-    // Signal sender closed the channel.
-    *closed_flag = true;
+    // Shutdown DTLS connection if enabled.
     if (ssl_enabled) {
       ssl->shutdown();
       logger.debug("{}: called shutdown for DTLS association", client_name);
@@ -91,7 +90,6 @@ private:
       logger.debug("{}: did not call shutdown for DTLS association", client_name);
     }
 
-    logger.error("{}: calling shutdown for association", client_name);
     int ret = ::shutdown(fd, SHUT_WR);
 
     if (ret == -1) {
@@ -105,7 +103,7 @@ private:
     ocudulog::flush();
 
     // Signal sender closed the channel.
-    // closed_flag->store(true, std::memory_order_relaxed);
+    closed_flag->store(true, std::memory_order_relaxed);
   }
 
   const std::string             client_name;
@@ -193,9 +191,10 @@ sctp_network_client_impl::connect(std::unique_ptr<sctp_association_sdu_notifier>
   }
 
   auto start = std::chrono::steady_clock::now();
+
   // Create SCTP socket only if not created earlier during bind. Otherwise, reuse socket.
   bool reuse_socket = socket.is_open();
-  fmt::println("reuse_socket={}", reuse_socket);
+
   // Resolve all destination addresses, remove duplicates and determine required socket family.
   // If socket was already created during bind, its family is already set and cannot be changed.
   // If it was created as an IPv4 socket, but destination addresses list contains some IPv6 addresses,
@@ -470,7 +469,7 @@ void sctp_network_client_impl::receive_dtls()
     return;
   }
 
-  expected<byte_buffer> plain = ssl->receive();
+  expected<byte_buffer, dtls_ssl_read_error> plain = ssl->receive();
   if (not plain.has_value()) {
     return;
   }
@@ -514,34 +513,14 @@ void sctp_network_client_impl::handle_connection_shutdown(const char* cause)
 
 void sctp_network_client_impl::dtls_connect()
 {
-  struct sctp_status status{};
-  socklen_t          len = sizeof(status);
-
-  if (getsockopt(socket.fd().value(), SOL_SCTP, SCTP_STATUS, &status, &len) == 0) {
-    fmt::println(stderr,
-                 "SCTP status: fd={} state={} assoc_id={} rwnd={} unack={} unord={}",
-                 socket.fd().value(),
-                 status.sstat_state,
-                 status.sstat_assoc_id,
-                 status.sstat_rwnd,
-                 status.sstat_unackdata,
-                 status.sstat_penddata);
-  } else {
-    fmt::println(stderr, "SCTP_STATUS failed: errno={} ({})", errno, strerror(errno));
-  }
-
-  fmt::println("shall init start?");
   if (ssl_enabled) {
-    fmt::println("init started");
     ssl = create_dtls_ssl(dtls_ssl_config{dtls_mode::client, 0}, {*dtls_ctxt, *this});
-    fmt::println("init started. ssl={}", fmt::ptr(ssl.get()));
     if (not ssl->init(socket.fd().value())) {
       logger.error("{} assoc={}: Could not initialize DTLS context for new association", node_cfg.if_name, 0);
       /// Remove association as if it was lost. Do it directly, as we are running in the app executor already.
       handle_connection_shutdown("DTLS initialization error");
       return;
     }
-    fmt::println("init fin");
   }
 }
 

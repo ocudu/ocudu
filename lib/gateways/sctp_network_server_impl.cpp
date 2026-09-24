@@ -222,10 +222,15 @@ void sctp_network_server_impl::sctp_associaton_context::receive_dtls()
     return;
   }
 
-  expected<byte_buffer> plain = ssl->receive();
+  expected<byte_buffer, dtls_ssl_read_error> plain = ssl->receive();
   if (not plain.has_value()) {
-    parent.logger.error("got READ error. trying to read any pending notifications.");
-    receive_plain();
+    dtls_ssl_read_error err = plain.error();
+    if (err == dtls_ssl_read_error::shutdown) {
+      parent.logger.debug("Got read error due to DTLS shutdown. Attempting plain read to handle notifications.");
+      receive_plain();
+    } else {
+      parent.logger.error("Got read error in DTLS read");
+    }
     return;
   }
 
@@ -275,9 +280,7 @@ bool sctp_network_server_impl::create_and_bind()
   if (not this->create_and_bind_common(SOCK_SEQPACKET)) {
     return false;
   }
-  fmt::println("if={} create_and_bind {}", node_cfg.if_name, node_cfg.dtls_cfg.has_value());
   if (OCUDU_DTLS_SCTP_SUPPORT and node_cfg.dtls_cfg.has_value()) {
-    fmt::println("if={} dtls", node_cfg.if_name);
     dtls_ctxt = create_dtls_context(*node_cfg.dtls_cfg);
     if (not dtls_ctxt->init(socket.fd().value())) {
       report_error("Could not initialize DTLS context in SCTP gateway. if={}", node_cfg.if_name);

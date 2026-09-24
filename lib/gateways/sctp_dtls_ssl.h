@@ -24,6 +24,8 @@ struct dtls_ssl_config {
   sctp_assoc_t assoc;
 };
 
+enum class dtls_ssl_read_error { shutdown, unknown };
+
 class dtls_context;
 class sctp_network_gateway_dtls_interface;
 
@@ -37,13 +39,13 @@ struct dtls_ssl_dependencies {
 class dtls_ssl
 {
 public:
-  virtual bool                  init(int socket)                    = 0;
-  virtual bool                  shutdown()                          = 0;
-  virtual bool                  is_init_finished()                  = 0;
-  virtual bool                  handshake()                         = 0;
-  virtual expected<byte_buffer> receive()                           = 0;
-  virtual int                   write(span<const uint8_t> pdu_span) = 0;
-  virtual ~dtls_ssl()                                               = default;
+  virtual bool                                       init(int socket)                    = 0;
+  virtual bool                                       shutdown()                          = 0;
+  virtual bool                                       is_init_finished()                  = 0;
+  virtual bool                                       handshake()                         = 0;
+  virtual expected<byte_buffer, dtls_ssl_read_error> receive()                           = 0;
+  virtual int                                        write(span<const uint8_t> pdu_span) = 0;
+  virtual ~dtls_ssl()                                                                    = default;
 };
 
 /// Creates an instance of a DTLS context.
@@ -58,12 +60,12 @@ class openssl_dtls_ssl : public dtls_ssl
 public:
   openssl_dtls_ssl(const dtls_ssl_config& cfg_, const dtls_ssl_dependencies& ssl_ctx_);
   ~openssl_dtls_ssl() override;
-  bool                  init(int socket) override;
-  bool                  shutdown() override;
-  bool                  is_init_finished() override;
-  bool                  handshake() override;
-  expected<byte_buffer> receive() override;
-  int                   write(span<const uint8_t> pdu_span) override;
+  bool                                       init(int socket) override;
+  bool                                       shutdown() override;
+  bool                                       is_init_finished() override;
+  bool                                       handshake() override;
+  expected<byte_buffer, dtls_ssl_read_error> receive() override;
+  int                                        write(span<const uint8_t> pdu_span) override;
 
 private:
   static void dtls_notification_cb(BIO* bio, void* context, void* buf);
@@ -73,7 +75,6 @@ private:
   BIO*            bio = nullptr;
   SSL*            ssl = nullptr;
 
-  int                                  socket_;
   dtls_context&                        ssl_ctx;
   sctp_network_gateway_dtls_interface& gw;
   static constexpr uint32_t            dtls_max_len = 9100;

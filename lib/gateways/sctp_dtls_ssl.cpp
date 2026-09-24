@@ -34,7 +34,6 @@ openssl_dtls_ssl::~openssl_dtls_ssl()
 
 bool openssl_dtls_ssl::init(int socket)
 {
-  socket_ = socket;
   /// Create SSL connection and BIO. We associate this BIO with the correct association at this point.
   SSL_CTX* ctx = static_cast<openssl_dtls_context&>(ssl_ctx).get_ssl_ctx();
   if (ctx == nullptr) {
@@ -140,7 +139,7 @@ bool openssl_dtls_ssl::handshake()
   return ret == 1;
 }
 
-expected<byte_buffer> openssl_dtls_ssl::receive()
+expected<byte_buffer, dtls_ssl_read_error> openssl_dtls_ssl::receive()
 {
   /// SSL should be initialized from here on.
   std::array<uint8_t, dtls_max_len> buff;
@@ -149,9 +148,9 @@ expected<byte_buffer> openssl_dtls_ssl::receive()
   if (ret <= 0) {
     unsigned long ssl_error = SSL_get_error(ssl, ret);
     if (ssl_error == SSL_ERROR_ZERO_RETURN) {
-      logger.error("SSL_read returned SSL_ERROR_ZERO_RETURN, SSL_get_error={}", openssl_error{ssl_error});
+      logger.debug("SSL_read returned SSL_ERROR_ZERO_RETURN, SSL_get_error={}", openssl_error{ssl_error});
       SSL_shutdown(ssl);
-      return make_unexpected(default_error_t{});
+      return make_unexpected(dtls_ssl_read_error::shutdown);
     }
     logger.error("SSL_read returned {}, SSL_get_error={}", ret, ssl_error);
     unsigned long err;
@@ -160,7 +159,7 @@ expected<byte_buffer> openssl_dtls_ssl::receive()
       ERR_error_string_n(err, error_buf, sizeof(error_buf));
       logger.error("OpenSSL error: {}", error_buf);
     }
-    return make_unexpected(default_error_t{});
+    return make_unexpected(dtls_ssl_read_error::unknown);
   }
 
   logger.debug("Read {} bytes from DTLS connection", ret);
@@ -185,18 +184,6 @@ void openssl_dtls_ssl::dtls_notification_cb(BIO* bio, void* context, void* buf)
   auto*       ssl   = static_cast<openssl_dtls_ssl*>(context);
   const auto* notif = static_cast<const union sctp_notification*>(buf);
   ssl->gw.handle_dtls_notification(notif, ssl->cfg.assoc);
-}
-
-void openssl_dtls_ssl::send_test_data(int line)
-{
-  char test = 'X';
-
-  errno     = 0;
-  ssize_t n = send(socket_, &test, 1, MSG_NOSIGNAL);
-
-  int saved_errno = errno;
-
-  logger.error("SCTP test send: n={} errno={} ({}), line={}", n, saved_errno, strerror(saved_errno), line);
 }
 
 static std::string get_ssl_error_string(int err)

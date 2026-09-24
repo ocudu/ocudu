@@ -38,7 +38,6 @@ static sctp_network_gateway_config make_sctp_network_gateway_config(const std::s
   if (dtls_cfg.enabled) {
     sctp_cfg.dtls_cfg.emplace();
     fill_dtls_network_gateway_config_params(*sctp_cfg.dtls_cfg, dtls_cfg);
-    fmt::println("filled DTLS config for F1!!!");
   }
   return sctp_cfg;
 }
