@@ -4,6 +4,7 @@
 #include "ethernet/ethernet_rx_buffer_pool.h"
 #include "ofh_integration_test_config.h"
 #include "ofh_integration_test_helpers.h"
+#include "ofh_integration_test_helpers_cat_b.h"
 #include "ofh_integration_test_non_rt_ru_factory.h"
 #include "ocudu/adt/bounded_bitset.h"
 #include "ocudu/adt/circular_map.h"
@@ -17,9 +18,11 @@
 #include "ocudu/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
 #include "ocudu/ofh/ofh_metrics.h"
 #include "ocudu/phy/support/resource_grid_context.h"
+#include "ocudu/phy/support/resource_grid_reader.h"
 #include "ocudu/phy/support/resource_grid_writer.h"
 #include "ocudu/phy/support/shared_resource_grid.h"
 #include "ocudu/phy/support/support_factories.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ru/ofh/ru_ofh_configuration.h"
 #include "ocudu/ru/ofh/ru_ofh_executor_mapper_factory.h"
 #include "ocudu/ru/ofh/ru_ofh_factory.h"
@@ -38,6 +41,7 @@
 #include <mutex>
 #include <net/if.h>
 #include <netinet/ether.h>
+#include <numeric>
 #include <random>
 #include <sys/ioctl.h>
 
@@ -71,19 +75,37 @@ static unsigned       nof_antennas_ul        = 2;
 static std::atomic<unsigned> nof_malformed_packets{0};
 static std::atomic<unsigned> nof_missing_dl_packets{0};
 
+/// Message counters indexed by eAxC, updated concurrently during the test.
+using eaxc_counters = std::array<std::atomic<unsigned>, MAX_SUPPORTED_EAXC_ID_VALUE>;
+/// Number of messages expected per eAxC, indexed by eAxC.
+using eaxc_expected_counters = std::array<unsigned, MAX_SUPPORTED_EAXC_ID_VALUE>;
+
 namespace {
 
 /// Dummy Radio Unit error notifier.
 class dummy_ru_error_notifier : public ru_error_notifier
 {
 public:
-  void on_late_downlink_message(const ru_error_context& context) override {}
+  void on_late_downlink_message(const ru_error_context& context) override
+  {
+    nof_late_dl_grids.fetch_add(1, std::memory_order_relaxed);
+  }
   void on_late_uplink_message(const ru_error_context& context) override {}
   void on_late_prach_message(const ru_error_context& context) override {}
+
+  /// Number of late downlink resource grids dropped by the OFH RU.
+  std::atomic<unsigned> nof_late_dl_grids{0};
 };
+
 } // namespace
 
 static test::test_parameters test_params;
+
+/// Returns true if the test runs with downlink beamforming, i.e., against a Category B O-RU.
+static bool is_cat_b_enabled()
+{
+  return test_params.beamforming_cfg.enable;
+}
 
 namespace {
 
@@ -490,18 +512,22 @@ class test_du_emulator
   static constexpr unsigned nof_rx_window_slots = 3;
 
 public:
-  test_du_emulator(ocudulog::basic_logger&    logger_,
-                   task_executor&             executor_,
-                   resource_grid_pool&        dl_rg_pool_,
-                   resource_grid_pool&        ul_rg_pool_,
-                   ru_downlink_plane_handler& dl_handler_,
-                   ru_uplink_plane_handler&   ul_handler_) :
+  test_du_emulator(ocudulog::basic_logger&        logger_,
+                   task_executor&                 executor_,
+                   resource_grid_pool&            dl_rg_pool_,
+                   resource_grid_pool&            ul_rg_pool_,
+                   ru_downlink_plane_handler&     dl_handler_,
+                   ru_uplink_plane_handler&       ul_handler_,
+                   test::dl_beam_registry&        beam_registry_,
+                   const dummy_ru_error_notifier& error_notifier_) :
     logger(logger_),
     dl_rg_pool(dl_rg_pool_),
     ul_rg_pool(ul_rg_pool_),
     executor(executor_),
     dl_handler(dl_handler_),
-    ul_handler(ul_handler_)
+    ul_handler(ul_handler_),
+    beam_registry(beam_registry_),
+    error_notifier(error_notifier_)
   {
   }
 
@@ -536,9 +562,13 @@ public:
 
   bool is_test_finished() const { return test_finished.load(std::memory_order_relaxed); }
 
-  /// Number of downlink resource grids handed to the RU.
+  /// Number of downlink resource grids pushed to the OFH RU.
   std::atomic<unsigned> nof_dl_grids{0};
-  /// Number of uplink requests handed to the RU.
+  /// Number of downlink resource grids dropped by the OFH RU for being late.
+  std::atomic<unsigned> nof_late_dl_grids{0};
+  /// Number of downlink C-Plane messages expected per eAxC (one per non-late grid).
+  eaxc_counters nof_expected_dl_cplane_messages = {};
+  /// Number of uplink requests sent to the OFH RU.
   std::atomic<unsigned> nof_ul_requests{0};
 
 private:
@@ -566,8 +596,25 @@ private:
       }
 
       if (dl_grid) {
+        test::dl_beam_list beams = get_transmitted_beams(dl_grid.get_reader());
+        // Save this grid's beams in the beam registry, so that the test gateway can fetch it when analyzing the
+        // received C-Plane messages.
+        beam_registry.write(slot, beams);
+
+        // Save the previous number of late grids to detect if the new grid is discarded as late or not.
+        unsigned prev_nof_lates = error_notifier.nof_late_dl_grids.load(std::memory_order_relaxed);
+
         dl_handler.handle_dl_data(context, dl_grid);
         nof_dl_grids.fetch_add(1, std::memory_order_relaxed);
+
+        if (error_notifier.nof_late_dl_grids.load(std::memory_order_relaxed) != prev_nof_lates) {
+          nof_late_dl_grids.fetch_add(1, std::memory_order_relaxed);
+        } else {
+          // The k-th transmitted beam-port is carried in the spatial stream associated with the k-th DL eAxC.
+          for (unsigned i_beam = 0, i_end = beams.size(); i_beam != i_end; ++i_beam) {
+            nof_expected_dl_cplane_messages[test_params.dl_port_id[i_beam]].fetch_add(1, std::memory_order_relaxed);
+          }
+        }
         logger.info("DU emulator pushed DL data in slot {}", slot);
       } else {
         logger.warning("No resource grid is available for processing DL slot");
@@ -595,12 +642,28 @@ private:
     }
   }
 
-  ocudulog::basic_logger&    logger;
-  resource_grid_pool&        dl_rg_pool;
-  resource_grid_pool&        ul_rg_pool;
-  task_executor&             executor;
-  ru_downlink_plane_handler& dl_handler;
-  ru_uplink_plane_handler&   ul_handler;
+  /// \brief Gets the list of non-empty beam-ports of the given resource grid.
+  ///
+  /// Category A transmits every antenna port, whereas Category B only transmits the non-empty beam-ports.
+  static test::dl_beam_list get_transmitted_beams(const resource_grid_reader& reader)
+  {
+    test::dl_beam_list beams;
+    for (unsigned i_port = 0, i_end = reader.get_nof_ports(); i_port != i_end; ++i_port) {
+      if (!is_cat_b_enabled() || !reader.is_empty(i_port)) {
+        beams.push_back(i_port);
+      }
+    }
+    return beams;
+  }
+
+  ocudulog::basic_logger&        logger;
+  resource_grid_pool&            dl_rg_pool;
+  resource_grid_pool&            ul_rg_pool;
+  task_executor&                 executor;
+  ru_downlink_plane_handler&     dl_handler;
+  ru_uplink_plane_handler&       ul_handler;
+  test::dl_beam_registry&        beam_registry;
+  const dummy_ru_error_notifier& error_notifier;
 
   /// Number of slots dispatched for processing.
   unsigned nof_dispatched_slots = 0;
@@ -654,6 +717,11 @@ public:
 
   void connect_ru(test_ru_emulator* ru_emulator_) { ru_emulator = ru_emulator_; }
 
+  /// \brief Connects the downlink C-Plane message checker.
+  ///
+  /// \note Must be called before starting the RU.
+  void connect_dl_cplane_checker(test::dl_cplane_checker& checker) { dl_checker = &checker; }
+
   // See interface for documentation.
   void send(span<span<const uint8_t>> frames) override
   {
@@ -673,6 +741,9 @@ public:
         (is_uplane ? dl_uplane_counters : dl_cplane_counters)[eaxc].fetch_add(1, std::memory_order_relaxed);
         if (is_uplane) {
           check_and_update_sequence_id(frame);
+        } else {
+          ocudu_assert(dl_checker != nullptr, "DL C-Plane checker uninitialized");
+          dl_checker->check(frame, peek_slot_point(frame), eaxc);
         }
         continue;
       }
@@ -694,8 +765,6 @@ public:
   // See interface for documentation.
   ether::transmitter_metrics_collector* get_metrics_collector() override { return this; }
 
-  /// Message counters indexed by eAxC.
-  using eaxc_counters = std::array<std::atomic<unsigned>, MAX_SUPPORTED_EAXC_ID_VALUE>;
   /// Downlink C-Plane messages.
   eaxc_counters dl_cplane_counters = {};
   /// Downlink U-Plane messages.
@@ -778,6 +847,7 @@ private:
   static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
   bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                        seq_counter_initialized;
   test_ru_emulator*                                                  ru_emulator;
+  test::dl_cplane_checker*                                           dl_checker = nullptr;
   std::atomic<uint64_t>                                              nof_tx_bytes{0};
   /// Last uplink slot requested to the RU emulator, only accessed from the transmitter thread.
   slot_point last_ul_slot;
@@ -979,21 +1049,23 @@ static ru_ofh_dependencies generate_ru_dependencies(ocudulog::basic_logger&     
                                                     ether::ethernet_rx_buffer_pool&     buffer_pool,
                                                     ru_error_notifier&                  error_notifier)
 {
-  ru_ofh_dependencies dependencies;
-  dependencies.logger             = &logger;
-  dependencies.timing_notifier    = timing_notifier;
-  dependencies.rx_symbol_notifier = rx_symbol_notifier;
-  dependencies.rt_timing_executor = workers.ru_timing_exec;
-  dependencies.error_notifier     = &error_notifier;
+  ru_ofh_dependencies dependencies{
+      .logger             = &logger,
+      .timing_notifier    = timing_notifier,
+      .error_notifier     = &error_notifier,
+      .rx_symbol_notifier = rx_symbol_notifier,
+      .rt_timing_executor = workers.ru_timing_exec,
+  };
 
   // Build the sector executor mapper that owns the per-eAxC serialization strands.
-  ru_ofh_executor_mapper_config exec_mapper_cfg;
-  exec_mapper_cfg.dl_eaxc_per_sector = {test_params.dl_port_id};
-  exec_mapper_cfg.downlink_executor  = workers.ru_dl_exec;
-  exec_mapper_cfg.uplink_executor    = workers.ru_rx_exec;
-  exec_mapper_cfg.txrx_executors     = {workers.ru_tx_exec};
-  exec_mapper_cfg.timing_executor    = workers.ru_timing_exec;
-  workers.ofh_exec_mapper            = create_ofh_ru_executor_mapper(exec_mapper_cfg);
+  ru_ofh_executor_mapper_config exec_mapper_cfg{
+      .dl_eaxc_per_sector = {test_params.dl_port_id},
+      .downlink_executor  = workers.ru_dl_exec,
+      .uplink_executor    = workers.ru_rx_exec,
+      .txrx_executors     = {workers.ru_tx_exec},
+      .timing_executor    = workers.ru_timing_exec,
+  };
+  workers.ofh_exec_mapper = create_ofh_ru_executor_mapper(exec_mapper_cfg);
 
   // Configure Ethernet gateway.
   auto gateway = std::make_unique<test_gateway>();
@@ -1013,25 +1085,55 @@ static ru_ofh_dependencies generate_ru_dependencies(ocudulog::basic_logger&     
   return dependencies;
 }
 
+/// \brief Creates the downlink resource grid pool filled with random data.
+///
+/// Category A grids have one port per DL eAxC, and all their ports carry data.
+/// Category B grids have one port per beam of the antenna topology. For each allocated grid this function selects a
+/// beam pattern and fills the data only in those beam-ports of the grid.
 static std::unique_ptr<resource_grid_pool>
 create_dl_resource_grid_pool(std::shared_ptr<resource_grid_factory> rg_factory, unsigned nof_prb)
 {
   std::uniform_real_distribution<float>       dist(-1.0, +1.0);
   std::vector<std::unique_ptr<resource_grid>> dl_resource_grids;
 
+  unsigned nof_ports = nof_antennas_dl;
+  unsigned nof_trx   = nof_antennas_dl;
+  if (is_cat_b_enabled()) {
+    // The configuration validation guarantees a valid antenna topology.
+    antenna_topology topology = *test::get_dl_antenna_topology(nof_antennas_dl);
+    nof_ports                 = get_total_nof_beams(topology);
+    nof_trx                   = get_total_nof_ports(topology);
+  }
+
   // Create resource grids according to TDD pattern.
   for (unsigned rg_id = 0, e = processing_delay_slots * tdd_pattern.nof_dl_slots; rg_id != e; rg_id++) {
-    dl_resource_grids.push_back(
-        rg_factory->create(nof_antennas_dl, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
-    resource_grid_writer& rg_writer = dl_resource_grids.back()->get_writer();
+    dl_resource_grids.push_back(rg_factory->create(nof_ports, MAX_NSYMB_PER_SLOT, nof_prb * NOF_SUBCARRIERS_PER_RB));
+    resource_grid& grid = *dl_resource_grids.back();
+
+    test::dl_beam_list beams;
+    if (is_cat_b_enabled()) {
+      beams = test::generate_beam_pattern(rgen, rg_id, nof_ports, nof_trx, nof_antennas_dl);
+    } else {
+      beams.resize(nof_ports);
+      std::iota(beams.begin(), beams.end(), 0);
+    }
 
     // Pre-generate random downlink data.
     for (unsigned sym = 0; sym != get_nsymb_per_slot(cyclic_prefix::NORMAL); ++sym) {
-      for (unsigned port = 0; port != nof_antennas_dl; ++port) {
+      for (unsigned port : beams) {
         std::vector<cf_t> test_data(nof_prb * NOF_SUBCARRIERS_PER_RB);
         std::generate(test_data.begin(), test_data.end(), [&]() { return cf_t{dist(rgen), dist(rgen)}; });
-        rg_writer.put(port, sym, 0, test_data);
+        grid.get_writer().put(port, sym, 0, test_data);
       }
+    }
+
+    // As a sanity check make sure the grid exposes exactly the beam pattern (because the du_emulator will rely on the
+    // grid allocation later).
+    const resource_grid_reader& reader = grid.get_reader();
+    for (unsigned port = 0; port != nof_ports; ++port) {
+      ocudu_assert(reader.is_empty(port) != (std::find(beams.begin(), beams.end(), port) != beams.end()),
+                   "Allocated resource grid port {} does not match the beam pattern",
+                   port);
     }
   }
   return create_generic_resource_grid_pool(std::move(dl_resource_grids));
@@ -1129,46 +1231,62 @@ static bool check_counter_upper_bound(std::string_view name, unsigned value, uns
   return false;
 }
 
-/// Returns true if the given eAxC is present in the list of ports.
-static bool contains_eaxc(span<const unsigned> ports, unsigned eaxc)
-{
-  return std::find(ports.begin(), ports.end(), eaxc) != ports.end();
-}
-
 /// \brief Checks the number of messages of one type transmitted by the DU against the expected values.
 ///
 /// Late messages are dropped by the OFH transmitter, and the late counter is not given per eAxC. Therefore, the total
-/// over the configured eAxCs must match exactly, while every eAxC is bounded by the number of messages expected in it.
-/// eAxCs that are not configured must not carry any message.
-static bool check_eaxc_counters(std::string_view                   name,
-                                const test_gateway::eaxc_counters& counters,
-                                span<const unsigned>               ports,
-                                unsigned                           nof_expected_per_eaxc,
-                                unsigned                           nof_late)
+/// over all eAxCs must match exactly, while every eAxC is bounded by the number of messages expected in it.
+static bool check_eaxc_counters(std::string_view              name,
+                                const eaxc_counters&          counters,
+                                const eaxc_expected_counters& nof_expected,
+                                unsigned                      nof_late)
 {
-  bool     success = true;
-  unsigned total   = 0;
+  bool     success        = true;
+  unsigned total          = 0;
+  unsigned total_expected = 0;
 
   for (unsigned eaxc = 0; eaxc != MAX_SUPPORTED_EAXC_ID_VALUE; ++eaxc) {
-    unsigned value        = counters[eaxc].load(std::memory_order_relaxed);
-    unsigned max_expected = contains_eaxc(ports, eaxc) ? nof_expected_per_eaxc : 0;
+    unsigned value = counters[eaxc].load(std::memory_order_relaxed);
     total += value;
-    success &= check_counter_upper_bound(fmt::format("{} messages in eAxC={}", name, eaxc), value, max_expected);
+    total_expected += nof_expected[eaxc];
+    success &= check_counter_upper_bound(fmt::format("{} messages in eAxC={}", name, eaxc), value, nof_expected[eaxc]);
   }
-  unsigned total_nof_expected_msgs = nof_expected_per_eaxc * ports.size() - nof_late;
-  success &= check_counter(fmt::format("{} messages", name), total, total_nof_expected_msgs);
+  success &= check_counter(fmt::format("{} messages", name), total, total_expected - nof_late);
 
+  return success;
+}
+
+/// \brief Checks that every configured eAxC received at least one message.
+///
+/// Complements \ref check_eaxc_counters, whose late tolerance only applies to the total and would hide an eAxC without
+/// traffic (it would also pass if the test never pushed a grid for eAxC).
+static bool check_eaxc_coverage(std::string_view              name,
+                                span<const unsigned>          eaxcs,
+                                const eaxc_counters&          counters,
+                                const eaxc_expected_counters& nof_expected)
+{
+  bool success = true;
+  for (unsigned eaxc : eaxcs) {
+    if (nof_expected[eaxc] == 0) {
+      fmt::println("No {} messages expected in configured eAxC={}, the test does not exercise it", name, eaxc);
+      success = false;
+    }
+    if (counters[eaxc].load(std::memory_order_relaxed) == 0) {
+      fmt::println("No {} messages received in configured eAxC={}", name, eaxc);
+      success = false;
+    }
+  }
   return success;
 }
 
 /// \brief Checks the number of messages exchanged during the test against the expected values.
 ///
 /// The expected values are derived from the resource grids and uplink requests handed by the DU emulator to the RU, as
-/// every grid carries data in all its ports and symbols. The late grids, requests and messages reported by the RU
-/// metrics are tolerated and accounted for.
+/// every transmitted beam-port carries data in all its symbols. The late grids, requests and messages reported by the
+/// RU metrics are tolerated and accounted for.
 /// \return \c true if all the counters match their expected values, \c false otherwise.
 static bool check_message_counters(const sector_metrics&           metrics,
                                    const test_gateway&             gateway,
+                                   const test::dl_cplane_checker&  cplane_checker,
                                    const test_du_emulator&         du_emulator,
                                    const test_ru_emulator&         ru_emulator,
                                    const dummy_rx_symbol_notifier& rx_symbol_notifier,
@@ -1179,7 +1297,7 @@ static bool check_message_counters(const sector_metrics&           metrics,
   const received_messages_metrics& rx_msgs = metrics.rx_metrics.rx_messages_metrics;
 
   unsigned nof_symbols  = get_nsymb_per_slot(cyclic_prefix::NORMAL);
-  unsigned nof_dl_slots = du_emulator.nof_dl_grids.load() - dl.nof_late_dl_grids;
+  unsigned nof_dl_slots = du_emulator.nof_dl_grids.load() - du_emulator.nof_late_dl_grids.load();
   // A dispatch failure drops a whole UL request, like a late one.
   unsigned nof_ul_slots =
       du_emulator.nof_ul_requests.load() - ul.nof_late_ul_requests - ul.ul_cp_metrics.nof_dispatch_failures;
@@ -1203,22 +1321,41 @@ static bool check_message_counters(const sector_metrics&           metrics,
 
   bool success = (nof_dl_slots != 0) && (nof_ul_slots != 0);
 
-  // Every DL slot carries one C-Plane message and the U-Plane messages of every symbol per DL eAxC. Every UL
-  // slot carries one C-Plane message per UL eAxC.
-  // A DL dispatch failure drops the C-Plane message, or the U-Plane messages of all symbols, of one eAxC in one slot.
+  // The late grids detected by the DU emulator are the ones reported by the RU metrics.
+  success &= check_counter("late DL grids", du_emulator.nof_late_dl_grids.load(), dl.nof_late_dl_grids);
+
+  // Every transmitted beam-port carries one C-Plane message and the U-Plane messages of every symbol in its DL eAxC.
+  // Every UL slot carries one C-Plane message per UL eAxC.
   unsigned nof_uplane_per_eaxc_slot = nof_symbols * nof_dl_uplane_per_symbol;
+
+  eaxc_expected_counters nof_expected_dl_cp = {};
+  eaxc_expected_counters nof_expected_dl_up = {};
+  eaxc_expected_counters nof_expected_ul_cp = {};
+  for (unsigned eaxc = 0; eaxc != MAX_SUPPORTED_EAXC_ID_VALUE; ++eaxc) {
+    nof_expected_dl_cp[eaxc] = du_emulator.nof_expected_dl_cplane_messages[eaxc].load();
+    nof_expected_dl_up[eaxc] = nof_expected_dl_cp[eaxc] * nof_uplane_per_eaxc_slot;
+  }
+  for (unsigned eaxc : test_params.ul_port_id) {
+    nof_expected_ul_cp[eaxc] = nof_ul_slots;
+  }
+  // A DL dispatch failure drops the C-Plane message, or the U-Plane messages of all symbols, of one eAxC in one slot.
   success &= check_eaxc_counters("DL C-Plane",
                                  gateway.dl_cplane_counters,
-                                 test_params.dl_port_id,
-                                 nof_dl_slots,
+                                 nof_expected_dl_cp,
                                  dl.nof_late_cp_dl + dl.dl_cp_metrics.nof_dispatch_failures);
   success &= check_eaxc_counters("DL U-Plane",
                                  gateway.dl_uplane_counters,
-                                 test_params.dl_port_id,
-                                 nof_dl_slots * nof_uplane_per_eaxc_slot,
+                                 nof_expected_dl_up,
                                  dl.nof_late_up_dl + dl.dl_up_metrics.nof_dispatch_failures * nof_uplane_per_eaxc_slot);
-  success &= check_eaxc_counters(
-      "UL C-Plane", gateway.ul_cplane_counters, test_params.ul_port_id, nof_ul_slots, ul.nof_late_cp_ul);
+  success &= check_eaxc_counters("UL C-Plane", gateway.ul_cplane_counters, nof_expected_ul_cp, ul.nof_late_cp_ul);
+
+  // Verify that every configured eAxC carries traffic at least once during the test.
+  success &= check_eaxc_coverage("DL C-Plane", test_params.dl_port_id, gateway.dl_cplane_counters, nof_expected_dl_cp);
+  success &= check_eaxc_coverage("DL U-Plane", test_params.dl_port_id, gateway.dl_uplane_counters, nof_expected_dl_up);
+  success &= check_eaxc_coverage("UL C-Plane", test_params.ul_port_id, gateway.ul_cplane_counters, nof_expected_ul_cp);
+
+  // Every DL C-Plane message carries the section of the beam-port transmitted in its eAxC.
+  success &= check_counter("DL C-Plane messages with errors", cplane_checker.get_nof_errors(), 0);
 
   // Dropped late DL U-Plane messages leave gaps in the sequence identifiers.
   success &= check_counter_upper_bound("missing DL packets", nof_missing_dl_packets, dl.nof_late_up_dl);
@@ -1280,6 +1417,7 @@ int main(int argc, char** argv)
   auto dl_rg_pool = create_dl_resource_grid_pool(rg_factory, nof_prb);
   auto ul_rg_pool = create_ul_resource_grid_pool(rg_factory, nof_prb);
 
+  test::dl_beam_registry         beam_registry;
   ether::ethernet_rx_buffer_pool buffer_pool(BUFFER_SIZE);
   worker_manager                 workers;
   dummy_rx_symbol_notifier       rx_symbol_notifier;
@@ -1288,8 +1426,10 @@ int main(int argc, char** argv)
   test_ether_receiver*           eth_receiver;
   dummy_ru_error_notifier        error_notifier;
 
-  ru_ofh_configuration ru_cfg  = generate_ru_config();
-  ru_ofh_dependencies  ru_deps = generate_ru_dependencies(
+  ru_ofh_configuration    ru_cfg = generate_ru_config();
+  test::dl_cplane_checker cplane_checker(
+      beam_registry, {nof_prb, test_params.dl_port_id, ru_cfg.sector_configs.front().dl_beamforming});
+  ru_ofh_dependencies ru_deps = generate_ru_dependencies(
       logger, workers, &timing_notifier, &rx_symbol_notifier, tx_gateway, eth_receiver, buffer_pool, error_notifier);
 
   if (test_params.use_loopback_receiver) {
@@ -1311,11 +1451,18 @@ int main(int argc, char** argv)
       logger, *workers.test_ru_sim_exec, *eth_receiver, test_params.data_compr_params, nof_prb);
 
   // Create DU emulator instance.
-  test_du_emulator du_emulator(
-      logger, *workers.test_du_sim_exec, *dl_rg_pool, *ul_rg_pool, ru_dl_handler, ru_ul_handler);
+  test_du_emulator du_emulator(logger,
+                               *workers.test_du_sim_exec,
+                               *dl_rg_pool,
+                               *ul_rg_pool,
+                               ru_dl_handler,
+                               ru_ul_handler,
+                               beam_registry,
+                               error_notifier);
 
   // Connect Ethernet gateway to the RU emulator.
   tx_gateway->connect_ru(&ru_emulator);
+  tx_gateway->connect_dl_cplane_checker(cplane_checker);
 
   // Start the RU.
   fmt::print("Starting RU...\n");
@@ -1343,7 +1490,7 @@ int main(int argc, char** argv)
   const ofh::metrics& ofh_metrics = std::get<ofh::metrics>(metrics.metrics);
   bool                success     = check_ru_metrics(ofh_metrics);
   success &= check_message_counters(
-      ofh_metrics.sectors.front(), *tx_gateway, du_emulator, ru_emulator, rx_symbol_notifier, nof_prb);
+      ofh_metrics.sectors.front(), *tx_gateway, cplane_checker, du_emulator, ru_emulator, rx_symbol_notifier, nof_prb);
 
   fmt::print("Test finished, nof_missing_dl_packets={}, nof_malformed_packets={}\n",
              nof_missing_dl_packets,
