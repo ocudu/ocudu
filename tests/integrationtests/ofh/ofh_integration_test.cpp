@@ -162,10 +162,13 @@ public:
     is_running.store(true, std::memory_order::memory_order_relaxed);
 
     auto exp_buffer = buffer_pool.reserve();
-    if (!exp_buffer.has_value()) {
-      logger.warning("Dummy Ethernet receiver: no buffer is available for receiving a packet");
-      is_running.store(false, std::memory_order::memory_order_relaxed);
-      return;
+    while (!exp_buffer.has_value()) {
+      if (stop_requested.load(std::memory_order_relaxed)) {
+        is_running.store(false, std::memory_order::memory_order_relaxed);
+        return;
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+      exp_buffer = buffer_pool.reserve();
     }
     ether::ethernet_rx_buffer_impl buffer = std::move(exp_buffer.value());
     std::memcpy(buffer.storage().data(), frame.data(), frame.size());
@@ -611,13 +614,13 @@ class dummy_timing_notifier : public ru_timing_notifier
 {
 public:
   /// Connects the DU emulator.
-  void connect_du(test_du_emulator& du_emulator_) { du_emulator = &du_emulator_; }
+  void connect_du(test_du_emulator& du_emulator_) { du_emulator.store(&du_emulator_, std::memory_order_release); }
 
   // See interface for documentation.
   void on_tti_boundary(const tti_boundary_context& slot_context) override
   {
-    if (du_emulator != nullptr) {
-      du_emulator->handle_tti_boundary(slot_context.slot.without_hyper_sfn());
+    if (test_du_emulator* du = du_emulator.load(std::memory_order_acquire)) {
+      du->handle_tti_boundary(slot_context.slot.without_hyper_sfn());
     }
   }
 
@@ -628,7 +631,7 @@ public:
   void on_ul_full_slot_boundary(slot_point slot) override {}
 
 private:
-  test_du_emulator* du_emulator = nullptr;
+  std::atomic<test_du_emulator*> du_emulator{nullptr};
 };
 
 /// Ethernet transmitter gateway that analyzes incoming packets and checks integrity of the DL packets, as well as asks
@@ -1063,14 +1066,17 @@ static bool check_ru_metrics(const ofh::metrics& metrics)
     const message_decoding_performance_metrics& rx_dec  = sector.rx_metrics.rx_decoding_perf_metrics;
 
     fmt::println("Sector#{} TX: tx_bytes={}, late_dl_grids={}, late_ul_requests={}, late_cp_dl={}, late_up_dl={}, "
-                 "late_cp_ul={}",
+                 "late_cp_ul={}, dispatch_failures_cp_dl={}, dispatch_failures_up_dl={}, dispatch_failures_ul={}",
                  sector.sector_id,
                  sector.tx_metrics.eth_transmitter_metrics.total_nof_bytes,
                  dl.nof_late_dl_grids,
                  ul.nof_late_ul_requests,
                  dl.nof_late_cp_dl,
                  dl.nof_late_up_dl,
-                 ul.nof_late_cp_ul);
+                 ul.nof_late_cp_ul,
+                 dl.dl_cp_metrics.nof_dispatch_failures,
+                 dl.dl_up_metrics.nof_dispatch_failures,
+                 ul.ul_cp_metrics.nof_dispatch_failures);
     fmt::println("Sector#{} RX: rx_bytes={}, on_time={}, early={}, late={}, missing_ul_symbols={}, "
                  "missing_prach_contexts={}, dropped_data={}, dropped_prach={}, past_seq_id={}, future_seq_id={}",
                  sector.sector_id,
@@ -1174,7 +1180,9 @@ static bool check_message_counters(const sector_metrics&           metrics,
 
   unsigned nof_symbols  = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   unsigned nof_dl_slots = du_emulator.nof_dl_grids.load() - dl.nof_late_dl_grids;
-  unsigned nof_ul_slots = du_emulator.nof_ul_requests.load() - ul.nof_late_ul_requests;
+  // A dispatch failure drops a whole UL request, like a late one.
+  unsigned nof_ul_slots =
+      du_emulator.nof_ul_requests.load() - ul.nof_late_ul_requests - ul.ul_cp_metrics.nof_dispatch_failures;
   unsigned nof_dl_uplane_per_symbol =
       test::calculate_nof_dl_uplane_messages_per_symbol(test_params.mtu,
                                                         nof_prb,
@@ -1197,13 +1205,18 @@ static bool check_message_counters(const sector_metrics&           metrics,
 
   // Every DL slot carries one C-Plane message and the U-Plane messages of every symbol per DL eAxC. Every UL
   // slot carries one C-Plane message per UL eAxC.
-  success &= check_eaxc_counters(
-      "DL C-Plane", gateway.dl_cplane_counters, test_params.dl_port_id, nof_dl_slots, dl.nof_late_cp_dl);
+  // A DL dispatch failure drops the C-Plane message, or the U-Plane messages of all symbols, of one eAxC in one slot.
+  unsigned nof_uplane_per_eaxc_slot = nof_symbols * nof_dl_uplane_per_symbol;
+  success &= check_eaxc_counters("DL C-Plane",
+                                 gateway.dl_cplane_counters,
+                                 test_params.dl_port_id,
+                                 nof_dl_slots,
+                                 dl.nof_late_cp_dl + dl.dl_cp_metrics.nof_dispatch_failures);
   success &= check_eaxc_counters("DL U-Plane",
                                  gateway.dl_uplane_counters,
                                  test_params.dl_port_id,
-                                 nof_dl_slots * nof_symbols * nof_dl_uplane_per_symbol,
-                                 dl.nof_late_up_dl);
+                                 nof_dl_slots * nof_uplane_per_eaxc_slot,
+                                 dl.nof_late_up_dl + dl.dl_up_metrics.nof_dispatch_failures * nof_uplane_per_eaxc_slot);
   success &= check_eaxc_counters(
       "UL C-Plane", gateway.ul_cplane_counters, test_params.ul_port_id, nof_ul_slots, ul.nof_late_cp_ul);
 
@@ -1284,9 +1297,10 @@ int main(int argc, char** argv)
     eth_receiver_ptr = std::make_unique<lo_eth_receiver>(logger);
     eth_receiver     = eth_receiver_ptr.get();
   }
-  std::unique_ptr<radio_unit> ru_object = test_params.is_non_realtime
-                                              ? test::create_non_rt_ofh_ru(ru_cfg, std::move(ru_deps))
-                                              : create_ofh_ru(ru_cfg, std::move(ru_deps));
+  std::unique_ptr<radio_unit> ru_object =
+      test_params.is_non_realtime
+          ? test::create_non_rt_ofh_ru(ru_cfg, std::move(ru_deps), test_params.non_rt_time_scale)
+          : create_ofh_ru(ru_cfg, std::move(ru_deps));
 
   // Get RU downlink plane handler.
   auto& ru_dl_handler = ru_object->get_downlink_plane_handler();
@@ -1300,13 +1314,14 @@ int main(int argc, char** argv)
   test_du_emulator du_emulator(
       logger, *workers.test_du_sim_exec, *dl_rg_pool, *ul_rg_pool, ru_dl_handler, ru_ul_handler);
 
-  // Connect Ethernet gateway to the RU emulator and the RU timing notifications to the DU emulator.
+  // Connect Ethernet gateway to the RU emulator.
   tx_gateway->connect_ru(&ru_emulator);
-  timing_notifier.connect_du(du_emulator);
 
-  // Start the RU, it notifies the DU emulator through the TTI boundary notifications.
+  // Start the RU.
   fmt::print("Starting RU...\n");
   ru_object->get_controller().get_operation_controller().start();
+  // Connect its TTI boundary notifications to the DU emulator.
+  timing_notifier.connect_du(du_emulator);
   fmt::print("Running the test...\n");
 
   // Wait until test is finished.

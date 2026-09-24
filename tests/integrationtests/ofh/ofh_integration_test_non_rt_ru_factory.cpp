@@ -19,8 +19,9 @@ namespace {
 
 /// \brief Non-realtime timing manager.
 ///
-/// Keeps an OTA symbol counter that is incremented after sleeping for one symbol duration, notifying every symbol to
-/// the subscribers. The OS may oversleep, which only slows down the emulated time without skipping any symbol.
+/// Keeps an OTA slot symbol point that is incremented after sleeping for the scaled symbol duration, notifying every
+/// symbol to the subscribers. The OS may oversleep, which only slows down the emulated time without skipping any
+/// symbol.
 class non_rt_timing_manager : public timing_manager,
                               private operation_controller,
                               private ota_symbol_boundary_notifier_manager,
@@ -30,15 +31,13 @@ public:
   non_rt_timing_manager(ocudulog::basic_logger& logger_,
                         task_executor&          executor_,
                         subcarrier_spacing      scs,
-                        cyclic_prefix           cp) :
+                        cyclic_prefix           cp,
+                        unsigned                time_scale) :
     logger(logger_),
     executor(executor_),
-    numerology(to_numerology_value(scs)),
-    nof_symbols_per_slot(get_nsymb_per_slot(cp)),
-    nof_symbols_per_hyper_sfn(NOF_SFNS * NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(scs) *
-                              nof_symbols_per_slot),
-    symbol_duration(std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::duration<double, std::nano>(1e6 / (nof_symbols_per_slot * get_nof_slots_per_subframe(scs)))))
+    symbol_point(to_numerology_value(scs), 0, get_nsymb_per_slot(cp)),
+    symbol_duration(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double, std::nano>(
+        time_scale * 1e6 / (get_nsymb_per_slot(cp) * get_nof_slots_per_subframe(scs)))))
   {
   }
 
@@ -90,38 +89,42 @@ private:
   // See interface for documentation.
   void collect_metrics(timing_metrics& metrics) override { metrics = {}; }
 
-  /// Notifies the current symbol and advances the symbol counter until a stop is requested.
+  /// Notifies the current symbol and advances the slot symbol point until a stop is requested.
   void timing_loop(const stop_event_token& token)
   {
     while (!token.is_stop_requested()) {
       slot_symbol_point_context context{
-          .symbol_point = slot_symbol_point(numerology, symbol_count % nof_symbols_per_hyper_sfn, nof_symbols_per_slot),
-          .hfn          = static_cast<unsigned>((symbol_count / nof_symbols_per_hyper_sfn) % NOF_HYPER_SFNS),
-          .time_point   = std::chrono::system_clock::now()};
+          .symbol_point = symbol_point, .hfn = hfn, .time_point = std::chrono::system_clock::now()};
       for (auto* notifier : ota_notifiers) {
         notifier->on_new_symbol(context);
       }
 
       std::this_thread::sleep_for(symbol_duration);
-      ++symbol_count;
+
+      // The slot symbol point wraps around at the end of a hyper frame.
+      symbol_point += 1;
+      if (symbol_point.to_uint() == 0) {
+        hfn = (hfn + 1) % NOF_HYPER_SFNS;
+      }
     }
   }
 
-  ocudulog::basic_logger&                    logger;
-  task_executor&                             executor;
-  const unsigned                             numerology;
-  const unsigned                             nof_symbols_per_slot;
-  const unsigned                             nof_symbols_per_hyper_sfn;
+  ocudulog::basic_logger& logger;
+  task_executor&          executor;
+  /// Current OTA slot symbol point, starting at 0.0.0.
+  slot_symbol_point symbol_point;
+  /// Current hyper frame number.
+  unsigned hfn = 0;
+
   const std::chrono::nanoseconds             symbol_duration;
-  uint64_t                                   symbol_count = 0;
   std::vector<ota_symbol_boundary_notifier*> ota_notifiers;
   stop_event_source                          stop_manager;
 };
 
 } // namespace
 
-std::unique_ptr<radio_unit> test::create_non_rt_ofh_ru(const ru_ofh_configuration& config,
-                                                       ru_ofh_dependencies&&       dependencies)
+std::unique_ptr<radio_unit>
+test::create_non_rt_ofh_ru(const ru_ofh_configuration& config, ru_ofh_dependencies&& dependencies, unsigned time_scale)
 {
   report_fatal_error_if_not(dependencies.timing_notifier, "Invalid timing notifier");
 
@@ -133,7 +136,7 @@ std::unique_ptr<radio_unit> test::create_non_rt_ofh_ru(const ru_ofh_configuratio
   ofh_dependencies.error_notifier     = dependencies.error_notifier;
   ofh_dependencies.rx_symbol_notifier = dependencies.rx_symbol_notifier;
   ofh_dependencies.timing_mngr        = std::make_unique<non_rt_timing_manager>(
-      *dependencies.logger, *dependencies.rt_timing_executor, last_sector_cfg.scs, last_sector_cfg.cp);
+      *dependencies.logger, *dependencies.rt_timing_executor, last_sector_cfg.scs, last_sector_cfg.cp, time_scale);
 
   ru_ofh_impl_config ru_config;
   ru_config.nof_slot_offset_du_ru = last_sector_cfg.max_processing_delay_slots;

@@ -55,6 +55,7 @@ struct test_parameters {
   bool                  use_loopback_receiver               = false;
   unsigned              nof_test_slots                      = 1000;
   bool                  is_non_realtime                     = false;
+  unsigned              non_rt_time_scale                   = 1;
   beamforming_config    beamforming_cfg                     = {};
 };
 

@@ -143,6 +143,12 @@ static void configure_cli11_test_args(CLI::App& app, test_parameters& config)
              config.is_non_realtime,
              "Runs the test in non-realtime mode, where the OTA time advances one symbol duration sleep at a time")
       ->capture_default_str();
+  add_option(app,
+             "--non_rt_time_scale",
+             config.non_rt_time_scale,
+             "Slow-down factor of the non-realtime OTA time, every symbol lasts this number of symbol durations")
+      ->capture_default_str()
+      ->check(CLI::PositiveNumber);
 }
 
 /// Validates the cross-parameter constraints of the test configuration.

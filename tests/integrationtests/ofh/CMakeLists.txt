@@ -12,16 +12,16 @@ target_link_libraries(ofh_integration_test
         ocudu_channel_precoder
         ocudu_support
         ocudu_yaml_util)
-add_test(ofh_integration_test_non_rt ofh_integration_test --non_realtime true --nof_test_slots 200
+add_test(ofh_integration_test_non_rt ofh_integration_test --non_realtime true --non_rt_time_scale 20 --nof_test_slots 200
         --dl_port_id 0 1)
-add_test(ofh_integration_test_non_rt_4x2 ofh_integration_test --non_realtime true --nof_test_slots 200)
-add_test(ofh_integration_test_non_rt_8x8 ofh_integration_test --non_realtime true --nof_test_slots 200
+add_test(ofh_integration_test_non_rt_4x2 ofh_integration_test --non_realtime true --non_rt_time_scale 20 --nof_test_slots 200)
+add_test(ofh_integration_test_non_rt_8x8 ofh_integration_test --non_realtime true --non_rt_time_scale 20 --nof_test_slots 200
         --dl_port_id 0 1 2 3 4 5 6 7 --ul_port_id 0 1 2 3 4 5 6 7 --prach_port_id 8 9)
-add_test(ofh_integration_test_non_rt_8x8_100MHz ofh_integration_test --non_realtime true --nof_test_slots 200
+add_test(ofh_integration_test_non_rt_8x8_100MHz ofh_integration_test --non_realtime true --non_rt_time_scale 20 --nof_test_slots 200
         --channel_bandwidth_MHz 100 --dl_port_id 0 1 2 3 4 5 6 7 --ul_port_id 0 1 2 3 4 5 6 7 --prach_port_id 8 9)
-add_test(ofh_integration_test_non_rt_custom_eaxc ofh_integration_test --non_realtime true --nof_test_slots 200
+add_test(ofh_integration_test_non_rt_custom_eaxc ofh_integration_test --non_realtime true --non_rt_time_scale 20 --nof_test_slots 200
         --dl_port_id 5 7 --ul_port_id 9 3 --prach_port_id 1 2)
-add_test(ofh_integration_test_non_rt_fragmented_no_compr ofh_integration_test --non_realtime true --nof_test_slots 200
+add_test(ofh_integration_test_non_rt_fragmented_no_compr ofh_integration_test --non_realtime true --non_rt_time_scale 20 --nof_test_slots 200
         --mtu 1500 --scs 15 --channel_bandwidth_MHz 50 --tdd_pattern 6d3u
         --compr_method_data none --compr_bitwidth_data 16 --enable_dl_static_compr_hdr true)
 set_tests_properties(ofh_integration_test_non_rt
