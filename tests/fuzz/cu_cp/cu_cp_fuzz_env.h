@@ -41,6 +41,7 @@
 #include "ocudu/pcap/dlt_pcap.h"
 #include "ocudu/pdcp/pdcp_config.h"
 #include "ocudu/pdcp/pdcp_factory.h"
+#include "ocudu/pdcp/pdcp_rx.h"
 #include "ocudu/pdcp/pdcp_tx.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/security/security.h"
@@ -202,7 +203,13 @@ inline security::sec_128_as_config make_rrc_128_as_config()
 ///
 /// Without this the RRC container would carry a zero MAC-I, which the CU-CP drops on integrity
 /// failure before RRC sees it, and the UE would be released.
-class du_srb_pdcp_tx : public pdcp_tx_lower_notifier, public pdcp_tx_upper_control_notifier
+///
+/// The RX side of the entity is never used, but the factory binds its notifiers to references, so
+/// they are implemented here as no-ops instead of passing null pointers.
+class du_srb_pdcp_tx : public pdcp_tx_lower_notifier,
+                       public pdcp_tx_upper_control_notifier,
+                       public pdcp_rx_upper_data_notifier,
+                       public pdcp_rx_upper_control_notifier
 {
 public:
   du_srb_pdcp_tx(srb_id_t srb_id, uint32_t ue_index, timer_factory timers, task_executor& ctrl_exec)
@@ -215,8 +222,8 @@ public:
     msg.config.tx.direction    = pdcp_security_direction::uplink;
     msg.tx_lower               = this;
     msg.tx_upper_cn            = this;
-    msg.rx_upper_dn            = nullptr;
-    msg.rx_upper_cn            = nullptr;
+    msg.rx_upper_dn            = this;
+    msg.rx_upper_cn            = this;
     msg.ue_dl_timer_factory    = timers;
     msg.ue_ul_timer_factory    = timers;
     msg.ue_ctrl_timer_factory  = timers;
@@ -251,10 +258,14 @@ public:
   void on_new_pdu(byte_buffer pdu, bool /*is_retx*/) override { packed_pdu = std::move(pdu); }
   void on_discard_pdu(uint32_t /*pdcp_sn*/) override {}
 
-  // pdcp_tx_upper_control_notifier
+  // pdcp_tx_upper_control_notifier and pdcp_rx_upper_control_notifier
   void on_protocol_failure() override {}
   void on_max_count_reached() override {}
   void on_resume_required() override {}
+  void on_integrity_failure() override {}
+
+  // pdcp_rx_upper_data_notifier
+  void on_new_sdu(byte_buffer /*sdu*/, bool /*integrity_verified*/) override {}
 
 private:
   inline_task_executor         inline_executor;
