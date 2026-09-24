@@ -3,7 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "pdsch.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_mapper.h"
 #include "ocudu/mac/mac_cell_result.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/ran/sch/sch_constants.h"
@@ -76,7 +76,7 @@ static void fill_power_parameters(fapi::dl_pdsch_pdu_builder& builder, const tx_
 
 static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&           builder,
                                            const precoding_and_beamforming_info& mac_info,
-                                           const precoding_matrix_mapper&        pm_mapper,
+                                           const precoding_codebook_mapper&      pm_mapper,
                                            unsigned                              nof_layers,
                                            unsigned                              cell_nof_prbs)
 {
@@ -102,10 +102,10 @@ static void fill_precoding_and_beamforming(fapi::dl_pdsch_pdu_builder&          
   pm_bf_builder.set_pmi(pm_mapper.map(info, nof_layers));
 }
 
-static void fill_omnidirectional_precoding(fapi::dl_pdsch_pdu_builder&    builder,
-                                           const precoding_matrix_mapper& pm_mapper,
-                                           unsigned                       nof_layers,
-                                           unsigned                       cell_nof_prbs)
+static void fill_omnidirectional_precoding(fapi::dl_pdsch_pdu_builder&      builder,
+                                           const precoding_codebook_mapper& pm_mapper,
+                                           unsigned                         nof_layers,
+                                           unsigned                         cell_nof_prbs)
 {
   fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
   pm_bf_builder.set_prg_parameters(cell_nof_prbs);
@@ -165,11 +165,11 @@ static void fill_pdsch_vrb_to_prb_configuration(fapi::dl_pdsch_pdu_builder& buil
   builder.set_vrb_to_prb_interleaved_other_parameters();
 }
 
-void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
-                                                    const sib_information&         mac_pdu,
-                                                    unsigned                       nof_csi_pdus,
-                                                    const precoding_matrix_mapper& pm_mapper,
-                                                    unsigned                       cell_nof_prbs)
+void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&      builder,
+                                                    const sib_information&           mac_pdu,
+                                                    unsigned                         nof_csi_pdus,
+                                                    const precoding_codebook_mapper& pm_mapper,
+                                                    unsigned                         cell_nof_prbs)
 {
   ocudu_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   ocudu_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
@@ -201,11 +201,11 @@ void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& 
   fill_pdsch_vrb_to_prb_configuration(builder, mac_pdu.pdsch_cfg);
 }
 
-void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
-                                                    const rar_information&         mac_pdu,
-                                                    unsigned                       nof_csi_pdus,
-                                                    const precoding_matrix_mapper& pm_mapper,
-                                                    unsigned                       cell_nof_prbs)
+void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&      builder,
+                                                    const rar_information&           mac_pdu,
+                                                    unsigned                         nof_csi_pdus,
+                                                    const precoding_codebook_mapper& pm_mapper,
+                                                    unsigned                         cell_nof_prbs)
 {
   ocudu_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   ocudu_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
@@ -235,11 +235,11 @@ void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& 
   fill_pdsch_vrb_to_prb_configuration(builder, mac_pdu.pdsch_cfg);
 }
 
-void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
-                                                    const dl_msg_alloc&            mac_pdu,
-                                                    unsigned                       nof_csi_pdus,
-                                                    const precoding_matrix_mapper& pm_mapper,
-                                                    unsigned                       cell_nof_prbs)
+void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&      builder,
+                                                    const dl_msg_alloc&              mac_pdu,
+                                                    unsigned                         nof_csi_pdus,
+                                                    const precoding_codebook_mapper& pm_mapper,
+                                                    unsigned                         cell_nof_prbs)
 {
   ocudu_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   ocudu_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");
@@ -272,11 +272,11 @@ void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& 
   fill_pdsch_vrb_to_prb_configuration(builder, mac_pdu.pdsch_cfg);
 }
 
-void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&    builder,
-                                                    const dl_paging_allocation&    mac_pdu,
-                                                    unsigned                       nof_csi_pdus,
-                                                    const precoding_matrix_mapper& pm_mapper,
-                                                    unsigned                       cell_nof_prbs)
+void ocudu::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&      builder,
+                                                    const dl_paging_allocation&      mac_pdu,
+                                                    unsigned                         nof_csi_pdus,
+                                                    const precoding_codebook_mapper& pm_mapper,
+                                                    unsigned                         cell_nof_prbs)
 {
   ocudu_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
   ocudu_assert(mac_pdu.pdsch_cfg.coreset_cfg, "Invalid CORESET configuration");

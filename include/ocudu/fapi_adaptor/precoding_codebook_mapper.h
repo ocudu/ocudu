@@ -25,8 +25,8 @@ struct mac_prs_precoding_info {};
 
 namespace fapi_adaptor {
 
-/// Precoding matrix mapper codebook offset configuration.
-struct precoding_matrix_mapper_codebook_offset_configuration {
+/// Codebook offset configuration of the precoding codebook mapper.
+struct precoding_codebook_mapper_codebook_offset_configuration {
   /// Codebook offset for the omnidirectional PDSCH.
   unsigned pdsch_omni_offset;
   /// Codebook offsets for SSB. Each entry represents a layer.
@@ -41,13 +41,13 @@ struct precoding_matrix_mapper_codebook_offset_configuration {
   std::vector<unsigned> prs_codebook_offsets;
 };
 
-/// \brief Precoding matrix mapper.
+/// \brief Precoding codebook mapper.
 ///
 /// Maps the given arguments to a precoding matrix index.
-class precoding_matrix_mapper
+class precoding_codebook_mapper
 {
 public:
-  precoding_matrix_mapper(unsigned sector_id_, const precoding_matrix_mapper_codebook_offset_configuration& config);
+  precoding_codebook_mapper(unsigned sector_id_, const precoding_codebook_mapper_codebook_offset_configuration& config);
 
   /// Maps the given MAC precoding information into a precoding matrix index.
   unsigned map(const mac_pdsch_precoding_info& precoding_info, unsigned nof_layers) const;

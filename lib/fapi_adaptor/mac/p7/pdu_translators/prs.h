@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ocudu/fapi/p7/builders/dl_tti_request_builder.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_mapper.h"
 
 namespace ocudu {
 
@@ -17,12 +17,12 @@ namespace fapi_adaptor {
 ///
 /// \param[out] builder       DL_TTI.Request builder where to add the DL-PRS PDU.
 /// \param[in] prs_pdu        DL-PRS MAC PDU to convert to DL-PRS FAPI PDU.
-/// \param[in] pm_mapper      Precoding matrix mapper.
+/// \param[in] pm_mapper      Precoding codebook mapper.
 /// \param[in] cell_nof_prbs  Number of PRBs of the cell.
-void convert_prs_mac_to_fapi(fapi::dl_tti_request_builder&  builder,
-                             const prs_info&                prs_pdu,
-                             const precoding_matrix_mapper& pm_mapper,
-                             unsigned                       cell_nof_prbs);
+void convert_prs_mac_to_fapi(fapi::dl_tti_request_builder&    builder,
+                             const prs_info&                  prs_pdu,
+                             const precoding_codebook_mapper& pm_mapper,
+                             unsigned                         cell_nof_prbs);
 
 } // namespace fapi_adaptor
 } // namespace ocudu

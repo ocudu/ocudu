@@ -8,9 +8,9 @@
 using namespace ocudu;
 using namespace fapi_adaptor;
 
-static void fill_precoding_and_beamforming(fapi::dl_prs_pdu_builder&      builder,
-                                           const precoding_matrix_mapper& pm_mapper,
-                                           unsigned                       cell_nof_prbs)
+static void fill_precoding_and_beamforming(fapi::dl_prs_pdu_builder&        builder,
+                                           const precoding_codebook_mapper& pm_mapper,
+                                           unsigned                         cell_nof_prbs)
 {
   fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
   pm_bf_builder.set_prg_parameters(cell_nof_prbs);
@@ -21,10 +21,10 @@ static void fill_precoding_and_beamforming(fapi::dl_prs_pdu_builder&      builde
   // TODO: assign a beam ID to each resource and set it here.
 }
 
-void ocudu::fapi_adaptor::convert_prs_mac_to_fapi(fapi::dl_tti_request_builder&  builder,
-                                                  const prs_info&                prs_pdu,
-                                                  const precoding_matrix_mapper& pm_mapper,
-                                                  unsigned                       cell_nof_prbs)
+void ocudu::fapi_adaptor::convert_prs_mac_to_fapi(fapi::dl_tti_request_builder&    builder,
+                                                  const prs_info&                  prs_pdu,
+                                                  const precoding_codebook_mapper& pm_mapper,
+                                                  unsigned                         cell_nof_prbs)
 {
   fapi::dl_prs_pdu_builder prs_builder = builder.add_prs_pdu();
 

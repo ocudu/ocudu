@@ -10,20 +10,20 @@
 namespace ocudu {
 namespace fapi_adaptor {
 
-class precoding_matrix_mapper;
+class precoding_codebook_mapper;
 
 /// \brief Helper function that converts from a PDCCH MAC PDU to a PDCCH FAPI PDU.
 ///
 /// \param[out] builder PDCCH FAPI builder that helps to fill the PDU.
 /// \param[in] context_information MACX DCI context information.
 /// \param[in] payload MACX DCI payload.
-/// \param[in] pm_mapper Precoding matrix mapper.
+/// \param[in] pm_mapper Precoding codebook mapper.
 /// \param[in] cell_nof_prbs Cell number of PRBs.
-void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&    builder,
-                               const dci_context_information& context_information,
-                               const dci_payload&             payload,
-                               const precoding_matrix_mapper& pm_mapper,
-                               unsigned                       cell_nof_prbs);
+void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&      builder,
+                               const dci_context_information&   context_information,
+                               const dci_payload&               payload,
+                               const precoding_codebook_mapper& pm_mapper,
+                               unsigned                         cell_nof_prbs);
 
 } // namespace fapi_adaptor
 } // namespace ocudu

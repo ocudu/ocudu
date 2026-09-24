@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_mapper.h"
 #include "ocudu/fapi_adaptor/uci_part2_correspondence_mapper.h"
 #include "ocudu/mac/mac_cell_result.h"
 #include "ocudu/ocudulog/logger.h"
@@ -34,8 +34,8 @@ struct mac_to_fapi_fastpath_translator_dependencies {
   fapi::p7_requests_gateway& p7_gateway;
   /// FAPI slot last message gateway.
   fapi::p7_last_request_notifier& p7_last_req_notifier;
-  /// Precoding matrix mapper.
-  std::unique_ptr<precoding_matrix_mapper> pm_mapper;
+  /// Precoding codebook mapper.
+  std::unique_ptr<precoding_codebook_mapper> pm_mapper;
   /// UCI Part 2 correspondence mapper.
   std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
   /// FAPI logger.
@@ -84,8 +84,8 @@ private:
   fapi::p7_requests_gateway& p7_gateway;
   /// P7 last requests notifier.
   fapi::p7_last_request_notifier& p7_last_req_notifier;
-  /// Precoding matrix mapper.
-  std::unique_ptr<precoding_matrix_mapper> pm_mapper;
+  /// Precoding codebook mapper.
+  std::unique_ptr<precoding_codebook_mapper> pm_mapper;
   /// UCI Part2 correspondence mapper.
   std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
   /// FAPI logger.

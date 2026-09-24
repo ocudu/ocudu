@@ -32,7 +32,7 @@ std::ostream& operator<<(std::ostream& os, const pmi_codebook_typeI_single_panel
 
 TEST(precoding_codebook_generator, one_port)
 {
-  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_mapper>     mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
   std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
 
@@ -50,7 +50,7 @@ TEST(precoding_codebook_generator, one_port)
 
 TEST(precoding_codebook_generator, two_port_one_layer)
 {
-  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_mapper>     mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
   std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, antenna_topology::two_port, 0);
 
@@ -71,7 +71,7 @@ TEST(precoding_codebook_generator, two_port_one_layer)
 
 TEST(precoding_codebook_generator, two_port_two_layer)
 {
-  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_mapper>     mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
   std::tie(mapper, repository) = generate_precoding_codebooks(pmi_codebook_two_port{}, antenna_topology::two_port, 0);
 
@@ -100,7 +100,7 @@ TEST_P(typeI_single_panel_fixture, TypeI_single_panel)
   unsigned         nof_ports = get_precoding_codebook_antenna_ports(codebook_config);
   antenna_topology topology  = get_single_panel_antenna_topology(nof_ports).value();
 
-  std::unique_ptr<precoding_matrix_mapper>       mapper;
+  std::unique_ptr<precoding_codebook_mapper>     mapper;
   std::unique_ptr<precoding_codebook_repository> repository;
   std::tie(mapper, repository) = generate_precoding_codebooks(codebook_config, topology, 0);
 

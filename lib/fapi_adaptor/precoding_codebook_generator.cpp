@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ocudu/fapi_adaptor/precoding_codebook_generator.h"
+#include "precoding_codebook_mapper_functions.h"
 #include "precoding_codebook_repository_builder.h"
-#include "precoding_matrix_mapper_functions.h"
 #include "ocudu/adt/slotted_array.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_mapper.h"
 #include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/precoding/precoding_codebook_type1_helpers.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
@@ -195,9 +195,9 @@ namespace {
 
 /// Dispatches codebook generation to the correct handler for the PMI codebook type.
 struct codebook_table_generator {
-  precoding_matrix_mapper_codebook_offset_configuration& mapper_offsets;
-  precoding_codebook_repository_builder&                 repo_builder;
-  antenna_topology                                       topology;
+  precoding_codebook_mapper_codebook_offset_configuration& mapper_offsets;
+  precoding_codebook_repository_builder&                   repo_builder;
+  antenna_topology                                         topology;
 
   void operator()(std::monostate) const { ocudu_assertion_failure("Unsupported PMI codebook configuration"); }
 
@@ -273,7 +273,7 @@ struct codebook_table_generator {
 
 } // namespace
 
-std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_codebook_repository>>
+std::pair<std::unique_ptr<precoding_codebook_mapper>, std::unique_ptr<precoding_codebook_repository>>
 ocudu::fapi_adaptor::generate_precoding_codebooks(const pmi_codebook_config& codebook_config,
                                                   antenna_topology           topology,
                                                   unsigned                   sector_id)
@@ -285,10 +285,10 @@ ocudu::fapi_adaptor::generate_precoding_codebooks(const pmi_codebook_config& cod
                             get_total_nof_ports(topology),
                             nof_ports);
 
-  precoding_matrix_mapper_codebook_offset_configuration mapper_offsets;
-  precoding_codebook_repository_builder                 repo_builder(get_max_num_codebooks(nof_ports));
+  precoding_codebook_mapper_codebook_offset_configuration mapper_offsets;
+  precoding_codebook_repository_builder                   repo_builder(get_max_num_codebooks(nof_ports));
 
   std::visit(codebook_table_generator{mapper_offsets, repo_builder, topology}, codebook_config);
 
-  return {std::make_unique<precoding_matrix_mapper>(sector_id, mapper_offsets), repo_builder.build()};
+  return {std::make_unique<precoding_codebook_mapper>(sector_id, mapper_offsets), repo_builder.build()};
 }

@@ -92,7 +92,7 @@ TEST(mac_fapi_pdcch_pdu_conversor_test, dci_without_a_beam_selects_a_precoding_m
   fapi::dl_pdcch_pdu         fapi_pdu;
   fapi::dl_pdcch_pdu_builder builder(fapi_pdu);
   auto pm_tools = generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
-  const precoding_matrix_mapper& mapper = *std::get<0>(pm_tools);
+  const precoding_codebook_mapper& mapper = *std::get<0>(pm_tools);
   convert_pdcch_mac_to_fapi(builder, context, payload, mapper, nof_prbs);
 
   ASSERT_TRUE(fapi_pdu.dl_dci.precoding_and_beamforming.prg.beams.empty());

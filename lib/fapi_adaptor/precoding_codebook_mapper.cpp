@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-#include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
-#include "precoding_matrix_mapper_functions.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_mapper.h"
+#include "precoding_codebook_mapper_functions.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/precoding/precoding_codebook_type1_helpers.h"
 #include "ocudu/ran/precoding/precoding_matrix_indicator.h"
@@ -12,8 +12,9 @@
 using namespace ocudu;
 using namespace fapi_adaptor;
 
-precoding_matrix_mapper::precoding_matrix_mapper(unsigned sector_id_,
-                                                 const precoding_matrix_mapper_codebook_offset_configuration& config) :
+precoding_codebook_mapper::precoding_codebook_mapper(
+    unsigned                                                       sector_id_,
+    const precoding_codebook_mapper_codebook_offset_configuration& config) :
   sector_id(sector_id_),
   logger(ocudulog::fetch_basic_logger("FAPI")),
   pdsch_omni_offset(config.pdsch_omni_offset),
@@ -30,24 +31,24 @@ precoding_matrix_mapper::precoding_matrix_mapper(unsigned sector_id_,
   ocudu_assert(!prs_codebook_offsets.empty(), "Invalid offset configuration");
 }
 
-unsigned precoding_matrix_mapper::map(const mac_csi_rs_precoding_info& precoding_info) const
+unsigned precoding_codebook_mapper::map(const mac_csi_rs_precoding_info& precoding_info) const
 {
   return csi_rs_codebook_offsets[0] + get_csi_rs_precoding_matrix_index();
 }
 
-unsigned precoding_matrix_mapper::map(const mac_ssb_precoding_info& precoding_info) const
+unsigned precoding_codebook_mapper::map(const mac_ssb_precoding_info& precoding_info) const
 {
   return ssb_codebook_offsets[0] + get_ssb_precoding_matrix_index();
 }
 
-unsigned precoding_matrix_mapper::map(const mac_prs_precoding_info& precoding_info) const
+unsigned precoding_codebook_mapper::map(const mac_prs_precoding_info& precoding_info) const
 {
   // [Implementation-defined] The DL-PRS is transmitted on a single antenna port, as per TS 38.211, Section 7.2, so it
   // carries one layer and no MIMO precoding applies.
   return prs_codebook_offsets[0] + get_prs_precoding_matrix_index();
 }
 
-unsigned precoding_matrix_mapper::map(const mac_pdcch_precoding_info& precoding_info) const
+unsigned precoding_codebook_mapper::map(const mac_pdcch_precoding_info& precoding_info) const
 {
   return pdcch_codebook_offsets[0] + get_pdcch_precoding_matrix_index();
 }
@@ -101,7 +102,7 @@ static unsigned get_pdsch_precoding_matrix_index(unsigned                       
   return 0;
 }
 
-unsigned precoding_matrix_mapper::map(const mac_pdsch_precoding_info& precoding_info, unsigned nof_layers) const
+unsigned precoding_codebook_mapper::map(const mac_pdsch_precoding_info& precoding_info, unsigned nof_layers) const
 {
   ocudu_assert(nof_layers > 0, "Invalid number of layers={}", nof_layers);
 

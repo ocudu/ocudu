@@ -86,11 +86,11 @@ public:
 class mac_to_fapi_translator_fixture : public ::testing::Test
 {
 protected:
-  p7_requests_gateway_spy                                                                             gateway_spy;
-  slot_last_message_notifier_spy                                                                      notifier_spy;
-  const unsigned                                                                                      nof_prbs  = 51U;
-  const unsigned                                                                                      sector_id = 1U;
-  std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_codebook_repository>> pm_tools =
+  p7_requests_gateway_spy                                                                               gateway_spy;
+  slot_last_message_notifier_spy                                                                        notifier_spy;
+  const unsigned                                                                                        nof_prbs  = 51U;
+  const unsigned                                                                                        sector_id = 1U;
+  std::pair<std::unique_ptr<precoding_codebook_mapper>, std::unique_ptr<precoding_codebook_repository>> pm_tools =
       generate_precoding_codebooks(pmi_codebook_one_port{}, antenna_topology::one_port, 0);
   std::pair<std::unique_ptr<uci_part2_correspondence_mapper>, std::unique_ptr<uci_part2_correspondence_repository>>
                                   uci_part2_tools = generate_uci_part2_correspondence(1);

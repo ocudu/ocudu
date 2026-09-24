@@ -4,7 +4,7 @@
 
 #include "pdcch.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/fapi_adaptor/precoding_matrix_mapper.h"
+#include "ocudu/fapi_adaptor/precoding_codebook_mapper.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 
 using namespace ocudu;
@@ -41,7 +41,7 @@ static void fill_coreset_parameters(fapi::dl_pdcch_pdu_builder&  builder,
 
 static void fill_precoding_and_beamforming(fapi::dl_dci_pdu_builder&             builder,
                                            const precoding_and_beamforming_info& mac_info,
-                                           const precoding_matrix_mapper&        pm_mapper,
+                                           const precoding_codebook_mapper&      pm_mapper,
                                            unsigned                              cell_nof_prbs)
 {
   fapi::tx_precoding_and_beamforming_pdu_builder pm_bf_builder = builder.get_tx_precoding_and_beamforming_pdu_builder();
@@ -57,11 +57,11 @@ static void fill_precoding_and_beamforming(fapi::dl_dci_pdu_builder&            
   pm_bf_builder.set_pmi(pm_mapper.map(info));
 }
 
-void ocudu::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&    builder,
-                                                    const dci_context_information& context_information,
-                                                    const dci_payload&             payload,
-                                                    const precoding_matrix_mapper& pm_mapper,
-                                                    unsigned                       cell_nof_prbs)
+void ocudu::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&      builder,
+                                                    const dci_context_information&   context_information,
+                                                    const dci_payload&               payload,
+                                                    const precoding_codebook_mapper& pm_mapper,
+                                                    unsigned                         cell_nof_prbs)
 {
   const coreset_configuration& coreset_cfg = *context_information.coreset_cfg;
 
