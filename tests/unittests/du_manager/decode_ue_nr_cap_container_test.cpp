@@ -493,3 +493,200 @@ TEST(decode_ue_nr_cap_container_type2_codebook_test, absent_type2_codebook_yield
 
   ASSERT_EQ(*caps, expected_caps);
 }
+
+/// NTN capabilities used to build a UE-NR-Capability container for the NTN band n256.
+struct ntn_caps_builder_params {
+  /// Sets \e nonTerrestrialNetwork-r17 and \e ntn-Parameters-r17.
+  bool ntn = true;
+  /// Sets \e harqFeedbackDisabled-r17 in the NTN \e MAC-ParametersCommon.
+  bool harq_feedback_disabled = false;
+  /// Sets \e uplink-HARQ-ModeB-r17 in the NTN \e MAC-ParametersCommon.
+  bool ul_harq_mode_b = false;
+  /// Sets \e uplinkPreCompensation-r17 for the band.
+  bool ul_pre_compensation = true;
+  /// Sets \e uplink-TA-Reporting-r17 for the band.
+  bool ul_ta_report = false;
+  /// Sets \e ue-specific-K-Offset-r17 for the band.
+  bool ue_specific_k_offset = false;
+  /// Sets \e maxHARQ-ProcessNumber-r17 for the band, when present.
+  std::optional<asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_e_> max_harq_process_num;
+};
+
+/// Marks the non-critical extension of an ASN.1 UE-NR-Capability as present, and returns it.
+template <typename T>
+static auto& add_non_crit_ext(T& ie)
+{
+  ie.non_crit_ext_present = true;
+  return ie.non_crit_ext;
+}
+
+/// Packs a UE-NR-Capability container advertising the NTN band n256 with the given NTN capabilities.
+static byte_buffer pack_ue_cap_with_ntn_caps(const ntn_caps_builder_params& params)
+{
+  using namespace asn1::rrc_nr;
+
+  ue_nr_cap_s ue_cap;
+  ue_cap.access_stratum_release.value                    = access_stratum_release_opts::rel17;
+  ue_cap.pdcp_params.max_num_rohc_context_sessions.value = pdcp_params_s::max_num_rohc_context_sessions_opts::cs2;
+
+  band_nr_s band;
+  band.band_nr                          = 256;
+  band.ext                              = true;
+  band.ul_pre_compensation_r17_present  = params.ul_pre_compensation;
+  band.ul_ta_report_r17_present         = params.ul_ta_report;
+  band.ue_specific_k_offset_r17_present = params.ue_specific_k_offset;
+  if (params.max_harq_process_num.has_value()) {
+    band.max_harq_process_num_r17_present = true;
+    band.max_harq_process_num_r17         = *params.max_harq_process_num;
+  }
+  ue_cap.rf_params.supported_band_list_nr.push_back(band);
+
+  if (params.ntn) {
+    // nonTerrestrialNetwork-r17 lives in UE-NR-Capability-v1700, the tenth non-critical extension.
+    auto& v1700 = add_non_crit_ext(add_non_crit_ext(add_non_crit_ext(add_non_crit_ext(add_non_crit_ext(
+        add_non_crit_ext(add_non_crit_ext(add_non_crit_ext(add_non_crit_ext(add_non_crit_ext(ue_cap))))))))));
+    v1700.non_terrestrial_network_r17_present = true;
+    v1700.ntn_params_r17_present              = true;
+    if (params.harq_feedback_disabled or params.ul_harq_mode_b) {
+      auto& mac_common                                = v1700.ntn_params_r17.mac_params_ntn_r17.mac_params_common;
+      v1700.ntn_params_r17.mac_params_ntn_r17_present = true;
+      v1700.ntn_params_r17.mac_params_ntn_r17.mac_params_common_present = true;
+      mac_common.ext                                                    = true;
+      mac_common.harq_feedback_disabled_r17_present                     = params.harq_feedback_disabled;
+      mac_common.ul_harq_mode_b_r17_present                             = params.ul_harq_mode_b;
+    }
+  }
+
+  byte_buffer   buf;
+  asn1::bit_ref bref{buf};
+  report_fatal_error_if_not(ue_cap.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
+  return buf;
+}
+
+TEST(decode_ue_nr_cap_container_ntn_test, all_ntn_caps_reported)
+{
+  byte_buffer container = pack_ue_cap_with_ntn_caps(
+      {.harq_feedback_disabled = true,
+       .ul_harq_mode_b         = true,
+       .ul_ta_report           = true,
+       .ue_specific_k_offset   = true,
+       .max_harq_process_num   = asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_opts::u32d32});
+
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  ue_capability_summary expected_caps;
+  expected_caps.ntn_supported                       = true;
+  expected_caps.disabled_dl_harq_feedback_supported = true;
+  expected_caps.ul_harq_mode_b_supported            = true;
+  ue_capability_summary::supported_band band_caps;
+  band_caps.ul_pre_compensation_supported  = true;
+  band_caps.ul_ta_reporting_supported      = true;
+  band_caps.ue_specific_k_offset_supported = true;
+  band_caps.max_dl_harq_process_num        = 32;
+  band_caps.max_ul_harq_process_num        = 32;
+  expected_caps.bands.emplace(nr_band::n256, band_caps);
+
+  ASSERT_EQ(*caps, expected_caps);
+}
+
+TEST(decode_ue_nr_cap_container_ntn_test, max_harq_process_number_is_decoded_per_direction)
+{
+  using max_harq_opts = asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_opts;
+  const std::array<std::tuple<max_harq_opts::options, unsigned, unsigned>, 3> cases = {
+      {{max_harq_opts::u16d32, 16, 32}, {max_harq_opts::u32d16, 32, 16}, {max_harq_opts::u32d32, 32, 32}}};
+
+  for (const auto& [option, nof_ul_harqs, nof_dl_harqs] : cases) {
+    byte_buffer container = pack_ue_cap_with_ntn_caps({.max_harq_process_num = option});
+
+    expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+    ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+    const ue_capability_summary::supported_band& band_caps = caps->bands.at(nr_band::n256);
+    ASSERT_EQ(band_caps.max_ul_harq_process_num, nof_ul_harqs);
+    ASSERT_EQ(band_caps.max_dl_harq_process_num, nof_dl_harqs);
+  }
+}
+
+TEST(decode_ue_nr_cap_container_ntn_test, ue_without_uplink_pre_compensation_is_not_ntn_capable)
+{
+  byte_buffer container =
+      pack_ue_cap_with_ntn_caps({.ul_pre_compensation = false, .ul_ta_report = true, .ue_specific_k_offset = true});
+
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  ue_capability_summary expected_caps;
+  expected_caps.bands.emplace(nr_band::n256, ue_capability_summary::supported_band{});
+
+  ASSERT_EQ(*caps, expected_caps);
+}
+
+TEST(decode_ue_nr_cap_container_ntn_test, ue_specific_k_offset_is_not_supported_without_ta_reporting)
+{
+  byte_buffer container = pack_ue_cap_with_ntn_caps({.ul_ta_report = false, .ue_specific_k_offset = true});
+
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  const ue_capability_summary::supported_band& band_caps = caps->bands.at(nr_band::n256);
+  ASSERT_TRUE(caps->ntn_supported);
+  ASSERT_TRUE(band_caps.ul_pre_compensation_supported);
+  ASSERT_FALSE(band_caps.ul_ta_reporting_supported);
+  ASSERT_FALSE(band_caps.ue_specific_k_offset_supported);
+}
+
+TEST(decode_ue_nr_cap_container_ntn_test, ntn_band_caps_are_ignored_without_non_terrestrial_network_support)
+{
+  byte_buffer container = pack_ue_cap_with_ntn_caps(
+      {.ntn                  = false,
+       .ul_ta_report         = true,
+       .ue_specific_k_offset = true,
+       .max_harq_process_num = asn1::rrc_nr::band_nr_s::max_harq_process_num_r17_opts::u32d32});
+
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container);
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  ue_capability_summary expected_caps;
+  expected_caps.bands.emplace(nr_band::n256, ue_capability_summary::supported_band{});
+
+  ASSERT_EQ(*caps, expected_caps);
+}
+
+TEST(decode_ue_nr_cap_container_ntn_test, captured_ntn_ue_capabilities_are_reported)
+{
+  // UE Capability Information of an NTN UE on band n256 (accessStratumRelease rel18). For n256 it declares
+  // uplinkPreCompensation-r17, uplink-TA-Reporting-r17, ue-Specific-K-Offset-r17 and maxHARQ-ProcessNumber-r17 u32d32,
+  // and in its NTN MAC parameters harq-FeedbackDisabled-r17 and uplink-HARQ-ModeB-r17.
+  const std::vector<uint8_t> captured = {
+      0xe1, 0xa7, 0x33, 0xa0, 0x40, 0x54, 0x04, 0x80, 0x04, 0x43, 0xc1, 0xc0, 0x0e, 0x03, 0x70, 0x12, 0x01, 0xc0, 0xb4,
+      0x05, 0xbf, 0x7b, 0x07, 0x0e, 0x50, 0x00, 0x02, 0xc0, 0x0b, 0x00, 0x00, 0x04, 0x01, 0x01, 0x26, 0x2e, 0x00, 0x03,
+      0x07, 0xe1, 0xa8, 0x01, 0x8d, 0xff, 0x80, 0x01, 0x01, 0x00, 0x48, 0x11, 0x01, 0x03, 0xe0, 0x05, 0x31, 0x73, 0xfe,
+      0x40, 0x00, 0x00, 0x43, 0x30, 0x00, 0x1a, 0xb4, 0x18, 0x00, 0x0c, 0x00, 0xf4, 0x0e, 0x3c, 0x87, 0x3e, 0x00, 0x00,
+      0x40, 0x08, 0x00, 0x0f, 0x81, 0xe1, 0x78, 0x00, 0x00, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x02, 0xa0, 0x82, 0x20, 0x02,
+      0x00, 0x02, 0x80, 0x00, 0x04, 0x41, 0xc0, 0x79, 0x00, 0x18, 0x00, 0x00, 0x10, 0x05, 0x80, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x80, 0x1c, 0xff, 0x00, 0x00, 0x00, 0x00, 0x20, 0x7f, 0x97, 0x80, 0x00,
+      0x00, 0x03, 0x80, 0x40, 0x4e, 0x90, 0x30, 0x20, 0x00, 0x64, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x01, 0x00, 0xa0, 0x00, 0x20, 0x00, 0x01, 0x2c, 0xb2, 0x80, 0x03, 0x80, 0x41, 0x47, 0xd0, 0x00, 0x02, 0xd0, 0x03,
+      0xc0, 0x00, 0x40, 0x03, 0x20, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x01, 0x00, 0x20, 0x04, 0x09, 0x12, 0xa5,
+      0x50, 0x00, 0x0b, 0x31, 0x27, 0x00, 0x01, 0x0c, 0x18, 0x24, 0x0c, 0x09, 0x00, 0x19, 0x00, 0x00, 0x00, 0x0c, 0x07,
+      0x01, 0xc2, 0x00, 0x80, 0x60, 0x2e, 0x02, 0x40, 0x38, 0x12, 0x00, 0x00, 0x16};
+
+  expected<byte_buffer> container = byte_buffer::create(captured.begin(), captured.end());
+  ASSERT_TRUE(container);
+  expected<ue_capability_summary, std::string> caps = decode_ue_nr_cap_container(container.value());
+  ASSERT_TRUE(caps.has_value()) << fmt::format("Failed to decode UE capabilities: {}", caps.error());
+
+  ASSERT_TRUE(caps->ntn_supported);
+  ASSERT_TRUE(caps->disabled_dl_harq_feedback_supported);
+  ASSERT_TRUE(caps->ul_harq_mode_b_supported);
+
+  ASSERT_EQ(caps->bands.count(nr_band::n256), 1U);
+  const ue_capability_summary::supported_band& band_caps = caps->bands.at(nr_band::n256);
+  ASSERT_TRUE(band_caps.ul_pre_compensation_supported);
+  ASSERT_TRUE(band_caps.ul_ta_reporting_supported);
+  ASSERT_TRUE(band_caps.ue_specific_k_offset_supported);
+  // maxHARQ-ProcessNumber-r17 is u32d32: 32 HARQ processes in both directions.
+  ASSERT_EQ(band_caps.max_dl_harq_process_num, 32U);
+  ASSERT_EQ(band_caps.max_ul_harq_process_num, 32U);
+}
