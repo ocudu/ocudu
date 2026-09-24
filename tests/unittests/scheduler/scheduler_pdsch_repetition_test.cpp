@@ -72,6 +72,8 @@ protected:
 
   bool is_fully_dl(slot_point sl) const { return cell_cfg(to_du_cell_index(0)).is_fully_dl_enabled(sl); }
 
+  bool is_fully_ul(slot_point sl) const { return cell_cfg(to_du_cell_index(0)).is_fully_ul_enabled(sl); }
+
   /// Runs the scheduler for \c nof_slots slots, collecting per-slot copies of the results for the test UE.
   void run_and_collect(unsigned nof_slots)
   {
@@ -276,6 +278,60 @@ TEST_F(scheduler_pdsch_repetition_test, when_harq_is_nacked_then_retx_is_schedul
     }
   }
   ASSERT_GT(nof_retx_bundles, 0) << "No reTx repetition bundle was scheduled";
+}
+
+// A bundle that loses trailing occasions to slots which cannot carry the PDSCH. The UE reads repetitionNumber-r16
+// from the TDRA row and counts every occasion of the nominal window, the ones it never receives included, so it
+// reports the HARQ-ACK k1 slots after the last occasion of that window (TS 38.213, Section 9.2.3), not after the last
+// one actually transmitted. Anchoring the PUCCH at the latter makes the gNB listen too early and the report is lost.
+TEST_F(scheduler_pdsch_repetition_test, when_trailing_occasions_are_dropped_then_harq_ack_follows_the_nominal_window)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
+  const unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).params.tdd_cfg);
+
+  // Bursty traffic whose phase advances by one slot per iteration, so that bundles start at every position of the TDD
+  // pattern over the run, including the last DL slots whose trailing occasions fall in the special and UL slots.
+  for (unsigned i = 0; i != 2 * tdd_period; ++i) {
+    dl_buffer_state_indication_message dl_buf_st{ue_idx, ue_drb_lcid, 1000};
+    this->push_dl_buffer_state(dl_buf_st);
+    run_and_collect(tdd_period + 1);
+  }
+
+  unsigned nof_truncated_bundles = 0;
+  for (const auto& [pdcch_slot, slot_dcis] : dcis) {
+    for (const dci_1_1_configuration& dci : slot_dcis) {
+      if (dci.time_resource != rep_time_resource or pdcch_slot + (nof_reps - 1) > last_collected_slot) {
+        continue;
+      }
+      // Only bundles that lost their trailing occasions tell the two anchors apart.
+      unsigned last_tx_occasion = 0;
+      for (unsigned i = 1; i != nof_reps; ++i) {
+        if (is_fully_dl(pdcch_slot + i)) {
+          last_tx_occasion = i;
+        }
+      }
+      if (last_tx_occasion == nof_reps - 1) {
+        continue;
+      }
+      ++nof_truncated_bundles;
+
+      ASSERT_TRUE(dci.pdsch_harq_fb_timing_indicator.has_value());
+      const auto dedicated_k1_list = cell_cfg(to_du_cell_index(0)).init_bwp.ul.td_mapper().dedicated_k1_candidates();
+      const unsigned   k1          = dedicated_k1_list[dci.pdsch_harq_fb_timing_indicator.value()];
+      const slot_point expected_pucch_slot = pdcch_slot + (nof_reps - 1) + k1;
+      if (expected_pucch_slot <= last_collected_slot) {
+        ASSERT_EQ(pucch_slots.count(expected_pucch_slot), 1)
+            << fmt::format("No PUCCH at slot {} for the bundle scheduled at slot {}, whose last transmitted occasion "
+                           "is at offset {} of a {}-occasion window",
+                           expected_pucch_slot,
+                           pdcch_slot,
+                           last_tx_occasion,
+                           nof_reps);
+      }
+    }
+  }
+  ASSERT_GT(nof_truncated_bundles, 0) << "No bundle lost a trailing occasion, the two anchors were never told apart";
 }
 
 class scheduler_pdsch_repetition_high_cqi_test : public base_pdsch_repetition_tester, public ::testing::Test
