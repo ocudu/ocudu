@@ -7,6 +7,7 @@
 /// CG PUSCH grants in the right slots, and that the scheduler output (symbols, RBs, RNTI) matches the CG
 /// configuration.
 
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_result_finder.h"
@@ -239,6 +240,8 @@ protected:
 /// Test: after adding a CG UE, CG PUSCH grants appear and repeat with the configured period.
 TEST_P(cg_duplex_test, cg_grants_are_periodic)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   // Find the first CG grant.
@@ -265,6 +268,8 @@ TEST_P(cg_duplex_test, cg_grants_are_periodic)
 /// Test: the CG PUSCH output uses the CS-RNTI (not the C-RNTI).
 TEST_P(cg_duplex_test, cg_pusch_rnti_is_cs_rnti)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
   const ul_sched_info* grant = run_until_next_cg_pusch();
   ASSERT_NE(grant, nullptr);
@@ -276,6 +281,8 @@ TEST_P(cg_duplex_test, cg_pusch_rnti_is_cs_rnti)
 /// Test: the OFDM symbols in the CG PUSCH match the PUSCH time-domain allocation entry used by the CG config.
 TEST_P(cg_duplex_test, cg_pusch_symbols_match_td_alloc)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
   const ul_sched_info* grant = run_until_next_cg_pusch();
   ASSERT_NE(grant, nullptr);
@@ -289,6 +296,8 @@ TEST_P(cg_duplex_test, cg_pusch_symbols_match_td_alloc)
 /// Test: the VRBs in the CG PUSCH match the configured VRB allocation (start=10, length=10).
 TEST_P(cg_duplex_test, cg_pusch_rbs_match_cg_config)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
   const ul_sched_info* grant = run_until_next_cg_pusch();
   ASSERT_NE(grant, nullptr);
@@ -302,6 +311,8 @@ TEST_P(cg_duplex_test, cg_pusch_rbs_match_cg_config)
 /// Test: the decision context fields are filled correctly for CG PUSCH.
 TEST_P(cg_duplex_test, cg_pusch_context_fields_are_correct)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
   const ul_sched_info* grant = run_until_next_cg_pusch();
   ASSERT_NE(grant, nullptr);
@@ -315,6 +326,8 @@ TEST_P(cg_duplex_test, cg_pusch_context_fields_are_correct)
 /// Test: after removing a CG UE, no further CG PUSCH grants are produced.
 TEST_P(cg_duplex_test, after_ue_removal_no_more_cg_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   // Confirm at least one grant appears before removal.
@@ -333,6 +346,8 @@ TEST_P(cg_duplex_test, after_ue_removal_no_more_cg_grants)
 /// Test: after changing the CG period from 40 to 20, the gap between consecutive grants halves.
 TEST_P(cg_duplex_test, cg_reconfig_period_change)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_crc = true;
   add_cg_ue();
 
@@ -364,6 +379,8 @@ TEST_P(cg_duplex_test, cg_reconfig_period_change)
 /// period.
 TEST_P(cg_duplex_test, cg_reconfig_offset_change)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_crc = true;
   add_cg_ue(to_du_ue_index(0), /*cg_slot_offset=*/7);
 
@@ -392,6 +409,8 @@ TEST_P(cg_duplex_test, cg_reconfig_offset_change)
 /// Test: a UE that is created without a CG reconfiguration does not produce CG grants.
 TEST_P(cg_duplex_test, ue_with_no_cg_config_produces_no_cg_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   // Create a UE without CG configuration (no reconfiguration issued, so add_reconf_ue() is never called).
   auto ue_req     = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran);
   ue_req.ue_index = to_du_ue_index(0);
@@ -410,6 +429,8 @@ TEST_P(cg_duplex_test, ue_with_no_cg_config_produces_no_cg_grants)
 /// is removed.
 TEST_P(cg_duplex_test, cg_pusch_absorbs_pucch_harq_ack)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_uci = true;
   auto_crc = true;
   add_cg_ue();
@@ -441,6 +462,8 @@ TEST_P(cg_duplex_test, cg_pusch_absorbs_pucch_harq_ack)
 /// 4 × period_slots, which equals nof_harq_procs × period_slots — exactly the CG reuse period.
 TEST_P(cg_duplex_test, cg_harq_freed_by_timeout_before_reuse)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   // Run for several full CG cycles: nof_harq_procs × period_slots × 3 slots.
@@ -471,6 +494,8 @@ TEST_P(cg_duplex_test, cg_harq_freed_by_timeout_before_reuse)
 /// same slot.
 TEST_P(cg_duplex_test, cg_and_dynamic_pusch_coexist_when_in_different_slots)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_crc = true;
   add_cg_ue();
 
@@ -513,6 +538,8 @@ TEST_P(cg_duplex_test, cg_and_dynamic_pusch_coexist_when_in_different_slots)
 /// Test: when a CG PUSCH is allocated in a slot, no dynamic PUSCH grant is allocated in that same slot.
 TEST_P(cg_duplex_test, no_dynamic_pusch_in_cg_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_crc = true;
   add_cg_ue();
 
@@ -538,6 +565,8 @@ TEST_P(cg_duplex_test, no_dynamic_pusch_in_cg_slot)
 /// Test: a reconfiguration that removes the CG config (cg_cfg reset to nullopt) stops CG grants while the UE remains.
 TEST_P(cg_duplex_test, cg_removal_via_reconfig_stops_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   // Confirm at least one CG grant appears.
@@ -560,6 +589,8 @@ TEST_P(cg_duplex_test, cg_removal_via_reconfig_stops_grants)
 /// against an independent recomputation from the grant fields (see is_valid_ul_sched_info).
 TEST_P(cg_duplex_test, cg_pusch_tbs_is_consistent_with_grant_params)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
   const ul_sched_info* grant = run_until_next_cg_pusch();
   ASSERT_NE(grant, nullptr);
@@ -576,6 +607,8 @@ TEST_P(cg_duplex_test, cg_pusch_tbs_is_consistent_with_grant_params)
 /// Test: a reconfiguration that changes the CG MCS is reflected in the next grant, including a recomputed TBS.
 TEST_P(cg_duplex_test, cg_reconfig_mcs_change_updates_tbs)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_crc = true;
   add_cg_ue();
 
@@ -600,6 +633,8 @@ TEST_P(cg_duplex_test, cg_reconfig_mcs_change_updates_tbs)
 /// makes CG grants resume. Also exercises the CG scheduler add/rem/add bookkeeping (slot wheel and TBS table).
 TEST_P(cg_duplex_test, cg_readd_after_removal_via_reconfig_resumes_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   // Confirm at least one CG grant appears.
@@ -646,6 +681,8 @@ protected:
 /// Test: two CG UEs with different slot offsets produce independent periodic grants.
 TEST_F(cg_multi_ue_test, two_ues_with_different_offsets)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   // UE1: default offset (0), default VRBs [10, 20).
   add_cg_ue(to_du_ue_index(0), /*cg_slot_offset=*/std::nullopt, ue_crnti, cs_rnti);
   // UE2: offset 1, VRBs [20, 30), different C-RNTI/CS-RNTI.
@@ -677,6 +714,8 @@ TEST_F(cg_multi_ue_test, two_ues_with_different_offsets)
 /// Test: two CG UEs sharing the same slot offset coexist with non-overlapping VRBs.
 TEST_F(cg_multi_ue_test, two_ues_same_offset_coexist)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   // UE1: default offset, VRBs [10, 20).
   add_cg_ue(to_du_ue_index(0), /*cg_slot_offset=*/std::nullopt, ue_crnti, cs_rnti);
   // UE2: same default offset, VRBs [20, 30).
@@ -707,6 +746,8 @@ TEST_F(cg_multi_ue_test, two_ues_same_offset_coexist)
 /// Test: removing one CG UE does not disrupt the other UE's CG grants.
 TEST_F(cg_multi_ue_test, removing_one_ue_preserves_other_cg_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   // UE1: default offset (0), default VRBs.
   add_cg_ue(to_du_ue_index(0), /*cg_slot_offset=*/std::nullopt, ue_crnti, cs_rnti);
   // UE2: offset 1, different VRBs/RNTIs.
@@ -761,6 +802,8 @@ protected:
 
 TEST_P(cg_period_test, period_is_met)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   const ul_sched_info* first_grant = run_until_next_cg_pusch();
@@ -802,6 +845,8 @@ protected:
 /// only way the next CG PUSCH appears within one period is if the DTX path freed the HARQ.
 TEST_F(cg_dtx_test, cg_dtx_detected_when_crc_ko_and_low_sinr)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   const ul_sched_info* grant = run_until_next_cg_pusch();
@@ -820,6 +865,8 @@ TEST_F(cg_dtx_test, cg_dtx_detected_when_crc_ko_and_low_sinr)
 /// the HARQ is freed by NACK handling and the next CG grant appears within one period.
 TEST_F(cg_dtx_test, cg_nack_when_crc_ko_and_high_sinr)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   const ul_sched_info* grant = run_until_next_cg_pusch();
@@ -836,6 +883,8 @@ TEST_F(cg_dtx_test, cg_nack_when_crc_ko_and_high_sinr)
 /// Test: when CRC KO but SINR is not reported (nullopt), DTX is NOT triggered. HARQ is freed by NACK handling.
 TEST_F(cg_dtx_test, cg_no_dtx_when_sinr_missing)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   const ul_sched_info* grant = run_until_next_cg_pusch();
@@ -854,6 +903,8 @@ TEST_F(cg_dtx_test, cg_no_dtx_when_sinr_missing)
 /// 4 periods).
 TEST_F(cg_dtx_test, cg_ack_frees_harq_for_next_occasion)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   const ul_sched_info* grant = run_until_next_cg_pusch();
@@ -871,6 +922,8 @@ TEST_F(cg_dtx_test, cg_ack_frees_harq_for_next_occasion)
 /// the HARQ manager must forcibly reuse the still-busy HARQ process (forced-reuse path) instead of stalling.
 TEST_F(cg_dtx_test, cg_grants_continue_when_crc_never_arrives)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   const ul_sched_info* first_grant = run_until_next_cg_pusch();
@@ -896,6 +949,8 @@ TEST_F(cg_dtx_test, cg_grants_continue_when_crc_never_arrives)
 /// reuses the same HARQ ID; any free-list corruption would cause later allocations to fail.
 TEST_F(cg_dtx_test, cg_dtx_stress_multiple_cycles)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_cg_ue();
 
   // With 1 HARQ, each period reuses the same ID. Run for 12 periods (= configured_grant_timer × 3 cycles).
@@ -937,6 +992,8 @@ protected:
 /// PUCCH is removed.
 TEST_F(cg_csi_mux_test, cg_pusch_absorbs_pucch_csi)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_uci = true;
   auto_crc = true;
   // Force the CG slot offset to the CSI report offset so that CG PUSCH and CSI PUCCH coincide periodically.
@@ -988,6 +1045,8 @@ protected:
 /// Test: a CG PUSCH can absorb more than one HARQ-ACK bit from the PUCCH (no max-1 HARQ-bit constraint for CG).
 TEST_F(cg_multi_harq_ack_mux_test, cg_pusch_absorbs_multiple_harq_ack_bits)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto_uci = true;
   auto_crc = true;
   add_cg_ue();
@@ -1026,6 +1085,8 @@ protected:
 /// any CG grant and without crashing (the CG scheduler is not instantiated).
 TEST_F(cg_disabled_cell_test, cell_without_cg_config_runs_and_produces_no_cg_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   // Create the UE. Since the cell has no CG configured, the default UE config carries no CG either.
   auto ue_req     = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran);
   ue_req.ue_index = to_du_ue_index(0);
@@ -1110,6 +1171,8 @@ protected:
 /// would run for a UE never registered in the CG scheduler).
 TEST_F(cg_fallback_ue_test, cg_setup_is_deferred_until_crnti_ce_and_ue_is_removed_cleanly)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_fallback_crnti_ce_ue();
 
   // Install the CG config while contention resolution is still pending: the CG scheduler registration is skipped.
@@ -1140,6 +1203,8 @@ TEST_F(cg_fallback_ue_test, cg_setup_is_deferred_until_crnti_ce_and_ue_is_remove
 /// must not attempt to unregister a UE that was never registered in the CG scheduler).
 TEST_F(cg_fallback_ue_test, when_crnti_ce_never_arrives_no_cg_grant_is_allocated_and_ue_is_removed_cleanly)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   add_fallback_crnti_ce_ue();
 
   // Install the CG config while contention resolution is still pending: the CG scheduler registration is skipped.

@@ -4,6 +4,7 @@
 
 #include "lib/scheduler/common_scheduling/prach_scheduler.h"
 #include "sub_scheduler_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
@@ -209,6 +210,8 @@ protected:
 
 TEST_P(prach_scheduler_test, prach_sched_allocates_in_prach_configured_slots)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-2");
+
   unsigned prach_counter = 0;
   for (unsigned i = 0; i != prach_repetition_period; ++i) {
     run_slot();
@@ -225,6 +228,8 @@ TEST_P(prach_scheduler_test, prach_sched_allocates_in_prach_configured_slots)
 
 TEST_P(prach_scheduler_test, prach_sched_allocates_in_sched_grid)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-2");
+
   for (unsigned i = 0; i != prach_repetition_period * 2; ++i) {
     run_slot();
     if (is_prach_slot()) {

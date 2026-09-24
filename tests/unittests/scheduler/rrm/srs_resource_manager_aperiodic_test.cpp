@@ -5,6 +5,7 @@
 #include "lib/scheduler/rrm/srs_resource_generator.h"
 #include "lib/scheduler/rrm/srs_resource_manager_aperiodic.h"
 #include "lib/scheduler/rrm/srs_resource_manager_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
@@ -260,6 +261,8 @@ protected:
 
 TEST_P(srs_resource_manager_aperiodic_tester, when_ues_are_added_the_srs_res_with_min_counter_is_assigned)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-4");
+
   for (unsigned i = 0; i != MAX_NOF_DU_UES_TO_TEST; ++i) {
     std::optional<ue_cell_config> ue = add_ue(to_du_ue_index(i));
     ASSERT_TRUE(ue.has_value());
@@ -280,6 +283,8 @@ TEST_P(srs_resource_manager_aperiodic_tester, when_ues_are_added_the_srs_res_wit
 
 TEST_P(srs_resource_manager_aperiodic_tester, when_all_ues_are_removed_all_srs_resources_have_zero_counter)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-4");
+
   // Add all UEs.
   for (unsigned i = 0; i != MAX_NOF_DU_UES_TO_TEST; ++i) {
     std::optional<ue_cell_config> ue = add_ue(to_du_ue_index(i));
@@ -320,6 +325,8 @@ TEST_P(srs_resource_manager_aperiodic_tester, when_all_ues_are_removed_all_srs_r
 TEST_P(srs_resource_manager_aperiodic_tester,
        when_random_ues_are_removed_and_added_new_ues_are_assign_srs_with_min_counter)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-4");
+
   // Lambda that adds a new UE, given that its index.
   // NOTE: This is the lambda that verifies the correct SRS resource is assigned to the UE.
   auto add_ues = [this](unsigned ue_idx) mutable {
@@ -407,6 +414,8 @@ protected:
 TEST_P(srs_resource_manager_aperiodic_param_tester,
        when_ue_is_added_srs_resources_parameters_and_slot_offsets_are_valid)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-4");
+
   // > Created UEs.
   for (unsigned i = 0; i != MAX_NOF_DU_UES_TO_TEST; ++i) {
     std::optional<ue_cell_config> ue = add_ue(to_du_ue_index(i));

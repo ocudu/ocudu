@@ -4,6 +4,7 @@
 
 #include "lib/du/du_high/du_manager/converters/asn1_ntn_config_helpers.h"
 #include "lib/du/du_high/du_manager/converters/asn1_rrc_config_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/asn1_utils.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
@@ -1333,6 +1334,8 @@ TEST(serving_cell_config_converter_test, test_csi_meas_cfg_release_conversion)
 
 TEST(serving_cell_config_converter_test, test_rlm_cfg_conversion)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   using namespace asn1::rrc_nr;
 
   // Some lambda to check recurrent configs.

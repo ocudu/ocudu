@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/rrm/srs_resource_generator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/support/test_utils.h"
@@ -176,6 +177,8 @@ protected:
 
 TEST_P(test_srs_res_list_builder, test_whether_list_is_generated_and_has_correct_size)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-3");
+
   auto srs_res_list = generate_cell_srs_list(cell_cfg);
   ASSERT_FALSE(srs_res_list.empty());
   ASSERT_EQ(compute_expected_srs_list_size(), srs_res_list.size());

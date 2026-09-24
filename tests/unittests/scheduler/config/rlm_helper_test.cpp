@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/scheduler/config/rlm_helper.h"
 #include <gtest/gtest.h>
 
@@ -70,6 +71,8 @@ protected:
 
 TEST_F(rlm_helper_test, default_resource_type_yields_no_resources)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   const rlm_helper::rlm_builder_params params(rlm_resource_type::default_type, 4);
 
   ASSERT_TRUE(rlm_helper::make_radio_link_monitoring_config(params, {}).rlm_resources.empty());
@@ -77,6 +80,8 @@ TEST_F(rlm_helper_test, default_resource_type_yields_no_resources)
 
 TEST_F(rlm_helper_test, single_transmitted_ssb_yields_one_ssb_resource)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   for (uint8_t l_max : {uint8_t{4}, uint8_t{8}, uint8_t{64}}) {
     const rlm_helper::rlm_builder_params params(rlm_resource_type::ssb, l_max, make_ssb_bitmap(1, l_max));
     const radio_link_monitoring_config   cfg = rlm_helper::make_radio_link_monitoring_config(params, {});
@@ -90,6 +95,8 @@ TEST_F(rlm_helper_test, single_transmitted_ssb_yields_one_ssb_resource)
 
 TEST_F(rlm_helper_test, ssb_resource_takes_the_index_of_the_transmitted_candidate)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   static constexpr uint8_t  l_max   = 8;
   static constexpr unsigned ssb_idx = 5;
 
@@ -105,6 +112,8 @@ TEST_F(rlm_helper_test, ssb_resource_takes_the_index_of_the_transmitted_candidat
 
 TEST_F(rlm_helper_test, one_ssb_resource_is_built_per_transmitted_candidate)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   static constexpr uint8_t  l_max    = 8;
   static constexpr unsigned nof_ssbs = 3;
 
@@ -116,7 +125,9 @@ TEST_F(rlm_helper_test, one_ssb_resource_is_built_per_transmitted_candidate)
 
 TEST_F(rlm_helper_test, nof_ssb_resources_is_capped_at_n_rlm)
 {
-  const std::array<std::pair<uint8_t, unsigned>, 3> l_max_to_n_rlm = {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
+  constexpr std::array<std::pair<uint8_t, unsigned>, 3> l_max_to_n_rlm = {
       {{4, N_RLM_L_MAX_4}, {8, N_RLM_L_MAX_8}, {64, N_RLM_L_MAX_64}}};
 
   for (const auto& [l_max, n_rlm] : l_max_to_n_rlm) {
@@ -131,9 +142,11 @@ TEST_F(rlm_helper_test, nof_ssb_resources_is_capped_at_n_rlm)
 
 TEST_F(rlm_helper_test, ssb_and_csi_rs_leaves_half_of_the_n_rlm_budget_for_csi_rs)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   const std::vector<nzp_csi_rs_resource> csi_rs_resources = make_csi_rs_resources(NOF_TRACKING_CSI_RS_RESOURCES);
 
-  const std::array<std::pair<uint8_t, unsigned>, 3> l_max_to_n_rlm = {
+  constexpr std::array<std::pair<uint8_t, unsigned>, 3> l_max_to_n_rlm = {
       {{4, N_RLM_L_MAX_4}, {8, N_RLM_L_MAX_8}, {64, N_RLM_L_MAX_64}}};
 
   for (const auto& [l_max, n_rlm] : l_max_to_n_rlm) {
@@ -152,6 +165,8 @@ TEST_F(rlm_helper_test, ssb_and_csi_rs_leaves_half_of_the_n_rlm_budget_for_csi_r
 
 TEST_F(rlm_helper_test, ssb_and_csi_rs_with_a_single_ssb_leaves_the_rest_to_csi_rs)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   static constexpr uint8_t l_max = 8;
 
   const std::vector<nzp_csi_rs_resource> csi_rs_resources = make_csi_rs_resources(NOF_TRACKING_CSI_RS_RESOURCES);
@@ -164,6 +179,8 @@ TEST_F(rlm_helper_test, ssb_and_csi_rs_with_a_single_ssb_leaves_the_rest_to_csi_
 
 TEST_F(rlm_helper_test, csi_rs_resource_type_yields_no_ssb_resource)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RLM-16-1");
+
   const std::vector<nzp_csi_rs_resource> csi_rs_resources = make_csi_rs_resources(NOF_TRACKING_CSI_RS_RESOURCES);
   const rlm_helper::rlm_builder_params   params(rlm_resource_type::csi_rs, 8);
   const radio_link_monitoring_config     cfg = rlm_helper::make_radio_link_monitoring_config(params, csi_rs_resources);

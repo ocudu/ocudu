@@ -8,6 +8,7 @@
 #include "lib/scheduler/srs/srs_scheduler_impl.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_context/ue_repository.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -292,6 +293,8 @@ protected:
 
 TEST_P(srs_alloc_tester, with_only_1_ue_srs_is_allocated_every_time_prohibit_time)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-4");
+
   const auto srs_prohib_time_uint = static_cast<unsigned>(GetParam().srs_prohib_time);
 
   const auto add_ue_slot = test_rng::uniform_int<unsigned>(0, res_grid.ring_size());
@@ -378,6 +381,8 @@ protected:
 
 TEST_P(srs_alloc_multi_ue_tester, multiple_ues_with_orthogonal_srs_res_is_allocated_at_most_every_time_prohibit_time)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-PHY-16-4");
+
   const auto srs_prohib_time_uint = static_cast<unsigned>(GetParam().srs_prohib_time);
 
   auto get_next_add_ue_slot = [](unsigned max_rnd_ue_gen_slot) {

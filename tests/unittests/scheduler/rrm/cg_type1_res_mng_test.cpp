@@ -6,6 +6,7 @@
 /// \brief Unit tests for cg_type1_res_mng. Verifies correct CG resource allocation, PRACH/PUCCH collision
 /// avoidance, multi-UE orthogonality, capacity exhaustion and resource reclamation.
 
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
@@ -205,6 +206,8 @@ protected:
 /// Test: a single UE gets all CG parameters correctly populated.
 TEST_P(cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto ue = add_ue(to_du_ue_index(0));
   ASSERT_TRUE(ue.has_value()) << "CG allocation failed for a single UE";
 
@@ -238,6 +241,8 @@ TEST_P(cg_type1_res_mng_test, single_ue_cg_config_is_fully_populated)
 /// Test: CG offset does not fall on a PRACH slot.
 TEST_P(cg_type1_res_mng_test, cg_offset_does_not_collide_with_prach)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto ue = add_ue(to_du_ue_index(0));
   ASSERT_TRUE(ue.has_value());
 
@@ -258,6 +263,8 @@ TEST_P(cg_type1_res_mng_test, cg_offset_does_not_collide_with_prach)
 /// Test: CG VRBs do not overlap with PUCCH guardband CRBs.
 TEST_P(cg_type1_res_mng_test, cg_rbs_do_not_collide_with_pucch)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   auto ue = add_ue(to_du_ue_index(0));
   ASSERT_TRUE(ue.has_value());
 
@@ -267,6 +274,8 @@ TEST_P(cg_type1_res_mng_test, cg_rbs_do_not_collide_with_pucch)
 /// Test: multiple UEs get orthogonal CG resources (no collision in offset+VRBs).
 TEST_P(cg_type1_res_mng_test, multiple_ues_get_orthogonal_cg_resources)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   std::vector<ue_cg_alloc_params> used_allocs;
 
   for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
@@ -298,6 +307,8 @@ TEST_P(cg_type1_res_mng_test, multiple_ues_get_orthogonal_cg_resources)
 /// Test: allocation fails when resources are exhausted; all previous UEs remain valid.
 TEST_P(cg_type1_res_mng_test, allocation_fails_when_resources_exhausted)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   unsigned nof_allocated = 0;
 
   for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
@@ -319,6 +330,8 @@ TEST_P(cg_type1_res_mng_test, allocation_fails_when_resources_exhausted)
 /// Test: after removing a UE, a new UE can be allocated with the freed resources.
 TEST_P(cg_type1_res_mng_test, dealloc_and_realloc_succeeds)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
   // Fill up all resources.
   unsigned nof_allocated = 0;
   for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
