@@ -16,6 +16,9 @@ public:
 
   /// Collect the performance metrics of a data flow.
   virtual void collect_metrics(tx_data_flow_perf_metrics& metric) = 0;
+
+  /// Increments the number of data flow processing requests that could not be dispatched to the processing executor.
+  virtual void increment_dispatch_failures() = 0;
 };
 
 } // namespace ofh

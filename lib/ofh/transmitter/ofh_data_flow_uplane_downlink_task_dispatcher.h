@@ -4,6 +4,8 @@
 #pragma once
 
 #include "ofh_data_flow_uplane_downlink_data.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/ofh/ofh_controller.h"
 #include "ocudu/ofh/ofh_sector_executor_mapper.h"
 #include "ocudu/phy/support/shared_resource_grid.h"
 #include "ocudu/support/executors/task_executor.h"
@@ -24,8 +26,13 @@ public:
   data_flow_uplane_downlink_task_dispatcher(ocudulog::basic_logger&                         logger_,
                                             std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane_,
                                             ofh_sector_executor_mapper&                     exec_mapper_,
-                                            unsigned                                        sector_id_) :
-    logger(logger_), exec_mapper(exec_mapper_), data_flow_uplane(std::move(data_flow_uplane_)), sector_id(sector_id_)
+                                            unsigned                                        sector_id_,
+                                            data_flow_message_encoding_metrics_collector*   metrics_collector_) :
+    logger(logger_),
+    exec_mapper(exec_mapper_),
+    data_flow_uplane(std::move(data_flow_uplane_)),
+    sector_id(sector_id_),
+    metrics_collector(metrics_collector_)
   {
     ocudu_assert(data_flow_uplane, "Invalid data flow");
   }
@@ -49,10 +56,14 @@ public:
       return;
     }
 
-    if (!exec_mapper.get_dl_up_executor(context.eaxc)
-             .defer([this, context, rg = grid.copy(), tk = std::move(token)]() noexcept OCUDU_RTSAN_NONBLOCKING {
-               data_flow_uplane->enqueue_section_type_1_message(context, rg);
-             })) {
+    if (OCUDU_UNLIKELY(
+            !exec_mapper.get_dl_up_executor(context.eaxc)
+                 .defer([this, context, rg = grid.copy(), tk = std::move(token)]() noexcept OCUDU_RTSAN_NONBLOCKING {
+                   data_flow_uplane->enqueue_section_type_1_message(context, rg);
+                 }))) {
+      if (metrics_collector != nullptr) {
+        metrics_collector->increment_dispatch_failures();
+      }
       logger.warning("Sector#{}: failed to dispatch message in the downlink data flow User-Plane for slot '{}'",
                      sector_id,
                      context.slot);
@@ -70,6 +81,7 @@ private:
   ofh_sector_executor_mapper&                     exec_mapper;
   std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
   const unsigned                                  sector_id;
+  data_flow_message_encoding_metrics_collector*   metrics_collector;
   rt_stop_event_source                            stop_manager;
 };
 

@@ -58,6 +58,9 @@ public:
   data_flow_message_encoding_metrics_collector* get_metrics_collector() override { return this; }
 
   // See interface for documentation.
+  void increment_dispatch_failures() override { nof_dispatch_failures.fetch_add(1, std::memory_order_relaxed); }
+
+  // See interface for documentation.
   void collect_metrics(tx_data_flow_perf_metrics& metrics) override
   {
     uint32_t total_count = count.load(std::memory_order_relaxed);
@@ -74,7 +77,8 @@ public:
     metrics.message_packing_min_latency_us =
         (min_latency == default_min_latency_ns) ? 0.f : static_cast<float>(min_latency) / 1000.f;
 
-    metrics.cpu_usage_us = static_cast<double>(sum_elapsed) / 1000.0;
+    metrics.cpu_usage_us          = static_cast<double>(sum_elapsed) / 1000.0;
+    metrics.nof_dispatch_failures = nof_dispatch_failures.exchange(0, std::memory_order_relaxed);
 
     reset();
   }
@@ -95,10 +99,11 @@ private:
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   operation_controller_dummy                            controller;
 
-  std::atomic<uint32_t> count          = {};
-  std::atomic<uint64_t> sum_elapsed_ns = {};
-  std::atomic<uint32_t> min_latency_ns = default_min_latency_ns;
-  std::atomic<uint32_t> max_latency_ns = default_max_latency_ns;
+  std::atomic<uint32_t> count                 = {};
+  std::atomic<uint64_t> sum_elapsed_ns        = {};
+  std::atomic<uint32_t> min_latency_ns        = default_min_latency_ns;
+  std::atomic<uint32_t> max_latency_ns        = default_max_latency_ns;
+  std::atomic<uint32_t> nof_dispatch_failures = {};
 };
 
 } // namespace ofh

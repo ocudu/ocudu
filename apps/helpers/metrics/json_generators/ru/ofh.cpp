@@ -130,6 +130,7 @@ static nlohmann::json generate_tx_data_flow(const ofh::tx_data_flow_perf_metrics
   json["max_latency_us"]     = validate_fp_value(metrics.message_packing_max_latency_us);
   json["cpu_usage_percent"] =
       validate_fp_value(validate_fp_value(metrics.cpu_usage_us / (metrics_period_ms * 1e3) * 100.0f));
+  json["dispatch_failures"] = metrics.nof_dispatch_failures;
 
   return json;
 }

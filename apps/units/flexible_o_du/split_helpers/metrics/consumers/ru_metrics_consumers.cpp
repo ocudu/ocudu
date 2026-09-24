@@ -113,25 +113,28 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
   float msg_tx_cpu_usage = msg_tx_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{} cpu_usage={:.1f}% dl_up_max_latency={:.2f}us dl_up_avg_latency={:.2f}us; ",
+                 "{} cpu_usage={:.1f}% dl_up_max_latency={:.2f}us dl_up_avg_latency={:.2f}us dispatch_failures={}; ",
                  "tx_dl_up:",
                  validate_fp_value(dl_up_cpu_usage),
                  validate_fp_value(dl_up_df_metrics.message_packing_max_latency_us),
-                 validate_fp_value(dl_up_df_metrics.message_packing_avg_latency_us));
+                 validate_fp_value(dl_up_df_metrics.message_packing_avg_latency_us),
+                 dl_up_df_metrics.nof_dispatch_failures);
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{} cpu_usage={:.1f}% dl_cp_max_latency={:.2f}us dl_cp_avg_latency={:.2f}us; ",
+                 "{} cpu_usage={:.1f}% dl_cp_max_latency={:.2f}us dl_cp_avg_latency={:.2f}us dispatch_failures={}; ",
                  "tx_dl_cp:",
                  validate_fp_value(dl_cp_cpu_usage),
                  validate_fp_value(dl_cp_df_metrics.message_packing_max_latency_us),
-                 validate_fp_value(dl_cp_df_metrics.message_packing_avg_latency_us));
+                 validate_fp_value(dl_cp_df_metrics.message_packing_avg_latency_us),
+                 dl_cp_df_metrics.nof_dispatch_failures);
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{} cpu_usage={:.1f}% ul_cp_max_latency={:.2f}us ul_cp_avg_latency={:.2f}us; ",
+                 "{} cpu_usage={:.1f}% ul_cp_max_latency={:.2f}us ul_cp_avg_latency={:.2f}us dispatch_failures={}; ",
                  "tx_ul_cp:",
                  validate_fp_value(ul_cp_cpu_usage),
                  validate_fp_value(ul_cp_df_metrics.message_packing_max_latency_us),
-                 validate_fp_value(ul_cp_df_metrics.message_packing_avg_latency_us));
+                 validate_fp_value(ul_cp_df_metrics.message_packing_avg_latency_us),
+                 ul_cp_df_metrics.nof_dispatch_failures);
 
   fmt::format_to(std::back_inserter(buffer),
                  "{} cpu_usage={:.1f}% max_latency={:.2f}us avg_latency={:.2f}us; ",

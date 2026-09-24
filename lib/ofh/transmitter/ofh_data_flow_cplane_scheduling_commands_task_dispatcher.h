@@ -4,6 +4,8 @@
 #pragma once
 
 #include "ofh_data_flow_cplane_scheduling_commands.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/ofh/ofh_controller.h"
 #include "ocudu/ofh/ofh_sector_executor_mapper.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/ocudu_assert.h"
@@ -24,8 +26,13 @@ public:
   data_flow_cplane_downlink_task_dispatcher(ocudulog::basic_logger&                               logger_,
                                             std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_,
                                             ofh_sector_executor_mapper&                           exec_mapper_,
-                                            unsigned                                              sector_id_) :
-    logger(logger_), exec_mapper(exec_mapper_), data_flow_cplane(std::move(data_flow_cplane_)), sector_id(sector_id_)
+                                            unsigned                                              sector_id_,
+                                            data_flow_message_encoding_metrics_collector*         metrics_collector_) :
+    logger(logger_),
+    exec_mapper(exec_mapper_),
+    data_flow_cplane(std::move(data_flow_cplane_)),
+    sector_id(sector_id_),
+    metrics_collector(metrics_collector_)
   {
     ocudu_assert(data_flow_cplane, "Invalid data flow");
   }
@@ -48,10 +55,13 @@ public:
       return;
     }
 
-    if (!exec_mapper.get_dl_cp_executor(context.eaxc)
-             .defer([this, context, tk = std::move(token)]() noexcept OCUDU_RTSAN_NONBLOCKING {
-               data_flow_cplane->enqueue_section_type_1_message(context);
-             })) {
+    if (OCUDU_UNLIKELY(!exec_mapper.get_dl_cp_executor(context.eaxc)
+                            .defer([this, context, tk = std::move(token)]() noexcept OCUDU_RTSAN_NONBLOCKING {
+                              data_flow_cplane->enqueue_section_type_1_message(context);
+                            }))) {
+      if (metrics_collector != nullptr) {
+        metrics_collector->increment_dispatch_failures();
+      }
       logger.warning(
           "Sector#{}: failed to dispatch Control-Plane type 1 message for slot '{}'", sector_id, context.slot);
     }
@@ -72,6 +82,9 @@ public:
              .defer([this, context, tk = std::move(token)]() noexcept OCUDU_RTSAN_NONBLOCKING {
                data_flow_cplane->enqueue_section_type_3_prach_message(context);
              })) {
+      if (metrics_collector != nullptr) {
+        metrics_collector->increment_dispatch_failures();
+      }
       logger.warning(
           "Sector#{}: failed to dispatch Control-Plane type 3 message for slot '{}'", sector_id, context.slot);
     }
@@ -88,6 +101,7 @@ private:
   ofh_sector_executor_mapper&                           exec_mapper;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   const unsigned                                        sector_id;
+  data_flow_message_encoding_metrics_collector*         metrics_collector;
   rt_stop_event_source                                  stop_manager;
 };
 

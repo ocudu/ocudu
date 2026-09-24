@@ -188,26 +188,26 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.frame_pool_dl_cp =
       create_eth_frame_pool(tx_config, logger, message_type::control_plane, data_direction::downlink, false);
 
-  dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
-      logger,
+  std::unique_ptr<data_flow_cplane_scheduling_commands> dl_df_cplane =
       create_data_flow_cplane_sched(tx_config,
                                     true,
                                     tx_config.is_downlink_static_compr_hdr_enabled,
                                     logger,
                                     dependencies.frame_pool_dl_cp,
                                     ul_cp_context_repo,
-                                    prach_cp_context_repo),
-      exec_mapper,
-      tx_config.sector);
+                                    prach_cp_context_repo);
+  data_flow_message_encoding_metrics_collector* dl_df_cplane_metrics = dl_df_cplane->get_metrics_collector();
+  dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      logger, std::move(dl_df_cplane), exec_mapper, tx_config.sector, dl_df_cplane_metrics);
 
   dependencies.frame_pool_dl_up =
       create_eth_frame_pool(tx_config, logger, message_type::user_plane, data_direction::downlink);
 
+  std::unique_ptr<data_flow_uplane_downlink_data> dl_df_uplane =
+      create_data_flow_uplane_data(tx_config, logger, dependencies.frame_pool_dl_up);
+  data_flow_message_encoding_metrics_collector* dl_df_uplane_metrics = dl_df_uplane->get_metrics_collector();
   dependencies.dl_df_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
-      logger,
-      create_data_flow_uplane_data(tx_config, logger, dependencies.frame_pool_dl_up),
-      exec_mapper,
-      tx_config.sector);
+      logger, std::move(dl_df_uplane), exec_mapper, tx_config.sector, dl_df_uplane_metrics);
 
   dependencies.frame_pool_ul_cp =
       create_eth_frame_pool(tx_config, logger, message_type::control_plane, data_direction::uplink, false);

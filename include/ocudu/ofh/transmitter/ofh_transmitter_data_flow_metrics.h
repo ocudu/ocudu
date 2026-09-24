@@ -12,9 +12,10 @@ struct tx_data_flow_perf_metrics {
   float message_packing_min_latency_us;
   float message_packing_max_latency_us;
   float message_packing_avg_latency_us;
-
   /// CPU usage in microseconds of the message processing in the transmitter.
   float cpu_usage_us;
+  /// Number of processing requests dropped because they could not be dispatched to the processing executor.
+  unsigned nof_dispatch_failures;
 };
 
 } // namespace ofh
