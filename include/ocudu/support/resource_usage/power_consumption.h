@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ocudu/ocudulog/ocudulog.h"
+#include <optional>
 
 namespace ocudu {
 namespace resource_usage_utils {
@@ -21,12 +22,6 @@ struct energy_consumption {
 /// Calculates a diff of micro Joules taking into account possible wrap around.
 uint64_t calculate_energy_diff(uint64_t current_uj, uint64_t previous_uj);
 
-/// Helper struct used to store energy consumption at a given point of time.
-struct energy_snapshot {
-  energy_consumption      probe;
-  energy_probe_time_point probe_time;
-};
-
 /// Interface for reading energy consumption.
 class energy_consumption_reader
 {
@@ -38,8 +33,19 @@ public:
   virtual energy_consumption read_consumed_energy() const = 0;
 };
 
-/// Builds an energy consumption reader available in the system.
-std::unique_ptr<energy_consumption_reader> build_energy_consumption_reader(ocudulog::basic_logger& logger);
+/// Interface for reading power consumption.
+class power_consumption_reader
+{
+public:
+  /// Default destructor.
+  virtual ~power_consumption_reader() = default;
+
+  /// Returns the power consumption in Watts measured since the previous call, or std::nullopt if not available.
+  virtual std::optional<double> read_power_watts() = 0;
+};
+
+/// Builds a power consumption reader available in the system.
+std::unique_ptr<power_consumption_reader> build_power_consumption_reader(ocudulog::basic_logger& logger);
 
 } // namespace resource_usage_utils
 } // namespace ocudu

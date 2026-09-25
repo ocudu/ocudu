@@ -12,18 +12,17 @@ using namespace ocudu;
 using namespace app_services;
 using namespace resource_usage_utils;
 
-app_resource_usage::app_resource_usage(std::unique_ptr<energy_consumption_reader> energy_reader_) :
-  energy_reader(std::move(energy_reader_))
+app_resource_usage::app_resource_usage(std::unique_ptr<power_consumption_reader> power_reader_) :
+  power_reader(std::move(power_reader_))
 {
-  ocudu_assert(energy_reader, "Invalid energy consumption reader passed");
+  ocudu_assert(power_reader, "Power consumption reader must be non-null");
 
   auto cpu_snapshot = cpu_usage_now(rusage_measurement_type::PROCESS);
   if (!cpu_snapshot) {
     ocudulog::fetch_basic_logger("METRICS").warning(
         "Application resource usage service failed to query current resource usage, errno={}", cpu_snapshot.error());
   } else {
-    last_snapshot->cpu_usage    = cpu_snapshot.value();
-    last_snapshot->energy_usage = energy_usage_now();
+    last_cpu_snapshot = cpu_snapshot.value();
   }
 }
 
@@ -37,17 +36,15 @@ resource_usage_metrics app_resource_usage::get_new_metrics()
     return {};
   }
 
-  if (!last_snapshot) {
-    last_snapshot->cpu_usage    = current_cpu_snapshot.value();
-    last_snapshot->energy_usage = energy_usage_now();
-
+  if (!last_cpu_snapshot) {
+    last_cpu_snapshot = current_cpu_snapshot.value();
     return {};
   }
 
   resource_usage_metrics new_metrics;
   // Calculate CPU metrics.
   update_cpu_usage_metric(current_cpu_snapshot.value(), new_metrics);
-  // Calculate CPU power consumption in Watts.
+  // Calculate power consumption in Watts.
   update_power_consumption_metric(new_metrics);
 
   return new_metrics;
@@ -59,13 +56,13 @@ void app_resource_usage::update_cpu_usage_metric(const cpu_snapshot&     current
   resource_usage_utils::measurements measurements;
 
   measurements.duration = std::chrono::duration_cast<resource_usage_utils::rusage_meas_duration>(
-      current_cpu_snapshot.tp - last_snapshot->cpu_usage.tp);
-  measurements.user_time   = (current_cpu_snapshot.user_time - last_snapshot->cpu_usage.user_time);
-  measurements.system_time = (current_cpu_snapshot.system_time - last_snapshot->cpu_usage.system_time);
+      current_cpu_snapshot.tp - last_cpu_snapshot->tp);
+  measurements.user_time   = (current_cpu_snapshot.user_time - last_cpu_snapshot->user_time);
+  measurements.system_time = (current_cpu_snapshot.system_time - last_cpu_snapshot->system_time);
   measurements.current_rss = current_cpu_snapshot.current_rss;
 
   // Save current snapshot.
-  last_snapshot->cpu_usage = current_cpu_snapshot;
+  last_cpu_snapshot = current_cpu_snapshot;
   // Update metrics.
   metrics = res_usage_measurements_to_metrics(
       measurements, std::chrono::duration_cast<std::chrono::microseconds>(measurements.duration));
@@ -73,28 +70,7 @@ void app_resource_usage::update_cpu_usage_metric(const cpu_snapshot&     current
 
 void app_resource_usage::update_power_consumption_metric(resource_usage_metrics& metrics)
 {
-  auto current_energy_snapshot = energy_usage_now();
-
-  // In the following calculations we use only package consumption.
-  uint64_t consumed_energy = calculate_energy_diff(current_energy_snapshot.probe.package_consumed_uj,
-                                                   last_snapshot->energy_usage.probe.package_consumed_uj);
-
-  std::chrono::microseconds time_diff = std::chrono::duration_cast<std::chrono::microseconds>(
-      current_energy_snapshot.probe_time - last_snapshot->energy_usage.probe_time);
-
-  // Save current snapshot.
-  last_snapshot->energy_usage = current_energy_snapshot;
-  // Update metrics.
-  metrics.power_usage_watts = static_cast<double>(consumed_energy) / static_cast<double>(time_diff.count());
-}
-
-energy_snapshot app_resource_usage::energy_usage_now()
-{
-  energy_snapshot current_snapshot;
-  current_snapshot.probe_time = std::chrono::steady_clock::now();
-  current_snapshot.probe      = energy_reader->read_consumed_energy();
-
-  return current_snapshot;
+  metrics.power_usage_watts = power_reader->read_power_watts().value_or(0.0);
 }
 
 app_resource_usage_service
@@ -107,7 +83,7 @@ app_services::build_app_resource_usage_service(metrics_notifier&                
   if (!config.enable_app_usage) {
     return app_res_usage;
   }
-  app_res_usage.service = std::make_unique<app_resource_usage>(build_energy_consumption_reader(logger));
+  app_res_usage.service = std::make_unique<app_resource_usage>(build_power_consumption_reader(logger));
 
   metrics_config& app_res_usage_metrics = app_res_usage.metrics.emplace_back();
   app_res_usage_metrics.metric_name     = resource_usage_metrics_properties_impl().name();
