@@ -511,6 +511,8 @@ if (BUILD_TESTING)
         _gtest_discover_tests(
             ${ARGV}
             DISCOVERY_MODE PRE_TEST
+            # Keep ctest names equal to the gtest names, so the recorded test requirements match.
+            NO_PRETTY_VALUES
             DISCOVERY_TIMEOUT ${GTEST_DISCOVERY_TIMEOUT_VALUE}
         )
     endfunction()
