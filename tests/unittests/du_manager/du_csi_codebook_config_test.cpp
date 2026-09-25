@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/du/du_high/du_qos_config_helpers.h"
 #include "ocudu/scheduler/config/csi_helper.h"
@@ -73,6 +74,8 @@ protected:
             qos_cfg_list,
             test_mode_cfg)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-2");
+
     auto result = res_mng.create_ue_resource_configurator(ue_idx, to_du_cell_index(0), true);
     report_fatal_error_if_not(result.has_value(), "Failed to create UE resources");
     ue_res.emplace(std::move(result.value()));

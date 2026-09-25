@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
@@ -241,6 +242,8 @@ static codebook_config get_codebook_config(const csi_meas_config& cfg)
 
 TEST(csi_helper_test, csi_report_config_with_eight_ports_uses_type2_codebook)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-2");
+
   const csi_meas_config cfg      = csi_helper::make_csi_meas_config(make_type2_csi_params(8, 4), {});
   const codebook_config codebook = get_codebook_config(cfg);
 
@@ -267,6 +270,8 @@ TEST(csi_helper_test, csi_report_config_with_eight_ports_uses_type2_codebook)
 
 TEST(csi_helper_test, csi_report_config_with_four_ports_uses_two_one_type2_codebook)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-2");
+
   const csi_meas_config cfg      = csi_helper::make_csi_meas_config(make_type2_csi_params(4, 2), {});
   const codebook_config codebook = get_codebook_config(cfg);
 
@@ -283,6 +288,8 @@ TEST(csi_helper_test, csi_report_config_with_four_ports_uses_two_one_type2_codeb
 
 TEST(csi_helper_test, generated_type2_codebook_derives_a_valid_report_configuration)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-2");
+
   const csi_meas_config cfg = csi_helper::make_csi_meas_config(make_type2_csi_params(8, 4), {});
 
   // The generated configuration must be usable by the CSI report unpacking.
@@ -296,6 +303,8 @@ TEST(csi_helper_test, generated_type2_codebook_derives_a_valid_report_configurat
 
 TEST(csi_helper_test, type1_codebook_is_generated_when_type2_is_disabled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-2");
+
   const csi_meas_config cfg      = csi_helper::make_csi_meas_config(make_csi_params_for_ports(8), {});
   const codebook_config codebook = get_codebook_config(cfg);
 
