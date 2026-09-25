@@ -100,7 +100,6 @@ private:
     } else {
       logger.debug("{}: called shutdown to SCTP client to close SCTP association", client_name);
     }
-    ocudulog::flush();
 
     // Signal sender closed the channel.
     closed_flag->store(true, std::memory_order_relaxed);

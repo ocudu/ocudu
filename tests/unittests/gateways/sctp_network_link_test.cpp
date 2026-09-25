@@ -204,7 +204,7 @@ protected:
 class sctp_network_link_test : public base_sctp_network_link_test, public ::testing::TestWithParam<test_params>
 {
 public:
-  sctp_network_link_test() : base_sctp_network_link_test(GetParam()) {}
+  sctp_network_link_test() : base_sctp_network_link_test(GetParam()) { ::signal(SIGPIPE, SIG_IGN); }
   ~sctp_network_link_test() override
   {
     if (server) {

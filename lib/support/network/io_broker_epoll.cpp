@@ -127,7 +127,10 @@ void io_broker_epoll::thread_loop()
       int      fd           = events[i].data.fd;
       uint32_t epoll_events = events[i].events;
 
-      if ((epoll_events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) or not(epoll_events & EPOLLIN)) {
+      if (epoll_events & EPOLLIN) {
+        // There is data to receive, even if there are errors signaled. Process data first.
+      } else {
+        // There is no data to receive, process errors and hangups now.
         error_code code = io_broker::error_code::other;
         // An error or hang up happened on this file descriptor, or the socket is not ready for reading
         if (epoll_events & (EPOLLHUP | EPOLLRDHUP)) {
