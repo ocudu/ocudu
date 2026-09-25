@@ -5,6 +5,7 @@
 #include "f1ap_du_test_helpers.h"
 #include "lib/f1ap/f1ap_asn1_utils.h"
 #include "test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/f1ap/common.h"
@@ -165,6 +166,8 @@ dummy_f1c_connection_client::handle_du_connection_request(std::unique_ptr<f1ap_m
 
 f1ap_du_test::f1ap_du_test()
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-ARCH-INTF-6");
+
   ocudulog::fetch_basic_logger("TEST").set_level(ocudulog::basic_levels::debug);
   ocudulog::init();
 

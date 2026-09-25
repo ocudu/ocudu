@@ -4,6 +4,7 @@
 
 #include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_worker_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1c_test_local_gateway.h"
 #include "tests/unittests/cu_cp/test_doubles/mock_amf.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -115,6 +116,8 @@ public:
 /// Test the f1 setup procedure was successful
 TEST_F(cu_du_test, when_f1setup_successful_then_du_connected)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-ARCH-INTF-6");
+
   // check that DU has been added
   auto report = cu_cp_obj->get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.dus.size(), 1);

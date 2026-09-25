@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/mac/mac_test_messages.h"
 #include "ocudu/asn1/f1ap/common.h"
@@ -21,6 +22,7 @@ protected:
     du_high_env_simulator(
         du_high_env_sim_params{.nof_cells = 1, .auto_start = false, .retry_f1c_connection = retry_f1c_connection})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-ARCH-INTF-6");
   }
 
   void run_f1_setup()
