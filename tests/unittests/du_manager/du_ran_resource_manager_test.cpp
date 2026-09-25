@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
@@ -241,6 +242,8 @@ TEST_P(du_ran_resource_manager_tester, when_srb1_is_added_then_ue_resource_confi
 
 TEST_P(du_ran_resource_manager_tester, when_gbr_drb_has_no_gbr_qos_information_then_drb_setup_fails)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-QOS-1");
+
   const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
   ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
   ASSERT_NE(ue_res, nullptr);
@@ -256,6 +259,8 @@ TEST_P(du_ran_resource_manager_tester, when_gbr_drb_has_no_gbr_qos_information_t
 
 TEST_P(du_ran_resource_manager_tester, when_gbr_drb_has_gbr_qos_information_then_drb_setup_succeeds)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-QOS-1");
+
   const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
   ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
   ASSERT_NE(ue_res, nullptr);

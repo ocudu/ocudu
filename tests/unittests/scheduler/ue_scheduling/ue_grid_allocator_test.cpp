@@ -14,6 +14,7 @@
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_result_finder.h"
@@ -520,6 +521,8 @@ TEST_P(ue_grid_allocator_default_cfg_test,
 
 TEST_P(ue_grid_allocator_default_cfg_test, successfully_allocates_pdsch_with_gbr_lc_prioritized_over_non_gbr_lc)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-QOS-1");
+
   const lcg_id_t lcg_id              = uint_to_lcg_id(2);
   const lcid_t   gbr_bearer_lcid     = uint_to_lcid(6);
   const lcid_t   non_gbr_bearer_lcid = uint_to_lcid(5);

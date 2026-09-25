@@ -13,6 +13,7 @@
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_scheduling/intra_slice_scheduler.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -629,7 +630,10 @@ using gbr_bitrate_bps = uint64_t;
 class scheduler_pf_qos_test : public base_scheduler_policy_test, public ::testing::TestWithParam<gbr_bitrate_bps>
 {
 protected:
-  scheduler_pf_qos_test() : base_scheduler_policy_test(test_params{policy_scheduler_type::time_qos}) {}
+  scheduler_pf_qos_test() : base_scheduler_policy_test(test_params{policy_scheduler_type::time_qos})
+  {
+    OCUDU_TEST_REQUIREMENTS("DU-QOS-1");
+  }
 
   static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs)
   {

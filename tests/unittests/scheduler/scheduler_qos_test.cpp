@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/ran/du_types.h"
@@ -169,6 +170,8 @@ class scheduler_1_gbr_ue_qos_test : public scheduler_qos_test
 public:
   scheduler_1_gbr_ue_qos_test()
   {
+    OCUDU_TEST_REQUIREMENTS("DU-QOS-1");
+
     auto gbr_qos     = make_qos(qos_prio_level_t::max(),
                             arp_prio_level_t::max(),
                             std::chrono::milliseconds(2000),
@@ -225,6 +228,8 @@ class scheduler_saturated_gbr_ue_qos_test : public scheduler_qos_test
 public:
   scheduler_saturated_gbr_ue_qos_test()
   {
+    OCUDU_TEST_REQUIREMENTS("DU-QOS-1");
+
     auto gbr_qos     = make_qos(qos_prio_level_t::max(),
                             arp_prio_level_t::max(),
                             std::chrono::milliseconds(2000),

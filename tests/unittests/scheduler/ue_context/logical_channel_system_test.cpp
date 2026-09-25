@@ -4,6 +4,7 @@
 
 #include "lib/scheduler/config/logical_channel_config_pool.h"
 #include "lib/scheduler/ue_context/logical_channel_system.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include <gtest/gtest.h>
@@ -695,6 +696,8 @@ TEST_F(single_ue_dl_logical_channel_system_test, when_sdu_is_scheduled_pending_s
 
 TEST_F(single_ue_dl_logical_channel_system_test, qos_gbr_bearer_bitrate_is_tracked)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-QOS-1");
+
   const lcid_t drb_lcid = LCID_MIN_DRB;
   lch_system.slot_indication();
   ASSERT_EQ(ue_lchs.average_dl_bit_rate(drb_lcid), 0);
