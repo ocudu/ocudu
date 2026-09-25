@@ -150,6 +150,7 @@ protected:
       return cfg;
     }())
   {
+    OCUDU_TEST_REQUIREMENTS("DU-GEN-10");
   }
 };
 

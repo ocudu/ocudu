@@ -16,6 +16,8 @@ using namespace odu;
 
 TEST(hashed_id_calculation_test, ts38304_annex_A_using_32bit_FCS_example)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-10");
+
   // TS 38.304, Annex A (informative) - Example of Hashed ID calculation using 32-bit FCS
   const uint64_t tmsi48 = 0x12341234U;
 
@@ -64,6 +66,8 @@ TEST_F(f1ap_du_paging_test, when_f1ap_paging_message_received_then_it_is_propaga
 
 TEST_F(f1ap_du_paging_test, when_f1ap_paging_message_received_with_edrx_then_the_ue_hashed_id_is_computed)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-10");
+
   const auto   tmsi        = test_rng::uniform_int<uint64_t>(0U, (static_cast<uint64_t>(1U) << 48U) - 1U);
   f1ap_message msg         = test_helpers::generate_f1ap_paging_message(tmsi);
   auto&        asn1_paging = msg.pdu.init_msg().value.paging();
