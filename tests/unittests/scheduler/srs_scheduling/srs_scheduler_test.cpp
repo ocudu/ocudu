@@ -334,7 +334,7 @@ class srs_positioning_scheduler_test : public srs_sched_test_bench, public ::tes
 public:
   srs_positioning_scheduler_test() : srs_sched_test_bench(srs_test_params{true, srs_periodicity::sl20})
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a", "MVP-FUNC-POS-16-3-b");
   }
 
   const srs_info* next_srs_info(rnti_t rnti, unsigned max_slots = 0)

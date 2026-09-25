@@ -187,6 +187,7 @@ public:
     du_high_env_simulator(du_high_env_sim_params{.srs_period = srs_periodicity::sl80}),
     srs_offset(GetParam().ue_connected ? 0U : 1U)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
     if (GetParam().rsrp_meas) {
       OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a");
       meas_requests = {pos_meas_type_opts::options::ul_rtoa, pos_meas_type_opts::options::ul_srs_rsrp};
@@ -318,7 +319,7 @@ public:
   du_high_pos_multi_cells_tester() :
     du_high_env_simulator(du_high_env_sim_params{.nof_cells = 3, .srs_period = srs_periodicity::sl80})
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a", "MVP-FUNC-POS-16-3-b");
   }
 
   ocudulog::basic_logger& du_logger = ocudulog::fetch_basic_logger("D1-F1");

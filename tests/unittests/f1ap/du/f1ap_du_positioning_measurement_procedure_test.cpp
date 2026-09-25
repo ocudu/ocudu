@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "f1ap_du_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "ocudu/adt/format.h"
@@ -83,6 +84,8 @@ TEST_F(f1ap_du_positioning_measurement_procedure_test, when_invalid_request_is_r
 TEST_F(f1ap_du_positioning_measurement_procedure_test,
        when_positioning_measurement_succeeds_then_response_is_sent_to_cu)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
+
   f1ap_message req =
       test_helpers::generate_positioning_measurement_request({trp_id_t::min}, lmf_meas_id_t::min, ran_meas_id_t::min);
   log_f1ap_pdu(test_logger, "Positioning Measurement Request", req);

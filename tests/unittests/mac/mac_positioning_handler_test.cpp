@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/mac/mac_sched/positioning_handler.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/mac/mac_positioning_measurement_handler.h"
@@ -157,6 +158,8 @@ TEST_F(single_cell_positioning_handler_test,
 TEST_F(single_cell_positioning_handler_test,
        when_connected_ue_initiates_positioning_measurement_then_it_only_completes_when_measurement_completes)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
+
   mac_positioning_measurement_request req  = make_positioning_request_for_connected_ue();
   rnti_t                              rnti = req.cells[0].rnti.value();
 
@@ -191,6 +194,8 @@ TEST_F(single_cell_positioning_handler_test,
 TEST_F(single_cell_positioning_handler_test,
        when_positioning_measurement_of_neighbor_cell_ue_is_initiated_then_it_only_completes_when_measurement_completes)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
+
   mac_positioning_measurement_request req = make_positioning_request_for_neighbor_ue();
 
   auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
@@ -226,6 +231,8 @@ TEST_F(single_cell_positioning_handler_test,
 TEST_F(single_cell_positioning_handler_test,
        when_neighbor_ue_positioning_completes_then_pos_rnti_becomes_available_again)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
+
   // First positioning run.
   mac_positioning_measurement_request                      req = make_positioning_request_for_neighbor_ue();
   auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
@@ -252,6 +259,8 @@ TEST_F(single_cell_positioning_handler_test,
 
 TEST_F(single_cell_positioning_handler_test, when_srs_indication_contains_ul_aoa_then_result_carries_ul_aoa)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
+
   static constexpr float azimuth_deg = 123.4F;
   static constexpr float zenith_deg  = 56.7F;
 
@@ -304,6 +313,8 @@ class multi_cell_positioning_handler_test : public positioning_handler_test, pub
 public:
   multi_cell_positioning_handler_test()
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
+
     cells.push_back(pos_handler->add_cell(to_du_cell_index(0)));
     cells.push_back(pos_handler->add_cell(to_du_cell_index(1)));
   }
