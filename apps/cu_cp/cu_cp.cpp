@@ -324,15 +324,8 @@ int main(int argc, char** argv)
     xnc_gws.push_back(create_xnc_connection_gateway(xnc_server_cfg));
   }
 
-  dtls_appconfig tmp_cfg{
-      .enabled          = true,
-      .mode             = dtls_appconfig_mode::server,
-      .cert_filename    = "/tmp/server-cert.pem",
-      .key_filename     = "/tmp/server-key.pem",
-      .ca_cert_filename = "/tmp/ca-cert.pem",
-  };
-
-  cu_cp_cfg.f1ap_cfg.dtls                                 = tmp_cfg;
+  // TODO get DTLS config from CLI11.
+  cu_cp_cfg.f1ap_cfg.dtls                                 = dtls_appconfig{};
   std::unique_ptr<ocucp::f1c_connection_server> cu_f1c_gw = ocudu::create_f1c_gateway_server(
       ocudu::f1c_gateway_config{.bind_addrs = cu_cp_cfg.f1ap_cfg.bind_addrs,
                                 .sctp_cfg   = cu_cp_cfg.f1ap_cfg.sctp,

@@ -26,9 +26,6 @@ static std::atomic<ocudu_signal_handler> cleanup_handler = nullptr;
 static void signal_handler(int signal)
 {
   switch (signal) {
-    case SIGPIPE:
-      fmt::print(stderr, "Got SIGPIPE, trying to ignore.\n");
-      break;
     case SIGALRM:
       fmt::print(stderr, "Could not stop application after {} seconds. Forcing exit.\n", TERMINATION_TIMEOUT_S);
       if (auto handler = cleanup_handler.exchange(nullptr)) {
@@ -57,7 +54,6 @@ void ocudu::register_interrupt_signal_handler(ocudu_signal_handler handler)
   std::signal(SIGTERM, signal_handler);
   std::signal(SIGHUP, signal_handler);
   std::signal(SIGALRM, signal_handler);
-  std::signal(SIGPIPE, signal_handler);
 }
 
 void ocudu::register_cleanup_signal_handler(ocudu_signal_handler handler)

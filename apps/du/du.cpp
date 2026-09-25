@@ -325,17 +325,11 @@ int main(int argc, char** argv)
   if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.is_testmode_enabled()) {
     f1c_gw = make_test_mode_f1c_connection_client();
   } else {
-    dtls_appconfig tmp_cfg{
-        .enabled          = true,
-        .mode             = dtls_appconfig_mode::client,
-        .cert_filename    = "/tmp/client-cert.pem",
-        .key_filename     = "/tmp/client-key.pem",
-        .ca_cert_filename = "/tmp/ca-cert.pem",
-    };
+    // TODO get DTLS config from CLI11.
     f1c_gw = create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_addresses,
                                        du_cfg.f1ap_cfg.bind_addresses,
                                        du_cfg.f1ap_cfg.sctp,
-                                       tmp_cfg,
+                                       dtls_appconfig{},
                                        du_cfg.f1ap_cfg.retry_connection,
                                        *epoll_broker,
                                        workers.get_du_high_executor_mapper().f1c_rx_executor(),
