@@ -29,6 +29,7 @@ protected:
                               get_nof_slots_per_subframe(cell_cfg.scs_common()))),
     sl_tx(to_numerology_value(cell_cfg.scs_common()), 0)
   {
+    OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
   }
 
   scheduler_expert_config    sched_cfg;

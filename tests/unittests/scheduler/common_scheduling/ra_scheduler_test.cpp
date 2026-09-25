@@ -202,7 +202,7 @@ public:
   ra_scheduler_common_test() :
     ra_scheduler_setup(get_sched_req(GetParam()), GetParam().sched_csi_rs, GetParam().sched_sib1)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
   }
 
   static sched_cell_configuration_request_message get_sched_req(const test_params& t_params)
@@ -459,7 +459,7 @@ public:
   ra_scheduler_failed_rar_test() :
     ra_scheduler_setup(get_sched_req(GetParam()), GetParam().sched_csi_rs, GetParam().sched_sib1)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
   }
 
   static sched_cell_configuration_request_message get_sched_req(const test_params& t_params)
@@ -588,7 +588,7 @@ public:
                                       unsigned             duration_ms   = 40) :
     ra_scheduler_setup(make_sched_cfg(snr_threshold_dB, max_preambles, duration_ms), get_sched_req(), false, false)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
   }
 
   static scheduler_expert_config
@@ -966,6 +966,7 @@ public:
   ra_scheduler_two_step_rach_test() :
     ra_scheduler_setup(make_two_step_rach_req(GetParam()), /*sched_csi=*/false, /*sched_sib1=*/false)
   {
+    OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
   }
 
   static sched_cell_configuration_request_message make_two_step_rach_req(const two_step_test_params& params)

@@ -88,6 +88,8 @@ protected:
 
 TEST_F(mac_rach_handler_test, when_cb_rach_detected_then_tc_rnti_is_allocated_and_forwarded_to_sched)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+
   // Report detected RACH.
   mac_rach_indication rach = make_rach_indication(create_cb_preamble());
   cell_handler.handle_rach_indication(rach);
@@ -173,6 +175,7 @@ protected:
     handler(sched, rnti_mng, logger),
     cell_handler(handler.add_cell(sched_cfg))
   {
+    OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
   }
 
   /// First preamble ID reserved for 2-step CB RACH, as configured above.

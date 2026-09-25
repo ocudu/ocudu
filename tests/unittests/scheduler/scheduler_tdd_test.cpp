@@ -744,7 +744,7 @@ protected:
 
 TEST_P(scheduler_multiue_conres_tdd_test, all_ues_schedule_conres_before_timeout)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   run_scenario();
 }

@@ -90,7 +90,7 @@ class scheduler_retx_tester : public base_scheduler_retx_tester, public ::testin
 
 TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   test_params  params          = GetParam();
   const size_t MAX_PUSCH_DELAY = 16, MAX_RETX_DELAY = 16;

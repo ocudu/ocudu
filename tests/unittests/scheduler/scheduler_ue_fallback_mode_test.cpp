@@ -35,7 +35,7 @@ public:
   base_scheduler_conres_test(duplex_mode duplx_mode) :
     scheduler_test_simulator(4, duplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
     ocudulog::fetch_basic_logger("SCHED", true).set_level(sched_log_level);
     builder_params = cell_config_builder_profiles::create(duplx_mode);
@@ -427,7 +427,7 @@ protected:
         scheduler_test_sim_config{.max_scs        = GetParam().max_scs,
                                   .ntn_cs_koffset = std::chrono::milliseconds(GetParam().ntn_cs_koffset)})
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
     // Create cell.
     auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
@@ -914,7 +914,7 @@ public:
 
 TEST(cfra_multi_ue_rar_test, cfra_pucch_does_not_block_other_ue_msg3_in_same_rar)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   // Sweep the RACH trigger across the periodic-CSI grid to vary the CFRA-PUCCH/Msg3 alignment. Only some alignments
   // put the CBRA Msg3 in a slot where the CFRA UE has a PUCCH, so the sweep as a whole must reach one.
@@ -938,6 +938,8 @@ protected:
 
   two_step_ra_fallback_scheduler_test() : scheduler_test_simulator(4, subcarrier_spacing::kHz30)
   {
+    OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+
     cell_config_builder_params bparams =
         cell_config_builder_profiles::create(duplex_mode::TDD, frequency_range::FR1, bs_channel_bandwidth::MHz50);
     bparams.min_k1 = 2;

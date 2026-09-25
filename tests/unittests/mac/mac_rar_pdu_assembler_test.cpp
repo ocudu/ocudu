@@ -183,7 +183,7 @@ void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> r
 
 TEST(rar_assembler_test, backoff_indicator_only)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   test_delimit_logger test_delim{"MAC assembler for Backoff Indicator only RAR"};
 
@@ -206,7 +206,7 @@ TEST(rar_assembler_test, backoff_indicator_only)
 
 TEST(rar_assembler_test, backoff_indicator_with_ul_grants)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   test_delimit_logger test_delim{"MAC assembler for Backoff Indicator plus UL grants"};
 
@@ -233,7 +233,7 @@ TEST(rar_assembler_test, backoff_indicator_with_ul_grants)
 
 TEST(rar_assembler_test, multiple_random_ul_grants)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   static constexpr size_t MAX_RAR_GRANT_SIZE = 64;
   test_delimit_logger     test_delim{"MAC assembler for multiple UL grants"};
@@ -252,7 +252,7 @@ TEST(rar_assembler_test, multiple_random_ul_grants)
 /// so that the output PDUs can be referenced by lower layers without risking dangling pointers.
 TEST(rar_assembler_test, rar_assembler_maintains_old_results)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   static constexpr size_t MAX_RAR_GRANT_SIZE = 64;
 
@@ -284,6 +284,8 @@ TEST(rar_assembler_test, rar_assembler_maintains_old_results)
 
 TEST(rar_assembler_test, success_rar_grant_zero_fills_unresolved_con_res_id)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+
   test_delimit_logger test_delim{"MAC assembler for successRAR grant with unresolved Contention Resolution Id"};
 
   rar_information rar_info{};
@@ -319,6 +321,8 @@ TEST(rar_assembler_test, success_rar_grant_zero_fills_unresolved_con_res_id)
 
 TEST(rar_assembler_test, success_rar_grant_encodes_resolved_con_res_id)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+
   test_delimit_logger test_delim{"MAC assembler for successRAR grant with resolved Contention Resolution Id"};
 
   rar_information rar_info{};
@@ -342,6 +346,8 @@ TEST(rar_assembler_test, success_rar_grant_encodes_resolved_con_res_id)
 
 TEST(rar_assembler_test, mixed_fallback_and_success_rar_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+
   test_delimit_logger test_delim{"MAC assembler for mixed fallbackRAR and successRAR grants"};
 
   rar_information rar_info{};

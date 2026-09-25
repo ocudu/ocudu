@@ -497,7 +497,7 @@ TEST_P(fallback_scheduler_tester, failed_allocating_resources)
 
 TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4_not_scheduled_until_conres_acked)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
@@ -546,7 +546,7 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4
 
 TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_different_slots_if_they_dont_fit_together)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
@@ -590,7 +590,7 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
 
 TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately_msg4_not_scheduled_until_conres_acked)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
@@ -646,7 +646,7 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
 
 TEST_P(fallback_scheduler_tester, when_ra_conres_timer_expires_ue_doesnt_get_allocated)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
 
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
@@ -701,6 +701,8 @@ TEST_P(fallback_scheduler_tester, when_ra_conres_timer_expires_ue_doesnt_get_all
 
 TEST_P(fallback_scheduler_tester, when_msgb_ack_not_yet_sent_ue_doesnt_get_allocated_until_msgb_ack_slot_passes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
   const rnti_t     tc_rnti          = to_rnti(0x4601);
