@@ -7,6 +7,7 @@
 
 #include "lib/f1ap/f1ap_asn1_packer.h"
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/gateways/test_helpers.h"
@@ -101,6 +102,8 @@ static f1ap_message generate_paging_message(uint64_t five_g_tmsi, const nr_cell_
 
 TEST_F(paging_tester, when_paging_message_is_received_its_relayed_to_ue)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BAS-16-1");
+
   static constexpr uint64_t five_g_tmsi = 0x01011066fef7;
 
   // Check F1 Setup.
@@ -192,6 +195,8 @@ TEST_F(edrx_paging_test, when_edrx_enabled_then_hypersfn_is_updated_in_sib1)
 
 TEST_F(edrx_paging_test, when_f1_edrx_paging_is_received_then_it_is_sent_to_lower_layers)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BAS-16-1");
+
   const uint64_t five_g_tmsi = test_rng::uniform_int<uint64_t>() & mask_lsb_ones<uint64_t>(48);
   // Note: We set a Paging Time Window that is almost the length of the full eDRX cycle, to minimize the duration
   /// of this test.

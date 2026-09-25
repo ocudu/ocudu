@@ -4,6 +4,7 @@
 
 #include "lib/scheduler/common_scheduling/paging_scheduler.h"
 #include "sub_scheduler_test_environment.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -46,6 +47,7 @@ public:
                              const sched_cell_configuration_request_message& cell_req) :
     sub_scheduler_test_environment(expert_cfg, cell_req), pg_sch(cell_cfg, *pdcch_alloc, 0)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BAS-16-1");
   }
   ~base_paging_scheduler_test() override { flush_events(); }
 

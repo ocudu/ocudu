@@ -4,6 +4,7 @@
 
 #include "f1ap_du_test_helpers.h"
 #include "test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
@@ -39,6 +40,8 @@ class f1ap_du_paging_test : public f1ap_du_test
 protected:
   f1ap_du_paging_test()
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BAS-16-1");
+
     // Test Preamble.
     run_f1_setup_procedure();
 
