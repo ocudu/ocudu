@@ -226,7 +226,7 @@ static byte_buffer create_data(unsigned start_val, unsigned nof_vals)
 TEST_P(sctp_network_link_test, multi_client_recv_data)
 {
 #ifdef OCUDU_HAVE_OPENSSL_DTLS
-  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-DU-01b", "MVP-SEC-O-CU-01b");
 #endif
 
   unsigned pdu_len = 10;
@@ -249,7 +249,7 @@ TEST_P(sctp_network_link_test, multi_client_recv_data)
 TEST_P(sctp_network_link_test, multi_client_send_data)
 {
 #ifdef OCUDU_HAVE_OPENSSL_DTLS
-  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-DU-01b", "MVP-SEC-O-CU-01b");
 #endif
 
   unsigned pdu_len = 10;
