@@ -528,10 +528,10 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        g
       if (rep_alloc.result.dl.ue_grants.full() or nof_other_grants >= expert_cfg.max_pdschs_per_slot or
           rep_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.first) or
           (not crbs.second.empty() and rep_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.second))) {
-        logger.warning("ue={} rnti={}: Skipping PDSCH repetition occasion at slot={}. Cause: No space in the grid.",
-                       u.ue_index,
-                       u.crnti,
-                       rep_alloc.slot);
+        logger.debug("ue={} rnti={}: Skipping PDSCH repetition occasion at slot={}. Cause: No space in the grid.",
+                     u.ue_index,
+                     u.crnti,
+                     rep_alloc.slot);
         continue;
       }
       rep_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, crbs.first});
