@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/ran_resource_management/du_drx_resource_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
@@ -38,6 +39,7 @@ protected:
   base_du_drx_resource_manager_test(const std::optional<drx_params>& drx_params_) :
     drx_args(drx_params_), cell_cfg_list({create_du_cell_config(params, drx_args)})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-6");
   }
 
   cell_group_config& add_ue(du_ue_index_t ue_idx)

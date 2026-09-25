@@ -6,6 +6,7 @@
 #include "lib/scheduler/config/logical_channel_config_pool.h"
 #include "lib/scheduler/ue_context/logical_channel_system.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include <gtest/gtest.h>
@@ -20,6 +21,7 @@ protected:
   base_ue_drx_controller_test(const std::optional<drx_config>& drx_cfg_) :
     drx_cfg(drx_cfg_), ue_lc_chs(lc_ch_sys.create_ue(to_du_ue_index(0), scs, false, cfg_pool.create({})))
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-6");
   }
 
   void tick()
