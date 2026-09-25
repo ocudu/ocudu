@@ -12,6 +12,7 @@
 #include "procedures/e1ap_cu_up_release_procedure.h"
 #include "procedures/e1ap_cu_up_setup_procedure.h"
 #include "ocudu/asn1/e1ap/common.h"
+#include "ocudu/support/async/async_no_op_task.h"
 
 using namespace ocudu;
 using namespace asn1::e1ap;
@@ -72,6 +73,9 @@ e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& req
 async_task<void> e1ap_cu_up_impl::handle_cu_up_e1ap_release_request()
 {
   metrics_timer.stop();
+  if (pdu_notifier == nullptr) {
+    return launch_no_op_task();
+  }
   return launch_async<e1ap_cu_up_release_procedure>(connection_handler, *pdu_notifier, *ev_mng, logger);
 }
 
