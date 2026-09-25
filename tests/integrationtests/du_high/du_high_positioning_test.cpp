@@ -319,7 +319,7 @@ public:
   du_high_pos_multi_cells_tester() :
     du_high_env_simulator(du_high_env_sim_params{.nof_cells = 3, .srs_period = srs_periodicity::sl80})
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a", "MVP-FUNC-POS-16-3-b");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a", "MVP-FUNC-POS-16-3-b", "MVP-FUNC-POS-16-3-c");
   }
 
   ocudulog::basic_logger& du_logger = ocudulog::fetch_basic_logger("D1-F1");

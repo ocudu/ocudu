@@ -100,6 +100,8 @@ TEST_F(f1ap_du_positioning_measurement_procedure_test,
 
 TEST_F(f1ap_du_positioning_measurement_procedure_test, when_ul_aoa_is_requested_then_response_contains_ul_aoa)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-c");
+
   static constexpr uint16_t azimuth_aoa = 1234;
   static constexpr uint16_t zenith_aoa  = 567;
 

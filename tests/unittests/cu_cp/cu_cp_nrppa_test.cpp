@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
@@ -1396,6 +1397,8 @@ TEST_F(
 TEST_F(cu_cp_nrppa_test,
        when_valid_ul_angle_of_arrival_measurement_response_is_received_from_the_du_then_response_is_forwarded_to_lmf)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-c");
+
   // Handle TRP information procedure.
   ASSERT_TRUE(run_successful_trp_information_procedure());
 

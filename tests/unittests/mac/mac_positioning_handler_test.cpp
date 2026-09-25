@@ -259,7 +259,7 @@ TEST_F(single_cell_positioning_handler_test,
 
 TEST_F(single_cell_positioning_handler_test, when_srs_indication_contains_ul_aoa_then_result_carries_ul_aoa)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b", "MVP-FUNC-POS-16-3-c");
 
   static constexpr float azimuth_deg = 123.4F;
   static constexpr float zenith_deg  = 56.7F;
@@ -287,6 +287,8 @@ TEST_F(single_cell_positioning_handler_test, when_srs_indication_contains_ul_aoa
 
 TEST_F(single_cell_positioning_handler_test, when_srs_indication_contains_only_ul_aoa_then_it_is_not_dropped)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-c");
+
   static constexpr float azimuth_deg = 200.1F;
 
   // Start a positioning measurement for a UE connected to the cell.
