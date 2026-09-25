@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/du/du_high/du_manager/converters/asn1_rrc_config_helpers.h"
+#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/mac/config/mac_cell_group_config_factory.h"
@@ -64,6 +65,142 @@ TEST(mac_cell_group_config_converter_test, test_custom_sr_cfg_conversion)
     ASSERT_EQ(rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list.size(), 2);
     ASSERT_EQ(rrc_mcg_cfg.sched_request_cfg.sched_request_to_release_list.size(), 1);
   }
+}
+
+TEST(mac_cell_group_config_converter_test, test_legacy_sr_prohibit_timer_is_not_signalled_in_the_r17_extension)
+{
+  auto dest_cfg                                                                = make_initial_du_ue_resource_config();
+  dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms128;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+
+  const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_present);
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list[0].sr_prohibit_timer_present);
+  ASSERT_EQ(rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list[0].sr_prohibit_timer,
+            asn1::rrc_nr::sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms128);
+  ASSERT_FALSE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present())
+      << "a value within the legacy range needs no extension";
+}
+
+TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_conversion)
+{
+  auto dest_cfg = make_initial_du_ue_resource_config();
+  // Only representable in sr-ProhibitTimer-v1700.
+  dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms320;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+
+  const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_present);
+
+  // The legacy field is capped at ms128.
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list[0].sr_prohibit_timer_present);
+  ASSERT_EQ(rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list[0].sr_prohibit_timer,
+            asn1::rrc_nr::sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms128);
+
+  ASSERT_TRUE(rrc_mcg_cfg.ext) << "the extension lives in an extension group";
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present());
+  const auto& ext_list = rrc_mcg_cfg.sched_request_cfg_v1700->sched_request_to_add_mod_list_ext_v1700;
+  // One entry per schedulingRequestToAddModList entry, in the same order.
+  ASSERT_EQ(ext_list.size(), rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list.size());
+  ASSERT_TRUE(ext_list[0].sr_prohibit_timer_v1700_present);
+  ASSERT_EQ(ext_list[0].sr_prohibit_timer_v1700,
+            asn1::rrc_nr::sched_request_to_add_mod_ext_v1700_s::sr_prohibit_timer_v1700_opts::ms320);
+}
+
+TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_fills_every_extension_list_entry)
+{
+  auto  dest_cfg     = make_initial_du_ue_resource_config();
+  auto& dest_mcg_cfg = dest_cfg.cell_group.mcg_cfg;
+  // Only the second SR needs the extension, but the list still needs an entry for the first.
+  dest_mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms64;
+  dest_mcg_cfg.scheduling_request_config.push_back(
+      scheduling_request_to_addmod{.sr_id          = static_cast<scheduling_request_id>(1),
+                                   .prohibit_timer = sr_prohib_timer::ms1082,
+                                   .max_tx         = sr_max_tx::n8});
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+
+  const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present());
+  const auto& ext_list = rrc_mcg_cfg.sched_request_cfg_v1700->sched_request_to_add_mod_list_ext_v1700;
+  ASSERT_EQ(ext_list.size(), 2);
+
+  const auto& add_mod_list = rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list;
+  for (unsigned i = 0; i != ext_list.size(); ++i) {
+    const bool needs_ext = add_mod_list[i].sched_request_id == 1;
+    ASSERT_EQ(ext_list[i].sr_prohibit_timer_v1700_present, needs_ext);
+    if (needs_ext) {
+      ASSERT_EQ(ext_list[i].sr_prohibit_timer_v1700,
+                asn1::rrc_nr::sched_request_to_add_mod_ext_v1700_s::sr_prohibit_timer_v1700_opts::ms1082);
+    }
+  }
+}
+
+TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_survives_encoding)
+{
+  auto dest_cfg                                                                = make_initial_du_ue_resource_config();
+  dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms320;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+
+  byte_buffer   buf;
+  asn1::bit_ref bref{buf};
+  ASSERT_EQ(rrc_cell_grp_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+
+  asn1::rrc_nr::cell_group_cfg_s decoded;
+  asn1::cbit_ref                 cbref{buf};
+  ASSERT_EQ(decoded.unpack(cbref), asn1::OCUDUASN_SUCCESS);
+
+  const auto& rrc_mcg_cfg = decoded.mac_cell_group_cfg;
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present());
+  const auto& ext_list = rrc_mcg_cfg.sched_request_cfg_v1700->sched_request_to_add_mod_list_ext_v1700;
+  ASSERT_EQ(ext_list.size(), 1);
+  ASSERT_TRUE(ext_list[0].sr_prohibit_timer_v1700_present);
+  ASSERT_EQ(ext_list[0].sr_prohibit_timer_v1700,
+            asn1::rrc_nr::sched_request_to_add_mod_ext_v1700_s::sr_prohibit_timer_v1700_opts::ms320);
+}
+
+TEST(mac_cell_group_config_converter_test, test_unchanged_extended_sr_prohibit_timer_is_not_resignalled)
+{
+  auto src_cfg                                                                = make_initial_du_ue_resource_config();
+  src_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms320;
+  const auto dest_cfg                                                         = src_cfg;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+
+  // The UE keeps the stored value (Need M).
+  const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
+  ASSERT_FALSE(rrc_mcg_cfg.sched_request_cfg_present);
+  ASSERT_FALSE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present());
+}
+
+TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_is_released_when_reconfigured_to_legacy)
+{
+  auto src_cfg                                                                 = make_initial_du_ue_resource_config();
+  src_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer  = sr_prohib_timer::ms320;
+  auto dest_cfg                                                                = src_cfg;
+  dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms64;
+
+  asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+
+  const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_present);
+  ASSERT_EQ(rrc_mcg_cfg.sched_request_cfg.sched_request_to_add_mod_list[0].sr_prohibit_timer,
+            asn1::rrc_nr::sched_request_to_add_mod_s::sr_prohibit_timer_opts::ms64);
+
+  // Without the extension, the UE would keep the stored ms320 (Need M), which overrides the legacy field.
+  ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present());
+  const auto& ext_list = rrc_mcg_cfg.sched_request_cfg_v1700->sched_request_to_add_mod_list_ext_v1700;
+  ASSERT_EQ(ext_list.size(), 1);
+  ASSERT_FALSE(ext_list[0].sr_prohibit_timer_v1700_present) << "an absent field releases the stored value (Need R)";
 }
 
 TEST(mac_cell_group_config_converter_test, test_custom_bsr_cfg_conversion)
