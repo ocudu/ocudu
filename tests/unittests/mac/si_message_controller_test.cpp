@@ -107,6 +107,8 @@ TEST_F(si_message_controller_test, when_si_message_is_removed_then_readded_with_
 
 TEST_F(si_message_controller_test, when_cell_is_not_provisioned_for_a_warning_then_pws_broadcast_is_rejected)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+
   // The cell carries no SI message for a warning, so no PWS broadcast state was allocated -- a Write-Replace Warning
   // must be rejected rather than silently misbehave.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
@@ -124,7 +126,7 @@ TEST_F(si_message_controller_test, when_cell_is_not_provisioned_for_a_warning_th
 class si_message_controller_pws_test : public ::testing::Test
 {
 public:
-  si_message_controller_pws_test() : bench(make_sys_info_cfg()) {}
+  si_message_controller_pws_test() : bench(make_sys_info_cfg()) { OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5"); }
 
   static mac_cell_sys_info_config make_sys_info_cfg()
   {
@@ -349,7 +351,10 @@ TEST_F(si_message_controller_pws_test, when_si_layout_changes_then_active_warnin
 class si_message_controller_auto_broadcast_test : public ::testing::Test
 {
 public:
-  si_message_controller_auto_broadcast_test() : bench(make_sys_info_cfg()) {}
+  si_message_controller_auto_broadcast_test() : bench(make_sys_info_cfg())
+  {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  }
 
   static mac_cell_sys_info_config make_sys_info_cfg()
   {
@@ -412,7 +417,10 @@ TEST_F(si_message_controller_auto_broadcast_test,
 class si_message_controller_sched_info_test : public ::testing::Test
 {
 public:
-  si_message_controller_sched_info_test() : bench(make_sys_info_cfg()) {}
+  si_message_controller_sched_info_test() : bench(make_sys_info_cfg())
+  {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  }
 
   static mac_cell_sys_info_config make_sys_info_cfg()
   {
@@ -612,7 +620,7 @@ TEST_F(si_message_controller_si_pdu_update_test, when_no_si_message_carries_the_
 
 TEST_F(si_message_controller_si_pdu_update_test, when_a_warning_goes_on_air_then_the_update_is_still_served)
 {
-  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2");
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-SI-2", "MVP-FUNC-SVCS-16-5");
 
   // The warning joins the epoch ahead of the SIB19 SI message, pushing it from position 1 to position 2.
   std::vector<byte_buffer>     segments = make_random_segmented_pdu(50, 1);
@@ -706,7 +714,10 @@ TEST_F(si_message_controller_two_warnings_test, when_two_warnings_are_on_air_the
 class si_message_controller_two_auto_broadcasts_test : public ::testing::Test
 {
 public:
-  si_message_controller_two_auto_broadcasts_test() : bench(make_sys_info_cfg()) {}
+  si_message_controller_two_auto_broadcasts_test() : bench(make_sys_info_cfg())
+  {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  }
 
   static mac_cell_sys_info_config make_sys_info_cfg()
   {

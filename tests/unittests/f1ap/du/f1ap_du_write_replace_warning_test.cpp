@@ -4,6 +4,7 @@
 
 #include "f1ap_du_test_helpers.h"
 #include "lib/f1ap/asn1_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
@@ -50,6 +51,8 @@ class f1ap_du_write_replace_warning_test : public f1ap_du_test
 protected:
   f1ap_du_write_replace_warning_test()
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+
     run_f1_setup_procedure();
     this->f1c_gw.clear_tx_pdus();
   }

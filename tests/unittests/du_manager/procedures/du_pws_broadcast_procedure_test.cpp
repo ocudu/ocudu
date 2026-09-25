@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "../du_manager_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/du/du_cell_config_helpers.h"
@@ -64,6 +65,8 @@ protected:
   explicit du_pws_broadcast_procedure_test(du_cell_config cell_cfg = config_helpers::make_default_du_cell_config()) :
     cell_cfgs({std::move(cell_cfg)}), dependencies(cell_cfgs), du_mng(create_du_manager(dependencies.params))
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+
     dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate.resize(1);
     dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate[0].cgi = cell_cfgs[0].nr_cgi;
     dependencies.f1ap.wait_f1_setup.ready_ev.set();
