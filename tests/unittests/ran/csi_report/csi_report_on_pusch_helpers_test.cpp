@@ -173,6 +173,7 @@ protected:
     if (!std::holds_alternative<pmi_codebook_typeII>(pmi_codebook)) {
       OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
     }
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-3");
 
     unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(pmi_codebook);
 
@@ -812,6 +813,8 @@ INSTANTIATE_TEST_SUITE_P(
 // Unpacks a Type II CSI report from a fixed bit stream.
 TEST(csi_report_unpacking, typeII_pusch_report_from_a_fixed_bit_stream)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-3");
+
   // Type II codebook configuration.
   pmi_codebook_config pmi_codebook =
       pmi_codebook_typeII{pmi_codebook_single_panel_config::two_one, 2, pmi_codebook_typeII_phase_size::qpsk, false};
@@ -916,7 +919,7 @@ TEST(csi_report_unpacking, typeII_pusch_report_from_a_fixed_bit_stream)
 // \c csi_report_max_size bounds the packed CSI report container, hence a configuration exceeding it would be truncated.
 TEST(csi_report_size, no_supported_configuration_exceeds_the_maximum_report_size)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1", "MVP-FUNC-MIMO-16-3");
 
   // The RI restriction is a bitmap with one bit per layer, hence the codebooks with more ports than the maximum number
   // of layers are skipped.

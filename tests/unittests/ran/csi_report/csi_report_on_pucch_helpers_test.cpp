@@ -87,7 +87,7 @@ protected:
 
     // The RSRP reports carry no codebook, every other configuration uses a Type I codebook.
     if (!std::holds_alternative<std::monostate>(configuration.pmi_codebook)) {
-      OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
+      OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1", "MVP-FUNC-MIMO-16-3");
     }
 
     // Pack CRI if enabled.

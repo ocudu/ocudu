@@ -34,7 +34,7 @@ protected:
 
   uci_cell_decoder_aperiodic_csi_test() : decoder(make_cell_cfg(), rnti_table, rlf_handler)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1", "MVP-FUNC-MIMO-16-3");
 
     ocudulog::init();
     rnti_table.add_ue(test_rnti, ue_idx);
