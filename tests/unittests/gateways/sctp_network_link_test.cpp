@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+#include "../../ocudu_test_requirements.h"
 #include "ocudu/adt/mutexed_mpmc_queue.h"
 #include "ocudu/gateways/sctp_network_client_factory.h"
 #include "ocudu/gateways/sctp_network_server_factory.h"
@@ -14,10 +15,24 @@
 
 using namespace ocudu;
 
+namespace {
+
+struct test_params {
+  bool     dtls_enabled = false;
+  unsigned nof_clients  = 1;
+};
+
+void PrintTo(const test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("nof_clients={}", value.nof_clients);
+}
+
+} // namespace
+
 class base_sctp_network_link_test
 {
 public:
-  base_sctp_network_link_test(unsigned nof_clients) :
+  base_sctp_network_link_test(test_params params) :
     logger([]() -> ocudulog::basic_logger& {
       ocudulog::init();
       return ocudulog::fetch_basic_logger("SCTP-GW");
@@ -25,12 +40,22 @@ public:
     server_broker(create_io_broker(ocudu::io_broker_type::epoll)),
     client_broker(create_io_broker(ocudu::io_broker_type::epoll)),
     assoc_factory(std::make_unique<server_assoc_handler_factory>(*this)),
-    server_cfg([this]() {
+    server_cfg([this, params]() {
       sctp_network_server_config cfg{{}, *server_broker, rx_executor, app_executor, *assoc_factory};
       cfg.sctp.if_name        = "SERVER";
       cfg.sctp.ppid           = NGAP_PPID;
       cfg.sctp.bind_addresses = {"127.0.0.1"};
       cfg.sctp.bind_port      = 0;
+      if (params.dtls_enabled) {
+        std::map<transport_layer_address, dtls_mode> mode_map = {};
+        cfg.sctp.dtls_cfg                                     = {dtls_mode::server,
+                                                                 "1",
+                                                                 std::string(TEST_CERT_DIR) + "/link12.crt",
+                                                                 std::string(TEST_CERT_DIR) + "/link12.key",
+                                                                 std::string(TEST_CERT_DIR) + "/ca.crt",
+                                                                 mode_map};
+      }
+
       return cfg;
     }()),
     server(create_sctp_network_server(server_cfg))
@@ -43,7 +68,7 @@ public:
 
     int server_port = server->get_listen_port().value();
 
-    for (unsigned i = 0; i < nof_clients; i++) {
+    for (unsigned i = 0; i < params.nof_clients; i++) {
       // Create context instance.
       auto ret = client_associations.insert(std::make_pair(i, std::make_unique<sctp_client_association_context>()));
       report_fatal_error_if_not(ret.second, "Failed to insert Client Association");
@@ -55,7 +80,17 @@ public:
       client_cfg.sctp.dest_name         = "server";
       client_cfg.sctp.connect_addresses = {server_cfg.sctp.bind_addresses[0]};
       client_cfg.sctp.connect_port      = server_port;
-      ret.first->second->client         = create_sctp_network_client(client_cfg);
+      if (params.dtls_enabled) {
+        std::map<transport_layer_address, dtls_mode> mode_map = {};
+        client_cfg.sctp.dtls_cfg                              = {dtls_mode::client,
+                                                                 "2",
+                                                                 std::string(TEST_CERT_DIR) + "/link21.crt",
+                                                                 std::string(TEST_CERT_DIR) + "/link21.key",
+                                                                 std::string(TEST_CERT_DIR) + "/ca.crt",
+                                                                 mode_map};
+        report_error_if_not(i == 0, "Only one client supported in unit tests for now. i={}", i);
+      }
+      ret.first->second->client = create_sctp_network_client(client_cfg);
       report_fatal_error_if_not(ret.first->second->client != nullptr, "Failed to create Client");
     }
 
@@ -67,7 +102,7 @@ public:
 
     // Wait for associations to be made to the server.
     std::unique_lock<std::mutex> lock(assoc_creation_mutex);
-    assoc_created_cvar.wait(lock, [this, nof_clients]() { return server_associations.size() == nof_clients; });
+    assoc_created_cvar.wait(lock, [this, params]() { return server_associations.size() == params.nof_clients; });
 
     logger.info("All UEs connected");
   }
@@ -166,23 +201,10 @@ protected:
   std::condition_variable assoc_created_cvar;
 };
 
-namespace {
-
-struct test_params {
-  unsigned nof_clients = 1;
-};
-
-void PrintTo(const test_params& value, ::std::ostream* os)
-{
-  *os << fmt::format("nof_clients={}", value.nof_clients);
-}
-
-} // namespace
-
 class sctp_network_link_test : public base_sctp_network_link_test, public ::testing::TestWithParam<test_params>
 {
 public:
-  sctp_network_link_test() : base_sctp_network_link_test(GetParam().nof_clients) {}
+  sctp_network_link_test() : base_sctp_network_link_test(GetParam()) {}
   ~sctp_network_link_test() override
   {
     if (server) {
@@ -203,6 +225,10 @@ static byte_buffer create_data(unsigned start_val, unsigned nof_vals)
 
 TEST_P(sctp_network_link_test, multi_client_recv_data)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#endif
+
   unsigned pdu_len = 10;
 
   // Send data from each server association sender.
@@ -222,6 +248,10 @@ TEST_P(sctp_network_link_test, multi_client_recv_data)
 
 TEST_P(sctp_network_link_test, multi_client_send_data)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#endif
+
   unsigned pdu_len = 10;
 
   // Send data from each client association.
@@ -239,6 +269,17 @@ TEST_P(sctp_network_link_test, multi_client_send_data)
   }
 }
 
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
 INSTANTIATE_TEST_SUITE_P(sctp_multi_client_test,
                          sctp_network_link_test,
-                         ::testing::Values(test_params{1}, test_params{4}, test_params{8}, test_params{32}));
+                         ::testing::Values(test_params{true, 1},
+                                           test_params{false, 1},
+                                           test_params{false, 4},
+                                           test_params{false, 8},
+                                           test_params{false, 32}));
+#else
+INSTANTIATE_TEST_SUITE_P(
+    sctp_multi_client_test,
+    sctp_network_link_test,
+    ::testing::Values(test_params{false, 1}, test_params{false, 4}, test_params{false, 8}, test_params{false, 32}));
+#endif
