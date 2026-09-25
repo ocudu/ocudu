@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/support/pusch_power_controller.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/scheduler/test_utils/sched_custom_test_bench.h"
 #include "ocudu/ran/power_control/tpc_mapping.h"
@@ -294,6 +295,8 @@ protected:
                                    .dl_carrier = {.carrier_bw = bs_channel_bandwidth::MHz20, .arfcn_f_ref = 520000U}}),
     pusch_sinr_target_dB(target_sinr_)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BAS-16-3");
+
     ocudulog::init();
     mac_logger.set_level(ocudulog::basic_levels::warning);
   }

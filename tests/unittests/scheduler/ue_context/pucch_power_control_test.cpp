@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/unittests/scheduler/test_utils/sched_custom_test_bench.h"
@@ -305,6 +306,8 @@ using namespace pucch_pw_ctrl_test;
 
 TEST_P(pucch_power_control_test_bench, when_phr_is_non_positive_cl_stops_increasing_pw_target)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BAS-16-3");
+
   // In this test, as assume TDD with 10 slots period, and 2 UL slots. We generate a PUCCH with a Bernoulli random
   // process with probability 0.5 in each UL slot. The PUCCH parameters and UCI bits are randomly set, to simulate
   // deterministic SINR variations due to the PUCCH parameters. The test succeeds if the SINR reaches convergence
