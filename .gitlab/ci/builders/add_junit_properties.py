@@ -13,15 +13,23 @@ writes its own gtest XML report (see cmake/scripts/gtest_xml_launcher.sh), and t
 there. CTest stays the authority on pass, fail, crash and timeout; this only adds metadata its JUnit
 output cannot carry.
 
+A ctest entry is matched to its gtest case through the --gtest_filter that gtest_discover_tests puts in
+its command, as listed by "ctest --show-only=json-v1" in the build directory. This matters for
+parameterised tests: gtest names their instances by index ("<test>/0"), while ctest names them after
+the printed parameter value unless the target is registered with NO_PRETTY_VALUES.
+
 Usage:
-  add_junit_properties.py <xunit.xml> [--commit <hash>] [--gtest-xml-dir <dir>] [--strict]
+  add_junit_properties.py <xunit.xml> [--commit <hash>] [--gtest-xml-dir <dir>] [--ctest-dir <dir>] [--strict]
 
 If --commit is omitted, the value is read from the OCUDU_COMMIT environment variable.
 """
 
 import argparse
+import html
+import json
 import os
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -74,6 +82,26 @@ def collect_requirements(gtest_xml_dir: Path) -> tuple[dict, dict, dict]:
     return by_case, by_binary, case_binary
 
 
+def collect_gtest_names(ctest_dir: Path) -> dict[str, str]:
+    """Return {"<ctest entry>": "<suite>.<case>"} for the entries that run a single gtest case."""
+    try:
+        listing = subprocess.run(
+            ["ctest", "--show-only=json-v1"], cwd=ctest_dir, capture_output=True, text=True, check=True
+        ).stdout
+        tests = json.loads(listing).get("tests", [])
+    except (OSError, subprocess.CalledProcessError, json.JSONDecodeError) as err:
+        print(f"WARNING: cannot list the ctest entries in {ctest_dir}: {err}", file=sys.stderr)
+        return {}
+
+    names: dict[str, str] = {}
+    for test in tests:
+        for arg in test.get("command", []):
+            if arg.startswith("--gtest_filter="):
+                names[test["name"]] = arg.split("=", 1)[1]
+                break
+    return names
+
+
 def _inject_property(body: str, ids: set[str]) -> str:
     """Add a requirements property to the <properties> block of one testcase body."""
     prop = f'<property name="{REQUIREMENTS}" value="{";".join(sorted(ids))}"/>'
@@ -86,24 +114,30 @@ def _inject_property(body: str, ids: set[str]) -> str:
     return body + f"<properties>{prop}</properties>"
 
 
-def add_requirements(content: str, by_case: dict, by_binary: dict) -> tuple[str, set[str]]:
-    """Copy the recorded ids onto the matching testcases. Returns the patched text and what matched."""
+def add_requirements(content: str, by_case: dict, by_binary: dict, gtest_names: dict[str, str]) -> tuple[str, set[str]]:
+    """Copy the recorded ids onto the matching testcases. Returns the patched text and the gtest cases
+    and binaries that matched."""
     matched: set[str] = set()
 
     def patch(match: re.Match[str]) -> str:
         self_closed, open_tag, body, close_tag = match.groups()
         tag = self_closed or open_tag
         name_match = re.search(r'name="([^"]*)"', tag)
-        name = name_match.group(1) if name_match else ""
+        name = html.unescape(name_match.group(1)) if name_match else ""
 
-        # A target registered with gtest_discover_tests has one ctest entry per case, named after it.
-        # A target registered as a single entry is named after the binary, and collects everything its
-        # tests recorded.
-        ids = by_case.get(name) or by_binary.get(name)
-        if not ids:
+        # A target registered with gtest_discover_tests has one ctest entry per case, which runs that
+        # case alone. A target registered as a single entry is named after the binary, and collects
+        # everything its tests recorded.
+        case = gtest_names.get(name, name)
+        if case in by_case:
+            ids = by_case[case]
+            matched.add(case)
+        elif name in by_binary:
+            ids = by_binary[name]
+            matched.add(name)
+        else:
             return match.group(0)
 
-        matched.add(name)
         if self_closed:
             prop = f'<property name="{REQUIREMENTS}" value="{";".join(sorted(ids))}"/>'
             return f"{self_closed[:-2]}><properties>{prop}</properties></testcase>"
@@ -149,6 +183,12 @@ def main() -> int:
         default=os.environ.get("OCUDU_GTEST_XML_DIR") or None,
         help="Folder holding the per-process gtest XML reports carrying the requirement tags",
     )
+    parser.add_argument(
+        "--ctest-dir",
+        type=Path,
+        default=Path.cwd(),
+        help="Build directory whose ctest entries are listed to match them to their gtest cases",
+    )
     parser.add_argument("--strict", action="store_true", help="Fail if a recorded requirement reached no entry")
     args = parser.parse_args()
 
@@ -165,7 +205,8 @@ def main() -> int:
             print("WARNING: no requirement tags found. Was OCUDU_GTEST_XML_DIR set for the test run?", file=sys.stderr)
             ret = 1 if args.strict else 0
         else:
-            content, matched = add_requirements(content, by_case, by_binary)
+            gtest_names = collect_gtest_names(args.ctest_dir)
+            content, matched = add_requirements(content, by_case, by_binary, gtest_names)
 
             # A tag that reaches no entry would leave the requirement looking untested, so it is worth
             # saying out loud rather than letting the report show a silent gap. A case is covered
