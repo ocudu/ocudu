@@ -49,12 +49,15 @@ std::unique_ptr<radio_factory> create_dynamic_radio_factory();
 /// \return A valid radio factory if the factory is successfully created, otherwise \c nullptr.
 std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);
 
-/// \brief Creates a radio factory that instantiates decorated radio session objects from a base radio factory.
+/// \brief Creates a radio factory that instantiates decorated radio sessions from a base radio factory.
+///
+/// The decorator gather metrics and prints them in the \e RADIO channel logger as info.
 ///
 /// \param[in] radio_factory_base_ Base radio factory to create radio instances.
 /// \param[in] rf_log_level        RF log level used by the decorator logger.
-std::unique_ptr<radio_factory> create_radio_decorator_factory(std::unique_ptr<radio_factory> radio_factory_base_,
-                                                              ocudulog::basic_levels         rf_log_level);
+std::unique_ptr<radio_factory>
+create_radio_metrics_decorator_factory(std::unique_ptr<radio_factory> radio_factory_base_,
+                                       ocudulog::basic_levels         rf_log_level);
 
 /// \brief Helper function to print all statically linked available radio factories to \c stdout.
 void print_available_radio_factories();

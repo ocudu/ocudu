@@ -284,7 +284,7 @@ int main(int argc, char** argv)
 
   // Decorate the radio factory.
   if (log_level >= ocudulog::basic_levels::info) {
-    factory = create_radio_decorator_factory(std::move(factory), log_level);
+    factory = create_radio_metrics_decorator_factory(std::move(factory), log_level);
   }
 
   // Create radio configuration.
