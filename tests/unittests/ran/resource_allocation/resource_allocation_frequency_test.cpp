@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include <gtest/gtest.h>
 
@@ -9,6 +10,8 @@ using namespace ocudu;
 
 TEST(resource_allocation_frequency_test, ra_frequency_type1)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-5");
+
   for (unsigned N_bwp_size : {24, 48, 96}) {
     for (unsigned start = 0; start != N_bwp_size - 1; ++start) {
       for (unsigned length = 1, length_end = N_bwp_size - start + 1; length != length_end; ++length) {
@@ -34,6 +37,8 @@ TEST(resource_allocation_frequency_test, ra_frequency_type1)
 
 TEST(resource_allocation_frequency_test, ra_frequency_type1_special)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-5");
+
   for (unsigned N_bwp_initial : {24, 48, 96}) {
     for (unsigned N_bwp_active : {25, 52, 104, 272}) {
       // Determine K.
