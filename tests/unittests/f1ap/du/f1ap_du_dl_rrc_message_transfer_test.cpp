@@ -4,6 +4,7 @@
 
 #include "f1ap_du_test_helpers.h"
 #include "test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include <gtest/gtest.h>
 
@@ -164,6 +165,8 @@ TEST_F(f1ap_du_test,
 TEST_F(f1ap_du_test,
        when_dl_rrc_message_transfer_with_old_gnb_du_ue_id_then_du_is_notified_and_rrc_container_is_forwarded)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
   // Run Test Preamble.
   run_f1_setup_procedure();
   // > create UE1
@@ -206,6 +209,8 @@ TEST_F(f1ap_du_test,
 
 TEST_F(f1ap_du_test, when_dl_rrc_message_transfer_has_duplicate_cu_ue_id_and_old_gnb_du_ue_id_then_cu_ue_id_is_updated)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
   // Run Test Preamble.
   run_f1_setup_procedure();
   // > create UE1

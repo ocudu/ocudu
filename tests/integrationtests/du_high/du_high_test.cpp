@@ -6,6 +6,7 @@
 /// \brief Tests that check the setup/teardown, addition/removal of UEs in the DU-high class.
 
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/du_high/rrm_policy_remote_command_helpers.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
@@ -387,6 +388,8 @@ TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_th
 
 TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_old_ue_traffic_stops)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
   // Create UE1.
   rnti_t rnti = to_rnti(0x4601);
   ASSERT_TRUE(add_ue(rnti));
@@ -415,6 +418,8 @@ TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_old_u
 
 TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_drbs_are_reestablished)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
   // Create UE1.
   rnti_t rnti1 = to_rnti(0x4601);
   ASSERT_TRUE(add_ue(rnti1));
@@ -444,6 +449,8 @@ TEST_F(du_high_tester, when_dl_rrc_message_with_old_du_ue_id_received_then_drbs_
 TEST_F(du_high_tester,
        when_dl_rrc_message_with_old_du_ue_id_received_but_same_cu_ue_f1ap_id_then_cu_ue_f1ap_id_is_reused)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
   // Create UE1.
   rnti_t rnti1 = to_rnti(0x4601);
   ASSERT_TRUE(add_ue(rnti1));
@@ -473,6 +480,8 @@ TEST_F(du_high_tester,
 
 TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabilities_are_considered_in_config)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
   // Create UE1.
   rnti_t rnti1 = to_rnti(0x4601);
   ASSERT_TRUE(add_ue(rnti1));

@@ -1714,6 +1714,8 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
 
 TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_reconf_is_after_reest_both_common_and_ded_pucch_are_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
   const auto rnti        = to_rnti(0x4601);
   const auto du_ue_index = to_du_ue_index(0);
   ASSERT_TRUE(add_ue(rnti, du_ue_index, false, current_slot));
