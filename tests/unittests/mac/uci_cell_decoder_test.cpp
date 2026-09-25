@@ -4,6 +4,7 @@
 
 #include "lib/mac/mac_sched/uci_cell_decoder.h"
 #include "mac_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -33,6 +34,8 @@ protected:
 
   uci_cell_decoder_aperiodic_csi_test() : decoder(make_cell_cfg(), rnti_table, rlf_handler)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
+
     ocudulog::init();
     rnti_table.add_ue(test_rnti, ue_idx);
     rlf_handler.add_ue(ue_idx, rlf_notif);

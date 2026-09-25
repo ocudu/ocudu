@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
 #include "ocudu/ran/csi_report/csi_report_formatters.h"
@@ -168,6 +169,10 @@ protected:
   {
     const pmi_codebook_config&   pmi_codebook = std::get<0>(GetParam());
     const csi_report_quantities& quantities   = std::get<1>(GetParam());
+
+    if (!std::holds_alternative<pmi_codebook_typeII>(pmi_codebook)) {
+      OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
+    }
 
     unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(pmi_codebook);
 
@@ -911,6 +916,8 @@ TEST(csi_report_unpacking, typeII_pusch_report_from_a_fixed_bit_stream)
 // \c csi_report_max_size bounds the packed CSI report container, hence a configuration exceeding it would be truncated.
 TEST(csi_report_size, no_supported_configuration_exceeds_the_maximum_report_size)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
+
   // The RI restriction is a bitmap with one bit per layer, hence the codebooks with more ports than the maximum number
   // of layers are skipped.
   constexpr unsigned max_nof_csi_rs_ports = 8;

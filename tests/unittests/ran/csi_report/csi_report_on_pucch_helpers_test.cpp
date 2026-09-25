@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/to_array.h"
 #include "ocudu/ran/csi_report/csi_report_configuration.h"
@@ -83,6 +84,11 @@ protected:
   void SetUp() override
   {
     const csi_report_configuration& configuration = GetParam();
+
+    // The RSRP reports carry no codebook, every other configuration uses a Type I codebook.
+    if (!std::holds_alternative<std::monostate>(configuration.pmi_codebook)) {
+      OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
+    }
 
     // Pack CRI if enabled.
     if (configuration.quantities < csi_report_quantities::other) {
