@@ -762,7 +762,10 @@ static beam_identifier beam_of(const precoding_and_beamforming_info& info)
 class ra_scheduler_beam_test : public ra_scheduler_setup, public ::testing::Test
 {
 public:
-  ra_scheduler_beam_test() : ra_scheduler_setup(make_beam_req(), /*sched_csi=*/false, /*sched_sib1=*/false) {}
+  ra_scheduler_beam_test() : ra_scheduler_setup(make_beam_req(), /*sched_csi=*/false, /*sched_sib1=*/false)
+  {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-12");
+  }
 
   static sched_cell_configuration_request_message make_beam_req()
   {
@@ -829,6 +832,7 @@ public:
 
   ra_scheduler_multi_beam_test() : ra_scheduler_setup(make_multi_beam_req(), /*sched_csi=*/false, /*sched_sib1=*/false)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-12");
   }
 
   static sched_cell_configuration_request_message make_multi_beam_req()
@@ -891,6 +895,7 @@ public:
                        /*sched_csi=*/false,
                        /*sched_sib1=*/false)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-12");
   }
 
   static scheduler_expert_config make_sched_cfg()

@@ -1861,6 +1861,8 @@ class fallback_sched_beam_test : public base_fallback_tester, public ::testing::
 protected:
   fallback_sched_beam_test() : base_fallback_tester(duplex_mode::FDD, false)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-12");
+
     const unsigned k0       = 0;
     auto           cell_req = create_custom_cell_config_request(k0);
     // A beam other than the first one, so that the assertions discriminate against a hardcoded default.
