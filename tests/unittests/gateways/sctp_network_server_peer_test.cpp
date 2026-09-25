@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+#include "../../ocudu_test_requirements.h"
 #include "sctp_server_test_helpers.h"
 #include "tests/ocudu_test_requirements.h"
 #include "ocudu/gateways/sctp_network_server_factory.h"
@@ -129,6 +130,10 @@ protected:
 
 TEST_P(sctp_network_server_peer_test, when_config_is_valid_then_server_is_created_successfully)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#endif
+
   server1 = create_sctp_network_server(server_cfg1);
   server2 = create_sctp_network_server(server_cfg2);
   server3 = create_sctp_network_server(server_cfg3);
@@ -139,6 +144,10 @@ TEST_P(sctp_network_server_peer_test, when_config_is_valid_then_server_is_create
 
 TEST_P(sctp_network_server_peer_test, when_association_requested_association_initiates_successfully)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#endif
+
   server1 = create_sctp_network_server(server_cfg1);
   server2 = create_sctp_network_server(server_cfg2);
   server3 = create_sctp_network_server(server_cfg3);
@@ -292,6 +301,10 @@ TEST_P(sctp_network_server_peer_test, when_association_requested_association_ini
 
 TEST_P(sctp_network_server_peer_test, when_connect_called_with_empty_address_list_then_returns_false)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#endif
+
   server1 = create_sctp_network_server(server_cfg1);
   ASSERT_NE(server1, nullptr);
   server1->listen();
@@ -305,7 +318,11 @@ TEST_P(sctp_network_server_peer_test, when_connect_called_with_empty_address_lis
 
 TEST_P(sctp_network_server_peer_test, when_connect_uses_multiple_destination_addresses_then_association_succeeds)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-4", "MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#else
   OCUDU_TEST_REQUIREMENTS("CU-GEN-4");
+#endif
 
   server_cfg1.sctp.bind_addresses = {server1_addr_str, server1_multihomed_addr_str};
   server_cfg2.sctp.bind_addresses = {server2_addr_str, server2_multihomed_addr_str};
@@ -361,6 +378,10 @@ TEST_P(sctp_network_server_peer_test, when_connect_uses_multiple_destination_add
 
 TEST_P(sctp_network_server_peer_test, when_pending_connects_overlap_then_second_connect_is_rejected)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#endif
+
   server_cfg1.sctp.bind_addresses = {server1_addr_str, server1_multihomed_addr_str};
   server_cfg2.sctp.bind_addresses = {server2_addr_str, server2_multihomed_addr_str};
 
@@ -415,6 +436,9 @@ TEST_P(sctp_network_server_peer_test, when_pending_connects_overlap_then_second_
 
 TEST_P(sctp_network_server_peer_test, when_server_is_destroyed_then_associations_are_cleaned_up)
 {
+#ifdef OCUDU_HAVE_OPENSSL_DTLS
+  OCUDU_TEST_REQUIREMENTS("MVP-SEC-O-CU-01b", "MVP-SEC-O-CU-10b", "MVP-SEC-O-CU-09b");
+#endif
   server1 = create_sctp_network_server(server_cfg1);
   server2 = create_sctp_network_server(server_cfg2);
   ASSERT_NE(server1, nullptr);
