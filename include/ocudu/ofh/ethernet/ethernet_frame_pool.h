@@ -204,10 +204,11 @@ public:
   /// \brief Enqueues buffers in \c state::pending into the given vector.
   ///
   /// \param[in] burst_of_frames - a vector in which the pending buffers must be enqueued.
-  void enqueue_pending(static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst_of_frames)
+  /// \return true if all pending buffers were enqueued, false if the vector is full and buffers remain pending.
+  bool enqueue_pending(static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst_of_frames)
   {
     unsigned idx;
-    while (pending_list.try_pop(idx)) {
+    while (!burst_of_frames.full() && pending_list.try_pop(idx)) {
       ocudu_sanity_check(idx < entries.size(), "Ethernet frame pool: invalid buffer popped from pending list");
 
       auto& buffer = entries[idx];
@@ -219,6 +220,8 @@ public:
       // Add popped buffer into the output vector.
       burst_of_frames.emplace_back(scoped_frame_buffer{&entries[idx], buffer_deleter{this}});
     }
+
+    return !burst_of_frames.full() || pending_list.empty();
   }
 
   /// \brief Enqueues buffers in \c state::pending into the given vector.
@@ -381,20 +384,25 @@ public:
     return p_entry.reserve(symbol_point);
   }
 
-  /// Enqueues buffers pending in the pool allocated for the given slot and symbol.
-  void enqueue_pending_into_burst(ofh::slot_symbol_point                                 symbol_point,
+  /// \brief Enqueues buffers pending in the pool allocated for the given slot and symbol.
+  ///
+  /// \return true if all pending buffers were enqueued, false if the burst is full and buffers may remain pending.
+  bool enqueue_pending_into_burst(ofh::slot_symbol_point                                 symbol_point,
                                   static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst)
   {
     auto& p_entry = get_pool_entry(symbol_point.get_slot(), symbol_point.get_symbol_index());
-    p_entry.enqueue_pending(burst);
+    return p_entry.enqueue_pending(burst);
   }
 
-  /// Enqueues buffers pending in the pools allocated for the given interval of symbols.
-  void enqueue_pending_into_burst(const frame_pool_interval&                             interval,
+  /// \brief Enqueues buffers pending in the pools allocated for the given interval of symbols.
+  ///
+  /// \return true if all pending buffers were enqueued, false otherwise. If the given vector fills up, the caller must
+  /// empty the burst and call this method again to enqueue the remaining buffers.
+  bool enqueue_pending_into_burst(const frame_pool_interval&                             interval,
                                   static_vector<scoped_frame_buffer, MAX_TX_BURST_SIZE>& burst)
   {
     if (interval.start > interval.end) {
-      return;
+      return true;
     }
 
     // Extra 1 is added to include the end symbol of the interval.
@@ -403,8 +411,12 @@ public:
       ofh::slot_symbol_point tmp_symbol = interval.start + i;
 
       auto& p_entry = get_pool_entry(tmp_symbol.get_slot(), tmp_symbol.get_symbol_index());
-      p_entry.enqueue_pending(burst);
+      if (OCUDU_UNLIKELY(!p_entry.enqueue_pending(burst))) {
+        return false;
+      }
     }
+
+    return true;
   }
 
   /// Pops 'pending' buffers from the pool corresponding to the given slot and symbol and checks whether they are

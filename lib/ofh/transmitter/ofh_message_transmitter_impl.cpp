@@ -42,6 +42,23 @@ void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> fr
   }
 }
 
+void message_transmitter_impl::transmit_frames(
+    static_vector<ether::scoped_frame_buffer, ether::MAX_TX_BURST_SIZE>& read_frames)
+{
+  // Construct burst of byte buffers ready to be transmitted.
+  static_vector<span<const uint8_t>, ether::MAX_TX_BURST_SIZE> frame_burst;
+  for (const auto& frame : read_frames) {
+    frame_burst.emplace_back(frame->data());
+  }
+
+  trace_point tp_ether = ofh_tracer.now();
+  transmit_frame_burst(frame_burst);
+  ofh_tracer << trace_event("ofh_ether_tx", tp_ether);
+
+  // The destructor of each buffer returns it to its pool.
+  read_frames.clear();
+}
+
 void message_transmitter_impl::enqueue_messages_into_burst(
     const ether::frame_pool_interval&                                    interval,
     ofh::message_type                                                    type,
@@ -49,20 +66,31 @@ void message_transmitter_impl::enqueue_messages_into_burst(
     static_vector<ether::scoped_frame_buffer, ether::MAX_TX_BURST_SIZE>& read_frames,
     std::shared_ptr<ether::eth_frame_pool>&                              pool)
 {
-  trace_point pool_access_tp = ofh_tracer.now();
+  unsigned nof_enqueued_frames = 0;
+  while (true) {
+    trace_point pool_access_tp = ofh_tracer.now();
 
-  unsigned prev_size = read_frames.size();
-  pool->enqueue_pending_into_burst(interval, read_frames);
+    unsigned prev_size    = read_frames.size();
+    bool     all_enqueued = pool->enqueue_pending_into_burst(interval, read_frames);
+    nof_enqueued_frames += read_frames.size() - prev_size;
 
-  ofh_tracer << trace_event("ofh_tx_pool_access", pool_access_tp);
+    ofh_tracer << trace_event("ofh_tx_pool_access", pool_access_tp);
 
-  if ((read_frames.size() - prev_size) == 0) {
+    if (OCUDU_LIKELY(all_enqueued)) {
+      break;
+    }
+
+    // The interval holds more frames than a burst can fit, transmit it and empty the burst.
+    transmit_frames(read_frames);
+  }
+
+  if (nof_enqueued_frames == 0) {
     return;
   }
 
   if (OCUDU_UNLIKELY(logger.debug.enabled())) {
     logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
-                 read_frames.size() - prev_size,
+                 nof_enqueued_frames,
                  (type == message_type::control_plane) ? "control-plane" : "user-plane",
                  (direction == data_direction::downlink) ? "downlink" : "uplink",
                  interval.start.get_slot(),
@@ -97,18 +125,9 @@ void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& sy
                                          symbol_point_context.symbol_point + timing_params.sym_up_dl_start};
   enqueue_messages_into_burst(interval_up, message_type::user_plane, data_direction::downlink, read_frames, pool_dl_up);
 
-  // Construct burst of byte buffers ready to be transmitted.
-  static_vector<span<const uint8_t>, ether::MAX_TX_BURST_SIZE> frame_burst;
+  // Transmit the remaining data.
+  transmit_frames(read_frames);
 
-  for (const auto& frame : read_frames) {
-    frame_burst.emplace_back(frame->data());
-  }
-
-  // Transmit the data.
-  trace_point tp_ether = ofh_tracer.now();
-  transmit_frame_burst(frame_burst);
-
-  ofh_tracer << trace_event("ofh_ether_tx", tp_ether);
   ofh_tracer << trace_event("ofh_message_transmitter", tp);
 
   metrics_collector.update_stats(meas.stop());

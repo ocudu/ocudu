@@ -54,7 +54,12 @@ private:
   /// Transmits the given frame burst.
   void transmit_frame_burst(span<span<const uint8_t>> frame_burst);
 
-  /// Enqueues pending frames that match the given interval into the output buffer.
+  /// Transmits the given frames and empties the vector, returning the frame buffers to their pools.
+  void transmit_frames(static_vector<ether::scoped_frame_buffer, ether::MAX_TX_BURST_SIZE>& read_frames);
+
+  /// \brief Enqueues pending frames that match the given interval into the output buffer.
+  ///
+  /// \note Whenever the output buffer fills up, it is transmitted and emptied.
   void enqueue_messages_into_burst(const ether::frame_pool_interval&                                    interval,
                                    ofh::message_type                                                    type,
                                    ofh::data_direction                                                  direction,

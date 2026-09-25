@@ -28,3 +28,8 @@ gtest_discover_tests(ofh_uplink_request_handler_impl_test)
 add_executable(sequence_identifier_generator_test sequence_identifier_generator_test.cpp)
 target_link_libraries(sequence_identifier_generator_test ocudu_support GTest::gtest GTest::gtest_main)
 gtest_discover_tests(sequence_identifier_generator_test)
+
+add_executable(ofh_message_transmitter_impl_test ofh_message_transmitter_impl_test.cpp)
+target_link_libraries(ofh_message_transmitter_impl_test ocudu_ofh_transmitter ocudu_support GTest::gtest GTest::gtest_main)
+target_include_directories(ofh_message_transmitter_impl_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/ofh)
+gtest_discover_tests(ofh_message_transmitter_impl_test)
