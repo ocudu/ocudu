@@ -596,7 +596,7 @@ class cfra_scheduler_test : public scheduler_test_simulator, public ::testing::T
 public:
   cfra_scheduler_test()
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-b");
 
     cell_config_builder_params bparams;
     auto                       cell_req = sched_config_helper::make_default_sched_cell_configuration_request(bparams);
@@ -709,7 +709,7 @@ class cfra_csi_collision_test : public scheduler_test_simulator, public ::testin
 public:
   cfra_csi_collision_test() : scheduler_test_simulator(make_no_uci_on_msg3_sched_cfg())
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-b");
 
     cell_config_builder_params bparams;
     auto                       cell_req = sched_config_helper::make_default_sched_cell_configuration_request(bparams);
@@ -914,7 +914,7 @@ public:
 
 TEST(cfra_multi_ue_rar_test, cfra_pucch_does_not_block_other_ue_msg3_in_same_rar)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-a", "DU-GEN-2-b");
 
   // Sweep the RACH trigger across the periodic-CSI grid to vary the CFRA-PUCCH/Msg3 alignment. Only some alignments
   // put the CBRA Msg3 in a slot where the CFRA UE has a PUCCH, so the sweep as a whole must reach one.

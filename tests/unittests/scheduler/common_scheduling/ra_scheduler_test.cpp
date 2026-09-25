@@ -1278,7 +1278,7 @@ class ra_scheduler_cfra_test : public ra_scheduler_setup, public ::testing::Test
 public:
   ra_scheduler_cfra_test() : ra_scheduler_setup(make_cfra_sched_req(), false, false)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-b");
 
     // The RA scheduler classifies a CRC as a CFRA Msg3 by looking the C-RNTI up in the cell UE repository, so the
     // CFRA UE must be registered there.
@@ -1357,7 +1357,7 @@ public:
   ra_scheduler_cfra_uci_on_msg3_test() :
     ra_scheduler_setup(make_expert_cfg(GetParam()), make_cfra_sched_req(), false, false)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-b");
 
     auto ue_req                    = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
     ue_req.ue_index                = cfra_ue_index;

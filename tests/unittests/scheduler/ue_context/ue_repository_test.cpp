@@ -203,7 +203,7 @@ protected:
     cell_cfg(*cfg_mng.add_cell(sched_cfg)),
     ue_db(expert_cfg.ue)
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-b");
 
     ue_db.register_cell(cell_ues);
   }

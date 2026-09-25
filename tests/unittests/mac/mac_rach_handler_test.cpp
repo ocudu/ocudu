@@ -104,6 +104,8 @@ TEST_F(mac_rach_handler_test, when_cb_rach_detected_then_tc_rnti_is_allocated_an
 
 TEST_F(mac_rach_handler_test, when_cf_rach_detected_then_allocated_crnti_is_used)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-b");
+
   uint8_t cfra_preamble = create_cf_preamble();
   ASSERT_TRUE(cell_handler.handle_cfra_allocation(cfra_preamble, to_du_ue_index(0), to_rnti(0x5555)));
 
@@ -119,6 +121,8 @@ TEST_F(mac_rach_handler_test, when_cf_rach_detected_then_allocated_crnti_is_used
 
 TEST_F(mac_rach_handler_test, when_cf_preamble_detected_but_no_cfra_ue_exists_then_rach_is_not_forwarded)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-b");
+
   uint8_t cfra_preamble = create_cf_preamble();
 
   // Report detected RACH.
@@ -130,6 +134,8 @@ TEST_F(mac_rach_handler_test, when_cf_preamble_detected_but_no_cfra_ue_exists_th
 
 TEST_F(mac_rach_handler_test, when_cf_preamble_is_deallocated_then_cf_rach_is_not_forwarded)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-b");
+
   uint8_t cfra_preamble = create_cf_preamble();
   ASSERT_TRUE(cell_handler.handle_cfra_allocation(cfra_preamble, to_du_ue_index(0), to_rnti(0x5555)));
   cell_handler.handle_cfra_deallocation(to_du_ue_index(0));
@@ -143,6 +149,8 @@ TEST_F(mac_rach_handler_test, when_cf_preamble_is_deallocated_then_cf_rach_is_no
 
 TEST_F(mac_rach_handler_test, when_same_cf_preamble_is_allocated_multiple_times_then_allocation_fails)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-b");
+
   uint8_t cfra_preamble = create_cf_preamble();
   ASSERT_TRUE(cell_handler.handle_cfra_allocation(cfra_preamble, to_du_ue_index(0), to_rnti(0x5555)));
   ASSERT_FALSE(cell_handler.handle_cfra_allocation(cfra_preamble, to_du_ue_index(1), to_rnti(0x5556)));
