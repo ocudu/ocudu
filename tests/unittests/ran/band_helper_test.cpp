@@ -500,6 +500,8 @@ TEST(test_get_f_req_from_f_req_point_a, scs_kHz60)
 
 TEST(test_get_n_rbs_from_bw, scs_15kHz)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-1");
+
   ASSERT_EQ(25, get_n_rbs_from_bw(bs_channel_bandwidth::MHz5, subcarrier_spacing::kHz15, frequency_range::FR1));
   ASSERT_EQ(52, get_n_rbs_from_bw(bs_channel_bandwidth::MHz10, subcarrier_spacing::kHz15, frequency_range::FR1));
   ASSERT_EQ(79, get_n_rbs_from_bw(bs_channel_bandwidth::MHz15, subcarrier_spacing::kHz15, frequency_range::FR1));
@@ -515,6 +517,8 @@ TEST(test_get_n_rbs_from_bw, scs_15kHz)
 
 TEST(test_get_n_rbs_from_bw, scs_30kHz)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-1");
+
   ASSERT_EQ(11, get_n_rbs_from_bw(bs_channel_bandwidth::MHz5, subcarrier_spacing::kHz30, frequency_range::FR1));
   ASSERT_EQ(24, get_n_rbs_from_bw(bs_channel_bandwidth::MHz10, subcarrier_spacing::kHz30, frequency_range::FR1));
   ASSERT_EQ(38, get_n_rbs_from_bw(bs_channel_bandwidth::MHz15, subcarrier_spacing::kHz30, frequency_range::FR1));
@@ -534,6 +538,8 @@ TEST(test_get_n_rbs_from_bw, scs_30kHz)
 
 TEST(test_get_n_rbs_from_bw, scs_60kHz)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-1");
+
   ASSERT_EQ(0, get_n_rbs_from_bw(bs_channel_bandwidth::MHz5, subcarrier_spacing::kHz60, frequency_range::FR1));
   ASSERT_EQ(11, get_n_rbs_from_bw(bs_channel_bandwidth::MHz10, subcarrier_spacing::kHz60, frequency_range::FR1));
   ASSERT_EQ(18, get_n_rbs_from_bw(bs_channel_bandwidth::MHz15, subcarrier_spacing::kHz60, frequency_range::FR1));
@@ -553,6 +559,8 @@ TEST(test_get_n_rbs_from_bw, scs_60kHz)
 
 TEST(test_get_n_rbs_from_bw, scs_120kHz_fr2)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-1");
+
   ASSERT_EQ(66, get_n_rbs_from_bw(bs_channel_bandwidth::MHz50, subcarrier_spacing::kHz60, frequency_range::FR2));
   ASSERT_EQ(132, get_n_rbs_from_bw(bs_channel_bandwidth::MHz100, subcarrier_spacing::kHz60, frequency_range::FR2));
   ASSERT_EQ(264, get_n_rbs_from_bw(bs_channel_bandwidth::MHz200, subcarrier_spacing::kHz60, frequency_range::FR2));
@@ -560,6 +568,8 @@ TEST(test_get_n_rbs_from_bw, scs_120kHz_fr2)
 
 TEST(test_get_n_rbs_from_bw, scs_120kHz)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-1");
+
   ASSERT_EQ(32, get_n_rbs_from_bw(bs_channel_bandwidth::MHz50, subcarrier_spacing::kHz120, frequency_range::FR2));
   ASSERT_EQ(66, get_n_rbs_from_bw(bs_channel_bandwidth::MHz100, subcarrier_spacing::kHz120, frequency_range::FR2));
   ASSERT_EQ(132, get_n_rbs_from_bw(bs_channel_bandwidth::MHz200, subcarrier_spacing::kHz120, frequency_range::FR2));
@@ -568,6 +578,8 @@ TEST(test_get_n_rbs_from_bw, scs_120kHz)
 
 TEST(test_get_n_rbs_from_bw, invalid_cases)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-1");
+
   ASSERT_EQ(0, get_n_rbs_from_bw(bs_channel_bandwidth::MHz200, subcarrier_spacing::kHz60, frequency_range::FR1));
   ASSERT_EQ(0, get_n_rbs_from_bw(bs_channel_bandwidth::MHz400, subcarrier_spacing::kHz60, frequency_range::FR2));
   ASSERT_EQ(0, get_n_rbs_from_bw(bs_channel_bandwidth::MHz400, subcarrier_spacing::kHz15, frequency_range::FR2));

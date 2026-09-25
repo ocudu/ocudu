@@ -116,7 +116,7 @@ gtest_discover_tests(slot_point_test)
 add_executable(band_helper_test band_helper_test.cpp)
 target_link_libraries(band_helper_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 target_include_directories(band_helper_test PRIVATE ${CMAKE_SOURCE_DIR})
-add_test(band_helper_test band_helper_test)
+gtest_discover_tests(band_helper_test)
 
 add_executable(ssb_gscn_test ssb_gscn_test.cpp)
 target_link_libraries(ssb_gscn_test ocudu_ran GTest::gtest ocudu_gtest_main)
