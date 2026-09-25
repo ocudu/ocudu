@@ -825,6 +825,8 @@ class cfra_multi_ue_rar_bench : public scheduler_test_simulator
   static constexpr unsigned NOF_CB_PREAMBLES = 60;
 
 public:
+  static constexpr unsigned CSI_PERIOD_SLOTS = 20;
+
   cfra_multi_ue_rar_bench() : scheduler_test_simulator(make_no_uci_on_msg3_sched_cfg())
   {
     cell_config_builder_params bparams;
@@ -846,11 +848,17 @@ public:
     add_ue(ue_req);
   }
 
-  /// Triggers the RAR after \c rach_lead slots and checks that both Msg3s are scheduled. Returns whether the CBRA Msg3
-  /// was scheduled in a slot where the CFRA UE had a PUCCH, i.e. the CFRA UE's PUCCH skip did not block the CBRA UE.
+  /// Triggers the RAR at slot \c rach_lead of the CSI period and checks that both Msg3s are scheduled. Returns whether
+  /// the CBRA Msg3 was scheduled in a slot where the CFRA UE had a PUCCH, i.e. the CFRA UE's PUCCH skip did not block
+  /// the CBRA UE.
   bool run(unsigned rach_lead)
   {
-    for (unsigned i = 0; i != rach_lead; ++i) {
+    // Let the scheduler allocate the CFRA UE's periodic PUCCHs ahead of the Msg3 candidate slots, then align to the CSI
+    // period, as each bench starts at a random slot.
+    for (unsigned i = 0; i != CSI_PERIOD_SLOTS; ++i) {
+      run_slot();
+    }
+    while (next_slot_rx().count() % CSI_PERIOD_SLOTS != rach_lead) {
       run_slot();
     }
 
@@ -898,7 +906,7 @@ TEST(cfra_multi_ue_rar_test, cfra_pucch_does_not_block_other_ue_msg3_in_same_rar
   // Sweep the RACH trigger across the periodic-CSI grid to vary the CFRA-PUCCH/Msg3 alignment. Only some alignments
   // put the CBRA Msg3 in a slot where the CFRA UE has a PUCCH, so the sweep as a whole must reach one.
   bool saw_cbra_msg3_with_cfra_pucch = false;
-  for (unsigned rach_lead = 0; rach_lead != 20; ++rach_lead) {
+  for (unsigned rach_lead = 0; rach_lead != cfra_multi_ue_rar_bench::CSI_PERIOD_SLOTS; ++rach_lead) {
     cfra_multi_ue_rar_bench bench;
     saw_cbra_msg3_with_cfra_pucch |= bench.run(rach_lead);
   }
