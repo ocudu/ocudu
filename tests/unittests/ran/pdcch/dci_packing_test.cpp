@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
 #include "ocudu/support/math/math_utils.h"
 #include <gtest/gtest.h>
@@ -1328,6 +1329,8 @@ static dci_payload build_dci_1_1_expected(const dci_1_1_configuration& config)
 
 TEST_P(DciFallbackPackingFixture, DciFormatZeroZeroPacking)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-2");
+
   for (unsigned i = 0; i != nof_repetitions; ++i) {
     // Generate DCI Format 0_0 scrambled by TC-RNTI configuration.
     dci_0_0_tc_rnti_configuration dci0_0_tc_rnti_cfg =
@@ -1374,6 +1377,8 @@ TEST_P(DciFallbackPackingFixture, DciFormatZeroZeroPacking)
 
 TEST_P(DciFallbackPackingFixture, DciFormatOneZeroPacking)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-2");
+
   for (unsigned i = 0; i != nof_repetitions; ++i) {
     // BW used to generate the DCI 1_0 configurations. It is set to the CORESET 0 bandwidth if configured, otherwise the
     // initial DL BWP bandwidth.
@@ -1485,6 +1490,8 @@ TEST_P(DciFallbackPackingFixture, DciFormatOneZeroPacking)
 
 TEST_P(DciNonFallbackPackingFixture, DciFormatZeroOnePacking)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-2");
+
   for (unsigned i = 0; i != nof_repetitions; ++i) {
     // Randomize DCI size configuration parameters that are not in the test case and generate the aligned DCI sizes.
     dci_sizes aligned_sizes = generate_dci_sizes();
@@ -1521,6 +1528,8 @@ TEST_P(DciNonFallbackPackingFixture, DciFormatZeroOnePacking)
 
 TEST_P(DciNonFallbackPackingFixture, DciFormatOneOnePacking)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-2");
+
   for (unsigned i = 0; i != nof_repetitions; ++i) {
     // Randomize DCI size configuration parameters and generate the aligned DCI sizes.
     dci_sizes aligned_sizes = generate_dci_sizes();
@@ -1552,6 +1561,8 @@ TEST_P(DciNonFallbackPackingFixture, DciFormatOneOnePacking)
 
 TEST_F(DciRarPackingFixture, DciRarPacking)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-PHY-2");
+
   for (unsigned i = 0; i != nof_repetitions; ++i) {
     // Test DCI RAR packing.
     dci_rar_configuration config    = {};

@@ -39,7 +39,7 @@ add_test(test_ssb_coreset0_freq_pos_generator test_ssb_coreset0_freq_pos_generat
 
 add_executable(dci_packing_test pdcch/dci_packing_test.cpp)
 target_link_libraries(dci_packing_test ocudu_support ocudu_ran GTest::gtest ocudu_gtest_main)
-add_test(dci_packing_test dci_packing_test)
+add_test(NAME dci_packing_test COMMAND dci_packing_test)
 
 add_executable(dci_packing_validator_test pdcch/dci_packing_validator_test.cpp)
 target_link_libraries(dci_packing_validator_test ocudu_support ocudu_ran GTest::gtest ocudu_gtest_main)
