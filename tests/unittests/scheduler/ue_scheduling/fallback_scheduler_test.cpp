@@ -701,7 +701,7 @@ TEST_P(fallback_scheduler_tester, when_ra_conres_timer_expires_ue_doesnt_get_all
 
 TEST_P(fallback_scheduler_tester, when_msgb_ack_not_yet_sent_ue_doesnt_get_allocated_until_msgb_ack_slot_passes)
 {
-  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2", "DU-GEN-2-a");
 
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 

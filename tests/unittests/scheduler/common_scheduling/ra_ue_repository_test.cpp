@@ -115,6 +115,8 @@ TEST_F(ra_ue_repository_test, slot_indication_keeps_entry_alive_while_msg3_harq_
 
 TEST_F(ra_ue_repository_test, add_msgb_pending_entry_is_harqless_and_pending_until_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2");
+
   const rnti_t tc_rnti = to_rnti(0x4601);
 
   // As soon as MsgA CRC=OK is known, an entry is created with no committed MsgB slot yet.
@@ -141,6 +143,8 @@ TEST_F(ra_ue_repository_test, add_msgb_pending_entry_is_harqless_and_pending_unt
 
 TEST_F(ra_ue_repository_test, add_msgb_pending_entry_is_erased_after_conres_timeout_even_if_never_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2");
+
   const rnti_t tc_rnti = to_rnti(0x4601);
 
   repo.add_msgb_pending(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
@@ -153,6 +157,8 @@ TEST_F(ra_ue_repository_test, add_msgb_pending_entry_is_erased_after_conres_time
 
 TEST_F(ra_ue_repository_test, add_msgb_pending_then_scheduled_entry_is_erased_after_conres_timeout)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2");
+
   const rnti_t     tc_rnti      = to_rnti(0x4601);
   const slot_point msgb_slot_tx = sl_tx + 3;
 

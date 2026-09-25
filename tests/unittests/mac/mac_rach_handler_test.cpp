@@ -175,7 +175,7 @@ protected:
     handler(sched, rnti_mng, logger),
     cell_handler(handler.add_cell(sched_cfg))
   {
-    OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2", "DU-GEN-2-a");
   }
 
   /// First preamble ID reserved for 2-step CB RACH, as configured above.

@@ -284,7 +284,7 @@ TEST(rar_assembler_test, rar_assembler_maintains_old_results)
 
 TEST(rar_assembler_test, success_rar_grant_zero_fills_unresolved_con_res_id)
 {
-  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2", "DU-GEN-2-a");
 
   test_delimit_logger test_delim{"MAC assembler for successRAR grant with unresolved Contention Resolution Id"};
 
@@ -321,7 +321,7 @@ TEST(rar_assembler_test, success_rar_grant_zero_fills_unresolved_con_res_id)
 
 TEST(rar_assembler_test, success_rar_grant_encodes_resolved_con_res_id)
 {
-  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2", "DU-GEN-2-a");
 
   test_delimit_logger test_delim{"MAC assembler for successRAR grant with resolved Contention Resolution Id"};
 
@@ -346,7 +346,7 @@ TEST(rar_assembler_test, success_rar_grant_encodes_resolved_con_res_id)
 
 TEST(rar_assembler_test, mixed_fallback_and_success_rar_grants)
 {
-  OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2", "DU-GEN-2-a");
 
   test_delimit_logger test_delim{"MAC assembler for mixed fallbackRAR and successRAR grants"};
 

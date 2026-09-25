@@ -966,7 +966,7 @@ public:
   ra_scheduler_two_step_rach_test() :
     ra_scheduler_setup(make_two_step_rach_req(GetParam()), /*sched_csi=*/false, /*sched_sib1=*/false)
   {
-    OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2", "DU-GEN-2-a");
   }
 
   static sched_cell_configuration_request_message make_two_step_rach_req(const two_step_test_params& params)

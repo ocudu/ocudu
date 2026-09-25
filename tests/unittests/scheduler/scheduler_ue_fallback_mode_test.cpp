@@ -938,7 +938,7 @@ protected:
 
   two_step_ra_fallback_scheduler_test() : scheduler_test_simulator(4, subcarrier_spacing::kHz30)
   {
-    OCUDU_TEST_REQUIREMENTS("DU-GEN-2-a");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-2", "DU-GEN-2-a");
 
     cell_config_builder_params bparams =
         cell_config_builder_profiles::create(duplex_mode::TDD, frequency_range::FR1, bs_channel_bandwidth::MHz50);
