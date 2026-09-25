@@ -65,7 +65,7 @@ protected:
   explicit du_pws_broadcast_procedure_test(du_cell_config cell_cfg = config_helpers::make_default_du_cell_config()) :
     cell_cfgs({std::move(cell_cfg)}), dependencies(cell_cfgs), du_mng(create_du_manager(dependencies.params))
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
     dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate.resize(1);
     dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate[0].cgi = cell_cfgs[0].nr_cgi;

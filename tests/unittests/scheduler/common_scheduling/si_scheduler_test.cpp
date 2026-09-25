@@ -370,7 +370,7 @@ protected:
   si_msg_scheduler_activation_test() :
     si_scheduler_test_environment(make_sched_configuration_request(ACTIVATION_REQUIRED_SI_SCHED_CFG))
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
   }
 };
 
@@ -605,7 +605,7 @@ protected:
   si_msg_scheduler_multi_activation_test() :
     si_scheduler_test_environment(make_sched_configuration_request(MULTI_ACTIVATION_REQUIRED_SI_SCHED_CFG))
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
   }
 };
 

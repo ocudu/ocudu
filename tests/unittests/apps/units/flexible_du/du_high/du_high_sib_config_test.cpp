@@ -80,7 +80,7 @@ std::vector<sib_type> warning_sibs_of(const si_scheduling_info_config& si_config
 
 TEST(du_high_sib_config_test, etws_block_alone_provisions_the_cell_for_a_warning)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   du_high_config_bench bench;
   bench.sib_cfg().etws_cfg               = etws_config{};
@@ -99,7 +99,7 @@ TEST(du_high_sib_config_test, etws_block_alone_provisions_the_cell_for_a_warning
 
 TEST(du_high_sib_config_test, etws_test_content_is_created_without_any_sib_mapping)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   du_high_config_bench bench;
   bench.sib_cfg().etws_cfg       = etws_config{};
@@ -119,7 +119,7 @@ TEST(du_high_sib_config_test, etws_test_content_is_created_without_any_sib_mappi
 
 TEST(du_high_sib_config_test, sib_mapping_of_a_warning_sib_is_rejected)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   for (uint8_t warning_sib : {6, 7, 8}) {
     du_high_config_bench bench;
@@ -133,7 +133,7 @@ TEST(du_high_sib_config_test, sib_mapping_of_a_warning_sib_is_rejected)
 
 TEST(du_high_sib_config_test, si_window_budget_reserves_room_for_the_warnings)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   du_high_config_bench bench;
   // Two SI messages of the normal operation, with a period that fits their windows, but not the three more a cell
@@ -209,7 +209,7 @@ du_high_unit_config parse_config(const std::string& yaml_text)
 /// silently inherit the value of the cell parsed before it rather than the default.
 TEST(du_high_sib_config_test, warning_configuration_of_one_cell_does_not_leak_into_the_next)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   const du_high_unit_config cfg = parse_config(R"(
 cells:

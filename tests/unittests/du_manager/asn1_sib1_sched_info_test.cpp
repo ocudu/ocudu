@@ -50,7 +50,7 @@ static sib2_info make_sib2_info()
 
 TEST(asn1_sib1_sched_info_test, si_message_carrying_a_warning_is_not_listed_in_the_packed_sib1)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   du_cell_config cell_cfg = make_cell_config_with_dormant_pws_si_message();
 
@@ -100,7 +100,7 @@ static std::vector<sib_type> first_sib_of_each(const si_scheduling_config& si_sc
 
 TEST(asn1_sib1_sched_info_test, pws_si_message_takes_no_position_in_the_si_scheduling_of_a_starting_cell)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   // A cell provisioned for a CMAS warning, on top of two SI messages that are always broadcast.
   du_cell_config cell_cfg                = make_cell_config_with_dormant_pws_si_message();
@@ -157,7 +157,7 @@ static std::vector<sib_type> listed_sibs_of(const byte_buffer& packed_sib1)
 
 TEST(asn1_sib1_sched_info_test, f1ap_system_information_leaves_out_a_pws_si_message)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(false);
 
@@ -170,7 +170,7 @@ TEST(asn1_sib1_sched_info_test, f1ap_system_information_leaves_out_a_pws_si_mess
 
 TEST(asn1_sib1_sched_info_test, f1ap_system_information_leaves_out_a_test_mode_pws_si_message)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(true);
 
@@ -192,7 +192,7 @@ TEST(asn1_sib1_sched_info_test, packed_sib1_lists_the_si_messages_of_the_normal_
 
 TEST(asn1_sib1_sched_info_test, warning_content_is_packed_apart_from_the_si_messages_of_the_normal_operation)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(true);
 
@@ -209,7 +209,7 @@ TEST(asn1_sib1_sched_info_test, warning_content_is_packed_apart_from_the_si_mess
 /// another for the secondary one, and both must be packed with the content they broadcast from the cell start.
 TEST(asn1_sib1_sched_info_test, etws_test_content_is_packed_for_both_of_its_si_messages)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   du_cell_config cell_cfg = config_helpers::make_default_du_cell_config();
   cell_cfg.si.si_config.emplace();
@@ -230,7 +230,7 @@ TEST(asn1_sib1_sched_info_test, etws_test_content_is_packed_for_both_of_its_si_m
 
 TEST(asn1_sib1_sched_info_test, warning_with_no_configured_content_is_packed_empty)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   const std::vector<bcch_dl_sch_payload_type> pws_msgs =
       asn1_packer::pack_pws_si_messages(make_cell_config_with_dormant_pws_si_message());
@@ -241,7 +241,7 @@ TEST(asn1_sib1_sched_info_test, warning_with_no_configured_content_is_packed_emp
 
 TEST(asn1_sib1_sched_info_test, warning_parameters_reach_the_si_scheduling_configuration)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   const du_cell_config cell_cfg = make_cell_config_with_sib2_and_pws(true);
 
@@ -262,7 +262,7 @@ TEST(asn1_sib1_sched_info_test, warning_parameters_reach_the_si_scheduling_confi
 
 TEST(asn1_sib1_sched_info_test, warning_sib_mapped_to_an_si_scheduling_info_entry_is_rejected)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   // A warning SIB has parameters of its own and takes a position in the schedulingInfoList only while it is on air, so
   // it is no part of the SI scheduling info.
@@ -274,7 +274,7 @@ TEST(asn1_sib1_sched_info_test, warning_sib_mapped_to_an_si_scheduling_info_entr
 
 TEST(asn1_sib1_sched_info_test, cell_provisioned_for_a_warning_with_no_other_si_message_is_accepted)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
   ASSERT_TRUE(is_du_cell_config_valid(make_cell_config_with_dormant_pws_si_message()).has_value());
 }

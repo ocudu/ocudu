@@ -51,7 +51,7 @@ class f1ap_du_write_replace_warning_test : public f1ap_du_test
 protected:
   f1ap_du_write_replace_warning_test()
   {
-    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5");
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-5", "CU-GEN-1");
 
     run_f1_setup_procedure();
     this->f1c_gw.clear_tx_pdus();
