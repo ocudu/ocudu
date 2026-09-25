@@ -7,6 +7,7 @@
 
 #include "test_utils/indication_generators.h"
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -743,6 +744,8 @@ protected:
 
 TEST_P(scheduler_multiue_conres_tdd_test, all_ues_schedule_conres_before_timeout)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   run_scenario();
 }
 

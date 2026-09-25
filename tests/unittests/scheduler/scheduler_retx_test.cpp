@@ -9,6 +9,7 @@
 #include "test_utils/indication_generators.h"
 #include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/ran/du_types.h"
 #include <gtest/gtest.h>
@@ -89,6 +90,8 @@ class scheduler_retx_tester : public base_scheduler_retx_tester, public ::testin
 
 TEST_P(scheduler_retx_tester, msg3_gets_retx_if_nacked)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   test_params  params          = GetParam();
   const size_t MAX_PUSCH_DELAY = 16, MAX_RETX_DELAY = 16;
 

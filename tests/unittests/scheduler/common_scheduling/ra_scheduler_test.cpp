@@ -202,6 +202,7 @@ public:
   ra_scheduler_common_test() :
     ra_scheduler_setup(get_sched_req(GetParam()), GetParam().sched_csi_rs, GetParam().sched_sib1)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
   }
 
   static sched_cell_configuration_request_message get_sched_req(const test_params& t_params)
@@ -458,6 +459,7 @@ public:
   ra_scheduler_failed_rar_test() :
     ra_scheduler_setup(get_sched_req(GetParam()), GetParam().sched_csi_rs, GetParam().sched_sib1)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
   }
 
   static sched_cell_configuration_request_message get_sched_req(const test_params& t_params)
@@ -586,6 +588,7 @@ public:
                                       unsigned             duration_ms   = 40) :
     ra_scheduler_setup(make_sched_cfg(snr_threshold_dB, max_preambles, duration_ms), get_sched_req(), false, false)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
   }
 
   static scheduler_expert_config
@@ -1274,6 +1277,8 @@ class ra_scheduler_cfra_test : public ra_scheduler_setup, public ::testing::Test
 public:
   ra_scheduler_cfra_test() : ra_scheduler_setup(make_cfra_sched_req(), false, false)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
     // The RA scheduler classifies a CRC as a CFRA Msg3 by looking the C-RNTI up in the cell UE repository, so the
     // CFRA UE must be registered there.
     auto ue_req                    = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
@@ -1351,6 +1356,8 @@ public:
   ra_scheduler_cfra_uci_on_msg3_test() :
     ra_scheduler_setup(make_expert_cfg(GetParam()), make_cfra_sched_req(), false, false)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
     auto ue_req                    = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
     ue_req.ue_index                = cfra_ue_index;
     ue_req.crnti                   = cfra_crnti;

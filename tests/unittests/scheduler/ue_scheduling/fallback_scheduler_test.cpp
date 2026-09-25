@@ -14,6 +14,7 @@
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
 #include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -496,6 +497,8 @@ TEST_P(fallback_scheduler_tester, failed_allocating_resources)
 
 TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4_not_scheduled_until_conres_acked)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
   // Add UE 1.
@@ -543,6 +546,8 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_scheduled_separately_msg4
 
 TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_different_slots_if_they_dont_fit_together)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
   // Add UE 1.
@@ -585,6 +590,8 @@ TEST_P(fallback_scheduler_tester, conres_and_msg4_scheduled_scheduled_over_diffe
 
 TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately_msg4_not_scheduled_until_conres_acked)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
   // Add UE 1.
@@ -639,6 +646,8 @@ TEST_P(fallback_scheduler_tester, when_conres_and_msg4_srb1_scheduled_separately
 
 TEST_P(fallback_scheduler_tester, when_ra_conres_timer_expires_ue_doesnt_get_allocated)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   setup_sched(create_expert_config(1), create_custom_cell_config_request(params.k0));
 
   // Set MSG3 rx slot to 0 (it wouldn't be correct for TDD, but this is not relevant for this test).

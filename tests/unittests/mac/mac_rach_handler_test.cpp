@@ -5,6 +5,7 @@
 #include "lib/mac/mac_sched/mac_rach_handler.h"
 #include "lib/mac/rnti_manager.h"
 #include "mac_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -46,6 +47,7 @@ protected:
     handler(sched, rnti_mng, logger),
     cell_handler(handler.add_cell(sched_cfg))
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
   }
 
   mac_rach_indication make_rach_indication(uint8_t preamble_id) const

@@ -4,6 +4,7 @@
 
 #include "lib/mac/mac_dl/rar_pdu_assembler.h"
 #include "mac_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/circular_vector.h"
 #include "ocudu/mac/ue_con_res_id.h"
 #include "ocudu/support/bit_encoding.h"
@@ -182,6 +183,8 @@ void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> r
 
 TEST(rar_assembler_test, backoff_indicator_only)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   test_delimit_logger test_delim{"MAC assembler for Backoff Indicator only RAR"};
 
   rar_information rar_info{};
@@ -203,6 +206,8 @@ TEST(rar_assembler_test, backoff_indicator_only)
 
 TEST(rar_assembler_test, backoff_indicator_with_ul_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   test_delimit_logger test_delim{"MAC assembler for Backoff Indicator plus UL grants"};
 
   rar_information rar_info                      = make_random_rar_info(nof_ul_grants_per_rar(gen));
@@ -228,6 +233,8 @@ TEST(rar_assembler_test, backoff_indicator_with_ul_grants)
 
 TEST(rar_assembler_test, multiple_random_ul_grants)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   static constexpr size_t MAX_RAR_GRANT_SIZE = 64;
   test_delimit_logger     test_delim{"MAC assembler for multiple UL grants"};
 
@@ -245,6 +252,8 @@ TEST(rar_assembler_test, multiple_random_ul_grants)
 /// so that the output PDUs can be referenced by lower layers without risking dangling pointers.
 TEST(rar_assembler_test, rar_assembler_maintains_old_results)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   static constexpr size_t MAX_RAR_GRANT_SIZE = 64;
 
   test_delimit_logger test_delim{"MAC assembler maintains previous results"};

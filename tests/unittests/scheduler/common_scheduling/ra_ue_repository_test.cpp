@@ -5,6 +5,7 @@
 #include "lib/scheduler/common_scheduling/ra_ue_repository.h"
 #include "lib/scheduler/config/cell_configuration.h"
 #include "lib/scheduler/config/sched_config_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "tests/unittests/scheduler/test_utils/indication_generators.h"
@@ -42,6 +43,8 @@ protected:
 
 TEST_F(ra_ue_repository_test, add_creates_entry_findable_by_tc_rnti)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   const rnti_t tc_rnti = to_rnti(0x4601);
 
   ra_ue_context* ctx = repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
@@ -59,6 +62,8 @@ TEST_F(ra_ue_repository_test, add_creates_entry_findable_by_tc_rnti)
 
 TEST_F(ra_ue_repository_test, erase_removes_resolved_entry)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   const rnti_t tc_rnti = to_rnti(0x4601);
   repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
   ASSERT_NE(repo.find(tc_rnti), repo.end());
@@ -69,6 +74,8 @@ TEST_F(ra_ue_repository_test, erase_removes_resolved_entry)
 
 TEST_F(ra_ue_repository_test, slot_indication_erases_entry_after_conres_timeout)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   const rnti_t tc_rnti = to_rnti(0x4601);
   repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});
 
@@ -85,6 +92,8 @@ TEST_F(ra_ue_repository_test, slot_indication_erases_entry_after_conres_timeout)
 
 TEST_F(ra_ue_repository_test, slot_indication_keeps_entry_alive_while_msg3_harq_awaits_ack)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   const rnti_t tc_rnti = to_rnti(0x4601);
 
   ra_ue_context* ctx = repo.add(test_helper::create_preamble(0, tc_rnti), sl_tx, ssb_id_t{0});

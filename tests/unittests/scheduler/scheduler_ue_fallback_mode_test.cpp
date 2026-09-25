@@ -35,6 +35,8 @@ public:
   base_scheduler_conres_test(duplex_mode duplx_mode) :
     scheduler_test_simulator(4, duplx_mode == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
     ocudulog::fetch_basic_logger("SCHED", true).set_level(sched_log_level);
     builder_params = cell_config_builder_profiles::create(duplx_mode);
   }
@@ -425,6 +427,8 @@ protected:
         scheduler_test_sim_config{.max_scs        = GetParam().max_scs,
                                   .ntn_cs_koffset = std::chrono::milliseconds(GetParam().ntn_cs_koffset)})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
     // Create cell.
     auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     if (ntn_cs_koffset != std::chrono::milliseconds{0}) {
@@ -592,6 +596,8 @@ class cfra_scheduler_test : public scheduler_test_simulator, public ::testing::T
 public:
   cfra_scheduler_test()
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
     cell_config_builder_params bparams;
     auto                       cell_req = sched_config_helper::make_default_sched_cell_configuration_request(bparams);
     cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->nof_cb_preambles_per_ssb = NOF_CB_PREAMBLES;
@@ -703,6 +709,8 @@ class cfra_csi_collision_test : public scheduler_test_simulator, public ::testin
 public:
   cfra_csi_collision_test() : scheduler_test_simulator(make_no_uci_on_msg3_sched_cfg())
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
     cell_config_builder_params bparams;
     auto                       cell_req = sched_config_helper::make_default_sched_cell_configuration_request(bparams);
     cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->nof_cb_preambles_per_ssb = NOF_CB_PREAMBLES;
@@ -906,6 +914,8 @@ public:
 
 TEST(cfra_multi_ue_rar_test, cfra_pucch_does_not_block_other_ue_msg3_in_same_rar)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
   // Sweep the RACH trigger across the periodic-CSI grid to vary the CFRA-PUCCH/Msg3 alignment. Only some alignments
   // put the CBRA Msg3 in a slot where the CFRA UE has a PUCCH, so the sweep as a whole must reach one.
   bool saw_cbra_msg3_with_cfra_pucch = false;

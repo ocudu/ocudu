@@ -6,6 +6,7 @@
 #include "lib/scheduler/support/sch_pdu_builder.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
 #include "lib/scheduler/ue_context/ue_repository.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -202,6 +203,8 @@ protected:
     cell_cfg(*cfg_mng.add_cell(sched_cfg)),
     ue_db(expert_cfg.ue)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1");
+
     ue_db.register_cell(cell_ues);
   }
 
