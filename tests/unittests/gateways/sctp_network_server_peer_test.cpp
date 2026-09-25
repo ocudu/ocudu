@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "sctp_server_test_helpers.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/gateways/sctp_network_server_factory.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/executors/inline_task_executor.h"
@@ -304,6 +305,8 @@ TEST_P(sctp_network_server_peer_test, when_connect_called_with_empty_address_lis
 
 TEST_P(sctp_network_server_peer_test, when_connect_uses_multiple_destination_addresses_then_association_succeeds)
 {
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-4");
+
   server_cfg1.sctp.bind_addresses = {server1_addr_str, server1_multihomed_addr_str};
   server_cfg2.sctp.bind_addresses = {server2_addr_str, server2_multihomed_addr_str};
 
