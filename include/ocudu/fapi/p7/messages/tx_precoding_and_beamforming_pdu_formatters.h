@@ -30,7 +30,7 @@ struct formatter<ocudu::fapi::tx_precoding_and_beamforming_pdu::prg_precoding> {
       return format_to(ctx.out(), "pm_index={}", *index);
     }
 
-    const auto& weights = std::get<ocudu::precoding_weight_matrix>(prg);
+    const auto& weights = std::get<ocudu::fapi::prg_precoding_weights>(prg);
 
     return format_to(ctx.out(), "pm_weights={}x{}", weights.get_nof_layers(), weights.get_nof_ports());
   }

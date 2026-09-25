@@ -46,9 +46,9 @@ TEST(tx_precoding_and_beamforming_pdu_builder, add_precoding_weights_passes)
   builder.set_precoding_weights(precoding_weight_matrix(nof_layers, nof_ports));
 
   ASSERT_EQ(prg_size, pdu.prg_size);
-  ASSERT_TRUE(std::holds_alternative<precoding_weight_matrix>(pdu.prg.precoding));
-  ASSERT_EQ(nof_layers, std::get<precoding_weight_matrix>(pdu.prg.precoding).get_nof_layers());
-  ASSERT_EQ(nof_ports, std::get<precoding_weight_matrix>(pdu.prg.precoding).get_nof_ports());
+  ASSERT_TRUE(std::holds_alternative<fapi::prg_precoding_weights>(pdu.prg.precoding));
+  ASSERT_EQ(nof_layers, std::get<fapi::prg_precoding_weights>(pdu.prg.precoding).get_nof_layers());
+  ASSERT_EQ(nof_ports, std::get<fapi::prg_precoding_weights>(pdu.prg.precoding).get_nof_ports());
 }
 
 TEST(tx_precoding_and_beamforming_pdu_builder, add_beam_passes)

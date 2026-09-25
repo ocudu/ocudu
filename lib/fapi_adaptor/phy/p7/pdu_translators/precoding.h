@@ -24,9 +24,10 @@ inline precoding_beamforming_composite get_precoding_config(const fapi::tx_preco
     return pm_repo.get_precoding_config(*index);
   }
 
-  const auto& weights = std::get<precoding_weight_matrix>(pdu.prg.precoding);
+  precoding_weight_matrix weights{std::get<fapi::prg_precoding_weights>(pdu.prg.precoding)};
+  precoding_beam_list     beams = get_default_beam_list(weights.get_nof_ports());
 
-  return {weights, get_default_beam_list(weights.get_nof_ports())};
+  return {std::move(weights), beams};
 }
 
 } // namespace fapi_adaptor

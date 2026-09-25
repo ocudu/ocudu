@@ -47,7 +47,7 @@ public:
   {
     ocudu_assert(std::holds_alternative<std::monostate>(pdu.prg.precoding),
                  "The PRG precoding already holds a precoding object.");
-    pdu.prg.precoding = weights;
+    pdu.prg.precoding = prg_precoding_weights(weights);
 
     return *this;
   }

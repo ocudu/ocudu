@@ -18,6 +18,8 @@
 ///
 /// This file contains structures that extend the information from the Type II PMI codebook.
 
+#include "ocudu/ran/precoding/precoding_weight_matrix.h"
+
 namespace ocudu {
 
 /// Maximum number of Type II spatial beams \f$L\f$.
@@ -25,6 +27,12 @@ static constexpr unsigned max_nof_typeII_beams = 4;
 
 /// Maximum number of layers of the Type II codebook, as per TS38.214 Section 5.2.2.2.3.
 static constexpr unsigned max_nof_typeII_layers = 2;
+
+/// \brief Precoding matrix of a Type II codebook.
+///
+/// TS38.214 Section 5.2.2.2.3 limits the rank of the codebook to two, so the matrix holds fewer layers than
+/// \ref precoding_weight_matrix.
+using typeII_precoding_weight_matrix = precoding_weight_matrix_base<max_nof_typeII_layers>;
 
 /// Maximum number of Type II combining coefficients per layer, i.e. \f$2L\f$.
 static constexpr unsigned max_nof_typeII_coefficients = 2 * max_nof_typeII_beams;
