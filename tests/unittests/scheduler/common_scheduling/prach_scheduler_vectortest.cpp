@@ -62,6 +62,11 @@ std::ostream& operator<<(std::ostream& os, span<const prach_occasion_info> occas
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& params)
 {
+  // The intervals are printed as "start..stop" because the gtest discovery of older CMake versions does not split the
+  // test list inside unbalanced brackets, so the "[start..stop)" notation merges the following test cases into one.
+  auto                     to_str = [](const auto& itv) { return fmt::format("{}..{}", itv.start(), itv.stop()); };
+  std::vector<std::string> crbs;
+  std::transform(params.crbs.begin(), params.crbs.end(), std::back_inserter(crbs), to_str);
   return os << fmt::format("dplx_mode={} prach_config_index={} pusch_scs={} active_slots={} nof_slots_period={} "
                            "crbs={} nof_subframes={} symbols={}",
                            to_string(params.dplx_mode),
@@ -69,9 +74,9 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& params)
                            to_string(params.pusch_scs),
                            params.active_slots,
                            params.nof_slots_period,
-                           params.crbs,
+                           fmt::join(crbs, ", "),
                            params.nof_subframes,
-                           params.symbols);
+                           to_str(params.symbols));
 }
 
 } // namespace ocudu
