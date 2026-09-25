@@ -1318,7 +1318,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->range(0, 15);
   add_option(app, "--sr_period_ms", pucch_params.sr_period_msec, "SR period in msec")
       ->capture_default_str()
-      ->enum_values({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F});
+      ->enum_values({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F});
   add_option_function<std::string>(
       app,
       "--formats",

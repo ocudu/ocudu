@@ -453,8 +453,8 @@ struct du_high_unit_pucch_config {
   unsigned nof_cell_csi_resources = 8;
 
   /// \brief \c SR period in milliseconds.
-  /// Among all values given in \c periodicityAndOffset, part of \c \SchedulingRequestResourceConfig, TS 38.331,
-  /// these are the only ones supported. Values: {1, 2, 2.5, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320}.
+  /// Among all values given in \c periodicityAndOffset, part of \c SchedulingRequestResourceConfig, TS 38.331,
+  /// these are the only ones supported. Values: {1, 2, 2.5, 4, 5, 8, 10, 16, 20, 40, 80}.
   float sr_period_msec = 20.0F;
 
   /// PUCCH F0 resource parameter.
