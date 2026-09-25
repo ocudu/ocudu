@@ -88,7 +88,7 @@ public:
                                                                  std::string(TEST_CERT_DIR) + "/link21.key",
                                                                  std::string(TEST_CERT_DIR) + "/ca.crt",
                                                                  mode_map};
-        report_error_if_not(i == 0, "Only one client supported in unit tests for now. i={}", i);
+        report_error_if_not(i == 0, "Only one client supported in unit tests for now");
       }
       ret.first->second->client = create_sctp_network_client(client_cfg);
       report_fatal_error_if_not(ret.first->second->client != nullptr, "Failed to create Client");

@@ -90,7 +90,7 @@ private:
       logger.debug("{}: did not call shutdown for DTLS association", client_name);
     }
 
-    int ret = ::shutdown(fd, SHUT_WR);
+    int ret = ::shutdown(fd, SHUT_RDWR);
 
     if (ret == -1) {
       // Failed to send EOF.
@@ -148,7 +148,7 @@ sctp_network_client_impl::~sctp_network_client_impl()
 
   // Signal that the upper layer sender should stop sending new SCTP data (including the EOF).
   if (eof_needed) {
-    int ret = ::shutdown(socket.fd().value(), SHUT_WR);
+    int ret = ::shutdown(socket.fd().value(), SHUT_RDWR);
 
     if (ret == -1) {
       // Failed to send EOF.
