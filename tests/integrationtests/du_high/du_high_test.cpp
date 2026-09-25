@@ -536,6 +536,7 @@ public:
     plmn_id(plmn_id_),
     s_nssai(s_nssai_)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
   }
 
   void apply_rrm_reconfiguration(unsigned max_rbs, unsigned min_rbs)

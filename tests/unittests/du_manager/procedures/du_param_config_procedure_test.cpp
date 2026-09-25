@@ -118,6 +118,7 @@ public:
       return cfgs;
     }())
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
   }
 
   static constexpr unsigned NOF_CELLS = 3U;

@@ -5,6 +5,7 @@
 #include "lib/scheduler/config/time_domain_mapper.h"
 #include "lib/scheduler/slicing/inter_slice_scheduler.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -299,6 +300,7 @@ protected:
         {{{plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}}, {MIN_SLICE_RB, MAX_SLICE_RB}},
          {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}}, {MIN_SLICE_RB, MAX_SLICE_RB}}})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
   }
 
   const ue_configuration* add_ue(du_ue_index_t                                        ue_idx,
@@ -532,6 +534,7 @@ protected:
         {{{plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}}, {MIN_SLICE_RB, MAX_NOF_PRBS}, PRIORITY},
          {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}}, {0, MAX_NOF_PRBS}, PRIORITY}})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
   }
 
   const ue_configuration* add_ue(du_ue_index_t ue_idx)
@@ -614,6 +617,7 @@ protected:
           PRIORITY},
          {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}}, {0, MAX_NOF_PRBS}, PRIORITY}})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
   }
 
   const ue_configuration* add_ue(du_ue_index_t ue_idx)
@@ -726,6 +730,7 @@ protected:
           {DED_SLICE_RB, MIN_SLICE_RB, MAX_NOF_PRBS},
           PRIORITY}})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
   }
 
   const ue_configuration* add_ue(du_ue_index_t ue_idx)
@@ -836,6 +841,7 @@ protected:
           PRIORITY},
          {{plmn_identity::test_value(), s_nssai_t{slice_service_type{2}}}, {MIN_SLICE_RB, MAX_NOF_PRBS}, PRIORITY}})
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
   }
 
   const ue_configuration* add_ue(du_ue_index_t ue_idx)

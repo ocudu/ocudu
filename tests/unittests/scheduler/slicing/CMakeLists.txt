@@ -13,4 +13,4 @@ target_link_libraries(slice_scheduler_test
         gtest
         gtest_main
 )
-add_test(slice_scheduler_test slice_scheduler_test)
+gtest_discover_tests(slice_scheduler_test)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
@@ -34,6 +35,8 @@ protected:
   base_multi_slice_scheduler_tester(const multi_slice_test_params& params_) :
     scheduler_test_simulator(4, subcarrier_spacing::kHz30), params(params_)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
+
     // Add Cell.
     auto sched_cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
     sched_cell_cfg_req.rrm_policy_members = params.slices;
@@ -312,6 +315,8 @@ protected:
 
   multi_slice_dedicated_ul_rbs_test() : scheduler_test_simulator(4, subcarrier_spacing::kHz30)
   {
+    OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-17-3-e");
+
     auto_crc = true;
     auto_uci = true;
 
