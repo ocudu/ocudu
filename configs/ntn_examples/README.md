@@ -102,6 +102,9 @@ cell_cfg:
     ta_measurement_slot_period: 1000
     ta_cmd_offset_threshold: 1
     ta_outlier_detection_zscore_threshold: 0.0
+  mac_cell_group:
+    sr_cfg:
+      sr_prohibit_timer: ... # smallest value covering cell_specific_koffset, one SR per round trip
   ntn:
     satellite_idx: 0 # references the serving satellite above
     cell_specific_koffset: ... # derived from the maximum propagation delay

@@ -771,6 +771,11 @@ if __name__ == "__main__":
     # (e.g. -c sat.yml).
     sat_cfg = {"ntn": {"satellites": satellites}}
 
+    # sr-ProhibitTimer: the smallest value covering the round trip, so the UE sends one SR per round trip. Values above
+    # 128ms are signalled via sr-ProhibitTimer-v1700.
+    sr_prohibit_timer_values = [1, 2, 4, 8, 16, 32, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 1082]
+    sr_prohibit_timer = next(v for v in sr_prohibit_timer_values if v >= serving["cell_specific_koffset"])
+
     # DU/cell config: references satellites from sat.yml by satellite_idx.
     ntn_cell_cfg = {
         "cell_cfg": {
@@ -780,6 +785,11 @@ if __name__ == "__main__":
                 "ta_measurement_slot_period": 1000,
                 "ta_cmd_offset_threshold": 1,
                 "ta_outlier_detection_zscore_threshold": 0.0,
+            },
+            "mac_cell_group": {
+                "sr_cfg": {
+                    "sr_prohibit_timer": sr_prohibit_timer,
+                },
             },
             "ntn": cell_ntn,
         }
