@@ -115,6 +115,7 @@ public:
   uci_sched_meas_gap_test() :
     t_bench{test_bench_params{.sr_period = sr_period, .sr_offset = 0, .csi_period = std::nullopt, .meas_gap = test_gap}}
   {
+    OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
   }
 
 protected:

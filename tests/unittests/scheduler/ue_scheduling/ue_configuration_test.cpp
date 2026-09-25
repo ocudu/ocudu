@@ -202,6 +202,8 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 class ue_ul_meas_gap_test : public ue_configuration_test
 {
 protected:
+  ue_ul_meas_gap_test() { OCUDU_TEST_REQUIREMENTS("DU-GEN-9"); }
+
   /// 6ms gap every 80ms, starting at subframe 10. At 15kHz there is one slot per subframe.
   static constexpr meas_gap_config test_gap{10, meas_gap_length::ms6, meas_gap_repetition_period::ms80};
 

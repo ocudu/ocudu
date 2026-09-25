@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ran/meas_gap_config.h"
 #include <gtest/gtest.h>
 
@@ -9,6 +10,8 @@ using namespace ocudu;
 
 TEST(supported_meas_gap_patterns_test, default_only_supports_mandatory_patterns_0_and_1)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   const supported_meas_gap_patterns default_patterns;
 
   // Gap patterns 0 and 1 are mandatory and always supported.
@@ -22,6 +25,8 @@ TEST(supported_meas_gap_patterns_test, default_only_supports_mandatory_patterns_
 
 TEST(supported_meas_gap_patterns_test, mandatory_patterns_are_supported_even_if_not_marked)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   // Even if patterns 0 and 1 are never explicitly marked, they must remain supported.
   supported_meas_gap_patterns patterns;
   patterns.mark_supported(4);
@@ -49,6 +54,8 @@ slot_point slot_at_gap_phase(unsigned phase, unsigned nof_periods = 70)
 
 TEST(is_inside_meas_gap_test, gap_spans_exactly_mgl_slots)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   // MGL is 6ms and there is one slot per subframe at 15kHz, so the gap covers the 6 slots at phases 0..5. Phase 6 is
   // the first slot after the gap.
   for (unsigned phase = 0; phase != 6; ++phase) {
@@ -59,6 +66,8 @@ TEST(is_inside_meas_gap_test, gap_spans_exactly_mgl_slots)
 
 TEST(is_inside_ul_meas_gap_test, untracked_timing_advance_still_covers_the_trailing_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   // An untracked T_TA gets no leading guard, but keeps the trailing slot: a terrestrial UE is advanced by its own round
   // trip, which the caller does not report. So the window is MGL + 1 slots at phases 0..6, unshifted.
   constexpr std::optional<std::chrono::microseconds> no_ul_ta = std::nullopt;
@@ -73,6 +82,8 @@ TEST(is_inside_ul_meas_gap_test, untracked_timing_advance_still_covers_the_trail
 
 TEST(is_inside_ul_meas_gap_test, ul_gap_is_shifted_by_the_ue_timing_advance)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   // NTN cell with a feeder link: T_TA is ta-Common (7.3ms, feeder link round trip) plus the service link round trip
   // (7.3ms). The UE transmits uplink slot S at position S - T_TA on its downlink grid (TS 38.211, Section 4.3.1), so
   // the slots it cannot transmit in are those whose phase falls at T_TA past the gap offset, not at the gap offset.
@@ -86,6 +97,8 @@ TEST(is_inside_ul_meas_gap_test, ul_gap_is_shifted_by_the_ue_timing_advance)
 
 TEST(is_inside_ul_meas_gap_test, ul_gap_is_guarded_at_each_edge)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   // A guard slot at each edge on top of the slot the trailing edge gets for the truncation of T_TA, so the window spans
   // MGL + 3 slots: phases 13..21 for a T_TA of 14 slots.
   constexpr std::chrono::microseconds ul_ta{14600};
@@ -99,6 +112,8 @@ TEST(is_inside_ul_meas_gap_test, ul_gap_is_guarded_at_each_edge)
 
 TEST(is_inside_ul_meas_gap_test, the_guard_keeps_its_duration_when_the_cell_scs_grows)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   // The 1ms guard spans 2 slots at 30kHz, not 1. T_TA is a whole number of milliseconds here, so that it truncates to
   // the same physical time on either grid.
   constexpr std::chrono::microseconds ul_ta{14000};
@@ -120,6 +135,8 @@ TEST(is_inside_ul_meas_gap_test, the_guard_keeps_its_duration_when_the_cell_scs_
 
 TEST(is_inside_ul_meas_gap_test, timing_advance_longer_than_the_gap_period_wraps)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
   // A GEO cell has a T_TA of several hundred milliseconds, well beyond one MGRP. Only T_TA modulo MGRP determines the
   // position of the window, so a large T_TA does not widen it beyond the usual MGL + 3 slots.
   constexpr std::chrono::microseconds geo_ul_ta{480000};
