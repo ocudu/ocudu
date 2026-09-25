@@ -23,4 +23,4 @@ target_link_libraries(sched_ue_context_test
         ocudulog
         gtest
         ocudu_gtest_main)
-add_test(sched_ue_context_test sched_ue_context_test)
+gtest_discover_tests(sched_ue_context_test)
