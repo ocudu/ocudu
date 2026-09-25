@@ -92,9 +92,8 @@ bool openssl_dtls_ssl::shutdown()
     return true;
   }
 
-  int err = SSL_get_error(ssl, ret);
-
-  logger.error("SSL_shutdown failed: ret={}, ssl_error={}", ret, err);
+  unsigned long err = SSL_get_error(ssl, ret);
+  logger.error("SSL_shutdown failed: ret={}, ssl_error={}", ret, openssl_error{err});
   return false;
 }
 
@@ -152,7 +151,7 @@ expected<byte_buffer, dtls_ssl_read_error> openssl_dtls_ssl::receive()
       SSL_shutdown(ssl);
       return make_unexpected(dtls_ssl_read_error::shutdown);
     }
-    logger.error("SSL_read returned {}, SSL_get_error={}", ret, ssl_error);
+    logger.error("SSL_read returned {}, SSL_get_error={}", ret, openssl_error{ssl_error});
     unsigned long err;
     while ((err = ERR_get_error()) != 0) {
       char error_buf[256];

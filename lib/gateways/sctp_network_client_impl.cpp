@@ -49,15 +49,15 @@ public:
     if (not ssl_enabled) {
       auto dest_addr = server_addr.native();
       bytes_sent     = ::sctp_sendmsg(fd,
-                                      pdu_span.data(),
-                                      pdu_span.size(),
-                                      const_cast<struct sockaddr*>(dest_addr.addr),
-                                      dest_addr.addrlen,
-                                      htonl(ppid),
-                                      0,
-                                      stream_no,
-                                      0,
-                                      0);
+                                  pdu_span.data(),
+                                  pdu_span.size(),
+                                  const_cast<struct sockaddr*>(dest_addr.addr),
+                                  dest_addr.addrlen,
+                                  htonl(ppid),
+                                  0,
+                                  stream_no,
+                                  0,
+                                  0);
     } else {
       ocudu_assert(ssl, "Trying to send a PDU with SSL enabled, but no SSL association is present");
       bytes_sent = ssl->write(pdu_span);
@@ -444,8 +444,9 @@ void sctp_network_client_impl::receive_plain()
     }
     return;
   }
+
   if (rx_bytes == 0) {
-    logger.error("{}: RX EOF", node_cfg.if_name);
+    logger.debug("{}: Received EOF. Terminating association", node_cfg.if_name);
     handle_connection_terminated("Received SCTP EOF");
     ocudulog::flush();
     return;
@@ -471,6 +472,7 @@ void sctp_network_client_impl::receive_dtls()
 
   expected<byte_buffer, dtls_ssl_read_error> plain = ssl->receive();
   if (not plain.has_value()) {
+    logger.warning("DTLS receive returned error. err={}", plain.error());
     return;
   }
 

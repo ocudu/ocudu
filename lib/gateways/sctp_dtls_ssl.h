@@ -69,7 +69,6 @@ public:
 
 private:
   static void dtls_notification_cb(BIO* bio, void* context, void* buf);
-  void        send_test_data(int line);
 
   dtls_ssl_config cfg;
   BIO*            bio = nullptr;
@@ -85,3 +84,28 @@ private:
 #endif
 
 } // namespace ocudu
+
+namespace fmt {
+
+// SN size
+template <>
+struct formatter<ocudu::dtls_ssl_read_error> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(ocudu::dtls_ssl_read_error err, FormatContext& ctx) const
+  {
+    switch (err) {
+      case ocudu::dtls_ssl_read_error::shutdown:
+        return format_to(ctx.out(), "shutdown");
+      default:
+        return format_to(ctx.out(), "unknown");
+    }
+  }
+};
+
+} // namespace fmt

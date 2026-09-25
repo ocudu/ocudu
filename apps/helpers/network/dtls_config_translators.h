@@ -15,7 +15,6 @@ namespace ocudu {
 inline void fill_dtls_network_gateway_config_params(dtls_context_config& dtls_cfg, const dtls_appconfig& app_cfg)
 {
   dtls_cfg.mode             = app_cfg.mode == dtls_appconfig_mode::server ? dtls_mode::server : dtls_mode::client;
-  dtls_cfg.session_id       = app_cfg.mode == dtls_appconfig_mode::server ? "1" : "2";
   dtls_cfg.cert_filename    = app_cfg.cert_filename;
   dtls_cfg.key_filename     = app_cfg.key_filename;
   dtls_cfg.ca_cert_filename = app_cfg.ca_cert_filename;
