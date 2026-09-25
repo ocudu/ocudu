@@ -3,6 +3,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/scheduler/support/pdcch_aggregation_level_calculator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ran/csi_rs/csi_report_config.h"
 #include "fmt/ranges.h"
 #include <gtest/gtest.h>
@@ -10,7 +11,10 @@
 using namespace ocudu;
 
 class pdcch_aggregation_level_calculation_corner_cases_tester : public ::testing::Test
-{};
+{
+protected:
+  pdcch_aggregation_level_calculation_corner_cases_tester() { OCUDU_TEST_REQUIREMENTS("DU-GEN-6"); }
+};
 
 TEST_F(
     pdcch_aggregation_level_calculation_corner_cases_tester,
@@ -63,7 +67,7 @@ class pdcch_aggregation_level_calculation_params_tester
   : public ::testing::TestWithParam<pdcch_aggregation_level_calculation_test_params>
 {
 protected:
-  pdcch_aggregation_level_calculation_params_tester() : params(GetParam()) {}
+  pdcch_aggregation_level_calculation_params_tester() : params(GetParam()) { OCUDU_TEST_REQUIREMENTS("DU-GEN-6"); }
 
   pdcch_aggregation_level_calculation_test_params params;
 };
