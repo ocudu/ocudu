@@ -116,7 +116,7 @@ public:
 /// Test the f1 setup procedure was successful
 TEST_F(cu_du_test, when_f1setup_successful_then_du_connected)
 {
-  OCUDU_TEST_REQUIREMENTS("MVP-ARCH-INTF-6");
+  OCUDU_TEST_REQUIREMENTS("MVP-ARCH-INTF-6", "MVP-ARCH-INTF-9");
 
   // check that DU has been added
   auto report = cu_cp_obj->get_metrics_handler().request_metrics_report();
