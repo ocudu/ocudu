@@ -564,6 +564,8 @@ TEST_F(single_ue_harq_entity_test,
 
 TEST_F(single_ue_harq_entity_test, when_newtx_has_no_pusch_repetitions_then_waiting_ack_matches_only_the_pusch_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   auto h_ul = harq_ent.alloc_ul_harq(current_slot, max_retxs);
   ASSERT_TRUE(h_ul.has_value());
 
@@ -573,6 +575,8 @@ TEST_F(single_ue_harq_entity_test, when_newtx_has_no_pusch_repetitions_then_wait
 
 TEST_F(single_ue_harq_entity_test, when_newtx_uses_pusch_repetitions_then_waiting_ack_matches_every_occasion_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   constexpr uint8_t nof_reps = 4;
 
   auto h_ul = harq_ent.alloc_ul_harq(current_slot, max_retxs, std::nullopt, true, nof_reps);
@@ -588,6 +592,8 @@ TEST_F(single_ue_harq_entity_test, when_newtx_uses_pusch_repetitions_then_waitin
 
 TEST_F(single_ue_harq_entity_test, when_one_occasion_of_a_pusch_bundle_decodes_then_the_combined_crc_stays_ok)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   constexpr uint8_t nof_reps = 4;
 
   auto h_ul = harq_ent.alloc_ul_harq(current_slot, max_retxs, std::nullopt, true, nof_reps);
@@ -603,6 +609,8 @@ TEST_F(single_ue_harq_entity_test, when_one_occasion_of_a_pusch_bundle_decodes_t
 
 TEST_F(single_ue_harq_entity_test, when_no_occasion_of_a_pusch_bundle_decodes_then_the_combined_crc_stays_ko)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   constexpr uint8_t nof_reps = 4;
 
   auto h_ul = harq_ent.alloc_ul_harq(current_slot, max_retxs, std::nullopt, true, nof_reps);
@@ -615,6 +623,8 @@ TEST_F(single_ue_harq_entity_test, when_no_occasion_of_a_pusch_bundle_decodes_th
 
 TEST_F(single_ue_harq_entity_test, when_a_harq_process_is_reused_then_the_combined_crc_is_cleared)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   constexpr uint8_t nof_reps = 4;
 
   // Take every UL HARQ, so that the process freed below is the only one left for the last allocation. A stale
@@ -639,6 +649,8 @@ TEST_F(single_ue_harq_entity_test, when_a_harq_process_is_reused_then_the_combin
 
 TEST_F(single_ue_harq_entity_test, when_a_harq_process_is_retransmitted_then_the_combined_crc_is_cleared)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   constexpr uint8_t nof_reps = 4;
 
   auto h_ul = harq_ent.alloc_ul_harq(current_slot, max_retxs, std::nullopt, true, nof_reps);
@@ -655,6 +667,8 @@ TEST_F(single_ue_harq_entity_test, when_a_harq_process_is_retransmitted_then_the
 
 TEST_F(single_ue_harq_entity_test, when_retx_uses_pusch_repetitions_then_waiting_ack_follows_the_retx_bundle)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   constexpr uint8_t nof_reps = 4;
 
   auto h_ul = harq_ent.alloc_ul_harq(current_slot, max_retxs, std::nullopt, true, nof_reps);

@@ -1037,6 +1037,8 @@ protected:
 // must still be a bundle, while a fresh newTx is a single transmission.
 TEST_P(ue_grid_allocator_pusch_repetition_test, retx_reuses_original_repetition_scheme_after_sinr_recovers)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue& u     = add_repetition_ue();
   ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
 
@@ -1098,6 +1100,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, retx_reuses_original_repetition_
 // allocated independently of this bundle, say -- must end up on that occasion, with the PUCCH grant dropped.
 TEST_P(ue_grid_allocator_pusch_repetition_test, uci_colliding_with_repetition_occasion_is_multiplexed_onto_it)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue&                    u           = add_repetition_ue();
   ue_cell&                     ue_cc       = ues[u.ue_index].get_pcell();
   const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
@@ -1148,6 +1152,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, uci_colliding_with_repetition_oc
 // V_T_DAI_UL=4) while the gNB demaps a bit off the occasion: the codebooks disagree and the UCI is lost, silently.
 TEST_P(ue_grid_allocator_pusch_repetition_test, harq_ack_booked_on_a_repetition_occasion_is_counted_in_the_ul_dai)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue& u     = add_repetition_ue();
   ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
 
@@ -1185,6 +1191,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, harq_ack_booked_on_a_repetition_
 // there regardless: a collision with whoever got those RBs. The bundle must route around them.
 TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_avoids_rbs_busy_in_an_occasion_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue& u     = add_repetition_ue();
   ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
 
@@ -1230,6 +1238,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_avoids_rbs_busy_in_an_occ
 // so the occasion is simply lost and the ones after it do not move up. The bundle must give way instead.
 TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_occasion_falls_in_an_ul_meas_gap_gives_way_to_a_single_tx)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // Reach a known, ready slot first: every occasion's slot is then known in advance.
   slot_indication();
 
@@ -1270,6 +1280,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_occasion_falls_in_a
 // same slot.
 TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_occasion_falls_on_a_cg_slot_gives_way_to_a_single_tx)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // Reach a known, ready slot first: every occasion's slot is then known in advance.
   slot_indication();
 
@@ -1304,6 +1316,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_occasion_falls_on_a
 // count exactly, so it cannot shrink around the busy RBs the way a newTx can -- it has to move aside as a whole.
 TEST_P(ue_grid_allocator_pusch_repetition_test, retx_bundle_avoids_rbs_busy_in_an_occasion_slot)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue& u     = add_repetition_ue();
   ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
 
@@ -1370,6 +1384,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, retx_bundle_avoids_rbs_busy_in_a
 // slot, and the UCI there would be lost silently.
 TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_slots_need_different_ul_dai_gives_way_to_a_single_tx)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue& u     = add_repetition_ue();
   ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
 
@@ -1410,6 +1426,8 @@ TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_slots_need_differen
 // is the DAI that decides, not the mere presence of HARQ-ACK in several slots of the bundle.
 TEST_P(ue_grid_allocator_pusch_repetition_test, bundle_whose_slots_agree_on_the_ul_dai_is_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue& u     = add_repetition_ue();
   ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
 
@@ -1469,6 +1487,8 @@ protected:
 // grant now routes around everything busy in every slot of the bundle.
 TEST_P(ue_grid_allocator_pusch_repetition_wideband_test, pucch_in_an_occasion_slot_does_not_break_the_bundle)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   const ue&                    u           = add_repetition_ue();
   ue_cell&                     ue_cc       = ues[u.ue_index].get_pcell();
   const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();

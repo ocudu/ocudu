@@ -4,6 +4,7 @@
 
 #include "lib/du/du_high/du_manager/ran_resource_management/du_pdsch_resource_manager.h"
 #include "lib/du/du_high/du_manager/ran_resource_management/du_pusch_resource_manager.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
@@ -153,6 +154,8 @@ TEST_F(du_pxsch_repetition_resource_manager_test, when_ue_supports_pusch_repetit
 // 0_1 could never use.
 TEST_F(du_pxsch_repetition_resource_manager_test, dedicated_pusch_list_offers_exactly_the_k2_values_of_the_common_one)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   cell_group_config ue = make_ue();
   pusch_mng.update_resources(ue, make_caps(1, true));
 

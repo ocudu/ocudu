@@ -4,6 +4,7 @@
 
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_cli11_schema.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_validator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ran/pusch/pusch_constants.h"
 #include <gtest/gtest.h>
 
@@ -34,11 +35,15 @@ protected:
 
 TEST_F(du_high_pusch_repetition_config_test, default_configuration_is_valid)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   ASSERT_TRUE(validate());
 }
 
 TEST_F(du_high_pusch_repetition_config_test, repetitions_within_the_soft_combining_budget_are_valid)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // (1 + 3) * 8 == 32, exactly the budget.
   pusch_cfg().max_nof_harq_retxs = 3;
   pusch_cfg().max_nof_rep        = 8;
@@ -50,6 +55,8 @@ TEST_F(du_high_pusch_repetition_config_test, repetitions_within_the_soft_combini
 
 TEST_F(du_high_pusch_repetition_config_test, repetitions_beyond_the_soft_combining_budget_are_rejected)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // (1 + 4) * 8 == 40, over the budget by one retransmission.
   pusch_cfg().max_nof_harq_retxs = 4;
   pusch_cfg().max_nof_rep        = 8;
@@ -59,6 +66,8 @@ TEST_F(du_high_pusch_repetition_config_test, repetitions_beyond_the_soft_combini
 
 TEST_F(du_high_pusch_repetition_config_test, the_initial_transmission_counts_towards_the_budget)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // (1 + 1) * 16 == 32 fits, while (1 + 2) * 16 == 48 does not: the budget covers the initial transmission too, not
   // just the retransmissions.
   pusch_cfg().max_nof_rep        = 16;

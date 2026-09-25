@@ -6,6 +6,7 @@
 /// \brief Unit tests for SINR-triggered Rel-16 PUSCH repetitions.
 
 #include "test_utils/scheduler_test_simulator.h"
+#include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
@@ -173,6 +174,8 @@ protected:
 
 TEST_F(scheduler_pusch_repetition_test, when_sinr_below_threshold_then_pusch_repetition_bundles_are_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   // Enqueue enough bytes for continuous UL tx.
   push_full_bsr();
 
@@ -247,6 +250,8 @@ protected:
 
 TEST_F(scheduler_pusch_repetition_high_sinr_test, when_sinr_above_threshold_then_no_repetitions_are_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   push_full_bsr();
 
   const unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).params.tdd_cfg);
@@ -268,6 +273,8 @@ protected:
 
 TEST_F(scheduler_pusch_repetition_forced_test, when_force_rep_enabled_then_repetitions_are_scheduled_despite_high_sinr)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   push_full_bsr();
 
   const unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).params.tdd_cfg);
@@ -295,6 +302,8 @@ protected:
 
 TEST_F(scheduler_pusch_repetition_disabled_test, when_threshold_unset_then_no_repetitions_are_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   push_full_bsr();
 
   const unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).params.tdd_cfg);
@@ -324,6 +333,8 @@ protected:
 
 TEST_F(scheduler_pusch_repetition_fallback_test, when_no_bundle_fits_then_a_single_transmission_is_scheduled)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   push_full_bsr();
 
   const unsigned tdd_period = nof_slots_per_tdd_period(*cell_cfg(to_du_cell_index(0)).params.tdd_cfg);
@@ -386,6 +397,8 @@ protected:
 /// on that DAI, and the DCI carries the per-slot count rather than the total the grant was sized for.
 TEST_F(scheduler_pusch_repetition_dai_test, when_a_bundle_is_scheduled_then_one_ul_dai_describes_all_its_slots)
 {
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-SVCS-16-8-d");
+
   push_full_bsr();
   push_full_dl_buffer_state();
 
