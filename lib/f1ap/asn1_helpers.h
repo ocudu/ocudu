@@ -113,6 +113,11 @@ f1ap_drb_failed_to_setupmod
 make_drb_failed_to_setupmod(const asn1::f1ap::drbs_failed_to_be_setup_mod_item_s& asn1_type);
 f1ap_drb_failed_to_setupmod make_drb_failed_to_setupmod(const asn1::f1ap::drbs_failed_to_be_modified_item_s& asn1_type);
 
+/// \brief Convert the geographical coordinates of a cell antenna to ASN.1, as per TS 38.473 section 9.3.1.191.
+///
+/// \remark The caller must set the position definition type to "direct".
+asn1::f1ap::geographical_coordinates_s geographical_coordinates_to_asn1(const geographical_coordinates_t& geo);
+
 /// Convert F1AP TRP info to ASN.1.
 asn1::f1ap::trp_info_s trp_info_to_asn1(const odu::du_trp_info& trp);
 

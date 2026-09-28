@@ -867,6 +867,24 @@ static asn1::f1ap::prs_cfg_s prs_cfg_to_asn1(const prs_cfg_t& prs_cfg)
   return asn1_prs_cfg;
 }
 
+asn1::f1ap::geographical_coordinates_s ocudu::geographical_coordinates_to_asn1(const geographical_coordinates_t& geo)
+{
+  geographical_coordinates_s asn1out;
+
+  const auto& direct = std::get<trp_position_direct_t>(geo.trp_position_definition_type);
+
+  trp_position_direct_s& asn1_direct = asn1out.trp_position_definition_type.set_direct();
+  if (std::holds_alternative<ng_ran_access_point_position_t>(direct.accuracy)) {
+    asn1_direct.accuracy.set_trp_position() =
+        access_point_position_to_asn1(std::get<ng_ran_access_point_position_t>(direct.accuracy));
+  } else {
+    asn1_direct.accuracy.set_trph_aposition() =
+        ha_access_point_position_to_asn1(std::get<ng_ran_high_accuracy_access_point_position_t>(direct.accuracy));
+  }
+
+  return asn1out;
+}
+
 asn1::f1ap::trp_info_s ocudu::trp_info_to_asn1(const odu::du_trp_info& trp)
 {
   trp_info_s asn1out;
@@ -894,17 +912,8 @@ asn1::f1ap::trp_info_s ocudu::trp_info_to_asn1(const odu::du_trp_info& trp)
     asn1out.trp_info_type_resp_list.push_back(item);
   }
   if (trp.geo_coords.has_value()) {
-    const auto& direct = std::get<trp_position_direct_t>(trp.geo_coords.value().trp_position_definition_type);
-
     trp_info_type_resp_item_c item;
-    trp_position_direct_s& asn1_direct = item.set_geographical_coordinates().trp_position_definition_type.set_direct();
-    if (std::holds_alternative<ng_ran_access_point_position_t>(direct.accuracy)) {
-      asn1_direct.accuracy.set_trp_position() =
-          access_point_position_to_asn1(std::get<ng_ran_access_point_position_t>(direct.accuracy));
-    } else {
-      asn1_direct.accuracy.set_trph_aposition() =
-          ha_access_point_position_to_asn1(std::get<ng_ran_high_accuracy_access_point_position_t>(direct.accuracy));
-    }
+    item.set_geographical_coordinates() = ocudu::geographical_coordinates_to_asn1(trp.geo_coords.value());
     asn1out.trp_info_type_resp_list.push_back(item);
   }
 
