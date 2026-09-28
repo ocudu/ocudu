@@ -47,7 +47,7 @@ protected:
     ta_sys.slot_indication(next_sl_tx);
   }
 
-  unsigned add_ue()
+  unsigned add_ue(unsigned ntn_koffset = 0)
   {
     unsigned ue_index;
     if (free_list.empty()) {
@@ -60,7 +60,7 @@ protected:
     ocudu_assert(ret.second, "Failed to insert UE in the repository");
     auto& u     = ret.first->second;
     u.ue_lc_chs = lc_ch_sys.create_ue(to_du_ue_index(ue_index), ul_scs, false, cfg_pool.create({}));
-    u.ta_mgr    = ta_sys.add_ue(time_alignment_group::id_t{0}, ul_scs, u.ue_lc_chs.view());
+    u.ta_mgr    = ta_sys.add_ue(time_alignment_group::id_t{0}, ul_scs, u.ue_lc_chs.view(), ntn_koffset);
     return ue_index;
   }
 
@@ -314,6 +314,39 @@ class multi_ue_ta_manager_test : public base_ta_management_system_test, public :
 protected:
   multi_ue_ta_manager_test() = default;
 };
+
+TEST_F(multi_ue_ta_manager_test, n_ta_indications_ignored_until_the_ue_applies_the_ta_cmd_past_its_koffset)
+{
+  // In NTN, K_offset delays the TA command further, as per TS 38.213, Section 4.2.
+  const unsigned ntn_koffset = 40;
+  const unsigned ue_index    = add_ue(ntn_koffset);
+  run_slot();
+
+  const uint8_t new_ta_cmd = 33;
+  const float   ul_sinr    = expert_cfg.ue.ta_control.update_measurement_ul_sinr_threshold + 10;
+  ues.at(ue_index).ta_mgr.handle_ul_n_ta_update_indication(
+      time_alignment_group::id_t{0}, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
+  ASSERT_TRUE(run_until_next_ta_cmd(ue_index, expert_cfg.ue.ta_control.measurement_period).has_value())
+      << "Missing TA command CE allocation";
+
+  for (unsigned i = 0; i != expert_cfg.ue.ta_control.measurement_prohibit_period + ntn_koffset; ++i) {
+    ues.at(ue_index).ta_mgr.handle_ul_n_ta_update_indication(
+        time_alignment_group::id_t{0}, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd), ul_sinr);
+    run_slot();
+    ASSERT_FALSE(fetch_ta_cmd_mac_ce_allocation(ue_index).has_value())
+        << "TA command should not be triggered before the UE applies the previous one";
+  }
+  ASSERT_FALSE(run_until_next_ta_cmd(ue_index).has_value())
+      << "N_TA updates measured before the UE applied the TA command were not discarded";
+
+  // N_TA updates count again once the UE applied the TA command.
+  const uint8_t new_ta_cmd2 = 40;
+  ues.at(ue_index).ta_mgr.handle_ul_n_ta_update_indication(
+      time_alignment_group::id_t{0}, compute_n_ta_diff_leading_to_new_ta_cmd(new_ta_cmd2), ul_sinr);
+  const auto ta_cmd_mac_ce_alloc = run_until_next_ta_cmd(ue_index, expert_cfg.ue.ta_control.measurement_period);
+  ASSERT_TRUE(ta_cmd_mac_ce_alloc.has_value()) << "Missing TA command CE allocation";
+  ASSERT_EQ(std::get<ta_cmd_ce_payload>(ta_cmd_mac_ce_alloc->ce_payload).ta_cmd, new_ta_cmd2);
+}
 
 TEST_F(multi_ue_ta_manager_test, ta_cmd_is_successfully_triggered_for_multiple_ues)
 {

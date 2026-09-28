@@ -169,8 +169,10 @@ void ue_repository::add_ue(const ue_configuration& ue_cfg, const ue_creation_con
                              creation_ctx.ul_ccch_slot_rx,
                              logger);
   ue_ta_report_trackers.emplace(ue_index);
-  auto ue_ta_mgr = ta_mgr_sys.add_ue(
-      ue_cfg.pcell_cfg().tag_id(), pcell_cmn.params.ul_cfg_common.init_ul_bwp.generic_params.scs, ue_lc_mng.view());
+  auto ue_ta_mgr = ta_mgr_sys.add_ue(ue_cfg.pcell_cfg().tag_id(),
+                                     pcell_cmn.params.ul_cfg_common.init_ul_bwp.generic_params.scs,
+                                     ue_lc_mng.view(),
+                                     pcell_cmn.ntn_cs_koffset);
 
   // Setup UE cells.
   ue_cell_lookups.emplace(ue_index);

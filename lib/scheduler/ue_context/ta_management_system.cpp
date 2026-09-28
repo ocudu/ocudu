@@ -28,7 +28,8 @@ ta_management_system::ta_management_system(const scheduler_ta_control_config& ta
 
 ue_ta_manager ta_management_system::add_ue(time_alignment_group::id_t         pcell_tag_id,
                                            subcarrier_spacing                 ul_scs,
-                                           ue_logical_channel_repository_view lc_ch_mgr)
+                                           ue_logical_channel_repository_view lc_ch_mgr,
+                                           unsigned                           ntn_koffset)
 {
   if (ta_cfg.ta_cmd_offset_threshold < 0) {
     // TA management disabled for this UE.
@@ -36,7 +37,9 @@ ue_ta_manager ta_management_system::add_ue(time_alignment_group::id_t         pc
   }
 
   // Create UE context.
-  auto row_id = ues.insert(ue_ta_context{ul_scs, std::move(lc_ch_mgr)}, wheel_list_node{});
+  // The UE applies a TA command in UL slot n + k + 1 + 2^mu * K_offset, as per TS 38.213, Section 4.2. The prohibit
+  // period covers k + 1.
+  auto row_id = ues.insert(ue_ta_context{ul_scs, ntn_koffset, std::move(lc_ch_mgr)}, wheel_list_node{});
   update_tags(row_id, std::array<time_alignment_group::id_t, 1>{pcell_tag_id});
 
   return ue_ta_manager{*this, row_id};
@@ -203,7 +206,8 @@ void ta_management_system::handle_ul_n_ta_update_indication(soa::row_id         
 
   // Check if the TAG measurement is within the forbid period.
   if (tag_meas.forbid_period_start.has_value()) {
-    if (next_wheel_index - tag_meas.forbid_period_start.value() < ta_cfg.measurement_prohibit_period) {
+    if (next_wheel_index - tag_meas.forbid_period_start.value() <
+        ta_cfg.measurement_prohibit_period + u.ta_cmd_apply_delay) {
       // Within forbid period, discard measurement.
       return;
     }
