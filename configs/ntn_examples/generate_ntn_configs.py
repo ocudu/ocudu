@@ -781,7 +781,6 @@ if __name__ == "__main__":
         "cell_cfg": {
             "ta": {
                 "ta_target": 0,
-                "ta_measurement_slot_prohibit_period": serving["cell_specific_koffset"] + 10,
                 "ta_measurement_slot_period": 1000,
                 "ta_cmd_offset_threshold": 1,
                 "ta_outlier_detection_zscore_threshold": 0.0,

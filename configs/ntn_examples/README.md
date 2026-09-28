@@ -98,7 +98,6 @@ ntn:
 cell_cfg:
   ta: # timing-advance command parameters
     ta_target: 0
-    ta_measurement_slot_prohibit_period: ...
     ta_measurement_slot_period: 1000
     ta_cmd_offset_threshold: 1
     ta_outlier_detection_zscore_threshold: 0.0
