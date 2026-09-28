@@ -27,6 +27,8 @@ public:
   async_task<du_positioning_meas_response>
   request_positioning_measurement(const du_positioning_meas_request& req) override;
 
+  async_task<du_e_cid_meas_response> request_e_cid_measurement(const du_e_cid_meas_request& req) override;
+
 private:
   void update_trp_info();
 

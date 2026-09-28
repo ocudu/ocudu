@@ -6,6 +6,7 @@
 #include "du_positioning_manager_impl.h"
 #include "du_positioning_handler_factory.h"
 #include "procedures/du_positioning_measurement_procedure.h"
+#include "procedures/du_ue_e_cid_measurement_procedure.h"
 #include "procedures/du_ue_positioning_info_procedure.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/prs/prs_constants.h"
@@ -115,6 +116,12 @@ du_positioning_manager_impl::request_positioning_measurement(const du_positionin
   update_trp_info();
 
   return launch_async<positioning_measurement_procedure>(req, cell_mng, ue_mng, du_params, trps);
+}
+
+async_task<du_e_cid_meas_response>
+du_positioning_manager_impl::request_e_cid_measurement(const du_e_cid_meas_request& req)
+{
+  return launch_async<du_ue_e_cid_measurement_procedure>(req, cell_mng, ue_mng, du_params);
 }
 
 void du_positioning_manager_impl::update_trp_info()

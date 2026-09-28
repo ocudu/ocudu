@@ -18,6 +18,7 @@ set(SOURCES
         cu_configuration_procedure.cpp
         f1c_disconnection_handling_procedure.cpp
         du_positioning_measurement_procedure.cpp
+        du_ue_e_cid_measurement_procedure.cpp
         du_ue_positioning_info_procedure.cpp
 )
 add_library(ocudu_du_manager_procedures STATIC ${SOURCES})

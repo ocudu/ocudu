@@ -16,6 +16,7 @@
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/support/async/async_task.h"
+#include <chrono>
 
 namespace ocudu::odu {
 
@@ -109,6 +110,31 @@ struct du_positioning_meas_response {
 };
 
 /// Interface used by F1AP-DU to request the DU for positioning services.
+/// E-CID measurement quantity, as per TS 38.473, Section 9.2.12.20.
+enum class e_cid_meas_quantity {
+  /// Serving cell information of the UE.
+  default_quantity,
+  /// UL Angle of Arrival measured on the SRS of the UE.
+  nr_angle_of_arrival
+};
+
+/// Request to measure the E-CID quantities of one UE, as per TS 38.473, Section 8.13.12.
+struct du_e_cid_meas_request {
+  du_ue_index_t ue_index;
+  /// Quantities to measure. The DU must produce all of them, as per TS 38.473, Section 8.13.12.3.
+  std::vector<e_cid_meas_quantity> quantities;
+};
+
+/// Result of an E-CID measurement request.
+struct du_e_cid_meas_response {
+  /// Set when the DU produced every requested quantity, as per TS 38.473, Section 8.13.12.3.
+  bool success = false;
+  /// Geographical coordinates of the serving cell antenna, as per TS 38.473, Section 8.13.14.2.
+  std::optional<geographical_coordinates_t> geo_coords;
+  /// UL Angle of Arrival measurements. Empty when the request does not include this quantity.
+  std::vector<pos_meas_result_ul_aoa> ul_aoa_results;
+};
+
 class f1ap_du_positioning_handler
 {
 public:
@@ -123,6 +149,9 @@ public:
   /// Request UE positioning measurement as per TS 38.473, Section 8.13.2.
   virtual async_task<du_positioning_meas_response>
   request_positioning_measurement(const du_positioning_meas_request& req) = 0;
+
+  /// Request an E-CID measurement for one UE as per TS 38.473, Section 8.13.12.
+  virtual async_task<du_e_cid_meas_response> request_e_cid_measurement(const du_e_cid_meas_request& req) = 0;
 };
 
 } // namespace ocudu::odu

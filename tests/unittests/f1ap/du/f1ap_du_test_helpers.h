@@ -54,6 +54,7 @@ public:
   std::optional<std::pair<du_ue_index_t, du_ue_index_t>> last_reestablishment_ue_indexes;
   du_positioning_info_response                           next_positioning_info_response;
   du_positioning_meas_response                           next_positioning_meas_response;
+  du_e_cid_meas_response                                 next_e_cid_meas_response;
 
   // F1AP procedures.
   std::optional<gnbcu_config_update_request>      last_cu_upd_req;
@@ -67,6 +68,7 @@ public:
   std::optional<std::vector<du_ue_index_t>>       last_ues_to_reset;
   std::optional<du_positioning_info_request>      last_positioning_info_request;
   std::optional<du_positioning_meas_request>      last_positioning_meas_request;
+  std::optional<du_e_cid_meas_request>            last_e_cid_meas_request;
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -169,6 +171,12 @@ public:
   {
     last_positioning_meas_request = req;
     return launch_no_op_task(du_positioning_meas_response{next_positioning_meas_response});
+  }
+
+  async_task<du_e_cid_meas_response> request_e_cid_measurement(const du_e_cid_meas_request& req) override
+  {
+    last_e_cid_meas_request = req;
+    return launch_no_op_task(du_e_cid_meas_response{next_e_cid_meas_response});
   }
 
   /// \brief Retrieve task scheduler specific to a given UE.
