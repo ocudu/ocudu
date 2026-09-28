@@ -446,6 +446,28 @@ uint8_t config_helpers::compute_max_nof_candidates(aggregation_level aggr_lvl, c
   return max_nof_candidates > PDCCH_MAX_NOF_CANDIDATES_SS ? PDCCH_MAX_NOF_CANDIDATES_SS : max_nof_candidates;
 }
 
+std::optional<unsigned> config_helpers::find_cg_pusch_td_res_idx(const ran_cell_config& cell_cfg)
+{
+  ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
+  ocudu_assert(cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
+               "PUSCH Config Common must be configured.");
+
+  // Symbols left free by the SRS, which is always placed at the end of the slot.
+  const unsigned last_non_srs_symbol =
+      cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
+          ? NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()
+          : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+
+  // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
+  const auto& td_res = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
+  for (unsigned n = 0, sz = td_res.size(); n != sz; ++n) {
+    if (td_res[n].symbols.stop() <= last_non_srs_symbol) {
+      return n;
+    }
+  }
+  return std::nullopt;
+}
+
 cg_configuration config_helpers::make_default_cell_cg_config(const ran_cell_config& cell_cfg)
 {
   ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
@@ -468,24 +490,13 @@ cg_configuration config_helpers::make_default_cell_cg_config(const ran_cell_conf
     return default_cg_cfg;
   }
 
-  // Compute PUSCH symbols to avoid overlapping with SRS.
-  const ofdm_symbol_range non_srs_symbols =
-      cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
-          ? ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()}
-          : ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
-
-  ocudu_assert(cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
-               "PUSCH Config Common must be configured.");
-  const auto& td_res        = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
-  unsigned    cg_td_res_idx = 0U;
-  // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
-  for (unsigned n = 0, sz = td_res.size(); n != sz; ++n) {
-    if (td_res[n].symbols.stop() <= non_srs_symbols.stop()) {
-      cg_td_res_idx = n;
-      break;
-    }
-  }
-  default_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx;
+  // Pick the PUSCH time-domain resource that does not overlap the SRS. The cell configuration validator rejects a cell
+  // in which no such resource exists, so falling back to index 0 here would silently place the CG PUSCH on top of the
+  // SRS instead.
+  const std::optional<unsigned> cg_td_res_idx = config_helpers::find_cg_pusch_td_res_idx(cell_cfg);
+  ocudu_assert(cg_td_res_idx.has_value(),
+               "No PUSCH time domain resource of the cell avoids the SRS symbols, so no CG PUSCH can be configured");
+  default_cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation = cg_td_res_idx.value_or(0U);
 
   return default_cg_cfg;
 }
@@ -502,21 +513,12 @@ unsigned config_helpers::compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_
     cg_td_res_idx = cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation;
   } else {
     // For type2 CG, the TD allocation is not defined yet at this point; the scheduler will choose the symbols that do
-    // not collide with SRS. In the following, we proceed under that assumption.
-
-    // Compute PUSCH symbols to avoid overlapping with SRS.
-    const ofdm_symbol_range non_srs_symbols =
-        cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
-            ? ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()}
-            : ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
-
-    // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
-    for (unsigned n = 0, sz = pusch_td_list.size(); n != sz; ++n) {
-      if (pusch_td_list[n].symbols.stop() <= non_srs_symbols.stop()) {
-        cg_td_res_idx = n;
-        break;
-      }
-    }
+    // not collide with SRS. In the following, we proceed under that assumption, which the cell configuration validator
+    // guarantees by rejecting a cell in which no PUSCH time domain resource avoids the SRS symbols.
+    const std::optional<unsigned> non_srs_td_res_idx = config_helpers::find_cg_pusch_td_res_idx(cell_cfg);
+    ocudu_assert(non_srs_td_res_idx.has_value(),
+                 "No PUSCH time domain resource of the cell avoids the SRS symbols, so no CG PUSCH can be scheduled");
+    cg_td_res_idx = non_srs_td_res_idx.value_or(0U);
   }
 
   const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_list[cg_td_res_idx];

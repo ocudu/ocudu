@@ -53,6 +53,16 @@ make_default_common_search_space_config(const config_helpers::cell_config_builde
 /// Compute the maximum number of candidates that can be accommodated in a CORESET for a given aggregation level.
 uint8_t compute_max_nof_candidates(aggregation_level aggr_lvl, const coreset_configuration& cs_cfg);
 
+/// \brief Finds the index, into the cell's common PUSCH time-domain resource list, of the resource a Configured Grant
+/// PUSCH should use, i.e. the first one whose symbols end before the SRS region at the end of the slot.
+///
+/// The list is sorted by increasing k2 first, then by decreasing \c symbols.stop(), so the first qualifying entry is
+/// the one with both the lowest k2 and the most symbols among those that avoid the SRS.
+/// \return The index of that resource, or \c std::nullopt if every resource in the list overlaps the SRS region, in
+/// which case no CG PUSCH can be placed in the cell at all.
+/// \remark This function must only be called if the cell has CG enabled (i.e. \c cell_cfg.init_bwp.cg_cfg is set).
+std::optional<unsigned> find_cg_pusch_td_res_idx(const ran_cell_config& cell_cfg);
+
 /// \brief Builds the cell-default Configured Grant configuration from the cell-level CG parameters.
 /// \remark This function must only be called if the cell has CG enabled (i.e. \c cell_cfg.init_bwp.cg_cfg is set).
 cg_configuration make_default_cell_cg_config(const ran_cell_config& cell_cfg);

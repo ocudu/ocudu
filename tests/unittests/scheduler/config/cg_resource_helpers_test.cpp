@@ -13,6 +13,7 @@
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/cg_builder_params.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
+#include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include <gtest/gtest.h>
 #include <numeric>
 
@@ -258,6 +259,75 @@ TEST(cg_usable_slot_offsets_regression_test, fdd_cell_only_drops_the_prach_offse
   const std::vector<unsigned> offsets = config_helpers::compute_cg_usable_slot_offsets(cell_cfg);
   ASSERT_FALSE(offsets.empty());
   EXPECT_LT(offsets.size(), cg_period_slots(cell_cfg)) << "the PRACH occasions must remove at least one offset";
+}
+
+// ---- find_cg_pusch_td_res_idx ----
+
+// Enables SRS on the cell and rebuilds its common PUSCH TDRA list around it, the way the DU config translator does.
+void enable_srs(ran_cell_config& cell_cfg, unsigned max_nof_symbols, srs_nof_symbols nof_symbols)
+{
+  cell_cfg.init_bwp.srs_cfg.srs_type_enabled = srs_type::periodic;
+  cell_cfg.init_bwp.srs_cfg.max_nof_symbols  = max_nof_symbols;
+  cell_cfg.init_bwp.srs_cfg.nof_symbols      = nof_symbols;
+  cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list =
+      time_domain_resource_helper::generate_dedicated_pusch_td_res_list(
+          cell_cfg.tdd_cfg,
+          cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp,
+          cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.front().k2,
+          static_cast<uint8_t>(max_nof_symbols),
+          static_cast<uint8_t>(nof_symbols));
+}
+
+/// With no SRS the whole slot is free, so the very first PUSCH TD resource qualifies.
+TEST(find_cg_pusch_td_res_idx_test, without_srs_the_first_resource_is_selected)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  const ran_cell_config cell_cfg = make_cg_cell_cfg(std::nullopt, cg_configuration::periodicity_t::sl40);
+  ASSERT_EQ(cell_cfg.init_bwp.srs_cfg.srs_type_enabled, srs_type::disabled);
+
+  EXPECT_EQ(config_helpers::find_cg_pusch_td_res_idx(cell_cfg), 0U);
+}
+
+/// An SRS length that is a multiple of the per-resource length leaves a PUSCH TD resource ending right at its edge.
+TEST(find_cg_pusch_td_res_idx_test, resource_clear_of_the_srs_is_selected)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  constexpr unsigned max_nof_srs_symbols = 2;
+  ran_cell_config    cell_cfg            = make_cg_cell_cfg(std::nullopt, cg_configuration::periodicity_t::sl40);
+  enable_srs(cell_cfg, max_nof_srs_symbols, srs_nof_symbols::n1);
+
+  const std::optional<unsigned> idx = config_helpers::find_cg_pusch_td_res_idx(cell_cfg);
+  ASSERT_TRUE(idx.has_value());
+  const auto& td_res = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+  EXPECT_LE(td_res[idx.value()].symbols.stop(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_nof_srs_symbols)
+      << "the selected PUSCH TD resource overlaps the SRS symbols";
+}
+
+/// A CG PUSCH is sized against the cell's whole SRS budget, so every SRS configuration an FDD cell accepts must leave
+/// it a PUSCH TD resource to pick. The resource list is generated in steps of one SRS resource length, which used to
+/// stop short of the SRS region whenever the budget was not a multiple of that length, leaving the CG PUSCH nothing
+/// clear of the SRS.
+TEST(find_cg_pusch_td_res_idx_test, every_fdd_srs_configuration_leaves_a_resource_clear_of_the_srs)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  // Values the DU accepts: an SRS resource spans 1, 2 or 4 symbols, and the per-slot budget is 1 to 6 symbols and at
+  // least one resource long.
+  for (srs_nof_symbols nof_symbols : {srs_nof_symbols::n1, srs_nof_symbols::n2, srs_nof_symbols::n4}) {
+    for (unsigned max_nof_symbols = nof_symbols; max_nof_symbols <= 6; ++max_nof_symbols) {
+      ran_cell_config cell_cfg = make_cg_cell_cfg(std::nullopt, cg_configuration::periodicity_t::sl40);
+      enable_srs(cell_cfg, max_nof_symbols, nof_symbols);
+
+      const std::optional<unsigned> idx = config_helpers::find_cg_pusch_td_res_idx(cell_cfg);
+      ASSERT_TRUE(idx.has_value()) << "no PUSCH TD resource avoids the SRS with a budget of " << max_nof_symbols
+                                   << " symbols in resources of " << static_cast<unsigned>(nof_symbols);
+      const auto& td_res = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+      EXPECT_LE(td_res[idx.value()].symbols.stop(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_nof_symbols)
+          << "the selected PUSCH TD resource overlaps the SRS symbols";
+    }
+  }
 }
 
 } // namespace

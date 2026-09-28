@@ -15,7 +15,7 @@ namespace ocudu {
 struct cg_builder_params {
   enum class cg_type : bool {
     type2 = false,
-    // Set type 1 as default, which as assign 0.
+    // Assign type 1 as default value (true).
     type1 = true,
   };
 

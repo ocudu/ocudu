@@ -267,6 +267,14 @@ static error_type<std::string> validate_cg_cfg(const sched_cell_configuration_re
     return {};
   }
 
+  // The CG PUSCH must leave the SRS region at the end of the slot free, so at least one PUSCH time domain resource has
+  // to end before it. This is checked ahead of the CG configuration below, which picks that resource and cannot fall
+  // back to one overlapping the SRS.
+  VERIFY(config_helpers::find_cg_pusch_td_res_idx(msg.ran).has_value(),
+         "No PUSCH time domain resource of the cell ends before the {} symbols reserved for SRS at the end of the "
+         "slot, so a Configured Grant PUSCH would always collide with the SRS",
+         msg.ran.init_bwp.srs_cfg.max_nof_symbols);
+
   // Verify that the CG parameters are consistent, i.e. the number of RBs required per UE (derived from the CG grant
   // size or bitrate and the MCS) does not exceed the maximum number of RBs reserved for CG in the cell. Otherwise, no
   // CG resources could ever be allocated to any UE.
