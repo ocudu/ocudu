@@ -540,7 +540,7 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
     // PUSCH, as the gNB would expect.
     static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES> filtered_k1;
     for (const uint8_t k1_candidate : k1_values) {
-      if (not u.get_pcell().cfg().is_cg_slot(pdsch_slot + k1_candidate)) {
+      if (not u.get_pcell().cfg().is_cg_slot(pdsch_slot + k1_candidate + ntn_koffset)) {
         filtered_k1.push_back(k1_candidate);
       }
     }
@@ -550,11 +550,11 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
 
   std::optional<uint8_t> last_valid_k1;
   for (uint8_t k1_candidate : k1_values) {
-    if (pdsch_slot + k1_candidate + ntn_koffset <= min_ack_slot) {
+    slot_point uci_slot = pdsch_slot + k1_candidate + ntn_koffset;
+    if (uci_slot <= min_ack_slot) {
       // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
       continue;
     }
-    slot_point uci_slot = pdsch_slot + k1_candidate;
     if (not res_alloc.cfg.is_fully_ul_enabled(uci_slot)) {
       // If it is not UL-enabled slot.
       continue;

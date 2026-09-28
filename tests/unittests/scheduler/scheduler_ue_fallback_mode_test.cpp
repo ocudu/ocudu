@@ -13,9 +13,11 @@
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
+#include "ocudu/ran/configured_grant/cg_configuration.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/prach/prach_time_mapping.h"
+#include "ocudu/scheduler/config/cg_builder_params.h"
 #include <functional>
 #include <gtest/gtest.h>
 
@@ -639,6 +641,93 @@ TEST_F(scheduler_ntn_fallback_test, pdsch_is_not_held_back_by_the_koffset_of_the
     ASSERT_LE(pdsch_slots[i] - pdsch_slots[i - 1], max_pdsch_gap)
         << fmt::format("PDSCH in slot {} was held back since the PDSCH in slot {}", pdsch_slots[i], pdsch_slots[i - 1]);
   }
+}
+
+/// \brief Fallback DL scheduling in an NTN cell while an RRC Reconfiguration adds a Configured Grant.
+///
+/// Until the UE confirms the CG, its HARQ-ACKs, k1 + Koffset slots after the PDSCH, stay off the CG slots. The CG
+/// scheduler moves a HARQ-ACK on a CG slot onto the CG PUSCH, so both channels are checked.
+class scheduler_ntn_fallback_cg_test : public scheduler_test_simulator, public ::testing::Test
+{
+protected:
+  scheduler_ntn_fallback_cg_test() :
+    scheduler_test_simulator(
+        scheduler_test_sim_config{.auto_uci = true, .ntn_cs_koffset = std::chrono::milliseconds{koffset_ms}})
+  {
+    auto cell_req = sched_config_helper::make_default_sched_cell_configuration_request(
+        cell_config_builder_profiles::create(duplex_mode::FDD));
+    cell_req.ran.ntn_params.emplace();
+    cell_req.ran.ntn_params->ntn_cfg.cell_specific_koffset = std::chrono::milliseconds{koffset_ms};
+    cell_req.ran.init_bwp.cg_cfg                           = cg_builder_params{.periodicity = cg_period};
+    add_cell(cell_req);
+
+    auto ue_req     = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran);
+    ue_req.ue_index = ue_index;
+    ue_req.crnti    = rnti;
+    auto& cg_cfg    = ue_req.cfg.cells->front().serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg;
+    ocudu_assert(cg_cfg.has_value(), "The UE was not given the CG of the cell");
+    cg_cfg->rrc_configured_ul_grant_cfg->time_domain_offset = cg_offset;
+
+    // An RRC Reconfiguration adds the CG.
+    auto ue_req_no_cg = ue_req;
+    ue_req_no_cg.cfg.cells->front().serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.reset();
+    add_ue(ue_req_no_cg, /*wait_notification=*/true);
+
+    // Left unconfirmed, so the UE stays in fallback.
+    sched_ue_reconfiguration_message reconf;
+    reconf.ue_index = ue_index;
+    reconf.crnti    = rnti;
+    reconf.cfg      = ue_req.cfg;
+    reconf.cs_rnti  = cs_rnti;
+    sched->handle_ue_reconfiguration_request(reconf);
+  }
+
+  bool is_cg_slot(slot_point sl) const { return sl.count() % static_cast<unsigned>(cg_period) == cg_offset; }
+
+  /// Returns whether the last slot has a HARQ-ACK of the UE, on PUCCH or PUSCH.
+  bool has_harq_ack() const
+  {
+    const auto& ul       = last_sched_result()->ul;
+    const auto  pucchs   = ul.pucchs.unsorted();
+    const bool  on_pucch = std::any_of(pucchs.begin(), pucchs.end(), [this](const pucch_info& pucch) {
+      return pucch.crnti == rnti and pucch.uci_bits.harq_ack_nof_bits > 0;
+    });
+    const bool  on_pusch = std::any_of(ul.puschs.begin(), ul.puschs.end(), [this](const ul_sched_info& pusch) {
+      return (pusch.pusch_cfg.rnti == rnti or pusch.pusch_cfg.rnti == cs_rnti) and pusch.uci.has_value() and
+             pusch.uci->harq.has_value() and pusch.uci->harq->harq_ack_nof_bits > 0;
+    });
+    return on_pucch or on_pusch;
+  }
+
+  /// Not a multiple of the CG period, so the Koffset shifts the CG phase.
+  static constexpr unsigned                        koffset_ms = 240;
+  static constexpr cg_configuration::periodicity_t cg_period  = cg_configuration::periodicity_t::sl32;
+  static constexpr unsigned                        cg_offset  = 3;
+  const du_ue_index_t                              ue_index   = to_du_ue_index(0);
+  const rnti_t                                     rnti       = to_rnti(0x4601);
+  const rnti_t                                     cs_rnti    = to_rnti(0xe0ef);
+};
+
+TEST_F(scheduler_ntn_fallback_cg_test, harq_ack_is_not_placed_in_a_cg_slot_past_the_koffset)
+{
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-1");
+
+  // Enough SRB1 data for HARQ-ACKs in every slot of a CG period.
+  static constexpr unsigned srb1_bytes        = 200000;
+  const unsigned            min_nof_harq_acks = 2 * static_cast<unsigned>(cg_period);
+  const unsigned            max_nof_slots     = 8 * cell_cfg().ntn_cs_koffset + 2000;
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_index, LCID_SRB1, srb1_bytes});
+
+  unsigned nof_harq_acks = 0;
+  for (unsigned count = 0; count != max_nof_slots and nof_harq_acks != min_nof_harq_acks; ++count) {
+    run_slot();
+    if (has_harq_ack()) {
+      ASSERT_FALSE(is_cg_slot(last_result_slot()))
+          << fmt::format("HARQ-ACK in slot {}, which is a CG slot", last_result_slot());
+      ++nof_harq_acks;
+    }
+  }
+  ASSERT_EQ(nof_harq_acks, min_nof_harq_acks) << "Too few HARQ-ACKs were scheduled";
 }
 
 class scheduler_ue_no_config_test : public base_scheduler_conres_test, public ::testing::Test
