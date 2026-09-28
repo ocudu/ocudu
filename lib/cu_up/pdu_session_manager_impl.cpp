@@ -143,13 +143,13 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Allocate the PDU session level DL data forwarding tunnel endpoint.
   if (requests_dl_data_forwarding(session.pdu_session_data_forwarding_info_request)) {
-    new_session->dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(ngu_addr);
-    if (new_session->dl_data_forwarding_tnl_info.has_value()) {
+    new_session->ingress_dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(ngu_addr);
+    if (new_session->ingress_dl_data_forwarding_tnl_info.has_value()) {
       pdu_session_result.data_forwarding_info.emplace();
-      pdu_session_result.data_forwarding_info->dl_data_forwarding = new_session->dl_data_forwarding_tnl_info;
+      pdu_session_result.data_forwarding_info->dl_data_forwarding = new_session->ingress_dl_data_forwarding_tnl_info;
       logger.log_info("Allocated DL data forwarding tunnel for {}. tnl_info={}",
                       session.pdu_session_id,
-                      new_session->dl_data_forwarding_tnl_info.value());
+                      new_session->ingress_dl_data_forwarding_tnl_info.value());
     }
   }
 
@@ -187,7 +187,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 }
 
 std::optional<up_transport_layer_info>
-pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const std::string& ngu_addr)
+pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const std::string& bind_addr)
 {
   expected<gtpu_teid_t> teid = ngu_teid_allocator.request_teid();
   if (not teid.has_value()) {
@@ -195,7 +195,7 @@ pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const std::string
     return std::nullopt;
   }
 
-  return up_transport_layer_info(transport_layer_address::create_from_string(ngu_addr), teid.value());
+  return up_transport_layer_info(transport_layer_address::create_from_string(bind_addr), teid.value());
 }
 
 drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&                         new_session,
@@ -640,12 +640,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
   // > Store the peer endpoint of the PDU session level DL data forwarding tunnel (TS 37.483 section 9.3.2.6).
   if (session.pdu_session_data_forwarding_info.has_value() and
       session.pdu_session_data_forwarding_info->dl_data_forwarding.has_value()) {
-    pdu_session->peer_dl_data_forwarding_tnl_info = session.pdu_session_data_forwarding_info->dl_data_forwarding;
+    pdu_session->egress_dl_data_forwarding_tnl_info = session.pdu_session_data_forwarding_info->dl_data_forwarding;
     pdu_session->qos_flows_to_be_forwarded =
         session.pdu_session_data_forwarding_info->data_forwarding_to_ng_ran_qos_flow_info_list;
     logger.log_info("Received DL data forwarding tunnel for {}. tnl_info={} nof_qos_flows={}",
                     session.pdu_session_id,
-                    pdu_session->peer_dl_data_forwarding_tnl_info.value(),
+                    pdu_session->egress_dl_data_forwarding_tnl_info.value(),
                     pdu_session->qos_flows_to_be_forwarded.size());
   }
 

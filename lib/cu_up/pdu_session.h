@@ -40,8 +40,8 @@ struct pdu_session {
       gtpu_rx_demux.remove_tunnel(local_teid);
       (void)ngu_teid_allocator.release_teid(local_teid);
 
-      if (dl_data_forwarding_tnl_info.has_value()) {
-        (void)ngu_teid_allocator.release_teid(dl_data_forwarding_tnl_info->gtp_teid);
+      if (ingress_dl_data_forwarding_tnl_info.has_value()) {
+        (void)ngu_teid_allocator.release_teid(ingress_dl_data_forwarding_tnl_info->gtp_teid);
       }
 
       if (dispatch_queue != nullptr) {
@@ -77,12 +77,12 @@ struct pdu_session {
   gtpu_teid_t             local_teid;     // the local teid used by the gNB for this PDU session
   up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
 
-  /// Local endpoint of the PDU session level DL data forwarding tunnel, allocated when the gNB-CU-CP requests PDU
-  /// session level data forwarding (TS 37.483 section 9.3.2.5).
-  std::optional<up_transport_layer_info> dl_data_forwarding_tnl_info;
-  /// Peer endpoint of the PDU session level DL data forwarding tunnel, to send the data still held for the UE to, and
-  /// the QoS flows to send over it (TS 37.483 section 9.3.2.6).
-  std::optional<up_transport_layer_info> peer_dl_data_forwarding_tnl_info;
+  /// Local endpoint of the PDU session level DL data forwarding tunnel, where this node receives the forwarded data.
+  /// Allocated when the gNB-CU-CP requests PDU session level data forwarding (TS 37.483 section 9.3.2.5).
+  std::optional<up_transport_layer_info> ingress_dl_data_forwarding_tnl_info;
+  /// Peer endpoint of the PDU session level DL data forwarding tunnel, where this node sends the data it still holds
+  /// for the UE, together with the QoS flows to send over it (TS 37.483 section 9.3.2.6).
+  std::optional<up_transport_layer_info> egress_dl_data_forwarding_tnl_info;
   std::vector<qos_flow_id_t>             qos_flows_to_be_forwarded;
 
   // GTP-U demux parameters
