@@ -99,6 +99,7 @@ struct scheduler_ta_control_config {
   /// This parameter specifies the mandatory waiting period (i.e. the prohibit period) that must elapse after the
   /// Timing Advance command (TA_CMD) is issued before the system begins its Timing Advance measurements.
   /// The delay allows the system to settle, ensuring that measurements are taken under stable conditions.
+  /// It adds to the delay after which the UE applies the TA_CMD, as per TS 38.213, Section 4.2.
   unsigned measurement_prohibit_period{0};
   /// \brief Timing Advance Command (T_A) offset threshold.
   ///

@@ -6,8 +6,54 @@
 #include "logical_channel_system.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/du_types.h"
+#include "ocudu/support/error_handling.h"
+#include "ocudu/support/math/math_utils.h"
+#include <cmath>
 
 using namespace ocudu;
+
+/// Returns the TA command processing time k, in UL slots, as per TS 38.213, Section 4.2.
+static unsigned get_ta_cmd_processing_slots(subcarrier_spacing ul_scs, subcarrier_spacing dl_scs)
+{
+  // N_1 with additional PDSCH DM-RS and N_2, of UE processing capability 1, at the minimum of the UL and DL SCS, as
+  // per TS 38.213, Section 4.2 and TS 38.214, Tables 5.3-1 and 6.4-1. N_1,0 is 14.
+  const subcarrier_spacing proc_scs   = std::min(ul_scs, dl_scs);
+  unsigned                 n1_symbols = 0;
+  unsigned                 n2_symbols = 0;
+  switch (proc_scs) {
+    case subcarrier_spacing::kHz15:
+      n1_symbols = 14;
+      n2_symbols = 10;
+      break;
+    case subcarrier_spacing::kHz30:
+      n1_symbols = 13;
+      n2_symbols = 12;
+      break;
+    case subcarrier_spacing::kHz60:
+      n1_symbols = 20;
+      n2_symbols = 23;
+      break;
+    case subcarrier_spacing::kHz120:
+      n1_symbols = 24;
+      n2_symbols = 36;
+      break;
+    default:
+      report_fatal_error("Unsupported SCS={} for the TA command processing time", scs_to_khz(proc_scs));
+  }
+
+  // T_c = 1 / (480 kHz * 4096) and kappa = T_s / T_c = 64, as per TS 38.211, Section 4.1.
+  static constexpr unsigned tc_per_ms = 480 * 4096;
+  static constexpr unsigned kappa     = 64;
+  const unsigned            proc_mu   = to_numerology_value(proc_scs);
+  const unsigned            ul_mu     = to_numerology_value(ul_scs);
+  // A normal cyclic prefix symbol spans (2048 + 144) * kappa * 2^-mu T_c, as per TS 38.211, Section 5.3.1. It is the
+  // per symbol factor of T_proc,1 and T_proc,2, as per TS 38.214, Sections 5.3 and 6.4.
+  const unsigned symbols_tc = (n1_symbols + n2_symbols) * (2048 + 144) * kappa / (1U << proc_mu);
+  // N_TA,max from T_A = 3846, as per TS 38.213, Section 4.2. N_TA,max and N_slot use the UL SCS.
+  const unsigned n_ta_max_tc = 3846 * 16 * kappa / (1U << ul_mu);
+
+  return divide_ceil(get_nof_slots_per_subframe(ul_scs) * (symbols_tc + n_ta_max_tc + tc_per_ms / 2), tc_per_ms);
+}
 
 ta_management_system::ta_management_system(const scheduler_ta_control_config& ta_cfg_) :
   ta_cfg(ta_cfg_),
@@ -28,6 +74,7 @@ ta_management_system::ta_management_system(const scheduler_ta_control_config& ta
 
 ue_ta_manager ta_management_system::add_ue(time_alignment_group::id_t         pcell_tag_id,
                                            subcarrier_spacing                 ul_scs,
+                                           subcarrier_spacing                 dl_scs,
                                            ue_logical_channel_repository_view lc_ch_mgr,
                                            unsigned                           ntn_koffset)
 {
@@ -37,9 +84,9 @@ ue_ta_manager ta_management_system::add_ue(time_alignment_group::id_t         pc
   }
 
   // Create UE context.
-  // The UE applies a TA command in UL slot n + k + 1 + 2^mu * K_offset, as per TS 38.213, Section 4.2. The prohibit
-  // period covers k + 1.
-  auto row_id = ues.insert(ue_ta_context{ul_scs, ntn_koffset, std::move(lc_ch_mgr)}, wheel_list_node{});
+  // The UE applies a TA command in UL slot n + k + 1 + 2^mu * K_offset, as per TS 38.213, Section 4.2.
+  const unsigned ta_cmd_apply_delay = get_ta_cmd_processing_slots(ul_scs, dl_scs) + 1 + ntn_koffset;
+  auto row_id = ues.insert(ue_ta_context{ul_scs, ta_cmd_apply_delay, std::move(lc_ch_mgr)}, wheel_list_node{});
   update_tags(row_id, std::array<time_alignment_group::id_t, 1>{pcell_tag_id});
 
   return ue_ta_manager{*this, row_id};

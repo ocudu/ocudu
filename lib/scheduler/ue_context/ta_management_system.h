@@ -28,11 +28,13 @@ public:
 
   /// \brief Adds a new UE to the TA management system.
   /// \param pcell_tag_id TAG of the UE PCell.
-  /// \param ul_scs UE UL BWP SCS.
+  /// \param ul_scs UE UL BWP SCS, which the scheduler slots follow.
+  /// \param dl_scs UE DL BWP SCS.
   /// \param lc_ch_mgr_ UE logical channels, which carry its TA commands.
   /// \param ntn_koffset K_offset in slots, zero outside NTN, as per TS 38.213, Section 4.2.
   ue_ta_manager add_ue(time_alignment_group::id_t         pcell_tag_id,
                        subcarrier_spacing                 ul_scs,
+                       subcarrier_spacing                 dl_scs,
                        ue_logical_channel_repository_view lc_ch_mgr_,
                        unsigned                           ntn_koffset = 0);
 
@@ -73,7 +75,7 @@ private:
   struct ue_ta_context {
     /// Uplink subcarrier spacing of the UE.
     subcarrier_spacing ul_scs;
-    /// Slots K_offset delays a TA command, as per TS 38.213, Section 4.2. Earlier N_TA updates are stale.
+    /// Slots until the UE applies a TA command, as per TS 38.213, Section 4.2. Earlier N_TA updates are stale.
     unsigned ta_cmd_apply_delay = 0;
     /// Logical channel manager for the UE.
     ue_logical_channel_repository_view lc_ch_mgr;
