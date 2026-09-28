@@ -123,11 +123,12 @@ uci_allocator_impl::slot_alloc_list::ue_uci* uci_allocator_impl::get_uci_alloc(s
 unsigned uci_allocator_impl::get_min_pdsch_to_ack_slot_distance(slot_point pdsch_slot,
                                                                 rnti_t     rnti,
                                                                 unsigned   min_k1,
-                                                                unsigned   max_k1)
+                                                                unsigned   max_k1,
+                                                                unsigned   ntn_koffset)
 {
   ocudu_assert(min_k1 <= max_k1, "Minimum k1 value must be greater than maximum k1 value");
   for (int sl_inc = max_k1; sl_inc >= static_cast<int>(min_k1); --sl_inc) {
-    const slot_point uci_slot = pdsch_slot + sl_inc;
+    const slot_point uci_slot = pdsch_slot + sl_inc + ntn_koffset;
     if (get_uci_alloc(uci_slot, rnti) != nullptr) {
       return sl_inc;
     }
@@ -175,7 +176,8 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_harq_ack(cell_resource_a
       get_min_pdsch_to_ack_slot_distance(pdsch_slot,
                                          ue_cell_cfg.crnti,
                                          *std::min_element(k1_list.begin(), k1_list.end()),
-                                         *std::max_element(k1_list.begin(), k1_list.end()));
+                                         *std::max_element(k1_list.begin(), k1_list.end()),
+                                         res_alloc.cfg.ntn_cs_koffset);
 
   for (const uint8_t k1_candidate : k1_list) {
     // Step 1: Check for validity of the UCI slot and other restrictions.

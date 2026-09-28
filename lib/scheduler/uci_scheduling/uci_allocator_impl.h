@@ -73,7 +73,11 @@ private:
   // This function is used in determining the k1 value to be applied when scheduling a PDSCH.
   //
   // \return The minimum distance in nof. slots to be maintained between PDSCH slot and its UCI HARQ ACK slot.
-  unsigned get_min_pdsch_to_ack_slot_distance(slot_point pdsch_slot, rnti_t rnti, unsigned min_k1, unsigned max_k1);
+  unsigned get_min_pdsch_to_ack_slot_distance(slot_point pdsch_slot,
+                                              rnti_t     rnti,
+                                              unsigned   min_k1,
+                                              unsigned   max_k1,
+                                              unsigned   ntn_koffset);
 
   pucch_allocator& pucch_alloc;
 

@@ -60,6 +60,8 @@ struct test_bench_params {
   std::optional<ue_capability_summary> ue_caps;
   // If set, configures a measurement gap for every UE added, which disables the UE uplink inside the gap.
   std::optional<meas_gap_config> meas_gap;
+  // Cell-specific Koffset of an NTN cell. Zero for a TN cell.
+  std::chrono::milliseconds ntn_cs_koffset{0};
 };
 
 class test_bench

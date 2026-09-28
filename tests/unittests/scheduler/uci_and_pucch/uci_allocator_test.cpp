@@ -179,6 +179,31 @@ TEST_F(uci_alloc_test, uci_harq_alloc_with_empty_k1_list_is_refused)
   ASSERT_EQ(0, t_bench.res_grid[t_bench.k0 + default_k1].result.ul.pucchs.size());
 }
 
+/// UCI allocation in an NTN cell, with HARQ-ACKs k1 + Koffset slots after the PDSCH, as per TS 38.213, Section 9.
+class uci_alloc_ntn_test : public uci_alloc_test
+{
+protected:
+  uci_alloc_ntn_test() : uci_alloc_test(test_bench_params{.ntn_cs_koffset = std::chrono::milliseconds{20}}) {}
+};
+
+TEST_F(uci_alloc_ntn_test, harq_ack_of_a_later_pdsch_does_not_precede_the_one_of_an_earlier_pdsch)
+{
+  const ue_cell& ue_cc = t_bench.get_main_ue().get_pcell();
+
+  // First PDSCH, with k1 = 7.
+  const std::vector<uint8_t>          first_k1s = {7};
+  const std::optional<uci_allocation> first =
+      t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, ue_cc, t_bench.k0, first_k1s);
+  ASSERT_TRUE(first.has_value());
+
+  // A PDSCH one slot later needs k1 >= 6 to keep the HARQ-ACK order, as per TS 38.214, Section 5.1.
+  const std::vector<uint8_t>          second_k1s = {4, 5, 6, 7};
+  const std::optional<uci_allocation> second =
+      t_bench.uci_alloc.alloc_harq_ack(t_bench.res_grid, ue_cc, t_bench.k0 + 1, second_k1s);
+  ASSERT_TRUE(second.has_value());
+  ASSERT_GE(1 + second->k1, first->k1) << "The HARQ-ACK of the later PDSCH precedes the one of the earlier PDSCH";
+}
+
 TEST_F(uci_alloc_test, uci_harq_alloc_with_no_pusch_grants)
 {
   const std::vector<uint8_t> k1_candidates = {static_cast<uint8_t>(default_k1)};

@@ -175,6 +175,10 @@ make_custom_sched_cell_configuration_request(const test_bench_params& params)
   }
   req.ran.init_bwp.pucch.resources = params.pucch_ded_params;
   req.ran.init_bwp.pucch.sr_period = params.sr_period;
+  if (params.ntn_cs_koffset.count() != 0) {
+    req.ran.ntn_params.emplace();
+    req.ran.ntn_params->ntn_cfg.cell_specific_koffset = params.ntn_cs_koffset;
+  }
   if (params.csi_period.has_value()) {
     req.ran.init_bwp.csi.value().csi_rs_period          = params.csi_period.value();
     req.ran.init_bwp.csi.value().csi_report_slot_offset = params.csi_offset;
