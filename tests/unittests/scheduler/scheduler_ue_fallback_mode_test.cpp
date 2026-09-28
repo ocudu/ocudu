@@ -531,6 +531,116 @@ INSTANTIATE_TEST_SUITE_P(scheduler_conres_expiry_test,
                                            conres_expiry_params{subcarrier_spacing::kHz30, 240},
                                            conres_expiry_params{subcarrier_spacing::kHz30, 480}));
 
+/// Fallback DL scheduling in an NTN cell, with HARQ-ACKs k1 + Koffset slots after the PDSCH, as per TS 38.213,
+/// Section 9.
+class scheduler_ntn_fallback_test : public scheduler_test_simulator, public ::testing::Test
+{
+protected:
+  scheduler_ntn_fallback_test() :
+    scheduler_test_simulator(
+        scheduler_test_sim_config{.auto_uci = true, .ntn_cs_koffset = std::chrono::milliseconds{koffset_ms}})
+  {
+    auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(
+        cell_config_builder_profiles::create(duplex_mode::FDD));
+    cell_cfg_req.ran.ntn_params.emplace();
+    cell_cfg_req.ran.ntn_params->ntn_cfg.cell_specific_koffset = std::chrono::milliseconds{koffset_ms};
+    add_cell(cell_cfg_req);
+
+    auto ue_cfg               = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg().params, {});
+    ue_cfg.ue_index           = ue_index;
+    ue_cfg.crnti              = rnti;
+    ue_cfg.starts_in_fallback = true;
+    ue_cfg.ul_ccch_slot_rx    = next_slot.without_hyper_sfn();
+    scheduler_test_simulator::add_ue(ue_cfg, false);
+  }
+
+  /// Koffset of a GEO cell.
+  static constexpr unsigned koffset_ms = 240;
+  const du_ue_index_t       ue_index   = to_du_ue_index(0);
+  const rnti_t              rnti       = to_rnti(0x4601);
+};
+
+TEST_F(scheduler_ntn_fallback_test, pdsch_is_not_held_back_by_the_koffset_of_the_previous_harq_ack)
+{
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-TIM-1");
+
+  // Enough SRB1 data for several fallback PDSCHs.
+  static constexpr unsigned srb1_bytes = 10000;
+  static constexpr unsigned nof_pdschs = 4;
+  // Slack for slots taken by SSB, SIB or CSI-RS.
+  static constexpr int    max_pdsch_gap = 10;
+  const unsigned          koffset       = cell_cfg().ntn_cs_koffset;
+  const unsigned          max_nof_slots = 4 * koffset + 1000;
+  std::vector<slot_point> pdsch_slots;
+  // HARQ-ACK slots the DCIs indicate, and slots with a HARQ-ACK PUCCH of the UE.
+  std::vector<slot_point> harq_ack_slots;
+  std::vector<slot_point> harq_ack_pucch_slots;
+  bool                    first_pdsch_has_conres = false;
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_index, LCID_SRB1, srb1_bytes});
+
+  for (unsigned count = 0;
+       count != max_nof_slots and (pdsch_slots.size() != nof_pdschs or last_result_slot() < harq_ack_slots.back());
+       ++count) {
+    run_slot();
+    const auto pucchs = last_sched_result()->ul.pucchs.unsorted();
+    if (std::any_of(pucchs.begin(), pucchs.end(), [this](const pucch_info& pucch) {
+          return pucch.crnti == rnti and pucch.uci_bits.harq_ack_nof_bits > 0;
+        })) {
+      harq_ack_pucch_slots.push_back(last_result_slot());
+    }
+
+    const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, *last_sched_result());
+    if (pdsch == nullptr or pdsch_slots.size() == nof_pdschs) {
+      continue;
+    }
+    if (pdsch_slots.empty()) {
+      const auto& lcs        = pdsch->tb_list.front().lc_chs_to_sched;
+      first_pdsch_has_conres = std::any_of(
+          lcs.begin(), lcs.end(), [](const dl_msg_lc_info& lc) { return lc.lcid == lcid_dl_sch_t::UE_CON_RES_ID; });
+    }
+
+    // DCI 1_0 shares the slot of its PDSCH. Its PDSCH-to-HARQ_feedback timing indicator maps to k1 in {1, ..., 8}, as
+    // per TS 38.213, Section 9.2.3.
+    const pdcch_dl_information* pdcch = find_ue_dl_pdcch(rnti);
+    ASSERT_NE(pdcch, nullptr) << fmt::format("No DCI for the PDSCH in slot {}", last_result_slot());
+    const dci_dl_rnti_config_type dci_type = pdcch->dci.type();
+    ASSERT_TRUE(dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0 or dci_type == dci_dl_rnti_config_type::c_rnti_f1_0);
+    const unsigned k1 = 1 + (dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0
+                                 ? pdcch->dci.as_tc_rnti_f1_0().pdsch_harq_fb_timing_indicator
+                                 : pdcch->dci.as_c_rnti_f1_0().pdsch_harq_fb_timing_indicator);
+    pdsch_slots.push_back(last_result_slot());
+    harq_ack_slots.push_back(last_result_slot() + k1 + koffset);
+  }
+  ASSERT_EQ(pdsch_slots.size(), nof_pdschs) << "The SRB1 data was not scheduled";
+
+  // Every indicated HARQ-ACK has its PUCCH.
+  for (const slot_point harq_ack_slot : harq_ack_slots) {
+    ASSERT_NE(std::find(harq_ack_pucch_slots.begin(), harq_ack_pucch_slots.end(), harq_ack_slot),
+              harq_ack_pucch_slots.end())
+        << fmt::format("No HARQ-ACK PUCCH in slot {}, which the DCI indicates", harq_ack_slot);
+  }
+
+  // Nothing follows the ConRes CE before its HARQ-ACK.
+  ASSERT_TRUE(first_pdsch_has_conres) << "The first PDSCH does not carry the ConRes CE";
+  ASSERT_GT(pdsch_slots[1], harq_ack_slots[0]) << fmt::format(
+      "PDSCH in slot {} scheduled before the HARQ-ACK in slot {} of the ConRes CE", pdsch_slots[1], harq_ack_slots[0]);
+
+  // HARQ-ACKs keep the PDSCH order, as per TS 38.214, Section 5.1, one per slot in fallback, as per TS 38.213,
+  // Section 9.2.1.
+  for (unsigned i = 1; i != harq_ack_slots.size(); ++i) {
+    ASSERT_GT(harq_ack_slots[i], harq_ack_slots[i - 1])
+        << fmt::format("HARQ-ACK of the PDSCH in slot {} does not follow the one of the PDSCH in slot {}",
+                       pdsch_slots[i],
+                       pdsch_slots[i - 1]);
+  }
+
+  // The Koffset delays every HARQ-ACK alike, so keeping their order never holds a PDSCH back.
+  for (unsigned i = 2; i != pdsch_slots.size(); ++i) {
+    ASSERT_LE(pdsch_slots[i] - pdsch_slots[i - 1], max_pdsch_gap)
+        << fmt::format("PDSCH in slot {} was held back since the PDSCH in slot {}", pdsch_slots[i], pdsch_slots[i - 1]);
+  }
+}
+
 class scheduler_ue_no_config_test : public base_scheduler_conres_test, public ::testing::Test
 {
 protected:

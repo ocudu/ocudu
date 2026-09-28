@@ -477,7 +477,7 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
     if (last_slot_ack.valid() and last_slot_ack > most_recent_ack_slot) {
       most_recent_ack_slot = last_slot_ack;
     }
-    if (pdsch_alloc.slot + dci_1_0_k1_values.back() <= most_recent_ack_slot) {
+    if (pdsch_alloc.slot + dci_1_0_k1_values.back() + cell_cfg.ntn_cs_koffset <= most_recent_ack_slot) {
       continue;
     }
 
@@ -530,6 +530,8 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
 {
   ocudu_assert(ded_alloc or common_alloc, "Invalid params passed to this function");
   const unsigned pdsch_delay = pdsch_slot - res_alloc.slot_tx();
+  // The HARQ-ACK is k1 + Koffset slots after its PDSCH, as per TS 38.213, Section 9.
+  const unsigned ntn_koffset = res_alloc.cfg.ntn_cs_koffset;
 
   if (not common_alloc and ded_alloc) {
     // UE dedicated-only PUCCH allocation.
@@ -548,7 +550,7 @@ static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&             
 
   std::optional<uint8_t> last_valid_k1;
   for (uint8_t k1_candidate : k1_values) {
-    if (pdsch_slot + k1_candidate <= min_ack_slot) {
+    if (pdsch_slot + k1_candidate + ntn_koffset <= min_ack_slot) {
       // Skip k1 values that would result in a PUCCH transmission in a slot that is older than the most recent ACK slot.
       continue;
     }
