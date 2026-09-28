@@ -158,8 +158,8 @@ struct ul_time_domain_builder_params {
   struct pusch_explicit_resources {
     /// PUSCH TD resource list used with DCI format 0_0, derived from PUSCH-ConfigCommon.
     std::vector<pusch_time_domain_resource_allocation> common_pusch_td_res_list;
-    /// \brief PUSCH TD resource list used with DCI format 0_1, from a UE's dedicated PUSCH-Config. A Rel-16 TDRA
-    /// list may carry \e numberOfRepetitions-r16 entries, enabling PUSCH repetition Type A.
+    /// \brief pusch-TimeDomainAllocationListDCI-0-1 used with DCI format 0_1, from a UE's dedicated PUSCH-Config.
+    /// A Rel-16 TDRA list may carry \e numberOfRepetitions-r16 entries, enabling PUSCH repetition Type A.
     /// \remark When empty, DCI format 0_1 falls back to \c common_pusch_td_res_list.
     std::vector<pusch_time_domain_resource_allocation> dedicated_pusch_td_res_list;
   };
@@ -198,6 +198,8 @@ struct ul_time_domain_mapper {
   }
 
   /// \brief Retrieve the dedicated PUSCH TD resources, used with DCI format 0_1.
+  /// \remark [Implementation-defined] In the current implementation, \ref dedicated_pusch_td_res_list contains \c
+  /// pusch-TimeDomainAllocationListDCI-0-1 provided in \c pusch-Config.
   /// \remark Falls back to \ref common_pusch_td_resources() if no dedicated list was configured.
   span<const pusch_time_domain_resource_allocation> dedicated_pusch_td_resources() const
   {
@@ -205,7 +207,7 @@ struct ul_time_domain_mapper {
   }
 
   /// \brief Retrieve the list of available PUSCH time-domain resource allocations applicable for the given DCI UL
-  /// format, as per TS38.214, clause 6.1.2.1.
+  /// format, as per TS 38.214, clause 6.1.2.1.
   /// \remark Returns the common (fallback) resources for DCI format 0_0, and the dedicated ones otherwise.
   span<const pusch_time_domain_resource_allocation> pusch_td_resources(dci_ul_format dci_format) const
   {
@@ -285,7 +287,7 @@ struct ul_time_domain_mapper {
     return dci_format == dci_dl_format::f1_0 ? common_k1_candidates() : dedicated_k1_candidates();
   }
 
-  /// \brief Retrieve the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
+  /// \brief Retrieve the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS 38.213, 9.1.2.1.
   /// \remark Unlike \ref common_k1_candidates(unsigned) const, this is not filtered per slot.
   span<const uint8_t> common_k1_candidates() const { return common_k1_list; }
 
@@ -328,8 +330,11 @@ private:
   /// Max size is pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS.
   std::vector<pusch_time_domain_resource_allocation> common_pusch_td_res_list;
 
-  /// \brief Dedicated PUSCH time-domain resource allocations for the BWP, used with DCI format 0_1 (legacy or Rel-16
+  /// \brief Dedicated PUSCH time-domain resource allocations for the BWP, used with DCI format 0_1 (Rel-16
   /// TDRA list). Falls back to \c common_pusch_td_res_list if no dedicated list was configured.
+  /// \remark [Implementation-defined] When configured, \ref dedicated_pusch_td_res_list contains \c
+  /// pusch-TimeDomainAllocationListDCI-0-1 provided in \c pusch-Config; pusch-TimeDomainAllocationList in \c
+  /// pusch-Config is not supported in the current implementation.
   std::vector<pusch_time_domain_resource_allocation> dedicated_pusch_td_res_list;
 
   /// List of indices into \c common_pusch_td_res_list applicable for each slot within the TDD period.
@@ -348,7 +353,7 @@ private:
   /// List of k1 candidates for PDSCH-to-HARQ timing used with UE-dedicated DCI.
   static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES> dedicated_k1_list;
 
-  /// List of common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
+  /// List of common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS 38.213, 9.1.2.1.
   span<const uint8_t> common_k1_list;
 
   /// List of common (fallback) k1 candidates valid for a PDSCH transmitted in each slot within the TDD period.

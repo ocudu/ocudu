@@ -9,6 +9,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/du/du_high/du_qos_config_helpers.h"
+#include "ocudu/scheduler/config/cg_builder_params.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -1040,3 +1041,71 @@ TEST_P(du_ran_res_mng_pucch_srs_tester, when_alloc_fail_ue_has_no_srs_and_no_puc
 }
 
 INSTANTIATE_TEST_SUITE_P(different_f1_f2_resources, du_ran_res_mng_pucch_srs_tester, ::testing::Values(true, false));
+
+// ---- Configured Grant type consistency across cells ----
+
+namespace {
+
+// Builds a DU cell list of two cells, each with the given Configured Grant type, or with CG disabled when unset.
+std::vector<du_cell_config> make_two_cell_cfg_list(std::optional<cg_builder_params::cg_type> cell0_cg,
+                                                   std::optional<cg_builder_params::cg_type> cell1_cg)
+{
+  std::vector<du_cell_config> cells(2, config_helpers::make_default_du_cell_config());
+  cells[1].ran.pci = static_cast<pci_t>(cells[0].ran.pci + 1);
+  for (unsigned i = 0; i != cells.size(); ++i) {
+    const std::optional<cg_builder_params::cg_type>& cg_type = i == 0 ? cell0_cg : cell1_cg;
+    if (cg_type.has_value()) {
+      cells[i].ran.init_bwp.cg_cfg = cg_builder_params{.type = cg_type.value()};
+    }
+  }
+  return cells;
+}
+
+std::unique_ptr<du_ran_resource_manager_impl> make_res_mng(std::vector<du_cell_config>& cells)
+{
+  static const std::map<srb_id_t, du_srb_config>  srbs;
+  static const std::map<five_qi_t, du_qos_config> qos =
+      config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
+  static const du_test_mode_config test_mode_cfg{};
+  return std::make_unique<du_ran_resource_manager_impl>(cells, scheduler_expert_config{}, srbs, qos, test_mode_cfg);
+}
+
+} // namespace
+
+/// The DU builds one Configured Grant resource manager for all its cells, picking the implementation from the first
+/// cell. A cell configured for the other CG type would be served by the wrong implementation, so the DU must refuse
+/// the configuration at construction rather than mis-serve UEs later.
+TEST(du_ran_resource_manager_cg_type_test, cells_disagreeing_on_the_cg_type_are_rejected)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  const std::vector<std::pair<std::optional<cg_builder_params::cg_type>, std::optional<cg_builder_params::cg_type>>>
+      mismatches = {{cg_builder_params::cg_type::type1, cg_builder_params::cg_type::type2},
+                    {cg_builder_params::cg_type::type2, cg_builder_params::cg_type::type1},
+                    // A first cell with no CG at all yields the Type 1 manager, so a Type 2 cell behind it is a
+                    // mismatch as well.
+                    {std::nullopt, cg_builder_params::cg_type::type2}};
+
+  for (const auto& [cell0_cg, cell1_cg] : mismatches) {
+    std::vector<du_cell_config> cells = make_two_cell_cfg_list(cell0_cg, cell1_cg);
+    EXPECT_DEATH({ auto res_mng = make_res_mng(cells); }, "All cells of a DU must use the same Configured Grant type");
+  }
+}
+
+/// The counterpart: cells that agree, and a cell left without CG behind a Type 1 cell, must be accepted.
+TEST(du_ran_resource_manager_cg_type_test, cells_agreeing_on_the_cg_type_are_accepted)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  const std::vector<std::pair<std::optional<cg_builder_params::cg_type>, std::optional<cg_builder_params::cg_type>>>
+      matches = {{cg_builder_params::cg_type::type1, cg_builder_params::cg_type::type1},
+                 {cg_builder_params::cg_type::type2, cg_builder_params::cg_type::type2},
+                 {std::nullopt, std::nullopt},
+                 {std::nullopt, cg_builder_params::cg_type::type1},
+                 {cg_builder_params::cg_type::type1, std::nullopt}};
+
+  for (const auto& [cell0_cg, cell1_cg] : matches) {
+    std::vector<du_cell_config> cells = make_two_cell_cfg_list(cell0_cg, cell1_cg);
+    EXPECT_NE(make_res_mng(cells), nullptr);
+  }
+}

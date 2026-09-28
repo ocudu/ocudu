@@ -18,7 +18,9 @@
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/rrm/configured_grant_rrm_factory.h"
 #include "ocudu/scheduler/rrm/configured_grant_type1_rrm.h"
+#include "ocudu/scheduler/rrm/configured_grant_type2_rrm.h"
 #include "ocudu/scheduler/support/rb_helper.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
@@ -440,6 +442,34 @@ TEST(configured_grant_type1_rrm_tdd_test, allocation_is_refused_when_no_offset_s
 
   EXPECT_FALSE(res_mng.build_ue_cg_config(ue_cell_cfg))
       << "a CG offset was allocated even though every one of its occurrences cannot be an UL slot";
+}
+
+/// A UE whose serving cell config carries no uplink_config cannot hold a CG at all. Both resource managers must skip
+/// it instead of reaching through the empty optional: the caller in the DU RAN resource manager, and the sibling
+/// reset_ue_cg_config(), both treat that optional as possibly empty.
+TEST(configured_grant_rrm_no_ul_config_test, ue_without_ul_config_is_skipped)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-BW-16-3");
+
+  for (cg_builder_params::cg_type type : {cg_builder_params::cg_type::type1, cg_builder_params::cg_type::type2}) {
+    const du_cell_config du_cfg = make_cg_du_cell_config(make_cell_cfg_params(cg_test_params{.nof_ul_slots = 2}),
+                                                         cg_builder_params{.type = type});
+
+    std::unique_ptr<configured_grant_rrm> res_mng = create_configured_grant_rrm(du_cfg.ran);
+    res_mng->add_cell(to_du_cell_index(0), du_cfg.ran);
+
+    ue_cell_config ue_cell_cfg = config_helpers::make_default_ue_cell_config(du_cfg.ran);
+    ue_cell_cfg.serv_cell_cfg.ul_config.reset();
+
+    EXPECT_TRUE(res_mng->build_ue_cg_config(ue_cell_cfg))
+        << "a UE without an uplink config must not fail CG allocation, it simply gets no CG";
+    EXPECT_FALSE(ue_cell_cfg.serv_cell_cfg.ul_config.has_value()) << "the uplink config must be left untouched";
+    EXPECT_FALSE(ue_cell_cfg.bwps[0].ul.cg.has_value()) << "no CG resources must have been recorded for the UE";
+
+    // The sibling call must be a no-op on the same config, rather than undoing an allocation never made.
+    res_mng->reset_ue_cg_config(ue_cell_cfg);
+    EXPECT_FALSE(ue_cell_cfg.serv_cell_cfg.ul_config.has_value());
+  }
 }
 
 // ---- Parameterization ----

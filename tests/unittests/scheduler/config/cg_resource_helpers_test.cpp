@@ -6,6 +6,7 @@
 /// \file
 /// \brief Unit tests for the Configured Grant resource helpers of ran_cell_config_helper.
 
+#include "lib/scheduler/rrm/srs_resource_generator.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "ocudu/du/du_cell_config_helpers.h"
@@ -316,15 +317,26 @@ TEST(find_cg_pusch_td_res_idx_test, every_fdd_srs_configuration_leaves_a_resourc
   // Values the DU accepts: an SRS resource spans 1, 2 or 4 symbols, and the per-slot budget is 1 to 6 symbols and at
   // least one resource long.
   for (srs_nof_symbols nof_symbols : {srs_nof_symbols::n1, srs_nof_symbols::n2, srs_nof_symbols::n4}) {
-    for (unsigned max_nof_symbols = nof_symbols; max_nof_symbols <= 6; ++max_nof_symbols) {
+    const unsigned res_syms = static_cast<unsigned>(nof_symbols);
+    for (unsigned max_nof_symbols = res_syms; max_nof_symbols <= 6; ++max_nof_symbols) {
       ran_cell_config cell_cfg = make_cg_cell_cfg(std::nullopt, cg_configuration::periodicity_t::sl40);
       enable_srs(cell_cfg, max_nof_symbols, nof_symbols);
 
+      // The SRS resources of the cell are whole blocks anchored at the last symbol of the slot, so they reach no
+      // lower than the largest multiple of a resource length that fits in the budget.
+      const unsigned first_srs_symbol  = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - (max_nof_symbols / res_syms) * res_syms;
+      unsigned       lowest_srs_symbol = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+      for (const du_srs_resource& srs_res : generate_cell_srs_list(cell_cfg)) {
+        lowest_srs_symbol = std::min<unsigned>(lowest_srs_symbol, srs_res.symbols.start());
+      }
+      ASSERT_EQ(lowest_srs_symbol, first_srs_symbol)
+          << "the cell places SRS below the last whole resource block, so the selection below is not safe";
+
       const std::optional<unsigned> idx = config_helpers::find_cg_pusch_td_res_idx(cell_cfg);
       ASSERT_TRUE(idx.has_value()) << "no PUSCH TD resource avoids the SRS with a budget of " << max_nof_symbols
-                                   << " symbols in resources of " << static_cast<unsigned>(nof_symbols);
+                                   << " symbols in resources of " << res_syms;
       const auto& td_res = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
-      EXPECT_LE(td_res[idx.value()].symbols.stop(), NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_nof_symbols)
+      EXPECT_LE(td_res[idx.value()].symbols.stop(), first_srs_symbol)
           << "the selected PUSCH TD resource overlaps the SRS symbols";
     }
   }

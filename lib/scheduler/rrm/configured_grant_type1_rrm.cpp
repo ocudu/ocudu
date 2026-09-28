@@ -85,11 +85,14 @@ bool configured_grant_type1_rrm::build_ue_cg_config(ue_cell_config& ue_cell_cfg)
   auto&                  cell     = cells[ue_cell_cfg.serv_cell_cfg.cell_index];
   const ran_cell_config& cell_cfg = cell.cell_cfg;
 
-  // A UE that already holds a CG allocation already has RBs reserved for it in the grid. Allocating a second one
-  // would overwrite the offset and VRBs recorded in the UE config, and the RBs of the first allocation would stay
-  // marked in cg_alloc_grid for good, as reset_ue_cg_config() can only release what the UE config still points at.
-  // NOTE: this mirrors reset_ue_cg_config(), which is a no-op for a UE that holds no CG allocation.
-  if (ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value() or ue_cell_cfg.init_bwp().ul.cg.has_value()) {
+  // Nothing to build for a UE with no UL configuration, which cannot carry a CG at all.
+  //
+  // Nothing to build either for a UE that already holds a CG allocation: it already has RBs reserved for it in the
+  // grid, and allocating a second one would overwrite the offset and VRBs recorded in the UE config, leaving the RBs
+  // of the first allocation marked in cg_alloc_grid for good, as reset_ue_cg_config() can only release what the UE
+  // config still points at.
+  if (not ue_cell_cfg.serv_cell_cfg.ul_config.has_value() or
+      ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value() or ue_cell_cfg.init_bwp().ul.cg.has_value()) {
     return true;
   }
 

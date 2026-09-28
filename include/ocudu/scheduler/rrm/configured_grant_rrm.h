@@ -28,7 +28,7 @@ public:
   /// \brief Builds the CG configuration for a given UE and ensures the cell has enough CG resources to accommodate this
   /// UE.
   ///
-  /// \return true if the UE can be accommodate or if the Configured grant is set in by the user.
+  /// \return true if the UE can be allocated or if the Configured grant is not set by the user.
   /// \remark For CG type 1, this function allocates the CG resources to the UE; these resources are taken from a common
   /// pool.
   virtual bool build_ue_cg_config(ue_cell_config& ue_cell_cfg) = 0;

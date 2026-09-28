@@ -94,6 +94,25 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   ra_res_alloc(cell_cfg_list),
   cell_ue_ctxts(cell_cfg_list_.size())
 {
+  // The Configured Grant resource manager is built once for the whole DU, from the CG type of the first cell (see the
+  // initialization list above), and every CG-enabled cell is then registered with it below. A cell configured for the
+  // other CG type would be served by the implementation of the wrong type, which builds it grants of a shape it cannot
+  // use, so refuse the configuration outright rather than fail later, once UEs are being admitted.
+  // NOTE: a first cell with no CG at all yields the Type 1 manager, so a Type 2 cell behind it is a mismatch too.
+  const bool du_cg_is_type2 =
+      cell_cfg_list[0].ran.init_bwp.cg_cfg.has_value() and cell_cfg_list[0].ran.init_bwp.cg_cfg->is_type2();
+  for (unsigned cell_idx_uint = 0; cell_idx_uint != cell_cfg_list.size(); ++cell_idx_uint) {
+    const auto& cg_cfg = cell_cfg_list[cell_idx_uint].ran.init_bwp.cg_cfg;
+    if (cg_cfg.has_value() and cg_cfg->is_type2() != du_cg_is_type2) {
+      report_error("ERROR: Invalid DU Cell Configuration. Cause: cell={} configures Configured Grant type {}, while "
+                   "the DU is set up for type {} (taken from cell=0). All cells of a DU must use the same Configured "
+                   "Grant type.\n",
+                   cell_idx_uint,
+                   cg_cfg->is_type2() ? 2 : 1,
+                   du_cg_is_type2 ? 2 : 1);
+    }
+  }
+
   for (unsigned cell_idx_uint = 0; cell_idx_uint != cell_cfg_list.size(); ++cell_idx_uint) {
     const auto&           cell     = cell_cfg_list[cell_idx_uint];
     const du_cell_index_t cell_idx = to_du_cell_index(cell_idx_uint);

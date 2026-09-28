@@ -261,10 +261,13 @@ void configured_grant_scheduler_impl::reserve_cg_resources(cell_slot_resource_al
   }
   const ue_cell_configuration& ue_cfg = ue_cc.cfg();
 
-  // For a Type 1 CG with PUSCH repetition Type A, the TDRA table is selected as for DCI format 0_0 in a UE-specific
-  // search space (TS 38.214, Section 6.1.2.3), i.e. the UE's dedicated pusch-TimeDomainAllocationList when configured
-  // and the common one otherwise, which is what the mapper's dedicated list already resolves to.
-  const auto& pusch_td_list = ue_cc.active_bwp().ul.td_mapper().dedicated_pusch_td_resources();
+  // The CG PUSCH takes the UE's dedicated pusch-TimeDomainAllocationList when one is configured, and the cell's common
+  // one otherwise, which is what the mapper's dedicated list already resolves to (TS 38.214, Section 6.1.2.3 and
+  // Table 6.1.2.1.1-1).
+  // From Rel-16, these tables and the rules have been revisited. For PUSCH repetition Type A (i.e. with no
+  // pusch-RepTypeIndicator configured), the TDRA table is selected as for DCI format 0_0 in a UE-specific search space
+  // (TS 38.214, Section 6.1.2.3).
+  const auto& pusch_td_list = ue_cc.active_bwp().ul.td_mapper().pusch_td_resources(dci_ul_format::f0_0);
 
   // NOTE: the CG and UL grant configs were validated when the UE was added to the wheel.
   const auto& ul_grant = ue_cfg.init_bwp().ul.ded()->cg_cfg.value().rrc_configured_ul_grant_cfg.value();
@@ -291,7 +294,7 @@ void configured_grant_scheduler_impl::stop()
 pusch_config_params
 configured_grant_scheduler_impl::build_cg_pusch_cfg_params(const ue_cell_configuration& ue_cell_cfg) const
 {
-  // Same TDRA table as the one the grid reservation is built against, see reserve_cg_resources().
+  // Same TDRA table as the one the grid reservation is built against, see \ref reserve_cg_resources().
   const auto& pusch_td_list = ue_cell_cfg.init_bwp().ul.td_mapper().dedicated_pusch_td_resources();
 
   const auto* ul_ded   = ue_cell_cfg.init_bwp().ul.ded();

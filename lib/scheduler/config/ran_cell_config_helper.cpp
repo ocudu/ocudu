@@ -452,11 +452,18 @@ std::optional<unsigned> config_helpers::find_cg_pusch_td_res_idx(const ran_cell_
   ocudu_assert(cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.has_value(),
                "PUSCH Config Common must be configured.");
 
-  // Symbols left free by the SRS, which is always placed at the end of the slot.
-  const unsigned last_non_srs_symbol =
-      cell_cfg.init_bwp.srs_cfg.srs_type_enabled != srs_type::disabled
-          ? NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.init_bwp.srs_cfg.max_nof_symbols.value()
-          : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  // Symbols left free by the SRS, which sits at the end of the slot.
+  //
+  // The cell's SRS resources are whole blocks of srs_cfg.nof_symbols anchored at the last symbol of the slot (see
+  // generate_cell_srs_list()), so the region actually occupied is the largest multiple of that length that fits in the
+  // configured budget: what is left of max_nof_symbols below it is too short for another resource and stays free.
+  // Sizing the CG PUSCH against the whole budget instead would give up those symbols for nothing.
+  const srs_builder_params& srs_cfg             = cell_cfg.init_bwp.srs_cfg;
+  const unsigned            srs_res_syms        = static_cast<unsigned>(srs_cfg.nof_symbols);
+  const unsigned            nof_srs_symbols     = srs_cfg.srs_type_enabled != srs_type::disabled
+                                                      ? (srs_cfg.max_nof_symbols.value() / srs_res_syms) * srs_res_syms
+                                                      : 0U;
+  const unsigned            last_non_srs_symbol = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - nof_srs_symbols;
 
   // PUSCH time-domain resources are sorted by increasing k2 first, then by decreasing symbols .stop().
   const auto& td_res = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list;
@@ -511,6 +518,12 @@ unsigned config_helpers::compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_
   if (not cell_cfg.init_bwp.cg_cfg.value().is_type2()) {
     ocudu_assert(cg_cfg.rrc_configured_ul_grant_cfg.has_value(), "rrc_configured_ul_grant must be set for a Type 1 CG");
     cg_td_res_idx = cg_cfg.rrc_configured_ul_grant_cfg.value().time_domain_allocation;
+
+    // For type1, the MCS is part of rrc_configured_ul_grant; ensure consistency between the user-set parameters and the
+    // default constructed configuration.
+    ocudu_assert(static_cast<uint8_t>(cell_cfg.init_bwp.cg_cfg.value().mcs) ==
+                     cg_cfg.rrc_configured_ul_grant_cfg.value().mcs,
+                 "MCS inconsistency detected between user-set CG parameters and default-constructed CG configuration");
   } else {
     // For type2 CG, the TD allocation is not defined yet at this point; the scheduler will choose the symbols that do
     // not collide with SRS. In the following, we proceed under that assumption, which the cell configuration validator
@@ -575,9 +588,14 @@ std::vector<crb_interval> config_helpers::compute_cg_type2_freq_resources(const 
 {
   ocudu_assert(cell_cfg.init_bwp.cg_cfg.has_value(), "This function cannot be called if CG is not set");
 
-  const crb_bitmap pucch_crbs = compute_pucch_crbs(cell_cfg);
-  const unsigned   nof_non_pucch_crbs =
-      cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length() - pucch_crbs.count();
+  // PUCCH occupies a block of CRBs at each edge of the UL BWP; the CG resources go in the gap in between.
+  const crb_bitmap pucch_crbs          = compute_pucch_crbs(cell_cfg);
+  const int        low_edge_last_crb   = pucch_crbs.find_highest(0, pucch_crbs.size() / 2, true);
+  const int        high_edge_first_crb = pucch_crbs.find_lowest(pucch_crbs.size() / 2, pucch_crbs.size(), true);
+  ocudu_assert(low_edge_last_crb >= 0 and high_edge_first_crb >= 0,
+               "PUCCH is expected to occupy both edges of the UL BWP");
+  ocudu_assert(high_edge_first_crb - low_edge_last_crb > 1, "No free PRBs for allocation that is not PUCCH");
+  const unsigned nof_non_pucch_crbs = high_edge_first_crb - low_edge_last_crb - 1;
 
   // Calculate the RBs per CG resource and the number of CG resources that fit in the CG band.
   const cg_configuration default_cg_config = config_helpers::make_default_cell_cg_config(cell_cfg);
@@ -592,9 +610,10 @@ std::vector<crb_interval> config_helpers::compute_cg_type2_freq_resources(const 
   // Only considers the lower part of the spectrum, as we allocate CG resources on that side.
   std::vector<crb_interval> cg_crbs;
   cg_crbs.reserve(nof_cg_res);
-  unsigned cg_crb_start = pucch_crbs.find_highest(0, pucch_crbs.size() / 2, true) + 1;
+  const unsigned bwp_crb_start = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start();
+  unsigned       cg_crb_start  = static_cast<unsigned>(low_edge_last_crb) + 1;
   for (unsigned n = 0; n != nof_cg_res; ++n) {
-    cg_crbs.push_back({cg_crb_start, cg_crb_start + nof_cg_rbs_per_ue});
+    cg_crbs.push_back({cg_crb_start + bwp_crb_start, cg_crb_start + nof_cg_rbs_per_ue + bwp_crb_start});
     cg_crb_start += nof_cg_rbs_per_ue;
   }
 

@@ -47,11 +47,14 @@ bool configured_grant_type2_rrm::build_ue_cg_config(ue_cell_config& ue_cell_cfg)
 
   auto& cell = cells[ue_cell_cfg.serv_cell_cfg.cell_index];
 
-  // A UE that already holds a CG configuration has already been counted against the cell. Allocating a second one
-  // would leave nof_ues above the number of UEs actually using the cell, and that capacity is never recovered: unlike
-  // an underflow, an overcount violates no local invariant, so nothing downstream can detect it.
-  // NOTE: this mirrors reset_ue_cg_config(), which is a no-op for a UE that holds no CG configuration.
-  if (ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
+  // Nothing to build for a UE with no UL configuration, which cannot carry a CG at all.
+  //
+  // Nothing to build either for a UE that already holds a CG configuration: it has already been counted against the
+  // cell, and counting it twice would leave nof_ues above the number of UEs actually using the cell, with that
+  // capacity never recovered. Unlike an underflow, an overcount violates no local invariant, so nothing downstream
+  // can detect it.
+  if (not ue_cell_cfg.serv_cell_cfg.ul_config.has_value() or
+      ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value()) {
     return true;
   }
 

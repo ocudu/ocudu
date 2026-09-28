@@ -296,28 +296,14 @@ static void add_srs_symbol_pusch_td_resources(std::vector<pusch_time_domain_reso
   // For FDD, we duplicate the only resource by adding extra ones with the same k2 value but different symbols, at
   // symbols_per_srs steps.
   else {
-    const auto add_res_excluding = [&td_alloc_list](unsigned srs_sym) {
+    for (unsigned srs_sym = symbols_per_srs;
+         srs_sym <= max_srs_symbols and td_alloc_list.size() != pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
+         srs_sym += symbols_per_srs) {
       const auto& res_full_symbols = td_alloc_list.front();
       td_alloc_list.push_back(
           pusch_time_domain_resource_allocation{res_full_symbols.k2,
                                                 res_full_symbols.map_type,
                                                 ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - srs_sym}});
-    };
-
-    for (unsigned srs_sym = symbols_per_srs;
-         srs_sym <= max_srs_symbols and td_alloc_list.size() != pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
-         srs_sym += symbols_per_srs) {
-      add_res_excluding(srs_sym);
-    }
-
-    // The steps above stop at the last multiple of symbols_per_srs that fits in max_srs_symbols, which leaves the whole
-    // SRS region uncovered when max_srs_symbols is not a multiple of symbols_per_srs (and covers none of it when a
-    // single SRS resource is longer than max_srs_symbols). Close the gap with a resource clear of the full region, so
-    // that a transmission sized against the cell's SRS budget, such as a Configured Grant PUSCH, always has a
-    // resource to pick.
-    if (max_srs_symbols % symbols_per_srs != 0 and
-        td_alloc_list.size() != pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS) {
-      add_res_excluding(max_srs_symbols);
     }
   }
 }
