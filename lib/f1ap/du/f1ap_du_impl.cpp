@@ -6,6 +6,7 @@
 #include "f1ap_du_impl.h"
 #include "../f1ap_asn1_utils.h"
 #include "asn1_helpers.h"
+#include "du/procedures/f1ap_du_e_cid_measurement_initiation_procedure.h"
 #include "du/procedures/f1ap_du_positioning_information_exchange_procedure.h"
 #include "du/procedures/f1ap_du_positioning_measurement_procedure.h"
 #include "du/procedures/f1ap_du_trp_information_exchange_procedure.h"
@@ -602,21 +603,36 @@ void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::posi
 
 void f1ap_du_impl::handle_e_cid_measurement_initiation_request(const asn1::f1ap::e_c_id_meas_initiation_request_s& msg)
 {
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
+  f1ap_du_ue*         ue                = ues.find(gnb_du_ue_f1ap_id);
+
+  if (ue == nullptr) {
+    logger.error("Discarding ECIDMeasurementInitiationRequest. Cause: Unrecognized gNB-DU UE F1AP ID={}",
+                 fmt::underlying(gnb_du_ue_f1ap_id));
+    // The failure needs only the identifiers of the request, so it is sent without a UE context.
+    send_e_cid_measurement_initiation_failure(msg);
+    return;
+  }
+
+  du_mng.get_ue_handler(ue->context.ue_index)
+      .schedule_async_task(
+          launch_async<f1ap_du_e_cid_measurement_initiation_procedure>(msg, du_mng.get_positioning_handler(), *ue));
+}
+
+void f1ap_du_impl::send_e_cid_measurement_initiation_failure(
+    const asn1::f1ap::e_c_id_meas_initiation_request_s& msg) const
+{
   using namespace asn1::f1ap;
-
-  logger.info("du_ue={}: Declining ECIDMeasurementInitiationRequest. Cause: The gNB-DU does not measure the E-CID "
-              "quantities",
-              msg->gnb_du_ue_f1ap_id);
-
   f1ap_message f1ap_msg;
+
   f1ap_msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_E_C_ID_MEAS_INITIATION);
   e_c_id_meas_initiation_fail_s& fail = f1ap_msg.pdu.unsuccessful_outcome().value.e_c_id_meas_initiation_fail();
 
-  fail->gnb_cu_ue_f1ap_id               = msg->gnb_cu_ue_f1ap_id;
-  fail->gnb_du_ue_f1ap_id               = msg->gnb_du_ue_f1ap_id;
-  fail->lmf_ue_meas_id                  = msg->lmf_ue_meas_id;
-  fail->ran_ue_meas_id                  = msg->ran_ue_meas_id;
-  fail->cause.set_radio_network().value = cause_radio_network_opts::meas_not_supported_for_the_obj;
+  fail->gnb_cu_ue_f1ap_id      = msg->gnb_cu_ue_f1ap_id;
+  fail->gnb_du_ue_f1ap_id      = msg->gnb_du_ue_f1ap_id;
+  fail->lmf_ue_meas_id         = msg->lmf_ue_meas_id;
+  fail->ran_ue_meas_id         = msg->ran_ue_meas_id;
+  fail->cause.set_misc().value = cause_misc_opts::unspecified;
 
   tx_pdu_notifier->on_new_message(f1ap_msg);
 }

@@ -96,6 +96,12 @@ bool is_valid_e_cid_measurement_initiation_request(const f1ap_message& msg);
 
 bool is_valid_f1ap_positioning_measurement_failure(const f1ap_message& msg);
 
+/// \brief Check if an F1AP message is a valid E-CID MEASUREMENT INITIATION RESPONSE.
+bool is_valid_f1ap_e_cid_measurement_initiation_response(const f1ap_message& msg);
+
+/// \brief Check if an F1AP message is a valid E-CID MEASUREMENT INITIATION FAILURE.
+bool is_valid_f1ap_e_cid_measurement_initiation_failure(const f1ap_message& msg);
+
 bool is_valid_gnb_cu_configuration_update(const f1ap_message& msg);
 
 bool is_valid_gnb_cu_configuration_update_acknowledge(const f1ap_message& msg);

@@ -475,3 +475,55 @@ INSTANTIATE_TEST_SUITE_P(
     [](const testing::TestParamInfo<pos_aoa_params>& params_item) {
       return params_item.param.aoa.azimuth_deg < 0 ? "negative_azimuth" : "positive_azimuth";
     });
+
+/// \remark This fixture has its own name on purpose. Several test files in this binary define a \c du_high_tester at
+/// global scope, so a test that needs a specific cell configuration must not rely on that name.
+class du_high_e_cid_tester : public du_high_env_simulator, public testing::Test
+{
+public:
+  du_high_e_cid_tester() : du_high_env_simulator(du_high_env_sim_params{.srs_period = srs_periodicity::sl80}) {}
+};
+
+TEST_F(du_high_e_cid_tester, when_e_cid_measurement_initiation_request_is_received_then_response_carries_nr_aoa)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-c");
+
+  // E-CID needs no TRP Information Exchange and no Positioning Information Exchange. The serving DU already knows the
+  // UE and its SRS, as per TS 38.473 section 8.13.12.
+  rnti_t rnti = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti));
+  ASSERT_TRUE(run_rrc_setup(rnti));
+  ASSERT_TRUE(run_ue_context_setup(rnti));
+
+  gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(
+      cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+  gnb_cu_ue_f1ap_id_t cu_ue_id = int_to_gnb_cu_ue_f1ap_id(
+      cu_notifier.f1ap_ul_msgs.rbegin()->second.pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_cu_ue_f1ap_id);
+
+  // DU receives E-CID MEASUREMENT INITIATION REQUEST.
+  cu_notifier.f1ap_ul_msgs.clear();
+  f1ap_message e_cid_req = test_helpers::generate_e_cid_measurement_initiation_request(
+      cu_ue_id, du_ue_id, {e_c_id_meas_quantities_value_opts::options::angle_of_arrival_nr});
+  this->du_hi->get_f1ap_pdu_handler().handle_message(e_cid_req);
+  this->test_logger.info("STATUS: E-CID MEASUREMENT INITIATION REQUEST received by DU. Waiting for the response...");
+
+  // Wait for E-CID MEASUREMENT INITIATION RESPONSE to be sent to the CU.
+  EXPECT_TRUE(this->run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }));
+
+  const auto& e_cid_resp = cu_notifier.f1ap_ul_msgs.rbegin()->second;
+  ASSERT_TRUE(test_helpers::is_valid_f1ap_e_cid_measurement_initiation_response(e_cid_resp));
+
+  const auto& resp_msg = e_cid_resp.pdu.successful_outcome().value.e_c_id_meas_initiation_resp();
+  const auto& req_msg  = e_cid_req.pdu.init_msg().value.e_c_id_meas_initiation_request();
+  ASSERT_EQ(req_msg->lmf_ue_meas_id, resp_msg->lmf_ue_meas_id);
+  ASSERT_EQ(req_msg->ran_ue_meas_id, resp_msg->ran_ue_meas_id);
+
+  ASSERT_TRUE(resp_msg->e_c_id_meas_result_present);
+  ASSERT_EQ(resp_msg->e_c_id_meas_result.measured_results_list.size(), 1);
+  const auto& result = resp_msg->e_c_id_meas_result.measured_results_list[0].e_c_id_measured_results_value;
+  ASSERT_EQ(result.type().value, e_c_id_measured_results_value_c::types_opts::value_angleof_arrival_nr);
+  // These are the azimuth/zenith AoA reported values hard-coded in the SRS indication.
+  ASSERT_EQ(result.value_angleof_arrival_nr().azimuth_ao_a, 3034);
+  ASSERT_TRUE(result.value_angleof_arrival_nr().zenith_ao_a_present);
+  ASSERT_EQ(result.value_angleof_arrival_nr().zenith_ao_a, 567);
+}

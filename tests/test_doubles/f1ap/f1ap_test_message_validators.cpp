@@ -444,6 +444,24 @@ bool test_helpers::is_valid_f1ap_positioning_measurement_response(const f1ap_mes
   return true;
 }
 
+bool test_helpers::is_valid_f1ap_e_cid_measurement_initiation_response(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().value.type().value ==
+                 f1ap_elem_procs_o::successful_outcome_c::types_opts::e_c_id_meas_initiation_resp);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
+bool test_helpers::is_valid_f1ap_e_cid_measurement_initiation_failure(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type().value == f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  TRUE_OR_RETURN(msg.pdu.unsuccessful_outcome().value.type().value ==
+                 f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::e_c_id_meas_initiation_fail);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
 bool test_helpers::is_valid_f1ap_positioning_measurement_failure(const f1ap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type().value == f1ap_pdu_c::types_opts::unsuccessful_outcome);
