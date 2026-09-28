@@ -25,7 +25,8 @@ add_executable(du_high_test du_high_test.cpp
         du_high_many_cells_test.cpp
         du_high_connectivity_test.cpp
         du_high_positioning_test.cpp
-        paging_test.cpp)
+        paging_test.cpp
+        typeii_csi_test.cpp)
 target_link_libraries(du_high_test
         ocudu_du_high
         du_high_worker_manager

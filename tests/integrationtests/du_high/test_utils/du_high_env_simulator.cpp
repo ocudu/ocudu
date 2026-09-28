@@ -588,7 +588,7 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
       mac_crc_indication_message crc_ind = test_helpers::create_crc_indication(sl_rx, ul_res.puschs);
       this->du_hi->get_control_info_handler(cell_index).handle_crc(crc_ind);
 
-      std::optional<mac_uci_indication_message> uci_ind = test_helpers::create_uci_indication(sl_rx, ul_res.puschs);
+      std::optional<mac_uci_indication_message> uci_ind = create_pusch_uci_indication(sl_rx, ul_res.puschs);
       if (uci_ind.has_value()) {
         this->du_hi->get_control_info_handler(cell_index).handle_uci(uci_ind.value());
       }
@@ -619,6 +619,12 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
       }
     }
   }
+}
+
+std::optional<mac_uci_indication_message>
+du_high_env_simulator::create_pusch_uci_indication(slot_point sl_rx, span<const ul_sched_info> puschs)
+{
+  return test_helpers::create_uci_indication(sl_rx, puschs);
 }
 
 void du_high_env_simulator::schedule_task(async_task<void> task)

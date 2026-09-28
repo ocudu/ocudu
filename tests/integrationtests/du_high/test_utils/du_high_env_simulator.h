@@ -14,6 +14,7 @@
 #include "ocudu/du/du_high/du_high.h"
 #include "ocudu/du/du_high/du_high_configuration.h"
 #include "ocudu/f1ap/f1ap_ue_id_types.h"
+#include "ocudu/mac/mac_cell_control_information_handler.h"
 #include "ocudu/ran/slot_point_extended.h"
 #include "ocudu/ran/srs/srs_properties.h"
 #include "ocudu/scheduler/config/cell_config_builder_params.h"
@@ -88,6 +89,12 @@ public:
   bool run_until(unique_function<bool()> condition, std::optional<unsigned> max_slot_count = std::nullopt);
 
   virtual void handle_slot_results(du_cell_index_t cell_index);
+
+  /// \brief Builds the UCI that the simulated UEs report on the given PUSCH grants.
+  ///
+  /// By default every HARQ-ACK is an ACK and every CSI bit is set. Override it to report a specific CSI payload.
+  virtual std::optional<mac_uci_indication_message> create_pusch_uci_indication(slot_point                sl_rx,
+                                                                                span<const ul_sched_info> puschs);
 
   /// Schedule asynchronous task to be executed in the simulator context.
   void schedule_task(async_task<void> task);
