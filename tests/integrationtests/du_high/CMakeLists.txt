@@ -9,7 +9,8 @@ add_library(du_high_worker_manager
         test_utils/du_high_env_simulator.cpp
         test_utils/du_high_ue_simulator.cpp
         test_utils/du_high_sim_dependencies.cpp
-        test_utils/typeii_csi_report_packer.cpp)
+        test_utils/typeii_csi_report_packer.cpp
+        test_utils/typeii_ue_capabilities.cpp)
 target_include_directories(du_high_worker_manager PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_high_worker_manager
         ocudu_du_high

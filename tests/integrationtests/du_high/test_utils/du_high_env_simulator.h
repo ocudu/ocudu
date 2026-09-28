@@ -72,6 +72,15 @@ public:
 
   bool run_ue_context_setup(rnti_t rnti);
 
+  /// \brief Run the UE Context Modification procedure that reports the UE capabilities to the DU.
+  ///
+  /// The CU-CP runs the UE capability enquiry after the UE Context Setup, so the capabilities of a UE that attaches
+  /// reach the DU in this procedure.
+  ///
+  /// \param[in] rnti            Identifier of the UE.
+  /// \param[in] ue_capabilities Capabilities that the CU reports for the UE.
+  bool run_ue_context_modification(rnti_t rnti, const byte_buffer& ue_capabilities);
+
   bool run_ue_context_release(rnti_t rnti, srb_id_t srb_id = srb_id_t::srb1);
 
   void run_slot();

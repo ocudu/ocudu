@@ -442,6 +442,45 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
   return true;
 }
 
+bool du_high_env_simulator::run_ue_context_modification(rnti_t rnti, const byte_buffer& ue_capabilities)
+{
+  auto it = ues.find(rnti);
+  if (it == ues.end()) {
+    return false;
+  }
+  auto& u = it->second;
+
+  // DU receives UE Context Modification Request carrying the UE capabilities.
+  cu_notifier.f1ap_ul_msgs.clear();
+  f1ap_message msg = test_helpers::generate_ue_context_modification_request(*u.du_ue_id, *u.cu_ue_id);
+  asn1::f1ap::ue_context_mod_request_s& cmd        = msg.pdu.init_msg().value.ue_context_mod_request();
+  cmd->cu_to_du_rrc_info_present                   = true;
+  cmd->cu_to_du_rrc_info.ue_cap_rat_container_list = ue_capabilities.copy();
+  this->du_hi->get_f1ap_pdu_handler().handle_message(msg);
+
+  // Wait until the DU sends the UE Context Modification Response.
+  if (not run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); })) {
+    test_logger.error("rnti={}: No UE Context Modification Response was sent back to the CU-CP", rnti);
+    return false;
+  }
+  if (not test_helpers::is_valid_ue_context_modification_response(cu_notifier.f1ap_ul_msgs.rbegin()->second, msg)) {
+    test_logger.error("rnti={}: UE Context Modification Response sent back to the CU-CP is not valid", rnti);
+    return false;
+  }
+
+  // The DU takes the next UL RRC message as the confirmation that the UE applied the new configuration, which is what
+  // takes the UE out of the fallback mode that a reconfiguration triggers.
+  cu_notifier.f1ap_ul_msgs.clear();
+  u.sim->enqueue_ul_mac_sdu(LCID_SRB1, make_dummy_payload());
+  if (not run_until([this]() { return not cu_notifier.f1ap_ul_msgs.empty(); }) or
+      not test_helpers::is_ul_rrc_msg_transfer_valid(cu_notifier.f1ap_ul_msgs.rbegin()->second, srb_id_t::srb1)) {
+    test_logger.error("rnti={}: F1AP UL RRC Message not sent or is invalid", rnti);
+    return false;
+  }
+
+  return true;
+}
+
 bool du_high_env_simulator::run_ue_context_release(rnti_t rnti, srb_id_t srb_id)
 {
   auto it = ues.find(rnti);
