@@ -118,6 +118,14 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
       return false;
     }
 
+    // A beam grid maps the transmissions onto beam-ports beyond the antenna ports, which only Category B supports.
+    if (has_beam_grid(cell_cfg.tx_ant_topology) && !ofh_cell.cell.dl_beamforming.has_value()) {
+      fmt::println("Antenna topology '{}' defines a beam grid, which requires the downlink beamforming configuration",
+                   to_string(cell_cfg.tx_ant_topology));
+
+      return false;
+    }
+
     const std::chrono::duration<double, std::micro> symbol_duration(
         (1e3 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(cell_cfg.scs))));
 

@@ -53,8 +53,9 @@ static std::vector<ru_ofh_cell_validation_config> get_ru_ofh_validation_dependen
     ru_ofh_cell_validation_config&       out_cell = out_cfg[i];
     const du_high_unit_base_cell_config& in_cell  = config.cells_cfg[i].cell;
 
-    // Validates the sampling rate is compatible with the PRACH sequence.
+    // The DU high validation, which runs first, guarantees the topology is set.
     out_cell.scs             = in_cell.common_scs;
+    out_cell.tx_ant_topology = *in_cell.tx_ant_topology;
     out_cell.nof_prach_ports = in_cell.prach_cfg.ports.size();
     out_cell.nof_antennas_dl = in_cell.nof_antennas_dl;
     out_cell.nof_antennas_ul = in_cell.nof_antennas_ul;

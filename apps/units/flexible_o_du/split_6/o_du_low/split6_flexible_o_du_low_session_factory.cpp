@@ -240,6 +240,7 @@ get_ru_ofh_validation_dependencies(const fapi::cell_configuration& config)
 
   // Validates the sampling rate is compatible with the PRACH sequence.
   out_cell.scs             = config.scs_common;
+  out_cell.tx_ant_topology = get_tx_antenna_topology(config.carrier_cfg.num_tx_ant);
   out_cell.nof_prach_ports = split6_du_low::PRACH_NOF_PORTS;
   out_cell.nof_antennas_dl = config.carrier_cfg.num_tx_ant;
   out_cell.nof_antennas_ul = config.carrier_cfg.num_rx_ant;

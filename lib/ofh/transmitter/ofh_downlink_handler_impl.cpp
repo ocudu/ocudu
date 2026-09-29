@@ -31,17 +31,9 @@ static unsigned get_nof_required_eaxc(const resource_grid_reader& reader, bool i
     return nof_active_ports;
   }
 
-  // Category A maps each beam-port onto the eAxC with the same index, hence all data must be contained in the first K
-  // beam-ports, where K is the number of antenna ports of the configured topology. Returning the highest non-empty
-  // port detects a transmission mapped beyond them.
-  unsigned nof_required_eaxc = 0;
-  for (unsigned port = 0, e = reader.get_nof_ports(); port != e; ++port) {
-    if (!reader.is_empty(port)) {
-      nof_required_eaxc = port + 1;
-    }
-  }
-
-  return nof_required_eaxc;
+  // Category A maps each beam-port onto the eAxC with the same index. Its topology defines no beam grid, so the grid
+  // has exactly one beam-port per antenna port and eAxC.
+  return reader.get_nof_ports();
 }
 
 downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&  config,

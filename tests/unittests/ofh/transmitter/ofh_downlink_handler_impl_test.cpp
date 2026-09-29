@@ -313,11 +313,10 @@ TEST(ofh_downlink_handler_impl, category_a_transmits_one_beam_port_per_eaxc)
   downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
   handler.start();
 
-  // The resource grid is sized to the total number of beams, which exceeds the number of antenna ports.
   // Write the second antenna port only, the first one is left empty.
-  resource_grid_reader_spy rg_reader_spy(8, 1, 1);
+  resource_grid_reader_spy rg_reader_spy(2, 1, 1);
   rg_reader_spy.write(resource_grid_reader_spy::expected_entry_t{1, 0, 0, {1.0F, 0.0F}});
-  resource_grid_writer_spy rg_writer_spy(8, 1, 1);
+  resource_grid_writer_spy rg_writer_spy(2, 1, 1);
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
 
@@ -430,17 +429,15 @@ TEST(ofh_downlink_handler_impl, category_b_rejects_more_active_beam_ports_than_c
       fmt::format("Resource grid needs '{}' downlink eAxCs and only '{}' are configured", 3, config.dl_eaxc.size()));
 }
 
-TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenna_ports)
+TEST(ofh_downlink_handler_impl, category_a_rejects_more_beam_ports_than_eaxcs)
 {
   // Use a topology that defines DFT beams on top of the port-selection ones.
   static constexpr antenna_topology topology = antenna_topology::single_panel_two_one;
   static_assert(get_total_nof_beams(topology) > get_total_nof_ports(topology),
                 "The topology must define beams beyond the antenna ports");
 
-  const unsigned nof_antenna_ports = get_total_nof_ports(topology);
-
   downlink_handler_impl_config config = generate_default_config();
-  config.dl_eaxc.resize(nof_antenna_ports);
+  config.dl_eaxc.resize(get_total_nof_ports(topology));
   std::iota(config.dl_eaxc.begin(), config.dl_eaxc.end(), 24);
 
   error_notifier_spy notifier_spy;
@@ -450,11 +447,9 @@ TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenn
   downlink_handler_impl handler(config, generate_dependencies(notifier_spy, std::move(cplane), std::move(uplane)));
   handler.start();
 
+  // Category A cannot transmit a grid sized to the beam grid, even when the DFT beam-ports are empty.
   resource_grid_reader_spy rg_reader_spy(get_total_nof_beams(topology), 1, 1);
   resource_grid_writer_spy rg_writer_spy(get_total_nof_beams(topology), 1, 1);
-  // Write the first beam-port that selects a DFT beam instead of an antenna port, which Category A cannot transmit.
-  rg_reader_spy.write(
-      resource_grid_reader_spy::expected_entry_t{static_cast<uint8_t>(nof_antenna_ports), 0, 0, {1.0F, 0.0F}});
   resource_grid_spy        rg_spy(rg_reader_spy, rg_writer_spy);
   shared_resource_grid_spy rg(rg_spy);
 
@@ -465,6 +460,6 @@ TEST(ofh_downlink_handler_impl, category_a_rejects_a_beam_port_beyond_the_antenn
 
   ASSERT_DEATH(handler.handle_dl_data(rg_context, rg.get_grid()),
                fmt::format("Resource grid needs '{}' downlink eAxCs and only '{}' are configured",
-                           nof_antenna_ports + 1,
+                           get_total_nof_beams(topology),
                            config.dl_eaxc.size()));
 }

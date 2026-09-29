@@ -7,6 +7,7 @@
 
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "ru_ofh_config.h"
+#include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 
 namespace ocudu {
@@ -15,6 +16,8 @@ namespace ocudu {
 struct ru_ofh_cell_validation_config {
   /// Subcarrier spacing.
   subcarrier_spacing scs;
+  /// Downlink antenna topology.
+  antenna_topology tx_ant_topology;
   /// Downlink number of antennas.
   unsigned nof_antennas_dl;
   /// Uplink number of antennas.
