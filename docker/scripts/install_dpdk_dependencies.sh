@@ -63,7 +63,7 @@ install_dpdk_dependencies_fedora() {
     local -a pip_pkgs=()
 
     local -a build_pkgs=(
-        curl ca-certificates xz
+        curl ca-certificates xz tar gzip
         python3-pip ninja-build gcc gcc-c++ make pkgconf-pkg-config numactl-devel libfdt-devel pciutils
         rdma-core-devel
     )

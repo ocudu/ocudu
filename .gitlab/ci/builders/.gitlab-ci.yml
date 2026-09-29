@@ -342,6 +342,90 @@ ubuntu-dpdk-builder arm64:
     target_arch: -Dplatform=n1sdp -Dmax_numa_nodes=1
 
 ################################################################################
+# Fedora compatibility dependencies. Ordinary Fedora jobs use RPM packages;
+# these tarballs supply explicit versions to the scheduled compatibility jobs.
+################################################################################
+.fedora-versioned-dependency-builder:
+  stage: dependencies
+  image: fedora:44
+  tags:
+    - ${OCUDU_RUNNER_TAG}-amd64
+  rules:
+    - if: $ON_MR
+  variables:
+    GIT_STRATEGY: fetch # The install and build scripts are read from this checkout.
+    component: ""
+    component_version: ""
+    isa_suffix: ""
+    target_arch: ""
+  before_script:
+    - dnf install -y curl ca-certificates tar gzip xz
+  script:
+    - |
+      set -euo pipefail
+      artifact_dir=".gitlab/ci/builders/${component}/${component_version}${isa_suffix}"
+      archive="/tmp/${component}.tar.gz"
+      package_url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${component}/fedora-44-amd64-${component_version}${isa_suffix}/${component}.tar.gz"
+      http_code="$(curl --silent --show-error --location --write-out '%{http_code}' \
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --output "${archive}" "${package_url}")"
+
+      case "${http_code}" in
+        200)
+          tar -tzf "${archive}" >/dev/null
+          tar -xzf "${archive}"
+          echo "Reusing Fedora ${component} ${component_version}${isa_suffix}"
+          ;;
+        404)
+          if [ "${component}" = dpdk ]; then
+            # Prefer the public Fedora/PyPI dependencies to the CI package index.
+            unset PIP_EXTRA_INDEX_URL PIP_INDEX_URL
+          fi
+          "docker/scripts/install_${component}_dependencies.sh" build
+          cpu_jobs="$(.gitlab/ci/builders/get_available_cores.sh)"
+          if [ -z "${cpu_jobs}" ] || [ "${cpu_jobs}" -lt 1 ]; then cpu_jobs=1; fi
+          "docker/scripts/build_${component}.sh" "${component_version}" "${target_arch}" "${cpu_jobs}"
+          mkdir -p "$(dirname "${artifact_dir}")"
+          cp -a "/opt/${component}/${component_version}" "${artifact_dir}"
+          tar -czf "${archive}" "${artifact_dir}"
+          curl --fail --show-error --silent --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+            --upload-file "${archive}" "${package_url}"
+          echo "Published Fedora ${component} ${component_version}${isa_suffix}"
+          ;;
+        *)
+          echo >&2 "Cannot read Fedora ${component} package: HTTP ${http_code}"
+          exit 1
+          ;;
+      esac
+
+      if [ ! -d "${artifact_dir}" ] || [ -z "$(find "${artifact_dir}" -type f -print -quit)" ]; then
+        echo >&2 "Fedora ${component} package is empty or has the wrong layout: ${artifact_dir}"
+        exit 1
+      fi
+
+fedora-uhd-builder avx2:
+  extends: .fedora-versioned-dependency-builder
+  variables:
+    component: uhd
+    component_version: "4.8.0.0"
+    target_arch: -march=x86-64-v3
+  artifacts:
+    paths:
+      - .gitlab/ci/builders/uhd
+    expire_in: 8 hours
+
+fedora-dpdk-builder avx2:
+  extends: .fedora-versioned-dependency-builder
+  variables:
+    component: dpdk
+    component_version: "25.11.3"
+    isa_suffix: _avx2
+    target_arch: -Dcpu_instruction_set=x86-64-v3
+  artifacts:
+    paths:
+      - .gitlab/ci/builders/dpdk
+    expire_in: 8 hours
+
+################################################################################
 # Common
 ################################################################################
 .image-build-publish:

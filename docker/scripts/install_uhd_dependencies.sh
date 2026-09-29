@@ -134,7 +134,7 @@ install_uhd_dependencies_rpm() {
     local -a pkgs=()
 
     local -a build_pkgs=(
-        curl-minimal ca-certificates xz tar gzip cmake make boost-devel libusb1-devel
+        curl-minimal ca-certificates xz tar gzip cmake gcc gcc-c++ make boost-devel libusb1-devel
         python3-mako python3-numpy python3-setuptools python3-requests
     )
     local -a run_pkgs=(
