@@ -4,6 +4,7 @@
 
 #include "fapi_to_mac_indications_fastpath_translator.h"
 #include "ocudu/fapi/p7/messages/rach_indication.h"
+#include "ocudu/fapi/p7/messages/srs_indication.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include <gtest/gtest.h>
 
@@ -27,6 +28,16 @@ public:
   std::optional<ue_con_res_id_t> resolve_msga_con_res_id(rnti_t tc_rnti) override { return std::nullopt; }
 
   const mac_rach_indication& get_indication() const { return indication; }
+};
+
+class mac_cell_control_information_handler_spy : public mac_cell_control_information_handler
+{
+public:
+  void handle_crc(const mac_crc_indication_message& msg) override {}
+  void handle_uci(const mac_uci_indication_message& msg) override {}
+  void handle_srs(const mac_srs_indication_message& msg) override { last_srs_ind = msg; }
+
+  std::optional<mac_srs_indication_message> last_srs_ind;
 };
 } // namespace
 
@@ -110,4 +121,33 @@ INSTANTIATE_TEST_SUITE_P(PowerValues, mac_rach_indication_fixture, testing::Valu
 TEST_F(mac_rach_indication_fixture, CorrectMessageConvertsCorrectly)
 {
   test_pdu();
+}
+
+TEST(mac_srs_indication_test, positioning_report_with_aoa_converts_correctly)
+{
+  mac_cell_control_information_handler_spy    handler;
+  fapi_to_mac_indications_fastpath_translator translator(0, ocudulog::fetch_basic_logger("FAPI"));
+  translator.set_cell_crc_handler(handler);
+
+  fapi::srs_indication fapi_msg;
+  fapi_msg.slot            = slot_point(subcarrier_spacing::kHz30, 1, 3);
+  fapi_msg.pdu.rnti        = to_rnti(0x4601);
+  fapi_msg.pdu.positioning = fapi::srs_positioning_report{.ul_relative_toa = phy_time_unit::from_units_of_Tc(28),
+                                                          .rsrp            = fapi::fapi_power_unit(-50.F, 0, 0),
+                                                          .azimuth_aoa_deg = -45.F,
+                                                          .zenith_aoa_deg  = 90.5F};
+  translator.on_srs_indication(fapi_msg);
+
+  ASSERT_TRUE(handler.last_srs_ind.has_value()) << "No SRS indication was forwarded to MAC";
+  ASSERT_EQ(fapi_msg.slot, handler.last_srs_ind->sl_rx);
+  ASSERT_EQ(1, handler.last_srs_ind->srss.size());
+  const mac_srs_pdu& pdu = handler.last_srs_ind->srss.front();
+  ASSERT_EQ(fapi_msg.pdu.rnti, pdu.rnti);
+
+  const auto* report = std::get_if<mac_srs_pdu::positioning_report>(&pdu.report);
+  ASSERT_NE(nullptr, report) << "The SRS report is not a positioning report";
+  EXPECT_EQ(fapi_msg.pdu.positioning->ul_relative_toa, report->ul_rtoa);
+  EXPECT_FLOAT_EQ(-50.F, report->ul_rsrp_dBFS.value());
+  EXPECT_EQ(fapi_msg.pdu.positioning->azimuth_aoa_deg, report->azimuth_aoa);
+  EXPECT_EQ(fapi_msg.pdu.positioning->zenith_aoa_deg, report->zenith_aoa);
 }

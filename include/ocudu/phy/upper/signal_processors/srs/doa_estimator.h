@@ -27,8 +27,12 @@ public:
   /// \brief Estimates the direction of arrival of \c srs_sequence from the sampled \c data.
   /// \param[in]  data          The samples from the antenna array (one column per antenna) corresponding to the
   ///                           received SRS sequence.
-  /// \return The estimated direction of arrival is the computation was successful, \c nullopt otherwise (data is badly
-  /// conditioned and the algorithm does not converge).
+  /// \return The estimated direction of arrival if the computation was successful, \c nullopt otherwise (data is badly
+  /// conditioned and the algorithm does not converge). A returned result meets the following requirements:
+  /// - \c doa_estimator_result::doa_components is sorted by decreasing \c spectrum_strength, so the first component is
+  ///   the strongest one.
+  /// - The number of components does not exceed the number of antennas.
+  /// - The list of components is empty if no direction is detected.
   virtual std::optional<doa_estimator_result> estimate(const tensor<2, cf_t>& data) = 0;
 };
 

@@ -34,7 +34,8 @@ struct doa_estimator_result {
 
   /// \brief List of detected DOA components.
   ///
-  /// The number of detected components cannot exceed the number of Rx antenna ports.
+  /// The components are sorted by decreasing spectrum strength. The number of detected components cannot exceed the
+  /// number of Rx antenna ports.
   static_vector<doa_component_type, MAX_PORTS> doa_components;
 };
 

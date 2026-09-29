@@ -280,8 +280,11 @@ void fapi_to_mac_indications_fastpath_translator::on_srs_indication(const fapi::
   }
 
   if (msg.pdu.positioning) {
-    mac_pdu.report =
-        mac_srs_pdu::positioning_report{msg.pdu.positioning->ul_relative_toa, to_dBFS(msg.pdu.positioning->rsrp)};
+    const fapi::srs_positioning_report& positioning = *msg.pdu.positioning;
+    mac_pdu.report                                  = mac_srs_pdu::positioning_report{positioning.ul_relative_toa,
+                                                     to_dBFS(positioning.rsrp),
+                                                     positioning.azimuth_aoa_deg,
+                                                     positioning.zenith_aoa_deg};
   }
 
   if (OCUDU_UNLIKELY(logger.debug.enabled())) {

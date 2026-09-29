@@ -61,8 +61,10 @@ TEST(srs_indication_builder, valid_srs_indication_with_positioning_report_passes
 
   std::optional<phy_time_unit>   ul_relative_toa = phy_time_unit::from_units_of_Tc(28);
   std::optional<fapi_power_unit> rsrp            = fapi_power_unit(-50, 0, 0);
+  std::optional<float>           azimuth_aoa_deg = -45.5F;
+  std::optional<float>           zenith_aoa_deg  = 90.1F;
 
-  pdu_builder.set_positioning_report_parameters(ul_relative_toa, rsrp);
+  pdu_builder.set_positioning_report_parameters(ul_relative_toa, rsrp, azimuth_aoa_deg, zenith_aoa_deg);
 
   ASSERT_EQ(slot, msg.slot);
 
@@ -74,4 +76,6 @@ TEST(srs_indication_builder, valid_srs_indication_with_positioning_report_passes
 
   ASSERT_EQ(ul_relative_toa, msg.pdu.positioning->ul_relative_toa);
   ASSERT_EQ(rsrp, msg.pdu.positioning->rsrp);
+  ASSERT_EQ(azimuth_aoa_deg, msg.pdu.positioning->azimuth_aoa_deg);
+  ASSERT_EQ(zenith_aoa_deg, msg.pdu.positioning->zenith_aoa_deg);
 }

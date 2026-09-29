@@ -506,6 +506,25 @@ void phy_to_fapi_results_event_fastpath_translator::on_new_pucch_results(const u
   p7_notifier->on_uci_indication(msg);
 }
 
+/// \brief Derives the azimuth Angle of Arrival, in degrees, from the strongest DoA component.
+///
+/// Only uniform linear arrays are supported. They measure the broadside angle, within [-90, 90] degrees, from the array
+/// normal, which is taken as the zero azimuth.
+///
+/// Limitation: the broadside angle equals the azimuth only if the zenith is 90 degrees. The azimuths A and 180 - A
+/// degrees have the same broadside angle, e.g. 20 and 160 degrees.
+///
+/// Returns an empty value if no component was detected.
+static std::optional<float> get_azimuth_aoa_deg(const std::optional<doa_estimator_result>& doa_result)
+{
+  if (!doa_result.has_value() || doa_result->doa_components.empty()) {
+    return std::nullopt;
+  }
+
+  // The DoA estimator sorts the components by decreasing spectrum strength.
+  return doa_result->doa_components.front().broadside_angle_degrees;
+}
+
 void phy_to_fapi_results_event_fastpath_translator::on_new_srs_results(const ul_srs_results& result)
 {
   fapi::srs_indication         msg;
@@ -533,8 +552,12 @@ void phy_to_fapi_results_event_fastpath_translator::on_new_srs_results(const ul_
           *result.processor_result.rsrp_dB, dbfs_to_dbm_conversion_factor, db_to_dbfs_conversion_factor);
     }
 
+    // A linear array only resolves the angle in its own plane, so the zenith Angle of Arrival is not reported.
     srs_pdu_builder.set_positioning_report_parameters(
-        std::make_optional(phy_time_unit::from_seconds(result.processor_result.time_alignment.time_alignment)), rsrp);
+        std::make_optional(phy_time_unit::from_seconds(result.processor_result.time_alignment.time_alignment)),
+        rsrp,
+        get_azimuth_aoa_deg(result.processor_result.doa_result),
+        std::nullopt);
   }
 
   p7_notifier->on_srs_indication(msg);

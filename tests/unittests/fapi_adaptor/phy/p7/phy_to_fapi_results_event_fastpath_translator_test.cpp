@@ -25,10 +25,11 @@ public:
   void on_rx_data_indication(const fapi::rx_data_indication& msg) override {}
   void on_crc_indication(const fapi::crc_indication& msg) override {}
   void on_uci_indication(const fapi::uci_indication& msg) override {}
-  void on_srs_indication(const fapi::srs_indication& msg) override {}
+  void on_srs_indication(const fapi::srs_indication& msg) override { last_srs_ind = msg; }
   void on_rach_indication(const fapi::rach_indication& msg) override { last_rach_ind = msg; }
 
   std::optional<fapi::rach_indication> last_rach_ind;
+  std::optional<fapi::srs_indication>  last_srs_ind;
 };
 
 /// Parameters of a PRACH occasion whose reported slot index is under test.
@@ -158,3 +159,93 @@ TEST(prach_slot_index_ntn_test, reported_slot_index_is_rebased_to_the_ue_ul_occa
   // The message header keeps reporting the DL-clock detection slot.
   ASSERT_EQ(DETECTION_SLOT, notifier.last_rach_ind->slot.slot_index());
 }
+
+namespace {
+
+/// Parameters of a positioning SRS result whose Angle of Arrival report is under test.
+struct srs_aoa_params {
+  /// DoA components estimated by the PHY. Empty if no DoA was estimated.
+  std::optional<std::vector<doa_estimator_result::doa_component_type>> doa_components;
+  /// Expected azimuth Angle of Arrival, in degrees, reported in the SRS.indication.
+  std::optional<float> expected_azimuth_aoa_deg;
+};
+
+void PrintTo(const srs_aoa_params& value, ::std::ostream* os)
+{
+  if (!value.doa_components.has_value()) {
+    *os << "no DoA";
+    return;
+  }
+  *os << fmt::format("nof_components={}", value.doa_components->size());
+  for (const auto& component : *value.doa_components) {
+    *os << fmt::format(" {{angle={} strength={}}}", component.broadside_angle_degrees, component.spectrum_strength);
+  }
+}
+
+class srs_aoa_report_test : public ::testing::TestWithParam<srs_aoa_params>
+{
+protected:
+  srs_aoa_report_test() :
+    translator(
+        phy_to_fapi_results_event_fastpath_translator_config{.sector_id                     = 0,
+                                                             .dbfs_to_dbm_conversion_factor = 0.F,
+                                                             .db_to_dbfs_conversion_factor  = 0.F,
+                                                             .msg1_scs = subcarrier_spacing::invalid},
+        phy_to_fapi_results_event_fastpath_translator_dependencies{.logger = ocudulog::fetch_basic_logger("FAPI")})
+  {
+    translator.set_p7_indications_notifier(notifier);
+  }
+
+  /// Builds a positioning SRS result carrying the parameterized DoA components.
+  static ul_srs_results make_srs_results()
+  {
+    const srs_aoa_params& params = GetParam();
+
+    ul_srs_results result;
+    result.context.slot                                             = slot_point(subcarrier_spacing::kHz30, 0, 3);
+    result.context.rnti                                             = to_rnti(0x4601);
+    result.context.is_normalized_channel_iq_matrix_report_requested = false;
+    result.context.is_positioning_report_requested                  = true;
+    result.processor_result.time_alignment.time_alignment           = 0.0;
+
+    if (params.doa_components.has_value()) {
+      doa_estimator_result& doa = result.processor_result.doa_result.emplace(params.doa_components->size());
+      std::copy(params.doa_components->begin(), params.doa_components->end(), doa.doa_components.begin());
+    }
+
+    return result;
+  }
+
+  p7_indications_notifier_spy                   notifier;
+  phy_to_fapi_results_event_fastpath_translator translator;
+};
+
+} // namespace
+
+/// The strongest DoA component is reported as the azimuth Angle of Arrival, without a zenith angle.
+TEST_P(srs_aoa_report_test, strongest_doa_component_is_reported_as_azimuth_aoa)
+{
+  translator.on_new_srs_results(make_srs_results());
+
+  ASSERT_TRUE(notifier.last_srs_ind.has_value()) << "No SRS.indication was generated";
+  const std::optional<fapi::srs_positioning_report>& positioning = notifier.last_srs_ind->pdu.positioning;
+  ASSERT_TRUE(positioning.has_value()) << "No positioning report was generated";
+
+  ASSERT_EQ(GetParam().expected_azimuth_aoa_deg, positioning->azimuth_aoa_deg);
+  ASSERT_FALSE(positioning->zenith_aoa_deg.has_value());
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    srs_aoa_report_test,
+    srs_aoa_report_test,
+    ::testing::Values(
+        // DoA estimation disabled.
+        srs_aoa_params{std::nullopt, std::nullopt},
+        // DoA estimation enabled, but no component detected.
+        srs_aoa_params{std::vector<doa_estimator_result::doa_component_type>{}, std::nullopt},
+        // Positive broadside angle.
+        srs_aoa_params{std::vector<doa_estimator_result::doa_component_type>{{30.F, 10.F}, {-60.F, 2.F}}, 30.F},
+        // Negative broadside angle.
+        srs_aoa_params{std::vector<doa_estimator_result::doa_component_type>{{-45.F, 10.F}, {20.F, 2.F}}, -45.F},
+        // Broadside direction.
+        srs_aoa_params{std::vector<doa_estimator_result::doa_component_type>{{0.F, 10.F}}, 0.F}));

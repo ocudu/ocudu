@@ -18,6 +18,10 @@ struct srs_positioning_report {
   /// TUL-RTOA as defined in TS 38.215 on section 5.1.
   std::optional<phy_time_unit>   ul_relative_toa;
   std::optional<fapi_power_unit> rsrp;
+  /// Azimuth Angle of Arrival, in degrees. Values: [-180, 180).
+  std::optional<float> azimuth_aoa_deg;
+  /// Zenith Angle of Arrival, in degrees. Values: [0, 180).
+  std::optional<float> zenith_aoa_deg;
 };
 
 /// SRS indication pdu.
@@ -60,6 +64,12 @@ struct formatter<ocudu::fapi::srs_indication> {
       }
       if (msg.pdu.positioning->rsrp.has_value()) {
         format_to(ctx.out(), " RSRP={}", *msg.pdu.positioning->rsrp);
+      }
+      if (msg.pdu.positioning->azimuth_aoa_deg.has_value()) {
+        format_to(ctx.out(), " azimuth_AoA={:.1f}", *msg.pdu.positioning->azimuth_aoa_deg);
+      }
+      if (msg.pdu.positioning->zenith_aoa_deg.has_value()) {
+        format_to(ctx.out(), " zenith_AoA={:.1f}", *msg.pdu.positioning->zenith_aoa_deg);
       }
     }
 

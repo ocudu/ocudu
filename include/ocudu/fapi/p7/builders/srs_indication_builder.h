@@ -50,9 +50,14 @@ public:
   ///
   /// These parameters are specified in SCF-222 v8.0 Section 3.4.10 Table 3-209.
   srs_indication_pdu_builder& set_positioning_report_parameters(std::optional<phy_time_unit>   ul_relative_toa,
-                                                                std::optional<fapi_power_unit> rsrp)
+                                                                std::optional<fapi_power_unit> rsrp,
+                                                                std::optional<float>           azimuth_aoa_deg,
+                                                                std::optional<float>           zenith_aoa_deg)
   {
-    pdu.positioning = std::make_optional<srs_positioning_report>({.ul_relative_toa = ul_relative_toa, .rsrp = rsrp});
+    pdu.positioning = std::make_optional<srs_positioning_report>({.ul_relative_toa = ul_relative_toa,
+                                                                  .rsrp            = rsrp,
+                                                                  .azimuth_aoa_deg = azimuth_aoa_deg,
+                                                                  .zenith_aoa_deg  = zenith_aoa_deg});
 
     return *this;
   }
