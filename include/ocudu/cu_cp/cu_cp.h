@@ -44,9 +44,9 @@ public:
 
   /// \brief Initiate AMF TNL connection and run NG Setup Procedure.
   ///
-  /// This function blocks until the procedure is complete. Once completed, the CU-CP is in operational state.
-  /// \return Returns true if the connection to the AMF and NG setup procedure were successful. False, otherwise.
-  virtual bool start() = 0;
+  /// This function blocks until the first attempt is complete. An AMF that is not connected by then is reconnected to
+  /// in the background.
+  virtual void start() = 0;
 
   /// \brief Stop the CU-CP operation.
   virtual void stop() = 0;

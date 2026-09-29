@@ -249,10 +249,10 @@ cu_cp_impl::~cu_cp_impl()
   stop();
 }
 
-bool cu_cp_impl::start()
+void cu_cp_impl::start()
 {
-  std::promise<bool> p;
-  std::future<bool>  fut = p.get_future();
+  std::promise<void> p;
+  std::future<void>  fut = p.get_future();
 
   if (not cfg.services.cu_cp_executor->execute([this, &p]() {
         // Start statistics report timer.
@@ -271,9 +271,7 @@ bool cu_cp_impl::start()
     report_fatal_error("Failed to initiate CU-CP setup");
   }
   // Block waiting for CU-CP setup to complete.
-  if (not fut.get()) {
-    return false; // Could not connect to AMF.
-  }
+  fut.get();
 
   // Start the NTN periodic updates. Dispatched from this thread on purpose: the manager blocks waiting on the CU-CP
   // executor, so calling it from within a task running on it would deadlock.
@@ -311,7 +309,6 @@ bool cu_cp_impl::start()
       })) {
     report_fatal_error("Failed to initiate XNC CU-CP setup");
   }
-  return true;
 }
 
 void cu_cp_impl::stop()

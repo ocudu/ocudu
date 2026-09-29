@@ -450,7 +450,7 @@ void cu_cp_test_environment::enqueue_procedure_outcome_pdus_and_start_cu_cp()
   }
 
   // Start CU-CP.
-  report_fatal_error_if_not(get_cu_cp().start(), "Failed to start CU-CP");
+  get_cu_cp().start();
 }
 
 void cu_cp_test_environment::run_ng_setup()

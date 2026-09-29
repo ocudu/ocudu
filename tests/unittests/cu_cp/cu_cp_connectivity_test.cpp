@@ -55,7 +55,7 @@ TEST_F(cu_cp_connectivity_test, when_cu_cp_starts_then_it_initiates_ng_setup_pro
   get_amf().enqueue_next_tx_pdu(ng_setup_resp);
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  ASSERT_TRUE(get_cu_cp().start());
+  get_cu_cp().start();
 
   ngap_message ngap_pdu;
   ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
@@ -72,7 +72,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_con
   get_amf().enqueue_next_tx_pdu(ng_setup_fail);
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  ASSERT_FALSE(get_cu_cp().start());
+  get_cu_cp().start();
 
   ngap_message ngap_pdu;
   ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
@@ -82,13 +82,35 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_con
   ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
 }
 
+TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_retries_it_until_it_succeeds)
+{
+  // The AMF rejects the first two NG Setups.
+  get_amf().enqueue_next_tx_pdu(generate_ng_setup_failure());
+  get_cu_cp().start();
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
+  ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
+
+  get_amf().enqueue_next_tx_pdu(generate_ng_setup_failure());
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1100}))
+      << "CU-CP did not retry the NG Setup over a new TNL association";
+  ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request));
+
+  // The retry backs off, so the AMF accepts the third NG Setup only after a longer wait.
+  get_amf().enqueue_next_tx_pdu(generate_ng_setup_response());
+  ASSERT_FALSE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1100})) << "CU-CP did not back off";
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(tick_until(
+      std::chrono::milliseconds{100}, [this]() { return get_cu_cp().get_ng_handler().amfs_are_connected(); }, false));
+}
+
 TEST_F(cu_cp_connectivity_test, when_amf_is_not_reachable_on_startup_then_cu_cp_starts_and_connects_once_amf_is_up)
 {
   // Simulate an AMF that is not reachable yet.
   get_amf().drop_connection();
 
   // The CU-CP must start, even though the N2 TNL connection could not be established.
-  ASSERT_TRUE(get_cu_cp().start());
+  get_cu_cp().start();
   ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
 
   ngap_message ngap_pdu;
@@ -649,7 +671,7 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_is_not_successful_then_f1_setup_is
   get_amf().enqueue_next_tx_pdu(ng_setup_fail);
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  ASSERT_FALSE(get_cu_cp().start());
+  get_cu_cp().start();
 
   // Establish TNL connection between DU and CU-CP and start F1 setup procedure.
   auto ret = connect_new_du();
@@ -672,7 +694,7 @@ TEST_F(cu_cp_connectivity_test, when_amf_connects_after_f1_setup_then_the_cells_
 
   // Simulate an AMF that is not reachable yet.
   get_amf().drop_connection();
-  ASSERT_TRUE(get_cu_cp().start());
+  get_cu_cp().start();
 
   // Establish TNL connection between DU and CU-CP and start F1 setup procedure.
   auto ret = connect_new_du();

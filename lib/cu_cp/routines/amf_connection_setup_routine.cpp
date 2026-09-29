@@ -72,7 +72,10 @@ void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ct
 
       logger.info("Connected to AMF. Supported PLMNs: {}", plmn_list);
     } else {
-      logger.error("Failed to connect to AMF");
+      logger.warning("NG Setup failed. Cause: {}", std::get<ngap_ng_setup_failure>(result_msg).cause);
+
+      // Tear the N2 TNL association down, so that the NG Setup can be retried over a new one.
+      CORO_AWAIT(ngap->handle_amf_disconnection_request());
       CORO_EARLY_RETURN(false);
     }
   }

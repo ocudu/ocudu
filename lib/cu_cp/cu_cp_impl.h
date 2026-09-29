@@ -68,7 +68,7 @@ public:
   explicit cu_cp_impl(const cu_cp_configuration& config_);
   ~cu_cp_impl() override;
 
-  bool start() override;
+  void start() override;
   void stop() override;
 
   // NGAP interface.

@@ -439,7 +439,8 @@ struct fuzz_state {
     // Pre-queue the NGSetupResponse so cu_cp->start() can complete the NG setup handshake.
     amf.enqueue_auto_response(generate_ng_setup_response());
 
-    if (!cu_cp_inst->start()) {
+    cu_cp_inst->start();
+    if (!cu_cp_inst->get_ng_handler().amfs_are_connected()) {
       // Should not happen with the auto-response above; abort to make initialization failures
       // visible during corpus refinement.
       std::abort();

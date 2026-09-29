@@ -13,10 +13,10 @@
 namespace ocudu {
 namespace ocucp {
 
-async_task<bool>
+async_task<void>
 start_amf_reconnection(ngap_interface& ngap, timer_factory timers, std::chrono::milliseconds reconnection_retry_time);
 
-/// \brief Handles the reconnection between the CU-CP and AMF.
+/// \brief Handles the reconnection between the CU-CP and AMF, until the NG Setup succeeds.
 class amf_reconnection_routine
 {
 public:
@@ -26,17 +26,25 @@ public:
 
   static std::string name() { return "AMF Reconnection Routine"; }
 
-  void operator()(coro_context<async_task<bool>>& ctx);
+  void operator()(coro_context<async_task<void>>& ctx);
 
 private:
   ngap_interface&         ngap;
   ocudulog::basic_logger& logger;
 
+  /// [Implementation-defined] Maximum exponent of the NG Setup retry backoff.
+  static constexpr unsigned max_setup_backoff_exponent = 5;
+  /// [Implementation-defined] Number of NG Setup failures between two warnings.
+  static constexpr unsigned setup_failure_log_period = 60;
+
   unique_timer              amf_tnl_connection_retry_timer;
   std::chrono::milliseconds reconnection_retry_time;
+  /// Time to wait before the next connection attempt.
+  std::chrono::milliseconds retry_wait;
 
   ngap_ng_setup_result result_msg = {};
-  bool                 success    = false;
+  /// Number of failed NG Setup attempts.
+  unsigned nof_setup_failures = 0;
 };
 
 } // namespace ocucp

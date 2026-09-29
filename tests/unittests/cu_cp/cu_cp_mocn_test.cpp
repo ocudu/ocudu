@@ -81,7 +81,7 @@ TEST_F(cu_cp_mocn_test, when_cu_cp_starts_then_it_initiates_ng_setup_procedures_
   get_amf(1).enqueue_next_tx_pdu(generate_ng_setup_response(plmn_identity::parse("99902").value()));
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connections.
-  ASSERT_TRUE(get_cu_cp().start());
+  get_cu_cp().start();
 
   ngap_message ngap_pdu;
   ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
@@ -104,7 +104,7 @@ TEST_F(cu_cp_mocn_test, when_one_ng_setup_fails_then_cu_cp_is_not_in_amf_connect
   get_amf(1).enqueue_next_tx_pdu(generate_ng_setup_failure());
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  ASSERT_FALSE(get_cu_cp().start());
+  get_cu_cp().start();
 
   ngap_message ngap_pdu;
   ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
@@ -176,7 +176,7 @@ TEST_F(cu_cp_mocn_test,
   get_amf(1).enqueue_next_tx_pdu(generate_ng_setup_response(plmn_identity::parse("99902").value()));
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  ASSERT_FALSE(get_cu_cp().start());
+  get_cu_cp().start();
 
   // Establish TNL connection between DU and CU-CP and start F1 setup procedure.
   auto ret = connect_new_du();
@@ -202,7 +202,7 @@ TEST_F(cu_cp_mocn_test, when_ng_setup_for_amf_supporting_the_dus_plmn_is_success
   get_amf(1).enqueue_next_tx_pdu(generate_ng_setup_failure());
 
   // This call is blocking. When it returns, the CU-CP should have finished its attempt at AMF connection.
-  ASSERT_FALSE(get_cu_cp().start());
+  get_cu_cp().start();
 
   // Establish TNL connection between DU and CU-CP and start F1 setup procedure.
   auto ret = connect_new_du();
@@ -227,7 +227,7 @@ TEST_F(cu_cp_mocn_test, when_the_amfs_connect_one_after_the_other_then_each_acti
   // Neither AMF is reachable yet, so the CU-CP starts without a core.
   get_amf().drop_connection();
   get_amf(1).drop_connection();
-  ASSERT_TRUE(get_cu_cp().start());
+  get_cu_cp().start();
 
   // A DU with one cell per AMF PLMN.
   test_helpers::served_cell_item_info cell_a;

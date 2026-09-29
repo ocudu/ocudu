@@ -38,9 +38,9 @@ public:
   ///
   /// A promise is passed as a parameter to enable blocking synchronization between the completion of the scheduled
   /// async task and the caller side.
-  /// \param[in] completion_signal Promise signalled with the result of the connection setup.
+  /// \param[in] completion_signal Promise signalled once the first connection attempt is complete.
   /// \param[in] retry_time The time to wait between attempts of the AMFs that are reconnected in the background.
-  void connect_to_amf(std::promise<bool>* completion_signal, std::chrono::milliseconds retry_time);
+  void connect_to_amf(std::promise<void>* completion_signal, std::chrono::milliseconds retry_time);
 
   /// Initiate procedure to disconnect from the N2 interface.
   async_task<void> disconnect_amf();
@@ -77,9 +77,8 @@ private:
   /// Converts the given PLMN identity into a CU_CP AMF index.
   cu_cp_amf_index_t plmn_to_amf_index(plmn_identity plmn) const;
 
-  /// \brief Schedules a background reconnection for every AMF whose N2 TNL association could not be established.
-  /// \return True if no AMF was left in a state from which it cannot recover on its own, false otherwise.
-  bool retry_unconnected_amfs(std::chrono::milliseconds retry_time);
+  /// Schedules a background reconnection for every AMF that is not connected.
+  void retry_unconnected_amfs(std::chrono::milliseconds retry_time);
 
   ngap_repository&                  ngaps;
   cu_cp_amf_reconnection_handler&   cu_cp_notifier;
