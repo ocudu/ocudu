@@ -64,6 +64,11 @@ bool e1ap_cu_up_impl::connect_to_cu_cp()
   return true;
 }
 
+async_task<void> e1ap_cu_up_impl::disconnect_from_cu_cp()
+{
+  return connection_handler.handle_tnl_association_removal();
+}
+
 async_task<cu_up_e1_setup_response>
 e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request)
 {

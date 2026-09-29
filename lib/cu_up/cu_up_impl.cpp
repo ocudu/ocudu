@@ -216,12 +216,12 @@ void cu_up::start()
 
   if (not ctrl_executor.execute([this, &p]() {
         main_ctrl_loop.schedule(
-            [this, &p, connected = bool{false}, e1ap = e1aps.end()](coro_context<async_task<void>>& ctx) mutable {
+            [this, &p, result = cu_up_setup_result{}, e1ap = e1aps.end()](coro_context<async_task<void>>& ctx) mutable {
               CORO_BEGIN(ctx);
 
               // Connect to CU-CP and send E1 Setup Request and await for E1 setup response.
               for (e1ap = e1aps.begin(); e1ap != e1aps.end(); ++e1ap) {
-                CORO_AWAIT_VALUE(connected,
+                CORO_AWAIT_VALUE(result,
                                  launch_async<cu_up_setup_routine>(
                                      cu_up_setup_routine_config{
                                          .cu_up_id = cfg.cu_up_id, .cu_up_name = cfg.cu_up_name, .plmns = cfg.plmns},
@@ -229,11 +229,18 @@ void cu_up::start()
                                                                       .e1ap_conn_mng     = **e1ap,
                                                                       .e1_setup_notifier = e1_setup_notifier.get()}));
 
-                if (not connected) {
-                  // Keep trying in the background, so that the CU-UP does not require the CU-CP to be reachable on
-                  // startup. Note: the connection loss handler also covers a connection that was never established.
-                  logger.info("e1={}: CU-CP is not reachable. Retrying the E1 connection in the background",
-                              fmt::underlying((*e1ap)->get_e1_index()));
+                if (result.result != cu_up_setup_result::outcome::success) {
+                  // Keep trying in the background, so that the CU-UP does not require the CU-CP to be reachable or
+                  // to accept it on startup. Note: the connection loss handler also covers a connection that was
+                  // never established.
+                  if (result.result == cu_up_setup_result::outcome::e1_setup_failure) {
+                    logger.warning("e1={}: E1 Setup failed. Cause: {}. Retrying in the background",
+                                   fmt::underlying((*e1ap)->get_e1_index()),
+                                   result.e1_setup_failure_cause);
+                  } else {
+                    logger.info("e1={}: CU-CP is not reachable. Retrying the E1 connection in the background",
+                                fmt::underlying((*e1ap)->get_e1_index()));
+                  }
                   cu_up_mng->handle_e1ap_connection_drop((*e1ap)->get_e1_index());
                 }
               }

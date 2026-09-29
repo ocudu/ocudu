@@ -22,6 +22,9 @@ public:
   /// \brief Connect the CU-UP to CU-CP via E1AP interface.
   [[nodiscard]] virtual bool connect_to_cu_cp() = 0;
 
+  /// Tears the E1 TNL association with the CU-CP down.
+  virtual async_task<void> disconnect_from_cu_cp() = 0;
+
   /// \brief Initiates the E1 Setup procedure as per TS 38.463, Section 8.2.3.
   /// \param[in] request The E1SetupRequest message to transmit.
   /// \return Returns a cu_up_e1_setup_response struct with the success member set to 'true' in case of a

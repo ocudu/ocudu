@@ -26,6 +26,7 @@ public:
   [[nodiscard]] bool connect_to_cu_cp() override;
 
   // See interface for documentation.
+  async_task<void>                    disconnect_from_cu_cp() override;
   async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) override;
 
   // See interface for documentation.

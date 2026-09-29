@@ -24,19 +24,27 @@ struct cu_up_setup_routine_dependencies {
   cu_up_e1_setup_complete_notifier* e1_setup_notifier = nullptr;
 };
 
+/// Outcome of the CU-UP setup routine.
+struct cu_up_setup_result {
+  enum class outcome { success, tnl_connection_failure, e1_setup_failure };
+
+  outcome result = outcome::success;
+  /// Cause of the E1 Setup failure.
+  std::string e1_setup_failure_cause;
+};
+
 /// CU-UP setup routine implementation.
 class cu_up_setup_routine
 {
 public:
   cu_up_setup_routine(cu_up_setup_routine_config cfg, const cu_up_setup_routine_dependencies& dependencies);
 
-  void operator()(coro_context<async_task<bool>>& ctx);
+  void operator()(coro_context<async_task<cu_up_setup_result>>& ctx);
 
   static const char* name() { return "CU-UP setup routine"; }
 
 private:
   async_task<cu_up_e1_setup_response> start_cu_up_e1_setup_request();
-  void                                handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp);
 
   gnb_cu_up_id_t           cu_up_id;
   std::string              cu_up_name;

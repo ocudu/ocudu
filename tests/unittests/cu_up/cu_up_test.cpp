@@ -13,6 +13,7 @@
 #include "ocudu/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
 #include <chrono>
+#include <future>
 #include <gtest/gtest.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -38,6 +39,21 @@ public:
       void on_new_message(const e1ap_message& msg) override
       {
         if (msg.pdu.type() != asn1::e1ap::e1ap_pdu_c::types::init_msg) {
+          return;
+        }
+
+        if (parent.nof_e1_setups_to_reject > 0 and
+            msg.pdu.init_msg().value.type().value ==
+                asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_up_e1_setup_request) {
+          // Reject the E1 Setup.
+          // Note: Only the CU-UP thread decrements the counter.
+          parent.nof_e1_setups_to_reject--;
+          e1ap_message fail;
+          fail.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
+          auto& setup_fail                   = fail.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
+          setup_fail->transaction_id         = msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request()->transaction_id;
+          setup_fail->cause.set_misc().value = cause_misc_opts::unspecified;
+          parent.cu_up_rx_pdu_notifier->on_new_message(fail);
           return;
         }
 
@@ -90,6 +106,8 @@ public:
   std::atomic<unsigned> nof_connections_to_reject{0};
   /// Number of connection requests received so far.
   std::atomic<unsigned> nof_connection_requests{0};
+  /// Number of E1 Setup Requests still to be answered with an E1 Setup Failure.
+  std::atomic<unsigned> nof_e1_setups_to_reject{0};
 
 private:
   std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier;
@@ -176,8 +194,8 @@ protected:
     return deps;
   }
 
-  /// Polls \c predicate until it holds or the timeout elapses.
-  static bool wait_until(const std::function<bool()>& predicate, std::chrono::milliseconds timeout)
+  /// Polls \c predicate until it holds or the timeout elapses, ticking the timers once per millisecond.
+  bool wait_until(const std::function<bool()>& predicate, std::chrono::milliseconds timeout)
   {
     const auto deadline = std::chrono::steady_clock::now() + timeout;
     while (not predicate()) {
@@ -185,6 +203,7 @@ protected:
         return false;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds{1});
+      app_timers->tick();
     }
     return true;
   }
@@ -344,6 +363,37 @@ TEST_F(cu_up_test, when_full_e1_reset_is_received_then_only_the_ues_of_that_e1_i
 
   // The UE of the other E1 interface is kept.
   ASSERT_EQ(cu_up->get_cu_up_manager()->get_nof_ues(), 1U);
+}
+
+TEST_F(cu_up_test, when_cu_cp_rejects_the_e1_setup_then_cu_up_retries_it_until_it_succeeds)
+{
+  // The CU-CP rejects the first two E1 Setups.
+  e1ap_client.nof_e1_setups_to_reject = 2;
+
+  // The CU-UP must start, even though the E1 Setup failed.
+  init(get_default_cu_up_config(), get_default_cu_up_dependencies());
+
+  // The retry backs off, so the third E1 Setup is only sent after a longer wait.
+  ASSERT_FALSE(
+      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{1500}))
+      << "CU-UP did not back off";
+  ASSERT_TRUE(
+      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{5000}))
+      << "CU-UP did not retry the E1 Setup after it was rejected";
+  ASSERT_EQ(e1ap_client.nof_connection_requests, 3U);
+}
+
+TEST_F(cu_up_test, when_cu_cp_keeps_rejecting_the_e1_setup_then_cu_up_can_still_be_stopped)
+{
+  e1ap_client.nof_e1_setups_to_reject = 100;
+  init(get_default_cu_up_config(), get_default_cu_up_dependencies());
+  ASSERT_TRUE(
+      wait_until([this]() { return e1ap_client.nof_connection_requests >= 2U; }, std::chrono::milliseconds{1000}));
+
+  // The stop only waits for the current step of the backoff of the pending retry.
+  auto stop = std::async(std::launch::async, [this]() { cu_up->stop(); });
+  ASSERT_TRUE(wait_until([&stop]() { return stop.wait_for(std::chrono::seconds{0}) == std::future_status::ready; },
+                         std::chrono::milliseconds{1500}));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

@@ -19,6 +19,7 @@
 #include "ocudu/gtpu/gtpu_gateway.h"
 #include "ocudu/gtpu/gtpu_teid_pool.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_tx.h"
+#include "ocudu/support/async/async_no_op_task.h"
 #include <array>
 #include <chrono>
 #include <condition_variable>
@@ -373,6 +374,8 @@ public:
   }
 
   bool connect_to_cu_cp() override { return true; }
+
+  async_task<void> disconnect_from_cu_cp() override { return launch_no_op_task(); }
 
   async_task<cu_up_e1_setup_response> handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request) override
   {

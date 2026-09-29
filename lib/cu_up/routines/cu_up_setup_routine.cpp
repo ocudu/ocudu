@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_setup_routine.h"
+#include "ocudu/adt/format.h"
 
 using namespace ocudu;
 using namespace ocuup;
@@ -19,7 +20,7 @@ cu_up_setup_routine::cu_up_setup_routine(cu_up_setup_routine_config             
 {
 }
 
-void cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
+void cu_up_setup_routine::operator()(coro_context<async_task<cu_up_setup_result>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -27,14 +28,21 @@ void cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
 
   // Connect to CU-CP.
   if (not e1ap_conn_mng.connect_to_cu_cp()) {
-    CORO_EARLY_RETURN(false);
+    CORO_EARLY_RETURN(cu_up_setup_result{cu_up_setup_result::outcome::tnl_connection_failure});
   }
 
   // Initiate E1 Setup.
   CORO_AWAIT_VALUE(response_msg, start_cu_up_e1_setup_request());
 
-  // Handle E1 setup result.
-  handle_cu_up_e1_setup_response(response_msg);
+  if (not response_msg.success) {
+    // Tear the E1 TNL association down, so that the E1 Setup can be retried over a new one.
+    CORO_AWAIT(e1ap_conn_mng.disconnect_from_cu_cp());
+    CORO_EARLY_RETURN(cu_up_setup_result{cu_up_setup_result::outcome::e1_setup_failure,
+                                         response_msg.cause.has_value() ? fmt::format("{}", *response_msg.cause)
+                                                                        : std::string{"unspecified"}});
+  }
+
+  logger.debug("cu-up={}: \"{}\" finalized.", cu_up_id, name());
 
   // Notify successful setup and deliver packed E1 setup PDU bytes via notifier.
   if (e1_setup_notifier) {
@@ -42,7 +50,7 @@ void cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
         std::move(response_msg.packed_e1_setup_request), std::move(response_msg.packed_e1_setup_response), cu_up_id);
   }
 
-  CORO_RETURN(true);
+  CORO_RETURN(cu_up_setup_result{});
 }
 
 async_task<cu_up_e1_setup_response> cu_up_setup_routine::start_cu_up_e1_setup_request()
@@ -65,14 +73,4 @@ async_task<cu_up_e1_setup_response> cu_up_setup_routine::start_cu_up_e1_setup_re
 
   // Initiate E1 Setup Request.
   return e1ap_conn_mng.handle_cu_up_e1_setup_request(request_msg);
-}
-
-void cu_up_setup_routine::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp)
-{
-  // TODO.
-  if (!resp.success) {
-    report_fatal_error("CU-UP E1 Setup failed");
-  }
-
-  logger.debug("cu-up={}: \"{}\" finalized.", cu_up_id, name());
 }
