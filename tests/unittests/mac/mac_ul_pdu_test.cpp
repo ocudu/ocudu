@@ -362,12 +362,12 @@ TEST(mac_ul_subpdu, decode_single_entry_phr)
   fmt::print("subPDU: {}\n", subpdu);
 }
 
-// Test that LCID 44 is treated as a fixed size MAC CE, even though it sits inside the reserved range.
+// Test that LCID 44 is treated as a fixed-size MAC CE among unsupported codepoints.
 TEST(mac_ul_subpdu, timing_advance_report_lcid_is_a_fixed_size_ce)
 {
   const lcid_ul_sch_t ta_report{lcid_ul_sch_t::TIMING_ADVANCE_REPORT};
 
-  ASSERT_TRUE(ta_report.is_valid_lcid()) << "LCID 44 must be carved out of the reserved range";
+  ASSERT_TRUE(ta_report.is_valid_lcid()) << "LCID 44 must be accepted among unsupported codepoints";
   ASSERT_TRUE(ta_report.is_ce());
   ASSERT_FALSE(ta_report.is_sdu());
   ASSERT_FALSE(ta_report.is_ccch());
@@ -376,7 +376,7 @@ TEST(mac_ul_subpdu, timing_advance_report_lcid_is_a_fixed_size_ce)
   ASSERT_FALSE(ta_report.is_var_len_ce());
   ASSERT_EQ(2, ta_report.sizeof_ce());
 
-  // The carve-out must not leak into the neighbouring reserved codepoints.
+  // The acceptance must not extend to neighbouring unsupported codepoints.
   ASSERT_FALSE(lcid_ul_sch_t{43}.is_valid_lcid());
   ASSERT_FALSE(lcid_ul_sch_t{45}.is_valid_lcid());
   ASSERT_FALSE(lcid_ul_sch_t{43}.is_ce());

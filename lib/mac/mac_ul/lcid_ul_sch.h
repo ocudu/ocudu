@@ -25,9 +25,9 @@ public:
     // ...
     LCID32 = 32,
 
-    /// Unsupported range, except for RedCap CCCH and Timing Advance Report.
-    MIN_UNSUPPORTED = 33,
-    MAX_UNSUPPORTED = 51,
+    /// Reserved UL-SCH LCIDs, as per TS 38.321, Table 6.2.1-2.
+    MIN_RESERVED = 37,
+    MAX_RESERVED = 42,
 
     /// RedCap CCCH of 48 bits.
     CCCH_SIZE_48_REDCAP = 35,
@@ -77,19 +77,19 @@ public:
   /// Whether LCID is an MAC CE
   bool is_ce() const
   {
-    // The MAC CE codepoints are contiguous from BIT_RATE_QUERY upwards, except for the Timing Advance Report, which
-    // sits at 44 among the unsupported codepoints.
+    // The Timing Advance Report at 44 lies below the MAC CE range starting at BIT_RATE_QUERY.
     return (lcid_val <= PADDING and lcid_val >= BIT_RATE_QUERY) or lcid_val == TIMING_ADVANCE_REPORT;
   }
 
   /// Whether LCID belongs to a Radio Bearer Logical Channel
   bool is_sdu() const { return lcid_val <= LCID32 and lcid_val >= LCID1; }
 
-  /// Returns false for the LCID values this MAC does not accept, see \c MIN_UNSUPPORTED.
+  /// Returns whether the MAC decoder accepts the LCID.
   bool is_valid_lcid() const
   {
-    return is_redcap_ccch() or lcid_val == TIMING_ADVANCE_REPORT or
-           (lcid_val <= PADDING and (lcid_val < MIN_UNSUPPORTED or lcid_val > MAX_UNSUPPORTED));
+    // Defined codepoints outside this set require MAC formats that this decoder does not support.
+    return lcid_val <= LCID32 or is_redcap_ccch() or lcid_val == TIMING_ADVANCE_REPORT or
+           (lcid_val >= CCCH_SIZE_48 and lcid_val <= PADDING);
   }
 
   /// Whether LCID subPDU has associated length field
