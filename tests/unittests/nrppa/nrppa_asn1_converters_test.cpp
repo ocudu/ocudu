@@ -56,6 +56,51 @@ asn1::nrppa::srs_carrier_list_item_s valid_asn1_srs_carrier_list_item()
   return item;
 }
 
+prs_cfg_t valid_prs_cfg()
+{
+  prs_res_item_t res;
+  res.prs_res_id        = 0;
+  res.seq_id            = 1;
+  res.re_offset         = 0;
+  res.res_slot_offset   = 0;
+  res.res_symbol_offset = 0;
+
+  prs_resource_set_item_t res_set;
+  res_set.prs_res_set_id      = 0;
+  res_set.scs                 = subcarrier_spacing::kHz30;
+  res_set.prs_bw              = 5;
+  res_set.start_prb           = 0;
+  res_set.point_a             = 620000;
+  res_set.comb_size           = 2;
+  res_set.cp_type             = cyclic_prefix::NORMAL;
+  res_set.res_set_periodicity = 160;
+  res_set.res_set_slot_offset = 2;
+  res_set.res_repeat_factor   = 1;
+  res_set.res_time_gap        = 1;
+  res_set.res_numof_symbols   = 12;
+  res_set.prs_res_tx_pwr      = 0;
+  res_set.prs_res_list.push_back(res);
+
+  prs_cfg_t prs_cfg;
+  prs_cfg.prs_res_set_list.push_back(res_set);
+  return prs_cfg;
+}
+
+trp_information_list_trp_response_item_t make_trp_response_item(trp_information_type_response_item_t info)
+{
+  trp_information_list_trp_response_item_t item;
+  item.trp_info.trp_id = trp_id_t{1};
+  item.trp_info.trp_info_type_resp_list.push_back(std::move(info));
+  return item;
+}
+
+bool packs(const asn1::nrppa::trp_info_list_trp_resp_item_s_& asn1_item)
+{
+  byte_buffer   buffer;
+  asn1::bit_ref bref(buffer);
+  return asn1_item.pack(bref) == asn1::OCUDUASN_SUCCESS;
+}
+
 } // namespace
 
 TEST(nrppa_asn1_converters_test, when_bandwidth_srs_choice_is_unsupported_then_request_is_dropped)
@@ -179,4 +224,44 @@ TEST(nrppa_asn1_converters_test, when_trp_meas_quantities_item_is_unsupported_th
   asn1::nrppa::trp_meas_quantities_list_item_s asn1_item;
 
   ASSERT_FALSE(asn1_to_trp_meas_quantities_list_item(asn1_item).has_value());
+}
+
+TEST(nrppa_asn1_converters_test, when_trp_information_has_prs_configuration_then_prs_resource_sets_are_encoded)
+{
+  asn1::nrppa::trp_info_list_trp_resp_item_s_ asn1_item =
+      trp_information_list_trp_response_item_to_asn1(make_trp_response_item(valid_prs_cfg()));
+
+  const asn1::nrppa::trp_info_type_resp_item_c& asn1_info = asn1_item.trp_info.trp_info_type_resp_list[0];
+  ASSERT_EQ(asn1_info.type(), asn1::nrppa::trp_info_type_resp_item_c::types_opts::prs_cfg);
+  ASSERT_EQ(asn1_info.prs_cfg().prs_res_set_list.size(), 1);
+  ASSERT_EQ(asn1_info.prs_cfg().prs_res_set_list[0].prs_res_list.size(), 1);
+  ASSERT_TRUE(packs(asn1_item));
+}
+
+TEST(nrppa_asn1_converters_test, when_trp_position_is_normal_accuracy_then_trp_information_is_encoded)
+{
+  geographical_coordinates_t geo_coords;
+  geo_coords.trp_position_definition_type = trp_position_direct_t{ng_ran_access_point_position_t{}};
+
+  asn1::nrppa::trp_info_list_trp_resp_item_s_ asn1_item =
+      trp_information_list_trp_response_item_to_asn1(make_trp_response_item(geo_coords));
+
+  const asn1::nrppa::trp_info_type_resp_item_c& asn1_info = asn1_item.trp_info.trp_info_type_resp_list[0];
+  ASSERT_EQ(asn1_info.geographical_coordinates().trp_position_definition_type.direct().accuracy.type(),
+            asn1::nrppa::trp_position_direct_accuracy_c::types_opts::trp_position);
+  ASSERT_TRUE(packs(asn1_item));
+}
+
+TEST(nrppa_asn1_converters_test, when_trp_position_is_high_accuracy_then_trp_information_is_encoded)
+{
+  geographical_coordinates_t geo_coords;
+  geo_coords.trp_position_definition_type = trp_position_direct_t{ng_ran_high_accuracy_access_point_position_t{}};
+
+  asn1::nrppa::trp_info_list_trp_resp_item_s_ asn1_item =
+      trp_information_list_trp_response_item_to_asn1(make_trp_response_item(geo_coords));
+
+  const asn1::nrppa::trp_info_type_resp_item_c& asn1_info = asn1_item.trp_info.trp_info_type_resp_list[0];
+  ASSERT_EQ(asn1_info.geographical_coordinates().trp_position_definition_type.direct().accuracy.type(),
+            asn1::nrppa::trp_position_direct_accuracy_c::types_opts::trph_aposition);
+  ASSERT_TRUE(packs(asn1_item));
 }
