@@ -1073,6 +1073,10 @@ fedora 44 avx2:
   variables:
     OS: fedora-44
     ENABLE_WERROR: "False"
+    ENABLE_UHD: "True"
+    ENABLE_DPDK: "True"
+    # Fail configuration if either Fedora repository package is unavailable.
+    BUILD_ARGS: "-DCMAKE_REQUIRE_FIND_PACKAGE_UHD=ON -DCMAKE_REQUIRE_FIND_PACKAGE_DPDK=ON"
     MARCH: x86-64-v3
   parallel:
     matrix:
