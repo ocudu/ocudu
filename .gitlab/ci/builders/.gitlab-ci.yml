@@ -363,10 +363,16 @@ ubuntu-dpdk-builder arm64:
   script:
     - |
       set -euo pipefail
-      artifact_dir=".gitlab/ci/builders/${component}/${component_version}${isa_suffix}"
+      if [ "${component}" = rohc ]; then
+        artifact_dir=".gitlab/ci/builders/rohc"
+        install_dir=/opt/rohc
+      else
+        artifact_dir=".gitlab/ci/builders/${component}/${component_version}${isa_suffix}"
+        install_dir="/opt/${component}/${component_version}"
+      fi
       archive="/tmp/${component}.tar.gz"
       package_url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${component}/fedora-44-amd64-${component_version}${isa_suffix}/${component}.tar.gz"
-      http_code="$(curl --silent --show-error --location --write-out '%{http_code}' \
+      http_code="$(curl --silent --show-error --write-out '%{http_code}' \
         --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --output "${archive}" "${package_url}")"
 
       case "${http_code}" in
@@ -385,7 +391,7 @@ ubuntu-dpdk-builder arm64:
           if [ -z "${cpu_jobs}" ] || [ "${cpu_jobs}" -lt 1 ]; then cpu_jobs=1; fi
           "docker/scripts/build_${component}.sh" "${component_version}" "${target_arch}" "${cpu_jobs}"
           mkdir -p "$(dirname "${artifact_dir}")"
-          cp -a "/opt/${component}/${component_version}" "${artifact_dir}"
+          cp -a "${install_dir}" "${artifact_dir}"
           tar -czf "${archive}" "${artifact_dir}"
           curl --fail --show-error --silent --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
             --upload-file "${archive}" "${package_url}"
@@ -423,6 +429,17 @@ fedora-dpdk-builder avx2:
   artifacts:
     paths:
       - .gitlab/ci/builders/dpdk
+    expire_in: 8 hours
+
+fedora-rohc-builder avx2:
+  extends: .fedora-versioned-dependency-builder
+  variables:
+    component: rohc
+    component_version: "2.3.1"
+    target_arch: x86-64-v3
+  artifacts:
+    paths:
+      - .gitlab/ci/builders/rohc
     expire_in: 8 hours
 
 ################################################################################
@@ -755,3 +772,8 @@ image-build-publish [fedora, 44, amd64]:
     OS_VERSION: "44"
     PLATFORM: amd64
     MULTI_ARCH_BUILD: ""
+  needs:
+    - builder version increased
+    - fedora-uhd-builder avx2
+    - fedora-dpdk-builder avx2
+    - fedora-rohc-builder avx2

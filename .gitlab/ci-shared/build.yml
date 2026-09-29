@@ -91,14 +91,24 @@ include:
       fi
 
       BUILD_CMD="${BUILD_ARGS}"
-      export LD_LIBRARY_PATH=/opt/rohc/lib:${LD_LIBRARY_PATH}
+      export PKG_CONFIG_PATH=/opt/rohc/lib64/pkgconfig:/opt/rohc/lib/pkgconfig:${PKG_CONFIG_PATH}
+      export LD_LIBRARY_PATH=/opt/rohc/lib64:/opt/rohc/lib:${LD_LIBRARY_PATH}
       if [ -n "${DPDK_VERSION}" ]; then
         BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
-        export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/:${LD_LIBRARY_PATH}
+        export PKG_CONFIG_PATH=/opt/dpdk/${DPDK_VERSION}/lib64/pkgconfig:/opt/dpdk/${DPDK_VERSION}/lib/pkgconfig:${PKG_CONFIG_PATH}
+        export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib64:/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/:${LD_LIBRARY_PATH}
+        if [ "${OS}" = "fedora-44" ]; then
+          dpdk_prefix="$(pkg-config --variable=prefix libdpdk)"
+          expected_dpdk_prefix="/opt/dpdk/${DPDK_VERSION%_*}"
+          if [ "${dpdk_prefix}" != "${expected_dpdk_prefix}" ]; then
+            echo >&2 "Requested DPDK ${DPDK_VERSION}, but pkg-config selected ${dpdk_prefix}"
+            exit 1
+          fi
+        fi
       fi
       if [ -n "${UHD_VERSION}" ]; then
         BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
-        export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
+        export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib64:/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
       fi
       if [ -n "${ENABLE_ARMPL}" ]; then
         if ARMPL_DIR=$(ls -d /opt/arm/armpl_* 2>/dev/null); then

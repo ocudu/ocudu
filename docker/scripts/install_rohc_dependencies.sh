@@ -40,7 +40,7 @@ install_rohc_dependencies_fedora() {
     local -a pkgs=()
 
     local -a build_pkgs=(
-        curl ca-certificates gcc gcc-c++ make which xz gzip
+        curl ca-certificates gcc gcc-c++ make which xz tar gzip
         autoconf automake libtool libpcap-devel libcmocka-devel
     )
     local -a run_pkgs=()

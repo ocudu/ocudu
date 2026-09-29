@@ -9,31 +9,18 @@ FIND_PACKAGE(PkgConfig REQUIRED)
 IF(NOT UHD_FOUND)
 
 if(NOT "$ENV{UHD_DIR}" STREQUAL "")
-  set(_UHD_INCLUDE_HINTS "$ENV{UHD_DIR}/include")
-  set(_UHD_LIB_HINTS     "$ENV{UHD_DIR}/lib")
+  # An explicit UHD prefix must not fall back to a system library with a different ABI.
+  FIND_PATH(UHD_INCLUDE_DIRS NAMES uhd.h
+            PATHS "$ENV{UHD_DIR}/include" NO_DEFAULT_PATH)
+  FIND_LIBRARY(UHD_LIBRARIES NAMES uhd
+               PATHS "$ENV{UHD_DIR}/lib" "$ENV{UHD_DIR}/lib64" NO_DEFAULT_PATH)
+else()
+  FIND_PATH(UHD_INCLUDE_DIRS NAMES uhd.h
+            PATHS /usr/local/include /usr/include)
+  FIND_LIBRARY(UHD_LIBRARIES NAMES uhd
+               PATHS /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu
+                     /usr/local/lib64 /usr/local/lib32)
 endif()
-
-FIND_PATH(
-    UHD_INCLUDE_DIRS
-    NAMES uhd.h
-    HINTS ${_UHD_INCLUDE_HINTS}
-    PATHS /usr/local/include
-          /usr/include
-)
-
-FIND_LIBRARY(
-    UHD_LIBRARIES
-    NAMES uhd
-    HINTS ${_UHD_LIB_HINTS}
-    PATHS /usr/local/lib
-          /usr/lib
-          /usr/lib/x86_64-linux-gnu
-          /usr/local/lib64
-          /usr/local/lib32
-)
-
-unset(_UHD_INCLUDE_HINTS)
-unset(_UHD_LIB_HINTS)
 
 message(STATUS "UHD LIBRARIES " ${UHD_LIBRARIES})
 message(STATUS "UHD INCLUDE DIRS " ${UHD_INCLUDE_DIRS})
