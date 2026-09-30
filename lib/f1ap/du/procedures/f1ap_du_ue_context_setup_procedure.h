@@ -34,6 +34,9 @@ private:
   /// Sends UE Context Setup Failure to CU.
   void send_ue_context_setup_failure();
 
+  /// Sends UE Context Setup Failure to CU and removes the UE, if created by this procedure.
+  async_task<void> handle_procedure_failure();
+
   /// Handles the RRC container.
   async_task<bool> handle_rrc_container();
 
@@ -57,5 +60,6 @@ private:
   std::optional<f1ap_ue_context_creation_response> du_ue_create_response;
   f1ap_ue_context_update_response                  du_ue_cfg_response;
   std::vector<f1ap_drb_failed_to_setupmod>         failed_drbs;
+  bool                                             rrc_container_delivered = false;
 };
 } // namespace ocudu::odu

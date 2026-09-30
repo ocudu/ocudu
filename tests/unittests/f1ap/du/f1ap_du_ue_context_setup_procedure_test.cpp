@@ -30,7 +30,7 @@ protected:
     test_ue                = run_f1ap_ue_create(ue_index);
   }
 
-  void start_procedure(const f1ap_message& msg)
+  void start_procedure(const f1ap_message& msg, bool du_ue_cfg_success = true)
   {
     const auto& ue_ctx_setup = *msg.pdu.init_msg().value.ue_context_setup_request();
 
@@ -64,7 +64,7 @@ protected:
     this->f1ap_du_cfg_handler.next_ue_cfg_req.f1c_bearers_to_add[0].srb_id = srb_id_t::srb2;
 
     auto& du_to_f1_resp          = this->f1ap_du_cfg_handler.next_ue_context_update_response;
-    du_to_f1_resp.result         = true;
+    du_to_f1_resp.result         = du_ue_cfg_success;
     du_to_f1_resp.cell_group_cfg = byte_buffer::create({0x1, 0x2, 0x3}).value();
     if (ue_ctx_setup.drbs_to_be_setup_list_present) {
       for (const auto& drb : ue_ctx_setup.drbs_to_be_setup_list) {
@@ -260,6 +260,37 @@ TEST_F(
             this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list.size());
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
             this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
+}
+
+TEST_F(f1ap_du_ue_context_setup_test,
+       when_du_fails_to_configure_ue_created_by_procedure_then_failure_is_sent_and_ue_is_removed)
+{
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
+
+  start_procedure(msg, false);
+
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.type().value,
+            f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail);
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_delete_req.has_value());
+  ASSERT_EQ(this->f1ap_du_cfg_handler.last_ue_delete_req->ue_index, test_ue->ue_index);
+}
+
+TEST_F(f1ap_du_ue_context_setup_test, when_du_fails_to_configure_existing_ue_then_failure_is_sent_and_ue_is_not_removed)
+{
+  du_creates_f1_logical_connection();
+  f1ap_message msg =
+      test_helpers::generate_ue_context_setup_request(gnb_cu_ue_f1ap_id_t{0},
+                                                      gnb_du_ue_f1ap_id_t{0},
+                                                      1,
+                                                      {drb_id_t::drb1},
+                                                      config_helpers::make_default_du_cell_config().nr_cgi);
+
+  start_procedure(msg, false);
+
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  ASSERT_FALSE(this->f1ap_du_cfg_handler.last_ue_delete_req.has_value());
 }
 
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_pdcp_sn_length_drb_setup_fails)

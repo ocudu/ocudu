@@ -126,18 +126,14 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
       !msg->conditional_inter_du_mob_info.target_gnb_du_ue_f1ap_id_present) {
     logger.warning("{}: UE Context Setup rejected. Cause: Missing Target gNB-DU UE F1AP ID for CHO replace",
                    f1ap_log_prefix{ue->context, name()});
-    send_ue_context_setup_failure();
+    CORO_AWAIT(handle_procedure_failure());
     CORO_EARLY_RETURN();
   }
 
   // Setup new UE configuration in DU.
   CORO_AWAIT_VALUE(du_ue_cfg_response, request_du_ue_config());
   if (not du_ue_cfg_response.result) {
-    // Clear up resources allocated during the procedure.
-    if (du_ue_create_response.has_value() and du_ue_cfg_response.result) {
-      CORO_AWAIT(du_mng.request_ue_removal(f1ap_ue_delete_request{ue_index}));
-    }
-    send_ue_context_setup_failure();
+    CORO_AWAIT(handle_procedure_failure());
     CORO_EARLY_RETURN();
   }
 
@@ -150,16 +146,18 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
       logger.warning("{}: Unexpected presence of RRC container in a UEContextSetupRequest for a newly created UE",
                      f1ap_log_prefix{ue->context, name()});
     }
-    CORO_AWAIT_VALUE(bool ret, handle_rrc_container());
-    if (ret) {
+    CORO_AWAIT_VALUE(rrc_container_delivered, handle_rrc_container());
+    if (rrc_container_delivered) {
       logger.debug("{}: RRC container sent successfully.", f1ap_log_prefix{ue->context, name()});
     } else {
-      const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[sp_cell_index.value()];
-      std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
-      logger.error("{}: Failed to send RRC container after timeout of {}msec",
-                   f1ap_log_prefix{ue->context, name()},
-                   timeout.count());
-      send_ue_context_setup_failure();
+      {
+        const f1ap_du_cell_context& cell_ctx = du_ctxt.served_cells[sp_cell_index.value()];
+        std::chrono::milliseconds   timeout  = rrc_container_delivery_timeout + cell_ctx.ntn_link_rtt;
+        logger.error("{}: Failed to send RRC container after timeout of {}msec",
+                     f1ap_log_prefix{ue->context, name()},
+                     timeout.count());
+      }
+      CORO_AWAIT(handle_procedure_failure());
       CORO_EARLY_RETURN();
     }
   }
@@ -168,6 +166,20 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   send_ue_context_setup_response();
 
   CORO_RETURN();
+}
+
+async_task<void> f1ap_du_ue_context_setup_procedure::handle_procedure_failure()
+{
+  // Send the failure before any UE removal, as the removal deletes the F1AP UE context used to reach the CU.
+  send_ue_context_setup_failure();
+
+  if (not du_ue_create_response.has_value() or not du_ue_create_response->result) {
+    return launch_no_op_task();
+  }
+
+  // The UE was created by this procedure and must not outlive its failure.
+  ue = nullptr;
+  return du_mng.request_ue_removal(f1ap_ue_delete_request{ue_index});
 }
 
 async_task<bool> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
