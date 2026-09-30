@@ -95,6 +95,9 @@ TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_failure_received_then_proced
 
   // The UE CONTEXT SETUP FAILURE was received and the F1AP-CU completed the procedure with failure.
   ASSERT_TRUE(was_ue_context_setup_failure_received());
+
+  // The F1AP-CU removed the UE context that the procedure created.
+  ASSERT_EQ(f1ap->get_nof_ues(), 0);
 }
 
 TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_procedure_timeouts_then_procedure_unsuccessful)
@@ -118,4 +121,53 @@ TEST_F(f1ap_cu_ue_context_setup_test, when_f1ap_stopped_while_ue_context_setup_i
   lazy_task_launcher<void> stop_launcher(stop_task);
 
   ASSERT_TRUE(stop_task.ready());
+}
+
+TEST_F(f1ap_cu_ue_context_setup_test,
+       when_ue_setup_failure_received_for_existing_ue_then_ue_context_is_kept_and_can_be_released)
+{
+  // Create the UE with an INITIAL UL RRC MESSAGE TRANSFER.
+  const test_ue& ue = create_ue(int_to_gnb_du_ue_f1ap_id(41255));
+
+  // Start UE CONTEXT SETUP procedure for the existing UE and return back the failure response from the DU.
+  f1ap_ue_context_setup_request req = create_ue_context_setup_request({drb_id_t::drb1});
+  req.ue_index                      = ue.ue_index;
+  this->start_procedure(req);
+
+  f1ap_message response =
+      test_helpers::generate_ue_context_setup_failure(int_to_gnb_cu_ue_f1ap_id(0), ue.du_ue_id.value());
+  f1ap->handle_message(response);
+  ASSERT_TRUE(was_ue_context_setup_failure_received());
+
+  // The F1AP-CU keeps the UE context, because the DU also keeps it.
+  ASSERT_EQ(f1ap->get_nof_ues(), 1);
+
+  // The UE release sends the UE CONTEXT RELEASE COMMAND to the DU.
+  f1ap_ue_context_release_command rel_cmd;
+  rel_cmd.ue_index = ue.ue_index;
+  rel_cmd.cause    = f1ap_cause_radio_network_t::unspecified;
+
+  async_task<cu_cp_ue_index_t>         rel_task = f1ap->handle_ue_context_release_command(rel_cmd);
+  lazy_task_launcher<cu_cp_ue_index_t> rel_launcher(rel_task);
+  ASSERT_EQ(this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.type().value,
+            f1ap_elem_procs_o::init_msg_c::types::ue_context_release_cmd);
+}
+
+TEST_F(f1ap_cu_ue_context_setup_test, when_ue_setup_procedure_timeouts_for_existing_ue_then_ue_context_is_kept)
+{
+  // Create the UE with an INITIAL UL RRC MESSAGE TRANSFER.
+  const test_ue& ue = create_ue(int_to_gnb_du_ue_f1ap_id(41255));
+
+  // Start UE CONTEXT SETUP procedure for the existing UE and let it time out.
+  f1ap_ue_context_setup_request req = create_ue_context_setup_request({drb_id_t::drb1});
+  req.ue_index                      = ue.ue_index;
+  this->start_procedure(req);
+
+  for (unsigned i = 0; i != procedure_timeout.count(); ++i) {
+    this->tick();
+  }
+  ASSERT_TRUE(was_ue_context_setup_failure_received());
+
+  // The F1AP-CU keeps the UE context, because the DU can still have it.
+  ASSERT_EQ(f1ap->get_nof_ues(), 1);
 }

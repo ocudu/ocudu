@@ -48,6 +48,8 @@ private:
 
   // Context of the created UE.
   f1ap_ue_context* ue_ctxt = nullptr;
+  // True if this procedure created the F1AP UE context.
+  bool ue_ctxt_created = false;
 
   protocol_transaction_outcome_observer<asn1::f1ap::ue_context_setup_resp_s, asn1::f1ap::ue_context_setup_fail_s>
       transaction_sink;

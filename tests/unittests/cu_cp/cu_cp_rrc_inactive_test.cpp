@@ -509,17 +509,6 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_bearer_context_release_complete_and_await_ngap_ue_context_release_complete()
-  {
-    // Inject Bearer Context Release Complete and wait for NGAP UE Context Release Complete.
-    get_cu_up(cu_up_idx).push_tx_pdu(
-        generate_bearer_context_release_complete(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
-    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu), "Failed to receive UE Context Release Complete");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_complete(ngap_pdu),
-                              "Invalid UE Context Release Complete");
-    return true;
-  }
-
   [[nodiscard]] bool send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command()
   {
     // Inject Bearer Context Release Complete and wait for F1AP UE Context Release Command.
@@ -1015,14 +1004,17 @@ TEST_F(cu_cp_rrc_inactive_test, when_ue_context_setup_for_rrc_resume_fails_then_
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_resumes.get_count(resume_cause_t::mo_data), 1);
 
-  // Send UE Context Setup Response and await Bearer Context Modification Request.
+  // Send UE Context Setup Failure and await NGAP UE Context Release Request.
   ASSERT_TRUE(send_ue_context_setup_failure_and_await_ngap_ue_context_release_request());
 
   // Inject NGAP UE Context Release Command and await Bearer Context Release Command.
   ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
 
-  // Inject Bearer Context Release Complete and await NGAP UE Context Release Complete.
-  ASSERT_TRUE(send_bearer_context_release_complete_and_await_ngap_ue_context_release_complete());
+  // Inject Bearer Context Release Complete and await F1AP UE Context Release Command.
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command());
+
+  // Inject F1AP UE Context Release Complete and await NGAP UE Context Release Complete.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete());
 
   // STATUS: UE should be removed at this stage.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
