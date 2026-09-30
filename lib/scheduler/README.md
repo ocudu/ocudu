@@ -167,6 +167,9 @@ of the cell that owns them, which the cell scheduler owns.
 Configuration changes are never applied mid-slot; they are queued as events and applied at the start of the next
 `run_slot()` call, in their arrival order relative to the indications of the same UE.
 
+A long refactor changes the cell and UE configuration structures step by step. See
+[config_refactor.md](config_refactor.md) for the rules that new configuration code follows.
+
 ## Logging
 
 The scheduler writes to the `SCHED` logger via two loggers in `logging/`: a result logger (`Slot decisions` lines) and
