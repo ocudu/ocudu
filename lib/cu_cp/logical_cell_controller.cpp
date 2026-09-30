@@ -16,16 +16,16 @@
 using namespace ocudu;
 using namespace ocudu::ocucp;
 
-logical_cell_controller::logical_cell_controller(const cu_cp_configuration&        cfg_,
-                                                 du_processor_repository&          du_db_,
-                                                 ue_manager&                       ue_mng_,
-                                                 async_task_scheduler&             common_task_sched_,
-                                                 cu_cp_ue_context_release_handler& ue_release_handler_) :
+logical_cell_controller::logical_cell_controller(const logical_cell_controller_configuration& cfg_,
+                                                 const logical_cell_controller_dependencies&  dependencies_) :
+
   cfg(cfg_),
-  du_db(du_db_),
-  ue_mng(ue_mng_),
-  common_task_sched(common_task_sched_),
-  ue_release_handler(ue_release_handler_),
+  du_db(dependencies_.du_db),
+  ue_mng(dependencies_.ue_mng),
+  common_task_sched(dependencies_.common_task_sched),
+  ue_release_handler(dependencies_.ue_release_handler),
+  cu_cp_executor(dependencies_.cu_cp_executor),
+  timers(dependencies_.timers),
   logical_cells(cfg.cells)
 {
 }
@@ -66,18 +66,20 @@ async_task<cu_cp_cell_command_response> logical_cell_controller::deactivate_cell
         // cell-stop handling (which is not mandated by F1AP). The UEs are collected when the task runs, not when
         // the command was created: UEs attaching while the task was queued must be drained too.
         ues_to_release = collect_ues_on_cell(du_db, ue_mng, du_index, cgi);
-        CORO_AWAIT_VALUE(
-            result,
-            launch_async<cell_deactivation_routine>(cfg,
-                                                    std::move(targets),
-                                                    std::move(ues_to_release),
-                                                    ngap_cause_t{ngap_cause_radio_network_t::cell_not_available},
-                                                    /* bar_cells_first = */ true,
-                                                    du_db,
-                                                    logical_cells,
-                                                    ue_release_handler,
-                                                    ue_mng,
-                                                    logger));
+        CORO_AWAIT_VALUE(result,
+                         launch_async<cell_deactivation_routine>(
+                             cell_deactivation_routine_configuration{
+                                 .ran_node_name   = cfg.ran_node_name,
+                                 .targets         = std::move(targets),
+                                 .ues_to_release  = std::move(ues_to_release),
+                                 .release_cause   = ngap_cause_t{ngap_cause_radio_network_t::cell_not_available},
+                                 .bar_cells_first = true},
+                             cell_deactivation_routine_dependencies{.du_db              = du_db,
+                                                                    .logical_cells      = logical_cells,
+                                                                    .ue_release_handler = ue_release_handler,
+                                                                    .ue_mng             = ue_mng,
+                                                                    .logger             = logger}));
+
         if (result.success) {
           // The graceful stop completed: the cell is now administratively locked.
           logical_cells.set_admin_state(cgi.nci, cell_admin_state::locked);
@@ -86,7 +88,7 @@ async_task<cu_cp_cell_command_response> logical_cell_controller::deactivate_cell
         // The failed stop can resume inside the executor task that is removing the DU, before the cell is
         // de-realized: re-post to the back of the CU-CP executor so the removal settles before the state is
         // resolved from what actually took effect.
-        CORO_AWAIT(defer_on_blocking(*cfg.services.cu_cp_executor, *cfg.services.timers));
+        CORO_AWAIT(defer_on_blocking(cu_cp_executor, timers));
         // Resolve the recorded state from the outcome, not from the command result alone: the stop's stages can
         // partially complete, and the state must match the cell, or a later F1 setup or AMF reconnection
         // resurrects a cell the operator took down. De-realization resolves an interrupted stop itself (the DU
@@ -158,8 +160,12 @@ async_task<cu_cp_cell_command_response> logical_cell_controller::activate_cell(c
       }
       targets = {cell_lifecycle_target{du_index, cgi, pci, std::move(plmns_to_activate)}};
     }
-    CORO_AWAIT_VALUE(success,
-                     launch_async<cell_activation_routine>(cfg, std::move(targets), du_db, logical_cells, logger));
+    CORO_AWAIT_VALUE(
+        success,
+        launch_async<cell_activation_routine>(
+            cell_activation_routine_configuration{.ran_node_name = cfg.ran_node_name, .targets = std::move(targets)},
+            cell_activation_routine_dependencies{.du_db = du_db, .logical_cells = logical_cells, .logger = logger}));
+
     if (!success) {
       // Restore the previous state, so recorded intent stays consistent with the reported outcome (a failed
       // activation must not leave the cell marked as unlocked).
@@ -168,13 +174,14 @@ async_task<cu_cp_cell_command_response> logical_cell_controller::activate_cell(c
     if (success && reapply_bar) {
       // Re-apply the logical cell's barred intent now that the cell is active again. The command reports
       // failure when the re-bar fails, so operator intent and reported outcome stay consistent.
-      CORO_AWAIT_VALUE(success,
-                       launch_async<cell_barring_routine>(
-                           cfg,
-                           std::vector<cell_lifecycle_target>{cell_lifecycle_target{du_index, cgi, std::nullopt, {}}},
-                           /* barred = */ true,
-                           du_db,
-                           logger));
+      CORO_AWAIT_VALUE(
+          success,
+          launch_async<cell_barring_routine>(
+              cell_barring_routine_configuration{
+                  .ran_node_name = cfg.ran_node_name,
+                  .targets = std::vector<cell_lifecycle_target>{cell_lifecycle_target{du_index, cgi, std::nullopt, {}}},
+                  .barred  = true},
+              cell_barring_routine_dependencies{.du_db = du_db, .logger = logger}));
     }
     CORO_RETURN(cu_cp_cell_command_response{success});
   });
@@ -213,7 +220,12 @@ async_task<cu_cp_cell_command_response> logical_cell_controller::bar_cell(const 
                       barred);
           CORO_EARLY_RETURN(cu_cp_cell_command_response{true});
         }
-        CORO_AWAIT_VALUE(success, launch_async<cell_barring_routine>(cfg, std::move(targets), barred, du_db, logger));
+        CORO_AWAIT_VALUE(success,
+                         launch_async<cell_barring_routine>(
+                             cell_barring_routine_configuration{
+                                 .ran_node_name = cfg.ran_node_name, .targets = std::move(targets), .barred = barred},
+                             cell_barring_routine_dependencies{.du_db = du_db, .logger = logger}));
+
         if (!success) {
           // Restore the previous intent, so recorded intent stays consistent with the reported outcome.
           logical_cells.set_barred(cgi.nci, *prev_barred);
@@ -224,14 +236,13 @@ async_task<cu_cp_cell_command_response> logical_cell_controller::bar_cell(const 
 
 bool logical_cell_controller::dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule)
 {
-  return dispatch_bounded<bool>(*cfg.services.cu_cp_executor, logger, name, std::move(validate_and_schedule))
-      .value_or(false);
+  return dispatch_bounded<bool>(cu_cp_executor, logger, name, std::move(validate_and_schedule)).value_or(false);
 }
 
 std::optional<cu_cp_cell_state> logical_cell_controller::dispatch_get_cell_state(const nr_cell_global_id_t& cgi)
 {
   std::optional<std::optional<cu_cp_cell_state>> state = dispatch_bounded<std::optional<cu_cp_cell_state>>(
-      *cfg.services.cu_cp_executor, logger, "get_cell_state", [this, cgi]() { return get_cell_state(cgi); });
+      cu_cp_executor, logger, "get_cell_state", [this, cgi]() { return get_cell_state(cgi); });
   return state.has_value() ? *state : std::nullopt;
 }
 
@@ -338,10 +349,13 @@ std::vector<nr_cell_identity> logical_cell_controller::handle_du_cells_reported(
     bool scheduled = common_task_sched.schedule(launch_async(
         [this, targets = std::move(cells_to_bar), cells_barred = false](coro_context<async_task<void>>& ctx) mutable {
           CORO_BEGIN(ctx);
-          CORO_AWAIT(defer_on_blocking(*cfg.services.cu_cp_executor, *cfg.services.timers));
-          CORO_AWAIT_VALUE(
-              cells_barred,
-              launch_async<cell_barring_routine>(cfg, std::move(targets), /* barred = */ true, du_db, logger));
+          CORO_AWAIT(defer_on_blocking(cu_cp_executor, timers));
+          CORO_AWAIT_VALUE(cells_barred,
+                           launch_async<cell_barring_routine>(
+                               cell_barring_routine_configuration{
+                                   .ran_node_name = cfg.ran_node_name, .targets = std::move(targets), .barred = true},
+                               cell_barring_routine_dependencies{.du_db = du_db, .logger = logger}));
+
           (void)cells_barred;
           CORO_RETURN();
         }));

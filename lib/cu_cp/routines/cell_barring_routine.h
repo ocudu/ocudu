@@ -5,14 +5,23 @@
 
 #pragma once
 
-#include "../du_processor/du_processor.h"
 #include "../du_processor/du_processor_repository.h"
 #include "cell_lifecycle_target.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
-#include <utility>
 
 namespace ocudu::ocucp {
+
+/// Holds the cell barring routine configuration parameters.
+struct cell_barring_routine_configuration {
+  std::string                        ran_node_name;
+  std::vector<cell_lifecycle_target> targets;
+  bool                               barred;
+};
+
+/// Holds the cell barring routine dependencies.
+struct cell_barring_routine_dependencies {
+  du_processor_repository& du_db;
+  ocudulog::basic_logger&  logger;
+};
 
 /// \brief Bars or unbars a caller-selected set of cells via per-DU gNB-CU Configuration Updates carrying the
 /// Cells to be Barred List (TS 38.473), without touching their activation state.
@@ -22,11 +31,9 @@ namespace ocudu::ocucp {
 class cell_barring_routine
 {
 public:
-  cell_barring_routine(const cu_cp_configuration&         cu_cp_cfg_,
-                       std::vector<cell_lifecycle_target> targets,
-                       bool                               barred_,
-                       du_processor_repository&           du_db_,
-                       ocudulog::basic_logger&            logger_);
+  cell_barring_routine(const cell_barring_routine_configuration& cfg,
+                       const cell_barring_routine_dependencies&  dependencies);
+
   ~cell_barring_routine() = default;
 
   void operator()(coro_context<async_task<bool>>& ctx);
@@ -34,9 +41,8 @@ public:
   static const char* name() { return "Cell Barring Routine"; }
 
 private:
-  const cu_cp_configuration& cu_cp_cfg;
-  du_processor_repository&   du_db;
-  ocudulog::basic_logger&    logger;
+  du_processor_repository& du_db;
+  ocudulog::basic_logger&  logger;
 
   // One gNB-CU Configuration Update per DU, built from the caller-provided targets.
   std::vector<std::pair<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update>>           du_updates;

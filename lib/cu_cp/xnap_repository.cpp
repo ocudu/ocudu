@@ -12,8 +12,14 @@
 using namespace ocudu;
 using namespace ocucp;
 
-xnap_repository::xnap_repository(xnap_repository_config cfg_) :
-  cfg(cfg_), logger(cfg.logger), xnc_task_sched(cfg.cu_cp.xnap.xnaps.size(), logger)
+xnap_repository::xnap_repository(xnap_repository_config cfg_, const xnap_repository_dependencies& dependencies) :
+  cfg(cfg_),
+  cu_cp_notifier(dependencies.cu_cp_notifier),
+  timers(dependencies.timers),
+  cu_cp_executor(dependencies.cu_cp_executor),
+  logger(dependencies.logger),
+  xnc_task_sched(cfg.number_of_xnaps, logger)
+
 {
 }
 
@@ -34,13 +40,11 @@ xnap_interface* xnap_repository::add_xnap(xnc_peer_index_t                      
   ocudu_assert(it.second, "Unable to insert XNAP in map");
   xnap_context& xnap_ctxt = it.first->second;
   xnap_ctxt.peer_addrs    = peer_addrs;
-  xnap_ctxt.xnap_to_cu_cp_notifier.connect_cu_cp(cfg.cu_cp_notifier, xnc_index);
+  xnap_ctxt.xnap_to_cu_cp_notifier.connect_cu_cp(cu_cp_notifier, xnc_index);
 
-  std::unique_ptr<xnap_interface> xnap_entity = create_xnap(xnc_index,
-                                                            xnap_cfg,
-                                                            xnap_ctxt.xnap_to_cu_cp_notifier,
-                                                            *cfg.cu_cp.services.timers,
-                                                            *cfg.cu_cp.services.cu_cp_executor);
+  std::unique_ptr<xnap_interface> xnap_entity =
+      create_xnap(xnc_index, xnap_cfg, xnap_ctxt.xnap_to_cu_cp_notifier, timers, cu_cp_executor);
+
   if (xnap_entity == nullptr) {
     logger.error("Failed to create XNAP");
     xnap_db.erase(it.first);

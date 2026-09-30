@@ -10,6 +10,7 @@
 #include "../ngap_repository.h"
 #include "../ue_manager/ue_metrics_handler.h"
 #include "ocudu/cu_cp/cu_cp_metrics_handler.h"
+#include "ocudu/cu_cp/cu_cp_metrics_notifier.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/timers.h"
 #include <deque>

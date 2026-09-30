@@ -6,8 +6,6 @@
 #pragma once
 
 #include "cu_cp_cho_types.h"
-#include "cu_cp_types.h"
-#include <optional>
 
 namespace ocudu::ocucp {
 

@@ -5,6 +5,7 @@
 
 #include "cell_deactivation_routine.h"
 #include "../du_processor/du_processor_repository.h"
+#include "../logical_cell_manager.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "ocudu/support/async/coroutine.h"
@@ -13,29 +14,21 @@
 using namespace ocudu;
 using namespace ocudu::ocucp;
 
-cell_deactivation_routine::cell_deactivation_routine(const cu_cp_configuration&         cu_cp_cfg_,
-                                                     std::vector<cell_lifecycle_target> targets,
-                                                     std::vector<cu_cp_ue_index_t>      ues_to_release_,
-                                                     ngap_cause_t                       release_cause_,
-                                                     bool                               bar_cells_first_,
-                                                     du_processor_repository&           du_db_,
-                                                     logical_cell_manager&              logical_cells_,
-                                                     cu_cp_ue_context_release_handler&  ue_release_handler_,
-                                                     ue_manager&                        ue_mng_,
-                                                     ocudulog::basic_logger&            logger_) :
-  du_db(du_db_),
-  logical_cells(logical_cells_),
-  ue_release_handler(ue_release_handler_),
-  ue_mng(ue_mng_),
-  logger(logger_),
-  ues_to_release(std::move(ues_to_release_)),
-  release_cause(release_cause_)
+cell_deactivation_routine::cell_deactivation_routine(const cell_deactivation_routine_configuration& cfg,
+                                                     const cell_deactivation_routine_dependencies&  dependencies) :
+  du_db(dependencies.du_db),
+  logical_cells(dependencies.logical_cells),
+  ue_release_handler(dependencies.ue_release_handler),
+  ue_mng(dependencies.ue_mng),
+  logger(dependencies.logger),
+  ues_to_release(std::move(cfg.ues_to_release)),
+  release_cause(cfg.release_cause)
 {
   // Group the targets into a single gNB-CU Configuration Update per DU.
   std::map<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update> by_du;
-  for (const cell_lifecycle_target& target : targets) {
+  for (const cell_lifecycle_target& target : cfg.targets) {
     f1ap_gnb_cu_configuration_update& update = by_du[target.du_index];
-    update.gnb_cu_name                       = cu_cp_cfg_.node.ran_node_name;
+    update.gnb_cu_name                       = cfg.ran_node_name;
     update.cells_to_be_deactivated_list.push_back({target.cgi});
   }
   for (auto& [du_index, update] : by_du) {
@@ -43,12 +36,12 @@ cell_deactivation_routine::cell_deactivation_routine(const cu_cp_configuration& 
   }
 
   // Group the targets into a single bar-carrying gNB-CU Configuration Update per DU (stage 1).
-  if (bar_cells_first_) {
+  if (cfg.bar_cells_first) {
     std::map<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update> bar_by_du;
-    for (const cell_lifecycle_target& target : targets) {
+    for (const cell_lifecycle_target& target : cfg.targets) {
       f1ap_gnb_cu_configuration_update& update = bar_by_du[target.du_index];
-      update.gnb_cu_name                       = cu_cp_cfg_.node.ran_node_name;
-      update.cells_to_be_barred_list.push_back({target.cgi, /* barred = */ true});
+      update.gnb_cu_name                       = cfg.ran_node_name;
+      update.cells_to_be_barred_list.push_back(f1ap_cell_to_bar{.cgi = target.cgi, .barred = true});
     }
     for (auto& [du_index, update] : bar_by_du) {
       bar_updates.emplace_back(du_index, std::move(update));

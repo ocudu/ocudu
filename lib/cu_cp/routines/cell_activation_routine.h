@@ -5,15 +5,23 @@
 
 #pragma once
 
-#include "../du_processor/du_processor.h"
 #include "../du_processor/du_processor_repository.h"
-#include "../logical_cell_manager.h"
 #include "cell_lifecycle_target.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
-#include <utility>
 
 namespace ocudu::ocucp {
+
+/// Holds the cell activation routine configuration parameters.
+struct cell_activation_routine_configuration {
+  std::string                        ran_node_name;
+  std::vector<cell_lifecycle_target> targets;
+};
+
+/// Holds the cell activation routine dependencies.
+struct cell_activation_routine_dependencies {
+  du_processor_repository& du_db;
+  logical_cell_manager&    logical_cells;
+  ocudulog::basic_logger&  logger;
+};
 
 /// \brief Activates a caller-selected set of cells via per-DU gNB-CU Configuration Updates.
 ///
@@ -21,11 +29,9 @@ namespace ocudu::ocucp {
 class cell_activation_routine
 {
 public:
-  cell_activation_routine(const cu_cp_configuration&         cu_cp_cfg_,
-                          std::vector<cell_lifecycle_target> targets,
-                          du_processor_repository&           du_db_,
-                          logical_cell_manager&              logical_cells_,
-                          ocudulog::basic_logger&            logger_);
+  cell_activation_routine(const cell_activation_routine_configuration& cfg,
+                          const cell_activation_routine_dependencies&  dependencies);
+
   ~cell_activation_routine() = default;
 
   void operator()(coro_context<async_task<bool>>& ctx);
@@ -33,10 +39,9 @@ public:
   static const char* name() { return "Cell Activation Routine"; }
 
 private:
-  const cu_cp_configuration& cu_cp_cfg;
-  du_processor_repository&   du_db;
-  logical_cell_manager&      logical_cells;
-  ocudulog::basic_logger&    logger;
+  du_processor_repository& du_db;
+  logical_cell_manager&    logical_cells;
+  ocudulog::basic_logger&  logger;
 
   // One gNB-CU Configuration Update per DU, built from the caller-provided targets.
   std::vector<std::pair<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update>>           du_updates;

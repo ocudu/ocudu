@@ -5,13 +5,9 @@
 
 #pragma once
 
-#include "ocudu/adt/bounded_integer.h"
-#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/ran/arfcn.h"
 #include "ocudu/ran/cu_cp_types.h"
-#include <chrono>
-#include <optional>
 
 namespace ocudu::ocucp {
 
@@ -28,7 +24,8 @@ using cond_recfg_id_t = bounded_integer<uint8_t, 1, 8>;
 struct cu_cp_cho_target_candidate {
   pci_t               pci = INVALID_PCI;
   nr_cell_global_id_t cgi;
-  cu_cp_du_index_t    du_index = cu_cp_du_index_t::invalid; ///< Invalid for inter-CU (Xn) candidates.
+  /// Invalid for inter-CU (Xn) candidates.
+  cu_cp_du_index_t du_index = cu_cp_du_index_t::invalid;
   /// Xn-C peer index for inter-CU candidates. When set, the target is served by a remote CU-CP.
   std::optional<xnc_peer_index_t> xnc_index;
   /// SSB ARFCN of the target cell, set for inter-CU (Xn) candidates. The source derives the candidate's key from it.
@@ -52,15 +49,19 @@ struct cu_cp_intra_cu_cho_response {
 
 /// \brief Parameters for a single CHO candidate preparation request.
 struct cu_cp_cho_preparation_request {
-  cond_recfg_id_t cond_recfg_id = 1; ///< CHO conditional reconfiguration ID (valid range 1..8).
+  /// CHO conditional reconfiguration ID (valid range 1..8).
+  cond_recfg_id_t cond_recfg_id = 1;
 };
 
 /// \brief Result of a single CHO candidate preparation.
 /// Only populated when cu_cp_intra_cu_handover_request::cho_preparation is set.
 struct cu_cp_cho_preparation_result {
-  cu_cp_ue_index_t target_ue_index = cu_cp_ue_index_t::invalid; ///< Target UE allocated/prepared for this candidate.
-  byte_buffer      packed_rrc_recfg;   ///< Packed RRCReconfiguration for deferred CHO execution.
-  unsigned         transaction_id = 0; ///< RRC transaction ID of packed_rrc_recfg.
+  /// Target UE allocated/prepared for this candidate.
+  cu_cp_ue_index_t target_ue_index = cu_cp_ue_index_t::invalid;
+  /// Packed RRCReconfiguration for deferred CHO execution.
+  byte_buffer packed_rrc_recfg;
+  /// RRC transaction ID of packed_rrc_recfg.
+  unsigned transaction_id = 0;
   /// CU-UP bearer update payload collected during target preparation.
   std::optional<e1ap_ng_ran_bearer_context_mod_request> ng_ran_bearer_context_mod_request;
 };

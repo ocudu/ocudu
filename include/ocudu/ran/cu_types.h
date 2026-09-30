@@ -138,8 +138,9 @@ inline const char* to_string(confidentiality_protection_indication_t confidentia
 }
 
 struct security_indication_t {
-  integrity_protection_indication_t       integrity_protection_ind;
-  confidentiality_protection_indication_t confidentiality_protection_ind;
+  integrity_protection_indication_t       integrity_protection_ind = integrity_protection_indication_t::required;
+  confidentiality_protection_indication_t confidentiality_protection_ind =
+      confidentiality_protection_indication_t::required;
 };
 
 /// \brief Checks whether a \c security_result shall be sent.

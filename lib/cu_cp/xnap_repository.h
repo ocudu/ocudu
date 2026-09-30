@@ -14,19 +14,24 @@
 #include "ocudu/xnap/xnap_message_notifier.h"
 
 namespace ocudu::ocucp {
-
-struct cu_cp_configuration;
+/// Holds the XNAP repository configuration parameters.
 
 struct xnap_repository_config {
-  const cu_cp_configuration& cu_cp;
-  cu_cp_xnap_handler&        cu_cp_notifier;
-  ocudulog::basic_logger&    logger;
+  unsigned number_of_xnaps = 0U;
+};
+
+/// Holds the XNAP repository dependencies.
+struct xnap_repository_dependencies {
+  cu_cp_xnap_handler&     cu_cp_notifier;
+  timer_manager&          timers;
+  task_executor&          cu_cp_executor;
+  ocudulog::basic_logger& logger;
 };
 
 class xnap_repository
 {
 public:
-  explicit xnap_repository(xnap_repository_config cfg_);
+  xnap_repository(xnap_repository_config cfg_, const xnap_repository_dependencies& dependencies);
 
   /// \brief Adds an XNAP object to the CU-CP.
   /// \param[in] xnc_index Index of the Xn-C peer to which the XNAP object will be connected.
@@ -102,6 +107,9 @@ private:
   };
 
   xnap_repository_config  cfg;
+  cu_cp_xnap_handler&     cu_cp_notifier;
+  timer_manager&          timers;
+  task_executor&          cu_cp_executor;
   ocudulog::basic_logger& logger;
 
   xnap_task_scheduler xnc_task_sched;

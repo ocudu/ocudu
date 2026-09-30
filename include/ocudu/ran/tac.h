@@ -6,7 +6,6 @@
 #pragma once
 
 #include "ocudu/adt/static_vector.h"
-#include <cstdint>
 
 namespace ocudu {
 

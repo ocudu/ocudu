@@ -6,7 +6,6 @@
 #pragma once
 
 #include "../ngap_repository.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/support/async/async_task.h"
 

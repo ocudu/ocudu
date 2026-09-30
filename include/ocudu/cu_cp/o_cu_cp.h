@@ -5,8 +5,7 @@
 
 #pragma once
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 class cu_cp;
 class cu_cp_operation_controller;
@@ -24,5 +23,4 @@ public:
   virtual cu_cp_operation_controller& get_operation_controller() = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

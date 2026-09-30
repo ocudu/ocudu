@@ -5,7 +5,6 @@
 
 #include "test_helpers.h"
 #include "tests/test_doubles/utils/test_rng.h"
-#include "ocudu/adt/format.h"
 
 using namespace ocudu;
 

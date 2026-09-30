@@ -10,7 +10,6 @@
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/xnap/xnap_test_helpers.h"
 #include "tests/unittests/xnap/xnap_test_messages.h"
-#include "ocudu/adt/format.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -54,7 +53,11 @@ public:
       cfg.services.cu_cp_executor = &ctrl_worker;
       return cfg;
     }()),
-    xnap_db(xnap_repository_config{local_cu_cp_cfg, cu_cp_xnap_handler, test_logger})
+    xnap_db(xnap_repository_config{.number_of_xnaps = static_cast<unsigned>(local_cu_cp_cfg.xnap.xnaps.size())},
+            xnap_repository_dependencies{.cu_cp_notifier = cu_cp_xnap_handler,
+                                         .timers         = timers,
+                                         .cu_cp_executor = ctrl_worker,
+                                         .logger         = test_logger})
   {
   }
 

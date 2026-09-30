@@ -5,13 +5,11 @@
 
 #pragma once
 
-#include "ocudu/support/async/fifo_async_task_scheduler.h"
+#include "ocudu/support/async/async_task.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/timers.h"
-#include <unordered_map>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Async FIFO task scheduler for a single UE managed by the CU-CP.
 class ue_task_scheduler
@@ -26,13 +24,14 @@ public:
   /// \return true if the task was successfully enqueued. False, otherwise.
   virtual bool schedule_async_task(async_task<void> task) = 0;
 
-  /// Create a timer for the UE.
+  /// Creates a timer for the UE.
   virtual unique_timer create_timer() = 0;
 
+  /// Returns the timer factory.
   virtual timer_factory get_timer_factory() = 0;
 
+  /// Returns the task executor.
   virtual task_executor& get_executor() = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

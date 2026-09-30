@@ -128,7 +128,14 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
          ue_manager_dependencies{.timers         = *cfg.services.timers,
                                  .cu_cp_executor = *cfg.services.cu_cp_executor,
                                  .logger         = ocudulog::fetch_basic_logger("CU-UEMNG")}),
-  cell_ctrl(cfg, du_db, ue_mng, common_task_sched, *this),
+  cell_ctrl(logical_cell_controller_configuration{.ran_node_name = cfg.node.ran_node_name, .cells = cfg.cells},
+            logical_cell_controller_dependencies{.du_db              = du_db,
+                                                 .ue_mng             = ue_mng,
+                                                 .common_task_sched  = common_task_sched,
+                                                 .ue_release_handler = *this,
+                                                 .cu_cp_executor     = *cfg.services.cu_cp_executor,
+                                                 .timers             = *cfg.services.timers}),
+
   cell_meas_mng(cfg.mobility.meas_mgr_config,
                 cell_meas_manager_dependencies{.mobility_mng_notifier = cell_meas_mobility_notifier,
                                                .ue_mng                = ue_mng,
@@ -182,7 +189,11 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                                        .logger         = logger,
                                        .cu_cp_notifier = get_cu_cp_ngap_handler(),
                                        .paging_handler = paging_handler}),
-  xnap_db(xnap_repository_config{cfg, get_cu_cp_xnap_handler(), ocudulog::fetch_basic_logger("CU-CP")}),
+  xnap_db(xnap_repository_config{.number_of_xnaps = static_cast<unsigned>(cfg.xnap.xnaps.size())},
+          xnap_repository_dependencies{.cu_cp_notifier = get_cu_cp_xnap_handler(),
+                                       .timers         = *cfg.services.timers,
+                                       .cu_cp_executor = *cfg.services.cu_cp_executor,
+                                       .logger         = ocudulog::fetch_basic_logger("CU-CP")}),
   mobility_mng(cfg.mobility.mobility_mgr_config,
                mobility_manager_dependencies{.cu_cp_notifier = mobility_manager_ev_notifier,
                                              .ngap_db        = ngap_db,
@@ -1981,11 +1992,18 @@ void cu_cp_impl::handle_amf_reconnection(cu_cp_amf_index_t amf_index)
       [this, targets = std::move(activation_targets), bars = std::move(bar_targets), cells_activated = false](
           coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(
-            cells_activated,
-            launch_async<cell_activation_routine>(cfg, std::move(targets), du_db, cell_ctrl.cells(), logger));
+        CORO_AWAIT_VALUE(cells_activated,
+                         launch_async<cell_activation_routine>(
+                             cell_activation_routine_configuration{.ran_node_name = cfg.node.ran_node_name,
+                                                                   .targets       = std::move(targets)},
+                             cell_activation_routine_dependencies{
+                                 .du_db = du_db, .logical_cells = cell_ctrl.cells(), .logger = logger}));
+
         if (cells_activated && !bars.empty()) {
-          CORO_AWAIT(launch_async<cell_barring_routine>(cfg, std::move(bars), /* barred = */ true, du_db, logger));
+          CORO_AWAIT(launch_async<cell_barring_routine>(
+              cell_barring_routine_configuration{
+                  .ran_node_name = cfg.node.ran_node_name, .targets = std::move(bars), .barred = true},
+              cell_barring_routine_dependencies{.du_db = du_db, .logger = logger}));
         }
         CORO_RETURN();
       }));

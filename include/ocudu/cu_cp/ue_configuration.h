@@ -6,11 +6,10 @@
 #pragma once
 
 #include "ocudu/ran/i_rnti.h"
-#include <chrono>
 
 namespace ocudu::ocucp {
 
-/// UE configuration passed to CU-CP
+/// UE configuration passed to CU-CP.
 struct ue_configuration {
   std::chrono::seconds inactivity_timer{7200};
   /// Timeout for requesting a PDU session in seconds, before the UE is released.

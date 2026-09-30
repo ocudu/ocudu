@@ -8,8 +8,7 @@
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ran/plmn_identity.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// \brief Handler of the NG interface of the CU-CP.
 ///
@@ -29,5 +28,4 @@ public:
   virtual bool amfs_are_connected() = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

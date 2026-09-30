@@ -5,17 +5,12 @@
 
 #pragma once
 
-#include "ocudu/adt/span.h"
 #include "ocudu/cu_cp/cell_meas_manager_config.h"
 #include "ocudu/cu_cp/cu_cp_cell_command_handler.h"
 #include "ocudu/ran/cu_cp_ue_context_release.h"
 #include "ocudu/ran/meas_types.h"
-#include "ocudu/ran/pci.h"
-#include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/rnti.h"
-#include <chrono>
-#include <optional>
-#include <vector>
+#include "ocudu/ran/tac.h"
 
 namespace ocudu::ocucp {
 

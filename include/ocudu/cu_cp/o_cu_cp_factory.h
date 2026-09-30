@@ -8,13 +8,11 @@
 #include "ocudu/cu_cp/o_cu_cp.h"
 #include <memory>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 struct o_cu_cp_config;
 struct o_cu_cp_dependencies;
 
 std::unique_ptr<o_cu_cp> create_o_cu_cp(const o_cu_cp_config& config, const o_cu_cp_dependencies& dependencies);
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

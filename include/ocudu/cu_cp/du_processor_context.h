@@ -5,14 +5,10 @@
 
 #pragma once
 
-#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ran/cu_cp_cell_configuration.h"
 #include "ocudu/ran/du_cell_index.h"
 #include "ocudu/ran/nr_band.h"
-#include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/ntn_location_mapping.h"
-#include "ocudu/ran/pci.h"
-#include "ocudu/ran/tac.h"
 
 namespace ocudu::ocucp {
 

@@ -6,18 +6,15 @@
 #pragma once
 
 #include "ocudu/adt/lockfree_triple_buffer.h"
-#include "ocudu/adt/span.h"
 #include "ocudu/cu_cp/cu_cp_ref_time_report_notifier.h"
 #include "ocudu/ntn/ntn_configuration_manager_config.h"
 #include "ocudu/ntn/ntn_time_provider.h"
 #include <map>
-#include <memory>
-#include <optional>
 
 namespace ocudu {
 
-class timer_manager;
 class task_executor;
+class timer_manager;
 
 namespace ocucp {
 class cu_cp_ntn_meas_update_handler;
@@ -62,11 +59,11 @@ private:
 /// Creates an NTN time provider backed by the given reference time store. Used to feed the NTN configuration manager.
 std::unique_ptr<ocudu_ntn::ntn_time_provider> create_cu_cp_ntn_time_provider(cu_cp_ntn_ref_time_store& store);
 
-/// Creates an NTN measurement info update handler that forwards refreshed neighbour info to the given CU-CP handler.
+/// Creates an NTN measurement info update handler that forwards refreshed neighbor info to the given CU-CP handler.
 std::unique_ptr<ocudu_ntn::ntn_meas_info_update_handler>
 create_cu_cp_ntn_meas_info_handler(ocucp::cu_cp_ntn_meas_update_handler& handler);
 
-/// Creates the NTN configuration manager used by the CU-CP to periodically refresh the NTN neighbour cell info of the
+/// Creates the NTN configuration manager used by the CU-CP to periodically refresh the NTN neighbor cell info of the
 /// measurement configuration. The manager is fed by the reference time store and forwards refreshed info to the given
 /// CU-CP measurement update handler.
 std::unique_ptr<ocudu_ntn::ntn_configuration_manager>

@@ -49,18 +49,20 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
   // Deactivate the cells served by the disconnected AMF, releasing their UEs from the CU-CP first (the core is
   // gone, so they are dropped with a transport cause). No barring stage here: this is a fault path, not an
   // operator-driven graceful stop, and the pre-existing AMF-loss behaviour is kept unchanged.
-  CORO_AWAIT_VALUE(
-      cell_deactivation_result deactivation_result,
-      launch_async<cell_deactivation_routine>(cu_cp_cfg,
-                                              resolve_deactivation_targets(du_db, plmns),
-                                              collect_ues_for_plmns(ue_mng, plmns),
-                                              ngap_cause_t{ngap_cause_transport_t::transport_res_unavailable},
-                                              /* bar_cells_first = */ false,
-                                              du_db,
-                                              logical_cells,
-                                              ue_release_handler,
-                                              ue_mng,
-                                              logger));
+  CORO_AWAIT_VALUE(cell_deactivation_result deactivation_result,
+                   launch_async<cell_deactivation_routine>(
+                       cell_deactivation_routine_configuration{
+                           .ran_node_name   = cu_cp_cfg.node.ran_node_name,
+                           .targets         = resolve_deactivation_targets(du_db, plmns),
+                           .ues_to_release  = collect_ues_for_plmns(ue_mng, plmns),
+                           .release_cause   = ngap_cause_t{ngap_cause_transport_t::transport_res_unavailable},
+                           .bar_cells_first = false},
+                       cell_deactivation_routine_dependencies{.du_db              = du_db,
+                                                              .logical_cells      = logical_cells,
+                                                              .ue_release_handler = ue_release_handler,
+                                                              .ue_mng             = ue_mng,
+                                                              .logger             = logger}));
+
   if (!deactivation_result.success) {
     logger.warning("\"{}\" cell deactivation finished with errors", name());
   }

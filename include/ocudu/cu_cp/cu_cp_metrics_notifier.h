@@ -5,14 +5,10 @@
 
 #pragma once
 
-#include "ocudu/ngap/mobility_management_metrics.h"
 #include "ocudu/ngap/ngap_metrics.h"
 #include "ocudu/ran/gnb_du_id.h"
-#include "ocudu/ran/pci.h"
-#include "ocudu/ran/rnti.h"
 #include "ocudu/rrc/rrc_metrics.h"
 #include "ocudu/rrc/rrc_ue.h"
-#include "ocudu/support/format/fmt_to_c_str.h"
 
 namespace ocudu {
 
@@ -37,8 +33,7 @@ struct cu_cp_metrics_report {
     /// ID of the DU connected to the CU-CP.
     gnb_du_id_t            id;
     std::vector<cell_info> cells;
-
-    rrc_du_metrics rrc_metrics;
+    rrc_du_metrics         rrc_metrics;
   };
 
   std::vector<ue_info>        ues;
@@ -63,7 +58,7 @@ inline std::string format_rrc_metrics(const std::vector<cu_cp_metrics_report::du
   fmt::memory_buffer buffer;
 
   for (const auto& du_info : report) {
-    // log RRC metrics
+    // Log RRC metrics.
     fmt::format_to(std::back_inserter(buffer), "[");
     fmt::format_to(std::back_inserter(buffer), " gnb_du_id={}", to_underlying(du_info.id));
 

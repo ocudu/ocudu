@@ -7,8 +7,7 @@
 
 #include <chrono>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Configuration for E1AP CU-CP.
 struct e1ap_configuration {
@@ -18,5 +17,4 @@ struct e1ap_configuration {
   bool json_log_enabled = false;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

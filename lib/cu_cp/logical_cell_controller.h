@@ -18,6 +18,22 @@
 
 namespace ocudu::ocucp {
 
+/// Holds the logical cell controller configuration parameters.
+struct logical_cell_controller_configuration {
+  std::string                            ran_node_name;
+  std::vector<cu_cp_logical_cell_config> cells;
+};
+
+/// Holds the logical cell controller dependencies.
+struct logical_cell_controller_dependencies {
+  du_processor_repository&          du_db;
+  ue_manager&                       ue_mng;
+  async_task_scheduler&             common_task_sched;
+  cu_cp_ue_context_release_handler& ue_release_handler;
+  task_executor&                    cu_cp_executor;
+  timer_manager&                    timers;
+};
+
 /// \brief Owns the CU-CP logical cells and drives the cell-level command surface on top of them.
 ///
 /// The controller is a component of the CU-CP: it implements the external cell commands (lock/unlock,
@@ -27,11 +43,8 @@ namespace ocudu::ocucp {
 class logical_cell_controller final : public cu_cp_cell_command_handler
 {
 public:
-  logical_cell_controller(const cu_cp_configuration&        cfg_,
-                          du_processor_repository&          du_db_,
-                          ue_manager&                       ue_mng_,
-                          async_task_scheduler&             common_task_sched_,
-                          cu_cp_ue_context_release_handler& ue_release_handler_);
+  logical_cell_controller(const logical_cell_controller_configuration& cfg_,
+                          const logical_cell_controller_dependencies&  dependencies_);
 
   // cu_cp_cell_command_handler.
   async_task<cu_cp_cell_command_response> deactivate_cell(const nr_cell_global_id_t& cgi) override;
@@ -64,11 +77,13 @@ private:
   /// Marshal the validation and scheduling of a cell command onto the CU-CP executor.
   bool dispatch_cell_command(const char* name, std::function<bool()> validate_and_schedule);
 
-  const cu_cp_configuration&        cfg;
-  du_processor_repository&          du_db;
-  ue_manager&                       ue_mng;
-  async_task_scheduler&             common_task_sched;
-  cu_cp_ue_context_release_handler& ue_release_handler;
+  const logical_cell_controller_configuration cfg;
+  du_processor_repository&                    du_db;
+  ue_manager&                                 ue_mng;
+  async_task_scheduler&                       common_task_sched;
+  cu_cp_ue_context_release_handler&           ue_release_handler;
+  task_executor&                              cu_cp_executor;
+  timer_manager&                              timers;
 
   logical_cell_manager logical_cells;
 

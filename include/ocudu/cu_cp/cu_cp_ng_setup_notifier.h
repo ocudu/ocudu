@@ -6,10 +6,8 @@
 #pragma once
 
 #include "ocudu/adt/byte_buffer.h"
-#include <string>
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// Notifier invoked once after a successful NG Setup, delivering the packed NGSetupRequest and
 /// NGSetupResponse bytes. Intended for use by out-of-band consumers that need the raw PDU bytes without being coupled
@@ -26,5 +24,4 @@ public:
   virtual void on_ng_setup_complete(byte_buffer req, byte_buffer resp, std::string amf_name) = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

@@ -5,21 +5,19 @@
 
 #pragma once
 
-#include "ocudu/adt/byte_buffer.h"
-#include "ocudu/adt/static_vector.h"
 #include "ocudu/cu_cp/up_context.h"
 #include "ocudu/ran/meas_types.h"
 #include "ocudu/security/security.h"
-#include <optional>
 
 namespace ocudu::ocucp {
 
-/// \brief RRC context transfered from one UE object to the other during mobility.
+/// \brief RRC context transferred from one UE object to the other during mobility.
 struct rrc_ue_transfer_context {
-  security::security_context            sec_context;
-  std::optional<rrc_meas_cfg>           meas_cfg;
-  up_context                            up_ctx;
-  static_vector<srb_id_t, MAX_NOF_SRBS> srbs; // List of active SRBs (TODO: add PDCP config).
+  security::security_context  sec_context;
+  std::optional<rrc_meas_cfg> meas_cfg;
+  up_context                  up_ctx;
+  /// List of active SRBs (TODO: add PDCP config).
+  static_vector<srb_id_t, MAX_NOF_SRBS> srbs;
   byte_buffer                           handover_preparation_info;
   byte_buffer                           ue_cap_rat_container_list;
   bool                                  is_inter_cu_handover = false;

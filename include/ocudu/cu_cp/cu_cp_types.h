@@ -10,16 +10,17 @@
 
 namespace ocudu::ocucp {
 
-/// QoS Configuration, i.e. 5QI and the associated PDCP
-/// and SDAP configuration for DRBs
+/// QoS Configuration, i.e. 5QI and the associated PDCP and SDAP configuration for DRBs.
 struct cu_cp_qos_config {
   pdcp_config pdcp;
 };
 
 /// \brief Indication from a DU that a UE has successfully accessed a target cell (CHO execution).
 struct cu_cp_access_success_indication {
-  cu_cp_ue_index_t    ue_index        = cu_cp_ue_index_t::invalid; ///< Target UE index (sender of Access Success).
-  cu_cp_ue_index_t    source_ue_index = cu_cp_ue_index_t::invalid; ///< Resolved CHO source UE index.
+  /// Target UE index (sender of Access Success).
+  cu_cp_ue_index_t ue_index = cu_cp_ue_index_t::invalid;
+  /// Resolved CHO source UE index.
+  cu_cp_ue_index_t    source_ue_index = cu_cp_ue_index_t::invalid;
   nr_cell_global_id_t cgi;
 };
 

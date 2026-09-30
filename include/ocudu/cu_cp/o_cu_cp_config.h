@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include "ocudu/cu_cp/cu_configurator.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/e2/e2_cu.h"
 #include "ocudu/e2/e2ap_config.h"
-#include "ocudu/e2/gateways/e2_connection_client.h"
 
-namespace ocudu::ocucp {
+namespace ocudu {
+
+class e2_cu_metrics_interface;
+
+namespace ocucp {
 
 /// O-RAN CU-CP configuration.
 struct o_cu_cp_config {
@@ -31,4 +31,5 @@ struct o_cu_cp_dependencies {
   cu_configurator* cu_cfg = nullptr;
 };
 
-} // namespace ocudu::ocucp
+} // namespace ocucp
+} // namespace ocudu

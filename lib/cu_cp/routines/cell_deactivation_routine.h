@@ -6,17 +6,28 @@
 #pragma once
 
 #include "../du_processor/du_processor.h"
-#include "../logical_cell_manager.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "cell_lifecycle_target.h"
-#include "ocudu/adt/expected.h"
-#include "ocudu/cu_cp/cu_cp_configuration.h"
-#include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
-#include "ocudu/ran/cause/ngap_cause.h"
-#include "ocudu/support/async/eager_async_task.h"
-#include <utility>
 
 namespace ocudu::ocucp {
+
+/// Holds the cell deactivation routine configuration parameters.
+struct cell_deactivation_routine_configuration {
+  std::string                        ran_node_name;
+  std::vector<cell_lifecycle_target> targets;
+  std::vector<cu_cp_ue_index_t>      ues_to_release;
+  ngap_cause_t                       release_cause;
+  bool                               bar_cells_first;
+};
+
+/// Holds the cell deactivation routine dependencies.
+struct cell_deactivation_routine_dependencies {
+  du_processor_repository&          du_db;
+  logical_cell_manager&             logical_cells;
+  cu_cp_ue_context_release_handler& ue_release_handler;
+  ue_manager&                       ue_mng;
+  ocudulog::basic_logger&           logger;
+};
 
 /// \brief Per-stage outcome of the cell deactivation routine.
 ///
@@ -40,16 +51,9 @@ struct cell_deactivation_result {
 class cell_deactivation_routine
 {
 public:
-  cell_deactivation_routine(const cu_cp_configuration&         cu_cp_cfg_,
-                            std::vector<cell_lifecycle_target> targets,
-                            std::vector<cu_cp_ue_index_t>      ues_to_release_,
-                            ngap_cause_t                       release_cause_,
-                            bool                               bar_cells_first_,
-                            du_processor_repository&           du_db_,
-                            logical_cell_manager&              logical_cells_,
-                            cu_cp_ue_context_release_handler&  ue_release_handler_,
-                            ue_manager&                        ue_mng_,
-                            ocudulog::basic_logger&            logger_);
+  cell_deactivation_routine(const cell_deactivation_routine_configuration& cfg,
+                            const cell_deactivation_routine_dependencies&  dependencies);
+
   ~cell_deactivation_routine() = default;
 
   void operator()(coro_context<async_task<cell_deactivation_result>>& ctx);

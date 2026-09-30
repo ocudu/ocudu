@@ -7,7 +7,6 @@
 
 #include "ocudu/cu_cp/cu_cp_metrics_notifier.h"
 #include <chrono>
-#include <memory>
 
 namespace ocudu::ocucp {
 

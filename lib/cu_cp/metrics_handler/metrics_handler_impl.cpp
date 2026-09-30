@@ -5,6 +5,7 @@
 
 #include "metrics_handler_impl.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/cu_cp/cu_cp_metrics_notifier.h"
 #include "ocudu/support/executors/sync_task_executor.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <thread>

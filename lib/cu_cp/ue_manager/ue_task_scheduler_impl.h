@@ -8,6 +8,7 @@
 #include "ocudu/cu_cp/ue_task_scheduler.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/cu_cp_types.h"
+#include "ocudu/support/async/fifo_async_task_scheduler.h"
 
 namespace ocudu::ocucp {
 

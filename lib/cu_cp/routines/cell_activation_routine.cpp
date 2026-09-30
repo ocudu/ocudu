@@ -5,28 +5,26 @@
 
 #include "cell_activation_routine.h"
 #include "../du_processor/du_processor_repository.h"
+#include "../logical_cell_manager.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu_configuration_update.h"
 #include "ocudu/support/async/coroutine.h"
-#include "fmt/ranges.h"
 #include <algorithm>
 #include <map>
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
 
-cell_activation_routine::cell_activation_routine(const cu_cp_configuration&         cu_cp_cfg_,
-                                                 std::vector<cell_lifecycle_target> targets,
-                                                 du_processor_repository&           du_db_,
-                                                 logical_cell_manager&              logical_cells_,
-                                                 ocudulog::basic_logger&            logger_) :
-  cu_cp_cfg(cu_cp_cfg_), du_db(du_db_), logical_cells(logical_cells_), logger(logger_)
+cell_activation_routine::cell_activation_routine(const cell_activation_routine_configuration& cfg,
+                                                 const cell_activation_routine_dependencies&  dependencies) :
+  du_db(dependencies.du_db), logical_cells(dependencies.logical_cells), logger(dependencies.logger)
+
 {
   // Group the targets into a single gNB-CU Configuration Update per DU.
   std::map<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update> by_du;
-  for (cell_lifecycle_target& target : targets) {
+  for (const cell_lifecycle_target& target : cfg.targets) {
     f1ap_gnb_cu_configuration_update& update = by_du[target.du_index];
-    update.gnb_cu_name                       = cu_cp_cfg.node.ran_node_name;
+    update.gnb_cu_name                       = cfg.ran_node_name;
     update.cells_to_be_activated_list.push_back({target.cgi, target.pci, std::move(target.plmns)});
   }
   for (auto& [du_index, update] : by_du) {

@@ -10,12 +10,10 @@
 using namespace ocudu;
 using namespace ocudu::ocucp;
 
-cell_barring_routine::cell_barring_routine(const cu_cp_configuration&         cu_cp_cfg_,
-                                           std::vector<cell_lifecycle_target> targets,
-                                           bool                               barred_,
-                                           du_processor_repository&           du_db_,
-                                           ocudulog::basic_logger&            logger_) :
-  cu_cp_cfg(cu_cp_cfg_), du_db(du_db_), logger(logger_)
+cell_barring_routine::cell_barring_routine(const cell_barring_routine_configuration& cfg,
+                                           const cell_barring_routine_dependencies&  dependencies) :
+  du_db(dependencies.du_db), logger(dependencies.logger)
+
 {
   // Group the targets into a single gNB-CU Configuration Update per DU.
   //
@@ -23,10 +21,10 @@ cell_barring_routine::cell_barring_routine(const cu_cp_configuration&         cu
   // does not support it drops the IE and still acknowledges the update, so a reported success proves the
   // request was accepted, not that the barred MIB reached the air.
   std::map<cu_cp_du_index_t, f1ap_gnb_cu_configuration_update> by_du;
-  for (const cell_lifecycle_target& target : targets) {
+  for (const cell_lifecycle_target& target : cfg.targets) {
     f1ap_gnb_cu_configuration_update& update = by_du[target.du_index];
-    update.gnb_cu_name                       = cu_cp_cfg.node.ran_node_name;
-    update.cells_to_be_barred_list.push_back({target.cgi, barred_});
+    update.gnb_cu_name                       = cfg.ran_node_name;
+    update.cells_to_be_barred_list.push_back({target.cgi, cfg.barred});
   }
   for (auto& [du_index, update] : by_du) {
     du_updates.emplace_back(du_index, std::move(update));

@@ -8,7 +8,6 @@
 #include "ocudu/cu_cp/cell_state.h"
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/support/async/async_task.h"
-#include <optional>
 
 namespace ocudu::ocucp {
 
@@ -97,7 +96,7 @@ public:
 
   /// \brief Synchronous variant of get_cell_state for callers outside the CU-CP execution context.
   ///
-  /// The read is marshalled onto the CU-CP executor with the same bounded, cancelled-on-timeout wait as the
+  /// The read is marshaled onto the CU-CP executor with the same bounded, cancelled-on-timeout wait as the
   /// dispatch_* commands. Returns std::nullopt when no logical cell with the given NCI exists or the
   /// dispatch failed.
   /// \param[in] cgi NR Cell Global ID of the cell to query.

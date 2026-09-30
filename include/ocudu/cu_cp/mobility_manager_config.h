@@ -11,12 +11,15 @@ namespace ocudu::ocucp {
 
 /// Mobility manager configuration.
 struct mobility_manager_config {
-  bool trigger_handover_from_measurements = false; ///< Set to true to trigger HO when neighbor becomes stronger.
-  bool enable_ngap_metrics                = false; ///< Set to true to enable inter gNB handover metrics collection.
-  bool enable_rrc_metrics                 = false; ///< Set to true to enable intra gNB metrics collection.
+  /// Set to true to trigger HO when neighbor becomes stronger.
+  bool trigger_handover_from_measurements = false;
+  /// Set to true to enable inter gNB handover metrics collection.
+  bool enable_ngap_metrics = false;
+  /// Set to true to enable intra gNB metrics collection.
+  bool enable_rrc_metrics = false;
   /// Auto-trigger CHO after UE setup if UE/cell readiness checks pass.
   bool trigger_cho_on_ue_setup = false;
-  /// Default CHO execution timeout. If it expires before CHO completion, CHO is cancelled.
+  /// Default CHO execution timeout. If it expires before CHO completion, CHO is canceled.
   std::chrono::milliseconds cho_timeout{10000};
 };
 

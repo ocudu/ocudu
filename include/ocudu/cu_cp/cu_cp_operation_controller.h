@@ -5,8 +5,7 @@
 
 #pragma once
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 /// CU-CP operation controller interface that allows to start/stop a CU-CP.
 class cu_cp_operation_controller
@@ -21,5 +20,4 @@ public:
   virtual void stop() = 0;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

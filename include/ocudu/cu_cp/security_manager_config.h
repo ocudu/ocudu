@@ -7,13 +7,13 @@
 
 #include "ocudu/security/security.h"
 
-namespace ocudu {
-namespace ocucp {
+namespace ocudu::ocucp {
 
 struct security_manager_config {
-  security::preferred_integrity_algorithms int_algo_pref_list; ///< Integrity protection algorithms preference list
-  security::preferred_ciphering_algorithms enc_algo_pref_list; ///< Encryption algorithms preference list
+  /// Integrity protection algorithms preference list.
+  security::preferred_integrity_algorithms int_algo_pref_list;
+  /// Encryption algorithms preference list.
+  security::preferred_ciphering_algorithms enc_algo_pref_list;
 };
 
-} // namespace ocucp
-} // namespace ocudu
+} // namespace ocudu::ocucp

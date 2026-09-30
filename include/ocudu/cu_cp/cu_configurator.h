@@ -8,20 +8,13 @@
 #include "ocudu/cu_cp/cu_cp_intra_cu_ho_types.h"
 #include "ocudu/f1ap/f1ap_ue_id_types.h"
 #include "ocudu/ngap/ngap_types.h"
-#include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/guami.h"
-#include "ocudu/ran/nr_cgi.h"
-#include "ocudu/ran/qos/qos_flow_id.h"
 #include "ocudu/support/async/async_task.h"
 #include <map>
 
 namespace ocudu {
 
-namespace ocucp {
-class du_processor_repository;
-class cu_cp_mobility_command_handler;
-} // namespace ocucp
-
+/// CU handover control configuration.
 struct cu_handover_control_config {
   nr_cell_global_id_t                                    target_cell_id;
   std::map<pdu_session_id_t, std::vector<qos_flow_id_t>> pdu_sessions_for_ho;
@@ -29,6 +22,7 @@ struct cu_handover_control_config {
   std::vector<nr_cell_global_id_t>                       secondary_cells_to_be_added;
 };
 
+/// Interface for the CU configurator.
 class cu_configurator
 {
 public:

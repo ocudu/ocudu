@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "ocudu/adt/span.h"
 #include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/slot_point.h"
 #include <chrono>
