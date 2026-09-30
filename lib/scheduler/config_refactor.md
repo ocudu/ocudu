@@ -1,7 +1,10 @@
 # Configuration refactor
 
 The configuration code of the DU and the scheduler changes step by step in a long refactor. This page tells you how to
-write new code before the refactor is complete. Issue: <https://gitlab.com/ocudu/ocudu/-/work_items/213>.
+write new code before the refactor is complete.
+
+This page holds all the context that you need. Issue [#213](https://gitlab.com/ocudu/ocudu/-/work_items/213) holds the
+history of the refactor, but you do not need to read it.
 
 Apply this page to the scheduler configuration code, and to the DU code that builds it.
 
@@ -60,7 +63,7 @@ the two structures do not agree. See Open points.
 
 The scheduler reads the UE structures for each UE and each slot. Small UE structures keep the cell data in the cache.
 
-- Put an ID or an index in the UE structure. Do not put a copy of the data.
+- If many UEs share the same data, put an ID or an index in the UE structure in place of a copy of that data.
 - Do not put a value in the UE structure if all the UEs of the cell have the same value.
 
 ### Do not copy the RRC structure
@@ -117,8 +120,8 @@ The PUCCH structures show the correct split. They are not perfect, but use them 
 
 - `serving_cell_config` does not exist. The DU fills the ASN.1 messages from `ran_cell_config` and `ue_bwp_config`.
 - `ue_cell_config` holds only the UE BWP configurations.
-- All the RRM code is in `lib/scheduler/rrm`. The scheduler allocates the UE resources. The DU asks the scheduler for
-  the data that RRC sends to the UE.
+- All the RRM code is in `lib/scheduler/rrm`. The RRM allocates the UE resources, and the DU asks the RRM for the data
+  that RRC sends to the UE. The RRM code is in the scheduler directory, but the RRM is not the scheduler.
 - `serving_cell_config_validator` does not exist, because the types do not permit an incorrect value.
   `scheduler_ue_config_validator` stays, because the request message still needs a check.
 
