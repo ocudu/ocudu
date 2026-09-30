@@ -250,9 +250,9 @@ struct mac_srs_pdu {
     std::optional<phy_time_unit> ul_rtoa;
     /// RSRP report in dBFS.
     std::optional<float> ul_rsrp_dBFS;
-    /// Azimuth Angle of Arrival, in degrees. Values: {0,...,359.9}.
+    /// Azimuth Angle of Arrival, in degrees. Values: [-180, 180).
     std::optional<float> azimuth_aoa;
-    /// Zenith Angle of Arrival, in degrees. Values: {0,...,179.9}.
+    /// Zenith Angle of Arrival, in degrees. Values: [0, 180).
     std::optional<float> zenith_aoa;
   };
 

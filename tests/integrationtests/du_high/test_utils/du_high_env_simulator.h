@@ -10,6 +10,7 @@
 #include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "tests/test_doubles/f1u/dummy_f1u_du_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "ocudu/adt/unique_function.h"
 #include "ocudu/du/du_high/du_high.h"
 #include "ocudu/du/du_high/du_high_configuration.h"
@@ -151,6 +152,9 @@ public:
   null_rlc_pcap            rlc_pcap;
 
   slot_point_extended next_slot;
+
+  /// Angle of Arrival reported in the SRS indications of positioning SRS.
+  test_helpers::srs_positioning_aoa srs_pos_aoa;
 
   ocudulog::basic_logger& test_logger = ocudulog::fetch_basic_logger("TEST");
 

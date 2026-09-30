@@ -595,7 +595,7 @@ void du_high_env_simulator::handle_slot_results(du_cell_index_t cell_index)
     }
 
     if (not ul_res.srss.empty()) {
-      mac_srs_indication_message srs_ind = test_helpers::create_srs_indication(sl_rx, ul_res.srss);
+      mac_srs_indication_message srs_ind = test_helpers::create_srs_indication(sl_rx, ul_res.srss, srs_pos_aoa);
       this->du_hi->get_control_info_handler(cell_index).handle_srs(srs_ind);
     }
   }

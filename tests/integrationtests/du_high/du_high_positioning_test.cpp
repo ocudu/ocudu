@@ -313,19 +313,32 @@ INSTANTIATE_TEST_SUITE_P(test_positionin_for_connected_vs_neighboring_ue,
                                               params_item.param.rsrp_meas ? "with" : "no");
                          });
 
-class du_high_pos_multi_cells_tester : public du_high_env_simulator, public testing::Test
+namespace {
+
+/// Angle of Arrival reported by the PHY and its expected F1AP reported values, as per TS 38.133, Tables 13.4.1-1 and
+/// 13.4.1-2.
+struct pos_aoa_params {
+  test_helpers::srs_positioning_aoa aoa;
+  uint16_t                          expected_azimuth_aoa;
+  uint16_t                          expected_zenith_aoa;
+};
+
+} // namespace
+
+class du_high_pos_multi_cells_tester : public du_high_env_simulator, public ::testing::TestWithParam<pos_aoa_params>
 {
 public:
   du_high_pos_multi_cells_tester() :
     du_high_env_simulator(du_high_env_sim_params{.nof_cells = 3, .srs_period = srs_periodicity::sl80})
   {
     OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-a", "MVP-FUNC-POS-16-3-b", "MVP-FUNC-POS-16-3-c");
+    srs_pos_aoa = GetParam().aoa;
   }
 
   ocudulog::basic_logger& du_logger = ocudulog::fetch_basic_logger("D1-F1");
 };
 
-TEST_F(du_high_pos_multi_cells_tester,
+TEST_P(du_high_pos_multi_cells_tester,
        when_positioning_measurement_request_is_received_for_a_ue_then_response_is_sent_to_cu)
 {
   // This tests generates 3 cells connected to the same DU; 1 UE connected to cell 1 and configured with 1 SRS resource.
@@ -433,9 +446,8 @@ TEST_F(du_high_pos_multi_cells_tester,
     ASSERT_EQ(asn1::f1ap::measured_results_value_c::types_opts::ul_srs_rsrp,
               resp_msg->pos_meas_result_list[trp_idx].pos_meas_result[1].measured_results_value.type().value);
     ASSERT_EQ(expected_rsrp, resp_msg->pos_meas_result_list[0].pos_meas_result[1].measured_results_value.ul_srs_rsrp());
-    // These correspond to the azimuth/zenith AoA (123.4/56.7 degrees) hard-coded in the SRS indication.
-    const uint16_t expected_azimuth_aoa = 1234;
-    const uint16_t expected_zenith_aoa  = 567;
+    const uint16_t expected_azimuth_aoa = GetParam().expected_azimuth_aoa;
+    const uint16_t expected_zenith_aoa  = GetParam().expected_zenith_aoa;
     ASSERT_EQ(asn1::f1ap::measured_results_value_c::types_opts::ul_angle_of_arrival,
               resp_msg->pos_meas_result_list[trp_idx].pos_meas_result[2].measured_results_value.type().value);
     const auto& aoa_result =
@@ -452,3 +464,13 @@ TEST_F(du_high_pos_multi_cells_tester,
     ASSERT_EQ(expected_srs_offset, slot_idx);
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    du_high_pos_multi_cells_tester,
+    du_high_pos_multi_cells_tester,
+    // The negative azimuth is exactly representable in single precision, so that it lies at the start of its interval.
+    testing::Values(pos_aoa_params{{.azimuth_deg = 123.4F, .zenith_deg = 56.7F}, 3034, 567},
+                    pos_aoa_params{{.azimuth_deg = -45.5F, .zenith_deg = 56.7F}, 1345, 567}),
+    [](const testing::TestParamInfo<pos_aoa_params>& params_item) {
+      return params_item.param.aoa.azimuth_deg < 0 ? "negative_azimuth" : "positive_azimuth";
+    });

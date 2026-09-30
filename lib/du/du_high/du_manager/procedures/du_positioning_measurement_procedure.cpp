@@ -4,6 +4,7 @@
 
 #include "du_positioning_measurement_procedure.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/ran/positioning/ul_aoa_mapping.h"
 #include <algorithm>
 #include <cmath>
 
@@ -18,29 +19,6 @@ static const positioning_meas_quantity* find_pos_meas_quantity(const std::vector
     return quantity.meas_type == type;
   });
   return it == quants.end() ? nullptr : &(*it);
-}
-
-/// \brief Maps an Azimuth Angle of Arrival in degrees to the TS 38.473, Section 9.3.1.157 0.1 degree resolution
-/// encoding, wrapping the value into its valid, circular range {0,...,3599} (i.e. [0, 360) degrees).
-static uint16_t degrees_to_f1ap_azimuth_aoa(float degrees)
-{
-  static constexpr unsigned AZIMUTH_AOA_MODULUS = 3600U;
-
-  float wrapped_deg = std::fmod(degrees, 360.0F);
-  if (wrapped_deg < 0.0F) {
-    wrapped_deg += 360.0F;
-  }
-  return static_cast<uint16_t>(std::lround(wrapped_deg * 10.0F) % AZIMUTH_AOA_MODULUS);
-}
-
-/// \brief Maps a Zenith Angle of Arrival in degrees to the TS 38.473, Section 9.3.1.157 0.1 degree resolution
-/// encoding, clamping the value into its valid range {0,...,1799} (i.e. [0, 180) degrees).
-static uint16_t degrees_to_f1ap_zenith_aoa(float degrees)
-{
-  static constexpr float MAX_ZENITH_AOA_DEG = 179.9F;
-
-  const float clamped_deg = std::clamp(degrees, 0.0F, MAX_ZENITH_AOA_DEG);
-  return static_cast<uint16_t>(std::lround(clamped_deg * 10.0F));
 }
 
 /// Maps RSRP in dBFS to L3 RSRP (reported value) as per TS 38.133, Table 10.1.6.1-1.
@@ -162,9 +140,9 @@ du_positioning_meas_response positioning_measurement_procedure::prepare_f1ap_res
           pos_meas_result_ul_rsrp{.ul_rsrp = rsrp_dbfs_to_l3_rsrp_mapping(mac_meas.rsrp_dbfs.value())});
     }
     if (aoa_report) {
-      pos_meas_result_ul_aoa aoa_result{.azimuth_aoa = degrees_to_f1ap_azimuth_aoa(*mac_meas.azimuth_aoa_deg)};
+      pos_meas_result_ul_aoa aoa_result{.azimuth_aoa = azimuth_aoa_to_reported_value(*mac_meas.azimuth_aoa_deg)};
       if (mac_meas.zenith_aoa_deg.has_value()) {
-        aoa_result.zenith_aoa = degrees_to_f1ap_zenith_aoa(*mac_meas.zenith_aoa_deg);
+        aoa_result.zenith_aoa = zenith_aoa_to_reported_value(*mac_meas.zenith_aoa_deg);
       }
       meas_res.results.push_back(aoa_result);
     }

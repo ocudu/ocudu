@@ -50,9 +50,18 @@ mac_crc_indication_message create_crc_indication(slot_point sl_rx, rnti_t rnti, 
 
 mac_crc_indication_message create_crc_indication(slot_point sl_rx, span<const ul_sched_info> puschs);
 
-mac_srs_pdu create_srs_pdu(const srs_info& srs);
+/// Angle of Arrival reported in the positioning SRS PDUs.
+struct srs_positioning_aoa {
+  /// Azimuth Angle of Arrival, in degrees.
+  float azimuth_deg = 123.4F;
+  /// Zenith Angle of Arrival, in degrees.
+  float zenith_deg = 56.7F;
+};
 
-mac_srs_indication_message create_srs_indication(slot_point sl_rx, span<const srs_info> srss);
+mac_srs_pdu create_srs_pdu(const srs_info& srs, const srs_positioning_aoa& aoa = {});
+
+mac_srs_indication_message
+create_srs_indication(slot_point sl_rx, span<const srs_info> srss, const srs_positioning_aoa& aoa = {});
 
 /// Creates a RACH indication that reports one preamble detected in a scheduled PRACH occasion.
 /// \param msg1_scs PRACH subcarrier spacing, ignored for long preamble formats.

@@ -188,3 +188,7 @@ add_test(precoding_matrix_resource_grid_test precoding_matrix_resource_grid_test
 add_executable(ntn_location_mapping_test ntn_location_mapping_test.cpp)
 target_link_libraries(ntn_location_mapping_test ocudu_ran GTest::gtest ocudu_gtest_main)
 gtest_discover_tests(ntn_location_mapping_test)
+
+add_executable(ul_aoa_mapping_test ul_aoa_mapping_test.cpp)
+target_link_libraries(ul_aoa_mapping_test ocudu_support GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(ul_aoa_mapping_test)

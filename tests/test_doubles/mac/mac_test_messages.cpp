@@ -193,20 +193,18 @@ std::optional<mac_uci_indication_message> ocudu::test_helpers::create_uci_indica
   return uci_ind.ucis.empty() ? std::nullopt : std::make_optional(uci_ind);
 }
 
-mac_srs_pdu test_helpers::create_srs_pdu(const srs_info& srs)
+mac_srs_pdu test_helpers::create_srs_pdu(const srs_info& srs, const srs_positioning_aoa& aoa)
 {
   phy_time_unit ta = phy_time_unit::from_timing_advance(test_rng::uniform_int<unsigned>(0, 60), srs.bwp_cfg->scs);
   if (srs.positioning_report_requested) {
     // Set a random number, just to test the values are passed to the positioning report.
-    phy_time_unit rtoa        = phy_time_unit::from_units_of_Tc(test_rng::uniform_int<unsigned>(0, 1000));
-    const float   rsrp        = -84.6f;
-    const float   azimuth_aoa = 123.4f;
-    const float   zenith_aoa  = 56.7f;
+    phy_time_unit rtoa = phy_time_unit::from_units_of_Tc(test_rng::uniform_int<unsigned>(0, 1000));
+    const float   rsrp = -84.6f;
 
     mac_srs_pdu pdu;
     pdu.rnti                = srs.crnti;
     pdu.time_advance_offset = ta;
-    pdu.report              = mac_srs_pdu::positioning_report{rtoa, rsrp, azimuth_aoa, zenith_aoa};
+    pdu.report              = mac_srs_pdu::positioning_report{rtoa, rsrp, aoa.azimuth_deg, aoa.zenith_deg};
     return pdu;
   } else {
     srs_channel_matrix ch_matrix(1, 1);
@@ -214,12 +212,13 @@ mac_srs_pdu test_helpers::create_srs_pdu(const srs_info& srs)
   }
 }
 
-mac_srs_indication_message test_helpers::create_srs_indication(slot_point sl_rx, span<const srs_info> srss)
+mac_srs_indication_message
+test_helpers::create_srs_indication(slot_point sl_rx, span<const srs_info> srss, const srs_positioning_aoa& aoa)
 {
   mac_srs_indication_message srs_ind;
   srs_ind.sl_rx = sl_rx;
   for (const auto& srs : srss) {
-    srs_ind.srss.push_back(create_srs_pdu(srs));
+    srs_ind.srss.push_back(create_srs_pdu(srs, aoa));
   }
   return srs_ind;
 }
