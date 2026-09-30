@@ -99,6 +99,10 @@ public:
     // Maximum time delay between reception and transmission in samples (1ms plus the time offset).
     unsigned rx_to_tx_max_delay = config.srate.to_kHz() + tx_time_offset;
 
+    // Number of receive buffers, sized for storing up to one frame.
+    unsigned nof_rx_buffers =
+        divide_ceil((NOF_SUBFRAMES_PER_FRAME * SUBFRAME_DURATION_MSEC * config.srate.to_kHz()), rx_buffer_size);
+
     // Prepare downlink processor configuration.
     downlink_processor_configuration dl_proc_config = {.sector_id               = config.sector_id,
                                                        .scs                     = config.scs,
@@ -136,7 +140,7 @@ public:
         .tx_time_offset         = static_cast<baseband_gateway_timestamp>(tx_time_offset),
         .rx_to_tx_max_delay     = rx_to_tx_max_delay,
         .rx_buffer_size         = rx_buffer_size,
-        .nof_rx_buffers         = std::max(4U, rx_to_tx_max_delay / rx_buffer_size),
+        .nof_rx_buffers         = nof_rx_buffers,
         .system_time_throttling = config.system_time_throttling,
         .stop_nof_slots         = 2 * config.max_processing_delay_slots};
 

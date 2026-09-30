@@ -240,7 +240,7 @@ public:
     tx_task_executor(1),
     rx_task_executor(1),
     dl_task_executor(1),
-    ul_task_executor(1),
+    ul_task_executor(max_nof_pending_ul_tasks),
     prach_task_executor(1)
   {
   }
@@ -371,7 +371,10 @@ protected:
     return time_alignment_offset.to_samples(srate.to_Hz()) - time_alignment_calibration;
   }
 
-  static constexpr antenna_topology tx_ant_topology = antenna_topology::eight_ports;
+  static constexpr antenna_topology   tx_ant_topology = antenna_topology::eight_ports;
+  static constexpr subcarrier_spacing max_scs         = subcarrier_spacing::kHz30;
+  static constexpr unsigned           max_nof_pending_ul_tasks =
+      NOF_SUBFRAMES_PER_FRAME * SUBFRAME_DURATION_MSEC * get_nof_slots_per_subframe(max_scs) + 1;
 
   subcarrier_spacing scs;
   cyclic_prefix      cp;
@@ -874,6 +877,80 @@ TEST_P(LowerPhyFixture, BasebandUplinkFlow)
     ASSERT_EQ(ul_bb_entry.buffer, receive_entry.data);
     ASSERT_EQ(ul_bb_entry.timestamp, receive_entry.metadata.ts);
   }
+
+  // No task should be pending in UL executor.
+  ASSERT_FALSE(ul_task_executor.has_pending_tasks());
+  ASSERT_TRUE(rx_task_executor.has_pending_tasks());
+}
+
+TEST_P(LowerPhyFixture, BasebandUplinkNotEnoughBuffers)
+{
+  static constexpr unsigned nof_discarded_blocks = 10;
+
+  // Derive the number of receive buffers in the pool.
+  unsigned rx_buffer_size = srate.to_kHz() / pow2(to_numerology_value(scs));
+  unsigned nof_rx_buffers =
+      divide_ceil((NOF_SUBFRAMES_PER_FRAME * SUBFRAME_DURATION_MSEC * srate.to_kHz()), rx_buffer_size);
+  ASSERT_LT(nof_rx_buffers, max_nof_pending_ul_tasks) << "The uplink executor queue cannot hold all the buffers.";
+
+  // Get lower PHY controller.
+  lower_phy_controller& lphy_controller = lphy->get_controller();
+
+  // Make sure executors have no pending tasks before starting.
+  ASSERT_FALSE(rx_task_executor.has_pending_tasks());
+  ASSERT_FALSE(tx_task_executor.has_pending_tasks());
+  ASSERT_FALSE(ul_task_executor.has_pending_tasks());
+
+  // Set initial time and start streaming.
+  baseband_gateway_timestamp init_time = 100;
+  bb_gateway_spy.set_receiver_current_timestamp(init_time);
+  lphy_controller.start(init_time);
+
+  // Receive as many baseband blocks as buffers without processing them, so the uplink tasks hold all the buffers.
+  for (unsigned i_block = 0; i_block != nof_rx_buffers; ++i_block) {
+    ASSERT_TRUE(rx_task_executor.try_run_next());
+    ASSERT_EQ(bb_gateway_spy.get_receive_entries().size(), i_block + 1);
+    ASSERT_TRUE(ul_task_executor.has_pending_tasks());
+  }
+
+  // The pool is exhausted, the next blocks are received and discarded.
+  for (unsigned i_block = 0; i_block != nof_discarded_blocks; ++i_block) {
+    ASSERT_TRUE(rx_task_executor.try_run_next());
+    ASSERT_EQ(bb_gateway_spy.get_receive_entries().size(), nof_rx_buffers + i_block + 1);
+  }
+
+  // Process the pending uplink tasks. Only the blocks that had a buffer reach the uplink processor.
+  ASSERT_TRUE(ul_task_executor.run_pending_tasks());
+  {
+    auto& receive_entries = bb_gateway_spy.get_receive_entries();
+    auto& ul_bb_entries   = uplink_proc_spy->get_uplink_proc_baseband_spy().get_entries();
+    ASSERT_EQ(ul_bb_entries.size(), nof_rx_buffers);
+    for (unsigned i_block = 0; i_block != nof_rx_buffers; ++i_block) {
+      ASSERT_EQ(ul_bb_entries[i_block].buffer, receive_entries[i_block].data);
+      ASSERT_EQ(ul_bb_entries[i_block].timestamp, receive_entries[i_block].metadata.ts);
+    }
+  }
+
+  // Clear spies.
+  bb_gateway_spy.clear_all_entries();
+  uplink_proc_spy->clear();
+
+  // The buffers are back in the pool, the next block is processed.
+  ASSERT_TRUE(rx_task_executor.try_run_next());
+  ASSERT_TRUE(ul_task_executor.try_run_next());
+
+  auto& receive_entries = bb_gateway_spy.get_receive_entries();
+  ASSERT_EQ(receive_entries.size(), 1);
+  auto& receive_entry = receive_entries.back();
+
+  auto& ul_bb_entries = uplink_proc_spy->get_uplink_proc_baseband_spy().get_entries();
+  ASSERT_EQ(ul_bb_entries.size(), 1);
+  auto& ul_bb_entry = ul_bb_entries.back();
+
+  // The discarded blocks keep the receive timestamp continuous.
+  ASSERT_EQ(receive_entry.metadata.ts, init_time + (nof_rx_buffers + nof_discarded_blocks) * rx_buffer_size);
+  ASSERT_EQ(ul_bb_entry.buffer, receive_entry.data);
+  ASSERT_EQ(ul_bb_entry.timestamp, receive_entry.metadata.ts);
 
   // No task should be pending in UL executor.
   ASSERT_FALSE(ul_task_executor.has_pending_tasks());

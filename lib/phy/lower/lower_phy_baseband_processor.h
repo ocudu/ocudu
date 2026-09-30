@@ -182,6 +182,7 @@ private:
     return timestamp - start_time_sfn0;
   }
 
+  /// Pool of baseband receive buffers.
   using baseband_buffer_pool = bounded_rc_object_pool<baseband_gateway_buffer_dynamic>;
 
   ocudulog::basic_logger&                                           logger;
