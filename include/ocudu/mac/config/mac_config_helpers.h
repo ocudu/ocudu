@@ -24,9 +24,10 @@ mac_lc_config make_default_drb_mac_lc_config();
 prioritized_bit_rate get_pbr_ceil(uint64_t bitrate_bps);
 
 /// \brief Generates DRB MAC Logical Channel configuration for GBR DRBs.
-mac_lc_config make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& gbr_qos_flow_info);
+mac_lc_config make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& gbr_qos_flow_info,
+                                         std::optional<ul_harq_mode>     allowed_harq_mode);
 
 /// \brief Generates DRB MAC Logical Channel configuration for non-GBR DRBs.
-mac_lc_config make_non_gbr_drb_mac_lc_config();
+mac_lc_config make_non_gbr_drb_mac_lc_config(std::optional<ul_harq_mode> allowed_harq_mode);
 
 } // namespace ocudu

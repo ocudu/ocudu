@@ -56,21 +56,24 @@ prioritized_bit_rate ocudu::get_pbr_ceil(uint64_t bitrate_bps)
   return prioritized_bit_rate::infinity;
 }
 
-mac_lc_config ocudu::make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& gbr_qos_flow_info)
+mac_lc_config ocudu::make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& gbr_qos_flow_info,
+                                                std::optional<ul_harq_mode>     allowed_harq_mode)
 {
   mac_lc_config mac_cfg{make_default_drb_mac_lc_config()};
   // [Implementation-Defined] Setting priority higher than the non-GBR DRBs.
-  mac_cfg.priority = 4;
-  mac_cfg.lcg_id   = GBR_DRB_LCG_ID;
+  mac_cfg.priority          = 4;
+  mac_cfg.allowed_harq_mode = allowed_harq_mode;
+  mac_cfg.lcg_id            = allowed_harq_mode == ul_harq_mode::mode_b ? GBR_DRB_MODE_B_LCG_ID : GBR_DRB_LCG_ID;
   // Set PBR based on the given GBR QoS flow information.
   mac_cfg.pbr = get_pbr_ceil(gbr_qos_flow_info.gbr_ul);
   return mac_cfg;
 }
 
-mac_lc_config ocudu::make_non_gbr_drb_mac_lc_config()
+mac_lc_config ocudu::make_non_gbr_drb_mac_lc_config(std::optional<ul_harq_mode> allowed_harq_mode)
 {
   mac_lc_config mac_cfg{make_default_drb_mac_lc_config()};
-  mac_cfg.lcg_id = NON_GBR_DRB_LCG_ID;
+  mac_cfg.allowed_harq_mode = allowed_harq_mode;
+  mac_cfg.lcg_id = allowed_harq_mode == ul_harq_mode::mode_b ? NON_GBR_DRB_MODE_B_LCG_ID : NON_GBR_DRB_LCG_ID;
   // [Implementation-Defined] Value of PBR is set such that the final value of B_j (computed before applying
   // logical channel prioritization procedure) is small (non-zero) for non-GBR DRBs. See TS 38.321, 5.4.3.1.1-3, for
   // computation of B_j and logical channel prioritization procedure.
