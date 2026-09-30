@@ -13,7 +13,7 @@ mac_lc_config ocudu::make_default_srb_mac_lc_config(lcid_t lcid)
   mac_lc_config mac_cfg{};
   // See TS 38.331, 9.2.1 Default SRB configurations.
   mac_cfg.priority            = lcid == LCID_SRB2 ? 3 : 1;
-  mac_cfg.lcg_id              = uint_to_lcg_id(0);
+  mac_cfg.lcg_id              = SRB_LCG_ID;
   mac_cfg.pbr                 = prioritized_bit_rate::infinity;
   mac_cfg.bsd                 = bucket_size_duration::ms5;
   mac_cfg.lc_sr_mask          = false;
@@ -27,7 +27,7 @@ mac_lc_config ocudu::make_default_drb_mac_lc_config()
   mac_lc_config mac_cfg{};
   // [Implementation-Defined] Setting priority higher than the least priority among SRBs.
   mac_cfg.priority = 5;
-  mac_cfg.lcg_id   = uint_to_lcg_id(2);
+  mac_cfg.lcg_id   = NON_GBR_DRB_LCG_ID;
   // [Implementation-Defined] By default we set the PBR to 0 so that there is no prioritized bitrate for the DRB. But,
   // can be customised based on the requirement.
   mac_cfg.pbr                 = prioritized_bit_rate::kBps0;
@@ -60,8 +60,7 @@ mac_lc_config ocudu::make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& 
   mac_lc_config mac_cfg{make_default_drb_mac_lc_config()};
   // [Implementation-Defined] Setting priority higher than the non-GBR DRBs.
   mac_cfg.priority = 4;
-  // [Implementation-Defined] Setting LCG ID other than the one assigned to non-GBR DRBs.
-  mac_cfg.lcg_id = uint_to_lcg_id(1);
+  mac_cfg.lcg_id   = GBR_DRB_LCG_ID;
   // Set PBR based on the given GBR QoS flow information.
   mac_cfg.pbr = get_pbr_ceil(gbr_qos_flow_info.gbr_ul);
   return mac_cfg;
@@ -70,6 +69,7 @@ mac_lc_config ocudu::make_gbr_drb_mac_lc_config(const gbr_qos_flow_information& 
 mac_lc_config ocudu::make_non_gbr_drb_mac_lc_config()
 {
   mac_lc_config mac_cfg{make_default_drb_mac_lc_config()};
+  mac_cfg.lcg_id = NON_GBR_DRB_LCG_ID;
   // [Implementation-Defined] Value of PBR is set such that the final value of B_j (computed before applying
   // logical channel prioritization procedure) is small (non-zero) for non-GBR DRBs. See TS 38.321, 5.4.3.1.1-3, for
   // computation of B_j and logical channel prioritization procedure.

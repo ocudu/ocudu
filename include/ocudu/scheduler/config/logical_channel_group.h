@@ -17,4 +17,10 @@ constexpr lcg_id_t uint_to_lcg_id(std::underlying_type_t<lcg_id_t> val)
   return static_cast<lcg_id_t>(val);
 }
 
+/// Logical channel group of the SRBs, as per the default SRB configuration of TS 38.331, Section 9.2.1.
+constexpr lcg_id_t SRB_LCG_ID = uint_to_lcg_id(0);
+/// [Implementation-defined] Logical channel groups of the DRBs.
+constexpr lcg_id_t GBR_DRB_LCG_ID     = uint_to_lcg_id(1);
+constexpr lcg_id_t NON_GBR_DRB_LCG_ID = uint_to_lcg_id(2);
+
 } // namespace ocudu

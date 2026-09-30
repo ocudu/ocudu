@@ -15,11 +15,7 @@ constexpr logical_channel_config create_default_logical_channel_config(lcid_t lc
   logical_channel_config lc_ch{};
   lc_ch.lcid = lcid;
   // See TS 38.331, 9.2.1 Default SRB configurations.
-  if (is_srb(lcid)) {
-    lc_ch.lc_group = uint_to_lcg_id(0);
-  } else {
-    lc_ch.lc_group = uint_to_lcg_id(2);
-  }
+  lc_ch.lc_group                  = is_srb(lcid) ? SRB_LCG_ID : NON_GBR_DRB_LCG_ID;
   lc_ch.lc_sr_mask                = false;
   lc_ch.lc_sr_delay_timer_applied = false;
   return lc_ch;
