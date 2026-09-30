@@ -17,6 +17,7 @@
 #include <future>
 
 namespace ocudu {
+
 /// Collects the parameters necessary to initialize the baseband adaptor.
 struct lower_phy_baseband_processor_configuration {
   /// Sampling rate.
@@ -181,6 +182,9 @@ private:
     return timestamp - start_time_sfn0;
   }
 
+  using baseband_buffer_pool = bounded_rc_object_pool<baseband_gateway_buffer_dynamic>;
+
+  ocudulog::basic_logger&                                           logger;
   sampling_rate                                                     srate;
   uint64_t                                                          nof_samples_in_all_hyper_frames;
   unsigned                                                          rx_buffer_size;
@@ -193,7 +197,8 @@ private:
   baseband_gateway_transmitter&                                     transmitter;
   uplink_processor_baseband&                                        uplink_processor;
   downlink_processor_baseband&                                      downlink_processor;
-  blocking_queue<std::unique_ptr<baseband_gateway_buffer_dynamic>>  rx_buffers;
+  baseband_buffer_pool                                              rx_buffers;
+  baseband_gateway_buffer_dynamic                                   discard_buffer;
   baseband_gateway_timestamp                                        tx_time_offset;
   baseband_gateway_timestamp                                        rx_to_tx_max_delay;
   baseband_gateway_timestamp                                        start_time_sfn0;

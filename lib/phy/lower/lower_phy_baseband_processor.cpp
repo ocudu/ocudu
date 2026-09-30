@@ -6,12 +6,14 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/interval.h"
 #include "ocudu/instrumentation/traces/ru_traces.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/slot_point_extended.h"
 
 using namespace ocudu;
 
 lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseband_processor_configuration& config,
                                                            const lower_phy_baseband_processor_dependencies&  deps) :
+  logger(ocudulog::fetch_basic_logger("PHY")),
   srate(config.srate),
   nof_samples_in_all_hyper_frames(config.srate.to_kHz() * NOF_HYPER_SFNS * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   rx_buffer_size(config.rx_buffer_size),
@@ -24,7 +26,8 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   transmitter(deps.transmitter),
   uplink_processor(deps.ul_bb_proc),
   downlink_processor(deps.dl_bb_proc),
-  rx_buffers(config.nof_rx_buffers),
+  rx_buffers(config.nof_rx_buffers, config.nof_rx_ports, config.rx_buffer_size),
+  discard_buffer(config.nof_rx_ports, config.rx_buffer_size),
   tx_time_offset(config.tx_time_offset),
   rx_to_tx_max_delay(config.rx_to_tx_max_delay),
   tx_state(config.stop_nof_slots),
@@ -39,11 +42,6 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
                system_time_throttling_range);
   ocudu_assert(config.nof_rx_ports != 0, "Invalid number of receive ports.");
   ocudu_assert(config.nof_tx_ports != 0, "Invalid number of transmit ports.");
-
-  // Create queue of receive buffers.
-  while (!rx_buffers.full()) {
-    rx_buffers.push_blocking(std::make_unique<baseband_gateway_buffer_dynamic>(config.nof_rx_ports, rx_buffer_size));
-  }
 }
 
 void lower_phy_baseband_processor::start(baseband_gateway_timestamp init_time, baseband_gateway_timestamp sfn0_ref_time)
@@ -145,7 +143,21 @@ void lower_phy_baseband_processor::ul_process()
   }
 
   // Get receive buffer.
-  std::unique_ptr<baseband_gateway_buffer_dynamic> rx_buffer = rx_buffers.pop_blocking();
+  baseband_buffer_pool::ptr rx_buffer = rx_buffers.get();
+  if (!rx_buffer) {
+    logger.warning("Insufficient number of receive buffers in the baseband processor (i.e., {}). Discarding...",
+                   rx_buffers.capacity());
+
+    // Receive baseband.
+    baseband_gateway_receiver::metadata rx_metadata = receiver.receive(discard_buffer.get_writer());
+
+    // Update last timestamp.
+    last_rx_timestamp.store(rx_metadata.ts + discard_buffer.get_nof_samples(), std::memory_order_release);
+
+    // Enqueue next iteration if it is running.
+    report_fatal_error_if_not(rx_executor.defer([this]() { ul_process(); }), "Failed to execute receive task.");
+    return;
+  }
 
   // Receive baseband.
   trace_point                         tp          = ru_tracer.now();
@@ -156,18 +168,15 @@ void lower_phy_baseband_processor::ul_process()
   last_rx_timestamp.store(rx_metadata.ts + rx_buffer->get_nof_samples(), std::memory_order_release);
 
   // Queue uplink buffer processing.
-  report_fatal_error_if_not(uplink_executor.defer([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
+  bool success = uplink_executor.defer([this, ul_buffer = std::move(rx_buffer), rx_metadata]() mutable {
     trace_point ul_tp = ru_tracer.now();
 
     // Process UL.
     uplink_processor.process(ul_buffer->get_reader(), apply_timestamp_sfn0_ref(rx_metadata.ts));
 
-    // Return buffer to receive.
-    rx_buffers.push_blocking(std::move(ul_buffer));
-
     ru_tracer << trace_event("uplink_baseband", ul_tp);
-  }),
-                            "Failed to execute uplink processing task.");
+  });
+  report_fatal_error_if_not(success, "Failed to execute uplink processing task.");
 
   // Enqueue next iteration if it is running.
   report_fatal_error_if_not(rx_executor.defer([this]() { ul_process(); }), "Failed to execute receive task.");
