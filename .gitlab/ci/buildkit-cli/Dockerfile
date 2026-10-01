@@ -8,7 +8,7 @@ ARG SYFT_VERSION=v1.52.0
 ARG GRYPE_VERSION=v0.119.0
 
 FROM ubuntu:${UBUNTU_VERSION} AS builder
-ARG BUILDKIT_CLI_VERSION=0.31.2
+ARG BUILDKIT_CLI_VERSION=0.33.1
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt update && apt dist-upgrade -y && \

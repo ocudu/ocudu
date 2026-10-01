@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 variables:
-  BUILDKIT_CLI_VERSION: "0.31.2"
+  BUILDKIT_CLI_VERSION: "0.33.1"
   RH_TOOL_CLI_VERSION: "1.0.4"
 
 .docker-builder:
