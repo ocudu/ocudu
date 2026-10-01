@@ -381,6 +381,10 @@ int main(int argc, char** argv)
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(exec_metrics_service.metrics);
 
+  // Scheduler tracer must be closed after the workers stop running its flush timers, but before the timer manager
+  // is destroyed.
+  auto schedtrace_closer = make_scope_exit([]() { schedtrace::close_tracer(); });
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);

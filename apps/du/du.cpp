@@ -284,6 +284,10 @@ int main(int argc, char** argv)
       metrics_notifier_forwarder, app_timers, du_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
   std::vector<app_services::metrics_config> app_metrics = std::move(exec_metrics_service.metrics);
 
+  // Scheduler tracer must be closed after the workers stop running its flush timers, but before the timer manager
+  // is destroyed.
+  auto schedtrace_closer = make_scope_exit([]() { schedtrace::close_tracer(); });
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
