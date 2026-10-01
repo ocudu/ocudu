@@ -659,7 +659,7 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
   // Redirect handling of status to pcell_executor
   if (not pcell_executor.execute(
           [this, status = std::move(status)]() mutable { handle_status_pdu(std::move(status)); })) {
-    logger.log_error("Unable to handle status report");
+    logger.log_warning("Unable to handle status report");
   }
 }
 
@@ -683,7 +683,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) noexcept OCUD
     if (not ue_executor.execute([status = std::move(status)]() mutable {
           // leaving this scope will implicitly delete the status PDU
         })) {
-      logger.log_error("Unable to delete status report in UE executor. Deleting from pcell executor");
+      logger.log_warning("Unable to delete status report in UE executor. Deleting from pcell executor");
     }
   });
 
@@ -707,7 +707,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) noexcept OCUD
   if (tx_mod_base(status.ack_sn) > tx_mod_base(st.tx_next + 1)) {
     logger.log_error("Ignoring status report with ack_sn={} > tx_next. {}", status.ack_sn, st);
     if (not ue_executor.defer([this]() { upper_cn.on_protocol_failure(rb_id); })) {
-      logger.log_error("Could not trigger protocol failure on invalid ACK_SN");
+      logger.log_warning("Could not trigger protocol failure on invalid ACK_SN");
     }
     return;
   }
@@ -927,14 +927,14 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     logger.log_warning("Invalid NACK with so_start > so_end. nack={}, sdu_length={}", nack, sdu_length);
     nack.so_start = 0;
     if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(rb_id); })) {
-      logger.log_error("Could not trigger protocol failure on invalid NACK");
+      logger.log_warning("Could not trigger protocol failure on invalid NACK");
     }
   }
   if (nack.so_start >= sdu_length) {
     logger.log_warning("Invalid NACK with so_start >= sdu_length. nack={} sdu_length={}.", nack, sdu_length);
     nack.so_start = 0;
     if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(rb_id); })) {
-      logger.log_error("Could not trigger protocol failure on invalid NACK");
+      logger.log_warning("Could not trigger protocol failure on invalid NACK");
     }
   }
   if (nack.so_end >= sdu_length) {
@@ -942,7 +942,7 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     nack.so_end = sdu_length - 1;
     upper_cn.on_protocol_failure(rb_id);
     if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(rb_id); })) {
-      logger.log_error("Could not trigger protocol failure on invalid NACK");
+      logger.log_warning("Could not trigger protocol failure on invalid NACK");
     }
   }
 
@@ -1003,7 +1003,7 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
     logger.log_debug("Triggering buffer state update to lower layer");
     // Redirect handling of status to pcell_executor
     if (not pcell_executor.defer([this]() { update_mac_buffer_state(/* force_notify */ false); })) {
-      logger.log_error("Failed to enqueue buffer state update");
+      logger.log_warning("Failed to enqueue buffer state update");
       pending_buffer_state.clear(std::memory_order_seq_cst);
     }
   } else {
@@ -1287,7 +1287,7 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
   if (tx_mod_base(nack.nack_sn) > tx_mod_base(st.tx_next)) {
     logger.log_error("Ignoring status report with nack_sn={} >= tx_next. {}", nack.nack_sn, st);
     if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(rb_id); })) {
-      logger.log_error("Could not trigger protocol failure on invalid NACK");
+      logger.log_warning("Could not trigger protocol failure on invalid NACK");
     }
     return false;
   }
@@ -1299,7 +1299,7 @@ bool rlc_tx_am_entity::valid_nack(uint32_t ack_sn, const rlc_am_status_nack& nac
                        nack.nack_range,
                        st);
       if (ue_executor.defer([this]() { upper_cn.on_protocol_failure(rb_id); })) {
-        logger.log_error("Could not trigger protocol failure on invalid NACK");
+        logger.log_warning("Could not trigger protocol failure on invalid NACK");
       }
       return false;
     }
