@@ -1060,11 +1060,13 @@ void pdcp_entity_tx::handle_transmit_notification_impl(uint32_t notif_sn, bool i
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
-  if (notif_count >= st.tx_trans_crypto) {
-    logger.log_error("Invalid notification SN, notif_count is larger then pending TX'es. notif_sn={} notif_count={} {}",
-                     notif_sn,
-                     notif_count,
-                     st);
+  if (notif_count < st.tx_next && notif_count >= st.tx_trans_crypto) {
+    // Filter (outdated) notifications that have a valid count value but were not yet encrypted/transmitted in current
+    // (re)transmission cycle, i.e. after reestablishment.
+    logger.log_info("Dropped outdated transmit notification after reestablishment. notif_sn={} notif_count={} {}",
+                    notif_sn,
+                    notif_count,
+                    st);
     return;
   }
   if (notif_count < st.tx_trans) {
