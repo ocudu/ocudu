@@ -126,7 +126,8 @@ void du_positioning_manager_impl::update_trp_info()
     trp.trp_id = uint_to_trp_id(i + 1); // TRP IDs start from 1.
     trp.pci    = cell_cfg.ran.pci;
     trp.cgi    = cell_cfg.nr_cgi;
-    trp.arfcn  = cell_cfg.ran.ul_cfg_common.freq_info_ul.absolute_freq_point_a;
+    // The LMF forwards this ARFCN to the UE as the ARFCN of the cell-defining SSB, as per TS 37.355, Section 6.4.3.
+    trp.arfcn = cell_cfg.ran.dl_cfg_common.freq_info_dl.absolute_frequency_ssb;
     if (not cell_cfg.ran.prs_cfg.resource_sets.empty()) {
       trp.prs_cfg = make_trp_prs_config(cell_cfg);
     }
