@@ -7,8 +7,9 @@ TEMPLATE_HDR_DEFAULT="header-default"
 TEMPLATE_HDR_ALT="header-alt"
 TEMPLATE_HDR_PRUNED="header-pruned"
 COPYRIGHT_PREFIX="spdx-string-c"
-COPYRIGHT_YEAR="2021-$(date +%Y)"
-COPYRIGHT_HOLDER="Software Radio Systems Limited"
+COPYRIGHT_YEAR="$(date +%Y)"
+# COPYRIGHT_YEAR="2026-$(date +%Y)" (starting from 2027)
+COPYRIGHT_HOLDER="OCUDU contributors"
 LICENSE="BSD-3-Clause-Open-MPI"
 
 config_env=".reuse/annotate-env.txt"
