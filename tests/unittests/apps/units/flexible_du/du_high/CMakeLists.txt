@@ -37,6 +37,7 @@ target_include_directories(du_high_coreset0_config_test PRIVATE ${CMAKE_SOURCE_D
 target_link_libraries(du_high_coreset0_config_test
         ocudu_du_high_unit_helpers
         ocudu_app_services
+        ocudu_du_config_validators
         gtest
         gtest_main)
 add_test(du_high_coreset0_config_test du_high_coreset0_config_test)
