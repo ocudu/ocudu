@@ -9,6 +9,7 @@
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
 #include "dynamic_o_du_translators.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ru/dummy/ru_dummy_factory.h"
 
 using namespace ocudu;

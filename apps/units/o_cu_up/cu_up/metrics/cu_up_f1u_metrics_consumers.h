@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "apps/services/metrics/metrics_consumer.h"
 #include "cu_up_f1u_metrics.h"
 
 namespace ocudu {
@@ -14,13 +15,13 @@ class f1u_metrics_notifier;
 }
 
 /// Consumer for the E2 CU-UP F1-U metrics.
-class cu_up_f1u_metrics_consumer_e2 : public app_services::metrics_consumer
+class cu_up_f1u_metrics_consumer_e2 : public app_services::metrics_consumer<cu_up_f1u_metrics_impl>
 {
 public:
   explicit cu_up_f1u_metrics_consumer_e2(ocuup::f1u_metrics_notifier& notifier_) : notifier(notifier_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const cu_up_f1u_metrics_impl& metric) override;
 
 private:
   ocuup::f1u_metrics_notifier& notifier;
@@ -40,7 +41,7 @@ struct cu_up_f1u_metrics_consumer_json_dependencies {
 };
 
 /// Consumer for the json CU-UP F1-U metrics.
-class cu_up_f1u_metrics_consumer_json : public app_services::metrics_consumer
+class cu_up_f1u_metrics_consumer_json : public app_services::metrics_consumer<cu_up_f1u_metrics_impl>
 {
   struct aggregated_metrics {
     void reset()
@@ -63,7 +64,7 @@ public:
                                   cu_up_f1u_metrics_consumer_json_dependencies  dependencies);
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const cu_up_f1u_metrics_impl& metric) override;
 
 private:
   // Print metrics.
@@ -84,7 +85,7 @@ private:
 };
 
 /// Consumer for the log F1-U metrics.
-class cu_up_f1u_metrics_consumer_log : public app_services::metrics_consumer
+class cu_up_f1u_metrics_consumer_log : public app_services::metrics_consumer<cu_up_f1u_metrics_impl>
 {
 public:
   explicit cu_up_f1u_metrics_consumer_log(ocudulog::log_channel& log_chan_) : log_chan(log_chan_)
@@ -93,7 +94,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const cu_up_f1u_metrics_impl& metric) override;
 
 private:
   ocudulog::log_channel& log_chan;

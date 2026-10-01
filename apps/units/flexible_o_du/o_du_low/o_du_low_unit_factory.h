@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "o_du_low_unit_factory_config.h"
 #include "ocudu/du/du_low/o_du_low.h"
 
@@ -13,8 +13,8 @@ namespace ocudu {
 
 /// O-RAN DU low unit.
 struct o_du_low_unit {
-  std::unique_ptr<odu::o_du_low>            o_du_lo;
-  std::vector<app_services::metrics_config> metrics;
+  std::unique_ptr<odu::o_du_low>           o_du_lo;
+  app_services::metrics_channel_collection metrics;
 };
 
 /// O-RAN DU low unit factory.

@@ -9,6 +9,7 @@
 #include "consumers/du_procedure_metrics_consumers.h"
 #include "consumers/mac_metrics_consumers.h"
 #include "consumers/scheduler_metrics_consumers.h"
+#include "du_metrics.h"
 #include "ocudu/ocudulog/log_channel.h"
 
 namespace ocudu {
@@ -18,11 +19,11 @@ class remote_server_metrics_gateway;
 } // namespace app_services
 
 /// Consumer for the STDOUT DU metrics.
-class du_metrics_consumer_stdout : public app_services::metrics_consumer
+class du_metrics_consumer_stdout : public app_services::metrics_consumer<du_metrics_impl>
 {
 public:
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const du_metrics_impl& metric) override;
 
   /// This can be called from another execution context to turn on the actual plotting.
   void enable() { print_metrics.store(true, std::memory_order_relaxed); }
@@ -38,20 +39,20 @@ private:
 };
 
 /// Consumer for the json DU metrics.
-class du_metrics_consumer_json : public app_services::metrics_consumer
+class du_metrics_consumer_json : public app_services::metrics_consumer<du_metrics_impl>
 {
 public:
   explicit du_metrics_consumer_json(app_services::remote_server_metrics_gateway& gateway_) : gateway(gateway_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const du_metrics_impl& metric) override;
 
 private:
   app_services::remote_server_metrics_gateway& gateway;
 };
 
 /// Consumer for the logger DU metrics.
-class du_metrics_consumer_log : public app_services::metrics_consumer
+class du_metrics_consumer_log : public app_services::metrics_consumer<du_metrics_impl>
 {
 public:
   explicit du_metrics_consumer_log(ocudulog::log_channel& log_chan_) :
@@ -60,7 +61,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const du_metrics_impl& metric) override;
 
 private:
   ocudulog::log_channel&              log_chan;
@@ -70,13 +71,13 @@ private:
 };
 
 /// Consumer for the E2 DU metrics.
-class du_metrics_consumer_e2 : public app_services::metrics_consumer
+class du_metrics_consumer_e2 : public app_services::metrics_consumer<du_metrics_impl>
 {
 public:
   explicit du_metrics_consumer_e2(scheduler_metrics_notifier& notifier) : sched_consumer(notifier) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const du_metrics_impl& metric) override;
 
 private:
   scheduler_cell_metrics_consumer_e2 sched_consumer;

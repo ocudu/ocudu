@@ -9,6 +9,7 @@
 #include "include/ocudu/support/timers.h"
 #include "metrics_producer.h"
 #include "ocudu/support/executors/execute_until_success.h"
+#include "ocudu/support/synchronization/stop_event.h"
 #include "ocudu/support/synchronization/sync_event.h"
 
 namespace ocudu {

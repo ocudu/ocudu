@@ -5,9 +5,11 @@
 
 #pragma once
 
+#include "apps/services/metrics/metrics_consumer.h"
 #include "du_high_rlc_metrics.h"
 #include "ocudu/ocudulog/log_channel.h"
 #include "ocudu/ocudulog/logger.h"
+#include "ocudu/support/ocudu_assert.h"
 
 namespace ocudu {
 
@@ -16,20 +18,20 @@ class remote_server_metrics_gateway;
 } // namespace app_services
 
 /// Consumer for the json RLC metrics.
-class rlc_metrics_consumer_json : public app_services::metrics_consumer
+class rlc_metrics_consumer_json : public app_services::metrics_consumer<rlc_metrics_impl>
 {
 public:
   explicit rlc_metrics_consumer_json(app_services::remote_server_metrics_gateway& gateway_) : gateway(gateway_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const rlc_metrics_impl& metric) override;
 
 private:
   app_services::remote_server_metrics_gateway& gateway;
 };
 
 /// Consumer for the log RLC metrics.
-class rlc_metrics_consumer_log : public app_services::metrics_consumer
+class rlc_metrics_consumer_log : public app_services::metrics_consumer<rlc_metrics_impl>
 {
 public:
   explicit rlc_metrics_consumer_log(ocudulog::log_channel& log_chan_) : log_chan(log_chan_)
@@ -38,20 +40,20 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const rlc_metrics_impl& metric) override;
 
 private:
   ocudulog::log_channel& log_chan;
 };
 
 /// Consumer for the E2 RLC metrics.
-class rlc_metrics_consumer_e2 : public app_services::metrics_consumer
+class rlc_metrics_consumer_e2 : public app_services::metrics_consumer<rlc_metrics_impl>
 {
 public:
   explicit rlc_metrics_consumer_e2(rlc_metrics_notifier& notifier_) : notifier(notifier_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const rlc_metrics_impl& metric) override;
 
 private:
   rlc_metrics_notifier& notifier;

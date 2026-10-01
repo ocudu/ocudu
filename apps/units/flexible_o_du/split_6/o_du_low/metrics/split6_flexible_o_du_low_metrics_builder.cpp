@@ -13,8 +13,7 @@
 using namespace ocudu;
 
 split6_flexible_o_du_low_metrics_notifier* ocudu::build_split6_flexible_o_du_low_metrics_config(
-    std::vector<app_services::metrics_config>&   metrics,
-    app_services::metrics_notifier&              notifier,
+    app_services::metrics_channel_collection&    metrics,
     app_services::remote_server_metrics_gateway* remote_metrics_gateway,
     const app_helpers::metrics_config&           metrics_cfg,
     const std::vector<pci_t>&                    pci_cell_map,
@@ -26,20 +25,18 @@ split6_flexible_o_du_low_metrics_notifier* ocudu::build_split6_flexible_o_du_low
     return output;
   }
 
-  auto& odu_metric = metrics.emplace_back();
-  auto  producer   = std::make_unique<split6_o_du_low_metrics_producer_impl>(notifier);
-  output           = producer.get();
-  odu_metric.producers.push_back(std::move(producer));
-  odu_metric.metric_name = split6_flexible_o_du_low_app_service_metrics_properties_impl().name();
-  odu_metric.callback    = split6_flexible_o_du_low_metrics_callback;
+  auto& odu_metrics_channel = app_services::make_channel<split6_flexible_o_du_low_app_service_metrics_impl>(metrics);
+  auto  producer            = std::make_unique<split6_o_du_low_metrics_producer_impl>(odu_metrics_channel);
+  output                    = producer.get();
+  odu_metrics_channel.add_producer(std::move(producer));
 
   if (metrics_cfg.enable_log_metrics) {
-    odu_metric.consumers.push_back(std::make_unique<split6_flexible_o_du_low_metrics_consumer_log>(
+    odu_metrics_channel.add_consumer(std::make_unique<split6_flexible_o_du_low_metrics_consumer_log>(
         app_helpers::fetch_logger_metrics_log_channel(), pci_cell_map, metrics_cfg.enable_verbose, symbol_duration));
   }
 
   if (metrics_cfg.enable_json_metrics) {
-    odu_metric.consumers.push_back(std::make_unique<split6_flexible_o_du_low_metrics_consumer_json>(
+    odu_metrics_channel.add_consumer(std::make_unique<split6_flexible_o_du_low_metrics_consumer_json>(
         *remote_metrics_gateway, pci_cell_map, symbol_duration));
   }
 

@@ -17,8 +17,8 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/services/metrics/metrics_manager.h"
-#include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
@@ -275,7 +275,7 @@ int main(int argc, char** argv)
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
 
-  app_services::metrics_notifier_proxy_impl    metrics_notifier_forwarder;
+  app_services::metrics_channel_collection     app_metrics;
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(du_cfg.remote_control_config);
   app_services::remote_server_metrics_gateway* remote_server_gateway =
@@ -283,8 +283,7 @@ int main(int argc, char** argv)
 
   // Instantiate executor metrics service.
   app_services::executor_metrics_service_and_metrics exec_metrics_service = build_executor_metrics_service(
-      metrics_notifier_forwarder, app_timers, du_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
-  std::vector<app_services::metrics_config> app_metrics = std::move(exec_metrics_service.metrics);
+      app_metrics, app_timers, du_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
@@ -391,17 +390,11 @@ int main(int argc, char** argv)
                                         E2_DU_PPID));
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service = app_services::build_app_resource_usage_service(metrics_notifier_forwarder,
-                                                                                   du_cfg.metrics_cfg.rusage_config,
-                                                                                   ocudulog::fetch_basic_logger("GNB"),
-                                                                                   remote_server_gateway);
-
-  for (auto& metric : app_resource_usage_service.metrics) {
-    app_metrics.push_back(std::move(metric));
-  }
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      app_metrics, du_cfg.metrics_cfg.rusage_config, ocudulog::fetch_basic_logger("GNB"), remote_server_gateway);
 
   buffer_pool_service.add_metrics_to_metrics_service(
-      app_metrics, du_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder, remote_server_gateway);
+      app_metrics, du_cfg.buffer_pool_config.metrics_config, remote_server_gateway);
 
   o_du_unit_dependencies du_dependencies;
   du_dependencies.workers                = &workers;
@@ -412,7 +405,6 @@ int main(int argc, char** argv)
   du_dependencies.mac_p                  = du_pcaps.mac.get();
   du_dependencies.rlc_p                  = du_pcaps.rlc.get();
   du_dependencies.e2_client_handler      = e2_gw.get();
-  du_dependencies.metrics_notifier       = &metrics_notifier_forwarder;
   du_dependencies.remote_metrics_gateway = remote_server_gateway;
   du_dependencies.fapi_logger            = &ocudulog::fetch_basic_logger("FAPI");
 
@@ -425,12 +417,9 @@ int main(int argc, char** argv)
   app_services::metrics_manager metrics_mngr(
       ocudulog::fetch_basic_logger("GNB"),
       workers.get_metrics_executor(),
-      app_metrics,
+      std::move(app_metrics),
       app_timers,
       std::chrono::milliseconds(du_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
-
-  // Connect the forwarder to the metrics manager.
-  metrics_notifier_forwarder.connect(metrics_mngr);
 
   odu::du& du_inst = *du_inst_and_cmds.unit;
 

@@ -10,8 +10,8 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/services/metrics/metrics_manager.h"
-#include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/application_unit.h"
@@ -233,12 +233,11 @@ int main(int argc, char** argv)
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
 
-  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+  app_services::metrics_channel_collection app_metrics;
 
   // Instantiate executor metrics service.
-  app_services::executor_metrics_service_and_metrics exec_metrics_service = build_executor_metrics_service(
-      metrics_notifier_forwarder, app_timers, du_low_cfg.metrics_cfg.executors_metrics_cfg, nullptr);
-  std::vector<app_services::metrics_config> app_metrics = std::move(exec_metrics_service.metrics);
+  app_services::executor_metrics_service_and_metrics exec_metrics_service =
+      build_executor_metrics_service(app_metrics, app_timers, du_low_cfg.metrics_cfg.executors_metrics_cfg, nullptr);
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
@@ -265,29 +264,18 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, du_low_cfg.metrics_cfg.rusage_config, ocudulog::fetch_basic_logger("APP"), nullptr);
-
-  for (auto& metric : app_resource_usage_service.metrics) {
-    app_metrics.push_back(std::move(metric));
-  }
+      app_metrics, du_low_cfg.metrics_cfg.rusage_config, ocudulog::fetch_basic_logger("APP"), nullptr);
 
   auto du = o_du_app_unit->create_flexible_o_du_low(
-      workers, metrics_notifier_forwarder, nullptr, app_timers, ocudulog::fetch_basic_logger("APP"));
-
-  for (auto& metric : du.metrics) {
-    app_metrics.push_back(std::move(metric));
-  }
+      workers, app_metrics, nullptr, app_timers, ocudulog::fetch_basic_logger("APP"));
 
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
       ocudulog::fetch_basic_logger("APP"),
       workers.get_metrics_executor(),
-      app_metrics,
+      std::move(app_metrics),
       app_timers,
       std::chrono::milliseconds(du_low_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
-
-  // Connect the forwarder to the metrics manager.
-  metrics_notifier_forwarder.connect(metrics_mngr);
 
   // :TODO: how to manage cmdline and remote commands??
 

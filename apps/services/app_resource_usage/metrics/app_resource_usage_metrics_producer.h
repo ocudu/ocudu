@@ -6,6 +6,7 @@
 #pragma once
 
 #include "apps/services/app_resource_usage/app_resource_usage.h"
+#include "apps/services/app_resource_usage/metrics/app_resource_usage_metrics.h"
 #include "apps/services/metrics/metrics_notifier.h"
 #include "apps/services/metrics/metrics_producer.h"
 
@@ -15,7 +16,7 @@ namespace ocudu {
 class resource_usage_metrics_producer_impl : public app_services::metrics_producer
 {
 public:
-  resource_usage_metrics_producer_impl(app_services::metrics_notifier&   notifier_,
+  resource_usage_metrics_producer_impl(app_services::metrics_notifier<resource_usage_metrics_impl>& notifier_,
                                        app_services::app_resource_usage& app_resource_usage_) :
     notifier(notifier_), app_resource_usage(app_resource_usage_)
   {
@@ -28,8 +29,8 @@ public:
   }
 
 private:
-  app_services::metrics_notifier&   notifier;
-  app_services::app_resource_usage& app_resource_usage;
+  app_services::metrics_notifier<resource_usage_metrics_impl>& notifier;
+  app_services::app_resource_usage&                            app_resource_usage;
 };
 
 } // namespace ocudu

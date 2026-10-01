@@ -6,7 +6,7 @@
 #pragma once
 
 #include "app_resource_usage_config.h"
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "ocudu/support/resource_usage/power_consumption.h"
 #include "ocudu/support/resource_usage/resource_usage_utils.h"
 
@@ -18,7 +18,6 @@ struct metrics_config;
 
 namespace app_services {
 
-class metrics_notifier;
 class remote_server_metrics_gateway;
 
 /// This class can be periodically polled for the new app-level resource usage metrics.
@@ -47,11 +46,10 @@ private:
 /// Aggregates application resource usage service with the related metrics.
 struct app_resource_usage_service {
   std::unique_ptr<app_resource_usage> service;
-  std::vector<metrics_config>         metrics;
 };
 
-/// Builds application resource usage service and related metrics.
-app_resource_usage_service build_app_resource_usage_service(metrics_notifier&                metrics_notifier,
+/// Builds application resource usage service and its metrics channel.
+app_resource_usage_service build_app_resource_usage_service(metrics_channel_collection&      metrics_channels,
                                                             const app_resource_usage_config& config,
                                                             ocudulog::basic_logger&          logger,
                                                             remote_server_metrics_gateway*   metrics_gateway);

@@ -51,7 +51,6 @@ o_du_unit ocudu::create_fapi_dummy_o_du(const o_du_high_unit_config&  odu_high_c
                                                           *dependencies.rlc_p,
                                                           *dependencies.e2_client_handler,
                                                           *(odu_unit.e2_metric_connectors),
-                                                          *dependencies.metrics_notifier,
                                                           dependencies.remote_metrics_gateway,
                                                           {}};
 

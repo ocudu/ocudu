@@ -6,6 +6,7 @@
 #pragma once
 
 #include "du_high_config.h"
+#include "ocudu/ocudulog/ocudulog.h"
 
 namespace ocudu {
 

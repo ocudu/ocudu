@@ -18,8 +18,8 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/services/metrics/metrics_manager.h"
-#include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
@@ -266,7 +266,7 @@ int main(int argc, char** argv)
   // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
   timer_manager app_timers{256};
 
-  app_services::metrics_notifier_proxy_impl    metrics_notifier_forwarder;
+  app_services::metrics_channel_collection     metrics_configs;
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(cu_cp_cfg.remote_control_config);
   app_services::remote_server_metrics_gateway* remote_server_gateway =
@@ -274,9 +274,7 @@ int main(int argc, char** argv)
 
   // Instantiate executor metrics service.
   app_services::executor_metrics_service_and_metrics exec_metrics_service = build_executor_metrics_service(
-      metrics_notifier_forwarder, app_timers, cu_cp_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
-
-  std::vector<app_services::metrics_config> metrics_configs = std::move(exec_metrics_service.metrics);
+      metrics_configs, app_timers, cu_cp_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
 
   // Create worker manager.
   worker_manager_config worker_manager_cfg;
@@ -366,26 +364,20 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, cu_cp_cfg.metrics_cfg.rusage_config, cu_cp_logger, remote_server_gateway);
-
-  for (auto& metric : app_resource_usage_service.metrics) {
-    metrics_configs.push_back(std::move(metric));
-  }
+      metrics_configs, cu_cp_cfg.metrics_cfg.rusage_config, cu_cp_logger, remote_server_gateway);
 
   buffer_pool_service.add_metrics_to_metrics_service(
-      metrics_configs, cu_cp_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder, remote_server_gateway);
+      metrics_configs, cu_cp_cfg.buffer_pool_config.metrics_config, remote_server_gateway);
 
   std::vector<ocucp::xnc_connection_gateway*> o_cucp_xnc_gws;
   for (auto& gw : xnc_gws) {
     o_cucp_xnc_gws.push_back(gw.get());
   }
-
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps{.executor_mapper        = workers.get_cu_cp_executor_mapper(),
                                         .timers                 = app_timers,
                                         .ngap_pcap              = *cu_cp_dlt_pcaps.ngap,
                                         .broker                 = *epoll_broker,
-                                        .metrics_notifier       = metrics_notifier_forwarder,
                                         .e2_gw                  = e2_gw_cu_cp.get(),
                                         .remote_metrics_gateway = remote_server_gateway,
                                         .xnc_gws                = std::move(o_cucp_xnc_gws)};
@@ -401,12 +393,9 @@ int main(int argc, char** argv)
   app_services::metrics_manager metrics_mngr(
       ocudulog::fetch_basic_logger("CU"),
       workers.get_metrics_executor(),
-      metrics_configs,
+      std::move(metrics_configs),
       app_timers,
       std::chrono::milliseconds(cu_cp_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
-
-  // Connect the forwarder to the metrics manager.
-  metrics_notifier_forwarder.connect(metrics_mngr);
 
   // Add the metrics STDOUT command.
   if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(

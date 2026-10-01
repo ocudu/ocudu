@@ -16,7 +16,11 @@ namespace ocudu {
 class o_du_metrics_producer_impl : public flexible_o_du_metrics_notifier, public app_services::metrics_producer
 {
 public:
-  explicit o_du_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
+  explicit o_du_metrics_producer_impl(
+      app_services::metrics_notifier<flexible_o_du_app_service_metrics_impl>& notifier_) :
+    notifier(notifier_)
+  {
+  }
 
   // See interface for documentation.
   void on_new_metrics(const flexible_o_du_metrics& metrics) override;
@@ -25,7 +29,7 @@ public:
   void on_new_report_period() override {}
 
 private:
-  app_services::metrics_notifier& notifier;
+  app_services::metrics_notifier<flexible_o_du_app_service_metrics_impl>& notifier;
 };
 
 } // namespace ocudu

@@ -12,9 +12,9 @@
 
 using namespace ocudu;
 
-void du_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& metric)
+void du_metrics_consumer_stdout::handle_metric(const du_metrics_impl& metric)
 {
-  const odu::du_metrics_report& report = static_cast<const du_metrics_impl&>(metric).get_report();
+  const odu::du_metrics_report& report = metric.get_report();
 
   if (!print_metrics.load(std::memory_order_relaxed)) {
     return;
@@ -27,9 +27,9 @@ void du_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& 
   sched_consumer.handle_metric(report.mac->sched);
 }
 
-void du_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
+void du_metrics_consumer_json::handle_metric(const du_metrics_impl& metric)
 {
-  const odu::du_metrics_report& report = static_cast<const du_metrics_impl&>(metric).get_report();
+  const odu::du_metrics_report& report = metric.get_report();
 
   gateway.send(app_helpers::json_generators::generate_string(report, DEFAULT_JSON_INDENT));
   if (report.mac) {
@@ -37,9 +37,9 @@ void du_metrics_consumer_json::handle_metric(const app_services::metrics_set& me
   }
 }
 
-void du_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+void du_metrics_consumer_log::handle_metric(const du_metrics_impl& metric)
 {
-  const odu::du_metrics_report& report = static_cast<const du_metrics_impl&>(metric).get_report();
+  const odu::du_metrics_report& report = metric.get_report();
 
   if (report.f1ap) {
     log_chan("F1AP metrics: connected={}", report.f1ap->connected);
@@ -51,9 +51,9 @@ void du_metrics_consumer_log::handle_metric(const app_services::metrics_set& met
   }
 }
 
-void du_metrics_consumer_e2::handle_metric(const app_services::metrics_set& metric)
+void du_metrics_consumer_e2::handle_metric(const du_metrics_impl& metric)
 {
-  const odu::du_metrics_report& report = static_cast<const du_metrics_impl&>(metric).get_report();
+  const odu::du_metrics_report& report = metric.get_report();
 
   if (!report.mac) {
     return;

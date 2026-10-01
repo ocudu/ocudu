@@ -168,7 +168,6 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier =
       build_flexible_o_du_metrics_config(o_du.metrics,
                                          ru_metrics_subcommands,
-                                         *dependencies.metrics_notifier,
                                          dependencies.remote_metrics_gateway,
                                          config.ru_cfg.config,
                                          std::move(pci_cell_mapper),
@@ -200,7 +199,6 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                                           *dependencies.rlc_p,
                                                           *dependencies.e2_client_handler,
                                                           *(o_du.e2_metric_connectors),
-                                                          *dependencies.metrics_notifier,
                                                           dependencies.remote_metrics_gateway,
                                                           {}};
 

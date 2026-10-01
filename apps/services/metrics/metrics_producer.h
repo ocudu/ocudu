@@ -8,8 +8,6 @@
 namespace ocudu {
 namespace app_services {
 
-class metrics_properties;
-
 /// \brief Metrics producer.
 ///
 /// Produces metrics that will be consumed by the corresponding metrics consumers.

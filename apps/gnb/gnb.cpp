@@ -17,8 +17,8 @@
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/cmdline/stdout_metrics_command.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/services/metrics/metrics_manager.h"
-#include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
@@ -370,7 +370,7 @@ int main(int argc, char** argv)
   // Setup application timers.
   timer_manager app_timers{1024};
 
-  app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
+  app_services::metrics_channel_collection metrics_configs;
 
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(gnb_cfg.remote_control_config);
@@ -379,9 +379,7 @@ int main(int argc, char** argv)
 
   // Instantiate executor metrics service.
   app_services::executor_metrics_service_and_metrics exec_metrics_service = build_executor_metrics_service(
-      metrics_notifier_forwarder, app_timers, gnb_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
-
-  std::vector<app_services::metrics_config> metrics_configs = std::move(exec_metrics_service.metrics);
+      metrics_configs, app_timers, gnb_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
 
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
@@ -481,14 +479,10 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.rusage_config, gnb_logger, remote_server_gateway);
-
-  for (auto& metric : app_resource_usage_service.metrics) {
-    metrics_configs.push_back(std::move(metric));
-  }
+      metrics_configs, gnb_cfg.metrics_cfg.rusage_config, gnb_logger, remote_server_gateway);
 
   buffer_pool_service.add_metrics_to_metrics_service(
-      metrics_configs, gnb_cfg.buffer_pool_config.metrics_config, metrics_notifier_forwarder, remote_server_gateway);
+      metrics_configs, gnb_cfg.buffer_pool_config.metrics_config, remote_server_gateway);
 
   // Instantiate E2AP client gateways.
   std::unique_ptr<e2_connection_client> e2_gw_du = create_e2_gateway_client(
@@ -514,13 +508,11 @@ int main(int argc, char** argv)
   for (auto& gw : xnc_gws) {
     o_cucp_xnc_gws.push_back(gw.get());
   }
-
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps{.executor_mapper        = workers.get_cu_cp_executor_mapper(),
                                         .timers                 = *cu_timers,
                                         .ngap_pcap              = *cu_cp_dlt_pcaps.ngap,
                                         .broker                 = *epoll_broker,
-                                        .metrics_notifier       = metrics_notifier_forwarder,
                                         .e2_gw                  = e2_gw_cu_cp.get(),
                                         .remote_metrics_gateway = remote_server_gateway,
                                         .xnc_gws                = std::move(o_cucp_xnc_gws)};
@@ -534,19 +526,16 @@ int main(int argc, char** argv)
 
   // Create O-CU-UP dependencies.
   std::vector<ocuup::e1_connection_client*> e1ap_conn_client({e1_gw.get()});
-  o_cu_up_unit_dependencies                 o_cuup_unit_deps{
-                      .workers                = workers,
-                      .e2_gw                  = *e2_gw_cu_up,
-                      .metrics_notifier       = metrics_notifier_forwarder,
-                      .remote_metrics_gateway = remote_server_gateway,
-                      .e1ap_conn_client       = std::move(e1ap_conn_client),
-                      .f1u_teid_allocator     = *cu_f1u_teid_allocator,
-                      .f1u_gateway            = f1u_conn->get_f1u_cu_up_gateway(),
-                      .ngu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
-                      .xnu_gtpu_pcap          = *cu_up_dlt_pcaps.xnu,
-                      .timers                 = *cu_timers,
-                      .io_brk                 = *epoll_broker,
-  };
+  o_cu_up_unit_dependencies                 o_cuup_unit_deps{.workers                = workers,
+                                                             .e2_gw                  = *e2_gw_cu_up,
+                                                             .remote_metrics_gateway = remote_server_gateway,
+                                                             .e1ap_conn_client       = std::move(e1ap_conn_client),
+                                                             .f1u_teid_allocator     = *cu_f1u_teid_allocator,
+                                                             .f1u_gateway   = f1u_conn->get_f1u_cu_up_gateway(),
+                                                             .ngu_gtpu_pcap = *cu_up_dlt_pcaps.ngu,
+                                                             .xnu_gtpu_pcap = *cu_up_dlt_pcaps.xnu,
+                                                             .timers        = *cu_timers,
+                                                             .io_brk        = *epoll_broker};
 
   // Create O-CU-UP.
   auto            o_cuup_unit = o_cu_up_app_unit->create_o_cu_up_unit(o_cuup_unit_deps);
@@ -564,7 +553,6 @@ int main(int argc, char** argv)
   odu_dependencies.mac_p                  = du_pcaps.mac.get();
   odu_dependencies.rlc_p                  = du_pcaps.rlc.get();
   odu_dependencies.e2_client_handler      = e2_gw_du.get();
-  odu_dependencies.metrics_notifier       = &metrics_notifier_forwarder;
   odu_dependencies.remote_metrics_gateway = remote_server_gateway;
   odu_dependencies.fapi_logger            = &ocudulog::fetch_basic_logger("FAPI");
 
@@ -579,12 +567,9 @@ int main(int argc, char** argv)
   app_services::metrics_manager metrics_mngr(
       ocudulog::fetch_basic_logger("GNB"),
       workers.get_metrics_executor(),
-      metrics_configs,
+      std::move(metrics_configs),
       app_timers,
       std::chrono::milliseconds(gnb_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
-
-  // Connect the forwarder to the metrics manager.
-  metrics_notifier_forwarder.connect(metrics_mngr);
 
   std::vector<std::unique_ptr<app_services::cmdline_command>> commands;
   commands.reserve(o_cucp_unit.commands.cmdline.commands.size() + o_du_unit.commands.cmdline.commands.size());

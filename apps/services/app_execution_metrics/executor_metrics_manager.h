@@ -7,7 +7,8 @@
 
 #include "apps/services/app_execution_metrics/executor_metrics_config.h"
 #include "apps/services/app_execution_metrics/metrics/app_execution_metrics_builder.h"
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/executors/execute_until_success.h"
 #include "ocudu/support/executors/metrics/executor_metrics_backend.h"
 #include "ocudu/support/synchronization/sync_event.h"
@@ -16,7 +17,6 @@
 namespace ocudu {
 namespace app_services {
 
-class metrics_notifier;
 class remote_server_metrics_gateway;
 
 /// \brief Executor metrics service.
@@ -172,30 +172,27 @@ private:
   executor_metrics_manager manager;
 };
 
-/// Aggregates the executor metrics service with the related application metrics configuration.
+/// Aggregates the executor metrics service with its channel registry.
 struct executor_metrics_service_and_metrics {
   std::unique_ptr<app_executor_metrics_service> service;
-  std::vector<app_services::metrics_config>     metrics;
   /// Executor metrics channel registry is initialized by the service when the executor metrics are enabled.
   executor_metrics_channel_registry* channel_registry = nullptr;
 };
 
-/// Builds executor metrics service and related metrics.
+/// Builds executor metrics service and its metrics channel.
 inline executor_metrics_service_and_metrics
-build_executor_metrics_service(app_services::metrics_notifier& metrics_notifier,
-                               timer_manager&                  timers,
-                               const executor_metrics_config&  app_cfg,
-                               remote_server_metrics_gateway*  metrics_gateway)
+build_executor_metrics_service(app_services::metrics_channel_collection& metrics_channels,
+                               timer_manager&                            timers,
+                               const executor_metrics_config&            app_cfg,
+                               remote_server_metrics_gateway*            metrics_gateway)
 {
   executor_metrics_service_and_metrics service_cfg;
   if (!app_cfg.enable_executor_metrics) {
     return service_cfg;
   }
 
-  // Build app metrics configuration.
-  auto& metrics = service_cfg.metrics.emplace_back();
-  auto& notifier =
-      build_app_execution_metrics_config(metrics, metrics_notifier, app_cfg.common_metrics_cfg, metrics_gateway);
+  // Build the executor metrics channel.
+  auto& notifier = build_app_execution_metrics_channel(metrics_channels, app_cfg.common_metrics_cfg, metrics_gateway);
 
   // Create executor metrics service.
   service_cfg.service = std::make_unique<app_executor_metrics_service>(timers, notifier, app_cfg.report_period_ms);

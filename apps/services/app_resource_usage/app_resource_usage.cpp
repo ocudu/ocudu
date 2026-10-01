@@ -8,6 +8,7 @@
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_resource_usage/metrics/app_resource_usage_metrics_consumer.h"
 #include "apps/services/app_resource_usage/metrics/app_resource_usage_metrics_producer.h"
+#include "apps/services/metrics/metrics_channel.h"
 
 using namespace ocudu;
 using namespace app_services;
@@ -75,7 +76,7 @@ void app_resource_usage::update_power_consumption_metric(resource_usage_metrics&
 }
 
 app_resource_usage_service
-app_services::build_app_resource_usage_service(metrics_notifier&                metrics_notifier,
+app_services::build_app_resource_usage_service(metrics_channel_collection&      metrics_channels,
                                                const app_resource_usage_config& config,
                                                ocudulog::basic_logger&          logger,
                                                remote_server_metrics_gateway*   metrics_gateway)
@@ -86,21 +87,18 @@ app_services::build_app_resource_usage_service(metrics_notifier&                
   }
   app_res_usage.service = std::make_unique<app_resource_usage>(build_power_consumption_reader(logger));
 
-  metrics_config& app_res_usage_metrics = app_res_usage.metrics.emplace_back();
-  app_res_usage_metrics.metric_name     = resource_usage_metrics_properties_impl().name();
-  app_res_usage_metrics.callback        = rusage_metrics_callback;
-  app_res_usage_metrics.producers.emplace_back(
-      std::make_unique<resource_usage_metrics_producer_impl>(metrics_notifier, *app_res_usage.service));
+  auto& channel = make_channel<resource_usage_metrics_impl>(metrics_channels);
+  channel.add_producer(std::make_unique<resource_usage_metrics_producer_impl>(channel, *app_res_usage.service));
 
   if (config.metrics_consumers_cfg.enable_log_metrics) {
-    app_res_usage_metrics.consumers.push_back(
+    channel.add_consumer(
         std::make_unique<resource_usage_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
   if (config.metrics_consumers_cfg.enable_json_metrics) {
     report_error_if_not(metrics_gateway,
                         "Invalid remote server gateway for sending JSON metrics. Check that remote server is enabled");
-    app_res_usage_metrics.consumers.push_back(std::make_unique<resource_usage_metrics_consumer_json>(*metrics_gateway));
+    channel.add_consumer(std::make_unique<resource_usage_metrics_consumer_json>(*metrics_gateway));
   }
 
   return app_res_usage;

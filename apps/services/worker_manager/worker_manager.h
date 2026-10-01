@@ -19,10 +19,6 @@
 
 namespace ocudu {
 
-namespace app_services {
-class metrics_notifier;
-}
-
 /// Mapper of PCAP executors for the APP.
 class gnb_pcap_executor_mapper : public du_pcap_executor_mapper,
                                  public cu_cp_pcap_executor_mapper,

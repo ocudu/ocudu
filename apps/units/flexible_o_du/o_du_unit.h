@@ -6,17 +6,17 @@
 #pragma once
 
 #include "apps/helpers/e2/e2_metric_connector_manager.h"
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/units/application_unit_commands.h"
 #include "ocudu/du/du.h"
 #include "ocudu/gtpu/gtpu_teid_pool.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include <memory>
 #include <vector>
 
 namespace ocudu {
 
 namespace app_services {
-class metrics_notifier;
 class remote_server_metrics_gateway;
 } // namespace app_services
 
@@ -37,9 +37,9 @@ class mac_clock_controller;
 
 /// O-DU unit.
 struct o_du_unit {
-  std::unique_ptr<odu::du>                  unit;
-  std::vector<app_services::metrics_config> metrics;
-  application_unit_commands                 commands;
+  std::unique_ptr<odu::du>                 unit;
+  app_services::metrics_channel_collection metrics;
+  application_unit_commands                commands;
   std::unique_ptr<e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>
       e2_metric_connectors;
 };
@@ -54,7 +54,6 @@ struct o_du_unit_dependencies {
   mac_pcap*                                    mac_p                  = nullptr;
   rlc_pcap*                                    rlc_p                  = nullptr;
   e2_connection_client*                        e2_client_handler      = nullptr;
-  app_services::metrics_notifier*              metrics_notifier       = nullptr;
   app_services::remote_server_metrics_gateway* remote_metrics_gateway = nullptr;
   ocudulog::basic_logger*                      fapi_logger            = nullptr;
 };

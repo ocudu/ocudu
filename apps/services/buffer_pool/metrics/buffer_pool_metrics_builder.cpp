@@ -12,26 +12,21 @@
 using namespace ocudu;
 using namespace app_services;
 
-metrics_config app_services::build_buffer_pool_metrics_config(metrics_notifier&                  notifier,
-                                                              const app_helpers::metrics_config& metrics_cfg,
-                                                              remote_server_metrics_gateway*     metrics_gateway)
+void app_services::build_buffer_pool_metrics_config(metrics_channel_collection&        metrics_channels,
+                                                    const app_helpers::metrics_config& metrics_cfg,
+                                                    remote_server_metrics_gateway*     metrics_gateway)
 {
-  metrics_config config;
-
-  config.metric_name = buffer_pool_metrics_properties_impl().name();
-  config.callback    = buffer_pool_metrics_callback;
-  config.producers.emplace_back(std::make_unique<buffer_pool_metrics_producer_impl>(notifier));
+  auto& channel = make_channel<buffer_pool_metrics_impl>(metrics_channels);
+  channel.add_producer(std::make_unique<buffer_pool_metrics_producer_impl>(channel));
 
   if (metrics_cfg.enable_log_metrics) {
-    config.consumers.push_back(
+    channel.add_consumer(
         std::make_unique<buffer_pool_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
   if (metrics_cfg.enable_json_metrics) {
     report_error_if_not(metrics_gateway,
                         "Invalid remote server gateway for sending JSON metrics. Check that remote server is enabled");
-    config.consumers.push_back(std::make_unique<buffer_pool_metrics_consumer_json>(*metrics_gateway));
+    channel.add_consumer(std::make_unique<buffer_pool_metrics_consumer_json>(*metrics_gateway));
   }
-
-  return config;
 }

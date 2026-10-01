@@ -8,13 +8,14 @@
 #include "apps/services/metrics/metrics_consumer.h"
 #include "consumers/o_du_low_metrics_consumers.h"
 #include "consumers/ru_metrics_consumers.h"
+#include "flexible_o_du_app_service_metrics.h"
 
 namespace ocudu {
 
 struct ru_metrics;
 
 /// Log consumer for the flexible O-DU metrics.
-class flexible_o_du_metrics_consumer_log : public app_services::metrics_consumer
+class flexible_o_du_metrics_consumer_log : public app_services::metrics_consumer<flexible_o_du_app_service_metrics_impl>
 {
 public:
   flexible_o_du_metrics_consumer_log(ocudulog::log_channel&   log_chan,
@@ -28,7 +29,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const flexible_o_du_app_service_metrics_impl& metric) override;
 
 private:
   const std::vector<pci_t>      pci_sector_map;
@@ -37,7 +38,8 @@ private:
 };
 
 /// JSON consumer for the flexible O-DU metrics.
-class flexible_o_du_metrics_consumer_json : public app_services::metrics_consumer
+class flexible_o_du_metrics_consumer_json
+  : public app_services::metrics_consumer<flexible_o_du_app_service_metrics_impl>
 {
 public:
   flexible_o_du_metrics_consumer_json(app_services::remote_server_metrics_gateway& gateway,
@@ -52,7 +54,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const flexible_o_du_app_service_metrics_impl& metric) override;
 
 private:
   const std::vector<pci_t>       pci_sector_map;
@@ -61,7 +63,7 @@ private:
 };
 
 /// Consumer for the STDOUT RU metrics.
-class ru_metrics_consumer_stdout : public app_services::metrics_consumer
+class ru_metrics_consumer_stdout : public app_services::metrics_consumer<flexible_o_du_app_service_metrics_impl>
 {
 public:
   ru_metrics_consumer_stdout(std::vector<pci_t> pci_sector_map_, std::chrono::nanoseconds symbol_duration) :
@@ -70,7 +72,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const flexible_o_du_app_service_metrics_impl& metric) override;
 
   /// This can be called from another execution context to enable the metrics.
   void enable() { print_metrics.store(true, std::memory_order_relaxed); }

@@ -6,8 +6,9 @@
 #pragma once
 
 #include "apps/helpers/metrics/metrics_config.h"
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "ocudu/ran/pci.h"
+#include <chrono>
 
 namespace ocudu {
 
@@ -18,14 +19,12 @@ struct metrics_config;
 } // namespace app_helpers
 
 namespace app_services {
-class metrics_notifier;
 class remote_server_metrics_gateway;
 } // namespace app_services
 
-/// Builds the split 6flexible O-DU low metrics configuration.
+/// Builds the split 6 flexible O-DU low metrics channel.
 split6_flexible_o_du_low_metrics_notifier*
-build_split6_flexible_o_du_low_metrics_config(std::vector<app_services::metrics_config>&   metrics,
-                                              app_services::metrics_notifier&              notifier,
+build_split6_flexible_o_du_low_metrics_config(app_services::metrics_channel_collection&    metrics,
                                               app_services::remote_server_metrics_gateway* remote_metrics_gateway,
                                               const app_helpers::metrics_config&           metrics_cfg,
                                               const std::vector<pci_t>&                    pci_cell_map,

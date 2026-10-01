@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/units/application_unit_commands.h"
 #include "o_cu_cp_unit_impl.h"
 #include "ocudu/cu_cp/cu_cp.h"
@@ -15,7 +15,6 @@
 namespace ocudu {
 
 namespace app_services {
-class metrics_notifier;
 class remote_server_metrics_gateway;
 } // namespace app_services
 
@@ -37,7 +36,6 @@ struct o_cu_cp_unit_dependencies {
   timer_manager&                               timers;
   dlt_pcap&                                    ngap_pcap;
   io_broker&                                   broker;
-  app_services::metrics_notifier&              metrics_notifier;
   e2_connection_client*                        e2_gw                  = nullptr;
   app_services::remote_server_metrics_gateway* remote_metrics_gateway = nullptr;
   std::vector<ocucp::xnc_connection_gateway*>  xnc_gws;
@@ -45,9 +43,9 @@ struct o_cu_cp_unit_dependencies {
 
 /// O-RAN CU-CP unit.
 struct o_cu_cp_unit {
-  std::unique_ptr<ocucp::o_cu_cp>           unit;
-  application_unit_commands                 commands;
-  std::vector<app_services::metrics_config> metrics;
+  std::unique_ptr<ocucp::o_cu_cp>          unit;
+  application_unit_commands                commands;
+  app_services::metrics_channel_collection metrics;
 };
 
 /// Builds an O-RAN CU-CP unit with the given configuration and dependencies.

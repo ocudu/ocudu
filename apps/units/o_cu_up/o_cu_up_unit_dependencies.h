@@ -9,7 +9,6 @@ namespace ocudu {
 
 namespace app_services {
 class remote_server_metrics_gateway;
-class metrics_notifier;
 } // namespace app_services
 
 namespace ocuup {
@@ -30,7 +29,6 @@ struct worker_manager;
 struct o_cu_up_unit_dependencies {
   worker_manager&                              workers;
   e2_connection_client&                        e2_gw;
-  app_services::metrics_notifier&              metrics_notifier;
   app_services::remote_server_metrics_gateway* remote_metrics_gateway = nullptr;
   std::vector<ocuup::e1_connection_client*>    e1ap_conn_client;
   gtpu_teid_pool&                              f1u_teid_allocator;

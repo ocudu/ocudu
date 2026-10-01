@@ -113,7 +113,7 @@ void split6_o_du_low_application_unit_impl::fill_worker_manager_config(worker_ma
 
 split6_o_du_low_unit split6_o_du_low_application_unit_impl::create_flexible_o_du_low(
     worker_manager&                              workers,
-    app_services::metrics_notifier&              metrics_notifier,
+    app_services::metrics_channel_collection&    metrics_channels,
     app_services::remote_server_metrics_gateway* remote_metrics_gateway,
     timer_manager&                               timers,
     ocudulog::basic_logger&                      logger)
@@ -127,8 +127,7 @@ split6_o_du_low_unit split6_o_du_low_application_unit_impl::create_flexible_o_du
 
   // :TODO: 0 is hardcoded to the cell id. Difficult to add here the PCI as it is a parameter that will be readed
   // dynamically after the CONFIG.request FAPI message.
-  auto* notifier = build_split6_flexible_o_du_low_metrics_config(output.metrics,
-                                                                 metrics_notifier,
+  auto* notifier = build_split6_flexible_o_du_low_metrics_config(metrics_channels,
                                                                  remote_metrics_gateway,
                                                                  unit_cfg.du_low_cfg.metrics_cfg.common_metrics_cfg,
                                                                  {0},

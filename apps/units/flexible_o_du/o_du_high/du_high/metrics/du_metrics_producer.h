@@ -7,6 +7,7 @@
 
 #include "apps/services/metrics/metrics_notifier.h"
 #include "apps/services/metrics/metrics_producer.h"
+#include "du_metrics.h"
 #include "ocudu/du/du_high/du_metrics_notifier.h"
 
 namespace ocudu {
@@ -15,7 +16,7 @@ namespace ocudu {
 class du_metrics_producer_impl : public odu::du_metrics_notifier, public app_services::metrics_producer
 {
 public:
-  explicit du_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
+  explicit du_metrics_producer_impl(app_services::metrics_notifier<du_metrics_impl>& notifier_) : notifier(notifier_) {}
 
   // See interface for documentation.
   void on_new_metric_report(const odu::du_metrics_report& metrics) override;
@@ -24,7 +25,7 @@ public:
   void on_new_report_period() override {}
 
 private:
-  app_services::metrics_notifier& notifier;
+  app_services::metrics_notifier<du_metrics_impl>& notifier;
 };
 
 } // namespace ocudu

@@ -9,6 +9,7 @@
 #include "fapi_adaptor/mac_fapi_p7_sector_adaptor_factory.h"
 #include "split6_flexible_o_du_low_session.h"
 #include "split6_o_du_low_unit_config.h"
+#include "ocudu/ocudulog/ocudulog.h"
 
 namespace ocudu {
 

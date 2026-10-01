@@ -8,10 +8,9 @@
 
 using namespace ocudu;
 
-void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
+void flexible_o_du_metrics_consumer_json::handle_metric(const flexible_o_du_app_service_metrics_impl& metric)
 {
-  const flexible_o_du_metrics& odu_metrics =
-      static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics();
+  const flexible_o_du_metrics& odu_metrics = metric.get_metrics();
 
   if (odu_metrics.du.low) {
     odu_low_metrics_handler.handle_metric(*odu_metrics.du.low);
@@ -20,10 +19,9 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   ru_metrics_handler.handle_metric(odu_metrics.ru);
 }
 
-void flexible_o_du_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+void flexible_o_du_metrics_consumer_log::handle_metric(const flexible_o_du_app_service_metrics_impl& metric)
 {
-  const flexible_o_du_metrics& odu_metrics =
-      static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics();
+  const flexible_o_du_metrics& odu_metrics = metric.get_metrics();
 
   if (odu_metrics.du.low) {
     odu_low_metrics_handler.handle_metric(*odu_metrics.du.low);
@@ -50,9 +48,9 @@ static void print_radio_metrics(const ru_metrics& metrics)
   }
 }
 
-void ru_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& metric)
+void ru_metrics_consumer_stdout::handle_metric(const flexible_o_du_app_service_metrics_impl& metric)
 {
-  const ru_metrics& metrics = static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics().ru;
+  const ru_metrics& metrics = metric.get_metrics().ru;
 
   // Radio metrics are always printed.
   print_radio_metrics(metrics);

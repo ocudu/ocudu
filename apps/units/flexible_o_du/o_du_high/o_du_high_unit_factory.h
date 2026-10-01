@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/units/application_unit_commands.h"
 #include "ocudu/du/du_high/o_du_high.h"
 #include "ocudu/du/du_high/o_du_high_config.h"
@@ -14,7 +14,6 @@ namespace ocudu {
 struct o_du_high_unit_config;
 
 namespace app_services {
-class metrics_notifier;
 class remote_server_metrics_gateway;
 } // namespace app_services
 
@@ -48,9 +47,9 @@ void announce_du_high_cells(const du_high_unit_config& du_high_unit_cfg);
 
 /// O-RAN DU high unit.
 struct o_du_high_unit {
-  std::unique_ptr<odu::o_du_high>           o_du_hi;
-  application_unit_commands                 commands;
-  std::vector<app_services::metrics_config> metrics;
+  std::unique_ptr<odu::o_du_high>          o_du_hi;
+  application_unit_commands                commands;
+  app_services::metrics_channel_collection metrics;
 };
 
 /// O-RAN DU high unit dependencies.
@@ -64,7 +63,6 @@ struct o_du_high_unit_dependencies {
   rlc_pcap&                                    rlc_p;
   e2_connection_client&                        e2_client_handler;
   e2_du_metrics_connector_manager&             e2_metric_connectors;
-  app_services::metrics_notifier&              metrics_notifier;
   app_services::remote_server_metrics_gateway* remote_metrics_gateway = nullptr;
   odu::o_du_high_dependencies                  o_du_hi_dependencies;
 };

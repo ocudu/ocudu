@@ -6,6 +6,7 @@
 #pragma once
 
 #include "apps/services/app_resource_usage/metrics/app_resource_usage_metrics.h"
+#include "apps/services/metrics/metrics_consumer.h"
 #include "ocudu/ocudulog/log_channel.h"
 
 namespace ocudu {
@@ -15,20 +16,20 @@ class remote_server_metrics_gateway;
 } // namespace app_services
 
 /// Log consumer for the resource usage metrics.
-class resource_usage_metrics_consumer_log : public app_services::metrics_consumer
+class resource_usage_metrics_consumer_log : public app_services::metrics_consumer<resource_usage_metrics_impl>
 {
 public:
   explicit resource_usage_metrics_consumer_log(ocudulog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const resource_usage_metrics_impl& metric) override;
 
 private:
   ocudulog::log_channel& log_chan;
 };
 
 /// JSON consumer for the resource usage metrics.
-class resource_usage_metrics_consumer_json : public app_services::metrics_consumer
+class resource_usage_metrics_consumer_json : public app_services::metrics_consumer<resource_usage_metrics_impl>
 {
 public:
   explicit resource_usage_metrics_consumer_json(app_services::remote_server_metrics_gateway& gateway_) :
@@ -37,7 +38,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const resource_usage_metrics_impl& metric) override;
 
 private:
   app_services::remote_server_metrics_gateway& gateway;

@@ -8,9 +8,9 @@
 
 using namespace ocudu;
 
-void cu_up_f1u_metrics_consumer_e2::handle_metric(const app_services::metrics_set& metric)
+void cu_up_f1u_metrics_consumer_e2::handle_metric(const cu_up_f1u_metrics_impl& metric)
 {
-  notifier.report_metrics(static_cast<const cu_up_f1u_metrics_impl&>(metric).get_metrics());
+  notifier.report_metrics(metric.get_metrics());
 }
 
 cu_up_f1u_metrics_consumer_json::cu_up_f1u_metrics_consumer_json(
@@ -30,10 +30,10 @@ cu_up_f1u_metrics_consumer_json::cu_up_f1u_metrics_consumer_json(
   timer.run();
 }
 
-void cu_up_f1u_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
+void cu_up_f1u_metrics_consumer_json::handle_metric(const cu_up_f1u_metrics_impl& metric)
 {
   // Implement aggregation.
-  const ocuup::f1u_metrics_container& f1u_metric = static_cast<const cu_up_f1u_metrics_impl&>(metric).get_metrics();
+  const ocuup::f1u_metrics_container& f1u_metric = metric.get_metrics();
 
   // Tx aggregation.
   const ocuup::f1u_tx_metrics_container& tx_metric = f1u_metric.tx;
@@ -81,10 +81,10 @@ void cu_up_f1u_metrics_consumer_json::initialize_timer()
   timer.run();
 }
 
-void cu_up_f1u_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+void cu_up_f1u_metrics_consumer_log::handle_metric(const cu_up_f1u_metrics_impl& metric)
 {
   // Implement aggregation.
-  const ocuup::f1u_metrics_container& f1u_metric = static_cast<const cu_up_f1u_metrics_impl&>(metric).get_metrics();
+  const ocuup::f1u_metrics_container& f1u_metric = metric.get_metrics();
 
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer), "NRUP Metrics: {}", f1u_metric);

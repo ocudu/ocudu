@@ -10,16 +10,16 @@
 
 using namespace ocudu;
 
-void resource_usage_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
+void resource_usage_metrics_consumer_json::handle_metric(const resource_usage_metrics_impl& metric)
 {
-  const resource_usage_metrics& sys_metrics = static_cast<const resource_usage_metrics_impl&>(metric).get_metrics();
+  const resource_usage_metrics& sys_metrics = metric.get_metrics();
 
   gateway.send(app_helpers::json_generators::generate_string(sys_metrics, 2));
 }
 
-void resource_usage_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+void resource_usage_metrics_consumer_log::handle_metric(const resource_usage_metrics_impl& metric)
 {
-  const resource_usage_metrics& sys_metrics = static_cast<const resource_usage_metrics_impl&>(metric).get_metrics();
+  const resource_usage_metrics& sys_metrics = metric.get_metrics();
 
   /// Bytes in one Mega Byte.
   static constexpr double BYTES_IN_MB = (1 << 20);

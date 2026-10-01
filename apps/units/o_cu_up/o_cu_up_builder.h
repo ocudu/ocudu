@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "o_cu_up_unit_dependencies.h"
 #include "o_cu_up_unit_impl.h"
 
@@ -13,8 +13,8 @@ namespace ocudu {
 
 /// O-RAN CU-CP unit.
 struct o_cu_up_unit {
-  std::unique_ptr<ocuup::o_cu_up>           unit;
-  std::vector<app_services::metrics_config> metrics;
+  std::unique_ptr<ocuup::o_cu_up>          unit;
+  app_services::metrics_channel_collection metrics;
 };
 
 /// Builds the O-RAN CU-UP unit using the given arguments.

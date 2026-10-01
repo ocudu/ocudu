@@ -15,17 +15,17 @@
 namespace ocudu {
 
 /// Log consumer for the application executors metrics.
-class app_execution_metrics_consumer_log : public app_services::metrics_consumer
+class app_execution_metrics_consumer_log : public app_services::metrics_consumer<executor_metrics_impl>
 {
 public:
   explicit app_execution_metrics_consumer_log(ocudulog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override
+  void handle_metric(const executor_metrics_impl& metric) override
   {
     static constexpr unsigned str_buffer_size = 256;
 
-    const auto& metrics = static_cast<const executor_metrics_impl&>(metric).get_metrics();
+    const auto&                                     metrics = metric.get_metrics();
     fmt::basic_memory_buffer<char, str_buffer_size> buffer;
 
     fmt::format_to(std::back_inserter(buffer),
@@ -50,7 +50,7 @@ private:
 };
 
 /// JSON consumer for the application executors metrics.
-class app_execution_metrics_consumer_json : public app_services::metrics_consumer
+class app_execution_metrics_consumer_json : public app_services::metrics_consumer<executor_metrics_impl>
 {
 public:
   explicit app_execution_metrics_consumer_json(app_services::remote_server_metrics_gateway& gateway_) :
@@ -59,9 +59,9 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override
+  void handle_metric(const executor_metrics_impl& metric) override
   {
-    const auto& metrics = static_cast<const executor_metrics_impl&>(metric).get_metrics();
+    const auto& metrics = metric.get_metrics();
     gateway.send(app_helpers::json_generators::generate_string(metrics, 2));
   }
 

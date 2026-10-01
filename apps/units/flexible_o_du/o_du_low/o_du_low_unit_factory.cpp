@@ -10,6 +10,7 @@
 #include "du_low_hal_factory.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_low/o_du_low_factory.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 
 using namespace ocudu;

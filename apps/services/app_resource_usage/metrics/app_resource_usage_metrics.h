@@ -5,54 +5,19 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_consumer.h"
-#include "apps/services/metrics/metrics_properties.h"
-#include "apps/services/metrics/metrics_set.h"
-#include "ocudu/adt/span.h"
-#include "ocudu/ocudulog/logger.h"
-#include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/resource_usage/resource_usage_metrics.h"
-#include "ocudu/support/synchronization/stop_event.h"
 
 namespace ocudu {
 
-/// System resources usage metrics properties.
-class resource_usage_metrics_properties_impl : public app_services::metrics_properties
+/// System resources usage metrics.
+class resource_usage_metrics_impl final
 {
-public:
-  std::string_view name() const override { return "Resource usage metrics"; }
-};
-
-class resource_usage_metrics_impl : public app_services::metrics_set
-{
-  resource_usage_metrics_properties_impl properties;
-  resource_usage_metrics                 metrics;
+  resource_usage_metrics metrics;
 
 public:
   explicit resource_usage_metrics_impl(const resource_usage_metrics& metrics_) : metrics(metrics_) {}
 
-  // See interface for documentation.
-  const app_services::metrics_properties& get_properties() const override { return properties; }
-
   const resource_usage_metrics& get_metrics() const { return metrics; }
-};
-
-/// Callback for the Resource usage metrics.
-// TODO: replace with better solution that doesn't allocate memory.
-inline auto rusage_metrics_callback = [](const app_services::metrics_set&      report,
-                                         span<app_services::metrics_consumer*> consumers,
-                                         task_executor&                        executor,
-                                         ocudulog::basic_logger&               logger,
-                                         stop_event_token                      token) {
-  const auto& metric = static_cast<const resource_usage_metrics_impl&>(report);
-
-  if (!executor.defer([metric, consumers, stop_token = std::move(token)]() {
-        for (auto& consumer : consumers) {
-          consumer->handle_metric(metric);
-        }
-      })) {
-    logger.error("Failed to dispatch the metric '{}'", metric.get_properties().name());
-  }
 };
 
 } // namespace ocudu

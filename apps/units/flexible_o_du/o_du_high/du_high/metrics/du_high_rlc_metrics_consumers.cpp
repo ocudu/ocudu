@@ -12,16 +12,16 @@
 
 using namespace ocudu;
 
-void rlc_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
+void rlc_metrics_consumer_json::handle_metric(const rlc_metrics_impl& metric)
 {
-  const rlc_metrics& drb = static_cast<const rlc_metrics_impl&>(metric).get_metrics();
+  const rlc_metrics& drb = metric.get_metrics();
 
   gateway.send(app_helpers::json_generators::generate_string(drb, DEFAULT_JSON_INDENT));
 }
 
-void rlc_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+void rlc_metrics_consumer_log::handle_metric(const rlc_metrics_impl& metric)
 {
-  const rlc_metrics& drb = static_cast<const rlc_metrics_impl&>(metric).get_metrics();
+  const rlc_metrics& drb = metric.get_metrics();
 
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer), "RLC Metrics:");
@@ -36,7 +36,7 @@ void rlc_metrics_consumer_log::handle_metric(const app_services::metrics_set& me
   log_chan("{}", to_c_str(buffer));
 }
 
-void rlc_metrics_consumer_e2::handle_metric(const app_services::metrics_set& metric)
+void rlc_metrics_consumer_e2::handle_metric(const rlc_metrics_impl& metric)
 {
-  notifier.report_metrics(static_cast<const rlc_metrics_impl&>(metric).get_metrics());
+  notifier.report_metrics(metric.get_metrics());
 }

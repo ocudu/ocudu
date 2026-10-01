@@ -8,20 +8,22 @@
 namespace ocudu {
 namespace app_services {
 
-class metrics_set;
-class metrics_properties;
-
 /// \brief Metrics subscriber.
 ///
-/// A subscriber will listen to a configured metric.
+/// A subscriber will listen to a configured metric. The metric type is passed as a template
+/// parameter, so consumers receive the concrete type directly, with no downcast required.
+template <typename MetricType>
 class metrics_consumer
 {
 public:
+  /// The concrete metric type this consumer subscribes to.
+  using metric_type = MetricType;
+
   /// Default destructor.
   virtual ~metrics_consumer() = default;
 
   /// Handles the given metrics.
-  virtual void handle_metric(const metrics_set& metric) = 0;
+  virtual void handle_metric(const MetricType& metric) = 0;
 };
 
 } // namespace app_services

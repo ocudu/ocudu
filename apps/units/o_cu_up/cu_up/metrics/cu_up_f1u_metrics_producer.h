@@ -7,6 +7,7 @@
 
 #include "apps/services/metrics/metrics_notifier.h"
 #include "apps/services/metrics/metrics_producer.h"
+#include "cu_up_f1u_metrics.h"
 #include "ocudu/f1u/cu_up/f1u_metrics.h"
 
 namespace ocudu {
@@ -15,7 +16,10 @@ namespace ocudu {
 class cu_up_f1u_metrics_producer_impl : public ocuup::f1u_metrics_notifier, public app_services::metrics_producer
 {
 public:
-  explicit cu_up_f1u_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
+  explicit cu_up_f1u_metrics_producer_impl(app_services::metrics_notifier<cu_up_f1u_metrics_impl>& notifier_) :
+    notifier(notifier_)
+  {
+  }
 
   // See interface for documentation.
   void report_metrics(const ocuup::f1u_metrics_container& metrics) override;
@@ -24,7 +28,7 @@ public:
   void on_new_report_period() override {}
 
 private:
-  app_services::metrics_notifier& notifier;
+  app_services::metrics_notifier<cu_up_f1u_metrics_impl>& notifier;
 };
 
 } // namespace ocudu

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/units/application_unit.h"
 #include "split6_o_du_low_plugin.h"
 #include "split6_o_du_low_unit_config.h"
@@ -18,13 +18,11 @@ class timer_manager;
 struct worker_manager;
 
 namespace app_services {
-class metrics_notifier;
 class remote_server_metrics_gateway;
 } // namespace app_services
 
 struct split6_o_du_low_unit {
-  std::unique_ptr<du_operation_controller>  odu_low;
-  std::vector<app_services::metrics_config> metrics;
+  std::unique_ptr<du_operation_controller> odu_low;
 };
 
 /// O-RAN DU low Split6 application unit implementation.
@@ -56,7 +54,7 @@ public:
 
   /// Creates and returns the low FAPI control adaptor of this application unit.
   split6_o_du_low_unit create_flexible_o_du_low(worker_manager&                              workers,
-                                                app_services::metrics_notifier&              metrics_notifier,
+                                                app_services::metrics_channel_collection&    metrics_channels,
                                                 app_services::remote_server_metrics_gateway* remote_metrics_gateway,
                                                 timer_manager&                               timers,
                                                 ocudulog::basic_logger&                      logger);

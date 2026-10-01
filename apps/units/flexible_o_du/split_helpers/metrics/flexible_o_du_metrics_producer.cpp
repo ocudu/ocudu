@@ -5,6 +5,7 @@
 
 #include "flexible_o_du_metrics_producer.h"
 #include "flexible_o_du_app_service_metrics.h"
+#include <utility>
 
 using namespace ocudu;
 
@@ -12,5 +13,5 @@ void o_du_metrics_producer_impl::on_new_metrics(const flexible_o_du_metrics& met
 {
   flexible_o_du_app_service_metrics_impl metric_set(metrics);
 
-  notifier.on_new_metric(metric_set);
+  notifier.on_new_metric(std::move(metric_set));
 }

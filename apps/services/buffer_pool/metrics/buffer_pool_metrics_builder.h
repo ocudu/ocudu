@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 
 namespace ocudu {
 
@@ -15,19 +15,15 @@ struct metrics_config;
 
 namespace app_services {
 
-class buffer_pool_manager;
-class metrics_notifier;
 class remote_server_metrics_gateway;
 
-///\brief Builds the buffer pool metrics configuration.
+///\brief Builds the buffer pool metrics channel.
 ///
-/// \param notifier[in]        - Application metrics notifier interface.
-/// \param metrics_cfg[in]     - Common metrics configuration.
-/// \param metrics_gateway[in] - Metrics JSON gateway.
-///
-/// \return buffer pool metrics configuration.
-metrics_config build_buffer_pool_metrics_config(metrics_notifier&                  notifier,
-                                                const app_helpers::metrics_config& metrics_cfg,
-                                                remote_server_metrics_gateway*     metrics_gateway);
+/// \param metrics_channels[out] - Application metrics channels, extended with the buffer pool metrics channel.
+/// \param metrics_cfg[in]       - Common metrics configuration.
+/// \param metrics_gateway[in]   - Metrics JSON gateway.
+void build_buffer_pool_metrics_config(metrics_channel_collection&        metrics_channels,
+                                      const app_helpers::metrics_config& metrics_cfg,
+                                      remote_server_metrics_gateway*     metrics_gateway);
 } // namespace app_services
 } // namespace ocudu

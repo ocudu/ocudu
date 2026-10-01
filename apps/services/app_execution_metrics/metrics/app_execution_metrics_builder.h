@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 
 namespace ocudu {
 
@@ -16,22 +16,19 @@ struct metrics_config;
 } // namespace app_helpers
 
 namespace app_services {
-class metrics_notifier;
 class remote_server_metrics_gateway;
 } // namespace app_services
 
-///\brief Builds the application execution metrics configuration.
+///\brief Builds the application execution metrics channel.
 ///
-/// \param metrics[out]        - Application metrics configuration of the executor metrics service.
-/// \param notifier[in]        - Application metrics notifier interface.
+/// \param metrics[out]        - Application metrics channels, extended with the executor metrics channel.
 /// \param metrics_cfg[in]     - Common metrics configuration.
 /// \param metrics_gateway[in] - Gateway to send the metrics in JSON format.
 ///
 /// \return reference to the executor metrics notifier.
 executor_metrics_notifier&
-build_app_execution_metrics_config(app_services::metrics_config&                exec_metric_cfg,
-                                   app_services::metrics_notifier&              notifier,
-                                   const app_helpers::metrics_config&           metrics_cfg,
-                                   app_services::remote_server_metrics_gateway* metrics_gateway);
+build_app_execution_metrics_channel(app_services::metrics_channel_collection&    metrics,
+                                    const app_helpers::metrics_config&           metrics_cfg,
+                                    app_services::remote_server_metrics_gateway* metrics_gateway);
 
 } // namespace ocudu

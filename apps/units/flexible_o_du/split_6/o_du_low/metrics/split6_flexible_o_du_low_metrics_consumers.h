@@ -8,6 +8,7 @@
 #include "apps/services/metrics/metrics_consumer.h"
 #include "apps/units/flexible_o_du/split_helpers/metrics/consumers/o_du_low_metrics_consumers.h"
 #include "apps/units/flexible_o_du/split_helpers/metrics/consumers/ru_metrics_consumers.h"
+#include "split6_flexible_o_du_low_app_service_metrics.h"
 
 namespace ocudu {
 
@@ -18,7 +19,8 @@ class remote_server_metrics_gateway;
 struct ru_metrics;
 
 /// Log consumer for the split 6 flexible O-DU low metrics.
-class split6_flexible_o_du_low_metrics_consumer_log : public app_services::metrics_consumer
+class split6_flexible_o_du_low_metrics_consumer_log
+  : public app_services::metrics_consumer<split6_flexible_o_du_low_app_service_metrics_impl>
 {
 public:
   split6_flexible_o_du_low_metrics_consumer_log(ocudulog::log_channel&   log_chan,
@@ -32,7 +34,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const split6_flexible_o_du_low_app_service_metrics_impl& metric) override;
 
 private:
   const std::vector<pci_t>      pci_sector_map;
@@ -41,7 +43,8 @@ private:
 };
 
 /// JSON consumer for the flexible O-DU metrics.
-class split6_flexible_o_du_low_metrics_consumer_json : public app_services::metrics_consumer
+class split6_flexible_o_du_low_metrics_consumer_json
+  : public app_services::metrics_consumer<split6_flexible_o_du_low_app_service_metrics_impl>
 {
 public:
   split6_flexible_o_du_low_metrics_consumer_json(app_services::remote_server_metrics_gateway& gateway,
@@ -55,7 +58,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const split6_flexible_o_du_low_app_service_metrics_impl& metric) override;
 
 private:
   const std::vector<pci_t>       pci_sector_map;

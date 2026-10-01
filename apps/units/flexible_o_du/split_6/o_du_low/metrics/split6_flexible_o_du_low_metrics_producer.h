@@ -7,6 +7,7 @@
 
 #include "apps/services/metrics/metrics_notifier.h"
 #include "apps/services/metrics/metrics_producer.h"
+#include "split6_flexible_o_du_low_app_service_metrics.h"
 #include "split6_flexible_o_du_low_metrics_notifier.h"
 
 namespace ocudu {
@@ -16,7 +17,11 @@ class split6_o_du_low_metrics_producer_impl : public split6_flexible_o_du_low_me
                                               public app_services::metrics_producer
 {
 public:
-  explicit split6_o_du_low_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
+  explicit split6_o_du_low_metrics_producer_impl(
+      app_services::metrics_notifier<split6_flexible_o_du_low_app_service_metrics_impl>& notifier_) :
+    notifier(notifier_)
+  {
+  }
 
   // See interface for documentation.
   void on_new_metrics(const split6_flexible_o_du_low_metrics& metrics) override;
@@ -25,7 +30,7 @@ public:
   void on_new_report_period() override {}
 
 private:
-  app_services::metrics_notifier& notifier;
+  app_services::metrics_notifier<split6_flexible_o_du_low_app_service_metrics_impl>& notifier;
 };
 
 } // namespace ocudu

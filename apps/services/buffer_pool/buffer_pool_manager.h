@@ -28,23 +28,20 @@ public:
     return pool.get_central_cache_approx_size();
   }
 
-  ///\brief Adds the buffer pool metrics configuration to the metrics service.
+  ///\brief Adds the buffer pool metrics channel to the metrics service.
   ///
-  /// \param metrics[in,out]     - Vector of application metrics configs. The service can extend it with its own config.
-  /// \param notifier[in]        - Application metrics notifier interface.
-  /// \param metrics_cfg[in]     - Buffer pool metrics configuration.
-  /// \param metrics_gateway[in] - Gateway for JSON metrics.
-  void add_metrics_to_metrics_service(std::vector<app_services::metrics_config>& app_metrics,
-                                      const buffer_pool_metrics_config&          metrics_cfg,
-                                      app_services::metrics_notifier&            notifier,
-                                      remote_server_metrics_gateway*             metrics_gateway)
+  /// \param metrics_channels[in,out] - Application metrics channels, extended with the buffer pool channel.
+  /// \param metrics_cfg[in]           - Buffer pool metrics configuration.
+  /// \param metrics_gateway[in]       - Gateway for JSON metrics.
+  void add_metrics_to_metrics_service(metrics_channel_collection&       metrics_channels,
+                                      const buffer_pool_metrics_config& metrics_cfg,
+                                      remote_server_metrics_gateway*    metrics_gateway)
   {
     if (!metrics_cfg.enable_metrics) {
       return;
     }
 
-    app_metrics.emplace_back(
-        build_buffer_pool_metrics_config(notifier, metrics_cfg.common_metrics_cfg, metrics_gateway));
+    build_buffer_pool_metrics_config(metrics_channels, metrics_cfg.common_metrics_cfg, metrics_gateway);
   }
 };
 

@@ -17,7 +17,10 @@ namespace app_services {
 class buffer_pool_metrics_producer_impl : public app_services::metrics_producer
 {
 public:
-  explicit buffer_pool_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
+  explicit buffer_pool_metrics_producer_impl(app_services::metrics_notifier<buffer_pool_metrics_impl>& notifier_) :
+    notifier(notifier_)
+  {
+  }
 
   void on_new_report_period() override
   {
@@ -26,7 +29,7 @@ public:
   }
 
 private:
-  app_services::metrics_notifier& notifier;
+  app_services::metrics_notifier<buffer_pool_metrics_impl>& notifier;
 };
 
 } // namespace app_services

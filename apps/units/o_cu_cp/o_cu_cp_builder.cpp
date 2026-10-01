@@ -5,7 +5,7 @@
 
 #include "o_cu_cp_builder.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
-#include "apps/services/metrics/metrics_config.h"
+#include "apps/services/metrics/metrics_channel.h"
 #include "apps/units/o_cu_cp/cu_cp/metrics/cu_cp_metrics.h"
 #include "apps/units/o_cu_cp/cu_cp/metrics/cu_cp_metrics_consumers.h"
 #include "apps/units/o_cu_cp/cu_cp/metrics/cu_cp_metrics_producer.h"
@@ -26,8 +26,7 @@
 using namespace ocudu;
 
 static cu_cp_metrics_report_notifier*
-build_cu_cp_metrics_config(std::vector<app_services::metrics_config>&   cu_cp_services_cfg,
-                           app_services::metrics_notifier&              metrics_notifier,
+build_cu_cp_metrics_config(app_services::metrics_channel_collection&    cu_cp_services_channels,
                            app_services::remote_server_metrics_gateway* remote_metrics_gateway,
                            const cu_cp_unit_metrics_config&             cu_cp_metrics_cfg,
                            bool                                         e2_enabled,
@@ -35,25 +34,23 @@ build_cu_cp_metrics_config(std::vector<app_services::metrics_config>&   cu_cp_se
 {
   cu_cp_metrics_report_notifier* out = nullptr;
 
-  auto metrics_generator                            = std::make_unique<cu_cp_metrics_producer_impl>(metrics_notifier);
-  out                                               = &(*metrics_generator);
-  app_services::metrics_config& metrics_service_cfg = cu_cp_services_cfg.emplace_back();
-  metrics_service_cfg.metric_name                   = cu_cp_metrics_properties_impl().name();
-  metrics_service_cfg.callback                      = cu_cp_metrics_callback;
-  metrics_service_cfg.producers.push_back(std::move(metrics_generator));
+  auto& metrics_channel   = app_services::make_channel<cu_cp_metrics_impl>(cu_cp_services_channels);
+  auto  metrics_generator = std::make_unique<cu_cp_metrics_producer_impl>(metrics_channel);
+  out                     = metrics_generator.get();
+  metrics_channel.add_producer(std::move(metrics_generator));
 
   if (const app_helpers::metrics_config& unit_metrics_cfg = cu_cp_metrics_cfg.common_metrics_cfg;
       unit_metrics_cfg.enable_json_metrics) {
     report_error_if_not(remote_metrics_gateway,
                         "Invalid remote server gateway for sending JSON metrics. Check that remote server is enabled");
-    metrics_service_cfg.consumers.push_back(std::make_unique<cu_cp_metrics_consumer_json>(*remote_metrics_gateway));
+    metrics_channel.add_consumer(std::make_unique<cu_cp_metrics_consumer_json>(*remote_metrics_gateway));
   }
   if (cu_cp_metrics_cfg.common_metrics_cfg.enable_log_metrics) {
-    metrics_service_cfg.consumers.push_back(
+    metrics_channel.add_consumer(
         std::make_unique<cu_cp_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
   if (e2_enabled) {
-    metrics_service_cfg.consumers.push_back(std::make_unique<cu_cp_metrics_consumer_e2>(e2_notifier));
+    metrics_channel.add_consumer(std::make_unique<cu_cp_metrics_consumer_e2>(e2_notifier));
   }
 
   return out;
@@ -165,7 +162,6 @@ o_cu_cp_unit ocudu::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, const o_c
                                        .timers            = dependencies.timers,
                                        .metrics_notifier =
                                            build_cu_cp_metrics_config(ocucp.metrics,
-                                                                      dependencies.metrics_notifier,
                                                                       dependencies.remote_metrics_gateway,
                                                                       unit_cfg.cucp_cfg.metrics,
                                                                       unit_cfg.e2_cfg.base_config.enable_unit_e2,

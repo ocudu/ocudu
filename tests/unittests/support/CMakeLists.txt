@@ -119,6 +119,16 @@ add_executable(resource_usage_test tracing/resource_usage_test.cpp)
 target_link_libraries(resource_usage_test ocudu_support ocudulog gtest ocudu_gtest_main)
 add_test(resource_usage_test resource_usage_test)
 
+add_executable(metrics_manager_test metrics_manager_test.cpp)
+target_link_libraries(metrics_manager_test ocudulog ocudu_support gtest ocudu_gtest_main)
+add_test(metrics_manager_test metrics_manager_test)
+
+add_executable(metrics_builders_test metrics_builders_test.cpp)
+target_link_libraries(metrics_builders_test ocudulog ocudu_support ocudu_buffer_pool_app_service
+                       ocudu_resource_usage_app_service ocudu_exec_metrics_app_service gtest ocudu_gtest_main)
+target_include_directories(metrics_builders_test PRIVATE ${CMAKE_SOURCE_DIR}/external)
+add_test(metrics_builders_test metrics_builders_test)
+
 add_executable(math_test math/mod_math_utils_test.cpp math/curve_fitting_find_max_test.cpp)
 target_link_libraries(math_test ocudu_support_math ocuduvec gtest ocudu_gtest_main)
 add_test(math_test math_test)

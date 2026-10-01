@@ -38,7 +38,6 @@ o_du_unit ocudu::create_o_du_split6(const split6_o_du_unit_config&              
                                                           *du_dependencies.rlc_p,
                                                           *du_dependencies.e2_client_handler,
                                                           *(odu_unit.e2_metric_connectors),
-                                                          *du_dependencies.metrics_notifier,
                                                           du_dependencies.remote_metrics_gateway,
                                                           {}};
 

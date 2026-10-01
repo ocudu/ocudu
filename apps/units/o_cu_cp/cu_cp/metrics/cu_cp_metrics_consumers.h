@@ -8,6 +8,7 @@
 #include "apps/services/metrics/metrics_consumer.h"
 #include "apps/units/o_cu_cp/cu_cp/metrics/consumers/ngap_metrics_consumers.h"
 #include "apps/units/o_cu_cp/cu_cp/metrics/consumers/rrc_metrics_consumers.h"
+#include "cu_cp_metrics.h"
 #include "ocudu/ocudulog/log_channel.h"
 #include "ocudu/support/ocudu_assert.h"
 
@@ -20,20 +21,20 @@ class remote_server_metrics_gateway;
 class e2_cu_metrics_notifier;
 
 /// Consumer for the json CU-CP metrics.
-class cu_cp_metrics_consumer_json : public app_services::metrics_consumer
+class cu_cp_metrics_consumer_json : public app_services::metrics_consumer<cu_cp_metrics_impl>
 {
 public:
   explicit cu_cp_metrics_consumer_json(app_services::remote_server_metrics_gateway& gateway_) : gateway(gateway_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const cu_cp_metrics_impl& metric) override;
 
 private:
   app_services::remote_server_metrics_gateway& gateway;
 };
 
 /// Consumer for the log CU-CP metrics.
-class cu_cp_metrics_consumer_log : public app_services::metrics_consumer
+class cu_cp_metrics_consumer_log : public app_services::metrics_consumer<cu_cp_metrics_impl>
 {
 public:
   explicit cu_cp_metrics_consumer_log(ocudulog::log_channel& log_chan_) :
@@ -42,7 +43,7 @@ public:
   }
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const cu_cp_metrics_impl& metric) override;
 
 private:
   ngap_metrics_consumer_log ngap_consumer;
@@ -50,13 +51,13 @@ private:
 };
 
 /// E2 Consumer for the CU-CP metrics.
-class cu_cp_metrics_consumer_e2 : public app_services::metrics_consumer
+class cu_cp_metrics_consumer_e2 : public app_services::metrics_consumer<cu_cp_metrics_impl>
 {
 public:
   explicit cu_cp_metrics_consumer_e2(e2_cu_metrics_notifier& notifier_) : notifier(notifier_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  void handle_metric(const cu_cp_metrics_impl& metric) override;
 
 private:
   e2_cu_metrics_notifier& notifier;

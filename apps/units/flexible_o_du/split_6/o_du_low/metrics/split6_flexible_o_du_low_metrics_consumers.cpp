@@ -9,19 +9,19 @@
 
 using namespace ocudu;
 
-void split6_flexible_o_du_low_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
+void split6_flexible_o_du_low_metrics_consumer_json::handle_metric(
+    const split6_flexible_o_du_low_app_service_metrics_impl& metric)
 {
-  const split6_flexible_o_du_low_metrics& odu_metrics =
-      static_cast<const split6_flexible_o_du_low_app_service_metrics_impl&>(metric).get_metrics();
+  const split6_flexible_o_du_low_metrics& odu_metrics = metric.get_metrics();
 
   odu_low_metrics_handler.handle_metric(odu_metrics.du_low);
   ru_metrics_handler.handle_metric(odu_metrics.ru);
 }
 
-void split6_flexible_o_du_low_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+void split6_flexible_o_du_low_metrics_consumer_log::handle_metric(
+    const split6_flexible_o_du_low_app_service_metrics_impl& metric)
 {
-  const split6_flexible_o_du_low_metrics& odu_metrics =
-      static_cast<const split6_flexible_o_du_low_app_service_metrics_impl&>(metric).get_metrics();
+  const split6_flexible_o_du_low_metrics& odu_metrics = metric.get_metrics();
 
   odu_low_metrics_handler.handle_metric(odu_metrics.du_low);
   ru_metrics_handler.handle_metric(odu_metrics.ru);

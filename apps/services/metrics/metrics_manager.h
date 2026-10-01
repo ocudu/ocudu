@@ -5,88 +5,65 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
-#include "apps/services/metrics/metrics_notifier.h"
-#include "apps/services/metrics/metrics_set.h"
-#include "apps/services/metrics/periodic_metrics_report_controller.h"
-#include "metrics_properties.h"
+#include "metrics_channel.h"
+#include "periodic_metrics_report_controller.h"
+#include "ocudu/adt/span.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/ocudu_assert.h"
 #include "ocudu/support/synchronization/stop_event.h"
+#include <chrono>
+#include <vector>
 
 namespace ocudu {
 namespace app_services {
 
 /// \brief Metrics manager application service.
 ///
-/// The manager allows to register metrics, metrics producers and metrics consumers in the service.
-class metrics_manager : public metrics_notifier
+/// The manager takes ownership of the metrics channels created by the application/unit builders
+/// and connects them to the runtime services they need (metrics executor, logger and stop event),
+/// and drives their producers through the periodic report controller. Metric values never reach
+/// the manager: they stay inside the typed channels. The manager therefore needs no knowledge of
+/// the metric types that exist, and a new metric type can be added without touching the framework.
+///
+/// \note \ref stop (and the destructor) block until every in-flight deferred report has run to
+/// completion. Consequently, \ref stop must never be called from a context that the metrics
+/// executor cannot make progress without, in particular from inside a \c handle_metric callback
+/// running on the metrics executor itself: the stop token of the currently running report can
+/// only be released once that callback returns, which would deadlock.
+class metrics_manager
 {
-  /// Helper struct to store the information related to a metric.
-  struct metrics_entry {
-    /// Metric name.
-    std::string metric_name;
-    /// Callback to be executed when received this type of metrics.
-    metrics_callback callback;
-    /// Metric producer.
-    std::vector<std::unique_ptr<metrics_producer>> producers;
-    /// Metric consumer.
-    std::vector<std::unique_ptr<metrics_consumer>> consumers;
-    /// Helper vector to store the pointers to the consumers.
-    std::vector<metrics_consumer*> consumers_helper;
-  };
-
 public:
-  metrics_manager(ocudulog::basic_logger&   logger_,
-                  task_executor&            executor_,
-                  span<metrics_config>      metrics_info,
-                  timer_manager&            timers,
-                  std::chrono::milliseconds report_period) :
+  metrics_manager(ocudulog::basic_logger&    logger_,
+                  task_executor&             executor_,
+                  metrics_channel_collection channels_,
+                  timer_manager&             timers,
+                  std::chrono::milliseconds  report_period) :
     logger(logger_),
     executor(executor_),
-    periodic_controller(([](span<metrics_config> metrics_info_cfg) {
-                          std::vector<metrics_producer*> producers;
-                          for (auto& metric : metrics_info_cfg) {
-                            for (auto& producer : metric.producers) {
-                              ocudu_assert(producer, "Invalid metrics producer");
-                              producers.push_back(producer.get());
-                            }
-                          }
-                          return producers;
-                        }(metrics_info)),
-                        timers,
-                        executor_,
-                        report_period)
+    periodic_controller(collect_producers(channels_), timers, executor_, report_period)
   {
-    for (auto& info : metrics_info) {
-      metrics_entry entry;
-      entry.metric_name = info.metric_name;
-      entry.callback    = std::move(info.callback);
-      entry.producers   = std::move(info.producers);
-      entry.consumers   = std::move(info.consumers);
-      for (const auto& con : entry.consumers) {
-        entry.consumers_helper.push_back(con.get());
-      }
-      supported_metrics.push_back(std::move(entry));
+    for (auto& channel : channels_) {
+      ocudu_assert(channel != nullptr, "Invalid metrics channel");
+      channel->connect(ctx);
     }
+    channels = std::move(channels_);
   }
 
-  /// Forwards the given metric to the subscribers.
-  void on_new_metric(const metrics_set& metric) override
+  /// \brief Stops the periodic controller, drains every in-flight report, disconnects every
+  /// channel and destroys the channels together with the manager.
+  ///
+  /// Calling \ref stop here (instead of relying on the member destruction order) makes the
+  /// drain explicit: by the time the member destructors run, no deferred report can be in
+  /// flight anymore. Producers must complete all their pushes before the manager is destroyed:
+  /// the manager owns the channels, so a channel reference held by a producer dangles after
+  /// destruction.
+  ~metrics_manager()
   {
-    auto token = stop_manager.get_token();
-    if (OCUDU_UNLIKELY(token.is_stop_requested())) {
-      return;
-    }
+    stop();
 
-    std::string_view metrics_name = metric.get_properties().name();
-    auto             iter         = std::find_if(
-        supported_metrics.begin(), supported_metrics.end(), [&metrics_name](const metrics_entry& supported_metric) {
-          return supported_metric.metric_name == metrics_name;
-        });
-
-    ocudu_assert(iter != supported_metrics.end(), "Received unregistered metrics '{}'", metrics_name);
-
-    if (!iter->consumers_helper.empty()) {
-      iter->callback(metric, iter->consumers_helper, executor, logger, std::move(token));
+    for (auto& channel : channels) {
+      channel->disconnect();
     }
   }
 
@@ -98,7 +75,11 @@ public:
     periodic_controller.start();
   }
 
-  /// Stops the periodic metrics report controller.
+  /// \brief Stops the periodic metrics report controller.
+  ///
+  /// Blocks until every in-flight deferred metrics report has run to completion. Must not be
+  /// called from inside a consumer callback running on the metrics executor (see the class-level
+  /// note for the reasoning).
   void stop()
   {
     periodic_controller.stop();
@@ -107,11 +88,32 @@ public:
   }
 
 private:
+  /// Collects the producers of every channel for the periodic report controller.
+  static std::vector<metrics_producer*> collect_producers(const metrics_channel_collection& channels)
+  {
+    std::vector<metrics_producer*> producers;
+    for (auto& channel : channels) {
+      ocudu_assert(channel != nullptr, "Invalid metrics channel");
+      for (auto* producer : channel->get_producers()) {
+        producers.push_back(producer);
+      }
+    }
+    return producers;
+  }
+
+  /// \brief Member ordering note.
+  ///
+  /// \c stop_manager (together with \c ctx, which references it) is deliberately declared
+  /// **last** as a second line of defence: even without the \ref stop call in the destructor,
+  /// its destruction would still drain every in-flight deferred report before \c channels, and
+  /// with them the consumers, are destroyed. With \ref stop in the destructor this ordering is
+  /// a redundant safety net rather than a load-bearing guarantee.
   ocudulog::basic_logger&            logger;
   task_executor&                     executor;
-  stop_event_source                  stop_manager;
-  std::vector<metrics_entry>         supported_metrics;
+  metrics_channel_collection         channels;
   periodic_metrics_report_controller periodic_controller;
+  stop_event_source                  stop_manager;
+  metrics_runtime_context            ctx{executor, logger, stop_manager};
 };
 
 } // namespace app_services
