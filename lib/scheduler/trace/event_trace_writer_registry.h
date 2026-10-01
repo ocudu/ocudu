@@ -36,7 +36,7 @@ public:
                             subcarrier_spacing                  max_scs,
                             std::chrono::milliseconds           sleep_period,
                             timer_manager&                      timers,
-                            task_executor&                      pool_executor,
+                            task_executor&                      cell_executor,
                             std::unique_ptr<event_trace_writer> writer);
 
   /// \brief Create a cell event tracer associated with this channel.
@@ -46,8 +46,6 @@ public:
 private:
   event_trace_writer_registry& parent;
   du_cell_index_t              cell_index;
-  /// Strand task executor used by this cell.
-  std::unique_ptr<task_executor> cell_trace_executor;
   /// Timer that triggers periodically to flush the events.
   unique_timer flush_timer;
   /// Queue of pending events to be processed by the backend.
@@ -73,6 +71,14 @@ public:
 private:
   friend class cell_event_trace_consumer;
 
+  /// Resources associated with a cell index.
+  struct cell_context {
+    /// Strand task executor used by the cell consumer. Reused across consumers of the same cell index.
+    std::unique_ptr<task_executor> strand;
+    /// Active consumer of the cell, if any.
+    std::unique_ptr<cell_event_trace_consumer> consumer;
+  };
+
   void handle_cell_destruction(du_cell_index_t cell_idx);
 
   timer_manager&            timers;
@@ -81,7 +87,7 @@ private:
   /// Factory used to generate tracer writers for each cell event trace consumer.
   trace_writer_factory_type trace_writer_factory;
 
-  std::array<std::unique_ptr<cell_event_trace_consumer>, MAX_NOF_DU_CELLS> channels;
+  std::array<cell_context, MAX_NOF_DU_CELLS> channels;
 };
 
 } // namespace ocudu::schedtrace

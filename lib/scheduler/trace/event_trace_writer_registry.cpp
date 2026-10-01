@@ -35,12 +35,11 @@ cell_event_trace_consumer::cell_event_trace_consumer(event_trace_writer_registry
                                                      subcarrier_spacing                  max_scs,
                                                      std::chrono::milliseconds           sleep_period,
                                                      timer_manager&                      timers,
-                                                     task_executor&                      executor,
+                                                     task_executor&                      cell_executor,
                                                      std::unique_ptr<event_trace_writer> writer) :
   parent(parent_),
   cell_index(cell_idx),
-  cell_trace_executor(make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(executor, strand_queue_size)),
-  flush_timer(timers.create_unique_timer(*cell_trace_executor)),
+  flush_timer(timers.create_unique_timer(cell_executor)),
   ev_queue(cell_idx, compute_required_queue_size(max_scs, sleep_period), ocudulog::fetch_basic_logger("SCHED")),
   trace_writer(std::move(writer))
 {
@@ -50,7 +49,6 @@ cell_event_trace_consumer::cell_event_trace_consumer(event_trace_writer_registry
     if (not trace_writer->on_flush_triggered(ev_queue)) {
       // Timer is not rearmed because an event was received to stop tracing.
       parent.handle_cell_destruction(cell_index);
-      // Note: Careful not to touch any this member at this stage, as consumer might already have been destroyed.
       return;
     }
 
@@ -81,28 +79,33 @@ event_trace_writer_registry::event_trace_writer_registry(std::chrono::millisecon
 std::unique_ptr<cell_event_tracer>
 event_trace_writer_registry::create_cell_tracer(const ocudu::cell_configuration& cell_cfg)
 {
-  ocudu_assert(
-      channels[cell_cfg.cell_index] == nullptr, "Cell event tracer for cell {} already exists", cell_cfg.cell_index);
+  cell_context& cell = channels[cell_cfg.cell_index];
+  ocudu_assert(cell.consumer == nullptr, "Cell event tracer for cell {} already exists", cell_cfg.cell_index);
+  if (cell.strand == nullptr) {
+    cell.strand = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(task_executor_ref, strand_queue_size);
+  }
 
   // Creates a cell trace consumer.
   const subcarrier_spacing max_scs = std::max(cell_cfg.init_bwp.dl.cfg().scs, cell_cfg.init_bwp.ul.cfg().scs);
 
-  auto  channel                 = std::make_unique<cell_event_trace_consumer>(*this,
-                                                             cell_cfg.cell_index,
-                                                             max_scs,
-                                                             flush_period,
-                                                             timers,
-                                                             task_executor_ref,
-                                                             trace_writer_factory(cell_cfg.cell_index));
-  auto& channel_ref             = *channel;
-  channels[cell_cfg.cell_index] = std::move(channel);
+  cell.consumer = std::make_unique<cell_event_trace_consumer>(*this,
+                                                              cell_cfg.cell_index,
+                                                              max_scs,
+                                                              flush_period,
+                                                              timers,
+                                                              *cell.strand,
+                                                              trace_writer_factory(cell_cfg.cell_index));
 
   // Request consumer to provide a notifier.
-  return channel_ref.create_producer(cell_cfg);
+  return cell.consumer->create_producer(cell_cfg);
 }
 
 void event_trace_writer_registry::handle_cell_destruction(du_cell_index_t cell_idx)
 {
-  // Called from within the cell tracer task executor.
-  channels[cell_idx] = nullptr;
+  // Called from within the consumer flush timer callback. The consumer destruction is deferred to a separate task, so
+  // that its flush timer, and the timer callback, are not destroyed while the callback is still running.
+  cell_context& cell = channels[cell_idx];
+  if (not cell.strand->defer([&cell]() { cell.consumer.reset(); })) {
+    ocudulog::fetch_basic_logger("SCHED").error("Failed to dispatch destruction of cell {} event tracer", cell_idx);
+  }
 }

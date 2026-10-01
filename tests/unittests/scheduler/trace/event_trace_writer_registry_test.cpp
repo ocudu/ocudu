@@ -151,6 +151,34 @@ TEST_F(event_trace_writer_registry_test, when_tracer_is_destroyed_then_stop_even
   ASSERT_NO_FATAL_FAILURE(registry.create_cell_tracer(make_test_cell_cfg(to_du_cell_index(0))));
 }
 
+TEST_F(event_trace_writer_registry_test, when_cell_is_recreated_after_stop_then_new_tracer_flushes_events)
+{
+  const auto& cell_cfg = make_test_cell_cfg(to_du_cell_index(0));
+  registry.create_cell_tracer(cell_cfg).reset();
+  for (unsigned i = 0; i != flush_period.count(); ++i) {
+    timers.tick();
+  }
+  worker.run_pending_tasks();
+  const size_t nof_events_before = written_events.cell_events[0].size();
+
+  // Recreate the tracer for the same cell index.
+  auto         tracer = registry.create_cell_tracer(cell_cfg);
+  sched_result result;
+  result.success = true;
+  tracer->on_scheduler_result(slot_point{0, 3}, result, std::chrono::microseconds(0));
+  for (unsigned i = 0; i != flush_period.count(); ++i) {
+    timers.tick();
+  }
+  worker.run_pending_tasks();
+
+  // START and slot events of the new tracer are flushed.
+  ASSERT_EQ(written_events.cell_events[0].size(), nof_events_before + 2);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), nof_events_before).value_type(),
+            fbs::CellEventValue::CellStartEvent);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), nof_events_before + 1).value_as_CellSlotEvent()->slot_tx(),
+            slot_point(0, 3).count());
+}
+
 TEST_F(event_trace_writer_registry_test, when_multiple_slots_are_pushed_then_all_are_flushed_in_one_period)
 {
   const auto& cell_cfg = make_test_cell_cfg(to_du_cell_index(0));
