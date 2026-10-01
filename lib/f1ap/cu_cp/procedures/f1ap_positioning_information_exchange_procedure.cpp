@@ -253,8 +253,8 @@ static void fill_asn1_positioning_information_request(asn1::f1ap::positioning_in
         asn1::f1ap::ssb_info_item_s asn1_ssb_info_item;
         // Fill SSB config.
         asn1_ssb_info_item.ssb_cfg.ssb_freq = ssb_info_item.ssb_cfg.ssb_freq;
-        asn1::string_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing,
-                             to_string(ssb_info_item.ssb_cfg.ssb_subcarrier_spacing));
+        asn1::number_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing,
+                             scs_to_khz(ssb_info_item.ssb_cfg.ssb_subcarrier_spacing));
         asn1_ssb_info_item.ssb_cfg.ssb_tx_pwr = ssb_info_item.ssb_cfg.ssb_tx_pwr;
         asn1::number_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_periodicity,
                              to_underlying(ssb_info_item.ssb_cfg.ssb_period));
@@ -342,15 +342,15 @@ fill_positioning_information_response(const asn1::f1ap::positioning_info_resp_s&
       for (const auto& asn1_carrier : asn1_srs_carrier_list_item.ul_ch_bw_per_scs_list) {
         scs_specific_carrier carrier;
         carrier.offset_to_carrier = asn1_carrier.offset_to_carrier;
-        carrier.scs               = to_subcarrier_spacing(std::to_string(asn1_carrier.subcarrier_spacing.to_number()));
+        carrier.scs               = khz_to_scs(asn1_carrier.subcarrier_spacing.to_number());
         carrier.carrier_bandwidth = asn1_carrier.carrier_bw;
         srs_carrier_list_item.ul_ch_bw_per_scs_list.push_back(carrier);
       }
 
       // Fill active UL BWP.
       srs_carrier_list_item.active_ul_bwp.location_and_bw = asn1_srs_carrier_list_item.active_ul_bwp.location_and_bw;
-      srs_carrier_list_item.active_ul_bwp.scs             = to_subcarrier_spacing(
-          std::to_string(asn1_srs_carrier_list_item.active_ul_bwp.subcarrier_spacing.to_number()));
+      srs_carrier_list_item.active_ul_bwp.scs =
+          khz_to_scs(asn1_srs_carrier_list_item.active_ul_bwp.subcarrier_spacing.to_number());
       if (asn1_srs_carrier_list_item.active_ul_bwp.cp.value == asn1::f1ap::active_ul_bwp_s::cp_opts::options::normal) {
         srs_carrier_list_item.active_ul_bwp.cp = cyclic_prefix::options::NORMAL;
       } else {

@@ -234,6 +234,7 @@ TEST(nrppa_asn1_converters_test, when_trp_information_has_prs_configuration_then
   const asn1::nrppa::trp_info_type_resp_item_c& asn1_info = asn1_item.trp_info.trp_info_type_resp_list[0];
   ASSERT_EQ(asn1_info.type(), asn1::nrppa::trp_info_type_resp_item_c::types_opts::prs_cfg);
   ASSERT_EQ(asn1_info.prs_cfg().prs_res_set_list.size(), 1);
+  ASSERT_EQ(asn1_info.prs_cfg().prs_res_set_list[0].subcarrier_spacing.to_number(), 30);
   ASSERT_EQ(asn1_info.prs_cfg().prs_res_set_list[0].prs_res_list.size(), 1);
   ASSERT_TRUE(packs(asn1_item));
 }

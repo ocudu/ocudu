@@ -163,12 +163,11 @@ trp_information_response_t create_trp_info_response(const asn1::f1ap::trp_info_r
         for (const auto& asn1_prs_res_set_item : asn1_prs_cfg.prs_res_set_list) {
           prs_resource_set_item_t prs_res_set_item;
           prs_res_set_item.prs_res_set_id = asn1_prs_res_set_item.prs_res_set_id;
-          prs_res_set_item.scs =
-              to_subcarrier_spacing(std::to_string(asn1_prs_res_set_item.subcarrier_spacing.to_number()));
-          prs_res_set_item.prs_bw    = asn1_prs_res_set_item.pr_sbw;
-          prs_res_set_item.start_prb = asn1_prs_res_set_item.start_prb;
-          prs_res_set_item.point_a   = asn1_prs_res_set_item.point_a;
-          prs_res_set_item.comb_size = asn1_prs_res_set_item.comb_size.to_number();
+          prs_res_set_item.scs            = khz_to_scs(asn1_prs_res_set_item.subcarrier_spacing.to_number());
+          prs_res_set_item.prs_bw         = asn1_prs_res_set_item.pr_sbw;
+          prs_res_set_item.start_prb      = asn1_prs_res_set_item.start_prb;
+          prs_res_set_item.point_a        = asn1_prs_res_set_item.point_a;
+          prs_res_set_item.comb_size      = asn1_prs_res_set_item.comb_size.to_number();
           if (asn1_prs_res_set_item.cp_type.value == asn1::f1ap::prs_res_set_item_s::cp_type_opts::options::normal) {
             prs_res_set_item.cp_type = cyclic_prefix::options::NORMAL;
           } else {
@@ -250,7 +249,7 @@ trp_information_response_t create_trp_info_response(const asn1::f1ap::trp_info_r
           // Fill SSB configuration.
           ssb_info_item.ssb_cfg.ssb_freq = asn1_ssb_info_item.ssb_cfg.ssb_freq;
           ssb_info_item.ssb_cfg.ssb_subcarrier_spacing =
-              to_subcarrier_spacing(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing.to_string());
+              khz_to_scs(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing.to_number());
           ssb_info_item.ssb_cfg.ssb_tx_pwr = asn1_ssb_info_item.ssb_cfg.ssb_tx_pwr;
           ssb_info_item.ssb_cfg.ssb_period = ssb_periodicity(asn1_ssb_info_item.ssb_cfg.ssb_periodicity.to_number());
           ssb_info_item.ssb_cfg.ssb_sfn_offset = asn1_ssb_info_item.ssb_cfg.ssb_sfn_offset;

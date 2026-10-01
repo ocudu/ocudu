@@ -522,7 +522,7 @@ inline asn1::nrppa::prs_res_set_item_s prs_resource_set_item_to_asn1(const prs_r
   asn1::nrppa::prs_res_set_item_s asn1_prs_res_set_item;
 
   asn1_prs_res_set_item.prs_res_set_id = prs_res_set_item.prs_res_set_id;
-  asn1::string_to_enum(asn1_prs_res_set_item.subcarrier_spacing, to_string(prs_res_set_item.scs));
+  asn1::number_to_enum(asn1_prs_res_set_item.subcarrier_spacing, scs_to_khz(prs_res_set_item.scs));
   asn1_prs_res_set_item.pr_sbw    = prs_res_set_item.prs_bw;
   asn1_prs_res_set_item.start_prb = prs_res_set_item.start_prb;
   asn1_prs_res_set_item.point_a   = prs_res_set_item.point_a;
@@ -591,8 +591,8 @@ inline asn1::nrppa::ssb_info_item_s ssb_info_item_to_asn1(const ssb_info_item_t&
 
   // Fill SSB config.
   asn1_ssb_info_item.ssb_cfg.ssb_freq = ssb_info_item.ssb_cfg.ssb_freq;
-  asn1::string_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing,
-                       to_string(ssb_info_item.ssb_cfg.ssb_subcarrier_spacing));
+  asn1::number_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing,
+                       scs_to_khz(ssb_info_item.ssb_cfg.ssb_subcarrier_spacing));
   asn1_ssb_info_item.ssb_cfg.ssb_tx_pwr = ssb_info_item.ssb_cfg.ssb_tx_pwr;
   asn1::number_to_enum(asn1_ssb_info_item.ssb_cfg.ssb_periodicity, to_underlying(ssb_info_item.ssb_cfg.ssb_period));
   asn1_ssb_info_item.ssb_cfg.ssb_half_frame_offset = ssb_info_item.ssb_cfg.ssb_half_frame_offset;
@@ -1066,7 +1066,7 @@ inline ssb_info_t asn1_to_ssb_info(const asn1::nrppa::ssb_info_s& asn1_ssb_info)
     // Fill SSB configuration.
     ssb_info_item.ssb_cfg.ssb_freq = asn1_ssb_info_item.ssb_cfg.ssb_freq;
     ssb_info_item.ssb_cfg.ssb_subcarrier_spacing =
-        to_subcarrier_spacing(std::to_string(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing.to_number()));
+        khz_to_scs(asn1_ssb_info_item.ssb_cfg.ssb_subcarrier_spacing.to_number());
     ssb_info_item.ssb_cfg.ssb_tx_pwr = asn1_ssb_info_item.ssb_cfg.ssb_tx_pwr;
     ssb_info_item.ssb_cfg.ssb_period = ssb_periodicity(asn1_ssb_info_item.ssb_cfg.ssb_periodicity.to_number());
     ssb_info_item.ssb_cfg.ssb_half_frame_offset = asn1_ssb_info_item.ssb_cfg.ssb_half_frame_offset;
@@ -1220,7 +1220,7 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
     for (const auto& asn1_carrier : asn1_srs_carrier_list_item.ul_ch_bw_per_scs_list) {
       scs_specific_carrier carrier;
       carrier.offset_to_carrier = asn1_carrier.offset_to_carrier;
-      carrier.scs               = to_subcarrier_spacing(std::to_string(asn1_carrier.subcarrier_spacing.to_number()));
+      carrier.scs               = khz_to_scs(asn1_carrier.subcarrier_spacing.to_number());
       carrier.carrier_bandwidth = asn1_carrier.carrier_bw;
       srs_carrier_list_item.ul_ch_bw_per_scs_list.push_back(carrier);
     }
@@ -1228,7 +1228,7 @@ inline srs_configuration_t asn1_to_srs_configuration(const asn1::nrppa::srs_conf
     // Fill active UL BWP.
     srs_carrier_list_item.active_ul_bwp.location_and_bw = asn1_srs_carrier_list_item.active_ul_bwp.location_and_bw;
     srs_carrier_list_item.active_ul_bwp.scs =
-        to_subcarrier_spacing(std::to_string(asn1_srs_carrier_list_item.active_ul_bwp.subcarrier_spacing.to_number()));
+        khz_to_scs(asn1_srs_carrier_list_item.active_ul_bwp.subcarrier_spacing.to_number());
     if (asn1_srs_carrier_list_item.active_ul_bwp.cp.value == asn1::nrppa::active_ul_bwp_s::cp_opts::options::normal) {
       srs_carrier_list_item.active_ul_bwp.cp = cyclic_prefix::options::NORMAL;
     } else {
