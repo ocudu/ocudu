@@ -1,4 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 # Makes the NTN cell broadcast TACs 7, 8 and 9. Stack on top of gnb.yml:

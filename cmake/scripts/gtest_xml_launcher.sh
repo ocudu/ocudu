@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 # Test launcher that gives each test process its own gtest XML report, so that the requirement tags
