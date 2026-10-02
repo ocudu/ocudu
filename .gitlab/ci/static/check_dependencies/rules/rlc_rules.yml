@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: rlc-must-not-depend-on-adjacent-layers
+    kind: forbidden-edge
+    from:
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+    to:
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+    reason: RLC exchanges SDUs with MAC and PDCP through interfaces it defines itself, so it must not
+      see either neighbour's types.

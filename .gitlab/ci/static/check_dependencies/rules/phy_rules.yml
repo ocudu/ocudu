@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: phy-must-not-depend-on-du-high
+    kind: forbidden-edge
+    from:
+      - include/ocudu/phy/**
+      - lib/phy/**
+    to:
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/fapi/**
+      - include/ocudu/fapi_adaptor/**
+      - lib/fapi_adaptor/**
+      - include/ocudu/ofh/**
+      - lib/ofh/**
+    reason: DU low is driven through FAPI and knows nothing above it. Including DU high or adaptor headers inverts
+      the split and pulls scheduling types into the sample path.

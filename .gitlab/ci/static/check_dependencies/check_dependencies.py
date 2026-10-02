@@ -17,8 +17,8 @@ Usage:
 
 Options:
   --repo <path>    Project root. Default: git toplevel of the cwd.
-  --rules <path>   Rules YAML for check_dependency_rules.py. Default:
-                   ocudu_dependency_rules.yml beside this script.
+  --rules <path>   Directory with rules in YAML format for check_dependency_rules.py.
+                   Default: rules.
 
 Exit codes:
   0  no violations

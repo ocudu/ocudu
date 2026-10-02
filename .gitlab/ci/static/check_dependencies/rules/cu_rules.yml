@@ -1,0 +1,115 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: cu-must-not-depend-on-du
+    kind: forbidden-edge
+    from:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    to:
+      - include/ocudu/du/**
+      - lib/du/**
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/phy/**
+      - lib/phy/**
+    reason: DU and CU are separate network functions that talk over F1 only. The CU must not see DU-side
+      layers, which exist only below the split.
+  - id: cu_cp-must-not-depend-on-cu_up
+    kind: forbidden-edge
+    from:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+    to:
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    reason: CU-CP and CU-UP are separate network functions that talk over E1 only, and may run in different
+      processes.
+  - id: cu_up-must-not-depend-on-cu_cp
+    kind: forbidden-edge
+    from:
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    to:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+    reason: CU-CP and CU-UP are separate network functions that talk over E1 only, and may run in different
+      processes.
+  - id: cu-layers-must-not-depend-on-cu
+    kind: forbidden-edge
+    from:
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+      - include/ocudu/e1ap/**
+      - lib/e1ap/**
+      - include/ocudu/f1ap/**
+      - lib/f1ap/**
+      - include/ocudu/xnap/**
+      - lib/xnap/**
+      - include/ocudu/nrppa/**
+      - lib/nrppa/**
+      - include/ocudu/lpp/**
+      - lib/lpp/**
+      - include/ocudu/rrc/**
+      - lib/rrc/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+      - include/ocudu/sdap/**
+      - lib/sdap/**
+      - include/ocudu/gtpu/**
+      - lib/gtpu/**
+      - include/ocudu/f1u/**
+      - lib/f1u/**
+      - include/ocudu/nru/**
+      - lib/nru/**
+      - include/ocudu/security/**
+      - lib/security/**
+    to:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    reason: These subsystems sit below the CU-CP and CU-UP, which drive them. Including CU headers inverts
+      that direction and stops each subsystem from being built or tested without the CU.
+    exempt:
+      - from: include/ocudu/e1ap/cu_up/e1ap_cu_up.h
+        to: include/ocudu/cu_up/cu_up_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. E1AP CU-UP interface takes CU-UP types directly.
+      - from: include/ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h
+        to: include/ocudu/cu_up/cu_up_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Bearer context update messages carry CU-UP types.
+      - from: lib/e1ap/cu_up/e1ap_cu_up_connection_handler.h
+        to: include/ocudu/cu_up/cu_up_manager.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Connection handler calls back into the CU-UP manager.
+      - from: lib/e1ap/cu_up/ue_context/e1ap_ue_logger.h
+        to: include/ocudu/cu_up/cu_up_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. UE logger formats CU-UP identifiers.
+      - from: include/ocudu/f1ap/cu_cp/f1ap_cu.h
+        to: include/ocudu/cu_cp/cu_cp_ue_messages.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. F1AP CU interface takes CU-CP UE message types directly.
+      - from: include/ocudu/rrc/rrc_config.h
+        to: include/ocudu/cu_cp/cu_cp_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. RRC config embeds CU-CP types.
+      - from: include/ocudu/rrc/rrc_ue.h
+        to: include/ocudu/cu_cp/cu_cp_ue_messages.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. RRC UE interface takes CU-CP UE message types directly.
+      - from: lib/xnap/procedures/xn_handover_asn1_helpers.h
+        to: include/ocudu/cu_cp/cu_cp_cho_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Xn handover helpers convert CU-CP conditional handover types.
+      - from: lib/xnap/procedures/xnap_source_handover_preparation_procedure.cpp
+        to: include/ocudu/cu_cp/cu_cp_cho_types.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Handover preparation reads CU-CP conditional handover types.

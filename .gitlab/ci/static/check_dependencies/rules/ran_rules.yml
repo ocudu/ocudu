@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: ran-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/ran/**
+      - lib/ran/**
+    allow:
+      - include/ocudu/ran/**
+      - lib/ran/**
+      - include/ocudu/adt/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ocuduvec/**
+      - include/ocudu/support/**
+    reason: Module ran may only depend on the modules listed in allow; anything else breaks its layering
+      boundary.
+    exempt:
+      - from: include/ocudu/ran/cu_types.h
+        to: include/ocudu/sdap/sdap_config.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. QoS flow types in ran/ carry
+          an SDAP config field; splitting it out needs a shared QoS header.
+      - from: include/ocudu/ran/inter_cu_handover_messages.h
+        to: include/ocudu/security/security.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Handover request messages embed
+          the security context; moving it needs a ran-level security type.
+      - from: include/ocudu/ran/pdcch/search_space.h
+        to: include/ocudu/scheduler/sched_consts.h
+        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Search space uses a scheduler
+          constant that belongs in ran/.

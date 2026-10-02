@@ -31,7 +31,7 @@ TEST_DIR = Path(__file__).resolve().parent
 GEN = TEST_DIR / "gen_dependency_tree.py"
 CHECK = TEST_DIR / "check_dependency_rules.py"
 ENTRYPOINT = TEST_DIR / "check_dependencies.py"
-SEED_RULES = TEST_DIR / "ocudu_dependency_rules.yml"
+SEED_RULES = TEST_DIR / "rules"
 
 MAC_RULE = {
     "version": 1,
@@ -800,11 +800,15 @@ class GlobSemanticsTest(unittest.TestCase):
 
 class SeedRulesTest(unittest.TestCase):
     def test_seed_ruleset_parses_and_is_self_consistent(self):
-        doc = yaml.safe_load(SEED_RULES.read_text())
-        self.assertEqual(doc["version"], 1)
-        ids = [rule["id"] for rule in doc["rules"]]
+        files = sorted(SEED_RULES.rglob("*.yml"))
+        self.assertTrue(files)
+        docs = [yaml.safe_load(path.read_text()) for path in files]
+        for path, doc in zip(files, docs):
+            self.assertEqual(doc["version"], 1, path)
+        rules = [rule for doc in docs for rule in doc.get("rules") or []]
+        ids = [rule["id"] for rule in rules]
         self.assertEqual(len(ids), len(set(ids)))
-        for rule in doc["rules"]:
+        for rule in rules:
             self.assertTrue(rule.get("reason", "").strip(), rule["id"])
             kind = rule.get("kind", "forbidden-edge")
             if kind == "peer-isolation":
@@ -817,8 +821,9 @@ class SeedRulesTest(unittest.TestCase):
             else:
                 self.assertIn("from", rule)
                 self.assertIn("to", rule)
-        for name in doc.get("always_allowed", []):
-            self.assertIsInstance(name, str)
+        for doc in docs:
+            for name in doc.get("always_allowed") or []:
+                self.assertIsInstance(name, str)
 
 
 class EntrypointTest(unittest.TestCase):

@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: user-plane-must-not-depend-on-control-plane
+    kind: forbidden-edge
+    from:
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+      - include/ocudu/sdap/**
+      - lib/sdap/**
+      - include/ocudu/gtpu/**
+      - lib/gtpu/**
+      - include/ocudu/f1u/**
+      - lib/f1u/**
+    to:
+      - include/ocudu/rrc/**
+      - lib/rrc/**
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+    reason: User-plane bearer processing is configured by the control plane, never the other way round.
+      Including control-plane headers puts signalling types on the per-packet path.

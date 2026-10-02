@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: du-layers-must-not-depend-on-du
+    kind: forbidden-edge
+    from:
+      - include/ocudu/mac/**
+      - lib/mac/**
+      - include/ocudu/rlc/**
+      - lib/rlc/**
+      - include/ocudu/f1ap/**
+      - lib/f1ap/**
+      - include/ocudu/scheduler/**
+      - lib/scheduler/**
+      - include/ocudu/phy/**
+      - lib/phy/**
+      - include/ocudu/ofh/**
+      - lib/ofh/**
+      - include/ocudu/fapi/**
+      - include/ocudu/fapi_adaptor/**
+      - lib/fapi_adaptor/**
+    to:
+      - include/ocudu/du/**
+      - lib/du/**
+    reason: These subsystems sit below the DU manager, which drives them. Including DU headers inverts
+      that direction, drags DU configuration types into the cell-processing path and stops each subsystem
+      from being built or tested without the DU manager.
+  - id: du_high-must-not-depend-on-du_low
+    kind: forbidden-edge
+    from:
+      - include/ocudu/du/du_high/**
+      - lib/du/du_high/**
+    to:
+      - include/ocudu/du/du_low/**
+      - lib/du/du_low/**
+    reason: The two DU halves meet only through FAPI, and are deployed in separate processes in a split
+      setup. A direct include makes DU-high unbuildable without an L1.
+  - id: du_low-must-not-depend-on-du_high
+    kind: forbidden-edge
+    from:
+      - include/ocudu/du/du_low/**
+      - lib/du/du_low/**
+    to:
+      - include/ocudu/du/du_high/**
+      - lib/du/du_high/**
+    reason: The two DU halves meet only through FAPI, and are deployed in separate processes in a split
+      setup. A direct include makes DU-low unbuildable without an L2.
+  - id: du-must-not-depend-on-cu
+    kind: forbidden-edge
+    from:
+      - include/ocudu/du/**
+      - lib/du/**
+    to:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+      - include/ocudu/e1ap/**
+      - lib/e1ap/**
+    reason: DU and CU are separate network functions that talk over F1 only. Reaching across the split
+      couples the DU to CU internals and to interfaces it does not terminate.

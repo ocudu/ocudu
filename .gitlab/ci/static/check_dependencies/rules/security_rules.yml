@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: security-must-not-depend-on-upper-layers
+    kind: forbidden-edge
+    from:
+      - include/ocudu/security/**
+      - lib/security/**
+    to:
+      - include/ocudu/rrc/**
+      - lib/rrc/**
+      - include/ocudu/pdcp/**
+      - lib/pdcp/**
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+      - include/ocudu/ngap/**
+      - lib/ngap/**
+    reason: The security primitives are a leaf utility. Including any of their callers' headers makes
+      the ciphering and integrity code impossible to test in isolation.

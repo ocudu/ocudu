@@ -7,7 +7,7 @@
 """
 check_dependency_rules.py — Check a dependency tree against dependency rules.
 
-Reads the adjacency map written by gen_dependency_tree.py plus a rules file, and
+Reads the adjacency map written by gen_dependency_tree.py plus the defined rules, and
 reports every include edge a rule forbids.
 
 Four rule kinds:
@@ -43,8 +43,8 @@ Usage:
 Options:
   --tree <path>                Dependency tree YAML from gen_dependency_tree.py.
                                Default: ./ocudu_dependency_tree.yml.
-  --rules <path>                Rules YAML. Default: ocudu_dependency_rules.yml
-                               beside this script.
+  --rules <path>               Rules directory with YAML description.
+                               Default: ./rules
   --repo <path>                Project root, for re-reading a line to check for
                                a relative include. Default: the tree's
                                meta.repo_root.
@@ -163,9 +163,7 @@ def load_tree(path: Path) -> dict:
     return doc
 
 
-def load_rules(path: Path) -> dict:
-    if not path.is_file():
-        fail(f"{path}: no such rules file")
+def load_rules_file(path: Path) -> dict:
     try:
         doc = yaml.load(path.read_text(), Loader=LOADER)
     except (OSError, yaml.YAMLError) as exc:
@@ -174,10 +172,35 @@ def load_rules(path: Path) -> dict:
         fail(f"{path}: top level must be a mapping with `version` and `rules`")
     if doc.get("version") != 1:
         fail(f"{path}: unsupported rules version {doc.get('version')!r} (expected 1)")
-    rules = doc.get("rules")
-    if not isinstance(rules, list) or not rules:
-        fail(f"{path}: `rules` must be a non-empty list")
+    if not isinstance(doc.get("rules", []), list):
+        fail(f"{path}: `rules` must be a list")
+    if not isinstance(doc.get("always_allowed", []), list):
+        fail(f"{path}: `always_allowed` must be a list")
     return doc
+
+
+def load_rules(path: Path) -> dict:
+    """Merge the `rules` and `always_allowed` lists of every *.yaml under the directory `path`, of of the file
+    `path`."""
+    if path.is_dir():
+        files = sorted(path.rglob("*.yml"))
+        if not files:
+            fail(f"{path}: rules in directory holds no *.yml files")
+    elif path.is_file():
+        files = [path]
+    else:
+        fail(f"{path}: no such rules directory or file")
+
+    merged: dict = {"rules": [], "always_allowed": []}
+    for file in files:
+        doc = load_rules_file(file)
+        merged["rules"].extend(doc.get("rules") or [])
+        merged["always_allowed"].extend(doc.get("always_allowed") or [])
+
+    if not merged["rules"]:
+        fail(f"{path}: `rules` must be a non-empty list")
+
+    return merged
 
 
 def validate_rules(rules: list[dict], paths: set[str], dirs: set[str]) -> list[dict]:
@@ -384,7 +407,7 @@ def is_relative_include(repo: Path, source: str, line: int) -> bool:
 
 
 def violations_for(
-    rule: dict, edges: dict[str, list[str]], files: dict, always_allowed: "Matcher", repo: Path,
+        rule: dict, edges: dict[str, list[str]], files: dict, always_allowed: "Matcher", repo: Path,
 ) -> list[dict]:
     found = []
     kind = rule["kind"]
@@ -449,7 +472,7 @@ def main() -> int:
     args = parser.parse_args()
 
     script_dir = Path(__file__).resolve().parent
-    rules_path = Path(args.rules) if args.rules else script_dir / "ocudu_dependency_rules.yml"
+    rules_path = Path(args.rules) if args.rules else script_dir / "rules"
     tree_path = Path(args.tree) if args.tree else Path.cwd() / "ocudu_dependency_tree.yml"
 
     doc = load_tree(tree_path)
@@ -467,8 +490,8 @@ def main() -> int:
     known_dirs = {d for path in known_paths for d in ancestor_dirs(path)}
 
     rules_doc = load_rules(rules_path)
-    rules = validate_rules(rules_doc.get("rules", []), known_paths, known_dirs)
-    always_allowed = Matcher(as_list(rules_doc.get("always_allowed", []), "always_allowed", "<top-level>"))
+    rules = validate_rules(rules_doc["rules"], known_paths, known_dirs)
+    always_allowed = Matcher(as_list(rules_doc["always_allowed"], "always_allowed", "<top-level>"))
     for dead in always_allowed.unmatched(known_paths):
         errors.append(f"'always_allowed' pattern '{dead}' matches no files — stale rule after a rename?")
     if errors:
