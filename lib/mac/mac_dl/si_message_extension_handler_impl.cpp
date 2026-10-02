@@ -8,6 +8,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/units.h"
 #include <algorithm>
+#include <array>
 
 using namespace ocudu;
 
@@ -21,11 +22,13 @@ namespace {
 class si_message_extension_handler_impl : public si_message_extension_handler
 {
   using time_point = std::chrono::system_clock::time_point;
+
+  /// \brief A queued SI PDU and the slot it starts being broadcast at.
   struct si_pdu_update {
     /// Slot at which this update becomes active. If std::nullopt, it becomes active immediately.
-    std::optional<slot_point> slot;
-    units::bytes              len;
-    bcch_dl_sch_buffer        pdu_buffer;
+    std::optional<slot_point>                     slot;
+    units::bytes                                  len;
+    std::array<uint8_t, MAX_BCCH_DL_SCH_PDU_SIZE> pdu_buffer;
   };
 
 public:
@@ -40,8 +43,8 @@ public:
       si_msg_sibs.push_back(si_msg.sibs);
     }
 
-    /// Min si_period is 8 frames (80 ms), with size of 128, we can enqueue SIB19 PDUs for the next 10s.
-    static constexpr unsigned max_nof_msgs = 128;
+    /// Min si_period is 8 frames (80 ms), with size of 32, we can enqueue SIB19 PDUs for the next 2.5s.
+    static constexpr unsigned max_nof_msgs = 32;
     si_msg_queues.reserve(req.si_messages.size());
     for (unsigned i = 0; i != req.si_messages.size(); ++i) {
       si_msg_queues.emplace_back(std::make_unique<si_msg_queue_type>(max_nof_msgs));
@@ -86,7 +89,6 @@ public:
       logger.warning("SI-message extension idx={} tbs={} not yet initialized.", idx, tbs);
       return span<const uint8_t>();
     }
-    ocudu_assert(cur_si_msg[idx].pdu_buffer, "SI-message idx={} has null PDU buffer after dequeue", idx);
 
     if (cur_si_msg[idx].len.value() > tbs) {
       logger.warning("Failed to encode SI-message extension idx={}. Cause: "
@@ -98,7 +100,7 @@ public:
       return span<const uint8_t>{zeros_payload}.first(tbs);
     }
 
-    return span<const uint8_t>(cur_si_msg[idx].pdu_buffer->data(), tbs);
+    return span<const uint8_t>(cur_si_msg[idx].pdu_buffer.data(), tbs);
   }
 
   // See interface for documentation.
@@ -120,9 +122,10 @@ public:
                    tx_slot.has_value() ? fmt::to_string(*tx_slot) : "asap",
                    *si_msg_idx,
                    static_cast<unsigned>(pdu.length()));
-      si_pdu_update sib_pdu_update{
-          tx_slot, units::bytes{static_cast<unsigned>(pdu.length())}, make_linear_bcch_dl_sch_buffer(pdu)};
-      if (!si_msg_queues[*si_msg_idx]->try_push(sib_pdu_update)) {
+      // Everything the PDU does not fill is broadcast as padding, hence the zeroed buffer.
+      si_pdu_update sib_pdu_update{tx_slot, units::bytes{static_cast<unsigned>(pdu.length())}, {}};
+      copy_segments(pdu, span<uint8_t>(sib_pdu_update.pdu_buffer));
+      if (!si_msg_queues[*si_msg_idx]->try_push(std::move(sib_pdu_update))) {
         return false;
       }
     }

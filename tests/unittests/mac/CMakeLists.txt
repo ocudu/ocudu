@@ -23,6 +23,7 @@ add_executable(mac_test
         mac_rar_pdu_assembler_test.cpp
         sib_pdu_assembler_test.cpp
         si_message_controller_test.cpp
+        si_message_extension_handler_test.cpp
         ssb_assembler_test.cpp
         rnti_manager_test.cpp
         mac_rach_handler_test.cpp
