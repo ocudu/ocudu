@@ -250,6 +250,10 @@ void nrppa_impl::handle_initiating_message(const init_msg_s&                    
       handle_measurement_request(
           msg.value.meas_request(), std::get<cu_cp_amf_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
       break;
+    case nr_ppa_elem_procs_o::init_msg_c::types_opts::otdoa_info_request:
+      // OTDOA is an E-UTRA positioning method (TS 38.455 section 8.2.5).
+      logger.info("Ignoring {}. Cause: OTDOA is not supported", msg.value.type().to_string());
+      break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
       break;
