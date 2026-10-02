@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_positioning_measurement_procedure.h"
+#include "du_positioning_meas_timeout.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/positioning/ul_aoa_mapping.h"
 #include <algorithm>
@@ -93,6 +94,9 @@ async_task<void> positioning_measurement_procedure::handle_mac_meas_request()
       //       mandatory.
       mac_req.cells.push_back(prepare_mac_cell_positioning_request(cell_index, req.srs_carriers[0]));
     }
+
+    // The measurement completes on an SRS occasion, so the time the MAC waits follows the SRS period.
+    mac_req.timeout = get_positioning_meas_timeout(req.srs_carriers[0].srs_cfg, req.srs_carriers[0].ul_bwp_cfg.scs);
 
     // NOTE: we implicitly map mac_resps[i] to req.trp_meas_req_list[i].trp_id.
     // TODO: Review this assumption once the F1AP we defined which elements of Positioning measurement request are

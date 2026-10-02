@@ -88,3 +88,12 @@ TEST_F(du_positioning_measurement_procedure_test, when_mac_reports_no_measuremen
 
   ASSERT_TRUE(resp.pos_meas_list.empty());
 }
+
+TEST_F(du_positioning_measurement_procedure_test, when_request_is_sent_then_the_mac_timeout_follows_the_srs_period)
+{
+  run_procedure(make_request());
+
+  ASSERT_TRUE(mac.last_positioning_meas_request.has_value());
+  // Two periods of 80 slots at 15 kHz.
+  ASSERT_EQ(mac.last_positioning_meas_request->timeout, std::chrono::milliseconds{160});
+}

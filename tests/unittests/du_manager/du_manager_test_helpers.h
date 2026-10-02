@@ -417,10 +417,14 @@ public:
 
   void handle_paging_information(const paging_information& msg) override {}
 
+  std::optional<mac_positioning_measurement_request> last_positioning_meas_request;
+  mac_positioning_measurement_response               next_positioning_meas_response;
+
   async_task<mac_positioning_measurement_response>
   handle_positioning_measurement_request(const mac_positioning_measurement_request& msg) override
   {
-    return launch_no_op_task(mac_positioning_measurement_response{});
+    last_positioning_meas_request = msg;
+    return launch_no_op_task(mac_positioning_measurement_response{next_positioning_meas_response});
   }
 };
 
