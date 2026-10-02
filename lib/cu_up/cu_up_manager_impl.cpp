@@ -294,17 +294,22 @@ void cu_up_manager_impl::handle_pdcp_resume_required(cu_up_ue_index_t ue_index)
 ///
 async_task<void> cu_up_manager_impl::enable_test_mode()
 {
-  return launch_async<cu_up_enable_test_mode_routine>(test_mode_cfg, *this, *ue_mng, ngu_demux);
+  return launch_async<cu_up_enable_test_mode_routine>(
+      cu_up_enable_test_mode_routine_configuration{.test_mode_cfg = test_mode_cfg},
+      cu_up_enable_test_mode_routine_dependencies{.cu_up_mngr = *this, .ue_mngr = *ue_mng, .ngu_demux = ngu_demux});
 }
 
 async_task<void> cu_up_manager_impl::disable_test_mode()
 {
-  return launch_async<cu_up_disable_test_mode_routine>(*this, *ue_mng);
+  return launch_async<cu_up_disable_test_mode_routine>(
+      cu_up_disable_test_mode_routine_dependencies{.cu_up_mngr = *this, .ue_mngr = *ue_mng});
 }
 
 async_task<void> cu_up_manager_impl::reestablish_test_mode()
 {
-  return launch_async<cu_up_reestablish_test_mode_routine>(test_mode_cfg, *this, *ue_mng);
+  return launch_async<cu_up_reestablish_test_mode_routine>(
+      cu_up_reestablish_test_mode_routine_configuration{.test_mode_cfg = test_mode_cfg},
+      cu_up_reestablish_test_mode_routine_dependencies{.cu_up_mngr = *this, .ue_mngr = *ue_mng});
 }
 
 void cu_up_manager_impl::trigger_enable_test_mode()

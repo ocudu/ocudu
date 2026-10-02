@@ -6,21 +6,17 @@
 #include "e1ap_cu_up_reset_procedure.h"
 #include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
-#include <utility>
 
 using namespace ocudu;
 using namespace ocuup;
 
-e1ap_cu_up_reset_procedure::e1ap_cu_up_reset_procedure(asn1::e1ap::reset_s          reset_msg_,
-                                                       e1ap_ue_context_list&        ue_ctxt_list_,
-                                                       e1ap_cu_up_manager_notifier& cu_up_notifier_,
-                                                       e1ap_message_notifier&       tx_pdu_notifier_,
-                                                       e1ap_logger&                 logger_) :
-  reset_msg(std::move(reset_msg_)),
-  ue_ctxt_list(ue_ctxt_list_),
-  cu_up_notifier(cu_up_notifier_),
-  tx_pdu_notifier(tx_pdu_notifier_),
-  logger(logger_)
+e1ap_cu_up_reset_procedure::e1ap_cu_up_reset_procedure(const e1ap_cu_up_reset_procedure_configuration& cfg,
+                                                       const e1ap_cu_up_reset_procedure_dependencies&  dependencies) :
+  reset_msg(cfg.reset_msg),
+  ue_ctxt_list(dependencies.ue_ctxt_list),
+  cu_up_notifier(dependencies.cu_up_notifier),
+  tx_pdu_notifier(dependencies.tx_pdu_notifier),
+  logger(dependencies.logger)
 {
 }
 

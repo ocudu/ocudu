@@ -34,7 +34,7 @@ void cu_up_bearer_context_modification_routine::operator()(
         response.cause = cause_protocol_t::msg_not_compatible_with_receiver_state;
         CORO_EARLY_RETURN(response);
       }
-      ue_ctxt.get_logger().log_debug("Processing bearer conetxt status suspend indication");
+      ue_ctxt.get_logger().log_debug("Processing bearer context status suspend indication");
       ue_ctxt.begin_pdcp_buffering();
       ue_ctxt.notify_pdcp_pdu_processing_stopped();
       CORO_AWAIT(ue_ctxt.await_rx_crypto_tasks());
@@ -86,13 +86,14 @@ void cu_up_bearer_context_modification_routine::operator()(
     CORO_EARLY_RETURN(response);
   }
 
-  // Traverse list of PDU sessions to be setup/modified
+  // Traverse list of PDU sessions to be setup/modified.
   for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
     ue_ctxt.get_logger().log_debug("Setup/Modification of {}", pdu_session_item.pdu_session_id);
     // The BEARER CONTEXT MODIFICATION REQUEST carries no Direct Forwarding Path Availability IE.
     pdu_session_setup_result session_result = ue_ctxt.setup_pdu_session(pdu_session_item, false);
     process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, session_result);
-    response.success &= session_result.success; // Update final result.
+    // Update final result.
+    response.success &= session_result.success;
   }
 
   // Traverse list of PDU sessions to be modified.
@@ -106,7 +107,8 @@ void cu_up_bearer_context_modification_routine::operator()(
                                                          logger);
     ue_ctxt.get_logger().log_debug("Modification {}", session_result.success ? "successful" : "failed");
 
-    response.success &= session_result.success; // Update final result.
+    // Update final result.
+    response.success &= session_result.success;
   }
 
   // Traverse list of PDU sessions to be removed.
@@ -121,7 +123,7 @@ void cu_up_bearer_context_modification_routine::operator()(
     ue_ctxt.end_pdcp_buffering();
   }
 
-  // 3. Create response
+  // Create response.
   response.success = true;
   CORO_RETURN(response);
 }

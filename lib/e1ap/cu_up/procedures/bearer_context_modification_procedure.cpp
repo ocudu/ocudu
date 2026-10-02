@@ -35,7 +35,7 @@ void bearer_context_modification_procedure::operator()(coro_context<async_task<v
 {
   CORO_BEGIN(ctx);
 
-  if (not validate_request()) {
+  if (!validate_request()) {
     pdu_notifier.on_new_message(e1ap_msg);
     CORO_EARLY_RETURN();
   }
@@ -60,10 +60,10 @@ void bearer_context_modification_procedure::operator()(coro_context<async_task<v
   }
 
   // PDU sessions failed to setup.
-  if (not bearer_context_mod_response_msg.success) {
+  if (!bearer_context_mod_response_msg.success) {
     if (bearer_context_mod_response_msg.cause.has_value()) {
       e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
-          cause_to_asn1(bearer_context_mod_response_msg.cause.value());
+          cause_to_asn1(*bearer_context_mod_response_msg.cause);
     } else {
       e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_mod_fail()->cause =
           cause_to_asn1(e1ap_cause_radio_network_t::unspecified);

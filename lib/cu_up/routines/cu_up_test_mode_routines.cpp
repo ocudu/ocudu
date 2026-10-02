@@ -11,15 +11,13 @@ using namespace ocudu;
 using namespace ocuup;
 
 /// Enable test mode routine.
-cu_up_enable_test_mode_routine::cu_up_enable_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
-                                                               cu_up_manager_impl&    cu_up_mngr_,
-                                                               ue_manager&            ue_mngr_,
-                                                               gtpu_demux_ctrl&       ngu_demux_) :
-  test_mode_cfg(std::move(test_mode_cfg_)),
-  cu_up_mngr(cu_up_mngr_),
-  ue_mngr(ue_mngr_),
-  ngu_demux(ngu_demux_),
-  logger(ocudulog::fetch_basic_logger("CU-UP"))
+cu_up_enable_test_mode_routine::cu_up_enable_test_mode_routine(
+    const cu_up_enable_test_mode_routine_configuration& cfg,
+    const cu_up_enable_test_mode_routine_dependencies&  dependencies) :
+  test_mode_cfg(cfg.test_mode_cfg),
+  cu_up_mngr(dependencies.cu_up_mngr),
+  ue_mngr(dependencies.ue_mngr),
+  ngu_demux(dependencies.ngu_demux)
 {
 }
 
@@ -28,7 +26,7 @@ void cu_up_enable_test_mode_routine::operator()(coro_context<async_task<void>>& 
   CORO_BEGIN(ctx);
 
   // Setup bearer context(s) and a PDU session for each context.
-  for (uint32_t i = 0; i < test_mode_cfg.nof_ues; i++) {
+  for (unsigned i = 0, e = test_mode_cfg.nof_ues; i != e; ++i) {
     bearer_context_setup = fill_test_mode_bearer_context_setup_request(test_mode_cfg);
     setup_resp           = cu_up_mngr.handle_bearer_context_setup_request(bearer_context_setup);
     // Store list of NG-U test TEID(s).
@@ -52,9 +50,9 @@ void cu_up_enable_test_mode_routine::operator()(coro_context<async_task<void>>& 
 }
 
 /// Disable test mode routine.
-cu_up_disable_test_mode_routine::cu_up_disable_test_mode_routine(cu_up_manager_impl& cu_up_mngr_,
-                                                                 ue_manager&         ue_mngr_) :
-  cu_up_mngr(cu_up_mngr_), ue_mngr(ue_mngr_), logger(ocudulog::fetch_basic_logger("CU-UP"))
+cu_up_disable_test_mode_routine::cu_up_disable_test_mode_routine(
+    const cu_up_disable_test_mode_routine_dependencies& dependencies) :
+  cu_up_mngr(dependencies.cu_up_mngr), ue_mngr(dependencies.ue_mngr)
 {
 }
 
@@ -74,10 +72,10 @@ void cu_up_disable_test_mode_routine::operator()(coro_context<async_task<void>>&
 }
 
 /// Reestablish test mode routine.
-cu_up_reestablish_test_mode_routine::cu_up_reestablish_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
-                                                                         cu_up_manager_impl&    cu_up_mngr_,
-                                                                         ue_manager&            ue_mngr_) :
-  test_mode_cfg(std::move(test_mode_cfg_)), cu_up_mngr(cu_up_mngr_), ue_mngr(ue_mngr_)
+cu_up_reestablish_test_mode_routine::cu_up_reestablish_test_mode_routine(
+    const cu_up_reestablish_test_mode_routine_configuration& cfg,
+    const cu_up_reestablish_test_mode_routine_dependencies&  dependencies) :
+  test_mode_cfg(std::move(cfg.test_mode_cfg)), cu_up_mngr(dependencies.cu_up_mngr), ue_mngr(dependencies.ue_mngr)
 {
 }
 

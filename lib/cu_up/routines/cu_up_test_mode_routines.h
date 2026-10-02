@@ -6,21 +6,26 @@
 #pragma once
 
 #include "../cu_up_manager_impl.h"
-#include "../ue_manager.h"
-#include "ocudu/cu_up/cu_up_config.h"
-#include "ocudu/gtpu/gtpu_demux.h"
-#include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
+
+/// Holds the CU-CP enable test mode routine configuration parameters.
+struct cu_up_enable_test_mode_routine_configuration {
+  cu_up_test_mode_config test_mode_cfg;
+};
+
+/// Holds the CU-CP enable test mode routine dependencies.
+struct cu_up_enable_test_mode_routine_dependencies {
+  cu_up_manager_impl& cu_up_mngr;
+  ue_manager&         ue_mngr;
+  gtpu_demux_ctrl&    ngu_demux;
+};
 
 class cu_up_enable_test_mode_routine
 {
 public:
-  cu_up_enable_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
-                                 cu_up_manager_impl&    cu_up_mngr_,
-                                 ue_manager&            ue_mngr_,
-                                 gtpu_demux_ctrl&       ngu_demux_);
+  cu_up_enable_test_mode_routine(const cu_up_enable_test_mode_routine_configuration& cfg,
+                                 const cu_up_enable_test_mode_routine_dependencies&  dependencies);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -34,8 +39,6 @@ private:
 
   unique_timer test_mode_ue_timer;
 
-  ocudulog::basic_logger& logger;
-
   e1ap_bearer_context_setup_request        bearer_context_setup;
   e1ap_bearer_context_setup_response       setup_resp;
   std::vector<gtpu_teid_t>                 teids;
@@ -44,31 +47,46 @@ private:
   e1ap_bearer_context_modification_request bearer_modify;
 };
 
+/// Holds the CU-UP disable test mode routine dependencies.
+struct cu_up_disable_test_mode_routine_dependencies {
+  cu_up_manager_impl& cu_up_mngr;
+  ue_manager&         ue_mngr;
+};
+
 class cu_up_disable_test_mode_routine
 {
 public:
-  cu_up_disable_test_mode_routine(cu_up_manager_impl& cu_up_mngr_, ue_manager& ue_mngr_);
+  explicit cu_up_disable_test_mode_routine(const cu_up_disable_test_mode_routine_dependencies& dependencies);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
   static const char* name() { return "CU-UP disable test mode routine"; }
 
 private:
-  cu_up_manager_impl&     cu_up_mngr;
-  ue_manager&             ue_mngr;
-  ocudulog::basic_logger& logger;
+  cu_up_manager_impl& cu_up_mngr;
+  ue_manager&         ue_mngr;
 
   up_state_t                          st;
   up_state_t::iterator                st_it;
   e1ap_bearer_context_release_command release_command;
 };
 
+/// Holds the CU-UP reestablish test mode routine configuration parameters.
+struct cu_up_reestablish_test_mode_routine_configuration {
+  cu_up_test_mode_config test_mode_cfg;
+};
+
+/// Holds the CU-UP reestablish test mode routine dependencies.
+struct cu_up_reestablish_test_mode_routine_dependencies {
+  cu_up_manager_impl& cu_up_mngr;
+  ue_manager&         ue_mngr;
+};
+
 class cu_up_reestablish_test_mode_routine
 {
 public:
-  cu_up_reestablish_test_mode_routine(cu_up_test_mode_config test_mode_cfg_,
-                                      cu_up_manager_impl&    cu_up_mngr_,
-                                      ue_manager&            ue_mngr_);
+  cu_up_reestablish_test_mode_routine(const cu_up_reestablish_test_mode_routine_configuration& cfg,
+                                      const cu_up_reestablish_test_mode_routine_dependencies&  dependencies);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -84,5 +102,4 @@ private:
   e1ap_bearer_context_modification_request bearer_modify;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

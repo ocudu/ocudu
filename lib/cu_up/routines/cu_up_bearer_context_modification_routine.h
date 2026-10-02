@@ -6,11 +6,8 @@
 #pragma once
 
 #include "../ue_context.h"
-#include "ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
-#include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 class cu_up_bearer_context_modification_routine
 {
@@ -26,10 +23,9 @@ private:
   const e1ap_bearer_context_modification_request& msg;
   ocudulog::basic_logger&                         logger;
 
-  // Helper variables
-  e1ap_bearer_context_modification_response response = {};
-  security::sec_as_config                   security_info;
+  /// Helper variables.
+  e1ap_bearer_context_modification_response response      = {};
+  security::sec_as_config                   security_info = {};
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

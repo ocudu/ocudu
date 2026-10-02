@@ -7,8 +7,6 @@
 
 #include "common/e1ap_logger.h"
 #include "e1ap_ue_logger.h"
-#include "ocudu/e1ap/common/e1ap_types.h"
-#include <unordered_map>
 
 namespace ocudu::ocuup {
 
@@ -118,7 +116,7 @@ public:
       return;
     }
 
-    // Remove UE from lookup
+    // Remove UE from lookup.
     gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id = ue_index_to_ue_e1ap_id.at(ue_index);
     ue_index_to_ue_e1ap_id.erase(ue_index);
 
@@ -140,32 +138,32 @@ public:
       return gnb_cu_up_ue_e1ap_id_t::invalid;
     }
 
-    // Check if the next_cu_up_ue_e1ap_id is available
+    // Check if the next_cu_up_ue_e1ap_id is available.
     if (ues.find(next_cu_up_ue_e1ap_id) == ues.end()) {
       gnb_cu_up_ue_e1ap_id_t ret = next_cu_up_ue_e1ap_id;
-      // increase the next cu-up ue e1ap id
+      // Increase the next cu-up ue E1AP id.
       increase_next_cu_up_ue_e1ap_id();
       return ret;
     }
 
     // Find holes in the allocated IDs by iterating over all ids starting with the next_cu_up_ue_e1ap_id to find the
-    // available id
+    // available id.
     while (true) {
-      // Only iterate over ue_index_to_ue_e1ap_id (size=MAX NOF CU UEs)
-      // to avoid iterating over all possible values of gnb_cu_up_ue_e1ap_id_t (size=2^32-1)
+      // Only iterate over ue_index_to_ue_e1ap_id (size=MAX NOF CU UEs) to avoid iterating over all possible values of
+      // gnb_cu_up_ue_e1ap_id_t (size=2^32-1).
       auto it = std::find_if(ue_index_to_ue_e1ap_id.begin(), ue_index_to_ue_e1ap_id.end(), [this](auto& u) {
         return u.second == next_cu_up_ue_e1ap_id;
       });
 
-      // return the id if it is not already used
+      // Return the id if it is not already used.
       if (it == ue_index_to_ue_e1ap_id.end()) {
         gnb_cu_up_ue_e1ap_id_t ret = next_cu_up_ue_e1ap_id;
-        // increase the next cu-up ue e1ap id
+        // Increase the next cu-up ue E1AP id.
         increase_next_cu_up_ue_e1ap_id();
         return ret;
       }
 
-      // increase the next cu-up ue e1ap id and try again
+      // Increase the next cu-up ue E1AP id and try again.
       increase_next_cu_up_ue_e1ap_id();
     }
 
@@ -179,17 +177,19 @@ private:
   void increase_next_cu_up_ue_e1ap_id()
   {
     if (next_cu_up_ue_e1ap_id == gnb_cu_up_ue_e1ap_id_t::max) {
-      // reset cu-up ue e1ap id counter
+      // Reset cu-up ue E1AP id counter.
       next_cu_up_ue_e1ap_id = gnb_cu_up_ue_e1ap_id_t::min;
     } else {
-      // increase cu-up ue e1ap id counter
+      // Increase cu-up ue E1AP id counter.
       next_cu_up_ue_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(to_underlying(next_cu_up_ue_e1ap_id) + 1);
     }
   }
 
-  const uint32_t                                               max_nof_ues;
-  std::unordered_map<gnb_cu_up_ue_e1ap_id_t, e1ap_ue_context>  ues; // indexed by gnb_cu_up_ue_e1ap_id
-  std::unordered_map<cu_up_ue_index_t, gnb_cu_up_ue_e1ap_id_t> ue_index_to_ue_e1ap_id; // indexed by ue_index
+  const uint32_t max_nof_ues;
+  /// Indexed by gnb_cu_up_ue_e1ap_id.
+  std::unordered_map<gnb_cu_up_ue_e1ap_id_t, e1ap_ue_context> ues;
+  /// Indexed by ue_index.
+  std::unordered_map<cu_up_ue_index_t, gnb_cu_up_ue_e1ap_id_t> ue_index_to_ue_e1ap_id;
   e1ap_logger&                                                 logger;
 };
 

@@ -6,7 +6,6 @@
 #include "cu_up_e1_connection_loss_routine.h"
 #include "cu_up_setup_routine.h"
 #include "ocudu/support/async/async_timer.h"
-#include <utility>
 
 using namespace ocudu;
 using namespace ocuup;

@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "ocudu/cu_up/cu_up_e1_setup_notifier.h"
 #include "ocudu/e2/e2_node_component_config_collector.h"
 
 namespace ocudu::ocuup {
@@ -16,6 +15,7 @@ class e1_setup_e2_adapter final : public cu_up_e1_setup_complete_notifier
 public:
   explicit e1_setup_e2_adapter(e2_node_component_config_collector& collector_) : collector(collector_) {}
 
+  // See interface for documentation.
   void on_e1_setup_complete(byte_buffer req, byte_buffer resp, gnb_cu_up_id_t gnb_cu_up_id) override
   {
     collector.deliver(

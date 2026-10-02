@@ -6,21 +6,23 @@
 #pragma once
 
 #include "../e1ap_cu_up_connection_handler.h"
-#include "common/e1ap_logger.h"
 #include "e1ap_cu_up_event_manager.h"
-#include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
-/// This coroutines handles the E1AP CU UP release procedure as per TS 37.483, 8.2.7.2.2.
+/// Holds the E1AP CU-UP release procedure dependencies.
+struct e1ap_cu_up_release_procedure_dependencies {
+  e1ap_cu_up_connection_handler& cu_up_conn_handler;
+  e1ap_message_notifier&         tx_pdu_notifier;
+  e1ap_event_manager&            ev_mng;
+  e1ap_logger&                   logger;
+};
+
+/// These coroutines handles the E1AP CU UP release procedure as per TS 37.483, 8.2.7.2.2.
 class e1ap_cu_up_release_procedure
 {
 public:
-  e1ap_cu_up_release_procedure(e1ap_cu_up_connection_handler& cu_up_conn_handler_,
-                               e1ap_message_notifier&         tx_pdu_notifier_,
-                               e1ap_event_manager&            ev_mng_,
-                               e1ap_logger&                   logger_);
+  explicit e1ap_cu_up_release_procedure(const e1ap_cu_up_release_procedure_dependencies& dependencies);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -39,5 +41,4 @@ private:
   e1ap_transaction transaction;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

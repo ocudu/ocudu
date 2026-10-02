@@ -17,7 +17,7 @@ class e1ap_cu_up_metrics_collector
   bool                         enabled = false;
 
 public:
-  e1ap_cu_up_metrics_collector(bool enabled_) : enabled(enabled_) {}
+  explicit e1ap_cu_up_metrics_collector(bool enabled_) : enabled(enabled_) {}
 
   bool is_enabled() const { return enabled; }
 
@@ -26,7 +26,7 @@ public:
   e1ap_cu_up_metrics_container get_metrics() const
   {
     ocudu_assert(enabled, "Trying to get metrics, but metrics are disabled.");
-    if (not enabled) {
+    if (!enabled) {
       return {};
     }
     return metrics;
@@ -35,7 +35,7 @@ public:
   e1ap_cu_up_metrics_container get_metrics_and_reset()
   {
     ocudu_assert(enabled, "Trying to get metrics, but metrics are disabled.");
-    if (not enabled) {
+    if (!enabled) {
       return {};
     }
     e1ap_cu_up_metrics_container ret = get_metrics();
@@ -45,7 +45,7 @@ public:
 
   void add_successful_context_setup()
   {
-    if (not enabled) {
+    if (!enabled) {
       return;
     }
     metrics.nof_successful_bearer_context_setup++;
@@ -53,7 +53,7 @@ public:
 
   void add_successful_context_modification()
   {
-    if (not enabled) {
+    if (!enabled) {
       return;
     }
     metrics.nof_successful_bearer_context_modification++;
@@ -61,7 +61,7 @@ public:
 
   void add_context_release(std::chrono::microseconds proc_dur)
   {
-    if (not enabled) {
+    if (!enabled) {
       return;
     }
     metrics.nof_bearer_context_release++;
@@ -76,4 +76,5 @@ public:
     metrics.max_release_latency = std::max(proc_dur, metrics.max_release_latency);
   }
 };
+
 } // namespace ocudu::ocuup

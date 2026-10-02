@@ -20,12 +20,14 @@ public:
 
   void disconnect() { cu_up_handler = nullptr; }
 
+  // See interface for documentation.
   e1ap_bearer_context_setup_response
   on_bearer_context_setup_request_received(const e1ap_bearer_context_setup_request& msg) override
   {
     if (cu_up_handler == nullptr) {
       logger.warning("Could not handle context setup command, no CU-UP handler present");
-      return {}; // return failure to setup bearer context
+      // Return failure to set up bearer context.
+      return {};
     }
     return cu_up_handler->handle_bearer_context_setup_request(msg);
   }
@@ -35,7 +37,8 @@ public:
   {
     if (cu_up_handler == nullptr) {
       logger.warning("Could not handle context modification command, no CU-UP handler present. ue={}", msg.ue_index);
-      return {}; // return failure to modify bearer context
+      // Return failure to modify bearer context.
+      return {};
     }
     return cu_up_handler->handle_bearer_context_modification_request(msg);
   }

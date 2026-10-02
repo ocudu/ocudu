@@ -7,18 +7,8 @@
 
 #include "../common/e1ap_asn1_converters.h"
 #include "../common/e1ap_logger.h"
-#include "ocudu/asn1/e1ap/e1ap.h"
-#include "ocudu/asn1/e1ap/e1ap_ies.h"
-#include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
-#include "ocudu/e1ap/common/e1_setup_messages.h"
-#include "ocudu/e1ap/common/e1ap_types.h"
-#include "ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
-#include "ocudu/ran/bcd_helper.h"
-#include "ocudu/ran/qos/five_qi.h"
-#include "ocudu/ran/qos/qos_prio_level.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(const cu_up_e1_setup_request& request)
 {
@@ -30,7 +20,7 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
   // Fill gNB CU-UP name.
   if (request.gnb_cu_up_name.has_value()) {
     asn1_request->gnb_cu_up_name_present = true;
-    asn1_request->gnb_cu_up_name.from_string(request.gnb_cu_up_name.value());
+    asn1_request->gnb_cu_up_name.from_string(*request.gnb_cu_up_name);
   }
 
   // Fill CN support.
@@ -76,21 +66,19 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
         // Fill QoS prio level.
         if (ran_item.non_dyn_5qi_desc.qos_prio_level.has_value()) {
           asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level_present = true;
-          asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level =
-              ran_item.non_dyn_5qi_desc.qos_prio_level.value().value();
+          asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level = ran_item.non_dyn_5qi_desc.qos_prio_level->value();
         }
 
         // Fill averaging window.
         if (ran_item.non_dyn_5qi_desc.averaging_win.has_value()) {
           asn1_ran_item.non_dyn_5qi_descriptor.averaging_win_present = true;
-          asn1_ran_item.non_dyn_5qi_descriptor.averaging_win         = ran_item.non_dyn_5qi_desc.averaging_win.value();
+          asn1_ran_item.non_dyn_5qi_descriptor.averaging_win         = *ran_item.non_dyn_5qi_desc.averaging_win;
         }
 
         // Fill max data burst.
         if (ran_item.non_dyn_5qi_desc.max_data_burst_volume.has_value()) {
           asn1_ran_item.non_dyn_5qi_descriptor.max_data_burst_volume_present = true;
-          asn1_ran_item.non_dyn_5qi_descriptor.max_data_burst_volume =
-              ran_item.non_dyn_5qi_desc.max_data_burst_volume.value();
+          asn1_ran_item.non_dyn_5qi_descriptor.max_data_burst_volume = *ran_item.non_dyn_5qi_desc.max_data_burst_volume;
         }
 
         asn1_plmn_item.qos_params_support_list.ng_ran_qos_support_list.push_back(asn1_ran_item);
@@ -103,7 +91,7 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
   // Fill gNB CU-UP capacity.
   if (request.gnb_cu_up_capacity.has_value()) {
     asn1_request->gnb_cu_up_capacity_present = true;
-    asn1_request->gnb_cu_up_capacity         = request.gnb_cu_up_capacity.value();
+    asn1_request->gnb_cu_up_capacity         = *request.gnb_cu_up_capacity;
   }
 
   return asn1_request;
@@ -237,7 +225,7 @@ inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
       // Fill security indication.
       asn1_to_security_indication(pdu_session_res_item.security_ind, asn1_pdu_session_res_item.security_ind);
 
-      // Fill DRB to setup list NG-RAN.
+      // Fill DRB to set up list NG-RAN.
       for (const auto& asn1_drb_to_setup_item : asn1_pdu_session_res_item.drb_to_setup_list_ng_ran) {
         e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
         fill_e1ap_drb_to_setup_item(drb_to_setup_item, asn1_drb_to_setup_item);
@@ -315,20 +303,20 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     // Fill Security Result.
     if (res_setup_item.security_result.has_value()) {
       asn1_res_setup_item.security_result_present = true;
-      security_result_to_asn1(asn1_res_setup_item.security_result, res_setup_item.security_result.value());
+      security_result_to_asn1(asn1_res_setup_item.security_result, *res_setup_item.security_result);
     }
 
     // Fill PDU Session Data Forwarding Info Response.
     if (res_setup_item.pdu_session_data_forwarding_info_resp.has_value()) {
       asn1_res_setup_item.pdu_session_data_forwarding_info_resp_present = true;
       e1ap_data_forwarding_info_to_asn1(asn1_res_setup_item.pdu_session_data_forwarding_info_resp,
-                                        res_setup_item.pdu_session_data_forwarding_info_resp.value());
+                                        *res_setup_item.pdu_session_data_forwarding_info_resp);
     }
 
     // Fill NG DL UP Unchanged.
     if (res_setup_item.ng_dl_up_unchanged.has_value()) {
       asn1_res_setup_item.ng_dl_up_unchanged_present = true;
-      if (res_setup_item.ng_dl_up_unchanged.value()) {
+      if (*res_setup_item.ng_dl_up_unchanged) {
         asn1_res_setup_item.ng_dl_up_unchanged.value =
             asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_opts::options::true_value;
       } else {
@@ -386,7 +374,7 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
   // Fill bearer context status change.
   if (asn1_request->bearer_context_status_change_present) {
     request.bearer_context_status_change =
-        static_cast<e1ap_bearer_context_status_change>((int)asn1_request->bearer_context_status_change);
+        static_cast<e1ap_bearer_context_status_change>(static_cast<int>(asn1_request->bearer_context_status_change));
   }
 
   // Fill new UL TNL info required.
@@ -413,7 +401,7 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
     const auto& asn1_ng_ran_bearer_context_mod_request =
         asn1_request->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request();
 
-    // Fill PDU session res to setup mod list.
+    // Fill PDU session res to set up mod list.
     if (asn1_ng_ran_bearer_context_mod_request.pdu_session_res_to_setup_mod_list_present) {
       for (const auto& asn1_res_to_setup_mod_item :
            asn1_ng_ran_bearer_context_mod_request.pdu_session_res_to_setup_mod_list) {
@@ -458,7 +446,7 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
               std::chrono::seconds(asn1_res_to_setup_mod_item.pdu_session_inactivity_timer);
         }
 
-        // Fill DRB to setup mod list NG-RAN.
+        // Fill DRB to set up mod list NG-RAN.
         for (const auto& asn1_drb_to_setup_mod_item_ng_ran : asn1_res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran) {
           e1ap_drb_to_setup_item_ng_ran drb_to_setup_mod_item_ng_ran;
 
@@ -524,7 +512,7 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
               e1ap_asn1_to_data_forwarding_info(asn1_res_to_mod_item.pdu_session_data_forwarding_info);
         }
 
-        // Fill DRB to setup list.
+        // Fill DRB to set up list.
         for (const auto& asn1_drb_to_setup_item : asn1_res_to_mod_item.drb_to_setup_list_ng_ran) {
           e1ap_drb_to_setup_item_ng_ran drb_to_setup_item;
           fill_e1ap_drb_to_setup_item(drb_to_setup_item, asn1_drb_to_setup_item);
@@ -561,57 +549,81 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
           }
           // Fill DL UP params.
           for (const auto& asn1_dl_up_param : asn1_drb_to_mod_item.dl_up_params) {
-            e1ap_up_params_item dl_up_params;
-            dl_up_params.cell_group_id = asn1_dl_up_param.cell_group_id;
-            dl_up_params.up_tnl_info   = asn1_to_up_transport_layer_info(asn1_dl_up_param.up_tnl_info);
+            e1ap_up_params_item dl_up_params{.up_tnl_info =
+                                                 asn1_to_up_transport_layer_info(asn1_dl_up_param.up_tnl_info),
+                                             .cell_group_id = asn1_dl_up_param.cell_group_id};
             drb_to_mod_item.dl_up_params.push_back(dl_up_params);
           }
           // Fill cell group to add.
           for (const auto& asn1_cell_group_item_to_add : asn1_drb_to_mod_item.cell_group_to_add) {
-            e1ap_cell_group_info_item cell_group_item_to_add;
-            cell_group_item_to_add.cell_group_id = asn1_cell_group_item_to_add.cell_group_id;
+            std::optional<e1ap_ul_cfg> ul_cfg = std::nullopt;
             if (asn1_cell_group_item_to_add.ul_cfg_present) {
-              cell_group_item_to_add.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_item_to_add.ul_cfg);
+              ul_cfg = static_cast<e1ap_ul_cfg>(static_cast<int>(asn1_cell_group_item_to_add.ul_cfg));
             }
+
+            std::optional<e1ap_dl_tx_stop> dl_tx_stop = std::nullopt;
             if (asn1_cell_group_item_to_add.dl_tx_stop_present) {
-              cell_group_item_to_add.dl_tx_stop =
-                  static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_item_to_add.dl_tx_stop);
+              dl_tx_stop = static_cast<e1ap_dl_tx_stop>(static_cast<int>(asn1_cell_group_item_to_add.dl_tx_stop));
             }
+
+            std::optional<e1ap_rat_type> rat_type = std::nullopt;
             if (asn1_cell_group_item_to_add.rat_type_present) {
-              cell_group_item_to_add.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_item_to_add.rat_type);
+              rat_type = static_cast<e1ap_rat_type>(static_cast<int>(asn1_cell_group_item_to_add.rat_type));
             }
+
+            e1ap_cell_group_info_item cell_group_item_to_add{.cell_group_id = asn1_cell_group_item_to_add.cell_group_id,
+                                                             .ul_cfg        = ul_cfg,
+                                                             .dl_tx_stop    = dl_tx_stop,
+                                                             .rat_type      = rat_type};
+
             drb_to_mod_item.cell_group_to_add.push_back(cell_group_item_to_add);
           }
           // Fill cell group to modify.
           for (const auto& asn1_cell_group_item_to_mod : asn1_drb_to_mod_item.cell_group_to_modify) {
-            e1ap_cell_group_info_item cell_group_item_to_mod;
-            cell_group_item_to_mod.cell_group_id = asn1_cell_group_item_to_mod.cell_group_id;
+            std::optional<e1ap_ul_cfg> ul_cfg = std::nullopt;
             if (asn1_cell_group_item_to_mod.ul_cfg_present) {
-              cell_group_item_to_mod.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_item_to_mod.ul_cfg);
+              ul_cfg = static_cast<e1ap_ul_cfg>(static_cast<int>(asn1_cell_group_item_to_mod.ul_cfg));
             }
+
+            std::optional<e1ap_dl_tx_stop> dl_tx_stop = std::nullopt;
             if (asn1_cell_group_item_to_mod.dl_tx_stop_present) {
-              cell_group_item_to_mod.dl_tx_stop =
-                  static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_item_to_mod.dl_tx_stop);
+              dl_tx_stop = static_cast<e1ap_dl_tx_stop>(static_cast<int>(asn1_cell_group_item_to_mod.dl_tx_stop));
             }
+
+            std::optional<e1ap_rat_type> rat_type = std::nullopt;
             if (asn1_cell_group_item_to_mod.rat_type_present) {
-              cell_group_item_to_mod.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_item_to_mod.rat_type);
+              rat_type = static_cast<e1ap_rat_type>(static_cast<int>(asn1_cell_group_item_to_mod.rat_type));
             }
+
+            e1ap_cell_group_info_item cell_group_item_to_mod{.cell_group_id = asn1_cell_group_item_to_mod.cell_group_id,
+                                                             .ul_cfg        = ul_cfg,
+                                                             .dl_tx_stop    = dl_tx_stop,
+                                                             .rat_type      = rat_type};
+
             drb_to_mod_item.cell_group_to_modify.push_back(cell_group_item_to_mod);
           }
           // Fill cell group to remove.
           for (const auto& asn1_cell_group_item_to_rem : asn1_drb_to_mod_item.cell_group_to_rem) {
-            e1ap_cell_group_info_item cell_group_item_to_rem;
-            cell_group_item_to_rem.cell_group_id = asn1_cell_group_item_to_rem.cell_group_id;
+            std::optional<e1ap_ul_cfg> ul_cfg = std::nullopt;
             if (asn1_cell_group_item_to_rem.ul_cfg_present) {
-              cell_group_item_to_rem.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_item_to_rem.ul_cfg);
+              ul_cfg = static_cast<e1ap_ul_cfg>(static_cast<int>(asn1_cell_group_item_to_rem.ul_cfg));
             }
+
+            std::optional<e1ap_dl_tx_stop> dl_tx_stop = std::nullopt;
             if (asn1_cell_group_item_to_rem.dl_tx_stop_present) {
-              cell_group_item_to_rem.dl_tx_stop =
-                  static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_item_to_rem.dl_tx_stop);
+              dl_tx_stop = static_cast<e1ap_dl_tx_stop>(static_cast<int>(asn1_cell_group_item_to_rem.dl_tx_stop));
             }
+
+            std::optional<e1ap_rat_type> rat_type = std::nullopt;
             if (asn1_cell_group_item_to_rem.rat_type_present) {
-              cell_group_item_to_rem.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_item_to_rem.rat_type);
+              rat_type = static_cast<e1ap_rat_type>(static_cast<int>(asn1_cell_group_item_to_rem.rat_type));
             }
+
+            e1ap_cell_group_info_item cell_group_item_to_rem{.cell_group_id = asn1_cell_group_item_to_rem.cell_group_id,
+                                                             .ul_cfg        = ul_cfg,
+                                                             .dl_tx_stop    = dl_tx_stop,
+                                                             .rat_type      = rat_type};
+
             drb_to_mod_item.cell_group_to_rem.push_back(cell_group_item_to_rem);
           }
           // Fill flow map info.
@@ -659,7 +671,8 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
   // Fill activity notif level.
   if (asn1_request->activity_notif_level_present) {
-    request.activity_notif_level = static_cast<e1ap_activity_notif_level>((int)asn1_request->activity_notif_level);
+    request.activity_notif_level =
+        static_cast<e1ap_activity_notif_level>(static_cast<int>(asn1_request->activity_notif_level));
   }
 
   return true;
@@ -683,7 +696,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Fill security result.
       if (res_setup_mod_item.security_result.has_value()) {
         asn1_res_setup_mod_item.security_result_present = true;
-        security_result_to_asn1(asn1_res_setup_mod_item.security_result, res_setup_mod_item.security_result.value());
+        security_result_to_asn1(asn1_res_setup_mod_item.security_result, *res_setup_mod_item.security_result);
       }
 
       // Fill NG DL UP TNL info.
@@ -693,7 +706,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.has_value()) {
         asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp_present = true;
         e1ap_data_forwarding_info_to_asn1(asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp,
-                                          res_setup_mod_item.pdu_session_data_forwarding_info_resp.value());
+                                          *res_setup_mod_item.pdu_session_data_forwarding_info_resp);
       }
 
       // Fill DRB setup mod list NG-RAN.
@@ -734,21 +747,20 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Fill NG DL UP TNL info.
       if (res_modified_item.ng_dl_up_tnl_info.has_value()) {
         asn1_res_modified_item.ng_dl_up_tnl_info_present = true;
-        up_transport_layer_info_to_asn1(asn1_res_modified_item.ng_dl_up_tnl_info,
-                                        res_modified_item.ng_dl_up_tnl_info.value());
+        up_transport_layer_info_to_asn1(asn1_res_modified_item.ng_dl_up_tnl_info, *res_modified_item.ng_dl_up_tnl_info);
       }
 
       // Fill security result.
       if (res_modified_item.security_result.has_value()) {
         asn1_res_modified_item.security_result_present = true;
-        security_result_to_asn1(asn1_res_modified_item.security_result, res_modified_item.security_result.value());
+        security_result_to_asn1(asn1_res_modified_item.security_result, *res_modified_item.security_result);
       }
 
       // Fill PDU session data forwarding info response.
       if (res_modified_item.pdu_session_data_forwarding_info_resp.has_value()) {
         asn1_res_modified_item.pdu_session_data_forwarding_info_resp_present = true;
         e1ap_data_forwarding_info_to_asn1(asn1_res_modified_item.pdu_session_data_forwarding_info_resp,
-                                          res_modified_item.pdu_session_data_forwarding_info_resp.value());
+                                          *res_modified_item.pdu_session_data_forwarding_info_resp);
       }
 
       // Fill DRB setup list NG-RAN.
@@ -777,23 +789,21 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
           asn1_drb_modified_item.pdcp_sn_status_info_present = true;
 
           // Fill PDCP status transfer UL.
-          if (drb_modified_item.pdcp_sn_status_info.value()
-                  .pdcp_status_transfer_ul.receive_status_of_pdcp_sdu.has_value()) {
+          if (drb_modified_item.pdcp_sn_status_info->pdcp_status_transfer_ul.receive_status_of_pdcp_sdu.has_value()) {
             asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu_present = true;
             asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu.from_number(
-                drb_modified_item.pdcp_sn_status_info.value()
-                    .pdcp_status_transfer_ul.receive_status_of_pdcp_sdu.value());
+                *drb_modified_item.pdcp_sn_status_info->pdcp_status_transfer_ul.receive_status_of_pdcp_sdu);
           }
           asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn =
-              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.pdcp_sn;
+              drb_modified_item.pdcp_sn_status_info->pdcp_status_transfer_ul.count_value.pdcp_sn;
           asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn =
-              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_ul.count_value.hfn;
+              drb_modified_item.pdcp_sn_status_info->pdcp_status_transfer_ul.count_value.hfn;
 
           // Fill PDCP status transfer DL.
           asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn =
-              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_dl.pdcp_sn;
+              drb_modified_item.pdcp_sn_status_info->pdcp_status_transfer_dl.pdcp_sn;
           asn1_drb_modified_item.pdcp_sn_status_info.pdcp_status_transfer_dl.hfn =
-              drb_modified_item.pdcp_sn_status_info.value().pdcp_status_transfer_dl.hfn;
+              drb_modified_item.pdcp_sn_status_info->pdcp_status_transfer_dl.hfn;
         }
 
         // Fill flow setup list.
@@ -836,5 +846,4 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
   }
 }
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

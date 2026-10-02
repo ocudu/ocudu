@@ -11,15 +11,25 @@
 
 namespace ocudu::ocuup {
 
+/// Holds the E1AP CU-UP setup procedure configuration parameters.
+struct e1ap_cu_up_setup_procedure_configuration {
+  const cu_up_e1_setup_request& request;
+};
+
+/// Holds the E1AP CU-UP setup procedure dependencies.
+struct e1ap_cu_up_setup_procedure_dependencies {
+  e1ap_message_notifier& cu_cp_notif;
+  e1ap_event_manager&    ev_mng;
+  e1ap_logger&           logger;
+  timer_factory          timers;
+};
+
 /// E1 Setup Procedure for the gNB-CU-UP as per TS 38.463, 8.2.3.
 class e1ap_cu_up_setup_procedure
 {
 public:
-  e1ap_cu_up_setup_procedure(const cu_up_e1_setup_request& request_,
-                             e1ap_message_notifier&        cu_cp_notif_,
-                             e1ap_event_manager&           ev_mng_,
-                             timer_factory                 timers_,
-                             e1ap_logger&                  logger_);
+  e1ap_cu_up_setup_procedure(const e1ap_cu_up_setup_procedure_configuration& cfg,
+                             const e1ap_cu_up_setup_procedure_dependencies&  dependencies);
 
   void operator()(coro_context<async_task<cu_up_e1_setup_response>>& ctx);
 

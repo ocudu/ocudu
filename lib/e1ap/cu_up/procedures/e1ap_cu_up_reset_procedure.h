@@ -6,23 +6,30 @@
 #pragma once
 
 #include "cu_up/ue_context/e1ap_cu_up_ue_context.h"
-#include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
-#include "ocudu/support/async/async_task.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
-/// This coroutines handles the E1AP CU UP release procedure as per TS 37.483, 8.2.7.2.2.
+/// Holds the E1AP CU-UP reset procedure configuration parameters.
+struct e1ap_cu_up_reset_procedure_configuration {
+  asn1::e1ap::reset_s reset_msg;
+};
+
+/// Holds the E1AP CU-UP reset procedure dependencies.
+struct e1ap_cu_up_reset_procedure_dependencies {
+  e1ap_ue_context_list&        ue_ctxt_list;
+  e1ap_cu_up_manager_notifier& cu_up_notifier;
+  e1ap_message_notifier&       tx_pdu_notifier;
+  e1ap_logger&                 logger;
+};
+
+/// These coroutines handles the E1AP CU UP release procedure as per TS 37.483, 8.2.7.2.2.
 class e1ap_cu_up_reset_procedure
 {
 public:
-  e1ap_cu_up_reset_procedure(asn1::e1ap::reset_s          reset_msg_,
-                             e1ap_ue_context_list&        ue_ctxt_list_,
-                             e1ap_cu_up_manager_notifier& cu_up_notifier_,
-                             e1ap_message_notifier&       tx_pdu_notifier_,
-                             e1ap_logger&                 logger_);
+  e1ap_cu_up_reset_procedure(const e1ap_cu_up_reset_procedure_configuration& cfg,
+                             const e1ap_cu_up_reset_procedure_dependencies&  dependencies);
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -40,5 +47,4 @@ private:
   e1ap_logger&                 logger;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

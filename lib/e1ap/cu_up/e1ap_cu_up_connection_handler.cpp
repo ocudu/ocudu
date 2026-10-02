@@ -30,17 +30,15 @@ private:
 
 } // namespace
 
-e1ap_cu_up_connection_handler::e1ap_cu_up_connection_handler(cu_up_e1_index_t                        e1_index_,
-                                                             e1_connection_client&                   e1_client_handler_,
-                                                             e1ap_message_handler&                   e1ap_pdu_handler_,
-                                                             e1ap_cu_up_manager_connection_notifier& cu_up_manager_,
-                                                             task_executor&                          cu_up_executor_) :
-  e1_index(e1_index_),
-  e1_client_handler(e1_client_handler_),
-  e1ap_pdu_handler(e1ap_pdu_handler_),
-  cu_up_manager(cu_up_manager_),
-  cu_up_executor(cu_up_executor_),
-  logger(ocudulog::fetch_basic_logger("CU-UP-E1"))
+e1ap_cu_up_connection_handler::e1ap_cu_up_connection_handler(
+    const e1ap_cu_up_connection_handler_configuration& cfg,
+    const e1ap_cu_up_connection_handler_dependencies&  dependencies) :
+  e1_index(cfg.e1_index),
+  e1_client_handler(dependencies.e1ap_client_handler),
+  e1ap_pdu_handler(dependencies.e1ap_pdu_handler),
+  cu_up_manager(dependencies.cu_up_manager),
+  cu_up_executor(dependencies.cu_up_executor),
+  logger(dependencies.logger)
 {
 }
 
@@ -48,7 +46,7 @@ e1ap_cu_up_connection_handler::~e1ap_cu_up_connection_handler()
 {
   // Check whether the N2 TNL association was previously shutdown as part of the E1 Removal procedure.
   if (is_connected()) {
-    logger.warning("E1 TNL association was not properly shutdown before E1AP shutdown. Forcing it...");
+    logger.log_warning("E1 TNL association was not properly shutdown before E1AP shutdown. Forcing it...");
   }
 
   // Tear down Tx PDU notifier, which will trigger the shutdown of the Rx path as well.
@@ -91,9 +89,10 @@ void e1ap_cu_up_connection_handler::handle_connection_loss(unsigned session)
   // executor.
   // Note: We use defer, because we want to handle all the already enqueued E1AP events before the association
   // shutdown. This way no pending task is left pointing to an inexistent E1AP context.
-  while (not cu_up_executor.defer(handle_loss_of_session)) {
+  while (!cu_up_executor.defer(handle_loss_of_session)) {
     // Note: This defer cannot fail. Keep trying.
-    logger.warning("Failed to dispatch handling of E1 Rx path disconnection. Cause: Task queue is full. Retrying...");
+    logger.log_warning(
+        "Failed to dispatch handling of E1 Rx path disconnection. Cause: Task queue is full. Retrying...");
     std::this_thread::sleep_for(std::chrono::microseconds{10});
   }
 }

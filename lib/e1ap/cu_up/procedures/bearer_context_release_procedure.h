@@ -7,26 +7,32 @@
 
 #include "cu_up/e1ap_cu_up_metrics_collector.h"
 #include "cu_up/ue_context/e1ap_cu_up_ue_context.h"
-#include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
-#include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
-#include "ocudu/ocudulog/logger.h"
-#include "ocudu/support/async/async_task.h"
 
 namespace ocudu::ocuup {
+
+/// Holds the bearer context release procedure configuration parameters.
+struct bearer_context_release_procedure_configuration {
+  cu_up_ue_index_t ue_index;
+};
+
+/// Holds the bearer context release procedure dependencies.
+struct bearer_context_release_procedure_dependencies {
+  const asn1::e1ap::bearer_context_release_cmd_s& cmd;
+  e1ap_message_notifier&                          pdu_notifier;
+  e1ap_cu_up_manager_notifier&                    cu_up_notifier;
+  e1ap_cu_up_metrics_collector&                   metrics;
+  e1ap_logger&                                    logger;
+};
 
 /// E1 Setup Procedure for the CU-UP as per TS 38.463, section TODO.
 class bearer_context_release_procedure
 {
 public:
-  bearer_context_release_procedure(cu_up_ue_index_t                                ue_index,
-                                   const asn1::e1ap::bearer_context_release_cmd_s& cmd_,
-                                   e1ap_message_notifier&                          pdu_notifier_,
-                                   e1ap_cu_up_manager_notifier&                    cu_up_notifier_,
-                                   e1ap_cu_up_metrics_collector&                   metrics_,
-                                   e1ap_logger&                                    logger_);
+  bearer_context_release_procedure(const bearer_context_release_procedure_configuration& cfg,
+                                   const bearer_context_release_procedure_dependencies&  dependencies);
 
   ~bearer_context_release_procedure();
 
@@ -42,7 +48,7 @@ private:
   e1ap_cu_up_metrics_collector&                  metrics;
   e1ap_logger&                                   logger;
 
-  // local variables
+  /// Local variables.
   e1ap_message                        e1ap_msg                   = {};
   e1ap_bearer_context_release_command bearer_context_release_cmd = {};
 

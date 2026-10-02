@@ -4,9 +4,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_setup_routine.h"
-#include "ocudu/e1ap/common/e1_setup_messages.h"
-#include "ocudu/ocudulog/ocudulog.h"
-#include <utility>
 
 using namespace ocudu;
 using namespace ocuup;
@@ -50,20 +47,21 @@ void cu_up_setup_routine::operator()(coro_context<async_task<bool>>& ctx)
 
 async_task<cu_up_e1_setup_response> cu_up_setup_routine::start_cu_up_e1_setup_request()
 {
-  // Prepare request to send to E1.
-  cu_up_e1_setup_request request_msg = {};
-
-  request_msg.gnb_cu_up_id   = to_underlying(cu_up_id);
-  request_msg.gnb_cu_up_name = cu_up_name;
-
-  // We only support 5G
-  request_msg.cn_support = cu_up_cn_support_t::c_5gc;
-
+  std::vector<supported_plmns_item_t> supported_plmns;
+  supported_plmns.reserve(plmns.size());
   for (const auto& plmn_id : plmns) {
     supported_plmns_item_t plmn_item;
     plmn_item.plmn_id = plmn_id;
-    request_msg.supported_plmns.push_back(plmn_item);
+    supported_plmns.emplace_back(plmn_item);
   }
+
+  // Prepare request to send to E1.
+  cu_up_e1_setup_request request_msg{.gnb_cu_up_id   = to_underlying(cu_up_id),
+                                     .gnb_cu_up_name = cu_up_name,
+                                     // We only support 5G.
+                                     .cn_support         = cu_up_cn_support_t::c_5gc,
+                                     .supported_plmns    = std::move(supported_plmns),
+                                     .gnb_cu_up_capacity = std::nullopt};
 
   // Initiate E1 Setup Request.
   return e1ap_conn_mng.handle_cu_up_e1_setup_request(request_msg);
@@ -71,7 +69,7 @@ async_task<cu_up_e1_setup_response> cu_up_setup_routine::start_cu_up_e1_setup_re
 
 void cu_up_setup_routine::handle_cu_up_e1_setup_response(const cu_up_e1_setup_response& resp)
 {
-  // TODO
+  // TODO.
   if (!resp.success) {
     report_fatal_error("CU-UP E1 Setup failed");
   }

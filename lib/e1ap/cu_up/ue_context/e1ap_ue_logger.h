@@ -5,17 +5,9 @@
 
 #pragma once
 
-#include "ocudu/cu_up/cu_up_types.h"
-#include "ocudu/e1ap/common/e1ap_types.h"
-#include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/cu_up_types.h"
-#include "ocudu/support/format/fmt_to_c_str.h"
-#include "ocudu/support/format/prefixed_logger.h"
-#include "fmt/format.h"
-#include <string.h>
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
 class e1ap_ue_log_prefix
 {
@@ -49,5 +41,4 @@ inline const char* format_as(const e1ap_ue_log_prefix& o)
 
 using e1ap_ue_logger = prefixed_logger<e1ap_ue_log_prefix>;
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

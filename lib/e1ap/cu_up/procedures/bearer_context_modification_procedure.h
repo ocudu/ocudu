@@ -7,12 +7,9 @@
 
 #include "cu_up/e1ap_cu_up_metrics_collector.h"
 #include "cu_up/ue_context/e1ap_cu_up_ue_context.h"
-#include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
-#include "ocudu/e1ap/common/e1ap_common.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
-#include "ocudu/support/async/async_task.h"
 
 namespace ocudu::ocuup {
 
@@ -39,7 +36,7 @@ private:
   e1ap_cu_up_manager_notifier&                   cu_up_notifier;
   e1ap_cu_up_metrics_collector&                  metrics;
 
-  // local variables
+  /// Local variables.
   e1ap_message                              e1ap_msg                        = {};
   e1ap_bearer_context_modification_request  bearer_context_mod              = {};
   e1ap_bearer_context_modification_response bearer_context_mod_response_msg = {};

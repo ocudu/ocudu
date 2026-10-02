@@ -6,9 +6,7 @@
 #pragma once
 
 #include "ocudu/cu_up/cu_up_e1_setup_notifier.h"
-#include "ocudu/e1ap/common/e1_setup_messages.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
-#include "ocudu/support/async/async_task.h"
 
 namespace ocudu::ocuup {
 

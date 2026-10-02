@@ -6,8 +6,6 @@
 #include "e1ap_cu_up_setup_procedure.h"
 #include "../../common/e1ap_asn1_utils.h"
 #include "../e1ap_cu_up_asn1_helpers.h"
-#include "ocudu/asn1/asn1_utils.h"
-#include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
 #include "ocudu/support/async/async_timer.h"
 
@@ -17,17 +15,14 @@ using namespace asn1::e1ap;
 
 static constexpr std::chrono::milliseconds e1_setup_response_timeout{3000};
 
-e1ap_cu_up_setup_procedure::e1ap_cu_up_setup_procedure(const cu_up_e1_setup_request& request_,
-                                                       e1ap_message_notifier&        cu_cp_notif_,
-                                                       e1ap_event_manager&           ev_mng_,
-                                                       timer_factory                 timers_,
-                                                       e1ap_logger&                  logger_) :
-  request(request_),
-  cu_cp_notifier(cu_cp_notif_),
-  ev_mng(ev_mng_),
-  timers(timers_),
-  logger(logger_),
-  e1_setup_wait_timer(timers_.create_timer())
+e1ap_cu_up_setup_procedure::e1ap_cu_up_setup_procedure(const e1ap_cu_up_setup_procedure_configuration& cfg,
+                                                       const e1ap_cu_up_setup_procedure_dependencies&  dependencies) :
+  request(cfg.request),
+  cu_cp_notifier(dependencies.cu_cp_notif),
+  ev_mng(dependencies.ev_mng),
+  timers(dependencies.timers),
+  logger(dependencies.logger),
+  e1_setup_wait_timer(timers.create_timer())
 {
 }
 

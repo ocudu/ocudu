@@ -8,14 +8,11 @@
 #include "ocudu/f1u/cu_up/f1u_gateway.h"
 #include "ocudu/f1u/cu_up/f1u_rx_delivery_notifier.h"
 #include "ocudu/f1u/cu_up/f1u_rx_sdu_notifier.h"
-#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/pdcp/pdcp_rx.h"
-#include "ocudu/pdcp/pdcp_tx.h"
 
-namespace ocudu {
-namespace ocuup {
+namespace ocudu::ocuup {
 
-/// Adapter between F1-U and PDCP
+/// Adapter between F1-U and PDCP.
 class f1u_pdcp_adapter final : public f1u_rx_sdu_notifier, public f1u_rx_delivery_notifier
 {
 public:
@@ -25,35 +22,42 @@ public:
     pdcp_tx_handler = &pdcp_tx_handler_;
   }
 
+  // See interface for documentation.
   void on_new_sdu(byte_buffer_chain sdu) override
   {
     if (pdcp_rx_handler == nullptr) {
       ocudulog::fetch_basic_logger("F1-U").warning("Unconnected PDCP handler. Dropping F1-U SDU");
-    } else {
-      pdcp_rx_handler->handle_pdu(std::move(sdu));
+      return;
     }
+
+    pdcp_rx_handler->handle_pdu(std::move(sdu));
   }
 
+  // See interface for documentation.
   void on_desired_buffer_size_notification(uint32_t desired_buffer_size) override
   {
     pdcp_tx_handler->handle_desired_buffer_size_notification(desired_buffer_size);
   }
 
+  // See interface for documentation.
   void on_transmit_notification(uint32_t highest_pdcp_sn) override
   {
     pdcp_tx_handler->handle_transmit_notification(highest_pdcp_sn);
   }
 
+  // See interface for documentation.
   void on_delivery_notification(uint32_t highest_pdcp_sn) override
   {
     pdcp_tx_handler->handle_delivery_notification(highest_pdcp_sn);
   }
 
+  // See interface for documentation.
   void on_retransmit_notification(uint32_t highest_pdcp_sn) override
   {
     pdcp_tx_handler->handle_retransmit_notification(highest_pdcp_sn);
   }
 
+  // See interface for documentation.
   void on_delivery_retransmitted_notification(uint32_t highest_pdcp_sn) override
   {
     pdcp_tx_handler->handle_delivery_retransmitted_notification(highest_pdcp_sn);
@@ -73,9 +77,15 @@ public:
 
   void connect_nru_bearer(f1u_rx_pdu_handler& f1u_handler_) { f1u_handler = &f1u_handler_; }
 
+  // See interface for documentation.
   void on_new_pdu(nru_ul_message msg) override
   {
     ocudu_assert(f1u_handler != nullptr, "GTP-U handler must not be nullptr");
+    if (f1u_handler == nullptr) {
+      ocudulog::fetch_basic_logger("F1-U").warning("Unconnected F1U handler. Dropping F1-U PDU");
+      return;
+    }
+
     f1u_handler->handle_pdu(std::move(msg));
   }
 
@@ -83,5 +93,4 @@ private:
   f1u_rx_pdu_handler* f1u_handler = nullptr;
 };
 
-} // namespace ocuup
-} // namespace ocudu
+} // namespace ocudu::ocuup

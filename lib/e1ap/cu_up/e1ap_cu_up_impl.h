@@ -5,15 +5,11 @@
 
 #pragma once
 
-#include "common/e1ap_logger.h"
 #include "cu_up/e1ap_cu_up_metrics_collector.h"
 #include "e1ap_cu_up_connection_handler.h"
 #include "ue_context/e1ap_cu_up_ue_context.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/e1ap/cu_up/e1ap_configuration.h"
-#include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
-#include "ocudu/support/executors/task_executor.h"
-#include "ocudu/support/timers.h"
 
 namespace ocudu::ocuup {
 
@@ -50,7 +46,7 @@ public:
   // See interface for documentation.
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
-  /// Gets the E1 index.
+  // See interface for documentation.
   cu_up_e1_index_t get_e1_index() const override { return e1ap_cfg.e1_index; }
 
 private:
@@ -60,6 +56,7 @@ private:
   public:
     e1ap_message_notifier_with_logging(e1ap_cu_up_impl& parent_, e1ap_message_notifier& notifier_);
 
+    // See interface for documentation.
     void on_new_message(const e1ap_message& msg) override;
 
   private:

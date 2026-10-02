@@ -6,19 +6,18 @@
 #include "e1ap_cu_up_release_procedure.h"
 #include "common/e1ap_common_messages.h"
 #include "ocudu/asn1/e1ap/common.h"
-#include "ocudu/asn1/e1ap/e1ap.h"
-#include "ocudu/asn1/e1ap/e1ap_ies.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
 
 using namespace ocudu;
 using namespace ocuup;
 using namespace asn1::e1ap;
 
-e1ap_cu_up_release_procedure::e1ap_cu_up_release_procedure(e1ap_cu_up_connection_handler& cu_up_conn_handler_,
-                                                           e1ap_message_notifier&         tx_pdu_notifier_,
-                                                           e1ap_event_manager&            ev_mng_,
-                                                           e1ap_logger&                   logger_) :
-  cu_up_conn_handler(cu_up_conn_handler_), cu_notifier(tx_pdu_notifier_), ev_mng(ev_mng_), logger(logger_)
+e1ap_cu_up_release_procedure::e1ap_cu_up_release_procedure(
+    const e1ap_cu_up_release_procedure_dependencies& dependencies) :
+  cu_up_conn_handler(dependencies.cu_up_conn_handler),
+  cu_notifier(dependencies.tx_pdu_notifier),
+  ev_mng(dependencies.ev_mng),
+  logger(dependencies.logger)
 {
 }
 
@@ -29,13 +28,13 @@ void e1ap_cu_up_release_procedure::operator()(coro_context<async_task<void>>& ct
   logger.log_debug("\"{}\" started...", name());
 
   // Check if the TNL is still up.
-  if (not cu_up_conn_handler.is_connected()) {
+  if (!cu_up_conn_handler.is_connected()) {
     CORO_EARLY_RETURN();
   }
 
   // Send the E1AP release request and await response.
   transaction = ev_mng.transactions.create_transaction(std::chrono::milliseconds{1000});
-  if (not transaction.valid()) {
+  if (!transaction.valid()) {
     // Just shutdown the TNL association and finish procedure.
     logger.log_error("{}: Unable to allocate transaction. Shutting down E1 TNL association...", name());
     CORO_AWAIT(cu_up_conn_handler.handle_tnl_association_removal());
@@ -63,10 +62,10 @@ void e1ap_cu_up_release_procedure::send_e1ap_release_request()
 {
   e1ap_message msg;
   msg.pdu.set_init_msg().load_info_obj(ASN1_E1AP_ID_E1_RELEASE);
-  asn1::e1ap::e1_release_request_s& release_request = msg.pdu.init_msg().value.e1_release_request();
+  e1_release_request_s& release_request = msg.pdu.init_msg().value.e1_release_request();
 
   release_request->transaction_id            = transaction.id();
-  release_request->cause.set_radio_network() = asn1::e1ap::cause_radio_network_opts::normal_release;
+  release_request->cause.set_radio_network() = cause_radio_network_opts::normal_release;
 
   // Send unpacked message to E1-C GW.
   cu_notifier.on_new_message(msg);
@@ -80,7 +79,7 @@ void e1ap_cu_up_release_procedure::handle_e1ap_release_response()
         "{}: Forcing shutdown of E1 TNL association. Cause: Timeout reached for reception of the E1 Release Response",
         name());
   } else {
-    const asn1::e1ap::successful_outcome_s& success = transaction.response().value();
+    const successful_outcome_s& success = transaction.response().value();
     if (success.value.type().value != e1ap_elem_procs_o::successful_outcome_c::types_opts::e1_release_resp) {
       logger.log_warning("{}: Received unexpected E1AP PDU type \"{}\"", name(), success.value.type().to_string());
 

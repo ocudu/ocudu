@@ -19,10 +19,6 @@ using namespace ocudu;
 using namespace asn1::e1ap;
 using namespace ocuup;
 
-namespace {
-
-} // namespace
-
 e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&           e1ap_cfg_,
                                  const e1ap_cu_up_impl_dependencies& dependencies) :
   e1ap_cfg(e1ap_cfg_),
@@ -30,7 +26,12 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&           e1ap_cfg_,
   cu_up_notifier(dependencies.cu_up_notifier),
   timers(dependencies.timers),
   cu_up_exec(dependencies.cu_up_exec),
-  connection_handler(e1ap_cfg.e1_index, dependencies.e1_client_handler, *this, dependencies.cu_up_notifier, cu_up_exec),
+  connection_handler(e1ap_cu_up_connection_handler_configuration{.e1_index = e1ap_cfg.e1_index},
+                     e1ap_cu_up_connection_handler_dependencies{.e1ap_client_handler = dependencies.e1_client_handler,
+                                                                .e1ap_pdu_handler    = *this,
+                                                                .cu_up_manager       = dependencies.cu_up_notifier,
+                                                                .cu_up_executor      = cu_up_exec,
+                                                                .logger              = logger}),
   ue_ctxt_list(e1ap_cfg.max_nof_ues, logger),
   ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec})),
   metrics(e1ap_cfg.metrics_period.count())
@@ -68,7 +69,11 @@ async_task<cu_up_e1_setup_response>
 e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& request)
 {
   return launch_async<e1ap_cu_up_setup_procedure>(
-      request, *pdu_notifier, *ev_mng, timer_factory{timers, cu_up_exec}, logger);
+      e1ap_cu_up_setup_procedure_configuration{.request = request},
+      e1ap_cu_up_setup_procedure_dependencies{.cu_cp_notif = *pdu_notifier,
+                                              .ev_mng      = *ev_mng,
+                                              .logger      = logger,
+                                              .timers      = timer_factory{timers, cu_up_exec}});
 }
 
 async_task<void> e1ap_cu_up_impl::handle_cu_up_e1ap_release_request()
@@ -77,7 +82,8 @@ async_task<void> e1ap_cu_up_impl::handle_cu_up_e1ap_release_request()
   if (pdu_notifier == nullptr) {
     return launch_no_op_task();
   }
-  return launch_async<e1ap_cu_up_release_procedure>(connection_handler, *pdu_notifier, *ev_mng, logger);
+  return launch_async<e1ap_cu_up_release_procedure>(e1ap_cu_up_release_procedure_dependencies{
+      .cu_up_conn_handler = connection_handler, .tx_pdu_notifier = *pdu_notifier, .ev_mng = *ev_mng, .logger = logger});
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
@@ -343,18 +349,27 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const bearer_context
   ue_ctxt_list.remove_ue(ue_ctxt.ue_ids.ue_index);
 
   // Handle the release procedure.
-  if (not cu_up_notifier.on_schedule_ue_async_task(
+  if (!cu_up_notifier.on_schedule_ue_async_task(
           ue_index,
           launch_async<bearer_context_release_procedure>(
-              ue_index, msg, *pdu_notifier, cu_up_notifier, metrics, logger))) {
+              bearer_context_release_procedure_configuration{.ue_index = ue_index},
+              bearer_context_release_procedure_dependencies{.cmd            = msg,
+                                                            .pdu_notifier   = *pdu_notifier,
+                                                            .cu_up_notifier = cu_up_notifier,
+                                                            .metrics        = metrics,
+                                                            .logger         = logger}))) {
     logger.log_warning("Failed to start Bearer Context Release procedure");
   }
 }
 
 void e1ap_cu_up_impl::handle_cu_up_e1ap_reset(const reset_s& msg)
 {
-  if (not cu_up_notifier.on_schedule_cu_up_async_task(
-          launch_async<e1ap_cu_up_reset_procedure>(msg, ue_ctxt_list, cu_up_notifier, *pdu_notifier, logger))) {
+  if (!cu_up_notifier.on_schedule_cu_up_async_task(launch_async<e1ap_cu_up_reset_procedure>(
+          e1ap_cu_up_reset_procedure_configuration{.reset_msg = msg},
+          e1ap_cu_up_reset_procedure_dependencies{.ue_ctxt_list    = ue_ctxt_list,
+                                                  .cu_up_notifier  = cu_up_notifier,
+                                                  .tx_pdu_notifier = *pdu_notifier,
+                                                  .logger          = logger}))) {
     logger.log_warning("Failed to start E1AP Reset procedure");
   }
 }

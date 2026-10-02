@@ -6,7 +6,6 @@
 #pragma once
 
 #include "../ue_manager.h"
-#include "ocudu/cu_up/cu_up_e1_setup_notifier.h"
 
 namespace ocudu::ocuup {
 

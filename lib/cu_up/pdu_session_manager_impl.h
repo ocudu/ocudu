@@ -13,6 +13,7 @@
 #include "ocudu/cu_up/cu_up_config.h"
 #include "ocudu/cu_up/cu_up_types.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
+#include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
 #include "ocudu/f1u/cu_up/f1u_gateway.h"
 #include "ocudu/gtpu/gtpu_demux.h"
 #include "ocudu/gtpu/gtpu_teid_pool.h"
