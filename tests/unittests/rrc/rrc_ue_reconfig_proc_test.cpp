@@ -89,7 +89,6 @@ TEST_F(rrc_ue_reconfig, when_meas_gap_cfg_in_request_then_outer_cho_rrc_message_
   }
 
   // Build a CHO RRC Reconfiguration request with the packed gap.
-  // meas_cfg must be present so the measConfig IE block (which injects the gap) runs.
   rrc_reconfiguration_procedure_request req;
   req.cho_candidates = std::vector<cu_cp_ue_cho_candidate>{};
   req.meas_cfg       = generate_dummy_meas_config();
@@ -137,4 +136,46 @@ TEST_F(rrc_ue_reconfig, when_no_meas_gap_cfg_in_request_then_outer_cho_rrc_messa
   // No measGapConfig should be present.
   ASSERT_TRUE(recfg.meas_cfg_present);
   ASSERT_FALSE(recfg.meas_cfg.meas_gap_cfg_present);
+}
+
+TEST_F(rrc_ue_reconfig, when_meas_gap_cfg_in_request_without_meas_cfg_then_rrc_message_includes_it)
+{
+  // Build a packed measGapConfig (gapFR2 setup, offset=5, mgl=ms6, mgrp=ms40, mgta=ms0).
+  asn1::rrc_nr::meas_gap_cfg_s asn1_gap;
+  asn1_gap.gap_fr2_present = true;
+  asn1_gap.gap_fr2.set_setup();
+  asn1_gap.gap_fr2.setup().gap_offset = 5;
+  asn1_gap.gap_fr2.setup().mgl.value  = asn1::rrc_nr::gap_cfg_s::mgl_opts::ms6;
+  asn1_gap.gap_fr2.setup().mgrp.value = asn1::rrc_nr::gap_cfg_s::mgrp_opts::ms40;
+  asn1_gap.gap_fr2.setup().mgta.value = asn1::rrc_nr::gap_cfg_s::mgta_opts::ms0;
+
+  byte_buffer packed_gap;
+  {
+    asn1::bit_ref bref(packed_gap);
+    ASSERT_EQ(asn1_gap.pack(bref), asn1::OCUDUASN_SUCCESS);
+  }
+
+  // Trigger an RRC Reconfiguration with only the packed gap.
+  rrc_reconfiguration_procedure_request req;
+  req.meas_gap_cfg = packed_gap.copy();
+
+  async_task<bool>         t = get_rrc_ue_control_message_handler()->handle_rrc_reconfiguration_request(req);
+  lazy_task_launcher<bool> t_launcher(t);
+  ASSERT_FALSE(t.ready());
+
+  byte_buffer                 raw_pdu = test_helpers::extract_dl_dcch_msg(get_srb1_pdu());
+  asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
+  {
+    asn1::cbit_ref bref(raw_pdu);
+    ASSERT_EQ(dl_dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  }
+  const auto& recfg = dl_dcch.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
+
+  // measConfig carries only the measGapConfig.
+  ASSERT_TRUE(recfg.meas_cfg_present);
+  ASSERT_TRUE(recfg.meas_cfg.meas_gap_cfg_present);
+  ASSERT_TRUE(recfg.meas_cfg.meas_gap_cfg.gap_fr2_present);
+  ASSERT_EQ(recfg.meas_cfg.meas_gap_cfg.gap_fr2.setup().gap_offset, 5);
+  ASSERT_EQ(recfg.meas_cfg.meas_obj_to_add_mod_list.size(), 0);
+  ASSERT_EQ(recfg.meas_cfg.meas_id_to_add_mod_list.size(), 0);
 }
