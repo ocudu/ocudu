@@ -1137,7 +1137,8 @@ f1ap_message ocudu::test_helpers::generate_positioning_measurement_request(
     ran_meas_id_t                                               ran_meas_id,
     const std::vector<asn1::f1ap::pos_meas_type_opts::options>& pos_meas_type_list,
     subcarrier_spacing                                          scs,
-    unsigned                                                    srs_offset)
+    unsigned                                                    srs_offset,
+    std::optional<uint8_t>                                      resp_time_ten_msec)
 {
   f1ap_message pdu = {};
 
@@ -1164,6 +1165,12 @@ f1ap_message ocudu::test_helpers::generate_positioning_measurement_request(
     }
 
     pos_meas_req->pos_meas_quantities.push_back(meas_quantities_item);
+  }
+
+  if (resp_time_ten_msec.has_value()) {
+    pos_meas_req->resp_time_present   = true;
+    pos_meas_req->resp_time.time      = resp_time_ten_msec.value();
+    pos_meas_req->resp_time.time_unit = asn1::f1ap::resp_time_s::time_unit_opts::ten_milliseconds;
   }
 
   pos_meas_req->srs_configuration_present = true;

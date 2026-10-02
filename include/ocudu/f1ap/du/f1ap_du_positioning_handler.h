@@ -66,9 +66,13 @@ struct du_trp_meas_request {
 };
 
 struct du_positioning_meas_request {
-  std::vector<du_trp_meas_request>       trp_meas_req_list;
-  std::vector<positioning_meas_quantity> pos_meas_quants;
-  std::vector<srs_carrier>               srs_carriers;
+  /// \brief Time in which the gNB-CU expects the measurement result, as per TS 38.473, Section 8.13.2.2.
+  ///
+  /// Empty when the gNB-CU did not include the Response Time IE.
+  std::optional<std::chrono::milliseconds> response_time;
+  std::vector<du_trp_meas_request>         trp_meas_req_list;
+  std::vector<positioning_meas_quantity>   pos_meas_quants;
+  std::vector<srs_carrier>                 srs_carriers;
 };
 
 struct pos_meas_result_ul_rtoa {

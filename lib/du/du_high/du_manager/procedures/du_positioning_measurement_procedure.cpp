@@ -95,8 +95,13 @@ async_task<void> positioning_measurement_procedure::handle_mac_meas_request()
       mac_req.cells.push_back(prepare_mac_cell_positioning_request(cell_index, req.srs_carriers[0]));
     }
 
-    // The measurement completes on an SRS occasion, so the time the MAC waits follows the SRS period.
+    // The measurement completes on an SRS occasion, so the time the MAC waits follows the SRS period. The gNB-CU
+    // expects the result within the Response Time, as per TS 38.473 section 8.13.2.2, so that time caps the wait and
+    // leaves a margin for the answer.
     mac_req.timeout = get_positioning_meas_timeout(req.srs_carriers[0].srs_cfg, req.srs_carriers[0].ul_bwp_cfg.scs);
+    if (req.response_time.has_value()) {
+      mac_req.timeout = std::min(mac_req.timeout, get_response_time_deadline(req.response_time.value()));
+    }
 
     // NOTE: we implicitly map mac_resps[i] to req.trp_meas_req_list[i].trp_id.
     // TODO: Review this assumption once the F1AP we defined which elements of Positioning measurement request are

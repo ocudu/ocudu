@@ -294,7 +294,9 @@ generate_positioning_measurement_request(const std::vector<trp_id_t>& trp_ids,
                                          const std::vector<asn1::f1ap::pos_meas_type_opts::options>&
                                              pos_meas_type_list = {asn1::f1ap::pos_meas_type_opts::options::ul_rtoa},
                                          subcarrier_spacing scs = subcarrier_spacing::kHz15,
-                                         unsigned           srs_offset = 0U);
+                                         unsigned           srs_offset = 0U,
+                                         /// Response Time in units of ten milliseconds. Empty leaves the IE out.
+                                         std::optional<uint8_t> resp_time_ten_msec = std::nullopt);
 
 /// \brief Generates dummy F1AP POSITIONING MEASUREMENT RESPONSE message, sent by the DU to the CU, as per
 /// TS 38.473 section 8.13.3.2.

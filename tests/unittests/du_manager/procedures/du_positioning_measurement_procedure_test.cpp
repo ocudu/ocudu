@@ -97,3 +97,44 @@ TEST_F(du_positioning_measurement_procedure_test, when_request_is_sent_then_the_
   // Two periods of 80 slots at 15 kHz.
   ASSERT_EQ(mac.last_positioning_meas_request->timeout, std::chrono::milliseconds{160});
 }
+
+/// The gNB-CU expects the result within the Response Time, as per TS 38.473 section 8.13.2.2, so a shorter Response
+/// Time caps the time that the MAC waits.
+TEST_F(du_positioning_measurement_procedure_test, when_response_time_is_shorter_then_it_caps_the_mac_timeout)
+{
+  du_positioning_meas_request req = make_request();
+  req.response_time               = std::chrono::milliseconds{50};
+
+  run_procedure(req);
+
+  ASSERT_TRUE(mac.last_positioning_meas_request.has_value());
+  // The measurement stops before the Response Time, so that the answer still arrives inside it.
+  ASSERT_EQ(mac.last_positioning_meas_request->timeout, std::chrono::milliseconds{40});
+}
+
+/// A very short Response Time still starts a measurement, which then ends in a failure.
+TEST_F(du_positioning_measurement_procedure_test,
+       when_response_time_is_shorter_than_the_margin_then_the_wait_stays_positive)
+{
+  du_positioning_meas_request req = make_request();
+  req.response_time               = std::chrono::milliseconds{10};
+
+  run_procedure(req);
+
+  ASSERT_TRUE(mac.last_positioning_meas_request.has_value());
+  ASSERT_GT(mac.last_positioning_meas_request->timeout.count(), 0);
+  ASSERT_LT(mac.last_positioning_meas_request->timeout, std::chrono::milliseconds{10});
+}
+
+/// A Response Time longer than the SRS period does not extend the wait.
+TEST_F(du_positioning_measurement_procedure_test, when_response_time_is_longer_then_the_srs_period_decides)
+{
+  du_positioning_meas_request req = make_request();
+  req.response_time               = std::chrono::milliseconds{5000};
+
+  run_procedure(req);
+
+  ASSERT_TRUE(mac.last_positioning_meas_request.has_value());
+  // Two periods of 80 slots at 15 kHz.
+  ASSERT_EQ(mac.last_positioning_meas_request->timeout, std::chrono::milliseconds{160});
+}

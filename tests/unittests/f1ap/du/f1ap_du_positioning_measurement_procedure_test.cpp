@@ -159,3 +159,26 @@ TEST_F(f1ap_du_positioning_measurement_procedure_test, when_ul_aoa_is_requested_
   ASSERT_TRUE(asn1_aoa.zenith_ao_a_present);
   ASSERT_EQ(asn1_aoa.zenith_ao_a, zenith_aoa);
 }
+
+/// The gNB-CU expects the result within the Response Time, as per TS 38.473 section 8.13.2.2, so that time caps how
+/// long the DU waits for the SRS.
+TEST_F(f1ap_du_positioning_measurement_procedure_test,
+       when_response_time_is_shorter_than_the_srs_period_then_it_caps_the_wait)
+{
+  // 5 units of ten milliseconds, which is shorter than the two SRS periods of the generated request.
+  f1ap_message req =
+      test_helpers::generate_positioning_measurement_request({trp_id_t::min},
+                                                             lmf_meas_id_t::min,
+                                                             ran_meas_id_t::min,
+                                                             {asn1::f1ap::pos_meas_type_opts::options::ul_rtoa},
+                                                             subcarrier_spacing::kHz15,
+                                                             0U,
+                                                             5U);
+
+  this->f1ap->handle_message(req);
+
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_positioning_meas_request.has_value());
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_positioning_meas_request->response_time.has_value());
+  ASSERT_EQ(this->f1ap_du_cfg_handler.last_positioning_meas_request->response_time.value(),
+            std::chrono::milliseconds{50});
+}

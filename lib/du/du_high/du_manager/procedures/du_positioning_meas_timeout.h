@@ -18,6 +18,24 @@ inline constexpr unsigned NOF_SRS_PERIODS_PER_POSITIONING_MEAS = 2;
 /// Shortest time that the MAC waits for a measurement, for SRS configurations with a very short period.
 inline constexpr std::chrono::milliseconds MIN_POSITIONING_MEAS_TIMEOUT{20};
 
+/// \brief Time that the gNB-DU keeps to answer within the Response Time.
+///
+/// The gNB-DU returns the result within the time that the gNB-CU indicates, as per TS 38.473 section 8.13.2.2. The
+/// measurement therefore stops before that time, so that the answer still arrives inside it.
+inline constexpr std::chrono::milliseconds POSITIONING_MEAS_RESPONSE_MARGIN{10};
+
+/// \brief Returns the time that the MAC waits when the gNB-CU indicates a Response Time.
+///
+/// The value keeps a margin for the answer. It stays above zero, so that a very short Response Time still starts a
+/// measurement and ends in a failure instead of an immediate one.
+inline std::chrono::milliseconds get_response_time_deadline(std::chrono::milliseconds response_time)
+{
+  if (response_time <= POSITIONING_MEAS_RESPONSE_MARGIN) {
+    return std::chrono::milliseconds{1};
+  }
+  return response_time - POSITIONING_MEAS_RESPONSE_MARGIN;
+}
+
 /// \brief Returns the time that the MAC waits for the SRS measurements of the given SRS configuration.
 ///
 /// The measurement completes on an SRS occasion, so the time follows the SRS period. A value below one period makes

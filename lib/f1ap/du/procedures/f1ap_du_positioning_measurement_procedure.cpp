@@ -154,9 +154,29 @@ bool f1ap_du_positioning_measurement_procedure::validate_request() const
   return true;
 }
 
+/// \brief Converts the Response Time IE to milliseconds, as per TS 38.473, Section 9.3.1.190.
+static std::chrono::milliseconds response_time_to_msec(const asn1::f1ap::resp_time_s& resp_time)
+{
+  using time_unit = asn1::f1ap::resp_time_s::time_unit_opts;
+
+  switch (resp_time.time_unit.value) {
+    case time_unit::ten_milliseconds:
+      return std::chrono::milliseconds{resp_time.time * 10};
+    case time_unit::ten_seconds:
+      return std::chrono::seconds{resp_time.time * 10};
+    default:
+      return std::chrono::seconds{resp_time.time};
+  }
+}
+
 async_task<du_positioning_meas_response> f1ap_du_positioning_measurement_procedure::request_positioning_measurement()
 {
   du_positioning_meas_request du_req;
+
+  // Response Time.
+  if (msg->resp_time_present) {
+    du_req.response_time = response_time_to_msec(msg->resp_time);
+  }
 
   // TRP Measurement Request List.
   du_req.trp_meas_req_list.resize(msg->trp_meas_request_list.size());
