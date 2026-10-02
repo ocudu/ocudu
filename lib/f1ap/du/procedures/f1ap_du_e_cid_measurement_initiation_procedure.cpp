@@ -6,6 +6,7 @@
 #include "f1ap_du_e_cid_measurement_initiation_procedure.h"
 #include "../../asn1_helpers.h"
 #include "../ue_context/f1ap_du_ue.h"
+#include "../ue_context/f1ap_du_ue_manager.h"
 #include "proc_logger.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/f1ap/common.h"
@@ -18,8 +19,13 @@ using namespace odu;
 f1ap_du_e_cid_measurement_initiation_procedure::f1ap_du_e_cid_measurement_initiation_procedure(
     const asn1::f1ap::e_c_id_meas_initiation_request_s& msg_,
     f1ap_du_positioning_handler&                        du_mng_,
-    f1ap_du_ue&                                         ue_) :
-  msg(msg_), du_mng(du_mng_), ue(ue_), logger(ocudulog::fetch_basic_logger("DU-F1"))
+    f1ap_du_ue_manager&                                 ues_) :
+  msg(msg_),
+  du_mng(du_mng_),
+  ues(ues_),
+  du_ue_id(int_to_gnb_du_ue_f1ap_id(msg_->gnb_du_ue_f1ap_id)),
+  ue_ctxt(ues_.find(int_to_gnb_du_ue_f1ap_id(msg_->gnb_du_ue_f1ap_id))->context),
+  logger(ocudulog::fetch_basic_logger("DU-F1"))
 {
 }
 
@@ -27,7 +33,7 @@ void f1ap_du_e_cid_measurement_initiation_procedure::operator()(coro_context<asy
 {
   CORO_BEGIN(ctx);
 
-  logger.info("{}: Procedure started...", f1ap_log_prefix{ue.context, name()});
+  logger.info("{}: Procedure started...", f1ap_log_prefix{ue_ctxt, name()});
 
   if (not read_request()) {
     send_failure();
@@ -35,6 +41,12 @@ void f1ap_du_e_cid_measurement_initiation_procedure::operator()(coro_context<asy
   }
 
   CORO_AWAIT_VALUE(du_result, request_e_cid_measurement());
+
+  if (ues.find(du_ue_id) == nullptr) {
+    logger.info("{}: Stopping procedure. Cause: UE was removed while the measurement was running",
+                f1ap_log_prefix{ue_ctxt, name()});
+    CORO_EARLY_RETURN();
+  }
 
   if (not du_result.success) {
     send_failure();
@@ -51,12 +63,12 @@ bool f1ap_du_e_cid_measurement_initiation_procedure::read_request()
   using namespace asn1::f1ap;
 
   if (msg->e_c_id_report_characteristics.value != e_c_id_report_characteristics_opts::on_demand) {
-    logger.warning("{}: Periodic E-CID measurement not supported", f1ap_log_prefix{ue.context, name()});
+    logger.warning("{}: Periodic E-CID measurement not supported", f1ap_log_prefix{ue_ctxt, name()});
     return false;
   }
 
   if (msg->e_c_id_meas_quantities.size() == 0) {
-    logger.warning("{}: E-CID measurement quantities list is empty", f1ap_log_prefix{ue.context, name()});
+    logger.warning("{}: E-CID measurement quantities list is empty", f1ap_log_prefix{ue_ctxt, name()});
     return false;
   }
 
@@ -72,7 +84,7 @@ bool f1ap_du_e_cid_measurement_initiation_procedure::read_request()
         break;
       default:
         logger.warning("{}: E-CID measurement quantity \"{}\" not supported",
-                       f1ap_log_prefix{ue.context, name()},
+                       f1ap_log_prefix{ue_ctxt, name()},
                        quantity.to_string());
         return false;
     }
@@ -84,7 +96,7 @@ bool f1ap_du_e_cid_measurement_initiation_procedure::read_request()
 async_task<du_e_cid_meas_response> f1ap_du_e_cid_measurement_initiation_procedure::request_e_cid_measurement()
 {
   du_e_cid_meas_request du_req;
-  du_req.ue_index   = ue.context.ue_index;
+  du_req.ue_index   = ue_ctxt.ue_index;
   du_req.quantities = quantities;
 
   return du_mng.request_e_cid_measurement(du_req);
@@ -121,9 +133,9 @@ void f1ap_du_e_cid_measurement_initiation_procedure::send_response() const
     }
   }
 
-  ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
+  ues.find(du_ue_id)->f1ap_msg_notifier.on_new_message(f1ap_msg);
 
-  logger.info("{}: Procedure finished successfully.", f1ap_log_prefix{ue.context, name()});
+  logger.info("{}: Procedure finished successfully.", f1ap_log_prefix{ue_ctxt, name()});
 }
 
 void f1ap_du_e_cid_measurement_initiation_procedure::send_failure() const
@@ -140,7 +152,7 @@ void f1ap_du_e_cid_measurement_initiation_procedure::send_failure() const
   fail->ran_ue_meas_id         = msg->ran_ue_meas_id;
   fail->cause.set_misc().value = cause_misc_opts::unspecified;
 
-  ue.f1ap_msg_notifier.on_new_message(f1ap_msg);
+  ues.find(du_ue_id)->f1ap_msg_notifier.on_new_message(f1ap_msg);
 
-  logger.info("{}: Procedure failed.", f1ap_log_prefix{ue.context, name()});
+  logger.info("{}: Procedure failed.", f1ap_log_prefix{ue_ctxt, name()});
 }

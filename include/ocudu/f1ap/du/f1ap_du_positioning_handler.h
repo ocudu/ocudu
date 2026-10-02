@@ -109,7 +109,6 @@ struct du_positioning_meas_response {
   std::vector<pos_meas_result> pos_meas_list;
 };
 
-/// Interface used by F1AP-DU to request the DU for positioning services.
 /// E-CID measurement quantity, as per TS 38.473, Section 9.2.12.20.
 enum class e_cid_meas_quantity {
   /// Serving cell information of the UE.
@@ -135,6 +134,7 @@ struct du_e_cid_meas_response {
   std::vector<pos_meas_result_ul_aoa> ul_aoa_results;
 };
 
+/// Interface used by F1AP-DU to request the DU for positioning services.
 class f1ap_du_positioning_handler
 {
 public:

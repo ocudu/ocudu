@@ -614,9 +614,12 @@ void f1ap_du_impl::handle_e_cid_measurement_initiation_request(const asn1::f1ap:
     return;
   }
 
+  // The procedure reads the SRS configuration, the C-RNTI and the serving cell of the UE, so it runs on the task
+  // loop of the UE. The other tasks of this UE wait while the measurement waits for the SRS. The MAC also measures
+  // one positioning request at a time, so a request that arrives during a measurement gets a failure.
   du_mng.get_ue_handler(ue->context.ue_index)
       .schedule_async_task(
-          launch_async<f1ap_du_e_cid_measurement_initiation_procedure>(msg, du_mng.get_positioning_handler(), *ue));
+          launch_async<f1ap_du_e_cid_measurement_initiation_procedure>(msg, du_mng.get_positioning_handler(), ues));
 }
 
 void f1ap_du_impl::send_e_cid_measurement_initiation_failure(

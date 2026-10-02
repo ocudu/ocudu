@@ -419,7 +419,6 @@ public:
 
   std::optional<mac_positioning_measurement_request> last_positioning_meas_request;
   mac_positioning_measurement_response               next_positioning_meas_response;
-
   async_task<mac_positioning_measurement_response>
   handle_positioning_measurement_request(const mac_positioning_measurement_request& msg) override
   {
