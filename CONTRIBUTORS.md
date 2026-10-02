@@ -10,4 +10,5 @@ This file lists the organizations and individuals who hold copyright in OCUDU so
 `SPDX-FileCopyrightText: Copyright (C) <year> The OCUDU contributors` header used throughout the codebase. Entries are
 alphabetical and do not imply seniority or level of contribution.
 
+- DeepSig Inc
 - Software Radio Systems Limited
