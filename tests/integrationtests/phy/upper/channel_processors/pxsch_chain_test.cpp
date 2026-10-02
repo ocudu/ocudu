@@ -28,15 +28,6 @@
 
 using namespace ocudu;
 
-static constexpr pdsch_mcs_table mcs_table           = pdsch_mcs_table::qam64;
-static constexpr unsigned        nof_layers          = 1;
-static constexpr unsigned        nof_ofdm_symbols    = 14;
-static const symbol_slot_mask    dmrs_symbols        = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0};
-static const float               noise_var           = convert_dB_to_power(-30);
-static constexpr unsigned        nof_ldpc_iterations = 6;
-static constexpr uint64_t        seed_begin          = 0;
-static constexpr uint64_t        seed_end            = 128;
-
 using ldpc_decoder_early_stop = bool;
 using pxsch_chain_params      = std::tuple<sch_mcs_index, prb_interval, ldpc_decoder_early_stop>;
 
@@ -60,6 +51,16 @@ namespace {
 
 class PxschChainFixture : public ::testing::TestWithParam<pxsch_chain_params>
 {
+protected:
+  static constexpr pdsch_mcs_table mcs_table           = pdsch_mcs_table::qam64;
+  static constexpr unsigned        nof_layers          = 1;
+  static constexpr unsigned        nof_ofdm_symbols    = 14;
+  static constexpr unsigned        nof_ldpc_iterations = 6;
+  static constexpr uint64_t        seed_begin          = 0;
+  static constexpr uint64_t        seed_end            = 128;
+  static const symbol_slot_mask    dmrs_symbols;
+  static const float               noise_var;
+
 private:
   static std::shared_ptr<pdsch_encoder_factory> create_sw_pdsch_encoder_factory()
   {
@@ -172,7 +173,11 @@ protected:
   std::unique_ptr<modulation_mapper>   modulator;
   std::unique_ptr<demodulation_mapper> demodulator;
 };
+
 } // namespace
+
+const symbol_slot_mask PxschChainFixture::dmrs_symbols = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0};
+const float            PxschChainFixture::noise_var    = convert_dB_to_power(-30);
 
 TEST_P(PxschChainFixture, Ideal)
 {
