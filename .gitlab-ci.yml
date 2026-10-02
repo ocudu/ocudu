@@ -448,7 +448,9 @@ clang-tidy incremental:
         echo "##################################################"
         git checkout $rev
         CodeChecker log -o ${CI_PROJECT_DIR}/build/compile_commands.json --build "builder.sh -m -j${CPU_JOBS} -c clang ${clean_arg} -DMARCH=x86-64-v3 -DENABLE_ARMPL=False -DENABLE_MKL=False -DENABLE_FFTW=True -DASSERT_LEVEL=PARANOID -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=False $CI_PROJECT_DIR"
+        # 2nd run without cleaning the build and cache, because ccache can hide files to the analysis
         clean_arg=""
+        export CCACHE_DISABLE=1
       done
     - |
       # The incremental database only holds what the MR head rebuilt, so an MR touching no C/C++ leaves it empty. That
