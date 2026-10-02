@@ -48,7 +48,12 @@ positioning_measurement_procedure::positioning_measurement_procedure(const du_po
                                                                      du_ue_manager&                         ue_mng_,
                                                                      const du_manager_params&               du_params_,
                                                                      const std::map<trp_id_t, du_trp_info>& trps_) :
-  req(req_), du_cells(du_cells_), ue_mng(ue_mng_), du_params(du_params_), trps(trps_)
+  req(req_),
+  du_cells(du_cells_),
+  ue_mng(ue_mng_),
+  du_params(du_params_),
+  trps(trps_),
+  logger(ocudulog::fetch_basic_logger("DU-MNG"))
 {
 }
 
@@ -102,10 +107,16 @@ async_task<void> positioning_measurement_procedure::handle_mac_meas_request()
 du_positioning_meas_response positioning_measurement_procedure::prepare_f1ap_response()
 {
   ocudu_assert(not req.pos_meas_quants.empty(), "Positioning measurement quantities are empty.");
-  ocudu_assert(mac_resp.cell_results.size() == req.trp_meas_req_list.size(),
-               "MAC responses size does not match TRP measurement request list size.");
 
   du_positioning_meas_response resp;
+
+  // The MAC returns an empty response when the measurement times out, or when it already runs another measurement.
+  // An empty response list makes the DU report a failure.
+  if (mac_resp.cell_results.size() != req.trp_meas_req_list.size()) {
+    logger.warning("Positioning measurement failed. Cause: MAC reported no measurement for every requested TRP");
+    return resp;
+  }
+
   resp.pos_meas_list.reserve(req.trp_meas_req_list.size());
   // The MAC response mac_resps[i] corresponds to the TRP in trp_meas_req_list[i]; \ref handle_mac_meas_request().
   for (unsigned trp_idx = 0, nof_trps = req.trp_meas_req_list.size(); trp_idx != nof_trps; ++trp_idx) {

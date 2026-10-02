@@ -9,6 +9,7 @@
 #include "../du_ue/du_ue_manager.h"
 #include "ocudu/f1ap/du/f1ap_du_positioning_handler.h"
 #include "ocudu/mac/mac_positioning_measurement_handler.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/async/async_task.h"
 
 namespace ocudu::odu {
@@ -37,6 +38,7 @@ private:
   du_ue_manager&                         ue_mng;
   const du_manager_params&               du_params;
   const std::map<trp_id_t, du_trp_info>& trps;
+  ocudulog::basic_logger&                logger;
 
   mac_positioning_measurement_request  mac_req;
   mac_positioning_measurement_response mac_resp;
