@@ -61,24 +61,21 @@ struct cu_cp_inter_cu_handover_request {
     rrc_handover_preparation_information =
         ng_handover_request.source_to_target_transparent_container.rrc_container.copy();
     location_report_request_type = ng_handover_request.location_report_request_type;
-    // Fold the source's forwarding proposal and its DRB-to-QoS-flow mapping into the PDU sessions, so that both
-    // handover types report them in the same place (TS 38.413 Section 9.3.1.29). The AMF may leave out a PDU session
-    // the source reported, so only the sessions to set up are filled.
+    // Fold the forwarding proposal of the source into the PDU sessions, so that both handover types report it in the
+    // same place (TS 38.413 Section 9.3.1.29). The AMF may leave out a PDU session the source reported, so only the
+    // sessions to set up are filled.
     for (const auto& pdu_session_res_info :
          ng_handover_request.source_to_target_transparent_container.pdu_session_res_info_list) {
       if (not pdu_session_res_setup_list.contains(pdu_session_res_info.pdu_session_id)) {
         continue;
       }
-      cu_cp_pdu_session_res_setup_item& pdu_session_res_setup_item =
-          pdu_session_res_setup_list[pdu_session_res_info.pdu_session_id];
+      cu_cp_data_forwarding_info_from_source forwarding_info;
       for (const auto& qos_flow_info : pdu_session_res_info.qos_flow_info_list) {
-        if (not pdu_session_res_setup_item.qos_flow_setup_request_items.contains(qos_flow_info.qos_flow_id)) {
-          continue;
-        }
-        pdu_session_res_setup_item.qos_flow_setup_request_items[qos_flow_info.qos_flow_id].dl_forwarding =
-            qos_flow_info.dl_forwarding;
+        forwarding_info.qos_flows_to_be_forwarded.push_back({qos_flow_info.qos_flow_id, qos_flow_info.dl_forwarding});
       }
-      pdu_session_res_setup_item.source_drbs_to_qos_flows_map_list = pdu_session_res_info.drbs_to_qos_flows_map_list;
+      forwarding_info.drbs_to_qos_flows_map_list = pdu_session_res_info.drbs_to_qos_flows_map_list;
+      pdu_session_res_setup_list[pdu_session_res_info.pdu_session_id].data_forwarding_info_from_source =
+          std::move(forwarding_info);
     }
 
     // Fill NG handover specific fields.

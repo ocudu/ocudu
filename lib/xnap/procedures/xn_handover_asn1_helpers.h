@@ -74,14 +74,14 @@ inline bool asn1_to_ue_context_info_ho_request(xnap_ue_context_info_ho_request& 
     // 9.2.1.17). The target also derives the mapping from AS-Config in the RRC container, which takes precedence
     // where the two disagree.
     if (asn1_pdu_session.dataforwardinginfofrom_source_present) {
+      cu_cp_data_forwarding_info_from_source forwarding_info;
       for (const auto& asn1_qos_flow_to_be_forwarded :
            asn1_pdu_session.dataforwardinginfofrom_source.qos_flows_to_be_forwarded) {
-        qos_flow_id_t qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_to_be_forwarded.qos_flow_id);
-        if (not pdu_session_item.qos_flow_setup_request_items.contains(qos_flow_id)) {
-          continue;
-        }
-        pdu_session_item.qos_flow_setup_request_items[qos_flow_id].dl_forwarding =
+        cu_cp_qos_flow_to_be_forwarded_item qos_flow_to_be_forwarded;
+        qos_flow_to_be_forwarded.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_to_be_forwarded.qos_flow_id);
+        qos_flow_to_be_forwarded.dl_forwarding =
             asn1_qos_flow_to_be_forwarded.dl_dataforwarding == asn1::xnap::dl_forwarding_opts::dl_forwarding_proposed;
+        forwarding_info.qos_flows_to_be_forwarded.push_back(qos_flow_to_be_forwarded);
       }
       for (const auto& asn1_drb_to_qos_flow_map :
            asn1_pdu_session.dataforwardinginfofrom_source.source_drb_to_qos_flow_map) {
@@ -92,8 +92,9 @@ inline bool asn1_to_ue_context_info_ho_request(xnap_ue_context_info_ho_request& 
           assoc_qos_flow.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow.qfi);
           drb_to_qos_flow_map.associated_qos_flow_list.push_back(assoc_qos_flow);
         }
-        pdu_session_item.source_drbs_to_qos_flows_map_list.push_back(drb_to_qos_flow_map);
+        forwarding_info.drbs_to_qos_flows_map_list.push_back(drb_to_qos_flow_map);
       }
+      pdu_session_item.data_forwarding_info_from_source = std::move(forwarding_info);
     }
 
     request.pdu_session_res_to_be_setup_list.emplace(pdu_session_id, pdu_session_item);

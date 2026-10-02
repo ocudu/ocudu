@@ -19,11 +19,6 @@ struct qos_flow_setup_request_item {
   qos_flow_id_t                 qos_flow_id = qos_flow_id_t::invalid;
   qos_flow_level_qos_parameters qos_flow_level_qos_params;
   std::optional<uint8_t>        erab_id;
-  /// \brief Set if the source proposes this QoS flow for DL data forwarding.
-  ///
-  /// Reported in the Data Forwarding and Offloading Info from source NG-RAN node IE of the PDU session
-  /// (TS 38.423 section 9.2.1.17).
-  std::optional<bool> dl_forwarding;
 };
 
 enum class cu_cp_qos_flow_map_indication { ul = 0, dl };
@@ -36,6 +31,32 @@ struct cu_cp_associated_qos_flow {
 struct cu_cp_drbs_to_qos_flows_map_item {
   drb_id_t                               drb_id = drb_id_t::invalid;
   std::vector<cu_cp_associated_qos_flow> associated_qos_flow_list;
+};
+
+/// \brief A QoS flow that the source proposes for data forwarding.
+///
+/// QoS Flow Information Item of the Source NG-RAN Node to Target NG-RAN Node Transparent Container IE
+/// (TS 38.413 section 9.3.1.29), and QoS Flows To Be Forwarded Item of the Data Forwarding and Offloading Info from
+/// source NG-RAN node IE (TS 38.423 section 9.2.1.17).
+struct cu_cp_qos_flow_to_be_forwarded_item {
+  qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid;
+  /// DL Forwarding (TS 38.413 section 9.3.1.33, TS 38.423 section 9.2.3.34). Optional over NG and mandatory over Xn.
+  std::optional<bool> dl_forwarding;
+};
+
+/// \brief What the source proposes for the data forwarding of one PDU session.
+///
+/// PDU Session Resource Information Item of the Source NG-RAN Node to Target NG-RAN Node Transparent Container IE
+/// (TS 38.413 section 9.3.1.29), and Data Forwarding and Offloading Info from source NG-RAN node IE
+/// (TS 38.423 section 9.2.1.17).
+struct cu_cp_data_forwarding_info_from_source {
+  /// QoS Flow Information List over NG, QoS Flows To Be Forwarded List over Xn. Mandatory and non-empty over Xn.
+  std::vector<cu_cp_qos_flow_to_be_forwarded_item> qos_flows_to_be_forwarded;
+  /// \brief The DRB-to-QoS-flow mapping of the source, so that the target can keep its DRB numbering.
+  ///
+  /// DRBs to QoS Flows Mapping List over NG (TS 38.413 section 9.3.1.34), Source DRB to QoS Flow Mapping List over
+  /// Xn (TS 38.423 section 9.2.1.17).
+  std::vector<cu_cp_drbs_to_qos_flows_map_item> drbs_to_qos_flows_map_list;
 };
 
 struct cu_cp_pdu_session_res_setup_item {
@@ -52,14 +73,10 @@ struct cu_cp_pdu_session_res_setup_item {
   ///
   /// Only carried by HANDOVER REQUEST and ignored otherwise (TS 38.413 section 9.3.4.1).
   std::optional<bool> data_forwarding_not_possible;
-  /// Whether a direct forwarding path towards this target is available (TS 38.413 section 9.3.1.64).
+  /// Whether a direct forwarding path towards the target is available (TS 38.413 section 9.3.1.64).
   std::optional<bool> direct_forwarding_path_available;
-
-  /// \brief This source's own DRB-to-QoS-flow mapping for this PDU session.
-  ///
-  /// Reported in the Data Forwarding and Offloading Info from source NG-RAN node IE, so that the target can keep the
-  /// DRB numbering of the source (TS 38.423 section 9.2.1.17).
-  std::vector<cu_cp_drbs_to_qos_flows_map_item> source_drbs_to_qos_flows_map_list;
+  /// Set when the source proposed data forwarding for this PDU session.
+  std::optional<cu_cp_data_forwarding_info_from_source> data_forwarding_info_from_source;
 };
 
 } // namespace ocudu::ocucp

@@ -55,13 +55,16 @@ public:
     qos_flow_setup_request_item qos_flow_item{.qos_flow_id               = qos_flow_id_t::min,
                                               .qos_flow_level_qos_params = qos_params};
 
-    qos_flow_item.dl_forwarding = true;
     item.qos_flow_setup_request_items.emplace(qos_flow_id_t::min, qos_flow_item);
 
     cu_cp_drbs_to_qos_flows_map_item drbs_to_qos_flows_map_item;
     drbs_to_qos_flows_map_item.drb_id = drb_id_t::drb1;
     drbs_to_qos_flows_map_item.associated_qos_flow_list.push_back({qos_flow_id_t::min, std::nullopt});
-    item.source_drbs_to_qos_flows_map_list.push_back(drbs_to_qos_flows_map_item);
+
+    cu_cp_data_forwarding_info_from_source forwarding_info;
+    forwarding_info.qos_flows_to_be_forwarded.push_back({qos_flow_id_t::min, true});
+    forwarding_info.drbs_to_qos_flows_map_list.push_back(drbs_to_qos_flows_map_item);
+    item.data_forwarding_info_from_source = forwarding_info;
 
     request.ue_context_info_ho_request.pdu_session_res_to_be_setup_list.emplace(item.pdu_session_id, item);
 

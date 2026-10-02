@@ -43,7 +43,10 @@ static up_old_drb_association build_old_drb_association(
 {
   up_old_drb_association old_drb_association;
   for (const auto& pdu_session : pdu_session_res_setup_list) {
-    for (const auto& drb_item : pdu_session.source_drbs_to_qos_flows_map_list) {
+    if (not pdu_session.data_forwarding_info_from_source.has_value()) {
+      continue;
+    }
+    for (const auto& drb_item : pdu_session.data_forwarding_info_from_source->drbs_to_qos_flows_map_list) {
       for (const auto& assoc_flow : drb_item.associated_qos_flow_list) {
         old_drb_association[pdu_session.pdu_session_id][assoc_flow.qos_flow_id] = drb_item.drb_id;
       }
@@ -433,10 +436,12 @@ void inter_cu_handover_target_routine::fill_e1ap_data_forwarding_info_requests()
 
     // Collect the QoS flows the source proposed for DL forwarding (TS 38.413 section 9.3.1.33).
     std::set<qos_flow_id_t> proposed_flows;
-    for (const qos_flow_setup_request_item& flow_info :
-         request.pdu_session_res_setup_list[psi].qos_flow_setup_request_items) {
-      if (flow_info.dl_forwarding.value_or(false)) {
-        proposed_flows.insert(flow_info.qos_flow_id);
+    if (request.pdu_session_res_setup_list[psi].data_forwarding_info_from_source.has_value()) {
+      for (const cu_cp_qos_flow_to_be_forwarded_item& flow_info :
+           request.pdu_session_res_setup_list[psi].data_forwarding_info_from_source->qos_flows_to_be_forwarded) {
+        if (flow_info.dl_forwarding.value_or(false)) {
+          proposed_flows.insert(flow_info.qos_flow_id);
+        }
       }
     }
     if (proposed_flows.empty()) {
