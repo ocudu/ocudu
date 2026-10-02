@@ -34,11 +34,10 @@ byte_buffer ocudu::ocucp::generate_rrc_setup_complete()
   return octet_str.to_byte_buffer();
 }
 
-byte_buffer ocudu::ocucp::generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count)
+byte_buffer ocudu::ocucp::generate_protected_ul_dcch_pdu(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t count)
 {
   byte_buffer pdu_with_count = byte_buffer::create({0x00, count}).value();
-  if (!pdu_with_count.append(
-          test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reconfiguration_complete(transaction_id)))) {
+  if (!pdu_with_count.append(test_helpers::pack_ul_dcch_msg(msg))) {
     return {};
   }
 
@@ -55,6 +54,11 @@ byte_buffer ocudu::ocucp::generate_rrc_reconfiguration_complete_pdu(unsigned tra
   }
 
   return pdu_with_count;
+}
+
+byte_buffer ocudu::ocucp::generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count)
+{
+  return generate_protected_ul_dcch_pdu(test_helpers::create_rrc_reconfiguration_complete(transaction_id), count);
 }
 
 rrc_timers_t ocudu::ocucp::get_timers(const asn1::f1ap::f1_setup_request_s& f1_setup_req)

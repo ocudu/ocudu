@@ -33,6 +33,7 @@
 #include "routines/pdu_session_resource_modification_routine.h"
 #include "routines/pdu_session_resource_release_routine.h"
 #include "routines/pdu_session_resource_setup_routine.h"
+#include "routines/positioning/location_measurement_indication_routine.h"
 #include "routines/positioning/trp_information_exchange_routine.h"
 #include "routines/reestablishment_context_modification_routine.h"
 #include "routines/ue_amf_context_release_request_routine.h"
@@ -1035,6 +1036,22 @@ void cu_cp_impl::handle_ran_paging_required(cu_cp_ue_index_t ue_index)
 
   // Send paging message.
   send_ran_paging(ue_index, full_i_rnti.value());
+}
+
+void cu_cp_impl::handle_location_measurement_indication(cu_cp_ue_index_t ue_index, byte_buffer location_meas_info)
+{
+  cu_cp_ue* ue = ue_mng.find_du_ue(ue_index);
+  if (ue == nullptr) {
+    logger.warning("ue={}: Dropping LocationMeasurementIndication. UE not found", ue_index);
+    return;
+  }
+
+  ue->get_task_sched().schedule_async_task(launch_async<location_measurement_indication_routine>(
+      ue_index,
+      std::move(location_meas_info),
+      du_db.get_du_processor(ue->get_du_index()).get_f1ap_handler(),
+      *ue->get_rrc_ue(),
+      logger));
 }
 
 bool cu_cp_impl::handle_handover_request(cu_cp_ue_index_t                  ue_index,

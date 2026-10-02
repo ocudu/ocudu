@@ -326,6 +326,14 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu, bool in
       }
       handle_measurement_report(ul_dcch_msg.msg.c1().meas_report());
       break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::location_meas_ind:
+      // P=- AI=- CI=- (Info: The UE sends it only after AS security activation, TS 38.331 section 5.5.6.1.)
+      if (!integrity_verified) {
+        handle_illegal_pdu_integrity(ul_dcch_msg.msg.c1().type().to_string(), integrity_verified);
+        return;
+      }
+      handle_location_measurement_indication(ul_dcch_msg.msg.c1().location_meas_ind());
+      break;
     default:
       logger.log_error("Unsupported DCCH UL message type");
       break;
@@ -415,6 +423,25 @@ void rrc_ue_impl::handle_measurement_report(const asn1::rrc_nr::meas_report_s& m
       asn1_to_measurement_results(msg.crit_exts.meas_report().meas_results, ocudulog::fetch_basic_logger("RRC"));
   // Send measurement results to cell measurement manager.
   measurement_notifier.on_measurement_report(meas_results);
+}
+
+void rrc_ue_impl::handle_location_measurement_indication(const asn1::rrc_nr::location_meas_ind_s& msg)
+{
+  if (msg.crit_exts.type().value != location_meas_ind_s::crit_exts_c_::types_opts::location_meas_ind) {
+    logger.log_warning("Ignoring LocationMeasurementIndication. Cause: Unsupported critical extension");
+    return;
+  }
+
+  const auto& meas_ind = msg.crit_exts.location_meas_ind().meas_ind;
+  if (meas_ind.type().value == asn1::setup_release_opts::release) {
+    // The UE stops the location measurements. The measurement gap stays configured until a later reconfiguration
+    // changes it.
+    logger.log_info("UE stops location measurements. Keeping the measurement gap configuration");
+    return;
+  }
+
+  // Forward the location measurement info to the CU-CP, which requests a measurement gap from the DU.
+  cu_cp_notifier.on_location_measurement_indication(pack_into_pdu(meas_ind.setup(), "LocationMeasurementInfo"));
 }
 
 void rrc_ue_impl::handle_dl_nas_transport_message(byte_buffer nas_pdu)

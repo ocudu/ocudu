@@ -11,6 +11,8 @@
 #include "lib/cu_cp/du_processor/du_processor.h"
 #include "lib/cu_cp/ue_manager/ue_manager_impl.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
+#include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
+#include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/cu_cp/cu_cp_ref_time_report_notifier.h"
 #include "ocudu/ran/cause/f1ap_cause.h"
 #include "ocudu/ran/cu_cp_types.h"
@@ -28,6 +30,9 @@ byte_buffer generate_container_with_cell_group_config();
 
 /// \brief Generate RRC Container with RRC Setup Complete message.
 byte_buffer generate_rrc_setup_complete();
+
+// Generate an UL-DCCH PDU on SRB1, with the PDCP header and the MAC-I of the attached test UE.
+byte_buffer generate_protected_ul_dcch_pdu(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t count);
 
 // Generate RRC Reconfiguration Complete PDU.
 byte_buffer generate_rrc_reconfiguration_complete_pdu(unsigned transaction_id, uint8_t count);

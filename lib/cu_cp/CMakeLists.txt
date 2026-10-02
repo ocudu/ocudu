@@ -75,6 +75,7 @@ set(SOURCES
         routines/mobility/conditional_handover_target_routine.cpp
         routines/mobility/inter_cu_conditional_handover_source_completion_routine.cpp
         routines/mobility/inter_cu_conditional_handover_target_execution_routine.cpp
+        routines/positioning/location_measurement_indication_routine.cpp
         routines/positioning/trp_information_exchange_routine.cpp
         task_schedulers/ngap_task_scheduler.cpp
         task_schedulers/xnap_task_scheduler.cpp

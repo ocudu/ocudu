@@ -316,6 +316,11 @@ public:
 
   /// \brief Initiate RAN paging for a UE in RRC Inactive state.
   virtual void handle_ran_paging_required(cu_cp_ue_index_t ue_index) = 0;
+
+  /// \brief Request a measurement gap from the DU for the location measurements of a UE (TS 38.331 section 5.5.6).
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] location_meas_info The packed LocationMeasurementInfo of the UE.
+  virtual void handle_location_measurement_indication(cu_cp_ue_index_t ue_index, byte_buffer location_meas_info) = 0;
 };
 
 // Request with information for the target handler of the intra cu handover.

@@ -147,6 +147,7 @@ private:
   void handle_security_mode_complete(const asn1::rrc_nr::security_mode_complete_s& msg);
 
   void handle_measurement_report(const asn1::rrc_nr::meas_report_s& msg);
+  void handle_location_measurement_indication(const asn1::rrc_nr::location_meas_ind_s& msg);
   void handle_rrc_transaction_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg, uint8_t transaction_id_);
   /// Dispatches the UL-DCCH message class extension, which is where UEInformationResponse lives.
   void handle_ul_dcch_msg_class_ext(const asn1::rrc_nr::ul_dcch_msg_s& ul_dcch_msg, bool integrity_verified);

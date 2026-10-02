@@ -241,6 +241,12 @@ public:
     location_handler->handle_location_update(ue_index);
   }
 
+  void on_location_measurement_indication(byte_buffer location_meas_info) override
+  {
+    ocudu_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
+    cu_cp_rrc_ue_handler->handle_location_measurement_indication(ue_index, std::move(location_meas_info));
+  }
+
   up_context on_up_context_required() override
   {
     ocudu_assert(up_mng != nullptr, "UP resource manager must not be nullptr");

@@ -99,6 +99,7 @@ public:
   async_task<void> handle_access_success(const cu_cp_access_success_indication& msg) override;
   async_task<rrc_resume_request_response> handle_rrc_resume_request(const rrc_resume_request& request) override;
   void                                    handle_ran_paging_required(cu_cp_ue_index_t ue_index) override;
+  void handle_location_measurement_indication(cu_cp_ue_index_t ue_index, byte_buffer location_meas_info) override;
 
   // cu_cp_ue_context_manipulation_handler.
   void             handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request) override;

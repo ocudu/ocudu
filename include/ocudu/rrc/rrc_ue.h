@@ -572,6 +572,11 @@ public:
   /// the AMF configured location reporting.
   virtual void on_ue_location_update() = 0;
 
+  /// \brief Notifies the CU-CP that the UE starts location measurements that need measurement gaps (TS 38.331
+  /// section 5.5.6).
+  /// \param[in] location_meas_info The packed LocationMeasurementInfo of the UE.
+  virtual void on_location_measurement_indication(byte_buffer location_meas_info) = 0;
+
   /// \brief Get the UP context of the UE.
   /// \returns The UP context of the UE.
   virtual up_context on_up_context_required() = 0;
