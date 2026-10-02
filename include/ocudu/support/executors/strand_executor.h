@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ocudu/adt/detail/concurrent_queue_params.h"
+#include "ocudu/adt/detail/intrusive_ptr.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/executors/detail/priority_task_queue.h"
 #include "ocudu/support/executors/detail/task_executor_utils.h"
@@ -167,6 +168,8 @@ template <typename Executor, typename QueueType, typename StrandLockPolicy = bas
 class task_strand_impl
 {
 public:
+  using ref_type = intrusive_ptr<task_strand_impl>;
+
   template <typename ExecType, typename... QueueParams>
   explicit task_strand_impl(unsigned batch_max_size_, ExecType&& exec_, QueueParams&&... queue_params) :
     batch_max_size(batch_max_size_),
@@ -194,7 +197,7 @@ public:
     // Note: We should only allow inline execution if the caller is using the exact same strand executor, but
     // to detect this situation, we would need to save the caller executor in a thread-local stack. I am not sure if it
     // is worth it to implement this feature.
-    bool dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { run_enqueued_tasks(); });
+    bool dispatch_successful = dispatch_run_enqueued_tasks();
     if (not dispatch_successful) {
       // Unable to dispatch executor job to run enqueued tasks.
       this->handle_failed_task_dispatch();
@@ -248,12 +251,30 @@ public:
   bool dispatch_value_dequeue_task()
   {
     // Dispatch batch dequeue job.
-    bool dispatch_successful = detail::get_task_executor_ref(out_exec).defer([this]() { run_enqueued_tasks(); });
+    bool dispatch_successful = dispatch_run_enqueued_tasks();
     if (not dispatch_successful) {
       handle_failed_task_dispatch();
       return false;
     }
     return true;
+  }
+
+  // Dispatches the running of the enqueued tasks to the wrapped executor.
+  bool dispatch_run_enqueued_tasks()
+  {
+    // The dispatched task holds a reference to the strand state, so that the state outlives the strand object while
+    // its tasks are being run.
+    return detail::get_task_executor_ref(out_exec).defer([self = acquire_ref()]() { self->run_enqueued_tasks(); });
+  }
+
+  ref_type acquire_ref() { return ref_type{this}; }
+
+  friend void intrusive_ptr_inc_ref(task_strand_impl* ptr) { ptr->ref_counter.inc_ref(); }
+  friend void intrusive_ptr_dec_ref(task_strand_impl* ptr)
+  {
+    if (ptr->ref_counter.dec_ref()) {
+      delete ptr;
+    }
   }
 
   void handle_failed_task_dispatch()
@@ -290,6 +311,9 @@ public:
   // Number of jobs currently enqueued in the strand.
   StrandLockPolicy state;
 
+  // Number of owners of this strand state.
+  intrusive_ptr_atomic_ref_counter ref_counter;
+
   // Logger used to report errors and warnings.
   ocudulog::basic_logger& logger = ocudulog::fetch_basic_logger("ALL");
 };
@@ -320,6 +344,8 @@ private:
 /// \tparam Executor Executor that the strands dispatches tasks to.
 /// \tparam QueuePolicy Enqueueing policy to dispatch tasks to the strand.
 /// \tparam StrandLockPolicy Policy used to lock/unlock the strand.
+///
+/// The strand can be destroyed while its tasks are running. Tasks already enqueued may still run after destruction.
 template <typename OutExec, concurrent_queue_policy QueuePolicy, typename StrandLockPolicy = basic_strand_lock>
 class task_strand final : public task_executor
 {
@@ -330,19 +356,21 @@ public:
 
   template <typename ExecType>
   task_strand(ExecType&& out_exec, unsigned qsize, unsigned max_batch = default_strand_batch_size) :
-    impl(max_batch, std::forward<ExecType>(out_exec), qsize), exec(*this)
+    impl(new impl_type(max_batch, std::forward<ExecType>(out_exec), qsize)), exec(*this)
   {
     report_fatal_error_if_not(is_basic_lock or max_batch == std::numeric_limits<unsigned>::max(),
                               "Cannot use limited batches with locking policies that are not \"basic_strand_lock\"");
   }
+  task_strand(const task_strand&)            = delete;
+  task_strand& operator=(const task_strand&) = delete;
 
   [[nodiscard]] bool execute(unique_task task) override
   {
     // Enqueue task in task_strand queue.
-    if (not impl.queue.try_push(std::move(task))) {
+    if (not impl->queue.try_push(std::move(task))) {
       return false;
     }
-    return impl.handle_enqueued_task(enqueue_priority::max);
+    return impl->handle_enqueued_task(enqueue_priority::max);
   }
 
   [[nodiscard]] bool defer(unique_task task) override { return execute(std::move(task)); }
@@ -354,8 +382,10 @@ public:
   executor_type& get_executor() { return exec; }
 
 private:
-  detail::task_strand_impl<OutExec, detail::strand_queue<QueuePolicy>, StrandLockPolicy> impl;
-  executor_type                                                                          exec;
+  using impl_type = detail::task_strand_impl<OutExec, detail::strand_queue<QueuePolicy>, StrandLockPolicy>;
+
+  typename impl_type::ref_type impl;
+  executor_type                exec;
 };
 
 /// \brief Executor that dispatches tasks with a specified priority to a strand that supports multiple priority levels.
@@ -383,6 +413,8 @@ private:
 /// \brief Task strand that supports multiple priority levels for the dispatched tasks.
 ///
 /// \tparam OutExec Executor that the strands dispatches tasks to.
+///
+/// The strand can be destroyed while its tasks are running. Tasks already enqueued may still run after destruction.
 template <typename OutExec, typename StrandLockPolicy = basic_strand_lock>
 class priority_task_strand
 {
@@ -396,7 +428,7 @@ public:
   priority_task_strand(ExecType&&                out_exec,
                        const ArrayOfQueueParams& strand_queue_params,
                        unsigned                  max_batch = default_strand_batch_size) :
-    impl(max_batch, std::forward<ExecType>(out_exec), strand_queue_params)
+    impl(new impl_type(max_batch, std::forward<ExecType>(out_exec), strand_queue_params))
   {
     static_assert(std::is_same_v<typename std::decay_t<ArrayOfQueueParams>::value_type, concurrent_queue_params>,
                   "Invalid queue params type");
@@ -407,22 +439,24 @@ public:
       exec_list.emplace_back(executor_type{detail::queue_index_to_enqueue_priority(i, nof_priority_levels()), *this});
     }
   }
+  priority_task_strand(const priority_task_strand&)            = delete;
+  priority_task_strand& operator=(const priority_task_strand&) = delete;
 
   /// \brief Dispatch task with priority \c prio. If possible, the task can be run inline.
   [[nodiscard]] bool execute(enqueue_priority prio, unique_task task)
   {
     // Enqueue task in task_strand queue.
-    if (not impl.queue.try_push(prio, std::move(task))) {
+    if (not impl->queue.try_push(prio, std::move(task))) {
       return false;
     }
-    return impl.handle_enqueued_task(prio);
+    return impl->handle_enqueued_task(prio);
   }
 
   /// \brief Dispatch task with priority \c prio. The task is never run inline.
   [[nodiscard]] bool defer(enqueue_priority prio, unique_task task) { return execute(prio, std::move(task)); }
 
   /// Number of priority levels supported by this strand.
-  size_t nof_priority_levels() { return impl.queue.queue.nof_priority_levels(); }
+  size_t nof_priority_levels() { return impl->queue.queue.nof_priority_levels(); }
 
   /// \brief Get a view of the basic executors for the different task priorities of the strand.
   ///
@@ -430,8 +464,10 @@ public:
   span<executor_type> get_executors() { return exec_list; }
 
 private:
-  detail::task_strand_impl<OutExec, detail::priority_strand_queue, StrandLockPolicy> impl;
-  std::vector<executor_type>                                                         exec_list;
+  using impl_type = detail::task_strand_impl<OutExec, detail::priority_strand_queue, StrandLockPolicy>;
+
+  typename impl_type::ref_type impl;
+  std::vector<executor_type>   exec_list;
 };
 
 /// \brief Creates a task strand instance with a single priority task level.

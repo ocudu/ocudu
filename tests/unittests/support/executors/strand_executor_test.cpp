@@ -120,6 +120,57 @@ TYPED_TEST(single_prio_strand_test, dispatch_to_worker_pool_causes_no_race_condi
   run_count_test(*this->strand_exec, nof_increments, nof_pushers, [&pool]() { pool.wait_pending_tasks(); });
 }
 
+TYPED_TEST(single_prio_strand_test, strand_can_be_destroyed_from_within_its_own_task)
+{
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{"POOL", 2, 64, std::chrono::microseconds{100}};
+  this->setup_strand(task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool), 16);
+
+  std::atomic<bool> done{false};
+  ASSERT_TRUE(this->strand_exec->defer([this, &done]() {
+    this->strand_exec.reset();
+    done = true;
+  }));
+  while (not done) {
+    std::this_thread::yield();
+  }
+  pool.wait_pending_tasks();
+  ASSERT_EQ(this->strand_exec, nullptr);
+}
+
+TYPED_TEST(single_prio_strand_test, strand_can_be_destroyed_right_after_its_last_task_completes)
+{
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{"POOL", 2, 64, std::chrono::microseconds{100}};
+
+  for (unsigned i = 0; i != 1000; ++i) {
+    this->setup_strand(task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool), 16);
+    std::atomic<bool> done{false};
+    ASSERT_TRUE(this->strand_exec->defer([&done]() { done.store(true, std::memory_order_release); }));
+    while (not done.load(std::memory_order_acquire)) {
+      std::this_thread::yield();
+    }
+    // The strand may still be finishing the run of its tasks.
+    this->strand_exec.reset();
+  }
+  pool.wait_pending_tasks();
+}
+
+TYPED_TEST(single_prio_strand_test, enqueued_tasks_run_after_strand_is_destroyed)
+{
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc> pool{"POOL", 2, 64, std::chrono::microseconds{100}};
+  this->setup_strand(task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(pool), 16);
+
+  std::atomic<unsigned> count{0};
+  ASSERT_TRUE(this->strand_exec->defer([&count]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    ++count;
+  }));
+  ASSERT_TRUE(this->strand_exec->defer([&count]() { ++count; }));
+  this->strand_exec.reset();
+
+  pool.wait_pending_tasks();
+  ASSERT_EQ(count, 2);
+}
+
 template <typename StrandType>
 class multi_prio_strand_test : public testing::Test
 {
