@@ -8,6 +8,7 @@
 #include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/bwp/bwp_configuration.h"
+#include "ocudu/support/executors/execute_until_success.h"
 #include "ocudu/support/executors/strand_executor.h"
 
 using namespace ocudu::schedtrace;
@@ -116,32 +117,29 @@ void event_trace_writer_registry::handle_cell_destruction(du_cell_index_t cell_i
 {
   // Called from within the consumer flush timer callback. The consumer destruction is deferred to a separate task, so
   // that its flush timer, and the timer callback, are not destroyed while the callback is still running.
-  cell_context& cell    = channels[cell_idx];
-  bool          success = cell.strand->defer([&cell]() {
+  cell_context& cell = channels[cell_idx];
+  defer_until_success(*cell.strand, timers, [&cell]() {
     // The cell context is not accessed after the consumer destruction, as it releases the close token, which may
     // trigger the destruction of the registry.
     std::unique_ptr<cell_event_trace_consumer> consumer = std::move(cell.consumer);
     cell.active.store(false, std::memory_order_release);
     consumer.reset();
   });
-  report_fatal_error_if_not(success, "Failed to dispatch destruction of cell {} event tracer", cell_idx);
 }
 
 void event_trace_writer_registry::stop()
 {
   sync_event consumers_closed;
-  for (unsigned i = 0; i != channels.size(); ++i) {
-    cell_context& cell = channels[i];
+  for (cell_context& cell : channels) {
     if (not cell.active.load(std::memory_order_acquire)) {
       continue;
     }
     // The consumer may be destroyed concurrently, so its presence is only checked within the strand.
-    bool success = cell.strand->defer([&cell, token = consumers_closed.get_token()]() mutable {
+    defer_until_success(*cell.strand, timers, [&cell, token = consumers_closed.get_token()]() mutable {
       if (cell.consumer != nullptr) {
         cell.consumer->request_close(std::move(token));
       }
     });
-    report_fatal_error_if_not(success, "Failed to dispatch close request to cell {} event tracer", i);
   }
 
   // Wait for all the consumers to be destroyed.
