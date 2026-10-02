@@ -148,10 +148,11 @@ variables:
       attest_spdx() {
         local predicate=$1
         local type=$2
+        shift 2
         local base_url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${NAME}/${VERSION}"
 
         echo "Attesting ${predicate} ($(wc -c < ${predicate}) bytes)"
-        cosign attest --predicate "${predicate}" --type "${type}" ${IMAGE_DIGEST}
+        cosign attest "$@" --predicate "${predicate}" --type "${type}" ${IMAGE_DIGEST}
 
         if [ -n "${COSIGN_KEY_FILE}" ]; then
           echo "Signing ${predicate} as detached blob signature"
@@ -203,7 +204,8 @@ variables:
 
         if [ -n "$ATTESTATION_FILE" ]; then
           echo "=== Attesting ${ATTESTATION_FILE} ==="
-          attest_spdx build.spdx spdx
+          # Legacy bundle format until the vendor SBOM is JSON, cosign v3 bundles reject tag-value
+          attest_spdx build.spdx spdx --new-bundle-format=false --use-signing-config=false
           echo ""
         fi
 
