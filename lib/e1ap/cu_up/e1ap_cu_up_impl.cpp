@@ -319,11 +319,15 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const bearer_co
 void e1ap_cu_up_impl::handle_bearer_context_release_command(const bearer_context_release_cmd_s& msg)
 {
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
-    // Create failure message for early returns.
+    // Received a release command for a context that we do not possess.
+    // Reply with release complete and log an error.
     e1ap_message e1ap_msg;
-    e1ap_msg.pdu.set_unsuccessful_outcome();
-    e1ap_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
-    // TODO fill other values.
+    e1ap_msg.pdu.set_successful_outcome();
+    e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
+    e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id =
+        msg->gnb_cu_cp_ue_e1ap_id;
+    e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_up_ue_e1ap_id =
+        msg->gnb_cu_up_ue_e1ap_id;
 
     logger.log_error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
     pdu_notifier->on_new_message(e1ap_msg);
