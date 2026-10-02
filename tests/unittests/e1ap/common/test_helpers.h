@@ -166,14 +166,14 @@ public:
     });
   }
 
-  void on_schedule_ue_async_task(cu_up_ue_index_t ue_index_, async_task<void> task) override
+  bool on_schedule_ue_async_task(cu_up_ue_index_t ue_index_, async_task<void> task) override
   {
-    task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop
+    return task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop
   }
 
-  void on_schedule_cu_up_async_task(async_task<void> task) override
+  bool on_schedule_cu_up_async_task(async_task<void> task) override
   {
-    task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop
+    return task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop
   }
 
   void on_connection_loss(cu_up_e1_index_t e1_index) override {}

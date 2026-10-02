@@ -65,14 +65,14 @@ async_task<void> cu_up_manager_impl::stop()
   return ue_mng->stop();
 }
 
-void cu_up_manager_impl::schedule_cu_up_async_task(async_task<void> task)
+bool cu_up_manager_impl::schedule_cu_up_async_task(async_task<void> task)
 {
-  cu_up_task_scheduler.schedule(std::move(task));
+  return cu_up_task_scheduler.schedule(std::move(task));
 }
 
-void cu_up_manager_impl::schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task)
+bool cu_up_manager_impl::schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task)
 {
-  ue_mng->schedule_ue_async_task(ue_index, std::move(task));
+  return ue_mng->schedule_ue_async_task(ue_index, std::move(task));
 }
 
 e1ap_bearer_context_setup_response
@@ -166,15 +166,18 @@ void cu_up_manager_impl::handle_e1ap_connection_drop(cu_up_e1_index_t e1_index)
     return;
   }
   std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
-  schedule_cu_up_async_task(launch_async<cu_up_e1_connection_loss_routine>(
-      cu_up_e1_connection_loss_routine_config{.cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns},
-      cu_up_e1_connection_loss_routine_dependencies{.stop_command      = stop_command,
-                                                    .e1ap              = e1ap,
-                                                    .ue_mng            = *ue_mng,
-                                                    .timers            = timers,
-                                                    .ctrl_exec         = exec_mapper.ctrl_executor(),
-                                                    .logger            = logger,
-                                                    .e1_setup_notifier = e1_setup_notifier}));
+  if (not schedule_cu_up_async_task(launch_async<cu_up_e1_connection_loss_routine>(
+          cu_up_e1_connection_loss_routine_config{.cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns},
+          cu_up_e1_connection_loss_routine_dependencies{.stop_command      = stop_command,
+                                                        .e1ap              = e1ap,
+                                                        .ue_mng            = *ue_mng,
+                                                        .timers            = timers,
+                                                        .ctrl_exec         = exec_mapper.ctrl_executor(),
+                                                        .logger            = logger,
+                                                        .e1_setup_notifier = e1_setup_notifier}))) {
+    logger.warning("e1={}: Could not start E1 connection drop procedure", fmt::underlying(e1_index));
+    return;
+  }
 }
 
 async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
@@ -307,8 +310,11 @@ void cu_up_manager_impl::trigger_enable_test_mode()
   }
 
   test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
-                         [this]() { schedule_cu_up_async_task(enable_test_mode()); });
+  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period, [this]() {
+    if (not schedule_cu_up_async_task(enable_test_mode())) {
+      logger.error("Could not start test mode enable routine");
+    }
+  });
   test_mode_ue_timer.run();
 }
 
@@ -319,8 +325,11 @@ void cu_up_manager_impl::trigger_disable_test_mode()
   }
 
   test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period,
-                         [this]() { schedule_cu_up_async_task(disable_test_mode()); });
+  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period, [this]() {
+    if (not schedule_cu_up_async_task(disable_test_mode())) {
+      logger.error("Could not start test mode disable routine");
+    }
+  });
   test_mode_ue_timer.run();
 }
 
@@ -331,7 +340,10 @@ void cu_up_manager_impl::trigger_reestablish_test_mode()
   }
 
   test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-  test_mode_ue_timer.set(test_mode_cfg.reestablish_period,
-                         [this]() { schedule_cu_up_async_task(reestablish_test_mode()); });
+  test_mode_ue_timer.set(test_mode_cfg.reestablish_period, [this]() {
+    if (not schedule_cu_up_async_task(reestablish_test_mode())) {
+      logger.error("Could not start test mode re-establishment routine");
+    }
+  });
   test_mode_ue_timer.run();
 }

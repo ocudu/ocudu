@@ -311,9 +311,11 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const bearer_co
 
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id)];
 
-  cu_up_notifier.on_schedule_ue_async_task(
-      ue_ctxt.ue_ids.ue_index,
-      launch_async<bearer_context_modification_procedure>(ue_ctxt, msg, *pdu_notifier, cu_up_notifier, metrics));
+  if (not cu_up_notifier.on_schedule_ue_async_task(
+          ue_ctxt.ue_ids.ue_index,
+          launch_async<bearer_context_modification_procedure>(ue_ctxt, msg, *pdu_notifier, cu_up_notifier, metrics))) {
+    logger.log_warning("Failed to start a Bearer Context Modification procedure");
+  }
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_release_command(const bearer_context_release_cmd_s& msg)
@@ -341,15 +343,20 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const bearer_context
   ue_ctxt_list.remove_ue(ue_ctxt.ue_ids.ue_index);
 
   // Handle the release procedure.
-  cu_up_notifier.on_schedule_ue_async_task(
-      ue_index,
-      launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, metrics, logger));
+  if (not cu_up_notifier.on_schedule_ue_async_task(
+          ue_index,
+          launch_async<bearer_context_release_procedure>(
+              ue_index, msg, *pdu_notifier, cu_up_notifier, metrics, logger))) {
+    logger.log_warning("Failed to start Bearer Context Release procedure");
+  }
 }
 
 void e1ap_cu_up_impl::handle_cu_up_e1ap_reset(const reset_s& msg)
 {
-  cu_up_notifier.on_schedule_cu_up_async_task(
-      launch_async<e1ap_cu_up_reset_procedure>(msg, ue_ctxt_list, cu_up_notifier, *pdu_notifier, logger));
+  if (not cu_up_notifier.on_schedule_cu_up_async_task(
+          launch_async<e1ap_cu_up_reset_procedure>(msg, ue_ctxt_list, cu_up_notifier, *pdu_notifier, logger))) {
+    logger.log_warning("Failed to start E1AP Reset procedure");
+  }
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const successful_outcome_s& outcome)

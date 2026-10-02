@@ -64,22 +64,22 @@ public:
     return cu_up_handler->handle_e1_reset(msg);
   }
 
-  void on_schedule_cu_up_async_task(async_task<void> task) override
+  [[nodiscard]] bool on_schedule_cu_up_async_task(async_task<void> task) override
   {
     if (cu_up_handler == nullptr) {
       logger.error("Could not schedule CU-UP task, no CU-UP handler present");
-      return;
+      return false;
     }
-    cu_up_handler->schedule_cu_up_async_task(std::move(task));
+    return cu_up_handler->schedule_cu_up_async_task(std::move(task));
   }
 
-  void on_schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) override
+  [[nodiscard]] bool on_schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) override
   {
     if (cu_up_handler == nullptr) {
       logger.error("Could not schedule UE task, no CU-UP handler present. ue={}", ue_index);
-      return;
+      return false;
     }
-    cu_up_handler->schedule_ue_async_task(ue_index, std::move(task));
+    return cu_up_handler->schedule_ue_async_task(ue_index, std::move(task));
   }
 
   void on_connection_loss(cu_up_e1_index_t e1_index) override

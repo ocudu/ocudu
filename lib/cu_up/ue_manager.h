@@ -69,7 +69,7 @@ public:
     return st;
   }
 
-  void schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task);
+  [[nodiscard]] bool schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task);
 
 private:
   /// \brief Get the next available UE index.

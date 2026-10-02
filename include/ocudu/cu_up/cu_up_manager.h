@@ -39,9 +39,9 @@ public:
 
   virtual void handle_e1ap_connection_drop(cu_up_e1_index_t e1_index) = 0;
 
-  virtual void schedule_cu_up_async_task(async_task<void> task) = 0;
+  [[nodiscard]] virtual bool schedule_cu_up_async_task(async_task<void> task) = 0;
 
-  virtual void schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) = 0;
+  [[nodiscard]] virtual bool schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) = 0;
 };
 
 /// Interface for the PDCP to notify the CU-UP manger

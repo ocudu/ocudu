@@ -361,7 +361,7 @@ TEST_F(e1ap_cu_up_test, when_valid_bearer_context_release_command_received_then_
   e1ap_message bearer_context_release_cmd = generate_bearer_context_release_command(9, 0);
   e1ap->handle_message(bearer_context_release_cmd);
 
-  // Check the generated PDU is indeed the Bearer Context Modification Response.
+  // Check the generated PDU is indeed the Bearer Context Release Complete.
   ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
   ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_release_complete,
             e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
@@ -377,23 +377,24 @@ TEST_F(e1ap_cu_up_test,
 
   test_logger.info("TEST: Receive BearerContextReleaseCommand message...");
 
-  // Receive BearerContextReleaseCommand.
+  // Receive first BearerContextReleaseCommand.
   {
     e1ap_message bearer_context_release_cmd = generate_bearer_context_release_command(9, 0);
     e1ap->handle_message(bearer_context_release_cmd);
 
-    // Check the generated PDU is indeed the Bearer Context Modification Response.
+    // Check the generated PDU is indeed the Bearer Context Release Complete.
     ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
     ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_release_complete,
               e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
   }
 
-  // Receive BearerContextReleaseCommand.
+  // Receive second Bearer Context Release Command. The bearer context no longer exists, but it should still reply with
+  // Bearer Context Release complete.
   {
     e1ap_message bearer_context_release_cmd = generate_bearer_context_release_command(9, 0);
     e1ap->handle_message(bearer_context_release_cmd);
 
-    // Check the generated PDU is indeed the Bearer Context Modification Response.
+    // Check the generated PDU is indeed the Bearer Context Release Complete.
     ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
     ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_release_complete,
               e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());

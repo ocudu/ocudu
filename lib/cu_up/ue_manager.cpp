@@ -197,14 +197,14 @@ cu_up_ue_index_t ue_manager::get_next_ue_index()
   return INVALID_CU_UP_UE_INDEX;
 }
 
-void ue_manager::schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task)
+bool ue_manager::schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task)
 {
   ue_context* ue_ctx = find_ue(ue_index);
   if (ue_ctx == nullptr) {
     logger.error("Cannot schedule UE task, could not find UE. ue_index={}", ue_index);
-    return;
+    return false;
   }
-  ue_ctx->task_sched.schedule(std::move(task));
+  return ue_ctx->task_sched.schedule(std::move(task));
 }
 
 async_task<expected<>> ue_manager::schedule_and_wait_ue_removal(cu_up_ue_index_t ue_index)

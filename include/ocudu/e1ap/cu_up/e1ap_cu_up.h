@@ -92,10 +92,10 @@ public:
   virtual async_task<void> on_e1_reset_received(const e1ap_reset& msg) = 0;
 
   /// \brief Schedules async task on CU-UP.
-  virtual void on_schedule_cu_up_async_task(async_task<void> task) = 0;
+  [[nodiscard]] virtual bool on_schedule_cu_up_async_task(async_task<void> task) = 0;
 
   /// \brief Schedules async task on UE.
-  virtual void on_schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) = 0;
+  [[nodiscard]] virtual bool on_schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) = 0;
 };
 
 /// Methods used by E1AP to notify the CU-UP manager of connection drops.

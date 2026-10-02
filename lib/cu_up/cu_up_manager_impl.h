@@ -69,10 +69,10 @@ public:
   async_task<void> handle_e1_reset(const e1ap_reset& msg) override;
 
   // See interface for documentation.
-  void schedule_cu_up_async_task(async_task<void> task) override;
+  [[nodiscard]] bool schedule_cu_up_async_task(async_task<void> task) override;
 
   // See interface for documentation.
-  void schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) override;
+  [[nodiscard]] bool schedule_ue_async_task(cu_up_ue_index_t ue_index, async_task<void> task) override;
 
   // See interface for documentation.
   size_t get_nof_ues() override { return ue_mng->get_nof_ues(); }
