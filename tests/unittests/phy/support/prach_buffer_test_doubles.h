@@ -232,6 +232,14 @@ public:
     return data.get_view({i_symbol, i_fd_occasion, i_td_occasion, i_port});
   }
 
+  unsigned
+  get_symbol_offset(unsigned i_port, unsigned i_td_occasion, unsigned i_fd_occasion, unsigned i_symbol) const override
+  {
+    return data.get_view_offset<1>({i_symbol, i_fd_occasion, i_td_occasion, i_port});
+  }
+
+  span<const cbf16_t> get_buffer() const override { return data.get_data(); }
+
 private:
   /// Data storage.
   dynamic_tensor<static_cast<std::underlying_type_t<dims>>(dims::count), cbf16_t, dims> data;
