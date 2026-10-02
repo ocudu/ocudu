@@ -71,6 +71,10 @@ public:
   /// Creates a new instance of a unique timer.
   unique_timer create_unique_timer(task_executor& exec);
 
+  /// \brief Dispatches a task to the given executor once \c delay ticks elapse.
+  /// \remark If the dispatch fails, it is retried in the following ticks.
+  void defer_after(timer_duration delay, task_executor& exec, unique_task task);
+
   /// Returns the number of timers handled by this instance.
   size_t nof_timers() const;
 

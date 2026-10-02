@@ -197,6 +197,8 @@ public:
   unique_function<void()> timeout_callback;
   /// Task executor used to dispatch expiry callback. When set to nullptr, the timer is not allocated.
   task_executor* exec = nullptr;
+  /// Whether the timer has no unique_timer owner and is destroyed after its callback runs.
+  bool detached = false;
   /// Pending commands to be handled by the backend.
   backend_channel backend_ch;
 
@@ -356,6 +358,7 @@ public:
     timer.frontend->duration         = INVALID_DURATION;
     timer.frontend->timeout_callback = {};
     timer.frontend->exec             = nullptr;
+    timer.frontend->detached         = false;
     // Clear backend.
     timer.backend.state   = state_t::stopped;
     timer.backend.timeout = 0;
@@ -509,6 +512,12 @@ bool timer_manager::manager_impl::trigger_timeout_handling(timer_handle& timer)
       if (not frontend->timeout_callback.is_empty()) {
         frontend->timeout_callback();
       }
+
+      if (frontend->detached) {
+        // The destruction is only requested after the callback returns, as the backend clears the callback when it
+        // handles the destruction.
+        frontend->destroy();
+      }
     }
   });
 }
@@ -595,6 +604,14 @@ void timer_manager::tick()
 unique_timer timer_manager::create_unique_timer(task_executor& exec)
 {
   return unique_timer(impl->create_frontend_timer(exec));
+}
+
+void timer_manager::defer_after(timer_duration delay, task_executor& exec, unique_task task)
+{
+  frontend_handle& timer = impl->create_frontend_timer(exec);
+  timer.detached         = true;
+  timer.set(delay, std::move(task));
+  timer.run();
 }
 
 size_t timer_manager::nof_timers() const

@@ -400,6 +400,41 @@ TEST_F(unique_timer_timeout_dispatch_fail_tester,
   ASSERT_TRUE(missing_timer->has_expired());
 }
 
+TEST_F(unique_timer_manual_tester, defer_after_runs_task_once_after_delay)
+{
+  const size_t   nof_timers_before = timer_mng.nof_timers();
+  timer_duration delay{10};
+  unsigned       count = 0;
+  timer_mng.defer_after(delay, worker, [&count]() { ++count; });
+
+  for (unsigned t = 0; t != delay.count() - 1; ++t) {
+    tick();
+  }
+  ASSERT_EQ(count, 0);
+  tick();
+  ASSERT_EQ(count, 1);
+
+  // The timer is released once its task runs.
+  tick();
+  ASSERT_EQ(count, 1);
+  ASSERT_EQ(timer_mng.nof_timers(), nof_timers_before);
+}
+
+TEST_F(unique_timer_timeout_dispatch_fail_tester, defer_after_retries_dispatch_on_failure)
+{
+  // Fill the worker queue so that the first dispatch fails.
+  for (unsigned i = 0; i != worker.max_pending_tasks(); ++i) {
+    ASSERT_TRUE(worker.defer([]() {}));
+  }
+  unsigned count = 0;
+  timer_mng.defer_after(timer_duration{1}, worker, [&count]() { ++count; });
+
+  tick();
+  ASSERT_EQ(count, 0);
+  tick();
+  ASSERT_EQ(count, 1);
+}
+
 class unique_timer_multithread_tester : public ::testing::Test
 {
 protected:

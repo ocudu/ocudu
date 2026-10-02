@@ -19,9 +19,7 @@ void execute_until_success(TaskExecutor& exec, timer_manager& timers, CopyableTa
   // Try to dispatch right away.
   if (not exec.execute(task)) {
     // If it fails, resort to timers.
-    auto timer = timers.create_unique_timer(exec);
-    timer.set(timer_duration{0}, [task]() mutable { task(); });
-    timer.run();
+    timers.defer_after(timer_duration{0}, exec, std::forward<CopyableTask>(task));
   }
 }
 
@@ -36,9 +34,7 @@ void defer_until_success(TaskExecutor& exec, timer_manager& timers, CopyableTask
   // Try to dispatch right away.
   if (not exec.defer(task)) {
     // If it fails, resort to timers.
-    auto timer = timers.create_unique_timer(exec);
-    timer.set(timer_duration{0}, [task]() mutable { task(); });
-    timer.run();
+    timers.defer_after(timer_duration{0}, exec, std::forward<CopyableTask>(task));
   }
 }
 
