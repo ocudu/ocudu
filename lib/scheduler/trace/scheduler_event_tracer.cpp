@@ -73,16 +73,17 @@ private:
 /// Single cell event file writer registry.
 static std::unique_ptr<event_trace_writer_registry> registry;
 
-void schedtrace::init_tracer(const std::string&        dir_path,
-                             std::chrono::milliseconds flush_period,
-                             timer_manager&            timers,
-                             task_executor&            pool_executor)
+tracer_handle schedtrace::init_tracer(const std::string&        dir_path,
+                                      std::chrono::milliseconds flush_period,
+                                      timer_manager&            timers,
+                                      task_executor&            pool_executor)
 {
   report_fatal_error_if_not(registry == nullptr, "Scheduler trace handling registry has already been initialized");
   registry = std::make_unique<event_trace_writer_registry>(
       flush_period, timers, pool_executor, [dir_path](du_cell_index_t cell_idx) {
         return std::make_unique<file_trace_writer>(dir_path, cell_idx);
       });
+  return tracer_handle{true};
 }
 
 std::unique_ptr<cell_event_tracer> schedtrace::create_cell_tracer(const ocudu::cell_configuration& cell_cfg)
@@ -95,7 +96,12 @@ std::unique_ptr<cell_event_tracer> schedtrace::create_cell_tracer(const ocudu::c
   return registry->create_cell_tracer(cell_cfg);
 }
 
-void schedtrace::close_tracer()
+void tracer_handle::reset()
 {
+  if (not std::exchange(active, false)) {
+    return;
+  }
+
+  registry->stop();
   registry = nullptr;
 }

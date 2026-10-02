@@ -62,6 +62,7 @@ protected:
   std::filesystem::path temp_dir; // set in SetUp to be unique per test
   timer_manager         timers{8};
   manual_task_worker    worker{32};
+  tracer_handle         tracer_backend;
 
   void SetUp() override
   {
@@ -69,13 +70,13 @@ protected:
     const auto  ts        = std::chrono::steady_clock::now().time_since_epoch().count();
     temp_dir = std::filesystem::temp_directory_path() / fmt::format("schedtrace_{}_{}", test_info->name(), ts);
     std::filesystem::create_directories(temp_dir);
-    init_tracer(temp_dir.string(), flush_period, timers, worker);
+    tracer_backend = init_tracer(temp_dir.string(), flush_period, timers, worker);
   }
 
   void TearDown() override
   {
     worker.run_pending_tasks();
-    schedtrace::close_tracer();
+    tracer_backend.reset();
     std::filesystem::remove_all(temp_dir);
   }
 

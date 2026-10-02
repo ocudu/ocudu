@@ -46,8 +46,8 @@ cell_event_trace_consumer::cell_event_trace_consumer(event_trace_writer_registry
   // Set up periodic flush timer.
   flush_timer.set(sleep_period, [this]() {
     // On timer expiry, flush events and return slots to the free queue.
-    if (not trace_writer->on_flush_triggered(ev_queue)) {
-      // Timer is not rearmed because an event was received to stop tracing.
+    if (not trace_writer->on_flush_triggered(ev_queue) or closing) {
+      // Timer is not rearmed because an event was received to stop tracing or the consumer is closing.
       parent.handle_cell_destruction(cell_index);
       return;
     }
@@ -68,6 +68,15 @@ std::unique_ptr<cell_event_tracer> cell_event_trace_consumer::create_producer(co
   return std::make_unique<cell_event_tracer>(cell_cfg, ev_queue);
 }
 
+void cell_event_trace_consumer::request_close(scoped_sync_token token)
+{
+  close_token = std::move(token);
+  closing     = true;
+  // Restart the timer with the shortest duration to avoid waiting for a full flush period. If the timer is not running,
+  // the consumer is already being destroyed.
+  flush_timer.set(std::chrono::milliseconds{1});
+}
+
 event_trace_writer_registry::event_trace_writer_registry(std::chrono::milliseconds        flush_period_,
                                                          timer_manager&                   timers_,
                                                          task_executor&                   pool_executor,
@@ -80,10 +89,13 @@ std::unique_ptr<cell_event_tracer>
 event_trace_writer_registry::create_cell_tracer(const ocudu::cell_configuration& cell_cfg)
 {
   cell_context& cell = channels[cell_cfg.cell_index];
-  ocudu_assert(cell.consumer == nullptr, "Cell event tracer for cell {} already exists", cell_cfg.cell_index);
+  ocudu_assert(not cell.active.load(std::memory_order_acquire),
+               "Cell event tracer for cell {} already exists",
+               cell_cfg.cell_index);
   if (cell.strand == nullptr) {
     cell.strand = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(task_executor_ref, strand_queue_size);
   }
+  cell.active.store(true, std::memory_order_relaxed);
 
   // Creates a cell trace consumer.
   const subcarrier_spacing max_scs = std::max(cell_cfg.init_bwp.dl.cfg().scs, cell_cfg.init_bwp.ul.cfg().scs);
@@ -104,8 +116,34 @@ void event_trace_writer_registry::handle_cell_destruction(du_cell_index_t cell_i
 {
   // Called from within the consumer flush timer callback. The consumer destruction is deferred to a separate task, so
   // that its flush timer, and the timer callback, are not destroyed while the callback is still running.
-  cell_context& cell = channels[cell_idx];
-  if (not cell.strand->defer([&cell]() { cell.consumer.reset(); })) {
-    ocudulog::fetch_basic_logger("SCHED").error("Failed to dispatch destruction of cell {} event tracer", cell_idx);
+  cell_context& cell    = channels[cell_idx];
+  bool          success = cell.strand->defer([&cell]() {
+    // The cell context is not accessed after the consumer destruction, as it releases the close token, which may
+    // trigger the destruction of the registry.
+    std::unique_ptr<cell_event_trace_consumer> consumer = std::move(cell.consumer);
+    cell.active.store(false, std::memory_order_release);
+    consumer.reset();
+  });
+  report_fatal_error_if_not(success, "Failed to dispatch destruction of cell {} event tracer", cell_idx);
+}
+
+void event_trace_writer_registry::stop()
+{
+  sync_event consumers_closed;
+  for (unsigned i = 0; i != channels.size(); ++i) {
+    cell_context& cell = channels[i];
+    if (not cell.active.load(std::memory_order_acquire)) {
+      continue;
+    }
+    // The consumer may be destroyed concurrently, so its presence is only checked within the strand.
+    bool success = cell.strand->defer([&cell, token = consumers_closed.get_token()]() mutable {
+      if (cell.consumer != nullptr) {
+        cell.consumer->request_close(std::move(token));
+      }
+    });
+    report_fatal_error_if_not(success, "Failed to dispatch close request to cell {} event tracer", i);
   }
+
+  // Wait for all the consumers to be destroyed.
+  consumers_closed.wait();
 }

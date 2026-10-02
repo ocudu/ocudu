@@ -9,6 +9,7 @@
 #include "cell_event_channel.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/synchronization/sync_event.h"
 #include "ocudu/support/timers.h"
 
 namespace ocudu::schedtrace {
@@ -43,9 +44,17 @@ public:
   /// \return cell event trace producer.
   std::unique_ptr<schedtrace::cell_event_tracer> create_producer(const ocudu::cell_configuration& cell_cfg);
 
+  /// \brief Flushes the pending events and destroys the consumer on the next timer tick.
+  /// \param token Token released once the consumer is destroyed.
+  void request_close(scoped_sync_token token);
+
 private:
+  /// Token released when the consumer is destroyed after a close request.
+  scoped_sync_token            close_token;
   event_trace_writer_registry& parent;
   du_cell_index_t              cell_index;
+  /// Whether the consumer was ordered to close.
+  bool closing = false;
   /// Timer that triggers periodically to flush the events.
   unique_timer flush_timer;
   /// Queue of pending events to be processed by the backend.
@@ -68,15 +77,21 @@ public:
   /// Creates and registers a cell event tracer.
   std::unique_ptr<cell_event_tracer> create_cell_tracer(const ocudu::cell_configuration& cell_cfg);
 
+  /// \brief Closes all cell consumers, flushing their pending events, and waits for their destruction.
+  /// \remark All cell event tracers must have been destroyed beforehand.
+  void stop();
+
 private:
   friend class cell_event_trace_consumer;
 
   /// Resources associated with a cell index.
   struct cell_context {
-    /// Strand task executor used by the cell consumer. Reused across consumers of the same cell index.
+    /// Strand used by the cell consumer. Reused across consumers of the same cell index.
     std::unique_ptr<task_executor> strand;
     /// Active consumer of the cell, if any.
     std::unique_ptr<cell_event_trace_consumer> consumer;
+    /// Whether the cell has a consumer that was not yet destroyed.
+    std::atomic<bool> active{false};
   };
 
   void handle_cell_destruction(du_cell_index_t cell_idx);

@@ -9,8 +9,10 @@
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/result/sched_result.h"
 #include "ocudu/support/executors/manual_task_worker.h"
+#include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/timers.h"
 #include <gtest/gtest.h>
+#include <thread>
 
 using namespace ocudu;
 using namespace schedtrace;
@@ -72,6 +74,16 @@ protected:
   event_trace_writer_registry registry{flush_period, timers, worker, [this](du_cell_index_t cell_idx) {
                                          return std::make_unique<mock_event_writer>(cell_idx, written_events);
                                        }};
+
+  void TearDown() override
+  {
+    // Process the STOP events of the tracers destroyed in the test body.
+    for (unsigned i = 0; i != flush_period.count(); ++i) {
+      timers.tick();
+    }
+    worker.run_pending_tasks();
+    registry.stop();
+  }
 };
 
 TEST_F(event_trace_writer_registry_test, when_no_cells_are_created_then_no_events_are_pushed)
@@ -204,4 +216,46 @@ TEST_F(event_trace_writer_registry_test, when_multiple_slots_are_pushed_then_all
     ASSERT_EQ(written_events.event(to_du_cell_index(0), 1 + slot).value_as_CellSlotEvent()->slot_tx(),
               slot_point(0, slot).count());
   }
+}
+
+TEST(event_trace_writer_registry_stop_test,
+     when_registry_is_stopped_then_pending_events_are_flushed_before_flush_period)
+{
+  static constexpr std::chrono::milliseconds long_flush_period{60000};
+
+  event_aggregator  written_events;
+  timer_manager     timers{8};
+  task_worker       worker{"trace_worker", 64};
+  auto              worker_exec = make_task_executor(worker);
+  std::atomic<bool> stop_ticking{false};
+  std::thread       ticker([&timers, &stop_ticking]() {
+    while (not stop_ticking.load(std::memory_order_relaxed)) {
+      timers.tick();
+      std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    }
+  });
+
+  {
+    event_trace_writer_registry registry{
+        long_flush_period, timers, worker_exec, [&written_events](du_cell_index_t idx) {
+          return std::make_unique<mock_event_writer>(idx, written_events);
+        }};
+    auto         tracer = registry.create_cell_tracer(make_test_cell_cfg(to_du_cell_index(0)));
+    sched_result result;
+    result.success = true;
+    tracer->on_scheduler_result(slot_point{0, 7}, result, std::chrono::microseconds(0));
+    tracer.reset();
+
+    registry.stop();
+  }
+
+  stop_ticking = true;
+  ticker.join();
+  worker.stop();
+
+  // START, slot and STOP events are flushed.
+  ASSERT_EQ(written_events.cell_events[0].size(), 3U);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 0).value_type(), fbs::CellEventValue::CellStartEvent);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 1).value_as_CellSlotEvent()->slot_tx(), slot_point(0, 7).count());
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 2).value_type(), fbs::CellEventValue::CellStopEvent);
 }

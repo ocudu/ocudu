@@ -285,10 +285,6 @@ int main(int argc, char** argv)
       metrics_notifier_forwarder, app_timers, du_cfg.metrics_cfg.executors_metrics_cfg, remote_server_gateway);
   std::vector<app_services::metrics_config> app_metrics = std::move(exec_metrics_service.metrics);
 
-  // Scheduler tracer must be closed after the workers stop running its flush timers, but before the timer manager
-  // is destroyed.
-  auto schedtrace_closer = make_scope_exit([]() { schedtrace::close_tracer(); });
-
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
@@ -312,12 +308,13 @@ int main(int argc, char** argv)
   auto on_pcap_close_init = make_scope_exit([&gnb_logger]() { gnb_logger.info("Closing PCAP files..."); });
 
   // Initiate schedtrace, if enabled.
+  schedtrace::tracer_handle schedtrace_backend;
   if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace.enabled) {
     auto& schedtrace_cfg = o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace;
-    schedtrace::init_tracer(schedtrace_cfg.path,
-                            std::chrono::milliseconds{schedtrace_cfg.flush_period_ms},
-                            app_timers,
-                            workers.get_trace_executor());
+    schedtrace_backend   = schedtrace::init_tracer(schedtrace_cfg.path,
+                                                 std::chrono::milliseconds{schedtrace_cfg.flush_period_ms},
+                                                 app_timers,
+                                                 workers.get_trace_executor());
   }
 
   // The F1-C TNL connection belongs to the application, so the DU-high is told from here whether its setup is to be
