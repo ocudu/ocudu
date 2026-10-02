@@ -84,6 +84,7 @@ public:
                              : (NOF_SUBCARRIERS_PER_RB - 1);
     if (pdu.subcarrier_offset.value() > k_ssb_max) {
       return make_unexpected(fmt::format("With common SCS {}kHz, the maximum SSB subcarrier offset is {} (i.e., {}).",
+                                         scs_to_khz(pdu.common_scs),
                                          k_ssb_max,
                                          pdu.subcarrier_offset.value()));
     }

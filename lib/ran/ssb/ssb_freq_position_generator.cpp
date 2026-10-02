@@ -40,15 +40,22 @@ compute_offset_to_pointA(double f_ssb_0_hz, double point_A_hz, subcarrier_spacin
 }
 
 // Compute the k_SSB, depending on the SCScommon.
-static ssb_subcarrier_offset
-compute_k_ssb(double f_ssb_0_hz, double point_A_hz, ssb_offset_to_pointA offset_to_pA, subcarrier_spacing scs_common)
+static ssb_subcarrier_offset compute_k_ssb(double               f_ssb_0_hz,
+                                           double               point_A_hz,
+                                           ssb_offset_to_pointA offset_to_pA,
+                                           subcarrier_spacing   scs_ssb,
+                                           subcarrier_spacing   scs_common)
 {
-  subcarrier_spacing scs_ref = band_helper::get_ssb_ref_scs(scs_common);
+  subcarrier_spacing scs_ref = band_helper::get_ssb_ref_scs(scs_ssb);
 
   const double f_crb_ssb_kHz = point_A_hz * band_helper::HZ_TO_KHZ +
                                static_cast<double>(NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_ref) * offset_to_pA.value());
 
-  return static_cast<uint64_t>(f_ssb_0_hz * band_helper::HZ_TO_KHZ - f_crb_ssb_kHz) / scs_to_khz(scs_ref);
+  // As per TS 38.211, Section 7.4.3.1, k_SSB is expressed in 15kHz subcarriers for FR1 and in SCScommon subcarriers for
+  // FR2, whereas N_CRB_SSB is expressed in units of the reference SCS.
+  const subcarrier_spacing k_ssb_scs = (scs_ref == subcarrier_spacing::kHz15) ? scs_ref : scs_common;
+
+  return static_cast<uint64_t>(f_ssb_0_hz * band_helper::HZ_TO_KHZ - f_crb_ssb_kHz) / scs_to_khz(k_ssb_scs);
 }
 
 ssb_freq_position_generator::ssb_freq_position_generator(arfcn_t            dl_arfcn_,
@@ -271,7 +278,7 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
 
       if (is_multiple_of_scs) {
         ssb.offset_to_point_A = compute_offset_to_pointA(f_ssb_0_hz, point_A_hz, scs_common);
-        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A, scs_ssb);
+        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A, scs_ssb, scs_common);
         ssb.is_valid          = true;
         ssb.ss_ref            = f_ssb_N_M_hz;
         // Increment N_raster according to the band.
@@ -327,7 +334,7 @@ ssb_freq_location ssb_freq_position_generator::get_next_ssb_location_special_ras
 
       if (is_multiple_of_scs) {
         ssb.offset_to_point_A = compute_offset_to_pointA(f_ssb_0_hz, point_A_hz, scs_common);
-        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A, scs_ssb);
+        ssb.k_ssb             = compute_k_ssb(f_ssb_0_hz, point_A_hz, ssb.offset_to_point_A, scs_ssb, scs_common);
         ssb.is_valid          = true;
         ssb.ss_ref            = f_ssb_N_M_hz;
         // Increment N_raster according to the band.

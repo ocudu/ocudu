@@ -589,3 +589,127 @@ INSTANTIATE_TEST_SUITE_P(
                          to_string(info_.param.scs_common),
                          to_string(info_.param.scs_ssb));
     });
+
+/*
+ *      ===========    TEST SSB OFFSETS AGAINST THE SYNC RASTER POSITION    ===========
+ */
+
+namespace {
+
+/// Carrier for which every SSB position returned by the generator is checked.
+struct ssb_offsets_test_params {
+  arfcn_t              dl_arfcn;
+  nr_band              band;
+  bs_channel_bandwidth bw;
+  subcarrier_spacing   scs_common;
+  subcarrier_spacing   scs_ssb;
+};
+
+class ssb_offsets_match_sync_raster : public ::testing::TestWithParam<ssb_offsets_test_params>
+{};
+
+} // namespace
+
+/// \brief Checks offsetToPointA and k_SSB of \p location against TS38.211 Section 7.4.3.1.
+///
+/// The two offsets must point at the lowest subcarrier of the SSB the sync raster centers on SS_ref. In FR1 both are
+/// expressed in 15kHz units and k_SSB is in {0, ..., 23}. In FR2, offsetToPointA counts 60kHz resource blocks, while
+/// k_SSB counts subcarriers of the common subcarrier spacing and is in {0, ..., 11}.
+static void check_ssb_offsets(const ssb_offsets_test_params& params, unsigned n_rbs, const ssb_freq_location& location)
+{
+  static constexpr double   KHZ_TO_HZ         = 1e3;
+  static constexpr double   FREQ_TOLERANCE_HZ = 1.0;
+  static constexpr unsigned FR1_REF_SCS_KHZ   = 15;
+  static constexpr unsigned FR2_CRB_SCS_KHZ   = 60;
+  static constexpr unsigned FR1_K_SSB_MAX     = 23;
+  static constexpr unsigned FR2_K_SSB_MAX     = 11;
+
+  const bool     is_fr1        = band_helper::get_freq_range(params.band) == frequency_range::FR1;
+  const unsigned crb_scs_kHz   = is_fr1 ? FR1_REF_SCS_KHZ : FR2_CRB_SCS_KHZ;
+  const unsigned k_ssb_scs_kHz = is_fr1 ? FR1_REF_SCS_KHZ : scs_to_khz(params.scs_common);
+  const unsigned k_ssb_max     = is_fr1 ? FR1_K_SSB_MAX : FR2_K_SSB_MAX;
+
+  EXPECT_LE(location.k_ssb.value(), k_ssb_max) << "k_SSB out of range";
+
+  const double point_a_Hz = band_helper::get_abs_freq_point_a_from_f_ref(
+      band_helper::nr_arfcn_to_freq(params.dl_arfcn), n_rbs, params.scs_common);
+  const double ssb_first_subcarrier_from_offsets_Hz =
+      point_a_Hz +
+      static_cast<double>(location.offset_to_point_A.value()) * NOF_SUBCARRIERS_PER_RB * crb_scs_kHz * KHZ_TO_HZ +
+      static_cast<double>(location.k_ssb.value()) * k_ssb_scs_kHz * KHZ_TO_HZ;
+  const double ssb_first_subcarrier_from_ss_ref_Hz =
+      location.ss_ref - static_cast<double>(scs_to_khz(params.scs_ssb)) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2;
+
+  EXPECT_NEAR(ssb_first_subcarrier_from_offsets_Hz, ssb_first_subcarrier_from_ss_ref_Hz, FREQ_TOLERANCE_HZ)
+      << "offsetToPointA and k_SSB do not reach the SSB centered on SS_ref";
+}
+
+TEST_P(ssb_offsets_match_sync_raster, every_ssb_position_has_consistent_offsets)
+{
+  const ssb_offsets_test_params& params = GetParam();
+  const unsigned                 n_rbs =
+      band_helper::get_n_rbs_from_bw(params.bw, params.scs_common, band_helper::get_freq_range(params.band));
+  ssb_freq_position_generator generator{params.dl_arfcn, params.band, n_rbs, params.scs_common, params.scs_ssb};
+
+  unsigned nof_locations = 0;
+  for (ssb_freq_location location = generator.get_next_ssb_location(); location.is_valid;
+       location                   = generator.get_next_ssb_location()) {
+    SCOPED_TRACE(fmt::format("SSB position {}: SS_ref={}Hz offsetToPointA={} k_SSB={}",
+                             nof_locations,
+                             location.ss_ref,
+                             location.offset_to_point_A.value(),
+                             location.k_ssb.value()));
+    check_ssb_offsets(params, n_rbs, location);
+    ++nof_locations;
+  }
+
+  ASSERT_GT(nof_locations, 0U) << "The generator found no SSB position within the carrier";
+}
+
+INSTANTIATE_TEST_SUITE_P(ssb_offsets,
+                         ssb_offsets_match_sync_raster,
+                         testing::Values(
+                             // FR2: k_SSB counts subcarriers of the 120kHz common subcarrier spacing.
+                             ssb_offsets_test_params{2079167,
+                                                     nr_band::n257,
+                                                     bs_channel_bandwidth::MHz100,
+                                                     subcarrier_spacing::kHz120,
+                                                     subcarrier_spacing::kHz120},
+                             ssb_offsets_test_params{2079167,
+                                                     nr_band::n257,
+                                                     bs_channel_bandwidth::MHz200,
+                                                     subcarrier_spacing::kHz120,
+                                                     subcarrier_spacing::kHz120},
+                             ssb_offsets_test_params{2079167,
+                                                     nr_band::n257,
+                                                     bs_channel_bandwidth::MHz400,
+                                                     subcarrier_spacing::kHz120,
+                                                     subcarrier_spacing::kHz120},
+                             ssb_offsets_test_params{2041667,
+                                                     nr_band::n258,
+                                                     bs_channel_bandwidth::MHz100,
+                                                     subcarrier_spacing::kHz120,
+                                                     subcarrier_spacing::kHz120},
+                             ssb_offsets_test_params{2077501,
+                                                     nr_band::n261,
+                                                     bs_channel_bandwidth::MHz400,
+                                                     subcarrier_spacing::kHz120,
+                                                     subcarrier_spacing::kHz120},
+                             // FR1: k_SSB counts 15kHz subcarriers, which the FR2 change must leave untouched.
+                             ssb_offsets_test_params{365000,
+                                                     nr_band::n3,
+                                                     bs_channel_bandwidth::MHz10,
+                                                     subcarrier_spacing::kHz15,
+                                                     subcarrier_spacing::kHz15},
+                             ssb_offsets_test_params{650000,
+                                                     nr_band::n78,
+                                                     bs_channel_bandwidth::MHz100,
+                                                     subcarrier_spacing::kHz30,
+                                                     subcarrier_spacing::kHz30}),
+                         [](const ::testing::TestParamInfo<ssb_offsets_match_sync_raster::ParamType>& info_) {
+                           return fmt::format("n{}_dl_arfcn_{}_bw_{}MHz_scs_{}",
+                                              fmt::underlying(info_.param.band),
+                                              info_.param.dl_arfcn,
+                                              bs_channel_bandwidth_to_MHz(info_.param.bw),
+                                              to_string(info_.param.scs_common));
+                         });
