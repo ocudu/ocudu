@@ -9,7 +9,6 @@
 #include "cell_event_channel.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/support/executors/task_executor.h"
-#include "ocudu/support/synchronization/sync_event.h"
 #include "ocudu/support/timers.h"
 
 namespace ocudu::schedtrace {
@@ -25,38 +24,22 @@ public:
   virtual bool on_flush_triggered(cell_event_channel& ev_queue) = 0;
 };
 
-class event_trace_writer_registry;
-
 /// This class provides a channel between backend and frontend for cell event tracing propagation and flushing of
 /// events to a event_trace_writer instance.
 class cell_event_trace_consumer
 {
 public:
-  cell_event_trace_consumer(event_trace_writer_registry&        parent_,
-                            du_cell_index_t                     cell_idx,
-                            subcarrier_spacing                  max_scs,
-                            std::chrono::milliseconds           sleep_period,
-                            timer_manager&                      timers,
-                            task_executor&                      cell_executor,
-                            std::unique_ptr<event_trace_writer> writer);
+  cell_event_trace_consumer(du_cell_index_t cell_idx, unsigned queue_size, std::unique_ptr<event_trace_writer> writer);
 
   /// \brief Create a cell event tracer associated with this channel.
   /// \return cell event trace producer.
   std::unique_ptr<schedtrace::cell_event_tracer> create_producer(const ocudu::cell_configuration& cell_cfg);
 
-  /// \brief Flushes the pending events and destroys the consumer on the next timer tick.
-  /// \param token Token released once the consumer is destroyed.
-  void request_close(scoped_sync_token token);
+  /// \brief Flushes the pending events to the event trace writer.
+  /// \return False if an event was received to stop tracing.
+  bool flush() { return trace_writer->on_flush_triggered(ev_queue); }
 
 private:
-  /// Token released when the consumer is destroyed after a close request.
-  scoped_sync_token            close_token;
-  event_trace_writer_registry& parent;
-  du_cell_index_t              cell_index;
-  /// Whether the consumer was ordered to close.
-  bool closing = false;
-  /// Timer that triggers periodically to flush the events.
-  unique_timer flush_timer;
   /// Queue of pending events to be processed by the backend.
   cell_event_channel ev_queue;
   /// Handler of the events at the backend.
@@ -82,19 +65,23 @@ public:
   void stop();
 
 private:
-  friend class cell_event_trace_consumer;
-
-  /// Resources associated with a cell index.
+  /// Resources associated with a cell index. The strand and the flush timer are reused across consumers.
   struct cell_context {
-    /// Strand used by the cell consumer. Reused across consumers of the same cell index.
+    /// Strand where the cell consumer is accessed.
     std::unique_ptr<task_executor> strand;
+    /// Timer that triggers periodically to flush the events.
+    unique_timer flush_timer;
     /// Active consumer of the cell, if any.
     std::unique_ptr<cell_event_trace_consumer> consumer;
     /// Whether the cell has a consumer that was not yet destroyed.
     std::atomic<bool> active{false};
   };
 
-  void handle_cell_destruction(du_cell_index_t cell_idx);
+  void handle_flush(cell_context& cell);
+
+  void close_cell(cell_context& cell);
+
+  void destroy_consumer(cell_context& cell);
 
   timer_manager&            timers;
   task_executor&            task_executor_ref;
