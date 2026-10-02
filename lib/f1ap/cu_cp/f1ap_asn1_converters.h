@@ -68,6 +68,13 @@ inline void cu_to_du_rrc_info_to_asn1(asn1::f1ap::cu_to_du_rrc_info_s& asn1_cu_t
       asn1_cu_to_du_rrc_info.ie_exts.cell_group_cfg = cu_to_du_rrc_info.ie_exts.value().cell_group_cfg.value().copy();
     }
 
+    // Fill location meas info.
+    if (cu_to_du_rrc_info.ie_exts.value().location_meas_info.has_value()) {
+      asn1_cu_to_du_rrc_info.ie_exts.location_meas_info_present = true;
+      asn1_cu_to_du_rrc_info.ie_exts.location_meas_info =
+          cu_to_du_rrc_info.ie_exts.value().location_meas_info.value().copy();
+    }
+
     // TODO: Add missing optional values
   }
 }

@@ -284,6 +284,28 @@ TEST_F(f1ap_cu_ue_context_modification_test,
   EXPECT_EQ(t.get().drbs_failed_to_be_setup_list[0].drb_id, drb_id_t::drb1);
 }
 
+TEST_F(f1ap_cu_ue_context_modification_test,
+       when_request_has_location_measurement_information_then_cu_to_du_rrc_information_includes_it)
+{
+  // Preamble.
+  test_ue& ue = run_ue_context_setup();
+
+  // Start UE CONTEXT MODIFICATION procedure with Location Measurement Information.
+  f1ap_ue_context_modification_request req = generate_ue_context_modification_request(ue.ue_index);
+  req.cu_to_du_rrc_info.value().ie_exts.emplace().location_meas_info = make_byte_buffer("cafe").value();
+  this->start_procedure(req);
+
+  // The UE CONTEXT MODIFICATION REQUEST carries the base IEs and the Location Measurement Information IE.
+  ASSERT_TRUE(was_ue_context_modification_msg_sent(ue.du_ue_id.value()));
+  const auto& asn1_req = this->f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_mod_request();
+  ASSERT_TRUE(asn1_req->cu_to_du_rrc_info_present);
+  EXPECT_EQ(asn1_req->cu_to_du_rrc_info.cg_cfg_info, make_byte_buffer("deadbeef").value());
+  EXPECT_EQ(asn1_req->cu_to_du_rrc_info.meas_cfg, make_byte_buffer("deadbeef").value());
+  ASSERT_TRUE(asn1_req->cu_to_du_rrc_info.ie_exts_present);
+  ASSERT_TRUE(asn1_req->cu_to_du_rrc_info.ie_exts.location_meas_info_present);
+  EXPECT_EQ(asn1_req->cu_to_du_rrc_info.ie_exts.location_meas_info, make_byte_buffer("cafe").value());
+}
+
 TEST_F(f1ap_cu_ue_context_modification_test, when_ue_modification_failure_received_then_procedure_is_unsuccessful)
 {
   // Preamble.

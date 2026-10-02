@@ -153,11 +153,8 @@ static void fill_asn1_ue_context_modification_request(asn1::f1ap::ue_context_mod
 
   // cu to du rrc info
   if (request.cu_to_du_rrc_info.has_value()) {
-    asn1_request->cu_to_du_rrc_info_present     = true;
-    asn1_request->cu_to_du_rrc_info.cg_cfg_info = request.cu_to_du_rrc_info.value().cg_cfg_info.copy();
-    asn1_request->cu_to_du_rrc_info.ue_cap_rat_container_list =
-        request.cu_to_du_rrc_info.value().ue_cap_rat_container_list.copy();
-    asn1_request->cu_to_du_rrc_info.meas_cfg = request.cu_to_du_rrc_info.value().meas_cfg.copy();
+    asn1_request->cu_to_du_rrc_info_present = true;
+    cu_to_du_rrc_info_to_asn1(asn1_request->cu_to_du_rrc_info, request.cu_to_du_rrc_info.value());
   }
 
   // tx action ind
