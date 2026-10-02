@@ -15,6 +15,6 @@ set(SOURCES_DIFI
 
 add_library(ocudu_radio_difi STATIC ${SOURCES_DIFI})
 
-target_link_libraries(ocudu_radio_difi fmt ocudulog ocudu_support)
+target_link_libraries(ocudu_radio_difi fmt ocudulog ocudu_support ocuduvec)
 
 add_to_exported_libs(ocudu_radio_difi)

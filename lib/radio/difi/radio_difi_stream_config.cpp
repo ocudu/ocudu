@@ -7,6 +7,7 @@
 #include "fmt/base.h"
 #include <arpa/inet.h>
 #include <sstream>
+#include <string_view>
 
 using namespace ocudu;
 
@@ -69,4 +70,40 @@ ocudu::parse_difi_stream_args(const std::string& args, const std::string& defaul
   }
 
   return config;
+}
+
+std::optional<difi_iq_byte_order> ocudu::parse_difi_iq_byte_order(const std::string& device_args)
+{
+  static constexpr std::string_view IQ_BYTE_ORDER_KEY = "iq_byte_order";
+  static constexpr std::string_view WHITESPACE        = " \t\n";
+
+  std::istringstream ss(device_args);
+  std::string        token;
+  while (std::getline(ss, token, ',')) {
+    const auto eq = token.find('=');
+    if (eq == std::string::npos) {
+      continue;
+    }
+
+    // Device arguments may be folded across lines in the configuration file, so surrounding whitespace is ignored.
+    std::string key   = token.substr(0, eq);
+    std::string value = token.substr(eq + 1);
+    key.erase(0, key.find_first_not_of(WHITESPACE));
+    key.erase(key.find_last_not_of(WHITESPACE) + 1);
+    value.erase(0, value.find_first_not_of(WHITESPACE));
+    value.erase(value.find_last_not_of(WHITESPACE) + 1);
+    if (key != IQ_BYTE_ORDER_KEY) {
+      continue;
+    }
+
+    if (value == "big") {
+      return difi_iq_byte_order::big;
+    }
+    if (value == "little") {
+      return difi_iq_byte_order::little;
+    }
+    return std::nullopt;
+  }
+
+  return difi_iq_byte_order::big;
 }

@@ -57,17 +57,15 @@ static inline uint64_t read_u64_be(const uint8_t* p)
 }
 
 /// Unpacks \c nof_samples interleaved IQ samples from \c payload into \c dst.
-static void unpack_samples(const uint8_t* payload, unsigned nof_samples, unsigned bit_depth, span<ci16_t> dst)
+static void unpack_samples(const uint8_t*     payload,
+                           unsigned           nof_samples,
+                           unsigned           bit_depth,
+                           difi_iq_byte_order byte_order,
+                           span<ci16_t>       dst)
 {
-  // The IQ payload is in host byte order; only the metadata fields are big endian.
   if (bit_depth == 16) {
-    for (unsigned i = 0; i != nof_samples; ++i) {
-      int16_t re = 0;
-      int16_t im = 0;
-      std::memcpy(&re, payload + i * 4, 2);
-      std::memcpy(&im, payload + i * 4 + 2, 2);
-      dst[i] = ci16_t(re, im);
-    }
+    difi_unpack_iq16(
+        dst.first(nof_samples), span<const uint8_t>(payload, nof_samples * DIFI_BYTES_PER_IQ16_SAMPLE), byte_order);
     return;
   }
 
@@ -264,20 +262,29 @@ baseband_gateway_receiver::metadata radio_difi_rx_stream::receive(baseband_gatew
       // The gap alone filled the buffer; this packet belongs to the next one.
       const unsigned nof_carry = nof_pkt - skip;
       carry_samples.resize(nof_carry);
-      unpack_samples(payload + skip * bytes_per_sample, nof_carry, config.bit_depth, carry_samples);
+      unpack_samples(
+          payload + skip * bytes_per_sample, nof_carry, config.bit_depth, config.iq_byte_order, carry_samples);
       carry_ts = static_cast<uint64_t>(local_ts) + skip;
       break;
     }
 
     const unsigned nof_write = std::min(nof_pkt - skip, nof_requested - filled);
-    unpack_samples(payload + skip * bytes_per_sample, nof_write, config.bit_depth, channel.subspan(filled, nof_write));
+    unpack_samples(payload + skip * bytes_per_sample,
+                   nof_write,
+                   config.bit_depth,
+                   config.iq_byte_order,
+                   channel.subspan(filled, nof_write));
     filled += nof_write;
 
     if (skip + nof_write < nof_pkt) {
       // The packet runs past the end of this buffer. Keep the tail for the next call.
       const unsigned nof_carry = nof_pkt - skip - nof_write;
       carry_samples.resize(nof_carry);
-      unpack_samples(payload + (skip + nof_write) * bytes_per_sample, nof_carry, config.bit_depth, carry_samples);
+      unpack_samples(payload + (skip + nof_write) * bytes_per_sample,
+                     nof_carry,
+                     config.bit_depth,
+                     config.iq_byte_order,
+                     carry_samples);
       carry_ts = static_cast<uint64_t>(local_ts) + skip + nof_write;
     }
   }

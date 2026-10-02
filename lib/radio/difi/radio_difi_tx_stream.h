@@ -31,6 +31,8 @@ public:
     uint32_t stream_id = 0;
     /// IQ sample bit depth: 8 or 16.
     unsigned bit_depth = 16;
+    /// Byte order of 16-bit IQ components in transmitted packets.
+    difi_iq_byte_order iq_byte_order = difi_iq_byte_order::big;
     /// Sample rate in Hz, used for timestamp conversion (sample ticks <-> seconds).
     double sample_rate_Hz = 0.0;
     /// RF centre frequency in Hz, encoded in the DIFI context packet rf_ref_freq field.

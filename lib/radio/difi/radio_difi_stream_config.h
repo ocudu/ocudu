@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "radio_difi_data_packet.h"
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -26,5 +27,13 @@ struct radio_difi_stream_config {
 std::optional<radio_difi_stream_config> parse_difi_stream_args(const std::string& args,
                                                                const std::string& default_ip   = "127.0.0.1",
                                                                uint16_t           default_port = 4991);
+
+/// \brief Parses the IQ byte order from the radio device arguments.
+///
+/// Looks for \c iq_byte_order=big or \c iq_byte_order=little in the comma-separated \p device_args, ignoring every
+/// other key. Absent means \c big, the VITA-49.2 network byte order.
+///
+/// \return The byte order, or std::nullopt if the key has any other value.
+std::optional<difi_iq_byte_order> parse_difi_iq_byte_order(const std::string& device_args);
 
 } // namespace ocudu

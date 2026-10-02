@@ -199,6 +199,20 @@ const std::vector<test_case_t> radio_difi_validator_test_data = {
        return config;
      },
      "Stream port 0 is out of valid range [1, 65535].\n"},
+    // Little-endian IQ payload.
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.args                       = "iq_byte_order=little";
+       return config;
+     },
+     ""},
+    // Big-endian IQ payload among the other device arguments, with the whitespace of a folded configuration line.
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.args                       = "tx_addr=127.0.0.1,tx_port=4991, iq_byte_order = big ,rx_port=4992";
+       return config;
+     },
+     ""},
 };
 
 class RadioDifiValidatorFixture : public ::testing::TestWithParam<test_case_t>

@@ -21,6 +21,7 @@
 #include <limits>
 #include <random>
 #include <thread>
+#include <utility>
 #include <vector>
 
 using namespace ocudu;
@@ -707,11 +708,12 @@ TEST_F(RxReassembly, QueuedSamplesAheadOfTheWallClockArePaced)
 //
 // Pseudo-random samples through the full transmit, UDP and receive path, recovered bit-for-bit.
 
-/// 16-bit fidelity: arbitrary int16 I/Q values must survive the round-trip
-/// unchanged because the 16-bit path is lossless.
-TEST(FidelityRoundTrip, RoundTrip16Bit)
+/// \brief Sends pseudo-random 16-bit samples through the full transmit, UDP and receive path.
+///
+/// Returns the sent and the received samples, with each end using its own IQ byte order.
+static std::pair<std::vector<ci16_t>, std::vector<ci16_t>>
+run_round_trip_16bit(difi_iq_byte_order tx_order, difi_iq_byte_order rx_order, uint16_t port)
 {
-  static constexpr uint16_t PORT      = 15003;
   static constexpr uint32_t STREAM    = 0x00000005U;
   static constexpr double   SRATE     = 1920000.0;
   static constexpr unsigned N_SAMPLES = 64;
@@ -720,9 +722,10 @@ TEST(FidelityRoundTrip, RoundTrip16Bit)
 
   radio_difi_rx_stream::stream_description rx_desc;
   rx_desc.ip             = "127.0.0.1";
-  rx_desc.port           = PORT;
+  rx_desc.port           = port;
   rx_desc.stream_id      = STREAM;
   rx_desc.bit_depth      = 16;
+  rx_desc.iq_byte_order  = rx_order;
   rx_desc.sample_rate_Hz = SRATE;
   rx_desc.stream_id_str  = "test:fidelity:rx:16";
   radio_difi_rx_stream rx_stream(rx_desc, notifier);
@@ -730,9 +733,10 @@ TEST(FidelityRoundTrip, RoundTrip16Bit)
 
   radio_difi_tx_stream::stream_description tx_desc;
   tx_desc.ip             = "127.0.0.1";
-  tx_desc.port           = PORT;
+  tx_desc.port           = port;
   tx_desc.stream_id      = STREAM;
   tx_desc.bit_depth      = 16;
+  tx_desc.iq_byte_order  = tx_order;
   tx_desc.sample_rate_Hz = SRATE;
   tx_desc.center_freq_Hz = 0.0;
   tx_desc.stream_id_str  = "test:fidelity:tx:16";
@@ -763,12 +767,41 @@ TEST(FidelityRoundTrip, RoundTrip16Bit)
   simple_buffer_writer out(N_SAMPLES);
   rx_stream.receive(out);
 
-  for (unsigned i = 0; i < N_SAMPLES; ++i) {
-    EXPECT_EQ(out.data()[i], sent[i]) << "Sample mismatch at index " << i;
-  }
-
   tx_stream.stop();
   rx_stream.stop();
+  return {sent, out.data()};
+}
+
+/// Returns \p value with its two bytes swapped.
+static int16_t swap_int16_bytes(int16_t value)
+{
+  const auto word = static_cast<uint16_t>(value);
+  return static_cast<int16_t>(static_cast<uint16_t>((word << 8) | (word >> 8)));
+}
+
+/// 16-bit fidelity in big-endian byte order: arbitrary int16 I/Q values survive the round trip unchanged.
+TEST(FidelityRoundTrip, RoundTrip16BitBigEndian)
+{
+  const auto [sent, received] = run_round_trip_16bit(difi_iq_byte_order::big, difi_iq_byte_order::big, 15003);
+  EXPECT_EQ(received, sent);
+}
+
+/// 16-bit fidelity in little-endian byte order: arbitrary int16 I/Q values survive the round trip unchanged.
+TEST(FidelityRoundTrip, RoundTrip16BitLittleEndian)
+{
+  const auto [sent, received] = run_round_trip_16bit(difi_iq_byte_order::little, difi_iq_byte_order::little, 15031);
+  EXPECT_EQ(received, sent);
+}
+
+/// Ends that disagree on the byte order receive every component byte-swapped: nothing corrects a mismatch silently.
+TEST(FidelityRoundTrip, MismatchedByteOrderSwapsEveryComponent)
+{
+  const auto [sent, received] = run_round_trip_16bit(difi_iq_byte_order::big, difi_iq_byte_order::little, 15032);
+  ASSERT_EQ(received.size(), sent.size());
+  for (unsigned i = 0, e = sent.size(); i != e; ++i) {
+    EXPECT_EQ(received[i], ci16_t(swap_int16_bytes(sent[i].real()), swap_int16_bytes(sent[i].imag())))
+        << "Sample " << i;
+  }
 }
 
 /// 8-bit fidelity: only the upper byte of each int16 is transmitted on the

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "radio_difi_data_packet.h"
 #include "radio_difi_udp_socket.h"
 #include "ocudu/adt/complex.h"
 #include "ocudu/gateways/baseband/baseband_gateway_receiver.h"
@@ -30,6 +31,8 @@ public:
     uint32_t stream_id;
     /// IQ sample bit depth, either 8 or 16.
     unsigned bit_depth;
+    /// Byte order of 16-bit IQ components in received packets.
+    difi_iq_byte_order iq_byte_order = difi_iq_byte_order::big;
     /// Sample rate in Hz, used to convert between timestamps and sample ticks.
     double sample_rate_Hz;
     /// Stream identifier string.

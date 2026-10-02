@@ -4,9 +4,16 @@
 
 #include "radio_difi_data_packet.h"
 #include "radio_difi_packing.h"
+#include "ocudu/ocuduvec/byte_swap.h"
 #include "ocudu/ocuduvec/zero.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <cstring>
+
+// The IQ payload is copied as-is for little-endian wire order and byte-swapped for big-endian, which is only correct
+// on a little-endian host. __BYTE_ORDER__ is predefined by GCC and Clang; other compilers skip the check.
+#if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__)
+#error "DIFI IQ packing assumes a little-endian host."
+#endif
 
 using namespace ocudu;
 
@@ -114,20 +121,11 @@ ocudu::build_difi_data_packet(span<uint8_t> buf, const difi_data_packet_params& 
   // Offset 20: timestamp — fractional picoseconds (8 bytes).
   pack_u64(out + 20, p.frac_ps);
 
-  // Offset 28: IQ payload, in host byte order while every metadata field above is big endian. That
-  // asymmetry is the DIFI convention: the Consortium's certification transmitter serialises the
-  // payload natively while byte-swapping the header.
+  // Offset 28: IQ payload.
   uint8_t* dst = out + DIFI_DATA_HEADER_SIZE.value();
 
   if (p.bit_depth == 16) {
-    for (const ci16_t s : samples) {
-      const int16_t re = s.real();
-      const int16_t im = s.imag();
-      std::memcpy(dst, &re, 2);
-      dst += 2;
-      std::memcpy(dst, &im, 2);
-      dst += 2;
-    }
+    difi_pack_iq16(span<uint8_t>(dst, samples.size() * DIFI_BYTES_PER_IQ16_SAMPLE), samples, p.iq_byte_order);
   } else {
     // 8-bit: upper byte of each int16 component is the int8 sample value.
     for (const ci16_t s : samples) {
@@ -138,4 +136,34 @@ ocudu::build_difi_data_packet(span<uint8_t> buf, const difi_data_packet_params& 
   }
 
   return total_bytes;
+}
+
+void ocudu::difi_pack_iq16(span<uint8_t> payload, span<const ci16_t> samples, difi_iq_byte_order order)
+{
+  ocudu_assert(payload.size() == samples.size() * DIFI_BYTES_PER_IQ16_SAMPLE,
+               "Payload size (i.e., {}) must be {} bytes per sample (i.e., {}).",
+               payload.size(),
+               DIFI_BYTES_PER_IQ16_SAMPLE,
+               samples.size());
+
+  if (order == difi_iq_byte_order::little) {
+    std::memcpy(payload.data(), samples.data(), payload.size());
+    return;
+  }
+  ocuduvec::swap_bytes(payload, samples);
+}
+
+void ocudu::difi_unpack_iq16(span<ci16_t> samples, span<const uint8_t> payload, difi_iq_byte_order order)
+{
+  ocudu_assert(payload.size() == samples.size() * DIFI_BYTES_PER_IQ16_SAMPLE,
+               "Payload size (i.e., {}) must be {} bytes per sample (i.e., {}).",
+               payload.size(),
+               DIFI_BYTES_PER_IQ16_SAMPLE,
+               samples.size());
+
+  if (order == difi_iq_byte_order::little) {
+    std::memcpy(samples.data(), payload.data(), payload.size());
+    return;
+  }
+  ocuduvec::swap_bytes(samples, payload);
 }

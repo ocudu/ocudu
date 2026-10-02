@@ -31,6 +31,11 @@ radio_session_difi_impl::radio_session_difi_impl(const radio_configuration::radi
 
   sample_rate_Hz = config.sampling_rate_Hz;
 
+  // The gNB configuration validator rejects an invalid byte order before the session is created.
+  const std::optional<difi_iq_byte_order> parsed_byte_order = parse_difi_iq_byte_order(config.args);
+  ocudu_assert(parsed_byte_order.has_value(), "Invalid DIFI IQ byte order in the device arguments '{}'.", config.args);
+  const difi_iq_byte_order iq_byte_order = parsed_byte_order.value_or(difi_iq_byte_order::big);
+
   unsigned nof_streams = config.tx_streams.size();
   bb_gateways.reserve(nof_streams);
 
@@ -63,6 +68,7 @@ radio_session_difi_impl::radio_session_difi_impl(const radio_configuration::radi
                                                           .port           = tx_parsed->port,
                                                           .stream_id      = stream_id,
                                                           .bit_depth      = bit_depth,
+                                                          .iq_byte_order  = iq_byte_order,
                                                           .sample_rate_Hz = config.sampling_rate_Hz,
                                                           .center_freq_Hz = tx_center_freq_Hz,
                                                           .rf_gain_dB     = tx_gain_dB,
@@ -74,17 +80,20 @@ radio_session_difi_impl::radio_session_difi_impl(const radio_configuration::radi
                                                           .port           = rx_parsed->port,
                                                           .stream_id      = stream_id,
                                                           .bit_depth      = bit_depth,
+                                                          .iq_byte_order  = iq_byte_order,
                                                           .sample_rate_Hz = config.sampling_rate_Hz,
                                                           .stream_id_str  = "difi:rx:" + std::to_string(stream_id),
                                                           .log_level      = config.log_level};
 
-    logger.info("Creating DIFI stream {} — tx={}:{} rx={}:{} bit_depth={} srate={}Hz freq={}Hz gain={}dB",
+    logger.info("Creating DIFI stream {} — tx={}:{} rx={}:{} bit_depth={} iq_byte_order={} srate={}Hz freq={}Hz "
+                "gain={}dB",
                 stream_id,
                 tx_config.ip,
                 tx_config.port,
                 rx_config.ip,
                 rx_config.port,
                 bit_depth,
+                (iq_byte_order == difi_iq_byte_order::big) ? "big" : "little",
                 config.sampling_rate_Hz,
                 tx_center_freq_Hz,
                 tx_gain_dB);

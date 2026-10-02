@@ -23,13 +23,11 @@ static uint64_t read_u64_be(const uint8_t* p)
   return (static_cast<uint64_t>(read_u32_be(p)) << 32) | read_u32_be(p + 4);
 }
 
-/// Reads one IQ component from the payload. Unlike every metadata field, the 16-bit IQ payload is
-/// in host byte order per the DIFI convention, so no swap is applied here.
+/// Reads one IQ component from the payload. Like every metadata field, the 16-bit IQ payload is big
+/// endian, as VITA-49.2 puts the whole packet in network byte order.
 static int16_t read_i16_iq(const uint8_t* p)
 {
-  int16_t v = 0;
-  std::memcpy(&v, p, 2);
-  return v;
+  return static_cast<int16_t>((static_cast<uint16_t>(p[0]) << 8) | static_cast<uint16_t>(p[1]));
 }
 
 static difi_data_packet_params make_params(unsigned bit_depth = 16, uint8_t pkt_n = 0)
@@ -138,7 +136,7 @@ TEST(DifiDataPacket, Iq16BitSingleSample)
   std::vector<uint8_t> buf(difi_data_packet_size(16, 1).value());
   build_difi_data_packet(buf, p, span<const ci16_t>(&sample, 1));
 
-  // Offset 28: host-order I, then host-order Q.
+  // Offset 28: I, then Q, in the default big-endian byte order.
   EXPECT_EQ(read_i16_iq(buf.data() + 28), 0x1234);
   EXPECT_EQ(read_i16_iq(buf.data() + 30), static_cast<int16_t>(0xabcd));
 }
@@ -154,6 +152,86 @@ TEST(DifiDataPacket, Iq16BitMultipleSamples)
   EXPECT_EQ(read_i16_iq(buf.data() + 30), -200);
   EXPECT_EQ(read_i16_iq(buf.data() + 32), 300);
   EXPECT_EQ(read_i16_iq(buf.data() + 34), -400);
+}
+
+namespace {
+
+/// Wire bytes of one 16-bit IQ payload in a given byte order.
+struct iq_byte_order_case {
+  difi_iq_byte_order   order;
+  std::vector<uint8_t> expected_bytes;
+};
+
+class DifiIqByteOrder : public ::testing::TestWithParam<iq_byte_order_case>
+{};
+
+} // namespace
+
+// The payload bytes follow the configured order exactly, component by component.
+TEST_P(DifiIqByteOrder, PayloadBytesFollowTheByteOrder)
+{
+  const iq_byte_order_case& param   = GetParam();
+  auto                      p       = make_params(16);
+  p.iq_byte_order                   = param.order;
+  const std::vector<ci16_t> samples = {ci16_t(0x1234, static_cast<int16_t>(0xabcd)), ci16_t(-1, 1)};
+
+  std::vector<uint8_t> buf(difi_data_packet_size(16, samples.size()).value());
+  build_difi_data_packet(buf, p, samples);
+
+  const std::vector<uint8_t> payload(buf.begin() + DIFI_DATA_HEADER_SIZE.value(), buf.end());
+  EXPECT_EQ(payload, param.expected_bytes);
+}
+
+// The header stays big endian whatever the payload order.
+TEST_P(DifiIqByteOrder, HeaderIsBigEndianRegardless)
+{
+  auto p          = make_params(16);
+  p.iq_byte_order = GetParam().order;
+  const ci16_t         sample(1, 2);
+  std::vector<uint8_t> buf(difi_data_packet_size(16, 1).value());
+  build_difi_data_packet(buf, p, span<const ci16_t>(&sample, 1));
+
+  EXPECT_EQ(read_u32_be(buf.data() + 4), p.stream_id);
+  EXPECT_EQ(read_u64_be(buf.data() + 20), p.frac_ps);
+}
+
+// Pack then unpack recovers every sample, across sizes that exercise the vector widths and the scalar tail.
+TEST_P(DifiIqByteOrder, PackUnpackRoundTrip)
+{
+  const difi_iq_byte_order order = GetParam().order;
+  for (unsigned nof_samples : {1U, 5U, 16U, 33U, 1920U}) {
+    std::vector<ci16_t> samples(nof_samples);
+    for (unsigned i = 0; i != nof_samples; ++i) {
+      samples[i] = ci16_t(static_cast<int16_t>(i * 257 - 30000), static_cast<int16_t>(30000 - i * 263));
+    }
+    std::vector<uint8_t> payload(4 * nof_samples);
+    difi_pack_iq16(payload, samples, order);
+
+    std::vector<ci16_t> recovered(nof_samples);
+    difi_unpack_iq16(recovered, payload, order);
+    ASSERT_EQ(recovered, samples) << "Round trip failed for " << nof_samples << " samples";
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(DifiIqByteOrderTest,
+                         DifiIqByteOrder,
+                         ::testing::Values(iq_byte_order_case{difi_iq_byte_order::big,
+                                                              {0x12, 0x34, 0xab, 0xcd, 0xff, 0xff, 0x00, 0x01}},
+                                           iq_byte_order_case{difi_iq_byte_order::little,
+                                                              {0x34, 0x12, 0xcd, 0xab, 0xff, 0xff, 0x01, 0x00}}));
+
+// 8-bit samples are single bytes, so the byte order does not change them.
+TEST(DifiDataPacket, Iq8BitIgnoresByteOrder)
+{
+  const ci16_t sample(0x1200, static_cast<int16_t>(0xab00));
+  for (difi_iq_byte_order order : {difi_iq_byte_order::big, difi_iq_byte_order::little}) {
+    auto p          = make_params(8);
+    p.iq_byte_order = order;
+    std::vector<uint8_t> buf(difi_data_packet_size(8, 1).value());
+    build_difi_data_packet(buf, p, span<const ci16_t>(&sample, 1));
+    EXPECT_EQ(buf[28], 0x12U);
+    EXPECT_EQ(buf[29], 0xabU);
+  }
 }
 
 TEST(DifiDataPacket, Iq8BitSingleSample)

@@ -77,13 +77,11 @@ static uint64_t read_u64_be(const uint8_t* p)
   return (static_cast<uint64_t>(read_u32_be(p)) << 32) | read_u32_be(p + 4);
 }
 
-/// Reads one IQ component from the payload. Unlike every metadata field, the 16-bit IQ payload is
-/// in host byte order per the DIFI convention, so no swap is applied here.
+/// Reads one IQ component from the payload. Like every metadata field, the 16-bit IQ payload is big
+/// endian, as VITA-49.2 puts the whole packet in network byte order.
 static int16_t read_i16_iq(const uint8_t* p)
 {
-  int16_t v = 0;
-  std::memcpy(&v, p, 2);
-  return v;
+  return static_cast<int16_t>((static_cast<uint16_t>(p[0]) << 8) | static_cast<uint16_t>(p[1]));
 }
 
 // ---- Test fixture -----------------------------------------------------------
@@ -100,12 +98,18 @@ protected:
   void SetUp() override
   {
     ASSERT_TRUE(rx_sock.open_rx("127.0.0.1", TEST_PORT)) << "Failed to open Rx socket";
+    ASSERT_NO_FATAL_FAILURE(create_tx(difi_iq_byte_order::big));
+  }
 
+  /// Creates the transmit stream with the given IQ byte order, replacing any previous one.
+  void create_tx(difi_iq_byte_order order)
+  {
     radio_difi_tx_stream::stream_description desc;
     desc.ip             = "127.0.0.1";
     desc.port           = TEST_PORT;
     desc.stream_id      = STREAM_ID;
     desc.bit_depth      = 16;
+    desc.iq_byte_order  = order;
     desc.sample_rate_Hz = SAMPLE_RATE;
     desc.center_freq_Hz = 3.5e9;
     desc.stream_id_str  = "test:tx:0";
@@ -248,11 +252,36 @@ TEST_F(TxStreamLoopback, TransmitSendsDataPacket)
   EXPECT_EQ(read_u32_be(pkt.data() + 16), 0U);
   EXPECT_EQ(read_u64_be(pkt.data() + 20), 0ULL);
 
-  // IQ payload — host-order int16 pairs, per the DIFI convention.
+  // IQ payload: int16 pairs in the default big-endian byte order.
   EXPECT_EQ(read_i16_iq(pkt.data() + 28), 0x1000);
   EXPECT_EQ(read_i16_iq(pkt.data() + 30), 0x2000);
   EXPECT_EQ(read_i16_iq(pkt.data() + 32), 0x3000);
   EXPECT_EQ(read_i16_iq(pkt.data() + 34), static_cast<int16_t>(0x4000));
+}
+
+// With little-endian byte order the payload carries each component least significant byte first, while the header
+// stays big endian.
+TEST_F(TxStreamLoopback, TransmitLittleEndianPayload)
+{
+  ASSERT_NO_FATAL_FAILURE(create_tx(difi_iq_byte_order::little));
+  tx->start(0);
+  std::vector<uint8_t> ctx;
+  ASSERT_GT(recv_packet(ctx), 0);
+
+  const std::vector<ci16_t>             samples = {ci16_t(0x1234, static_cast<int16_t>(0xabcd))};
+  simple_buffer_reader                  buf(samples);
+  baseband_gateway_transmitter_metadata meta{};
+  meta.is_empty = false;
+  meta.ts       = 0;
+  tx->transmit(buf, meta);
+
+  std::vector<uint8_t> pkt;
+  ASSERT_GT(recv_packet(pkt), 0) << "No data packet received";
+  ASSERT_EQ(pkt.size(), 32U);
+  EXPECT_EQ(read_u32_be(pkt.data() + 4), STREAM_ID);
+
+  const std::vector<uint8_t> payload(pkt.begin() + 28, pkt.end());
+  EXPECT_EQ(payload, (std::vector<uint8_t>{0x34, 0x12, 0xcd, 0xab}));
 }
 
 // An empty buffer must still go out, as silence: DIFI is a continuous stream, so omitting one leaves a

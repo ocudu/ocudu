@@ -7,8 +7,50 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/interval.h"
 #include "ocudu/ran/phy_time_unit.h"
+#include <sstream>
+#include <string_view>
 
 using namespace ocudu;
+
+/// Returns \p text without its leading and trailing whitespace.
+static std::string trim_whitespace(const std::string& text)
+{
+  static constexpr std::string_view whitespace = " \t\n";
+
+  const std::size_t first = text.find_first_not_of(whitespace);
+  if (first == std::string::npos) {
+    return {};
+  }
+  return text.substr(first, text.find_last_not_of(whitespace) - first + 1);
+}
+
+/// Validates the DIFI device arguments. Returns true on success, otherwise false.
+static bool validate_difi_device_arguments(const std::string& device_arguments)
+{
+  static constexpr std::string_view iq_byte_order_key = "iq_byte_order";
+
+  std::istringstream stream(device_arguments);
+  std::string        argument;
+  while (std::getline(stream, argument, ',')) {
+    const std::size_t equal = argument.find('=');
+    if (equal == std::string::npos) {
+      continue;
+    }
+
+    // Device arguments may be folded across lines in the configuration file, so surrounding whitespace is ignored.
+    if (trim_whitespace(argument.substr(0, equal)) != iq_byte_order_key) {
+      continue;
+    }
+
+    const std::string value = trim_whitespace(argument.substr(equal + 1));
+    if ((value != "big") && (value != "little")) {
+      fmt::print("Invalid DIFI {} '{}'. Valid values are 'big' and 'little'.\n", iq_byte_order_key, value);
+      return false;
+    }
+  }
+
+  return true;
+}
 
 /// Validates the given amplitude control application configuration. Returns true on success, otherwise false.
 static bool validate_amplitude_control_unit_config(const amplitude_control_unit_config& config)
@@ -97,6 +139,10 @@ static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 
 
   if (discontinuous_transmission && (config.device_driver == "difi")) {
     fmt::print("Discontinuous transmission modes cannot be used with DIFI.\n");
+    return false;
+  }
+
+  if ((config.device_driver == "difi") && !validate_difi_device_arguments(config.device_arguments)) {
     return false;
   }
 

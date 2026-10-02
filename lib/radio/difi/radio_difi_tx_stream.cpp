@@ -84,11 +84,12 @@ void radio_difi_tx_stream::transmit(const baseband_gateway_buffer_reader&       
     }
 
     difi_data_packet_params p;
-    p.stream_id = config.stream_id;
-    p.full_secs = full_secs;
-    p.frac_ps   = frac_ps;
-    p.bit_depth = config.bit_depth;
-    p.pkt_n     = data_pkt_n;
+    p.stream_id     = config.stream_id;
+    p.full_secs     = full_secs;
+    p.frac_ps       = frac_ps;
+    p.bit_depth     = config.bit_depth;
+    p.pkt_n         = data_pkt_n;
+    p.iq_byte_order = config.iq_byte_order;
 
     const units::bytes pkt_bytes = difi_data_packet_size(config.bit_depth, nof_chunk);
     ocudu_assert(tx_buf.size() >= pkt_bytes.value(),
