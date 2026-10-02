@@ -76,17 +76,24 @@ public:
     }
 
     // Check if we need to move to the SI next version.
-    const std::optional<slot_point>& front_slot = si_msg_queues[idx]->front()->slot;
+    bool                             pdu_dequeued = false;
+    const std::optional<slot_point>& front_slot   = si_msg_queues[idx]->front()->slot;
     if (not front_slot.has_value() or sl_tx >= *front_slot) {
       // Pop the current SI PDU.
       if (not si_msg_queues[idx]->try_pop(cur_si_msg[idx])) {
         logger.warning("SI-message idx={} try_pop failed despite non-empty queue", idx);
         return span<const uint8_t>();
       }
+      pdu_dequeued = true;
     }
 
     if (cur_si_msg[idx].len.value() == 0) {
-      logger.warning("SI-message extension idx={} tbs={} not yet initialized.", idx, tbs);
+      // Every occasion between the first update being queued and the slot it becomes active at lands here. Returning
+      // nothing makes the assembler fall back to the SI message of the cell configuration, which is what the cell is
+      // meant to broadcast until then, so only an update that was dequeued and carries nothing is a fault.
+      if (pdu_dequeued) {
+        logger.warning("SI-message extension idx={} tbs={} carries no content.", idx, tbs);
+      }
       return span<const uint8_t>();
     }
 
