@@ -261,6 +261,14 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   // Fill activity notification level.
   asn1::string_to_enum(asn1_request->activity_notif_level, request.activity_notif_level);
 
+  // Tell the gNB-CU-UP that the source forwards over a direct path, so that it takes the endpoints of the data
+  // forwarding tunnels from the address space of that path (TS 37.483 section 8.3.1.2).
+  if (request.direct_forwarding_path_available.value_or(false)) {
+    asn1_request->direct_forwarding_path_availability_present = true;
+    asn1_request->direct_forwarding_path_availability =
+        asn1::e1ap::direct_forwarding_path_availability_opts::intra_sys_direct_path_available;
+  }
+
   // Fill PDU session resource to setup list.
   asn1_request->sys_bearer_context_setup_request.set_ng_ran_bearer_context_setup_request();
   auto& ng_ran_bearer_context_setup_request =

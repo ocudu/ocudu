@@ -21,6 +21,8 @@ struct e1ap_bearer_context_setup_request {
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
   activity_notification_level_t                                           activity_notif_level;
   std::optional<std::chrono::seconds>                                     ue_inactivity_timer;
+  /// Set when the source forwards over a direct path (TS 37.483 section 9.3.1.98).
+  std::optional<bool> direct_forwarding_path_available;
 };
 
 /// \brief Response to a bearer context setup request including UE index for E1AP map.

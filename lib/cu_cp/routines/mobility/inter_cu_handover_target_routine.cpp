@@ -399,6 +399,16 @@ bool inter_cu_handover_target_routine::fill_e1ap_bearer_context_setup_request(co
                                           ue_mng.get_ue_config(),
                                           default_security_indication);
 
+  // Tell the CU-UP when the source forwards over a direct path, so that it takes the endpoints of the data
+  // forwarding tunnels from the address space of that path (TS 37.483 section 8.3.1.2). The IE covers the whole
+  // bearer context, so it is set once any PDU session has a direct path.
+  bearer_context_setup_request.direct_forwarding_path_available =
+      std::any_of(request.pdu_session_res_setup_list.begin(),
+                  request.pdu_session_res_setup_list.end(),
+                  [](const cu_cp_pdu_session_res_setup_item& pdu_session_res_setup_item) {
+                    return pdu_session_res_setup_item.direct_forwarding_path_available.value_or(false);
+                  });
+
   fill_e1ap_data_forwarding_info_requests();
 
   return true;

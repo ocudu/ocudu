@@ -829,6 +829,32 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_source_proposes_dl_data_forwarding_
 // When the 5GC reports a direct forwarding path, the forwarded data reaches this target's own CU-UP, so the target
 // asks for a DRB level tunnel that preserves the PDCP sequence numbers (TS 38.413 section 9.3.1.64,
 // TS 38.300 section 9.2.3.2.3).
+// The target tells the CU-UP that the source forwards over a direct path, so that the CU-UP takes the endpoints of
+// the data forwarding tunnels from the address space of that path (TS 37.483 section 8.3.1.2).
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_direct_forwarding_path_is_available_then_it_is_signalled_to_the_cu_up)
+{
+  handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding       = true;
+  ho_params.direct_forwarding_path_available = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  const auto& bearer_context_setup = e1ap_pdu.pdu.init_msg().value.bearer_context_setup_request();
+  ASSERT_TRUE(bearer_context_setup->direct_forwarding_path_availability_present);
+  ASSERT_EQ(bearer_context_setup->direct_forwarding_path_availability.value,
+            asn1::e1ap::direct_forwarding_path_availability_opts::intra_sys_direct_path_available);
+}
+
+// Without a direct path the IE is left out, so that the CU-UP keeps the NG-U address space, where the UPF forwards.
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_no_direct_forwarding_path_is_available_then_nothing_is_signalled)
+{
+  handover_request_params ho_params;
+  ho_params.propose_dl_data_forwarding = true;
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  const auto& bearer_context_setup = e1ap_pdu.pdu.init_msg().value.bearer_context_setup_request();
+  ASSERT_FALSE(bearer_context_setup->direct_forwarding_path_availability_present);
+}
+
 TEST_F(cu_cp_inter_cu_ng_handover_test, when_direct_forwarding_path_is_available_then_target_requests_drb_fwd_tunnels)
 {
   handover_request_params ho_params;

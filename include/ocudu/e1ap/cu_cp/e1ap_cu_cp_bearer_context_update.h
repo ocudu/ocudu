@@ -22,6 +22,8 @@ struct e1ap_bearer_context_setup_request {
   std::optional<e1ap_bearer_context_status_change>                        bearer_context_status_change;
   std::optional<ran_ue_id_t>                                              ran_ue_id;
   std::optional<uint64_t>                                                 gnb_du_id;
+  /// Set when the source forwards over a direct path (TS 37.483 section 9.3.1.98).
+  std::optional<bool> direct_forwarding_path_available;
 };
 
 struct e1ap_bearer_context_setup_response {

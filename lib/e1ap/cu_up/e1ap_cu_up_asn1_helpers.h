@@ -195,6 +195,14 @@ inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   // Fill UE DL aggregate maximum bit rate.
   request.ue_dl_aggregate_maximum_bit_rate = asn1_request->ue_dl_aggr_max_bit_rate;
 
+  // Fill the availability of a direct forwarding path (TS 37.483 section 9.3.1.98). Only an intra-system direct path
+  // is handled, since this node hands over within 5GS.
+  if (asn1_request->direct_forwarding_path_availability_present) {
+    request.direct_forwarding_path_available =
+        asn1_request->direct_forwarding_path_availability ==
+        asn1::e1ap::direct_forwarding_path_availability_opts::intra_sys_direct_path_available;
+  }
+
   // Fill serving PLMN.
   request.serving_plmn = bcd_helper::plmn_bcd_to_string(asn1_request->serving_plmn.to_number());
 
