@@ -272,10 +272,9 @@ void ocudu::fill_sdr_worker_manager_config(worker_manager_config& config, const 
 
   // The ZMQ driver requires sequential lower PHY execution to gurantee the order of the slot processing.
   worker_manager_config::ru_sdr_config::lower_phy_thread_profile thread_profile =
-      (ru_cfg.device_driver != "zmq" && ru_cfg.device_driver != "difi")
-          ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
-                ru_cfg.expert_execution_cfg.threads.execution_profile)
-          : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
+      (ru_cfg.device_driver != "zmq") ? static_cast<worker_manager_config::ru_sdr_config::lower_phy_thread_profile>(
+                                            ru_cfg.expert_execution_cfg.threads.execution_profile)
+                                      : worker_manager_config::ru_sdr_config::lower_phy_thread_profile::sequential;
 
   config.ru_sdr_cfg.emplace(
       worker_manager_config::ru_sdr_config{.profile                 = thread_profile,
