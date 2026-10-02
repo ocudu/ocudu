@@ -133,31 +133,25 @@ variables:
     # Attestation functions
     - |
       generate_container_spdx() {
-        # Catalog OS packages only (no file metadata or executable classification).
-        # Post-process to strip file-level SPDX entries: without this the output
-        # exceeds 19MB (dpkg package lists inflate it) which breaks cosign attest
-        # because Rekor rejects entries that large.
-        #   awk:    removes FileName: element blocks (File sections from dpkg lists)
-        #   grep 1: removes evident-by RelationshipComment lines paired with file refs
-        #   grep 2: removes CONTAINS/OTHER Relationship lines pointing to SPDXRef-File-
-
+        # Catalog OS packages only. Skip package-owned file entries: dpkg file lists inflate the
+        # SPDX beyond 19MB, which breaks cosign attest. JSON because cosign v3 rejects non-JSON predicates.
         SYFT_REGISTRY_AUTH_USERNAME="${REGISTRY_AUTH_USERNAME}" \
           SYFT_REGISTRY_AUTH_PASSWORD="${REGISTRY_AUTH_PASSWORD}" \
           SYFT_REGISTRY_AUTH_AUTHORITY="${REGISTRY_AUTH_SERVER}" \
-          syft registry:${IMAGE_NAME_VERSION} -o spdx \
+          SYFT_FILE_METADATA_SELECTION=none \
+          SYFT_RELATIONSHIPS_PACKAGE_FILE_OWNERSHIP=false \
+          syft registry:${IMAGE_NAME_VERSION} \
           --select-catalogers "os,-file-metadata-cataloger,-file-executable-cataloger" \
-          | awk '/^FileName:/{skip=1;next} /^$/{if(skip){skip=0;next}} !skip' \
-          | grep -v "^RelationshipComment: evident-by:" \
-          | grep -v "^Relationship:.*SPDXRef-File-" \
-          > container.spdx
+          -o spdx-json=container.spdx.json
       }
 
       attest_spdx() {
         local predicate=$1
+        local type=$2
         local base_url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${NAME}/${VERSION}"
 
         echo "Attesting ${predicate} ($(wc -c < ${predicate}) bytes)"
-        cosign attest --predicate "${predicate}" --type spdx ${IMAGE_DIGEST}
+        cosign attest --predicate "${predicate}" --type "${type}" ${IMAGE_DIGEST}
 
         if [ -n "${COSIGN_KEY_FILE}" ]; then
           echo "Signing ${predicate} as detached blob signature"
@@ -200,16 +194,16 @@ variables:
 
         echo "=== Generating container SPDX ==="
         generate_container_spdx
-        if [ -s container.spdx ]; then
+        if [ -s container.spdx.json ]; then
           echo "=== Attesting container SPDX ==="
-          attest_spdx container.spdx
+          attest_spdx container.spdx.json spdxjson
         else
-          echo "WARNING: syft produced an empty container.spdx, skipping container attestation"
+          echo "WARNING: syft produced an empty container.spdx.json, skipping container attestation"
         fi
 
         if [ -n "$ATTESTATION_FILE" ]; then
           echo "=== Attesting ${ATTESTATION_FILE} ==="
-          attest_spdx build.spdx
+          attest_spdx build.spdx spdx
           echo ""
         fi
 
