@@ -57,6 +57,12 @@ void f1ap_du_positioning_measurement_procedure::operator()(coro_context<async_ta
 
   CORO_AWAIT_VALUE(du_result, request_positioning_measurement());
 
+  if (du_result.pos_meas_list.empty()) {
+    logger.warning("Positioning measurement failed. Cause: The DU produced no measurement result");
+    send_failure();
+    CORO_EARLY_RETURN();
+  }
+
   // Respond back to CU-CP.
   send_response();
 

@@ -87,6 +87,13 @@ TEST_F(f1ap_du_positioning_measurement_procedure_test,
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-b");
 
+  // Program the DU to report a measurement for the requested TRP.
+  du_positioning_meas_response& meas_resp  = this->f1ap_du_cfg_handler.next_positioning_meas_response;
+  pos_meas_result&              trp_result = meas_resp.pos_meas_list.emplace_back();
+  trp_result.trp_id                        = trp_id_t::min;
+  trp_result.sl_rx                         = slot_point{subcarrier_spacing::kHz15, 0, 0};
+  trp_result.results.push_back(pos_meas_result_ul_rtoa{.granularity = 1, .ul_rtoa = 0});
+
   f1ap_message req =
       test_helpers::generate_positioning_measurement_request({trp_id_t::min}, lmf_meas_id_t::min, ran_meas_id_t::min);
   log_f1ap_pdu(test_logger, "Positioning Measurement Request", req);
@@ -97,6 +104,20 @@ TEST_F(f1ap_du_positioning_measurement_procedure_test,
   ASSERT_TRUE(tx_msg.has_value());
   log_f1ap_pdu(test_logger, "Positioning Measurement Response", tx_msg.value());
   ASSERT_TRUE(test_helpers::is_valid_f1ap_positioning_measurement_response(tx_msg.value()));
+}
+
+/// The DU reports a failure when it produced no measurement result, for example after a MAC timeout.
+TEST_F(f1ap_du_positioning_measurement_procedure_test, when_du_produces_no_result_then_failure_is_sent_to_cu)
+{
+  // The DU test double reports no measurement.
+  f1ap_message req =
+      test_helpers::generate_positioning_measurement_request({trp_id_t::min}, lmf_meas_id_t::min, ran_meas_id_t::min);
+
+  this->f1ap->handle_message(req);
+
+  auto tx_msg = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(tx_msg.has_value());
+  ASSERT_TRUE(test_helpers::is_valid_f1ap_positioning_measurement_failure(tx_msg.value()));
 }
 
 TEST_F(f1ap_du_positioning_measurement_procedure_test, when_ul_aoa_is_requested_then_response_contains_ul_aoa)
