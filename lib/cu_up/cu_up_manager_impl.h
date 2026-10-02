@@ -7,6 +7,7 @@
 
 #include "ngu_session_manager.h"
 #include "ue_manager.h"
+#include "xnu_session_manager.h"
 #include "ocudu/cu_up/cu_up_config.h"
 #include "ocudu/cu_up/cu_up_manager.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
@@ -33,6 +34,8 @@ struct cu_up_manager_impl_dependencies {
   gtpu_demux&                                         ngu_demux;
   ngu_session_manager&                                ngu_session_mngr;
   gtpu_teid_pool&                                     ngu_teid_allocator;
+  gtpu_teid_pool&                                     xnu_teid_allocator;
+  xnu_session_manager*                                xnu_session_mngr;
   gtpu_teid_pool&                                     f1u_teid_allocator;
   cu_up_executor_mapper&                              exec_mapper;
   f1u_cu_up_gateway&                                  f1u_gateway;

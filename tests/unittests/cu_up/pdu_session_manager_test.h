@@ -30,8 +30,10 @@ protected:
     gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     ngu_allocator      = std::make_unique<dummy_gtpu_teid_pool>();
+    xnu_allocator      = std::make_unique<dummy_gtpu_teid_pool>();
     f1u_allocator      = std::make_unique<dummy_gtpu_teid_pool>();
     ngu_session_mngr   = std::make_unique<dummy_ngu_session_manager>();
+    xnu_session_mngr   = with_xnu_socket ? std::make_unique<dummy_xnu_session_manager>() : nullptr;
     cu_up_mngr_pdcp_if = std::make_unique<dummy_cu_up_manager_pdcp_interface>();
     e1ap               = std::make_unique<dummy_e1ap>(cu_up_e1_index_t{0});
 
@@ -44,29 +46,32 @@ protected:
     manual_task_worker teid_worker{128};
 
     const uint64_t ue_dl_ambr = 1000000000;
-    pdu_session_mng           = std::make_unique<pdu_session_manager_impl>(MIN_CU_UP_UE_INDEX,
-                                                                 qos,
-                                                                 security_info,
-                                                                 ngu_config,
-                                                                 cu_up_test_mode_config{},
-                                                                 ue_dl_ambr,
-                                                                 pdu_session_manager_dependencies{logger,
-                                                                                                  ue_inactivity_timer,
-                                                                                                  timers_factory,
-                                                                                                  timers_factory,
-                                                                                                  timers_factory,
-                                                                                                  *e1ap,
-                                                                                                  *f1u_gw,
-                                                                                                  *ngu_session_mngr,
-                                                                                                  *cu_up_mngr_pdcp_if,
-                                                                                                  *ngu_allocator,
-                                                                                                  *f1u_allocator,
-                                                                                                  *gtpu_rx_demux,
-                                                                                                  teid_worker,
-                                                                                                  teid_worker,
-                                                                                                  teid_worker,
-                                                                                                  teid_worker,
-                                                                                                  gtpu_pcap});
+    pdu_session_mng =
+        std::make_unique<pdu_session_manager_impl>(MIN_CU_UP_UE_INDEX,
+                                                   qos,
+                                                   security_info,
+                                                   ngu_config,
+                                                   cu_up_test_mode_config{},
+                                                   ue_dl_ambr,
+                                                   pdu_session_manager_dependencies{logger,
+                                                                                    ue_inactivity_timer,
+                                                                                    timers_factory,
+                                                                                    timers_factory,
+                                                                                    timers_factory,
+                                                                                    *e1ap,
+                                                                                    *f1u_gw,
+                                                                                    *ngu_session_mngr,
+                                                                                    *cu_up_mngr_pdcp_if,
+                                                                                    *ngu_allocator,
+                                                                                    *xnu_allocator,
+                                                                                    xnu_session_mngr.get(),
+                                                                                    *f1u_allocator,
+                                                                                    *gtpu_rx_demux,
+                                                                                    teid_worker,
+                                                                                    teid_worker,
+                                                                                    teid_worker,
+                                                                                    teid_worker,
+                                                                                    gtpu_pcap});
   }
 
   void finish()
@@ -87,6 +92,10 @@ protected:
   std::unique_ptr<cu_up_manager_pdcp_interface>               cu_up_mngr_pdcp_if;
   std::unique_ptr<e1ap_interface>                             e1ap;
   std::unique_ptr<dummy_gtpu_teid_pool>                       ngu_allocator;
+  std::unique_ptr<dummy_gtpu_teid_pool>                       xnu_allocator;
+  std::unique_ptr<dummy_xnu_session_manager>                  xnu_session_mngr;
+  bool                                                        with_xnu_socket        = true;
+  bool                                                        direct_forwarding_path = false;
   std::unique_ptr<dummy_gtpu_teid_pool>                       f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>                   pdu_session_mng;
   null_dlt_pcap                                               gtpu_pcap;

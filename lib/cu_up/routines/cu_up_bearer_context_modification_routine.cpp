@@ -89,7 +89,8 @@ void cu_up_bearer_context_modification_routine::operator()(
   // Traverse list of PDU sessions to be setup/modified
   for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_setup_mod_list) {
     ue_ctxt.get_logger().log_debug("Setup/Modification of {}", pdu_session_item.pdu_session_id);
-    pdu_session_setup_result session_result = ue_ctxt.setup_pdu_session(pdu_session_item);
+    // The BEARER CONTEXT MODIFICATION REQUEST carries no Direct Forwarding Path Availability IE.
+    pdu_session_setup_result session_result = ue_ctxt.setup_pdu_session(pdu_session_item, false);
     process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, session_result);
     response.success &= session_result.success; // Update final result.
   }

@@ -69,12 +69,18 @@ class pdu_session_manager_ctrl
 public:
   virtual ~pdu_session_manager_ctrl() = default;
 
-  virtual pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) = 0;
+  /// \brief Sets up a PDU session.
+  ///
+  /// \param[in] direct_forwarding_path_available Set when the source forwards the data it still holds straight to
+  /// this node. The endpoints of the data forwarding tunnels are then taken from the Xn-U address space, and from the
+  /// NG-U address space otherwise (TS 37.483 section 8.3.1.2).
+  virtual pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
+                                                            bool direct_forwarding_path_available) = 0;
   virtual pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
-                                                             bool new_tnl_info_required)                       = 0;
-  virtual void                            remove_pdu_session(pdu_session_id_t pdu_session_id)                  = 0;
-  virtual size_t                          get_nof_pdu_sessions()                                               = 0;
-  virtual pdu_session_state_t             get_pdu_session_state()                                              = 0;
+                                                             bool new_tnl_info_required)           = 0;
+  virtual void                            remove_pdu_session(pdu_session_id_t pdu_session_id)      = 0;
+  virtual size_t                          get_nof_pdu_sessions()                                   = 0;
+  virtual pdu_session_state_t             get_pdu_session_state()                                  = 0;
 };
 
 } // namespace ocuup

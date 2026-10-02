@@ -41,6 +41,8 @@ protected:
                                                                 ngu_session_mngr,
                                                                 pdcp_if,
                                                                 ngu_allocator,
+                                                                xnu_allocator,
+                                                                &xnu_session_mngr,
                                                                 f1u_allocator,
                                                                 gtpu_demux,
                                                                 pcap});
@@ -78,6 +80,8 @@ private:
   dummy_ngu_session_manager          ngu_session_mngr;
   dummy_cu_up_manager_pdcp_interface pdcp_if;
   dummy_gtpu_teid_pool               ngu_allocator;
+  dummy_gtpu_teid_pool               xnu_allocator;
+  dummy_xnu_session_manager          xnu_session_mngr;
   dummy_gtpu_teid_pool               f1u_allocator;
   dummy_gtpu_demux_ctrl              gtpu_demux;
   null_dlt_pcap                      pcap;

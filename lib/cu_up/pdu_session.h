@@ -23,14 +23,16 @@ struct pdu_session {
   pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
               gtpu_teid_t      local_teid_, // the local teid used by the gNB for this PDU session
               gtpu_demux_ctrl& gtpu_rx_demux_,
-              gtpu_teid_pool&  ngu_teid_allocator_) :
+              gtpu_teid_pool&  ngu_teid_allocator_,
+              gtpu_teid_pool&  dl_data_forwarding_teid_allocator_) :
     pdu_session_id(session.pdu_session_id),
     snssai(session.snssai),
     security_ind(session.security_ind),
     local_teid(local_teid_),
     ul_tunnel_info(session.ng_ul_up_tnl_info),
     gtpu_rx_demux(gtpu_rx_demux_),
-    ngu_teid_allocator(ngu_teid_allocator_)
+    ngu_teid_allocator(ngu_teid_allocator_),
+    dl_data_forwarding_teid_allocator(dl_data_forwarding_teid_allocator_)
   {
   }
   ~pdu_session() { stop(); }
@@ -42,7 +44,7 @@ struct pdu_session {
       (void)ngu_teid_allocator.release_teid(local_teid);
 
       if (ingress_dl_data_forwarding_tnl_info.has_value()) {
-        (void)ngu_teid_allocator.release_teid(ingress_dl_data_forwarding_tnl_info->gtp_teid);
+        (void)dl_data_forwarding_teid_allocator.release_teid(ingress_dl_data_forwarding_tnl_info->gtp_teid);
       }
 
       if (dispatch_queue != nullptr) {
@@ -80,6 +82,13 @@ struct pdu_session {
 
   /// NG-U bind address of this PDU session.
   std::string ngu_addr;
+  /// \brief Set when the source forwards the data it still holds straight to the target, without a UPF in the path.
+  ///
+  /// The data forwarding tunnels of this PDU session are then on Xn-U, and on NG-U otherwise
+  /// (TS 37.483 section 8.3.1.2).
+  bool direct_forwarding_path = false;
+  /// Xn-U bind address of this PDU session. Empty unless this node has an Xn-U socket for a direct path.
+  std::string xnu_addr;
 
   /// Local endpoint of the PDU session level DL data forwarding tunnel, where this node receives the forwarded data.
   /// Allocated when the gNB-CU-CP requests PDU session level data forwarding (TS 37.483 section 9.3.2.5).
@@ -90,8 +99,11 @@ struct pdu_session {
   std::vector<qos_flow_id_t>             qos_flows_to_be_forwarded;
 
   // GTP-U demux parameters
-  gtpu_demux_ctrl&                           gtpu_rx_demux;      // The demux entity to register/remove the tunnel.
-  gtpu_teid_pool&                            ngu_teid_allocator; // Pool to de-allocate TEID on release
+  gtpu_demux_ctrl& gtpu_rx_demux;      // The demux entity to register/remove the tunnel.
+  gtpu_teid_pool&  ngu_teid_allocator; // Pool to de-allocate TEID on release
+  // Pool that the TEID of the DL data forwarding tunnel came from: the Xn-U pool for a direct path, and
+  // the NG-U pool for an indirect one.
+  gtpu_teid_pool&                            dl_data_forwarding_teid_allocator;
   std::unique_ptr<gtpu_demux_dispatch_queue> dispatch_queue;
 
   // DRB contexts

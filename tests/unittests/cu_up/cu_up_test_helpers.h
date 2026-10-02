@@ -6,6 +6,7 @@
 #pragma once
 
 #include "lib/cu_up/ngu_session_manager.h"
+#include "lib/cu_up/xnu_session_manager.h"
 #include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
 #include "ocudu/cu_up/cu_up_executor_mapper.h"
@@ -326,6 +327,23 @@ public:
 
 private:
   std::array<dummy_gtpu_gateway, 2> ngu_gws;
+  unsigned                          next_gw = 0;
+};
+
+class dummy_xnu_session_manager final : public ocuup::xnu_session_manager
+{
+public:
+  dummy_xnu_session_manager()
+  {
+    xnu_gws[0].set_bind_address("127.0.50.1");
+    xnu_gws[1].set_bind_address("127.0.50.2");
+  }
+
+  // Hands out the gateways in round-robin order, like xnu_session_manager_impl does.
+  gtpu_tnl_pdu_session& get_next_xnu_gateway() override { return xnu_gws[next_gw++ % xnu_gws.size()]; }
+
+private:
+  std::array<dummy_gtpu_gateway, 2> xnu_gws;
   unsigned                          next_gw = 0;
 };
 

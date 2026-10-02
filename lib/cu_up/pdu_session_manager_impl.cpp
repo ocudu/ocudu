@@ -39,6 +39,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(cu_up_ue_index_t             
   ue_ul_timer_factory(dependencies.ue_ul_timer_factory),
   ue_ctrl_timer_factory(dependencies.ue_ctrl_timer_factory),
   ngu_teid_allocator(dependencies.ngu_teid_allocator),
+  xnu_teid_allocator(dependencies.xnu_teid_allocator),
+  xnu_session_mngr(dependencies.xnu_session_mngr),
   f1u_teid_allocator(dependencies.f1u_teid_allocator),
   gtpu_rx_demux(dependencies.gtpu_rx_demux),
   ue_dl_exec(dependencies.ue_dl_exec),
@@ -56,7 +58,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(cu_up_ue_index_t             
   ue_ambr_limiter = std::make_unique<token_bucket>(ue_ambr_config);
 }
 
-pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
+pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
+                                                                     bool direct_forwarding_path_available)
 {
   pdu_session_setup_result pdu_session_result = {};
   pdu_session_result.success                  = false;
@@ -82,9 +85,30 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
     return pdu_session_result;
   }
 
+  // Advertise the Xn-U interface for the data forwarding tunnels of a direct path. One socket serves the whole PDU
+  // session, like the NG-U one, since the sockets are picked per slice and 5QI. The address stays empty when this
+  // node has no Xn-U socket, and it then offers no data forwarding for this PDU session.
+  // TODO select correct GW based on slice or UE info.
+  std::string xnu_addr;
+  if (direct_forwarding_path_available) {
+    if (xnu_session_mngr == nullptr) {
+      logger.log_error("Cannot report data forwarding tunnels for {}. Cause: no Xn-U socket is configured",
+                       session.pdu_session_id);
+    } else if (not xnu_session_mngr->get_next_xnu_gateway().get_bind_address(xnu_addr)) {
+      logger.log_error("Cannot report data forwarding tunnels for {}. Cause: could not read the Xn-U bind address",
+                       session.pdu_session_id);
+    }
+  }
+
   std::unique_ptr<pdu_session> new_session =
-      std::make_unique<pdu_session>(session, local_teid.value(), gtpu_rx_demux, ngu_teid_allocator);
-  const auto& ul_tunnel_info = new_session->ul_tunnel_info;
+      std::make_unique<pdu_session>(session,
+                                    local_teid.value(),
+                                    gtpu_rx_demux,
+                                    ngu_teid_allocator,
+                                    direct_forwarding_path_available ? xnu_teid_allocator : ngu_teid_allocator);
+  new_session->direct_forwarding_path = direct_forwarding_path_available;
+  new_session->xnu_addr               = xnu_addr;
+  const auto& ul_tunnel_info          = new_session->ul_tunnel_info;
 
   // Get uplink transport address
   logger.log_debug("PDU session uplink tunnel info: {} local_teid={} peer_teid={} peer_addr={}",
@@ -145,7 +169,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 
   // Allocate the PDU session level DL data forwarding tunnel endpoint.
   if (requests_dl_data_forwarding(session.pdu_session_data_forwarding_info_request)) {
-    new_session->ingress_dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(ngu_addr);
+    new_session->ingress_dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(*new_session);
     if (new_session->ingress_dl_data_forwarding_tnl_info.has_value()) {
       pdu_session_result.data_forwarding_info.emplace();
       pdu_session_result.data_forwarding_info->dl_data_forwarding = new_session->ingress_dl_data_forwarding_tnl_info;
@@ -189,9 +213,19 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
 }
 
 std::optional<up_transport_layer_info>
-pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const std::string& bind_addr)
+pdu_session_manager_impl::allocate_dl_data_forwarding_tnl_info(const pdu_session& session)
 {
-  expected<gtpu_teid_t> teid = ngu_teid_allocator.request_teid();
+  // A UPF relays the data unless the source forwards over a direct path, and it reaches this node on NG-U. A direct
+  // path without an Xn-U socket leaves the address empty, and this node then offers no endpoint at all, since an
+  // NG-U one would not be reachable by the source.
+  const std::string& bind_addr      = session.direct_forwarding_path ? session.xnu_addr : session.ngu_addr;
+  gtpu_teid_pool&    teid_allocator = session.direct_forwarding_path ? xnu_teid_allocator : ngu_teid_allocator;
+
+  if (bind_addr.empty()) {
+    return std::nullopt;
+  }
+
+  expected<gtpu_teid_t> teid = teid_allocator.request_teid();
   if (not teid.has_value()) {
     logger.log_warning("Could not allocate a TEID for the DL data forwarding tunnel");
     return std::nullopt;
@@ -235,7 +269,10 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
 
   // get DRB from list and create context
-  new_session.drbs.emplace(drb_to_setup.drb_id, std::make_unique<drb_context>(drb_to_setup.drb_id, ngu_teid_allocator));
+  new_session.drbs.emplace(
+      drb_to_setup.drb_id,
+      std::make_unique<drb_context>(drb_to_setup.drb_id,
+                                    new_session.direct_forwarding_path ? xnu_teid_allocator : ngu_teid_allocator));
   drb_context* new_drb = new_session.drbs.at(drb_to_setup.drb_id).get();
 
   // Create Qos Flows
@@ -415,7 +452,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
 
   // Allocate the DRB level DL data forwarding tunnel endpoint.
   if (requests_dl_data_forwarding(drb_to_setup.drb_data_forwarding_info_request)) {
-    new_drb->ingress_dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(new_session.ngu_addr);
+    new_drb->ingress_dl_data_forwarding_tnl_info = allocate_dl_data_forwarding_tnl_info(new_session);
     if (new_drb->ingress_dl_data_forwarding_tnl_info.has_value()) {
       drb_result.data_forwarding_info.emplace();
       drb_result.data_forwarding_info->dl_data_forwarding = new_drb->ingress_dl_data_forwarding_tnl_info;

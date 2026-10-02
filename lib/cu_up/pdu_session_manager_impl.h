@@ -9,6 +9,7 @@
 #include "ngu_session_manager.h"
 #include "pdu_session.h"
 #include "pdu_session_manager.h"
+#include "xnu_session_manager.h"
 #include "ocudu/cu_up/cu_up_config.h"
 #include "ocudu/cu_up/cu_up_types.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
@@ -33,6 +34,8 @@ struct pdu_session_manager_dependencies {
   ngu_session_manager&          ngu_session_mngr;
   cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if;
   gtpu_teid_pool&               ngu_teid_allocator;
+  gtpu_teid_pool&               xnu_teid_allocator;
+  xnu_session_manager*          xnu_session_mngr;
   gtpu_teid_pool&               f1u_teid_allocator;
   gtpu_demux_ctrl&              gtpu_rx_demux;
   task_executor&                ue_dl_exec;
@@ -53,7 +56,8 @@ public:
                            uint64_t                                     ue_dl_ambr,
                            const pdu_session_manager_dependencies&      dependencies);
 
-  pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override;
+  pdu_session_setup_result        setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
+                                                    bool direct_forwarding_path_available) override;
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
                                                      bool new_ul_tnl_info_required) override;
   void                            remove_pdu_session(pdu_session_id_t pdu_session_id) override;
@@ -90,11 +94,12 @@ private:
   drb_setup_result handle_drb_to_setup_item(pdu_session&                         new_session,
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
 
-  /// \brief Allocate the local endpoint of a DL data forwarding tunnel on \c bind_addr.
+  /// \brief Allocate the local endpoint of a DL data forwarding tunnel, on the interface that the source reaches.
   ///
-  /// The endpoint is reported to the gNB-CU-CP so that it can be advertised to the source NG-RAN node, which sends the
-  /// data it still holds for the UE to it (TS 37.483 section 9.3.2.6).
-  std::optional<up_transport_layer_info> allocate_dl_data_forwarding_tnl_info(const std::string& bind_addr);
+  /// The endpoint is on Xn-U when the source forwards over a direct path, and on \c ngu_addr when a UPF relays the
+  /// data instead (TS 37.483 section 8.3.1.2). It is reported to the gNB-CU-CP so that it can be advertised to the
+  /// source NG-RAN node, which sends the data it still holds for the UE to it (TS 37.483 section 9.3.2.6).
+  std::optional<up_transport_layer_info> allocate_dl_data_forwarding_tnl_info(const pdu_session& session);
 
   cu_up_ue_index_t                                         ue_index;
   const std::map<five_qi_t, ocuup::cu_up_qos_config>       qos_cfg;
@@ -108,6 +113,8 @@ private:
   timer_factory                                            ue_ul_timer_factory;
   timer_factory                                            ue_ctrl_timer_factory;
   gtpu_teid_pool&                                          ngu_teid_allocator;
+  gtpu_teid_pool&                                          xnu_teid_allocator;
+  xnu_session_manager*                                     xnu_session_mngr;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
   task_executor&                                           ue_dl_exec;

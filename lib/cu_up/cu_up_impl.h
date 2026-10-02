@@ -7,6 +7,7 @@
 
 #include "adapters/e1ap_adapters.h"
 #include "ue_manager.h"
+#include "xnu_session_manager.h"
 #include "ocudu/cu_up/cu_up.h"
 #include "ocudu/gtpu/gtpu_echo.h"
 #include "ocudu/support/rate_limiting/lockfree_token_bucket.h"
@@ -59,6 +60,9 @@ private:
   std::unique_ptr<gtpu_demux>                        ngu_demux;
   std::unique_ptr<gtpu_echo>                         ngu_echo;
   std::unique_ptr<gtpu_teid_pool>                    ngu_teid_allocator;
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> xnu_sessions;
+  std::unique_ptr<xnu_session_manager>               xnu_session_mngr;
+  std::unique_ptr<gtpu_teid_pool>                    xnu_teid_allocator;
   std::unique_ptr<cu_up_manager>                     cu_up_mng;
   std::optional<lockfree_token_bucket>               ngu_limiter;
 

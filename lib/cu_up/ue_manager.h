@@ -7,6 +7,7 @@
 
 #include "ngu_session_manager.h"
 #include "ue_manager_interfaces.h"
+#include "xnu_session_manager.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/cu_up/cu_up_state.h"
 #include "ocudu/f1u/cu_up/f1u_gateway.h"
@@ -37,6 +38,8 @@ struct ue_manager_dependencies {
   cu_up_manager_pdcp_interface&                       cu_up_mngr_pdcp_if;
   gtpu_demux_ctrl&                                    gtpu_rx_demux;
   gtpu_teid_pool&                                     ngu_teid_allocator;
+  gtpu_teid_pool&                                     xnu_teid_allocator;
+  xnu_session_manager*                                xnu_session_mngr;
   gtpu_teid_pool&                                     f1u_teid_allocator;
   cu_up_executor_mapper&                              exec_pool;
   dlt_pcap&                                           gtpu_pcap;
@@ -95,6 +98,8 @@ private:
   cu_up_manager_pdcp_interface&                       cu_up_mngr_pdcp_if;
   gtpu_demux_ctrl&                                    gtpu_rx_demux;
   gtpu_teid_pool&                                     ngu_teid_allocator;
+  gtpu_teid_pool&                                     xnu_teid_allocator;
+  xnu_session_manager*                                xnu_session_mngr;
   gtpu_teid_pool&                                     f1u_teid_allocator;
   cu_up_executor_mapper&                              exec_pool;
   task_executor&                                      ctrl_executor;

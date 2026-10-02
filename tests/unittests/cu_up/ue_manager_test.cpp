@@ -29,6 +29,7 @@ protected:
     // create required objects
     gtpu_rx_demux      = std::make_unique<dummy_gtpu_demux_ctrl>();
     gtpu_ngu_allocator = std::make_unique<dummy_gtpu_teid_pool>();
+    gtpu_xnu_allocator = std::make_unique<dummy_gtpu_teid_pool>();
     gtpu_f1u_allocator = std::make_unique<dummy_gtpu_teid_pool>();
     gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
@@ -51,6 +52,8 @@ protected:
                                                                   *pdcp_ctrl_handler,
                                                                   *gtpu_rx_demux,
                                                                   *gtpu_ngu_allocator,
+                                                                  *gtpu_xnu_allocator,
+                                                                  &xnu_session_mngr,
                                                                   *gtpu_f1u_allocator,
                                                                   *cu_up_exec_mapper,
                                                                   gtpu_pcap,
@@ -65,6 +68,8 @@ protected:
 
   std::unique_ptr<gtpu_demux_ctrl>                            gtpu_rx_demux;
   std::unique_ptr<gtpu_teid_pool>                             gtpu_ngu_allocator;
+  std::unique_ptr<gtpu_teid_pool>                             gtpu_xnu_allocator;
+  dummy_xnu_session_manager                                   xnu_session_mngr;
   std::unique_ptr<gtpu_teid_pool>                             gtpu_f1u_allocator;
   std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
   std::unique_ptr<e1ap_interface>                             e1ap1;

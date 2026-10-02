@@ -22,8 +22,8 @@ namespace ocuup {
 
 /// \brief DRB context with map to all QoS flows.
 struct drb_context {
-  drb_context(const drb_id_t& drb_id_, gtpu_teid_pool& ngu_teid_allocator_) :
-    drb_id(drb_id_), ngu_teid_allocator(ngu_teid_allocator_)
+  drb_context(const drb_id_t& drb_id_, gtpu_teid_pool& dl_data_forwarding_teid_allocator_) :
+    drb_id(drb_id_), dl_data_forwarding_teid_allocator(dl_data_forwarding_teid_allocator_)
   {
   }
   ~drb_context() { stop(); }
@@ -32,7 +32,7 @@ struct drb_context {
   {
     if (!stopped) {
       if (ingress_dl_data_forwarding_tnl_info.has_value()) {
-        (void)ngu_teid_allocator.release_teid(ingress_dl_data_forwarding_tnl_info->gtp_teid);
+        (void)dl_data_forwarding_teid_allocator.release_teid(ingress_dl_data_forwarding_tnl_info->gtp_teid);
       }
       if (pdcp) {
         pdcp->stop();
@@ -61,8 +61,9 @@ struct drb_context {
   /// the UE (TS 37.483 section 9.3.2.6).
   std::optional<up_transport_layer_info> egress_dl_data_forwarding_tnl_info;
 
-  /// Pool to release the TEID of the DL data forwarding tunnel on.
-  gtpu_teid_pool& ngu_teid_allocator;
+  /// Pool that the TEID of the DL data forwarding tunnel came from: the Xn-U pool for a direct path, and
+  /// the NG-U pool for an indirect one.
+  gtpu_teid_pool& dl_data_forwarding_teid_allocator;
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> f1u_gw_bearer;
   std::unique_ptr<f1u_bearer>               f1u;

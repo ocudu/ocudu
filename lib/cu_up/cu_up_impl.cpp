@@ -7,6 +7,7 @@
 #include "cu_up_manager_impl.h"
 #include "ngu_session_manager_impl.h"
 #include "routines/cu_up_setup_routine.h"
+#include "xnu_session_manager_impl.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up_factory.h"
 #include "ocudu/gtpu/gtpu_demux_factory.h"
 #include "ocudu/gtpu/gtpu_echo_factory.h"
@@ -29,6 +30,10 @@ static void assert_cu_up_dependencies_valid(const cu_up_dependencies& dependenci
   for (const auto& gw : dependencies.ngu_gws) {
     ocudu_assert(gw, "Invalid NG-U gateway");
   }
+
+  for (const auto& gw : dependencies.xnu_gws) {
+    ocudu_assert(gw, "Invalid Xn-U gateway");
+  }
 }
 
 cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
@@ -45,6 +50,13 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
 
   // Create NG-U TEID allocator.
   ngu_teid_allocator = create_gtpu_allocator(
+      gtpu_allocator_creation_request{.max_nof_teids            = cfg.max_nof_ues * MAX_NOF_PDU_SESSIONS,
+                                      .teid_release_linger_time = cfg.ngu_cfg.gtpu_teid_release_linger_time,
+                                      .timers                   = timers});
+
+  // Create Xn-U TEID allocator. The DL data forwarding tunnels of an Xn handover are numbered out of it, apart from
+  // the NG-U tunnels, because the two interfaces bind to different addresses (TS 38.401 section 6.1.2).
+  xnu_teid_allocator = create_gtpu_allocator(
       gtpu_allocator_creation_request{.max_nof_teids            = cfg.max_nof_ues * MAX_NOF_PDU_SESSIONS,
                                       .teid_release_linger_time = cfg.ngu_cfg.gtpu_teid_release_linger_time,
                                       .timers                   = timers});
@@ -91,6 +103,24 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
   // We use the first UDP GW for UL.
   gtpu_gw_adapter.connect_network_gateway(*ngu_sessions[0]);
 
+  // Establish the Xn-U sessions and connect them to the GTP-U DEMUX adapter, so that the data a source NG-RAN node
+  // forwards over Xn-U reaches the same demux as the DL PDUs of the 5GC.
+  // TODO the demux keys the tunnels on the TEID alone, so it cannot hold an NG-U and an Xn-U tunnel with the same
+  // TEID. Give it the interface as well before the data forwarding tunnels are registered.
+  for (const auto& gw : dependencies.xnu_gws) {
+    std::unique_ptr<gtpu_tnl_pdu_session> xnu_session = gw->create(*gw_data_gtpu_demux_adapter);
+    if (!xnu_session) {
+      report_error("Unable to allocate the required Xn-U network resources");
+    }
+    xnu_sessions.push_back(std::move(xnu_session));
+  }
+
+  // The DL data forwarding tunnels of a direct path are reported on the Xn-U sockets. Without one this CU-UP offers
+  // no data forwarding over a direct path.
+  if (not xnu_sessions.empty()) {
+    xnu_session_mngr = std::make_unique<xnu_session_manager_impl>(xnu_sessions);
+  }
+
   // Configure GTP-U Error Indication TX on the demux.
   {
     std::string ngu_bind_addr;
@@ -133,6 +163,8 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
                                       .ngu_demux            = *ngu_demux,
                                       .ngu_session_mngr     = *ngu_session_mngr,
                                       .ngu_teid_allocator   = *ngu_teid_allocator,
+                                      .xnu_teid_allocator   = *xnu_teid_allocator,
+                                      .xnu_session_mngr     = xnu_session_mngr.get(),
                                       .f1u_teid_allocator   = dependencies.f1u_teid_allocator,
                                       .exec_mapper          = dependencies.exec_mapper,
                                       .f1u_gateway          = dependencies.f1u_gateway,

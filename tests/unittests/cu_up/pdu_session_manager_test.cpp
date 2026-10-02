@@ -25,7 +25,8 @@ TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_b
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
@@ -55,6 +56,8 @@ TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_requested_then_tunne
   drb_id_t         drb_id = uint_to_drb_id(1);
   qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
 
+  direct_forwarding_path = true;
+
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
@@ -64,7 +67,8 @@ TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_requested_then_tunne
   pdu_session_setup_item.pdu_session_data_forwarding_info_request = forwarding_request;
   pdu_session_setup_item.drb_to_setup_list_ng_ran[drb_id].drb_data_forwarding_info_request = forwarding_request;
 
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   ASSERT_TRUE(setup_result.success);
 
@@ -78,26 +82,93 @@ TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_requested_then_tunne
   ASSERT_TRUE(setup_result.drb_setup_results[0].data_forwarding_info->dl_data_forwarding.has_value());
   ASSERT_FALSE(setup_result.drb_setup_results[0].data_forwarding_info->ul_data_forwarding.has_value());
 
-  // Both forwarding endpoints share the NG-U bind address of the PDU session, so that the forwarded and the freshly
-  // arriving DL packets reach the same gateway, and differ from it and from each other only in the TEID.
+  // The source forwards over a direct path, so both endpoints are on the Xn-U bind address, which only the source
+  // reaches, and both TEIDs come from the Xn-U pool.
+  const up_transport_layer_info session_fwd = setup_result.data_forwarding_info->dl_data_forwarding.value();
+  const up_transport_layer_info drb_fwd =
+      setup_result.drb_setup_results[0].data_forwarding_info->dl_data_forwarding.value();
+  // One Xn-U socket serves the whole PDU session, so both endpoints share its address and differ from NG-U.
+  ASSERT_EQ(session_fwd.tp_address, transport_layer_address::create_from_string("127.0.50.1"));
+  ASSERT_EQ(drb_fwd.tp_address, session_fwd.tp_address);
+  ASSERT_NE(session_fwd.tp_address, setup_result.gtp_tunnel.tp_address);
+  ASSERT_NE(session_fwd.gtp_teid, drb_fwd.gtp_teid);
+
+  // Removing the session releases both forwarding TEIDs back to the Xn-U pool.
+  ASSERT_FALSE(xnu_allocator->was_teid_released(session_fwd.gtp_teid));
+  ASSERT_FALSE(xnu_allocator->was_teid_released(drb_fwd.gtp_teid));
+
+  pdu_session_mng->remove_pdu_session(psi);
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
+
+  ASSERT_TRUE(xnu_allocator->was_teid_released(session_fwd.gtp_teid));
+  ASSERT_TRUE(xnu_allocator->was_teid_released(drb_fwd.gtp_teid));
+}
+
+// Without a direct path a UPF relays the forwarded data, so the endpoints must be on NG-U, where the UPF reaches this
+// node (TS 37.483 section 8.3.1.2).
+TEST_F(pdu_session_manager_test, when_no_direct_forwarding_path_is_signalled_then_the_endpoints_are_on_ngu)
+{
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+
+  e1ap_data_forwarding_info_request forwarding_request;
+  forwarding_request.data_forwarding_request                      = e1ap_data_forwarding_request::dl;
+  pdu_session_setup_item.pdu_session_data_forwarding_info_request = forwarding_request;
+  pdu_session_setup_item.drb_to_setup_list_ng_ran[drb_id].drb_data_forwarding_info_request = forwarding_request;
+
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
+
+  ASSERT_TRUE(setup_result.success);
+  ASSERT_TRUE(setup_result.data_forwarding_info.has_value());
+  ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
+  ASSERT_TRUE(setup_result.drb_setup_results[0].data_forwarding_info.has_value());
+
   const up_transport_layer_info session_fwd = setup_result.data_forwarding_info->dl_data_forwarding.value();
   const up_transport_layer_info drb_fwd =
       setup_result.drb_setup_results[0].data_forwarding_info->dl_data_forwarding.value();
   ASSERT_EQ(session_fwd.tp_address, setup_result.gtp_tunnel.tp_address);
   ASSERT_EQ(drb_fwd.tp_address, setup_result.gtp_tunnel.tp_address);
-  ASSERT_NE(session_fwd.gtp_teid, setup_result.gtp_tunnel.gtp_teid);
-  ASSERT_NE(drb_fwd.gtp_teid, setup_result.gtp_tunnel.gtp_teid);
-  ASSERT_NE(session_fwd.gtp_teid, drb_fwd.gtp_teid);
-
-  // Removing the session releases both forwarding TEIDs back to the NG-U pool.
-  ASSERT_FALSE(ngu_allocator->was_teid_released(session_fwd.gtp_teid));
-  ASSERT_FALSE(ngu_allocator->was_teid_released(drb_fwd.gtp_teid));
 
   pdu_session_mng->remove_pdu_session(psi);
-  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
-
   ASSERT_TRUE(ngu_allocator->was_teid_released(session_fwd.gtp_teid));
   ASSERT_TRUE(ngu_allocator->was_teid_released(drb_fwd.gtp_teid));
+}
+
+// A direct path needs an Xn-U socket. Without one no endpoint can be offered, since an NG-U endpoint would not be
+// reachable by the source.
+TEST_F(pdu_session_manager_test, when_no_xnu_socket_is_configured_then_no_tunnel_is_reported)
+{
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+
+  // Rebuild the manager without an Xn-U socket, although the source forwards over a direct path.
+  direct_forwarding_path = true;
+  with_xnu_socket        = false;
+  init();
+
+  e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
+      generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
+
+  e1ap_data_forwarding_info_request forwarding_request;
+  forwarding_request.data_forwarding_request                      = e1ap_data_forwarding_request::dl;
+  pdu_session_setup_item.pdu_session_data_forwarding_info_request = forwarding_request;
+  pdu_session_setup_item.drb_to_setup_list_ng_ran[drb_id].drb_data_forwarding_info_request = forwarding_request;
+
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
+
+  ASSERT_TRUE(setup_result.success);
+
+  // Neither level can offer an endpoint.
+  ASSERT_FALSE(setup_result.data_forwarding_info.has_value());
+  ASSERT_EQ(setup_result.drb_setup_results.size(), 1);
+  ASSERT_FALSE(setup_result.drb_setup_results[0].data_forwarding_info.has_value());
 }
 
 TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_not_requested_then_no_tunnel_endpoints_are_reported)
@@ -109,7 +180,8 @@ TEST_F(pdu_session_manager_test, when_dl_data_forwarding_is_not_requested_then_n
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   ASSERT_TRUE(setup_result.success);
   ASSERT_FALSE(setup_result.data_forwarding_info.has_value());
@@ -131,14 +203,15 @@ TEST_F(pdu_session_manager_test, when_pdu_session_with_same_id_is_setup_session_
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
   // attempt to add the same session again
-  setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check unsuccessful outcome
   ASSERT_FALSE(setup_result.success);
@@ -176,7 +249,8 @@ TEST_F(pdu_session_manager_test, drb_create_modify_remove)
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
@@ -238,7 +312,8 @@ TEST_F(pdu_session_manager_test, drb_create_with_one_qfi_which_is_already_mapped
       generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi, uint_to_five_qi(9));
 
   // attempt to add session
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
@@ -297,7 +372,8 @@ TEST_F(pdu_session_manager_test, drb_create_with_unknown_five_qi)
       generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi, uint_to_five_qi(8));
 
   // attempt to add session adding a new DRB and map it to a 5QI that is unknown
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
@@ -326,7 +402,8 @@ TEST_F(pdu_session_manager_test, drb_create_with_two_qfi_of_which_one_is_already
       generate_pdu_session_res_to_setup_item(psi, drb_id1, qfi1, uint_to_five_qi(9));
 
   // attempt to add session
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
@@ -387,7 +464,8 @@ TEST_F(pdu_session_manager_test, dtor_rm_all_sessions_and_bearers)
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
   // attempt to add session
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
 
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
@@ -437,7 +515,8 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
 
-  pdu_session_setup_result set_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result set_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
   drb_setup_result drb_setup_res = set_result.drb_setup_results[0];
   ASSERT_EQ(drb_setup_res.gtp_tunnel.gtp_teid, 0x1);
@@ -465,7 +544,8 @@ TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_is_set_in_modify_item_th
   // Set up the PDU session first.
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
   ASSERT_TRUE(setup_result.success);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 
@@ -492,7 +572,8 @@ TEST_F(pdu_session_manager_test, when_ng_ul_up_tnl_info_absent_in_modify_item_th
 
   e1ap_pdu_session_res_to_setup_item pdu_session_setup_item =
       generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9));
-  pdu_session_setup_result setup_result = pdu_session_mng->setup_pdu_session(pdu_session_setup_item);
+  pdu_session_setup_result setup_result =
+      pdu_session_mng->setup_pdu_session(pdu_session_setup_item, direct_forwarding_path);
   ASSERT_TRUE(setup_result.success);
 
   // Modification without ng_ul_up_tnl_info — must succeed and leave the session intact.

@@ -20,6 +20,8 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
   cu_up_mngr_pdcp_if(dependencies.cu_up_mngr_pdcp_if),
   gtpu_rx_demux(dependencies.gtpu_rx_demux),
   ngu_teid_allocator(dependencies.ngu_teid_allocator),
+  xnu_teid_allocator(dependencies.xnu_teid_allocator),
+  xnu_session_mngr(dependencies.xnu_session_mngr),
   f1u_teid_allocator(dependencies.f1u_teid_allocator),
   exec_pool(dependencies.exec_pool),
   ctrl_executor(exec_pool.ctrl_executor()),
@@ -157,6 +159,8 @@ ue_context* ue_manager::add_ue(cu_up_e1_index_t e1_index, const ue_context_cfg& 
                                                            ngu_session_mngr,
                                                            cu_up_mngr_pdcp_if,
                                                            ngu_teid_allocator,
+                                                           xnu_teid_allocator,
+                                                           xnu_session_mngr,
                                                            f1u_teid_allocator,
                                                            gtpu_rx_demux,
                                                            gtpu_pcap});

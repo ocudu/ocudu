@@ -33,6 +33,8 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
           cu_up_mngr_pdcp_if,
           dependencies.ngu_demux,
           dependencies.ngu_teid_allocator,
+          dependencies.xnu_teid_allocator,
+          dependencies.xnu_session_mngr,
           dependencies.f1u_teid_allocator,
           dependencies.exec_mapper,
           dependencies.gtpu_pcap,
@@ -98,7 +100,9 @@ cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_contex
 
   // 2. Handle bearer context setup request.
   for (const auto& pdu_session : msg.pdu_session_res_to_setup_list) {
-    if (pdu_session_setup_result result = ue_ctxt->setup_pdu_session(pdu_session); result.success) {
+    if (pdu_session_setup_result result =
+            ue_ctxt->setup_pdu_session(pdu_session, msg.direct_forwarding_path_available.value_or(false));
+        result.success) {
       process_successful_pdu_resource_setup_mod_outcome(response.pdu_session_resource_setup_list, result);
     } else {
       e1ap_pdu_session_resource_failed_item res_failed_item;

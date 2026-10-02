@@ -9,6 +9,7 @@
 #include "ngu_session_manager.h"
 #include "pdu_session_manager.h"
 #include "pdu_session_manager_impl.h"
+#include "xnu_session_manager.h"
 #include "ocudu/cu_up/cu_up_types.h"
 #include "ocudu/e1ap/cu_up/e1ap_cu_up.h"
 #include "ocudu/f1u/cu_up/f1u_gateway.h"
@@ -45,6 +46,8 @@ struct ue_context_dependencies {
   ngu_session_manager&                ngu_session_mngr;
   cu_up_manager_pdcp_interface&       cu_up_mngr_pdcp_if;
   gtpu_teid_pool&                     ngu_teid_allocator;
+  gtpu_teid_pool&                     xnu_teid_allocator;
+  xnu_session_manager*                xnu_session_mngr;
   gtpu_teid_pool&                     f1u_teid_allocator;
   gtpu_demux_ctrl&                    gtpu_rx_demux;
   dlt_pcap&                           gtpu_pcap;
@@ -81,6 +84,8 @@ public:
                          dependencies.ngu_session_mngr,
                          dependencies.cu_up_mngr_pdcp_if,
                          dependencies.ngu_teid_allocator,
+                         dependencies.xnu_teid_allocator,
+                         dependencies.xnu_session_mngr,
                          dependencies.f1u_teid_allocator,
                          dependencies.gtpu_rx_demux,
                          ue_exec_mapper->dl_pdu_executor(),
@@ -153,9 +158,10 @@ public:
   async_task<void> await_tx_crypto_tasks() { return pdu_session_manager.await_crypto_tx_all_pdu_sessions(); }
 
   // pdu_session_manager_ctrl
-  pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override
+  pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session,
+                                             bool direct_forwarding_path_available) override
   {
-    return pdu_session_manager.setup_pdu_session(session);
+    return pdu_session_manager.setup_pdu_session(session, direct_forwarding_path_available);
   }
   pdu_session_modification_result modify_pdu_session(const e1ap_pdu_session_res_to_modify_item& session,
                                                      bool new_ul_tnl_info_required) override
