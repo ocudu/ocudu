@@ -53,11 +53,11 @@ struct drb_context {
   gtpu_teid_t f1u_ul_teid;
   f1u_config  f1u_cfg;
 
-  /// Local endpoint of the DL data forwarding tunnel of this DRB, where this node receives the forwarded data.
+  /// Local endpoint of the DL data forwarding tunnel of this DRB, where the target receives the forwarded data.
   /// Allocated when the gNB-CU-CP requests DRB level data forwarding (TS 37.483 section 9.3.2.5).
   std::optional<up_transport_layer_info> ingress_dl_data_forwarding_tnl_info;
 
-  /// Peer endpoint of the DL data forwarding tunnel of this DRB, where this node sends the data it still holds for
+  /// Peer endpoint of the DL data forwarding tunnel of this DRB, where the source sends the data it still holds for
   /// the UE (TS 37.483 section 9.3.2.6).
   std::optional<up_transport_layer_info> egress_dl_data_forwarding_tnl_info;
 

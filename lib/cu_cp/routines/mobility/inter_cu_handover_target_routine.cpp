@@ -110,7 +110,7 @@ void inter_cu_handover_target_routine::operator()(
     }
 
     // On Xn the source already derived K_NG-RAN* for this cell (TS 33.501 Section 6.9.2.3.2); on N2 the AMF supplies
-    // the {NH, NCC} pair and this node derives from it (Section 6.9.2.3.3).
+    // the {NH, NCC} pair and the target derives from it (Section 6.9.2.3.3).
     if (!is_xn_handover()) {
       std::optional<cell_meas_config> cell_cfg = cell_meas_mng.get_cell_config(request.target_cell_id.nci);
       if (!cell_cfg.has_value() || !cell_cfg->serving_cell_cfg.pci.has_value() ||
@@ -426,8 +426,8 @@ void inter_cu_handover_target_routine::fill_e1ap_data_forwarding_info_requests()
       continue;
     }
 
-    // Only a direct forwarding path reaches this node's own CU-UP, so only then can a DRB level tunnel be used
-    // (TS 38.413 section 9.3.1.64).
+    // The target reports a DRB level tunnel on Xn-U, which only the source reaches, so it offers one only over a
+    // direct path (TS 38.413 section 9.3.1.64).
     const bool direct_data_forwarding_path =
         request.pdu_session_res_setup_list[psi].direct_forwarding_path_available.value_or(false);
 
@@ -445,8 +445,8 @@ void inter_cu_handover_target_routine::fill_e1ap_data_forwarding_info_requests()
 
     // Request a DRB level forwarding tunnel for every admitted DRB that carries the same QoS flows as at the source,
     // so that the forwarded PDCP SDUs keep their sequence numbers. Flows on any other DRB are forwarded over a single
-    // PDU session level tunnel as SDAP SDUs instead (TS 38.300 section 9.2.3.2.3). This node reports a DRB level
-    // tunnel on Xn-U, which only the source NG-RAN node reaches, so it asks for one only over a direct path.
+    // PDU session level tunnel as SDAP SDUs instead (TS 38.300 section 9.2.3.2.3). The target reports a DRB level
+    // tunnel on Xn-U, which only the source reaches, so it asks for one only over a direct path.
     slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_map_item> flows_on_pdu_session_tunnel;
     const auto& next_session = next_config.pdu_sessions_to_setup_list.at(psi);
     for (const auto& [drb_id, drb_ctx] : next_session.drb_to_add) {
@@ -549,7 +549,7 @@ get_pdu_session_dl_data_forwarding(const e1ap_pdu_session_res_to_setup_item&    
 
   if (flows_on_pdu_session_tunnel.empty()) {
     // The CU-UP built the tunnel, but none of the requested flows was set up on a DRB. The tunnel stays unused until
-    // this node removes the PDU session.
+    // the target removes the PDU session.
     logger.warning(
         "Not advertising the data forwarding tunnel of {}. Cause: none of the requested QoS flows was set up",
         response_session.pdu_session_id);

@@ -90,10 +90,10 @@ struct pdu_session {
   /// Xn-U bind address of this PDU session. Empty unless this node has an Xn-U socket for a direct path.
   std::string xnu_addr;
 
-  /// Local endpoint of the PDU session level DL data forwarding tunnel, where this node receives the forwarded data.
+  /// Local endpoint of the PDU session level DL data forwarding tunnel, where the target receives the forwarded data.
   /// Allocated when the gNB-CU-CP requests PDU session level data forwarding (TS 37.483 section 9.3.2.5).
   std::optional<up_transport_layer_info> ingress_dl_data_forwarding_tnl_info;
-  /// Peer endpoint of the PDU session level DL data forwarding tunnel, where this node sends the data it still holds
+  /// Peer endpoint of the PDU session level DL data forwarding tunnel, where the source sends the data it still holds
   /// for the UE, together with the QoS flows to send over it (TS 37.483 section 9.3.2.6).
   std::optional<up_transport_layer_info> egress_dl_data_forwarding_tnl_info;
   std::vector<qos_flow_id_t>             qos_flows_to_be_forwarded;

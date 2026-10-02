@@ -109,7 +109,7 @@ struct cu_cp_inter_cu_handover_request {
     rrc_handover_preparation_information =
         xnap_request.ue_context_info_ho_request.rrc_handover_preparation_information.copy();
     location_report_request_type = xnap_request.ue_context_info_ho_request.location_report_info;
-    // Over Xn the source forwards straight to this node, without a 5GC in the path.
+    // Over Xn the source forwards straight to the target, without a 5GC in the path.
     for (auto& pdu_session_res_setup_item : pdu_session_res_setup_list) {
       pdu_session_res_setup_item.direct_forwarding_path_available = true;
     }
