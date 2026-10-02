@@ -14,6 +14,7 @@
 #include "ocudu/support/async/manual_event.h"
 #include "ocudu/support/executors/execute_until_success.h"
 #include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/timers.h"
 
 using namespace ocudu;
 
@@ -46,8 +47,15 @@ public:
                    task_executor&                 ctrl_exec_,
                    timer_manager&                 timers_,
                    ocudulog::basic_logger&        logger_) :
-    sched(sched_), ctrl_exec(ctrl_exec_), timers(timers_), logger(logger_)
+    sched(sched_),
+    ctrl_exec(ctrl_exec_),
+    timers(timers_),
+    logger(logger_),
+    meas_timeout(timer_factory{timers_, ctrl_exec_}.create_timer())
   {
+    // The timeout handling is the same for every request, so the callback is set once. Each request sets its own
+    // duration before the timer runs.
+    meas_timeout.set(std::chrono::milliseconds{0}, [this]() { handle_meas_timeout(); });
   }
 
   async_task<mac_positioning_measurement_response>
@@ -85,6 +93,10 @@ private:
 
   void handle_pending_srs_report(du_cell_index_t cell_index, mac_srs_indication_message& msg);
 
+  void handle_meas_timeout();
+
+  void complete_request();
+
   void clean_last_req_resources();
 
   void rem_cell(du_cell_index_t cell_index);
@@ -102,6 +114,9 @@ private:
 
   mac_positioning_measurement_response resp;
   manual_event_flag                    report_completed;
+
+  /// Timer that bounds how long the MAC waits for the SRS measurements of the current request.
+  unique_timer meas_timeout;
 };
 
 pos_handler_impl::cell_meas_context::cell_meas_context(pos_handler_impl& parent, du_cell_index_t cell_index_) :
@@ -162,6 +177,10 @@ pos_handler_impl::handle_positioning_measurement_request(const mac_positioning_m
     sched_cell.srs_to_measure = cell_req.srs_to_meas;
   }
   sched.handle_positioning_measurement_request(sched_req);
+
+  // Start the guard timer. If no SRS measurement arrives in time, complete the request with an empty response.
+  meas_timeout.set(req.timeout);
+  meas_timeout.run();
 
   return launch_async([this](coro_context<async_task<mac_positioning_measurement_response>>& ctx) {
     CORO_BEGIN(ctx);
@@ -281,6 +300,20 @@ void pos_handler_impl::handle_pending_srs_report(du_cell_index_t cell_index, mac
       out.zenith_aoa_deg  = rep.zenith_aoa;
     }
   }
+
+  complete_request();
+}
+
+void pos_handler_impl::handle_meas_timeout()
+{
+  logger.warning("Positioning measurement request timed out after {}ms", meas_timeout.duration().count());
+  resp = {};
+  complete_request();
+}
+
+void pos_handler_impl::complete_request()
+{
+  meas_timeout.stop();
 
   // Notify scheduler to stop scheduling new positioning measurement PDUs.
   positioning_measurement_stop_request stop_req;

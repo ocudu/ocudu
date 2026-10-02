@@ -114,6 +114,15 @@ protected:
   std::unique_ptr<positioning_handler> pos_handler;
 
   std::vector<std::unique_ptr<cell_positioning_handler>> cells;
+
+  /// Advances time by \c nof_ms milliseconds and runs the tasks that the expired timers scheduled.
+  void tick(unsigned nof_ms)
+  {
+    for (unsigned i = 0; i != nof_ms; ++i) {
+      timers.tick();
+      worker.run_pending_tasks();
+    }
+  }
 };
 
 class single_cell_positioning_handler_test : public positioning_handler_test, public ::testing::Test
@@ -311,6 +320,133 @@ TEST_F(single_cell_positioning_handler_test, when_srs_indication_contains_only_u
   EXPECT_FLOAT_EQ(meas.azimuth_aoa_deg.value(), azimuth_deg);
 }
 
+TEST_F(single_cell_positioning_handler_test, when_no_srs_indication_arrives_then_request_times_out)
+{
+  mac_positioning_measurement_request req = make_positioning_request_for_connected_ue();
+  req.timeout                             = std::chrono::milliseconds{20};
+
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+
+  // No SRS indication arrives. The request is still pending just before the timeout expires.
+  tick(req.timeout.count() - 1);
+  ASSERT_FALSE(t_launcher.ready());
+
+  // The guard timer expires and completes the request.
+  tick(1);
+  ASSERT_TRUE(t_launcher.ready());
+}
+
+TEST_F(single_cell_positioning_handler_test, when_request_times_out_then_response_is_empty)
+{
+  // Run a first measurement to completion, so that a result is stored.
+  mac_positioning_measurement_request req  = make_positioning_request_for_connected_ue();
+  rnti_t                              rnti = req.cells[0].rnti.value();
+  req.timeout                              = std::chrono::milliseconds{20};
+
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+  cells[0]->handle_srs_indication(make_srs_ind(rnti, 123.4F));
+  worker.run_pending_tasks();
+  ASSERT_TRUE(t_launcher.ready());
+  ASSERT_FALSE(t_launcher.result.value().cell_results.empty());
+
+  // Let a second measurement time out. Its response must not carry the results of the first one.
+  auto t2 = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher2(t2);
+  tick(req.timeout.count());
+
+  ASSERT_TRUE(t_launcher2.ready());
+  ASSERT_TRUE(t_launcher2.result.value().cell_results.empty());
+}
+
+TEST_F(single_cell_positioning_handler_test, when_request_times_out_then_scheduler_is_told_to_stop)
+{
+  mac_positioning_measurement_request req  = make_positioning_request_for_connected_ue();
+  rnti_t                              rnti = req.cells[0].rnti.value();
+  req.timeout                              = std::chrono::milliseconds{20};
+
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+  ASSERT_TRUE(sched.stop_reqs.empty());
+
+  tick(req.timeout.count());
+
+  ASSERT_TRUE(t_launcher.ready());
+  ASSERT_EQ(sched.stop_reqs.size(), 1);
+  ASSERT_EQ(sched.stop_reqs.back().completed_meas.size(), 1);
+  ASSERT_EQ(sched.stop_reqs.back().completed_meas[0].second, rnti);
+}
+
+TEST_F(single_cell_positioning_handler_test, when_request_times_out_then_a_new_request_is_accepted)
+{
+  mac_positioning_measurement_request req  = make_positioning_request_for_connected_ue();
+  rnti_t                              rnti = req.cells[0].rnti.value();
+  req.timeout                              = std::chrono::milliseconds{20};
+
+  // Let a first request time out.
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+  tick(req.timeout.count());
+  ASSERT_TRUE(t_launcher.ready());
+
+  // A new request is accepted and completes on the next SRS indication.
+  sched.last_req.reset();
+  auto t2 = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher2(t2);
+  ASSERT_TRUE(sched.last_req.has_value()) << "Request was refused as a duplicate";
+
+  cells[0]->handle_srs_indication(make_srs_ind(rnti));
+  worker.run_pending_tasks();
+  ASSERT_TRUE(t_launcher2.ready());
+  ASSERT_FALSE(t_launcher2.result.value().cell_results.empty());
+}
+
+TEST_F(single_cell_positioning_handler_test, when_request_completes_in_time_then_it_does_not_time_out)
+{
+  mac_positioning_measurement_request req  = make_positioning_request_for_connected_ue();
+  rnti_t                              rnti = req.cells[0].rnti.value();
+  req.timeout                              = std::chrono::milliseconds{20};
+
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+
+  cells[0]->handle_srs_indication(make_srs_ind(rnti));
+  worker.run_pending_tasks();
+  ASSERT_TRUE(t_launcher.ready());
+  ASSERT_EQ(sched.stop_reqs.size(), 1);
+
+  // The guard timer of the completed request does not fire.
+  tick(req.timeout.count() * 2);
+  ASSERT_EQ(sched.stop_reqs.size(), 1);
+}
+
+TEST_F(single_cell_positioning_handler_test, when_srs_indication_arrives_after_the_timeout_then_it_is_ignored)
+{
+  mac_positioning_measurement_request req  = make_positioning_request_for_connected_ue();
+  rnti_t                              rnti = req.cells[0].rnti.value();
+  req.timeout                              = std::chrono::milliseconds{20};
+
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+  tick(req.timeout.count());
+  ASSERT_TRUE(t_launcher.ready());
+
+  // The SRS of the timed out request arrives late. It must not complete the next request.
+  cells[0]->handle_srs_indication(make_srs_ind(rnti));
+  worker.run_pending_tasks();
+
+  auto t2 = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher2(t2);
+  worker.run_pending_tasks();
+  ASSERT_FALSE(t_launcher2.ready()) << "A stray SRS indication completed the new request";
+
+  // Only a new SRS indication completes it.
+  cells[0]->handle_srs_indication(make_srs_ind(rnti));
+  worker.run_pending_tasks();
+  ASSERT_TRUE(t_launcher2.ready());
+}
+
 class multi_cell_positioning_handler_test : public positioning_handler_test, public ::testing::Test
 {
 public:
@@ -463,4 +599,32 @@ TEST_F(multi_cell_positioning_handler_test, when_positioning_measurement_complet
   cells[1]->handle_srs_indication(srs_ind);
   worker.run_pending_tasks();
   ASSERT_TRUE(t_launcher2.ready());
+}
+
+TEST_F(multi_cell_positioning_handler_test, when_neighbor_ue_request_times_out_then_pos_rntis_are_released)
+{
+  mac_positioning_measurement_request req;
+  req.cells.resize(2);
+  for (unsigned i = 0; i != 2; ++i) {
+    req.cells[i].cell_index  = to_du_cell_index(i);
+    req.cells[i].srs_to_meas = make_test_srs_config();
+  }
+  req.timeout = std::chrono::milliseconds{20};
+
+  auto                                                     t = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher(t);
+  ASSERT_TRUE(sched.last_req.has_value());
+  const rnti_t pos_rnti1 = sched.last_req->cells[0].pos_rnti;
+  const rnti_t pos_rnti2 = sched.last_req->cells[1].pos_rnti;
+  ASSERT_FALSE(is_crnti(pos_rnti1));
+
+  tick(req.timeout.count());
+  ASSERT_TRUE(t_launcher.ready());
+
+  // The reserved RNTIs returned to the free list, so the next request reuses them.
+  auto t2 = pos_handler->handle_positioning_measurement_request(req);
+  lazy_task_launcher<mac_positioning_measurement_response> t_launcher2(t2);
+  ASSERT_TRUE(sched.last_req.has_value());
+  ASSERT_EQ(sched.last_req->cells[0].pos_rnti, pos_rnti1);
+  ASSERT_EQ(sched.last_req->cells[1].pos_rnti, pos_rnti2);
 }

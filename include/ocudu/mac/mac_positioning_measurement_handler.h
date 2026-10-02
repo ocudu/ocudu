@@ -9,6 +9,7 @@
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/support/async/async_task.h"
+#include <chrono>
 #include <optional>
 
 namespace ocudu {
@@ -26,6 +27,11 @@ struct mac_positioning_measurement_request {
 
   /// Cells for which to perform measurements.
   std::vector<cell_info> cells;
+  /// \brief Maximum time the MAC waits for the SRS measurements before it completes the request.
+  ///
+  /// If the UE does not transmit SRS, no measurement arrives. On expiry, the MAC stops the measurement and returns an
+  /// empty response. The value bounds how long the caller waits for a result.
+  std::chrono::milliseconds timeout{500};
 };
 
 /// Result of a positioning measurement request.
