@@ -11,6 +11,10 @@ add_executable(ocuduvec_bit_test ocuduvec_bit_test.cpp)
 target_link_libraries(ocuduvec_bit_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_bit_test ocuduvec_bit_test)
 
+add_executable(ocuduvec_byte_swap_test ocuduvec_byte_swap_test.cpp)
+target_link_libraries(ocuduvec_byte_swap_test ocuduvec ocudulog gtest gtest_main)
+add_test(ocuduvec_byte_swap_test ocuduvec_byte_swap_test)
+
 add_executable(ocuduvec_compare_test ocuduvec_compare_test.cpp)
 target_link_libraries(ocuduvec_compare_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_compare_test ocuduvec_compare_test)

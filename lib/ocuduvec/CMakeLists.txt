@@ -7,6 +7,7 @@ set(SOURCES
         accumulate.cpp
         add.cpp
         bit.cpp
+        byte_swap.cpp
         clip.cpp
         compare.cpp
         conversion.cpp
