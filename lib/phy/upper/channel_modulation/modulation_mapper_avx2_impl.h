@@ -27,6 +27,9 @@ private:
   /// Implements the modulation algorithm for 256-QAM.
   float modulate_qam256(span<ci8_t> symbols, const bit_buffer& input);
 
+  /// Implements the modulation algorithm for 1024-QAM.
+  float modulate_qam1024(span<ci8_t> symbols, const bit_buffer& input);
+
   /// Modulation mapper based on LUT for modulations that are not implemented with AVX2.
   modulation_mapper_lut_impl lut_modulator;
 };
