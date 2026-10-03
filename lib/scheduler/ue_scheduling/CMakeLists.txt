@@ -10,6 +10,7 @@ set(SOURCES
         ue_scheduler_impl.cpp
         grant_params_selector.cpp
         intra_slice_scheduler.cpp
+        pdcch_cce_budget_tracker.cpp
         triggered_ul_grant_scheduler.cpp
 )
 
