@@ -140,7 +140,8 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
   ues(ues_),
   logger(logger_),
   expected_pdschs_per_slot(compute_expected_pdschs_per_slot(cell_alloc.cfg)),
-  ue_alloc(expert_cfg, ues, pdcch_alloc, uci_alloc, srs_alloc, cell_alloc_, logger_)
+  ue_alloc(expert_cfg, ues, pdcch_alloc, uci_alloc, srs_alloc, cell_alloc_, logger_),
+  pdcch_cce_budget(cell_alloc_)
 {
   // Pre-reserve memory for UE candidates.
   newtx_candidates.reserve(MAX_NOF_DU_UES);
@@ -161,6 +162,7 @@ void intra_slice_scheduler::slot_indication(slot_point sl_tx)
   pusch_slot.clear();
   dl_attempts_count = 0;
   ul_attempts_count = 0;
+  pdcch_cce_budget.slot_indication(sl_tx);
 }
 
 void intra_slice_scheduler::post_process_results()
@@ -229,10 +231,10 @@ void intra_slice_scheduler::ul_sched(ul_ran_slice_candidate slice, scheduler_pol
 /// \brief Helper function that returns a pair with the remaining number of RBs to allocate in this slice scheduling
 /// opportunity and the recommended number of RBs per UE grant.
 template <typename SliceCandidate>
-static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const ue_newtx_candidate> ue_candidates,
-                                                                      const cell_resource_allocator& cell_alloc,
-                                                                      const SliceCandidate&          slice,
-                                                                      const vrb_bitmap&              used_vrbs,
+static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const ue_newtx_candidate>  ue_candidates,
+                                                                      const pdcch_cce_budget_tracker& pdcch_cce_budget,
+                                                                      const SliceCandidate&           slice,
+                                                                      const vrb_bitmap&               used_vrbs,
                                                                       unsigned max_ue_grants_to_alloc)
 {
   constexpr bool is_dl = std::is_same_v<dl_ran_slice_candidate, SliceCandidate>;
@@ -255,20 +257,11 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   ues_to_alloc =
       std::min({ues_to_alloc, std::max(static_cast<unsigned>(ue_candidates.size()) / 4U, 1U), MAX_UE_GRANT_PER_SLOT});
 
-  // > Compute maximum nof. PDCCH candidates allowed for each direction.
-  // [Implementation-defined]
-  // - Assume aggregation level 2 while computing nof. candidates that can be fit in CORESET.
-  // - CORESET CCEs are divided by 2 to provide equal PDCCH resources to DL and UL.
-  unsigned max_nof_candidates = (ss_info->coreset->cfg().get_nof_cces() / 2) / to_nof_cces(aggregation_level::n2);
-
-  // > Subtract already scheduled PDCCHs.
-  unsigned pdcchs_in_grid = is_dl ? cell_alloc[0].result.dl.dl_pdcchs.size() : cell_alloc[0].result.dl.ul_pdcchs.size();
-  max_nof_candidates -= std::min(pdcchs_in_grid, max_nof_candidates);
-
-  // > Ensure fairness in PDCCH allocation between DL and UL.
-  // [Implementation-defined] To avoid running out of PDCCH candidates for UL allocation in multi-UE scenario and short
-  // BW (e.g. TDD and 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot.
-  ues_to_alloc = std::min(max_nof_candidates, ues_to_alloc);
+  // [Implementation-defined] Assume aggregation level 2 to derive the nof. PDCCHs that fit in the remaining CCEs.
+  const unsigned remaining_cces =
+      is_dl ? pdcch_cce_budget.remaining_dl_cces() : pdcch_cce_budget.remaining_ul_cces(slice.get_slot_tx());
+  const unsigned max_nof_candidates = remaining_cces / to_nof_cces(aggregation_level::n2);
+  ues_to_alloc                      = std::min(max_nof_candidates, ues_to_alloc);
   if (ues_to_alloc == 0) {
     return std::make_pair(0, 0);
   }
@@ -468,8 +461,12 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
   }
 
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
-  auto [rbs_to_alloc, max_rbs_per_grant] = get_max_grants_and_rb_grant_size(
-      newtx_candidates, cell_alloc, slice, used_dl_vrbs, std::min(max_ue_grants_to_alloc, expected_pdschs_per_slot));
+  auto [rbs_to_alloc, max_rbs_per_grant] =
+      get_max_grants_and_rb_grant_size(newtx_candidates,
+                                       pdcch_cce_budget,
+                                       slice,
+                                       used_dl_vrbs,
+                                       std::min(max_ue_grants_to_alloc, expected_pdschs_per_slot));
   if (max_rbs_per_grant == 0) {
     return 0;
   }
@@ -505,6 +502,11 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
       }
       if (pending_dl_newtxs.size() >= max_ue_grants_to_alloc) {
         // Maximum number of allocations reached. Move to stage 2.
+        break;
+      }
+      if (pdcch_cce_budget.remaining_dl_cces() == 0) {
+        // DL PDCCH CCE budget exhausted. Move to stage 2.
+        // Note: The last grant may exceed the budget, in which case it borrows CCEs from the reserved UL shares.
         break;
       }
     } else if (result.error() == dl_alloc_failure_cause::skip_slot) {
@@ -607,7 +609,7 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
 
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
   auto [rbs_to_alloc, expected_rbs_per_grant] =
-      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, used_ul_vrbs, max_ue_grants_to_alloc);
+      get_max_grants_and_rb_grant_size(newtx_candidates, pdcch_cce_budget, slice, used_ul_vrbs, max_ue_grants_to_alloc);
   if (expected_rbs_per_grant == 0) {
     return 0;
   }
@@ -632,6 +634,11 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
       }
       if (pending_ul_newtxs.size() >= max_ue_grants_to_alloc) {
         // Maximum number of allocations reached. Move to stage 2.
+        break;
+      }
+      if (pdcch_cce_budget.remaining_ul_cces(pusch_slot) == 0) {
+        // UL PDCCH CCE budget for this PUSCH slot exhausted. Move to stage 2.
+        // Note: The last grant may exceed the budget, in which case it borrows CCEs from the later PUSCH slots.
         break;
       }
     } else if (result.error() == alloc_status::skip_slot) {

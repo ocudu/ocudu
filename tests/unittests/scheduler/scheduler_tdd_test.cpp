@@ -6,6 +6,7 @@
 /// \file
 /// \brief Unit test for scheduler using different TDD patterns.
 
+#include "lib/scheduler/ue_scheduling/pdcch_cce_budget_tracker.h"
 #include "test_utils/indication_generators.h"
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/ocudu_test_requirements.h"
@@ -852,5 +853,124 @@ INSTANTIATE_TEST_SUITE_P(
   multiue_tdd_test_params{ {subcarrier_spacing::kHz30, {4, 2, 9, 1, 0}}, 4, 16, 8, 1, 8, false, multiue_bg_traffic::ul_only, srs_periodicity::sl16}
 ));
 // clang-format on
+
+// ------------------------------------ PDCCH CCE distribution --------------------------------------------
+
+struct pdcch_distribution_tdd_test_params {
+  tdd_ul_dl_config_common tdd_cfg;
+  unsigned                min_k;
+};
+
+void PrintTo(const pdcch_distribution_tdd_test_params& value, ::std::ostream* os)
+{
+  *os << fmt::format("tdd={} min_k={}", value.tdd_cfg, value.min_k);
+}
+
+/// Fixture with many full-buffer UEs in both directions, competing for the PDCCH CCEs of every DL slot.
+class scheduler_pdcch_distribution_tdd_test : public base_scheduler_tdd_tester,
+                                              public ::testing::TestWithParam<pdcch_distribution_tdd_test_params>
+{
+protected:
+  static constexpr unsigned nof_ues     = 32;
+  static constexpr unsigned huge_buffer = 10000000;
+
+  scheduler_pdcch_distribution_tdd_test() :
+    base_scheduler_tdd_tester(common_tdd_tester_params{.tdd_cfg = GetParam().tdd_cfg, .min_k = GetParam().min_k}),
+    nof_pusch_slots(compute_nof_pusch_slots_per_pdcch_slot(cell_cfg()))
+  {
+    for (unsigned i = 0; i != nof_ues; ++i) {
+      const du_ue_index_t idx  = to_du_ue_index(i);
+      const rnti_t        rnti = to_rnti(0x4601 + i);
+      add_ue(build_ue_request(idx, rnti, {LCID_MIN_DRB}));
+      push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_MIN_DRB, huge_buffer});
+      push_bsr(ul_bsr_indication_message{
+          to_du_cell_index(0), idx, rnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{uint_to_lcg_id(0), huge_buffer}}});
+    }
+
+    // Warmup, so that all UEs have been scheduled at least once.
+    for (unsigned i = 0, e = 4 * nof_slots_per_tdd_period(*cell_cfg().params.tdd_cfg); i != e; ++i) {
+      run_slot();
+    }
+  }
+
+  unsigned nof_pusch_slots_of(slot_point pdcch_slot) const
+  {
+    return nof_pusch_slots[pdcch_slot.count() % nof_pusch_slots.size()];
+  }
+
+  std::vector<uint8_t> nof_pusch_slots;
+};
+
+/// Patterns where some DL slots cannot schedule PUSCHs.
+class scheduler_pdcch_distribution_dl_heavy_tdd_test : public scheduler_pdcch_distribution_tdd_test
+{};
+
+TEST_P(scheduler_pdcch_distribution_dl_heavy_tdd_test, dl_uses_most_cces_in_slots_that_cannot_schedule_ul)
+{
+  static constexpr unsigned nof_test_slots = 200;
+
+  unsigned max_dl_cces  = 0;
+  unsigned coreset_cces = 0;
+  for (unsigned count = 0; count != nof_test_slots; ++count) {
+    run_slot();
+    if (not cell_cfg().is_dl_enabled(last_result_slot()) or nof_pusch_slots_of(last_result_slot()) != 0) {
+      continue;
+    }
+    unsigned dl_cces = 0;
+    for (const auto& pdcch : last_sched_result()->dl.dl_pdcchs) {
+      if (pdcch.ctx.coreset_cfg->get_id() == to_coreset_id(0)) {
+        continue;
+      }
+      coreset_cces = pdcch.ctx.coreset_cfg->get_nof_cces();
+      dl_cces += to_nof_cces(pdcch.ctx.cces.aggr_lvl);
+    }
+    max_dl_cces = std::max(max_dl_cces, dl_cces);
+  }
+
+  ASSERT_GT(coreset_cces, 0) << "No DL UE grants were scheduled in slots without UL PDCCH opportunities";
+  // Without UL PDCCH opportunities, DL is not limited to half of the CORESET.
+  ASSERT_GE(max_dl_cces, coreset_cces * 3 / 4) << "DL left CCEs unused in slots that cannot schedule PUSCHs";
+}
+
+TEST_P(scheduler_pdcch_distribution_tdd_test, ul_slots_are_not_starved)
+{
+  static constexpr unsigned nof_test_slots = 1000;
+
+  unsigned nof_ul_slots = 0;
+  unsigned nof_empty    = 0;
+  for (unsigned count = 0; count != nof_test_slots; ++count) {
+    run_slot();
+    if (cell_cfg().is_fully_ul_enabled(last_result_slot())) {
+      ++nof_ul_slots;
+      nof_empty += last_sched_result()->ul.puschs.empty() ? 1 : 0;
+    }
+  }
+
+  // Note: A few UL slots may still be left empty due to PDCCH candidate blocking.
+  ASSERT_LE(nof_empty, nof_ul_slots / 50) << fmt::format("{} of {} UL slots had no PUSCH", nof_empty, nof_ul_slots);
+}
+
+INSTANTIATE_TEST_SUITE_P(scheduler_tdd_test,
+                         scheduler_pdcch_distribution_dl_heavy_tdd_test,
+                         testing::Values(
+                             // clang-format off
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {5, 3, 9, 1, 0}}, 4},   // DDDSU
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}, 4}   // DDDDDDDSUU
+                             // clang-format on
+                             ));
+
+INSTANTIATE_TEST_SUITE_P(
+    scheduler_tdd_test,
+    scheduler_pdcch_distribution_tdd_test,
+    testing::Values(
+        // clang-format off
+  // DL-heavy: some DL slots cannot schedule PUSCHs.
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {5, 3, 9, 1, 0}}, 4},   // DDDSU
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}, 4},  // DDDDDDDSUU
+  // UL-heavy: a single PDCCH slot schedules several PUSCH slots.
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {5, 1, 10, 3, 0}}, 2},  // DSUUU
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}, 2}   // DDDSUUUUUU
+                                                                                       // clang-format on
+        ));
 
 } // namespace

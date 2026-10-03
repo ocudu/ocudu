@@ -7,6 +7,7 @@
 
 #include "../policy/scheduler_policy.h"
 #include "../slicing/ran_slice_candidate.h"
+#include "pdcch_cce_budget_tracker.h"
 #include "ue_cell_grid_allocator.h"
 
 namespace ocudu {
@@ -118,6 +119,9 @@ private:
 
   /// Handler of grid allocations.
   ue_cell_grid_allocator ue_alloc;
+
+  // Distribution of PDCCH CCEs between DL and UL UE grants.
+  pdcch_cce_budget_tracker pdcch_cce_budget;
 
   // Slot at which PDCCH is scheduled.
   slot_point pdcch_slot;
