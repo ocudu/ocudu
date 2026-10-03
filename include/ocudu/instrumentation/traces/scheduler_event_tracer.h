@@ -23,15 +23,15 @@ class tracer_handle;
 /// \param timers Timer manager of the application.
 /// \param executor Task executor for handling snapshot writing tasks.
 /// \return Handle that tears down the backend on destruction.
-[[nodiscard]] tracer_handle init_tracer(const std::string&        dir_path,
-                                        std::chrono::milliseconds flush_period,
-                                        timer_manager&            timers,
-                                        task_executor&            executor);
+[[nodiscard]] tracer_handle init(const std::string&        dir_path,
+                                 std::chrono::milliseconds flush_period,
+                                 timer_manager&            timers,
+                                 task_executor&            executor);
 
 /// \brief Owner of the scheduler tracing backend.
 ///
 /// The backend must be torn down after all cell tracers are destroyed, and while the timers and executor passed to
-/// \c init_tracer are still running.
+/// \c init are still running.
 class tracer_handle
 {
 public:
@@ -49,7 +49,7 @@ public:
   void reset();
 
 private:
-  friend tracer_handle init_tracer(const std::string&, std::chrono::milliseconds, timer_manager&, task_executor&);
+  friend tracer_handle init(const std::string&, std::chrono::milliseconds, timer_manager&, task_executor&);
 
   explicit tracer_handle(bool active_) : active(active_) {}
 

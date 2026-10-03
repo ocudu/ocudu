@@ -71,7 +71,7 @@ protected:
     const auto  ts        = std::chrono::steady_clock::now().time_since_epoch().count();
     temp_dir = std::filesystem::temp_directory_path() / fmt::format("schedtrace_{}_{}", test_info->name(), ts);
     std::filesystem::create_directories(temp_dir);
-    tracer_backend = init_tracer(temp_dir.string(), flush_period, timers, worker);
+    tracer_backend = schedtrace::init(temp_dir.string(), flush_period, timers, worker);
   }
 
   void TearDown() override

@@ -418,10 +418,10 @@ int main(int argc, char** argv)
   schedtrace::tracer_handle schedtrace_backend;
   if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace.enabled) {
     auto& schedtrace_cfg = o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace;
-    schedtrace_backend   = schedtrace::init_tracer(schedtrace_cfg.path,
-                                                 std::chrono::milliseconds{schedtrace_cfg.flush_period_ms},
-                                                 app_timers,
-                                                 workers.get_trace_executor());
+    schedtrace_backend   = schedtrace::init(schedtrace_cfg.path,
+                                          std::chrono::milliseconds{schedtrace_cfg.flush_period_ms},
+                                          app_timers,
+                                          workers.get_trace_executor());
   }
 
   // Create Xn-C GWs. (TODO cleanup port and PPID args with factory)

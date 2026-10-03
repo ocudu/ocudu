@@ -74,10 +74,10 @@ private:
 /// Single cell event file writer registry.
 static std::unique_ptr<event_trace_writer_registry> registry;
 
-tracer_handle schedtrace::init_tracer(const std::string&        dir_path,
-                                      std::chrono::milliseconds flush_period,
-                                      timer_manager&            timers,
-                                      task_executor&            pool_executor)
+tracer_handle schedtrace::init(const std::string&        dir_path,
+                               std::chrono::milliseconds flush_period,
+                               timer_manager&            timers,
+                               task_executor&            pool_executor)
 {
   report_fatal_error_if_not(registry == nullptr, "Scheduler trace handling registry has already been initialized");
   registry = std::make_unique<event_trace_writer_registry>(

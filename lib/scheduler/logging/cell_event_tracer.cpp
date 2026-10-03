@@ -45,10 +45,10 @@ std::unique_ptr<cell_event_tracer> ocudu::schedtrace::create_cell_tracer(const o
   return std::make_unique<cell_event_tracer>();
 }
 
-tracer_handle schedtrace::init_tracer(const std::string&        dir_path,
-                                      std::chrono::milliseconds flush_period,
-                                      timer_manager&            timers,
-                                      task_executor&            pool_executor)
+tracer_handle schedtrace::init(const std::string&        dir_path,
+                               std::chrono::milliseconds flush_period,
+                               timer_manager&            timers,
+                               task_executor&            pool_executor)
 {
   return tracer_handle{true};
 }
