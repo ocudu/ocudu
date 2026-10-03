@@ -5,12 +5,14 @@
 
 #include "event_trace_writer_registry.h"
 #include "../config/cell_configuration.h"
+#include "../logging/cell_event_tracer.h"
 #include "ocudu/adt/mpmc_queue.h"
 #include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/ran/bwp/bwp_configuration.h"
+#include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/support/executors/execute_until_success.h"
 #include "ocudu/support/executors/strand_executor.h"
 #include "ocudu/support/synchronization/sync_event.h"
+#include <algorithm>
 
 using namespace ocudu::schedtrace;
 
@@ -32,18 +34,6 @@ static unsigned compute_required_queue_size(ocudu::subcarrier_spacing max_scs, s
 /// only dispatches a timer for flushing.
 static constexpr unsigned strand_queue_size = 16;
 
-cell_event_trace_consumer::cell_event_trace_consumer(du_cell_index_t                     cell_idx,
-                                                     unsigned                            queue_size,
-                                                     std::unique_ptr<event_trace_writer> writer) :
-  ev_queue(cell_idx, queue_size, ocudulog::fetch_basic_logger("SCHED")), trace_writer(std::move(writer))
-{
-}
-
-std::unique_ptr<cell_event_tracer> cell_event_trace_consumer::create_producer(const cell_configuration& cell_cfg)
-{
-  return std::make_unique<cell_event_tracer>(cell_cfg, ev_queue);
-}
-
 event_trace_writer_registry::event_trace_writer_registry(std::chrono::milliseconds        flush_period_,
                                                          timer_manager&                   timers_,
                                                          task_executor&                   pool_executor,
@@ -55,36 +45,54 @@ event_trace_writer_registry::event_trace_writer_registry(std::chrono::millisecon
 std::unique_ptr<cell_event_tracer>
 event_trace_writer_registry::create_cell_tracer(const ocudu::cell_configuration& cell_cfg)
 {
-  cell_context& cell = channels[cell_cfg.cell_index];
-  ocudu_assert(not cell.active.load(std::memory_order_acquire),
-               "Cell event tracer for cell {} already exists",
-               cell_cfg.cell_index);
+  cell_context& cell = cells[cell_cfg.cell_index];
   if (cell.strand == nullptr) {
     cell.strand = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(task_executor_ref, strand_queue_size);
-    cell.flush_timer = timers.create_unique_timer(*cell.strand);
+  }
+
+  // Create the event queue of the new cell event tracer.
+  const subcarrier_spacing max_scs  = std::max(cell_cfg.init_bwp.dl.cfg().scs, cell_cfg.init_bwp.ul.cfg().scs);
+  auto                     ev_queue = std::make_unique<cell_event_channel>(
+      cell_cfg.cell_index, compute_required_queue_size(max_scs, flush_period), ocudulog::fetch_basic_logger("SCHED"));
+  auto tracer = std::make_unique<cell_event_tracer>(cell_cfg, *ev_queue);
+
+  // The queue is installed in the cell strand, as the events of the previous tracer may still be pending.
+  // Note: The queue ownership is passed as a raw pointer, because the tasks dispatched via defer_until_success must be
+  // copyable. The queue is not leaked, as the install task always runs before the registry stop completes.
+  defer_until_success(*cell.strand, timers, [this, cell_idx = cell_cfg.cell_index, queue = ev_queue.release()]() {
+    install_queue(cell_idx, std::unique_ptr<cell_event_channel>(queue));
+  });
+
+  return tracer;
+}
+
+void event_trace_writer_registry::install_queue(du_cell_index_t cell_idx, std::unique_ptr<cell_event_channel> ev_queue)
+{
+  cell_context& cell = cells[cell_idx];
+
+  if (cell.trace_writer == nullptr) {
+    cell.trace_writer = trace_writer_factory(cell_idx);
+    cell.flush_timer  = timers.create_unique_timer(*cell.strand);
     cell.flush_timer.set(flush_period, [this, &cell]() { handle_flush(cell); });
   }
-  cell.active.store(true, std::memory_order_relaxed);
 
-  // Creates a cell trace consumer.
-  const subcarrier_spacing max_scs    = std::max(cell_cfg.init_bwp.dl.cfg().scs, cell_cfg.init_bwp.ul.cfg().scs);
-  const unsigned           queue_size = compute_required_queue_size(max_scs, flush_period);
-  cell.consumer                       = std::make_unique<cell_event_trace_consumer>(
-      cell_cfg.cell_index, queue_size, trace_writer_factory(cell_cfg.cell_index));
+  if (cell.ev_queue != nullptr) {
+    // Flush the remaining events of the previous tracer, which was destroyed before its stop event got flushed.
+    bool stop_received = not cell.trace_writer->on_flush_triggered(*cell.ev_queue);
+    ocudu_assert(
+        stop_received, "Cell event tracer for cell {} created while the previous one is still active", cell_idx);
+  }
 
-  // Start the periodic flush.
+  cell.ev_queue = std::move(ev_queue);
   cell.flush_timer.run();
-
-  // Request consumer to provide a notifier.
-  return cell.consumer->create_producer(cell_cfg);
 }
 
 void event_trace_writer_registry::handle_flush(cell_context& cell)
 {
   // On timer expiry, flush events and return slots to the free queue.
-  if (not cell.consumer->flush()) {
+  if (not cell.trace_writer->on_flush_triggered(*cell.ev_queue)) {
     // Timer is not rearmed because an event was received to stop tracing.
-    destroy_consumer(cell);
+    cell.ev_queue.reset();
     return;
   }
 
@@ -94,36 +102,27 @@ void event_trace_writer_registry::handle_flush(cell_context& cell)
 
 void event_trace_writer_registry::close_cell(cell_context& cell)
 {
-  if (cell.consumer == nullptr) {
-    // The consumer is already destroyed.
+  if (cell.ev_queue == nullptr) {
+    // The events of the last tracer were already flushed.
     return;
   }
   cell.flush_timer.stop();
   // Flush the pending events, including the stop event, without waiting for the next timer tick.
-  cell.consumer->flush();
-  destroy_consumer(cell);
-}
-
-void event_trace_writer_registry::destroy_consumer(cell_context& cell)
-{
-  // Note: The consumer can be destroyed from within the flush timer callback, as it does not own the timer.
-  cell.consumer.reset();
-  cell.active.store(false, std::memory_order_release);
+  cell.trace_writer->on_flush_triggered(*cell.ev_queue);
+  cell.ev_queue.reset();
 }
 
 void event_trace_writer_registry::stop()
 {
-  sync_event consumers_closed;
-  for (cell_context& cell : channels) {
-    if (not cell.active.load(std::memory_order_acquire)) {
+  sync_event cells_closed;
+  for (cell_context& cell : cells) {
+    if (cell.strand == nullptr) {
       continue;
     }
-    // The consumer may be destroyed concurrently, so its presence is only checked within the strand. The token is
-    // released once the task is destroyed, which happens after it has run.
-    defer_until_success(
-        *cell.strand, timers, [this, &cell, token = consumers_closed.get_token()]() { close_cell(cell); });
+    // The token is released once the task is destroyed, which happens after it has run.
+    defer_until_success(*cell.strand, timers, [this, &cell, token = cells_closed.get_token()]() { close_cell(cell); });
   }
 
-  // Wait for all the consumers to be destroyed.
-  consumers_closed.wait();
+  // Wait for all the cells to be closed.
+  cells_closed.wait();
 }

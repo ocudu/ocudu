@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/instrumentation/traces/scheduler_event_tracer.h"
+#include "../logging/cell_event_tracer.h"
 #include "event_trace_writer_registry.h"
 #include "fbs/cell_event_generated.h"
 #include "ocudu/support/executors/task_executor.h"

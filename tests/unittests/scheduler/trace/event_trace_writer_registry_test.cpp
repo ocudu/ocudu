@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "fbs/cell_event_generated.h"
+#include "lib/scheduler/logging/cell_event_tracer.h"
 #include "lib/scheduler/trace/event_trace_writer_registry.h"
 #include "trace_test_utils.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
@@ -82,7 +83,30 @@ protected:
       timers.tick();
     }
     worker.run_pending_tasks();
-    registry.stop();
+    stop_registry();
+  }
+
+  /// Creates a cell tracer and runs the strand task that starts its periodic flush.
+  std::unique_ptr<cell_event_tracer> create_tracer(const cell_configuration& cell_cfg)
+  {
+    auto tracer = registry.create_cell_tracer(cell_cfg);
+    worker.run_pending_tasks();
+    return tracer;
+  }
+
+  void stop_registry()
+  {
+    // The stop blocks until the cell strands run, so it is called from another thread while this one runs the worker.
+    std::atomic<bool> stopped{false};
+    std::thread       stopper([this, &stopped]() {
+      registry.stop();
+      stopped = true;
+    });
+    while (not stopped) {
+      worker.run_pending_tasks();
+      std::this_thread::yield();
+    }
+    stopper.join();
   }
 };
 
@@ -99,7 +123,7 @@ TEST_F(event_trace_writer_registry_test, when_no_cells_are_created_then_no_event
 TEST_F(event_trace_writer_registry_test, when_cell_is_created_and_slot_pushed_then_event_is_flushed_on_timer_tick)
 {
   const auto& cell_cfg = make_test_cell_cfg(to_du_cell_index(0));
-  auto        tracer   = registry.create_cell_tracer(cell_cfg);
+  auto        tracer   = create_tracer(cell_cfg);
 
   sched_result result;
   result.success = true;
@@ -123,8 +147,8 @@ TEST_F(event_trace_writer_registry_test, when_cell_is_created_and_slot_pushed_th
 
 TEST_F(event_trace_writer_registry_test, when_multiple_cells_are_created_then_each_gets_its_own_events)
 {
-  auto tracer0 = registry.create_cell_tracer(make_test_cell_cfg(to_du_cell_index(0)));
-  auto tracer1 = registry.create_cell_tracer(make_test_cell_cfg(to_du_cell_index(1)));
+  auto tracer0 = create_tracer(make_test_cell_cfg(to_du_cell_index(0)));
+  auto tracer1 = create_tracer(make_test_cell_cfg(to_du_cell_index(1)));
 
   sched_result result;
   result.success = true;
@@ -145,7 +169,7 @@ TEST_F(event_trace_writer_registry_test, when_multiple_cells_are_created_then_ea
 TEST_F(event_trace_writer_registry_test, when_tracer_is_destroyed_then_stop_event_is_flushed_and_channel_is_freed)
 {
   {
-    auto tracer = registry.create_cell_tracer(make_test_cell_cfg(to_du_cell_index(0)));
+    auto tracer = create_tracer(make_test_cell_cfg(to_du_cell_index(0)));
     // Tracer goes out of scope, pushing a STOP event to the queue.
   }
 
@@ -160,13 +184,13 @@ TEST_F(event_trace_writer_registry_test, when_tracer_is_destroyed_then_stop_even
   ASSERT_EQ(written_events.event(to_du_cell_index(0), last).value_type(), fbs::CellEventValue::CellStopEvent);
 
   // After channel destruction, the same cell index can be reused.
-  ASSERT_NO_FATAL_FAILURE(registry.create_cell_tracer(make_test_cell_cfg(to_du_cell_index(0))));
+  ASSERT_NO_FATAL_FAILURE(create_tracer(make_test_cell_cfg(to_du_cell_index(0))));
 }
 
 TEST_F(event_trace_writer_registry_test, when_cell_is_recreated_after_stop_then_new_tracer_flushes_events)
 {
   const auto& cell_cfg = make_test_cell_cfg(to_du_cell_index(0));
-  registry.create_cell_tracer(cell_cfg).reset();
+  create_tracer(cell_cfg).reset();
   for (unsigned i = 0; i != flush_period.count(); ++i) {
     timers.tick();
   }
@@ -174,7 +198,7 @@ TEST_F(event_trace_writer_registry_test, when_cell_is_recreated_after_stop_then_
   const size_t nof_events_before = written_events.cell_events[0].size();
 
   // Recreate the tracer for the same cell index.
-  auto         tracer = registry.create_cell_tracer(cell_cfg);
+  auto         tracer = create_tracer(cell_cfg);
   sched_result result;
   result.success = true;
   tracer->on_scheduler_result(slot_point{0, 3}, result, std::chrono::microseconds(0));
@@ -191,10 +215,38 @@ TEST_F(event_trace_writer_registry_test, when_cell_is_recreated_after_stop_then_
             slot_point(0, 3).count());
 }
 
+TEST_F(event_trace_writer_registry_test, when_cell_is_recreated_before_its_stop_is_flushed_then_both_runs_are_flushed)
+{
+  const auto&  cell_cfg = make_test_cell_cfg(to_du_cell_index(0));
+  sched_result result;
+  result.success = true;
+
+  auto tracer = create_tracer(cell_cfg);
+  tracer->on_scheduler_result(slot_point{0, 1}, result, std::chrono::microseconds(0));
+  tracer.reset();
+  worker.run_pending_tasks();
+
+  // Recreate the tracer before the STOP event of the previous one is flushed.
+  tracer = create_tracer(cell_cfg);
+  tracer->on_scheduler_result(slot_point{0, 2}, result, std::chrono::microseconds(0));
+  for (unsigned i = 0; i != flush_period.count(); ++i) {
+    timers.tick();
+  }
+  worker.run_pending_tasks();
+
+  // START, slot and STOP events of the first run, followed by the START and slot events of the second run.
+  ASSERT_EQ(written_events.cell_events[0].size(), 5U);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 0).value_type(), fbs::CellEventValue::CellStartEvent);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 1).value_as_CellSlotEvent()->slot_tx(), slot_point(0, 1).count());
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 2).value_type(), fbs::CellEventValue::CellStopEvent);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 3).value_type(), fbs::CellEventValue::CellStartEvent);
+  ASSERT_EQ(written_events.event(to_du_cell_index(0), 4).value_as_CellSlotEvent()->slot_tx(), slot_point(0, 2).count());
+}
+
 TEST_F(event_trace_writer_registry_test, when_multiple_slots_are_pushed_then_all_are_flushed_in_one_period)
 {
   const auto& cell_cfg = make_test_cell_cfg(to_du_cell_index(0));
-  auto        tracer   = registry.create_cell_tracer(cell_cfg);
+  auto        tracer   = create_tracer(cell_cfg);
 
   sched_result result;
   result.success = true;

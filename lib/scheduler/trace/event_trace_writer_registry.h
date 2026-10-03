@@ -5,13 +5,22 @@
 
 #pragma once
 
-#include "../logging/cell_event_tracer.h"
 #include "cell_event_channel.h"
-#include "ocudu/scheduler/config/bwp_configuration.h"
+#include "ocudu/ran/du_cell_index.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/timers.h"
+#include <array>
+#include <chrono>
+#include <functional>
+#include <memory>
 
-namespace ocudu::schedtrace {
+namespace ocudu {
+
+class cell_configuration;
+
+namespace schedtrace {
+
+class cell_event_tracer;
 
 /// \brief Interface to flush events to a sink.
 class event_trace_writer
@@ -22,28 +31,6 @@ public:
   /// \brief Flushes events to the sink. Called periodically by the consumer.
   /// \return Returns false if the trace writer has been ordered to stop.
   virtual bool on_flush_triggered(cell_event_channel& ev_queue) = 0;
-};
-
-/// This class provides a channel between backend and frontend for cell event tracing propagation and flushing of
-/// events to a event_trace_writer instance.
-class cell_event_trace_consumer
-{
-public:
-  cell_event_trace_consumer(du_cell_index_t cell_idx, unsigned queue_size, std::unique_ptr<event_trace_writer> writer);
-
-  /// \brief Create a cell event tracer associated with this channel.
-  /// \return cell event trace producer.
-  std::unique_ptr<schedtrace::cell_event_tracer> create_producer(const ocudu::cell_configuration& cell_cfg);
-
-  /// \brief Flushes the pending events to the event trace writer.
-  /// \return False if an event was received to stop tracing.
-  bool flush() { return trace_writer->on_flush_triggered(ev_queue); }
-
-private:
-  /// Queue of pending events to be processed by the backend.
-  cell_event_channel ev_queue;
-  /// Handler of the events at the backend.
-  std::unique_ptr<event_trace_writer> trace_writer;
 };
 
 /// Component that creates and registers the active cell event tracers.
@@ -57,39 +44,41 @@ public:
                               task_executor&                   pool_executor,
                               const trace_writer_factory_type& factory);
 
-  /// Creates and registers a cell event tracer.
+  /// \brief Creates and registers a cell event tracer.
+  /// \remark The previous cell event tracer of the same cell, if any, must have been destroyed beforehand.
   std::unique_ptr<cell_event_tracer> create_cell_tracer(const ocudu::cell_configuration& cell_cfg);
 
-  /// \brief Closes all cell consumers, flushing their pending events, and waits for their destruction.
+  /// \brief Flushes the pending events of all cells and stops their periodic flush.
   /// \remark All cell event tracers must have been destroyed beforehand.
   void stop();
 
 private:
-  /// Resources associated with a cell index. The strand and the flush timer are reused across consumers.
+  /// Resources associated with a cell index, reused across the cell event tracers of the same cell.
   struct cell_context {
-    /// Strand where the cell consumer is accessed.
+    /// Strand where the cell resources are accessed, except for its own creation.
     std::unique_ptr<task_executor> strand;
     /// Timer that triggers periodically to flush the events.
     unique_timer flush_timer;
-    /// Active consumer of the cell, if any.
-    std::unique_ptr<cell_event_trace_consumer> consumer;
-    /// Whether the cell has a consumer that was not yet destroyed.
-    std::atomic<bool> active{false};
+    /// Handler of the events of the cell.
+    std::unique_ptr<event_trace_writer> trace_writer;
+    /// Queue of the events of the current cell event tracer, if any.
+    std::unique_ptr<cell_event_channel> ev_queue;
   };
+
+  void install_queue(du_cell_index_t cell_idx, std::unique_ptr<cell_event_channel> ev_queue);
 
   void handle_flush(cell_context& cell);
 
   void close_cell(cell_context& cell);
 
-  void destroy_consumer(cell_context& cell);
-
   timer_manager&            timers;
   task_executor&            task_executor_ref;
   std::chrono::milliseconds flush_period;
-  /// Factory used to generate tracer writers for each cell event trace consumer.
+  /// Factory used to generate the trace writer of each cell.
   trace_writer_factory_type trace_writer_factory;
 
-  std::array<cell_context, MAX_NOF_DU_CELLS> channels;
+  std::array<cell_context, MAX_NOF_DU_CELLS> cells;
 };
 
-} // namespace ocudu::schedtrace
+} // namespace schedtrace
+} // namespace ocudu

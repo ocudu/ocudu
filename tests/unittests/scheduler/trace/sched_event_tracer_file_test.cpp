@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <thread>
 
 using namespace ocudu;
 using namespace schedtrace;
@@ -76,20 +77,32 @@ protected:
   void TearDown() override
   {
     worker.run_pending_tasks();
-    tracer_backend.reset();
+    // The teardown blocks until the cell strands run, so it is done from another thread while this one runs the worker.
+    std::atomic<bool> closed{false};
+    std::thread       closer([this, &closed]() {
+      tracer_backend.reset();
+      closed = true;
+    });
+    while (not closed) {
+      worker.run_pending_tasks();
+      std::this_thread::yield();
+    }
+    closer.join();
     std::filesystem::remove_all(temp_dir);
   }
 
   void tick_until_flush()
   {
+    // Run the pending strand tasks, which may start the periodic flush of new tracers.
+    worker.run_pending_tasks();
     for (unsigned i = 0; i != flush_period.count(); ++i) {
       timers.tick();
     }
     worker.run_pending_tasks();
   }
 
-  /// Destroy the tracer (pushes STOP) and tick until the STOP is processed, flushed, and the
-  /// file is closed. After this call the .bin file is safe to read.
+  /// Destroy the tracer (pushes STOP) and tick until the STOP is processed and flushed to the file. After this call
+  /// the .bin file is safe to read.
   void destroy_and_flush(std::unique_ptr<cell_event_tracer>& tracer)
   {
     tracer.reset();
@@ -144,6 +157,27 @@ TEST_F(sched_event_tracer_file_test, when_multiple_slot_results_are_pushed_then_
     EXPECT_EQ(decode(events[i]).value_as_CellSlotEvent()->slot_tx(), slot_point(0, i).count());
   }
   EXPECT_EQ(decode(events[4]).value_type(), fbs::CellEventValue::CellStopEvent);
+}
+
+TEST_F(sched_event_tracer_file_test, when_cell_is_restarted_then_file_contains_both_runs)
+{
+  const auto&  cell_cfg = make_test_cell_cfg(to_du_cell_index(0));
+  sched_result result;
+  result.success = true;
+
+  for (unsigned run = 0; run != 2; ++run) {
+    auto tracer = schedtrace::create_cell_tracer(cell_cfg);
+    tracer->on_scheduler_result(slot_point{0, run}, result, std::chrono::microseconds(0));
+    destroy_and_flush(tracer);
+  }
+
+  const auto events = read_cell_events(temp_dir, to_du_cell_index(0));
+  ASSERT_EQ(events.size(), 6U);
+  for (unsigned run = 0; run != 2; ++run) {
+    ASSERT_EQ(decode(events[run * 3]).value_type(), fbs::CellEventValue::CellStartEvent);
+    ASSERT_EQ(decode(events[run * 3 + 1]).value_as_CellSlotEvent()->slot_tx(), slot_point(0, run).count());
+    ASSERT_EQ(decode(events[run * 3 + 2]).value_type(), fbs::CellEventValue::CellStopEvent);
+  }
 }
 
 TEST_F(sched_event_tracer_file_test, when_multiple_cells_are_traced_then_separate_files_are_created)
