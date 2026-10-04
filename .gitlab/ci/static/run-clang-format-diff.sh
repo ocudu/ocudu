@@ -25,7 +25,7 @@ if [ ! -x "$app2" ]; then
   exit 1
 fi
 
-FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp)$'
+FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|cu|cuh|h|hh|hpp)$'
 target=$1
 
 if [ "$target" ]; then

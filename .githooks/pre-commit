@@ -9,7 +9,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 # Same file selection as run-clang-format-diff.sh, so we only ever
 # re-stage files clang-format was actually allowed to touch
-FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp)$'
+FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|cu|cuh|h|hh|hpp)$'
 files=$(git diff --name-only --relative --diff-filter=d HEAD | grep -E "$FILE_EXTENSION_REGEX" || true)
 
 # Apply clang-format to files changed vs HEAD
