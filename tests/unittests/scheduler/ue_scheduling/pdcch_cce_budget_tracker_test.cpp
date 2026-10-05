@@ -111,12 +111,12 @@ protected:
   }
 
   /// Advances to the next slot whose PDCCH can schedule the given number of PUSCH slots.
-  void run_until_slot_with(unsigned nof_pusch_slots)
+  void run_until_slot_with(unsigned nof_pusch_slots, bool ul_pending = true)
   {
     for (unsigned i = 0; i != 2 * table.size(); ++i) {
       const slot_point sl = next_sl++;
       res_grid->slot_indication(sl);
-      distrib->slot_indication(sl);
+      distrib->slot_indication(sl, ul_pending);
       next_ncce.fill(0);
       if (table[sl.count() % table.size()] == nof_pusch_slots and cell_cfg->is_dl_enabled(sl)) {
         return;
@@ -291,6 +291,16 @@ TEST_F(pdcch_cce_budget_test, when_earlier_pusch_slots_are_skipped_then_later_pu
   // The first PUSCH slot keeps the shares of the later PUSCH slots, while the last PUSCH slot can use all CCEs.
   ASSERT_EQ(distrib->remaining_ul_cces(pusch_slot(2)), total - (n - 1) * share);
   ASSERT_EQ(distrib->remaining_ul_cces(pusch_slot(2 + n - 1)), total);
+}
+
+TEST_F(pdcch_cce_budget_test, when_no_ul_is_pending_then_dl_gets_all_cces)
+{
+  setup(2, tdd_ul_dl_config_common{subcarrier_spacing::kHz30, {5, 1, 10, 3, 0}});
+  const uint8_t n = *std::max_element(table.begin(), table.end());
+  ASSERT_GE(n, 2);
+  run_until_slot_with(n, false);
+
+  ASSERT_EQ(distrib->remaining_dl_cces(), cs_cfg->get_nof_cces());
 }
 
 } // namespace

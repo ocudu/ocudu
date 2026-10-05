@@ -20,8 +20,9 @@ struct cell_resource_allocator;
 
 /// \brief Tracks the CCE budget of the UE-dedicated CORESETs for the DL and UL UE grants of a PDCCH slot.
 ///
-/// An equal share of CCEs is reserved for the PDSCH slot and for each of the PUSCH slots reachable from the PDCCH slot.
-/// A direction can use any free CCE not reserved for the PUSCH slots yet to be scheduled.
+/// An equal share of CCEs is reserved for the PDSCH slot and for each of the PUSCH slots reachable from the PDCCH slot,
+/// the latter only if there is UL demand. A direction can use any free CCE not reserved for the PUSCH slots yet
+/// to be scheduled.
 class pdcch_cce_budget_tracker
 {
 public:
@@ -30,8 +31,8 @@ public:
 
   explicit pdcch_cce_budget_tracker(const cell_resource_allocator& cell_alloc_);
 
-  /// Reset context in preparation for new PDCCH slot.
-  void slot_indication(slot_point pdcch_slot);
+  /// Reset context in preparation for new PDCCH slot, given whether any UE has pending UL data.
+  void slot_indication(slot_point pdcch_slot, bool ul_pending);
 
   /// Remaining CCEs that DL UE grants can use in the current PDCCH slot.
   unsigned remaining_dl_cces() const;
@@ -49,11 +50,11 @@ private:
     uint8_t duration;
   };
 
-  /// k2 values reachable from the current PDCCH slot.
-  const k2_list& current_k2s() const;
+  /// k2 values reachable from the given PDCCH slot.
+  const k2_list& k2s(slot_point sl) const;
 
-  /// CCEs of a single share in the current PDCCH slot.
-  unsigned share() const;
+  /// CCEs of a single share in the given PDCCH slot.
+  unsigned share(slot_point sl) const;
 
   /// CCEs reserved for the reachable PUSCH slots after the given one, or for all of them if the slot is invalid.
   unsigned nof_reserved_ul_cces(slot_point pusch_slot) const;
@@ -71,6 +72,8 @@ private:
 
   // Current PDCCH slot.
   slot_point pdcch_slot;
+  // Whether any UE has pending UL data in the current PDCCH slot.
+  bool ul_pending = false;
 };
 
 /// \brief Distinct k2 values of the common PUSCH TD resources applicable in each PDCCH slot index of the TDD period. In

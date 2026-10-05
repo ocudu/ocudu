@@ -41,6 +41,25 @@ static unsigned compute_expected_pdschs_per_slot(const cell_configuration& cell_
   return pdschs_per_slot;
 }
 
+/// \brief Determines whether there is any pending UL retx in the cell, or any UE with pending UL newTx data or SR.
+/// \remark UEs with pending UL newTx data or SR are not filtered by cell, to avoid traversing them.
+static bool has_pending_ul(const ue_repository& ues, cell_harq_manager& cell_harqs, const cell_configuration& cell_cfg)
+{
+  auto retxs = cell_harqs.pending_ul_retxs();
+  if (retxs.begin() != retxs.end()) {
+    return true;
+  }
+  // Note: The RAN slice IDs follow the ones created by the inter-slice scheduler, i.e. SRB and default DRB slices,
+  // followed by one slice per RRM policy member.
+  const unsigned nof_slices = 2 + cell_cfg.rrm_policy_members.size();
+  for (unsigned i = 0; i != nof_slices; ++i) {
+    if (ues.get_ues_with_pending_newtx_data(ran_slice_id_t{static_cast<uint8_t>(i)}, false).any()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // class intra_slice_scheduler::slice_ue_group_scheduler
 
 void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_dl_candidate_group(
@@ -162,7 +181,7 @@ void intra_slice_scheduler::slot_indication(slot_point sl_tx)
   pusch_slot.clear();
   dl_attempts_count = 0;
   ul_attempts_count = 0;
-  pdcch_cce_budget.slot_indication(sl_tx);
+  pdcch_cce_budget.slot_indication(sl_tx, has_pending_ul(ues, cell_harqs, cell_alloc.cfg));
 }
 
 void intra_slice_scheduler::post_process_results()

@@ -100,33 +100,38 @@ pdcch_cce_budget_tracker::pdcch_cce_budget_tracker(const cell_resource_allocator
   }
 }
 
-void pdcch_cce_budget_tracker::slot_indication(slot_point pdcch_slot_)
+void pdcch_cce_budget_tracker::slot_indication(slot_point pdcch_slot_, bool ul_pending_)
 {
   pdcch_slot = pdcch_slot_;
+  ul_pending = ul_pending_;
 }
 
-const pdcch_cce_budget_tracker::k2_list& pdcch_cce_budget_tracker::current_k2s() const
+const pdcch_cce_budget_tracker::k2_list& pdcch_cce_budget_tracker::k2s(slot_point sl) const
 {
-  return k2s_per_pdcch_slot[pdcch_slot.count() % k2s_per_pdcch_slot.size()];
+  return k2s_per_pdcch_slot[sl.count() % k2s_per_pdcch_slot.size()];
 }
 
-unsigned pdcch_cce_budget_tracker::share() const
+unsigned pdcch_cce_budget_tracker::share(slot_point sl) const
 {
-  return total_cces / (current_k2s().size() + 1);
+  return total_cces / (k2s(sl).size() + 1);
 }
 
 unsigned pdcch_cce_budget_tracker::nof_reserved_ul_cces(slot_point pusch_slot) const
 {
+  if (not ul_pending) {
+    // [Implementation-defined] Without UL demand, the CCEs are left to DL.
+    return 0;
+  }
   // [Implementation-defined] A share is reserved for each reachable PUSCH slot yet to be scheduled. Given that PUSCH
   // slots are scheduled in increasing order, these are the ones after the given PUSCH slot.
   unsigned nof_pending = 0;
-  for (uint8_t k2 : current_k2s()) {
+  for (uint8_t k2 : k2s(pdcch_slot)) {
     const slot_point sl = pdcch_slot + k2 + cell_alloc.cfg.ntn_cs_koffset;
     if (not pusch_slot.valid() or sl > pusch_slot) {
       ++nof_pending;
     }
   }
-  return nof_pending * share();
+  return nof_pending * share(pdcch_slot);
 }
 
 unsigned pdcch_cce_budget_tracker::nof_free_cces() const

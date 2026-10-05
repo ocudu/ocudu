@@ -859,14 +859,16 @@ INSTANTIATE_TEST_SUITE_P(
 struct pdcch_distribution_tdd_test_params {
   tdd_ul_dl_config_common tdd_cfg;
   unsigned                min_k;
+  // Whether the UEs have pending UL data.
+  bool ul_traffic = true;
 };
 
 void PrintTo(const pdcch_distribution_tdd_test_params& value, ::std::ostream* os)
 {
-  *os << fmt::format("tdd={} min_k={}", value.tdd_cfg, value.min_k);
+  *os << fmt::format("tdd={} min_k={} ul_traffic={}", value.tdd_cfg, value.min_k, value.ul_traffic);
 }
 
-/// Fixture with many full-buffer UEs in both directions, competing for the PDCCH CCEs of every DL slot.
+/// Fixture with many full-buffer UEs, competing for the PDCCH CCEs of every DL slot.
 class scheduler_pdcch_distribution_tdd_test : public base_scheduler_tdd_tester,
                                               public ::testing::TestWithParam<pdcch_distribution_tdd_test_params>
 {
@@ -883,8 +885,13 @@ protected:
       const rnti_t        rnti = to_rnti(0x4601 + i);
       add_ue(build_ue_request(idx, rnti, {LCID_MIN_DRB}));
       push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_MIN_DRB, huge_buffer});
-      push_bsr(ul_bsr_indication_message{
-          to_du_cell_index(0), idx, rnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{uint_to_lcg_id(0), huge_buffer}}});
+      if (GetParam().ul_traffic) {
+        push_bsr(ul_bsr_indication_message{to_du_cell_index(0),
+                                           idx,
+                                           rnti,
+                                           bsr_format::SHORT_BSR,
+                                           {ul_bsr_lcg_report{uint_to_lcg_id(0), huge_buffer}}});
+      }
     }
 
     // Warmup, so that all UEs have been scheduled at least once.
@@ -971,6 +978,51 @@ INSTANTIATE_TEST_SUITE_P(
   pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {5, 1, 10, 3, 0}}, 2},  // DSUUU
   pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}, 2}   // DDDSUUUUUU
                                                                                        // clang-format on
+        ));
+
+/// Patterns where the UEs only have DL data.
+class scheduler_pdcch_distribution_dl_only_tdd_test : public scheduler_pdcch_distribution_tdd_test
+{};
+
+TEST_P(scheduler_pdcch_distribution_dl_only_tdd_test, dl_uses_most_cces_when_no_ue_has_ul_data)
+{
+  static constexpr unsigned nof_test_slots = 200;
+
+  for (unsigned count = 0; count != nof_test_slots; ++count) {
+    run_slot();
+    if (not cell_cfg().is_dl_enabled(last_result_slot())) {
+      continue;
+    }
+    unsigned dl_cces      = 0;
+    unsigned coreset_cces = 0;
+    bool     has_cs0      = false;
+    for (const auto& pdcch : last_sched_result()->dl.dl_pdcchs) {
+      if (pdcch.ctx.coreset_cfg->get_id() == to_coreset_id(0)) {
+        has_cs0 = true;
+        continue;
+      }
+      coreset_cces = pdcch.ctx.coreset_cfg->get_nof_cces();
+      dl_cces += to_nof_cces(pdcch.ctx.cces.aggr_lvl);
+    }
+    if (has_cs0) {
+      // PDCCHs in CORESET#0 (e.g. SIB1) block CCEs of the overlapping UE-dedicated CORESET.
+      continue;
+    }
+    ASSERT_GT(coreset_cces, 0) << fmt::format("No DL UE grant in slot {}", last_result_slot());
+    // Without UL demand, DL is not limited by the reservations of the PUSCH slots.
+    ASSERT_GE(dl_cces, coreset_cces * 3 / 4) << fmt::format("DL left CCEs unused in slot {}", last_result_slot());
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    scheduler_tdd_test,
+    scheduler_pdcch_distribution_dl_only_tdd_test,
+    testing::Values(
+        // clang-format off
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {5, 3, 9, 1, 0}}, 4, false},  // DDDSU
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {5, 1, 10, 3, 0}}, 2, false}, // DSUUU
+  pdcch_distribution_tdd_test_params{{subcarrier_spacing::kHz30, {10, 3, 5, 6, 0}}, 2, false}  // DDDSUUUUUU
+                                                                                             // clang-format on
         ));
 
 } // namespace
