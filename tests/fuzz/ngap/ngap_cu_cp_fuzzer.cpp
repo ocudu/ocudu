@@ -85,9 +85,19 @@ std::once_flag g_init_flag;
 void ensure_state()
 {
   std::call_once(g_init_flag, []() {
+    // Started here rather than in LLVMFuzzerInitialize so that the backend thread is created after AFL++ forks.
+    ocudulog::init();
+    // Construct the byte_buffer pools before registering the atexit handler below, so that they are destroyed after it
+    // has drained the log entries holding byte_buffers.
+    (void)get_default_byte_buffer_segment_pool();
+    (void)get_default_fallback_byte_buffer_segment_pool();
     g_state = new fuzz_state();
 
-    std::atexit([]() { g_state->worker.stop(); });
+    std::atexit([]() {
+      g_state->worker.stop();
+      // Drain pending log entries while the byte_buffer pool their arguments point into is still alive.
+      ocudulog::flush();
+    });
 
     // Bring one UE all the way up before fuzzing starts, so that a broken bring-up shows as an abort
     // rather than as a harness that only ever reaches the UE lookup.
