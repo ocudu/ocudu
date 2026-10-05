@@ -330,6 +330,32 @@ TEST_P(du_ran_resource_manager_tester, when_a_ul_harq_process_is_in_mode_a_then_
   ASSERT_EQ(*ue_res->value().drbs[drb_id_t::drb1].mac_cfg.allowed_harq_mode, ul_harq_mode::mode_a);
 }
 
+/// The grants of a data slice take a mode B process whenever the UE has one, and an unrestricted SRB rides them. The
+/// SRBs therefore take mode A as soon as the capabilities of the UE give it both modes, and not before, when the
+/// restriction would select every process it has.
+TEST_P(du_ran_resource_manager_tester, when_the_ue_has_both_ul_harq_modes_then_the_srbs_take_mode_a)
+{
+  const unsigned nof_harqs = std::min<unsigned>(cell_cfg_list[0].ran.init_bwp.pusch.max_harq_procs,
+                                                ue_capability_summary::default_max_harq_process_num);
+  cell_cfg_list[0].ran.init_bwp.pusch.ul_harq_mode.fill(nof_harqs / 2, nof_harqs, false);
+  ue_capability_summary ue_caps;
+  ue_caps.ntn_supported            = true;
+  ue_caps.ul_harq_mode_b_supported = true;
+
+  const du_ue_index_t           ue_idx1 = to_du_ue_index(0);
+  ue_ran_resource_configurator* ue_res  = create_ue(ue_idx1);
+  ASSERT_NE(ue_res, nullptr);
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), srb1_creation_req(ue_idx1)).failed());
+  ASSERT_TRUE(ue_res->value().srbs.contains(srb_id_t::srb1));
+  ASSERT_FALSE(ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_harq_mode.has_value())
+      << "every UL HARQ process of the UE is in mode A until it reports the capability";
+
+  ASSERT_FALSE(ue_res->update(to_du_cell_index(0), gbr_drb_creation_req(ue_idx1, true), nullptr, &ue_caps).failed());
+
+  ASSERT_TRUE(ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_harq_mode.has_value());
+  EXPECT_EQ(*ue_res->value().srbs[srb_id_t::srb1].mac_cfg.allowed_harq_mode, ul_harq_mode::mode_a);
+}
+
 TEST_P(du_ran_resource_manager_tester, when_multiple_ues_are_created_then_they_use_different_sr_offsets)
 {
   const unsigned sr_period = get_config_sr_period();

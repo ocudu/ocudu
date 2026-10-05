@@ -176,7 +176,18 @@ du_bearer_resource_manager::update(du_ue_resource_config&                      u
   // Modify DRBs.
   resp.drbs_failed_to_mod = modify_drbs(ue_cfg, upd_req);
 
+  // Keep the signalling of the UE out of the mode B grants its data is served by.
+  restrict_srbs_to_mode_a(ue_cfg);
+
   return resp;
+}
+
+void du_bearer_resource_manager::restrict_srbs_to_mode_a(du_ue_resource_config& ue_cfg) const
+{
+  for (du_ue_srb_config& srb : ue_cfg.srbs) {
+    srb.mac_cfg.allowed_harq_mode =
+        supported_allowed_harq_mode(ue_cfg, ul_harq_mode::mode_a, srb_id_to_lcid(srb.srb_id));
+  }
 }
 
 void du_bearer_resource_manager::setup_srbs(du_ue_resource_config&                      ue_cfg,

@@ -49,6 +49,13 @@ private:
                                                           std::optional<ul_harq_mode>  allowed_harq_mode,
                                                           lcid_t                       lcid) const;
 
+  /// \brief Restricts the SRBs of the UE to UL HARQ mode A, when that restriction selects anything.
+  ///
+  /// An unrestricted SRB rides any grant, as per TS 38.321, Section 5.4.3.1.2, including the mode B grants of a data
+  /// slice, where no HARQ retransmission recovers a corrupted PDU. Resolved on every update, as the UE only takes the
+  /// mode B processes once it has reported the capability.
+  void restrict_srbs_to_mode_a(du_ue_resource_config& ue_cfg) const;
+
   void                  setup_srbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
   std::vector<drb_id_t> setup_drbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
   std::vector<drb_id_t> modify_drbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
