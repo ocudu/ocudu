@@ -17,8 +17,9 @@ namespace ocudu {
 /// Measurement Gap Repetition Period (MGRP) in msec, as per TS 38.331.
 enum class meas_gap_repetition_period : uint8_t { ms20 = 20, ms40 = 40, ms80 = 80, ms160 = 160 };
 
-/// Measurement Gap Length (MGL) in msec, as per TS 38.331.
-enum class meas_gap_length : uint8_t { ms1dot5, ms3, ms3dot5, ms4, ms5dot5, ms6 };
+/// Measurement Gap Length (MGL) in msec, as per TS 38.331. The values ms10 and ms20 are signalled with mgl-r16 and only
+/// apply to PRS measurements.
+enum class meas_gap_length : uint8_t { ms1dot5, ms3, ms3dot5, ms4, ms5dot5, ms6, ms10, ms20 };
 
 /// Configuration of a Measurement Gap as per TS 38.331, GapConfig.
 struct meas_gap_config {
@@ -39,7 +40,7 @@ struct meas_gap_config {
 /// Convert measurement gap length into a float in milliseconds.
 inline float meas_gap_length_to_msec(meas_gap_length len)
 {
-  static constexpr std::array<float, 6> vals{1.5, 3, 3.5, 4, 5.5, 6};
+  static constexpr std::array<float, 8> vals{1.5, 3, 3.5, 4, 5.5, 6, 10, 20};
   return vals[static_cast<unsigned>(len)];
 }
 

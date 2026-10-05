@@ -4038,7 +4038,16 @@ static gap_cfg_s make_gap_cfg(const meas_gap_config& cfg)
   gap_cfg_s gap;
 
   gap.gap_offset = cfg.offset;
-  gap.mgl.value  = (asn1::rrc_nr::gap_cfg_s::mgl_opts::options)cfg.mgl;
+  if (cfg.mgl == meas_gap_length::ms10 or cfg.mgl == meas_gap_length::ms20) {
+    // The UE ignores mgl when mgl-r16 is present, as per TS 38.331.
+    gap.mgl.value       = gap_cfg_s::mgl_opts::ms6;
+    gap.ext             = true;
+    gap.mgl_r16_present = true;
+    gap.mgl_r16.value =
+        cfg.mgl == meas_gap_length::ms10 ? gap_cfg_s::mgl_r16_opts::ms10 : gap_cfg_s::mgl_r16_opts::ms20;
+  } else {
+    gap.mgl.value = (asn1::rrc_nr::gap_cfg_s::mgl_opts::options)cfg.mgl;
+  }
   if (not asn1::number_to_enum(gap.mgrp, (uint8_t)cfg.mgrp)) {
     gap.mgrp.value = asn1::rrc_nr::gap_cfg_s::mgrp_opts::nulltype;
   }
