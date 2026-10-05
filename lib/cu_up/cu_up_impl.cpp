@@ -236,7 +236,8 @@ void cu_up::start()
                   if (result.result == cu_up_setup_result::outcome::e1_setup_failure) {
                     logger.warning("e1={}: E1 Setup failed. Cause: {}. Retrying in the background",
                                    fmt::underlying((*e1ap)->get_e1_index()),
-                                   result.e1_setup_failure_cause);
+                                   result.cause);
+                    fmt::print("E1 Setup failed. Cause: {}. Retrying in the background\n", result.cause);
                   } else {
                     logger.info("e1={}: CU-CP is not reachable. Retrying the E1 connection in the background",
                                 fmt::underlying((*e1ap)->get_e1_index()));

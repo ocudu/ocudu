@@ -124,11 +124,6 @@ public:
                 sctp_params.dest_name,
                 fmt::join(sctp_params.connect_addresses, ","),
                 sctp_params.connect_port);
-    fmt::print("{}: Connection to {} completed (configured addrs {}, port {})\n",
-               sctp_params.if_name,
-               sctp_params.dest_name,
-               fmt::join(sctp_params.connect_addresses, ","),
-               sctp_params.connect_port);
 
     // Return the Tx PDU notifier to the CU-UP.
     return std::make_unique<e1_to_sctp_pdu_notifier>(std::move(sctp_sender), pcap_writer, logger);

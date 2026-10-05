@@ -9,6 +9,7 @@
 #include "ocudu/ran/cause/e1ap_cause.h"
 #include "ocudu/ran/crit_diagnostics.h"
 #include "ocudu/ran/cu_types.h"
+#include <chrono>
 
 namespace ocudu {
 
@@ -33,8 +34,9 @@ struct cu_up_e1_setup_response {
   std::optional<std::string> gnb_cu_cp_name;
 
   // e1 setup failure
-  std::optional<e1ap_cause_t>       cause;
-  std::optional<crit_diagnostics_t> crit_diagnostics;
+  std::optional<e1ap_cause_t>         cause;
+  std::optional<std::chrono::seconds> time_to_wait;
+  std::optional<crit_diagnostics_t>   crit_diagnostics;
   /// Packed E1AP PDUs captured during the setup exchange.
   byte_buffer packed_e1_setup_request;
   byte_buffer packed_e1_setup_response;

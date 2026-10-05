@@ -101,6 +101,32 @@ TEST_F(e1ap_cu_up_test, when_single_plmn_configured_then_present_in_e1_setup_req
   EXPECT_EQ(setup_req->supported_plmns[0].plmn_id.to_number(), bcd_helper::plmn_string_to_bcd(plmn));
 }
 
+/// Test that a received E1 Setup Failure reports its cause and Time to Wait to the E1 Setup caller.
+TEST_F(e1ap_cu_up_test, when_e1_setup_fails_then_response_carries_cause_and_time_to_wait)
+{
+  cu_up_e1_setup_request req = generate_cu_up_e1_setup_request();
+  req.max_setup_retries      = 0;
+
+  bool ret = e1ap->connect_to_cu_cp();
+  ocudu_assert(ret, "Failed to connect to CU-CP");
+  async_task<cu_up_e1_setup_response>         t = e1ap->handle_cu_up_e1_setup_request(req);
+  lazy_task_launcher<cu_up_e1_setup_response> t_launcher(t);
+
+  e1ap_message fail;
+  fail.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_E1AP_ID_GNB_CU_UP_E1_SETUP);
+  auto& setup_fail                   = fail.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
+  setup_fail->transaction_id         = get_transaction_id(e1ap_gw.last_tx_e1ap_pdu.pdu).value();
+  setup_fail->cause.set_misc().value = asn1::e1ap::cause_misc_opts::om_intervention;
+  setup_fail->time_to_wait_present   = true;
+  setup_fail->time_to_wait.value     = asn1::e1ap::time_to_wait_opts::v10s;
+  e1ap->handle_message(fail);
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().success);
+  EXPECT_EQ(t.get().cause, e1ap_cause_t{cause_misc_t::om_intervention});
+  EXPECT_EQ(t.get().time_to_wait, std::chrono::seconds{10});
+}
+
 /// Test that multiple PLMNs in the setup request are all present in the transmitted E1 Setup Request PDU
 TEST_F(e1ap_cu_up_test, when_multiple_plmns_configured_then_all_present_in_e1_setup_request)
 {

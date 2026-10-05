@@ -163,10 +163,14 @@ cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()
     logger.log_error("\"{}\" failed with cause={}", name(), cu_cp_pdu_response.value().value.type().to_string());
     res.success = false;
   } else {
-    logger.log_error("\"{}\" failed with cause={}",
-                     name(),
-                     get_cause_str(cu_cp_pdu_response.error().value.gnb_cu_up_e1_setup_fail()->cause));
+    const gnb_cu_up_e1_setup_fail_ies_container& e1_setup_fail =
+        *cu_cp_pdu_response.error().value.gnb_cu_up_e1_setup_fail();
+    logger.log_error("\"{}\" failed with cause={}", name(), get_cause_str(e1_setup_fail.cause));
     res.success = false;
+    res.cause   = asn1_to_cause(e1_setup_fail.cause);
+    if (e1_setup_fail.time_to_wait_present) {
+      res.time_to_wait = std::chrono::seconds{e1_setup_fail.time_to_wait.to_number()};
+    }
   }
   return res;
 }

@@ -51,18 +51,14 @@ private:
   cu_up_e1_setup_complete_notifier* e1_setup_notifier;
   ocudulog::basic_logger&           logger;
 
-  /// [Implementation-defined] Time to wait before retrying a failed E1 TNL connection.
+  /// [Implementation-defined] Time to wait before retrying a failed E1 TNL connection or E1 Setup.
   static constexpr std::chrono::milliseconds retry_period{1000};
-  /// [Implementation-defined] Maximum exponent of the E1 Setup retry backoff.
-  static constexpr unsigned max_setup_backoff_exponent = 5;
-  /// [Implementation-defined] Number of E1 Setup failures between two warnings.
-  static constexpr unsigned setup_failure_log_period = 60;
 
   cu_up_setup_result setup_result;
-  /// Number of failed E1 Setup attempts.
-  unsigned nof_setup_failures = 0;
   /// Number of retry periods left before the next attempt.
   unsigned nof_retry_waits = 0;
+  /// Whether a failed E1 Setup was already announced in STDOUT.
+  bool setup_failure_reported = false;
 };
 
 } // namespace ocudu::ocuup

@@ -30,7 +30,9 @@ struct cu_up_setup_result {
 
   outcome result = outcome::success;
   /// Cause of the E1 Setup failure.
-  std::string e1_setup_failure_cause;
+  e1ap_cause_t cause = cause_misc_t::unspecified;
+  /// Time to wait before the E1 Setup is retried, if the CU-CP commanded one.
+  std::optional<std::chrono::seconds> time_to_wait;
 };
 
 /// CU-UP setup routine implementation.

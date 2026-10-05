@@ -373,12 +373,9 @@ TEST_F(cu_up_test, when_cu_cp_rejects_the_e1_setup_then_cu_up_retries_it_until_i
   // The CU-UP must start, even though the E1 Setup failed.
   init(get_default_cu_up_config(), get_default_cu_up_dependencies());
 
-  // The retry backs off, so the third E1 Setup is only sent after a longer wait.
-  ASSERT_FALSE(
-      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{1500}))
-      << "CU-UP did not back off";
+  // The retries are spaced by the retry period.
   ASSERT_TRUE(
-      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{5000}))
+      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{1500}))
       << "CU-UP did not retry the E1 Setup after it was rejected";
   ASSERT_EQ(e1ap_client.nof_connection_requests, 3U);
 }

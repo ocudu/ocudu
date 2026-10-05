@@ -4,7 +4,6 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_up_setup_routine.h"
-#include "ocudu/adt/format.h"
 
 using namespace ocudu;
 using namespace ocuup;
@@ -38,11 +37,12 @@ void cu_up_setup_routine::operator()(coro_context<async_task<cu_up_setup_result>
     // Tear the E1 TNL association down, so that the E1 Setup can be retried over a new one.
     CORO_AWAIT(e1ap_conn_mng.disconnect_from_cu_cp());
     CORO_EARLY_RETURN(cu_up_setup_result{cu_up_setup_result::outcome::e1_setup_failure,
-                                         response_msg.cause.has_value() ? fmt::format("{}", *response_msg.cause)
-                                                                        : std::string{"unspecified"}});
+                                         response_msg.cause.value_or(cause_misc_t::unspecified),
+                                         response_msg.time_to_wait});
   }
 
   logger.debug("cu-up={}: \"{}\" finalized.", cu_up_id, name());
+  fmt::print("E1 Setup with CU-CP completed\n");
 
   // Notify successful setup and deliver packed E1 setup PDU bytes via notifier.
   if (e1_setup_notifier) {
