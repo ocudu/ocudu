@@ -23,12 +23,13 @@ inline void set_error_handler(ocudu_error_handler handler)
   error_report_handler = handler;
 }
 
-/// \brief Command to terminate application with an error message.
+namespace detail {
+
+/// \brief Prints a fatal error and aborts. Non-template: the arguments arrive type-erased, so this body exists once.
 ///
 /// Attribute noinline is used to signal to the compiler that this path should rarely occur and therefore doesn't need
 /// to get optimized.
-template <typename... Args>
-[[gnu::noinline, noreturn]] inline bool ocudu_terminate(const char* reason_fmt, Args&&... args) noexcept
+[[gnu::noinline, noreturn]] inline void vterminate(fmt::string_view reason_fmt, fmt::format_args args) noexcept
 {
   OCUDU_RTSAN_SCOPED_DISABLER(d);
 
@@ -37,17 +38,13 @@ template <typename... Args>
   }
   ::fflush(stdout);
   fmt::print(stderr, "OCUDU FATAL ERROR: ");
-  fmt::println(stderr, reason_fmt, std::forward<Args>(args)...);
+  fmt::vprintln(stderr, reason_fmt, args);
 
   std::abort();
 }
 
-/// \brief Reports an error and closes the application gracefully.
-///
-/// This function is intended to be used for error conditions that may be triggered by the user or through invalid
-/// configurations.
-template <typename... Args>
-[[gnu::noinline, noreturn]] inline void report_error(const char* reason_fmt, Args&&... args) noexcept
+/// Prints an error and exits. Non-template: the arguments arrive type-erased, so this body exists once.
+[[gnu::noinline, noreturn]] inline void vreport_error(fmt::string_view reason_fmt, fmt::format_args args) noexcept
 {
   OCUDU_RTSAN_SCOPED_DISABLER(d);
 
@@ -56,19 +53,41 @@ template <typename... Args>
   }
   ::fflush(stdout);
   fmt::print(stderr, "OCUDU ERROR: ");
-  fmt::println(stderr, reason_fmt, std::forward<Args>(args)...);
+  fmt::vprintln(stderr, reason_fmt, args);
 
   std::quick_exit(1);
+}
+
+} // namespace detail
+
+/// \brief Command to terminate application with an error message.
+/// \remark Arguments are taken by const reference so that temporaries can be passed to fmt::make_format_args.
+template <typename... Args>
+[[noreturn]] inline bool ocudu_terminate(const char* reason_fmt, const Args&... args) noexcept
+{
+  detail::vterminate(reason_fmt, fmt::make_format_args(args...));
+}
+
+/// \brief Reports an error and closes the application gracefully.
+///
+/// This function is intended to be used for error conditions that may be triggered by the user or through invalid
+/// configurations.
+/// \remark Arguments are taken by const reference so that temporaries can be passed to fmt::make_format_args.
+template <typename... Args>
+[[noreturn]] inline void report_error(const char* reason_fmt, const Args&... args) noexcept
+{
+  detail::vreport_error(reason_fmt, fmt::make_format_args(args...));
 }
 
 /// \brief Reports a fatal error and handles the application shutdown.
 ///
 /// This function is intended to be used for error conditions that are neither caught by the compiler nor possible to
 /// be handled by the application at runtime.
+/// \remark Arguments are taken by const reference so that temporaries can be passed to fmt::make_format_args.
 template <typename... Args>
-[[gnu::noinline, noreturn]] inline void report_fatal_error(const char* reason_fmt, Args&&... args) noexcept
+[[noreturn]] inline void report_fatal_error(const char* reason_fmt, const Args&... args) noexcept
 {
-  ocudu_terminate(reason_fmt, std::forward<Args>(args)...);
+  detail::vterminate(reason_fmt, fmt::make_format_args(args...));
 }
 
 /// \brief Verifies if condition is true. If not, report a fatal error and closes the application.

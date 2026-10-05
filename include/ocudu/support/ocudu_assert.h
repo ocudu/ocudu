@@ -35,21 +35,27 @@ print_and_abort_1(const char* filename, int line, const char* funcname, const ch
   }
 }
 
-/// \brief Helper function to format and print assertion messages, second stage.
-///
-/// \param msg additional assertion message.
-template <typename... Args>
-[[gnu::noinline, noreturn]] inline void print_and_abort_2(fmt::string_view fmt, Args&&... args) noexcept
+/// \brief Prints the additional assertion message and aborts, second stage.
+[[gnu::noinline, noreturn]] inline void vprint_and_abort_2(fmt::string_view fmt, fmt::format_args args) noexcept
 {
   OCUDU_RTSAN_SCOPED_DISABLER(d);
 
   if (fmt.size()) {
     fmt::print(stderr, " - ");
-    fmt::print(stderr, fmt, std::forward<Args>(args)...);
+    fmt::vprint(stderr, fmt, args);
   }
   fmt::print(stderr, "\n");
 
   std::abort();
+}
+
+/// \brief Helper function to format and print assertion messages, second stage.
+/// \param msg additional assertion message.
+/// \remark Arguments are taken by const reference so that temporaries can be passed to fmt::make_format_args.
+template <typename... Args>
+[[noreturn]] inline void print_and_abort_2(fmt::string_view fmt, const Args&... args) noexcept
+{
+  vprint_and_abort_2(fmt, fmt::make_format_args(args...));
 }
 
 } // namespace detail
