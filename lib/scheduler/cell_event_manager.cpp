@@ -923,8 +923,8 @@ static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot
       if (h_ul->nof_retxs() == 0) {
         // Given that the PUSCH grant was discarded before it reached the PHY, the "new_data" flag was not handled
         // and the UL softbuffer was not reset. To avoid mixing different TBs in the softbuffer, it is important to
-        // reset the UL HARQ process.
-        h_ul->reset();
+        // release the UL HARQ process. The UE received the UL DCI, so the NDI is kept and the next newTx toggles it.
+        h_ul->discard_sent_tx();
       } else {
         // To avoid a long UL HARQ timeout window (due to lack of CRC indication), it is important to force a NACK
         // in the UL HARQ process.

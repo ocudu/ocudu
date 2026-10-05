@@ -608,6 +608,24 @@ void cell_harq_repository<IsDl>::cancel_retxs(harq_type& h)
 }
 
 template <bool IsDl>
+void cell_harq_repository<IsDl>::cancel_unsent_tx(harq_type& h)
+{
+  if (h.status != harq_state_t::waiting_ack) {
+    // Only a HARQ process that was just allocated for a (re)transmission can be cancelled. In particular, the NDI of
+    // a released process must not be touched.
+    logger.warning("rnti={} h_id={}: Attempt to cancel a HARQ transmission that was not allocated", h.rnti, h.h_id);
+    return;
+  }
+  if (h.nof_retxs == 0) {
+    // Undo the NDI toggle of alloc_harq(): the UE never saw it.
+    h.ndi = !h.ndi;
+  }
+  // TODO: A cancelled reTx is dropped together with its TB. Undo handle_new_retx() instead (restore nof_retxs and
+  // the pending_retx state), so that the reTx is retried in a later slot.
+  dealloc_harq(h);
+}
+
+template <bool IsDl>
 const typename cell_harq_repository<IsDl>::harq_type*
 cell_harq_repository<IsDl>::find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state) const
 {
@@ -647,7 +665,13 @@ void harq_utils::base_harq_process_handle<IsDl>::cancel_retxs()
 }
 
 template <bool IsDl>
-void harq_utils::base_harq_process_handle<IsDl>::reset()
+void harq_utils::base_harq_process_handle<IsDl>::cancel_unsent_tx()
+{
+  harq_repo->cancel_unsent_tx(*impl);
+}
+
+template <bool IsDl>
+void harq_utils::base_harq_process_handle<IsDl>::discard_sent_tx()
 {
   harq_repo->dealloc_harq(*impl);
 }

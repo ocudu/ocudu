@@ -220,7 +220,7 @@ class single_ntn_ue_ul_harq_mode_b_process_test : public single_harq_process_tes
 public:
   single_ntn_ue_ul_harq_mode_b_process_test() : single_harq_process_test(0, NTN_CELL_SPECIFIC_KOFFSET_MAX, true)
   {
-    h_ul.reset();
+    h_ul.cancel_unsent_tx();
     // Note: DL Feedback Disabled and UL HARQ Mode B is be set during RRC Reconf if UE supports it.
     // Need to enable Mode B and request new harq process.
     harq_dl_feedback_disabled_mask dl_feedback_disabled(MAX_NOF_HARQS);
@@ -245,7 +245,7 @@ public:
   single_ntn_ue_harq_dl_feedback_disabled_process_test() :
     single_harq_process_test(0, NTN_CELL_SPECIFIC_KOFFSET_MAX, false)
   {
-    h_dl.reset();
+    h_dl.cancel_unsent_tx();
     // Note: DL HARQ Feedback Disabled can be set during RRC Reconf if UE supports it.
     harq_dl_feedback_disabled_mask dl_feedback_disabled(MAX_NOF_HARQS);
     dl_feedback_disabled.fill(true);
@@ -386,6 +386,99 @@ TEST_F(single_harq_process_test, when_newtx_after_ack_then_ndi_flips)
   ASSERT_EQ(h_ul.nof_retxs(), 0);
   ASSERT_NE(dl_ndi, h_dl.ndi());
   ASSERT_NE(ul_ndi, h_ul.ndi());
+}
+
+// TS 38.321, clauses 5.3.2.2 and 5.4.2.1: the UE compares the NDI with the one of the last transmission it received
+// for the HARQ process. A newTx whose DCI is never sent must therefore not count as a toggle.
+TEST_F(single_harq_process_test, when_unsent_newtx_is_cancelled_then_next_newtx_flips_ndi_wrt_last_sent_newtx)
+{
+  const harq_id_t dl_id = h_dl.id(), ul_id = h_ul.id();
+  const bool      sent_dl_ndi = h_dl.ndi(), sent_ul_ndi = h_ul.ndi();
+  ASSERT_TRUE(h_dl.dl_ack_info(mac_harq_ack_report_status::ack, 5));
+  ASSERT_GE(h_ul.ul_crc_info(true).value().value(), 0);
+
+  // NewTx allocated in the same HARQ processes, but cancelled before its DCI is sent.
+  h_dl = harq_ent.alloc_dl_harq(current_slot, k1, max_retxs, 0).value();
+  h_ul = harq_ent.alloc_ul_harq(current_slot + k2, max_retxs).value();
+  ASSERT_EQ(h_dl.id(), dl_id);
+  ASSERT_EQ(h_ul.id(), ul_id);
+  h_dl.cancel_unsent_tx();
+  h_ul.cancel_unsent_tx();
+  ASSERT_TRUE(h_dl.empty());
+  ASSERT_TRUE(h_ul.empty());
+  ASSERT_EQ(h_dl.ndi(), sent_dl_ndi);
+  ASSERT_EQ(h_ul.ndi(), sent_ul_ndi);
+
+  // The next newTx toggles the NDI w.r.t. the last DCI the UE received.
+  h_dl = harq_ent.alloc_dl_harq(current_slot, k1, max_retxs, 0).value();
+  h_ul = harq_ent.alloc_ul_harq(current_slot + k2, max_retxs).value();
+  ASSERT_EQ(h_dl.id(), dl_id);
+  ASSERT_EQ(h_ul.id(), ul_id);
+  ASSERT_NE(h_dl.ndi(), sent_dl_ndi);
+  ASSERT_NE(h_ul.ndi(), sent_ul_ndi);
+}
+
+TEST_F(single_harq_process_test, when_unsent_retx_is_cancelled_then_harq_is_released_and_ndi_is_kept)
+{
+  const bool sent_dl_ndi = h_dl.ndi(), sent_ul_ndi = h_ul.ndi();
+  ASSERT_TRUE(h_dl.dl_ack_info(mac_harq_ack_report_status::nack, 5));
+  ASSERT_EQ(h_ul.ul_crc_info(false), units::bytes{0});
+  run_slot();
+  ASSERT_TRUE(h_dl.new_retx(current_slot, k1, 0));
+  ASSERT_TRUE(h_ul.new_retx(current_slot + k2));
+
+  // A reTx does not toggle the NDI, so cancelling it leaves the NDI of the last sent newTx in place.
+  h_dl.cancel_unsent_tx();
+  h_ul.cancel_unsent_tx();
+  ASSERT_TRUE(h_dl.empty());
+  ASSERT_TRUE(h_ul.empty());
+  ASSERT_EQ(h_dl.ndi(), sent_dl_ndi);
+  ASSERT_EQ(h_ul.ndi(), sent_ul_ndi);
+}
+
+// A transmission dropped after its DCI was sent: the UE received the NDI toggle, so the next newTx must toggle again.
+TEST_F(single_harq_process_test, when_sent_tx_is_discarded_then_next_newtx_flips_ndi_wrt_discarded_tx)
+{
+  const harq_id_t dl_id = h_dl.id(), ul_id = h_ul.id();
+  const bool      sent_dl_ndi = h_dl.ndi(), sent_ul_ndi = h_ul.ndi();
+
+  h_dl.discard_sent_tx();
+  h_ul.discard_sent_tx();
+  ASSERT_TRUE(h_dl.empty());
+  ASSERT_TRUE(h_ul.empty());
+  ASSERT_EQ(h_dl.ndi(), sent_dl_ndi);
+  ASSERT_EQ(h_ul.ndi(), sent_ul_ndi);
+
+  h_dl = harq_ent.alloc_dl_harq(current_slot, k1, max_retxs, 0).value();
+  h_ul = harq_ent.alloc_ul_harq(current_slot + k2, max_retxs).value();
+  ASSERT_EQ(h_dl.id(), dl_id);
+  ASSERT_EQ(h_ul.id(), ul_id);
+  ASSERT_NE(h_dl.ndi(), sent_dl_ndi);
+  ASSERT_NE(h_ul.ndi(), sent_ul_ndi);
+}
+
+TEST_F(single_harq_process_test, when_harq_not_waiting_ack_is_cancelled_then_it_is_left_untouched)
+{
+  // HARQ process with a pending reTx.
+  const bool sent_dl_ndi = h_dl.ndi(), sent_ul_ndi = h_ul.ndi();
+  ASSERT_TRUE(h_dl.dl_ack_info(mac_harq_ack_report_status::nack, 5));
+  ASSERT_EQ(h_ul.ul_crc_info(false), units::bytes{0});
+  h_dl.cancel_unsent_tx();
+  h_ul.cancel_unsent_tx();
+  ASSERT_TRUE(h_dl.has_pending_retx());
+  ASSERT_TRUE(h_ul.has_pending_retx());
+  ASSERT_EQ(h_dl.ndi(), sent_dl_ndi);
+  ASSERT_EQ(h_ul.ndi(), sent_ul_ndi);
+
+  // Empty HARQ process.
+  h_dl.discard_sent_tx();
+  h_ul.discard_sent_tx();
+  h_dl.cancel_unsent_tx();
+  h_ul.cancel_unsent_tx();
+  ASSERT_TRUE(h_dl.empty());
+  ASSERT_TRUE(h_ul.empty());
+  ASSERT_EQ(h_dl.ndi(), sent_dl_ndi);
+  ASSERT_EQ(h_ul.ndi(), sent_ul_ndi);
 }
 
 TEST_F(single_harq_process_test, when_ack_wait_timeout_reached_then_harq_is_available_for_newtx)
@@ -547,10 +640,11 @@ TEST_F(single_ue_harq_entity_test,
   // prev_tx_params.nof_repetitions (only correct once save_grant_params has run), last_occasion_slot is set together
   // with slot_tx regardless, so dealloc_harq can tell precisely that this HARQ held the whole reservation and
   // releases it immediately, rather than leaving the UE needlessly unschedulable for the rest of the nominal window.
-  // NOTE: reset() immediately frees the HARQ-id itself for reuse (cell_harq_manager does not gate alloc_dl_harq on
-  // last_pdsch_slot() at all); it is ue_cell::is_pdsch_enabled, one layer up and not exercised by this test, that
-  // reads last_pdsch_slot() and would reject a newTx/reTx candidate for as long as a reservation is in place.
-  h_dl->reset();
+  // NOTE: cancel_unsent_tx() immediately frees the HARQ-id itself for reuse (cell_harq_manager does not gate
+  // alloc_dl_harq on last_pdsch_slot() at all); it is ue_cell::is_pdsch_enabled, one layer up and not exercised by this
+  // test, that reads last_pdsch_slot() and would reject a newTx/reTx candidate for as long as a reservation is in
+  // place.
+  h_dl->cancel_unsent_tx();
   ASSERT_FALSE(harq_ent.last_pdsch_slot().valid());
 
   // The UE is immediately schedulable again, even for a slot still within the aborted bundle's nominal window.

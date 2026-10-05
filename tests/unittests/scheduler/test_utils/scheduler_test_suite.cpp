@@ -1067,6 +1067,22 @@ bool test_helper::ra_scheduler_tracker::is_expired(const preamble_context& ctxt,
   return false;
 }
 
+/// Removes the entries of \c rnti from a map keyed by HARQ.
+template <typename HarqMap>
+static void erase_ue_harqs(HarqMap& harqs, rnti_t rnti)
+{
+  for (auto it = harqs.begin(); it != harqs.end();) {
+    it = it->first.rnti == rnti ? harqs.erase(it) : std::next(it);
+  }
+}
+
+void test_helper::harq_tracker::on_ue_added(rnti_t rnti)
+{
+  erase_ue_harqs(dl_harqs, rnti);
+  erase_ue_harqs(ul_harqs, rnti);
+  erase_ue_harqs(pending_ul_dcis, rnti);
+}
+
 void test_helper::harq_tracker::on_new_result(slot_point /*sl_tx*/, const sched_result& result)
 {
   // Build DL NDI map from DL PDCCHs (UE-specific formats with NDI).
@@ -1111,7 +1127,12 @@ void test_helper::harq_tracker::on_new_result(slot_point /*sl_tx*/, const sched_
     const bool ndi = ndi_it->second;
     const auto it  = dl_harqs.find(key);
     if (cw.new_data) {
-      // newTx.
+      // newTx. TS 38.321, clause 5.3.2.2: the UE only takes the TB as new data if the NDI is toggled with respect to
+      // the previous transmission it received for this HARQ process.
+      if (it != dl_harqs.end()) {
+        ASSERT_NE(it->second.ndi, ndi) << fmt::format(
+            "NDI must toggle in a DL HARQ newTx (rnti={} h_id={})", pdsch.rnti, fmt::underlying(pdsch.harq_id));
+      }
       dl_harqs[key] = {ndi, cw.tb_size_bytes};
     } else {
       // reTx.
@@ -1121,8 +1142,7 @@ void test_helper::harq_tracker::on_new_result(slot_point /*sl_tx*/, const sched_
     }
   }
 
-  // Build UL NDI map from UL PDCCHs (C-RNTI formats with NDI; tc_rnti_f0_0 has none).
-  std::unordered_map<harq_key, bool, harq_key_hash> ul_ndi_map;
+  // Save the NDI of the UL PDCCHs (C-RNTI formats with NDI; tc_rnti_f0_0 has none) until their PUSCH, k2 slots later.
   for (const pdcch_ul_information& pdcch : result.dl.ul_pdcchs) {
     bool     ndi     = false;
     unsigned harq_id = 0;
@@ -1138,21 +1158,27 @@ void test_helper::harq_tracker::on_new_result(slot_point /*sl_tx*/, const sched_
       default:
         continue;
     }
-    ul_ndi_map[{pdcch.ctx.rnti, static_cast<harq_id_t>(harq_id)}] = ndi;
+    pending_ul_dcis[{pdcch.ctx.rnti, static_cast<harq_id_t>(harq_id)}] = ndi;
   }
 
   for (const ul_sched_info& sched_info : result.ul.puschs) {
     const pusch_information& pusch  = sched_info.pusch_cfg;
     const harq_key           key    = {pusch.rnti, pusch.harq_id};
-    const auto               ndi_it = ul_ndi_map.find(key);
-    if (ndi_it == ul_ndi_map.end()) {
-      // No matching PDCCH (e.g. Msg3 newTx, MsgA-PUSCH, CGs) — skip NDI tracking.
+    const auto               ndi_it = pending_ul_dcis.find(key);
+    if (ndi_it == pending_ul_dcis.end()) {
+      // No matching PDCCH (e.g. Msg3 newTx, MsgA-PUSCH, CGs, PUSCH repetition occasions) — skip NDI tracking.
       continue;
     }
     const bool ndi = ndi_it->second;
-    const auto it  = ul_harqs.find(key);
+    pending_ul_dcis.erase(ndi_it);
+    const auto it = ul_harqs.find(key);
     if (pusch.new_data) {
-      // newTx.
+      // newTx. TS 38.321, clause 5.4.2.1: the UE only builds a new MAC PDU if the NDI is toggled with respect to the
+      // previous transmission of this HARQ process.
+      if (it != ul_harqs.end()) {
+        ASSERT_NE(it->second.ndi, ndi) << fmt::format(
+            "NDI must toggle in a UL HARQ newTx (rnti={} h_id={})", pusch.rnti, fmt::underlying(pusch.harq_id));
+      }
       ul_harqs[key] = {ndi, pusch.tb_size_bytes};
     } else {
       // reTx.

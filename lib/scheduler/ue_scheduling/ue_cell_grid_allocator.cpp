@@ -351,7 +351,7 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        g
     grant.pdcch->ctx.rnti       = rnti_t::INVALID_RNTI;
     grant.pdsch->pdsch_cfg.rnti = rnti_t::INVALID_RNTI;
     // TODO: Cancel UCI allocation.
-    grant.h_dl.reset();
+    grant.h_dl.cancel_unsent_tx();
     return {};
   }
 
@@ -1038,7 +1038,7 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
     // RBs could not be allocated. Cancel associated grants.
     grant.pdcch->ctx.rnti       = rnti_t::INVALID_RNTI;
     grant.pusch->pusch_cfg.rnti = rnti_t::INVALID_RNTI;
-    grant.h_ul.reset();
+    grant.h_ul.cancel_unsent_tx();
     return {};
   }
 
@@ -1057,7 +1057,7 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
                     rep_alloc.slot);
         grant.pdcch->ctx.rnti       = rnti_t::INVALID_RNTI;
         grant.pusch->pusch_cfg.rnti = rnti_t::INVALID_RNTI;
-        grant.h_ul.reset();
+        grant.h_ul.cancel_unsent_tx();
         return {};
       }
     }

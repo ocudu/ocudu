@@ -203,6 +203,9 @@ class harq_tracker
 public:
   void on_new_result(slot_point sl_tx, const sched_result& result);
 
+  /// Forgets the HARQ history of \c rnti, as a new UE starts with no previous NDI (e.g. on RNTI reuse).
+  void on_ue_added(rnti_t rnti);
+
 private:
   struct harq_alloc {
     bool         ndi;
@@ -225,6 +228,8 @@ private:
 
   std::unordered_map<harq_key, harq_alloc, harq_key_hash> dl_harqs;
   std::unordered_map<harq_key, harq_alloc, harq_key_hash> ul_harqs;
+  /// NDI of the UL PDCCHs whose PUSCH has not been reached yet.
+  std::unordered_map<harq_key, bool, harq_key_hash> pending_ul_dcis;
 };
 
 } // namespace test_helper

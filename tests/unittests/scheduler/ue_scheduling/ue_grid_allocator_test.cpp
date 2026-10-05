@@ -361,6 +361,95 @@ TEST_P(ue_grid_allocator_default_cfg_test, allocates_pusch_restricted_to_recomme
   ASSERT_EQ(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), max_nof_rbs_to_schedule);
 }
 
+// TS 38.321 clause 5.3.2.2: the UE considers a TB a new transmission only if the NDI "has been toggled compared to
+// the value of the previous received transmission" for the HARQ process; otherwise it soft-combines it with the
+// buffered TB. A newTx whose DCI is never sent (stage 2 found no RBs for it) must therefore not change the NDI that the
+// next newTx on the same HARQ process is compared against.
+TEST_P(ue_grid_allocator_default_cfg_test,
+       when_dl_newtx_is_cancelled_before_its_dci_is_sent_then_next_newtx_toggles_ndi)
+{
+  const ue& u     = add_ue(to_du_ue_index(0), {LCID_MIN_DRB});
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+  push_dl_bs(u.ue_index, LCID_MIN_DRB, 100000);
+  const units::bytes newtx_bytes{1000};
+
+  // A newTx that is sent: its NDI is the one the UE received for this HARQ process. ACK it to free the process.
+  ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], newtx_bytes, false); },
+                        [&]() { return find_ue_dl_pdcch(u.crnti, res_grid[0].result.dl) != nullptr; }));
+  const dci_1_1_configuration& sent_dci  = find_ue_dl_pdcch(u.crnti, res_grid[0].result.dl)->dci.as_c_rnti_f1_1();
+  const unsigned               sent_h_id = sent_dci.harq_process_number;
+  const bool                   sent_ndi  = sent_dci.tb1_new_data_indicator;
+  ASSERT_TRUE(ue_cc.harqs.dl_harq(to_harq_id(sent_h_id))->dl_ack_info(mac_harq_ack_report_status::ack, std::nullopt));
+
+  // A newTx that stage 2 cancels for lack of RBs: its PDCCH and PDSCH are removed and nothing is sent.
+  bool cancelled = false;
+  ASSERT_TRUE(run_until(
+      [&]() {
+        auto grant =
+            alloc.allocate_dl_grant(ue_newtx_dl_grant_request{slice_ues[u.ue_index], current_slot, newtx_bytes, false});
+        if (grant.has_value()) {
+          grant.value().set_pdsch_params({}, {}, false);
+          cancelled = true;
+        }
+      },
+      [&]() { return cancelled; }));
+  ASSERT_EQ(find_ue_dl_pdcch(u.crnti, res_grid[0].result.dl), nullptr);
+
+  // The next newTx reuses the HARQ process and must toggle the NDI relative to the DCI the UE actually received.
+  ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], newtx_bytes, false); },
+                        [&]() { return find_ue_dl_pdcch(u.crnti, res_grid[0].result.dl) != nullptr; }));
+  const dci_1_1_configuration& next_dci = find_ue_dl_pdcch(u.crnti, res_grid[0].result.dl)->dci.as_c_rnti_f1_1();
+  ASSERT_EQ(next_dci.harq_process_number, sent_h_id)
+      << "Expected the newTx to reuse the HARQ process of the cancelled grant";
+  ASSERT_NE(next_dci.tb1_new_data_indicator, sent_ndi)
+      << "The UE would take the new TB for a retransmission of the previous one";
+}
+
+// TS 38.321 clause 5.4.2.1: the UE obtains a new MAC PDU only if the NDI "has been toggled compared to the value in
+// the previous transmission of this TB of this HARQ process"; otherwise it retransmits the PDU in its HARQ buffer. A
+// newTx whose DCI is never sent must not change the NDI the next newTx on the same HARQ process is compared against.
+TEST_P(ue_grid_allocator_default_cfg_test,
+       when_ul_newtx_is_cancelled_before_its_dci_is_sent_then_next_newtx_toggles_ndi)
+{
+  const ue&          u     = add_ue(to_du_ue_index(0), {LCID_MIN_DRB});
+  ue_cell&           ue_cc = ues[u.ue_index].get_pcell();
+  const units::bytes newtx_bytes{1000};
+
+  // A newTx that is sent: its NDI is the one the UE received for this HARQ process. Report CRC OK to free the process.
+  ASSERT_TRUE(run_until([&]() { allocate_ul_newtx_grant(slice_ues[u.ue_index], newtx_bytes); },
+                        [&]() { return find_ue_ul_pdcch(u.crnti, res_grid[0].result.dl) != nullptr; }));
+  const dci_0_1_configuration& sent_dci  = find_ue_ul_pdcch(u.crnti, res_grid[0].result.dl)->dci.as_c_rnti_f0_1();
+  const unsigned               sent_h_id = sent_dci.harq_process_number;
+  const bool                   sent_ndi  = sent_dci.new_data_indicator;
+  ASSERT_TRUE(ue_cc.harqs.ul_harq(to_harq_id(sent_h_id))->ul_crc_info(true).has_value());
+
+  // A newTx that stage 2 cancels for lack of RBs: its PDCCH and PUSCH are removed and nothing is sent.
+  bool cancelled = false;
+  ASSERT_TRUE(run_until(
+      [&]() {
+        auto grant =
+            alloc.allocate_ul_grant(ue_newtx_ul_grant_request{slice_ues[u.ue_index],
+                                                              get_next_ul_slot(current_slot),
+                                                              newtx_bytes,
+                                                              ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}});
+        if (grant.has_value()) {
+          grant.value().set_pusch_params({});
+          cancelled = true;
+        }
+      },
+      [&]() { return cancelled; }));
+  ASSERT_EQ(find_ue_ul_pdcch(u.crnti, res_grid[0].result.dl), nullptr);
+
+  // The next newTx reuses the HARQ process and must toggle the NDI relative to the DCI the UE actually received.
+  ASSERT_TRUE(run_until([&]() { allocate_ul_newtx_grant(slice_ues[u.ue_index], newtx_bytes); },
+                        [&]() { return find_ue_ul_pdcch(u.crnti, res_grid[0].result.dl) != nullptr; }));
+  const dci_0_1_configuration& next_dci = find_ue_ul_pdcch(u.crnti, res_grid[0].result.dl)->dci.as_c_rnti_f0_1();
+  ASSERT_EQ(next_dci.harq_process_number, sent_h_id)
+      << "Expected the newTx to reuse the HARQ process of the cancelled grant";
+  ASSERT_NE(next_dci.new_data_indicator, sent_ndi)
+      << "The UE would retransmit its previous MAC PDU instead of a new one";
+}
+
 TEST_P(ue_grid_allocator_default_cfg_test, does_not_allocate_pusch_with_all_remaining_rbs_if_its_a_sr_indication)
 {
   sched_ue_creation_request_message ue_creation_req =

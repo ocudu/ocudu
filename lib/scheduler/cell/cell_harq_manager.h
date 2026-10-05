@@ -271,6 +271,7 @@ struct cell_harq_repository {
   void               extend_ue_harqs(du_ue_index_t ue_idx, rnti_t rnti, unsigned new_nof_harqs);
   void               destroy_ue(du_ue_index_t ue_idx);
   void               cancel_retxs(harq_type& h);
+  void               cancel_unsent_tx(harq_type& h);
   harq_type*         find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state);
   const harq_type*   find_ue_harq_in_state(du_ue_index_t ue_idx, harq_utils::harq_state_t state) const;
   bool               is_ntn_harq_mode_b_enabled() const;
@@ -302,8 +303,16 @@ public:
   /// HARQ process waits for it to arrive before being reset.
   void cancel_retxs();
 
-  /// Empty the HARQ process.
-  void reset();
+  /// \brief Releases a HARQ process whose (re)transmission was allocated but whose DCI is not going to be sent.
+  /// For a newTx, the NDI toggle done at allocation is undone, so that the next newTx in this HARQ process toggles the
+  /// NDI with respect to the last DCI the UE actually received (TS 38.321, clauses 5.3.2.2 and 5.4.2.1). A reTx did
+  /// not toggle the NDI. Ignored if the HARQ process is not waiting for an ACK.
+  void cancel_unsent_tx();
+
+  /// \brief Releases a HARQ process whose DCI was sent, dropping its transmission (e.g. discarded by the lower layers).
+  /// The NDI is kept as the UE received it, so that the next newTx in this HARQ process toggles it and the UE takes it
+  /// as new data (TS 38.321, clauses 5.3.2.2 and 5.4.2.1).
+  void discard_sent_tx();
 
   bool operator==(const base_harq_process_handle& other) const
   {
