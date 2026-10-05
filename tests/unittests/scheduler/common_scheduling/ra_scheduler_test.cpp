@@ -22,6 +22,7 @@
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include <algorithm>
 #include <gtest/gtest.h>
+#include <limits>
 
 using namespace ocudu;
 using namespace cell_config_builder_profiles;
@@ -1606,12 +1607,12 @@ class ra_scheduler_msg3_dtx_test : public ra_scheduler_cfra_test
 protected:
   static constexpr float dtx_sinr_threshold_dB = -5.0F;
 
-  ra_scheduler_msg3_dtx_test(std::optional<float> threshold_dB = dtx_sinr_threshold_dB) :
+  ra_scheduler_msg3_dtx_test(float threshold_dB = dtx_sinr_threshold_dB) :
     ra_scheduler_cfra_test(make_expert_cfg(threshold_dB))
   {
   }
 
-  static scheduler_expert_config make_expert_cfg(std::optional<float> threshold_dB)
+  static scheduler_expert_config make_expert_cfg(float threshold_dB)
   {
     scheduler_expert_config cfg{};
     cfg.ra.msg3_dtx_sinr_threshold_dB = threshold_dB;
@@ -1703,14 +1704,14 @@ TEST_F(ra_scheduler_cfra_test, when_cbra_msg3_crc_ko_has_sinr_below_default_thre
   ASSERT_EQ(tracker.nof_msg3_retxs(), 0);
 }
 
-/// Fixture with the Msg3 DTX detection disabled.
+/// Fixture with the Msg3 DTX detection disabled via the lowest possible SINR threshold.
 class ra_scheduler_msg3_dtx_disabled_test : public ra_scheduler_msg3_dtx_test
 {
 protected:
-  ra_scheduler_msg3_dtx_disabled_test() : ra_scheduler_msg3_dtx_test(std::nullopt) {}
+  ra_scheduler_msg3_dtx_disabled_test() : ra_scheduler_msg3_dtx_test(std::numeric_limits<float>::lowest()) {}
 };
 
-TEST_F(ra_scheduler_msg3_dtx_disabled_test, when_msg3_dtx_threshold_is_not_set_then_low_sinr_crc_ko_triggers_retx)
+TEST_F(ra_scheduler_msg3_dtx_disabled_test, when_msg3_dtx_threshold_is_lowest_then_low_sinr_crc_ko_triggers_retx)
 {
   const rnti_t tc_rnti = to_rnti(0x4602);
   handle_rach_indication(create_cbra_rach_indication(tc_rnti));

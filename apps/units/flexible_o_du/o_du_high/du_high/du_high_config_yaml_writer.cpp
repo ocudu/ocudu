@@ -544,9 +544,7 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_rach_config& co
   node["zero_correlation_zone"]     = config.zero_correlation_zone;
   node["fixed_msg3_mcs"]            = config.fixed_msg3_mcs;
   node["max_msg3_harq_retx"]        = config.max_msg3_harq_retx;
-  if (config.msg3_dtx_sinr_threshold.has_value()) {
-    node["msg3_dtx_sinr_threshold"] = config.msg3_dtx_sinr_threshold.value();
-  }
+  node["msg3_dtx_sinr_threshold"]   = config.msg3_dtx_sinr_threshold;
   if (config.backoff_indicator_snr_threshold.has_value()) {
     node["backoff_indicator_snr_threshold"] = config.backoff_indicator_snr_threshold.value();
   }

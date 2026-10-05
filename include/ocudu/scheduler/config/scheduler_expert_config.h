@@ -269,8 +269,7 @@ struct scheduler_ra_expert_config {
   /// by the RA scheduler to the closest value in TS38.321, Table 7.2-1.
   std::chrono::milliseconds backoff_indicator_duration{40};
   /// \brief SINR threshold, in dB, below which a CBRA Msg3 CRC KO is considered DTX, dropping its retransmissions.
-  /// If not set, Msg3 retransmissions are never dropped based on SINR.
-  std::optional<float> msg3_dtx_sinr_threshold_dB = -15.0F;
+  float msg3_dtx_sinr_threshold_dB = -15.0F;
   /// \brief Whether pending UCI may be multiplexed into Contention-free (CF) RAR UL grants, rather than restricting
   /// the CF RAR UL grants to slots where the UE has no pending PUCCH.
   /// \remark The TS 38.321 and TS 38.213 are very unclear on whether UCI should be multiplexed in RAR UL grants for

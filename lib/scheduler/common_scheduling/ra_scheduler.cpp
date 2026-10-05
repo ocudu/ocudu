@@ -825,8 +825,8 @@ void ra_scheduler::handle_ra_crc(const ul_crc_pdu_indication& crc, slot_point sl
   // A CBRA Msg3 KO with very low SINR suggests that no UE is listening (e.g. a preamble collision or false detection),
   // so its reTxs are dropped and the TC-RNTI released. CFRA UEs are exempt, as dedicated preambles cannot collide.
   const bool is_cbra = crc.ue_index == INVALID_DU_UE_INDEX;
-  if (is_cbra and not crc.tb_crc_success and sched_cfg.msg3_dtx_sinr_threshold_dB.has_value() and
-      crc.ul_sinr_dB.has_value() and *crc.ul_sinr_dB < *sched_cfg.msg3_dtx_sinr_threshold_dB) {
+  if (is_cbra and not crc.tb_crc_success and crc.ul_sinr_dB.has_value() and
+      *crc.ul_sinr_dB < sched_cfg.msg3_dtx_sinr_threshold_dB) {
     logger.debug("pci={} tc-rnti={}: Dropping Msg3 reTxs after nof_retxs={}. Cause: CRC KO with SINR={:.1f}dB below "
                  "the DTX threshold",
                  cell_cfg.params.pci,
