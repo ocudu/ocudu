@@ -72,12 +72,15 @@ public:
   ///
   /// \param ue_cfg UE resource configuration to update with the measurement gap of the PRS.
   /// \param location_meas_info Packed LocationMeasurementInfo provided by the CU-CP.
+  /// \param ue_caps Decoded UE capabilities, used to extract the UE supported gap patterns.
   /// \return false if no measurement gap can enclose the PRS of the location measurements.
-  bool update_location_meas(du_ue_resource_config& ue_cfg, const byte_buffer& location_meas_info);
+  bool update_location_meas(du_ue_resource_config&       ue_cfg,
+                            const byte_buffer&           location_meas_info,
+                            const ue_capability_summary* ue_caps);
 
 private:
   /// Sets the measurement gap of the UE from its SSB measurement gap and PRS windows.
-  void apply_meas_gap(du_ue_resource_config& ue_cfg);
+  void apply_meas_gap(du_ue_resource_config& ue_cfg, const supported_meas_gap_patterns& supported_patterns);
 
   span<const du_cell_config> cell_cfg_list;
   ocudulog::basic_logger&    logger;

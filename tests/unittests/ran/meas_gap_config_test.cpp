@@ -39,6 +39,33 @@ TEST(supported_meas_gap_patterns_test, mandatory_patterns_are_supported_even_if_
 
 namespace {
 
+/// Bitstring holding the value of supportedGapPattern-r16, with the leftmost bit as the most significant one.
+struct gap_pattern_r16_bitstring {
+  uint64_t value;
+  unsigned length() const { return 2; }
+  uint64_t to_number() const { return value; }
+};
+
+} // namespace
+
+TEST(supported_meas_gap_patterns_test, leftmost_r16_bit_maps_to_pattern_24_and_rightmost_to_pattern_25)
+{
+  OCUDU_TEST_REQUIREMENTS("DU-GEN-9");
+
+  supported_meas_gap_patterns patterns;
+  patterns.set_r16_patterns(gap_pattern_r16_bitstring{0b10});
+  EXPECT_TRUE(patterns.is_supported(24));
+  EXPECT_FALSE(patterns.is_supported(25));
+  EXPECT_TRUE(patterns.is_supported(meas_gap_length::ms10, meas_gap_repetition_period::ms80));
+
+  patterns.set_r16_patterns(gap_pattern_r16_bitstring{0b01});
+  EXPECT_FALSE(patterns.is_supported(24));
+  EXPECT_TRUE(patterns.is_supported(25));
+  EXPECT_TRUE(patterns.is_supported(meas_gap_length::ms20, meas_gap_repetition_period::ms160));
+}
+
+namespace {
+
 /// Gap configuration used in the tests below: 6ms gap every 80ms, starting at subframe 10.
 constexpr meas_gap_config test_gap{10, meas_gap_length::ms6, meas_gap_repetition_period::ms80};
 

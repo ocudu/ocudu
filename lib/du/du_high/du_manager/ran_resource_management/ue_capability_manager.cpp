@@ -299,7 +299,9 @@ expected<ue_capability_summary, std::string> odu::decode_ue_nr_cap_container(con
     if (meas_common.supported_gap_pattern_present) {
       ue_caps.supported_meas_gaps = supported_meas_gap_patterns{meas_common.supported_gap_pattern};
     }
-    // The R16 gap patterns are ignored.
+    if (meas_common.supported_gap_pattern_r16_present) {
+      ue_caps.supported_meas_gaps.set_r16_patterns(meas_common.supported_gap_pattern_r16);
+    }
   }
 
   // Convert advanced UE NR capabilities.

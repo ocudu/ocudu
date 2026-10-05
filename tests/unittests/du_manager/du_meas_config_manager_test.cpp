@@ -553,6 +553,17 @@ byte_buffer make_location_meas_info(std::initializer_list<prs_window> windows)
   return buf;
 }
 
+// UE capabilities supporting all the gap patterns.
+const ue_capability_summary* all_gap_patterns_ue_caps()
+{
+  static const ue_capability_summary ue_caps = [] {
+    ue_capability_summary caps;
+    caps.supported_meas_gaps = supported_meas_gap_patterns::all();
+    return caps;
+  }();
+  return &ue_caps;
+}
+
 TEST(du_meas_config_manager_location_meas_test, prs_window_is_added_to_the_meas_gap_when_they_fit)
 {
   du_meas_config_manager mng{{}};
@@ -561,7 +572,8 @@ TEST(du_meas_config_manager_location_meas_test, prs_window_is_added_to_the_meas_
   ue_cfg.meas_gap     = ue_cfg.ssb_meas_gap;
 
   // The gap [0, 3) every 40ms and the PRS window [3, 4.5) every 80ms fit in a 5.5ms gap at offset 0 every 40ms.
-  ASSERT_TRUE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 3, prs_len::ms1dot5}})));
+  ASSERT_TRUE(mng.update_location_meas(
+      ue_cfg, make_location_meas_info({{80, 3, prs_len::ms1dot5}}), all_gap_patterns_ue_caps()));
 
   EXPECT_EQ(ue_cfg.meas_gap, (meas_gap_config{0, meas_gap_length::ms5dot5, meas_gap_repetition_period::ms40}));
 }
@@ -574,7 +586,8 @@ TEST(du_meas_config_manager_location_meas_test, prs_window_that_does_not_fit_wit
   ue_cfg.ssb_meas_gap = ssb_gap;
   ue_cfg.meas_gap     = ssb_gap;
 
-  ASSERT_FALSE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}})));
+  ASSERT_FALSE(
+      mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}}), all_gap_patterns_ue_caps()));
 
   EXPECT_EQ(ue_cfg.meas_gap, ssb_gap);
   EXPECT_TRUE(ue_cfg.prs_meas_gaps.empty());
@@ -587,8 +600,10 @@ TEST(du_meas_config_manager_location_meas_test, prs_windows_of_several_layers_sh
 
   // At MGRP=20 the windows are [18, 19.5) and [1, 2.5), as 21 mod 20 = 1. The gap wraps around the period: it starts
   // at 18 and spans 4.5ms, which rounds up to MGL=5.5ms.
-  ASSERT_TRUE(mng.update_location_meas(
-      ue_cfg, make_location_meas_info({{20, 18, prs_len::ms1dot5}, {40, 21, prs_len::ms1dot5}})));
+  ASSERT_TRUE(
+      mng.update_location_meas(ue_cfg,
+                               make_location_meas_info({{20, 18, prs_len::ms1dot5}, {40, 21, prs_len::ms1dot5}}),
+                               all_gap_patterns_ue_caps()));
 
   EXPECT_EQ(ue_cfg.meas_gap, (meas_gap_config{18, meas_gap_length::ms5dot5, meas_gap_repetition_period::ms20}));
 }
@@ -598,8 +613,53 @@ TEST(du_meas_config_manager_location_meas_test, prs_windows_too_far_apart_are_re
   du_meas_config_manager mng{{}};
   du_ue_resource_config  ue_cfg;
 
-  ASSERT_FALSE(
-      mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}, {80, 50, prs_len::ms3}})));
+  // The windows start 15ms apart every 80ms, so they lie at least 5ms apart for any shorter gap period too.
+  ASSERT_FALSE(mng.update_location_meas(
+      ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}, {80, 45, prs_len::ms3}}), all_gap_patterns_ue_caps()));
+
+  EXPECT_FALSE(ue_cfg.meas_gap.has_value());
+}
+
+TEST(du_meas_config_manager_location_meas_test, prs_windows_apart_do_not_use_a_10ms_gap)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+
+  // The windows [30, 33) and [36, 39) every 80ms span 9ms. A 10ms gap encloses them, but no PRS window needs 10ms.
+  ASSERT_FALSE(mng.update_location_meas(
+      ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}, {80, 36, prs_len::ms3}}), all_gap_patterns_ue_caps()));
+
+  EXPECT_FALSE(ue_cfg.meas_gap.has_value());
+}
+
+TEST(du_meas_config_manager_location_meas_test, longer_gap_is_used_when_the_ue_does_not_support_the_shortest_one)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+
+  // Without UE capabilities, only the mandatory patterns 0 (MGL=6ms, MGRP=40ms) and 1 (MGL=6ms, MGRP=80ms) apply.
+  ASSERT_TRUE(mng.update_location_meas(ue_cfg, make_location_meas_info({{40, 5, prs_len::ms3}}), nullptr));
+
+  EXPECT_EQ(ue_cfg.meas_gap, (meas_gap_config{5, meas_gap_length::ms6, meas_gap_repetition_period::ms40}));
+}
+
+TEST(du_meas_config_manager_location_meas_test, shorter_gap_period_is_used_when_the_ue_does_not_support_the_prs_one)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+
+  // No mandatory gap pattern repeats every 160ms, but the one repeating every 80ms still meets every PRS occasion.
+  ASSERT_TRUE(mng.update_location_meas(ue_cfg, make_location_meas_info({{160, 100, prs_len::ms3}}), nullptr));
+
+  EXPECT_EQ(ue_cfg.meas_gap, (meas_gap_config{20, meas_gap_length::ms6, meas_gap_repetition_period::ms80}));
+}
+
+TEST(du_meas_config_manager_location_meas_test, prs_length_of_10ms_is_rejected_without_gap_pattern_24)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+
+  ASSERT_FALSE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms10}}), nullptr));
 
   EXPECT_FALSE(ue_cfg.meas_gap.has_value());
 }
@@ -609,7 +669,8 @@ TEST(du_meas_config_manager_location_meas_test, prs_length_of_10ms_is_signalled_
   du_meas_config_manager mng{{}};
   du_ue_resource_config  ue_cfg;
 
-  ASSERT_TRUE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms10}})));
+  ASSERT_TRUE(
+      mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms10}}), all_gap_patterns_ue_caps()));
   ASSERT_EQ(ue_cfg.meas_gap, (meas_gap_config{30, meas_gap_length::ms10, meas_gap_repetition_period::ms80}));
 
   meas_gap_cfg_s asn1_gap;
@@ -668,7 +729,8 @@ TEST_F(du_meas_config_manager_meas_cfg_with_prs_test, meas_cfg_keeps_the_prs_in_
 
 TEST_F(du_meas_config_manager_meas_cfg_with_prs_test, prs_that_do_not_fit_with_the_meas_cfg_are_dropped)
 {
-  ue_cfg.prs_meas_gaps = {meas_gap_config{20, meas_gap_length::ms3, meas_gap_repetition_period::ms80}};
+  // The PRS starts 10ms after the SSB gap for every gap period, too far apart to share a gap.
+  ue_cfg.prs_meas_gaps = {meas_gap_config{10, meas_gap_length::ms3, meas_gap_repetition_period::ms80}};
 
   update_meas_cfg();
 

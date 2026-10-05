@@ -336,7 +336,7 @@ void du_meas_config_manager::update(du_ue_resource_config&       ue_cfg,
                                           supported_patterns);
   }
 
-  apply_meas_gap(ue_cfg);
+  apply_meas_gap(ue_cfg, supported_patterns);
 }
 
 // Returns the measurement gap required by the PRS of one frequency layer, whose fields share the values of a GapConfig,
@@ -361,39 +361,48 @@ static std::optional<meas_gap_config> make_prs_meas_gap(const nr_prs_meas_info_r
   }
 }
 
-// Returns the shortest gap, of at most \c max_mgl, that encloses one occurrence of each gap.
-static std::optional<meas_gap_config> make_enclosing_gap(span<const meas_gap_config> gaps, meas_gap_length max_mgl)
+// Returns the shortest gap, of at most \c max_mgl and with a gap pattern supported by the UE, that encloses one
+// occurrence of each gap.
+static std::optional<meas_gap_config> make_enclosing_gap(span<const meas_gap_config>        gaps,
+                                                         meas_gap_length                    max_mgl,
+                                                         const supported_meas_gap_patterns& supported_patterns)
 {
   // The periods are 20*2^i ms, so the gap with the smallest period can cover all other gaps.
-  const unsigned mgrp_ms = static_cast<unsigned>(
+  const unsigned min_period_ms = static_cast<unsigned>(
       std::min_element(gaps.begin(), gaps.end(), [](const meas_gap_config& lhs, const meas_gap_config& rhs) {
         return static_cast<unsigned>(lhs.mgrp) < static_cast<unsigned>(rhs.mgrp);
       })->mgrp);
 
-  // The gaps wrap around the gap period, so each gap start is tried as the gap offset, keeping the one that encloses
-  // all the gaps in the shortest span.
-  unsigned gap_offset_ms = 0;
-  float    gap_span_ms   = std::numeric_limits<float>::max();
-  for (const meas_gap_config& anchor : gaps) {
-    const unsigned candidate_offset_ms = anchor.offset % mgrp_ms;
-    float          span_ms             = 0;
-    for (const meas_gap_config& g : gaps) {
-      const unsigned offset_ms = g.offset % mgrp_ms;
-      // A gap starting before the candidate is enclosed by its occurrence in the next gap period.
-      const unsigned start_ms = offset_ms >= candidate_offset_ms ? offset_ms - candidate_offset_ms
-                                                                 : offset_ms + mgrp_ms - candidate_offset_ms;
-      span_ms                 = std::max(span_ms, start_ms + meas_gap_length_to_msec(g.mgl));
+  // A shorter gap period also divides all the periods, so it is tried when the UE does not support a gap pattern with
+  // the smallest one, at the cost of more frequent gaps.
+  static constexpr unsigned min_mgrp_ms = static_cast<unsigned>(meas_gap_repetition_period::ms20);
+  for (unsigned mgrp_ms = min_period_ms; mgrp_ms >= min_mgrp_ms; mgrp_ms /= 2) {
+    // The gaps wrap around the gap period, so each gap start is tried as the gap offset, keeping the one that encloses
+    // all the gaps in the shortest span.
+    unsigned gap_offset_ms = 0;
+    float    gap_span_ms   = std::numeric_limits<float>::max();
+    for (const meas_gap_config& anchor : gaps) {
+      const unsigned candidate_offset_ms = anchor.offset % mgrp_ms;
+      float          span_ms             = 0;
+      for (const meas_gap_config& g : gaps) {
+        const unsigned offset_ms = g.offset % mgrp_ms;
+        // A gap starting before the candidate is enclosed by its occurrence in the next gap period.
+        const unsigned start_ms = offset_ms >= candidate_offset_ms ? offset_ms - candidate_offset_ms
+                                                                   : offset_ms + mgrp_ms - candidate_offset_ms;
+        span_ms                 = std::max(span_ms, start_ms + meas_gap_length_to_msec(g.mgl));
+      }
+      if (span_ms < gap_span_ms) {
+        gap_offset_ms = candidate_offset_ms;
+        gap_span_ms   = span_ms;
+      }
     }
-    if (span_ms < gap_span_ms) {
-      gap_offset_ms = candidate_offset_ms;
-      gap_span_ms   = span_ms;
-    }
-  }
 
-  for (unsigned mgl_idx = 0; mgl_idx <= static_cast<unsigned>(max_mgl); ++mgl_idx) {
-    const auto mgl = static_cast<meas_gap_length>(mgl_idx);
-    if (meas_gap_length_to_msec(mgl) >= gap_span_ms and meas_gap_length_to_msec(mgl) < mgrp_ms) {
-      return meas_gap_config{gap_offset_ms, mgl, static_cast<meas_gap_repetition_period>(mgrp_ms)};
+    const auto mgrp = static_cast<meas_gap_repetition_period>(mgrp_ms);
+    for (unsigned mgl_idx = 0; mgl_idx <= static_cast<unsigned>(max_mgl); ++mgl_idx) {
+      const auto mgl = static_cast<meas_gap_length>(mgl_idx);
+      if (meas_gap_length_to_msec(mgl) >= gap_span_ms and supported_patterns.is_supported(mgl, mgrp)) {
+        return meas_gap_config{gap_offset_ms, mgl, mgrp};
+      }
     }
   }
   return std::nullopt;
@@ -402,27 +411,33 @@ static std::optional<meas_gap_config> make_enclosing_gap(span<const meas_gap_con
 // The UE supports a single gap, as per TS 38.331 gapUE, so the gap of the PRS must also enclose the SSB gap to keep the
 // SSB measurements running.
 static std::optional<meas_gap_config> make_prs_gap(const std::optional<meas_gap_config>& ssb_gap,
-                                                   span<const meas_gap_config>           prs_meas_gaps)
+                                                   span<const meas_gap_config>           prs_meas_gaps,
+                                                   const supported_meas_gap_patterns&    supported_patterns)
 {
   static_vector<meas_gap_config, MAX_NOF_PRS_FREQ_LAYERS + 1> gaps(prs_meas_gaps.begin(), prs_meas_gaps.end());
   if (ssb_gap.has_value()) {
     gaps.push_back(*ssb_gap);
   }
 
-  // The 10ms and 20ms gaps only serve the PRS that need them, not to join PRS and SSB gaps lying apart.
+  // Gaps of 10ms and 20ms can only be configured if a PRS needs them, as per TS 38.133, Table 9.1.2-3, NOTE 8.
+  // Thus, do not use them only to enclose several PRS and SSB gaps together.
   meas_gap_length max_mgl = meas_gap_length::ms6;
   for (const meas_gap_config& prs_meas_gap : prs_meas_gaps) {
     max_mgl = std::max(max_mgl, prs_meas_gap.mgl);
   }
-  return make_enclosing_gap(gaps, max_mgl);
+  return make_enclosing_gap(gaps, max_mgl, supported_patterns);
 }
 
-bool du_meas_config_manager::update_location_meas(du_ue_resource_config& ue_cfg,
-                                                  const byte_buffer&     packed_location_meas_info)
+bool du_meas_config_manager::update_location_meas(du_ue_resource_config&       ue_cfg,
+                                                  const byte_buffer&           packed_location_meas_info,
+                                                  const ue_capability_summary* ue_caps)
 {
   if (packed_location_meas_info.empty()) {
     return true;
   }
+
+  const supported_meas_gap_patterns supported_patterns =
+      ue_caps != nullptr ? ue_caps->supported_meas_gaps : supported_meas_gap_patterns{};
 
   location_meas_info_c location_meas_info;
   asn1::cbit_ref       bref{packed_location_meas_info};
@@ -447,10 +462,10 @@ bool du_meas_config_manager::update_location_meas(du_ue_resource_config& ue_cfg,
     prs_meas_gaps.push_back(*prs_meas_gap);
   }
 
-  const std::optional<meas_gap_config> gap = make_prs_gap(ue_cfg.ssb_meas_gap, prs_meas_gaps);
+  const std::optional<meas_gap_config> gap = make_prs_gap(ue_cfg.ssb_meas_gap, prs_meas_gaps, supported_patterns);
   if (not gap.has_value()) {
-    logger.warning("Rejecting LocationMeasurementInfo. Cause: PRS do not fit in a single gap with the SSB measurement "
-                   "gap");
+    logger.warning("Rejecting LocationMeasurementInfo. Cause: PRS do not fit in a single gap supported by the UE with "
+                   "the SSB measurement gap");
     return false;
   }
   ue_cfg.prs_meas_gaps = std::move(prs_meas_gaps);
@@ -458,22 +473,25 @@ bool du_meas_config_manager::update_location_meas(du_ue_resource_config& ue_cfg,
   return true;
 }
 
-void du_meas_config_manager::apply_meas_gap(du_ue_resource_config& ue_cfg)
+void du_meas_config_manager::apply_meas_gap(du_ue_resource_config&             ue_cfg,
+                                            const supported_meas_gap_patterns& supported_patterns)
 {
   if (ue_cfg.prs_meas_gaps.empty()) {
     ue_cfg.meas_gap = ue_cfg.ssb_meas_gap;
     return;
   }
 
-  const std::optional<meas_gap_config> gap = make_prs_gap(ue_cfg.ssb_meas_gap, ue_cfg.prs_meas_gaps);
+  const std::optional<meas_gap_config> gap =
+      make_prs_gap(ue_cfg.ssb_meas_gap, ue_cfg.prs_meas_gaps, supported_patterns);
   if (gap.has_value()) {
     ue_cfg.meas_gap = gap;
     return;
   }
 
   // The measConfig takes priority, as when the location measurements are rejected for not fitting.
-  logger.warning("Dropping the PRS from the measurement gap. Cause: They do not fit in a single gap with the SSB "
-                 "measurement gap");
+  logger.warning(
+      "Dropping the PRS from the measurement gap. Cause: They do not fit in a single gap supported by the UE "
+      "with the SSB measurement gap");
   ue_cfg.prs_meas_gaps.clear();
   ue_cfg.meas_gap = ue_cfg.ssb_meas_gap;
 }
