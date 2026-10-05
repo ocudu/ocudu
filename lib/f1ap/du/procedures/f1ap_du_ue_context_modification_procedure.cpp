@@ -115,6 +115,11 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
 
     // >> Pass UE capabilities.
     du_request.ue_cap_rat_list = msg->cu_to_du_rrc_info.ue_cap_rat_container_list.copy();
+
+    // >> Location Measurement Information IE.
+    if (msg->cu_to_du_rrc_info.ie_exts_present and msg->cu_to_du_rrc_info.ie_exts.location_meas_info_present) {
+      du_request.location_meas_info = msg->cu_to_du_rrc_info.ie_exts.location_meas_info.copy();
+    }
   }
 
   if (msg->rrc_recfg_complete_ind_present) {

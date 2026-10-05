@@ -5,9 +5,12 @@
 
 #include "f1ap_du_test_helpers.h"
 #include "test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "ocudu/du/du_cell_config_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -90,6 +93,39 @@ TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1a
   ASSERT_EQ(req.srbs_to_setup.size(), 0);
   ASSERT_EQ(req.drbs_to_setup.size(), 1);
   ASSERT_EQ(req.drbs_to_setup[0].drb_id, drb_id_t::drb1);
+}
+
+TEST_F(f1ap_du_ue_context_modification_test,
+       when_request_contains_location_meas_info_then_f1ap_forwards_it_to_du_and_returns_the_meas_gap_config)
+{
+  const byte_buffer location_meas_info = byte_buffer::create({0x10, 0x20, 0x30}).value();
+  const byte_buffer meas_gap_cfg       = byte_buffer::create({0x40, 0x50}).value();
+
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.result         = true;
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg = byte_buffer::create({0x1, 0x2}).value();
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.meas_gap_cfg   = meas_gap_cfg.copy();
+
+  f1ap_message msg = test_helpers::generate_ue_context_modification_request(
+      int_to_gnb_du_ue_f1ap_id(0), int_to_gnb_cu_ue_f1ap_id(0), {}, {}, {});
+  auto& req                                                 = msg.pdu.init_msg().value.ue_context_mod_request();
+  req->cu_to_du_rrc_info_present                            = true;
+  req->cu_to_du_rrc_info.ie_exts_present                    = true;
+  req->cu_to_du_rrc_info.ie_exts.location_meas_info_present = true;
+  req->cu_to_du_rrc_info.ie_exts.location_meas_info         = location_meas_info.copy();
+  f1ap->handle_message(msg);
+  this->last_ue_ctxt_mod_req = msg;
+
+  // DU manager receives the LocationMeasurementInfo.
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  ASSERT_EQ(this->f1ap_du_cfg_handler.last_ue_context_update_req->location_meas_info, location_meas_info);
+
+  // F1AP returns the measGapConfig computed by the DU.
+  auto sent_pdu = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(sent_pdu.has_value());
+  ASSERT_TRUE(is_ue_context_modification_response_valid(sent_pdu.value()));
+  const ue_context_mod_resp_s& resp = sent_pdu.value().pdu.successful_outcome().value.ue_context_mod_resp();
+  ASSERT_TRUE(resp->du_to_cu_rrc_info_present);
+  ASSERT_EQ(resp->du_to_cu_rrc_info.meas_gap_cfg, meas_gap_cfg);
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,

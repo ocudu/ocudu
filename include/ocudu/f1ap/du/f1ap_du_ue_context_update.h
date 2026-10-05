@@ -72,6 +72,9 @@ struct f1ap_ue_context_update_request {
   byte_buffer source_cell_group_cfg;
   /// Container with the UE-CapabilityRAT-ContainerList, as per TS 38.331.
   byte_buffer ue_cap_rat_list;
+  /// \brief Container with the LocationMeasurementInfo of the UE, as per TS 38.331. If non-empty, the gNB-DU configures
+  /// a measurement gap for the location measurements of the UE.
+  byte_buffer location_meas_info;
   /// Indiction that the CU-CP has received the RRC reconfiguration complete.
   bool rrc_recfg_complete_ind;
   /// \brief Optional CHO trigger. If set, this context update is part of a Conditional Handover procedure.

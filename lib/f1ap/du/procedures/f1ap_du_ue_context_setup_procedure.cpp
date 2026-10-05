@@ -258,6 +258,11 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
     if (msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg_present) {
       du_request.source_cell_group_cfg = msg->cu_to_du_rrc_info.ie_exts.cell_group_cfg.copy();
     }
+
+    // > Location Measurement Information IE.
+    if (msg->cu_to_du_rrc_info.ie_exts.location_meas_info_present) {
+      du_request.location_meas_info = msg->cu_to_du_rrc_info.ie_exts.location_meas_info.copy();
+    }
   }
 
   // > Add UE capabilities information.
