@@ -30,6 +30,7 @@
 #include "ocudu/cu_cp/cu_cp_configuration.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/ran/nr_cgi.h"
 #include "ocudu/ran/plmn_identity.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/security/security.h"
@@ -39,6 +40,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -166,7 +168,11 @@ public:
     }
     (void)state.ue_mng.set_plmn(ue_index, plmn_identity::test_value());
 
-    rrc_cell_context cell;
+    rrc_cell_context cell{};
+    cell.cgi       = nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x19b0).value()};
+    cell.tac       = 7;
+    cell.pci       = 1;
+    cell.ssb_arfcn = 632628;
     cell.bands.push_back(nr_band::n78);
     cell.plmn_identity_list.push_back(plmn_identity::test_value());
     cell.timers = rrc_timers_t{.t300 = std::chrono::milliseconds{400},
