@@ -68,6 +68,13 @@ public:
   /// \param ue_caps Decoded UE capabilities, used to extract the UE supported gap patterns.
   void update(du_ue_resource_config& ue_cfg, const byte_buffer& meas_cfg, const ue_capability_summary* ue_caps);
 
+  /// Update UE config based on the UE LocationMeasurementInfo given by the CU-CP.
+  ///
+  /// \param ue_cfg UE resource configuration to update with the measurement gap of the PRS.
+  /// \param location_meas_info Packed LocationMeasurementInfo provided by the CU-CP.
+  /// \return false if no measurement gap can enclose the PRS of the location measurements.
+  bool update_location_meas(du_ue_resource_config& ue_cfg, const byte_buffer& location_meas_info);
+
 private:
   span<const du_cell_config> cell_cfg_list;
   ocudulog::basic_logger&    logger;

@@ -7,6 +7,7 @@
 #include "du_ue_resource_config.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg_ies.h"
+#include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/csi_rs/csi_report_config.h"
@@ -15,7 +16,9 @@
 #include "ocudu/ran/subcarrier_spacing.h"
 #include "ocudu/scheduler/rrm/ue_capability_summary.h"
 #include "ocudu/support/enum_utils.h"
+#include <algorithm>
 #include <array>
+#include <limits>
 #include <numeric>
 #include <optional>
 #include <vector>
@@ -332,4 +335,120 @@ void du_meas_config_manager::update(du_ue_resource_config&       ue_cfg,
                                       ul_ta,
                                       supported_patterns);
   }
+}
+
+namespace {
+
+// Periodic window, in ms, that a measurement gap encloses.
+struct meas_window {
+  unsigned period;
+  unsigned offset;
+  float    length;
+};
+
+} // namespace
+
+static std::optional<meas_window> make_prs_window(const nr_prs_meas_info_r16_s& prs_info)
+{
+  using repeat_opts             = nr_prs_meas_info_r16_s::nr_meas_prs_repeat_and_offset_r16_c_::types_opts;
+  const auto& repeat_and_offset = prs_info.nr_meas_prs_repeat_and_offset_r16;
+  const float length            = prs_info.nr_meas_prs_len_r16.to_number();
+  switch (repeat_and_offset.type().value) {
+    case repeat_opts::ms20_r16:
+      return meas_window{20, repeat_and_offset.ms20_r16(), length};
+    case repeat_opts::ms40_r16:
+      return meas_window{40, repeat_and_offset.ms40_r16(), length};
+    case repeat_opts::ms80_r16:
+      return meas_window{80, repeat_and_offset.ms80_r16(), length};
+    case repeat_opts::ms160_r16:
+      return meas_window{160, repeat_and_offset.ms160_r16(), length};
+    default:
+      return std::nullopt;
+  }
+}
+
+// Returns the shortest gap of at most 6ms that encloses one occurrence of each window.
+static std::optional<meas_gap_config> make_enclosing_gap(span<const meas_window> windows)
+{
+  // The periods are 20*2^i ms, so the window with the smallest period can cover all other windows.
+  const unsigned mgrp_ms =
+      std::min_element(windows.begin(), windows.end(), [](const meas_window& lhs, const meas_window& rhs) {
+        return lhs.period < rhs.period;
+      })->period;
+
+  // The windows wrap around the gap period, so each window start is tried as the gap offset, keeping the one that
+  // encloses all the windows in the shortest span.
+  unsigned gap_offset_ms = 0;
+  float    gap_span_ms   = std::numeric_limits<float>::max();
+  for (const meas_window& anchor : windows) {
+    const unsigned candidate_offset_ms = anchor.offset % mgrp_ms;
+    float          span_ms             = 0;
+    for (const meas_window& w : windows) {
+      const unsigned offset_ms = w.offset % mgrp_ms;
+      // A window starting before the gap is enclosed by its occurrence in the next gap period.
+      const unsigned start_ms = offset_ms >= candidate_offset_ms ? offset_ms - candidate_offset_ms
+                                                                 : offset_ms + mgrp_ms - candidate_offset_ms;
+      span_ms                 = std::max(span_ms, start_ms + w.length);
+    }
+    if (span_ms < gap_span_ms) {
+      gap_offset_ms = candidate_offset_ms;
+      gap_span_ms   = span_ms;
+    }
+  }
+
+  for (unsigned mgl_idx = 0; mgl_idx <= static_cast<unsigned>(meas_gap_length::ms6); ++mgl_idx) {
+    const auto mgl = static_cast<meas_gap_length>(mgl_idx);
+    if (meas_gap_length_to_msec(mgl) >= gap_span_ms) {
+      return meas_gap_config{gap_offset_ms, mgl, static_cast<meas_gap_repetition_period>(mgrp_ms)};
+    }
+  }
+  return std::nullopt;
+}
+
+bool du_meas_config_manager::update_location_meas(du_ue_resource_config& ue_cfg,
+                                                  const byte_buffer&     packed_location_meas_info)
+{
+  if (packed_location_meas_info.empty()) {
+    return true;
+  }
+
+  location_meas_info_c location_meas_info;
+  asn1::cbit_ref       bref{packed_location_meas_info};
+  if (location_meas_info.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    logger.error("Failed to unpack LocationMeasurementInfo");
+    return false;
+  }
+
+  if (location_meas_info.type().value != location_meas_info_c::types_opts::nr_prs_meas_r16) {
+    logger.warning("Rejecting LocationMeasurementInfo. Cause: Unsupported type {}",
+                   location_meas_info.type().to_string());
+    return false;
+  }
+  std::vector<meas_window> windows;
+  for (const nr_prs_meas_info_r16_s& prs_info : location_meas_info.nr_prs_meas_r16()) {
+    const std::optional<meas_window> window = make_prs_window(prs_info);
+    if (not window.has_value()) {
+      logger.warning("Rejecting LocationMeasurementInfo. Cause: Unsupported PRS repetition period {}",
+                     prs_info.nr_meas_prs_repeat_and_offset_r16.type().to_string());
+      return false;
+    }
+    windows.push_back(*window);
+  }
+
+  // The UE supports a single gap, as per TS 38.331 gapUE, so the new gap must also enclose the current one to keep the
+  // SSB measurements running.
+  if (ue_cfg.meas_gap.has_value()) {
+    windows.push_back(meas_window{static_cast<unsigned>(ue_cfg.meas_gap->mgrp),
+                                  ue_cfg.meas_gap->offset,
+                                  meas_gap_length_to_msec(ue_cfg.meas_gap->mgl)});
+  }
+
+  const std::optional<meas_gap_config> gap = make_enclosing_gap(windows);
+  if (not gap.has_value()) {
+    logger.warning("Rejecting LocationMeasurementInfo. Cause: PRS windows do not fit in a 6ms gap with the current "
+                   "measurement gap");
+    return false;
+  }
+  ue_cfg.meas_gap = gap;
+  return true;
 }

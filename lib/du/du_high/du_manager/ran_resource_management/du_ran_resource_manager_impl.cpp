@@ -337,6 +337,10 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   // Update measGaps based on the UE measConfig and supportedGapPatterns UE capabilities.
   meas_cfg_mng.update(
       ue_mcg, upd_req.meas_cfg, u.ue_cap_manager.summary().has_value() ? &*u.ue_cap_manager.summary() : nullptr);
+  if (not meas_cfg_mng.update_location_meas(ue_mcg, upd_req.location_meas_info)) {
+    resp.procedure_error = make_unexpected(std::string{"Unable to configure a measurement gap for the PRS"});
+    return resp;
+  }
 
   if (u.ue_cap_manager.summary().has_value()) {
     pdsch_res_mng.update_resources(ue_mcg.cell_group, *u.ue_cap_manager.summary());

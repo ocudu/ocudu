@@ -7,6 +7,7 @@
 #include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
+#include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"
@@ -506,6 +507,105 @@ TEST(du_meas_config_manager_ntn_test, timing_advance_moves_the_gap_off_the_uplin
   EXPECT_EQ(0, gap.offset % 20);
   EXPECT_EQ(meas_gap_length::ms6, gap.mgl);
   EXPECT_EQ(meas_gap_repetition_period::ms80, gap.mgrp);
+}
+
+// ---------- Location measurements ----------
+
+using prs_len = nr_prs_meas_info_r16_s::nr_meas_prs_len_r16_opts::options;
+
+// PRS measurement window of one frequency layer.
+struct prs_window {
+  unsigned period_ms;
+  uint8_t  offset_ms;
+  prs_len  len;
+};
+
+byte_buffer make_location_meas_info(std::initializer_list<prs_window> windows)
+{
+  location_meas_info_c info;
+  auto&                prs_list = info.set_nr_prs_meas_r16();
+  for (const prs_window& w : windows) {
+    nr_prs_meas_info_r16_s prs_info;
+    prs_info.nr_meas_prs_len_r16.value = w.len;
+    auto& repeat_and_offset            = prs_info.nr_meas_prs_repeat_and_offset_r16;
+    switch (w.period_ms) {
+      case 20:
+        repeat_and_offset.set_ms20_r16() = w.offset_ms;
+        break;
+      case 40:
+        repeat_and_offset.set_ms40_r16() = w.offset_ms;
+        break;
+      case 80:
+        repeat_and_offset.set_ms80_r16() = w.offset_ms;
+        break;
+      default:
+        repeat_and_offset.set_ms160_r16() = w.offset_ms;
+        break;
+    }
+    prs_list.push_back(prs_info);
+  }
+  byte_buffer   buf;
+  asn1::bit_ref bref{buf};
+  report_fatal_error_if_not(info.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack LocationMeasurementInfo");
+  return buf;
+}
+
+TEST(du_meas_config_manager_location_meas_test, prs_window_is_added_to_the_meas_gap_when_they_fit)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+  ue_cfg.meas_gap = meas_gap_config{0, meas_gap_length::ms3, meas_gap_repetition_period::ms40};
+
+  // The gap [0, 3) every 40ms and the PRS window [3, 4.5) every 80ms fit in a 5.5ms gap at offset 0 every 40ms.
+  ASSERT_TRUE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 3, prs_len::ms1dot5}})));
+
+  EXPECT_EQ(ue_cfg.meas_gap, (meas_gap_config{0, meas_gap_length::ms5dot5, meas_gap_repetition_period::ms40}));
+}
+
+TEST(du_meas_config_manager_location_meas_test, prs_window_that_does_not_fit_with_the_meas_gap_is_rejected)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+  const meas_gap_config  ssb_gap{0, meas_gap_length::ms6, meas_gap_repetition_period::ms40};
+  ue_cfg.meas_gap = ssb_gap;
+
+  ASSERT_FALSE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}})));
+
+  EXPECT_EQ(ue_cfg.meas_gap, ssb_gap);
+}
+
+TEST(du_meas_config_manager_location_meas_test, prs_windows_of_several_layers_share_one_gap)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+
+  // At MGRP=20 the windows are [18, 19.5) and [1, 2.5), as 21 mod 20 = 1. The gap wraps around the period: it starts
+  // at 18 and spans 4.5ms, which rounds up to MGL=5.5ms.
+  ASSERT_TRUE(mng.update_location_meas(
+      ue_cfg, make_location_meas_info({{20, 18, prs_len::ms1dot5}, {40, 21, prs_len::ms1dot5}})));
+
+  EXPECT_EQ(ue_cfg.meas_gap, (meas_gap_config{18, meas_gap_length::ms5dot5, meas_gap_repetition_period::ms20}));
+}
+
+TEST(du_meas_config_manager_location_meas_test, prs_windows_too_far_apart_are_rejected)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+
+  ASSERT_FALSE(
+      mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}, {80, 50, prs_len::ms3}})));
+
+  EXPECT_FALSE(ue_cfg.meas_gap.has_value());
+}
+
+TEST(du_meas_config_manager_location_meas_test, prs_length_above_6ms_is_rejected)
+{
+  du_meas_config_manager mng{{}};
+  du_ue_resource_config  ue_cfg;
+
+  ASSERT_FALSE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms10}})));
+
+  EXPECT_FALSE(ue_cfg.meas_gap.has_value());
 }
 
 } // namespace
