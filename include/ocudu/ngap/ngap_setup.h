@@ -11,6 +11,7 @@
 #include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/guami.h"
 #include "ocudu/ran/tac.h"
+#include <chrono>
 #include <variant>
 
 namespace ocudu::ocucp {
@@ -52,8 +53,9 @@ struct ngap_ng_setup_response {
 };
 
 struct ngap_ng_setup_failure {
-  ngap_cause_t                      cause;
-  std::optional<crit_diagnostics_t> crit_diagnostics;
+  ngap_cause_t                        cause;
+  std::optional<std::chrono::seconds> time_to_wait;
+  std::optional<crit_diagnostics_t>   crit_diagnostics;
 };
 
 using ngap_ng_setup_result = std::variant<ngap_ng_setup_response, ngap_ng_setup_failure>;

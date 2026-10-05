@@ -96,10 +96,32 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_retries_it_until_
       << "CU-CP did not retry the NG Setup over a new TNL association";
   ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request));
 
-  // The retry backs off, so the AMF accepts the third NG Setup only after a longer wait.
+  // The retries are spaced by the reconnection retry time.
   get_amf().enqueue_next_tx_pdu(generate_ng_setup_response());
-  ASSERT_FALSE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1100})) << "CU-CP did not back off";
-  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1100}))
+      << "CU-CP did not retry the NG Setup after the reconnection retry time";
+  ASSERT_TRUE(tick_until(
+      std::chrono::milliseconds{100}, [this]() { return get_cu_cp().get_ng_handler().amfs_are_connected(); }, false));
+}
+
+TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_with_time_to_wait_then_cu_cp_waits_for_it_before_retrying)
+{
+  get_amf().enqueue_next_tx_pdu(generate_ng_setup_failure());
+  get_cu_cp().start();
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(get_amf().try_pop_rx_pdu(ngap_pdu)) << "CU-CP did not send the NG Setup Request to the AMF";
+
+  // The AMF commands a Time to Wait longer than the reconnection retry time. The NGAP retries once over the same TNL
+  // association, before the CU-CP reconnects.
+  get_amf().enqueue_next_tx_pdu(generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait_opts::v2s));
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1100}));
+  get_amf().enqueue_next_tx_pdu(generate_ng_setup_failure_with_time_to_wait(asn1::ngap::time_to_wait_opts::v2s));
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{2100}));
+
+  get_amf().enqueue_next_tx_pdu(generate_ng_setup_response());
+  ASSERT_FALSE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1900}))
+      << "CU-CP did not wait for the Time to Wait before reconnecting";
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{200}));
   ASSERT_TRUE(tick_until(
       std::chrono::milliseconds{100}, [this]() { return get_cu_cp().get_ng_handler().amfs_are_connected(); }, false));
 }

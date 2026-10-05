@@ -32,19 +32,14 @@ private:
   ngap_interface&         ngap;
   ocudulog::basic_logger& logger;
 
-  /// [Implementation-defined] Maximum exponent of the NG Setup retry backoff.
-  static constexpr unsigned max_setup_backoff_exponent = 5;
-  /// [Implementation-defined] Number of NG Setup failures between two warnings.
-  static constexpr unsigned setup_failure_log_period = 60;
-
   unique_timer              amf_tnl_connection_retry_timer;
   std::chrono::milliseconds reconnection_retry_time;
   /// Time to wait before the next connection attempt.
   std::chrono::milliseconds retry_wait;
 
   ngap_ng_setup_result result_msg = {};
-  /// Number of failed NG Setup attempts.
-  unsigned nof_setup_failures = 0;
+  /// Whether a failed NG Setup was already announced in STDOUT.
+  bool setup_failure_reported = false;
 };
 
 } // namespace ocucp

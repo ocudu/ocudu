@@ -243,11 +243,6 @@ public:
                 sctp_cfg.dest_name,
                 sctp_cfg.connect_addresses[0],
                 sctp_cfg.connect_port);
-    fmt::print("{}: Connection to {} on {}:{} completed\n",
-               sctp_cfg.if_name,
-               sctp_cfg.dest_name,
-               sctp_cfg.connect_addresses[0],
-               sctp_cfg.connect_port);
 
     // Return the Tx PDU notifier to the CU-CP.
     return std::make_unique<n2_to_sctp_pdu_notifier>(std::move(sctp_sender), pcap_writer, logger);

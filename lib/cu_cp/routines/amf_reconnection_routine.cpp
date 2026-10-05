@@ -8,6 +8,7 @@
 #include "ocudu/ngap/ngap_setup.h"
 #include "ocudu/support/async/async_timer.h"
 #include "ocudu/support/async/coroutine.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -36,8 +37,8 @@ void amf_reconnection_routine::operator()(coro_context<async_task<void>>& ctx)
 
   logger.info("\"{}\" started...", name());
 
+  logger.info("Reconnecting to AMF in {}...", retry_wait);
   while (true) {
-    logger.info("Reconnecting to AMF in {}...", retry_wait);
     CORO_AWAIT(async_wait_for(amf_tnl_connection_retry_timer, retry_wait));
     while (not ngap.handle_amf_tnl_connection_request()) {
       logger.info("TNL connection establishment to AMF failed. Retrying in {}...", reconnection_retry_time);
@@ -50,35 +51,31 @@ void amf_reconnection_routine::operator()(coro_context<async_task<void>>& ctx)
       break;
     }
 
-    // The AMF may accept the CU-CP later. Back off exponentially to spare the AMF, and throttle the warnings so a
-    // lasting misconfiguration stays visible without flooding the log.
-    ++nof_setup_failures;
-    retry_wait =
-        reconnection_retry_time *
-        (1U << (nof_setup_failures < max_setup_backoff_exponent ? nof_setup_failures : max_setup_backoff_exponent));
-    if (nof_setup_failures == 1 or nof_setup_failures % setup_failure_log_period == 0) {
-      logger.warning("NG Setup attempt {} failed. Cause: {}. Retrying in {}...",
-                     nof_setup_failures,
-                     std::get<ngap_ng_setup_failure>(result_msg).cause,
-                     retry_wait);
-    } else {
-      logger.debug("NG Setup attempt {} failed. Cause: {}. Retrying in {}...",
-                   nof_setup_failures,
-                   std::get<ngap_ng_setup_failure>(result_msg).cause,
-                   retry_wait);
+    // The AMF may accept the CU-CP later, e.g. once its configuration is fixed. Wait at least the Time to Wait, if the
+    // AMF commanded one, see TS 38.413, Section 8.7.1.3.
+    retry_wait = std::max<std::chrono::milliseconds>(
+        reconnection_retry_time,
+        std::get<ngap_ng_setup_failure>(result_msg).time_to_wait.value_or(std::chrono::seconds{0}));
+    logger.warning(
+        "NG Setup failed. Cause: {}. Retrying in {}...", std::get<ngap_ng_setup_failure>(result_msg).cause, retry_wait);
+    if (not setup_failure_reported) {
+      // Only the first failure is announced in STDOUT, so that a lasting rejection does not flood it.
+      fmt::print("NG Setup failed. Cause: {}. Retrying in the background\n",
+                 std::get<ngap_ng_setup_failure>(result_msg).cause);
+      setup_failure_reported = true;
     }
 
     // Tear the N2 TNL association down, so that the NG Setup can be retried over a new one.
     CORO_AWAIT(ngap.handle_amf_disconnection_request());
   }
 
-  if (logger.debug.enabled()) {
+  {
     std::string plmn_list;
     for (const auto& plmn : ngap.get_ngap_context().get_supported_plmns()) {
       plmn_list += plmn.to_string() + " ";
     }
-
     logger.debug("Reconnected to AMF. Supported PLMNs: {}", plmn_list);
+    fmt::print("Reconnected to AMF. Supported PLMNs: {}\n", plmn_list);
   }
 
   logger.info("\"{}\" finished successfully", name());

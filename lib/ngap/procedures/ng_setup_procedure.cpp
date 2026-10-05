@@ -56,7 +56,7 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
     }
 
     // Await timer.
-    logger.debug("Reinitiating NG setup in {}s (retry={}/{}). Received NGSetupFailure with Time to Wait IE",
+    logger.debug("Reinitiating NG setup in {}ms (retry={}/{}). Received NGSetupFailure with Time to Wait IE",
                  time_to_wait.count(),
                  ng_setup_retry_no,
                  max_setup_retries);
@@ -78,14 +78,12 @@ bool ng_setup_procedure::retry_required()
   if (transaction_sink.timeout_expired()) {
     // Timeout case.
     logger.warning("\"{}\" timed out after {}ms", name(), context.procedure_timeout.count());
-    fmt::print("\"{}\" timed out after {}ms\n", name(), context.procedure_timeout.count());
     return false;
   }
 
   if (!transaction_sink.failed()) {
     // No response received.
     logger.warning("\"{}\" failed. No response received", name());
-    fmt::print("\"{}\" failed. No response received\n", name());
     return false;
   }
 
@@ -95,7 +93,6 @@ bool ng_setup_procedure::retry_required()
   if (is_failure_misconfiguration(ng_fail->cause)) {
     logger.warning("\"{}\": Stopping procedure. Cause: misconfiguration between gNB and AMF", name());
     logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), asn1_utils::get_cause_str(ng_fail->cause));
-    fmt::print("\"{}\" failed. AMF NGAP cause: \"{}\"\n", name(), asn1_utils::get_cause_str(ng_fail->cause));
     return false;
   }
 
@@ -103,7 +100,6 @@ bool ng_setup_procedure::retry_required()
     // AMF didn't command a waiting time.
     logger.warning("\"{}\": Stopping procedure. Cause: AMF did not set any retry waiting time", name());
     logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), asn1_utils::get_cause_str(ng_fail->cause));
-    fmt::print("\"{}\" failed. AMF NGAP cause: \"{}\"\n", name(), asn1_utils::get_cause_str(ng_fail->cause));
     return false;
   }
   if (ng_setup_retry_no++ >= max_setup_retries) {
@@ -112,7 +108,6 @@ bool ng_setup_procedure::retry_required()
                    name(),
                    max_setup_retries);
     logger.warning("\"{}\" failed. AMF NGAP cause: \"{}\"", name(), asn1_utils::get_cause_str(ng_fail->cause));
-    fmt::print("\"{}\" failed. AMF NGAP cause: \"{}\"\n", name(), asn1_utils::get_cause_str(ng_fail->cause));
     return false;
   }
 
@@ -244,6 +239,9 @@ ngap_ng_setup_failure ng_setup_procedure::create_ngap_ng_setup_failure(const asn
 {
   ngap_ng_setup_failure fail;
   fail.cause = asn1_to_cause(asn1_fail->cause);
+  if (asn1_fail->time_to_wait_present) {
+    fail.time_to_wait = std::chrono::seconds{asn1_fail->time_to_wait.to_number()};
+  }
 
   return fail;
 }
