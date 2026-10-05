@@ -1467,6 +1467,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ra.max_nof_msg3_harq_retxs            = prach.max_msg3_harq_retx;
   out_cfg.ra.msg3_mcs_index                     = prach.fixed_msg3_mcs;
   out_cfg.ra.nof_prach_guardbands_rbs           = prach.nof_prach_guardbands_rbs;
+  out_cfg.ra.msg3_dtx_sinr_threshold_dB         = prach.msg3_dtx_sinr_threshold;
   out_cfg.ra.backoff_indicator_snr_threshold_dB = prach.backoff_indicator_snr_threshold;
   out_cfg.ra.backoff_indicator_max_preambles    = prach.backoff_indicator_max_preambles;
   out_cfg.ra.backoff_indicator_duration         = std::chrono::milliseconds{prach.backoff_indicator_duration_ms};

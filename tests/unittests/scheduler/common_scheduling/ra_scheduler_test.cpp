@@ -1281,7 +1281,8 @@ class ra_scheduler_cfra_test : public ra_scheduler_setup, public ::testing::Test
   static constexpr unsigned NOF_CB_PREAMBLES = 60;
 
 public:
-  ra_scheduler_cfra_test() : ra_scheduler_setup(make_cfra_sched_req(), false, false)
+  ra_scheduler_cfra_test(const scheduler_expert_config& sched_cfg_ = {}) :
+    ra_scheduler_setup(sched_cfg_, make_cfra_sched_req(), false, false)
   {
     OCUDU_TEST_REQUIREMENTS("MVP-FUNC-RACH-16-1", "DU-GEN-2-b");
 
@@ -1320,7 +1321,7 @@ public:
     return test_helper::create_rach_indication(cell_cfg, next_slot_rx(), {preamble});
   }
 
-  void send_cfra_crc(rnti_t tc_rnti, bool success)
+  void send_cfra_crc(rnti_t tc_rnti, bool success, std::optional<float> sinr_dB = std::nullopt)
   {
     ul_crc_indication crc_ind;
     crc_ind.cell_index = cell_cfg.cell_index;
@@ -1330,10 +1331,11 @@ public:
     pdu.ue_index       = cfra_ue_index;
     pdu.harq_id        = to_harq_id(0);
     pdu.tb_crc_success = success;
+    pdu.ul_sinr_dB     = sinr_dB;
     handle_crc_indication(crc_ind);
   }
 
-  void send_cbra_crc(rnti_t tc_rnti, bool success)
+  void send_cbra_crc(rnti_t tc_rnti, bool success, std::optional<float> sinr_dB = std::nullopt)
   {
     ul_crc_indication crc_ind;
     crc_ind.cell_index = cell_cfg.cell_index;
@@ -1343,6 +1345,7 @@ public:
     pdu.ue_index       = INVALID_DU_UE_INDEX;
     pdu.harq_id        = to_harq_id(0);
     pdu.tb_crc_success = success;
+    pdu.ul_sinr_dB     = sinr_dB;
     handle_crc_indication(crc_ind);
   }
 
@@ -1595,6 +1598,125 @@ TEST_F(ra_scheduler_cfra_test, crc_with_ue_index_of_non_cfra_rnti_is_filtered)
     run_slot();
   }
   ASSERT_GE(tracker.nof_msg3_retxs(), 1) << "Filtered CRC must not free the HARQ. Retx expected";
+}
+
+/// Fixture with a custom Msg3 DTX SINR threshold.
+class ra_scheduler_msg3_dtx_test : public ra_scheduler_cfra_test
+{
+protected:
+  static constexpr float dtx_sinr_threshold_dB = -5.0F;
+
+  ra_scheduler_msg3_dtx_test(std::optional<float> threshold_dB = dtx_sinr_threshold_dB) :
+    ra_scheduler_cfra_test(make_expert_cfg(threshold_dB))
+  {
+  }
+
+  static scheduler_expert_config make_expert_cfg(std::optional<float> threshold_dB)
+  {
+    scheduler_expert_config cfg{};
+    cfg.ra.msg3_dtx_sinr_threshold_dB = threshold_dB;
+    return cfg;
+  }
+
+  /// Runs until the Msg3 new-tx is in the current slot and NACKs it with the given SINR.
+  void nack_msg3_newtx(rnti_t tc_rnti, bool cfra, std::optional<float> sinr_dB)
+  {
+    for (unsigned i = 0, max_slots = 1000; i < max_slots and tracker.nof_msg3_newtxs() == 0; ++i) {
+      run_slot();
+    }
+    ASSERT_EQ(tracker.nof_msg3_newtxs(), 1) << "Msg3 new-tx was not scheduled";
+    if (cfra) {
+      send_cfra_crc(tc_rnti, false, sinr_dB);
+    } else {
+      send_cbra_crc(tc_rnti, false, sinr_dB);
+    }
+  }
+
+  bool msg3_retx_scheduled_in_next_slots(unsigned nof_slots)
+  {
+    for (unsigned i = 0; i != nof_slots and tracker.nof_msg3_retxs() == 0; ++i) {
+      run_slot();
+    }
+    return tracker.nof_msg3_retxs() > 0;
+  }
+};
+
+TEST_F(ra_scheduler_msg3_dtx_test, when_cbra_msg3_crc_ko_has_sinr_below_threshold_then_retxs_are_dropped)
+{
+  const rnti_t tc_rnti = to_rnti(0x4602);
+  handle_rach_indication(create_cbra_rach_indication(tc_rnti));
+  ASSERT_NO_FATAL_FAILURE(nack_msg3_newtx(tc_rnti, false, dtx_sinr_threshold_dB - 1));
+
+  ASSERT_FALSE(msg3_retx_scheduled_in_next_slots(100));
+}
+
+/// The dropped RA attempt must release its TC-RNTI right away, rather than at the ra-ContentionResolutionTimer expiry.
+TEST_F(ra_scheduler_msg3_dtx_test, when_cbra_msg3_is_dropped_as_dtx_then_tc_rnti_is_released_for_reuse)
+{
+  const rnti_t tc_rnti = to_rnti(0x4602);
+  handle_rach_indication(create_cbra_rach_indication(tc_rnti));
+  ASSERT_NO_FATAL_FAILURE(nack_msg3_newtx(tc_rnti, false, dtx_sinr_threshold_dB - 1));
+
+  // A new preamble reusing the TC-RNTI would be discarded if the repository still held the previous RA attempt.
+  ASSERT_EQ(ra_ue_repo.find(tc_rnti), ra_ue_repo.end()) << "TC-RNTI of the dropped Msg3 was not released";
+}
+
+TEST_F(ra_scheduler_msg3_dtx_test, when_cbra_msg3_crc_ko_has_sinr_above_threshold_then_retx_is_scheduled)
+{
+  const rnti_t tc_rnti = to_rnti(0x4602);
+  handle_rach_indication(create_cbra_rach_indication(tc_rnti));
+  ASSERT_NO_FATAL_FAILURE(nack_msg3_newtx(tc_rnti, false, dtx_sinr_threshold_dB + 1));
+
+  ASSERT_TRUE(msg3_retx_scheduled_in_next_slots(100));
+}
+
+TEST_F(ra_scheduler_msg3_dtx_test, when_cbra_msg3_crc_ko_has_no_sinr_then_retx_is_scheduled)
+{
+  const rnti_t tc_rnti = to_rnti(0x4602);
+  handle_rach_indication(create_cbra_rach_indication(tc_rnti));
+  ASSERT_NO_FATAL_FAILURE(nack_msg3_newtx(tc_rnti, false, std::nullopt));
+
+  ASSERT_TRUE(msg3_retx_scheduled_in_next_slots(100));
+}
+
+TEST_F(ra_scheduler_msg3_dtx_test, when_cfra_msg3_crc_ko_has_sinr_below_threshold_then_retx_is_scheduled)
+{
+  handle_rach_indication(create_cfra_rach_indication(cfra_crnti));
+  ASSERT_NO_FATAL_FAILURE(nack_msg3_newtx(cfra_crnti, true, dtx_sinr_threshold_dB - 1));
+
+  ASSERT_TRUE(msg3_retx_scheduled_in_next_slots(100));
+}
+
+TEST_F(ra_scheduler_cfra_test, when_cbra_msg3_crc_ko_has_sinr_below_default_threshold_then_retxs_are_dropped)
+{
+  const rnti_t tc_rnti = to_rnti(0x4602);
+  handle_rach_indication(create_cbra_rach_indication(tc_rnti));
+  for (unsigned i = 0, max_slots = 1000; i < max_slots and tracker.nof_msg3_newtxs() == 0; ++i) {
+    run_slot();
+  }
+  ASSERT_EQ(tracker.nof_msg3_newtxs(), 1);
+  send_cbra_crc(tc_rnti, false, -16.0F);
+
+  for (unsigned i = 0; i != 100; ++i) {
+    run_slot();
+  }
+  ASSERT_EQ(tracker.nof_msg3_retxs(), 0);
+}
+
+/// Fixture with the Msg3 DTX detection disabled.
+class ra_scheduler_msg3_dtx_disabled_test : public ra_scheduler_msg3_dtx_test
+{
+protected:
+  ra_scheduler_msg3_dtx_disabled_test() : ra_scheduler_msg3_dtx_test(std::nullopt) {}
+};
+
+TEST_F(ra_scheduler_msg3_dtx_disabled_test, when_msg3_dtx_threshold_is_not_set_then_low_sinr_crc_ko_triggers_retx)
+{
+  const rnti_t tc_rnti = to_rnti(0x4602);
+  handle_rach_indication(create_cbra_rach_indication(tc_rnti));
+  ASSERT_NO_FATAL_FAILURE(nack_msg3_newtx(tc_rnti, false, -100.0F));
+
+  ASSERT_TRUE(msg3_retx_scheduled_in_next_slots(100));
 }
 
 } // namespace

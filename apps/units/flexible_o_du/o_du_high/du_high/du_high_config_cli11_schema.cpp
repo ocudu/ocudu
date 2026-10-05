@@ -1756,6 +1756,12 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_rach_config& 
       ->capture_default_str()
       ->range(0, 4);
   add_option(app,
+             "--msg3_dtx_sinr_threshold",
+             prach_params.msg3_dtx_sinr_threshold,
+             "SINR threshold in dB below which a CBRA message 3 CRC KO is considered DTX and its retransmissions are "
+             "dropped")
+      ->capture_default_str();
+  add_option(app,
              "--backoff_indicator_snr_threshold",
              prach_params.backoff_indicator_snr_threshold,
              "SNR threshold in dB below which a detected PRACH preamble is excluded from the RAR and triggers a "

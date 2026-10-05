@@ -160,6 +160,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned nof_msg3_ok = 0;
     // Number of MSG3 KOs.
     unsigned nof_msg3_nok = 0;
+    // Number of MSG3 KOs considered DTX.
+    unsigned nof_msg3_dtx = 0;
     // Number of ra-ContentionResolutionTimer expiries that occurred before the ConRes CE could be scheduled.
     unsigned nof_conres_timer_expired = 0;
     // Number of ra-ContentionResolutionTimer expiries where the ConRes CE was scheduled but never positively ACKed.
@@ -218,6 +220,9 @@ public:
 
   /// \brief Register MSG3 CRC indication.
   void handle_msg3_crc_indication(const ul_crc_pdu_indication& crc_pdu);
+
+  /// \brief Register a MSG3 CRC KO considered DTX, whose retransmissions were dropped.
+  void handle_msg3_dtx();
 
   /// \brief Register a ra-ContentionResolutionTimer expiry that occurred before the ConRes CE could be scheduled.
   void handle_conres_timer_expired();

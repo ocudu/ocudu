@@ -816,10 +816,26 @@ void ra_scheduler::handle_ra_crc(const ul_crc_pdu_indication& crc, slot_point sl
   // Note: The ra_ue_repository entry is intentionally left in place once its Msg3 HARQ empties (slot_indication's
   // ConRes-timer sweep reclaims the ring slot in due course): the async UE-creation event still needs to read
   // prach_slot_rx from it.
+  const unsigned nof_retxs = h_ul->nof_retxs();
   h_ul->ul_crc_info(crc.tb_crc_success);
 
   // Forward MSG3 CRC indication to metrics handler.
   metrics_hdlr.handle_msg3_crc_indication(crc);
+
+  // A CBRA Msg3 KO with very low SINR suggests that no UE is listening (e.g. a preamble collision or false detection),
+  // so its reTxs are dropped and the TC-RNTI released. CFRA UEs are exempt, as dedicated preambles cannot collide.
+  const bool is_cbra = crc.ue_index == INVALID_DU_UE_INDEX;
+  if (is_cbra and not crc.tb_crc_success and sched_cfg.msg3_dtx_sinr_threshold_dB.has_value() and
+      crc.ul_sinr_dB.has_value() and *crc.ul_sinr_dB < *sched_cfg.msg3_dtx_sinr_threshold_dB) {
+    logger.debug("pci={} tc-rnti={}: Dropping Msg3 reTxs after nof_retxs={}. Cause: CRC KO with SINR={:.1f}dB below "
+                 "the DTX threshold",
+                 cell_cfg.params.pci,
+                 crc.rnti,
+                 nof_retxs,
+                 *crc.ul_sinr_dB);
+    metrics_hdlr.handle_msg3_dtx();
+    ra_ue_repo.erase(crc_it);
+  }
 }
 
 const ue_cell* ra_scheduler::find_cfra_ue(rnti_t crnti) const
@@ -956,9 +972,6 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Update Msg3 HARQ state and erase RA UE entries whose ra-ContentionResolutionTimer has expired.
   ra_ue_repo.slot_indication(res_alloc.slot_tx());
 
-  // Allocate the Msg3 reTxs that the CRCs handled so far left pending.
-  schedule_pending_msg3_retxs(res_alloc);
-
   // Allocate the MsgA PUSCHs of the PRACH occasions handled so far.
   schedule_pending_msgas(res_alloc);
 
@@ -967,6 +980,10 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
   // Schedule pending MsgBs.
   schedule_pending_msgbs(res_alloc);
+
+  // Msg3 reTxs go last, as RARs and MsgBs are bounded by their response window, while a reTx can be postponed. Under
+  // PRACH load, many reTxs also target preambles from collisions or false detections.
+  schedule_pending_msg3_retxs(res_alloc);
 }
 
 void ra_scheduler::stop()

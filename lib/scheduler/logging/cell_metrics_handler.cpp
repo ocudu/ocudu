@@ -157,6 +157,14 @@ void cell_metrics_handler::handle_msg3_crc_indication(const ul_crc_pdu_indicatio
   }
 }
 
+void cell_metrics_handler::handle_msg3_dtx()
+{
+  if (not enabled()) {
+    return;
+  }
+  data.nof_msg3_dtx++;
+}
+
 void cell_metrics_handler::handle_conres_timer_expired()
 {
   if (not enabled()) {
@@ -468,6 +476,7 @@ void cell_metrics_handler::report_metrics()
   next_report->failed_fallback_uci_allocs         = data.failed_fallback_uci_allocs;
   next_report->nof_msg3_ok                        = data.nof_msg3_ok;
   next_report->nof_msg3_nok                       = data.nof_msg3_nok;
+  next_report->nof_msg3_dtx                       = data.nof_msg3_dtx;
   next_report->nof_conres_timer_expired           = data.nof_conres_timer_expired;
   next_report->nof_conres_ce_never_acked          = data.nof_conres_ce_never_acked;
   next_report->avg_prach_delay_slots              = data.total_prach_preambles > 0

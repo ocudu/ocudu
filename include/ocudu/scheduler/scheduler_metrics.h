@@ -161,6 +161,8 @@ struct scheduler_cell_metrics {
   unsigned nof_msg3_ok = 0;
   /// Number of MSG3 KOs.
   unsigned nof_msg3_nok = 0;
+  /// Number of MSG3 KOs considered DTX, whose retransmissions were dropped.
+  unsigned nof_msg3_dtx = 0;
   /// Number of ra-ContentionResolutionTimer expiries that occurred before the ConRes CE could be scheduled.
   unsigned nof_conres_timer_expired = 0;
   /// Number of ra-ContentionResolutionTimer expiries where the ConRes CE was scheduled but never positively ACKed.

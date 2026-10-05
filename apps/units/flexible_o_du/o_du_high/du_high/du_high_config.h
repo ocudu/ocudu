@@ -1256,6 +1256,8 @@ struct du_high_unit_rach_config {
   unsigned zero_correlation_zone = 0;
   unsigned fixed_msg3_mcs        = 0;
   unsigned max_msg3_harq_retx    = 4;
+  /// SINR threshold, in dB, below which a CBRA Msg3 CRC KO is considered DTX and its reTxs dropped.
+  std::optional<float> msg3_dtx_sinr_threshold = -15.0F;
   /// \brief SNR threshold, in dB, below which a detected PRACH preamble is excluded from the RAR/Msg3 grant and
   /// triggers a Backoff Indicator in the RAR. Disabled if not set.
   std::optional<float> backoff_indicator_snr_threshold;

@@ -203,7 +203,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const scheduler_metrics_
         "failed_dl_pdcch={} failed_common_dl_pdcch={} failed_ul_pdcch={} failed_common_ul_pdcch={} failed_uci={} "
         "failed_fallback_uci_allocs={} "
         "nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
-        "latency_hist=[{}] msg3_ok={} msg3_nok={} conres_timer_expired={} conres_ce_never_acked={} late_dl_harqs={} "
+        "latency_hist=[{}] msg3_ok={} msg3_nok={} msg3_dtx={} conres_timer_expired={} conres_ce_never_acked={} "
+        "late_dl_harqs={} "
         "late_ul_harqs={} "
         "pucch_tot_rb_usage_avg={:.3}",
         cell.pci,
@@ -232,6 +233,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const scheduler_metrics_
         fmt::join(cell.latency_histogram.begin(), cell.latency_histogram.end(), ", "),
         cell.nof_msg3_ok,
         cell.nof_msg3_nok,
+        cell.nof_msg3_dtx,
         cell.nof_conres_timer_expired,
         cell.nof_conres_ce_never_acked,
         cell.nof_failed_pdsch_allocs_late_harqs,
