@@ -72,7 +72,19 @@ void conditional_handover_target_routine::operator()(coro_context<async_task<voi
                name());
 
   // Transfer NGAP/E1AP UE context from source to target.
-  cu_cp_handler.handle_handover_ue_context_push(request.source_ue_index, request.target_ue_index);
+  CORO_AWAIT_VALUE(ue_context_moved,
+                   cu_cp_handler.handle_handover_ue_context_push(request.source_ue_index, request.target_ue_index));
+  if (not ue_context_moved) {
+    logger.warning("target_ue={} source_ue={}: \"{}\" failed to transfer the source UE context",
+                   request.target_ue_index,
+                   request.source_ue_index,
+                   name());
+    release_cmd          = {};
+    release_cmd.ue_index = request.target_ue_index;
+    release_cmd.cause    = ngap_cause_radio_network_t::unspecified;
+    CORO_AWAIT_VALUE(release_complete, ue_context_release_handler.handle_ue_context_release_command(release_cmd));
+    CORO_EARLY_RETURN();
+  }
 
   target_ue = ue_mng.find_du_ue(request.target_ue_index);
   if (target_ue == nullptr) {

@@ -101,9 +101,10 @@ public:
   void                                    handle_ran_paging_required(cu_cp_ue_index_t ue_index) override;
 
   // cu_cp_ue_context_manipulation_handler.
-  void handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request) override;
-  void handle_cho_reconfiguration_sent(const cu_cp_cho_target_request& request) override;
-  void handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index, cu_cp_ue_index_t target_ue_index) override;
+  void             handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request) override;
+  void             handle_cho_reconfiguration_sent(const cu_cp_cho_target_request& request) override;
+  async_task<bool> handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index,
+                                                   cu_cp_ue_index_t target_ue_index) override;
   void
        initialize_handover_ue_release_timer(cu_cp_ue_index_t                        ue_index,
                                             std::chrono::milliseconds               handover_ue_release_timeout,

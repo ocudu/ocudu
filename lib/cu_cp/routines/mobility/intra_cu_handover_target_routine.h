@@ -67,7 +67,8 @@ private:
   cu_cp_ue_context_release_command         ue_context_release_command;
 
   // (Sub-)routine results.
-  bool                                      reconf_result = false;
+  bool                                      reconf_result    = false;
+  bool                                      ue_context_moved = false;
   e1ap_bearer_context_modification_response bearer_context_modification_response;
 };
 

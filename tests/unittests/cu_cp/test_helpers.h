@@ -174,9 +174,11 @@ public:
                 request.source_ue_index);
   }
 
-  void handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index, cu_cp_ue_index_t target_ue_index) override
+  async_task<bool> handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index,
+                                                   cu_cp_ue_index_t target_ue_index) override
   {
     logger.info("source_ue={} target_ue={}: Received handover ue context push", source_ue_index, target_ue_index);
+    return launch_no_op_task(true);
   }
 
   void initialize_handover_ue_release_timer(cu_cp_ue_index_t                        ue_index,

@@ -815,38 +815,76 @@ void cu_cp_impl::handle_cho_reconfiguration_sent(const cu_cp_cho_target_request&
       request, ue_mng, du_db, cu_up_db, *this, *this, mobility_mng, logger));
 }
 
-void cu_cp_impl::handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index, cu_cp_ue_index_t target_ue_index)
+async_task<bool> cu_cp_impl::handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index,
+                                                             cu_cp_ue_index_t target_ue_index)
 {
-  auto* ue = ue_mng.find_ue(target_ue_index);
-  ocudu_assert(ue != nullptr, "ue={} not found", target_ue_index);
-  ocudu_assert(ue->get_cu_up_index() != cu_cp_cu_up_index_t::invalid,
-               "ue={}: could not find CU-UP of the target UE",
-               target_ue_index);
-
-  auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
-  if (ngap == nullptr) {
-    logger.warning(
-        "ue={}: could not find NGAP of the target UE for plmn={}", target_ue_index, ue->get_ue_context().plmn);
-    return;
+  if (ue_mng.find_ue(source_ue_index) == nullptr) {
+    logger.warning("ue={}: could not find source UE of the target ue={}", source_ue_index, target_ue_index);
+    return launch_no_op_task(false);
   }
 
-  // Transfer NGAP UE Context to new UE and remove the old context.
-  if (!ngap->update_ue_index(target_ue_index, source_ue_index, ue->get_ngap_cu_cp_ue_notifier())) {
-    return;
-  }
-  // Transfer E1AP UE Context to new UE and remove old context.
-  cu_up_db.find_cu_up_processor(ue->get_cu_up_index())->update_ue_index(target_ue_index, source_ue_index);
+  // Task to run in source UE task scheduler.
+  auto handle_handover_ue_context_push_impl = [this, source_ue_index, target_ue_index]() {
+    auto* source_ue = ue_mng.find_ue(source_ue_index);
+    if (source_ue == nullptr) {
+      logger.warning("ue={}: could not find source UE of the target ue={}", source_ue_index, target_ue_index);
+      return false;
+    }
 
-  // Transfer NRPPA UE Context (if any) to new UE and remove old context.
-  nrppa_entity->get_nrppa_ue_context_removal_handler().update_ue_index(
-      target_ue_index, source_ue_index, ue->get_nrppa_cu_cp_ue_notifier());
+    auto* ue = ue_mng.find_ue(target_ue_index);
+    if (ue == nullptr) {
+      logger.warning("ue={}: could not find target UE", target_ue_index);
+      return false;
+    }
+    if (ue->get_cu_up_index() == cu_cp_cu_up_index_t::invalid) {
+      logger.warning("ue={}: could not find CU-UP of the target UE", target_ue_index);
+      return false;
+    }
 
-  // Transfer location reporting configuration and UE AMBR from source UE to target UE.
-  auto* source_ue = ue_mng.find_ue(source_ue_index);
-  if (source_ue != nullptr) {
+    auto* ngap = ngap_db.find_ngap(ue->get_ue_context().plmn);
+    if (ngap == nullptr) {
+      logger.warning(
+          "ue={}: could not find NGAP of the target UE for plmn={}", target_ue_index, ue->get_ue_context().plmn);
+      return false;
+    }
+
+    // Transfer NGAP UE Context to new UE and remove the old context.
+    if (!ngap->update_ue_index(target_ue_index, source_ue_index, ue->get_ngap_cu_cp_ue_notifier())) {
+      return false;
+    }
+    // Transfer E1AP UE Context to new UE and remove old context.
+    cu_up_db.find_cu_up_processor(ue->get_cu_up_index())->update_ue_index(target_ue_index, source_ue_index);
+
+    // Transfer NRPPA UE Context (if any) to new UE and remove old context.
+    nrppa_entity->get_nrppa_ue_context_removal_handler().update_ue_index(
+        target_ue_index, source_ue_index, ue->get_nrppa_cu_cp_ue_notifier());
+
+    // Transfer location reporting configuration and UE AMBR from source UE to target UE.
     ue->get_location_manager().set_config(source_ue->get_location_manager().get_config());
     ue->set_ue_ambr(source_ue->get_ue_ambr());
+
+    return true;
+  };
+
+  if (source_ue_index == target_ue_index) {
+    // The caller already runs in the source UE task scheduler. A dispatch to it would wait for the caller itself.
+    return launch_no_op_task(handle_handover_ue_context_push_impl());
   }
+
+  async_task<bool> push_task =
+      launch_async([impl = std::move(handle_handover_ue_context_push_impl)](coro_context<async_task<bool>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN(impl());
+      });
+
+  // Run the push in the source UE task scheduler, so that it does not interleave with a source UE procedure, e.g. a
+  // UE context release. If such a procedure removes the source UE, the source UE task scheduler drops the push.
+  return launch_async([dispatched = ue_mng.get_task_sched().dispatch_and_await_task_completion(
+                           source_ue_index, std::move(push_task))](coro_context<async_task<bool>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(const auto result, dispatched);
+    CORO_RETURN(result.has_value() and result.value());
+  });
 }
 
 void cu_cp_impl::trigger_release(pci_t                                         source_pci,

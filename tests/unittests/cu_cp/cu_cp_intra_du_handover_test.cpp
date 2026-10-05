@@ -688,6 +688,52 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_fails_and_ue_is_gone_then_source_an
   ASSERT_EQ(report.ues.size(), 0) << "Target UE should be removed";
 }
 
+TEST_F(cu_cp_intra_du_handover_test,
+       when_source_ue_release_is_ongoing_at_rrc_reconfiguration_complete_then_source_and_target_ue_are_removed)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-1-a", "MVP-FUNC-MOB-1-b");
+
+  // Inject Measurement Report and await F1AP UE Context Setup Request.
+  ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
+
+  // Inject UE Context Setup Response and await UE Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
+
+  // Inject UE Context Modification Response.
+  ASSERT_TRUE(send_ue_context_modification_response());
+
+  // The AMF releases the source UE, e.g. after a deregistration of the UE.
+  // Inject NGAP UE Context Release Command and await E1AP Bearer Context Release Command.
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
+
+  // Inject RRC Reconfiguration Complete for the target UE while the source UE release is ongoing.
+  ASSERT_TRUE(send_rrc_reconfiguration_complete());
+
+  // STATUS: The target UE must not use the bearer context while the source UE releases it.
+  ASSERT_FALSE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu)) << "Unexpected E1AP PDU";
+
+  // Inject Bearer Context Release Complete and await F1AP UE Context Release Command for the source UE.
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command());
+  ASSERT_EQ(int_to_gnb_du_ue_f1ap_id(f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->gnb_du_ue_f1ap_id),
+            ue_ctx->du_ue_id.value());
+
+  // Inject F1AP UE Context Release Complete and await NGAP UE Context Release Complete.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete());
+
+  // STATUS: The source UE context is gone, so the CU-CP releases the target UE.
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
+  ASSERT_EQ(int_to_gnb_du_ue_f1ap_id(f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->gnb_du_ue_f1ap_id),
+            target_du_ue_id);
+
+  // Inject F1AP UE Context Release Complete for the target UE.
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete(target_cu_ue_id, target_du_ue_id));
+
+  // STATUS: Source and target UE should be removed from DU.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 0) << "Source and target UE should be removed";
+}
+
 TEST_F(cu_cp_intra_du_handover_test, when_ho_fails_then_reestablishment_to_source_ue_succeeds)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-1-a", "MVP-FUNC-MOB-1-b", "CU-GEN-3");

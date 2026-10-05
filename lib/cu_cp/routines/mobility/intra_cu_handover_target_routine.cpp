@@ -62,7 +62,18 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
 
   {
     // Transfer old UE context (NGAP, E1AP, location manager) to new UE context and remove old UE context.
-    cu_cp_handler.handle_handover_ue_context_push(request.source_ue_index, request.target_ue_index);
+    CORO_AWAIT_VALUE(ue_context_moved,
+                     cu_cp_handler.handle_handover_ue_context_push(request.source_ue_index, request.target_ue_index));
+    if (not ue_context_moved) {
+      logger.warning("ue={}: \"{}\" failed to transfer the UE context of source ue={}",
+                     request.target_ue_index,
+                     name(),
+                     request.source_ue_index);
+      ue_context_release_command.ue_index = request.target_ue_index;
+      ue_context_release_command.cause    = ngap_cause_radio_network_t::unspecified;
+      CORO_AWAIT(ue_context_release_handler.handle_ue_context_release_command(ue_context_release_command));
+      CORO_EARLY_RETURN();
+    }
   }
 
   // Inform CU-UP about new DL tunnels.

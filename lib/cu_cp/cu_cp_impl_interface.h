@@ -369,9 +369,14 @@ public:
   virtual void handle_cho_reconfiguration_sent(const cu_cp_cho_target_request& request) = 0;
 
   /// \brief Handle a UE context push during handover.
+  ///
+  /// The push runs in the source UE task scheduler. It does not run if the source UE is removed first.
+  ///
   /// \param[in] source_ue_index The index of the UE that is the source of the handover.
   /// \param[in] target_ue_index The index of the UE that is the target of the handover.
-  virtual void handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index, cu_cp_ue_index_t target_ue_index) = 0;
+  /// \return True if the UE context was pushed to the target UE, false otherwise.
+  virtual async_task<bool> handle_handover_ue_context_push(cu_cp_ue_index_t source_ue_index,
+                                                           cu_cp_ue_index_t target_ue_index) = 0;
 
   /// \brief Initialize a handover UE release timer. When the timeout is reached, a release request is sent to the AMF.
   /// \param[in] ue_index The index of the UE.
