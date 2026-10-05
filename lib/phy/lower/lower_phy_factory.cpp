@@ -167,8 +167,7 @@ public:
                                                    .controller         = std::move(controller),
                                                    .rx_symbol_notifier = dependencies.rx_symbol_notifier,
                                                    .timing_notifier    = dependencies.timing_notifier,
-                                                   .error_notifier     = dependencies.error_notifier,
-                                                   .metrics_notifier   = dependencies.metric_notifier};
+                                                   .error_notifier     = dependencies.error_notifier};
 
     return std::make_unique<lower_phy_impl>(std::move(lower_phy_deps));
   }

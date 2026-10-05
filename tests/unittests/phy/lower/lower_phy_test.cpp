@@ -291,7 +291,6 @@ protected:
                                    .rx_symbol_notifier   = rx_symbol_notifier_spy,
                                    .timing_notifier      = timing_notifier_spy,
                                    .error_notifier       = error_notifier_spy,
-                                   .metric_notifier      = metrics_notifier_spy,
                                    .rx_task_executor     = rx_task_executor,
                                    .tx_task_executor     = tx_task_executor,
                                    .dl_task_executor     = dl_task_executor,
@@ -394,7 +393,6 @@ protected:
   lower_phy_rx_symbol_notifier_spy        rx_symbol_notifier_spy;
   lower_phy_timing_notifier_spy           timing_notifier_spy;
   lower_phy_error_notifier_spy            error_notifier_spy;
-  lower_phy_metrics_notifier_spy          metrics_notifier_spy;
   manual_task_worker_always_enqueue_tasks tx_task_executor;
   manual_task_worker_always_enqueue_tasks rx_task_executor;
   manual_task_worker_always_enqueue_tasks dl_task_executor;

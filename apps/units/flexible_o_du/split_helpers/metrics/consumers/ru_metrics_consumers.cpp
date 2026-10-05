@@ -211,8 +211,10 @@ void ru_metrics_consumer_log::handle_metric(const ru_metrics& metric)
 
 static void print_sdr_header()
 {
-  fmt::println("     | ------------------- TX ------------------ | ------------------- RX ------------------ |");
-  fmt::println(" pci | Avg. power | Peak power | PAPR | Clipping | Avg. power | Peak power | PAPR | Clipping |");
+  fmt::println("     | ------------------- TX ----------------------------- | ------------------- RX "
+               "----------------------------- |");
+  fmt::println(" pci | Avg. power | Peak power | PAPR | Clipping | Net Rate | Avg. power | Peak power | PAPR | "
+               "Clipping | Net Rate |");
 }
 
 void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
@@ -245,16 +247,19 @@ void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_sdr_metric
                  cell.sector_id,
                  pci_sector_map.size());
 
-    fmt::println(" {:>3} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} |",
+    fmt::println(" {:>3} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} | {:>8.1f} | {:>10.1f} | {:>10.1f} | {:>4.1f} | "
+                 "{:>8.1e} | {:>8.1f} |",
                  static_cast<unsigned>(pci_sector_map[cell.sector_id]),
                  validate_fp_value(cell.tx_avg_power_dB),
                  validate_fp_value(cell.tx_peak_power_dB),
                  validate_fp_value(cell.tx_papr_dB),
                  validate_fp_value(cell.tx_clipping_prob),
+                 validate_fp_value(cell.tx_net_call_rate_MHz),
                  validate_fp_value(cell.rx_avg_power_dB),
                  validate_fp_value(cell.rx_peak_power_dB),
                  validate_fp_value(cell.rx_papr_dB),
-                 validate_fp_value(cell.rx_clipping_prob));
+                 validate_fp_value(cell.rx_clipping_prob),
+                 validate_fp_value(cell.rx_net_call_rate_MHz));
   }
 }
 

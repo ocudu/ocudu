@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "lower_phy_sector_metrics_collector.h"
 #include "lower_phy_sector_timing_handler.h"
 #include "ocudu/phy/lower/lower_phy.h"
 #include <memory>
@@ -52,16 +51,12 @@ public:
     lower_phy = std::move(phy);
   }
 
-  /// Returns the metrics collector of this lower PHY sector.
-  lower_phy_sector_metrics_collector& get_metrics_collector() { return metric_collector; }
-
   /// Returns the timing notifier of this lower PHY sector.
   lower_phy_timing_notifier& get_timing_notifier() { return timing_handler; }
 
 private:
-  lower_phy_sector_metrics_collector metric_collector;
-  lower_phy_sector_timing_handler    timing_handler;
-  std::unique_ptr<lower_phy>         lower_phy;
+  lower_phy_sector_timing_handler timing_handler;
+  std::unique_ptr<lower_phy>      lower_phy;
 };
 
 } // namespace ocudu

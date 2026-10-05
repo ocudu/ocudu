@@ -14,10 +14,12 @@
 using namespace ocudu;
 
 /// Creates a radio session with the given parameters.
-static std::unique_ptr<radio_session> create_radio_session(task_executor&                    executor,
-                                                           radio_event_notifier&             radio_handler,
-                                                           const radio_configuration::radio& config,
-                                                           const std::string&                device_driver)
+static std::unique_ptr<radio_session>
+create_radio_session(task_executor&                                                              executor,
+                     radio_event_notifier&                                                       radio_handler,
+                     const std::vector<std::reference_wrapper<radio_baseband_metrics_notifier>>& metric_notifiers,
+                     const radio_configuration::radio&                                           config,
+                     const std::string&                                                          device_driver)
 {
   print_available_radio_factories();
 
@@ -26,16 +28,14 @@ static std::unique_ptr<radio_session> create_radio_session(task_executor&       
     return nullptr;
   }
 
-  if (config.log_level == ocudulog::basic_levels::debug) {
-    factory = create_radio_metrics_decorator_factory(std::move(factory), config.log_level);
-  }
-  if (!factory) {
-    return nullptr;
+  // Create optional radio baseband metrics decorator.
+  if (!metric_notifiers.empty()) {
+    factory = create_radio_metrics_decorator_factory(std::move(factory), metric_notifiers, config.log_level);
+    report_error_if_not(factory, "Failed to create baseband metric decorators.");
   }
 
-  if (!factory->get_configuration_validator().is_configuration_valid(config)) {
-    report_error("Invalid radio configuration.");
-  }
+  report_error_if_not(factory->get_configuration_validator().is_configuration_valid(config),
+                      "Invalid radio configuration.");
 
   return factory->create(config, executor, radio_handler);
 }
@@ -45,6 +45,7 @@ std::unique_ptr<radio_unit> ocudu::create_sdr_ru(const ru_sdr_configuration& con
 {
   ru_sdr_impl_config ru_config = {.srate_MHz           = config.radio_cfg.sampling_rate_Hz * 1e-6,
                                   .start_time          = config.start_time,
+                                  .nof_sectors         = config.lower_phy_config.size(),
                                   .are_metrics_enabled = config.are_metrics_enabled};
 
   ru_sdr_impl_dependencies ru_dependencies = {.rx_symbol_handler = dependencies.symbol_notifier,
@@ -55,8 +56,11 @@ std::unique_ptr<radio_unit> ocudu::create_sdr_ru(const ru_sdr_configuration& con
 
   auto ru = std::make_unique<ru_sdr_impl>(ru_config, ru_dependencies);
 
-  auto radio = create_radio_session(
-      dependencies.radio_exec, ru->get_radio_event_notifier(), config.radio_cfg, config.device_driver);
+  auto radio = create_radio_session(dependencies.radio_exec,
+                                    ru->get_radio_event_notifier(),
+                                    ru->get_baseband_metric_notifiers(),
+                                    config.radio_cfg,
+                                    config.device_driver);
   report_error_if_not(radio, "Unable to create radio session.");
 
   ru->set_radio(std::move(radio));

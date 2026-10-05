@@ -20,9 +20,9 @@ void ru_metrics_collector_sdr_impl::collect_metrics(ru_metrics& metrics)
   ru_metrics.cells.resize(sector_metrics_collectors.size());
 
   unsigned sector_id = 0;
-  for (auto* collector : sector_metrics_collectors) {
+  for (auto& collector : sector_metrics_collectors) {
     ru_sdr_sector_metrics& cell_metric = ru_metrics.cells[sector_id];
     cell_metric.sector_id              = sector_id++;
-    collector->collect_metrics(cell_metric);
+    collector.collect_metrics(cell_metric);
   }
 }

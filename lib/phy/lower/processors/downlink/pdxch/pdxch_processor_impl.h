@@ -100,7 +100,7 @@ private:
   static constexpr unsigned max_slot_modulation_concurrency = 4;
 
   /// Buffer request pool alias.
-  using buffer_request_pool = resource_request_pool<pdxch_processor_baseband::slot_result>;
+  using buffer_request_pool = resource_request_pool<baseband_gateway_buffer_ptr>;
 
   /// The request pool size must be a multiple of the modulation concurrency. This guarantees that any two slots mapping
   /// to the same pool entry (i.e. equal modulo the pool size) are also mapped to the same modulator. As each modulator
@@ -115,7 +115,7 @@ private:
   }
 
   // See pdxch_processor_baseband interface for documentation.
-  pdxch_processor_baseband::slot_result process_slot(slot_context context) override;
+  baseband_gateway_buffer_ptr process_slot(slot_context context) override;
 
   // See pdxch_processor_request_handler interface for documentation.
   void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override;
@@ -124,7 +124,7 @@ private:
   bool set_carrier_center_frequency(double carrier_center_frequency_Hz) override;
 
   // See pdxch_processor_modulator_notifier interface for documentation.
-  void on_modulation_completion(pdxch_processor_baseband::slot_result result, resource_grid_context context) override;
+  void on_modulation_completion(baseband_gateway_buffer_ptr result, const resource_grid_context& context) override;
 
   /// Physical layer logger. Used for logging errors when the number of buffers are exhausted or a modulator is busy.
   ocudulog::basic_logger& logger;

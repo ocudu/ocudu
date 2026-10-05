@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "lower_phy/lower_phy_sector.h"
+#include "radio_baseband_sector_metrics_collector.h"
+#include "ocudu/adt/span.h"
 #include "ocudu/ru/ru_metrics_collector.h"
 #include <vector>
 
@@ -16,17 +17,17 @@ class ru_radio_metrics_collector;
 /// Metrics collector implementation for the SDR RU.
 class ru_metrics_collector_sdr_impl : public ru_metrics_collector
 {
-  ru_radio_metrics_collector&                      radio;
-  std::vector<lower_phy_sector_metrics_collector*> sector_metrics_collectors;
+  ru_radio_metrics_collector&                          radio;
+  std::vector<radio_baseband_sector_metrics_collector> sector_metrics_collectors;
 
 public:
-  explicit ru_metrics_collector_sdr_impl(ru_radio_metrics_collector& radio_) : radio(radio_) {}
-
-  /// Sets the list of lower PHY sector collectors.
-  void set_lower_phy_sectors(std::vector<lower_phy_sector_metrics_collector*> collectors)
+  explicit ru_metrics_collector_sdr_impl(ru_radio_metrics_collector& radio_, unsigned nof_sectors) :
+    radio(radio_), sector_metrics_collectors(nof_sectors)
   {
-    sector_metrics_collectors = std::move(collectors);
   }
+
+  /// Sets the list of baseband metrics per sector collectors.
+  span<radio_baseband_sector_metrics_collector> get_baseband_metrics_collector() { return sector_metrics_collectors; }
 
   // See interface for documentation.
   void collect_metrics(ru_metrics& metrics) override;

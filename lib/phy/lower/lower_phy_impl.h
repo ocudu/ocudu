@@ -8,23 +8,15 @@
 #include "lower_phy_baseband_processor.h"
 #include "processors/adaptors/processor_handler_adaptor.h"
 #include "processors/adaptors/processor_notifier_adaptor.h"
-#include "ocudu/adt/circular_array.h"
-#include "ocudu/gateways/baseband/baseband_gateway.h"
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "ocudu/phy/lower/lower_phy.h"
-#include "ocudu/phy/lower/lower_phy_configuration.h"
 #include "ocudu/phy/lower/lower_phy_controller.h"
 #include "ocudu/phy/lower/lower_phy_downlink_handler.h"
 #include "ocudu/phy/lower/lower_phy_error_notifier.h"
-#include "ocudu/phy/lower/lower_phy_metrics_notifier.h"
 #include "ocudu/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "ocudu/phy/lower/lower_phy_timing_notifier.h"
 #include "ocudu/phy/lower/lower_phy_uplink_request_handler.h"
-#include "ocudu/phy/lower/modulation/ofdm_modulator.h"
 #include "ocudu/phy/lower/processors/downlink/downlink_processor.h"
 #include "ocudu/phy/lower/processors/uplink/uplink_processor.h"
-#include "ocudu/phy/support/resource_grid_pool.h"
-#include "ocudu/support/math/stats.h"
 
 namespace ocudu {
 
@@ -46,8 +38,6 @@ public:
     lower_phy_timing_notifier& timing_notifier;
     /// Error handler to notify runtime errors.
     lower_phy_error_notifier& error_notifier;
-    /// Metrics handler to notify metrics.
-    lower_phy_metrics_notifier& metrics_notifier;
   };
 
   /// Constructs a generic lower physical layer.

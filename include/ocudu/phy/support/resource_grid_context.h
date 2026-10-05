@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "ocudu/phy/support/resource_grid.h"
 #include "ocudu/ran/slot_point.h"
 
 namespace ocudu {

@@ -14,11 +14,6 @@ void processor_notifier_adaptor::downlink_adaptor::on_tti_boundary(const lower_p
   timing_notifier.on_tti_boundary(context);
 }
 
-void processor_notifier_adaptor::downlink_adaptor::on_new_metrics(const lower_phy_baseband_metrics& metrics)
-{
-  metric_notifier.on_new_transmit_metrics(metrics);
-}
-
 void processor_notifier_adaptor::uplink_adaptor::on_half_slot(const lower_phy_timing_context& context)
 {
   timing_notifier.on_ul_half_slot_boundary(context);
@@ -27,11 +22,6 @@ void processor_notifier_adaptor::uplink_adaptor::on_half_slot(const lower_phy_ti
 void processor_notifier_adaptor::uplink_adaptor::on_full_slot(const lower_phy_timing_context& context)
 {
   timing_notifier.on_ul_full_slot_boundary(context);
-}
-
-void processor_notifier_adaptor::uplink_adaptor::on_new_metrics(const lower_phy_baseband_metrics& metrics)
-{
-  metric_notifier.on_new_receive_metrics(metrics);
 }
 
 void processor_notifier_adaptor::pdxch_adaptor::on_pdxch_request_late(const resource_grid_context& context)

@@ -93,7 +93,6 @@ std::unique_ptr<lower_phy_sector> ocudu::create_lower_phy_sector(const lower_phy
                                          .rx_symbol_notifier   = sector_deps.rx_symbol_notifier,
                                          .timing_notifier      = sector->get_timing_notifier(),
                                          .error_notifier       = sector_deps.error_notifier,
-                                         .metric_notifier      = sector->get_metrics_collector(),
                                          .rx_task_executor     = sector_deps.rx_task_executor,
                                          .tx_task_executor     = sector_deps.tx_task_executor,
                                          .dl_task_executor     = sector_deps.dl_task_executor,

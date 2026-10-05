@@ -9,7 +9,7 @@
 using namespace ocudu;
 
 lower_phy_impl::lower_phy_impl(dependencies deps) :
-  notification_adaptor(deps.error_notifier, deps.metrics_notifier, deps.rx_symbol_notifier, deps.timing_notifier),
+  notification_adaptor(deps.error_notifier, deps.rx_symbol_notifier, deps.timing_notifier),
   downlink_proc(std::move(deps.downlink_proc)),
   uplink_proc(std::move(deps.uplink_proc)),
   handler_adaptor(downlink_proc->get_downlink_request_handler(),

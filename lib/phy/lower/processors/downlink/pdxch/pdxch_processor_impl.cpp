@@ -62,14 +62,14 @@ void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
   }
 }
 
-void pdxch_processor_impl::on_modulation_completion(pdxch_processor_baseband::slot_result result,
-                                                    resource_grid_context                 context)
+void pdxch_processor_impl::on_modulation_completion(baseband_gateway_buffer_ptr  buffer,
+                                                    const resource_grid_context& context)
 {
   // Write modulation result in the request buffer.
-  auto request = requests.exchange({context.slot, std::move(result)});
+  auto request = requests.exchange({context.slot, std::move(buffer)});
 
   // Check if the previous entry in the request buffer is not empty.
-  if (request.resource.buffer) {
+  if (request.resource) {
     notifier->on_pdxch_request_late(resource_grid_context{.slot = request.slot, .sector = context.sector});
     general_critical_tracer << instant_trace_event{"on_pdxch_request_late",
                                                    instant_trace_event::cpu_scope::thread,
@@ -83,13 +83,13 @@ bool pdxch_processor_impl::set_carrier_center_frequency(double carrier_center_fr
   return true;
 }
 
-pdxch_processor_baseband::slot_result pdxch_processor_impl::process_slot(slot_context context)
+baseband_gateway_buffer_ptr pdxch_processor_impl::process_slot(slot_context context)
 {
   // Exchange an empty request with the current slot with a stored request.
   auto request = requests.exchange({.slot = context.slot, .resource = {}});
 
   // If the request buffer is invalid, the request is empty.
-  if (!request.resource.buffer) {
+  if (!request.resource) {
     return {};
   }
 

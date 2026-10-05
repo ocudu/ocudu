@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include "ocudu/radio/radio_baseband_metrics_notifier.h"
 #include "ocudu/radio/radio_configuration.h"
 #include "ocudu/radio/radio_session.h"
 #include "ocudu/support/executors/task_executor.h"
-#include <memory>
+#include <vector>
 
 namespace ocudu {
 
@@ -50,17 +51,22 @@ std::unique_ptr<radio_factory> create_dynamic_radio_factory();
 /// \return A valid radio factory if the factory is successfully created, otherwise \c nullptr.
 std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);
 
+/// Helper function to print all statically linked available radio factories to \c stdout.
+void print_available_radio_factories();
+
 /// \brief Creates a radio factory that instantiates decorated radio sessions from a base radio factory.
 ///
-/// The decorator gather metrics and prints them in the \e RADIO channel logger as info.
+/// The decorator gathers baseband execution metrics and prints them in the \e RADIO channel logger as info.
 ///
-/// \param[in] radio_factory_base_ Base radio factory to create radio instances.
-/// \param[in] rf_log_level        RF log level used by the decorator logger.
-std::unique_ptr<radio_factory>
-create_radio_metrics_decorator_factory(std::unique_ptr<radio_factory> radio_factory_base_,
-                                       ocudulog::basic_levels         rf_log_level);
-
-/// \brief Helper function to print all statically linked available radio factories to \c stdout.
-void print_available_radio_factories();
+/// If a list of metric notifiers is provided per stream, then baseband IQ metrics are measured and notified.
+///
+/// \param radio_factory_base_  Base radio factory to create radio instances.
+/// \param metric_notifiers_    Optional radio baseband metric notifiers (empty means no baseband IQ metrics).
+/// \param rf_log_level         RF log level used by the decorator logger.
+/// \return A radio factory that wraps \a radio_factory_base_ with metrics collection.
+std::unique_ptr<radio_factory> create_radio_metrics_decorator_factory(
+    std::unique_ptr<radio_factory>                                              radio_factory_base_,
+    const std::vector<std::reference_wrapper<radio_baseband_metrics_notifier>>& metric_notifiers_,
+    ocudulog::basic_levels                                                      rf_log_level);
 
 } // namespace ocudu

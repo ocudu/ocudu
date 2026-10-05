@@ -4,10 +4,14 @@
 
 #pragma once
 
+#include "ocudu/adt/span.h"
 #include "ocudu/gateways/baseband/baseband_gateway_receiver.h"
 #include "ocudu/gateways/baseband/baseband_gateway_transmitter.h"
-#include "ocudu/radio/radio_factory.h"
+#include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/radio/radio_baseband_metrics_notifier.h"
+#include "ocudu/radio/radio_session.h"
 #include "ocudu/support/math/stats.h"
+#include <memory>
 
 namespace ocudu {
 
@@ -36,7 +40,13 @@ public:
   baseband_gateway_decorator() = delete;
 
   /// Constructor that decorates a baseband gateway passed by reference.
-  baseband_gateway_decorator(baseband_gateway& gateway_base_) : gateway_base(gateway_base_) {}
+  ///
+  /// \param gateway_base_  Base gateway to decorate.
+  /// \param notifier_      Optional baseband metrics notifier (nullptr = no notification or IQ metrics).
+  baseband_gateway_decorator(baseband_gateway& gateway_base_, radio_baseband_metrics_notifier* notifier_ = nullptr) :
+    gateway_base(gateway_base_), notifier(notifier_)
+  {
+  }
 
   // See the baseband_gateway interface for documentation.
   unsigned get_transmitter_optimal_buffer_size() const override
@@ -65,6 +75,8 @@ public:
 private:
   /// Base gateway to be decorated.
   baseband_gateway& gateway_base;
+  /// Optional radio baseband metric notifier (nullptr = no notification or IQ metrics).
+  radio_baseband_metrics_notifier* notifier;
   /// Transmit and receive radio statistics.
   tx_rx_statistics radio_stats;
 };
@@ -78,12 +90,13 @@ public:
 
   /// \brief Constructor that takes ownership of a base radio and provides decorated transmit and receive calls.
   ///
-  /// \param[in] radio_session_base_ Base radio session to decorate.
-  /// \param[in] nof_streams         Number of configured streams in the base radio session.
-  /// \param[in] rf_log_level        RF log level to use in the decorator.
-  radio_metrics_decorator(std::unique_ptr<radio_session> radio_session_base_,
-                          unsigned                       nof_streams,
-                          ocudulog::basic_levels         rf_log_level);
+  /// \param radio_session_base_  Base radio session to decorate.
+  /// \param notifiers            Optional radio baseband metric notifiers, one per stream (empty or nullptr = no
+  ///                             notification or IQ metrics).
+  /// \param rf_log_level         RF log level to use in the decorator.
+  radio_metrics_decorator(std::unique_ptr<radio_session>         radio_session_base_,
+                          span<radio_baseband_metrics_notifier*> notifiers,
+                          ocudulog::basic_levels                 rf_log_level);
 
   // See the radio_session interface for documentation.
   radio_management_plane& get_management_plane() override { return radio_session_base->get_management_plane(); }

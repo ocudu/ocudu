@@ -17,11 +17,13 @@ struct ru_sdr_sector_metrics {
   float    tx_avg_power_dB;
   float    tx_peak_power_dB;
   float    tx_papr_dB;
-  float    tx_clipping_prob = std::numeric_limits<double>::quiet_NaN();
+  double   tx_clipping_prob     = std::numeric_limits<double>::quiet_NaN();
+  double   tx_net_call_rate_MHz = std::numeric_limits<double>::quiet_NaN();
   float    rx_avg_power_dB;
   float    rx_peak_power_dB;
   float    rx_papr_dB;
-  double   rx_clipping_prob = std::numeric_limits<double>::quiet_NaN();
+  double   rx_clipping_prob     = std::numeric_limits<double>::quiet_NaN();
+  double   rx_net_call_rate_MHz = std::numeric_limits<double>::quiet_NaN();
 };
 
 /// Radio metrics.

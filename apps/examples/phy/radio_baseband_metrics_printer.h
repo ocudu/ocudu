@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "ocudu/phy/lower/lower_phy_baseband_metrics.h"
-#include "ocudu/phy/lower/lower_phy_metrics_notifier.h"
+#include "ocudu/radio/radio_baseband_metrics.h"
+#include "ocudu/radio/radio_baseband_metrics_notifier.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/math/stats.h"
 #include <mutex>
@@ -14,35 +14,37 @@
 namespace ocudu {
 
 /// Implements a generic lower physical layer metrics printer.
-class lower_phy_metrics_printer : public lower_phy_metrics_notifier
+class radio_baseband_metrics_printer : public radio_baseband_metrics_notifier
 {
 public:
   // See interface for documentation.
-  void on_new_transmit_metrics(const lower_phy_baseband_metrics& metrics) override
+  void on_new_transmit_metrics(const radio_baseband_metrics& metrics) override
   {
     std::lock_guard<std::mutex> lock(tx_mutex);
     tx_avg_power.update(metrics.avg_power);
     tx_peak_power.update(metrics.peak_power);
-    if (!tx_clipping.has_value()) {
-      tx_clipping = metrics.clipping;
-    } else {
-      tx_clipping->nof_clipped_samples += metrics.clipping->nof_clipped_samples;
-      tx_clipping->nof_processed_samples += metrics.clipping->nof_processed_samples;
+    if (metrics.clipping.nof_processed_samples != 0) {
+      if (tx_clipping.nof_processed_samples == 0) {
+        tx_clipping = metrics.clipping;
+      } else {
+        tx_clipping.nof_clipped_samples += metrics.clipping.nof_clipped_samples;
+        tx_clipping.nof_processed_samples += metrics.clipping.nof_processed_samples;
+      }
     }
   }
 
   // See interface for documentation.
-  void on_new_receive_metrics(const lower_phy_baseband_metrics& metrics) override
+  void on_new_receive_metrics(const radio_baseband_metrics& metrics) override
   {
     std::lock_guard<std::mutex> lock(rx_mutex);
     rx_avg_power.update(metrics.avg_power);
     rx_peak_power.update(metrics.peak_power);
-    if (metrics.clipping.has_value()) {
-      if (!rx_clipping.has_value()) {
+    if (metrics.clipping.nof_processed_samples != 0) {
+      if (rx_clipping.nof_processed_samples == 0) {
         rx_clipping = metrics.clipping;
       } else {
-        rx_clipping->nof_clipped_samples += metrics.clipping->nof_clipped_samples;
-        rx_clipping->nof_processed_samples += metrics.clipping->nof_processed_samples;
+        rx_clipping.nof_clipped_samples += metrics.clipping.nof_clipped_samples;
+        rx_clipping.nof_processed_samples += metrics.clipping.nof_processed_samples;
       }
     }
   }
@@ -64,14 +66,14 @@ public:
       tx_avg_power_dB  = convert_power_to_dB(tx_avg_power.get_mean());
       tx_peak_power_dB = convert_power_to_dB(tx_peak_power.get_max());
       tx_papr_dB       = convert_power_to_dB(tx_peak_power.get_max() / tx_avg_power.get_mean());
-      if (tx_clipping.has_value()) {
-        double num       = tx_clipping->nof_clipped_samples;
-        double den       = tx_clipping->nof_processed_samples;
+      if (tx_clipping.nof_processed_samples != 0) {
+        double num       = tx_clipping.nof_clipped_samples;
+        double den       = tx_clipping.nof_processed_samples;
         tx_clipping_prob = num / den;
       }
       tx_avg_power.reset();
       tx_peak_power.reset();
-      tx_clipping.reset();
+      tx_clipping = {};
     }
 
     float  rx_avg_power_dB;
@@ -83,14 +85,14 @@ public:
       rx_avg_power_dB  = convert_power_to_dB(rx_avg_power.get_mean());
       rx_peak_power_dB = convert_power_to_dB(rx_peak_power.get_max());
       rx_papr_dB       = convert_power_to_dB(rx_peak_power.get_max() / rx_avg_power.get_mean());
-      if (rx_clipping.has_value()) {
-        double num       = rx_clipping->nof_clipped_samples;
-        double den       = rx_clipping->nof_processed_samples;
+      if (rx_clipping.nof_processed_samples != 0) {
+        double num       = rx_clipping.nof_clipped_samples;
+        double den       = rx_clipping.nof_processed_samples;
         rx_clipping_prob = num / den;
       }
       rx_avg_power.reset();
       rx_peak_power.reset();
-      rx_clipping.reset();
+      rx_clipping = {};
     }
 
     fmt::println("| {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} |",
@@ -105,14 +107,14 @@ public:
   }
 
 private:
-  std::mutex                       tx_mutex;
-  sample_statistics<float>         tx_avg_power;
-  sample_statistics<float>         tx_peak_power;
-  std::optional<clipping_counters> tx_clipping;
-  std::mutex                       rx_mutex;
-  sample_statistics<float>         rx_avg_power;
-  sample_statistics<float>         rx_peak_power;
-  std::optional<clipping_counters> rx_clipping;
+  std::mutex               tx_mutex;
+  sample_statistics<float> tx_avg_power;
+  sample_statistics<float> tx_peak_power;
+  clipping_counters        tx_clipping;
+  std::mutex               rx_mutex;
+  sample_statistics<float> rx_avg_power;
+  sample_statistics<float> rx_peak_power;
+  clipping_counters        rx_clipping;
 };
 
 } // namespace ocudu

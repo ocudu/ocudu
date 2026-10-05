@@ -11,16 +11,15 @@
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer_view.h"
 #include "ocudu/instrumentation/traces/ru_traces.h"
 #include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/ocuduvec/compare.h"
 #include "ocudu/ocuduvec/conversion.h"
 #include "ocudu/ocuduvec/dot_prod.h"
 #include "ocudu/ocuduvec/zero.h"
 #include "ocudu/phy/antenna_ports.h"
 #include "ocudu/phy/lower/amplitude_controller/amplitude_controller.h"
-#include "ocudu/phy/lower/lower_phy_baseband_metrics.h"
 #include "ocudu/phy/lower/modulation/ofdm_modulator.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "ocudu/phy/lower/sampling_rate.h"
+#include "ocudu/phy/support/resource_grid_context.h"
 #include "ocudu/phy/support/resource_grid_reader.h"
 #include "ocudu/phy/support/shared_resource_grid.h"
 #include "ocudu/ran/beamforming/beam_weights_codebook.h"
@@ -139,7 +138,7 @@ public:
     // Prepare current context, grid and result for the asynchronous OFDM modulation.
     current_context = context;
     current_grid    = grid.copy();
-    current_result  = {{}, std::move(buffer)};
+    current_buffer  = std::move(buffer);
 
     // Calculate the OFDM symbol indexes within the subframe.
     unsigned i_symbol_sf_begin = current_context.slot.subframe_slot_index() * nof_symbols_per_slot;
@@ -150,23 +149,20 @@ public:
         std::accumulate(symbol_sizes_sf.begin() + i_symbol_sf_begin, symbol_sizes_sf.begin() + i_symbol_sf_end, 0);
 
     // Prepare baseband buffer.
-    current_result.buffer->resize(nof_samples_slot);
-
-    // Prepare metrics.
-    metrics_collection.resize(nof_symbols_per_slot * nof_ports);
+    current_buffer->resize(nof_samples_slot);
 
     unsigned i_symbol_start = 0;
-    for (unsigned i_symbol = 0, i_metric = 0; i_symbol != nof_symbols_per_slot; ++i_symbol) {
+    for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol) {
       // Calculate OFDM symbol within the subframe.
       unsigned i_symbol_sf = i_symbol + i_symbol_sf_begin;
 
       // Process each port individually.
-      for (unsigned i_port = 0; i_port != nof_ports; ++i_port, ++i_metric) {
-        bool success = executor.defer([this, i_symbol_sf, i_port, i_metric, i_symbol_start]() {
+      for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
+        bool success = executor.defer([this, i_symbol_sf, i_port, i_symbol_start]() {
           unsigned symbol_size = symbol_sizes_sf[i_symbol_sf];
 
           // Create view to the writer offset.
-          span<ci16_t> ci16_buf = current_result.buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_size);
+          span<ci16_t> ci16_buf = current_buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_size);
           // Get a view over the temporary buffer holding float-based complex samples.
           span<cf_t> cf_buf = cf_buffer.get_view({i_port}).subspan(i_symbol_start, symbol_size);
 
@@ -181,12 +177,6 @@ public:
 
           // Apply amplitude control.
           amplitude_control.process(cf_buf, cf_buf);
-
-          // Perform signal measurements.
-          metrics_collection[i_metric].avg_power  = ocuduvec::average_power(cf_buf);
-          metrics_collection[i_metric].peak_power = ocuduvec::max_abs_element(cf_buf).second;
-          metrics_collection[i_metric].clipping   = {ocuduvec::count_if_part_abs_greater_than(cf_buf, 0.95),
-                                                     cf_buf.size()};
 
           // Convert complex floating-point buffer to complex integer-based.
           ocuduvec::convert(ci16_buf, cf_buf, ocuduvec::scaling_factor_cf_to_ci16);
@@ -203,7 +193,7 @@ public:
                        "Failed to enqueue modulation task for symbol {}.",
                        i_symbol_sf);
           span<ci16_t> ci16_buf =
-              current_result.buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_sizes_sf[i_symbol_sf]);
+              current_buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_sizes_sf[i_symbol_sf]);
           ocuduvec::zero(ci16_buf);
           complete_symbol_task();
         }
@@ -233,34 +223,16 @@ private:
     // The resource grid is no longer necessary.
     current_grid = {};
 
-    // Gather metrics.
-    sample_statistics<float> peak_power;
-    sample_statistics<float> avg_power;
-    uint64_t                 nof_clipped_samples     = 0;
-    uint64_t                 total_processed_samples = 0;
-    for (const auto& metrics : metrics_collection) {
-      if (std::isnormal(metrics.peak_power) && std::isnormal(metrics.avg_power)) {
-        peak_power.update(metrics.peak_power);
-        avg_power.update(metrics.avg_power);
-        nof_clipped_samples += metrics.clipping->nof_clipped_samples;
-        total_processed_samples += metrics.clipping->nof_processed_samples;
-      }
-    }
-    current_result.metrics.peak_power = peak_power.get_max();
-    current_result.metrics.avg_power  = avg_power.get_mean();
-    current_result.metrics.clipping =
-        clipping_counters{.nof_clipped_samples = nof_clipped_samples, .nof_processed_samples = total_processed_samples};
-
-    // Move context and result to the stack.
-    resource_grid_context                 this_context = current_context;
-    pdxch_processor_baseband::slot_result this_result  = std::move(current_result);
+    // Move context and buffer to the stack.
+    resource_grid_context       this_context = current_context;
+    baseband_gateway_buffer_ptr this_buffer  = std::move(current_buffer);
 
     // Transition modulator state to idle which becomes available for the next use.
     [[maybe_unused]] uint32_t expected_mask = current_state.exchange(state_idle);
     ocudu_assert(expected_mask == state_modulate_mask, "Unexpected state 0x{:08x}.", prev);
 
     // Notify completion of the OFDM modulation.
-    notifier.on_modulation_completion(std::move(this_result), this_context);
+    notifier.on_modulation_completion(std::move(this_buffer), this_context);
   }
 
   /// State value for when the modulator is not processing any transmisson request.
@@ -287,15 +259,12 @@ private:
   std::array<unsigned, max_nof_symbols_per_subframe> symbol_sizes_sf;
   /// Current modulator state.
   std::atomic<unsigned> current_state = 0;
-  /// Collection of metrics, each asynchronous task gets assigned a reference to this collection. These are combined
-  /// once the processing is completed.
-  static_vector<lower_phy_baseband_metrics, max_nof_tasks> metrics_collection;
   /// Current slot processing context. Used for reporting the completion of the modulation.
   resource_grid_context current_context;
   /// Current resource grid.
   shared_resource_grid current_grid;
-  /// Keeps the reference of the current processing buffer and collects metrics.
-  pdxch_processor_baseband::slot_result current_result;
+  /// Keeps the reference of the current processing buffer.
+  baseband_gateway_buffer_ptr current_buffer;
   /// Executor for asynchronously modulating.
   task_executor& executor;
   /// OFDM modulator. Its implementation must be thread safe.

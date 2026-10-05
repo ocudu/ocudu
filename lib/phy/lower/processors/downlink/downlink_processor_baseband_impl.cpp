@@ -6,10 +6,8 @@
 #include "downlink_processor_baseband_impl.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer_view.h"
 #include "ocudu/instrumentation/traces/ru_traces.h"
-#include "ocudu/ocuduvec/conversion.h"
 #include "ocudu/ocuduvec/dot_prod.h"
 #include "ocudu/ocuduvec/zero.h"
-#include "ocudu/phy/lower/lower_phy_baseband_metrics.h"
 #include "ocudu/phy/lower/lower_phy_timing_context.h"
 
 using namespace ocudu;
@@ -126,7 +124,7 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
   // Note that the slot could be equal to the previous slot if tx_time_offset was modified. So, the processor notifies
   // the slot boundary only if no previous slot has been processed before or the new slot is different from the
   // previous.
-  pdxch_processor_baseband::slot_result pdxch_baseband_result;
+  baseband_gateway_buffer_ptr tx_buffer = nullptr;
   if (slot_point_extended slot(scs, i_slot); !previous_slot.has_value() || (*previous_slot != slot)) {
     ocudu_assert(notifier != nullptr, "Timing notifier is not connected.");
     trace_point tp = ru_tracer.now();
@@ -138,23 +136,18 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
 
     // Obtain the downlink baseband processing for the slot independently of the sample alignment. This avoids leaving
     // resource grids in the PDxCH processor.
-    pdxch_baseband_result = pdxch_proc_baseband.process_slot({.slot = slot.without_hyper_sfn(), .sector = sector_id});
+    tx_buffer = pdxch_proc_baseband.process_slot({.slot = slot.without_hyper_sfn(), .sector = sector_id});
   }
 
-  // Handle CFO and metrics if the PDxCH baseband result contains a buffer.
-  if (pdxch_baseband_result.buffer) {
-    // Apply carrier frequency offset for the entire transmit slot buffer.
+  // Apply carrier frequency offset for the entire transmit slot buffer if available.
+  if (tx_buffer) {
     cfo_processor.next_cfo_command();
-    cfo_processor.process(pdxch_baseband_result.buffer->get_writer());
-
-    // Notify metrics.
-    ocudu_assert(notifier != nullptr, "Timing notifier is not connected.");
-    notifier->on_new_metrics(pdxch_baseband_result.metrics);
+    cfo_processor.process(tx_buffer->get_writer());
   }
 
   // Align with the next slot using a different baseband buffer if the next sample is not aligned with the beginning of
   // a slot or no PDxCH baseband is available to transmit.
-  if ((i_sample_slot != 0) || !pdxch_baseband_result.buffer) {
+  if ((i_sample_slot != 0) || !tx_buffer) {
     // Prepare result metadata and obtain baseband buffer from the pool.
     processing_result result = {.metadata = {.ts = timestamp, .is_empty = true}, .buffer = buffer_pool.get()};
     report_fatal_error_if_not(result.buffer, "Failed to retrieve a baseband buffer.");
@@ -166,8 +159,8 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
     result.buffer->resize(nof_samples_to_next_slot);
 
     // Fill the baseband buffer with the generated PDxCH if possible. Otherwise, fill it with zeros.
-    if (pdxch_baseband_result.buffer) {
-      fill_buffer_from_tail(result.buffer->get_writer(), pdxch_baseband_result.buffer->get_reader());
+    if (tx_buffer) {
+      fill_buffer_from_tail(result.buffer->get_writer(), tx_buffer->get_reader());
       result.metadata.is_empty = false;
     } else {
       fill_zeros(result.buffer->get_writer(), result.metadata);
@@ -178,8 +171,7 @@ downlink_processor_baseband_impl::process(baseband_gateway_timestamp timestamp)
   }
 
   // Prepare result metadata.
-  return processing_result{.metadata = {.ts = timestamp, .is_empty = false},
-                           .buffer   = std::move(pdxch_baseband_result.buffer)};
+  return processing_result{.metadata = {.ts = timestamp, .is_empty = false}, .buffer = std::move(tx_buffer)};
 }
 
 void downlink_processor_baseband_impl::set_tx_time_offset(phy_time_unit tx_time_offset_)

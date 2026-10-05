@@ -8,7 +8,8 @@
 
 #pragma once
 
-#include "ocudu/ocuduvec/types.h"
+#include "ocudu/adt/complex.h"
+#include "ocudu/adt/span.h"
 
 namespace ocudu {
 

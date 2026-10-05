@@ -6,9 +6,7 @@
 #pragma once
 
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_pool.h"
-#include "ocudu/phy/lower/lower_phy_baseband_metrics.h"
 #include "ocudu/ran/slot_point.h"
-#include <optional>
 
 namespace ocudu {
 
@@ -29,19 +27,11 @@ public:
     unsigned sector;
   };
 
-  /// Groups baseband metrics and buffer for a slot.
-  struct slot_result {
-    /// Collected baseband buffer metrics.
-    lower_phy_baseband_metrics metrics = {};
-    /// Actual baseband buffer. Set to nullptr if there was no transmit request in the given slot.
-    baseband_gateway_buffer_ptr buffer = nullptr;
-  };
-
   /// \brief Processes a baseband OFDM slot.
   ///
   /// \param[in] context OFDM Symbol context.
-  /// \return Slot downlink baseband results.
-  virtual slot_result process_slot(slot_context context) = 0;
+  /// \return Slot downlink baseband buffer.
+  virtual baseband_gateway_buffer_ptr process_slot(slot_context context) = 0;
 };
 
 } // namespace ocudu

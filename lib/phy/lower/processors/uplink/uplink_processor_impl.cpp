@@ -5,11 +5,7 @@
 
 #include "uplink_processor_impl.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_reader_view.h"
-#include "ocudu/ocuduvec/compare.h"
-#include "ocudu/ocuduvec/conversion.h"
 #include "ocudu/ocuduvec/copy.h"
-#include "ocudu/ocuduvec/dot_prod.h"
-#include "ocudu/phy/lower/lower_phy_baseband_metrics.h"
 #include "ocudu/phy/lower/lower_phy_rx_symbol_context.h"
 #include "ocudu/phy/lower/lower_phy_timing_context.h"
 #include "ocudu/phy/lower/processors/uplink/prach/prach_processor_baseband.h"
@@ -224,35 +220,7 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
   // Process symbol by PUxCH processor.
   lower_phy_rx_symbol_context puxch_context = {
       .slot = current_slot, .sector = sector_id, .nof_symbols = current_symbol_index};
-  bool processed = puxch_proc->get_baseband().process_symbol(samples_view, puxch_context);
-
-  if (processed) {
-    sample_statistics<float> avg_power;
-    sample_statistics<float> peak_power;
-    unsigned                 nof_channels = temp_buffer.get_nof_channels();
-
-    uint64_t total_processed_samples = 0;
-    uint64_t nof_clipped_samples     = 0;
-
-    // Process received signal before demodulation.
-    for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-      // Perform signal measurements on CI16 samples.
-      span<const ci16_t> channel_buffer = temp_buffer.get_reader().get_channel_buffer(i_channel);
-
-      avg_power.update(ocuduvec::average_power(channel_buffer, ocuduvec::scaling_factor_ci16_to_cf));
-      peak_power.update(ocuduvec::max_abs_element(channel_buffer, ocuduvec::scaling_factor_ci16_to_cf).second);
-      nof_clipped_samples +=
-          ocuduvec::count_if_part_abs_greater_than(channel_buffer, 0.95F, ocuduvec::scaling_factor_ci16_to_cf);
-      total_processed_samples += channel_buffer.size();
-    }
-
-    lower_phy_baseband_metrics metrics = {.avg_power  = avg_power.get_mean(),
-                                          .peak_power = peak_power.get_max(),
-                                          .clipping =
-                                              clipping_counters{.nof_clipped_samples   = nof_clipped_samples,
-                                                                .nof_processed_samples = total_processed_samples}};
-    notifier->on_new_metrics(metrics);
-  }
+  puxch_proc->get_baseband().process_symbol(samples_view, puxch_context);
 
   // Detect half-slot boundary.
   if (current_symbol_index == (nof_symbols_per_slot / 2) - 1) {

@@ -80,10 +80,10 @@ static std::optional<sampling_rate> parse_sampling_rate(const std::string& value
 class modulator_completion_notifier : public pdxch_processor_modulator_notifier
 {
 public:
-  void on_modulation_completion(pdxch_processor_baseband::slot_result result, resource_grid_context) override
+  void on_modulation_completion(baseband_gateway_buffer_ptr buffer, const resource_grid_context&) override
   {
     // Return the buffer to the pool before unblocking the benchmark, as the pool may be destroyed right after.
-    result.buffer.reset();
+    buffer.reset();
     sync_token.reset();
   }
 

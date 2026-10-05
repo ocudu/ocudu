@@ -1,19 +1,16 @@
 // SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
 // SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
-// Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #pragma once
 
 #include <cstdint>
-#include <optional>
-#include <utility>
 
 namespace ocudu {
 
 /// \brief Clipping event counters.
 ///
-/// It comprises of the number of clipped samples and the total number of processed samples.
+/// It comprises the number of clipped samples and the total number of processed samples.
 struct clipping_counters {
   uint64_t nof_clipped_samples;
   uint64_t nof_processed_samples;
@@ -26,13 +23,15 @@ struct clipping_counters {
 };
 
 /// Collects transmit or receive signal statistics.
-struct lower_phy_baseband_metrics {
-  /// Average power.
+struct radio_baseband_metrics {
+  /// Linear average power.
   float avg_power;
-  /// Peak power.
+  /// Linear peak power.
   float peak_power;
   /// Clipping counters.
-  std::optional<clipping_counters> clipping;
+  clipping_counters clipping;
+  /// Radio call duration in nanoseconds.
+  uint64_t call_duration_ns;
 };
 
 } // namespace ocudu

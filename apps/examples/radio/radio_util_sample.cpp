@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "radio_baseband_metrics_notifier_spy.h"
 #include "radio_notifier_sample.h"
 #include "ocudu/adt/spsc_queue.h"
 #include "ocudu/adt/to_array.h"
@@ -38,6 +39,7 @@ static double                                    rx_freq                       =
 static double                                    rx_gain                       = 60.0;
 static double                                    tx_rx_delay_s                 = 0.001;
 static bool                                      enable_discontinuous_tx       = false;
+static bool                                      enable_iq_metrics             = false;
 static unsigned                                  nof_consecutive_empty_buffers = 0;
 static float                                     power_ramping_us              = 200.0F;
 static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::SC16;
@@ -208,7 +210,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "o:D:dg:P:v:h")) != -1) {
+  while ((opt = getopt(argc, argv, "o:D:dg:P:v:Mh")) != -1) {
     switch (opt) {
       case 'o':
         rx_filename = std::string(optarg);
@@ -236,6 +238,9 @@ static void parse_args(int argc, char** argv)
         log_level  = level.has_value() ? level.value() : ocudulog::basic_levels::info;
         break;
       }
+      case 'M':
+        enable_iq_metrics = !enable_iq_metrics;
+        break;
       case 'h':
       default:
         usage(argv[0]);
@@ -283,9 +288,28 @@ int main(int argc, char** argv)
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
   report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
 
-  // Decorate the radio factory.
+  // Decorate the radio factory with the metric collectors.
+  std::vector<radio_baseband_metrics_notifier_spy> metrics_collectors;
   if (log_level >= ocudulog::basic_levels::info) {
-    factory = create_radio_metrics_decorator_factory(std::move(factory), log_level);
+    // List of IQ metric collectors. Leave empty for no IQ metric collection.
+    std::vector<std::reference_wrapper<radio_baseband_metrics_notifier>> ref_metrics_collectors;
+
+    if (enable_iq_metrics) {
+      // Make sure there is a metric collector for each Tx/Rx stream.
+      unsigned nof_metric_collectors = std::max(nof_tx_streams, nof_rx_streams);
+
+      // Create metrics collectors.
+      metrics_collectors.reserve(nof_metric_collectors);
+      for (unsigned i = 0; i != nof_metric_collectors; ++i) {
+        metrics_collectors.emplace_back(log_level);
+      }
+
+      // Convert to reference wrappers for the factory call.
+      ref_metrics_collectors = {metrics_collectors.begin(), metrics_collectors.end()};
+    }
+
+    // Actual creation of the factory decorator.
+    factory = create_radio_metrics_decorator_factory(std::move(factory), ref_metrics_collectors, log_level);
   }
 
   // Create radio configuration.
@@ -424,7 +448,11 @@ int main(int argc, char** argv)
   // Stop asynchronous thread.
   async_task_worker.stop();
 
+  // Print all collected metrics.
   notification_handler.print();
+  for (auto collector : metrics_collectors) {
+    collector.print();
+  }
 
   return 0;
 }

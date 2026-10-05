@@ -9,11 +9,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "ocudu/phy/lower/lower_phy_error_notifier.h"
-#include "ocudu/phy/lower/lower_phy_metrics_notifier.h"
 #include "ocudu/phy/lower/lower_phy_rx_symbol_notifier.h"
-#include "ocudu/phy/lower/lower_phy_timing_notifier.h"
-#include "ocudu/phy/lower/modulation/ofdm_demodulator.h"
-#include "ocudu/phy/lower/modulation/ofdm_modulator.h"
 #include "ocudu/phy/lower/sampling_rate.h"
 #include "ocudu/ran/antenna_topology.h"
 #include "ocudu/ran/cyclic_prefix.h"
@@ -22,6 +18,8 @@
 #include "ocudu/support/executors/task_executor.h"
 
 namespace ocudu {
+
+class lower_phy_timing_notifier;
 
 /// \brief Lower physical layer baseband gateway buffer size policy.
 ///
@@ -104,8 +102,6 @@ struct lower_phy_dependencies {
   lower_phy_timing_notifier& timing_notifier;
   /// Provides the error handler to notify runtime errors.
   lower_phy_error_notifier& error_notifier;
-  /// Provides the metrics handler to notify runtime measurements.
-  lower_phy_metrics_notifier& metric_notifier;
   /// Receive task executor.
   task_executor& rx_task_executor;
   /// Transmit task executor.

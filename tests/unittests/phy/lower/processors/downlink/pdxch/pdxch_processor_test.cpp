@@ -24,20 +24,6 @@ using namespace ocudu;
 
 namespace ocudu {
 
-bool operator==(const lower_phy_baseband_metrics& left, const lower_phy_baseband_metrics& right)
-{
-  if (left.avg_power != right.avg_power) {
-    return false;
-  }
-  if (left.peak_power != right.peak_power) {
-    return false;
-  }
-  if (left.clipping != right.clipping) {
-    return false;
-  }
-  return true;
-}
-
 std::ostream& operator<<(std::ostream& os, antenna_topology ant_topology)
 {
   fmt::print(os, "{}", to_string(ant_topology));
@@ -275,11 +261,10 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowNoRequest)
     pdxch_processor_baseband::slot_context context = {.slot = slot, .sector = dist_sector_id(rgen)};
 
     // Process baseband.
-    auto slot_result = pdxch_proc->get_baseband().process_slot(context);
+    baseband_gateway_buffer_ptr buffer = pdxch_proc->get_baseband().process_slot(context);
 
-    // Verify result.
-    ASSERT_EQ(slot_result.metrics, lower_phy_baseband_metrics{});
-    ASSERT_EQ(slot_result.buffer, nullptr);
+    // Verify buffer pointer.
+    ASSERT_EQ(buffer, nullptr);
 
     // Assert OFDM modulator is not called.
     ASSERT_TRUE(ofdm_mod_spy->get_modulate_entries().empty());
@@ -410,13 +395,13 @@ TEST_P(LowerPhyDownlinkProcessorFixture, LateRequest)
     pdxch_processor_baseband::slot_context proc_context = {.slot = slot, .sector = sector_id};
 
     // Process baseband.
-    pdxch_processor_baseband::slot_result slot_result = pdxch_proc->get_baseband().process_slot(proc_context);
+    baseband_gateway_buffer_ptr buffer = pdxch_proc->get_baseband().process_slot(proc_context);
 
     // Assert results. Only two of the three request must have been processed.
     if ((slot == initial_rg_context.slot) || (slot == next_rg_context.slot)) {
-      ASSERT_NE(slot_result.buffer, nullptr);
+      ASSERT_NE(buffer, nullptr);
     } else {
-      ASSERT_EQ(slot_result.buffer, nullptr);
+      ASSERT_EQ(buffer, nullptr);
     }
   }
 
@@ -504,13 +489,13 @@ TEST_P(LowerPhyDownlinkProcessorFixture, OverflowWithRequest)
     pdxch_processor_baseband::slot_context proc_context = {.slot = slot, .sector = sector_id};
 
     // Process baseband.
-    pdxch_processor_baseband::slot_result slot_result = pdxch_proc->get_baseband().process_slot(proc_context);
+    baseband_gateway_buffer_ptr tx_buffer = pdxch_proc->get_baseband().process_slot(proc_context);
 
     // Process baseband.
     if (static_cast<unsigned>(slot - slot_begin) < max_nof_concurrent_requests) {
-      ASSERT_NE(slot_result.buffer, nullptr);
+      ASSERT_NE(tx_buffer, nullptr);
     } else {
-      ASSERT_EQ(slot_result.buffer, nullptr);
+      ASSERT_EQ(tx_buffer, nullptr);
     }
 
     // Assert notifications.

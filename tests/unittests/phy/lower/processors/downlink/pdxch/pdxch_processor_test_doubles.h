@@ -25,14 +25,11 @@ class pdxch_processor_baseband_spy : public pdxch_processor_baseband
 public:
   struct entry_t {
     slot_context                      context;
-    lower_phy_baseband_metrics        metrics;
     baseband_gateway_buffer_read_only samples;
   };
 
   // Constructs a PDxCH processor baseband spy that processes all slots and symbols.
   pdxch_processor_baseband_spy(subcarrier_spacing scs, cyclic_prefix cp, sampling_rate srate, unsigned nof_ports_) :
-    avg_power_dist(0.01, 1.0),
-    peak_power_dist(1.0, 10.0),
     nof_ports(nof_ports_),
     nof_slots_per_subframe(get_nof_slots_per_subframe(scs)),
     nof_symbols_per_slot(get_nsymb_per_slot(cp)),
@@ -53,7 +50,7 @@ public:
     }
   }
 
-  slot_result process_slot(slot_context context) override
+  baseband_gateway_buffer_ptr process_slot(slot_context context) override
   {
     // Obtain buffer from the pool.
     baseband_gateway_buffer_ptr buffer = buffer_pool.get();
@@ -80,15 +77,12 @@ public:
       });
     }
 
-    slot_result result = {.metrics = {.avg_power = avg_power_dist(rgen)}, .buffer = std::move(buffer)};
-
     // Save results.
     entry_t& entry = entries.emplace_back();
     entry.context  = context;
-    entry.samples  = baseband_gateway_buffer_read_only(result.buffer->get_reader());
-    entry.metrics  = result.metrics;
+    entry.samples  = baseband_gateway_buffer_read_only(buffer->get_reader());
 
-    return result;
+    return buffer;
   }
 
   const std::vector<entry_t>& get_entries() const { return entries; }
@@ -99,9 +93,7 @@ private:
   static constexpr unsigned max_nof_symbols_per_subframe =
       MAX_NSYMB_PER_SLOT * pow2(to_numerology_value(subcarrier_spacing::kHz240));
 
-  std::mt19937                          rgen;
-  std::uniform_real_distribution<float> avg_power_dist;
-  std::uniform_real_distribution<float> peak_power_dist;
+  std::mt19937 rgen;
 
   unsigned                                           nof_ports;
   unsigned                                           nof_slots_per_subframe;

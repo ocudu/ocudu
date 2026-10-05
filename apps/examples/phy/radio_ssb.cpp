@@ -15,23 +15,23 @@
 #include "../radio/radio_notifier_sample.h"
 #include "lower_phy_error_logger.h"
 #include "lower_phy_example_factory.h"
-#include "lower_phy_metrics_printer.h"
 #include "phy_rg_gateway_adapter.h"
 #include "phy_rx_symbol_adapter.h"
 #include "phy_rx_symbol_request_adapter.h"
 #include "phy_timing_adapter.h"
+#include "radio_baseband_metrics_printer.h"
 #include "rx_symbol_handler_example.h"
 #include "upper_phy_ssb_example.h"
 #include "ocudu/adt/to_array.h"
 #include "ocudu/phy/lower/lower_phy.h"
 #include "ocudu/phy/lower/lower_phy_controller.h"
-#include "ocudu/phy/lower/lower_phy_rx_symbol_context.h"
 #include "ocudu/radio/radio_factory.h"
 #include "ocudu/ran/antenna_topology.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/signal_handling.h"
 #include <atomic>
+#include <cstdlib>
 #include <getopt.h>
 #include <string>
 #include <unistd.h>
@@ -82,6 +82,7 @@ static ssb_pattern_case                          ssb_pattern          = ssb_patt
 static bool                                      enable_random_data   = false;
 static bool                                      enable_ul_processing = false;
 static bool                                      enable_prach_processing = false;
+static bool                                      enable_radio_metrics    = false;
 static modulation_scheme                         data_mod_scheme         = modulation_scheme::QPSK;
 static std::string                               thread_profile_name     = "single";
 static std::string                               clock_source            = "internal";
@@ -304,6 +305,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-m Data modulation scheme ({}). [Default {}]\n",
              span<const std::string>(modulations),
              to_string(data_mod_scheme));
+  fmt::print("\t-M Enable radio metrics [Default {}]\n", enable_radio_metrics);
   fmt::print("\t-h Print this message.\n");
 }
 
@@ -312,7 +314,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:S:T:C:L:v:b:m:a:cduph")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:S:T:C:L:v:b:m:Ma:cduph")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -372,6 +374,9 @@ static void parse_args(int argc, char** argv)
         if (optarg != nullptr) {
           data_mod_scheme = modulation_scheme_from_string(std::string(optarg));
         }
+        break;
+      case 'M':
+        enable_radio_metrics = !enable_radio_metrics;
         break;
       case 'c':
         enable_clipping = true;
@@ -453,7 +458,6 @@ create_lower_phy_configuration(task_executor*                rx_task_executor,
                                task_executor*                dl_task_executor,
                                task_executor*                prach_task_executor,
                                lower_phy_error_notifier*     error_notifier,
-                               lower_phy_metrics_notifier*   metrics_notifier,
                                lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                lower_phy_timing_notifier*    timing_notifier,
                                baseband_gateway&             bb_gateway,
@@ -492,7 +496,6 @@ create_lower_phy_configuration(task_executor*                rx_task_executor,
                                  .rx_symbol_notifier   = *rx_symbol_notifier,
                                  .timing_notifier      = *timing_notifier,
                                  .error_notifier       = *error_notifier,
-                                 .metric_notifier      = *metrics_notifier,
                                  .rx_task_executor     = *rx_task_executor,
                                  .tx_task_executor     = *tx_task_executor,
                                  .dl_task_executor     = *dl_task_executor,
@@ -600,6 +603,14 @@ int main(int argc, char** argv)
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
   report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
 
+  // Decorate radio factory for IQ metrics.
+  radio_baseband_metrics_printer radio_metrics_printer;
+  if (enable_radio_metrics) {
+    std::reference_wrapper<radio_baseband_metrics_notifier> notifier = std::ref(radio_metrics_printer);
+    factory = create_radio_metrics_decorator_factory(std::move(factory), {notifier}, log_level);
+    report_fatal_error_if_not(factory, "Failed to create radio baseband IQ metrics decorator.");
+  }
+
   // Create radio configuration. Assume 1 sector per stream.
   radio_configuration::radio radio_config = create_radio_configuration();
 
@@ -618,12 +629,12 @@ int main(int argc, char** argv)
   logger.set_level(log_level);
 
   // Create adapters.
-  lower_phy_error_logger        error_adapter(logger);
-  lower_phy_metrics_printer     metrics_adapter;
-  phy_rx_symbol_adapter         rx_symbol_adapter;
-  phy_rg_gateway_adapter        rg_gateway_adapter;
-  phy_timing_adapter            timing_adapter;
-  phy_rx_symbol_request_adapter phy_rx_symbol_req_adapter;
+  lower_phy_error_logger         error_adapter(logger);
+  radio_baseband_metrics_printer metrics_adapter;
+  phy_rx_symbol_adapter          rx_symbol_adapter;
+  phy_rg_gateway_adapter         rg_gateway_adapter;
+  phy_timing_adapter             timing_adapter;
+  phy_rx_symbol_request_adapter  phy_rx_symbol_req_adapter;
 
   // Create lower physical layer.
   std::unique_ptr<lower_phy> lower_phy_instance = nullptr;
@@ -635,7 +646,6 @@ int main(int argc, char** argv)
                                                      dl_task_executor.get(),
                                                      prach_task_executor.get(),
                                                      &error_adapter,
-                                                     &metrics_adapter,
                                                      &rx_symbol_adapter,
                                                      &timing_adapter,
                                                      radio->get_baseband_gateway(0),
@@ -747,6 +757,12 @@ int main(int argc, char** argv)
 
   // Prints radio notification summary (number of overflow, underflow and other events).
   notification_handler.print();
+
+  // Prints radio baseband IQ metrics (average power, peak power, and clipping probability).
+  if (enable_radio_metrics) {
+    radio_baseband_metrics_printer::print_header();
+    radio_metrics_printer.print_metrics();
+  }
 
   // Destroy physical layer components in the correct order.
   lower_phy_instance.reset();

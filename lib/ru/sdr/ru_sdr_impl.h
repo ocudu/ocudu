@@ -24,6 +24,7 @@ namespace ocudu {
 struct ru_sdr_impl_config {
   double                                               srate_MHz;
   std::optional<std::chrono::system_clock::time_point> start_time;
+  size_t                                               nof_sectors;
   bool                                                 are_metrics_enabled;
 };
 
@@ -65,6 +66,16 @@ public:
 
   /// Returns the radio event notifier of this RU.
   radio_event_notifier& get_radio_event_notifier() { return radio_event_dispatcher; }
+
+  /// Returns a baseband metric notifier interface reference for each sector if metrics are enabled. Otherwise, an empty
+  /// vector.
+  std::vector<std::reference_wrapper<radio_baseband_metrics_notifier>> get_baseband_metric_notifiers()
+  {
+    span<radio_baseband_sector_metrics_collector> baseband_metrics_collectors =
+        metrics_collector.get_baseband_metrics_collector();
+
+    return {baseband_metrics_collectors.begin(), baseband_metrics_collectors.end()};
+  }
 
   /// Sets the radio to the given one for this RU.
   void set_radio(std::unique_ptr<radio_session> radio_ptr)

@@ -6,7 +6,6 @@
 #pragma once
 
 #include "ocudu/phy/lower/lower_phy_error_notifier.h"
-#include "ocudu/phy/lower/lower_phy_metrics_notifier.h"
 #include "ocudu/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "ocudu/phy/lower/lower_phy_timing_notifier.h"
 #include "ocudu/phy/lower/processors/downlink/downlink_processor_notifier.h"
@@ -24,12 +23,11 @@ class processor_notifier_adaptor
 {
 public:
   processor_notifier_adaptor(lower_phy_error_notifier&     err_notifier,
-                             lower_phy_metrics_notifier&   metrics_notifier,
                              lower_phy_rx_symbol_notifier& rx_symbol_notifier,
                              lower_phy_timing_notifier&    timing_notifier) :
-    downlink(metrics_notifier, timing_notifier),
+    downlink(timing_notifier),
     pdxch(err_notifier),
-    uplink(metrics_notifier, timing_notifier),
+    uplink(timing_notifier),
     prach(rx_symbol_notifier, err_notifier),
     puxch(rx_symbol_notifier, err_notifier)
   {
@@ -55,20 +53,12 @@ private:
   class downlink_adaptor : public downlink_processor_notifier
   {
   public:
-    downlink_adaptor(lower_phy_metrics_notifier& metric_notifier_, lower_phy_timing_notifier& timing_notifier_) :
-      metric_notifier(metric_notifier_), timing_notifier(timing_notifier_)
-    {
-    }
+    downlink_adaptor(lower_phy_timing_notifier& timing_notifier_) : timing_notifier(timing_notifier_) {}
 
     // See interface for documentation.
     void on_tti_boundary(const lower_phy_timing_context& context) override;
 
-    // See interface for documentation.
-    void on_new_metrics(const lower_phy_baseband_metrics& metrics) override;
-
   private:
-    /// Metrics notifier.
-    lower_phy_metrics_notifier& metric_notifier;
     /// Timing notifier.
     lower_phy_timing_notifier& timing_notifier;
   };
@@ -77,10 +67,7 @@ private:
   class uplink_adaptor : public uplink_processor_notifier
   {
   public:
-    uplink_adaptor(lower_phy_metrics_notifier& metric_notifier_, lower_phy_timing_notifier& timing_notifier_) :
-      metric_notifier(metric_notifier_), timing_notifier(timing_notifier_)
-    {
-    }
+    uplink_adaptor(lower_phy_timing_notifier& timing_notifier_) : timing_notifier(timing_notifier_) {}
 
     // See interface for documentation.
     void on_half_slot(const lower_phy_timing_context& context) override;
@@ -88,12 +75,7 @@ private:
     // See interface for documentation.
     void on_full_slot(const lower_phy_timing_context& context) override;
 
-    // See interface for documentation.
-    void on_new_metrics(const lower_phy_baseband_metrics& metrics) override;
-
   private:
-    /// Metrics notifier.
-    lower_phy_metrics_notifier& metric_notifier;
     /// Timing notifier.
     lower_phy_timing_notifier& timing_notifier;
   };

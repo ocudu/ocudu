@@ -5,13 +5,11 @@
 
 #pragma once
 
-#include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
-#include "ocudu/phy/lower/lower_phy_baseband_metrics.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
-#include "ocudu/phy/support/resource_grid_context.h"
-#include "ocudu/support/memory_pool/bounded_object_pool.h"
 
 namespace ocudu {
+
+struct resource_grid_context;
 
 /// Physical downlink modulator notifier interface.
 class pdxch_processor_modulator_notifier
@@ -21,10 +19,9 @@ public:
   virtual ~pdxch_processor_modulator_notifier() = default;
 
   /// \brief Notifies the completion of the OFDM modulation for a given slot.
-  /// \param[in] result  Baseband modulation results.
+  /// \param[in] buffer  Baseband buffer containing the modulated slot.
   /// \param[in] context Modulated resource grid context.
-  virtual void on_modulation_completion(pdxch_processor_baseband::slot_result result,
-                                        resource_grid_context                 context) = 0;
+  virtual void on_modulation_completion(baseband_gateway_buffer_ptr buffer, const resource_grid_context& context) = 0;
 };
 
 } // namespace ocudu
