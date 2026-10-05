@@ -29,6 +29,8 @@ using namespace ocudu;
 /// \brief Returns the topology of the given number of transmit antennas.
 ///
 /// Split 6 has no DU high, so this process derives the topology of the carrier that it receives.
+/// TODO: FAPI carries no antenna topology, so only the default topologies are used. A DU high configured with another
+/// topology would build a different codebook than the PHY.
 static antenna_topology get_tx_antenna_topology(unsigned nof_tx_antennas)
 {
   std::optional<antenna_topology> topology = get_single_panel_antenna_topology(nof_tx_antennas);

@@ -1421,20 +1421,32 @@ static bool validate_tdd_ul_dl_unit_config(const du_high_unit_tdd_ul_dl_config& 
   return true;
 }
 
-/// Validates that the beams assigned to the transmitted SSB candidates fit the antenna topology and are distinct.
-/// Validates that the beams of a cell fit its antenna topology and are distinct.
-static bool validate_ref_beams(const std::vector<du_high_unit_ref_beam_config>& beams,
-                               unsigned                                         nof_antennas_dl,
-                               antenna_topology                                 topology)
+/// Validates that the cell has a downlink antenna topology and that its number of ports matches the number of downlink
+/// antennas.
+static bool validate_tx_antenna_topology(const std::optional<antenna_topology>& topology, unsigned nof_antennas_dl)
 {
-  // The topology is derived from the number of downlink antennas. It keeps its default value if no topology is
-  // defined for that number, so the two disagree.
-  if (get_total_nof_ports(topology) != nof_antennas_dl) {
-    fmt::print("Number of DL antennas {} does not define an antenna topology. Valid values are 1, 2, 4 and 8.\n",
+  if (!topology.has_value()) {
+    fmt::print("Number of DL antennas {} does not define a default antenna topology. Valid values are 1, 2, 4 and 8, "
+               "otherwise set tx_ant_topology.\n",
                nof_antennas_dl);
     return false;
   }
 
+  unsigned nof_ports = get_total_nof_ports(*topology);
+  if (nof_ports != nof_antennas_dl) {
+    fmt::print("Antenna topology {} has {} ports, but the number of DL antennas is {}.\n",
+               to_string(*topology),
+               nof_ports,
+               nof_antennas_dl);
+    return false;
+  }
+
+  return true;
+}
+
+/// Validates that the beams assigned to the transmitted SSB candidates fit the antenna topology and are distinct.
+static bool validate_ref_beams(const std::vector<du_high_unit_ref_beam_config>& beams, antenna_topology topology)
+{
   const unsigned nof_panels   = get_nof_antenna_panels(topology);
   const unsigned nof_pol      = get_nof_antenna_polarizations(topology);
   const unsigned nof_beams_d1 = get_nof_beams_dim1(topology);
@@ -2010,7 +2022,11 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_ref_beams(config.ref_beams, config.nof_antennas_dl, config.tx_ant_topology)) {
+  if (!validate_tx_antenna_topology(config.tx_ant_topology, config.nof_antennas_dl)) {
+    return false;
+  }
+
+  if (!validate_ref_beams(config.ref_beams, *config.tx_ant_topology)) {
     return false;
   }
 

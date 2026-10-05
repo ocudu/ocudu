@@ -739,7 +739,7 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
                                        });
       out_cell.ran.ssb_cfg.ssb_beams.set_beam(
           ssb_beam.ssb_index,
-          get_beam_id(base_cell.tx_ant_topology, beam.i_panel, beam.i_pol, beam.i_beam_dim1, beam.i_beam_dim2));
+          get_beam_id(*base_cell.tx_ant_topology, beam.i_panel, beam.i_pol, beam.i_beam_dim1, beam.i_beam_dim2));
     }
     out_cell.ran.ssb_cfg.ssb_period      = static_cast<ssb_periodicity>(base_cell.ssb_cfg.ssb_period_msec);
     out_cell.ran.ssb_cfg.ssb_block_power = base_cell.ssb_cfg.ssb_block_power;
@@ -747,7 +747,7 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
 
     // > Carrier config.
     out_cell.ran.dl_carrier.nof_ant  = base_cell.nof_antennas_dl;
-    out_cell.ran.dl_carrier.topology = base_cell.tx_ant_topology;
+    out_cell.ran.dl_carrier.topology = *base_cell.tx_ant_topology;
     out_cell.ran.ul_carrier.nof_ant  = base_cell.nof_antennas_ul;
     // > System Information.
     fill_si_acquisition_info(out_cell.si, base_cell);

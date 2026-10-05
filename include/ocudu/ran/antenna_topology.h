@@ -191,19 +191,19 @@ inline const char* to_string(antenna_topology topology)
 {
   switch (topology) {
     case antenna_topology::one_port:
-      return "one-port";
+      return "one_port";
     case antenna_topology::two_port:
-      return "two-ports";
-    case antenna_topology::single_panel_two_one:
-      return "single-panel/two-one";
-    case antenna_topology::single_panel_two_two:
-      return "single-panel/two-two";
-    case antenna_topology::single_panel_four_one:
-      return "single-panel/four-one";
+      return "two_ports";
     case antenna_topology::four_ports:
-      return "4-ports";
+      return "four_ports";
     case antenna_topology::eight_ports:
-      return "8-ports";
+      return "eight_ports";
+    case antenna_topology::single_panel_two_one:
+      return "single_panel_two_one";
+    case antenna_topology::single_panel_two_two:
+      return "single_panel_two_two";
+    case antenna_topology::single_panel_four_one:
+      return "single_panel_four_one";
   }
   return "undefined";
 }

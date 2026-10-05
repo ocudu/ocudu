@@ -1361,11 +1361,13 @@ struct du_high_unit_base_cell_config {
   bs_channel_bandwidth channel_bw_mhz = bs_channel_bandwidth::MHz20;
   /// Number of antennas in downlink.
   unsigned nof_antennas_dl = 1;
-  /// \brief Topology of the downlink antennas.
+  /// \brief Transmit antenna topology.
   ///
-  /// The number of downlink antennas gives the topology. It is derived once, so that all stack components of a
-  /// cell/sector use the same topology.
-  antenna_topology tx_ant_topology = antenna_topology::one_port;
+  /// If not configured, it is derived from the number of downlink antennas as they were independent antennas without
+  /// any specific geometry. It is set once, so that all stack components of a cell/sector use the same topology.
+  ///
+  /// \see get_tx_antenna_topology for more information about the topology selection derivation.
+  std::optional<antenna_topology> tx_ant_topology;
   /// Number of antennas in uplink.
   unsigned nof_antennas_ul = 1;
   /// Human readable full PLMN (without possible filler digit).

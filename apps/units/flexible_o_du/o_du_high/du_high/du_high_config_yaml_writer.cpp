@@ -788,7 +788,10 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
   node["channel_bandwidth_MHz"] = bs_channel_bandwidth_to_MHz(config.channel_bw_mhz);
   node["nof_antennas_ul"]       = config.nof_antennas_ul;
   node["nof_antennas_dl"]       = config.nof_antennas_dl;
-  node["plmn"]                  = config.plmn;
+  if (config.tx_ant_topology.has_value()) {
+    node["tx_ant_topology"] = to_string(*config.tx_ant_topology);
+  }
+  node["plmn"] = config.plmn;
   if (!config.additional_plmns.empty()) {
     node["additional_plmns"] = config.additional_plmns;
   }
