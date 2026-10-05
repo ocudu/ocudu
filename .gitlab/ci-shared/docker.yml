@@ -158,13 +158,13 @@ variables:
         if [ -n "${COSIGN_KEY_FILE}" ]; then
           echo "Signing ${predicate} as detached blob signature"
           cosign sign-blob --key "${COSIGN_KEY_FILE}" \
-            --output-signature "${predicate}.sig" "${predicate}"
+            --bundle "${predicate}.bundle" "${predicate}"
 
-          echo "Publishing ${predicate}, ${predicate}.sig and cosign.pub to package registry (${base_url})"
+          echo "Publishing ${predicate}, ${predicate}.bundle and cosign.pub to package registry (${base_url})"
           curl --fail --silent --show-error --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
             --upload-file "${predicate}" "${base_url}/${predicate}"
           curl --fail --silent --show-error --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-            --upload-file "${predicate}.sig" "${base_url}/${predicate}.sig"
+            --upload-file "${predicate}.bundle" "${base_url}/${predicate}.bundle"
           curl --fail --silent --show-error --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
             --upload-file "${COSIGN_PUBLIC_KEY_FILE}" "${base_url}/cosign.pub"
         else
