@@ -375,6 +375,14 @@ ue_fallback_scheduler::schedule_dl_srb(cell_resource_allocator&              res
 
   const bool is_retx = h_dl_retx.has_value();
 
+  // Search for empty HARQ in normal mode in case of newTx.
+  if (not is_retx and not u.get_pcell().harqs.has_empty_dl_harqs(true)) {
+    logger.debug("rnti={}: Skipped fallback PDSCH allocation. Cause: every empty DL HARQ process has its feedback "
+                 "disabled",
+                 u.crnti);
+    return dl_sched_outcome::next_ue;
+  }
+
   // \ref sched_ref_slot is the slot that we take as reference for the scheduler, which is processed when calling the
   // slot_indication().
   // NOTE: we guarantee that \ref sched_ref_slot is a DL slot in the caller.
@@ -608,9 +616,9 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = get_pdsch_td_cfg(pdsch_time_res);
   const bool                                   is_retx      = h_dl_retx.has_value();
 
-  // Search for empty HARQ in case of newTx.
-  if (not is_retx and not ue_pcell.harqs.has_empty_dl_harqs()) {
-    logger.warning("rnti={}: UE must have empty HARQs during fallback newtx allocation", u.crnti);
+  // Search for empty HARQ in normal mode in case of newTx.
+  if (not is_retx and not ue_pcell.harqs.has_empty_dl_harqs(true)) {
+    logger.warning("rnti={}: UE must have empty HARQs in normal mode during fallback newtx allocation", u.crnti);
     return {};
   }
 

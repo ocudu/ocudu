@@ -17,6 +17,7 @@
 #include "ocudu/ran/configured_grant/cg_configuration.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/duplex_mode.h"
+#include "ocudu/ran/harq_id.h"
 #include "ocudu/ran/prach/prach_time_mapping.h"
 #include "ocudu/scheduler/config/cg_builder_params.h"
 #include <functional>
@@ -729,6 +730,83 @@ TEST_F(scheduler_ntn_fallback_cg_test, harq_ack_is_not_placed_in_a_cg_slot_past_
     }
   }
   ASSERT_EQ(nof_harq_acks, min_nof_harq_acks) << "Too few HARQ-ACKs were scheduled";
+}
+
+/// Fallback DL scheduling in an NTN cell that disables the DL HARQ feedback of all but the first HARQ processes, as
+/// per TS 38.331, \c downlinkHARQ-FeedbackDisabled.
+class scheduler_ntn_fallback_dl_feedback_disabled_test : public scheduler_test_simulator, public ::testing::Test
+{
+protected:
+  scheduler_ntn_fallback_dl_feedback_disabled_test() :
+    scheduler_test_simulator(
+        scheduler_test_sim_config{.auto_uci = true, .ntn_cs_koffset = std::chrono::milliseconds{koffset_ms}})
+  {
+    auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(
+        cell_config_builder_profiles::create(duplex_mode::FDD));
+    cell_cfg_req.ran.ntn_params.emplace();
+    cell_cfg_req.ran.ntn_params->ntn_cfg.cell_specific_koffset = std::chrono::milliseconds{koffset_ms};
+    add_cell(cell_cfg_req);
+
+    auto ue_cfg               = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg().params, {});
+    ue_cfg.ue_index           = ue_index;
+    ue_cfg.crnti              = rnti;
+    ue_cfg.starts_in_fallback = true;
+    ue_cfg.ul_ccch_slot_rx    = next_slot.without_hyper_sfn();
+    scheduler_test_simulator::add_ue(ue_cfg, /*wait_notification=*/true);
+
+    // An RRC Reconfiguration disables the DL HARQ feedback, which the UE reports it supports. Left unconfirmed, so the
+    // UE stays in fallback.
+    auto& pdsch_serv_cell = ue_cfg.cfg.cells->front().serv_cell_cfg.pdsch_serv_cell_cfg;
+    ocudu_assert(pdsch_serv_cell.has_value(), "The UE was not given a PDSCH serving cell config");
+    pdsch_serv_cell->dl_harq_feedback_disabled.fill(true);
+    pdsch_serv_cell->dl_harq_feedback_disabled.fill(0, nof_feedback_enabled_harqs, false);
+
+    sched_ue_reconfiguration_message reconf;
+    reconf.ue_index = ue_index;
+    reconf.crnti    = rnti;
+    reconf.cfg      = ue_cfg.cfg;
+    sched->handle_ue_reconfiguration_request(reconf);
+  }
+
+  /// Koffset of a GEO cell.
+  static constexpr unsigned koffset_ms = 240;
+  /// HARQ processes the configuration value "true" leaves with the feedback enabled.
+  static constexpr unsigned nof_feedback_enabled_harqs = 4;
+  const du_ue_index_t       ue_index                   = to_du_ue_index(0);
+  const rnti_t              rnti                       = to_rnti(0x4601);
+};
+
+TEST_F(scheduler_ntn_fallback_dl_feedback_disabled_test, srb_grants_do_not_reuse_a_harq_process_awaiting_its_ack)
+{
+  OCUDU_TEST_REQUIREMENTS("DU-NTN-HARQ-2");
+
+  // Enough SRB1 data to keep the fallback scheduler asking for HARQ processes.
+  static constexpr unsigned srb1_bytes = 200000;
+  // Several rounds of the feedback-enabled processes, so one has to be released and reused.
+  const unsigned min_nof_pdschs = 3 * nof_feedback_enabled_harqs;
+  const unsigned max_nof_slots  = 8 * cell_cfg().ntn_cs_koffset + 2000;
+  // Slot of the HARQ-ACK of the last new transmission of each HARQ process, as its DCI indicates it.
+  std::vector<slot_point> ack_slots(MAX_NOF_HARQS);
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_index, LCID_SRB1, srb1_bytes});
+
+  unsigned nof_pdschs = 0;
+  for (unsigned count = 0; count != max_nof_slots and nof_pdschs != min_nof_pdschs; ++count) {
+    run_slot();
+    const dl_msg_alloc* pdsch = find_ue_pdsch(rnti, *last_sched_result());
+    if (pdsch == nullptr or pdsch->context.nof_retxs != 0) {
+      continue;
+    }
+    const auto h_id = static_cast<unsigned>(pdsch->pdsch_cfg.harq_id);
+    ASSERT_FALSE(ack_slots[h_id].valid() and ack_slots[h_id] > last_result_slot())
+        << fmt::format("New transmission in slot {} takes HARQ process {}, whose HARQ-ACK of a previous transmission "
+                       "is due in slot {}",
+                       last_result_slot(),
+                       h_id,
+                       ack_slots[h_id]);
+    ack_slots[h_id] = last_result_slot() + pdsch->context.k1 + cell_cfg().ntn_cs_koffset;
+    ++nof_pdschs;
+  }
+  ASSERT_EQ(nof_pdschs, min_nof_pdschs) << "The fallback scheduler stopped delivering the SRB1 data";
 }
 
 class scheduler_ue_no_config_test : public base_scheduler_conres_test, public ::testing::Test
