@@ -1653,20 +1653,25 @@ varlength_field_pack_guard::~varlength_field_pack_guard()
   *bref_tracker = brefstart;
 }
 
-varlength_field_unpack_guard::varlength_field_unpack_guard(cbit_ref& bref, bool align) :
-  len([&bref, align]() {
-    uint32_t len_;
-    unpack_length(len_, bref, align);
-    return len_;
-  }()),
-  bref0(bref),
-  bref_tracker(&bref)
+varlength_field_unpack_guard::varlength_field_unpack_guard(cbit_ref& bref, bool align) : bref0(bref)
 {
-  bref = bref.subview(0, len);
+  if (unpack_length(len, bref, align) != OCUDUASN_SUCCESS) {
+    // The length could not be decoded, e.g. due to a truncated buffer. Leave an empty view, so that unpacking the field
+    // contents fails, and do not restore the caller's bit_ref on destruction.
+    len  = 0;
+    bref = cbit_ref(ocudu::byte_buffer_view{});
+    return;
+  }
+  bref0        = bref;
+  bref_tracker = &bref;
+  bref         = bref.subview(0, len);
 }
 
 varlength_field_unpack_guard::~varlength_field_unpack_guard()
 {
+  if (bref_tracker == nullptr) {
+    return;
+  }
   if (len * 8 < (unsigned)bref_tracker->distance(bref0)) {
     log_error("The number of bits unpacked exceeds the variable length field size ({} > {})",
               bref_tracker->distance(bref0),
