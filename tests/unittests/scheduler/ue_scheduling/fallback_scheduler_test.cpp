@@ -1929,3 +1929,51 @@ TEST_F(fallback_sched_beam_test, ue_not_tracked_by_the_ra_scheduler_uses_the_def
   ASSERT_NE(pdcch, nullptr) << "No PDCCH scheduling the ConRes CE was found";
   ASSERT_FALSE(std::holds_alternative<beam_identifier>(pdcch->ctx.precoding_and_beamforming));
 }
+
+/// Fixture with a single fallback DCI per slot, which makes the scheduling priority observable.
+class fallback_sched_conres_priority_test : public base_fallback_tester, public ::testing::Test
+{
+protected:
+  fallback_sched_conres_priority_test() : base_fallback_tester(duplex_mode::FDD, false)
+  {
+    auto cell_req = create_custom_cell_config_request(0);
+    cell_req.ran.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].set_non_ss0_nof_candidates({0, 0, 1, 0, 0});
+    setup_sched(create_expert_config(max_msg4_mcs_index), cell_req);
+  }
+
+  void add_conres_ue(du_ue_index_t ue_index)
+  {
+    ASSERT_TRUE(add_ue(to_rnti(0x4601 + static_cast<uint16_t>(ue_index)), ue_index, false, current_slot));
+  }
+
+  static constexpr sch_mcs_index max_msg4_mcs_index = 8;
+  static constexpr unsigned      MAC_SRB_SDU_SIZE   = 101;
+  static constexpr unsigned      MAX_TEST_RUN_SLOTS = 200;
+};
+
+TEST_F(fallback_sched_conres_priority_test, when_conres_ce_retx_and_new_conres_ce_compete_then_new_conres_ce_goes_first)
+{
+  const du_ue_index_t retx_ue_index   = to_du_ue_index(0);
+  const du_ue_index_t new_tx_ue_index = to_du_ue_index(1);
+  add_conres_ue(retx_ue_index);
+  add_conres_ue(new_tx_ue_index);
+  push_buffer_state_to_dl_ue(retx_ue_index, current_slot, MAC_SRB_SDU_SIZE, true);
+
+  // NACK the first ConRes CE tx, leaving it pending for retx, and make a new ConRes CE pending at the same time.
+  ue&  retx_ue   = get_ue(retx_ue_index);
+  bool nack_sent = false;
+  for (unsigned i = 0; i != MAX_TEST_RUN_SLOTS and not nack_sent; ++i) {
+    run_slot();
+    std::optional<dl_harq_process_handle> h_dl = retx_ue.get_pcell().harqs.find_dl_harq_waiting_ack(current_slot, 0);
+    if (h_dl.has_value()) {
+      ASSERT_TRUE(h_dl->dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt));
+      nack_sent = true;
+    }
+  }
+  ASSERT_TRUE(nack_sent);
+  push_buffer_state_to_dl_ue(new_tx_ue_index, current_slot, MAC_SRB_SDU_SIZE, true);
+
+  run_slot();
+  ASSERT_TRUE(ue_is_allocated_pdcch(get_ue(new_tx_ue_index))) << "The new ConRes CE must take the only DCI";
+  ASSERT_FALSE(ue_is_allocated_pdcch(retx_ue));
+}

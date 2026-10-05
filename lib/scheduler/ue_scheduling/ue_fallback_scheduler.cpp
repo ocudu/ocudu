@@ -99,8 +99,14 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
-  // Schedule DL retransmissions before new any other DL or UL transmissions.
-  bool stop_dl_scheduling = not schedule_dl_retx(res_alloc);
+  // Schedule the first ConRes CE txs before any other DL or UL transmission, as the ra-ContentionResolutionTimer is
+  // already running for these UEs and, under RACH load, pending ConRes CE retxs often target UEs that are gone.
+  bool stop_dl_scheduling = not schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::conres_only);
+
+  // Schedule DL retransmissions before the remaining DL and UL transmissions.
+  if (not stop_dl_scheduling) {
+    stop_dl_scheduling = not schedule_dl_retx(res_alloc);
+  }
 
   // Schedule UL (retx and new TX) before DL new TX, as the DL can take advantage from scheduling on next slots.
   schedule_ul_new_tx_and_retx(res_alloc);
@@ -109,10 +115,7 @@ void ue_fallback_scheduler::run_slot(cell_resource_allocator& res_alloc)
     return;
   }
 
-  // Schedule DL new txs with the following priority: ConRes CE, SRB0 and SRB1.
-  if (not schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::conres_only)) {
-    return;
-  }
+  // Schedule the remaining DL new txs with the following priority: SRB0 and SRB1.
   if (not schedule_dl_new_tx(res_alloc, dl_new_tx_alloc_type::srb0)) {
     return;
   }
@@ -301,7 +304,12 @@ bool ue_fallback_scheduler::schedule_dl_new_tx(cell_resource_allocator& res_allo
       next_ue = pending_dl_ues_new_tx.erase(next_ue);
       continue;
     }
-    if (alloc_type != selected_alloc_type) {
+    // Any new tx carrying a ConRes CE, with or without a multiplexed SRB0/SRB1 PDU, belongs to the ConRes pass.
+    const bool has_conres_ce = u.logical_channels().is_con_res_id_pending();
+    const bool selected      = selected_alloc_type == dl_new_tx_alloc_type::conres_only
+                                   ? has_conres_ce
+                                   : (not has_conres_ce and alloc_type == selected_alloc_type);
+    if (not selected) {
       // This type of alloc is not being prioritized.
       ++next_ue;
       continue;

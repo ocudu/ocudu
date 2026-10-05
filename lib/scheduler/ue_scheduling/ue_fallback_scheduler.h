@@ -84,7 +84,8 @@ private:
   static dl_new_tx_alloc_type get_dl_new_tx_alloc_type(const ue& u);
 
   /// Helper that schedules pending DL new txs for ConRes CE, SRB0 or SRB1.
-  /// \param[in] selected_alloc_type Type of allocation to make. Options: ConRes CE only, SRB0 and SRB1.
+  /// \param[in] selected_alloc_type Type of allocation to make. Options: any new tx carrying a ConRes CE, SRB0 and
+  /// SRB1 without ConRes CE.
   /// \return false if the fallback scheduler should stop its operation for the given slot.
   bool schedule_dl_new_tx(cell_resource_allocator& res_alloc, dl_new_tx_alloc_type selected_alloc_type);
 
