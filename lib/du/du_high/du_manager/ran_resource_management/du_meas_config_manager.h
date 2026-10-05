@@ -76,6 +76,9 @@ public:
   bool update_location_meas(du_ue_resource_config& ue_cfg, const byte_buffer& location_meas_info);
 
 private:
+  /// Sets the measurement gap of the UE from its SSB measurement gap and PRS windows.
+  void apply_meas_gap(du_ue_resource_config& ue_cfg);
+
   span<const du_cell_config> cell_cfg_list;
   ocudulog::basic_logger&    logger;
 };

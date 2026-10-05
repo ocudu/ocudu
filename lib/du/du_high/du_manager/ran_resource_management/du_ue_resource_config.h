@@ -8,6 +8,7 @@
 #include "ocudu/adt/flat_map.h"
 #include "ocudu/adt/slotted_array.h"
 #include "ocudu/adt/slotted_vector.h"
+#include "ocudu/adt/static_vector.h"
 #include "ocudu/f1u/du/f1u_config.h"
 #include "ocudu/mac/mac_cell_group_config.h"
 #include "ocudu/mac/mac_lc_config.h"
@@ -60,6 +61,9 @@ struct cfra_config {
   unsigned preamble_id;
 };
 
+/// Maximum number of PRS frequency layers of a LocationMeasurementInfo, as per TS 38.331 NR-PRS-MeasurementInfoList.
+constexpr unsigned MAX_NOF_PRS_FREQ_LAYERS = 4;
+
 /// Snapshot of the DU resources taken by a UE at a given instant.
 struct du_ue_resource_config {
   slotted_id_table<srb_id_t, du_ue_srb_config, MAX_NOF_SRBS> srbs;
@@ -67,8 +71,12 @@ struct du_ue_resource_config {
   slotted_id_vector<drb_id_t, du_ue_drb_config> drbs;
   /// CellGroupConfiguration of the RAN resources allocated to a UE.
   cell_group_config cell_group;
-  /// measGapConfig chosen for the UE.
+  /// measGapConfig chosen for the UE, enclosing \c ssb_meas_gap and \c prs_meas_gaps.
   std::optional<meas_gap_config> meas_gap;
+  /// Measurement gap required by the measConfig of the UE.
+  std::optional<meas_gap_config> ssb_meas_gap;
+  /// Measurement gaps required by the PRS of each frequency layer of the UE location measurements.
+  static_vector<meas_gap_config, MAX_NOF_PRS_FREQ_LAYERS> prs_meas_gaps;
   /// Resources allocated for contention-free random access (CFRA).
   std::optional<cfra_config> cfra;
 };

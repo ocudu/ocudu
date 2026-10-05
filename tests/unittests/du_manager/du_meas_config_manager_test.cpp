@@ -3,12 +3,15 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/du/du_high/du_manager/converters/asn1_rrc_config_helpers.h"
 #include "lib/du/du_high/du_manager/ran_resource_management/du_meas_config_manager.h"
 #include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
+#include "ocudu/du/du_cell_config_helpers.h"
 #include "ocudu/ran/ssb/ssb_properties.h"
+#include "ocudu/scheduler/rrm/ue_capability_summary.h"
 #include "fmt/format.h"
 #include "fmt/ranges.h"
 #include <gtest/gtest.h>
@@ -554,7 +557,8 @@ TEST(du_meas_config_manager_location_meas_test, prs_window_is_added_to_the_meas_
 {
   du_meas_config_manager mng{{}};
   du_ue_resource_config  ue_cfg;
-  ue_cfg.meas_gap = meas_gap_config{0, meas_gap_length::ms3, meas_gap_repetition_period::ms40};
+  ue_cfg.ssb_meas_gap = meas_gap_config{0, meas_gap_length::ms3, meas_gap_repetition_period::ms40};
+  ue_cfg.meas_gap     = ue_cfg.ssb_meas_gap;
 
   // The gap [0, 3) every 40ms and the PRS window [3, 4.5) every 80ms fit in a 5.5ms gap at offset 0 every 40ms.
   ASSERT_TRUE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 3, prs_len::ms1dot5}})));
@@ -567,11 +571,13 @@ TEST(du_meas_config_manager_location_meas_test, prs_window_that_does_not_fit_wit
   du_meas_config_manager mng{{}};
   du_ue_resource_config  ue_cfg;
   const meas_gap_config  ssb_gap{0, meas_gap_length::ms6, meas_gap_repetition_period::ms40};
-  ue_cfg.meas_gap = ssb_gap;
+  ue_cfg.ssb_meas_gap = ssb_gap;
+  ue_cfg.meas_gap     = ssb_gap;
 
   ASSERT_FALSE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms3}})));
 
   EXPECT_EQ(ue_cfg.meas_gap, ssb_gap);
+  EXPECT_TRUE(ue_cfg.prs_meas_gaps.empty());
 }
 
 TEST(du_meas_config_manager_location_meas_test, prs_windows_of_several_layers_share_one_gap)
@@ -598,14 +604,76 @@ TEST(du_meas_config_manager_location_meas_test, prs_windows_too_far_apart_are_re
   EXPECT_FALSE(ue_cfg.meas_gap.has_value());
 }
 
-TEST(du_meas_config_manager_location_meas_test, prs_length_above_6ms_is_rejected)
+TEST(du_meas_config_manager_location_meas_test, prs_length_of_10ms_is_signalled_with_mgl_r16)
 {
   du_meas_config_manager mng{{}};
   du_ue_resource_config  ue_cfg;
 
-  ASSERT_FALSE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms10}})));
+  ASSERT_TRUE(mng.update_location_meas(ue_cfg, make_location_meas_info({{80, 30, prs_len::ms10}})));
+  ASSERT_EQ(ue_cfg.meas_gap, (meas_gap_config{30, meas_gap_length::ms10, meas_gap_repetition_period::ms80}));
 
-  EXPECT_FALSE(ue_cfg.meas_gap.has_value());
+  meas_gap_cfg_s asn1_gap;
+  calculate_meas_gap_config_diff(asn1_gap, std::nullopt, ue_cfg.meas_gap);
+  ASSERT_TRUE(asn1_gap.gap_ue.is_present());
+  const gap_cfg_s& gap_ue = asn1_gap.gap_ue->setup();
+  ASSERT_TRUE(gap_ue.mgl_r16_present);
+  EXPECT_EQ(gap_ue.mgl_r16.value, gap_cfg_s::mgl_r16_opts::ms10);
+  EXPECT_EQ(gap_ue.mgrp.value, gap_cfg_s::mgrp_opts::ms80);
+  EXPECT_EQ(gap_ue.gap_offset, 30);
+}
+
+class du_meas_config_manager_meas_cfg_with_prs_test : public ::testing::Test
+{
+protected:
+  du_meas_config_manager_meas_cfg_with_prs_test()
+  {
+    ue_cfg.cell_group.cells.emplace(SERVING_PCELL_IDX, ue_cell_config{});
+    ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index = to_du_cell_index(0);
+    ue_caps.supported_meas_gaps                                            = supported_meas_gap_patterns::all();
+  }
+
+  // Applies a measConfig with an inter-frequency SSB whose SMTC lasts 1ms every 40ms, at offset 0. Its gap starts at 0
+  // and lasts at most 3ms.
+  void update_meas_cfg()
+  {
+    meas_cfg_s meas_cfg;
+    meas_cfg.meas_obj_to_add_mod_list.resize(1);
+    auto& meas_obj_nr            = meas_cfg.meas_obj_to_add_mod_list[0].meas_obj.set_meas_obj_nr();
+    meas_obj_nr.ssb_freq_present = true;
+    meas_obj_nr.ssb_freq         = cell_cfgs[0].ran.dl_cfg_common.freq_info_dl.absolute_frequency_ssb.value() + 100;
+    meas_obj_nr.smtc1_present    = true;
+    meas_obj_nr.smtc1            = make_smtc(ssb_periodicity::ms40, 0, smtc_duration::sf1);
+
+    byte_buffer   buf;
+    asn1::bit_ref bref{buf};
+    report_fatal_error_if_not(meas_cfg.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack measConfig");
+    mng.update(ue_cfg, buf, &ue_caps);
+  }
+
+  std::vector<du_cell_config> cell_cfgs{config_helpers::make_default_du_cell_config()};
+  du_meas_config_manager      mng{cell_cfgs};
+  du_ue_resource_config       ue_cfg;
+  ue_capability_summary       ue_caps;
+};
+
+TEST_F(du_meas_config_manager_meas_cfg_with_prs_test, meas_cfg_keeps_the_prs_in_the_gap)
+{
+  ue_cfg.prs_meas_gaps = {meas_gap_config{3, meas_gap_length::ms1dot5, meas_gap_repetition_period::ms80}};
+
+  update_meas_cfg();
+
+  ASSERT_TRUE(ue_cfg.ssb_meas_gap.has_value());
+  EXPECT_EQ(ue_cfg.meas_gap, (meas_gap_config{0, meas_gap_length::ms5dot5, meas_gap_repetition_period::ms40}));
+}
+
+TEST_F(du_meas_config_manager_meas_cfg_with_prs_test, prs_that_do_not_fit_with_the_meas_cfg_are_dropped)
+{
+  ue_cfg.prs_meas_gaps = {meas_gap_config{20, meas_gap_length::ms3, meas_gap_repetition_period::ms80}};
+
+  update_meas_cfg();
+
+  EXPECT_EQ(ue_cfg.meas_gap, ue_cfg.ssb_meas_gap);
+  EXPECT_TRUE(ue_cfg.prs_meas_gaps.empty());
 }
 
 } // namespace
