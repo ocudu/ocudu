@@ -19,6 +19,8 @@ public:
   enum options : underlying_type {
     /// CCCH of 64 bits
     CCCH_SIZE_64 = 0b000000,
+    /// RedCap CCCH of 64 bits.
+    CCCH_SIZE_64_REDCAP = 36,
 
     /// Identity of the logical channel
     LCID1 = 1,
@@ -29,16 +31,13 @@ public:
     MIN_RESERVED = 37,
     MAX_RESERVED = 42,
 
-    /// RedCap CCCH of 48 bits.
-    CCCH_SIZE_48_REDCAP = 35,
-    /// RedCap CCCH of 64 bits.
-    CCCH_SIZE_64_REDCAP = 36,
-
     /// Timing Advance Report (44), see TS 38.321, 6.1.3.56.
     TIMING_ADVANCE_REPORT = 0b101100,
 
     /// CCCH of 48 bits
     CCCH_SIZE_48 = 0b110100,
+    /// RedCap CCCH of 48 bits.
+    CCCH_SIZE_48_REDCAP = 35,
 
     BIT_RATE_QUERY = 0b110101,
 
@@ -87,9 +86,12 @@ public:
   /// Returns whether the MAC decoder accepts the LCID.
   bool is_valid_lcid() const
   {
-    // Defined codepoints outside this set require MAC formats that this decoder does not support.
-    return lcid_val <= LCID32 or is_redcap_ccch() or lcid_val == TIMING_ADVANCE_REPORT or
-           (lcid_val >= CCCH_SIZE_48 and lcid_val <= PADDING);
+    // These assigned LCIDs require MAC formats that this decoder does not support.
+    if ((lcid_val > LCID32 and lcid_val < CCCH_SIZE_48_REDCAP) or
+        (lcid_val > MAX_RESERVED and lcid_val < CCCH_SIZE_48 and lcid_val != TIMING_ADVANCE_REPORT)) {
+      return false;
+    }
+    return lcid_val <= PADDING and (lcid_val < MIN_RESERVED or lcid_val > MAX_RESERVED);
   }
 
   /// Whether LCID subPDU has associated length field
