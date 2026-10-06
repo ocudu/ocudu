@@ -77,6 +77,8 @@ private:
 };
 
 struct rrc_connection_resume_counter_with_cause {
+  static constexpr unsigned NOF_RESUME_CAUSES = static_cast<unsigned>(resume_cause_t::unknown) + 1;
+
   rrc_connection_resume_counter_with_cause() = default;
 
   void increase(resume_cause_t cause)
@@ -97,16 +99,16 @@ struct rrc_connection_resume_counter_with_cause {
   resume_cause_t get_cause(unsigned index) const { return resume_cause_t(index); }
 
   /// Returns a const iterator to the beginning of the container.
-  std::array<unsigned, 11>::const_iterator begin() const { return counters_by_cause.begin(); }
-  std::array<unsigned, 11>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
+  std::array<unsigned, NOF_RESUME_CAUSES>::const_iterator begin() const { return counters_by_cause.begin(); }
+  std::array<unsigned, NOF_RESUME_CAUSES>::const_iterator cbegin() const { return counters_by_cause.cbegin(); }
 
   /// Returns a const iterator to the end of the container.
-  std::array<unsigned, 11>::const_iterator end() const { return counters_by_cause.end(); }
-  std::array<unsigned, 11>::const_iterator cend() const { return counters_by_cause.cend(); }
+  std::array<unsigned, NOF_RESUME_CAUSES>::const_iterator end() const { return counters_by_cause.end(); }
+  std::array<unsigned, NOF_RESUME_CAUSES>::const_iterator cend() const { return counters_by_cause.cend(); }
 
 private:
   // The RRC setup request/complete counters indexed by the resume cause.
-  std::array<unsigned, 11> counters_by_cause = {};
+  std::array<unsigned, NOF_RESUME_CAUSES> counters_by_cause = {};
 };
 
 struct rrc_du_metrics {

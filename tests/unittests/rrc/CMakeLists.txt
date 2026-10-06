@@ -30,6 +30,11 @@ target_include_directories(rrc_ue_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(rrc_ue_test rrc_ue_test_helpers f1ap_test_doubles ocudu_rrc ocudu_cu_cp ocudu_support ocudulog GTest::gtest GTest::gtest_main)
 gtest_discover_tests(rrc_ue_test PROPERTIES "LABELS;rrc_ue")
 
+add_executable(rrc_du_metrics_aggregator_test rrc_du_metrics_aggregator_test.cpp)
+target_include_directories(rrc_du_metrics_aggregator_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(rrc_du_metrics_aggregator_test ocudu_rrc ocudu_support GTest::gtest GTest::gtest_main)
+gtest_discover_tests(rrc_du_metrics_aggregator_test PROPERTIES "LABELS;rrc_du")
+
 add_executable(rrc_cond_trigger_asn1_test rrc_cond_trigger_asn1_test.cpp)
 target_include_directories(rrc_cond_trigger_asn1_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(rrc_cond_trigger_asn1_test ocudu_rrc ocudu_support GTest::gtest GTest::gtest_main)
