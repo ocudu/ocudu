@@ -90,6 +90,7 @@ class remote_server_impl : public remote_server,
   std::unordered_map<std::string, std::unique_ptr<remote_command>> commands;
   std::set<socket_type*>                                           metrics_subscribers;
   socket_type*                                                     current_cmd_client = nullptr;
+  bool                                                             commands_disabled  = false;
   stop_event_source                                                stop_control;
 
   /// Metrics subscription command.
@@ -239,6 +240,19 @@ public:
   }
 
   // See interface for documentation.
+  void disable_commands() override
+  {
+    if (!thread.running()) {
+      return;
+    }
+
+    // Commands run in the server loop, so once this task completes no command is in progress.
+    sync_event ev;
+    server_loop.load()->defer([this, tk = ev.get_token()]() { commands_disabled = true; });
+    ev.wait();
+  }
+
+  // See interface for documentation.
   void send(std::string metrics) override
   {
     auto token = stop_control.get_token();
@@ -284,6 +298,10 @@ private:
   /// Handles the given command.
   std::string handle_command(std::string_view command)
   {
+    if (commands_disabled) {
+      return build_error_response("Remote server is not accepting commands");
+    }
+
     nlohmann::json req;
 
     try {

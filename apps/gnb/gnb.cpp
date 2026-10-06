@@ -650,12 +650,9 @@ int main(int argc, char** argv)
     }
   }
 
-  // Stop metrics manager.
-  metrics_mngr.stop();
-
-  // Stop remote control server.
+  // Reject remote commands, but keep the metrics flowing until all the units have stopped.
   if (remote_control_server) {
-    remote_control_server->get_operation_controller().stop();
+    remote_control_server->get_operation_controller().disable_commands();
   }
 
   // Stop DU activity.
@@ -666,6 +663,14 @@ int main(int argc, char** argv)
 
   // Stop O-CU-CP activity.
   o_cucp_obj.get_operation_controller().stop();
+
+  // Stop metrics manager.
+  metrics_mngr.stop();
+
+  // Stop remote control server.
+  if (remote_control_server) {
+    remote_control_server->get_operation_controller().stop();
+  }
 
   // Stop gateway SCTP servers.
   f1c_gw->stop();

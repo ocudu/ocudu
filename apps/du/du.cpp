@@ -469,14 +469,19 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
+  // Reject remote commands
+  if (remote_control_server) {
+    remote_control_server->get_operation_controller().disable_commands();
+  }
+
+  // Stop DU activity
+  du_inst.get_operation_controller().stop();
+
   metrics_mngr.stop();
 
   if (remote_control_server) {
     remote_control_server->get_operation_controller().stop();
   }
-
-  // Stop DU activity.
-  du_inst.get_operation_controller().stop();
 
   return 0;
 }

@@ -475,14 +475,21 @@ int main(int argc, char** argv)
     }
   }
 
-  metrics_mngr.stop();
-
+  // Reject remote commands, but keep the metrics flowing until all the units have stopped.
   if (remote_control_server) {
-    remote_control_server->get_operation_controller().stop();
+    remote_control_server->get_operation_controller().disable_commands();
   }
 
   // Stop O-CU-UP activity.
   o_cuup_unit.unit->get_operation_controller().stop();
+
+  // Stop metrics manager.
+  metrics_mngr.stop();
+
+  // Stop remote control server.
+  if (remote_control_server) {
+    remote_control_server->get_operation_controller().stop();
+  }
 
   return 0;
 }
