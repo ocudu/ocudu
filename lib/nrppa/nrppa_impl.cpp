@@ -224,55 +224,56 @@ void nrppa_impl::handle_initiating_message(const init_msg_s&                    
                                            std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index)
 {
   // The NRPPa PDU is opaque to NGAP, so the AMF may carry a UE-associated procedure in a non-UE-associated NRPPa
-  // transport, or vice versa. Drop such a PDU, as its handler has no index to work with.
-  std::optional<bool> ue_associated;
-  switch (msg.value.type().value) {
-    case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_initiation_request:
-    case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_termination_cmd:
-    case nr_ppa_elem_procs_o::init_msg_c::types_opts::positioning_info_request:
-    case nr_ppa_elem_procs_o::init_msg_c::types_opts::positioning_activation_request:
-      ue_associated = true;
-      break;
-    case nr_ppa_elem_procs_o::init_msg_c::types_opts::trp_info_request:
-    case nr_ppa_elem_procs_o::init_msg_c::types_opts::meas_request:
-      ue_associated = false;
-      break;
-    default:
-      break;
-  }
-  if (ue_associated.has_value() and *ue_associated != std::holds_alternative<cu_cp_ue_index_t>(ue_or_amf_index)) {
-    logger.warning("Discarding {}. Cause: Received in a {}UE-associated NRPPa transport",
-                   msg.value.type().to_string(),
-                   *ue_associated ? "non-" : "");
-    return;
-  }
+  // transport, or vice versa. Each procedure takes its index through one of these helpers, which drop the PDU when the
+  // index is missing.
+  auto with_ue_index = [&](auto&& handler) {
+    if (const auto* ue_index = std::get_if<cu_cp_ue_index_t>(&ue_or_amf_index)) {
+      handler(*ue_index);
+      return;
+    }
+    logger.warning("Discarding {}. Cause: Received in a non-UE-associated NRPPa transport",
+                   msg.value.type().to_string());
+  };
+  auto with_amf_index = [&](auto&& handler) {
+    if (const auto* amf_index = std::get_if<cu_cp_amf_index_t>(&ue_or_amf_index)) {
+      handler(*amf_index);
+      return;
+    }
+    logger.warning("Discarding {}. Cause: Received in a UE-associated NRPPa transport", msg.value.type().to_string());
+  };
 
   switch (msg.value.type().value) {
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_initiation_request:
-      handle_e_cid_meas_initiation_request(msg.value.e_c_id_meas_initiation_request(),
-                                           std::get<cu_cp_ue_index_t>(ue_or_amf_index),
-                                           msg.nrppatransaction_id);
+      with_ue_index([&](cu_cp_ue_index_t ue_index) {
+        handle_e_cid_meas_initiation_request(
+            msg.value.e_c_id_meas_initiation_request(), ue_index, msg.nrppatransaction_id);
+      });
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_termination_cmd:
-      handle_e_cid_meas_termination_command(msg.value.e_c_id_meas_termination_cmd(),
-                                            std::get<cu_cp_ue_index_t>(ue_or_amf_index));
+      with_ue_index([&](cu_cp_ue_index_t ue_index) {
+        handle_e_cid_meas_termination_command(msg.value.e_c_id_meas_termination_cmd(), ue_index);
+      });
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::trp_info_request:
-      handle_trp_information_request(
-          msg.value.trp_info_request(), std::get<cu_cp_amf_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
+      with_amf_index([&](cu_cp_amf_index_t amf_index) {
+        handle_trp_information_request(msg.value.trp_info_request(), amf_index, msg.nrppatransaction_id);
+      });
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::positioning_info_request:
-      handle_positioning_information_request(
-          msg.value.positioning_info_request(), std::get<cu_cp_ue_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
+      with_ue_index([&](cu_cp_ue_index_t ue_index) {
+        handle_positioning_information_request(msg.value.positioning_info_request(), ue_index, msg.nrppatransaction_id);
+      });
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::positioning_activation_request:
-      handle_positioning_activation_request(msg.value.positioning_activation_request(),
-                                            std::get<cu_cp_ue_index_t>(ue_or_amf_index),
-                                            msg.nrppatransaction_id);
+      with_ue_index([&](cu_cp_ue_index_t ue_index) {
+        handle_positioning_activation_request(
+            msg.value.positioning_activation_request(), ue_index, msg.nrppatransaction_id);
+      });
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::meas_request:
-      handle_measurement_request(
-          msg.value.meas_request(), std::get<cu_cp_amf_index_t>(ue_or_amf_index), msg.nrppatransaction_id);
+      with_amf_index([&](cu_cp_amf_index_t amf_index) {
+        handle_measurement_request(msg.value.meas_request(), amf_index, msg.nrppatransaction_id);
+      });
       break;
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::otdoa_info_request:
       // OTDOA is an E-UTRA positioning method (TS 38.455 section 8.2.5).
