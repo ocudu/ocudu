@@ -42,6 +42,14 @@ public:
   /// \brief Aggregates the metrics for the successful handover execution.
   void aggregate_successful_handover_execution();
 
+  /// \brief Aggregates the metrics for a UE configured with conditional handover.
+  /// \param[in] has_intra_gnb_candidate True if the UE has at least one candidate cell in this gNB.
+  /// \param[in] has_inter_gnb_candidate True if the UE has at least one candidate cell in another gNB.
+  void aggregate_ue_configured_with_cho(bool has_intra_gnb_candidate, bool has_inter_gnb_candidate);
+
+  /// \brief Aggregates the metrics for the successful intra-gNB conditional handover execution.
+  void aggregate_successful_intra_gnb_cho_execution();
+
   /// \brief Returns the mobility manager metrics.
   mobility_management_metrics request_metrics_report() const;
 

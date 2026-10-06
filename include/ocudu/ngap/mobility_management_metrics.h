@@ -21,6 +21,13 @@ struct mobility_management_metrics {
   unsigned nof_handover_executions_requested  = 0;
   unsigned nof_successful_handover_executions = 0;
 
+  // Section 5.1.1.6.6: Inter-gNB conditional handovers.
+  unsigned nof_ues_configured_with_inter_gnb_cho = 0;
+
+  // Section 5.1.1.6.7: Intra-gNB conditional handovers.
+  unsigned nof_ues_configured_with_intra_gnb_cho   = 0;
+  unsigned nof_successful_intra_gnb_cho_executions = 0;
+
   // Section 5.1.3.7.1: Intra-gNB handovers in a split gNB deployment.
   unsigned nof_intra_gnb_handover_preparations_requested  = 0;
   unsigned nof_successful_intra_gnb_handover_preparations = 0;

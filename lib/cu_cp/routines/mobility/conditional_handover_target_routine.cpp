@@ -125,7 +125,7 @@ void conditional_handover_target_routine::operator()(coro_context<async_task<voi
     target_ue->get_cho_context().reset();
   }
 
-  mobility_mng.get_metrics_handler().aggregate_successful_handover_execution();
+  mobility_mng.get_metrics_handler().aggregate_successful_intra_gnb_cho_execution();
 
   logger.info(
       "target_ue={} source_ue={}: CHO inter-DU completion finalized", request.target_ue_index, request.source_ue_index);

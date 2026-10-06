@@ -174,10 +174,14 @@ void conditional_handover_reconfiguration_routine::operator()(coro_context<async
       cho_ctx->state = cu_cp_ue_cho_context::state_t::execution;
       logger.info("ue={}: CHO reconfiguration acknowledged. Waiting for UE to complete handover to target",
                   source_ue.get_ue_index());
+
+      // Notify mobility manager about the UE configured with conditional handover.
+      const auto is_inter_cu = [](const cu_cp_cho_candidate& candidate) { return candidate.is_inter_cu(); };
+      mobility_mng.get_metrics_handler().aggregate_ue_configured_with_cho(
+          not std::all_of(cho_ctx->candidates.begin(), cho_ctx->candidates.end(), is_inter_cu),
+          std::any_of(cho_ctx->candidates.begin(), cho_ctx->candidates.end(), is_inter_cu));
     }
   }
-
-  mobility_mng.get_metrics_handler().aggregate_requested_handover_execution();
 
   logger.debug("ue={}: \"{}\" finished successfully", source_ue.get_ue_index(), name());
 

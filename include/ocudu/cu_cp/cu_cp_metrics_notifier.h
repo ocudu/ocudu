@@ -179,6 +179,10 @@ inline std::string format_rrc_metrics(const std::vector<cu_cp_metrics_report::du
                  " nof_handover_executions_requested={} nof_successful_handover_executions={}",
                  mobility_metrics.nof_handover_executions_requested,
                  mobility_metrics.nof_successful_handover_executions);
+  fmt::format_to(std::back_inserter(buffer),
+                 " nof_ues_configured_with_intra_gnb_cho={} nof_successful_intra_gnb_cho_executions={}",
+                 mobility_metrics.nof_ues_configured_with_intra_gnb_cho,
+                 mobility_metrics.nof_successful_intra_gnb_cho_executions);
 
   return to_c_str(buffer);
 }

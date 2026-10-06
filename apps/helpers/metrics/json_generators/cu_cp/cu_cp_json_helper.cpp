@@ -82,6 +82,7 @@ void to_json(nlohmann::json& json, const ocudu::cu_cp_ngap_metrics_json& metrics
       metrics.mobility.nof_successful_inter_gnb_handover_resource_allocations;
   json["nof_inter_gnb_handover_executions_requested"]  = metrics.mobility.nof_inter_gnb_handover_executions_requested;
   json["nof_successful_inter_gnb_handover_executions"] = metrics.mobility.nof_successful_inter_gnb_handover_executions;
+  json["nof_ues_configured_with_inter_gnb_cho"]        = metrics.mobility.nof_ues_configured_with_inter_gnb_cho;
 }
 
 void to_json(nlohmann::json& json, const rrc_connection_counter_with_cause& metrics)
@@ -137,8 +138,10 @@ void to_json(nlohmann::json& json, const cu_cp_rrc_metrics_json& metrics)
       metrics.mobility.nof_intra_gnb_handover_preparations_requested;
   json["nof_successful_intra_gnb_handover_preparations"] =
       metrics.mobility.nof_successful_intra_gnb_handover_preparations;
-  json["nof_handover_executions_requested"]  = metrics.mobility.nof_handover_executions_requested;
-  json["nof_successful_handover_executions"] = metrics.mobility.nof_successful_handover_executions;
+  json["nof_handover_executions_requested"]       = metrics.mobility.nof_handover_executions_requested;
+  json["nof_successful_handover_executions"]      = metrics.mobility.nof_successful_handover_executions;
+  json["nof_ues_configured_with_intra_gnb_cho"]   = metrics.mobility.nof_ues_configured_with_intra_gnb_cho;
+  json["nof_successful_intra_gnb_cho_executions"] = metrics.mobility.nof_successful_intra_gnb_cho_executions;
 }
 
 } // namespace ocudu
