@@ -198,6 +198,8 @@ public:
     logger.info("HandoverSuccess received for source UE index {}", source_ue_index);
   }
 
+  void on_transmission_of_handover_request() override { logger.info("Sent a Handover Request"); }
+
   void on_handover_cancel_received(cu_cp_ue_index_t ue_index) override
   {
     logger.info("Received a handover cancel for UE index {}", ue_index);

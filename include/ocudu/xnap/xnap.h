@@ -141,6 +141,9 @@ public:
   on_xn_handover_execution(cu_cp_ue_index_t                              ue_index,
                            const xnap_handover_target_execution_context& xnap_ho_target_execution_ctxt) = 0;
 
+  /// \brief Notify the CU-CP about the transmission of a Handover Request for an immediate handover to the Xn-C peer.
+  virtual void on_transmission_of_handover_request() = 0;
+
   /// \brief Notify the CU-CP about the reception of a Handover Cancel message.
   /// \param[in] ue_index The index of the UE.
   virtual void on_handover_cancel_received(cu_cp_ue_index_t ue_index) = 0;

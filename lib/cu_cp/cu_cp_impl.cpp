@@ -1416,6 +1416,12 @@ cu_cp_impl::handle_xnap_handover_request(const xnap_handover_request& request)
   return handle_inter_cu_handover_request(inter_cu_handover_request);
 }
 
+void cu_cp_impl::handle_transmission_of_xnap_handover_request()
+{
+  // Notify mobility manager metrics handler about the requested handover preparation.
+  mobility_mng.get_metrics_handler().aggregate_requested_handover_preparation();
+}
+
 void cu_cp_impl::handle_handover_cancel_received(cu_cp_ue_index_t ue_index)
 {
   cu_cp_ue* ue = ue_mng.find_ue(ue_index);

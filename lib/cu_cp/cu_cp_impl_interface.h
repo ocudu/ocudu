@@ -516,6 +516,9 @@ public:
   virtual async_task<cu_cp_handover_resource_allocation_response>
   handle_xnap_handover_request(const xnap_handover_request& request) = 0;
 
+  /// \brief Handle the transmission of a Handover Request for an immediate handover to the Xn-C peer.
+  virtual void handle_transmission_of_xnap_handover_request() = 0;
+
   /// \brief Handle the reception of a Handover Cancel message.
   /// \param[in] ue_index The index of the UE that is the target of the handover cancel.
   virtual void handle_handover_cancel_received(cu_cp_ue_index_t ue_index) = 0;

@@ -156,6 +156,7 @@ public:
   // cu_cp_xnap_handler.
   async_task<cu_cp_handover_resource_allocation_response>
                                       handle_xnap_handover_request(const xnap_handover_request& request) override;
+  void                                handle_transmission_of_xnap_handover_request() override;
   void                                handle_handover_cancel_received(cu_cp_ue_index_t ue_index) override;
   void                                handle_xnap_handover_success_received(cu_cp_ue_index_t           source_ue_index,
                                                                             const nr_cell_global_id_t& winner_cgi) override;

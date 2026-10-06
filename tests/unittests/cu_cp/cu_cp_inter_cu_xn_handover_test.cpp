@@ -444,6 +444,11 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_preparation_failure_is_rec
   // Inject Handover Preparation Failure.
   ASSERT_TRUE(send_handover_preparation_failure(target_peer_xnap_ue_id));
 
+  // Check that the metrics report contains the requested handover preparation only.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_preparations_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_handover_preparations, 0U);
+
   // STATUS: Handover Preparation failed and no further messages are sent to the AMF.
   report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                             "there are still NGAP messages to pop from AMF");
@@ -471,9 +476,19 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_succeeds_then_amf_releases
   ASSERT_TRUE(send_rrc_measurement_report_and_await_handover_request(
       ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value(), source_local_xnap_ue_id, target_peer_xnap_ue_id));
 
+  // Check that the metrics report contains the requested handover preparation.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_preparations_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_handover_preparations, 0U);
+
   // Inject Handover Request Ack and await UE Context Modification Request (with RRC Reconfiguration).
   ASSERT_TRUE(send_handover_request_ack_and_await_ue_context_modification_request(target_local_xnap_ue_id,
                                                                                   target_peer_xnap_ue_id));
+
+  // Check that the metrics report contains the successful handover preparation.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_handover_preparations_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_handover_preparations, 1U);
 
   // Inject Handover UE Context Modification Response and await for Bearer Context Modification Request (to query PDCP
   // state).
@@ -495,7 +510,7 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_succeeds_then_amf_releases
   ASSERT_TRUE(send_f1ap_ue_context_release_complete(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
 
   // STATUS: UE should be removed at this stage
-  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
 }
 

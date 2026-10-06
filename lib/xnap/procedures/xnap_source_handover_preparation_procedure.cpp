@@ -68,6 +68,11 @@ void xnap_source_handover_preparation_procedure::operator()(
     CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
   }
 
+  if (!request.is_conditional_handover) {
+    // Notify the CU-CP about the transmission of a Handover Request.
+    cu_cp_notifier.on_transmission_of_handover_request();
+  }
+
   CORO_AWAIT(transaction_sink);
 
   if (!transaction_sink.successful()) {

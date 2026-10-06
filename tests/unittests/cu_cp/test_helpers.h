@@ -994,6 +994,8 @@ public:
                 xnap_ho_target_execution_ctxt.has_value() ? "Xn-C" : "NG");
   }
 
+  void handle_transmission_of_xnap_handover_request() override { logger.info("Sent a handover request message"); }
+
   void handle_handover_cancel_received(cu_cp_ue_index_t ue_index) override
   {
     logger.info("ue={}: Received a handover cancel message", ue_index);
