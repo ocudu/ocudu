@@ -7,6 +7,7 @@
 
 #include "../../cu_up_processor/cu_up_processor_repository.h"
 #include "../../du_processor/du_processor_repository.h"
+#include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/cu_cp_types.h"
@@ -23,6 +24,7 @@ public:
                                    cu_up_processor_repository&   cu_up_db_,
                                    ngap_control_message_handler& ngap_,
                                    xnap_interface*               xnap_,
+                                   mobility_manager&             mobility_mng_,
                                    ocudulog::basic_logger&       logger_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
@@ -40,6 +42,7 @@ private:
   cu_up_processor_repository&   cu_up_db;
   ngap_control_message_handler& ngap;
   xnap_interface*               xnap = nullptr;
+  mobility_manager&             mobility_mng;
 
   ocudulog::basic_logger& logger;
 

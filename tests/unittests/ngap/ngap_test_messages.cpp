@@ -425,7 +425,9 @@ ngap_message ocudu::ocucp::generate_invalid_ue_context_modification_request_mess
   return ngap_msg;
 }
 
-ngap_message ocudu::ocucp::generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id_t amf_ue_id)
+ngap_message
+ocudu::ocucp::generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id_t                       amf_ue_id,
+                                                                            asn1::ngap::cause_radio_network_e cause)
 {
   ngap_message ngap_msg = {};
 
@@ -434,8 +436,7 @@ ngap_message ocudu::ocucp::generate_valid_ue_context_release_command_with_amf_ue
 
   auto& ue_context_release_cmd                             = ngap_msg.pdu.init_msg().value.ue_context_release_cmd();
   ue_context_release_cmd->ue_ngap_ids.set_amf_ue_ngap_id() = to_underlying(amf_ue_id);
-  auto& cause                                              = ue_context_release_cmd->cause.set_radio_network();
-  cause = asn1::ngap::cause_radio_network_opts::options::radio_conn_with_ue_lost;
+  ue_context_release_cmd->cause.set_radio_network()        = cause;
 
   return ngap_msg;
 }

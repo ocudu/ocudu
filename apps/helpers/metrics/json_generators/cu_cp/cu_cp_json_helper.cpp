@@ -73,9 +73,11 @@ void to_json(nlohmann::json& json, const ngap_info& metrics)
 void to_json(nlohmann::json& json, const ocudu::cu_cp_ngap_metrics_json& metrics)
 {
   // NGAP metrics.
-  json["ngap"]                                 = metrics.ngaps;
-  json["nof_handover_preparations_requested"]  = metrics.mobility.nof_handover_preparations_requested;
-  json["nof_successful_handover_preparations"] = metrics.mobility.nof_successful_handover_preparations;
+  json["ngap"]                                         = metrics.ngaps;
+  json["nof_handover_preparations_requested"]          = metrics.mobility.nof_handover_preparations_requested;
+  json["nof_successful_handover_preparations"]         = metrics.mobility.nof_successful_handover_preparations;
+  json["nof_inter_gnb_handover_executions_requested"]  = metrics.mobility.nof_inter_gnb_handover_executions_requested;
+  json["nof_successful_inter_gnb_handover_executions"] = metrics.mobility.nof_successful_inter_gnb_handover_executions;
 }
 
 void to_json(nlohmann::json& json, const rrc_connection_counter_with_cause& metrics)

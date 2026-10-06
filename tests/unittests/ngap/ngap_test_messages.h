@@ -148,7 +148,9 @@ ngap_message generate_valid_ue_context_modification_request_message(
 ngap_message generate_invalid_ue_context_modification_request_message(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);
 
 /// \brief Generate an valid dummy UE Context Release Command Message with AMF UE NGAP ID.
-ngap_message generate_valid_ue_context_release_command_with_amf_ue_ngap_id(amf_ue_id_t amf_ue_id);
+ngap_message generate_valid_ue_context_release_command_with_amf_ue_ngap_id(
+    amf_ue_id_t                       amf_ue_id,
+    asn1::ngap::cause_radio_network_e cause = asn1::ngap::cause_radio_network_opts::radio_conn_with_ue_lost);
 
 /// \brief Generate an valid dummy UE Context Release Command Message with UE NGAP ID pair.
 ngap_message generate_valid_ue_context_release_command_with_ue_ngap_id_pair(amf_ue_id_t amf_ue_id,

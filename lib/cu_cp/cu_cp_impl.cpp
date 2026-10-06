@@ -1274,6 +1274,12 @@ cu_cp_impl::handle_ue_context_release_command(const cu_cp_ue_context_release_com
     ue->get_handover_ue_release_timer().stop();
   }
 
+  if (ue->get_ue_context().inter_gnb_handover_execution_requested and
+      command.cause == ngap_cause_t{ngap_cause_radio_network_t::successful_ho}) {
+    // Notify mobility manager metrics handler about the successful handover execution over NG.
+    mobility_mng.get_metrics_handler().aggregate_successful_inter_gnb_handover_execution();
+  }
+
   e1ap_bearer_context_manager* e1ap_bearer_ctxt_mng = nullptr;
   if (ue->get_cu_up_index() != cu_cp_cu_up_index_t::invalid) {
     e1ap_bearer_ctxt_mng = &cu_up_db.find_cu_up_processor(ue->get_cu_up_index())->get_e1ap_bearer_context_manager();
@@ -1393,8 +1399,14 @@ async_task<bool> cu_cp_impl::handle_new_rrc_handover_command(cu_cp_rrc_handover_
                                        ue->get_up_resource_manager().get_pdu_sessions(),
                                        ngap_cause_radio_network_t::tngrelocoverall_expiry});
 
-  return launch_async<inter_cu_handover_source_routine>(
-      std::move(command), ue_mng, du_db, cu_up_db, ngap->get_ngap_control_message_handler(), xnap, logger);
+  return launch_async<inter_cu_handover_source_routine>(std::move(command),
+                                                        ue_mng,
+                                                        du_db,
+                                                        cu_up_db,
+                                                        ngap->get_ngap_control_message_handler(),
+                                                        xnap,
+                                                        mobility_mng,
+                                                        logger);
 }
 
 async_task<cu_cp_handover_resource_allocation_response>
@@ -1499,6 +1511,11 @@ void cu_cp_impl::handle_xnap_ue_context_release_received(cu_cp_ue_index_t ue_ind
   if (ue == nullptr) {
     logger.warning("ue={}: UE not found for XNAP UE context release handling", ue_index);
     return;
+  }
+
+  if (ue->get_ue_context().inter_gnb_handover_execution_requested) {
+    // Notify mobility manager metrics handler about the successful handover execution over Xn.
+    mobility_mng.get_metrics_handler().aggregate_successful_inter_gnb_handover_execution();
   }
 
   cu_cp_ue_context_release_command command;

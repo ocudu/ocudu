@@ -359,8 +359,9 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool
-  send_ngap_ue_context_release_command_and_await_bearer_context_release_command(amf_ue_id_t ngap_amf_ue_id)
+  [[nodiscard]] bool send_ngap_ue_context_release_command_and_await_bearer_context_release_command(
+      amf_ue_id_t                       ngap_amf_ue_id,
+      asn1::ngap::cause_radio_network_e cause = asn1::ngap::cause_radio_network_opts::radio_conn_with_ue_lost)
   {
     report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                               "there are still NGAP messages to pop from AMF");
@@ -370,7 +371,7 @@ public:
                               "there are still E1AP messages to pop from CU-UP");
 
     // Inject NGAP UE Context Release Command and wait for Bearer Context Release Command.
-    get_amf().push_tx_pdu(generate_valid_ue_context_release_command_with_amf_ue_ngap_id(ngap_amf_ue_id));
+    get_amf().push_tx_pdu(generate_valid_ue_context_release_command_with_amf_ue_ngap_id(ngap_amf_ue_id, cause));
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Release Command");
     report_fatal_error_if_not(test_helpers::is_valid_bearer_context_release_command(e1ap_pdu),
@@ -493,6 +494,11 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_succeeds_then_amf_releases
   ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request(
       ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
 
+  // Check that the metrics report contains the requested handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_inter_gnb_handover_executions_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_inter_gnb_handover_executions, 0U);
+
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_ul_status_transfer(ue_ctx->cu_cp_e1ap_id.value(),
                                                                                      ue_ctx->cu_up_e1ap_id.value()));
 
@@ -502,7 +508,12 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_succeeds_then_amf_releases
   ASSERT_EQ(report.mobility.nof_successful_handover_preparations, 1);
 
   // Inject NGAP UE Context Release Command and await Bearer Context Release Command.
-  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command(ue_ctx->amf_ue_id.value()));
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command(
+      ue_ctx->amf_ue_id.value(), asn1::ngap::cause_radio_network_opts::successful_ho));
+
+  // Check that the metrics report contains the successful handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_successful_inter_gnb_handover_executions, 1U);
 
   // Inject Bearer Context Release Complete and await F1AP UE Context Release Command.
   ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command(

@@ -495,12 +495,21 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_succeeds_then_amf_releases
   ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request(
       ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
 
+  // Check that the metrics report contains the requested handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_inter_gnb_handover_executions_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_inter_gnb_handover_executions, 0U);
+
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_sn_status_transfer(ue_ctx->cu_cp_e1ap_id.value(),
                                                                                      ue_ctx->cu_up_e1ap_id.value()));
 
   // Inject XNAP UE Context Release and await Bearer Context Release Command.
   ASSERT_TRUE(send_xnap_ue_context_release_and_await_bearer_context_release_command(target_local_xnap_ue_id,
                                                                                     target_peer_xnap_ue_id));
+
+  // Check that the metrics report contains the successful handover execution.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_successful_inter_gnb_handover_executions, 1U);
 
   // Inject Bearer Context Release Complete and await F1AP UE Context Release Command.
   ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command(

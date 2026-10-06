@@ -15,6 +15,7 @@ inter_cu_handover_source_routine::inter_cu_handover_source_routine(cu_cp_rrc_han
                                                                    cu_up_processor_repository&   cu_up_db_,
                                                                    ngap_control_message_handler& ngap_,
                                                                    xnap_interface*               xnap_,
+                                                                   mobility_manager&             mobility_mng_,
                                                                    ocudulog::basic_logger&       logger_) :
   command(std::move(command_)),
   ue_index(command.ue_index),
@@ -23,6 +24,7 @@ inter_cu_handover_source_routine::inter_cu_handover_source_routine(cu_cp_rrc_han
   cu_up_db(cu_up_db_),
   ngap(ngap_),
   xnap(xnap_),
+  mobility_mng(mobility_mng_),
   logger(logger_)
 {
 }
@@ -58,6 +60,10 @@ void inter_cu_handover_source_routine::operator()(coro_context<async_task<bool>>
   if (not ue_context_mod_response.success) {
     CORO_EARLY_RETURN(false);
   }
+
+  // Notify mobility manager about requested handover execution.
+  ue_mng.find_du_ue(ue_index)->get_ue_context().inter_gnb_handover_execution_requested = true;
+  mobility_mng.get_metrics_handler().aggregate_requested_inter_gnb_handover_execution();
 
   // Get the PDCP state from the CU-UP and give it the forwarding tunnels to send the held data to.
   fill_e1ap_bearer_context_modification_request();

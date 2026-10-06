@@ -18,6 +18,12 @@ public:
   /// \brief Aggregates the metrics for the successful handover preparation.
   void aggregate_successful_handover_preparation();
 
+  /// \brief Aggregates the metrics for the requested inter-gNB handover execution.
+  void aggregate_requested_inter_gnb_handover_execution();
+
+  /// \brief Aggregates the metrics for the successful inter-gNB handover execution.
+  void aggregate_successful_inter_gnb_handover_execution();
+
   /// \brief Aggregates the metrics for the requested intra-gNB handover preparation.
   void aggregate_requested_intra_gnb_handover_preparation();
 
