@@ -64,7 +64,7 @@ private:
   // Allocates a single CG PUSCH opportunity for the given RNTI.
   bool allocate_cg_opportunity(cell_slot_resource_allocator& slot_alloc, rnti_t rnti) const;
 
-  pusch_config_params build_cg_pusch_cfg_params(const ue_cell_configuration& ue_cell_cfg) const;
+  pusch_config_params build_cg_pusch_cfg_params(const ue_cell& ue_cc) const;
 
   const cell_configuration& cell_cfg;
   uci_allocator&            uci_alloc;
