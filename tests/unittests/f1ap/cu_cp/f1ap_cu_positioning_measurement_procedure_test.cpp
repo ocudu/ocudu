@@ -65,6 +65,31 @@ TEST_F(f1ap_cu_positioning_measurement_test, when_f1ap_already_stopped_then_requ
   EXPECT_FALSE(t.get().has_value());
 }
 
+TEST_F(f1ap_cu_positioning_measurement_test, when_response_carries_zoa_then_procedure_returns_the_zoa)
+{
+  start_procedure(make_request());
+  ASSERT_TRUE(was_request_sent());
+
+  constexpr uint16_t             zenith_aoa = 600;
+  const lcs_to_gcs_translation_t lcs_to_gcs{.alpha = 900, .beta = 50, .gamma = 2700};
+  f1ap->handle_message(test_helpers::generate_positioning_measurement_response_with_zoa(
+      lmf_meas_id_t::min, ran_meas_id_t::min, {uint_to_trp_id(1)}, zenith_aoa, lcs_to_gcs, sent_transaction_id()));
+
+  ASSERT_TRUE(t.ready());
+  const auto& res = t.get();
+  ASSERT_TRUE(res.has_value());
+  ASSERT_EQ(res.value().trp_meas_resp_list.size(), 1);
+  ASSERT_EQ(res.value().trp_meas_resp_list[0].meas_result.size(), 1);
+
+  const auto* zoa = std::get_if<zoa_t>(&res.value().trp_meas_resp_list[0].meas_result[0].measured_results_value);
+  ASSERT_NE(zoa, nullptr);
+  ASSERT_EQ(zoa->zenith_aoa, zenith_aoa);
+  ASSERT_TRUE(zoa->lcs_to_gcs_translation.has_value());
+  ASSERT_EQ(zoa->lcs_to_gcs_translation->alpha, lcs_to_gcs.alpha);
+  ASSERT_EQ(zoa->lcs_to_gcs_translation->beta, lcs_to_gcs.beta);
+  ASSERT_EQ(zoa->lcs_to_gcs_translation->gamma, lcs_to_gcs.gamma);
+}
+
 TEST_F(f1ap_cu_positioning_measurement_test, when_response_carries_an_unsupported_result_then_its_trp_is_ignored)
 {
   start_procedure(make_request());

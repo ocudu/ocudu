@@ -194,6 +194,20 @@ static inline trp_meas_quality_t asn1_to_trp_meas_quality(const asn1::f1ap::trp_
   return trp_meas_quality;
 }
 
+static zoa_t asn1_to_zoa(const asn1::f1ap::zo_a_info_s& asn1_zoa)
+{
+  zoa_t zoa;
+
+  zoa.zenith_aoa = asn1_zoa.zenith_ao_a;
+  if (asn1_zoa.lcs_to_gcs_translation_present) {
+    zoa.lcs_to_gcs_translation = {asn1_zoa.lcs_to_gcs_translation.alpha,
+                                  asn1_zoa.lcs_to_gcs_translation.beta,
+                                  asn1_zoa.lcs_to_gcs_translation.gamma};
+  }
+
+  return zoa;
+}
+
 static std::vector<multiple_ul_aoa_item_t>
 asn1_to_multiple_ul_aoa(const asn1::f1ap::multiple_ul_ao_a_s& asn1_multiple_aoa)
 {
@@ -216,17 +230,7 @@ asn1_to_multiple_ul_aoa(const asn1::f1ap::multiple_ul_ao_a_s& asn1_multiple_aoa)
 
       multiple_ul_aoa.push_back(aoa);
     } else {
-      const asn1::f1ap::zo_a_info_s& asn1_zoa = asn1_multiple_ul_aoa_item.ul_zo_a();
-      zoa_t                          zoa;
-
-      zoa.zenith_aoa = asn1_zoa.zenith_ao_a;
-      if (asn1_zoa.lcs_to_gcs_translation_present) {
-        zoa.lcs_to_gcs_translation = {asn1_zoa.lcs_to_gcs_translation.alpha,
-                                      asn1_zoa.lcs_to_gcs_translation.beta,
-                                      asn1_zoa.lcs_to_gcs_translation.gamma};
-      }
-
-      multiple_ul_aoa.push_back(zoa);
+      multiple_ul_aoa.push_back(asn1_to_zoa(asn1_multiple_ul_aoa_item.ul_zo_a()));
     }
   }
 
@@ -363,9 +367,13 @@ create_positioning_measurement_response(const asn1::f1ap::positioning_meas_resp_
 
         } else if (asn1_pos_meas_result_item.measured_results_value.type() ==
                    asn1::f1ap::measured_results_value_c::types_opts::options::choice_ext) {
-          logger.warning("Positioning Measurement Response: ignoring unsupported measured results value {}",
-                         asn1_pos_meas_result_item.measured_results_value.choice_ext()->type().to_string());
-          continue;
+          const auto& asn1_ext = asn1_pos_meas_result_item.measured_results_value.choice_ext();
+          if (asn1_ext->type() != asn1::f1ap::measured_results_value_ext_ies_o::value_c::types_opts::zo_a_info) {
+            logger.warning("Positioning Measurement Response: ignoring unsupported measured results value {}",
+                           asn1_ext->type().to_string());
+            continue;
+          }
+          pos_meas_result_item.measured_results_value = asn1_to_zoa(asn1_ext->zo_a_info());
         } else {
           const asn1::f1ap::gnb_rx_tx_time_diff_s& asn1_rx_tx_time_diff =
               asn1_pos_meas_result_item.measured_results_value.gnb_rx_tx_time_diff();

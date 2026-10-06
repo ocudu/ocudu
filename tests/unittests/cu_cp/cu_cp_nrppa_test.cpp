@@ -755,6 +755,26 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool
+  send_f1ap_positioning_measurement_response_with_zoa(unsigned                                du_id,
+                                                      lmf_meas_id_t                           lmf_meas,
+                                                      ran_meas_id_t                           ran_meas,
+                                                      const std::vector<trp_id_t>&            trp_ids,
+                                                      uint16_t                                zenith_ao_a,
+                                                      std::optional<lcs_to_gcs_translation_t> lcs_to_gcs_translation)
+  {
+    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
+                              "there are still NGAP messages to pop from AMF");
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+
+    // Inject F1AP Positioning Measurement Response containing a Zenith Angle of Arrival measurement result.
+    get_du(du_id).push_ul_pdu(test_helpers::generate_positioning_measurement_response_with_zoa(
+        lmf_meas, ran_meas, trp_ids, zenith_ao_a, lcs_to_gcs_translation));
+
+    return true;
+  }
+
   [[nodiscard]] bool await_nrppa_measurement_response(unsigned trp_meas_resp_list_size)
   {
     // Wait for NRPPa Measurement Response.
@@ -1643,6 +1663,48 @@ TEST_F(cu_cp_nrppa_test,
               asn1::nrppa::trp_measured_results_value_c::types_opts::ul_angle_of_arrival);
     ASSERT_EQ(meas_result.measured_results_value.ul_angle_of_arrival().azimuth_ao_a, azimuth_ao_a);
   }
+}
+
+TEST_F(cu_cp_nrppa_test, when_zenith_angle_of_arrival_measurement_response_is_received_then_it_is_forwarded_to_lmf)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-POS-16-3-c");
+
+  // Handle TRP information procedure.
+  ASSERT_TRUE(run_successful_trp_information_procedure());
+
+  // Attach UE.
+  ASSERT_TRUE(attach_ue(du_ue_id, crnti, amf_ue_id, cu_up_e1ap_id));
+
+  // Inject measurement request, requesting UL Angle of Arrival for a TRP hosted by DU 1.
+  ASSERT_TRUE(send_nrppa_measurement_request(lmf_meas_id, {uint_to_trp_id(1)}, {{trp_meas_quantities_item_t::ul_aoa}}));
+
+  // Await F1AP positioning measurement request.
+  ASSERT_TRUE(await_f1ap_positioning_measurement_request(du_idx, f1ap_pdu));
+
+  // Inject F1AP positioning measurement response with a Zenith Angle of Arrival measurement result.
+  constexpr uint16_t             zenith_ao_a = 600;
+  const lcs_to_gcs_translation_t lcs_to_gcs{.alpha = 900, .beta = 50, .gamma = 2700};
+  ASSERT_TRUE(send_f1ap_positioning_measurement_response_with_zoa(
+      du_idx, lmf_meas_id, ran_meas_id, {uint_to_trp_id(1)}, zenith_ao_a, lcs_to_gcs));
+
+  // Await NRPPa measurement response.
+  ASSERT_TRUE(await_nrppa_measurement_response(1));
+
+  // Verify that the Zenith Angle of Arrival measurement result was correctly forwarded to the LMF.
+  asn1::nrppa::nr_ppa_pdu_c nrppa_pdu          = get_nrppa_pdu(ngap_pdu);
+  const auto&               trp_meas_resp_list = nrppa_pdu.successful_outcome().value.meas_resp()->trp_meas_resp_list;
+  ASSERT_EQ(trp_meas_resp_list[0].meas_result.size(), 1);
+  const auto& meas_result = trp_meas_resp_list[0].meas_result[0];
+  ASSERT_EQ(meas_result.measured_results_value.type(),
+            asn1::nrppa::trp_measured_results_value_c::types_opts::choice_ext);
+  const auto& ext = meas_result.measured_results_value.choice_ext();
+  ASSERT_EQ(ext->type(), asn1::nrppa::trp_measured_results_value_ext_ies_o::value_c::types_opts::zo_a);
+  const asn1::nrppa::zo_a_s& zoa = ext->zo_a();
+  ASSERT_EQ(zoa.zenith_ao_a, zenith_ao_a);
+  ASSERT_TRUE(zoa.lcs_to_gcs_translation_present);
+  ASSERT_EQ(zoa.lcs_to_gcs_translation.alpha, lcs_to_gcs.alpha);
+  ASSERT_EQ(zoa.lcs_to_gcs_translation.beta, lcs_to_gcs.beta);
+  ASSERT_EQ(zoa.lcs_to_gcs_translation.gamma, lcs_to_gcs.gamma);
 }
 
 TEST_F(cu_cp_nrppa_test, when_trp_information_is_not_available_then_measurement_failure_is_sent)

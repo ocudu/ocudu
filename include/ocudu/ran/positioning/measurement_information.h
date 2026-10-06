@@ -214,7 +214,8 @@ struct gnb_rx_tx_time_diff_t {
   std::optional<trp_teg_info_t>     trp_teg_info;
 };
 
-using trp_measured_results_value_t = std::variant<ul_angle_of_arrival_t, uint8_t, ul_rtoa_t, gnb_rx_tx_time_diff_t>;
+using trp_measured_results_value_t =
+    std::variant<ul_angle_of_arrival_t, uint8_t, ul_rtoa_t, gnb_rx_tx_time_diff_t, zoa_t>;
 
 struct meas_beam_info_t {
   std::optional<uint8_t> prs_res_id;

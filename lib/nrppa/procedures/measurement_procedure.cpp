@@ -244,6 +244,16 @@ static inline asn1::nrppa::trp_meas_quality_c trp_meas_qualitiy_to_asn1(const tr
   return asn1_trp_meas_quality;
 }
 
+static asn1::nrppa::lcs_to_gcs_translation_s
+lcs_to_gcs_translation_to_asn1(const lcs_to_gcs_translation_t& lcs_to_gcs_translation)
+{
+  asn1::nrppa::lcs_to_gcs_translation_s asn1_lcs_to_gcs_translation;
+  asn1_lcs_to_gcs_translation.alpha = lcs_to_gcs_translation.alpha;
+  asn1_lcs_to_gcs_translation.beta  = lcs_to_gcs_translation.beta;
+  asn1_lcs_to_gcs_translation.gamma = lcs_to_gcs_translation.gamma;
+  return asn1_lcs_to_gcs_translation;
+}
+
 static inline asn1::nrppa::multiple_ul_ao_a_item_c
 multiple_ul_aoa_item_to_asn1(const multiple_ul_aoa_item_t& multiple_ul_aoa_item)
 {
@@ -375,9 +385,16 @@ asn1::nrppa::nr_ppa_pdu_c measurement_procedure::create_measurement_response()
           }
           if (ul_aoa.lcs_to_gcs_translation.has_value()) {
             asn1_ul_aoa.lcs_to_gcs_translation_present = true;
-            asn1_ul_aoa.lcs_to_gcs_translation.alpha   = ul_aoa.lcs_to_gcs_translation->alpha;
-            asn1_ul_aoa.lcs_to_gcs_translation.beta    = ul_aoa.lcs_to_gcs_translation->beta;
-            asn1_ul_aoa.lcs_to_gcs_translation.gamma   = ul_aoa.lcs_to_gcs_translation->gamma;
+            asn1_ul_aoa.lcs_to_gcs_translation = lcs_to_gcs_translation_to_asn1(ul_aoa.lcs_to_gcs_translation.value());
+          }
+        } else if (const auto* zoa = std::get_if<zoa_t>(&trp_meas_result_item.measured_results_value)) {
+          auto& asn1_ext = asn1_trp_meas_result_item.measured_results_value.set_choice_ext();
+          asn1_ext->set(asn1::nrppa::trp_measured_results_value_ext_ies_o::value_c::types_opts::zo_a);
+          asn1::nrppa::zo_a_s& asn1_zoa = asn1_ext->zo_a();
+          asn1_zoa.zenith_ao_a          = zoa->zenith_aoa;
+          if (zoa->lcs_to_gcs_translation.has_value()) {
+            asn1_zoa.lcs_to_gcs_translation_present = true;
+            asn1_zoa.lcs_to_gcs_translation = lcs_to_gcs_translation_to_asn1(zoa->lcs_to_gcs_translation.value());
           }
         } else if (std::holds_alternative<uint8_t>(trp_meas_result_item.measured_results_value)) {
           asn1_trp_meas_result_item.measured_results_value.set_ul_srs_rsrp() =

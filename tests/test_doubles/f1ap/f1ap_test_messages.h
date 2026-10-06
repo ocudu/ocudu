@@ -19,6 +19,7 @@
 #include "ocudu/ran/nr_cell_identity.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "ocudu/ran/positioning/common.h"
 #include "ocudu/ran/positioning/positioning_ids.h"
 #include "ocudu/ran/rb_id.h"
 #include "ocudu/ran/rnti.h"
@@ -317,6 +318,17 @@ f1ap_message generate_positioning_measurement_response_with_aoa(lmf_meas_id_t   
                                                                 const std::vector<trp_id_t>& trp_ids,
                                                                 uint16_t                     azimuth_ao_a,
                                                                 unsigned                     transaction_id = 1);
+
+/// \brief Generates dummy F1AP POSITIONING MEASUREMENT RESPONSE message containing a Zenith Angle of Arrival
+/// Information measurement result for each TRP, sent by the DU to the CU, as per TS 38.473 section 8.13.3.2 and
+/// section 9.3.1.239 (Zenith Angle of Arrival Information).
+f1ap_message
+generate_positioning_measurement_response_with_zoa(lmf_meas_id_t                           lmf_meas_id,
+                                                   ran_meas_id_t                           ran_meas_id,
+                                                   const std::vector<trp_id_t>&            trp_ids,
+                                                   uint16_t                                zenith_ao_a,
+                                                   std::optional<lcs_to_gcs_translation_t> lcs_to_gcs_translation,
+                                                   unsigned                                transaction_id = 1);
 
 /// \brief Generates dummy F1AP POSITIONING MEASUREMENT FAILURE message, sent by the DU to the CU, as per
 /// TS 38.473 section 8.13.3.3.
