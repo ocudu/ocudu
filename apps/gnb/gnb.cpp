@@ -652,7 +652,7 @@ int main(int argc, char** argv)
 
   // Reject remote commands, but keep the metrics flowing until all the units have stopped.
   if (remote_control_server) {
-    remote_control_server->get_operation_controller().disable_commands();
+    remote_control_server->get_operation_controller().reject_commands();
   }
 
   // Stop DU activity.

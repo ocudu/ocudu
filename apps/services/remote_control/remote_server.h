@@ -31,7 +31,7 @@ public:
   /// \brief Rejects any new incoming command while metrics keep being sent.
   ///
   /// Returns once no command is being executed.
-  virtual void disable_commands() = 0;
+  virtual void reject_commands() = 0;
 };
 
 /// \brief Remote server interface.

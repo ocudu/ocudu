@@ -471,7 +471,7 @@ int main(int argc, char** argv)
   }
   // Reject remote commands
   if (remote_control_server) {
-    remote_control_server->get_operation_controller().disable_commands();
+    remote_control_server->get_operation_controller().reject_commands();
   }
 
   // Stop DU activity

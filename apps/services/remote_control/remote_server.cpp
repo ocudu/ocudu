@@ -90,7 +90,7 @@ class remote_server_impl : public remote_server,
   std::unordered_map<std::string, std::unique_ptr<remote_command>> commands;
   std::set<socket_type*>                                           metrics_subscribers;
   socket_type*                                                     current_cmd_client = nullptr;
-  bool                                                             commands_disabled  = false;
+  bool                                                             rejecting_commands = false;
   stop_event_source                                                stop_control;
 
   /// Metrics subscription command.
@@ -240,7 +240,7 @@ public:
   }
 
   // See interface for documentation.
-  void disable_commands() override
+  void reject_commands() override
   {
     if (!thread.running()) {
       return;
@@ -248,7 +248,7 @@ public:
 
     // Commands run in the server loop, so once this task completes no command is in progress.
     sync_event ev;
-    server_loop.load()->defer([this, tk = ev.get_token()]() { commands_disabled = true; });
+    server_loop.load()->defer([this, tk = ev.get_token()]() { rejecting_commands = true; });
     ev.wait();
   }
 
@@ -298,7 +298,7 @@ private:
   /// Handles the given command.
   std::string handle_command(std::string_view command)
   {
-    if (commands_disabled) {
+    if (rejecting_commands) {
       return build_error_response("Remote server is not accepting commands");
     }
 
@@ -336,7 +336,6 @@ private:
 } // namespace
 
 std::unique_ptr<remote_server> ocudu::app_services::create_remote_server(const remote_control_appconfig& cfg)
-
 {
   if (!cfg.enabled) {
     return nullptr;
