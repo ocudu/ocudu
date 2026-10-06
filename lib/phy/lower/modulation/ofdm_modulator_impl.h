@@ -61,7 +61,7 @@ public:
   }
 
   // See the interface for documentation.
-  void modulate(span<cf_t>                  ouput,
+  void modulate(span<ci16_t>                output,
                 const resource_grid_reader& grid,
                 span<const cf_t>            port_weights,
                 unsigned                    symbol_index) override;
@@ -95,7 +95,7 @@ public:
   void set_center_frequency(double center_frequency_Hz) override;
 
   // See interface for documentation;
-  void modulate(span<cf_t>                  output,
+  void modulate(span<ci16_t>                output,
                 const resource_grid_reader& grid,
                 span<const cf_t>            port_weights,
                 unsigned                    slot_index) override;

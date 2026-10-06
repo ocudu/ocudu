@@ -98,8 +98,6 @@ static void fill_ru_sdr_section(YAML::Node node, const ru_sdr_unit_config& confi
   {
     YAML::Node amp_crtl_node         = node["amplitude_control"];
     amp_crtl_node["tx_gain_backoff"] = config.amplitude_cfg.gain_backoff_dB;
-    amp_crtl_node["enable_clipping"] = config.amplitude_cfg.enable_clipping;
-    amp_crtl_node["ceiling"]         = config.amplitude_cfg.power_ceiling_dBFS;
   }
 
   {

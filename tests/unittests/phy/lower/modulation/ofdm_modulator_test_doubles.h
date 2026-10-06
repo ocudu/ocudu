@@ -8,6 +8,7 @@
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
 #include "ocudu/support/error_handling.h"
+#include <limits>
 #include <random>
 
 namespace ocudu {
@@ -15,12 +16,12 @@ namespace ocudu {
 class ofdm_symbol_modulator_spy : public ofdm_symbol_modulator
 {
 private:
-  std::mt19937                          rgen;
-  std::uniform_real_distribution<float> dist;
-  ofdm_modulator_configuration          configuration;
+  std::mt19937                           rgen;
+  std::uniform_int_distribution<int16_t> dist;
+  ofdm_modulator_configuration           configuration;
 
   struct modulate_entry {
-    std::vector<cf_t>           output;
+    std::vector<ci16_t>         output;
     const resource_grid_reader* grid;
     std::vector<cf_t>           port_weights;
     unsigned                    symbol_index;
@@ -28,7 +29,8 @@ private:
   std::vector<modulate_entry> modulate_entries;
 
 public:
-  ofdm_symbol_modulator_spy(const ofdm_modulator_configuration& config) : rgen(0), dist(-1, +1), configuration(config)
+  ofdm_symbol_modulator_spy(const ofdm_modulator_configuration& config) :
+    rgen(0), dist(std::numeric_limits<int16_t>::min(), std::numeric_limits<int16_t>::max()), configuration(config)
   {
     // Do nothing.
   }
@@ -43,7 +45,7 @@ public:
            configuration.dft_size;
   }
 
-  void modulate(span<cf_t>                  output,
+  void modulate(span<ci16_t>                output,
                 const resource_grid_reader& grid,
                 span<const cf_t>            port_weights,
                 unsigned                    symbol_index) override
@@ -59,7 +61,7 @@ public:
 
     // Prepare output.
     entry.output.resize(output.size());
-    std::generate(entry.output.begin(), entry.output.end(), [this]() { return cf_t(dist(rgen), dist(rgen)); });
+    std::generate(entry.output.begin(), entry.output.end(), [this]() { return ci16_t(dist(rgen), dist(rgen)); });
     ocuduvec::copy(output, entry.output);
   }
 

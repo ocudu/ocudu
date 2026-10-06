@@ -20,9 +20,6 @@ static void configure_cli11_amplitude_control_args(CLI::App& app, amplitude_cont
              amplitude_params.gain_backoff_dB,
              "Gain back-off to accommodate the signal PAPR in decibels")
       ->capture_default_str();
-  add_option(app, "--enable_clipping", amplitude_params.enable_clipping, "Signal clipping")->capture_default_str();
-  add_option(app, "--ceiling", amplitude_params.power_ceiling_dBFS, "Clipping ceiling referenced to full scale")
-      ->capture_default_str();
 }
 
 static void configure_cli11_ru_sdr_expert_args(CLI::App& app, ru_sdr_unit_expert_config& config)

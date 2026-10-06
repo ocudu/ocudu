@@ -7,7 +7,6 @@
 
 #include "ocudu/gateways/baseband/baseband_gateway.h"
 #include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "ocudu/phy/lower/lower_phy_error_notifier.h"
 #include "ocudu/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "ocudu/phy/lower/sampling_rate.h"
@@ -86,8 +85,12 @@ struct lower_phy_configuration {
   unsigned max_nof_prach_concurrent_requests = 1;
   /// Baseband receive buffer size policy.
   lower_phy_baseband_buffer_size_policy baseband_rx_buffer_size_policy;
-  /// Amplitude control parameters, including baseband gain and clipping.
-  amplitude_controller_clipping_config amplitude_config;
+  /// \brief Transmit baseband gain back-off in decibels.
+  ///
+  /// The transmit signal is normalized so its average power is equal to the full scale of the radio device. The
+  /// back-off then lowers the signal power to accommodate its peak-to-average power ratio. Samples that exceed the full
+  /// scale saturate.
+  float gain_backoff_dB = 0.0F;
 };
 
 /// Lower physical layer dependencies.

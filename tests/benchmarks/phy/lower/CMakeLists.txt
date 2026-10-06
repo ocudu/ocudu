@@ -7,7 +7,6 @@ add_executable(pdxch_modulator_benchmark pdxch_modulator_benchmark.cpp)
 target_include_directories(pdxch_modulator_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/lib/phy/lower/processors/downlink/pdxch)
 target_link_libraries(pdxch_modulator_benchmark
         ocudu_lower_phy_modulation
-        ocudu_lower_phy_amplitude_controller
         ocudu_phy_support
         ocudu_dft
         ocudu_ran

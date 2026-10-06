@@ -41,6 +41,7 @@ target_link_libraries(ocuduvec_prod_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_prod_test ocuduvec_prod_test)
 
 add_executable(ocuduvec_sc_prod_test ocuduvec_sc_prod_test.cpp)
+target_include_directories(ocuduvec_sc_prod_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
 target_link_libraries(ocuduvec_sc_prod_test ocuduvec ocudulog gtest gtest_main)
 add_test(ocuduvec_sc_prod_test ocuduvec_sc_prod_test)
 

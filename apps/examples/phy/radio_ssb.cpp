@@ -88,11 +88,8 @@ static std::string                               thread_profile_name     = "sing
 static std::string                               clock_source            = "internal";
 static std::string                               sync_source             = "internal";
 
-/// Amplitude control args.
-static float baseband_backoff_dB    = 12.0F;
-static bool  enable_clipping        = false;
-static float full_scale_amplitude   = 1.0F;
-static float amplitude_ceiling_dBFS = -0.1F;
+/// Baseband gain args.
+static float baseband_backoff_dB = 12.0F;
 
 /// Defines a set of configuration profiles.
 static const auto profiles = to_array<configuration_profile>({
@@ -296,8 +293,7 @@ static void usage(std::string_view prog)
   fmt::print("\t-C Set clock source (internal, external, gpsdo). [Default {}]\n", clock_source);
   fmt::print("\t-S Set sync source (internal, external, gpsdo). [Default {}]\n", sync_source);
   fmt::print("\t-v Logging level. [Default {}]\n", fmt::underlying(log_level));
-  fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
-  fmt::print("\t-b Baseband gain back-off prior to clipping (in dB). [Default {}]\n", baseband_backoff_dB);
+  fmt::print("\t-b Baseband gain back-off (in dB). [Default {}]\n", baseband_backoff_dB);
   fmt::print("\t-d Fill the resource grid with random data [Default {}]\n", enable_random_data);
   fmt::print("\t-u Enable uplink processing [Default {}]\n", enable_ul_processing);
   fmt::print("\t-p Enable PRACH processing [Default {}]\n", enable_prach_processing);
@@ -314,7 +310,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:S:T:C:L:v:b:m:Ma:cduph")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:S:T:C:L:v:b:m:Ma:duph")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -377,9 +373,6 @@ static void parse_args(int argc, char** argv)
         break;
       case 'M':
         enable_radio_metrics = !enable_radio_metrics;
-        break;
-      case 'c':
-        enable_clipping = true;
         break;
       case 'b':
         if (optarg != nullptr) {
@@ -480,17 +473,9 @@ create_lower_phy_configuration(task_executor*                rx_task_executor,
   phy_config.dft_window_offset                 = 0.5F;
   phy_config.baseband_rx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::half_slot;
 
-  // Amplitude controller configuration.
-  phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
-  phy_config.amplitude_config.ceiling_dBFS    = amplitude_ceiling_dBFS;
-  phy_config.amplitude_config.enable_clipping = enable_clipping;
+  phy_config.gain_backoff_dB = baseband_backoff_dB;
 
-  // Baseband gain includes normalization to unitary power (according to the number of subcarriers) and the additional
-  // back-off to account for signal PAPR.
-  phy_config.amplitude_config.input_gain_dB =
-      -convert_power_to_dB(bw_rb * NOF_SUBCARRIERS_PER_RB) - baseband_backoff_dB;
-
-  lower_phy_dependencies deps = {// Logger for amplitude control metrics.
+  lower_phy_dependencies deps = {// Logger for lower PHY messages.
                                  .logger               = *logger,
                                  .bb_gateway           = bb_gateway,
                                  .rx_symbol_notifier   = *rx_symbol_notifier,

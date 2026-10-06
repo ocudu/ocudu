@@ -36,14 +36,9 @@ std::unique_ptr<lower_phy> ocudu::create_lower_phy(const lower_phy_configuration
   std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
       create_ofdm_prach_demodulator_factory_sw(dft_factory, config.srate, fr);
 
-  // Create amplitude control factory.
-  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory =
-      create_amplitude_controller_clipping_factory(config.amplitude_config);
-  report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
-
   // Create PDxCH processor factory.
   std::shared_ptr<pdxch_processor_factory> pdxch_proc_factory =
-      create_pdxch_processor_factory_sw(modulator_factory, amplitude_control_factory);
+      create_pdxch_processor_factory_sw(modulator_factory, config.gain_backoff_dB);
   report_fatal_error_if_not(pdxch_proc_factory, "Failed to create PDxCH processor factory.");
 
   // Create PRACH processor factory.

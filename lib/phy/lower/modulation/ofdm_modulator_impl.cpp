@@ -5,6 +5,7 @@
 
 #include "ofdm_modulator_impl.h"
 #include "ocudu/adt/format.h"
+#include "ocudu/ocuduvec/conversion.h"
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/ocuduvec/zero.h"
@@ -38,7 +39,7 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_conf
   ocuduvec::zero(dft->get_input());
 }
 
-void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
+void ofdm_symbol_modulator_impl::modulate(span<ci16_t>                output,
                                           const resource_grid_reader& grid,
                                           span<const cf_t>            port_weights,
                                           unsigned                    i_symbol_sf)
@@ -142,8 +143,9 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
   // Get phase correction (TS138.211, Section 5.4)
   cf_t phase_compensation = phase_compensation_table.get_coefficient(i_symbol_sf);
 
-  // Apply scaling and phase compensation.
-  ocuduvec::sc_prod(output.last(dft_size), dft_output, phase_compensation * scale);
+  // Apply scaling and phase compensation, including the conversion from cf to ci16.
+  ocuduvec::sc_prod(
+      output.last(dft_size), dft_output, phase_compensation * scale * ocuduvec::scaling_factor_cf_to_ci16);
 
   // Copy cyclic prefix.
   ocuduvec::copy(output.first(cp_len), output.last(cp_len));
@@ -166,7 +168,7 @@ void ofdm_slot_modulator_impl::set_center_frequency(double center_frequency_Hz)
   symbol_modulator->set_center_frequency(center_frequency_Hz);
 }
 
-void ofdm_slot_modulator_impl::modulate(span<cf_t>                  output,
+void ofdm_slot_modulator_impl::modulate(span<ci16_t>                output,
                                         const resource_grid_reader& grid,
                                         span<const cf_t>            port_weights,
                                         unsigned                    slot_index)

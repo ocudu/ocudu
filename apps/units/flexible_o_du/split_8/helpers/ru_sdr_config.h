@@ -45,12 +45,8 @@ struct ru_sdr_unit_expert_config {
 
 /// Amplitude control application configuration.
 struct amplitude_control_unit_config {
-  /// Baseband gain back-off. This accounts for the signal PAPR and is applied regardless of clipping settings.
+  /// Baseband gain back-off. This accounts for the signal PAPR.
   float gain_backoff_dB = 12.0F;
-  /// Power ceiling in dB, relative to the full scale amplitude of the radio.
-  float power_ceiling_dBFS = -0.1F;
-  /// Clipping of the baseband samples. If enabled, the samples that exceed the power ceiling are clipped.
-  bool enable_clipping = false;
 };
 
 /// Configuration of logging functionalities.

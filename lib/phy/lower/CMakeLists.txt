@@ -6,7 +6,6 @@
 
 add_subdirectory(modulation)
 add_subdirectory(processors)
-add_subdirectory(amplitude_controller)
 
 add_library(ocudu_lower_phy STATIC
         lower_phy_baseband_processor.cpp
@@ -15,7 +14,6 @@ add_library(ocudu_lower_phy STATIC
 target_link_libraries(ocudu_lower_phy
         ocudu_dft
         ocudu_lower_phy_adaptors
-        ocudu_lower_phy_amplitude_controller
         ocudu_lower_phy_downlink_processor
         ocudu_lower_phy_pdxch_processor
         ocudu_lower_phy_modulation

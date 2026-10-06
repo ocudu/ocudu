@@ -19,10 +19,6 @@ static bool validate_amplitude_control_unit_config(const amplitude_control_unit_
     fmt::print("Invalid gain backoff (i.e., {:.1f} dB). Must be positive or zero.\n", config.gain_backoff_dB);
     valid = false;
   }
-  if (config.power_ceiling_dBFS > 0.0F) {
-    fmt::print("Invalid power ceiling (i.e., {:.1f} dBFS). Must be negative or zero.\n", config.power_ceiling_dBFS);
-    valid = false;
-  }
 
   return valid;
 }

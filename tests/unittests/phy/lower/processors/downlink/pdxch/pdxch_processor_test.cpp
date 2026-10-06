@@ -4,9 +4,9 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "../../../../support/resource_grid_test_doubles.h"
-#include "../../../amplitude_control/amplitude_controller_test_doubles.h"
 #include "../../../modulation/ofdm_modulator_test_doubles.h"
 #include "pdxch_processor_notifier_test_doubles.h"
+#include "support/compare_sequences.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -16,6 +16,7 @@
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
 #include "ocudu/support/executors/manual_task_worker.h"
+#include "ocudu/support/math/math_utils.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -108,6 +109,9 @@ using LowerPhyDownlinkProcessorParams = std::tuple<antenna_topology, sampling_ra
 
 namespace {
 
+/// Baseband gain back-off in decibels.
+constexpr float gain_backoff_dB = 12.0F;
+
 class LowerPhyDownlinkProcessorFixture : public ::testing::TestWithParam<LowerPhyDownlinkProcessorParams>
 {
 protected:
@@ -119,10 +123,7 @@ protected:
       ofdm_mod_factory_spy = std::make_shared<ofdm_modulator_factory_spy>();
       ASSERT_NE(ofdm_mod_factory_spy, nullptr);
 
-      amplitude_control_factory = std::make_shared<amplitude_controller_factory_spy>();
-      ASSERT_NE(amplitude_control_factory, nullptr);
-
-      pdxch_proc_factory = create_pdxch_processor_factory_sw(ofdm_mod_factory_spy, amplitude_control_factory);
+      pdxch_proc_factory = create_pdxch_processor_factory_sw(ofdm_mod_factory_spy, gain_backoff_dB);
       ASSERT_NE(pdxch_proc_factory, nullptr);
     }
   }
@@ -188,16 +189,15 @@ protected:
     return shared_rg_spy.get_grid();
   }
 
-  static constexpr unsigned                                nof_frames_test    = 3;
-  static constexpr unsigned                                initial_slot_index = 0;
-  static std::mt19937                                      rgen;
-  static std::uniform_int_distribution<unsigned>           dist_sector_id;
-  static std::uniform_int_distribution<unsigned>           dist_bandwidth_prb;
-  static std::uniform_real_distribution<double>            dist_center_freq_Hz;
-  static std::uniform_real_distribution<float>             dist_sample;
-  static std::shared_ptr<ofdm_modulator_factory_spy>       ofdm_mod_factory_spy;
-  static std::shared_ptr<amplitude_controller_factory_spy> amplitude_control_factory;
-  static std::shared_ptr<pdxch_processor_factory>          pdxch_proc_factory;
+  static constexpr unsigned                          nof_frames_test    = 3;
+  static constexpr unsigned                          initial_slot_index = 0;
+  static std::mt19937                                rgen;
+  static std::uniform_int_distribution<unsigned>     dist_sector_id;
+  static std::uniform_int_distribution<unsigned>     dist_bandwidth_prb;
+  static std::uniform_real_distribution<double>      dist_center_freq_Hz;
+  static std::uniform_real_distribution<float>       dist_sample;
+  static std::shared_ptr<ofdm_modulator_factory_spy> ofdm_mod_factory_spy;
+  static std::shared_ptr<pdxch_processor_factory>    pdxch_proc_factory;
 
   resource_grid_reader_spy rg_reader_spy;
   resource_grid_writer_spy rg_writer_spy;
@@ -219,24 +219,27 @@ protected:
   manual_task_worker               modulation_executor;
 };
 
-std::mt19937                                      LowerPhyDownlinkProcessorFixture::rgen(0);
-std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_sector_id(0, 16);
-std::uniform_int_distribution<unsigned>           LowerPhyDownlinkProcessorFixture::dist_bandwidth_prb(1, MAX_NOF_PRBS);
-std::uniform_real_distribution<double>            LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
-std::uniform_real_distribution<float>             LowerPhyDownlinkProcessorFixture::dist_sample(-1, 1);
-std::shared_ptr<ofdm_modulator_factory_spy>       LowerPhyDownlinkProcessorFixture::ofdm_mod_factory_spy      = nullptr;
-std::shared_ptr<amplitude_controller_factory_spy> LowerPhyDownlinkProcessorFixture::amplitude_control_factory = nullptr;
-std::shared_ptr<pdxch_processor_factory>          LowerPhyDownlinkProcessorFixture::pdxch_proc_factory        = nullptr;
+std::mt19937                                LowerPhyDownlinkProcessorFixture::rgen(0);
+std::uniform_int_distribution<unsigned>     LowerPhyDownlinkProcessorFixture::dist_sector_id(0, 16);
+std::uniform_int_distribution<unsigned>     LowerPhyDownlinkProcessorFixture::dist_bandwidth_prb(1, MAX_NOF_PRBS);
+std::uniform_real_distribution<double>      LowerPhyDownlinkProcessorFixture::dist_center_freq_Hz(1e8, 6e9);
+std::uniform_real_distribution<float>       LowerPhyDownlinkProcessorFixture::dist_sample(-1, 1);
+std::shared_ptr<ofdm_modulator_factory_spy> LowerPhyDownlinkProcessorFixture::ofdm_mod_factory_spy = nullptr;
+std::shared_ptr<pdxch_processor_factory>    LowerPhyDownlinkProcessorFixture::pdxch_proc_factory   = nullptr;
 
 } // namespace
 
 TEST_P(LowerPhyDownlinkProcessorFixture, ModulatorConfiguration)
 {
+  // The modulator scale normalizes the signal power according to the number of subcarriers and applies the back-off.
+  float expected_scale = convert_dB_to_amplitude(
+      -convert_power_to_dB(static_cast<float>(bandwidth_rb * NOF_SUBCARRIERS_PER_RB)) - gain_backoff_dB);
+
   ofdm_modulator_configuration expected_mod_config = {.numerology     = to_numerology_value(scs),
                                                       .bw_rb          = bandwidth_rb,
                                                       .dft_size       = srate.get_dft_size(scs),
                                                       .cp             = cp,
-                                                      .scale          = 1.0F,
+                                                      .scale          = expected_scale,
                                                       .center_freq_Hz = center_freq_Hz};
 
   ASSERT_EQ(ofdm_mod_spy->get_configuration(), expected_mod_config);
@@ -335,6 +338,19 @@ TEST_P(LowerPhyDownlinkProcessorFixture, FlowFloodRequest)
 
     // Process baseband.
     auto result = pdxch_proc->get_baseband().process_slot(proc_context);
+
+    // Assert the baseband buffer contains the OFDM modulator output without further processing.
+    ASSERT_TRUE(result);
+    for (unsigned i_port = 0; i_port != nof_tx_ports; ++i_port) {
+      span<const ci16_t> channel = result->get_reader().get_channel_buffer(i_port);
+      for (unsigned i_symbol = 0; i_symbol != nof_symbols_per_slot; ++i_symbol) {
+        span<const ci16_t> expected = ofdm_mod_entries[i_symbol * nof_tx_ports + i_port].output;
+        ASSERT_GE(channel.size(), expected.size());
+        error_type<std::string> compare_result = compare_sequences(channel.first(expected.size()), expected);
+        ASSERT_TRUE(compare_result.has_value()) << compare_result.error();
+        channel = channel.last(channel.size() - expected.size());
+      }
+    }
 
     // Assert notification.
     ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);

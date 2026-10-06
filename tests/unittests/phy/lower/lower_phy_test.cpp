@@ -282,7 +282,7 @@ protected:
     config.ta_offset                         = ta_offset;
     config.time_alignment_calibration        = time_alignment_calibration;
     config.baseband_rx_buffer_size_policy    = lower_phy_baseband_buffer_size_policy::slot;
-    config.amplitude_config                  = {};
+    config.gain_backoff_dB                   = 0.0F;
     config.system_time_throttling            = 0.1;
     config.max_nof_prach_concurrent_requests = 1;
 

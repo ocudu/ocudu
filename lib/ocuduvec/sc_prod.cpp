@@ -4,6 +4,9 @@
 
 #include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/ocuduvec/simd.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
 using namespace ocudu;
 using namespace ocuduvec;
@@ -70,6 +73,24 @@ void sc_prod_cfc_simd(OutComplexType* z, const InComplexType* x, float h, std::s
   }
 }
 
+/// Converts a complex floating-point sample to the output complex type.
+template <typename OutComplexType>
+static OutComplexType convert_to(cf_t value)
+{
+  return value;
+}
+
+/// Converts a complex floating-point sample to complex 16-bit integer, rounding to the nearest integer and saturating
+/// like the SIMD store does.
+template <>
+ci16_t convert_to(cf_t value)
+{
+  static constexpr float min_value = std::numeric_limits<int16_t>::min();
+  static constexpr float max_value = std::numeric_limits<int16_t>::max();
+  return {static_cast<int16_t>(std::lrint(std::clamp(value.real(), min_value, max_value))),
+          static_cast<int16_t>(std::lrint(std::clamp(value.imag(), min_value, max_value)))};
+}
+
 template <typename OutComplexType, typename InComplexType>
 void sc_prod_ccc_simd(OutComplexType* z, const InComplexType* x, cf_t h, std::size_t len)
 {
@@ -87,7 +108,7 @@ void sc_prod_ccc_simd(OutComplexType* z, const InComplexType* x, cf_t h, std::si
 #endif // OCUDU_SIMD_CF_SIZE
 
   for (; i != len; ++i) {
-    z[i] = to_cf(x[i]) * h;
+    z[i] = convert_to<OutComplexType>(to_cf(x[i]) * h);
   }
 }
 
@@ -198,6 +219,13 @@ void ocuduvec::sc_prod(span<cf_t> z, span<const cbf16_t> x, float h)
 }
 
 void ocuduvec::sc_prod(span<cf_t> z, span<const ci16_t> x, cf_t h)
+{
+  ocudu_ocuduvec_assert_size(x, z);
+
+  sc_prod_ccc_simd(z.data(), x.data(), h, x.size());
+}
+
+void ocuduvec::sc_prod(span<ci16_t> z, span<const cf_t> x, cf_t h)
 {
   ocudu_ocuduvec_assert_size(x, z);
 

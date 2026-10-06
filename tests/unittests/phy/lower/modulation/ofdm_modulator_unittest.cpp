@@ -8,13 +8,16 @@
 #include "support/compare_sequences.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/to_array.h"
+#include "ocudu/ocuduvec/conversion.h"
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/ocuduvec/sc_prod.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
 #include "ocudu/support/error_handling.h"
 #include "ocudu/support/ocudu_assert.h"
 #include "fmt/ostream.h"
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <limits>
 #include <random>
 
 using namespace ocudu;
@@ -63,8 +66,10 @@ protected:
   static constexpr unsigned nsubc = 11 * NOF_SUBCARRIERS_PER_RB;
   /// Fix scaling factor different than one.
   static constexpr float scale = M_SQRT1_2;
-  /// Maximum allowed error at the OFDM modulator output.
+  /// Maximum allowed error at the DFT input.
   static constexpr float ASSERT_MAX_ERROR = 1e-6f;
+  /// Maximum allowed error at the OFDM modulator output, in units of the least significant bit of the 16-bit integer.
+  static constexpr float ASSERT_MAX_ERROR_LSB = 1.0f;
 
   static void SetUpTestCase()
   {
@@ -205,7 +210,7 @@ TEST_P(OfdmModulatorFixture, ModulatesCorrectly)
     resource_grid_reader_spy rg = generate_resource_grid(params.allocated_ports);
 
     // Modulate signal.
-    std::vector<cf_t> output(ofdm->get_slot_size(i_slot));
+    std::vector<ci16_t> output(ofdm->get_slot_size(i_slot));
     ofdm->modulate(output, rg, params.port_weights, i_slot);
 
     // No DFT is called if no allocated ports have ports weights.
@@ -213,7 +218,7 @@ TEST_P(OfdmModulatorFixture, ModulatesCorrectly)
                     params.allocated_ports.end(),
                     [port_weights = params.port_weights](unsigned i_port) { return port_weights[i_port] == cf_t(); })) {
       // The output must be zero.
-      ASSERT_TRUE(std::all_of(output.begin(), output.end(), [](cf_t modulated) { return modulated == cf_t(); }));
+      ASSERT_TRUE(std::all_of(output.begin(), output.end(), [](ci16_t modulated) { return modulated == ci16_t(); }));
       continue;
     }
 
@@ -256,23 +261,33 @@ TEST_P(OfdmModulatorFixture, ModulatesCorrectly)
         ASSERT_TRUE(compare_result.has_value()) << compare_result.error();
       }
 
-      // Generate expected time domain output.
+      // Generate expected time domain output, scaled to the 16-bit integer full scale.
       std::vector<cf_t> expected_output_data(dft_size + cp_len);
       span<cf_t>        expected_output = expected_output_data;
-      ocuduvec::sc_prod(expected_output.last(dft_size), dft_entries[i_symbol].output, amplitude_phase_compensation);
+      ocuduvec::sc_prod(expected_output.last(dft_size),
+                        dft_entries[i_symbol].output,
+                        amplitude_phase_compensation * ocuduvec::scaling_factor_cf_to_ci16);
       ocuduvec::copy(expected_output.first(cp_len), expected_output.last(cp_len));
 
       // Select a view of the OFDM modulator output.
-      span<const cf_t> output_symbol(output);
+      span<const ci16_t> output_symbol(output);
       output_symbol = output_symbol.subspan(offset_slot, dft_size + cp_len);
 
-      // Assert generated symbol matches ideal.
+      // Assert generated symbol matches ideal, allowing the rounding and saturation of the 16-bit integer conversion.
       {
         error_type<std::string> compare_result = compare_sequences(
             output_symbol,
             span<const cf_t>(expected_output),
-            [](const cf_t& actual, const cf_t& expected) { return std::abs(actual - expected); },
-            ASSERT_MAX_ERROR);
+            [](const ci16_t& actual, const cf_t& expected) {
+              auto saturate = [](float value) {
+                return std::clamp(value,
+                                  static_cast<float>(std::numeric_limits<int16_t>::min()),
+                                  static_cast<float>(std::numeric_limits<int16_t>::max()));
+              };
+              return std::max(std::abs(static_cast<float>(actual.real()) - saturate(expected.real())),
+                              std::abs(static_cast<float>(actual.imag()) - saturate(expected.imag())));
+            },
+            ASSERT_MAX_ERROR_LSB);
         ASSERT_TRUE(compare_result.has_value()) << compare_result.error();
       }
 

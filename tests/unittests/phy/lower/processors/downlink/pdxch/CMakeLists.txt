@@ -5,5 +5,6 @@
 
 
 add_executable(pdxch_processor_test pdxch_processor_test.cpp)
+target_include_directories(pdxch_processor_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests)
 target_link_libraries(pdxch_processor_test ocudu_lower_phy_pdxch_processor ocudulog GTest::gtest GTest::gtest_main)
 add_test(pdxch_processor_test pdxch_processor_test)

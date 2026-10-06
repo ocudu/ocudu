@@ -11,11 +11,8 @@
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer_view.h"
 #include "ocudu/instrumentation/traces/ru_traces.h"
 #include "ocudu/ocudulog/ocudulog.h"
-#include "ocudu/ocuduvec/conversion.h"
-#include "ocudu/ocuduvec/dot_prod.h"
 #include "ocudu/ocuduvec/zero.h"
 #include "ocudu/phy/antenna_ports.h"
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "ocudu/phy/lower/modulation/ofdm_modulator.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "ocudu/phy/lower/sampling_rate.h"
@@ -24,7 +21,6 @@
 #include "ocudu/phy/support/shared_resource_grid.h"
 #include "ocudu/ran/beamforming/beam_weights_codebook.h"
 #include "ocudu/support/executors/task_executor.h"
-#include "ocudu/support/math/stats.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
 #include <thread>
 
@@ -48,7 +44,6 @@ public:
   /// \param[in] srate                  Sampling rate.
   /// \param[in] executor_              Task executor for processing baseband modulation.
   /// \param[in] modulator_             OFDM Modulator, called from the executor - it must be thread safe.
-  /// \param[in] amplitude_control_     Amplitude controller, called from the executor - it must be thread safe.
   /// \param[in] beamforming_codebook_  Beamfoming coefficient codebook. It determines the number of antenna ports and
   ///                                   beams.
   /// \param[in] notifier_              Reference to the interface for notifying the completion of the processing.
@@ -57,7 +52,6 @@ public:
                            sampling_rate                       srate,
                            task_executor&                      executor_,
                            ofdm_symbol_modulator&              modulator_,
-                           amplitude_controller&               amplitude_control_,
                            const beam_weights_codebook&        beamforming_codebook_,
                            pdxch_processor_modulator_notifier& notifier_) :
     logger(ocudulog::fetch_basic_logger("PHY")),
@@ -66,10 +60,8 @@ public:
     nof_symbols_per_slot(get_nsymb_per_slot(cp)),
     executor(executor_),
     modulator(modulator_),
-    amplitude_control(amplitude_control_),
     beamforming_codebook(beamforming_codebook_),
-    notifier(notifier_),
-    cf_buffer({srate.to_kHz(), nof_ports})
+    notifier(notifier_)
   {
     unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(scs);
 
@@ -163,8 +155,6 @@ public:
 
           // Create view to the writer offset.
           span<ci16_t> ci16_buf = current_buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_size);
-          // Get a view over the temporary buffer holding float-based complex samples.
-          span<cf_t> cf_buf = cf_buffer.get_view({i_port}).subspan(i_symbol_start, symbol_size);
 
           // Start tracing.
           trace_point tp = ru_tracer.now();
@@ -173,13 +163,7 @@ public:
           span<const cf_t> port_weights = beamforming_codebook.get_antenna_coefficients(i_port);
 
           // OFDM modulation.
-          modulator.modulate(cf_buf, current_grid.get_reader(), port_weights, i_symbol_sf);
-
-          // Apply amplitude control.
-          amplitude_control.process(cf_buf, cf_buf);
-
-          // Convert complex floating-point buffer to complex integer-based.
-          ocuduvec::convert(ci16_buf, cf_buf, ocuduvec::scaling_factor_cf_to_ci16);
+          modulator.modulate(ci16_buf, current_grid.get_reader(), port_weights, i_symbol_sf);
 
           ru_tracer << trace_event("PDxCH modulation", tp);
 
@@ -244,8 +228,6 @@ private:
   /// Maximum number of symbols per subframe. Used for the OFDM symbol size look-up table.
   static constexpr unsigned max_nof_symbols_per_subframe =
       MAX_NSYMB_PER_SLOT * pow2(to_numerology_value(subcarrier_spacing::kHz240));
-  /// Maximum number of tasks. Used for keeping record of the metrics per symbol basis.
-  static constexpr unsigned max_nof_tasks = MAX_NSYMB_PER_SLOT * MAX_PORTS;
 
   /// Physical layer logger. Used for logging when the executor cannot defer the modulation task.
   ocudulog::basic_logger& logger;
@@ -269,16 +251,12 @@ private:
   task_executor& executor;
   /// OFDM modulator. Its implementation must be thread safe.
   ofdm_symbol_modulator& modulator;
-  /// Amplitude controller. Its implementation must be thread safe.
-  amplitude_controller& amplitude_control;
   /// \brief Reference to the beamforming codebook.
   ///
   /// Provides the beamforming weights for each of the resource grid ports.
   const beam_weights_codebook& beamforming_codebook;
   /// Notifier containing the completion notification callback.
   pdxch_processor_modulator_notifier& notifier;
-  /// Buffer to hold complex floating-point based samples for processing.
-  dynamic_tensor<2, cf_t> cf_buffer;
 };
 
 } // namespace ocudu

@@ -7,8 +7,6 @@
 #include "pdxch_processor_modulator_notifier.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_pool.h"
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller.h"
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
 #include "ocudu/phy/lower/modulation/ofdm_modulator.h"
 #include "ocudu/phy/lower/sampling_rate.h"
@@ -121,13 +119,12 @@ private:
   std::unique_ptr<resource_grid> grid_owned;
 };
 
-static void benchmark_pdxch_modulator(benchmarker&                                  perf_meas,
-                                      cyclic_prefix                                 cp,
-                                      sampling_rate                                 srate,
-                                      antenna_topology                              topology,
-                                      task_executor&                                executor,
-                                      std::shared_ptr<ofdm_modulator_factory>       ofdm_mod_factory,
-                                      std::shared_ptr<amplitude_controller_factory> amp_factory)
+static void benchmark_pdxch_modulator(benchmarker&                            perf_meas,
+                                      cyclic_prefix                           cp,
+                                      sampling_rate                           srate,
+                                      antenna_topology                        topology,
+                                      task_executor&                          executor,
+                                      std::shared_ptr<ofdm_modulator_factory> ofdm_mod_factory)
 {
   // Create completion notifier.
   modulator_completion_notifier notifier;
@@ -152,12 +149,8 @@ static void benchmark_pdxch_modulator(benchmarker&                              
   std::unique_ptr<ofdm_symbol_modulator> modulator = ofdm_mod_factory->create_ofdm_symbol_modulator(ofdm_config);
   report_fatal_error_if_not(modulator, "Failed to create OFDM symbol modulator.");
 
-  // Amplitude controller.
-  std::unique_ptr<amplitude_controller> amp_ctrl = amp_factory->create();
-  report_fatal_error_if_not(amp_ctrl, "Failed to create amplitude controller.");
-
   // Create the actual baseband modulator.
-  pdxch_baseband_modulator modulator_obj(scs, cp, srate, executor, *modulator, *amp_ctrl, codebook, notifier);
+  pdxch_baseband_modulator modulator_obj(scs, cp, srate, executor, *modulator, codebook, notifier);
 
   // Compute number of samples per slot, assuming that it is the first slot in the subframe.
   static constexpr unsigned i_slot_sf        = 0;
@@ -309,15 +302,11 @@ int main(int argc, char** argv)
   ofdm_mod_factory = create_ofdm_modulator_pool_factory(std::move(ofdm_mod_factory), nof_threads);
   report_fatal_error_if_not(ofdm_mod_factory, "Failed to create OFDM modulator pool factory.");
 
-  std::shared_ptr<amplitude_controller_factory> amp_factory = create_amplitude_controller_scaling_factory(0.0F);
-  report_fatal_error_if_not(amp_factory, "Failed to create amplitude controller factory.");
-
   benchmarker perf_meas("pdxch_modulator", nof_repetitions);
 
   for (const auto topology : topologies) {
     for (const sampling_rate rate : rates) {
-      benchmark_pdxch_modulator(
-          perf_meas, cyclic_prefix::NORMAL, rate, topology, *executor, ofdm_mod_factory, amp_factory);
+      benchmark_pdxch_modulator(perf_meas, cyclic_prefix::NORMAL, rate, topology, *executor, ofdm_mod_factory);
     }
   }
 

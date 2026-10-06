@@ -2,9 +2,13 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+#include "support/compare_sequences.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ocuduvec/sc_prod.h"
+#include <algorithm>
+#include <cmath>
 #include <gtest/gtest.h>
+#include <limits>
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -234,6 +238,40 @@ TEST_P(OcuduvecScProdFixture, OcuduvecScProdInt16Complex)
     float err = std::abs(expected[i] - z[i]);
     ASSERT_LT(err, ASSERT_MAX_ERROR) << fmt::format("expected={} z={}", expected[i], z[i]);
   }
+}
+
+TEST_P(OcuduvecScProdFixture, OcuduvecScProdFloatComplexToInt16Complex)
+{
+  std::vector<cf_t> x = generate_complex_random_data<cf_t>();
+  // Use a scaling factor larger than the int16 range so that some products saturate.
+  cf_t h = get_random_complex_coeff() * 2.0F * static_cast<float>(std::numeric_limits<int16_t>::max());
+
+  std::vector<ci16_t> z(size);
+
+  ocuduvec::sc_prod(z, x, h);
+
+  auto round_and_saturate = [](float value) {
+    return static_cast<int16_t>(std::clamp(std::lrint(value),
+                                           static_cast<long>(std::numeric_limits<int16_t>::min()),
+                                           static_cast<long>(std::numeric_limits<int16_t>::max())));
+  };
+
+  std::vector<ci16_t> expected(size);
+  std::transform(x.begin(), x.end(), expected.begin(), [h, &round_and_saturate](cf_t value) {
+    cf_t product = value * h;
+    return ci16_t(round_and_saturate(product.real()), round_and_saturate(product.imag()));
+  });
+
+  // Allow one least significant bit of difference per component due to the rounding.
+  error_type<std::string> result = compare_sequences(
+      span<const ci16_t>(z),
+      span<const ci16_t>(expected),
+      [](ci16_t actual, ci16_t value) {
+        return std::max(std::abs(static_cast<int>(actual.real()) - static_cast<int>(value.real())),
+                        std::abs(static_cast<int>(actual.imag()) - static_cast<int>(value.imag())));
+      },
+      1);
+  ASSERT_TRUE(result.has_value()) << result.error();
 }
 
 TEST_P(OcuduvecScProdFixture, OcuduvecScAndAddProdFloat)

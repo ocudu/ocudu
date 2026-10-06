@@ -23,7 +23,9 @@ struct ofdm_modulator_configuration {
   unsigned dft_size;
   /// Cyclic prefix.
   cyclic_prefix cp;
-  /// Scaling factor at the DFT output.
+  /// \brief Linear amplitude scaling factor at the DFT output.
+  ///
+  /// An amplitude of one at the DFT output corresponds to the full scale of the complex 16-bit integer output.
   float scale;
   /// Carrier center frequency in Hertz.
   double center_freq_Hz;
@@ -55,6 +57,9 @@ public:
   virtual void set_center_frequency(double center_frequency_Hz) = 0;
 
   /// \brief Modulates an OFDM signal with symbol granularity.
+  ///
+  /// The modulated signal is scaled, converted to complex 16-bit integer and saturated.
+  ///
   /// \param[out] output      Time domain modulated signal.
   /// \param[in] grid         Input as frequency-domain signal corresponding to one slot.
   /// \param[in] port_weights Beamforming weights.
@@ -62,7 +67,7 @@ public:
   /// \note The input size must be consistent with the configured bandwidth.
   /// \note The output size must be equal to the the symbol size.
   /// \note The number of port weights must be equal to the number of ports contained by the resource grid.
-  virtual void modulate(span<cf_t>                  output,
+  virtual void modulate(span<ci16_t>                output,
                         const resource_grid_reader& grid,
                         span<const cf_t>            port_weights,
                         unsigned                    i_symbol_sf) = 0;
@@ -96,7 +101,7 @@ public:
   /// \brief Modulates an OFDM signal with slot granularity.
   ///
   /// The resource grid symbols in each port are combined according to the provided port weights before applying the
-  /// OFDM modulation.
+  /// OFDM modulation. The modulated signal is scaled, converted to complex 16-bit integer and saturated.
   ///
   /// \param[out] output       Time time domain modulated signal destination.
   /// \param[in]  grid          Input as frequency-domain signal corresponding to one slot.
@@ -105,7 +110,7 @@ public:
   /// \note The input size must be consistent with the configured bandwidth.
   /// \note The output size must be equal to the slot size.
   /// \note The number of port weights must be equal to the number of ports contained by the resource grid.
-  virtual void modulate(span<cf_t>                  output,
+  virtual void modulate(span<ci16_t>                output,
                         const resource_grid_reader& grid,
                         span<const cf_t>            port_weights,
                         unsigned                    i_symbol_sf) = 0;

@@ -9,7 +9,6 @@
 #include "pdxch_baseband_modulator.h"
 #include "pdxch_processor_modulator_notifier.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "ocudu/phy/lower/modulation/ofdm_modulator.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
@@ -47,7 +46,6 @@ public:
 
   /// Constructs a physical downlink channel baseband processor.
   pdxch_processor_impl(std::unique_ptr<ofdm_symbol_modulator> modulator,
-                       std::unique_ptr<amplitude_controller>  amplitude_control,
                        task_executor&                         executor,
                        const configuration&                   config) :
     logger(ocudulog::fetch_basic_logger("PHY")),
@@ -56,19 +54,12 @@ public:
                beamforming_codebook.get_nof_antennas(),
                config.srate.to_kHz()),
     common_ofdm_modulator(std::move(modulator)),
-    common_amplitude_control(std::move(amplitude_control)),
     modulators(max_slot_modulation_concurrency)
   {
     // Generate baseband modulators.
     std::generate(modulators.begin(), modulators.end(), [this, &config, &executor]() {
-      return std::make_unique<pdxch_baseband_modulator>(config.scs,
-                                                        config.cp,
-                                                        config.srate,
-                                                        executor,
-                                                        *common_ofdm_modulator,
-                                                        *common_amplitude_control,
-                                                        beamforming_codebook,
-                                                        *this);
+      return std::make_unique<pdxch_baseband_modulator>(
+          config.scs, config.cp, config.srate, executor, *common_ofdm_modulator, beamforming_codebook, *this);
     });
   }
 
@@ -138,8 +129,6 @@ private:
   baseband_gateway_buffer_pool bb_buffers;
   /// Common OFDM symbol modulators. It must be thread-safe.
   std::unique_ptr<ofdm_symbol_modulator> common_ofdm_modulator;
-  /// Common amplitude controller. It must be thread-safe.
-  std::unique_ptr<amplitude_controller> common_amplitude_control;
   /// Downlink physical channel baseband modulators.
   std::vector<std::unique_ptr<pdxch_baseband_modulator>> modulators;
   /// Circular concurrent pool of transmit requests.

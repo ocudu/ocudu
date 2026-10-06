@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "ocudu/phy/lower/modulation/modulation_factories.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor.h"
 #include "ocudu/phy/lower/sampling_rate.h"
@@ -46,11 +45,14 @@ public:
 
 /// \brief Creates a software based PDxCH processor factory.
 ///
-/// \param[in] ofdm_mod_factory          OFDM modulator factory.
-/// \param[in] amplitude_control_factory Amplitude control factory.
+/// The modulated signal is normalized to unitary average power according to the number of subcarriers, and then
+/// attenuated by the gain back-off.
+///
+/// \param[in] ofdm_mod_factory OFDM modulator factory.
+/// \param[in] gain_backoff_dB  Baseband gain back-off in decibels to accommodate the signal peak-to-average power
+///                             ratio.
 /// \return A PDxCH processor factory.
 std::shared_ptr<pdxch_processor_factory>
-create_pdxch_processor_factory_sw(std::shared_ptr<ofdm_modulator_factory>       ofdm_mod_factory,
-                                  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory);
+create_pdxch_processor_factory_sw(std::shared_ptr<ofdm_modulator_factory> ofdm_mod_factory, float gain_backoff_dB);
 
 } // namespace ocudu

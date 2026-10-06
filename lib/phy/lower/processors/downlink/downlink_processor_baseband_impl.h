@@ -9,7 +9,6 @@
 #include "ocudu/adt/blocking_queue.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/ocuduvec/copy.h"
-#include "ocudu/phy/lower/amplitude_controller/amplitude_controller.h"
 #include "ocudu/phy/lower/processors/downlink/downlink_processor.h"
 #include "ocudu/phy/lower/processors/downlink/downlink_processor_baseband.h"
 #include "ocudu/phy/lower/processors/downlink/downlink_processor_notifier.h"
