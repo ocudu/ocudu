@@ -223,6 +223,30 @@ void nrppa_impl::handle_new_nrppa_pdu(const byte_buffer&                        
 void nrppa_impl::handle_initiating_message(const init_msg_s&                                 msg,
                                            std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t> ue_or_amf_index)
 {
+  // The NRPPa PDU is opaque to NGAP, so the AMF may carry a UE-associated procedure in a non-UE-associated NRPPa
+  // transport, or vice versa. Drop such a PDU, as its handler has no index to work with.
+  std::optional<bool> ue_associated;
+  switch (msg.value.type().value) {
+    case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_initiation_request:
+    case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_termination_cmd:
+    case nr_ppa_elem_procs_o::init_msg_c::types_opts::positioning_info_request:
+    case nr_ppa_elem_procs_o::init_msg_c::types_opts::positioning_activation_request:
+      ue_associated = true;
+      break;
+    case nr_ppa_elem_procs_o::init_msg_c::types_opts::trp_info_request:
+    case nr_ppa_elem_procs_o::init_msg_c::types_opts::meas_request:
+      ue_associated = false;
+      break;
+    default:
+      break;
+  }
+  if (ue_associated.has_value() and *ue_associated != std::holds_alternative<cu_cp_ue_index_t>(ue_or_amf_index)) {
+    logger.warning("Discarding {}. Cause: Received in a {}UE-associated NRPPa transport",
+                   msg.value.type().to_string(),
+                   *ue_associated ? "non-" : "");
+    return;
+  }
+
   switch (msg.value.type().value) {
     case nr_ppa_elem_procs_o::init_msg_c::types_opts::e_c_id_meas_initiation_request:
       handle_e_cid_meas_initiation_request(msg.value.e_c_id_meas_initiation_request(),
