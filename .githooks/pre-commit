@@ -11,14 +11,17 @@ FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|cu|cuh|h|hh|hpp)$'
 staged=$(git diff --cached --name-only --relative --diff-filter=d | grep -E "$FILE_EXTENSION_REGEX" || true)
 [ -n "$staged" ] || exit 0
 
-# Files that also have unstaged changes cannot be re-staged without committing those changes too, so skip them
+# Files that also have unstaged changes cannot be re-staged without committing those changes too, so reject the commit
 partial=$(git diff --name-only --relative -- $staged)
-files=$(comm -23 <(echo "$staged" | sort) <(echo "$partial" | sort))
-
-for f in $partial; do
-    echo "pre-commit: skipping clang-format on partially staged file: $f"
-done
-[ -n "$files" ] || exit 0
+if [ -n "$partial" ]; then
+    echo "pre-commit: the following files have both staged and unstaged changes:"
+    for f in $partial; do
+        echo "    $f"
+    done
+    echo "pre-commit: stage or stash the remaining changes (e.g. 'git stash --keep-index') and commit again"
+    exit 1
+fi
+files=$staged
 
 if [ -n "$OCUDU_CLANG_FORMAT" ] && [ -x "$OCUDU_CLANG_FORMAT" ]; then
     clang_format=$OCUDU_CLANG_FORMAT
@@ -33,5 +36,5 @@ echo "Running clang-format on staged files"
 # Same flags as .gitlab/ci/static/run-clang-format-diff.sh, so per-directory overrides of third-party code keep applying
 "$clang_format" -style=file -fallback-style=none -i $files
 
-# Re-stage the files clang-format reformatted; they had no other unstaged changes
+# Re-stage the files clang-format reformatted; the check above guarantees they had no other unstaged changes
 git diff --name-only -- $files | xargs -r git add
