@@ -120,7 +120,7 @@ void configured_grant_scheduler_impl::add_ue_to_wheel(const ue_cell_configuratio
   updated_ues.push_back(ue_cfg.crnti);
 
   // Register the UE TBS in the TBS table.
-  pusch_config_params pusch_params = build_cg_pusch_cfg_params(*ue_cc);
+  pusch_config_params pusch_params = build_cg_pusch_cfg_params(ue_cfg);
   const auto          cg_vrbs      = compute_cg_vrbs(ul_grant);
   ue_cc->get_conf_grant_state_manager().update_state(
       period_slots,
@@ -261,12 +261,12 @@ void configured_grant_scheduler_impl::reserve_cg_resources(cell_slot_resource_al
   }
   const ue_cell_configuration& ue_cfg = ue_cc.cfg();
 
-  // The CG PUSCH takes the UE's dedicated pusch-TimeDomainAllocationList when one is configured, and the cell's common
-  // one otherwise, which is what the mapper's dedicated list already resolves to (TS 38.214, Section 6.1.2.3 and
-  // Table 6.1.2.1.1-1).
-  // From Rel-16, these tables and the rules have been revisited. For PUSCH repetition Type A (i.e. with no
-  // pusch-RepTypeIndicator configured), the TDRA table is selected as for DCI format 0_0 in a UE-specific search space
-  // (TS 38.214, Section 6.1.2.3).
+  // For PUSCH repetition Type A (i.e. with no pusch-RepTypeIndicator configured), the TDRA table is selected as for
+  // DCI format 0_0 in a UE-specific search space (TS 38.214, Section 6.1.2.3 and Table 6.1.2.1.1-1), i.e. the cell's
+  // common pusch-TimeDomainAllocationList.
+  // NOTE: [Implementation-defined] the UE's dedicated list holds the Rel-16 pusch-TimeDomainAllocationListDCI-0-1,
+  // which replaces the common list for DCI format 0_1 only; hence it does not apply here. The config validator
+  // bounds-checks ul_grant.time_domain_allocation against this same common list, see validate_cg_cfg().
   const auto& pusch_td_list = ue_cc.active_bwp().ul.td_mapper().pusch_td_resources(dci_ul_format::f0_0);
 
   // NOTE: the CG and UL grant configs were validated when the UE was added to the wheel.
@@ -291,12 +291,18 @@ void configured_grant_scheduler_impl::stop()
   }
 }
 
-pusch_config_params configured_grant_scheduler_impl::build_cg_pusch_cfg_params(const ue_cell& ue_cc) const
+pusch_config_params
+configured_grant_scheduler_impl::build_cg_pusch_cfg_params(const ue_cell_configuration& ue_cell_cfg) const
 {
+  // NOTE: this is called while a UE reconfiguration is being applied, when \c ue_cell_cfg is the new configuration but
+  // the UE cell context still holds the old one. Everything below must therefore be read off \c ue_cell_cfg, never off
+  // the \c ue_cell.
   // Same TDRA table as the one the grid reservation is built against, see \ref reserve_cg_resources().
-  const auto& pusch_td_list = ue_cc.active_bwp().ul.td_mapper().pusch_td_resources(dci_ul_format::f0_0);
+  // NOTE: use the configuration rather than the ue_cell, because it is also called while a reconfiguration is being
+  // applied, at which point the ue_cell still holds the previous configuration.
+  const auto& pusch_td_list = ue_cell_cfg.init_bwp().ul.td_mapper().pusch_td_resources(dci_ul_format::f0_0);
 
-  const auto* ul_ded   = ue_cc.active_bwp().ul.ded();
+  const auto* ul_ded   = ue_cell_cfg.init_bwp().ul.ded();
   const auto& cg_cfg   = ul_ded->cg_cfg.value();
   const auto& ul_grant = cg_cfg.rrc_configured_ul_grant_cfg.value();
 
@@ -327,7 +333,7 @@ pusch_config_params configured_grant_scheduler_impl::build_cg_pusch_cfg_params(c
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
   pusch_params.tb_scaling_field = 0;
   // As per TS 38.214, Section 6.1.4.2, nof_oh_prb equals xOverhead when configured; otherwise 0.
-  const auto* ue_serv_cell_cfg = ue_cc.cfg().pusch_serving_cell_cfg();
+  const auto* ue_serv_cell_cfg = ue_cell_cfg.pusch_serving_cell_cfg();
   pusch_params.nof_oh_prb      = ue_serv_cell_cfg != nullptr ? static_cast<unsigned>(ue_serv_cell_cfg->x_ov_head)
                                                              : static_cast<unsigned>(x_overhead::not_set);
   // If aperiodic CSI is configured, it is assumed that it will be carried by dynamic grants.
@@ -396,7 +402,7 @@ bool configured_grant_scheduler_impl::allocate_cg_opportunity(cell_slot_resource
   const auto&      cg_cfg     = ul_ded->cg_cfg.value();
   const auto&      ul_grant   = cg_cfg.rrc_configured_ul_grant_cfg.value();
 
-  pusch_config_params pusch_params = build_cg_pusch_cfg_params(*ue_cc);
+  pusch_config_params pusch_params = build_cg_pusch_cfg_params(ue_cfg);
   // The HARQ-ACK bits are the only element of pusch_params that need to be updated at scheduling time.
   pusch_params.nof_harq_ack_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, u->crnti);
 

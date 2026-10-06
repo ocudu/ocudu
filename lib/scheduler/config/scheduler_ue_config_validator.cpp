@@ -59,26 +59,18 @@ static validator_result validate_cg_cfg(const uplink_config& ul_cfg, const cell_
   // TS 38.214, Section 6.1.2.3: a Type 1 CG with PUSCH repetition Type A selects its TDRA table as for DCI format 0_0
   // in a UE-specific search space, i.e. the UE's dedicated pusch-TimeDomainAllocationList when configured, and the
   // common one otherwise (Table 6.1.2.1.1-1).
-  const bool uses_ded_pusch_td_list =
-      bwp_ul_ded_cfg.pusch_cfg.has_value() and not bwp_ul_ded_cfg.pusch_cfg->pusch_td_alloc_list.empty();
+  // NOTE: [Implementation-defined] \c pusch-TimeDomainAllocationList is never set in the code, therefore the TDRA list
+  // resolves to the common one (what can be set is \c PUSCH-TimeDomainResourceAllocation-r16, but that is not used for
+  // CG type 1 and PUSCH repetition type A).
+  // TODO: revise this once CG type 2 is supported, as the different rules apply in that case.
   const span<const pusch_time_domain_resource_allocation> pusch_td_list =
-      uses_ded_pusch_td_list
-          ? span<const pusch_time_domain_resource_allocation>(bwp_ul_ded_cfg.pusch_cfg->pusch_td_alloc_list)
-          : span<const pusch_time_domain_resource_allocation>(cell_cfg.init_bwp.ul.pusch_common()->pusch_td_alloc_list);
-  VERIFY(cg_ul_grant.time_domain_allocation < pusch_td_list.size(),
-         "Configured Grant time domain allocation index ({}) is out of range for the {} PUSCH time domain allocation "
-         "list ({} entries)",
-         cg_ul_grant.time_domain_allocation,
-         uses_ded_pusch_td_list ? "dedicated" : "common",
-         pusch_td_list.size());
-
-  // The CG scheduler emits one PUSCH per occasion, so the selected row must not request slot repetitions. Reachable
-  // only through a dedicated Rel-16 TDRA list, whose rows carry numberOfRepetitions-r16.
-  VERIFY(pusch_td_list[cg_ul_grant.time_domain_allocation].nof_repetitions.value_or(1) == 1,
-         "Configured Grant time domain allocation index ({}) points at a TDRA row requesting {} PUSCH repetitions, "
-         "which the Configured Grant scheduler does not support",
-         cg_ul_grant.time_domain_allocation,
-         pusch_td_list[cg_ul_grant.time_domain_allocation].nof_repetitions.value_or(1));
+      span<const pusch_time_domain_resource_allocation>(cell_cfg.init_bwp.ul.pusch_common()->pusch_td_alloc_list);
+  VERIFY(
+      cg_ul_grant.time_domain_allocation < pusch_td_list.size(),
+      "Configured Grant time domain allocation index ({}) is out of range for the common PUSCH time domain allocation "
+      "list ({} entries)",
+      cg_ul_grant.time_domain_allocation,
+      pusch_td_list.size());
 
   return {};
 }

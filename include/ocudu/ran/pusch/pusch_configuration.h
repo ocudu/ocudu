@@ -154,10 +154,8 @@ struct pusch_config {
   std::optional<dmrs_uplink_config>  pusch_mapping_type_b_dmrs;
   std::optional<pusch_power_control> pusch_pwr_ctrl;
   resource_allocation                res_alloc;
-  /// \brief PUSCH time domain resource allocations, either the legacy \e pusch-TimeDomainAllocationList or (when an
-  /// entry carries \c nof_repetitions) the Rel-16 \e pusch-TimeDomainAllocationListDCI-0-1-r16, which replaces the
-  /// legacy and common lists for DCI format 0_1. Size: (0..maxNrofUL-Allocations=16) for the legacy IE, or
-  /// (0..maxNrofUL-Allocations-r16=64) for the Rel-16 IE.
+  /// \brief PUSCH time domain resource allocations, i.e., the Rel-16 \e pusch-TimeDomainAllocationListDCI-0-1-r16,
+  /// which replaces the common lists for DCI format 0_1. Size: (0..maxNrofUL-Allocations-r16=64).
   std::vector<pusch_time_domain_resource_allocation> pusch_td_alloc_list;
   /// Indicates which MCS table the UE shall use for PUSCH.
   pusch_mcs_table mcs_table{pusch_mcs_table::qam64};
