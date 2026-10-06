@@ -435,6 +435,11 @@ void rrc_du_impl::handle_rrc_inactive()
   metrics_aggregator.aggregate_successful_rrc_inactive();
 }
 
+void rrc_du_impl::handle_rrc_connection_setup_time(std::chrono::milliseconds setup_time)
+{
+  metrics_aggregator.aggregate_rrc_connection_setup_time(setup_time);
+}
+
 void rrc_du_impl::handle_attempted_rrc_setup(establishment_cause_t cause)
 {
   metrics_aggregator.aggregate_attempted_connection_establishment(cause);

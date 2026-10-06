@@ -94,9 +94,11 @@ private:
   bool                            is_resume_fallback          = false;
   rrc_ue_logger&                  logger;
 
-  std::chrono::milliseconds     procedure_timeout{0};
-  rrc_transaction               transaction;
-  eager_async_task<rrc_outcome> task;
+  std::chrono::milliseconds procedure_timeout{0};
+  /// Time at which the procedure was created, i.e. when the RRC UE received the request that starts the RRC setup.
+  std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+  rrc_transaction                       transaction;
+  eager_async_task<rrc_outcome>         task;
 
   asn1::rrc_nr::rrc_setup_complete_s rrc_setup_complete_msg;
   uint8_t                            sel_plmn_id   = 0;

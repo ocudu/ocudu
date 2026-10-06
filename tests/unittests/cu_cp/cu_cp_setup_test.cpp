@@ -458,6 +458,8 @@ TEST_F(cu_cp_setup_test, when_rrc_setup_completes_then_initial_message_sent_to_a
   ASSERT_FALSE(report.ues.empty());
   ASSERT_EQ(report.dus[0].rrc_metrics.mean_nof_rrc_connections, 1);
   ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_rrc_connections, 1);
+  ASSERT_TRUE(report.dus[0].rrc_metrics.mean_rrc_connection_setup_time.has_value());
+  ASSERT_TRUE(report.dus[0].rrc_metrics.max_rrc_connection_setup_time.has_value());
 }
 
 ///////////////////////////////////////////////////////////////////////////////

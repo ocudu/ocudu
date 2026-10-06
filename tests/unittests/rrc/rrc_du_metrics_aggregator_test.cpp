@@ -36,3 +36,23 @@ TEST(rrc_du_metrics_aggregator_test, when_one_rrc_connection_is_added_then_mean_
   ASSERT_EQ(metrics.mean_nof_rrc_connections, 1);
   ASSERT_EQ(metrics.max_nof_rrc_connections, 1);
 }
+
+TEST(rrc_du_metrics_aggregator_test, when_rrc_connection_setup_times_are_added_then_mean_and_max_are_reported)
+{
+  rrc_du_metrics_aggregator aggregator;
+
+  aggregator.aggregate_rrc_connection_setup_time(std::chrono::milliseconds{10});
+  aggregator.aggregate_rrc_connection_setup_time(std::chrono::milliseconds{30});
+
+  rrc_du_metrics metrics;
+  aggregator.collect_metrics(metrics);
+
+  ASSERT_EQ(metrics.mean_rrc_connection_setup_time, std::chrono::milliseconds{20});
+  ASSERT_EQ(metrics.max_rrc_connection_setup_time, std::chrono::milliseconds{30});
+
+  // The next reporting period starts without RRC connection setup times.
+  aggregator.collect_metrics(metrics);
+
+  ASSERT_FALSE(metrics.mean_rrc_connection_setup_time.has_value());
+  ASSERT_FALSE(metrics.max_rrc_connection_setup_time.has_value());
+}

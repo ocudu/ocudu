@@ -678,7 +678,9 @@ public:
 
   /// \brief Notify the RRC DU about a successful RRC connection establishment.
   /// \param[in] cause The establishment cause of the RRC connection.
-  virtual void on_successful_rrc_connection_establishment(establishment_cause_t cause) = 0;
+  /// \param[in] setup_time The time from the reception of the RRCSetupRequest to the reception of the RRCSetupComplete.
+  virtual void on_successful_rrc_connection_establishment(establishment_cause_t     cause,
+                                                          std::chrono::milliseconds setup_time) = 0;
 
   /// \brief Notify the RRC DU about a failed RRC connection establishment.
   virtual void on_failed_rrc_connection_establishment(establishment_fail_cause_t cause) = 0;

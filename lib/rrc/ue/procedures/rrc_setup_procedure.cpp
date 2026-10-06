@@ -115,7 +115,9 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
         establishment_cause_to_resume_cause(context.connection_cause));
   } else {
     // Notify metrics about successful RRC connection establishment.
-    metrics_notifier.on_successful_rrc_connection_establishment(context.connection_cause);
+    metrics_notifier.on_successful_rrc_connection_establishment(
+        context.connection_cause,
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time));
   }
 
   // Notify metrics about new RRC connection.

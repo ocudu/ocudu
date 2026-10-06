@@ -56,6 +56,11 @@ void rrc_du_metrics_aggregator::aggregate_failed_connection_establishment(establ
   connection_establishment_metrics.failed_rrc_connection_establishments.increase(cause);
 }
 
+void rrc_du_metrics_aggregator::aggregate_rrc_connection_setup_time(std::chrono::milliseconds setup_time)
+{
+  connection_setup_time_ms.update(setup_time.count());
+}
+
 void rrc_du_metrics_aggregator::aggregate_attempted_connection_reestablishment()
 {
   ++connection_reestablishment_metrics.attempted_rrc_connection_reestablishments;
@@ -106,6 +111,13 @@ void rrc_du_metrics_aggregator::collect_metrics(rrc_du_metrics& metrics)
   metrics.successful_rrc_connection_establishments =
       connection_establishment_metrics.successful_rrc_connection_establishments;
   metrics.failed_rrc_connection_establishments = connection_establishment_metrics.failed_rrc_connection_establishments;
+  metrics.mean_rrc_connection_setup_time.reset();
+  metrics.max_rrc_connection_setup_time.reset();
+  if (connection_setup_time_ms.get_nof_observations() != 0) {
+    metrics.mean_rrc_connection_setup_time = std::chrono::milliseconds{
+        static_cast<std::chrono::milliseconds::rep>(std::round(connection_setup_time_ms.get_mean()))};
+    metrics.max_rrc_connection_setup_time = std::chrono::milliseconds{connection_setup_time_ms.get_max()};
+  }
   metrics.attempted_rrc_connection_reestablishments =
       connection_reestablishment_metrics.attempted_rrc_connection_reestablishments;
   metrics.successful_rrc_connection_reestablishments_with_ue_context =
@@ -122,4 +134,5 @@ void rrc_du_metrics_aggregator::collect_metrics(rrc_du_metrics& metrics)
       connection_resume_metrics.attempted_rrc_connection_resumes_followed_by_rrc_setup;
   connection_metrics.reset();
   inactive_connection_metrics.reset();
+  connection_setup_time_ms.reset();
 }

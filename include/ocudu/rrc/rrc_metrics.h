@@ -7,6 +7,8 @@
 
 #include "ocudu/ran/cause/common.h"
 #include <array>
+#include <chrono>
+#include <optional>
 
 namespace ocudu {
 
@@ -121,6 +123,11 @@ struct rrc_du_metrics {
   rrc_connection_counter_with_cause      attempted_rrc_connection_establishments;
   rrc_connection_counter_with_cause      successful_rrc_connection_establishments;
   rrc_connection_fail_counter_with_cause failed_rrc_connection_establishments;
+  /// \brief RRC connection setup time, from the reception of the RRCSetupRequest to the reception of the
+  /// RRCSetupComplete. TS 28.552 does not define this metric. The values are empty when no RRC connection was set up in
+  /// the reporting period.
+  std::optional<std::chrono::milliseconds> mean_rrc_connection_setup_time;
+  std::optional<std::chrono::milliseconds> max_rrc_connection_setup_time;
   /// \brief RRC connection re-establishment metrics, see TS 28.552 section 5.1.1.17.
   unsigned attempted_rrc_connection_reestablishments;
   unsigned successful_rrc_connection_reestablishments_with_ue_context;

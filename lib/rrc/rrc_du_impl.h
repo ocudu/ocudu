@@ -28,9 +28,11 @@ public:
     metrics_handler.handle_attempted_rrc_setup(cause);
   }
 
-  void on_successful_rrc_connection_establishment(establishment_cause_t cause) override
+  void on_successful_rrc_connection_establishment(establishment_cause_t     cause,
+                                                  std::chrono::milliseconds setup_time) override
   {
     metrics_handler.handle_successful_rrc_setup(cause);
+    metrics_handler.handle_rrc_connection_setup_time(setup_time);
   }
 
   void on_failed_rrc_connection_establishment(establishment_fail_cause_t cause) override
@@ -119,6 +121,7 @@ public:
   // rrc_du_connection_event_handler.
   void handle_successful_rrc_setup(std::optional<establishment_cause_t> cause) override;
   void handle_rrc_inactive() override;
+  void handle_rrc_connection_setup_time(std::chrono::milliseconds setup_time) override;
   void handle_attempted_rrc_setup(establishment_cause_t cause) override;
   void handle_failed_rrc_connection_establishment(establishment_fail_cause_t cause) override;
   void handle_attempted_rrc_reestablishment() override;

@@ -7,6 +7,7 @@
 
 #include "ocudu/rrc/rrc_du.h"
 #include "ocudu/rrc/rrc_metrics.h"
+#include "ocudu/support/math/stats.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -58,6 +59,8 @@ public:
   void aggregate_successful_connection_establishment(establishment_cause_t cause);
 
   void aggregate_failed_connection_establishment(establishment_fail_cause_t cause);
+
+  void aggregate_rrc_connection_setup_time(std::chrono::milliseconds setup_time);
 
   void aggregate_attempted_connection_reestablishment();
 
@@ -166,9 +169,11 @@ private:
     unsigned                                      current_rrc_connections = 0;
   };
 
-  rrc_connection_metrics_aggregator      connection_metrics;
-  rrc_connection_metrics_aggregator      inactive_connection_metrics;
-  rrc_connection_establishment_metrics   connection_establishment_metrics;
+  rrc_connection_metrics_aggregator    connection_metrics;
+  rrc_connection_metrics_aggregator    inactive_connection_metrics;
+  rrc_connection_establishment_metrics connection_establishment_metrics;
+  /// RRC connection setup times in milliseconds of the current reporting period.
+  sample_statistics<unsigned>            connection_setup_time_ms;
   rrc_connection_reestablishment_metrics connection_reestablishment_metrics;
   rrc_connection_resume_metrics          connection_resume_metrics;
 };

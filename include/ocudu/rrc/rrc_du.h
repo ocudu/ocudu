@@ -149,6 +149,10 @@ public:
   /// \brief Add the RRC inactive transition to the metrics.
   virtual void handle_rrc_inactive() = 0;
 
+  /// \brief Add the RRC connection setup time to the metrics.
+  /// \param[in] setup_time The time from the reception of the RRCSetupRequest to the reception of the RRCSetupComplete.
+  virtual void handle_rrc_connection_setup_time(std::chrono::milliseconds setup_time) = 0;
+
   /// \brief Add the attempted RRC connection establishment to the metrics.
   /// \param[in] cause The establishment cause of the RRC connection.
   virtual void handle_attempted_rrc_setup(establishment_cause_t cause) = 0;
