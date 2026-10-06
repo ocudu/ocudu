@@ -434,3 +434,40 @@ TEST_F(nrppa_impl_test, when_periodic_aoa_is_requested_with_rrc_quantities_then_
   asn1::nrppa::nr_ppa_pdu_c pdu = unpack_nrppa_pdu(cu_cp_notifier.last_ul_nrppa_pdu);
   ASSERT_EQ(pdu.type().value, asn1::nrppa::nr_ppa_pdu_c::types_opts::successful_outcome);
 }
+
+/// The NRPPa PDU is opaque to NGAP, so the AMF can carry a non-UE-associated procedure in a UE-associated NRPPa
+/// transport, or vice versa. Such a PDU must be dropped rather than dispatched to a handler expecting the other index.
+TEST_F(nrppa_impl_test, when_trp_information_request_is_received_ue_associated_then_it_is_dropped)
+{
+  nrppa.get_nrppa_message_handler().handle_new_nrppa_pdu(generate_valid_trp_information_request(),
+                                                         std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t>{ue_index});
+
+  ASSERT_FALSE(cu_cp_notifier.ul_pdu_sent);
+}
+
+TEST_F(nrppa_impl_test, when_measurement_request_is_received_ue_associated_then_it_is_dropped)
+{
+  nrppa.get_nrppa_message_handler().handle_new_nrppa_pdu(
+      generate_valid_nrppa_measurement_request(uint_to_lmf_meas_id(1)),
+      std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t>{ue_index});
+
+  ASSERT_FALSE(cu_cp_notifier.ul_pdu_sent);
+}
+
+TEST_F(nrppa_impl_test, when_positioning_information_request_is_received_non_ue_associated_then_it_is_dropped)
+{
+  nrppa.get_nrppa_message_handler().handle_new_nrppa_pdu(
+      generate_valid_positioning_information_request(),
+      std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t>{cu_cp_amf_index_t::min});
+
+  ASSERT_FALSE(cu_cp_notifier.ul_pdu_sent);
+}
+
+TEST_F(nrppa_impl_test, when_e_cid_measurement_initiation_request_is_received_non_ue_associated_then_it_is_dropped)
+{
+  nrppa.get_nrppa_message_handler().handle_new_nrppa_pdu(
+      generate_valid_nrppa_e_cid_measurement_initiation_request(uint_to_lmf_ue_meas_id(1)),
+      std::variant<cu_cp_ue_index_t, cu_cp_amf_index_t>{cu_cp_amf_index_t::min});
+
+  ASSERT_FALSE(cu_cp_notifier.ul_pdu_sent);
+}
