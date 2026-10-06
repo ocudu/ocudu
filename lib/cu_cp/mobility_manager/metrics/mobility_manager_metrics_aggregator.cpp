@@ -18,6 +18,16 @@ void mobility_manager_metrics_aggregator::aggregate_successful_handover_preparat
   ++aggregated_mobility_manager_metrics.nof_successful_handover_preparations;
 }
 
+void mobility_manager_metrics_aggregator::aggregate_requested_intra_gnb_handover_preparation()
+{
+  ++aggregated_mobility_manager_metrics.nof_intra_gnb_handover_preparations_requested;
+}
+
+void mobility_manager_metrics_aggregator::aggregate_successful_intra_gnb_handover_preparation()
+{
+  ++aggregated_mobility_manager_metrics.nof_successful_intra_gnb_handover_preparations;
+}
+
 /// \brief Aggregates the metrics for the requested handover execution.
 void mobility_manager_metrics_aggregator::aggregate_requested_handover_execution()
 {

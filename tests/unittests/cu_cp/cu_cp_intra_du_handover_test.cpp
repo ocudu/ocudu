@@ -467,6 +467,10 @@ TEST_F(cu_cp_intra_du_handover_test, when_ue_context_setup_fails_then_ho_fails)
   // STATUS: Target UE should be removed from DU.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1) << "UE should be removed";
+
+  // Check that the metrics report contains the requested handover preparation only.
+  ASSERT_EQ(report.mobility.nof_intra_gnb_handover_preparations_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_intra_gnb_handover_preparations, 0U);
 }
 
 TEST_F(cu_cp_intra_du_handover_test, when_bearer_context_modification_fails_then_ho_fails)
@@ -529,11 +533,18 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_succeeds_then_source_ue_is_removed)
 
   // Check that the metrics report doesn't contain a requested/successful handover execution.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_intra_gnb_handover_preparations_requested, 0U);
+  ASSERT_EQ(report.mobility.nof_successful_intra_gnb_handover_preparations, 0U);
   ASSERT_EQ(report.mobility.nof_handover_executions_requested, 0U);
   ASSERT_EQ(report.mobility.nof_successful_handover_executions, 0U);
 
   // Inject Measurement Report and await F1AP UE Context Setup Request.
   ASSERT_TRUE(send_rrc_measurement_report_and_await_ue_context_setup_request());
+
+  // Check that the metrics report contains a requested handover preparation.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_intra_gnb_handover_preparations_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_intra_gnb_handover_preparations, 0U);
 
   // Inject UE Context Setup Response and await UE Context Modification Request.
   ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request());
@@ -541,8 +552,9 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_succeeds_then_source_ue_is_removed)
   // Inject UE Context Modification Response.
   ASSERT_TRUE(send_ue_context_modification_response());
 
-  // Check that the metrics report contains a requested handover execution.
+  // Check that the metrics report contains a successful handover preparation and a requested handover execution.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_successful_intra_gnb_handover_preparations, 1U);
   ASSERT_EQ(report.mobility.nof_handover_executions_requested, 1U);
 
   // Inject RRC Reconfiguration Complete and await Bearer Context Modification Request.

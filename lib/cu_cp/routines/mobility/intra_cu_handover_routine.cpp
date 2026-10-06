@@ -126,9 +126,19 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
     target_ue_context_setup_request.cu_to_du_rrc_info.meas_cfg = source_ue->get_rrc_ue()->get_packed_meas_config();
     target_ue_context_setup_request.serving_cell_mo            = source_ue->get_rrc_ue()->get_serving_cell_mo();
 
+    if (not is_cho_preparation) {
+      // Notify mobility manager about requested handover preparation.
+      mobility_mng.get_metrics_handler().aggregate_requested_intra_gnb_handover_preparation();
+    }
+
     CORO_AWAIT_VALUE(target_ue_context_setup_response,
                      target_du_f1ap_ue_ctxt_mng.handle_ue_context_setup_request(target_ue_context_setup_request,
                                                                                 source_rrc_context));
+
+    if (not is_cho_preparation and target_ue_context_setup_response.success) {
+      // Notify mobility manager about successful handover preparation.
+      mobility_mng.get_metrics_handler().aggregate_successful_intra_gnb_handover_preparation();
+    }
 
     // Handle UE Context Setup Response.
     if (!handle_context_setup_response(response_msg,

@@ -126,7 +126,11 @@ void to_json(nlohmann::json& json, const ocudu::cu_cp_metrics_report::du_info& m
 void to_json(nlohmann::json& json, const cu_cp_rrc_metrics_json& metrics)
 {
   // RRC-DU metrics.
-  json["du"]                                 = metrics.dus;
+  json["du"] = metrics.dus;
+  json["nof_intra_gnb_handover_preparations_requested"] =
+      metrics.mobility.nof_intra_gnb_handover_preparations_requested;
+  json["nof_successful_intra_gnb_handover_preparations"] =
+      metrics.mobility.nof_successful_intra_gnb_handover_preparations;
   json["nof_handover_executions_requested"]  = metrics.mobility.nof_handover_executions_requested;
   json["nof_successful_handover_executions"] = metrics.mobility.nof_successful_handover_executions;
 }

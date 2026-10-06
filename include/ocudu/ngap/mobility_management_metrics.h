@@ -16,6 +16,10 @@ struct mobility_management_metrics {
   // Section 5.1.1.6.2: Intra-gNB handovers.
   unsigned nof_handover_executions_requested  = 0;
   unsigned nof_successful_handover_executions = 0;
+
+  // Section 5.1.3.7.1: Intra-gNB handovers in a split gNB deployment.
+  unsigned nof_intra_gnb_handover_preparations_requested  = 0;
+  unsigned nof_successful_intra_gnb_handover_preparations = 0;
 };
 
 } // namespace ocudu
