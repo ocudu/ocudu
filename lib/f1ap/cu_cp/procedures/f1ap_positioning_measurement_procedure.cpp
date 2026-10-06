@@ -38,7 +38,8 @@ static measurement_failure_t create_positioning_measurement_failure(const f1ap_c
 /// \param[in] asn1_resp The ASN.1 measurement response.
 /// \return The measurement response PDU.
 static measurement_response_t
-create_positioning_measurement_response(const asn1::f1ap::positioning_meas_resp_s& asn1_resp);
+create_positioning_measurement_response(const asn1::f1ap::positioning_meas_resp_s& asn1_resp,
+                                        ocudulog::basic_logger&                    logger);
 
 // ---- Positioning Measurement Procedure ----
 
@@ -112,7 +113,8 @@ f1ap_positioning_measurement_procedure::handle_procedure_outcome()
                    name(),
                    get_cause_str(du_pdu_response.error().value.positioning_meas_fail()->cause));
   } else {
-    procedure_outcome = create_positioning_measurement_response(du_pdu_response.value().value.positioning_meas_resp());
+    procedure_outcome =
+        create_positioning_measurement_response(du_pdu_response.value().value.positioning_meas_resp(), logger);
     logger.info("\"{}\" finished successfully", name());
   }
 
@@ -232,7 +234,8 @@ asn1_to_multiple_ul_aoa(const asn1::f1ap::multiple_ul_ao_a_s& asn1_multiple_aoa)
 }
 
 static measurement_response_t
-create_positioning_measurement_response(const asn1::f1ap::positioning_meas_resp_s& asn1_resp)
+create_positioning_measurement_response(const asn1::f1ap::positioning_meas_resp_s& asn1_resp,
+                                        ocudulog::basic_logger&                    logger)
 {
   measurement_response_t resp;
   resp.lmf_meas_id = uint_to_lmf_meas_id(asn1_resp->lmf_meas_id);
@@ -358,6 +361,11 @@ create_positioning_measurement_response(const asn1::f1ap::positioning_meas_resp_
 
           pos_meas_result_item.measured_results_value = ul_rtoa;
 
+        } else if (asn1_pos_meas_result_item.measured_results_value.type() ==
+                   asn1::f1ap::measured_results_value_c::types_opts::options::choice_ext) {
+          logger.warning("Positioning Measurement Response: ignoring unsupported measured results value {}",
+                         asn1_pos_meas_result_item.measured_results_value.choice_ext()->type().to_string());
+          continue;
         } else {
           const asn1::f1ap::gnb_rx_tx_time_diff_s& asn1_rx_tx_time_diff =
               asn1_pos_meas_result_item.measured_results_value.gnb_rx_tx_time_diff();
@@ -524,6 +532,11 @@ create_positioning_measurement_response(const asn1::f1ap::positioning_meas_resp_
         }
 
         trp_meas_resp_item.meas_result.push_back(pos_meas_result_item);
+      }
+
+      // The TRP Measurement Result IE needs at least one item, as per TS 38.455 section 9.2.37.
+      if (trp_meas_resp_item.meas_result.empty()) {
+        continue;
       }
 
       // Fill TRP ID.

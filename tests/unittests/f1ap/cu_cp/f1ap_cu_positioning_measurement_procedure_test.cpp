@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "f1ap_cu_test_helpers.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/support/async/async_test_utils.h"
@@ -29,6 +30,11 @@ protected:
   {
     t = f1ap->handle_positioning_measurement_request(req);
     t_launcher.emplace(t);
+  }
+
+  unsigned sent_transaction_id() const
+  {
+    return f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.positioning_meas_request()->transaction_id;
   }
 
   bool was_request_sent() const
@@ -57,4 +63,30 @@ TEST_F(f1ap_cu_positioning_measurement_test, when_f1ap_already_stopped_then_requ
   ASSERT_FALSE(was_request_sent());
   ASSERT_TRUE(t.ready());
   EXPECT_FALSE(t.get().has_value());
+}
+
+TEST_F(f1ap_cu_positioning_measurement_test, when_response_carries_an_unsupported_result_then_its_trp_is_ignored)
+{
+  start_procedure(make_request());
+  ASSERT_TRUE(was_request_sent());
+
+  // Replace the result of the second TRP with a Multiple UL AoA result.
+  f1ap_message pdu = test_helpers::generate_positioning_measurement_response_with_aoa(
+      lmf_meas_id_t::min, ran_meas_id_t::min, {uint_to_trp_id(1), uint_to_trp_id(2)}, 1800, sent_transaction_id());
+  auto& ext = pdu.pdu.successful_outcome()
+                  .value.positioning_meas_resp()
+                  ->pos_meas_result_list[1]
+                  .pos_meas_result[0]
+                  .measured_results_value.set_choice_ext();
+  ext->set(measured_results_value_ext_ies_o::value_c::types_opts::multiple_ul_ao_a);
+  ext->multiple_ul_ao_a().multiple_ul_ao_a.resize(1);
+  ext->multiple_ul_ao_a().multiple_ul_ao_a[0].set_ul_ao_a().azimuth_ao_a = 1800;
+  f1ap->handle_message(pdu);
+
+  ASSERT_TRUE(t.ready());
+  const auto& res = t.get();
+  ASSERT_TRUE(res.has_value());
+  ASSERT_EQ(res.value().trp_meas_resp_list.size(), 1);
+  ASSERT_EQ(res.value().trp_meas_resp_list[0].trp_id, uint_to_trp_id(1));
+  ASSERT_EQ(res.value().trp_meas_resp_list[0].meas_result.size(), 1);
 }
