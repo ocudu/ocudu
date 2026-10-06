@@ -2297,16 +2297,35 @@ cu_cp_impl::handle_inter_cu_handover_request(const cu_cp_inter_cu_handover_reque
   auto* ngap = ngap_db.find_ngap(request.guami.plmn);
   ocudu_assert(ngap != nullptr, "ue={}: NGAP not found for PLMN={}", request.ue_index, request.guami.plmn);
 
-  return launch_async<inter_cu_handover_target_routine>(
-      request,
-      cu_up_db.find_cu_up_processor(ue->get_cu_up_index())->get_e1ap_bearer_context_manager(),
-      du_db.get_du_processor(ue->get_du_index()),
-      get_cu_cp_ue_removal_handler(),
-      ue_mng,
-      cell_meas_mng,
-      ngap->get_ngap_location_reporting_handler(),
-      cfg.security.default_security_indication,
-      logger);
+  async_task<cu_cp_handover_resource_allocation_response> target_routine =
+      launch_async<inter_cu_handover_target_routine>(
+          request,
+          cu_up_db.find_cu_up_processor(ue->get_cu_up_index())->get_e1ap_bearer_context_manager(),
+          du_db.get_du_processor(ue->get_du_index()),
+          get_cu_cp_ue_removal_handler(),
+          ue_mng,
+          cell_meas_mng,
+          ngap->get_ngap_location_reporting_handler(),
+          cfg.security.default_security_indication,
+          logger);
+  if (request.is_conditional_handover) {
+    return target_routine;
+  }
+
+  // Notify mobility manager metrics handler about the requested handover resource allocation.
+  mobility_mng.get_metrics_handler().aggregate_requested_inter_gnb_handover_resource_allocation();
+
+  return launch_async(
+      [this, target_routine = std::move(target_routine), response = cu_cp_handover_resource_allocation_response{}](
+          coro_context<async_task<cu_cp_handover_resource_allocation_response>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(response, target_routine);
+        if (std::holds_alternative<cu_cp_handover_request_ack>(response)) {
+          // Notify mobility manager metrics handler about the successful handover resource allocation.
+          mobility_mng.get_metrics_handler().aggregate_successful_inter_gnb_handover_resource_allocation();
+        }
+        CORO_RETURN(response);
+      });
 }
 
 void cu_cp_impl::on_statistics_report_timer_expired()

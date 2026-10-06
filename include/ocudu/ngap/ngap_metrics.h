@@ -187,6 +187,11 @@ inline std::string format_ngap_metrics(const std::vector<ngap_info>&      report
                  mobility_metrics.nof_handover_preparations_requested,
                  mobility_metrics.nof_successful_handover_preparations);
   fmt::format_to(std::back_inserter(buffer),
+                 " nof_inter_gnb_handover_resource_allocations_requested={} "
+                 "nof_successful_inter_gnb_handover_resource_allocations={}",
+                 mobility_metrics.nof_inter_gnb_handover_resource_allocations_requested,
+                 mobility_metrics.nof_successful_inter_gnb_handover_resource_allocations);
+  fmt::format_to(std::back_inserter(buffer),
                  " nof_inter_gnb_handover_executions_requested={} nof_successful_inter_gnb_handover_executions={}",
                  mobility_metrics.nof_inter_gnb_handover_executions_requested,
                  mobility_metrics.nof_successful_inter_gnb_handover_executions);

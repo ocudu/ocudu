@@ -18,6 +18,16 @@ void mobility_manager_metrics_aggregator::aggregate_successful_handover_preparat
   ++aggregated_mobility_manager_metrics.nof_successful_handover_preparations;
 }
 
+void mobility_manager_metrics_aggregator::aggregate_requested_inter_gnb_handover_resource_allocation()
+{
+  ++aggregated_mobility_manager_metrics.nof_inter_gnb_handover_resource_allocations_requested;
+}
+
+void mobility_manager_metrics_aggregator::aggregate_successful_inter_gnb_handover_resource_allocation()
+{
+  ++aggregated_mobility_manager_metrics.nof_successful_inter_gnb_handover_resource_allocations;
+}
+
 void mobility_manager_metrics_aggregator::aggregate_requested_inter_gnb_handover_execution()
 {
   ++aggregated_mobility_manager_metrics.nof_inter_gnb_handover_executions_requested;

@@ -531,6 +531,11 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_request_received_then_path
   // Inject Handover Request and await Bearer Context Setup Request.
   ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(source_local_xnap_ue_id));
 
+  // Check that the metrics report contains the requested handover resource allocation.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_inter_gnb_handover_resource_allocations_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_inter_gnb_handover_resource_allocations, 0U);
+
   // Inject Bearer Context Setup Response and await UE Context Setup Request.
   ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
 
@@ -539,6 +544,11 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_request_received_then_path
 
   // Inject Bearer Context Modification Response and await Handover Request Ack.
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+
+  // Check that the metrics report contains the successful handover resource allocation.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.mobility.nof_inter_gnb_handover_resource_allocations_requested, 1U);
+  ASSERT_EQ(report.mobility.nof_successful_inter_gnb_handover_resource_allocations, 1U);
 
   // Inject XNAP SN RAN Status Transfer and Bearer Context Modification Response.
   ASSERT_TRUE(send_sn_status_transfer_and_await_bearer_context_modification_request(source_local_xnap_ue_id,

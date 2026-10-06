@@ -10,10 +10,12 @@ namespace ocudu {
 // Mobility Management metrics, see TS 28.552 section 5.1.1.6.
 struct mobility_management_metrics {
   // Section 5.1.1.6.1: Inter-gNB handovers.
-  unsigned nof_handover_preparations_requested          = 0;
-  unsigned nof_successful_handover_preparations         = 0;
-  unsigned nof_inter_gnb_handover_executions_requested  = 0;
-  unsigned nof_successful_inter_gnb_handover_executions = 0;
+  unsigned nof_handover_preparations_requested                    = 0;
+  unsigned nof_successful_handover_preparations                   = 0;
+  unsigned nof_inter_gnb_handover_resource_allocations_requested  = 0;
+  unsigned nof_successful_inter_gnb_handover_resource_allocations = 0;
+  unsigned nof_inter_gnb_handover_executions_requested            = 0;
+  unsigned nof_successful_inter_gnb_handover_executions           = 0;
 
   // Section 5.1.1.6.2: Intra-gNB handovers.
   unsigned nof_handover_executions_requested  = 0;
