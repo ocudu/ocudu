@@ -23,3 +23,16 @@ TEST(rrc_du_metrics_aggregator_test, when_resume_cause_is_unknown_then_only_the_
     ASSERT_EQ(metrics.successful_rrc_connection_resumes.get_count(i), 0) << "cause index " << i;
   }
 }
+
+TEST(rrc_du_metrics_aggregator_test, when_one_rrc_connection_is_added_then_mean_and_max_are_one)
+{
+  rrc_du_metrics_aggregator aggregator;
+
+  aggregator.aggregate_successful_rrc_setup();
+
+  rrc_du_metrics metrics;
+  aggregator.collect_metrics(metrics);
+
+  ASSERT_EQ(metrics.mean_nof_rrc_connections, 1);
+  ASSERT_EQ(metrics.max_nof_rrc_connections, 1);
+}

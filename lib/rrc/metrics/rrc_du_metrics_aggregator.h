@@ -109,7 +109,7 @@ private:
 
       if (rrc_connections_with_time.size() == 2 && rrc_connections_with_time.begin()->second == 0) {
         // Only one measurement has been made (the map is initialized with a zero value).
-        return rrc_connections_with_time.end()->second;
+        return rrc_connections_with_time.rbegin()->second;
       }
 
       // Add current value to the map to count all actual measurements (the last value of the map will be ignored).
