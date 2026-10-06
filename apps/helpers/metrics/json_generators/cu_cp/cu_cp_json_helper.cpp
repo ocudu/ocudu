@@ -147,8 +147,16 @@ void to_json(nlohmann::json& json, const cu_cp_rrc_metrics_json& metrics)
       metrics.mobility.nof_intra_gnb_handover_preparations_requested;
   json["nof_successful_intra_gnb_handover_preparations"] =
       metrics.mobility.nof_successful_intra_gnb_handover_preparations;
-  json["nof_handover_executions_requested"]       = metrics.mobility.nof_handover_executions_requested;
-  json["nof_successful_handover_executions"]      = metrics.mobility.nof_successful_handover_executions;
+  json["nof_handover_executions_requested"]         = metrics.mobility.nof_handover_executions_requested;
+  json["nof_successful_handover_executions"]        = metrics.mobility.nof_successful_handover_executions;
+  json["mean_intra_gnb_handover_execution_time_ms"] = nullptr;
+  json["max_intra_gnb_handover_execution_time_ms"]  = nullptr;
+  if (metrics.mobility.mean_intra_gnb_handover_execution_time.has_value() and
+      metrics.mobility.max_intra_gnb_handover_execution_time.has_value()) {
+    json["mean_intra_gnb_handover_execution_time_ms"] =
+        metrics.mobility.mean_intra_gnb_handover_execution_time->count();
+    json["max_intra_gnb_handover_execution_time_ms"] = metrics.mobility.max_intra_gnb_handover_execution_time->count();
+  }
   json["nof_ues_configured_with_intra_gnb_cho"]   = metrics.mobility.nof_ues_configured_with_intra_gnb_cho;
   json["nof_successful_intra_gnb_cho_executions"] = metrics.mobility.nof_successful_intra_gnb_cho_executions;
 }

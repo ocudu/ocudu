@@ -59,6 +59,8 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
   }
   // Notify mobility manager about successful handover execution.
   mobility_mng.get_metrics_handler().aggregate_successful_handover_execution();
+  mobility_mng.get_metrics_handler().aggregate_intra_gnb_handover_execution_time(
+      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time));
 
   {
     // Transfer old UE context (NGAP, E1AP, location manager) to new UE context and remove old UE context.

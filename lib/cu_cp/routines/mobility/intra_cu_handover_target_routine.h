@@ -11,6 +11,7 @@
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/support/async/async_task.h"
+#include <chrono>
 
 namespace ocudu::ocucp {
 
@@ -65,6 +66,10 @@ private:
   e1ap_bearer_context_modification_request bearer_context_modification_request;
   f1ap_ue_context_modification_request     target_ue_context_modification_request;
   cu_cp_ue_context_release_command         ue_context_release_command;
+
+  /// \brief Time at which the routine was created. The routine is created when the CU-CP sends the RRC Reconfiguration
+  /// to the source DU.
+  std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
   // (Sub-)routine results.
   bool                                      reconf_result    = false;

@@ -39,7 +39,7 @@ public:
   virtual ~mobility_manager_metrics_handler() = default;
 
   /// \brief Handle new metrics request for the mobility manager of the CU-CP.
-  virtual mobility_management_metrics handle_mobility_metrics_report_request() const = 0;
+  virtual mobility_management_metrics handle_mobility_metrics_report_request() = 0;
 };
 
 /// Dependencies of the mobility manager.
@@ -92,7 +92,7 @@ public:
   mobility_manager_metrics_aggregator& get_metrics_handler() { return metrics_handler; }
 
   // See interface for documentation.
-  mobility_management_metrics handle_mobility_metrics_report_request() const override
+  mobility_management_metrics handle_mobility_metrics_report_request() override
   {
     return metrics_handler.request_metrics_report();
   }

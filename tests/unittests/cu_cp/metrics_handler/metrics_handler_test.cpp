@@ -34,7 +34,7 @@ public:
 
   std::vector<ngap_info> handle_ngap_metrics_report_request() const override { return next_metrics.ngaps; }
 
-  mobility_management_metrics handle_mobility_metrics_report_request() const override { return next_metrics.mobility; }
+  mobility_management_metrics handle_mobility_metrics_report_request() override { return next_metrics.mobility; }
 };
 
 class dummy_metrics_notifier : public cu_cp_metrics_report_notifier

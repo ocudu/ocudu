@@ -569,9 +569,11 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_succeeds_then_source_ue_is_removed)
   // Inject F1AP UE Context Release Complete.
   ASSERT_TRUE(send_f1ap_ue_context_release_complete(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
 
-  // Check that the metrics report contains a successful handover execution.
+  // Check that the metrics report contains a successful handover execution and its execution time.
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.mobility.nof_successful_handover_executions, 1U);
+  ASSERT_TRUE(report.mobility.mean_intra_gnb_handover_execution_time.has_value());
+  ASSERT_TRUE(report.mobility.max_intra_gnb_handover_execution_time.has_value());
 
   // STATUS: Source UE should be removed from DU.
   ASSERT_EQ(report.ues.size(), 1) << "Source UE should be removed";
