@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <random>
+#include <thread>
 #include <vector>
 
 using namespace ocudu;
@@ -637,19 +638,28 @@ TEST_F(RxReassembly, SilentUplinkIsPacedAtRealTime)
   EXPECT_EQ(buf.data()[NOF_SAMPLES - 1], ci16_t(0, 0));
 }
 
-// Conversely, samples that are already queued must be consumed without waiting out the budget,
-// so a receiver that has fallen behind can catch up instead of pacing itself into a backlog.
-TEST_F(RxReassembly, QueuedSamplesAreConsumedWithoutWaiting)
+// Conversely, a receiver that has fallen behind the wall clock must consume what is already queued without
+// waiting, so it catches up instead of pacing itself into a backlog.
+TEST_F(RxReassembly, QueuedSamplesAreConsumedWithoutWaitingWhenBehind)
 {
   ASSERT_NO_FATAL_FAILURE(open(15014));
 
-  // Four slots, not more. The whole span is queued before the first receive() call, and the kernel caps
+  // Behind schedule by this much, but well short of the re-anchoring threshold.
+  constexpr std::chrono::milliseconds LAG{20};
+
+  // Anchor the timeline with one slot, then fall behind it.
+  transmit_ramp(SLOT_LEN, 0);
+  simple_buffer_writer first(SLOT_LEN);
+  rx->receive(first);
+  std::this_thread::sleep_for(LAG);
+
+  // Four slots, not more. The whole span is queued before the receive() call, and the kernel caps
   // SO_RCVBUF at net.core.rmem_max, which defaults to 208 kB. Queueing past that drops datagrams
   // silently, and the stream then waits out its budget for samples that never arrive.
   constexpr unsigned NOF_SAMPLES = 4 * SLOT_LEN;
 
-  // Queue the whole span up front: 24 fragments of 1920 samples.
-  transmit_ramp(NOF_SAMPLES, 0);
+  // Queue the next span, 24 fragments of 1920 samples, all of which are now overdue.
+  transmit_ramp(NOF_SAMPLES, SLOT_LEN);
 
   simple_buffer_writer buf(NOF_SAMPLES);
 
@@ -658,7 +668,34 @@ TEST_F(RxReassembly, QueuedSamplesAreConsumedWithoutWaiting)
   const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - t0);
 
   // The span is worth 4 ms of pacing, so anything approaching that means receive() waited rather than drained.
-  EXPECT_LT(elapsed.count(), 2000) << "Queued samples must not be paced, this blocks catch-up";
+  EXPECT_LT(elapsed.count(), 2000) << "Overdue queued samples must not be paced, this blocks catch-up";
+
+  for (unsigned k = 0; k != NOF_SAMPLES; ++k) {
+    ASSERT_EQ(buf.data()[k], ramp_sample(k)) << "Mismatch at sample " << k;
+  }
+  EXPECT_TRUE(notifier.events.empty()) << "A fully queued span has no discontinuity";
+}
+
+// Samples queued ahead of the wall clock must not be handed over early: a peer sample-locked to this receiver
+// would otherwise let the pair run faster than real time, shrinking every processing deadline measured in slots.
+TEST_F(RxReassembly, QueuedSamplesAheadOfTheWallClockArePaced)
+{
+  ASSERT_NO_FATAL_FAILURE(open(15030));
+
+  // Four slots at 11.52 MHz, a 4 ms span, kept under the default net.core.rmem_max.
+  constexpr unsigned NOF_SAMPLES = 4 * SLOT_LEN;
+
+  // Queue the whole span up front, so all of it is available immediately.
+  transmit_ramp(NOF_SAMPLES, 0);
+
+  simple_buffer_writer buf(NOF_SAMPLES);
+
+  const auto t0 = std::chrono::steady_clock::now();
+  rx->receive(buf);
+  const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - t0);
+
+  EXPECT_GT(elapsed.count(), 3000) << "Returned before the span elapsed, the pair would run faster than real time";
+  EXPECT_LT(elapsed.count(), 60000) << "Blocked far beyond the buffer duration, the downlink would stall";
 
   for (unsigned k = 0; k != NOF_SAMPLES; ++k) {
     ASSERT_EQ(buf.data()[k], ramp_sample(k)) << "Mismatch at sample " << k;

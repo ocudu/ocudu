@@ -11,6 +11,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 
 using namespace ocudu;
 
@@ -22,6 +23,16 @@ static constexpr uint8_t DIFI_PKT_TYPE_DATA = 0x1U;
 
 /// Largest number of IQ samples one datagram can carry, at the 8 bit depth where a sample takes two bytes.
 static constexpr size_t MAX_SAMPLES_PER_DATAGRAM = (MAX_UDP_PAYLOAD - DIFI_DATA_HEADER_SIZE.value()) / 2;
+
+/// \brief Fixed offset by which the receive timeline trails the transmitter, applied once when anchored.
+///
+/// Keeps a backlog in the socket queue to absorb burstiness: a shortfall is zero-filled, not deferred.
+static constexpr std::chrono::microseconds RX_LAG{2000};
+
+/// \brief Maximum drift behind schedule before the timeline is re-anchored.
+///
+/// Bounds the catch-up debt taken on across a stall. Ordinary lateness is absorbed by not waiting.
+static constexpr std::chrono::milliseconds MAX_TIMELINE_DEBT{50};
 
 /// \brief Largest offset between the transmitter epoch and ours that is treated as a shared clock.
 ///
@@ -87,14 +98,41 @@ baseband_gateway_receiver::metadata radio_difi_rx_stream::receive(baseband_gatew
   // Wall-clock span the requested samples represent. This call must occupy that span: receive() is the
   // only thing pacing the lower physical layer, whose uplink chain reschedules itself with no throttle
   // and whose downlink waits on the timestamp published here. Returning late throttles the downlink too.
-  const auto budget = std::chrono::nanoseconds(
+  const auto start_time = std::chrono::steady_clock::now();
+  const auto budget     = std::chrono::nanoseconds(
       (config.sample_rate_Hz > 0.0)
           ? static_cast<int64_t>(static_cast<double>(nof_requested) * 1e9 / config.sample_rate_Hz)
           : 0);
-  const auto deadline = std::chrono::steady_clock::now() + budget;
+
+  // Deadlines derive from an anchor rather than from the start of the call, so the timeline advances by
+  // exactly one budget per buffer and a call that finishes early leaves slack for the next one.
+  auto compute_deadline = [&]() -> std::chrono::steady_clock::time_point {
+    if (!clock_anchor.has_value() || config.sample_rate_Hz <= 0.0) {
+      return start_time + budget;
+    }
+    const double target_s = static_cast<double>(base_ts + nof_requested - clock_anchor_ts) / config.sample_rate_Hz;
+    return *clock_anchor + std::chrono::nanoseconds(static_cast<int64_t>(target_s * 1e9));
+  };
+
+  // Anchor on the first call, so the timeline paces correctly before any transmitter appears.
+  if (!clock_anchor.has_value() && (config.sample_rate_Hz > 0.0)) {
+    clock_anchor    = start_time;
+    clock_anchor_ts = base_ts;
+  }
+
+  auto deadline = compute_deadline();
+
+  // Falling behind is normal, and the way to catch up is to stop waiting. Re-anchor only past a stall so
+  // long that the debt would otherwise be repaid by returning a burst of buffers back to back.
+  if (clock_anchor.has_value() && start_time > deadline + MAX_TIMELINE_DEBT) {
+    clock_anchor    = start_time;
+    clock_anchor_ts = base_ts;
+    deadline        = compute_deadline();
+  }
 
   unsigned filled       = 0;
   bool     gap_reported = false;
+  bool     peer_active  = false;
 
   // Resolves where a block of samples starting at local_ts belongs in this buffer. Zero-fills any gap
   // ahead of it, and returns how many leading samples are stale, equal to the block size if all are.
@@ -178,6 +216,18 @@ baseband_gateway_receiver::metadata radio_difi_rx_stream::receive(baseband_gatew
       continue;
     }
 
+    if (!peer_active) {
+      peer_active = true;
+      if (!clock_anchor_locked_to_peer) {
+        // Re-anchor to the transmitter first packet, so the schedule is expressed relative to when it
+        // started streaming. RX_LAG is applied here, once, and every deadline is then one budget on.
+        clock_anchor                = std::chrono::steady_clock::now() + RX_LAG;
+        clock_anchor_ts             = base_ts + filled;
+        clock_anchor_locked_to_peer = true;
+        deadline                    = compute_deadline();
+      }
+    }
+
     const uint64_t pkt_ts = difi_time_to_ticks(read_u32_be(buf + 16), read_u64_be(buf + 20), config.sample_rate_Hz);
 
     if (!ts_offset.has_value()) {
@@ -224,6 +274,14 @@ baseband_gateway_receiver::metadata radio_difi_rx_stream::receive(baseband_gatew
     ocuduvec::zero(channel.subspan(filled, nof_requested - filled));
   }
 
+  // Never hand a buffer over before the wall-clock time its last sample stands for. A peer that is sample-locked to
+  // this gNB would otherwise let the pair run faster than real time, shrinking every processing deadline measured
+  // in slots, and building a lead that a later stall of the peer repays as a freeze. The deadline is anchored, so
+  // sleep overshoot is absorbed by the next call rather than accumulating.
+  if (clock_anchor.has_value()) {
+    std::this_thread::sleep_until(deadline);
+  }
+
   // The timeline advances by the whole buffer regardless of how much arrived, matching how the caller
   // computes the next expected timestamp.
   sample_count.store(base_ts + nof_requested, std::memory_order_relaxed);
@@ -239,6 +297,9 @@ void radio_difi_rx_stream::start(baseband_gateway_timestamp init_time)
   ts_offset.reset();
   carry_samples.clear();
   carry_ts = 0;
+  clock_anchor.reset();
+  clock_anchor_ts             = 0;
+  clock_anchor_locked_to_peer = false;
 
   socket.open_rx(config.ip, config.port);
 }

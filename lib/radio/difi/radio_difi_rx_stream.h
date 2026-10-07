@@ -11,6 +11,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/radio/radio_event_notifier.h"
 #include <atomic>
+#include <chrono>
 #include <optional>
 
 namespace ocudu {
@@ -77,6 +78,15 @@ private:
   std::vector<ci16_t> carry_samples;
   /// Timestamp of the first sample in \ref carry_samples.
   uint64_t carry_ts = 0;
+  /// \brief Reference system time associated with a timestamp.
+  ///
+  /// Wall clock anchor of the real-time timeline, and the sample position it maps to. This is necessary
+  /// for throttling the baseband IQ streaming.
+  std::optional<std::chrono::steady_clock::time_point> clock_anchor;
+  /// Timestamp associated with the clock anchor.
+  uint64_t clock_anchor_ts = 0;
+  /// Indicates whether \ref clock_anchor has been re-taken against the transmitter first packet.
+  bool clock_anchor_locked_to_peer = false;
 };
 
 } // namespace ocudu
