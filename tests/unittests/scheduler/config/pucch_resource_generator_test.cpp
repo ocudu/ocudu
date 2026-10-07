@@ -9,6 +9,7 @@
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/ran_cell_config.h"
@@ -38,7 +39,8 @@ public:
     cell_cfg(make_custom_cell_config(GetParam())),
     params(cell_cfg.init_bwp.pucch.resources),
     bwp_cfg(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params),
-    pucch_res_common(cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common)
+    pucch_res_common(cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common),
+    dedicated_pucch_rb_start(get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_cfg.crbs.length()))
   {
   }
 
@@ -47,12 +49,13 @@ protected:
   const pucch_resource_builder_params params;
   const bwp_configuration             bwp_cfg;
   const unsigned                      pucch_res_common;
+  const unsigned                      dedicated_pucch_rb_start;
 };
 
 TEST_P(pucch_resource_generator_test, generated_resources_are_consistent_with_parameters)
 {
   std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
   const unsigned nof_res_f0_f1 =
       params.nof_cell_sr_resources + params.nof_cell_res_set_configs * params.res_set_size.value();
   const unsigned nof_res_f2_f3_f4 =
@@ -80,7 +83,7 @@ TEST_P(pucch_resource_generator_test, generated_resources_are_consistent_with_pa
 TEST_P(pucch_resource_generator_test, successful_generation_results_in_no_collisions)
 {
   std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
   ASSERT_FALSE(res_list.empty());
 
   // Not all resources are checked for the F0+F2 case, since the extra resources there (SR_F0 and CSI_F2) are generated
@@ -135,7 +138,7 @@ static void assert_no_prb_overlap_with_common(span<const pucch_resource> ded_res
 TEST_P(pucch_resource_generator_test, dedicated_resources_do_not_overlap_common_resources)
 {
   const std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
   ASSERT_FALSE(res_list.empty());
   assert_no_prb_overlap_with_common(res_list, pucch_res_common, bwp_cfg.crbs.length());
 }
@@ -144,8 +147,8 @@ TEST(pucch_resource_generator_common_res_test, dedicated_resources_do_not_overla
 {
   static constexpr unsigned bwp_size_rbs = 106;
   for (unsigned pucch_res_common = 0; pucch_res_common != 16; ++pucch_res_common) {
-    const std::vector<pucch_resource> res_list =
-        config_helpers::generate_cell_pucch_res_list(pucch_resource_builder_params{}, bwp_size_rbs, pucch_res_common);
+    const std::vector<pucch_resource> res_list = config_helpers::generate_cell_pucch_res_list(
+        pucch_resource_builder_params{}, bwp_size_rbs, get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_size_rbs));
     ASSERT_FALSE(res_list.empty());
     assert_no_prb_overlap_with_common(res_list, pucch_res_common, bwp_size_rbs);
   }
@@ -154,7 +157,7 @@ TEST(pucch_resource_generator_common_res_test, dedicated_resources_do_not_overla
 TEST_P(pucch_resource_generator_test, f1_resources_have_valid_occ_indices)
 {
   const std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
   ASSERT_FALSE(res_list.empty());
 
   for (const auto& res : res_list) {
@@ -173,7 +176,7 @@ TEST_P(pucch_resource_generator_test, f1_resources_have_valid_occ_indices)
 TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
 {
   const auto cell_res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
   const bool using_02 = params.format_01() == pucch_format::FORMAT_0 and params.format_234() == pucch_format::FORMAT_2;
 
   for (auto res_set_cfg_id     = pucch_resource_set_config_id(0),

@@ -8,6 +8,7 @@
 #include "lib/scheduler/trace/cell_configuration.h"
 #include "ocudu/ran/du_cell_index.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/result/pucch_info.h"
@@ -36,7 +37,9 @@ inline const cell_configuration& make_test_schedtrace_cell_cfg()
       c.pucch_resources.push_back(res);
     }
     for (const auto& res : config_helpers::generate_cell_pucch_res_list(
-             pucch_resource_builder_params{}, c.init_ul_bwp.crbs.length(), pucch_res_common)) {
+             pucch_resource_builder_params{},
+             c.init_ul_bwp.crbs.length(),
+             get_pucch_default_nof_edge_prbs(pucch_res_common, c.init_ul_bwp.crbs.length()))) {
       c.pucch_resources.push_back(res);
     }
     return c;

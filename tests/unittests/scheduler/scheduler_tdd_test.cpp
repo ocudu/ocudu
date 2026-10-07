@@ -15,6 +15,7 @@
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/du/du_update_config_helpers.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include "ocudu/scheduler/rrm/srs_resource_manager_factory.h"
@@ -119,11 +120,13 @@ protected:
     }
     // Place PRACH clear of the PUCCH resource pool (as the DU does), so a large PUCCH pool does not overlap the PRACH
     // occasion.
+    const unsigned bwp_size = cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
     cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start =
         config_helpers::compute_prach_frequency_start(
             pucch_params,
-            cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-            cell_req.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
+            bwp_size,
+            get_pucch_default_nof_edge_prbs(
+                cell_req.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, bwp_size),
             false);
     if (srs_enabled) {
       // Regenerate the common PUSCH time-domain-resource table with SRS awareness, adding a shortened candidate per

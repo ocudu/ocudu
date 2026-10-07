@@ -19,6 +19,7 @@
 #include "ocudu/ran/srs/srs_bandwidth_configuration.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/scheduler/config/periodic_resource_sched_validator.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/sched_cell_config_helpers.h"
@@ -772,10 +773,11 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
   const uint8_t prach_prb_stop =
       rach_cfg.rach_cfg_generic.msg1_frequency_start + rach_cfg.rach_cfg_generic.msg1_fdm * prach_nof_prbs;
 
+  const unsigned bwp_size                 = cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+  const unsigned dedicated_pucch_rb_start = get_pucch_default_nof_edge_prbs(
+      cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, bwp_size);
   prb_interval prb_interval_no_pucch = config_helpers::find_largest_prb_interval_without_pucch(
-      cell_cfg.ran.init_bwp.pucch.resources,
-      cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-      cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
+      cell_cfg.ran.init_bwp.pucch.resources, bwp_size, dedicated_pucch_rb_start);
 
   // This is to preserve a guardband between the PUCCH and PRACH.
   const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;
@@ -1136,10 +1138,12 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ul_config_common(cell_cfg));
   HANDLE_ERROR(check_ssb_configuration(cell_cfg));
   HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
+  const unsigned ul_bwp_size = cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
   HANDLE_ERROR(config_helpers::pucch_parameters_validator(
       cell_cfg.ran.init_bwp.pucch.resources,
-      cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-      cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common));
+      ul_bwp_size,
+      get_pucch_default_nof_edge_prbs(cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
+                                      ul_bwp_size)));
   HANDLE_ERROR(check_prach_config(cell_cfg));
   HANDLE_ERROR(check_srs_config(cell_cfg));
   const serving_cell_config ue_serv_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg.ran).serv_cell_cfg;

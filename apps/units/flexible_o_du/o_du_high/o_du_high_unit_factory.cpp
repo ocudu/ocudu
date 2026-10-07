@@ -26,6 +26,7 @@
 #include "ocudu/e2/e2_du_metrics_connector.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prach/prach_frequency_mapping.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 
 using namespace ocudu;
 
@@ -84,10 +85,11 @@ static void validates_derived_du_params(span<const odu::du_cell_config> cells)
 
     const auto prach_cfg = prach_configuration_get(freq_range, dplx_mode, rach_cfg.rach_cfg_generic.prach_config_index);
 
+    const unsigned bwp_size                 = cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+    const unsigned dedicated_pucch_rb_start = get_pucch_default_nof_edge_prbs(
+        cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, bwp_size);
     prb_interval prb_interval_no_pucch = config_helpers::find_largest_prb_interval_without_pucch(
-        cell_cfg.ran.init_bwp.pucch.resources,
-        cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-        cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
+        cell_cfg.ran.init_bwp.pucch.resources, bwp_size, dedicated_pucch_rb_start);
 
     // This is to preserve a guardband between the PUCCH and PRACH.
     const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;

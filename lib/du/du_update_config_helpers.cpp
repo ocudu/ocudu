@@ -48,10 +48,11 @@ static prb_interval find_pucch_inner_prbs(const pucch_resource& res, unsigned bw
 
 prb_interval config_helpers::find_largest_prb_interval_without_pucch(const pucch_resource_builder_params& user_params,
                                                                      unsigned                             bwp_size,
-                                                                     unsigned pucch_res_common)
+                                                                     unsigned dedicated_pucch_rb_start)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-  const std::vector<pucch_resource>& res_list = generate_cell_pucch_res_list(user_params, bwp_size, pucch_res_common);
+  const std::vector<pucch_resource>& res_list =
+      generate_cell_pucch_res_list(user_params, bwp_size, dedicated_pucch_rb_start);
 
   prb_interval prb_without_pucch = {0, bwp_size};
 
@@ -65,12 +66,12 @@ prb_interval config_helpers::find_largest_prb_interval_without_pucch(const pucch
 
 unsigned config_helpers::compute_prach_frequency_start(const pucch_resource_builder_params& user_params,
                                                        unsigned                             bwp_size,
-                                                       unsigned                             pucch_res_common,
+                                                       unsigned                             dedicated_pucch_rb_start,
                                                        bool                                 is_long_prach)
 {
   // This is to preserve a guardband between the PUCCH and PRACH.
   const unsigned pucch_to_prach_guardband = is_long_prach ? 0U : 3U;
-  return find_largest_prb_interval_without_pucch(user_params, bwp_size, pucch_res_common).start() +
+  return find_largest_prb_interval_without_pucch(user_params, bwp_size, dedicated_pucch_rb_start).start() +
          pucch_to_prach_guardband;
 }
 

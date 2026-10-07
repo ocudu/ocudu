@@ -28,6 +28,7 @@
 #include "ocudu/rlc/rlc_srb_config_factory.h"
 #include "ocudu/scheduler/config/cell_config_builder_params.h"
 #include "ocudu/scheduler/config/csi_helper.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/sched_cell_config_helpers.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_validator.h"
@@ -1193,11 +1194,11 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
     }
 
     if (update_msg1_frequency_start) {
+      const unsigned bwp_size                 = out_cell.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+      const unsigned dedicated_pucch_rb_start = get_pucch_default_nof_edge_prbs(
+          out_cell.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common, bwp_size);
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
-          du_pucch_cfg,
-          out_cell.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-          out_cell.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
-          is_long_prach);
+          du_pucch_cfg, bwp_size, dedicated_pucch_rb_start, is_long_prach);
     }
 
     // Slicing configuration.

@@ -9,6 +9,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
@@ -118,7 +119,8 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   const auto     cell_res_list = config_helpers::generate_cell_pucch_res_list(
       pucch_res_params,
       bwp_size_rbs,
-      cell_params_rep.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common);
+      get_pucch_default_nof_edge_prbs(
+          cell_params_rep.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common, bwp_size_rbs));
   ASSERT_TRUE(std::any_of(cell_res_list.begin(), cell_res_list.end(), [](const pucch_resource& res) {
     return res.format() == pucch_format::FORMAT_1 and res.rep_factor != pucch_repetition_factor::n1;
   }));

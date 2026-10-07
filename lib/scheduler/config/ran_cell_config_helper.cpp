@@ -16,6 +16,7 @@
 #include "ocudu/ran/ssb/ssb_helper.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
+#include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
@@ -365,12 +366,12 @@ static unsigned compute_default_msg1_frequency_start(const ran_cell_config& cfg)
   const auto&    ul_bwp           = cfg.ul_cfg_common.init_ul_bwp;
   const unsigned bwp_size         = ul_bwp.generic_params.crbs.length();
   const unsigned pucch_res_common = ul_bwp.pucch_cfg_common->pucch_resource_common;
+  const unsigned ded_rb_start     = get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_size);
 
   // If the dedicated PUCCH resources do not fit in the BWP, only account for the common ones.
   std::vector<pucch_resource> ded_res;
-  if (config_helpers::pucch_parameters_validator(cfg.init_bwp.pucch.resources, bwp_size, pucch_res_common)
-          .has_value()) {
-    ded_res = config_helpers::generate_cell_pucch_res_list(cfg.init_bwp.pucch.resources, bwp_size, pucch_res_common);
+  if (config_helpers::pucch_parameters_validator(cfg.init_bwp.pucch.resources, bwp_size, ded_rb_start).has_value()) {
+    ded_res = config_helpers::generate_cell_pucch_res_list(cfg.init_bwp.pucch.resources, bwp_size, ded_rb_start);
   }
   const crb_bitmap pucch_prbs     = compute_pucch_crbs(crb_interval{0, bwp_size}, pucch_res_common, ded_res);
   const int        last_pucch_prb = pucch_prbs.find_highest(0, bwp_size / 2, true);

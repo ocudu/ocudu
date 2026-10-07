@@ -22,7 +22,7 @@ using namespace config_helpers;
 
 error_type<const char*> config_helpers::pucch_parameters_validator(const pucch_resource_builder_params& params,
                                                                    unsigned                             bwp_size_rbs,
-                                                                   unsigned pucch_res_common)
+                                                                   unsigned dedicated_pucch_rb_start)
 {
   if (params.nof_cell_sr_resources == 0) {
     return make_unexpected("The number of PUCCH SR resources must be greater than zero.");
@@ -136,10 +136,9 @@ error_type<const char*> config_helpers::pucch_parameters_validator(const pucch_r
   if (nof_rbs_01 + nof_rbs_234 >= max_allowed_rb_usage * bwp_size_rbs) {
     return make_unexpected("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs");
   }
-  // The dedicated resources are placed after the PRBs used by the common resources at both BWP edges.
-  const unsigned nof_cmn_rbs = 2U * get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_size_rbs);
-  if (nof_cmn_rbs + nof_rbs_01 + nof_rbs_234 >= bwp_size_rbs) {
-    return make_unexpected("With the given parameters, the common and dedicated PUCCH PRBs exceed the BWP PRBs");
+  // The dedicated resources are placed after the PRBs reserved at both BWP edges.
+  if (2U * dedicated_pucch_rb_start + nof_rbs_01 + nof_rbs_234 >= bwp_size_rbs) {
+    return make_unexpected("With the given parameters, the reserved and dedicated PUCCH PRBs exceed the BWP PRBs");
   }
 
   if (params.harq_ack_rep.has_value()) {
@@ -428,9 +427,9 @@ config_helpers::generate_cell_common_pucch_res_list(unsigned pucch_res_common, u
 
 std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(const pucch_resource_builder_params& params,
                                                                          unsigned bwp_size_rbs,
-                                                                         unsigned pucch_res_common)
+                                                                         unsigned dedicated_pucch_rb_start)
 {
-  auto outcome = pucch_parameters_validator(params, bwp_size_rbs, pucch_res_common);
+  auto outcome = pucch_parameters_validator(params, bwp_size_rbs, dedicated_pucch_rb_start);
   if (not outcome.has_value()) {
     ocudu_assertion_failure("The cell list could not be generated due to: {}", outcome.error());
     return {};
@@ -446,9 +445,8 @@ std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(const p
   std::vector<pucch_resource> resources;
   // For F0+F2, the list contains extra resources for CSI_F0 and SR_F2.
   resources.reserve(nof_res + (using_02 ? params.nof_cell_sr_resources + params.nof_cell_csi_resources : 0U));
-  // Start after the common resources PRBs, so that UEs in fallback mode don't compete with dedicated PUCCHs.
-  const unsigned cmn_edge_prbs = get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_size_rbs);
-  res_gen_state  state{.prb_low_off = cmn_edge_prbs, .prb_high_off = cmn_edge_prbs};
+  // Start after the reserved edge PRBs, so that UEs in fallback mode don't compete with dedicated PUCCHs.
+  res_gen_state state{.prb_low_off = dedicated_pucch_rb_start, .prb_high_off = dedicated_pucch_rb_start};
 
   // Generate F0/F1 resources at the BWP edges.
   // Note: PUCCH Format 0 and 1 always take one PRB.
