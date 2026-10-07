@@ -23,12 +23,13 @@ ocudu::prach_helper::prach_config_index_is_valid(uint16_t prach_cfg_idx, frequen
   // Supported PRACH Configuration Index values for TDD in FR2, as per TS38.211 Table 6.3.3.2-4.
   static constexpr auto fr2_tdd_intervals = to_array<interval<unsigned>>({{112, 144}});
 
+  // Table 6.3.3.2-4, TS 38.211, covers FR2 whatever the duplex mode, since FR2-NTN (paired spectrum) uses it too.
   span<const interval<unsigned>> intervals;
-  if (mode == duplex_mode::FDD) {
-    intervals = fr1_fdd_intervals;
+  if (fr == frequency_range::FR2) {
+    intervals = fr2_tdd_intervals;
   } else {
-    intervals = fr == frequency_range::FR1 ? span<const interval<unsigned>>(fr1_tdd_intervals)
-                                           : span<const interval<unsigned>>(fr2_tdd_intervals);
+    intervals = mode == duplex_mode::FDD ? span<const interval<unsigned>>(fr1_fdd_intervals)
+                                         : span<const interval<unsigned>>(fr1_tdd_intervals);
   }
 
   const bool is_prach_cfg_idx_supported = std::any_of(

@@ -908,7 +908,8 @@ ocudu::prach_configuration_get(frequency_range fr, duplex_mode dm, uint16_t prac
     return prach_configuration_get_fr1_unpaired(prach_config_index);
   }
 
-  if ((fr == frequency_range::FR2) && (dm == duplex_mode::TDD)) {
+  // Table 6.3.3.2-4, TS 38.211, also applies to FR2-NTN, the only FR2 bands with paired spectrum.
+  if ((fr == frequency_range::FR2) && (dm == duplex_mode::TDD || dm == duplex_mode::FDD)) {
     return prach_configuration_get_fr2_unpaired(prach_config_index);
   }
 

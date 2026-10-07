@@ -935,6 +935,11 @@ error_type<std::string> ocudu::band_helper::is_ul_arfcn_valid_given_band(nr_band
     band_delta_freq_raster = scs == subcarrier_spacing::kHz15 ? delta_freq_raster::kHz15 : delta_freq_raster::kHz30;
   }
 
+  // Update Delta freq raster based on SCS for FDD FR2 bands (FR2-NTN, n510-n512).
+  if (get_freq_range(band) == frequency_range::FR2) {
+    band_delta_freq_raster = (scs == subcarrier_spacing::kHz60) ? delta_freq_raster::kHz60 : delta_freq_raster::kHz120;
+  }
+
   for (const nr_band_raster& raster_band : nr_band_table) {
     if (raster_band.band == band and raster_band.delta_f_rast == band_delta_freq_raster) {
       // Check if the ARFCN doesn't exceed the band upper-bound for bands that support asymmetrical UL and DL channel
