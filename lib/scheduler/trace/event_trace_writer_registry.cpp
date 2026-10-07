@@ -32,7 +32,7 @@ static unsigned compute_required_queue_size(ocudu::subcarrier_spacing max_scs, s
 /// Strand queue size.
 /// \note The queue size is tiny because the cell event tracer stores all the pending events in an inner queue and
 /// only dispatches a timer for flushing.
-static constexpr unsigned strand_queue_size = 16;
+static constexpr unsigned cell_strand_queue_size = 16;
 
 event_trace_writer_registry::event_trace_writer_registry(std::chrono::milliseconds        flush_period_,
                                                          timer_manager&                   timers_,
@@ -47,7 +47,8 @@ event_trace_writer_registry::create_cell_tracer(const ocudu::cell_configuration&
 {
   cell_context& cell = cells[cell_cfg.cell_index];
   if (cell.strand == nullptr) {
-    cell.strand = make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(task_executor_ref, strand_queue_size);
+    cell.strand =
+        make_task_strand_ptr<concurrent_queue_policy::lockfree_mpmc>(task_executor_ref, cell_strand_queue_size);
   }
 
   // Create the event queue of the new cell event tracer.
