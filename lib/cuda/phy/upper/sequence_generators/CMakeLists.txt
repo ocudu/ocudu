@@ -2,5 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-add_subdirectory(channel_coding)
-add_subdirectory(sequence_generators)
+add_library(ocudu_cuda_sequence_generators scrambling.cu)
+
+target_link_libraries(ocudu_cuda_sequence_generators ocudu_cuda_adt ocudu_support CUDA::cudart)
+
+add_to_exported_libs(ocudu_cuda_sequence_generators)
