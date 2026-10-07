@@ -92,8 +92,9 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   std::string xnu_addr;
   if (direct_forwarding_path_available) {
     if (xnu_session_mngr == nullptr) {
-      logger.log_error("Cannot report data forwarding tunnels for {}. Cause: no Xn-U socket is configured",
-                       session.pdu_session_id);
+      // Xn-U is optional, so a node without a socket simply offers no data forwarding over a direct path.
+      logger.log_info("Not reporting data forwarding tunnels for {}. Cause: no Xn-U socket is configured",
+                      session.pdu_session_id);
     } else if (not xnu_session_mngr->get_next_xnu_gateway().get_bind_address(xnu_addr)) {
       logger.log_error("Cannot report data forwarding tunnels for {}. Cause: could not read the Xn-U bind address",
                        session.pdu_session_id);
