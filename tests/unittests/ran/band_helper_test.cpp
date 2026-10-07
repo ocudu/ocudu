@@ -10,6 +10,7 @@
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/bs_channel_bandwidth.h"
 #include "ocudu/ran/duplex_mode.h"
+#include "ocudu/ran/ssb/ssb_gscn.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include <gtest/gtest.h>
 
@@ -1277,4 +1278,61 @@ TEST_F(custom_band_test, clear_restores_unknown)
   band_helper::register_custom_bands({});
   ASSERT_EQ(duplex_mode::INVALID, get_duplex_mode(uint_to_nr_band(109)));
   ASSERT_FALSE(is_ntn_band(uint_to_nr_band(300)));
+}
+
+// FR2-NTN bands n510-n512 (TS 38.101-5): FDD, downlink below 24.25 GHz on the 15 kHz global raster, uplink on the FR2
+// raster, SSB on every 12th GSCN of the 3-24.25 GHz synchronization raster.
+TEST(test_fr2_ntn_bands, band_properties)
+{
+  for (nr_band band : {nr_band::n510, nr_band::n511, nr_band::n512}) {
+    EXPECT_EQ(frequency_range::FR2, band_helper::get_freq_range(band));
+    EXPECT_EQ(duplex_mode::FDD, band_helper::get_duplex_mode(band));
+    EXPECT_TRUE(band_helper::is_ntn_band(band));
+    EXPECT_EQ(ssb_pattern_case::D, band_helper::get_ssb_pattern(band, subcarrier_spacing::kHz120));
+  }
+}
+
+TEST(test_fr2_ntn_bands, arfcn_validity)
+{
+  // 18999.96 MHz, on the 120 kHz downlink raster 1553336 <8> 1746664 (Table 5.4.2.3-3, TS 38.101-5).
+  const arfcn_t dl_arfcn{1666664};
+  const arfcn_t off_raster_dl_arfcn{dl_arfcn.value() + 1};
+  // The uplink keeps the downlink offset from the band edge: 27500.04 + 1699.92 MHz = 29199.96 MHz.
+  const arfcn_t           expected_ul_arfcn{2099165};
+  static constexpr double expected_ul_freq_hz = 29199.96e6;
+  static constexpr double freq_tolerance_hz   = 1.0;
+  const arfcn_t           no_ul_arfcn{0};
+
+  EXPECT_TRUE(band_helper::is_dl_arfcn_valid_given_band(
+                  nr_band::n512, dl_arfcn, subcarrier_spacing::kHz120, bs_channel_bandwidth::MHz100)
+                  .has_value());
+  EXPECT_FALSE(band_helper::is_dl_arfcn_valid_given_band(
+                   nr_band::n512, off_raster_dl_arfcn, subcarrier_spacing::kHz120, bs_channel_bandwidth::MHz100)
+                   .has_value());
+  EXPECT_EQ(nr_band::n510, band_helper::get_band_from_dl_arfcn(dl_arfcn));
+
+  const arfcn_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn, nr_band::n512);
+  EXPECT_EQ(expected_ul_arfcn, ul_arfcn);
+  EXPECT_NEAR(expected_ul_freq_hz, band_helper::nr_arfcn_to_freq(ul_arfcn), freq_tolerance_hz);
+  EXPECT_TRUE(band_helper::is_ul_arfcn_valid_given_band(
+                  nr_band::n512, ul_arfcn, bs_channel_bandwidth::MHz100, subcarrier_spacing::kHz120)
+                  .has_value());
+  // n510's uplink ends at 28350 MHz, too close for that offset.
+  EXPECT_EQ(no_ul_arfcn, band_helper::get_ul_arfcn_from_dl_arfcn(dl_arfcn, nr_band::n510));
+}
+
+TEST(test_fr2_ntn_bands, gscn_raster)
+{
+  // 120 kHz SSB on GSCN 17448 <12> 19428 (Table 5.4.3.3-2, TS 38.101-5).
+  static constexpr unsigned first_gscn = 17448;
+  static constexpr unsigned gscn_step  = 12;
+  static constexpr unsigned nof_steps  = 100;
+  static constexpr unsigned valid_gscn = first_gscn + gscn_step * nof_steps;
+
+  EXPECT_TRUE(band_helper::is_gscn_valid_given_band(
+                  valid_gscn, nr_band::n512, subcarrier_spacing::kHz120, bs_channel_bandwidth::MHz100)
+                  .has_value());
+  EXPECT_FALSE(band_helper::is_gscn_valid_given_band(
+                   valid_gscn + 1, nr_band::n512, subcarrier_spacing::kHz120, bs_channel_bandwidth::MHz100)
+                   .has_value());
 }

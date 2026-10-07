@@ -47,7 +47,7 @@ struct nr_band_raster {
 /// NOTE: Band 2 is a subset of band 25.
 /// NOTE: Band 41 has two different Freq raster, we only consider raster 15kHz.
 /// NOTE: FR2 bands have two different Freq raster, we only consider raster 120kHz.
-static constexpr unsigned                                    nof_nr_DL_bands = 92;
+static constexpr unsigned                                    nof_nr_DL_bands = 98;
 static constexpr std::array<nr_band_raster, nof_nr_DL_bands> nr_band_table   = {{
     // clang-format off
     {nr_band::n1,    delta_freq_raster::kHz100, 384000, 20,  396000,  422000, 20,  434000},
@@ -151,6 +151,13 @@ static constexpr std::array<nr_band_raster, nof_nr_DL_bands> nr_band_table   = {
     {nr_band::n261,  delta_freq_raster::kHz120, 2070833, 2, 2084999, 2070833,  2, 2084999},
     {nr_band::n262,  delta_freq_raster::kHz60,  2399166, 1, 2415832, 2399166,  1, 2415832},
     {nr_band::n262,  delta_freq_raster::kHz120, 2399167, 2, 2415831, 2399167,  2, 2415831},
+    // FR2-NTN bands, as per Table 5.4.2.3-3, TS 38.101-5. The downlink, below 24.25 GHz, uses the 15 kHz global raster.
+    {nr_band::n510,  delta_freq_raster::kHz60,  2070833, 1, 2084999, 1553336,  4, 1746664},
+    {nr_band::n510,  delta_freq_raster::kHz120, 2070833, 2, 2084999, 1553336,  8, 1746664},
+    {nr_band::n511,  delta_freq_raster::kHz60,  2084999, 1, 2112499, 1553336,  4, 1746664},
+    {nr_band::n511,  delta_freq_raster::kHz120, 2084999, 2, 2112499, 1553336,  8, 1746664},
+    {nr_band::n512,  delta_freq_raster::kHz60,  2070833, 1, 2112499, 1553336,  4, 1746664},
+    {nr_band::n512,  delta_freq_raster::kHz120, 2070833, 2, 2112499, 1553336,  8, 1746664},
     // clang-format on
 }};
 
@@ -164,7 +171,7 @@ struct nr_operating_band {
 
 } // namespace
 
-static constexpr unsigned                                             nof_nr_operating_band = 75;
+static constexpr unsigned                                             nof_nr_operating_band = 78;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band> nr_operating_bands    = {{
     // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
@@ -241,7 +248,10 @@ static constexpr std::array<nr_operating_band, nof_nr_operating_band> nr_operati
     {nr_band::n259, duplex_mode::TDD},
     {nr_band::n260, duplex_mode::TDD},
     {nr_band::n261, duplex_mode::TDD},
-    {nr_band::n262, duplex_mode::TDD}
+    {nr_band::n262, duplex_mode::TDD},
+    {nr_band::n510, duplex_mode::FDD},
+    {nr_band::n511, duplex_mode::FDD},
+    {nr_band::n512, duplex_mode::FDD}
     // clang-format on
 }};
 
@@ -260,7 +270,7 @@ struct nr_band_ssb_scs_case {
 /// NR operating bands with corresponding SSB Subcarrier Spacing and SSB pattern case, as per Table 5.4.3.3-1 for FR1
 /// and Table 5.4.3.3-1 for FR2, TS 38.104, Rel. 17, version 17.8.0.
 /// NTN bands from Table 5.4.3.3-1 in TS 38.108, version 19.4.0.
-static constexpr unsigned                                           nof_nr_ssb_bands           = 85;
+static constexpr unsigned                                           nof_nr_ssb_bands           = 91;
 static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_scs_case_table = {{
     // clang-format off
     {nr_band::n1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
@@ -346,6 +356,12 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands> nr_ssb_band_
     {nr_band::n260,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
     {nr_band::n261,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
     {nr_band::n261,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
+    {nr_band::n510,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
+    {nr_band::n510,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
+    {nr_band::n511,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
+    {nr_band::n511,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
+    {nr_band::n512,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
+    {nr_band::n512,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
     {nr_band::n262,  subcarrier_spacing::kHz120, ssb_pattern_case::D},
     {nr_band::n262,  subcarrier_spacing::kHz240, ssb_pattern_case::E},
     // clang-format on
@@ -1053,7 +1069,7 @@ bool ocudu::band_helper::is_ntn_band(nr_band band)
   }
   return band == nr_band::n247 or band == nr_band::n248 or band == nr_band::n250 or band == nr_band::n251 or
          band == nr_band::n252 or band == nr_band::n253 or band == nr_band::n254 or band == nr_band::n255 or
-         band == nr_band::n256;
+         band == nr_band::n256 or band == nr_band::n510 or band == nr_band::n511 or band == nr_band::n512;
 }
 
 ssb_pattern_case ocudu::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
@@ -1405,6 +1421,9 @@ min_channel_bandwidth ocudu::band_helper::get_min_channel_bw(nr_band nr_band, su
     case nr_band::n259:
     case nr_band::n260:
     case nr_band::n261:
+    case nr_band::n510:
+    case nr_band::n511:
+    case nr_band::n512:
       if ((scs == subcarrier_spacing::kHz60) || (scs == subcarrier_spacing::kHz120)) {
         return min_channel_bandwidth::MHz50;
       }
@@ -1789,6 +1808,26 @@ error_type<std::string> ocudu::band_helper::is_ssb_arfcn_valid_given_band(arfcn_
   }
   // If the GCSN exists, check if it is a valid one.
   return band_helper::is_gscn_valid_given_band(gscn.value(), band, ssb_scs, bw);
+}
+
+std::optional<std::pair<unsigned, unsigned>> ocudu::band_helper::get_fr2_ntn_gscn_raster(nr_band            band,
+                                                                                         subcarrier_spacing ssb_scs)
+{
+  static constexpr unsigned GSCN_FIRST_SSB_120_KHZ = 17448;
+  static constexpr unsigned GSCN_STEP_SSB_120_KHZ  = 12;
+  static constexpr unsigned GSCN_FIRST_SSB_240_KHZ = 17472;
+  static constexpr unsigned GSCN_STEP_SSB_240_KHZ  = 24;
+
+  if ((band != nr_band::n510) and (band != nr_band::n511) and (band != nr_band::n512)) {
+    return std::nullopt;
+  }
+  if (ssb_scs == subcarrier_spacing::kHz120) {
+    return std::make_pair(GSCN_FIRST_SSB_120_KHZ, GSCN_STEP_SSB_120_KHZ);
+  }
+  if (ssb_scs == subcarrier_spacing::kHz240) {
+    return std::make_pair(GSCN_FIRST_SSB_240_KHZ, GSCN_STEP_SSB_240_KHZ);
+  }
+  return std::nullopt;
 }
 
 void ocudu::band_helper::register_custom_bands(span<const custom_band_config> bands)

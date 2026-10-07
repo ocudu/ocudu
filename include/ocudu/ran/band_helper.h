@@ -20,6 +20,7 @@
 #include "ocudu/ran/ssb/ssb_properties.h"
 #include <cstdint>
 #include <optional>
+#include <utility>
 
 namespace ocudu {
 
@@ -411,6 +412,13 @@ struct custom_band_config {
   uint8_t delta_gscn   = 1;
   bool    ntn          = false;
 };
+
+/// \brief Returns the GSCN raster of an FR2-NTN band for an SSB subcarrier spacing, as first GSCN and step.
+///
+/// FR2-NTN bands (n510, n511, n512) number their downlink synchronization raster on the 3-24.25 GHz global raster, but
+/// only every 12th (120 kHz SSB) or 24th (240 kHz SSB) entry is valid, as per Table 5.4.3.3-2, TS 38.101-5.
+/// \return The first GSCN and the step, or std::nullopt for any other band.
+std::optional<std::pair<unsigned, unsigned>> get_fr2_ntn_gscn_raster(nr_band band, subcarrier_spacing ssb_scs);
 
 /// Register user-defined bands. Must be called before any band_helper query.
 void register_custom_bands(span<const custom_band_config> bands);

@@ -94,7 +94,11 @@ enum class nr_band : uint16_t {
   n260 = 260,
   n261 = 261,
   n262 = 262,
-  n263 = 263
+  n263 = 263,
+  // FR2-NTN bands, as per Table 5.2.2-2, TS 38.101-5.
+  n510 = 510,
+  n511 = 511,
+  n512 = 512
 };
 
 } // namespace ocudu

@@ -111,6 +111,12 @@ ssb_freq_position_generator::ssb_freq_position_generator(arfcn_t            dl_a
       while (get_ss_ref_hz(N_raster, 0) < ss_ref_l_bound_hz) {
         increase_N_raster();
       }
+    } else if (const auto fr2_ntn_raster = band_helper::get_fr2_ntn_gscn_raster(band, scs_ssb)) {
+      // FR2-NTN bands only allow every 12th or 24th GSCN, as per Table 5.4.3.3-2, TS 38.101-5.
+      N_raster = fr2_ntn_raster->first - band_helper::GSCN_LB_SYNC_RASTER_2;
+      while (get_ss_ref_hz(N_raster, 0) < ss_ref_l_bound_hz) {
+        increase_N_raster();
+      }
     } else {
       N_raster = static_cast<unsigned>(std::floor((ss_ref_l_bound_hz - band_helper::N_REF_OFFSET_3_GHZ_24_5_GHZ) /
                                                   band_helper::N_SIZE_SYNC_RASTER_2_HZ));
@@ -224,6 +230,8 @@ void ssb_freq_position_generator::increase_N_raster()
     N_raster += 16U;
   } else if (band == nr_band::n104) {
     N_raster += 7U;
+  } else if (const auto fr2_ntn_raster = band_helper::get_fr2_ntn_gscn_raster(band, scs_ssb)) {
+    N_raster += fr2_ntn_raster->second;
   } else {
     ++N_raster;
   }

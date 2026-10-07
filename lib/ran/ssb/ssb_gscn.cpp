@@ -62,7 +62,7 @@ struct ssb_gscn_raster {
 } // namespace
 
 // This table implements Table 5.4.3.3-1, TS 38.104.
-static constexpr size_t                                           nof_gscn_raster_fr1 = 51U;
+static constexpr size_t                                           nof_gscn_raster_fr1 = 57U;
 static constexpr std::array<ssb_gscn_raster, nof_gscn_raster_fr1> ssb_gscn_raster_table_fr1{{
     // clang-format off
     {nr_band::n1, subcarrier_spacing::kHz15,  5279, 1, 5419},
@@ -114,7 +114,15 @@ static constexpr std::array<ssb_gscn_raster, nof_gscn_raster_fr1> ssb_gscn_raste
     {nr_band::n100,subcarrier_spacing::kHz15, 2303, 1, 2307},
     {nr_band::n101,subcarrier_spacing::kHz15, 4754, 1, 4768},
     {nr_band::n101,subcarrier_spacing::kHz30, 4760, 1, 4764},
-    {nr_band::n104,subcarrier_spacing::kHz30, 9882, 7, 10358} // clang-format on
+    {nr_band::n104,subcarrier_spacing::kHz30, 9882, 7, 10358},
+    // FR2-NTN bands, as per Table 5.4.3.3-2, TS 38.101-5. Their downlink, below 24.25 GHz, numbers its GSCNs on the
+    // 3-24.25 GHz synchronization raster.
+    {nr_band::n510,subcarrier_spacing::kHz120, 17448, 12, 19428},
+    {nr_band::n510,subcarrier_spacing::kHz240, 17472, 24, 19416},
+    {nr_band::n511,subcarrier_spacing::kHz120, 17448, 12, 19428},
+    {nr_band::n511,subcarrier_spacing::kHz240, 17472, 24, 19416},
+    {nr_band::n512,subcarrier_spacing::kHz120, 17448, 12, 19428},
+    {nr_band::n512,subcarrier_spacing::kHz240, 17472, 24, 19416} // clang-format on
 }};
 
 // Helper that validates the GSCN of bands with irregular or special rasters.
