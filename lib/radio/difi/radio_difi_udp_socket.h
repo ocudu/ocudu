@@ -18,7 +18,7 @@ namespace ocudu {
 
 /// Reasons a DIFI socket receive did not yield a datagram.
 enum class difi_recv_error {
-  /// No datagram arrived within the socket receive timeout; the caller may retry.
+  /// No datagram is queued; the caller may wait for one and retry.
   timeout,
   /// The receive failed and has been logged; the caller should stop.
   failure
@@ -30,10 +30,8 @@ enum class difi_recv_error {
 class radio_difi_udp_socket
 {
 public:
-  /// Receive buffer size applied via SO_RCVBUF.
+  /// Default receive buffer size applied via SO_RCVBUF.
   static constexpr units::bytes RX_SOCKET_BUFFER_BYTES{2 * 1024 * 1024};
-  /// Receive timeout in milliseconds, bounding how long recv() blocks with no data available.
-  static constexpr unsigned RX_TIMEOUT_MS = 100;
 
   explicit radio_difi_udp_socket(ocudulog::basic_logger& logger_) : logger(logger_) {}
   ~radio_difi_udp_socket();
@@ -47,8 +45,9 @@ public:
 
   /// \brief Opens a receive socket bound to \p ip : \p port, "0.0.0.0" for any interface.
   ///
-  /// Returns true on success. As with open_tx(), any socket already held is closed first.
-  bool open_rx(const std::string& ip, uint16_t port);
+  /// Returns true on success. As with open_tx(), any socket already held is closed first. \p rx_buffer_size is
+  /// requested via SO_RCVBUF. The kernel caps it at net.core.rmem_max, so the size it actually granted is logged.
+  bool open_rx(const std::string& ip, uint16_t port, units::bytes rx_buffer_size = RX_SOCKET_BUFFER_BYTES);
 
   /// Closes the socket. Safe to call if already closed.
   void close();
@@ -58,12 +57,13 @@ public:
   /// Sends every byte of \p buf. Returns true if all bytes were sent, false on a closed socket.
   bool send(span<const uint8_t> buf);
 
-  /// \brief Receives one datagram into \p buf, up to its size.
+  /// \brief Receives one queued datagram into \p buf, up to its size, without blocking.
   ///
-  /// Returns the prefix of \p buf holding the datagram, which may be empty for a zero-length one.
-  /// On failure returns difi_recv_error::timeout if none arrived in time, otherwise ::failure,
-  /// which also covers a closed socket.
-  expected<span<uint8_t>, difi_recv_error> recv(span<uint8_t> buf);
+  /// Returns the prefix of \p buf holding the datagram, which may be empty for a zero-length one. On failure
+  /// returns difi_recv_error::timeout if none is queued, otherwise ::failure, which also covers a closed socket.
+  /// Lets a receiver drain a backlog with one system call per datagram, polling with wait_readable() only when
+  /// the queue is empty.
+  expected<span<uint8_t>, difi_recv_error> try_recv(span<uint8_t> buf);
 
   /// \brief Waits for a readable datagram or \p timeout, zero polling without blocking.
   ///

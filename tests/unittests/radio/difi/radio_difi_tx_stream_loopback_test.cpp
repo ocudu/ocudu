@@ -13,6 +13,7 @@
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/radio/radio_event_notifier.h"
+#include <chrono>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -26,6 +27,18 @@ using namespace ocudu;
 static ocudulog::basic_logger& test_socket_logger()
 {
   return ocudulog::fetch_basic_logger("difi:test", false);
+}
+
+/// How long a test waits for a datagram it expects to arrive.
+static constexpr std::chrono::milliseconds RECV_TIMEOUT{100};
+
+/// Waits up to \ref RECV_TIMEOUT for a datagram on \p sock and receives it into \p buf.
+static expected<span<uint8_t>, difi_recv_error> recv_within(radio_difi_udp_socket& sock, span<uint8_t> buf)
+{
+  if (!sock.wait_readable(RECV_TIMEOUT)) {
+    return make_unexpected(difi_recv_error::timeout);
+  }
+  return sock.try_recv(buf);
 }
 
 // ---- Stubs ------------------------------------------------------------------
@@ -113,7 +126,7 @@ protected:
   ssize_t recv_packet(std::vector<uint8_t>& buf)
   {
     buf.resize(65536);
-    const auto received = rx_sock.recv(buf);
+    const auto received = recv_within(rx_sock, buf);
     if (!received.has_value()) {
       return 0;
     }
@@ -351,7 +364,7 @@ protected:
   ssize_t recv_packet(std::vector<uint8_t>& buf)
   {
     buf.resize(65536);
-    const auto received = rx_sock.recv(buf);
+    const auto received = recv_within(rx_sock, buf);
     if (!received.has_value()) {
       return 0;
     }
@@ -736,7 +749,7 @@ TEST(TxStreamEvents, UnderflowFiredOnTimestampGap)
 
   // Drain context packet sent by start().
   std::vector<uint8_t> ctx(65536);
-  drain_sock.recv(ctx);
+  recv_within(drain_sock, ctx);
 
   // First transmit: ts=0, N_SAMPLES samples → last_tx_end_ts = N_SAMPLES.
   // ts (0) == last_tx_end_ts (0) → no underflow.
@@ -746,7 +759,7 @@ TEST(TxStreamEvents, UnderflowFiredOnTimestampGap)
   meta1.is_empty = false;
   meta1.ts       = 0;
   tx_stream.transmit(buf1, meta1);
-  drain_sock.recv(ctx);
+  recv_within(drain_sock, ctx);
   EXPECT_TRUE(notifier.events.empty()) << "No underflow expected for first contiguous packet";
 
   // Second transmit: ts = N_SAMPLES + 10 (gap of 10) → underflow must fire.
@@ -809,7 +822,7 @@ TEST(TxStreamConfig, UnsupportedBitDepthIsRejected)
   tx_stream.start(0);
 
   std::vector<uint8_t> pkt(65536);
-  EXPECT_FALSE(drain_sock.recv(pkt).has_value()) << "A rejected stream must not put a packet on the wire";
+  EXPECT_FALSE(recv_within(drain_sock, pkt).has_value()) << "A rejected stream must not put a packet on the wire";
 
   tx_stream.stop();
   drain_sock.close();

@@ -18,6 +18,12 @@ using namespace ocudu;
 /// Maximum UDP payload size in bytes.
 static constexpr size_t MAX_UDP_PAYLOAD = 65507;
 
+/// \brief Span of samples the receive socket buffer holds.
+///
+/// The socket is the only slack while the lower physical layer is busy, so it is sized in time rather than
+/// bytes: 50 ms covers a stall of many slots at any bandwidth, about 98 MB at 491.52 Msps.
+static constexpr std::chrono::milliseconds RX_SOCKET_BUFFER_DURATION{50};
+
 /// DIFI packet type for IF data with stream identifier.
 static constexpr uint8_t DIFI_PKT_TYPE_DATA = 0x1U;
 
@@ -183,19 +189,22 @@ baseband_gateway_receiver::metadata radio_difi_rx_stream::receive(baseband_gatew
   }
 
   while (filled != nof_requested) {
-    // The deadline bounds the whole call. Past it the wait drops to zero, which still drains anything
-    // already queued, so a receiver that has fallen behind catches up instead of discarding a backlog.
-    const auto now  = std::chrono::steady_clock::now();
-    auto       wait = std::chrono::microseconds(0);
-    if (now < deadline) {
-      wait = std::chrono::duration_cast<std::chrono::microseconds>(deadline - now);
+    // Take a queued datagram first and poll only when the queue is empty: under load the queue is rarely
+    // empty, so this halves the system calls per datagram.
+    auto received = socket.try_recv(rx_buf);
+    if (!received.has_value() && (received.error() == difi_recv_error::timeout)) {
+      // The deadline bounds the whole call. Past it the wait drops to zero, so a receiver that has fallen
+      // behind drains what is queued and stops, instead of waiting for more.
+      const auto now  = std::chrono::steady_clock::now();
+      auto       wait = std::chrono::microseconds(0);
+      if (now < deadline) {
+        wait = std::chrono::duration_cast<std::chrono::microseconds>(deadline - now);
+      }
+      if (!socket.wait_readable(wait)) {
+        break;
+      }
+      received = socket.try_recv(rx_buf);
     }
-
-    if (!socket.wait_readable(wait)) {
-      break;
-    }
-
-    const auto received = socket.recv(rx_buf);
     if (!received.has_value()) {
       break;
     }
@@ -306,7 +315,10 @@ void radio_difi_rx_stream::start(baseband_gateway_timestamp init_time, int64_t e
   clock_anchor_ts             = 0;
   clock_anchor_locked_to_peer = false;
 
-  socket.open_rx(config.ip, config.port);
+  const double          bytes_per_sample = (config.bit_depth == 8) ? 2.0 : 4.0;
+  const units::byterate stream_rate(config.sample_rate_Hz * bytes_per_sample);
+  const units::bytes    rx_buffer_size = stream_rate * RX_SOCKET_BUFFER_DURATION;
+  socket.open_rx(config.ip, config.port, std::max(rx_buffer_size, radio_difi_udp_socket::RX_SOCKET_BUFFER_BYTES));
 }
 
 void radio_difi_rx_stream::stop()

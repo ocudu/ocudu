@@ -18,6 +18,18 @@ static ocudulog::basic_logger& test_socket_logger()
   return ocudulog::fetch_basic_logger("difi:test", false);
 }
 
+/// How long a test waits for a datagram it expects to arrive.
+static constexpr std::chrono::milliseconds RECV_TIMEOUT{100};
+
+/// Waits up to \ref RECV_TIMEOUT for a datagram on \p sock and receives it into \p buf.
+static expected<span<uint8_t>, difi_recv_error> recv_within(radio_difi_udp_socket& sock, span<uint8_t> buf)
+{
+  if (!sock.wait_readable(RECV_TIMEOUT)) {
+    return make_unexpected(difi_recv_error::timeout);
+  }
+  return sock.try_recv(buf);
+}
+
 namespace {
 
 /// Loopback port used by these tests. Chosen to avoid clashing with DIFI defaults.
@@ -46,6 +58,15 @@ TEST(RadioDifiUdpSocketTest, OpenTxAndRxSucceeds)
   EXPECT_TRUE(tx.is_open());
 }
 
+TEST(RadioDifiUdpSocketTest, OversizedReceiveBufferIsCappedNotRejected)
+{
+  radio_difi_udp_socket rx(test_socket_logger());
+
+  // Far above any default net.core.rmem_max. The kernel caps the request, so opening must still succeed.
+  ASSERT_TRUE(rx.open_rx("127.0.0.1", TEST_PORT + 12, units::bytes(1024 * 1024 * 1024)));
+  EXPECT_TRUE(rx.is_open());
+}
+
 TEST(RadioDifiUdpSocketTest, CloseIsIdempotent)
 {
   radio_difi_udp_socket sock(test_socket_logger());
@@ -68,24 +89,46 @@ TEST(RadioDifiUdpSocketTest, SendAndReceiveLoopback)
   ASSERT_TRUE(tx.send(tx_buf));
 
   uint8_t    rx_buf[64] = {};
-  const auto received   = rx.recv(rx_buf);
+  const auto received   = recv_within(rx, rx_buf);
 
   ASSERT_TRUE(received.has_value());
   ASSERT_EQ(received.value().size(), sizeof(tx_buf));
   EXPECT_EQ(std::memcmp(received.value().data(), tx_buf, sizeof(tx_buf)), 0);
 }
 
-TEST(RadioDifiUdpSocketTest, RecvReportsTimeoutWhenNoSender)
+TEST(RadioDifiUdpSocketTest, TryRecvReturnsImmediatelyWhenNothingIsQueued)
 {
   radio_difi_udp_socket rx(test_socket_logger());
-  ASSERT_TRUE(rx.open_rx("127.0.0.1", TEST_PORT + 3));
+  ASSERT_TRUE(rx.open_rx("127.0.0.1", TEST_PORT + 10));
 
-  // No sender — recv should report a timeout after the 100 ms socket timeout.
+  // An empty queue must not wait out the 100 ms socket timeout.
   uint8_t    buf[64]  = {};
-  const auto received = rx.recv(buf);
+  const auto t0       = std::chrono::steady_clock::now();
+  const auto received = rx.try_recv(buf);
+  const auto elapsed  = std::chrono::steady_clock::now() - t0;
 
   ASSERT_FALSE(received.has_value());
   EXPECT_EQ(received.error(), difi_recv_error::timeout);
+  EXPECT_LT(elapsed, std::chrono::milliseconds(50));
+}
+
+TEST(RadioDifiUdpSocketTest, TryRecvTakesAQueuedDatagram)
+{
+  radio_difi_udp_socket rx(test_socket_logger());
+  radio_difi_udp_socket tx(test_socket_logger());
+
+  ASSERT_TRUE(rx.open_rx("127.0.0.1", TEST_PORT + 11));
+  ASSERT_TRUE(tx.open_tx("127.0.0.1", TEST_PORT + 11));
+
+  const uint8_t tx_buf[] = {0xca, 0xfe};
+  ASSERT_TRUE(tx.send(tx_buf));
+
+  uint8_t    rx_buf[64] = {};
+  const auto received   = recv_within(rx, rx_buf);
+
+  ASSERT_TRUE(received.has_value());
+  ASSERT_EQ(received.value().size(), sizeof(tx_buf));
+  EXPECT_EQ(std::memcmp(received.value().data(), tx_buf, sizeof(tx_buf)), 0);
 }
 
 TEST(RadioDifiUdpSocketTest, ZeroLengthDatagramIsNotATimeout)
@@ -101,7 +144,7 @@ TEST(RadioDifiUdpSocketTest, ZeroLengthDatagramIsNotATimeout)
   ASSERT_TRUE(tx.send({}));
 
   uint8_t    buf[64]  = {};
-  const auto received = rx.recv(buf);
+  const auto received = recv_within(rx, buf);
 
   ASSERT_TRUE(received.has_value());
   EXPECT_TRUE(received.value().empty());
@@ -115,7 +158,7 @@ TEST(RadioDifiUdpSocketTest, SendAndRecvOnClosedSocketFail)
   uint8_t       buf[8] = {};
   const uint8_t payload[4]{};
   EXPECT_FALSE(sock.send(payload));
-  auto received = sock.recv(buf);
+  auto received = sock.try_recv(buf);
   ASSERT_FALSE(received.has_value());
   EXPECT_EQ(received.error(), difi_recv_error::failure);
 
@@ -123,7 +166,7 @@ TEST(RadioDifiUdpSocketTest, SendAndRecvOnClosedSocketFail)
   ASSERT_TRUE(sock.open_tx("127.0.0.1", TEST_PORT + 6));
   sock.close();
   EXPECT_FALSE(sock.send(payload));
-  received = sock.recv(buf);
+  received = sock.try_recv(buf);
   ASSERT_FALSE(received.has_value());
   EXPECT_EQ(received.error(), difi_recv_error::failure);
 }
@@ -157,7 +200,7 @@ TEST(RadioDifiUdpSocketTest, MultiplePacketsArrivedInOrder)
 
   for (uint8_t i = 0; i < 4; ++i) {
     uint8_t    val      = 0xff;
-    const auto received = rx.recv(span<uint8_t>(&val, 1));
+    const auto received = recv_within(rx, span<uint8_t>(&val, 1));
     ASSERT_TRUE(received.has_value());
     ASSERT_EQ(received.value().size(), 1U);
     EXPECT_EQ(val, i);

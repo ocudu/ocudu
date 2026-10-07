@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_difi_udp_socket.h"
+#include <algorithm>
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
+#include <limits>
 #include <netinet/in.h>
 #include <poll.h>
 #include <sys/socket.h>
@@ -49,7 +51,7 @@ bool radio_difi_udp_socket::open_tx(const std::string& ip, uint16_t port)
   return true;
 }
 
-bool radio_difi_udp_socket::open_rx(const std::string& ip, uint16_t port)
+bool radio_difi_udp_socket::open_rx(const std::string& ip, uint16_t port, units::bytes rx_buffer_size)
 {
   // Re-opening would otherwise overwrite fd and leak the previous descriptor.
   close();
@@ -60,22 +62,29 @@ bool radio_difi_udp_socket::open_rx(const std::string& ip, uint16_t port)
     return false;
   }
 
-  // Large receive buffer to absorb bursts without dropping packets.
-  const int buf_size = static_cast<int>(RX_SOCKET_BUFFER_BYTES.value());
+  // Large receive buffer to absorb bursts without dropping packets. SO_RCVBUF takes an int.
+  const int buf_size = static_cast<int>(std::min<unsigned>(rx_buffer_size.value(), std::numeric_limits<int>::max()));
   if (::setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size)) < 0) {
     logger.error("failed to set SO_RCVBUF: {}", std::strerror(errno));
     close();
     return false;
   }
 
-  // 100 ms receive timeout so recv() unblocks periodically for stop checks.
-  struct timeval tv = {};
-  tv.tv_sec         = 0;
-  tv.tv_usec        = RX_TIMEOUT_MS * 1000;
-  if (::setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
-    logger.error("failed to set SO_RCVTIMEO: {}", std::strerror(errno));
-    close();
-    return false;
+  // The kernel silently caps the request at net.core.rmem_max, and getsockopt() reports double the usable size
+  // to account for its own bookkeeping overhead.
+  int       granted_size = 0;
+  socklen_t granted_len  = sizeof(granted_size);
+  if (::getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &granted_size, &granted_len) == 0) {
+    const int usable_size = granted_size / 2;
+    if (usable_size < buf_size) {
+      logger.warning("port={}: Receive buffer capped at net.core.rmem_max, datagrams may be dropped under load. "
+                     "requested={} granted={}",
+                     port,
+                     buf_size,
+                     usable_size);
+    } else {
+      logger.info("port={}: Receive buffer set. size={}", port, usable_size);
+    }
   }
 
   struct sockaddr_in bind_addr = {};
@@ -111,16 +120,15 @@ bool radio_difi_udp_socket::send(span<const uint8_t> buf)
   return true;
 }
 
-expected<span<uint8_t>, difi_recv_error> radio_difi_udp_socket::recv(span<uint8_t> buf)
+expected<span<uint8_t>, difi_recv_error> radio_difi_udp_socket::try_recv(span<uint8_t> buf)
 {
   if (fd < 0) {
     return make_unexpected(difi_recv_error::failure);
   }
 
-  ssize_t n = ::recvfrom(fd, buf.data(), buf.size(), 0, nullptr, nullptr);
+  ssize_t n = ::recvfrom(fd, buf.data(), buf.size(), MSG_DONTWAIT, nullptr, nullptr);
   if (n < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
-      // No data within RX_TIMEOUT_MS; the caller checks its stop flag and retries.
       return make_unexpected(difi_recv_error::timeout);
     }
     logger.error("recvfrom error: {}", std::strerror(errno));
