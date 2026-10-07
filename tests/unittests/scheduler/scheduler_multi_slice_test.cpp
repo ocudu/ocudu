@@ -11,6 +11,7 @@
 #include "tests/unittests/scheduler/test_utils/scheduler_test_simulator.h"
 #include "ocudu/adt/ranges/transform.h"
 #include "ocudu/ran/du_types.h"
+#include "ocudu/scheduler/config/pucch_guardbands.h"
 #include "ocudu/scheduler/scheduler_feedback_handler.h"
 #include <gtest/gtest.h>
 
@@ -409,7 +410,13 @@ TEST_F(multi_slice_dedicated_ul_rbs_test, ul_dedicated_rbs_ratio_is_respected)
   }
 
   const double avg_ul_prbs_per_slot = ul_slots > 0 ? static_cast<double>(ul_rbs_total) / ul_slots : 0.0;
-  const auto   cell_ul_prbs         = static_cast<double>(slice_75_rbs + slice_25_rbs);
+  // The dedicated PUCCH resources sit between the common PUCCH PRBs and the rest of the band, so the contiguous PUSCH
+  // allocations cannot reach the common PUCCH PRBs.
+  const auto& ul_bwp = cell_cfg(to_du_cell_index(0)).params.ul_cfg_common.init_ul_bwp;
+  const auto  cell_ul_prbs =
+      static_cast<double>(compute_available_crbs_without_common_pucch(ul_bwp.generic_params.crbs,
+                                                                      ul_bwp.pucch_cfg_common->pucch_resource_common)
+                              .length());
 
   test_logger.info("UL RBs: 75%={} 25%={} total={} ul_slots={} avg_prbs/ul_slot={:.1f} (cell={})",
                    ul_rbs_75,

@@ -262,30 +262,76 @@ TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_resource_in_use_by_anothe
   ASSERT_EQ(pucch_alloc_failure::RESOURCE_IN_USE, col_manager.alloc(slot_alloc, ded_res[0], other_rnti).error());
 }
 
-TEST_F(pucch_collision_manager_rg_test, alloc_succeeds_if_pucch_collision_is_with_same_rntis_own_resource)
-{
-  // Note: Common Res 0 collides with the first dedicated resource as both start at the edges of the BWP. A UE is
-  // allowed to hold both simultaneously (e.g. common + dedicated HARQ-ACK), since only one is ever transmitted.
-
-  // First common, then dedicated.
-  ASSERT_TRUE(col_manager.alloc(slot_alloc, common_res[0], rnti).has_value());
-  ASSERT_TRUE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
-
-  run_slot();
-
-  // First dedicated, then common.
-  ASSERT_TRUE(col_manager.alloc(slot_alloc, ded_res[0], rnti).has_value());
-  ASSERT_TRUE(col_manager.alloc(slot_alloc, common_res[0], rnti).has_value());
-}
-
-TEST_F(pucch_collision_manager_rg_test, alloc_fails_if_pucch_collision_is_with_another_rntis_resource)
+TEST_F(pucch_collision_manager_rg_test, dedicated_resources_do_not_collide_with_common_resources)
 {
   static constexpr rnti_t other_rnti = to_rnti(0x4602);
 
-  // Note: Common Res 0 collides with the first dedicated resource as both start at the edges of the BWP.
-  ASSERT_TRUE(col_manager.alloc(slot_alloc, common_res[0], rnti).has_value());
-  ASSERT_FALSE(col_manager.alloc(slot_alloc, ded_res[0], other_rnti).has_value());
-  ASSERT_EQ(pucch_alloc_failure::PUCCH_COLLISION, col_manager.alloc(slot_alloc, ded_res[0], other_rnti).error());
+  for (const auto& cmn : common_res) {
+    ASSERT_TRUE(col_manager.alloc(slot_alloc, cmn, rnti).has_value());
+  }
+  for (const auto& res : ded_res) {
+    ASSERT_TRUE(col_manager.alloc(slot_alloc, res, other_rnti).has_value());
+  }
+}
+
+/// Fixture with PUCCH F0 + F2, where each SR_F2 resource collides with its SR resource.
+class pucch_collision_manager_f0_f2_test : public ::testing::Test
+{
+protected:
+  pucch_collision_manager_f0_f2_test() :
+    cfg_pool(make_test_cell_config_pool(ded_params, 0)),
+    cell_cfg(cfg_pool->cell_cfg()),
+    ded_res(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated),
+    sr_res(ded_res[ded_params.sr_res_id(pucch_sr_resource_id(0)).ded().cell_res_id]),
+    sr_f2_res(ded_res[ded_params.sr_f2_res_id(pucch_sr_resource_id(0)).ded().cell_res_id]),
+    col_manager(cell_cfg),
+    slot_alloc(cell_cfg),
+    sl(0, 0)
+  {
+    col_manager.slot_indication(sl);
+    slot_alloc.slot_indication(sl);
+  }
+
+  void run_slot()
+  {
+    ++sl;
+    col_manager.slot_indication(sl);
+    slot_alloc.slot_indication(sl);
+  }
+
+  const pucch_resource_builder_params  ded_params{.f0_or_f1_params = pucch_f0_params{}};
+  std::unique_ptr<du_cell_config_pool> cfg_pool;
+  const cell_configuration&            cell_cfg;
+  const std::vector<pucch_resource>&   ded_res;
+  const pucch_resource&                sr_res;
+  const pucch_resource&                sr_f2_res;
+
+  pucch_collision_manager      col_manager;
+  cell_slot_resource_allocator slot_alloc;
+  slot_point                   sl;
+
+  static constexpr rnti_t rnti = to_rnti(0x4601);
+};
+
+TEST_F(pucch_collision_manager_f0_f2_test, alloc_succeeds_if_pucch_collision_is_with_same_rntis_own_resource)
+{
+  // A UE is allowed to hold colliding resources simultaneously, since only one is ever transmitted.
+  ASSERT_TRUE(col_manager.alloc(slot_alloc, sr_res, rnti).has_value());
+  ASSERT_TRUE(col_manager.alloc(slot_alloc, sr_f2_res, rnti).has_value());
+
+  run_slot();
+
+  ASSERT_TRUE(col_manager.alloc(slot_alloc, sr_f2_res, rnti).has_value());
+  ASSERT_TRUE(col_manager.alloc(slot_alloc, sr_res, rnti).has_value());
+}
+
+TEST_F(pucch_collision_manager_f0_f2_test, alloc_fails_if_pucch_collision_is_with_another_rntis_resource)
+{
+  static constexpr rnti_t other_rnti = to_rnti(0x4602);
+
+  ASSERT_TRUE(col_manager.alloc(slot_alloc, sr_res, rnti).has_value());
+  ASSERT_FALSE(col_manager.alloc(slot_alloc, sr_f2_res, other_rnti).has_value());
+  ASSERT_EQ(pucch_alloc_failure::PUCCH_COLLISION, col_manager.alloc(slot_alloc, sr_f2_res, other_rnti).error());
 }
 
 TEST_F(pucch_collision_manager_rg_test, free_clears_grants_in_ul_res_grid)

@@ -27,9 +27,9 @@ cell_bwp_res_config ocudu::make_cell_bwp_res_config(const ran_cell_config& cell_
   return cell_bwp_res_config{
       .dl = make_cell_dl_bwp_res_config(cell_cfg),
       .ul = {.pucch = {
-                 .common = config_helpers::generate_cell_common_pucch_res_list(pucch_res_common, bwp_size_rbs),
-                 .dedicated =
-                     config_helpers::generate_cell_pucch_res_list(cell_cfg.init_bwp.pucch.resources, bwp_size_rbs),
+                 .common    = config_helpers::generate_cell_common_pucch_res_list(pucch_res_common, bwp_size_rbs),
+                 .dedicated = config_helpers::generate_cell_pucch_res_list(
+                     cell_cfg.init_bwp.pucch.resources, bwp_size_rbs, pucch_res_common),
 
              }}};
 }

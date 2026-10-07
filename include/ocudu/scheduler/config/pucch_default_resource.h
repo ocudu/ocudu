@@ -69,4 +69,11 @@ unsigned get_pucch_default_cyclic_shift(unsigned r_pucch, unsigned nof_cs);
 /// \remark An assertion is triggered if the row index exceeds its boundaries.
 pucch_default_resource get_pucch_default_resource(unsigned row_index, unsigned N_bwp_size);
 
+/// \brief Gets the number of PRBs, at each edge of the BWP, spanned by the common PUCCH resources.
+/// \param[in] row_index PUCCH default row index (\e pucch-ResourceCommon). Range {0, ..., 15}.
+/// \param[in] N_bwp_size BWP size, parameter \f$N_{BWP}^{size}\f$.
+/// \return Number of PRBs from each BWP edge up to the last common PUCCH PRB. Zero if the common resources are not
+///         located at the BWP edges (row index 15).
+unsigned get_pucch_default_nof_edge_prbs(unsigned row_index, unsigned N_bwp_size);
+
 } // namespace ocudu

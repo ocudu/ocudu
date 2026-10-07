@@ -26,9 +26,11 @@ namespace config_helpers {
 ///
 /// \param user_params parameters passed by the user for the generation the PUCCH resource list.
 /// \param bwp_size size of the BWP in RBs.
+/// \param pucch_res_common PUCCH default row index (pucch-ResourceCommon in TS 38.331).
 /// \return The largest (internal) BWP PRB interval without PUCCH resources.
 prb_interval find_largest_prb_interval_without_pucch(const pucch_resource_builder_params& user_params,
-                                                     unsigned                             bwp_size);
+                                                     unsigned                             bwp_size,
+                                                     unsigned                             pucch_res_common);
 
 /// \brief Compute the PRACH frequency start as a function of the PUCCH guardbands.
 ///
@@ -37,10 +39,13 @@ prb_interval find_largest_prb_interval_without_pucch(const pucch_resource_builde
 ///
 /// \param user_params parameters passed by the user for the generation the PUCCH resource list.
 /// \param bwp_size size of the BWP in RBs.
+/// \param pucch_res_common PUCCH default row index (pucch-ResourceCommon in TS 38.331).
 /// \param is_long_prach whether the PRACH uses long preambles.
 /// \return PRACH frequency start.
-unsigned
-compute_prach_frequency_start(const pucch_resource_builder_params& user_params, unsigned bwp_size, bool is_long_prach);
+unsigned compute_prach_frequency_start(const pucch_resource_builder_params& user_params,
+                                       unsigned                             bwp_size,
+                                       unsigned                             pucch_res_common,
+                                       bool                                 is_long_prach);
 
 /// \brief Compute the number of PUCCH resources that are used for SR and CSI.
 ///

@@ -233,8 +233,6 @@ static ul_config_common make_default_ul_config_common(const config_helpers::cell
           .format);
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index      = 1;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm = 1;
-  // Add +3 PRBS to the MSG1 frequency start, which act as a guardband between the PUCCH and PRACH.
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start = 6;
 
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window = 10u << to_numerology_value(params.scs_common);
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.preamble_rx_target_pw = -100;
@@ -361,6 +359,27 @@ config_helpers::make_default_ssb_config(const config_helpers::cell_config_builde
   return cfg;
 }
 
+/// Computes the PRACH frequency start right after the PUCCH resources at the lower edge of the UL BWP.
+static unsigned compute_default_msg1_frequency_start(const ran_cell_config& cfg)
+{
+  const auto&    ul_bwp           = cfg.ul_cfg_common.init_ul_bwp;
+  const unsigned bwp_size         = ul_bwp.generic_params.crbs.length();
+  const unsigned pucch_res_common = ul_bwp.pucch_cfg_common->pucch_resource_common;
+
+  // If the dedicated PUCCH resources do not fit in the BWP, only account for the common ones.
+  std::vector<pucch_resource> ded_res;
+  if (config_helpers::pucch_parameters_validator(cfg.init_bwp.pucch.resources, bwp_size, pucch_res_common)
+          .has_value()) {
+    ded_res = config_helpers::generate_cell_pucch_res_list(cfg.init_bwp.pucch.resources, bwp_size, pucch_res_common);
+  }
+  const crb_bitmap pucch_prbs     = compute_pucch_crbs(crb_interval{0, bwp_size}, pucch_res_common, ded_res);
+  const int        last_pucch_prb = pucch_prbs.find_highest(0, bwp_size / 2, true);
+
+  // Guardband between the PUCCH and the short PRACH formats.
+  const unsigned guardband = ul_bwp.rach_cfg_common->is_prach_root_seq_index_l839 ? 0U : 3U;
+  return static_cast<unsigned>(last_pucch_prb + 1) + guardband;
+}
+
 ran_cell_config config_helpers::make_default_ran_cell_config(const cell_config_builder_params_extended& params)
 {
   ran_cell_config cfg;
@@ -376,6 +395,8 @@ ran_cell_config config_helpers::make_default_ran_cell_config(const cell_config_b
                            : dmrs_typeA_position::pos2;
   cfg.tdd_cfg        = params.tdd_ul_dl_cfg_common;
   cfg.init_bwp       = make_default_bwp_builder_params(params);
+  cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start =
+      compute_default_msg1_frequency_start(cfg);
   return cfg;
 }
 

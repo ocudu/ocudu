@@ -780,7 +780,8 @@ TEST_P(pucch_alloc_ded_resources_test, test_for_private_fnc_retrieving_existing_
   auto pri_ue0 = t_bench.pucch_alloc.alloc_common_harq_ack(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.k0, k1, t_bench.dci_info);
   ASSERT_TRUE(pri_ue0.has_value());
-  ASSERT_EQ(1U, pri_ue0.value());
+  // The dedicated resources do not overlap the common ones, so the first common resource is available.
+  ASSERT_EQ(0U, pri_ue0.value());
   ASSERT_EQ(2U, slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs.unsorted(),
                              [rnti = t_bench.get_main_ue().crnti](const pucch_info& pdu) {

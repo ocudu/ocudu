@@ -773,7 +773,9 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
       rach_cfg.rach_cfg_generic.msg1_frequency_start + rach_cfg.rach_cfg_generic.msg1_fdm * prach_nof_prbs;
 
   prb_interval prb_interval_no_pucch = config_helpers::find_largest_prb_interval_without_pucch(
-      cell_cfg.ran.init_bwp.pucch.resources, cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());
+      cell_cfg.ran.init_bwp.pucch.resources,
+      cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+      cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common);
 
   // This is to preserve a guardband between the PUCCH and PRACH.
   const unsigned pucch_to_prach_guardband = is_long_preamble(prach_cfg.format) ? 0U : 3U;
@@ -1135,7 +1137,9 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ssb_configuration(cell_cfg));
   HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
   HANDLE_ERROR(config_helpers::pucch_parameters_validator(
-      cell_cfg.ran.init_bwp.pucch.resources, cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.crbs.length()));
+      cell_cfg.ran.init_bwp.pucch.resources,
+      cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+      cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common));
   HANDLE_ERROR(check_prach_config(cell_cfg));
   HANDLE_ERROR(check_srs_config(cell_cfg));
   const serving_cell_config ue_serv_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg.ran).serv_cell_cfg;

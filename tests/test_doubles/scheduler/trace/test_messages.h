@@ -35,8 +35,8 @@ inline const cell_configuration& make_test_schedtrace_cell_cfg()
          config_helpers::generate_cell_common_pucch_res_list(pucch_res_common, c.init_ul_bwp.crbs.length())) {
       c.pucch_resources.push_back(res);
     }
-    for (const auto& res :
-         config_helpers::generate_cell_pucch_res_list(pucch_resource_builder_params{}, c.init_ul_bwp.crbs.length())) {
+    for (const auto& res : config_helpers::generate_cell_pucch_res_list(
+             pucch_resource_builder_params{}, c.init_ul_bwp.crbs.length(), pucch_res_common)) {
       c.pucch_resources.push_back(res);
     }
     return c;

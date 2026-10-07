@@ -115,7 +115,10 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   // Sanity check: with this configuration, the cell PUCCH resources of both F1 (Resource Set 0) and F2 (Resource Set 1)
   // do have a repetition factor other than n1.
   const unsigned bwp_size_rbs  = cell_params_rep.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-  const auto     cell_res_list = config_helpers::generate_cell_pucch_res_list(pucch_res_params, bwp_size_rbs);
+  const auto     cell_res_list = config_helpers::generate_cell_pucch_res_list(
+      pucch_res_params,
+      bwp_size_rbs,
+      cell_params_rep.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common);
   ASSERT_TRUE(std::any_of(cell_res_list.begin(), cell_res_list.end(), [](const pucch_resource& res) {
     return res.format() == pucch_format::FORMAT_1 and res.rep_factor != pucch_repetition_factor::n1;
   }));

@@ -121,7 +121,10 @@ protected:
     // occasion.
     cell_req.ran.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start =
         config_helpers::compute_prach_frequency_start(
-            pucch_params, cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), false);
+            pucch_params,
+            cell_req.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+            cell_req.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
+            false);
     if (srs_enabled) {
       // Regenerate the common PUSCH time-domain-resource table with SRS awareness, adding a shortened candidate per
       // slot so Msg3/RAR PUSCH can still be scheduled once SRS occupies the tail of the slot.

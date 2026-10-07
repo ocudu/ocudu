@@ -37,7 +37,8 @@ public:
   pucch_resource_generator_test() :
     cell_cfg(make_custom_cell_config(GetParam())),
     params(cell_cfg.init_bwp.pucch.resources),
-    bwp_cfg(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params)
+    bwp_cfg(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params),
+    pucch_res_common(cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common)
   {
   }
 
@@ -45,12 +46,14 @@ protected:
   const ran_cell_config               cell_cfg;
   const pucch_resource_builder_params params;
   const bwp_configuration             bwp_cfg;
+  const unsigned                      pucch_res_common;
 };
 
 TEST_P(pucch_resource_generator_test, generated_resources_are_consistent_with_parameters)
 {
-  std::vector<pucch_resource> res_list = config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length());
-  const unsigned              nof_res_f0_f1 =
+  std::vector<pucch_resource> res_list =
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
+  const unsigned nof_res_f0_f1 =
       params.nof_cell_sr_resources + params.nof_cell_res_set_configs * params.res_set_size.value();
   const unsigned nof_res_f2_f3_f4 =
       params.nof_cell_csi_resources + params.nof_cell_res_set_configs * params.res_set_size.value();
@@ -76,7 +79,8 @@ TEST_P(pucch_resource_generator_test, generated_resources_are_consistent_with_pa
 
 TEST_P(pucch_resource_generator_test, successful_generation_results_in_no_collisions)
 {
-  std::vector<pucch_resource> res_list = config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length());
+  std::vector<pucch_resource> res_list =
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
   ASSERT_FALSE(res_list.empty());
 
   // Not all resources are checked for the F0+F2 case, since the extra resources there (SR_F0 and CSI_F2) are generated
@@ -92,10 +96,65 @@ TEST_P(pucch_resource_generator_test, successful_generation_results_in_no_collis
   }
 }
 
+/// Returns the PRBs (first and second hop) occupied by a PUCCH resource.
+static std::vector<unsigned> get_res_prbs(const pucch_resource& res)
+{
+  std::vector<unsigned> prbs;
+  const prb_interval    first_hop = res.prbs();
+  for (unsigned prb = first_hop.start(); prb != first_hop.stop(); ++prb) {
+    prbs.push_back(prb);
+  }
+  if (res.second_hop_prb.has_value()) {
+    for (unsigned prb = *res.second_hop_prb; prb != *res.second_hop_prb + first_hop.length(); ++prb) {
+      prbs.push_back(prb);
+    }
+  }
+  return prbs;
+}
+
+/// Checks that no dedicated resource shares PRBs with the common resources.
+static void assert_no_prb_overlap_with_common(span<const pucch_resource> ded_res_list,
+                                              unsigned                   pucch_res_common,
+                                              unsigned                   bwp_size_rbs)
+{
+  std::vector<bool> common_prbs(bwp_size_rbs, false);
+  for (const auto& res : config_helpers::generate_cell_common_pucch_res_list(pucch_res_common, bwp_size_rbs)) {
+    for (unsigned prb : get_res_prbs(res)) {
+      common_prbs[prb] = true;
+    }
+  }
+  for (const auto& res : ded_res_list) {
+    for (unsigned prb : get_res_prbs(res)) {
+      ASSERT_LT(prb, bwp_size_rbs);
+      ASSERT_FALSE(common_prbs[prb]) << fmt::format(
+          "Dedicated resource cell_res_id={} overlaps common prb={}", res.res_id.ded().cell_res_id, prb);
+    }
+  }
+}
+
+TEST_P(pucch_resource_generator_test, dedicated_resources_do_not_overlap_common_resources)
+{
+  const std::vector<pucch_resource> res_list =
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
+  ASSERT_FALSE(res_list.empty());
+  assert_no_prb_overlap_with_common(res_list, pucch_res_common, bwp_cfg.crbs.length());
+}
+
+TEST(pucch_resource_generator_common_res_test, dedicated_resources_do_not_overlap_any_common_resource_row)
+{
+  static constexpr unsigned bwp_size_rbs = 106;
+  for (unsigned pucch_res_common = 0; pucch_res_common != 16; ++pucch_res_common) {
+    const std::vector<pucch_resource> res_list =
+        config_helpers::generate_cell_pucch_res_list(pucch_resource_builder_params{}, bwp_size_rbs, pucch_res_common);
+    ASSERT_FALSE(res_list.empty());
+    assert_no_prb_overlap_with_common(res_list, pucch_res_common, bwp_size_rbs);
+  }
+}
+
 TEST_P(pucch_resource_generator_test, f1_resources_have_valid_occ_indices)
 {
   const std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length());
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
   ASSERT_FALSE(res_list.empty());
 
   for (const auto& res : res_list) {
@@ -113,7 +172,8 @@ TEST_P(pucch_resource_generator_test, f1_resources_have_valid_occ_indices)
 
 TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
 {
-  const auto cell_res_list = config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length());
+  const auto cell_res_list =
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), pucch_res_common);
   const bool using_02 = params.format_01() == pucch_format::FORMAT_0 and params.format_234() == pucch_format::FORMAT_2;
 
   for (auto res_set_cfg_id     = pucch_resource_set_config_id(0),

@@ -1194,7 +1194,10 @@ std::vector<odu::du_cell_config> ocudu::generate_du_cell_config(const du_high_un
 
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
-          du_pucch_cfg, out_cell.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), is_long_prach);
+          du_pucch_cfg,
+          out_cell.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+          out_cell.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
+          is_long_prach);
     }
 
     // Slicing configuration.

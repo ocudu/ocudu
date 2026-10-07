@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/scheduler/config/pucch_default_resource.h"
+#include "ocudu/support/math/math_utils.h"
 
 using namespace ocudu;
 
@@ -71,4 +72,17 @@ pucch_default_resource ocudu::get_pucch_default_resource(unsigned index, unsigne
   }
 
   return result;
+}
+
+unsigned ocudu::get_pucch_default_nof_edge_prbs(unsigned row_index, unsigned N_bwp_size)
+{
+  // Row 15 places the common resources at N_bwp/4 from the edges, leaving the edges free.
+  if (row_index == 15) {
+    return 0;
+  }
+  const pucch_default_resource res    = get_pucch_default_resource(row_index, N_bwp_size);
+  const unsigned               nof_cs = res.cs_indexes.size();
+  // Resources r_PUCCH = 0..7 hop from the low edge, and 8..15 mirror them from the high edge.
+  static constexpr unsigned nof_res_per_edge = 8;
+  return res.rb_bwp_offset + divide_ceil(nof_res_per_edge, nof_cs);
 }
