@@ -133,9 +133,9 @@ static void benchmark_pdxch_modulator(benchmarker&                            pe
   beam_weights_codebook codebook = generate_beam_weights_codebook(topology);
 
   // Maximum bandwidth that fits in the DFT.
-  unsigned dft_size = srate.get_dft_size(scs);
-  unsigned max_rb   = (dft_size - 1) / NOF_SUBCARRIERS_PER_RB;
-  unsigned bw_rb    = std::min(max_rb, 275U);
+  unsigned    dft_size = srate.get_dft_size(scs);
+  std::size_t max_rb   = (dft_size - 1) / NOF_SUBCARRIERS_PER_RB;
+  unsigned    bw_rb    = std::min(max_rb, MAX_NOF_PRBS);
 
   // OFDM modulator.
   ofdm_modulator_configuration ofdm_config{
