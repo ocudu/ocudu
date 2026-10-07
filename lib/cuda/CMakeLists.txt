@@ -4,5 +4,6 @@
 
 
 add_subdirectory(adt)
+add_subdirectory(phy)
 add_subdirectory(prach)
 add_subdirectory(support)
