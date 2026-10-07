@@ -335,8 +335,9 @@ INSTANTIATE_TEST_SUITE_P(
 // ------------------------------------ multi-UE case --------------------------------------------
 
 // Background traffic profile for the persistent UEs of the multi-UE TDD tests. \c mixed assigns each background UE a
-// random direction; the others force the same direction for all of them.
-enum class multiue_bg_traffic { dl_only, ul_only, bidir, mixed };
+// random direction; \c dl_cbr gives each UE a small DL packet at a fixed rate; the others force the same direction for
+// all of them with full buffers.
+enum class multiue_bg_traffic { dl_only, ul_only, bidir, mixed, dl_cbr };
 
 const char* to_string(multiue_bg_traffic t)
 {
@@ -347,6 +348,8 @@ const char* to_string(multiue_bg_traffic t)
       return "ul_only";
     case multiue_bg_traffic::bidir:
       return "bidir";
+    case multiue_bg_traffic::dl_cbr:
+      return "dl_cbr";
     default:
       return "mixed";
   }
@@ -374,12 +377,15 @@ struct multiue_tdd_test_params {
   // Periodic SRS occasions are placed at the end of the UL slot, so on UL-scarce TDD patterns they narrow the
   // symbol window available for Msg3/retx PUSCH and other UL grants on the same (few) UL slots.
   std::optional<srs_periodicity> srs_period;
+  // Size of the Msg4 (RRCSetup) SRB0 PDU of each transient UE, in bytes.
+  unsigned msg4_size = 128;
 };
 
 void PrintTo(const multiue_tdd_test_params& value, ::std::ostream* os)
 {
   *os << fmt::format(
-      "tdd={} bg_ues={} transient_ues={} ues_per_wave={} wave_period_slots={} rach_driven={} bg_traffic={} srs={}",
+      "tdd={} bg_ues={} transient_ues={} ues_per_wave={} wave_period_slots={} rach_driven={} bg_traffic={} srs={} "
+      "msg4_size={}",
       value.tdd_cfg,
       value.nof_background_ues,
       value.nof_transient_ues,
@@ -387,7 +393,8 @@ void PrintTo(const multiue_tdd_test_params& value, ::std::ostream* os)
       value.wave_period_in_slots,
       value.rach_driven,
       to_string(value.background_traffic),
-      value.srs_period.has_value() ? fmt::format("{}", static_cast<unsigned>(*value.srs_period)) : "disabled");
+      value.srs_period.has_value() ? fmt::format("{}", static_cast<unsigned>(*value.srs_period)) : "disabled",
+      value.msg4_size);
 }
 
 /// \brief Base fixture that saturates the grid with background traffic while overlapping waves of UEs attach in
@@ -396,10 +403,12 @@ void PrintTo(const multiue_tdd_test_params& value, ::std::ostream* os)
 class base_scheduler_multiue_tdd_test : public base_scheduler_tdd_tester
 {
 protected:
-  static constexpr unsigned msg4_size      = 128;
-  static constexpr unsigned huge_buffer    = 10000000;
-  static constexpr unsigned sr_grant_bytes = 512;
-  static constexpr rnti_t   base_rnti      = to_rnti(0x4601);
+  static constexpr unsigned huge_buffer = 10000000;
+  // DL packet size and inter-arrival period of the \c dl_cbr background UEs (~400 kbps per UE at 30 kHz SCS).
+  static constexpr unsigned cbr_packet_size         = 1400;
+  static constexpr unsigned cbr_packet_period_slots = 56;
+  static constexpr unsigned sr_grant_bytes          = 512;
+  static constexpr rnti_t   base_rnti               = to_rnti(0x4601);
   // Slots to wait after Msg4 delivery before releasing a UE, so the ConRes/Msg4 HARQ is auto-ACKed first. The
   // fallback common PUCCH lands at most max_k1 (=7, see ue_fallback_scheduler) slots after the PDSCH.
   static const unsigned ack_margin_slots = 8;
@@ -452,6 +461,7 @@ protected:
   {
     switch (test_params.background_traffic) {
       case multiue_bg_traffic::dl_only:
+      case multiue_bg_traffic::dl_cbr:
         return background_traffic_direction::dl_only;
       case multiue_bg_traffic::ul_only:
         return background_traffic_direction::ul_only;
@@ -475,6 +485,7 @@ protected:
 
     // Warmup so that the background traffic reaches steady-state saturation before waves start.
     for (unsigned i = 0; i != 2 * tdd_period_slots; ++i) {
+      push_cbr_packets_to_background_ues();
       run_slot();
     }
 
@@ -485,6 +496,7 @@ protected:
         ++launched_waves;
         next_wave_count += wave_period_slots;
       }
+      push_cbr_packets_to_background_ues();
       run_slot();
     }
 
@@ -521,7 +533,8 @@ protected:
       const du_ue_index_t idx  = to_du_ue_index(i);
       const rnti_t        rnti = to_rnti(to_underlying(base_rnti) + i);
 
-      if (background_ues[i] != background_traffic_direction::ul_only) {
+      if (test_params.background_traffic != multiue_bg_traffic::dl_cbr and
+          background_ues[i] != background_traffic_direction::ul_only) {
         push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_MIN_DRB, huge_buffer});
       }
       if (background_ues[i] != background_traffic_direction::dl_only) {
@@ -531,6 +544,19 @@ protected:
                                            bsr_format::SHORT_BSR,
                                            {ul_bsr_lcg_report{uint_to_lcg_id(0), huge_buffer}}});
       }
+    }
+  }
+
+  // Hand a new DL packet to the \c dl_cbr background UEs whose arrival falls in the current slot. Arrivals are
+  // staggered across UEs, so the DL load is spread over the slots of the TDD period.
+  void push_cbr_packets_to_background_ues()
+  {
+    if (test_params.background_traffic != multiue_bg_traffic::dl_cbr) {
+      return;
+    }
+    const unsigned phase = cbr_slot_count++ % cbr_packet_period_slots;
+    for (unsigned i = phase; i < test_params.nof_background_ues; i += cbr_packet_period_slots) {
+      push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(i), LCID_MIN_DRB, cbr_packet_size});
     }
   }
 
@@ -659,7 +685,7 @@ protected:
       for (count = 0; count != delay; ++count) {
         CORO_AWAIT(next_slot_signal);
       }
-      push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_SRB0, msg4_size});
+      push_dl_buffer_state(dl_buffer_state_indication_message{idx, LCID_SRB0, test_params.msg4_size});
       CORO_RETURN();
     });
   }
@@ -707,6 +733,9 @@ protected:
   // Instrumentation: peak number of transient UEs concurrently between fallback creation and ConRes-CE scheduling.
   unsigned cur_in_conres  = 0;
   unsigned peak_in_conres = 0;
+
+  // Number of slots elapsed since the first \c dl_cbr packet arrival.
+  unsigned cbr_slot_count = 0;
 
   std::vector<du_ue_index_t>                transient_pool;
   std::vector<background_traffic_direction> background_ues;
@@ -792,7 +821,12 @@ INSTANTIATE_TEST_SUITE_P(
   // SRS enabled, RACH-driven Msg3: periodic SRS carves into the tail of the sole UL slot, narrowing the symbol window
   // left for Msg3 and UE PUSCHs.
   multiue_tdd_test_params{
-      create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 8, 16, 1, 10, true, multiue_bg_traffic::mixed, srs_periodicity::sl5}
+      create_tdd_pattern(tdd_pattern_profile_fr1_30khz::DDDSU), 2, 8, 16, 1, 10, true, multiue_bg_traffic::mixed, srs_periodicity::sl5},
+  // DL-heavy DDDDDDDSUU with a DL-only special slot, many low-rate DL UEs and bursts of RACH-driven UEs: dedicated
+  // HARQ-ACKs (k1 up to 12) of the DL slots that cannot reach the UL slots with the fallback k1 set book the UL slots
+  // first, leaving no common PUCCH resource for the ConRes CE HARQ-ACK.
+  multiue_tdd_test_params{
+      {subcarrier_spacing::kHz30, {10, 7, 7, 2, 0}}, 4, 500, 96, 8, 20, true, multiue_bg_traffic::dl_cbr, std::nullopt, 308}
 ));
 // clang-format on
 
