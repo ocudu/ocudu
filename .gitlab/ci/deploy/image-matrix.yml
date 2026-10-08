@@ -126,6 +126,16 @@
       IMAGE_REF="${REGISTRY_URI}/${NAME}:${VERSION}"
       echo "Publishing image ${IMAGE_REF}"
       echo "IMAGE_REF=${IMAGE_REF}" > build.env
+  script:
+    - !reference [.docker-builder, script]
+    # Moving per-variant tag (e.g. ubuntu-24.04-avx2-latest), re-pointed only by
+    # the nightly once the image is published and attested.
+    - |
+      if [ "${MODE}" = "publish" ] && [ -z "${PROMOTE_IMAGE_TAG:-}" ] && [ "${CI_PIPELINE_SCHEDULE_DESCRIPTION}" = "Nightly" ]; then
+        LATEST_REF="${IMAGE_NAME}:${TAG_OS}-${OS_VERSION}${TAG_DRIVER}-${SIMD}-latest"
+        regctl image copy "${IMAGE_NAME_VERSION}" "${LATEST_REF}"
+        echo "Image ${LATEST_REF} pushed"
+      fi
   artifacts:
     reports:
       dotenv: build.env
