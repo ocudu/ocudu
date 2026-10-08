@@ -184,6 +184,7 @@ variables:
           ATTESTATION_IMAGE="${IMAGE_NAME_VERSION}" \
             "${CI_PROJECT_DIR}/.gitlab/ci/deploy/validate_vendor_spdx.sh" \
             build.spdx ${ATTESTATION_EXPECTED_FILES}
+          syft convert build.spdx -o spdx-json=build.spdx.json
         fi
 
         # If we don't clean the attestation, every iteration amends the signature/sbom/grype_report and it can grow unbounded
@@ -205,8 +206,7 @@ variables:
 
         if [ -n "$ATTESTATION_FILE" ]; then
           echo "=== Attesting ${ATTESTATION_FILE} ==="
-          # Legacy bundle format until the vendor SBOM is JSON, cosign v3 bundles reject tag-value
-          attest_spdx build.spdx spdx --new-bundle-format=false --use-signing-config=false
+          attest_spdx build.spdx.json spdxjson
           echo ""
         fi
 
