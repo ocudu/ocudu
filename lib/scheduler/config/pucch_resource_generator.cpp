@@ -136,7 +136,7 @@ error_type<const char*> config_helpers::pucch_parameters_validator(const pucch_r
   if (nof_rbs_01 + nof_rbs_234 >= max_allowed_rb_usage * bwp_size_rbs) {
     return make_unexpected("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs");
   }
-  // The dedicated resources are placed after the PRBs reserved at both BWP edges.
+  // The dedicated resources are placed after the PRBs reserved (if any) at both BWP edges.
   if (2U * dedicated_pucch_rb_start + nof_rbs_01 + nof_rbs_234 >= bwp_size_rbs) {
     return make_unexpected("With the given parameters, the reserved and dedicated PUCCH PRBs exceed the BWP PRBs");
   }
