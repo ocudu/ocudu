@@ -234,6 +234,14 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
     logger.log_error("Dropping empty PDU.");
     return;
   }
+  // Drop PDUs that cannot carry an SDU within the maximum PDCP SDU size (TS 38.323 Sec. 4.3.1). Control PDUs are
+  // bounded by the same limit. The security engines size their buffers for PDUs within this limit.
+  const size_t max_pdu_len = hdr_len_bytes + pdcp_sdu_max_size + security::sec_mac_len;
+  if (OCUDU_UNLIKELY(buf.length() > max_pdu_len)) {
+    metrics.add_dropped_pdus(1);
+    logger.log_warning("Dropping PDU. Cause: PDU too large. pdu_len={} max_pdu_len={}", buf.length(), max_pdu_len);
+    return;
+  }
 
   auto pdu_copy = buf.deep_copy();
   if (not pdu_copy.has_value()) {

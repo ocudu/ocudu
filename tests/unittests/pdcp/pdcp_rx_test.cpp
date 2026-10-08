@@ -607,6 +607,48 @@ TEST_P(pdcp_rx_test_drb, rx_integrity_fail)
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), exp_nof_decompressors);
 }
 
+/// Test that PDUs too large to carry an SDU within the maximum PDCP SDU size (TS 38.323 Sec. 4.3.1) are dropped before
+/// integrity verification, while a PDU of the maximum size is still verified.
+TEST_P(pdcp_rx_test_drb, rx_pdu_max_size)
+{
+  set_sn_size(std::get<pdcp_sn_size>(GetParam()));
+  set_algo(std::get<unsigned>(GetParam()));
+  set_header_compression(std::get<rohc_test_params>(GetParam()).config);
+  init();
+  pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+  pdcp_rx_state init_state = {.rx_next = 0, .rx_deliv = 0, .rx_reord = 0};
+  pdcp_rx->set_state(init_state);
+
+  const size_t max_pdu_len = pdcp_data_pdu_header_size(config.sn_size) + pdcp_sdu_max_size + security::sec_mac_len;
+  auto         make_pdu    = [this](size_t len) {
+    byte_buffer pdu;
+    get_test_pdu(0, pdu);
+    while (pdu.length() < len) {
+      EXPECT_TRUE(pdu.append(0));
+    }
+    return pdu;
+  };
+
+  // A PDU of the maximum size reaches integrity verification (and fails it, as the padding breaks the MAC-I).
+  uint32_t prev_integrity_fail_counter = test_frame->integrity_fail_counter;
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(make_pdu(max_pdu_len)).value());
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  EXPECT_EQ(prev_integrity_fail_counter + 1, test_frame->integrity_fail_counter);
+
+  // A PDU above the maximum size is dropped before integrity verification.
+  prev_integrity_fail_counter = test_frame->integrity_fail_counter;
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(make_pdu(max_pdu_len + 1)).value());
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  EXPECT_EQ(prev_integrity_fail_counter, test_frame->integrity_fail_counter);
+  EXPECT_EQ(0, test_frame->sdu_queue.size());
+
+  // One warning for the integrity failure and one for the dropped PDU, no errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 2);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
+}
+
 /// Test reception of SRB PDUs with zero-padded MAC-I across all integrity modes (off, on, SMC transition mode).
 /// The PDCP should reject the PDUs only in when integrity is fully enabled.
 TEST_P(pdcp_rx_test_srb, rx_zero_padded_mac)

@@ -222,6 +222,15 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     return;
   }
 
+  // Drop SDUs above the maximum PDCP SDU size (TS 38.323 Sec. 4.3.1). The security engines size their buffers
+  // for PDUs built from SDUs within this limit.
+  if (OCUDU_UNLIKELY(buf.length() > pdcp_sdu_max_size)) {
+    logger.log_warning(
+        "Dropping SDU. Cause: SDU too large. sdu_len={} max_sdu_len={}", buf.length(), pdcp_sdu_max_size);
+    metrics.add_lost_sdus(1);
+    return;
+  }
+
   if (suspended && not resume_requested) {
     logger.log_debug("Activity detected while suspended. Requesting resume");
     resume_requested = true;

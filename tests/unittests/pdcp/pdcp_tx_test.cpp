@@ -135,6 +135,38 @@ TEST_P(pdcp_tx_test, pdu_gen)
   EXPECT_EQ(test_spy.get_error_counter(), 0);
 }
 
+/// \brief Test that SDUs above the maximum PDCP SDU size (TS 38.323 Sec. 4.3.1) are dropped, while an SDU of the
+/// maximum size is still protected and transmitted.
+TEST_P(pdcp_tx_test, sdu_max_size)
+{
+  init(GetParam());
+  if (header_compression.has_value()) {
+    GTEST_SKIP() << "Payload of the test SDUs is not a valid IP packet for ROHC";
+  }
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+  // SDU of the maximum size is transmitted.
+  byte_buffer max_sdu = byte_buffer::create(std::vector<uint8_t>(pdcp_sdu_max_size, 0xab)).value();
+  pdcp_tx->handle_sdu(std::move(max_sdu));
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+  EXPECT_EQ(test_frame.pdu_queue.front().length(),
+            pdcp_data_pdu_header_size(config.sn_size) + pdcp_sdu_max_size + security::sec_mac_len);
+  test_frame.pdu_queue.pop();
+
+  // SDU above the maximum size is dropped.
+  byte_buffer big_sdu = byte_buffer::create(std::vector<uint8_t>(pdcp_sdu_max_size + 1, 0xab)).value();
+  pdcp_tx->handle_sdu(std::move(big_sdu));
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  EXPECT_TRUE(test_frame.pdu_queue.empty());
+
+  // One warning for the dropped SDU, no errors.
+  EXPECT_EQ(test_spy.get_warning_counter(), 1);
+  EXPECT_EQ(test_spy.get_error_counter(), 0);
+}
+
 /// \brief Test correct stalling of PDCP if RLC SDU queue is full; then continue via delivery notification
 TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
 {
