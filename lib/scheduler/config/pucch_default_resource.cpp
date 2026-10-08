@@ -76,8 +76,8 @@ pucch_default_resource ocudu::get_pucch_default_resource(unsigned index, unsigne
 
 unsigned ocudu::get_pucch_default_nof_edge_prbs(unsigned row_index, unsigned N_bwp_size)
 {
-  // Row 15 places the common resources at N_bwp/4 from the edges, leaving the edges free. The dedicated resources
-  // cannot reach them, as the PUCCH resource validator limits the dedicated PUCCH PRBs to less than 50% of the BWP.
+  // Row 15 places the common resources at N_bwp/4 from the edges, leaving the edges free. The DU cell config validator
+  // rejects the dedicated resources that reach them.
   if (row_index == 15) {
     return 0;
   }

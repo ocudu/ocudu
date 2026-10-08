@@ -794,6 +794,32 @@ static check_outcome check_prach_config(const du_cell_config& cell_cfg)
   return {};
 }
 
+/// Fails if any dedicated PUCCH resource overlaps the common PUCCH PRBs.
+static check_outcome check_pucch_common_ded_overlap(const du_cell_config& cell_cfg)
+{
+  const unsigned bwp_size         = cell_cfg.ran.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+  const unsigned pucch_res_common = cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common;
+
+  // The PRBs reserved at the BWP edges cannot rule out the overlap by themselves, as row 15 places the common
+  // resources away from the edges, where the dedicated resources of a crowded edge may reach them.
+  const std::vector<pucch_resource> ded_res = config_helpers::generate_cell_pucch_res_list(
+      cell_cfg.ran.init_bwp.pucch.resources, bwp_size, get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_size));
+  const crb_bitmap common_prbs = compute_pucch_crbs(crb_interval{0, bwp_size}, pucch_res_common, {});
+  for (const pucch_resource& res : ded_res) {
+    const prb_interval hop1 = res.prbs();
+    const prb_interval hop2 =
+        res.second_hop_prb.has_value() ? prb_interval::start_and_len(*res.second_hop_prb, hop1.length()) : hop1;
+    CHECK_TRUE(not common_prbs.any(hop1.start(), hop1.stop()) and not common_prbs.any(hop2.start(), hop2.stop()),
+               "The dedicated PUCCH resource cell_res_id={} in PRBs={} (second hop {}) overlaps the common PUCCH "
+               "resources of pucch-ResourceCommon={}",
+               res.res_id.ded().cell_res_id,
+               hop1,
+               hop2,
+               pucch_res_common);
+  }
+  return {};
+}
+
 /// Fails if the dedicated PUCCH resources overlap the SRS symbols. Warns if a manually configured SRS bandwidth
 /// overlaps with the common PUCCH resources, which the scheduler tolerates.
 static check_outcome check_srs_config(const du_cell_config& cell_cfg)
@@ -1144,6 +1170,7 @@ check_outcome odu::is_du_cell_config_valid(const du_cell_config& cell_cfg)
       ul_bwp_size,
       get_pucch_default_nof_edge_prbs(cell_cfg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
                                       ul_bwp_size)));
+  HANDLE_ERROR(check_pucch_common_ded_overlap(cell_cfg));
   HANDLE_ERROR(check_prach_config(cell_cfg));
   HANDLE_ERROR(check_srs_config(cell_cfg));
   const serving_cell_config ue_serv_cell_cfg = config_helpers::make_default_ue_cell_config(cell_cfg.ran).serv_cell_cfg;
