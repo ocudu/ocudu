@@ -41,6 +41,8 @@ private:
 
   void run_sched_strategy(du_cell_index_t cell_index);
 
+  void post_process_results(du_cell_index_t cell_index, slot_point sl_tx);
+
   struct cell_context final : public ue_cell_scheduler {
     ue_scheduler_impl& parent;
 

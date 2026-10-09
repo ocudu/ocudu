@@ -112,6 +112,20 @@ void ue_scheduler_impl::run_sched_strategy(du_cell_index_t cell_index)
   return true;
 }
 
+void ue_scheduler_impl::post_process_results(du_cell_index_t cell_index, slot_point sl_tx)
+{
+  auto& cell = cells[cell_index];
+
+  // The post processing is done for DL and UL slots.
+  cell.intra_slice_sched.post_process_results();
+
+  // Record UEs needing triggered UL grants based on the finalized DL grant list.
+  cell.trig_ul_sched.process_dl_results(sl_tx, (*cell.cell_res_alloc)[0].result);
+
+  ocudu_sanity_check(puxch_grant_sanitizer(*cell.cell_res_alloc, logger),
+                     "PUCCH and PUSCH found for the same UE in the same slot");
+}
+
 void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
 {
   std::unique_lock<std::mutex> lock(cell_group_mutex, std::defer_lock);
@@ -151,14 +165,8 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
     // Run slice scheduler policies.
     run_sched_strategy(cell_index);
 
-    // The post processing is done for DL and UL slots.
-    group_cell.intra_slice_sched.post_process_results();
-
-    // Record UEs needing triggered UL grants based on the finalized DL grant list.
-    group_cell.trig_ul_sched.process_dl_results(sl_tx, (*group_cell.cell_res_alloc)[0].result);
-
-    ocudu_sanity_check(puxch_grant_sanitizer(*group_cell.cell_res_alloc, logger),
-                       "PUCCH and PUSCH found for the same UE in the same slot");
+    // Post process sched results.
+    post_process_results(cell_index, sl_tx);
   }
 }
 
