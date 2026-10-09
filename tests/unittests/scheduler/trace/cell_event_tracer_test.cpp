@@ -52,7 +52,7 @@ protected:
     bool popped = qs.pop_and_process([this](const fbs::CellEvent& ev) {
       ASSERT_EQ(ev.value_type(), fbs::CellEventValue::CellStartEvent);
       const fbs::CellStartEvent& start = *ev.value_as_CellStartEvent();
-      ASSERT_EQ(start.pci(), static_cast<uint16_t>(cell_cfg.cell_index));
+      ASSERT_EQ(start.pci(), cell_cfg.params.pci);
       check_bwp_cfg(start.init_ul_bwp(), cell_cfg.init_bwp.ul.cfg());
       check_bwp_cfg(start.init_dl_bwp(), cell_cfg.init_bwp.dl.cfg());
     });
@@ -98,7 +98,7 @@ TEST(custom_cell_event_tracer_test, when_enabled_tracer_is_created_and_destroyed
     bool popped = qs.pop_and_process([&cell_cfg](const fbs::CellEvent& ev) {
       ASSERT_EQ(ev.value_type(), fbs::CellEventValue::CellStartEvent);
       const fbs::CellStartEvent& start = *ev.value_as_CellStartEvent();
-      EXPECT_EQ(start.pci(), static_cast<uint16_t>(cell_cfg.cell_index));
+      EXPECT_EQ(start.pci(), cell_cfg.params.pci);
       check_bwp_cfg(start.init_ul_bwp(), cell_cfg.init_bwp.ul.cfg());
       check_bwp_cfg(start.init_dl_bwp(), cell_cfg.init_bwp.dl.cfg());
     });

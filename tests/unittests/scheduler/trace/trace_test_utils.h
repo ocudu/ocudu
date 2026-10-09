@@ -31,7 +31,9 @@ inline const ocudu::cell_configuration& make_test_cell_cfg(du_cell_index_t cell_
   if (cells[static_cast<size_t>(cell_idx)] == nullptr) {
     sched_cell_configuration_request_message req = mgr.get_default_cell_config_request();
     req.cell_index                               = cell_idx;
-    cells[static_cast<size_t>(cell_idx)]         = mgr.add_cell(req);
+    // PCI distinct from the cell index, so that tests can tell them apart.
+    req.ran.pci                          = 100 + static_cast<pci_t>(cell_idx);
+    cells[static_cast<size_t>(cell_idx)] = mgr.add_cell(req);
   }
   return *cells[static_cast<size_t>(cell_idx)];
 }

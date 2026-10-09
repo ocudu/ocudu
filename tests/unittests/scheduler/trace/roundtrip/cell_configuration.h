@@ -41,7 +41,7 @@ struct test_values<static_vector<pucch_resource, pucch_constants::MAX_NOF_TOT_CE
 
 template <>
 struct roundtrip_traits<cell_configuration> {
-  static constexpr auto members = std::make_tuple(field("cell_index", &cell_configuration::cell_index),
+  static constexpr auto members = std::make_tuple(field("pci", &cell_configuration::pci),
                                                   field("init_ul_bwp", &cell_configuration::init_ul_bwp),
                                                   field("init_dl_bwp", &cell_configuration::init_dl_bwp),
                                                   field("pucch_resources", &cell_configuration::pucch_resources));

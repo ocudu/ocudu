@@ -199,7 +199,7 @@ TEST_F(sched_event_tracer_file_test, when_multiple_cells_are_traced_then_separat
   const auto events0 = read_cell_events(temp_dir, to_du_cell_index(0));
   ASSERT_GE(events0.size(), 3U);
   ASSERT_EQ(decode(events0[0]).value_type(), fbs::CellEventValue::CellStartEvent);
-  ASSERT_EQ(decode(events0[0]).value_as_CellStartEvent()->pci(), 0U);
+  ASSERT_EQ(decode(events0[0]).value_as_CellStartEvent()->pci(), cell_cfg0.params.pci);
   check_bwp_cfg(decode(events0[0]).value_as_CellStartEvent()->init_ul_bwp(), cell_cfg0.init_bwp.ul.cfg());
   check_bwp_cfg(decode(events0[0]).value_as_CellStartEvent()->init_dl_bwp(), cell_cfg0.init_bwp.dl.cfg());
   ASSERT_EQ(decode(events0[1]).value_type(), fbs::CellEventValue::CellSlotEvent);
@@ -209,7 +209,7 @@ TEST_F(sched_event_tracer_file_test, when_multiple_cells_are_traced_then_separat
   const auto events1 = read_cell_events(temp_dir, to_du_cell_index(1));
   ASSERT_GE(events1.size(), 3U);
   ASSERT_EQ(decode(events1[0]).value_type(), fbs::CellEventValue::CellStartEvent);
-  ASSERT_EQ(decode(events1[0]).value_as_CellStartEvent()->pci(), 1U);
+  ASSERT_EQ(decode(events1[0]).value_as_CellStartEvent()->pci(), cell_cfg1.params.pci);
   check_bwp_cfg(decode(events1[0]).value_as_CellStartEvent()->init_ul_bwp(), cell_cfg1.init_bwp.ul.cfg());
   check_bwp_cfg(decode(events1[0]).value_as_CellStartEvent()->init_dl_bwp(), cell_cfg1.init_bwp.dl.cfg());
   ASSERT_EQ(decode(events1[1]).value_type(), fbs::CellEventValue::CellSlotEvent);

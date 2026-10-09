@@ -17,6 +17,7 @@
 #include "fbs/slot_input_generated.h"
 #include "flatbuffers/flatbuffer_builder.h"
 #include "ocudu/adt/span.h"
+#include "ocudu/ran/du_cell_index.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 
 namespace ocudu {

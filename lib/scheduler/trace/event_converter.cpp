@@ -124,7 +124,7 @@ flatbuffers::Offset<fbs::CellStartEvent> schedtrace::convert_cell_cfg_to_fb(flat
                                                                             const ocudu::cell_configuration& cell_cfg)
 {
   schedtrace::cell_configuration trace_cfg;
-  trace_cfg.cell_index                   = cell_cfg.cell_index;
+  trace_cfg.pci                          = cell_cfg.params.pci;
   trace_cfg.init_ul_bwp                  = cell_cfg.init_bwp.ul.cfg();
   trace_cfg.init_dl_bwp                  = cell_cfg.init_bwp.dl.cfg();
   const cell_pucch_res_config& pucch_res = cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch;
@@ -150,12 +150,12 @@ schedtrace::convert_cell_cfg_to_fb(flatbuffers::FlatBufferBuilder& fbb, const sc
   }
   const auto pucch_res_vec = fbb.CreateVector(pucch_res_offs);
 
-  return fbs::CreateCellStartEvent(fbb, static_cast<uint16_t>(cell_cfg.cell_index), &ul_bwp, &dl_bwp, pucch_res_vec);
+  return fbs::CreateCellStartEvent(fbb, cell_cfg.pci, &ul_bwp, &dl_bwp, pucch_res_vec);
 }
 
 void schedtrace::convert_fb_to_cell_cfg(cell_configuration& cell_cfg, const fbs::CellStartEvent& start_event)
 {
-  cell_cfg.cell_index = static_cast<du_cell_index_t>(start_event.pci());
+  cell_cfg.pci = start_event.pci();
   if (start_event.init_dl_bwp() != nullptr) {
     convert_fb_to_bwp_cfg(cell_cfg.init_dl_bwp, *start_event.init_dl_bwp());
   }

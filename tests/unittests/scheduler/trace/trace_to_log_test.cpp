@@ -98,7 +98,7 @@ private:
   void write_stop()
   {
     flatbuffers::FlatBufferBuilder fbb;
-    finish_and_append(fbb, fbs::CellEventValue::CellStopEvent, fbs::CreateCellStopEvent(fbb, pci).Union());
+    finish_and_append(fbb, fbs::CellEventValue::CellStopEvent, fbs::CreateCellStopEvent(fbb, 0).Union());
     finalised = true;
   }
 
@@ -194,11 +194,10 @@ TEST_F(trace_to_log_test, when_cell_starts_and_stops_then_start_and_stop_are_log
 
 TEST_F(trace_to_log_test, when_cell_starts_then_log_contains_pci_and_bwp_info)
 {
-  // The CellStartEvent "pci" field carries the DU cell index, which has a small valid range.
-  cell_trace_stream_builder builder{1, make_test_bwp_cfg(), make_test_bwp_cfg()};
+  cell_trace_stream_builder builder{500, make_test_bwp_cfg(), make_test_bwp_cfg()};
   ASSERT_TRUE(run(builder.get_stream()));
 
-  ASSERT_TRUE(messages_contain("pci=1"));
+  ASSERT_TRUE(messages_contain("pci=500"));
   ASSERT_TRUE(messages_contain("30kHz"));
   log_to_stdout();
 }

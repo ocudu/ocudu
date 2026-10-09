@@ -27,7 +27,7 @@ inline const cell_configuration& make_test_schedtrace_cell_cfg()
 {
   static const cell_configuration cfg = [] {
     cell_configuration c;
-    c.cell_index  = to_du_cell_index(0);
+    c.pci         = 1;
     c.init_dl_bwp = make_test_bwp_cfg();
     c.init_ul_bwp = make_test_bwp_cfg();
 

@@ -84,7 +84,7 @@ bool schedtrace::trace_to_log(std::istream& input, ocudulog::basic_logger& logge
   convert_fb_to_cell_cfg(cell_cfg, *ev->value_as_CellStartEvent());
   const auto dl_scs = cell_cfg.init_dl_bwp.scs;
   logger.info("pci={}: Cell started. dl_bwp=[scs={} crbs=[{},{})] ul_bwp=[scs={} crbs=[{},{})]",
-              cell_cfg.cell_index,
+              cell_cfg.pci,
               to_string(cell_cfg.init_dl_bwp.scs),
               cell_cfg.init_dl_bwp.crbs.start(),
               cell_cfg.init_dl_bwp.crbs.stop(),
@@ -92,9 +92,12 @@ bool schedtrace::trace_to_log(std::istream& input, ocudulog::basic_logger& logge
               cell_cfg.init_ul_bwp.crbs.start(),
               cell_cfg.init_ul_bwp.crbs.stop());
 
+  // The trace does not carry the DU cell index, as each trace file holds a single cell.
+  const du_cell_index_t cell_index = to_du_cell_index(0);
+
   // Constructed after CellStartEvent so the PCI is known.
-  scheduler_result_logger result_logger{true, cell_cfg.cell_index};
-  scheduler_event_logger  event_logger{to_du_cell_index(0), cell_cfg.cell_index};
+  scheduler_result_logger result_logger{true, cell_cfg.pci};
+  scheduler_event_logger  event_logger{cell_index, cell_cfg.pci};
   const unsigned          flush_period    = 1024;
   unsigned                rem_until_flush = flush_period;
   bool                    stop_received   = false;
@@ -120,13 +123,13 @@ bool schedtrace::trace_to_log(std::istream& input, ocudulog::basic_logger& logge
             case fbs::SlotInput::RachIndication: {
               const auto*             rach_ind = static_cast<const fbs::RachIndication*>(slot_ev.inputs()->Get(i));
               rach_indication_message msg;
-              convert_fb_to_rach_indication(msg, *rach_ind, cell_cfg.init_ul_bwp.scs, cell_cfg.cell_index);
+              convert_fb_to_rach_indication(msg, *rach_ind, cell_cfg.init_ul_bwp.scs, cell_index);
               event_logger.enqueue(msg);
             } break;
             case fbs::SlotInput::HarqAckEvent: {
               const auto*    harq_ack = static_cast<const fbs::HarqAckEvent*>(slot_ev.inputs()->Get(i));
               harq_ack_event event;
-              convert_fb_to_harq_ack_event(event, *harq_ack, cell_cfg.init_ul_bwp.scs, cell_cfg.cell_index);
+              convert_fb_to_harq_ack_event(event, *harq_ack, cell_cfg.init_ul_bwp.scs, cell_index);
               event_logger.enqueue(event);
             } break;
             case fbs::SlotInput::SrEvent: {
@@ -150,7 +153,7 @@ bool schedtrace::trace_to_log(std::istream& input, ocudulog::basic_logger& logge
         result_logger.on_scheduler_result(result, std::chrono::microseconds(slot_ev.latency_us()));
       } break;
       case fbs::CellEventValue::CellStopEvent: {
-        logger.info("pci={}: Cell stopped", cell_cfg.cell_index);
+        logger.info("pci={}: Cell stopped", cell_cfg.pci);
         stop_received = true;
       } break;
       default:
