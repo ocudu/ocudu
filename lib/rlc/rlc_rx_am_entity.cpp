@@ -512,17 +512,19 @@ expected<byte_buffer_chain> rlc_rx_am_entity::reassemble_sdu(rlc_rx_am_sdu_info&
   }
 
   if (std::holds_alternative<byte_buffer_slice>(sdu_info.sdu_data)) {
-    // Handling for full SDU
+    // Handling for full SDU.
     byte_buffer_slice& payload = std::get<byte_buffer_slice>(sdu_info.sdu_data);
     if (!sdu.value().append(std::move(payload))) {
       logger.log_error("Failed to append segment in SDU buffer. sn={} {}", sn, sdu_info);
       return make_unexpected(default_error_t{});
     }
   } else if (std::holds_alternative<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data)) {
+    // Handling for segment set.
     rlc_rx_am_sdu_info::segment_set_t& segments = std::get<rlc_rx_am_sdu_info::segment_set_t>(sdu_info.sdu_data);
+    byte_buffer                        sdu_buf;
     for (const rlc_rx_am_sdu_segment& segm : segments) {
-      logger.log_debug("Chaining segment. sn={} so={} len={}", sn, segm.so, segm.payload.length());
-      if (!sdu.value().append(segm.payload.copy())) {
+      logger.log_debug("Appending segment. sn={} so={} len={}", sn, segm.so, segm.payload.length());
+      if (!sdu_buf.append(segm.payload)) {
         logger.log_error("Failed to append segment in SDU buffer. sn={} so={} len={} {}",
                          sn,
                          segm.so,
@@ -531,6 +533,11 @@ expected<byte_buffer_chain> rlc_rx_am_entity::reassemble_sdu(rlc_rx_am_sdu_info&
         return make_unexpected(default_error_t{});
       }
     }
+    if (!sdu.value().append(std::move(sdu_buf))) {
+      logger.log_error("Failed to store reassembled SDU in SDU buffer. sn={} {}", sn, sdu_info);
+      return make_unexpected(default_error_t{});
+    }
+
     logger.log_debug("Assembled SDU from segments. sn={} sdu_len={}", sn, sdu.value().length());
   } else {
     logger.log_error("Unhandled variant of sdu_data. sn={} {}", sn, sdu_info);
