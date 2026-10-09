@@ -9,6 +9,7 @@
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/subcarrier_spacing.h"
 #include <optional>
+#include <vector>
 
 namespace ocudu {
 
@@ -109,5 +110,14 @@ std::optional<unsigned> find_next_tdd_ul_slot(const tdd_ul_dl_config_common& cfg
 /// \return The slot index, if found, or an empty optional otherwise. The case of empty optional would the case of
 /// start_slot_index being >= TDD period in slots.
 std::optional<unsigned> find_next_tdd_full_ul_slot(const tdd_ul_dl_config_common& cfg, unsigned start_slot_index = 0);
+
+/// \brief Lists the slot offsets of a periodic UL resource where all the symbols of the resource are active for UL.
+/// \param cfg TDD configuration. Without it (FDD), all the slot offsets are listed.
+/// \param period_slots Periodicity of the resource, in slots.
+/// \param syms OFDM symbols of the resource.
+std::vector<unsigned> get_ul_slot_offsets(const std::optional<tdd_ul_dl_config_common>& cfg,
+                                          unsigned                                      period_slots,
+                                          ofdm_symbol_range                             syms,
+                                          cyclic_prefix                                 cp);
 
 } // namespace ocudu

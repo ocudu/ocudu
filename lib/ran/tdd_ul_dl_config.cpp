@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
+#include "ocudu/ran/time/radio_frame_constants.h"
 
 using namespace ocudu;
 
@@ -138,4 +139,24 @@ std::optional<unsigned> ocudu::find_next_tdd_full_ul_slot(const tdd_ul_dl_config
     }
   }
   return ret;
+}
+
+std::vector<unsigned> ocudu::get_ul_slot_offsets(const std::optional<tdd_ul_dl_config_common>& cfg,
+                                                 unsigned                                      period_slots,
+                                                 ofdm_symbol_range                             syms,
+                                                 cyclic_prefix                                 cp)
+{
+  std::vector<unsigned> offsets;
+  offsets.reserve(period_slots);
+  for (unsigned offset = 0; offset != period_slots; ++offset) {
+    if (cfg.has_value()) {
+      const unsigned slot_index =
+          offset % (radio_frame_constants::NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(cfg->ref_scs));
+      if (not get_active_tdd_ul_symbols(*cfg, slot_index, cp).contains(syms)) {
+        continue;
+      }
+    }
+    offsets.push_back(offset);
+  }
+  return offsets;
 }

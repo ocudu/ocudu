@@ -43,25 +43,11 @@ void pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cell_c
   // Compute SR period and SR configuration list.
   // TODO: Handle more than one SR period.
   cell_ctx.sr_period_slots = sr_periodicity_to_slot(cell_cfg.init_bwp.pucch.sr_period);
+  const cyclic_prefix cp   = cell_ctx.cell_params.ul_cfg_common.init_ul_bwp.generic_params.cp;
   for (unsigned res = 0; res < cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_sr_resources; ++res) {
-    for (unsigned offset = 0; offset != cell_ctx.sr_period_slots; ++offset) {
-      if (cell_cfg.tdd_cfg.has_value()) {
-        const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg.tdd_cfg;
-        const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-        if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
-          // UL disabled for this slot.
-          continue;
-        }
-
-        const pucch_resource& sr_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
-            cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(res)));
-        const auto slot_ul_syms = get_active_tdd_ul_symbols(
-            tdd_cfg, slot_index, cell_ctx.cell_params.ul_cfg_common.init_ul_bwp.generic_params.cp);
-        if (not slot_ul_syms.contains(sr_res.syms)) {
-          // The UL symbols in this slot do not contain the symbols for the resource.
-          continue;
-        }
-      }
+    const pucch_resource& sr_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
+        cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(res)));
+    for (unsigned offset : get_ul_slot_offsets(cell_cfg.tdd_cfg, cell_ctx.sr_period_slots, sr_res.syms, cp)) {
       cell_ctx.free_sr_configs.emplace_back(periodic_pucch_config{res, offset});
     }
   }
@@ -73,24 +59,9 @@ void pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cell_c
     // Compute the LCM of SR and CSI periods, as they might not be multiples of each other.
     cell_ctx.lcm_csi_sr_period = std::lcm(cell_ctx.sr_period_slots, cell_ctx.csi_period_slots);
     for (unsigned res = 0; res < cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_csi_resources; ++res) {
-      for (unsigned offset = 0; offset != cell_ctx.csi_period_slots; ++offset) {
-        if (cell_cfg.tdd_cfg.has_value()) {
-          const tdd_ul_dl_config_common& tdd_cfg = *cell_cfg.tdd_cfg;
-          const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-          if (not has_active_tdd_ul_symbols(tdd_cfg, slot_index)) {
-            // UL disabled for this slot.
-            continue;
-          }
-
-          const pucch_resource& csi_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
-              cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(res)));
-          const auto slot_ul_syms = get_active_tdd_ul_symbols(
-              tdd_cfg, slot_index, cell_ctx.cell_params.ul_cfg_common.init_ul_bwp.generic_params.cp);
-          if (not slot_ul_syms.contains(csi_res.syms)) {
-            // The UL symbols in this slot do not contain the symbols for the resource.
-            continue;
-          }
-        }
+      const pucch_resource& csi_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
+          cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(res)));
+      for (unsigned offset : get_ul_slot_offsets(cell_cfg.tdd_cfg, cell_ctx.csi_period_slots, csi_res.syms, cp)) {
         cell_ctx.free_csi_configs.emplace_back(periodic_pucch_config{res, offset});
       }
     }
