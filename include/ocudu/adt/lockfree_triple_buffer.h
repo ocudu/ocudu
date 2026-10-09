@@ -26,8 +26,8 @@ public:
   /// \brief Read the latest committed data from the buffer.
   /// This function is intended to be called by the consumer thread.
   /// It checks if new data is available and updates the front buffer index if necessary.
-  /// \return Const reference to the latest data.
-  const T& read()
+  /// \return Reference to the latest data.
+  T& read()
   {
     unsigned dirty_idx = dirty_middle_buffer_idx.load(std::memory_order_relaxed);
     if (dirty_idx & dirty_bit) {
