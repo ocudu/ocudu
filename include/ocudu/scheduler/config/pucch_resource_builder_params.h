@@ -187,15 +187,8 @@ struct pucch_harq_ack_rep_params {
 ///
 /// [Implementation-defined] The cell PUCCH resource list will contain all resources in the cell ordered by type:
 ///   | HARQ Resource Set ID 0 | SR | HARQ Resource Set ID 1 | CSI | (SR_F2) | (CSI_F0) |
-/// [Implementation-defined] The UE PUCCH resource list will contain the resources in the following order:
-///   | HARQ Resource Set ID 0 | SR | HARQ Resource Set ID 1 | CSI | (SR_F2) | (CSI_F0) |
 /// Where SR_F2 and CSI_F0 only exist when using Format 0 and Format 2 together.
 struct pucch_resource_builder_params {
-  /// Number of PUCCH resources for SR configured per UE.
-  static constexpr unsigned nof_sr_res_per_ue = 1U;
-  /// Number of PUCCH resources for CSI configured per UE (when periodic CSI reporting is configured).
-  static constexpr unsigned nof_csi_res_per_ue = 1U;
-
   static constexpr unsigned max_res_set_size = 8;
   using resource_set_size                    = bounded_integer<unsigned, 1, max_res_set_size>;
 
@@ -272,11 +265,10 @@ struct pucch_resource_builder_params {
                  pri,
                  res_set_size.value());
     if constexpr (ResourceSetId == 0) {
-      return pucch_res_id_t::make_ded(res_set_cfg_id.value() * res_set_size.value() + pri, pri);
+      return pucch_res_id_t::make_ded(res_set_cfg_id.value() * res_set_size.value() + pri);
     }
     return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                        res_set_cfg_id.value() * res_set_size.value() + pri,
-                                    res_set_size.value() + nof_sr_res_per_ue + pri);
+                                    res_set_cfg_id.value() * res_set_size.value() + pri);
   }
 
   // \brief Get the ID of a given PUCCH resource for SR.
@@ -289,8 +281,7 @@ struct pucch_resource_builder_params {
                  "SR resource index={} exceeds configured number of SR resources={}",
                  sr_res_id.value(),
                  nof_cell_sr_resources);
-    return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + sr_res_id.value(),
-                                    res_set_size.value());
+    return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + sr_res_id.value());
   }
 
   // \brief Get the ID of a given PUCCH resource for CSI.
@@ -304,8 +295,7 @@ struct pucch_resource_builder_params {
                  csi_res_id.value(),
                  nof_cell_csi_resources);
     return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                        nof_cell_res_set_configs * res_set_size.value() + csi_res_id.value(),
-                                    res_set_size.value() + nof_sr_res_per_ue + res_set_size.value());
+                                    nof_cell_res_set_configs * res_set_size.value() + csi_res_id.value());
   }
 
   /// \brief Get the ID of the SR_F2 resource associated to a given SR resource.
@@ -317,10 +307,8 @@ struct pucch_resource_builder_params {
     ocudu_assert(format_01() == pucch_format::FORMAT_0 and format_234() == pucch_format::FORMAT_2,
                  "SR_F2 resource is only present in the F0+F2 case");
     return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                        nof_cell_res_set_configs * res_set_size.value() + nof_cell_csi_resources +
-                                        sr_res_id.value(),
-                                    res_set_size.value() + nof_sr_res_per_ue + res_set_size.value() +
-                                        (nof_cell_csi_resources != 0 ? nof_csi_res_per_ue : 0U));
+                                    nof_cell_res_set_configs * res_set_size.value() + nof_cell_csi_resources +
+                                    sr_res_id.value());
   }
 
   /// \brief Get the ID of the CSI_F0 resource associated to a given CSI resource.
@@ -333,10 +321,8 @@ struct pucch_resource_builder_params {
                      format_234() == pucch_format::FORMAT_2,
                  "CSI_F0 resource is only present in the F0+F2 case");
     return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                        nof_cell_res_set_configs * res_set_size.value() + nof_cell_csi_resources +
-                                        nof_cell_sr_resources + csi_res_id.value(),
-                                    res_set_size.value() + nof_sr_res_per_ue + res_set_size.value() +
-                                        nof_csi_res_per_ue + 1U);
+                                    nof_cell_res_set_configs * res_set_size.value() + nof_cell_csi_resources +
+                                    nof_cell_sr_resources + csi_res_id.value());
   }
 
   /// Get the number of symbols configured for the Format 0 or 1 resources.

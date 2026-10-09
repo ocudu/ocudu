@@ -165,9 +165,9 @@ struct scheduling_request_resource_config {
   /// \c periodicityAndOffset is here represented separately as pediod and offset.
   sr_periodicity period;
   unsigned       offset;
-  /// \c resource, which identifies the PUCCH resource to be used for this SR.
-  /// Refer to \ref pucch_res_id_t.
-  pucch_res_id_t pucch_res_id = pucch_res_id_t::make_ded(0, 0);
+  /// \c resource, the \c PUCCH-ResourceId of the PUCCH resource used for this SR, i.e. its position in the UE's PUCCH
+  /// resource list.
+  unsigned pucch_res_id = 0;
 };
 
 } // namespace ocudu

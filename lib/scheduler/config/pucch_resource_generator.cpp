@@ -279,7 +279,7 @@ public:
     pucch_resource res{};
     // Resource ID will be set later, assign an invalid value to avoid uninitialized variable warnings.
     static constexpr unsigned invalid_res_id = std::numeric_limits<unsigned>::max();
-    res.res_id                               = pucch_res_id_t::make_ded(invalid_res_id, invalid_res_id);
+    res.res_id                               = pucch_res_id_t::make_ded(invalid_res_id);
     res.syms = {static_cast<uint8_t>(state.start_sym), static_cast<uint8_t>(state.start_sym + nof_syms)};
     const unsigned starting_prb =
         state.high_start_prb ? bwp_size_rbs - state.prb_high_off - nof_prbs : state.prb_low_off;

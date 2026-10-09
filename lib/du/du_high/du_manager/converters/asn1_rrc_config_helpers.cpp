@@ -1483,7 +1483,7 @@ asn1::rrc_nr::pucch_res_set_s ocudu::odu::make_asn1_rrc_pucch_resource_set(const
   pucch_res_set_s pucch_res_set;
   pucch_res_set.pucch_res_set_id = static_cast<uint8_t>(cfg.id);
   for (const auto& it : cfg.resources) {
-    pucch_res_set.res_list.push_back(it.ded().ue_res_id);
+    pucch_res_set.res_list.push_back(it);
   }
   return pucch_res_set;
 }
@@ -1545,10 +1545,10 @@ static void make_asn1_rrc_pucch_formats_common_param(asn1::rrc_nr::pucch_format_
   }
 }
 
-asn1::rrc_nr::pucch_res_s ocudu::odu::make_asn1_rrc_pucch_resource(const pucch_resource& cfg)
+asn1::rrc_nr::pucch_res_s ocudu::odu::make_asn1_rrc_pucch_resource(const pucch_resource& cfg, unsigned ue_res_id)
 {
   pucch_res_s pucch_res;
-  pucch_res.pucch_res_id                = cfg.res_id.ded().ue_res_id;
+  pucch_res.pucch_res_id                = ue_res_id;
   pucch_res.start_prb                   = cfg.starting_prb;
   pucch_res.intra_slot_freq_hop_present = cfg.second_hop_prb.has_value();
   pucch_res.second_hop_prb_present      = cfg.second_hop_prb.has_value();
@@ -1628,7 +1628,7 @@ ocudu::odu::make_asn1_rrc_sr_resource(const scheduling_request_resource_config& 
   sr_res_cfg.sched_request_res_id           = cfg.sr_res_id;
   sr_res_cfg.sched_request_id               = cfg.sr_id;
   sr_res_cfg.res_present                    = true;
-  sr_res_cfg.res                            = cfg.pucch_res_id.ded().ue_res_id;
+  sr_res_cfg.res                            = cfg.pucch_res_id;
   sr_res_cfg.periodicity_and_offset_present = true;
   switch (cfg.period) {
     case sr_periodicity::sym_2:
@@ -1706,22 +1706,25 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
       [](const pucch_resource_set& res_set) { return make_asn1_rrc_pucch_resource_set(res_set); },
       [](const pucch_resource_set& res_set) { return static_cast<uint8_t>(res_set.id); });
 
-  // PUCCH Resource.
-  calculate_addmodremlist_diff(
-      out.res_to_add_mod_list,
-      out.res_to_release_list,
-      src.pucch_res_list,
-      dest.pucch_res_list,
-      [](const pucch_resource& res) { return make_asn1_rrc_pucch_resource(res); },
-      [](const pucch_resource& res) { return res.res_id.ded().ue_res_id; });
+  // PUCCH Resource. The PUCCH-ResourceId of each resource is its position in the list.
+  out.res_to_add_mod_list.clear();
+  out.res_to_release_list.clear();
+  for (unsigned ue_res_id = 0, nof_res = std::max(src.pucch_res_list.size(), dest.pucch_res_list.size());
+       ue_res_id != nof_res;
+       ++ue_res_id) {
+    if (ue_res_id >= dest.pucch_res_list.size()) {
+      out.res_to_release_list.push_back(ue_res_id);
+    } else if (ue_res_id >= src.pucch_res_list.size() or
+               src.pucch_res_list[ue_res_id] != dest.pucch_res_list[ue_res_id]) {
+      out.res_to_add_mod_list.push_back(make_asn1_rrc_pucch_resource(dest.pucch_res_list[ue_res_id], ue_res_id));
+    }
+  }
 
   // PUCCH Resource extension (\c pucch-RepetitionNrofSlots-r17): mirror res_to_add_mod_list in size and order.
   // Emit the ext list if a signalled resource has or had a non-default repetition factor. The list is Need N, so
   // omitting it would leave a previously configured repetition unreleased in the UE.
   const auto has_repetition = [](const auto& res_list, unsigned ue_res_id) {
-    return std::any_of(res_list.begin(), res_list.end(), [ue_res_id](const pucch_resource& r) {
-      return r.res_id.ded().ue_res_id == ue_res_id and r.rep_factor != pucch_repetition_factor::n1;
-    });
+    return ue_res_id < res_list.size() and res_list[ue_res_id].rep_factor != pucch_repetition_factor::n1;
   };
   const bool any_repetition =
       std::any_of(out.res_to_add_mod_list.begin(), out.res_to_add_mod_list.end(), [&](const auto& asn1_res) {
@@ -1733,17 +1736,14 @@ calculate_pucch_config_diff(asn1::rrc_nr::pucch_cfg_s& out, const pucch_config& 
     out.res_to_add_mod_list_ext_v1610.set_present();
     auto* ext_list = out.res_to_add_mod_list_ext_v1610.get();
     for (const auto& asn1_res : out.res_to_add_mod_list) {
-      const auto* const it =
-          std::find_if(dest.pucch_res_list.begin(), dest.pucch_res_list.end(), [&](const pucch_resource& r) {
-            return r.res_id.ded().ue_res_id == asn1_res.pucch_res_id;
-          });
+      const pucch_resource& res = dest.pucch_res_list[asn1_res.pucch_res_id];
       pucch_res_ext_v1610_s ext{};
-      if (it != dest.pucch_res_list.end() and it->rep_factor != pucch_repetition_factor::n1) {
+      if (res.rep_factor != pucch_repetition_factor::n1) {
         // pucch-RepetitionNrofSlots-r17 is in an extension addition group of PUCCH-ResourceExt-v1610.
         ext.pucch_repeat_nrof_slots_r17_present = true;
         ext.pucch_repeat_nrof_slots_r17.value =
             static_cast<pucch_res_ext_v1610_s::pucch_repeat_nrof_slots_r17_opts::options>(
-                log2_ceil(static_cast<unsigned>(it->rep_factor)));
+                log2_ceil(static_cast<unsigned>(res.rep_factor)));
       }
       ext_list->push_back(ext);
     }

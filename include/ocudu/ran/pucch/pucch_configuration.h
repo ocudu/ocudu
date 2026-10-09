@@ -156,7 +156,7 @@ struct pucch_resource {
     bool operator!=(const f4_config& rhs) const { return !(rhs == *this); }
   };
 
-  pucch_res_id_t                                                      res_id = pucch_res_id_t::make_ded(0, 0);
+  pucch_res_id_t                                                      res_id = pucch_res_id_t::make_ded(0);
   uint16_t                                                            starting_prb;
   ofdm_symbol_range                                                   syms;
   std::optional<uint16_t>                                             second_hop_prb;
@@ -195,8 +195,8 @@ struct pucch_resource {
 struct pucch_resource_set {
   /// \c PUCCH-ResourceSetId.
   pucch_res_set_id id;
-  /// \c resourceList.
-  static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> resources;
+  /// \c resourceList, with the \c PUCCH-ResourceId of each resource, i.e. its position in the UE's PUCCH resource list.
+  static_vector<unsigned, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> resources;
 
   bool operator==(const pucch_resource_set& rhs) const { return id == rhs.id && resources == rhs.resources; }
   bool operator!=(const pucch_resource_set& rhs) const { return !(rhs == *this); }

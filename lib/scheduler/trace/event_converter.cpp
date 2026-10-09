@@ -385,7 +385,7 @@ static void convert_fb_to_ul_bwp(ul_bwp_configuration& ul_bwp, const fbs::UlBwp&
       pucch_res_id_t res_id =
           cell_res_idx < pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES
               ? pucch_res_id_t::make_cmn(cell_res_idx)
-              : pucch_res_id_t::make_ded(cell_res_idx - pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES, 0);
+              : pucch_res_id_t::make_ded(cell_res_idx - pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES);
       pucch_resource res;
       convert_fb_to_pucch_resource(res, *fb_res, res_id);
       ul_bwp.pucch_resources.push_back(res);

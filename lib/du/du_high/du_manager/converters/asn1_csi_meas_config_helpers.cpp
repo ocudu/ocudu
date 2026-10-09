@@ -803,8 +803,7 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
           rep_cfg.report_slot_cfg, rep_cfg_val->report_slot_period, rep_cfg_val->report_slot_offset);
       for (const auto& pucch_csi_res : rep_cfg_val->pucch_csi_res_list) {
         rep_cfg.pucch_csi_res_list.push_back(
-            {.ul_bw_part_id = pucch_csi_res.ul_bwp,
-             .pucch_res     = static_cast<uint8_t>(pucch_csi_res.pucch_res_id.ded().ue_res_id)});
+            {.ul_bw_part_id = pucch_csi_res.ul_bwp, .pucch_res = static_cast<uint8_t>(pucch_csi_res.pucch_res_id)});
       }
     } else if (rep_cfg_val->report_type ==
                csi_report_config::periodic_or_semi_persistent_report_on_pucch::report_type_t::semi_persistent) {
@@ -813,8 +812,7 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
           rep_cfg.report_slot_cfg, rep_cfg_val->report_slot_period, rep_cfg_val->report_slot_offset);
       for (const auto& pucch_csi_res : rep_cfg_val->pucch_csi_res_list) {
         rep_cfg.pucch_csi_res_list.push_back(
-            {.ul_bw_part_id = pucch_csi_res.ul_bwp,
-             .pucch_res     = static_cast<uint8_t>(pucch_csi_res.pucch_res_id.ded().ue_res_id)});
+            {.ul_bw_part_id = pucch_csi_res.ul_bwp, .pucch_res = static_cast<uint8_t>(pucch_csi_res.pucch_res_id)});
       }
     }
   } else if (const auto* rep_cfg_val2 =

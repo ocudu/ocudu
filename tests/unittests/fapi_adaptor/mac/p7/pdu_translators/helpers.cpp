@@ -559,7 +559,7 @@ static pucch_info_test_helper build_pucch_pdu(unsigned                          
   pucch_info_test_helper helper;
   helper.bwp_cfg = std::make_unique<bwp_configuration>(
       bwp_configuration{.cp = cyclic_prefix::NORMAL, .scs = subcarrier_spacing::kHz15, .crbs = crb_interval{2, 10}});
-  helper.res = std::make_unique<pucch_resource>(pucch_resource{.res_id         = pucch_res_id_t::make_ded(0, 0),
+  helper.res = std::make_unique<pucch_resource>(pucch_resource{.res_id         = pucch_res_id_t::make_ded(0),
                                                                .starting_prb   = 1,
                                                                .syms           = ofdm_symbol_range{0, nof_symbols},
                                                                .second_hop_prb = second_hop_prb,

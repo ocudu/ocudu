@@ -116,7 +116,7 @@ enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 /// \brief Identifier of a PUCCH resource.
 ///
 /// Carries either:
-///   - a \e dedicated identifier (cell-wide id + UE-specific id) for UE-configured PUCCH resources, or
+///   - a \e dedicated identifier (cell-wide id) for UE-configured PUCCH resources, or
 ///   - a \e common identifier (\f$r_{PUCCH}\f$, TS 38.213 Section 9.2.1) for PUCCH resources from the default
 ///     common table used before dedicated PUCCH is configured.
 struct pucch_res_id_t {
@@ -132,20 +132,14 @@ struct pucch_res_id_t {
   struct dedicated {
     /// PUCCH cell resource ID, used by the DU and the scheduler to identify the resource.
     unsigned cell_res_id = 0;
-    /// Corresponds to \c pucch-ResourceId in \c PUCCH-Resource, \c PUCCH-Config, TS 38.331.
-    /// \remark Used by the DU only to populate the ASN.1 message; not used by the scheduler.
-    unsigned ue_res_id = 0;
 
-    bool operator==(const dedicated& rhs) const { return cell_res_id == rhs.cell_res_id && ue_res_id == rhs.ue_res_id; }
+    bool operator==(const dedicated& rhs) const { return cell_res_id == rhs.cell_res_id; }
     bool operator!=(const dedicated& rhs) const { return !(rhs == *this); }
   };
   std::variant<dedicated, common> id;
 
   static pucch_res_id_t make_cmn(unsigned r_pucch) { return pucch_res_id_t{common{r_pucch}}; }
-  static pucch_res_id_t make_ded(unsigned cell_res_id_, unsigned ue_res_id_)
-  {
-    return pucch_res_id_t{dedicated{cell_res_id_, ue_res_id_}};
-  }
+  static pucch_res_id_t make_ded(unsigned cell_res_id_) { return pucch_res_id_t{dedicated{cell_res_id_}}; }
 
   bool is_cmn() const { return std::holds_alternative<common>(id); }
   bool is_ded() const { return std::holds_alternative<dedicated>(id); }
@@ -175,7 +169,7 @@ struct formatter<ocudu::pucch_res_id_t> {
     if (res_id.is_cmn()) {
       return format_to(ctx.out(), "cmn({})", res_id.cmn().r_pucch);
     }
-    return format_to(ctx.out(), "ded({}, {})", res_id.ded().cell_res_id, res_id.ded().ue_res_id);
+    return format_to(ctx.out(), "ded({})", res_id.ded().cell_res_id);
   }
 };
 

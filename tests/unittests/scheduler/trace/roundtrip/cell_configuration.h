@@ -27,7 +27,7 @@ struct test_values<static_vector<pucch_resource, pucch_constants::MAX_NOF_TOT_CE
         pucch_resource res = contents[i % contents.size()];
         res.res_id         = i < pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES
                                  ? pucch_res_id_t::make_cmn(i)
-                                 : pucch_res_id_t::make_ded(i - pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES, 0);
+                                 : pucch_res_id_t::make_ded(i - pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES);
         list.push_back(res);
       }
       return list;

@@ -36,7 +36,8 @@ asn1::rrc_nr::pucch_res_set_s make_asn1_rrc_pucch_resource_set(const pucch_resou
 
 asn1::rrc_nr::sched_request_res_cfg_s make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg);
 
-asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg);
+/// Converts a PUCCH resource of the UE's PUCCH resource list, where \c ue_res_id is its position in the list.
+asn1::rrc_nr::pucch_res_s make_asn1_rrc_pucch_resource(const pucch_resource& cfg, unsigned ue_res_id);
 
 asn1::rrc_nr::tci_state_s make_asn1_rrc_tci_state(const tci_state& cfg);
 

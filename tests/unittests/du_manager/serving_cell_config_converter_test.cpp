@@ -499,21 +499,21 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   // >> PUCCH Resource Set 1.
   dest_pucch_cfg.pucch_res_set.emplace_back();
   dest_pucch_cfg.pucch_res_set.back().id = ocudu::pucch_res_set_id::set_1;
-  dest_pucch_cfg.pucch_res_set.back().resources.emplace_back(pucch_res_id_t::make_ded(1, 1));
+  dest_pucch_cfg.pucch_res_set.back().resources.emplace_back(1);
   // Remove first element.
   dest_pucch_cfg.pucch_res_set.erase(dest_pucch_cfg.pucch_res_set.begin());
 
-  // >>> PUCCH resource 2.
+  // >>> Modify the first PUCCH resource and remove the last one.
+  ASSERT_GE(dest_pucch_cfg.pucch_res_list.size(), 2);
+  const unsigned last_res_id = dest_pucch_cfg.pucch_res_list.size() - 1;
   pucch_resource res_basic;
-  res_basic.res_id         = pucch_res_id_t::make_ded(14, 14);
+  res_basic.res_id         = pucch_res_id_t::make_ded(14);
   res_basic.starting_prb   = 40;
   res_basic.second_hop_prb = 50;
   res_basic.syms           = ofdm_symbol_range::start_and_len(13, 1);
   res_basic.format_params.emplace<pucch_resource::f2_config>(pucch_resource::f2_config{.nof_prbs = 1});
-  dest_pucch_cfg.pucch_res_list.push_back(res_basic);
-
-  // Remove first element.
-  dest_pucch_cfg.pucch_res_list.erase(dest_pucch_cfg.pucch_res_list.begin());
+  dest_pucch_cfg.pucch_res_list.front() = res_basic;
+  dest_pucch_cfg.pucch_res_list.pop_back();
 
   dest_pucch_cfg.dl_data_to_ul_ack.push_back(2);
   dest_pucch_cfg.dl_data_to_ul_ack.push_back(3);
@@ -536,12 +536,11 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
   dest_pucch_cfg.format_4_common_param.value().additional_dmrs = true;
 
   // >>> SR Resource.
-  dest_pucch_cfg.sr_res_list.push_back(
-      scheduling_request_resource_config{.sr_res_id    = 2,
-                                         .sr_id        = uint_to_sched_req_id(1),
-                                         .period       = sr_periodicity::sl_80,
-                                         .offset       = 0,
-                                         .pucch_res_id = pucch_res_id_t::make_ded(1, 1)});
+  dest_pucch_cfg.sr_res_list.push_back(scheduling_request_resource_config{.sr_res_id    = 2,
+                                                                          .sr_id        = uint_to_sched_req_id(1),
+                                                                          .period       = sr_periodicity::sl_80,
+                                                                          .offset       = 0,
+                                                                          .pucch_res_id = 1});
 
   // Remove first element.
   dest_pucch_cfg.sr_res_list.erase(dest_pucch_cfg.sr_res_list.begin());
@@ -568,8 +567,9 @@ TEST(serving_cell_config_converter_test, test_ue_custom_pucch_cfg_conversion)
 
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list.size(), 1);
     auto& pucch_res1 = rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list[0];
-    ASSERT_EQ(pucch_res1.pucch_res_id, 14);
+    ASSERT_EQ(pucch_res1.pucch_res_id, 0);
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_release_list.size(), 1);
+    ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_release_list[0], last_res_id);
 
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().sched_request_res_to_add_mod_list.size(), 1);
     ASSERT_EQ(rrc_sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().sched_request_res_to_release_list.size(), 1);
@@ -598,9 +598,11 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_conver
   auto&                      dest_pucch_cfg =
       dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
 
-  // Add a PUCCH resource repeated over four slots and a PUCCH resource without repetition.
+  // Add a PUCCH resource repeated over four slots and a PUCCH resource without repetition. The PUCCH-ResourceId of
+  // each one is its position in the resource list.
+  const unsigned rep_res_id = dest_pucch_cfg.pucch_res_list.size();
   pucch_resource res_rep;
-  res_rep.res_id         = pucch_res_id_t::make_ded(14, 14);
+  res_rep.res_id         = pucch_res_id_t::make_ded(14);
   res_rep.starting_prb   = 40;
   res_rep.second_hop_prb = 50;
   res_rep.syms           = ofdm_symbol_range::start_and_len(0, 14);
@@ -609,7 +611,7 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_conver
   dest_pucch_cfg.pucch_res_list.push_back(res_rep);
 
   pucch_resource res_no_rep = res_rep;
-  res_no_rep.res_id         = pucch_res_id_t::make_ded(15, 15);
+  res_no_rep.res_id         = pucch_res_id_t::make_ded(15);
   res_no_rep.rep_factor     = pucch_repetition_factor::n1;
   dest_pucch_cfg.pucch_res_list.push_back(res_no_rep);
 
@@ -634,11 +636,11 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_conver
   ASSERT_EQ(pucch_cfg.res_to_add_mod_list_ext_v1610->size(), pucch_cfg.res_to_add_mod_list.size());
   for (unsigned i = 0, e = pucch_cfg.res_to_add_mod_list.size(); i != e; ++i) {
     const auto& res_ext = (*pucch_cfg.res_to_add_mod_list_ext_v1610)[i];
-    if (pucch_cfg.res_to_add_mod_list[i].pucch_res_id == 14) {
+    if (pucch_cfg.res_to_add_mod_list[i].pucch_res_id == rep_res_id) {
       ASSERT_TRUE(res_ext.pucch_repeat_nrof_slots_r17_present);
       ASSERT_EQ(res_ext.pucch_repeat_nrof_slots_r17.to_number(), 4);
     } else {
-      ASSERT_EQ(pucch_cfg.res_to_add_mod_list[i].pucch_res_id, 15);
+      ASSERT_EQ(pucch_cfg.res_to_add_mod_list[i].pucch_res_id, rep_res_id + 1);
       ASSERT_FALSE(res_ext.pucch_repeat_nrof_slots_r17_present);
     }
   }
@@ -670,7 +672,7 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_update
   // The modified PUCCH resource is signalled again, with its repetition factor.
   const auto& pucch_cfg = unpacked.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
   ASSERT_EQ(pucch_cfg.res_to_add_mod_list.size(), 1);
-  ASSERT_EQ(pucch_cfg.res_to_add_mod_list[0].pucch_res_id, res.res_id.ded().ue_res_id);
+  ASSERT_EQ(pucch_cfg.res_to_add_mod_list[0].pucch_res_id, 0);
   ASSERT_TRUE(pucch_cfg.res_to_add_mod_list_ext_v1610.is_present());
   ASSERT_EQ(pucch_cfg.res_to_add_mod_list_ext_v1610->size(), 1);
   ASSERT_TRUE((*pucch_cfg.res_to_add_mod_list_ext_v1610)[0].pucch_repeat_nrof_slots_r17_present);
@@ -705,7 +707,7 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_releas
   // resourceToAddModListExt-v1610 is Need N, so it must be present for pucch-RepetitionNrofSlots-r17 to be released.
   const auto& pucch_cfg = unpacked.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
   ASSERT_EQ(pucch_cfg.res_to_add_mod_list.size(), 1);
-  ASSERT_EQ(pucch_cfg.res_to_add_mod_list[0].pucch_res_id, res.res_id.ded().ue_res_id);
+  ASSERT_EQ(pucch_cfg.res_to_add_mod_list[0].pucch_res_id, 0);
   ASSERT_TRUE(pucch_cfg.res_to_add_mod_list_ext_v1610.is_present());
   ASSERT_EQ(pucch_cfg.res_to_add_mod_list_ext_v1610->size(), 1);
   ASSERT_FALSE((*pucch_cfg.res_to_add_mod_list_ext_v1610)[0].pucch_repeat_nrof_slots_r17_present);

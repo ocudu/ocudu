@@ -121,13 +121,10 @@ The PUCCH structures show the correct split. They are not perfect, but use them 
   parameters, for example the number of resources and the format parameters.
 - `cell_pucch_res_config` (`include/ocudu/scheduler/config/cell_bwp_res_config.h`) holds the lists of the common and the
   dedicated PUCCH resources of the cell.
-- `ue_pucch_config` (`include/ocudu/scheduler/config/ue_bwp_config.h`) holds IDs, the SR offset, the maximum PUCCH
-  payload and the PUCCH repetition flags. It holds no copy of a resource.
-- `pucch_res_id_t` (`include/ocudu/ran/pucch/pucch_mapping.h`) holds a dedicated ID or a common ID.
-  - The dedicated ID holds two IDs. The scheduler uses `cell_res_id`. The DU uses `ue_res_id` only for the ASN.1
-    message.
-  - The common ID holds `r_pucch`. It selects a resource from the default common PUCCH table, before the UE has a
-    dedicated PUCCH configuration.
+- `ue_pucch_config` (`include/ocudu/scheduler/config/ue_bwp_config.h`) holds only IDs and offsets. It holds no copy of a
+  resource.
+- `pucch_res_id_t` (`include/ocudu/ran/pucch/pucch_mapping.h`) holds only the cell resource ID. The UE resource ID of
+  the ASN.1 message is the position of the resource in the UE's PUCCH resource list.
 
 ## Target
 

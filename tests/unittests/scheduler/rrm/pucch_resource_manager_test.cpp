@@ -66,7 +66,8 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
     // Check that the SR is configured and all UEs have different SR offsets or PUCCH res id.
     const auto& sr_res_list = ue->ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
     ASSERT_FALSE(sr_res_list.empty());
-    auto ue_sr_res_offset_pair = std::make_pair(sr_res_list[0].pucch_res_id.ded().cell_res_id, sr_res_list[0].offset);
+    const ue_bwp_config& ue_bwp_cfg = ue->ue_cell_cfg.bwps[0];
+    auto ue_sr_res_offset_pair      = std::make_pair(ue_bwp_cfg.ul.pucch.sr_res_id.value(), sr_res_list[0].offset);
     ASSERT_EQ(sr_offsets.count(ue_sr_res_offset_pair), 0);
     sr_offsets.insert(ue_sr_res_offset_pair);
 
@@ -77,8 +78,9 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
       ASSERT_TRUE(has_csi_cfg);
       const auto& csi_res_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
           ue->ue_cell_cfg.serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.front().report_cfg_type);
-      auto ue_csi_res_offset_pair = std::make_pair(
-          csi_res_cfg.pucch_csi_res_list.front().pucch_res_id.ded().cell_res_id, csi_res_cfg.report_slot_offset);
+      ASSERT_TRUE(ue_bwp_cfg.ul.csi.periodic_report.has_value());
+      auto ue_csi_res_offset_pair =
+          std::make_pair(ue_bwp_cfg.ul.csi.periodic_report->pucch_res_id.value(), csi_res_cfg.report_slot_offset);
       ASSERT_EQ(csi_offsets.count(ue_csi_res_offset_pair), 0);
       csi_offsets.insert(ue_csi_res_offset_pair);
     }

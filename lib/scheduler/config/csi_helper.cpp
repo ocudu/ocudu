@@ -8,7 +8,6 @@
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/precoding/precoding_codebook_type2_helpers.h"
 #include "ocudu/ran/slot_point.h"
-#include "ocudu/scheduler/config/pucch_resource_builder_params.h"
 #include "ocudu/support/enum_utils.h"
 #include "ocudu/support/math/math_utils.h"
 
@@ -731,17 +730,8 @@ make_csi_report_configs(const csi_meas_config_builder_params&                   
     report_cfg_type.report_slot_period =
         csi_helper::convert_csi_resource_period_to_report_period(params.csi_params.csi_rs_period);
     report_cfg_type.report_slot_offset = *params.csi_params.csi_report_slot_offset;
-    pucch_resource_builder_params pucch_builder_params{};
-    const unsigned                cell_res_id =
-        ((pucch_builder_params.res_set_size.value() + pucch_builder_params.res_set_size.value()) *
-         pucch_builder_params.nof_cell_res_set_configs) +
-        pucch_builder_params.nof_cell_sr_resources;
-
-    static constexpr unsigned nof_ue_sr_resources = 1U;
-    const unsigned            ue_res_id =
-        pucch_builder_params.res_set_size.value() + nof_ue_sr_resources + pucch_builder_params.res_set_size.value();
-    report_cfg_type.pucch_csi_res_list = {csi_report_config::pucch_csi_resource{
-        .ul_bwp = to_bwp_id(0), .pucch_res_id = pucch_res_id_t::make_ded(cell_res_id, ue_res_id)}};
+    // The PUCCH resource ID depends on the UE's PUCCH-Config and is set when building the UE configuration.
+    report_cfg_type.pucch_csi_res_list = {csi_report_config::pucch_csi_resource{.ul_bwp = to_bwp_id(0)}};
     reps[0].report_cfg_type            = report_cfg_type;
   }
   if (params.csi_params.enable_aperiodic_report) {

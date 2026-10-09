@@ -146,7 +146,8 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   const auto& pucch_cfg = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
 
   // Verify the PUCCH resource list.
-  for (const auto& res : pucch_cfg.pucch_res_list) {
+  for (unsigned ue_res_id = 0, nof_res = pucch_cfg.pucch_res_list.size(); ue_res_id != nof_res; ++ue_res_id) {
+    const auto& res = pucch_cfg.pucch_res_list[ue_res_id];
     // Verify that each PUCCH resource matches the corresponding cell resource.
     VERIFY(res.res_id.ded().cell_res_id < cell_pucch_res_list.size(),
            "PUCCH resource with cell_res_id={} does not exist in the cell configuration",
@@ -165,7 +166,7 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
            res.res_id.ded().cell_res_id);
     VERIFY(res.format() == res_params.format_01() or res.format() == res_params.format_234(),
            "Invalid PUCCH format configured for UE resource ID {}",
-           res.res_id.ded().ue_res_id);
+           ue_res_id);
   }
 
   // Verify the configured Resource Sets.
@@ -179,27 +180,15 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   VERIFY(res_set_0.resources.size() <= res_set_1.resources.size(),
          "PUCCH Resource Set ID 1's size should be greater or equal to PUCCH Resource Set ID 0's size");
 
-  // Verify that the resources indicated in the Resource Sets point to the correct resources in the PUCCH resource list.
-  for (size_t pucch_res_set_idx = 0; pucch_res_set_idx != 2; ++pucch_res_set_idx) {
-    for (auto res_id : pucch_cfg.pucch_res_set[pucch_res_set_idx].resources) {
-      const auto& res = pucch_cfg.pucch_res_list[res_id.ded().ue_res_id];
-      VERIFY(res.res_id == res_id,
-             "PUCCH resource with UE resource ID {} does not match the corresponding resource ID in the resource set",
-             res_id.ded().ue_res_id);
-    }
-  }
-
-  // Check PUCCH Formats for each Resource Set.
-  for (auto res_id : res_set_0.resources) {
-    VERIFY(res_id.ded().ue_res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
-    const auto& res = pucch_cfg.pucch_res_list[res_id.ded().ue_res_id];
-    VERIFY(res.res_id == res_id and res.format() == res_params.format_01(),
+  // Check that the resources of each Resource Set exist and have the PUCCH Format of the Resource Set.
+  for (unsigned res_id : res_set_0.resources) {
+    VERIFY(res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
+    VERIFY(pucch_cfg.pucch_res_list[res_id].format() == res_params.format_01(),
            "Invalid PUCCH resource in Resource Set ID 0");
   }
-  for (auto res_id : res_set_1.resources) {
-    VERIFY(res_id.ded().ue_res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
-    const auto& res = pucch_cfg.pucch_res_list[res_id.ded().ue_res_id];
-    VERIFY(res.res_id == res_id and res.format() == res_params.format_234(),
+  for (unsigned res_id : res_set_1.resources) {
+    VERIFY(res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
+    VERIFY(pucch_cfg.pucch_res_list[res_id].format() == res_params.format_234(),
            "Invalid PUCCH resource in Resource Set ID 1");
   }
 
@@ -220,12 +209,10 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
 
   // Verify the PUCCH resource ID indicated in the SR resource config exists in the PUCCH resource list.
   VERIFY(pucch_cfg.sr_res_list.size() == 1, "Only SchedulingRequestResourceConfig with size 1 supported");
-  VERIFY(pucch_cfg.sr_res_list.front().pucch_res_id.ded().ue_res_id < pucch_cfg.pucch_res_list.size(),
-         "Invalid UE resource ID");
-  const auto  sr_res_id = pucch_cfg.sr_res_list.front().pucch_res_id;
-  const auto& sr_res    = pucch_cfg.pucch_res_list[sr_res_id.ded().ue_res_id];
-  VERIFY(sr_res.res_id == sr_res_id and sr_res.format() == res_params.format_01(),
-         "Invalid PUCCH resource used for SR reporting");
+  const unsigned sr_res_id = pucch_cfg.sr_res_list.front().pucch_res_id;
+  VERIFY(sr_res_id < pucch_cfg.pucch_res_list.size(), "Invalid UE resource ID");
+  const auto& sr_res = pucch_cfg.pucch_res_list[sr_res_id];
+  VERIFY(sr_res.format() == res_params.format_01(), "Invalid PUCCH resource used for SR reporting");
 
   // With Format 0, the last resource in PUCCH resource set 1 should point at the SR resource. Also, the last (or second
   // last if there is CSI) resource in PUCCH resource set 1 should have symbols and starting PRBs that match those of
@@ -236,8 +223,8 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
     VERIFY(res_set_0.resources[res_params.res_set_size.value()] == sr_res_id,
            "With Format 0, the SR resource must be present in Resource Set ID 0");
 
-    VERIFY(res_set_1.resources[res_params.res_set_size.value()].ded().ue_res_id ==
-               res_params.sr_f2_res_id(pucch_sr_resource_id(0)).ded().ue_res_id,
+    const auto& sr_f2_res = pucch_cfg.pucch_res_list[res_set_1.resources[res_params.res_set_size.value()]];
+    VERIFY(sr_f2_res.syms.overlaps(sr_res.syms),
            "With Format 0, the SR_F2 resource must be present in Resource Set ID 1");
   }
 
@@ -579,11 +566,9 @@ validator_result config_validators::validate_csi_meas_cfg(const serving_cell_con
       VERIFY(ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value(), "Cell={} does not define a PUCCH Config");
       const auto& pucch_resources = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value().pucch_res_list;
       for (const auto& pucch_res : pucch_csi.pucch_csi_res_list) {
-        const auto& pucch_res_id = pucch_res.pucch_res_id;
-        VERIFY_ID_EXISTS([pucch_res_id](const pucch_resource& rhs) { return rhs.res_id == pucch_res_id; },
-                         pucch_resources,
-                         "PUCCH resource id={} does not exist",
-                         pucch_res_id.ded().cell_res_id);
+        VERIFY(pucch_res.pucch_res_id < pucch_resources.size(),
+               "PUCCH resource id={} does not exist",
+               pucch_res.pucch_res_id);
       }
     } else if (std::holds_alternative<csi_report_config::aperiodic_report>(rep_cfg.report_cfg_type)) {
       const auto& aperiodic_csi = std::get<csi_report_config::aperiodic_report>(rep_cfg.report_cfg_type);

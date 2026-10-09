@@ -16,8 +16,8 @@ template <>
 struct test_values<pucch_res_id_t> {
   static std::vector<pucch_res_id_t> get()
   {
-    return {pucch_res_id_t::make_ded(0, 0),
-            pucch_res_id_t::make_ded(255, 255),
+    return {pucch_res_id_t::make_ded(0),
+            pucch_res_id_t::make_ded(255),
             pucch_res_id_t::make_cmn(0),
             pucch_res_id_t::make_cmn(15)};
   }
