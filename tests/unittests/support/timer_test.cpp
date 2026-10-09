@@ -436,6 +436,33 @@ TEST_F(unique_timer_timeout_dispatch_fail_tester, defer_after_retries_dispatch_o
   ASSERT_EQ(count, 1);
 }
 
+TEST(unique_timer_reuse_test, timer_destroyed_in_own_callback_and_reused_by_defer_after_is_not_cancelled)
+{
+  // No pre-reserved timers, so that the timer released in the callback is the one reused by defer_after.
+  timer_manager      timer_mng{0};
+  manual_task_worker worker{64};
+  unsigned           count = 0;
+
+  unique_timer t = timer_mng.create_unique_timer(worker);
+  t.set(timer_duration{1}, [&timer_mng, &worker, &t, &count]() {
+    // Captures are copied, as the backend clears this callback when it handles the timer destruction.
+    timer_manager&      mng  = timer_mng;
+    manual_task_worker& exec = worker;
+    unsigned&           cnt  = count;
+    t.reset();
+    // Backend handles the destruction before the callback returns, as it would from another thread.
+    mng.tick();
+    mng.defer_after(timer_duration{1}, exec, [&cnt]() { ++cnt; });
+  });
+  t.run();
+
+  for (unsigned i = 0; i != 4; ++i) {
+    timer_mng.tick();
+    worker.run_pending_tasks();
+  }
+  ASSERT_EQ(count, 1);
+}
+
 class unique_timer_multithread_tester : public ::testing::Test
 {
 protected:

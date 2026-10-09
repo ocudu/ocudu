@@ -509,12 +509,16 @@ bool timer_manager::manager_impl::trigger_timeout_handling(timer_handle& timer)
       // Update timer frontend state to expired.
       frontend->state = state_t::expired;
 
+      // Read before the callback, as the callback may destroy its own unique_timer, letting the backend recycle the
+      // frontend concurrently.
+      const bool detached = frontend->detached;
+
       // Run callback if configured.
       if (not frontend->timeout_callback.is_empty()) {
         frontend->timeout_callback();
       }
 
-      if (frontend->detached) {
+      if (detached) {
         // The destruction is only requested after the callback returns, as the backend clears the callback when it
         // handles the destruction.
         frontend->destroy();
