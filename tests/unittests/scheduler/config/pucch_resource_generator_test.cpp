@@ -130,7 +130,7 @@ static void assert_no_prb_overlap_with_common(span<const pucch_resource> ded_res
     for (unsigned prb : get_res_prbs(res)) {
       ASSERT_LT(prb, bwp_size_rbs);
       ASSERT_FALSE(common_prbs[prb]) << fmt::format(
-          "Dedicated resource cell_res_id={} overlaps common prb={}", res.res_id.ded().cell_res_id, prb);
+          "Dedicated resource cell_res_id={} overlaps common prb={}", res.res_id.cell_res_id(), prb);
     }
   }
 }
@@ -192,7 +192,7 @@ TEST_P(pucch_resource_generator_test, f1_resources_have_valid_occ_indices)
     const unsigned nof_occs = res.second_hop_prb.has_value() ? nof_syms / 4 : nof_syms / 2;
     const auto&    f1_cfg   = std::get<pucch_resource::f1_config>(res.format_params);
     ASSERT_LT(f1_cfg.time_domain_occ, nof_occs)
-        << fmt::format("Invalid OCC index for cell_res_id={} with nof_syms={}", res.res_id.ded().cell_res_id, nof_syms);
+        << fmt::format("Invalid OCC index for cell_res_id={} with nof_syms={}", res.res_id.cell_res_id(), nof_syms);
   }
 }
 
@@ -240,7 +240,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
         // Checks that a UE resource ID points to the UE resource list entry that copies the given cell resource.
         auto is_ue_res_of = [&cell_res_list, &pucch_cfg](unsigned ue_res_id, pucch_res_id_t cell_id) {
           return ue_res_id < pucch_cfg.pucch_res_list.size() and
-                 pucch_cfg.pucch_res_list[ue_res_id] == cell_res_list[cell_id.ded().cell_res_id];
+                 pucch_cfg.pucch_res_list[ue_res_id] == cell_res_list[cell_id.cell_res_id()];
         };
 
         // Check the SR resource.

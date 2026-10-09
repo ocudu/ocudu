@@ -5,9 +5,10 @@
 
 #pragma once
 
+#include "ocudu/ran/pucch/pucch_constants.h"
+#include "ocudu/support/ocudu_assert.h"
 #include "fmt/base.h"
 #include <cstdint>
-#include <variant>
 
 namespace ocudu {
 
@@ -113,41 +114,49 @@ inline pucch_format pucch_f2f3f4_format(pucch_formats formats)
 /// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
-/// \brief Identifier of a PUCCH resource.
+/// \brief Identifier of a PUCCH resource of the cell.
 ///
-/// Carries either:
-///   - a \e dedicated identifier (cell-wide id) for UE-configured PUCCH resources, or
-///   - a \e common identifier (\f$r_{PUCCH}\f$, TS 38.213 Section 9.2.1) for PUCCH resources from the default
-///     common table used before dedicated PUCCH is configured.
+/// Holds a single index over the common resources followed by the dedicated resources of the cell:
+///   - indices {0, ..., 15} identify the common resources from the default table (TS 38.213 Table 9.2.1-1), where the
+///     index is \f$r_{PUCCH}\f$ (TS 38.213 Section 9.2.1), and
+///   - indices from 16 onwards identify the dedicated resources, where the index is the cell resource ID plus 16.
 struct pucch_res_id_t {
-  /// Identifier for a PUCCH resource from the default common table (TS 38.213 Table 9.2.1-1).
-  struct common {
-    /// \f$r_{PUCCH}\f$, range {0, ..., 15}.
-    unsigned r_pucch = 0;
+  /// Number of common PUCCH resources, i.e. the number of rows of TS 38.213 Table 9.2.1-1.
+  static constexpr unsigned nof_cmn_res = pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES;
 
-    bool operator==(const common& rhs) const { return r_pucch == rhs.r_pucch; }
-    bool operator!=(const common& rhs) const { return !(rhs == *this); }
-  };
-  /// Identifier for a UE-dedicated PUCCH resource.
-  struct dedicated {
-    /// PUCCH cell resource ID, used by the DU and the scheduler to identify the resource.
-    unsigned cell_res_id = 0;
+  /// Index over the common and the dedicated resources of the cell.
+  uint16_t idx = nof_cmn_res;
 
-    bool operator==(const dedicated& rhs) const { return cell_res_id == rhs.cell_res_id; }
-    bool operator!=(const dedicated& rhs) const { return !(rhs == *this); }
-  };
-  std::variant<dedicated, common> id;
+  static pucch_res_id_t make_cmn(unsigned r_pucch)
+  {
+    ocudu_assert(r_pucch < nof_cmn_res, "Invalid r_pucch={} for a common PUCCH resource", r_pucch);
+    return pucch_res_id_t{static_cast<uint16_t>(r_pucch)};
+  }
+  static pucch_res_id_t make_ded(unsigned cell_res_id)
+  {
+    ocudu_assert(cell_res_id < pucch_constants::MAX_NOF_CELL_DED_RESOURCES,
+                 "Invalid cell resource ID={} for a dedicated PUCCH resource",
+                 cell_res_id);
+    return pucch_res_id_t{static_cast<uint16_t>(nof_cmn_res + cell_res_id)};
+  }
 
-  static pucch_res_id_t make_cmn(unsigned r_pucch) { return pucch_res_id_t{common{r_pucch}}; }
-  static pucch_res_id_t make_ded(unsigned cell_res_id_) { return pucch_res_id_t{dedicated{cell_res_id_}}; }
+  bool is_cmn() const { return idx < nof_cmn_res; }
+  bool is_ded() const { return not is_cmn(); }
 
-  bool is_cmn() const { return std::holds_alternative<common>(id); }
-  bool is_ded() const { return std::holds_alternative<dedicated>(id); }
+  /// Returns \f$r_{PUCCH}\f$ of a common resource.
+  unsigned r_pucch() const
+  {
+    ocudu_assert(is_cmn(), "PUCCH resource ID={} is not common", idx);
+    return idx;
+  }
+  /// Returns the cell resource ID of a dedicated resource.
+  unsigned cell_res_id() const
+  {
+    ocudu_assert(is_ded(), "PUCCH resource ID={} is not dedicated", idx);
+    return idx - nof_cmn_res;
+  }
 
-  const common&    cmn() const { return std::get<common>(id); }
-  const dedicated& ded() const { return std::get<dedicated>(id); }
-
-  bool operator==(const pucch_res_id_t& rhs) const { return id == rhs.id; }
+  bool operator==(const pucch_res_id_t& rhs) const { return idx == rhs.idx; }
   bool operator!=(const pucch_res_id_t& rhs) const { return !(rhs == *this); }
 };
 
@@ -167,9 +176,9 @@ struct formatter<ocudu::pucch_res_id_t> {
   auto format(ocudu::pucch_res_id_t res_id, FormatContext& ctx) const
   {
     if (res_id.is_cmn()) {
-      return format_to(ctx.out(), "cmn({})", res_id.cmn().r_pucch);
+      return format_to(ctx.out(), "cmn({})", res_id.r_pucch());
     }
-    return format_to(ctx.out(), "ded({})", res_id.ded().cell_res_id);
+    return format_to(ctx.out(), "ded({})", res_id.cell_res_id());
   }
 };
 

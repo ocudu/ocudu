@@ -599,8 +599,8 @@ protected:
       return {};
     }
 
-    return {pucch_cfg.pucch_res_list[pucch_res_set.front()].res_id.ded().cell_res_id,
-            pucch_cfg.pucch_res_list[pucch_res_set.back()].res_id.ded().cell_res_id};
+    return {pucch_cfg.pucch_res_list[pucch_res_set.front()].res_id.cell_res_id(),
+            pucch_cfg.pucch_res_list[pucch_res_set.back()].res_id.cell_res_id()};
   }
 
   // Retrieve the expected interval [ ID_start, ID_stop] with the initial and final IDs of the UE's PUCCH resources used

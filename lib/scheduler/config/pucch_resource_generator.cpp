@@ -204,9 +204,8 @@ static bool validate_generated_list(const std::vector<pucch_resource>&   res_lis
 
   std::array<unsigned, 5> res_count_by_format{0, 0, 0, 0, 0};
   for (const auto& res : res_list) {
-    if (res.res_id.ded().cell_res_id >= res_list.size()) {
-      ocudu_assertion_failure("Invalid cell resource ID {} in the generated resource list",
-                              res.res_id.ded().cell_res_id);
+    if (res.res_id.is_cmn() or res.res_id.cell_res_id() >= res_list.size()) {
+      ocudu_assertion_failure("Invalid resource ID {} in the generated resource list", res.res_id);
       return false;
     }
 
@@ -277,10 +276,9 @@ public:
   pucch_resource get(unsigned bwp_size_rbs) const
   {
     pucch_resource res{};
-    // Resource ID will be set later, assign an invalid value to avoid uninitialized variable warnings.
-    static constexpr unsigned invalid_res_id = std::numeric_limits<unsigned>::max();
-    res.res_id                               = pucch_res_id_t::make_ded(invalid_res_id);
-    res.syms = {static_cast<uint8_t>(state.start_sym), static_cast<uint8_t>(state.start_sym + nof_syms)};
+    // Resource ID will be set later, assign an invalid value to detect resources whose ID is not set.
+    res.res_id = pucch_res_id_t{std::numeric_limits<uint16_t>::max()};
+    res.syms   = {static_cast<uint8_t>(state.start_sym), static_cast<uint8_t>(state.start_sym + nof_syms)};
     const unsigned starting_prb =
         state.high_start_prb ? bwp_size_rbs - state.prb_high_off - nof_prbs : state.prb_low_off;
     res.starting_prb = starting_prb;
@@ -516,7 +514,7 @@ std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(const p
   for (unsigned res_set_cfg_id = 0; res_set_cfg_id != params.nof_cell_res_set_configs; ++res_set_cfg_id) {
     for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
       pucch_res_id_t res_id         = params.harq_res_id<0>(pucch_resource_set_config_id(res_set_cfg_id), pri);
-      const unsigned cell_res_id    = res_id.ded().cell_res_id;
+      const unsigned cell_res_id    = res_id.cell_res_id();
       resources[cell_res_id].res_id = res_id;
       if (params.harq_ack_rep.has_value()) {
         resources[cell_res_id].rep_factor = params.harq_ack_rep->factors_per_res[pri];
@@ -524,7 +522,7 @@ std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(const p
     }
     for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
       pucch_res_id_t res_id         = params.harq_res_id<1>(pucch_resource_set_config_id(res_set_cfg_id), pri);
-      unsigned       cell_res_id    = res_id.ded().cell_res_id;
+      unsigned       cell_res_id    = res_id.cell_res_id();
       resources[cell_res_id].res_id = res_id;
       if (params.harq_ack_rep.has_value()) {
         resources[cell_res_id].rep_factor = params.harq_ack_rep->factors_per_res[pri];
@@ -533,7 +531,7 @@ std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(const p
   }
   for (unsigned sr_res_id = 0; sr_res_id != params.nof_cell_sr_resources; ++sr_res_id) {
     pucch_res_id_t res_id      = params.sr_res_id(pucch_sr_resource_id(sr_res_id));
-    unsigned       cell_res_id = res_id.ded().cell_res_id;
+    unsigned       cell_res_id = res_id.cell_res_id();
     auto&          sr_res      = resources[cell_res_id];
     sr_res.res_id              = res_id;
     if (using_02) {
@@ -549,7 +547,7 @@ std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(const p
   }
   for (unsigned csi_res_id = 0; csi_res_id != params.nof_cell_csi_resources; ++csi_res_id) {
     pucch_res_id_t res_id      = params.csi_res_id(pucch_csi_resource_id(csi_res_id));
-    unsigned       cell_res_id = res_id.ded().cell_res_id;
+    unsigned       cell_res_id = res_id.cell_res_id();
     auto&          csi_res     = resources[cell_res_id];
     csi_res.res_id             = res_id;
     if (using_02) {

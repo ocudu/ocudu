@@ -31,17 +31,11 @@ static const pucch_resource& get_res(const cell_pucch_res_config& cell_resources
 /// Returns the index of a given PUCCH resource in the collision/multiplexing region matrices.
 static unsigned get_res_idx(const cell_pucch_res_config& cell_resources, const pucch_res_id_t& res_id)
 {
-  if (res_id.is_cmn()) {
-    ocudu_assert(res_id.cmn().r_pucch < cell_resources.common.size(),
-                 "Invalid r_pucch for common PUCCH resource: {}",
-                 res_id.cmn().r_pucch);
-    return res_id.cmn().r_pucch;
-  }
-  ocudu_assert(res_id.ded().cell_res_id < cell_resources.dedicated.size(),
-               "PUCCH cell resource ID {} exceeds the size of the dedicated cell resource list ({})",
-               res_id.ded().cell_res_id,
-               cell_resources.dedicated.size());
-  return res_id.ded().cell_res_id + pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES;
+  ocudu_assert(res_id.idx < cell_resources.nof_total_res(),
+               "PUCCH resource ID {} exceeds the number of cell resources ({})",
+               res_id.idx,
+               cell_resources.nof_total_res());
+  return res_id.idx;
 }
 
 // Computes a grant_info for one hop of a pucch_resource, for use with the UL resource grid.

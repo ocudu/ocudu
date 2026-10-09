@@ -380,14 +380,10 @@ static void convert_fb_to_ul_bwp(ul_bwp_configuration& ul_bwp, const fbs::UlBwp&
   // derived from the position of the resource in the list.
   ul_bwp.pucch_resources.clear();
   if (fb.pucch_resources() != nullptr) {
-    unsigned cell_res_idx = 0;
+    uint16_t cell_res_idx = 0;
     for (const fbs::PucchResource* fb_res : *fb.pucch_resources()) {
-      pucch_res_id_t res_id =
-          cell_res_idx < pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES
-              ? pucch_res_id_t::make_cmn(cell_res_idx)
-              : pucch_res_id_t::make_ded(cell_res_idx - pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES);
       pucch_resource res;
-      convert_fb_to_pucch_resource(res, *fb_res, res_id);
+      convert_fb_to_pucch_resource(res, *fb_res, pucch_res_id_t{cell_res_idx});
       ul_bwp.pucch_resources.push_back(res);
       ++cell_res_idx;
     }
@@ -552,13 +548,7 @@ void schedtrace::convert_fb_to_bwp_cfg(bwp_configuration& bwp, const fbs::BwpCon
 flatbuffers::Offset<fbs::Pucch> schedtrace::convert_pucch_info_to_fb(flatbuffers::FlatBufferBuilder& fbb,
                                                                      const pucch_info&               pucch)
 {
-  uint16_t res_idx = 0;
-  if (pucch.res->res_id.is_cmn()) {
-    res_idx = static_cast<uint16_t>(pucch.res->res_id.cmn().r_pucch);
-  } else {
-    res_idx = static_cast<uint16_t>(pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES +
-                                    pucch.res->res_id.ded().cell_res_id);
-  }
+  const uint16_t            res_idx     = pucch.res->res_id.idx;
   fbs::PucchTxParams        params_type = fbs::PucchTxParams::NONE;
   flatbuffers::Offset<void> params;
   if (const auto* f0 = std::get_if<pucch_info::f0_config>(&pucch.format_params)) {

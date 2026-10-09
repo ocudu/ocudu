@@ -149,21 +149,22 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   for (unsigned ue_res_id = 0, nof_res = pucch_cfg.pucch_res_list.size(); ue_res_id != nof_res; ++ue_res_id) {
     const auto& res = pucch_cfg.pucch_res_list[ue_res_id];
     // Verify that each PUCCH resource matches the corresponding cell resource.
-    VERIFY(res.res_id.ded().cell_res_id < cell_pucch_res_list.size(),
+    VERIFY(res.res_id.is_ded(), "PUCCH resource with UE resource ID {} is not dedicated", ue_res_id);
+    VERIFY(res.res_id.cell_res_id() < cell_pucch_res_list.size(),
            "PUCCH resource with cell_res_id={} does not exist in the cell configuration",
-           res.res_id.ded().cell_res_id);
+           res.res_id.cell_res_id());
 
-    const auto& cell_res = cell_pucch_res_list[res.res_id.ded().cell_res_id];
+    const auto& cell_res = cell_pucch_res_list[res.res_id.cell_res_id()];
     // The UE's repetition factor may be clamped down from the cell's configured value if the UE doesn't support
     // PUCCH repetition for this resource's format.
     pucch_resource cell_res_same_rep = cell_res;
     cell_res_same_rep.rep_factor     = res.rep_factor;
     VERIFY(res == cell_res_same_rep,
            "PUCCH resource with cell_res_id={} does not match the corresponding cell resource",
-           res.res_id.ded().cell_res_id);
+           res.res_id.cell_res_id());
     VERIFY(res.rep_factor == cell_res.rep_factor or res.rep_factor == pucch_repetition_factor::n1,
            "PUCCH resource with cell_res_id={} has an incorrect repetition factor",
-           res.res_id.ded().cell_res_id);
+           res.res_id.cell_res_id());
     VERIFY(res.format() == res_params.format_01() or res.format() == res_params.format_234(),
            "Invalid PUCCH format configured for UE resource ID {}",
            ue_res_id);
