@@ -9,6 +9,7 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
+#include "ocudu/scheduler/config/csi_helper.h"
 #include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
@@ -116,6 +117,47 @@ TEST_F(pucch_resource_manager_tester, when_allocation_fails_then_ue_cell_config_
   ASSERT_EQ(ue_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg,
             default_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg);
   ASSERT_EQ(ue_cfg.serv_cell_cfg.csi_meas_cfg, default_cfg.serv_cell_cfg.csi_meas_cfg);
+}
+
+TEST_F(pucch_resource_manager_tester, sr_and_csi_in_different_symbols_are_allocated_if_their_offsets_never_collide)
+{
+  ran_cell_config cell_params_f0          = cell_cfg.params;
+  auto&           pucch_res_params        = cell_params_f0.init_bwp.pucch.resources;
+  pucch_res_params.f0_or_f1_params        = pucch_f0_params{};
+  pucch_res_params.f2_or_f3_or_f4_params  = pucch_f2_params{.nof_syms = 1U, .max_nof_rbs = 4U};
+  pucch_res_params.nof_cell_sr_resources  = 1;
+  pucch_res_params.nof_cell_csi_resources = 1;
+
+  // Sanity check: the SR and the CSI resources do not overlap in symbols.
+  const unsigned bwp_size_rbs  = cell_params_f0.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+  const auto     cell_res_list = config_helpers::generate_cell_pucch_res_list(
+      pucch_res_params,
+      bwp_size_rbs,
+      get_pucch_default_nof_edge_prbs(
+          cell_params_f0.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common, bwp_size_rbs));
+  const auto find_res = [&](pucch_res_id_t res_id) {
+    return std::find_if(
+        cell_res_list.begin(), cell_res_list.end(), [&](const pucch_resource& r) { return r.res_id == res_id; });
+  };
+  const auto sr_res_it  = find_res(pucch_res_params.sr_res_id(pucch_sr_resource_id(0)));
+  const auto csi_res_it = find_res(pucch_res_params.csi_res_id(pucch_csi_resource_id(0)));
+  ASSERT_NE(sr_res_it, cell_res_list.end());
+  ASSERT_NE(csi_res_it, cell_res_list.end());
+  ASSERT_FALSE(sr_res_it->syms.overlaps(csi_res_it->syms));
+
+  const du_cell_index_t f0_cell_idx = to_du_cell_index(1);
+  pucch_res_mng.add_cell(f0_cell_idx, cell_params_f0);
+
+  ue_cell_config ue_cfg = ocudu::config_helpers::make_default_ue_cell_config(cell_params_f0, f0_cell_idx);
+  ASSERT_TRUE(pucch_res_mng.alloc_resources(ue_cfg));
+
+  const auto& ul_bwp = ue_cfg.init_bwp().ul;
+  ASSERT_TRUE(ul_bwp.csi.periodic_report.has_value());
+  ASSERT_FALSE(csi_helper::are_sr_and_csi_pucchs_scheduled_together(
+      sr_periodicity_to_slot(cell_params_f0.init_bwp.pucch.sr_period),
+      ul_bwp.pucch.sr_offset,
+      to_underlying(cell_params_f0.init_bwp.csi->csi_rs_period),
+      ul_bwp.csi.periodic_report->offset));
 }
 
 TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_confirm_support)

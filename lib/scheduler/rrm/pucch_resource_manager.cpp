@@ -254,6 +254,11 @@ pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&     
       return false;
     }
 
+    if (not csi_helper::are_sr_and_csi_pucchs_scheduled_together(
+            cell_ctx.sr_period_slots, sr_cfg.offset, cell_ctx.csi_period_slots, csi_cfg.offset)) {
+      return csi_report_size <= max_pucch_payload;
+    }
+
     // Ensure the CSI and SR resources collide in OFDM symbols, so they are multiplexed.
     const pucch_resource& csi_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
         cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(csi_cfg.res)));
@@ -261,13 +266,8 @@ pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&     
       return false;
     }
 
-    // Ensure the SR and CSI reports can be sent together in the same PUCCH if their offsets collide.
-    const unsigned nof_sr_bits        = csi_helper::are_sr_and_csi_pucchs_scheduled_together(
-                                     cell_ctx.sr_period_slots, sr_cfg.offset, cell_ctx.csi_period_slots, csi_cfg.offset)
-                                                    ? 1
-                                                    : 0;
-    const unsigned candidate_uci_bits = nof_sr_bits + csi_report_size;
-    return candidate_uci_bits <= max_pucch_payload;
+    // Ensure the SR and CSI reports can be sent together in the same PUCCH.
+    return 1U + csi_report_size <= max_pucch_payload;
   };
 
   // [Implementation-defined] CSI resource and report periods are the same.
