@@ -347,9 +347,6 @@ private:
                                           uint8_t                  pdsch_td_res_index,
                                           unsigned                 last_occasion_offset = 0) const;
 
-  // Save the PUCCH power control results for the given slot.
-  void post_process_pucch_pw_ctrl_results(slot_point slot) const;
-
   const scheduler_ue_expert_config& expert_cfg;
   ue_repository&                    ues;
   pdcch_resource_allocator&         pdcch_sched;
