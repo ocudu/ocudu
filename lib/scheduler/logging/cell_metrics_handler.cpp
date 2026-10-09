@@ -432,7 +432,8 @@ void cell_metrics_handler::report_metrics()
 {
   auto next_report = notifier.get_builder();
 
-  const std::chrono::milliseconds report_period{data.nof_slots / last_slot_tx.nof_slots_per_subframe()};
+  // In microseconds, since a report may span less than a subframe, e.g. one slot when reports are late.
+  const std::chrono::microseconds report_period{data.nof_slots * 1000U / last_slot_tx.nof_slots_per_subframe()};
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report. This includes the final report of UEs
     // that were removed during this report period.
@@ -673,11 +674,16 @@ void cell_metrics_handler::handle_cell_deactivation()
 }
 
 scheduler_ue_metrics
-cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period,
+cell_metrics_handler::ue_metric_context::compute_report(std::chrono::microseconds metric_report_period,
                                                         unsigned                  slots_per_sf)
 {
   auto convert_slots_to_ms = [slots_per_sf](unsigned slots) {
     return static_cast<float>(slots) / static_cast<float>(slots_per_sf);
+  };
+  // A report spans no slots when the cell is deactivated right after a periodic report.
+  auto convert_bytes_to_kbps = [metric_report_period](uint64_t nof_bytes) {
+    return metric_report_period.count() > 0 ? static_cast<double>(nof_bytes * 8U * 1000U) / metric_report_period.count()
+                                            : 0.0;
   };
   scheduler_ue_metrics ret{};
   ret.ue_index            = ue_index;
@@ -691,8 +697,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.ul_mcs              = sch_mcs_index{mcs};
   ret.tot_pdsch_prbs_used = data.tot_dl_prbs_used;
   ret.tot_pusch_prbs_used = data.tot_ul_prbs_used;
-  ret.dl_brate_kbps       = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
-  ret.ul_brate_kbps       = static_cast<double>(data.sum_ul_tb_bytes * 8U) / metric_report_period.count();
+  ret.dl_brate_kbps       = convert_bytes_to_kbps(data.sum_dl_tb_bytes);
+  ret.ul_brate_kbps       = convert_bytes_to_kbps(data.sum_ul_tb_bytes);
   ret.dl_nof_ok           = data.count_uci_harq_acks;
   ret.dl_nof_nok          = data.count_uci_harqs - data.count_uci_harq_acks;
   ret.ul_nof_ok           = data.count_crc_acks;

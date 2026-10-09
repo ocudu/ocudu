@@ -295,6 +295,36 @@ TEST_F(scheduler_metrics_handler_tester, compute_bitrate)
   ASSERT_EQ(ue_metrics.ul_brate_kbps, 0) << "NACKs should not count for bitrate";
 }
 
+TEST_F(scheduler_metrics_handler_tester, when_report_spans_no_slots_then_bitrates_are_zero)
+{
+  this->get_next_metric();
+
+  // A report right after another spans no slots, e.g. when the cell is deactivated.
+  metrics_notif.last_report = {};
+  metrics.handle_dl_harq_ack(test_ue_index, true, units::bytes{100});
+  metrics.handle_cell_deactivation();
+
+  ASSERT_EQ(metrics_notif.last_report.nof_slots, 0);
+  ASSERT_EQ(metrics_notif.last_report.ue_metrics.size(), 1);
+  ASSERT_EQ(metrics_notif.last_report.ue_metrics[0].dl_brate_kbps, 0);
+  ASSERT_EQ(metrics_notif.last_report.ue_metrics[0].ul_brate_kbps, 0);
+}
+
+TEST_F(scheduler_metrics_handler_tester, when_report_spans_less_than_a_subframe_then_bitrates_use_its_duration)
+{
+  // One slot of 30 kHz SCS, i.e. half a subframe, with no periodic report in between.
+  next_sl_tx                   = slot_point_extended{subcarrier_spacing::kHz30, 0};
+  metrics_notif.next_sl_report = next_sl_tx + 1000;
+  metrics.handle_dl_harq_ack(test_ue_index, true, units::bytes{100});
+  run_slot(sched_result{});
+  metrics_notif.last_report = {};
+  metrics.handle_cell_deactivation();
+
+  ASSERT_EQ(metrics_notif.last_report.nof_slots, 1);
+  ASSERT_EQ(metrics_notif.last_report.ue_metrics.size(), 1);
+  ASSERT_EQ(metrics_notif.last_report.ue_metrics[0].dl_brate_kbps, 100 * 8 / 0.5);
+}
+
 TEST_F(scheduler_metrics_handler_tester, compute_latency_metric)
 {
   using usecs                = std::chrono::microseconds;
