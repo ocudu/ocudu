@@ -19,6 +19,7 @@
 namespace ocudu {
 
 class ue_cell_configuration;
+struct pucch_info;
 
 /// \brief Closed-loop PUCCH power controller for a given UE.
 ///
@@ -43,6 +44,9 @@ public:
                                   bool            intraslot_freq_hopping,
                                   bool            pi_2_bpsk       = false,
                                   bool            additional_dmrs = false);
+
+  /// Save the PUCCH power control parameters of a scheduled PUCCH grant.
+  void update_pucch_pw_ctrl_state(slot_point slot, const pucch_info& pucch);
 
   /// Compute the TPC command for the PUCCH with the objective set to reach the target SINR for Format 0/2/3. This
   /// function doesn't consider FOrmat 1 and 4 for closed-loop power control based on target SINR.

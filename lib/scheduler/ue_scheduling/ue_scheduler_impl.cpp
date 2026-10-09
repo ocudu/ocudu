@@ -112,71 +112,6 @@ void ue_scheduler_impl::run_sched_strategy(du_cell_index_t cell_index)
   return true;
 }
 
-// Save the PUCCH power control results for the current slot.
-static void
-update_pucch_pw_ctrl_results(cell_resource_allocator& cell_alloc, ue_repository& ues, ocudulog::basic_logger& logger)
-{
-  auto& slot_alloc = cell_alloc[0];
-  if (not cell_alloc.cfg.is_ul_enabled(slot_alloc.slot)) {
-    return;
-  }
-
-  // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
-  // process id.
-  for (const auto& pucch : slot_alloc.result.ul.pucchs) {
-    ue* user = ues.find_by_rnti(pucch.crnti);
-    // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
-    // expected to be sent.
-    if (user == nullptr) {
-      logger.warning(
-          "rnti={}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH power control update",
-          pucch.crnti,
-          slot_alloc.slot);
-      continue;
-    }
-
-    pucch_uci_bits pucch_uci_bits;
-    unsigned       nof_prbs = 1;
-    // pi_2_bpsk, additional_dmrs and intraslot_freq_hopping are only used for PUCCH format 3 and 4.
-    bool pi_2_bpsk              = false;
-    bool additional_dmrs        = false;
-    bool intraslot_freq_hopping = false;
-
-    pucch_uci_bits.harq_ack_nof_bits  = pucch.uci_bits.harq_ack_nof_bits;
-    pucch_uci_bits.sr_bits            = pucch.uci_bits.sr_bits;
-    pucch_uci_bits.csi_part1_nof_bits = pucch.uci_bits.csi_part1_nof_bits;
-    switch (pucch.format()) {
-      case pucch_format::FORMAT_2: {
-        nof_prbs = std::get<pucch_info::f2_config>(pucch.format_params).nof_prbs;
-      } break;
-      case pucch_format::FORMAT_3: {
-        const auto& f3         = std::get<pucch_resource::f3_config>(pucch.res->format_params);
-        nof_prbs               = std::get<pucch_info::f3_config>(pucch.format_params).nof_prbs;
-        pi_2_bpsk              = f3.pi_2_bpsk;
-        additional_dmrs        = f3.additional_dmrs;
-        intraslot_freq_hopping = pucch.res->second_hop_prb.has_value();
-      } break;
-      case pucch_format::FORMAT_4: {
-        const auto& f4         = std::get<pucch_resource::f4_config>(pucch.res->format_params);
-        pi_2_bpsk              = f4.pi_2_bpsk;
-        additional_dmrs        = f4.additional_dmrs;
-        intraslot_freq_hopping = pucch.res->second_hop_prb.has_value();
-      } break;
-      default:
-        break;
-    }
-
-    user->get_pcell().get_pucch_power_controller().update_pucch_pw_ctrl_state(slot_alloc.slot,
-                                                                              pucch.format(),
-                                                                              nof_prbs,
-                                                                              pucch.res->syms.length(),
-                                                                              pucch_uci_bits,
-                                                                              intraslot_freq_hopping,
-                                                                              pi_2_bpsk,
-                                                                              additional_dmrs);
-  }
-}
-
 void ue_scheduler_impl::post_process_results(du_cell_index_t cell_index, slot_point sl_tx)
 {
   auto& cell = cells[cell_index];
@@ -185,7 +120,16 @@ void ue_scheduler_impl::post_process_results(du_cell_index_t cell_index, slot_po
   cell.intra_slice_sched.post_process_results();
 
   // Update the PUCCH power control data.
-  update_pucch_pw_ctrl_results(*cell.cell_res_alloc, ue_db, logger);
+  const auto& slot_alloc = (*cell.cell_res_alloc)[0];
+  for (const auto& pucch : slot_alloc.result.ul.pucchs) {
+    ue_cell* ue_cc = cell.ue_cell_db.find_by_rnti(pucch.crnti);
+    // The UE may be removed between the PUCCH allocation and its transmission.
+    if (ue_cc == nullptr) {
+      logger.warning("rnti={}: No UE found in the cell repository. Skipping PUCCH power control update", pucch.crnti);
+      continue;
+    }
+    ue_cc->get_pucch_power_controller().update_pucch_pw_ctrl_state(slot_alloc.slot, pucch);
+  }
 
   // Record UEs needing triggered UL grants based on the finalized DL grant list.
   cell.trig_ul_sched.process_dl_results(sl_tx, (*cell.cell_res_alloc)[0].result);

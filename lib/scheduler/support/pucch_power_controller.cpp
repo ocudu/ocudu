@@ -8,6 +8,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/power_control/tpc_mapping.h"
 #include "ocudu/ran/pucch/pucch_info.h"
+#include "ocudu/scheduler/result/pucch_info.h"
 #include "ocudu/support/format/fmt_to_c_str.h"
 
 using namespace ocudu;
@@ -261,6 +262,49 @@ void pucch_power_controller::update_pucch_sinr_f2_f3_f4(slot_point slor_rx,
   // The SINR value is adjusted by the delta TF value. This is to avoid the SINR to oscillate based on deterministic
   // parameters known by the GNB, such as UCI bits, number of PRBs and symbols.
   sinr_dB_234.push(static_cast<float>(sinr_db - pucch_pw->delta_tf));
+}
+
+void pucch_power_controller::update_pucch_pw_ctrl_state(slot_point slot, const pucch_info& pucch)
+{
+  pucch_uci_bits uci_bits;
+  uci_bits.harq_ack_nof_bits  = pucch.uci_bits.harq_ack_nof_bits;
+  uci_bits.sr_bits            = pucch.uci_bits.sr_bits;
+  uci_bits.csi_part1_nof_bits = pucch.uci_bits.csi_part1_nof_bits;
+
+  unsigned nof_prbs = 1;
+  // pi_2_bpsk, additional_dmrs and intraslot_freq_hopping are only used for PUCCH format 3 and 4.
+  bool pi_2_bpsk              = false;
+  bool additional_dmrs        = false;
+  bool intraslot_freq_hopping = false;
+  switch (pucch.format()) {
+    case pucch_format::FORMAT_2: {
+      nof_prbs = std::get<pucch_info::f2_config>(pucch.format_params).nof_prbs;
+    } break;
+    case pucch_format::FORMAT_3: {
+      const auto& f3         = std::get<pucch_resource::f3_config>(pucch.res->format_params);
+      nof_prbs               = std::get<pucch_info::f3_config>(pucch.format_params).nof_prbs;
+      pi_2_bpsk              = f3.pi_2_bpsk;
+      additional_dmrs        = f3.additional_dmrs;
+      intraslot_freq_hopping = pucch.res->second_hop_prb.has_value();
+    } break;
+    case pucch_format::FORMAT_4: {
+      const auto& f4         = std::get<pucch_resource::f4_config>(pucch.res->format_params);
+      pi_2_bpsk              = f4.pi_2_bpsk;
+      additional_dmrs        = f4.additional_dmrs;
+      intraslot_freq_hopping = pucch.res->second_hop_prb.has_value();
+    } break;
+    default:
+      break;
+  }
+
+  update_pucch_pw_ctrl_state(slot,
+                             pucch.format(),
+                             nof_prbs,
+                             pucch.res->syms.length(),
+                             uci_bits,
+                             intraslot_freq_hopping,
+                             pi_2_bpsk,
+                             additional_dmrs);
 }
 
 void pucch_power_controller::update_pucch_pw_ctrl_state(slot_point      slot,
