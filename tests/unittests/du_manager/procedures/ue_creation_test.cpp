@@ -301,6 +301,7 @@ TEST_F(du_manager_ntn_ue_creation_tester,
 
 TEST_F(du_manager_ue_creation_tester, redcap_initial_access_indication_reaches_f1ap)
 {
+  params.ran.cells[0].redcap.enabled = true;
   start_procedure(to_du_ue_index(0), to_rnti(0x4601), true, {}, std::nullopt, true);
   ASSERT_TRUE(cell_res_alloc.last_ue_index.has_value());
   auto* ue = ue_mng.find_ue(to_du_ue_index(0));

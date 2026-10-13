@@ -114,6 +114,7 @@ public:
   byte_buffer&                            get_cell_group_config() override { return context.cell_group_config; }
 
   // rrc_ue_capability_handler
+  const rrc_ue_capabilities_t& get_capabilities() const override { return context.capabilities; }
   bool is_rrc_inactive_supported() const override { return context.capabilities.rrc_inactive_supported; }
   bool is_conditional_handover_supported() const override
   {

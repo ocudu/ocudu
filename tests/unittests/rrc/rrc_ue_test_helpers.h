@@ -387,12 +387,14 @@ protected:
         generate_security_context(ue_mng.find_ue(allocated_ue_index)->get_security_manager());
   }
 
-  void add_ue_reestablishment_context(cu_cp_ue_index_t ue_index)
+  void add_ue_reestablishment_context(cu_cp_ue_index_t                               ue_index,
+                                      std::optional<rrc_ue_cap_rat_container_list_t> capabilities = std::nullopt)
   {
     rrc_ue_reestablishment_context_response reest_context = {};
     reest_context.ue_index                                = ue_index;
     reest_context.sec_context = generate_security_context(ue_mng.find_ue(allocated_ue_index)->get_security_manager());
     reest_context.old_ue_fully_attached = true;
+    reest_context.capabilities_list     = std::move(capabilities);
 
     logger.debug("Adding reestablishment context for ue={}", ue_index);
 

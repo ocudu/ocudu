@@ -93,7 +93,10 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       CORO_EARLY_RETURN();
     }
   } else {
-    transfer_reestablishment_context_and_update_keys();
+    if (not transfer_reestablishment_context_and_update_keys()) {
+      CORO_AWAIT(handle_rrc_reestablishment_fallback());
+      CORO_EARLY_RETURN();
+    }
   }
 
   // Create SRB1.
@@ -272,7 +275,7 @@ bool rrc_reestablishment_procedure::verify_security_context()
       logger);
 }
 
-void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_keys()
+bool rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_keys()
 {
   // Store capabilities if available.
   if (old_ue_reest_context.capabilities_list.has_value()) {
@@ -280,13 +283,16 @@ void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_
 
     // Store parsed capabilities.
     std::optional<rrc_ue_capabilities_t> caps = get_capabilities(context.capabilities_list.value(), logger);
-    if (caps.has_value()) {
-      context.capabilities = caps.value();
+    if (not caps.has_value()) {
+      return false;
     }
+    context.capabilities = caps.value();
   }
 
   // Transfer UP context from old UE.
-  cu_cp_notifier.on_up_context_setup_required(old_ue_reest_context.up_ctx);
+  if (not cu_cp_notifier.on_up_context_setup_required(old_ue_reest_context.up_ctx, context.capabilities)) {
+    return false;
+  }
 
   // Transfer the ongoing location measurements from old UE.
   if (old_ue_reest_context.location_meas_info.has_value()) {
@@ -299,6 +305,7 @@ void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_
   cu_cp_ue_notifier.update_security_context(old_ue_reest_context.sec_context);
   cu_cp_ue_notifier.perform_horizontal_key_derivation(context.cell.pci, ssb_arfcn);
   logger.log_debug("Refreshed keys horizontally. pci={} ssb-arfcn_f_ref={}", context.cell.pci, ssb_arfcn);
+  return true;
 }
 
 bool rrc_reestablishment_procedure::transfer_retrieved_context_and_update_keys()

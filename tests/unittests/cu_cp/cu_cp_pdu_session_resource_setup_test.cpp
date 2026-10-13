@@ -28,7 +28,8 @@ using namespace ocucp;
 class cu_cp_pdu_session_resource_setup_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  cu_cp_pdu_session_resource_setup_test() : cu_cp_test_environment(cu_cp_test_env_params{})
+  explicit cu_cp_pdu_session_resource_setup_test(bool is_redcap = false) :
+    cu_cp_test_environment(cu_cp_test_env_params{})
   {
     // Run NG setup to completion.
     run_ng_setup();
@@ -46,7 +47,12 @@ public:
     EXPECT_TRUE(this->run_e1_setup(cu_up_idx));
 
     // Connect UE 0x4601.
-    EXPECT_TRUE(connect_new_ue(du_idx, du_ue_id, crnti));
+    EXPECT_TRUE(connect_new_ue(du_idx,
+                               du_ue_id,
+                               crnti,
+                               plmn_identity::test_value(),
+                               test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()),
+                               is_redcap));
     EXPECT_TRUE(authenticate_ue(du_idx, du_ue_id, amf_ue_id));
     EXPECT_TRUE(setup_ue_security_and_ue_capabilities(du_idx, du_ue_id));
     ue_ctx = this->find_ue_context(du_idx, du_ue_id);
@@ -755,4 +761,15 @@ TEST_F(cu_cp_pdu_session_resource_setup_test,
       {}, {{psi2, drb_id_t::drb2}}, std::vector<srb_id_t>{}, std::vector<drb_id_t>{drb_id_t::drb2}));
   ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
       generate_rrc_reconfiguration_complete_pdu(1, 9), {psi2}, {}));
+}
+
+class cu_cp_early_redcap_pdu_session_setup_test : public cu_cp_pdu_session_resource_setup_test
+{
+public:
+  cu_cp_early_redcap_pdu_session_setup_test() : cu_cp_pdu_session_resource_setup_test(true) {}
+};
+
+TEST_F(cu_cp_early_redcap_pdu_session_setup_test, decoded_capabilities_drive_bearer_setup)
+{
+  ASSERT_TRUE(setup_pdu_session(psi, drb_id_t::drb1, qfi));
 }

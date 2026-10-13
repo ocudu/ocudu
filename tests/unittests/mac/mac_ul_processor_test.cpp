@@ -760,7 +760,7 @@ TEST(mac_ul_processor, when_pdu_is_filled_with_zerosfor_existing_ue_then_the_mac
   ASSERT_TRUE(t_bench.verify_no_ul_ccch_msg());
 }
 
-TEST(mac_ul_processor, redcap_ccch_does_not_create_an_ordinary_ue)
+TEST(mac_ul_processor, redcap_ccch_retains_identity_when_dispatched)
 {
   for (uint8_t lcid : {uint8_t{35}, uint8_t{36}}) {
     SCOPED_TRACE(unsigned(lcid));
@@ -772,11 +772,12 @@ TEST(mac_ul_processor, redcap_ccch_does_not_create_an_ordinary_ue)
 
     t_bench.send_rx_indication_msg(tc_rnti, payload);
 
-    EXPECT_TRUE(t_bench.verify_no_ul_ccch_msg());
+    ASSERT_TRUE(t_bench.last_ul_ccch_msg().has_value());
+    EXPECT_TRUE(t_bench.last_ul_ccch_msg()->is_redcap);
   }
 }
 
-TEST(mac_ul_processor, mixed_redcap_and_ordinary_ccch_cannot_bypass_unsupported_ue_guard)
+TEST(mac_ul_processor, mixed_redcap_and_ordinary_ccch_is_rejected_before_dispatch)
 {
   for (uint8_t lcid : {uint8_t{35}, uint8_t{36}}) {
     for (bool redcap_first : {false, true}) {

@@ -45,8 +45,18 @@ void retrieved_context_setup_routine::operator()(coro_context<async_task<bool>>&
     up_old_drb_association old_drb_association;
     merge_old_drb_association_from_as_config(old_drb_association, retrieval_context.rrc_context, logger);
 
-    next_config = ue.get_up_resource_manager().calculate_update(retrieval_context.pdu_session_res_to_be_setup_list,
-                                                                old_drb_association);
+    auto capabilities = retrieval_context.rrc_context.empty()
+                            ? std::optional<rrc_ue_capabilities_t>{ue.get_rrc_ue()->get_capabilities()}
+                            : decode_handover_capabilities(retrieval_context.rrc_context);
+    if (not capabilities.has_value()) {
+      CORO_EARLY_RETURN(false);
+    }
+    next_config = ue.get_up_resource_manager().calculate_update(
+        retrieval_context.pdu_session_res_to_be_setup_list, *capabilities, old_drb_association);
+    if (next_config.pdu_sessions_to_setup_list.empty() or
+        not preserve_redcap_pdcp_sn_lengths(next_config, retrieval_context.rrc_context, *capabilities)) {
+      CORO_EARLY_RETURN(false);
+    }
   }
 
   // Establish the bearers at the CU-UP from the retrieved PDU session list.

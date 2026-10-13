@@ -9,6 +9,7 @@
 #include "ocudu/du/du_high/du_qos_config.h"
 #include "ocudu/du/du_high/du_srb_config.h"
 #include "ocudu/f1ap/ue_context_management_configs.h"
+#include "ocudu/scheduler/rrm/ue_capability_summary.h"
 #include <map>
 
 namespace ocudu {
@@ -37,7 +38,8 @@ public:
   /// \return true if allocation was successful.
   du_ue_bearer_resource_update_response update(du_ue_resource_config&                      ue_cfg,
                                                const du_ue_bearer_resource_update_request& request,
-                                               const du_ue_resource_config*                reestablished_context);
+                                               const du_ue_resource_config*                reestablished_context,
+                                               const ue_capability_summary*                capabilities = nullptr);
 
 private:
   /// \brief Returns the allowed UL HARQ mode a logical channel of this UE can keep, if any.
@@ -70,7 +72,9 @@ private:
   void restrict_srbs_to_dl_feedback(du_ue_resource_config& ue_cfg) const;
 
   void                  setup_srbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
-  std::vector<drb_id_t> setup_drbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
+  std::vector<drb_id_t> setup_drbs(du_ue_resource_config&                      ue_cfg,
+                                   const du_ue_bearer_resource_update_request& request,
+                                   const ue_capability_summary*                capabilities);
   std::vector<drb_id_t> modify_drbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
   void                  rem_drbs(du_ue_resource_config& ue_cfg, const du_ue_bearer_resource_update_request& request);
 

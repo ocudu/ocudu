@@ -101,8 +101,16 @@ void inter_cu_handover_target_routine::operator()(
     // Calculate next user-plane configuration based on incoming setup message.
     up_old_drb_association old_drb_association = build_old_drb_association(request.pdu_session_res_setup_list);
     merge_old_drb_association_from_as_config(old_drb_association, request.rrc_handover_preparation_information, logger);
-    next_config =
-        ue->get_up_resource_manager().calculate_update(request.pdu_session_res_setup_list, old_drb_association);
+    auto capabilities = decode_handover_capabilities(request.rrc_handover_preparation_information);
+    if (not capabilities.has_value()) {
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+    }
+    next_config = ue->get_up_resource_manager().calculate_update(
+        request.pdu_session_res_setup_list, *capabilities, old_drb_association);
+    if (next_config.pdu_sessions_to_setup_list.empty() or
+        not preserve_redcap_pdcp_sn_lengths(next_config, request.rrc_handover_preparation_information, *capabilities)) {
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+    }
   }
 
   // Prepare E1AP Bearer Context Setup Request and call E1AP notifier.

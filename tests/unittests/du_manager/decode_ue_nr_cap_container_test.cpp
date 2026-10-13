@@ -6,8 +6,10 @@
 #include "lib/du/du_high/du_manager/ran_resource_management/ue_capability_manager.h"
 #include "lib/scheduler/rrm/ue_capability_summary_formatter.h"
 #include "tests/ocudu_test_requirements.h"
+#include "tests/test_doubles/rrc/redcap_ue_capability_fixture.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/to_array.h"
+#include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/asn1/rrc_nr/ue_cap.h"
 #include "ocudu/support/error_handling.h"
 #include "fmt/ostream.h"
@@ -698,4 +700,113 @@ TEST(decode_ue_nr_cap_container_ntn_test, captured_ntn_ue_capabilities_are_repor
   // maxHARQ-ProcessNumber-r17 is u32d32: 32 HARQ processes in both directions.
   ASSERT_EQ(band_caps.max_dl_harq_process_num, 32U);
   ASSERT_EQ(band_caps.max_ul_harq_process_num, 32U);
+}
+
+TEST(decode_ue_nr_cap_container_redcap_test, captured_capability_retains_identity_and_rlc_sn_support)
+{
+  auto summary = decode_ue_nr_cap_container(test_helpers::make_captured_redcap_nr_capability());
+  ASSERT_TRUE(summary.has_value());
+  EXPECT_TRUE(summary->is_redcap);
+  EXPECT_TRUE(summary->redcap_rlc_am_long_sn_supported);
+}
+
+TEST(decode_ue_nr_cap_container_redcap_test, malformed_nr_container_does_not_hide_a_later_valid_container)
+{
+  asn1::rrc_nr::ue_cap_rat_container_list_l list;
+  list.resize(3);
+  list[0].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  list[0].ue_cap_rat_container = byte_buffer::create({0xff}).value();
+  list[1].rat_type             = asn1::rrc_nr::rat_type_opts::eutra;
+  list[1].ue_cap_rat_container = byte_buffer::create({0xff}).value();
+  list[2].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  list[2].ue_cap_rat_container = test_helpers::make_captured_redcap_nr_capability();
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(asn1::pack_dyn_seq_of(writer, list, 0, 8), asn1::OCUDUASN_SUCCESS);
+  ue_capability_manager manager{{}, ocudulog::fetch_basic_logger("DU-MNG")};
+  ASSERT_TRUE(manager.update(packed));
+  ASSERT_TRUE(manager.summary().has_value());
+  EXPECT_TRUE(manager.summary()->is_redcap);
+
+  list.resize(2);
+  byte_buffer   malformed;
+  asn1::bit_ref malformed_writer{malformed};
+  ASSERT_EQ(asn1::pack_dyn_seq_of(malformed_writer, list, 0, 8), asn1::OCUDUASN_SUCCESS);
+  EXPECT_FALSE(manager.update(malformed));
+  ASSERT_TRUE(manager.summary().has_value());
+  EXPECT_TRUE(manager.summary()->is_redcap);
+}
+
+TEST(decode_ue_nr_cap_container_redcap_test, rlc_long_sn_support_is_independent_of_pdcp_long_sn_support)
+{
+  auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
+  asn1::rrc_nr::ue_nr_cap_s cap;
+  asn1::cbit_ref            reader{encoded};
+  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  for (bool pdcp_long_sn : {false, true}) {
+    for (bool rlc_long_sn : {false, true}) {
+      SCOPED_TRACE(fmt::format("pdcp_long_sn={} rlc_long_sn={}", pdcp_long_sn, rlc_long_sn));
+      cap.pdcp_params.long_sn_red_cap_r17_present        = pdcp_long_sn;
+      cap.rlc_params.am_with_long_sn_red_cap_r17_present = rlc_long_sn;
+      byte_buffer   packed;
+      asn1::bit_ref writer{packed};
+      ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+      auto summary = decode_ue_nr_cap_container(packed);
+      ASSERT_TRUE(summary.has_value());
+      EXPECT_TRUE(summary->is_redcap);
+      EXPECT_EQ(summary->redcap_rlc_am_long_sn_supported, rlc_long_sn);
+    }
+  }
+}
+
+TEST(decode_ue_nr_cap_container_redcap_test, forwarded_handover_capabilities_retain_redcap_without_msg3)
+{
+  asn1::rrc_nr::ho_prep_info_s ho;
+  auto&                        list = ho.crit_exts.set_c1().set_ho_prep_info().ue_cap_rat_list;
+  list.resize(1);
+  list[0].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  list[0].ue_cap_rat_container = test_helpers::make_captured_redcap_nr_capability();
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(ho.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ue_capability_manager manager({}, ocudulog::fetch_basic_logger("DU-MNG"));
+  ASSERT_TRUE(manager.update_from_ho_prep_info(packed));
+  ASSERT_TRUE(manager.summary().has_value());
+  EXPECT_TRUE(manager.summary()->is_redcap);
+  EXPECT_TRUE(manager.summary()->redcap_rlc_am_long_sn_supported);
+  auto previous = *manager.summary();
+  EXPECT_FALSE(manager.update(byte_buffer::create({0xff}).value()));
+  EXPECT_EQ(*manager.summary(), previous);
+}
+
+TEST(decode_ue_nr_cap_container_redcap_test, absent_rlc_parameters_keep_the_mandatory_short_sn_baseline)
+{
+  auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
+  asn1::rrc_nr::ue_nr_cap_s cap;
+  asn1::cbit_ref            reader{encoded};
+  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  cap.rlc_params_present = false;
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+  auto summary = decode_ue_nr_cap_container(packed);
+  ASSERT_TRUE(summary.has_value());
+  EXPECT_TRUE(summary->is_redcap);
+  EXPECT_FALSE(summary->redcap_rlc_am_long_sn_supported);
+}
+
+TEST(decode_ue_nr_cap_container_redcap_test, ordinary_capabilities_do_not_inherit_redcap_rlc_features)
+{
+  auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
+  asn1::rrc_nr::ue_nr_cap_s cap;
+  asn1::cbit_ref            reader{encoded};
+  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  cap.non_crit_ext_present = false;
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+  auto summary = decode_ue_nr_cap_container(packed);
+  ASSERT_TRUE(summary.has_value());
+  EXPECT_FALSE(summary->is_redcap);
+  EXPECT_FALSE(summary->redcap_rlc_am_long_sn_supported);
 }

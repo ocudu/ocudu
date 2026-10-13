@@ -60,7 +60,15 @@ drb_id_t ocudu::ocucp::allocate_drb_id(const up_pdu_session_context_update& new_
                                        const ocudulog::basic_logger&        logger,
                                        std::optional<drb_id_t>              preferred_drb_id)
 {
-  if (context.drb_map.size() >= max_nof_drbs_per_ue) {
+  size_t nof_drbs = context.drb_map.size() + new_session_context.drb_to_add.size();
+  for (const auto& session : config_update.pdu_sessions_to_setup_list) {
+    nof_drbs += session.second.drb_to_add.size();
+  }
+  // Modified sessions consume additional capacity only for newly added DRBs.
+  for (const auto& session : config_update.pdu_sessions_to_modify_list) {
+    nof_drbs += session.second.drb_to_add.size();
+  }
+  if (nof_drbs >= max_nof_drbs_per_ue) {
     logger.warning("DRB creation failed. Cause: Maximum number of DRBs per UE already created ({}). To increase the "
                    "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration\n",
                    max_nof_drbs_per_ue);
@@ -209,23 +217,29 @@ static drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session
                                   const up_config_update&            config_update,
                                   const up_context&                  full_context,
                                   const up_resource_manager_cfg&     cfg,
+                                  const rrc_ue_capabilities_t&       capabilities,
                                   const ocudulog::basic_logger&      logger,
                                   std::optional<drb_id_t>            preferred_drb_id = std::nullopt)
 {
   five_qi_t five_qi = get_five_qi(qos_flow, cfg, logger);
   ocudu_assert(five_qi != five_qi_t::invalid, "5QI cannot be invalid.");
 
+  const uint8_t max_nof_drbs =
+      capabilities.redcap.has_value()
+          ? std::min<uint8_t>(cfg.max_nof_drbs_per_ue, capabilities.redcap->support_of_16_drb ? 16 : 8)
+          : cfg.max_nof_drbs_per_ue;
+
   // Note: We map QoS flows to DRBs in a 1:1 manner meaning that each flow gets it's own DRB.
   // potential optimization to support more QoS flows is to map non-GPB flows onto existing DRBs.
-  if (full_context.drb_map.size() >= cfg.max_nof_drbs_per_ue) {
+  if (full_context.drb_map.size() >= max_nof_drbs) {
     logger.warning("DRB creation failed. Cause: Maximum number of DRBs per UE already created ({}). To increase the "
                    "number of allowed DRBs per UE change the \"--max_nof_drbs_per_ue\" in the CU-CP configuration",
-                   cfg.max_nof_drbs_per_ue);
+                   max_nof_drbs);
     return drb_id_t::invalid;
   }
 
-  drb_id_t drb_id = allocate_drb_id(
-      new_session_context, full_context, config_update, cfg.max_nof_drbs_per_ue, logger, preferred_drb_id);
+  drb_id_t drb_id =
+      allocate_drb_id(new_session_context, full_context, config_update, max_nof_drbs, logger, preferred_drb_id);
   if (drb_id == drb_id_t::invalid) {
     logger.warning("No more DRBs available");
     return drb_id;
@@ -252,6 +266,10 @@ static drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session
                                          cfg,
                                          new_session_context.integrity_protection_result,
                                          new_session_context.confidentiality_protection_result);
+  if (capabilities.redcap.has_value() and not capabilities.redcap->pdcp_long_sn_supported) {
+    drb_ctx.pdcp_cfg.tx.sn_size = pdcp_sn_size::size12bits;
+    drb_ctx.pdcp_cfg.rx.sn_size = pdcp_sn_size::size12bits;
+  }
   drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
   drb_ctx.rlc_mod  = (drb_ctx.pdcp_cfg.rlc_mode == pdcp_rlc_mode::am) ? rlc_mode::am : rlc_mode::um_bidir;
 
@@ -271,12 +289,20 @@ static drb_id_t modify_qos_flow(up_pdu_session_context_update&     new_session_c
 {
   // Note: We map QoS flows to DRBs in a 1:1 manner meaning that each flow gets it's own DRB.
   // potential optimization to support more QoS flows is to map non-GPB flows onto existing DRBs.
-  if (full_context.qos_flow_map.find(qos_flow.qos_flow_id) == full_context.qos_flow_map.end()) {
-    logger.warning("{} does not exist", qos_flow.qos_flow_id);
+  const auto session = full_context.pdu_sessions.find(new_session_context.id);
+  if (session == full_context.pdu_sessions.end()) {
+    logger.warning("Can't modify QoS flow: PDU session does not exist");
     return drb_id_t::invalid;
   }
-
-  drb_id_t drb_id = full_context.qos_flow_map.at(qos_flow.qos_flow_id);
+  const auto previous_drb =
+      std::find_if(session->second.drbs.begin(), session->second.drbs.end(), [&qos_flow](const auto& drb) {
+        return drb.second.qos_flows.find(qos_flow.qos_flow_id) != drb.second.qos_flows.end();
+      });
+  if (previous_drb == session->second.drbs.end()) {
+    logger.warning("Can't modify {}: no matching bearer in the PDU session", qos_flow.qos_flow_id);
+    return drb_id_t::invalid;
+  }
+  drb_id_t drb_id = previous_drb->first;
 
   up_drb_context drb_ctx;
   drb_ctx.drb_id         = drb_id;
@@ -297,6 +323,11 @@ static drb_id_t modify_qos_flow(up_pdu_session_context_update&     new_session_c
   drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
   drb_ctx.rlc_mod  = (drb_ctx.pdcp_cfg.rlc_mode == pdcp_rlc_mode::am) ? rlc_mode::am : rlc_mode::um_bidir;
 
+  // An existing bearer keeps its sequence-number lengths across QoS changes.
+  const auto& previous_pdcp   = previous_drb->second.pdcp_cfg;
+  drb_ctx.pdcp_cfg.tx.sn_size = previous_pdcp.tx.sn_size;
+  drb_ctx.pdcp_cfg.rx.sn_size = previous_pdcp.rx.sn_size;
+
   // Add modified DRB to list.
   new_session_context.drb_to_modify.emplace(drb_id, drb_ctx);
 
@@ -307,7 +338,8 @@ up_config_update
 ocudu::ocucp::calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
                                const up_context&                                                            context,
                                const up_resource_manager_cfg&                                               cfg,
-                               const ocudulog::basic_logger&                                                logger,
+                               const rrc_ue_capabilities_t&  capabilities,
+                               const ocudulog::basic_logger& logger,
                                const up_old_drb_association& old_drb_association)
 {
   up_config_update config;
@@ -335,7 +367,8 @@ ocudu::ocucp::calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_p
         }
       }
 
-      auto drb_id = allocate_qos_flow(new_ctxt, flow_item, config, context, cfg, logger, preferred_drb_id);
+      auto drb_id =
+          allocate_qos_flow(new_ctxt, flow_item, config, context, cfg, capabilities, logger, preferred_drb_id);
       if (drb_id == drb_id_t::invalid) {
         logger.warning("Couldn't allocate {}", flow_item.qos_flow_id);
         continue;
@@ -381,6 +414,7 @@ five_qi_t ocudu::ocucp::get_five_qi(const ngap_qos_flow_add_or_mod_item& qos_flo
 up_config_update ocudu::ocucp::calculate_update(const ngap_pdu_session_resource_modify_request& pdu,
                                                 const up_context&                               context,
                                                 const up_resource_manager_cfg&                  cfg,
+                                                const rrc_ue_capabilities_t&                    capabilities,
                                                 const ocudulog::basic_logger&                   logger)
 {
   up_config_update update;
@@ -413,7 +447,7 @@ up_config_update ocudu::ocucp::calculate_update(const ngap_pdu_session_resource_
           logger.debug("Modified {} on {}", flow_item.qos_flow_id, drb_id);
         }
       } else {
-        auto drb_id = allocate_qos_flow(ctxt_update, flow_item, update, context, cfg, logger);
+        auto drb_id = allocate_qos_flow(ctxt_update, flow_item, update, context, cfg, capabilities, logger);
         if (drb_id == drb_id_t::invalid) {
           logger.warning("Couldn't allocate {}", flow_item.qos_flow_id);
           update.pdu_sessions_failed_to_modify_list.push_back(modify_item.pdu_session_id);

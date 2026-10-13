@@ -33,16 +33,29 @@ bool up_resource_manager::validate_request(const ngap_pdu_session_resource_relea
 
 up_config_update up_resource_manager::calculate_update(
     const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+    const rrc_ue_capabilities_t&                                                 capabilities,
     const up_old_drb_association&                                                old_drb_association)
 {
   ocudu_assert(is_valid(setup_items, context, cfg, logger), "Invalid PDU Session Resource Setup items.");
-  return ocudu::ocucp::calculate_update(setup_items, context, cfg, logger, old_drb_association);
+  if (not validate_context(context, capabilities)) {
+    return {};
+  }
+  return ocudu::ocucp::calculate_update(setup_items, context, cfg, capabilities, logger, old_drb_association);
 }
 
-up_config_update up_resource_manager::calculate_update(const ngap_pdu_session_resource_modify_request& pdu)
+up_config_update up_resource_manager::calculate_update(const ngap_pdu_session_resource_modify_request& pdu,
+                                                       const rrc_ue_capabilities_t&                    capabilities)
 {
   ocudu_assert(is_valid(pdu, context, cfg, logger), "Invalid PDU Session Resource Modify request.");
-  return ocudu::ocucp::calculate_update(pdu, context, cfg, logger);
+  if (not validate_context(context, capabilities)) {
+    up_config_update rejected;
+    rejected.initial_context_creation = false;
+    for (const auto& session : pdu.pdu_session_res_modify_items) {
+      rejected.pdu_sessions_failed_to_modify_list.push_back(session.pdu_session_id);
+    }
+    return rejected;
+  }
+  return ocudu::ocucp::calculate_update(pdu, context, cfg, capabilities, logger);
 }
 
 up_config_update up_resource_manager::calculate_update(const ngap_pdu_session_resource_release_command& pdu)
@@ -292,7 +305,31 @@ up_context up_resource_manager::get_up_context() const
   return context;
 }
 
-void up_resource_manager::set_up_context(const up_context& ctx)
+bool up_resource_manager::validate_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities) const
 {
+  if (not capabilities.redcap.has_value()) {
+    return true;
+  }
+  size_t count = 0;
+  for (const auto& session : ctx.pdu_sessions) {
+    count += session.second.drbs.size();
+    for (const auto& drb : session.second.drbs) {
+      if (not capabilities.redcap->pdcp_long_sn_supported and
+          (drb.second.pdcp_cfg.tx.sn_size != pdcp_sn_size::size12bits or
+           drb.second.pdcp_cfg.rx.sn_size != pdcp_sn_size::size12bits)) {
+        logger.warning("RedCap context has an unsupported PDCP SN length");
+        return false;
+      }
+    }
+  }
+  return count <= std::min<unsigned>(cfg.max_nof_drbs_per_ue, capabilities.redcap->support_of_16_drb ? 16 : 8);
+}
+
+bool up_resource_manager::set_up_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities)
+{
+  if (not validate_context(ctx, capabilities)) {
+    return false;
+  }
   context = ctx;
+  return true;
 }

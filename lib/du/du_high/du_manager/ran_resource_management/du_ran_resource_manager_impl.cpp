@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "du_ran_resource_manager_impl.h"
+#include "redcap_config_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/mac/config/mac_cell_group_config_factory.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -345,15 +346,39 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       u.ue_cap_manager.update(*reestablished_ue_caps);
     }
     if (not upd_req.ue_cap_rat_list.empty()) {
-      u.ue_cap_manager.update(upd_req.ue_cap_rat_list);
+      if (not u.ue_cap_manager.update(upd_req.ue_cap_rat_list)) {
+        resp.procedure_error = make_unexpected(std::string{"Invalid UE capability container"});
+        return resp;
+      }
     } else if (not upd_req.ho_prep_info.empty()) {
-      u.ue_cap_manager.update_from_ho_prep_info(upd_req.ho_prep_info);
+      if (not u.ue_cap_manager.update_from_ho_prep_info(upd_req.ho_prep_info)) {
+        resp.procedure_error = make_unexpected(std::string{"Invalid handover capability container"});
+        return resp;
+      }
     }
   }
 
   // Update measGaps based on the UE measConfig, location measurements and supportedGapPatterns UE capabilities.
   const ue_capability_summary* ue_caps_summary =
       u.ue_cap_manager.summary().has_value() ? &*u.ue_cap_manager.summary() : nullptr;
+  if (ue_caps_summary != nullptr and ue_caps_summary->is_redcap) {
+    if (not supports_redcap_admission(cell_cfg_list[pcell_idx]) or ue_mcg.cell_group.cells.size() != 1) {
+      resp.procedure_error = make_unexpected(std::string{"Unsupported RedCap cell configuration"});
+      return resp;
+    }
+    const auto compatible_rlc = [&](const du_ue_resource_config& config) {
+      return std::all_of(config.drbs.begin(), config.drbs.end(), [&](const auto& drb) {
+        return drb.rlc_cfg.mode != rlc_mode::am or ue_caps_summary->redcap_rlc_am_long_sn_supported or
+               (drb.rlc_cfg.am.tx.sn_field_length == rlc_am_sn_size::size12bits and
+                drb.rlc_cfg.am.rx.sn_field_length == rlc_am_sn_size::size12bits);
+      });
+    };
+    if (not compatible_rlc(ue_mcg) or
+        (reestablished_context != nullptr and not compatible_rlc(*reestablished_context))) {
+      resp.procedure_error = make_unexpected(std::string{"RedCap context has an unsupported RLC AM SN length"});
+      return resp;
+    }
+  }
   if (not meas_cfg_mng.update(ue_mcg, upd_req.meas_cfg, upd_req.location_meas_info, ue_caps_summary)) {
     resp.procedure_error = make_unexpected(std::string{"Unable to configure a measurement gap for the PRS"});
     return resp;
@@ -378,7 +403,8 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
       bearer_res_mng.update(ue_mcg,
                             du_ue_bearer_resource_update_request{
                                 upd_req.srbs_to_setup, upd_req.drbs_to_setup, upd_req.drbs_to_mod, upd_req.drbs_to_rem},
-                            reestablished_context);
+                            reestablished_context,
+                            ue_caps_summary);
   resp.failed_drbs = std::move(bearer_resp.drbs_failed_to_setup);
   resp.failed_drbs.insert(
       resp.failed_drbs.end(), bearer_resp.drbs_failed_to_mod.begin(), bearer_resp.drbs_failed_to_mod.end());

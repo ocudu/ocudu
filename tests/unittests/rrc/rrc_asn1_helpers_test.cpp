@@ -4,6 +4,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "lib/rrc/ue/rrc_asn1_converters.h"
+#include "lib/rrc/ue/rrc_ue_helpers.h"
+#include "tests/test_doubles/rrc/redcap_ue_capability_fixture.h"
 #include "ocudu/asn1/asn1_utils.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/ran/five_g_s_tmsi.h"
@@ -98,4 +100,62 @@ TEST(rrc_asn1_helpers_test, test_ue_cap_rat_container_list_converter_respects_ca
   rrc_ue_cap_rat_container_list_t capabilities_list = asn1_to_ue_cap_rat_container_list(asn1_capabilities_list);
 
   ASSERT_EQ(MAX_NOF_UE_CAP_RAT_CONTAINERS, capabilities_list.size());
+}
+
+TEST(rrc_asn1_helpers_test, redcap_capabilities_retain_optional_pdcp_sn_and_drb_support)
+{
+  auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
+  asn1::rrc_nr::ue_nr_cap_s cap;
+  asn1::cbit_ref            reader{encoded};
+  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  auto          next = [](auto& value) -> auto& { return value.non_crit_ext; };
+  auto&         r17  = next(next(next(next(next(next(next(next(next(next(cap))))))))));
+  rrc_ue_logger logger{"RRC", {cu_cp_ue_index_t::min, to_rnti(0x4601)}};
+  for (bool long_sn : {false, true}) {
+    for (bool drbs16 : {false, true}) {
+      cap.pdcp_params.long_sn_red_cap_r17_present                 = long_sn;
+      r17.red_cap_params_r17.support_of16_drb_red_cap_r17_present = drbs16;
+      auto decoded                                                = get_capabilities(cap, logger);
+      ASSERT_TRUE(decoded.redcap.has_value());
+      EXPECT_EQ(decoded.redcap->pdcp_long_sn_supported, long_sn);
+      EXPECT_EQ(decoded.redcap->support_of_16_drb, drbs16);
+    }
+  }
+}
+
+TEST(rrc_asn1_helpers_test, optional_redcap_features_without_identity_do_not_mark_an_ordinary_ue)
+{
+  auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
+  asn1::rrc_nr::ue_nr_cap_s cap;
+  asn1::cbit_ref            reader{encoded};
+  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  auto          next = [](auto& value) -> auto& { return value.non_crit_ext; };
+  auto&         r17  = next(next(next(next(next(next(next(next(next(next(cap))))))))));
+  rrc_ue_logger logger{"RRC", {cu_cp_ue_index_t::min, to_rnti(0x4601)}};
+  r17.red_cap_params_r17.support_of_red_cap_r17_present = false;
+  EXPECT_FALSE(get_capabilities(cap, logger).redcap.has_value());
+  r17.red_cap_params_r17.support_of_red_cap_r17_present = true;
+  r17.red_cap_params_r17_present                        = false;
+  EXPECT_FALSE(get_capabilities(cap, logger).redcap.has_value());
+  r17.red_cap_params_r17_present = true;
+  cap.non_crit_ext_present       = false;
+  EXPECT_FALSE(get_capabilities(cap, logger).redcap.has_value());
+}
+
+TEST(rrc_asn1_helpers_test, malformed_nr_container_does_not_hide_a_later_valid_container)
+{
+  asn1::rrc_nr::ue_cap_rat_container_list_l list;
+  list.resize(3);
+  list[0].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  list[0].ue_cap_rat_container = byte_buffer::create({0xff}).value();
+  list[1].rat_type             = asn1::rrc_nr::rat_type_opts::eutra;
+  list[1].ue_cap_rat_container = byte_buffer::create({0xff}).value();
+  list[2].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  list[2].ue_cap_rat_container = test_helpers::make_captured_redcap_nr_capability();
+  rrc_ue_logger logger{"RRC", {cu_cp_ue_index_t::min, to_rnti(0x4601)}};
+  auto          capabilities = get_capabilities(list, logger);
+  ASSERT_TRUE(capabilities.has_value());
+  EXPECT_TRUE(capabilities->redcap.has_value());
+  list.resize(2);
+  EXPECT_FALSE(get_capabilities(list, logger).has_value());
 }

@@ -33,6 +33,7 @@ public:
 
   /// \brief Decodes and stores the UE capability RAT list container.
   /// \param[in] ue_cap_rat_list packed UE capability RAT list container.
+  /// \return True for a valid container, including a list without NR capabilities.
   bool update(const byte_buffer& ue_cap_rat_list);
 
   /// \brief Extracts and stores UE capabilities from a packed HandoverPreparationInformation container.

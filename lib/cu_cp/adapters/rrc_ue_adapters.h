@@ -231,10 +231,10 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_context_release(request);
   }
 
-  void on_up_context_setup_required(const up_context& ctxt) override
+  bool on_up_context_setup_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) override
   {
     ocudu_assert(up_mng != nullptr, "UP resource manager must not be nullptr");
-    up_mng->set_up_context(ctxt);
+    return up_mng->set_up_context(ctxt, capabilities);
   }
 
   void on_ue_location_update() override

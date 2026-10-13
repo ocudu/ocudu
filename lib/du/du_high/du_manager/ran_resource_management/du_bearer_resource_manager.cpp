@@ -195,7 +195,8 @@ du_bearer_resource_manager::supported_dl_harq_feedback(const du_ue_resource_conf
 du_ue_bearer_resource_update_response
 du_bearer_resource_manager::update(du_ue_resource_config&                      ue_cfg,
                                    const du_ue_bearer_resource_update_request& upd_req,
-                                   const du_ue_resource_config*                reestablished_context)
+                                   const du_ue_resource_config*                reestablished_context,
+                                   const ue_capability_summary*                capabilities)
 {
   du_ue_bearer_resource_update_response resp;
 
@@ -211,7 +212,7 @@ du_bearer_resource_manager::update(du_ue_resource_config&                      u
   setup_srbs(ue_cfg, upd_req);
 
   // Setup DRBs.
-  resp.drbs_failed_to_setup = setup_drbs(ue_cfg, upd_req);
+  resp.drbs_failed_to_setup = setup_drbs(ue_cfg, upd_req, capabilities);
 
   // Modify DRBs.
   resp.drbs_failed_to_mod = modify_drbs(ue_cfg, upd_req);
@@ -264,7 +265,8 @@ void du_bearer_resource_manager::setup_srbs(du_ue_resource_config&              
 }
 
 std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_config&                      ue_cfg,
-                                                             const du_ue_bearer_resource_update_request& upd_req)
+                                                             const du_ue_bearer_resource_update_request& upd_req,
+                                                             const ue_capability_summary*                capabilities)
 {
   std::vector<drb_id_t> failed_drbs;
 
@@ -297,6 +299,11 @@ std::vector<drb_id_t> du_bearer_resource_manager::setup_drbs(du_ue_resource_conf
     new_drb.qos               = drb_to_setup.qos_info.drb_qos;
     new_drb.f1u               = qos.f1u;
     new_drb.rlc_cfg           = qos.rlc;
+    if (capabilities != nullptr and capabilities->is_redcap and not capabilities->redcap_rlc_am_long_sn_supported and
+        new_drb.rlc_cfg.mode == rlc_mode::am) {
+      new_drb.rlc_cfg.am.tx.sn_field_length = rlc_am_sn_size::size12bits;
+      new_drb.rlc_cfg.am.rx.sn_field_length = rlc_am_sn_size::size12bits;
+    }
     const std::optional<ul_harq_mode> allowed_harq_mode =
         supported_allowed_harq_mode(ue_cfg, qos.allowed_harq_mode, lcid);
     new_drb.mac_cfg = make_non_gbr_drb_mac_lc_config(allowed_harq_mode);

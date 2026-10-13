@@ -151,7 +151,12 @@ public:
     });
   }
 
-  void on_up_context_setup_required(const up_context& ctxt) override { logger.info("UP context setup requested"); }
+  bool on_up_context_setup_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) override
+  {
+    logger.info("UP context setup requested");
+    ++nof_up_context_setup_requests;
+    return up_context_setup_succeeds;
+  }
 
   void on_ue_location_update() override
   {
@@ -207,6 +212,8 @@ public:
 
   /// Returned by on_up_context_required(); allows tests to inject the UE's active DRBs.
   up_context up_ctxt;
+  bool       up_context_setup_succeeds     = true;
+  unsigned   nof_up_context_setup_requests = 0;
 
   cu_cp_ue_context_release_request last_cu_cp_ue_context_release_request;
 

@@ -650,7 +650,8 @@ bool cu_cp_test_environment::connect_new_ue(unsigned            du_idx,
                                             gnb_du_ue_f1ap_id_t du_ue_id,
                                             rnti_t              crnti,
                                             plmn_identity       plmn,
-                                            byte_buffer         rrc_setup_complete)
+                                            byte_buffer         rrc_setup_complete,
+                                            bool                is_redcap)
 {
   ngap_message ngap_pdu;
   ocudu_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
@@ -659,6 +660,11 @@ bool cu_cp_test_environment::connect_new_ue(unsigned            du_idx,
 
   // Inject Initial UL RRC message.
   f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti, plmn);
+  if (is_redcap) {
+    auto& initial                      = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
+    initial->nr_red_cap_ue_ind_present = true;
+    initial->nr_red_cap_ue_ind         = asn1::f1ap::nr_red_cap_ue_ind_opts::true_value;
+  }
   test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
   get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 

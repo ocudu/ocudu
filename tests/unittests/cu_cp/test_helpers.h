@@ -922,6 +922,9 @@ public:
   }
 
   // RRC UE capability handler.
+  rrc_ue_capabilities_t        decoded_capabilities;
+  const rrc_ue_capabilities_t& get_capabilities() const override { return decoded_capabilities; }
+
   bool is_rrc_inactive_supported() const override { return rrc_inactive_supported; }
   bool is_conditional_handover_supported() const override { return true; }
   bool is_conditional_handover_two_trigger_events_supported() const override { return true; }

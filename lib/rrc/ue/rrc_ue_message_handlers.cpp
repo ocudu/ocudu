@@ -634,7 +634,9 @@ bool rrc_ue_impl::handle_rrc_handover_preparation_info(byte_buffer pdu)
   asn1::rrc_nr::ho_prep_info_s ho_prep_info;
   asn1::cbit_ref               bref({pdu.begin(), pdu.end()});
 
-  if (ho_prep_info.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (ho_prep_info.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+      ho_prep_info.crit_exts.type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::types::c1 or
+      ho_prep_info.crit_exts.c1().type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::c1_c_::types::ho_prep_info) {
     logger.log_error("Couldn't unpack HandoverPreparationInfo RRC container");
     return false;
   }
@@ -642,12 +644,12 @@ bool rrc_ue_impl::handle_rrc_handover_preparation_info(byte_buffer pdu)
   // Store UE capabilities.
   auto& ue_capabilities_list = ho_prep_info.crit_exts.c1().ho_prep_info().ue_cap_rat_list;
 
-  context.capabilities_list.emplace(ue_capabilities_list);
-
-  // Parse UE capabilities, so capability checks work on the target.
-  if (std::optional<rrc_ue_capabilities_t> caps = get_capabilities(ue_capabilities_list, logger); caps.has_value()) {
-    context.capabilities = caps.value();
+  auto capabilities = ocucp::get_capabilities(ue_capabilities_list, logger);
+  if (not capabilities.has_value()) {
+    return false;
   }
+  context.capabilities = *capabilities;
+  context.capabilities_list.emplace(ue_capabilities_list);
 
   if (logger.get_basic_logger().debug.enabled()) {
     logger.log_debug("UE Capabilities:");
@@ -932,7 +934,10 @@ bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
   asn1::rrc_nr::ue_radio_access_cap_info_s ue_radio_access_cap_info;
   asn1::cbit_ref                           bref({ue_capabilities.begin(), ue_capabilities.end()});
 
-  if (ue_radio_access_cap_info.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (ue_radio_access_cap_info.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+      ue_radio_access_cap_info.crit_exts.type() != asn1::rrc_nr::ue_radio_access_cap_info_s::crit_exts_c_::types::c1 or
+      ue_radio_access_cap_info.crit_exts.c1().type() !=
+          asn1::rrc_nr::ue_radio_access_cap_info_s::crit_exts_c_::c1_c_::types::ue_radio_access_cap_info) {
     logger.log_error("Couldn't unpack UERadioAccessCapabilityInfo RRC container");
     return false;
   }
@@ -947,13 +952,12 @@ bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
     return false;
   }
 
-  context.capabilities_list.emplace(ue_cap_rat_container_list);
-
-  // Parse UE capabilities for the capability checks.
-  if (std::optional<rrc_ue_capabilities_t> caps = get_capabilities(ue_cap_rat_container_list, logger);
-      caps.has_value()) {
-    context.capabilities = caps.value();
+  auto capabilities = ocucp::get_capabilities(ue_cap_rat_container_list, logger);
+  if (not capabilities.has_value()) {
+    return false;
   }
+  context.capabilities = capabilities.value();
+  context.capabilities_list.emplace(ue_cap_rat_container_list);
 
   if (logger.get_basic_logger().debug.enabled()) {
     logger.log_debug("UE Capabilities:\n");

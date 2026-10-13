@@ -8,6 +8,7 @@
 #include "../converters/rlc_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "../metrics/du_procedure_metrics_collector.h"
+#include "../ran_resource_management/redcap_config_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
 #include "ocudu/rlc/rlc_factory.h"
@@ -106,6 +107,9 @@ expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context() cons
   // Fetch the DU cell configuration of the primary cell UE is connected to.
   // TODO: Use cell manager
   const auto& cell_cfg = du_params.ran.cells[req.pcell_index];
+  if (req.is_redcap and not supports_redcap_admission(cell_cfg)) {
+    return make_unexpected("RedCap access is disabled or unsupported by this cell configuration");
+  }
   if (not cell_cfg.enabled) {
     return make_unexpected("UE created in inactive cell");
   }

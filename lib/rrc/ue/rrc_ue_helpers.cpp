@@ -6,6 +6,7 @@
 #include "rrc_ue_helpers.h"
 #include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
+#include "ocudu/asn1/rrc_nr/ue_cap_utils.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg_ies.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
@@ -89,14 +90,25 @@ template void ocudu::ocucp::log_rrc_message<asn1::rrc_nr::dl_dcch_msg_s>(rrc_ue_
                                                                          srb_id_t                           srb_id,
                                                                          const char*                        msg_type);
 
-rrc_ue_capabilities_t ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_nr_cap_s& ue_capabilities, rrc_ue_logger& logger)
+static void decode_redcap_capabilities(rrc_ue_capabilities_t& capabilities, const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+{
+  const auto* v1700 = asn1::rrc_nr::get_ue_nr_cap_v1700(ue_cap);
+  if (v1700 == nullptr or not v1700->red_cap_params_r17_present or
+      not v1700->red_cap_params_r17.support_of_red_cap_r17_present) {
+    return;
+  }
+  auto& redcap                  = capabilities.redcap.emplace();
+  redcap.support_of_16_drb      = v1700->red_cap_params_r17.support_of16_drb_red_cap_r17_present;
+  redcap.pdcp_long_sn_supported = ue_cap.pdcp_params.long_sn_red_cap_r17_present;
+}
+
+static rrc_ue_capabilities_t decode_capabilities(const asn1::rrc_nr::ue_nr_cap_s& ue_capabilities)
 {
   rrc_ue_capabilities_t capabilities{};
 
   // Set RRC Inactive support.
   if (ue_capabilities.non_crit_ext_present and ue_capabilities.non_crit_ext.inactive_state_present) {
     capabilities.rrc_inactive_supported = true;
-    logger.log_debug("RRC Inactive supported by UE");
   }
 
   // Set CHO support flags. Per TS 38.306 Section 4.2.7.2 each capability must be set consistently
@@ -120,28 +132,50 @@ rrc_ue_capabilities_t ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_nr_cap_s& 
     }
   }
   // TODO: parse condHandoverFDD-TDD-r16 and condHandoverFR1-FR2-r16
-  if (capabilities.conditional_handover_supported) {
+  decode_redcap_capabilities(capabilities, ue_capabilities);
+
+  return capabilities;
+}
+
+rrc_ue_capabilities_t ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_nr_cap_s& capabilities, rrc_ue_logger& logger)
+{
+  auto decoded = decode_capabilities(capabilities);
+  if (decoded.rrc_inactive_supported) {
+    logger.log_debug("RRC Inactive supported by UE");
+  }
+  if (decoded.conditional_handover_supported) {
     logger.log_debug("CHO (Rel-16) supported by UE");
   }
-  if (capabilities.conditional_handover_two_trigger_events_supported) {
+  if (decoded.conditional_handover_two_trigger_events_supported) {
     logger.log_debug("CHO two-trigger-events (Rel-16) supported by UE");
   }
-  if (capabilities.conditional_handover_event_a4_supported) {
+  if (decoded.conditional_handover_event_a4_supported) {
     logger.log_debug("CHO event-A4-based (Rel-17) supported by UE");
   }
-  if (capabilities.conditional_handover_location_based_supported) {
+  if (decoded.conditional_handover_location_based_supported) {
     logger.log_debug("CHO location-based (Rel-17) supported by UE");
   }
-  if (capabilities.conditional_handover_time_based_supported) {
+  if (decoded.conditional_handover_time_based_supported) {
     logger.log_debug("CHO time-based (Rel-17) supported by UE");
   }
 
-  return capabilities;
+  return decoded;
+}
+
+std::optional<rrc_ue_capabilities_t> ocudu::ocucp::decode_ue_nr_capabilities(const byte_buffer& container)
+{
+  asn1::rrc_nr::ue_nr_cap_s decoded;
+  asn1::cbit_ref            reader{container};
+  if (decoded.unpack(reader) != asn1::OCUDUASN_SUCCESS) {
+    return std::nullopt;
+  }
+  return decode_capabilities(decoded);
 }
 
 std::optional<rrc_ue_capabilities_t>
 ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_cap_rat_container_list_l& capabilities_list, rrc_ue_logger& logger)
 {
+  bool invalid_nr_container = false;
   // Parse UE capabilities list.
   for (const auto& asn1_ue_capability_rat_container : capabilities_list) {
     if (asn1_ue_capability_rat_container.rat_type != asn1::rrc_nr::rat_type_opts::options::nr) {
@@ -156,13 +190,17 @@ ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_cap_rat_container_list_l& capabi
         logger.log_error(asn1_ue_capability_rat_container.ue_cap_rat_container.begin(),
                          asn1_ue_capability_rat_container.ue_cap_rat_container.end(),
                          "Failed to unpack UE Capabilitiy RAT container PDU");
-        return std::nullopt;
+        invalid_nr_container = true;
+        continue;
       }
     }
 
     return get_capabilities(asn1_ue_nr_cap, logger);
   }
 
+  if (invalid_nr_container) {
+    return std::nullopt;
+  }
   return rrc_ue_capabilities_t{};
 }
 

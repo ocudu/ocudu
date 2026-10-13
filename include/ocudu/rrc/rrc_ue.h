@@ -583,7 +583,7 @@ public:
 
   /// \brief Notify the CU-CP to setup an UP context.
   /// \param[in] ctxt The UP context to setup.
-  virtual void on_up_context_setup_required(const up_context& ctxt) = 0;
+  virtual bool on_up_context_setup_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) = 0;
 
   /// \brief Notifies the CU-CP that the location the UE reports has changed, so that a Location Report is sent when
   /// the AMF configured location reporting.
@@ -660,6 +660,9 @@ class rrc_ue_capability_handler
 {
 public:
   virtual ~rrc_ue_capability_handler() = default;
+
+  /// Returns the decoded UE capabilities.
+  virtual const rrc_ue_capabilities_t& get_capabilities() const = 0;
 
   /// \brief Check if RRC Inactive is supported by the UE.
   virtual bool is_rrc_inactive_supported() const = 0;

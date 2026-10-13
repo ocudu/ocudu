@@ -70,6 +70,91 @@ void ocudu::ocucp::merge_old_drb_association_from_as_config(up_old_drb_associati
   }
 }
 
+static std::optional<asn1::rrc_nr::ho_prep_info_s> unpack_handover_preparation(const byte_buffer& container)
+{
+  asn1::rrc_nr::ho_prep_info_s info;
+  asn1::cbit_ref               reader{container};
+  if (info.unpack(reader) != asn1::OCUDUASN_SUCCESS or
+      info.crit_exts.type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::types::c1 or
+      info.crit_exts.c1().type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::c1_c_::types::ho_prep_info) {
+    return std::nullopt;
+  }
+  return info;
+}
+
+std::optional<rrc_ue_capabilities_t> ocudu::ocucp::decode_handover_capabilities(const byte_buffer& container)
+{
+  if (container.empty()) {
+    return rrc_ue_capabilities_t{};
+  }
+  auto info = unpack_handover_preparation(container);
+  if (not info.has_value()) {
+    return std::nullopt;
+  }
+  bool invalid_nr_container = false;
+  for (const auto& rat : info->crit_exts.c1().ho_prep_info().ue_cap_rat_list) {
+    if (rat.rat_type == asn1::rrc_nr::rat_type_opts::nr) {
+      auto capabilities = decode_ue_nr_capabilities(rat.ue_cap_rat_container);
+      if (capabilities.has_value()) {
+        return capabilities;
+      }
+      invalid_nr_container = true;
+    }
+  }
+  if (invalid_nr_container) {
+    return std::nullopt;
+  }
+  return rrc_ue_capabilities_t{};
+}
+
+bool ocudu::ocucp::preserve_redcap_pdcp_sn_lengths(up_config_update&            update,
+                                                   const byte_buffer&           container,
+                                                   const rrc_ue_capabilities_t& capabilities)
+{
+  if (not capabilities.redcap.has_value() or update.pdu_sessions_to_setup_list.empty()) {
+    return true;
+  }
+  auto info = unpack_handover_preparation(container);
+  if (not info.has_value() or not info->crit_exts.c1().ho_prep_info().source_cfg_present) {
+    return false;
+  }
+  const auto&               source = info->crit_exts.c1().ho_prep_info().source_cfg;
+  asn1::rrc_nr::rrc_recfg_s reconfiguration;
+  asn1::cbit_ref            reader{source.rrc_recfg};
+  if (reconfiguration.unpack(reader) != asn1::OCUDUASN_SUCCESS or
+      reconfiguration.crit_exts.type() != asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg or
+      not reconfiguration.crit_exts.rrc_recfg().radio_bearer_cfg_present) {
+    return false;
+  }
+  const auto& source_drbs = reconfiguration.crit_exts.rrc_recfg().radio_bearer_cfg.drb_to_add_mod_list;
+  if (source_drbs.size() > (capabilities.redcap->support_of_16_drb ? 16U : 8U)) {
+    return false;
+  }
+  for (auto& session : update.pdu_sessions_to_setup_list) {
+    for (auto& target : session.second.drb_to_add) {
+      const auto old = std::find_if(source_drbs.begin(), source_drbs.end(), [&](const auto& drb) {
+        return drb.drb_id == to_underlying(target.first);
+      });
+      if (not target.second.source_drb_id_confirmed or old == source_drbs.end() or not old->pdcp_cfg_present or
+          not old->pdcp_cfg.drb_present or not old->pdcp_cfg.drb.pdcp_sn_size_dl_present or
+          not old->pdcp_cfg.drb.pdcp_sn_size_ul_present) {
+        return false;
+      }
+      const auto dl =
+          old->pdcp_cfg.drb.pdcp_sn_size_dl.to_number() == 12 ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
+      const auto ul =
+          old->pdcp_cfg.drb.pdcp_sn_size_ul.to_number() == 12 ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
+      if (not capabilities.redcap->pdcp_long_sn_supported and
+          (dl != pdcp_sn_size::size12bits or ul != pdcp_sn_size::size12bits)) {
+        return false;
+      }
+      target.second.pdcp_cfg.tx.sn_size = dl;
+      target.second.pdcp_cfg.rx.sn_size = ul;
+    }
+  }
+  return true;
+}
+
 bool ocudu::ocucp::handle_context_setup_response(
     cu_cp_intra_cu_handover_response&         response_msg,
     e1ap_bearer_context_modification_request& bearer_context_modification_request,

@@ -5,6 +5,7 @@
 
 #include "lib/du/du_high/du_manager/ran_resource_management/du_ran_resource_manager_impl.h"
 #include "tests/ocudu_test_requirements.h"
+#include "tests/test_doubles/rrc/redcap_ue_capability_fixture.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/du/du_cell_config_helpers.h"
@@ -1299,4 +1300,138 @@ TEST(du_ran_resource_manager_cg_cs_rnti_test, cs_rnti_is_requested_as_long_as_th
         ue_res->cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value());
     EXPECT_FALSE(resp.cs_rnti_requested);
   }
+}
+
+TEST_P(du_ran_resource_manager_tester, redcap_rlc_policy_uses_rlc_capability_and_preserves_cu_pdcp_selection)
+{
+  cell_cfg_list[0].redcap.enabled = true;
+  auto& qos                       = qos_cfg_list.at(uint_to_five_qi(9));
+  qos.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
+  qos.rlc.am.rx.sn_field_length   = rlc_am_sn_size::size18bits;
+  unsigned index                  = 0;
+  for (bool redcap : {false, true}) {
+    for (bool long_sn : {false, true}) {
+      const auto ue_idx = to_du_ue_index(index++);
+      auto*      ue     = create_ue(ue_idx);
+      ASSERT_NE(ue, nullptr);
+      auto  request                 = gbr_drb_creation_req(ue_idx, false);
+      auto& drb                     = request.drbs_to_setup.front();
+      drb.mode                      = rlc_mode::am;
+      drb.qos_info.drb_qos.qos_desc = non_dyn_5qi_descriptor{uint_to_five_qi(9), {}, {}, {}};
+      drb.pdcp_sn_len               = pdcp_sn_size::size18bits;
+      ue_capability_summary caps;
+      caps.is_redcap                       = redcap;
+      caps.redcap_rlc_am_long_sn_supported = long_sn;
+      auto response                        = ue->update(to_du_cell_index(0), request, nullptr, &caps);
+      ASSERT_FALSE(response.failed());
+      ASSERT_TRUE(response.failed_drbs.empty());
+      const auto& configured = ue->value().drbs[drb_id_t::drb1];
+      auto        expected   = redcap && !long_sn ? rlc_am_sn_size::size12bits : rlc_am_sn_size::size18bits;
+      EXPECT_EQ(configured.rlc_cfg.am.tx.sn_field_length, expected);
+      EXPECT_EQ(configured.rlc_cfg.am.rx.sn_field_length, expected);
+      EXPECT_EQ(configured.pdcp_sn_len, pdcp_sn_size::size18bits);
+    }
+  }
+}
+
+TEST_P(du_ran_resource_manager_tester, redcap_admission_rejects_disabled_barred_and_multi_antenna_cells)
+{
+  unsigned idx = 0;
+  for (unsigned mode = 0; mode != 3; ++mode) {
+    cell_cfg_list[0].redcap.enabled         = mode != 0;
+    cell_cfg_list[0].redcap.cell_barred     = mode == 1;
+    cell_cfg_list[0].ran.dl_carrier.nof_ant = mode == 2 ? 2 : 1;
+    auto  index                             = to_du_ue_index(idx++);
+    auto* ue                                = create_ue(index);
+    ASSERT_NE(ue, nullptr);
+    ue_capability_summary caps;
+    caps.is_redcap = true;
+    EXPECT_TRUE(ue->update(to_du_cell_index(0), srb1_creation_req(index), nullptr, &caps).failed());
+  }
+}
+
+TEST_P(du_ran_resource_manager_tester, redcap_malformed_capability_update_preserves_previous_summary)
+{
+  cell_cfg_list[0].redcap.enabled = true;
+  auto  index                     = to_du_ue_index(0);
+  auto* ue                        = create_ue(index);
+  ASSERT_NE(ue, nullptr);
+  ue_capability_summary caps;
+  caps.is_redcap = true;
+  ASSERT_FALSE(ue->update(to_du_cell_index(0), srb1_creation_req(index), nullptr, &caps).failed());
+  auto request            = srb1_creation_req(index);
+  request.ue_cap_rat_list = byte_buffer::create({0xff}).value();
+  EXPECT_TRUE(ue->update(to_du_cell_index(0), request).failed());
+  ASSERT_TRUE(ue->get_ue_capabilities().has_value());
+  EXPECT_TRUE(ue->get_ue_capabilities()->is_redcap);
+}
+
+TEST_P(du_ran_resource_manager_tester, redcap_handover_resources_use_capabilities_without_early_identity)
+{
+  cell_cfg_list[0].redcap.enabled = true;
+  auto  index                     = to_du_ue_index(0);
+  auto* ue                        = create_ue(index);
+  ASSERT_NE(ue, nullptr);
+  auto  request                 = gbr_drb_creation_req(index, false);
+  auto& drb                     = request.drbs_to_setup.front();
+  drb.mode                      = rlc_mode::am;
+  drb.qos_info.drb_qos.qos_desc = non_dyn_5qi_descriptor{uint_to_five_qi(9), {}, {}, {}};
+  request.ho_prep_info          = test_helpers::make_redcap_handover_preparation(false);
+  auto response                 = ue->update(to_du_cell_index(0), request);
+  ASSERT_FALSE(response.failed());
+  ASSERT_TRUE(response.failed_drbs.empty());
+  ASSERT_TRUE(ue->get_ue_capabilities().has_value());
+  EXPECT_TRUE(ue->get_ue_capabilities()->is_redcap);
+  EXPECT_TRUE(ue->value().drbs.contains(drb_id_t::drb1));
+}
+
+TEST_P(du_ran_resource_manager_tester, redcap_reestablishment_preserves_supported_rlc_sn_and_rejects_unsupported_sn)
+{
+  cell_cfg_list[0].redcap.enabled = true;
+  unsigned index                  = 0;
+  for (bool long_sn_supported : {false, true}) {
+    for (auto source_sn : {rlc_am_sn_size::size12bits, rlc_am_sn_size::size18bits}) {
+      auto  ue_idx = to_du_ue_index(index++);
+      auto* ue     = create_ue(ue_idx);
+      ASSERT_NE(ue, nullptr);
+      du_ue_resource_config source;
+      du_ue_drb_config      drb;
+      drb.drb_id                        = drb_id_t::drb1;
+      drb.lcid                          = LCID_MIN_DRB;
+      drb.rlc_cfg.mode                  = rlc_mode::am;
+      drb.rlc_cfg.am.tx.sn_field_length = source_sn;
+      drb.rlc_cfg.am.rx.sn_field_length = source_sn;
+      source.drbs.emplace(drb.drb_id, drb);
+      ue_capability_summary caps;
+      caps.is_redcap                       = true;
+      caps.redcap_rlc_am_long_sn_supported = long_sn_supported;
+      auto response                        = ue->update(to_du_cell_index(0), srb1_creation_req(ue_idx), &source, &caps);
+      if (source_sn == rlc_am_sn_size::size18bits and not long_sn_supported) {
+        EXPECT_TRUE(response.failed());
+        EXPECT_TRUE(ue->value().drbs.empty());
+      } else {
+        ASSERT_FALSE(response.failed());
+        ASSERT_TRUE(ue->value().drbs.contains(drb_id_t::drb1));
+        EXPECT_EQ(ue->value().drbs[drb_id_t::drb1].rlc_cfg.am.tx.sn_field_length, source_sn);
+        EXPECT_EQ(ue->value().drbs[drb_id_t::drb1].rlc_cfg.am.rx.sn_field_length, source_sn);
+      }
+    }
+  }
+}
+
+TEST_P(du_ran_resource_manager_tester, ordinary_handover_without_nr_capabilities_remains_accepted)
+{
+  auto  index = to_du_ue_index(0);
+  auto* ue    = create_ue(index);
+  ASSERT_NE(ue, nullptr);
+  asn1::rrc_nr::ho_prep_info_s info;
+  info.crit_exts.set_c1().set_ho_prep_info();
+  auto          request = srb1_creation_req(index);
+  asn1::bit_ref writer{request.ho_prep_info};
+  ASSERT_EQ(info.pack(writer), asn1::OCUDUASN_SUCCESS);
+  EXPECT_FALSE(ue->update(to_du_cell_index(0), request).failed());
+  EXPECT_FALSE(ue->get_ue_capabilities().has_value());
+  request.ho_prep_info = byte_buffer::create({0xff}).value();
+  EXPECT_TRUE(ue->update(to_du_cell_index(0), request).failed());
+  EXPECT_FALSE(ue->get_ue_capabilities().has_value());
 }

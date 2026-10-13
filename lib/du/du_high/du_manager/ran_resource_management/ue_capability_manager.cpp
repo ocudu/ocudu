@@ -6,6 +6,7 @@
 #include "ue_capability_manager.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h" // for ho_prep_info_s
+#include "ocudu/asn1/rrc_nr/ue_cap_utils.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/du/du_cell_config.h"
 #include "ocudu/du/du_high/du_test_mode_config.h"
@@ -17,9 +18,7 @@ using namespace odu;
 
 static const asn1::rrc_nr::ntn_params_r17_s* get_ntn_params_r17(const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
 {
-  const asn1::rrc_nr::ue_nr_cap_s* ue_cap_ptr = &ue_cap;
-  auto        next  = [](const auto* p) { return p && p->non_crit_ext_present ? &p->non_crit_ext : nullptr; };
-  const auto* v1700 = next(next(next(next(next(next(next(next(next(next(ue_cap_ptr))))))))));
+  const auto* v1700 = asn1::rrc_nr::get_ue_nr_cap_v1700(ue_cap);
   if (!v1700 || !v1700->non_terrestrial_network_r17_present || !v1700->ntn_params_r17_present) {
     return nullptr;
   }
@@ -244,6 +243,19 @@ static void decode_advanced_ue_nr_ntn_caps(ue_capability_summary&           ue_c
   }
 }
 
+static void decode_advanced_ue_nr_redcap_caps(ue_capability_summary&           capabilities,
+                                              const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+{
+  const auto* v1700 = asn1::rrc_nr::get_ue_nr_cap_v1700(ue_cap);
+  if (v1700 == nullptr or not v1700->red_cap_params_r17_present or
+      not v1700->red_cap_params_r17.support_of_red_cap_r17_present) {
+    return;
+  }
+  capabilities.is_redcap = true;
+  capabilities.redcap_rlc_am_long_sn_supported =
+      ue_cap.rlc_params_present and ue_cap.rlc_params.am_with_long_sn_red_cap_r17_present;
+}
+
 expected<ue_capability_summary, std::string> odu::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
 {
   asn1::rrc_nr::ue_nr_cap_s ue_cap;
@@ -313,6 +325,7 @@ expected<ue_capability_summary, std::string> odu::decode_ue_nr_cap_container(con
 
   // Convert advanced UE NR NTN capabilities.
   decode_advanced_ue_nr_ntn_caps(ue_caps, ue_cap);
+  decode_advanced_ue_nr_redcap_caps(ue_caps, ue_cap);
 
   return ue_caps;
 }
@@ -346,6 +359,7 @@ bool ue_capability_manager::update(const byte_buffer& ue_cap_rat_list)
     }
   }
 
+  bool invalid_nr_container = false;
   for (const ue_cap_rat_container_s& ue_cap_rat : asn1_cap_list) {
     if (ue_cap_rat.rat_type.value != rat_type_opts::nr) {
       logger.warning("Unsupported RAT type in UE Capability RAT Container List RRC container");
@@ -354,13 +368,15 @@ bool ue_capability_manager::update(const byte_buffer& ue_cap_rat_list)
     expected<ue_capability_summary, std::string> asn1_cap = decode_ue_nr_cap_container(ue_cap_rat.ue_cap_rat_container);
     if (not asn1_cap.has_value()) {
       logger.warning("{}", asn1_cap.error());
+      invalid_nr_container = true;
       continue;
     }
     ue_caps = asn1_cap.value();
     return true;
   }
 
-  return false;
+  // A list without NR capabilities leaves the current summary unchanged.
+  return not invalid_nr_container;
 }
 
 bool ue_capability_manager::update_from_ho_prep_info(const byte_buffer& ho_prep_info)

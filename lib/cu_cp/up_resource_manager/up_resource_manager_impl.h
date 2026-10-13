@@ -8,6 +8,7 @@
 #include "ocudu/cu_cp/up_context.h"
 #include "ocudu/ngap/ngap_pdu_session.h"
 #include "ocudu/ran/cu_cp_pdu_session.h"
+#include "ocudu/rrc/rrc_ue_capabilities.h"
 #include <map>
 
 namespace ocudu::ocucp {
@@ -83,8 +84,10 @@ public:
 
   up_config_update
   calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item>& setup_items,
+                   const rrc_ue_capabilities_t&                                                 capabilities,
                    const up_old_drb_association& old_drb_association = {});
-  up_config_update calculate_update(const ngap_pdu_session_resource_modify_request& pdu);
+  up_config_update calculate_update(const ngap_pdu_session_resource_modify_request& pdu,
+                                    const rrc_ue_capabilities_t&                    capabilities);
   up_config_update calculate_update(const ngap_pdu_session_resource_release_command& pdu);
 
   void                          apply_config_update(const up_config_update_result& result);
@@ -104,7 +107,8 @@ public:
   std::vector<drb_id_t>         get_drbs() const;
 
   up_context get_up_context() const;
-  void       set_up_context(const up_context& ctx);
+  bool       set_up_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities);
+  bool       validate_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities) const;
 
   const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() const;
 

@@ -156,10 +156,17 @@ struct ue_capability_summary {
   /// It is given by field \e slotBasedDynamicPUCCH-Rep-r17 in Information Element \e Phy-ParametersCommon.
   bool slot_based_dyn_pucch_rep_r17_supported = false;
 
+  /// RedCap capability indication, as per TS 38.306, Section 4.2.21.2.
+  bool is_redcap = false;
+  /// RedCap 18-bit RLC AM SN support, as per TS 38.306, Section 4.2.21.4.
+  bool redcap_rlc_am_long_sn_supported = false;
+
   /// Equality operator.
   bool operator==(const ue_capability_summary& other) const
   {
-    return (pdsch_qam256_supported == other.pdsch_qam256_supported) &&
+    return (is_redcap == other.is_redcap) &&
+           (redcap_rlc_am_long_sn_supported == other.redcap_rlc_am_long_sn_supported) &&
+           (pdsch_qam256_supported == other.pdsch_qam256_supported) &&
            (pdsch_qam64lowse_supported == other.pdsch_qam64lowse_supported) &&
            (pusch_qam64lowse_supported == other.pusch_qam64lowse_supported) &&
            (pusch_rep_type_a_supported == other.pusch_rep_type_a_supported) && (bands == other.bands) &&

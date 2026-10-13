@@ -25,6 +25,14 @@ void merge_old_drb_association_from_as_config(up_old_drb_association&       old_
                                               const byte_buffer&            rrc_handover_preparation_information,
                                               const ocudulog::basic_logger& logger);
 
+/// Decodes capabilities forwarded in HandoverPreparationInformation, as per TS 38.331, Section 11.2.2.
+std::optional<rrc_ue_capabilities_t> decode_handover_capabilities(const byte_buffer& container);
+
+/// Preserves supported RedCap PDCP SN lengths from the source AS-Config, as per TS 38.331, Section 6.3.2.
+bool preserve_redcap_pdcp_sn_lengths(up_config_update&            update,
+                                     const byte_buffer&           container,
+                                     const rrc_ue_capabilities_t& capabilities);
+
 /// \brief Handle UE context setup response from target DU and prefills the Bearer context modification.
 bool handle_context_setup_response(cu_cp_intra_cu_handover_response&         response_msg,
                                    e1ap_bearer_context_modification_request& bearer_context_modification_request,

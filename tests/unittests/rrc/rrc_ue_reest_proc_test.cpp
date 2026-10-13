@@ -167,3 +167,22 @@ TEST_F(rrc_ue_reest, when_reestablishment_is_rejected_locally_then_no_context_is
 
   ASSERT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
 }
+
+TEST_F(rrc_ue_reest, incompatible_imported_up_context_falls_back_to_setup)
+{
+  add_ue_reestablishment_context(uint_to_ue_index(0));
+  rrc_ue_cu_cp_notifier.up_context_setup_succeeds = false;
+  receive_valid_reestablishment_request(1, to_rnti(0x4601));
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_setup_requests, 1U);
+  EXPECT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+}
+
+TEST_F(rrc_ue_reest, malformed_imported_capabilities_do_not_import_up_context)
+{
+  rrc_ue_cap_rat_container_list_t caps;
+  caps.push_back({rat_type_t::nr, byte_buffer::create({0xff}).value()});
+  add_ue_reestablishment_context(uint_to_ue_index(0), std::move(caps));
+  receive_valid_reestablishment_request(1, to_rnti(0x4601));
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_setup_requests, 0U);
+  EXPECT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+}

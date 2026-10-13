@@ -61,6 +61,9 @@ void ue_resume_routine::operator()(coro_context<async_task<rrc_resume_request_re
     // Retrieve source UE context.
     ue          = ue_mng.find_du_ue(request.ue_index);
     rrc_context = ue->get_rrc_ue()->get_transfer_context();
+    if (not ue->get_up_resource_manager().validate_context(rrc_context.up_ctx, ue->get_rrc_ue()->get_capabilities())) {
+      CORO_EARLY_RETURN(response_msg);
+    }
     next_config = to_config_update(rrc_context.up_ctx);
   }
 

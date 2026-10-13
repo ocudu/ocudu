@@ -180,8 +180,8 @@ public:
       gnb_du_ue_f1ap_id_t du_ue_id,
       rnti_t              crnti,
       plmn_identity       plmn       = plmn_identity::test_value(),
-      byte_buffer rrc_setup_complete = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()));
-
+      byte_buffer rrc_setup_complete = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()),
+      bool        is_redcap          = false);
   /// Runs the NAS Authentication for a given UE.
   [[nodiscard]] bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
 

@@ -7,6 +7,7 @@
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/static_vector.h"
+#include <optional>
 
 namespace ocudu::ocucp {
 
@@ -24,6 +25,12 @@ struct rrc_ue_cap_rat_container_t {
 
 /// List of per-RAT UE capability containers (UE-CapabilityRAT-ContainerList in TS 38.331 section 6.2.2).
 using rrc_ue_cap_rat_container_list_t = static_vector<rrc_ue_cap_rat_container_t, MAX_NOF_UE_CAP_RAT_CONTAINERS>;
+
+/// RedCap bearer capabilities, as per TS 38.306, Sections 4.2.21.2 and 4.2.21.3.
+struct rrc_redcap_ue_capabilities {
+  bool support_of_16_drb      = false;
+  bool pdcp_long_sn_supported = false;
+};
 
 struct rrc_ue_capabilities_t {
   bool rrc_inactive_supported = false;
@@ -49,6 +56,12 @@ struct rrc_ue_capabilities_t {
   /// UE supports time-based CHO (CondEvent-T1 per TS 38.331). A UE supporting this shall also indicate condHandover-r16
   /// for NTN bands and nonTerrestrialNetwork-r17 support.
   bool conditional_handover_time_based_supported = false;
+
+  /// RedCap capabilities, present when supportOfRedCap-r17 is reported.
+  std::optional<rrc_redcap_ue_capabilities> redcap;
 };
+
+/// Decodes an NR capability container, as per TS 38.331, Section 6.3.3.
+std::optional<rrc_ue_capabilities_t> decode_ue_nr_capabilities(const byte_buffer& container);
 
 } // namespace ocudu::ocucp

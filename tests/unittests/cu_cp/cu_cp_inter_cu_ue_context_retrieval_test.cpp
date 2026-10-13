@@ -9,6 +9,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
+#include "tests/test_doubles/rrc/redcap_ue_capability_fixture.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/test_doubles/xnap/xnap_test_message_validators.h"
@@ -167,9 +168,22 @@ public:
     ue_sends_rrc_reest_request(xnc_peer_served_pci);
     report_fatal_error_if_not(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu),
                               "No Retrieve UE Context Request was sent");
-    get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(generate_retrieve_ue_context_response(local_xnap_ue_id, peer_xnap_ue_id));
+    get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(make_retrieval_response());
     report_fatal_error_if_not(wait_for_msg4_and_check_reestablishment_accepted(), "Reestablishment was not accepted");
     return true;
+  }
+
+  std::optional<byte_buffer> forwarded_capability_context;
+
+  xnap_message make_retrieval_response()
+  {
+    auto response = generate_retrieve_ue_context_response(local_xnap_ue_id, peer_xnap_ue_id);
+    if (forwarded_capability_context.has_value()) {
+      response.pdu.successful_outcome()
+          .value.retrieve_ue_context_resp()
+          ->ue_context_info_retr_ue_ctxt_resp.rrc_context = forwarded_capability_context->copy();
+    }
+    return response;
   }
 
   unsigned du_idx       = 0;
@@ -212,7 +226,7 @@ TEST_F(cu_cp_inter_cu_ue_context_retrieval_test, when_peer_serves_failure_cell_t
                                         asn1::xnap::xnap_elem_procs_o::init_msg_c::types::retrieve_ue_context_request))
       << "Unexpected XNAP message sent to the peer";
 
-  get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(generate_retrieve_ue_context_response(local_xnap_ue_id, peer_xnap_ue_id));
+  get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(make_retrieval_response());
 
   // With the context in hand, the UE is answered with an RRCReestablishment.
   ASSERT_TRUE(wait_for_msg4_and_check_reestablishment_accepted())
@@ -441,15 +455,17 @@ public:
                                   make_peer_i_rnti(),
                               "The retrieval did not carry the I-RNTI the UE presented");
 
-    get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(generate_retrieve_ue_context_response(local_xnap_ue_id, peer_xnap_ue_id));
+    get_xnc_cu_cp(xnc_peer_idx).push_tx_pdu(make_retrieval_response());
     return true;
   }
 
   /// Establishes the bearers the RRCResume needs and returns once Msg4 was sent to the UE.
-  [[nodiscard]] bool setup_bearers_and_await_rrc_resume()
+  [[nodiscard]] bool setup_bearers_and_await_rrc_resume(bool setup_request_received = false)
   {
     // The retrieved PDU sessions are established at the CU-UP, which holds nothing for this UE.
-    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu), "No Bearer Context Setup Request");
+    if (not setup_request_received) {
+      report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu), "No Bearer Context Setup Request");
+    }
     report_fatal_error_if_not(e1ap_pdu.pdu.init_msg().value.type().value ==
                                   asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request,
                               "Expected a Bearer Context Setup Request for a retrieved context");
@@ -673,4 +689,63 @@ TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_resume_cause_is_rna
   ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu));
   ASSERT_EQ(int_to_srb_id(f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id), srb_id_t::srb0)
       << "Expected an RRC Setup fallback on SRB0 for an RNA update from a peer's I-RNTI";
+}
+
+TEST_F(cu_cp_inter_cu_ue_context_retrieval_test, redcap_retrieved_bearers_use_forwarded_pdcp_capabilities)
+{
+  forwarded_capability_context = test_helpers::make_redcap_handover_preparation(false);
+  ASSERT_TRUE(retrieve_ue_context());
+  ASSERT_TRUE(ue_sends_rrc_reest_complete());
+  ASSERT_TRUE(wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu));
+  const auto& sessions = e1ap_pdu.pdu.init_msg()
+                             .value.bearer_context_setup_request()
+                             ->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request()
+                             .pdu_session_res_to_setup_list;
+  ASSERT_EQ(sessions.size(), 1U);
+  const auto& drb = sessions[0].drb_to_setup_list_ng_ran[0];
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_dl, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_ul, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  cu_cp_e1ap_id =
+      int_to_gnb_cu_cp_ue_e1ap_id(e1ap_pdu.pdu.init_msg().value.bearer_context_setup_request()->gnb_cu_cp_ue_e1ap_id);
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_modification_response(du_ue_id, cu_ue_id, crnti));
+  ASSERT_TRUE(wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu));
+  get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_modification_response(cu_cp_e1ap_id, cu_up_e1ap_id));
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu));
+  ASSERT_TRUE(ue_sends_rrc_reconfiguration_complete());
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_path_switch_request(ngap_pdu));
+  const auto& path_switch = *ngap_pdu.pdu.init_msg().value.path_switch_request();
+  get_amf().push_tx_pdu(generate_path_switch_request_ack(uint_to_amf_ue_id(peer_reported_amf_ue_id),
+                                                         uint_to_ran_ue_id(path_switch.ran_ue_ngap_id)));
+  ASSERT_TRUE(wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu));
+  ASSERT_TRUE(
+      test_helpers::is_pdu_type(xnap_pdu, asn1::xnap::xnap_elem_procs_o::init_msg_c::types::ue_context_release));
+}
+
+TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, redcap_retrieved_bearers_use_forwarded_pdcp_capabilities)
+{
+  forwarded_capability_context = test_helpers::make_redcap_handover_preparation(false);
+  ASSERT_TRUE(retrieve_ue_context_for_resume());
+  ASSERT_TRUE(wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu));
+  const auto& sessions = e1ap_pdu.pdu.init_msg()
+                             .value.bearer_context_setup_request()
+                             ->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request()
+                             .pdu_session_res_to_setup_list;
+  ASSERT_EQ(sessions.size(), 1U);
+  const auto& drb = sessions[0].drb_to_setup_list_ng_ran[0];
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_dl, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_ul, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  ASSERT_TRUE(setup_bearers_and_await_rrc_resume(true));
+  ASSERT_TRUE(ue_sends_rrc_resume_complete());
+  ASSERT_TRUE(wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_path_switch_request(ngap_pdu));
+  const auto& path_switch = *ngap_pdu.pdu.init_msg().value.path_switch_request();
+  get_amf().push_tx_pdu(generate_path_switch_request_ack(uint_to_amf_ue_id(peer_reported_amf_ue_id),
+                                                         uint_to_ran_ue_id(path_switch.ran_ue_ngap_id)));
+  ASSERT_TRUE(wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu));
+  ASSERT_TRUE(
+      test_helpers::is_pdu_type(xnap_pdu, asn1::xnap::xnap_elem_procs_o::init_msg_c::types::ue_context_release));
 }

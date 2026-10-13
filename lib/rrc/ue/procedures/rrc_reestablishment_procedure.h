@@ -61,7 +61,7 @@ private:
   rrc_ue_context_retrieval_request make_context_retrieval_request() const;
 
   /// \brief Transfer the reestablishment context e.g. ue capabilities and update the security keys
-  void transfer_reestablishment_context_and_update_keys();
+  bool transfer_reestablishment_context_and_update_keys();
 
   /// \brief Transfer the context retrieved from the peer and set up the security keys. The peer derived KgNB* for
   /// this node's cell before answering (TS 33.501 section 6.11), so that key is taken as it is.

@@ -100,7 +100,7 @@ void pdu_session_resource_setup_routine::operator()(
 
   {
     // Calculate next user-plane configuration based on incoming setup message.
-    next_config = up_resource_mng.calculate_update(setup_msg.pdu_session_res_setup_items);
+    next_config = up_resource_mng.calculate_update(setup_msg.pdu_session_res_setup_items, rrc_ue->get_capabilities());
   }
 
   // Check next configuration.

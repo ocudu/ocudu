@@ -55,7 +55,7 @@ protected:
         ue->get_security_manager().init_security_context(generate_security_context(ue->get_security_manager())),
         "Failed to init security context");
 
-    ue->get_up_resource_manager().set_up_context(make_up_context());
+    ue->get_up_resource_manager().set_up_context(make_up_context(), {});
 
     return ue;
   }
@@ -230,7 +230,7 @@ TEST_F(cu_cp_ue_context_retrieval_test, when_ue_has_no_pdu_sessions_then_retriev
   cu_cp_ue* ue = create_attached_ue();
 
   // A UE that is not fully attached has no context worth transferring.
-  ue->get_up_resource_manager().set_up_context(up_context{});
+  ue->get_up_resource_manager().set_up_context(up_context{}, {});
 
   const xnap_retrieve_ue_context_response response = collect_ue_context_for_retrieval(
       make_request(ue->get_ue_index()), *ue, guami, amf_ue_id_t::min, amf_addr, target_ssb_arfcn, logger);

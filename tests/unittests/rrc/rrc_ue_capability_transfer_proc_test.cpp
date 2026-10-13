@@ -5,10 +5,12 @@
 
 #include "rrc_ue_test_helpers.h"
 #include "rrc_ue_test_messages.h"
+#include "tests/test_doubles/rrc/redcap_ue_capability_fixture.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/support/async/async_test_utils.h"
+#include "ocudu/support/error_handling.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -137,4 +139,66 @@ TEST_F(rrc_ue_capability_transfer_proc_test,
   ASSERT_TRUE(get_rrc_ue_control_message_handler()->store_ue_capabilities(pack_ue_radio_access_cap_info(false)));
 
   ASSERT_FALSE(rrc_ue->is_rrc_inactive_supported());
+}
+
+static byte_buffer wrap_radio_access_capabilities(byte_buffer nr_capability)
+{
+  asn1::rrc_nr::ue_cap_rat_container_list_l list;
+  list.resize(1);
+  list[0].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  list[0].ue_cap_rat_container = std::move(nr_capability);
+  byte_buffer   packed_list;
+  asn1::bit_ref writer{packed_list};
+  report_fatal_error_if_not(asn1::pack_dyn_seq_of(writer, list, 0, 8) == asn1::OCUDUASN_SUCCESS,
+                            "Invalid test capability list");
+  asn1::rrc_nr::ue_radio_access_cap_info_s info;
+  info.crit_exts.set_c1().set_ue_radio_access_cap_info().ue_radio_access_cap_info = std::move(packed_list);
+  byte_buffer   packed;
+  asn1::bit_ref info_writer{packed};
+  report_fatal_error_if_not(info.pack(info_writer) == asn1::OCUDUASN_SUCCESS, "Invalid test capability information");
+  return packed;
+}
+
+TEST_F(rrc_ue_capability_transfer_proc_test, cached_capabilities_update_the_decoded_summary)
+{
+  auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
+  asn1::rrc_nr::ue_nr_cap_s cap;
+  asn1::cbit_ref            reader{encoded};
+  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  cap.non_crit_ext_present                = true;
+  cap.non_crit_ext.inactive_state_present = true;
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_TRUE(rrc_ue->store_ue_capabilities(wrap_radio_access_capabilities(std::move(packed))));
+  EXPECT_TRUE(rrc_ue->is_rrc_inactive_supported());
+  ASSERT_TRUE(rrc_ue->get_capabilities().redcap.has_value());
+  const auto previous = rrc_ue->get_packed_ue_capability_rat_container_list();
+  EXPECT_FALSE(rrc_ue->store_ue_capabilities(wrap_radio_access_capabilities(byte_buffer::create({0xff}).value())));
+  EXPECT_EQ(rrc_ue->get_packed_ue_capability_rat_container_list(), previous);
+  EXPECT_TRUE(rrc_ue->is_rrc_inactive_supported());
+  ASSERT_TRUE(rrc_ue->get_capabilities().redcap.has_value());
+  cap.non_crit_ext.inactive_state_present = false;
+  byte_buffer   replacement;
+  asn1::bit_ref replacement_writer{replacement};
+  ASSERT_EQ(cap.pack(replacement_writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_TRUE(rrc_ue->store_ue_capabilities(wrap_radio_access_capabilities(std::move(replacement))));
+  EXPECT_FALSE(rrc_ue->is_rrc_inactive_supported());
+}
+
+TEST_F(rrc_ue_capability_transfer_proc_test, malformed_cached_nr_capabilities_are_rejected)
+{
+  EXPECT_FALSE(rrc_ue->store_ue_capabilities(wrap_radio_access_capabilities(byte_buffer::create({0xff}).value())));
+  EXPECT_TRUE(rrc_ue->get_packed_ue_capability_rat_container_list().empty());
+}
+
+TEST_F(rrc_ue_capability_transfer_proc_test, unsupported_cached_capability_message_choice_is_rejected)
+{
+  asn1::rrc_nr::ue_radio_access_cap_info_s info;
+  info.crit_exts.set_crit_exts_future();
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(info.pack(writer), asn1::OCUDUASN_SUCCESS);
+  EXPECT_FALSE(rrc_ue->store_ue_capabilities(std::move(packed)));
+  EXPECT_TRUE(rrc_ue->get_packed_ue_capability_rat_container_list().empty());
 }
