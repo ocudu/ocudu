@@ -7,7 +7,6 @@
 #include "../../common/e1ap_asn1_utils.h"
 #include "../e1ap_cu_up_asn1_helpers.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
-#include "ocudu/support/async/async_timer.h"
 
 using namespace ocudu;
 using namespace ocudu::ocuup;
@@ -20,9 +19,7 @@ e1ap_cu_up_setup_procedure::e1ap_cu_up_setup_procedure(const e1ap_cu_up_setup_pr
   request(cfg.request),
   cu_cp_notifier(dependencies.cu_cp_notif),
   ev_mng(dependencies.ev_mng),
-  timers(dependencies.timers),
-  logger(dependencies.logger),
-  e1_setup_wait_timer(timers.create_timer())
+  logger(dependencies.logger)
 {
 }
 
@@ -32,28 +29,14 @@ void e1ap_cu_up_setup_procedure::operator()(coro_context<async_task<cu_up_e1_set
 
   logger.log_debug("\"{}\" initialized", name());
 
-  while (true) {
-    transaction = ev_mng.transactions.create_transaction(e1_setup_response_timeout);
+  transaction = ev_mng.transactions.create_transaction(e1_setup_response_timeout);
 
-    // Send request to CU.
-    send_cu_up_e1_setup_request();
+  // Send request to CU.
+  send_cu_up_e1_setup_request();
 
-    // Await CU response.
-    CORO_AWAIT(transaction);
-
-    if (not retry_required()) {
-      // No more attempts. Exit loop.
-      break;
-    }
-
-    // Await timer.
-    logger.log_debug("Reinitiating E1 setup in {}s (retry={}/{}). Received E1SetupFailure with Time to Wait IE",
-                     time_to_wait.count(),
-                     e1_setup_retry_no,
-                     request.max_setup_retries);
-    CORO_AWAIT(
-        async_wait_for(e1_setup_wait_timer, std::chrono::duration_cast<std::chrono::milliseconds>(time_to_wait)));
-  }
+  // Await CU response.
+  // Note: The caller retries a failed E1 Setup, honouring the Time to Wait commanded by the CU-CP.
+  CORO_AWAIT(transaction);
 
   // Forward procedure result to DU manager.
   CORO_RETURN(create_e1_setup_result());
@@ -83,41 +66,6 @@ void e1ap_cu_up_setup_procedure::send_cu_up_e1_setup_request()
   }
 
   cu_cp_notifier.on_new_message(msg);
-}
-
-bool e1ap_cu_up_setup_procedure::retry_required()
-{
-  if (transaction.aborted()) {
-    // Timeout or cancellation case.
-    return false;
-  }
-  const e1ap_transaction_response& cu_cp_pdu_response = transaction.response();
-  if (cu_cp_pdu_response.has_value()) {
-    // Success case.
-    return false;
-  }
-
-  if (cu_cp_pdu_response.error().value.type().value !=
-      e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::gnb_cu_up_e1_setup_fail) {
-    // Invalid response type.
-    return false;
-  }
-
-  const gnb_cu_up_e1_setup_fail_ies_container& e1_setup_fail =
-      *cu_cp_pdu_response.error().value.gnb_cu_up_e1_setup_fail();
-  if (not e1_setup_fail.time_to_wait_present) {
-    // CU didn't command a waiting time.
-    logger.log_error("CU-CP did not set any retry waiting time");
-    return false;
-  }
-  if (e1_setup_retry_no++ >= request.max_setup_retries) {
-    // Number of retries exceeded, or there is no time to wait.
-    logger.log_error("Reached maximum number of E1 Setup connection retries ({})", request.max_setup_retries);
-    return false;
-  }
-
-  time_to_wait = std::chrono::seconds{e1_setup_fail.time_to_wait.to_number()};
-  return true;
 }
 
 cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()

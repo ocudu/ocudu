@@ -105,7 +105,6 @@ TEST_F(e1ap_cu_up_test, when_single_plmn_configured_then_present_in_e1_setup_req
 TEST_F(e1ap_cu_up_test, when_e1_setup_fails_then_response_carries_cause_and_time_to_wait)
 {
   cu_up_e1_setup_request req = generate_cu_up_e1_setup_request();
-  req.max_setup_retries      = 0;
 
   bool ret = e1ap->connect_to_cu_cp();
   ocudu_assert(ret, "Failed to connect to CU-CP");

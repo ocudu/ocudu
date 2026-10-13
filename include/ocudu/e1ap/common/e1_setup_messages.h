@@ -22,8 +22,6 @@ struct cu_up_e1_setup_request {
   cu_up_cn_support_t                  cn_support;
   std::vector<supported_plmns_item_t> supported_plmns;
   std::optional<uint16_t>             gnb_cu_up_capacity;
-
-  unsigned max_setup_retries = 5;
 };
 
 /// \brief Response to CU-UP initiated E1 setup request.

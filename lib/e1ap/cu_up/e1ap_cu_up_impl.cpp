@@ -74,10 +74,7 @@ e1ap_cu_up_impl::handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& req
 {
   return launch_async<e1ap_cu_up_setup_procedure>(
       e1ap_cu_up_setup_procedure_configuration{.request = request},
-      e1ap_cu_up_setup_procedure_dependencies{.cu_cp_notif = *pdu_notifier,
-                                              .ev_mng      = *ev_mng,
-                                              .logger      = logger,
-                                              .timers      = timer_factory{timers, cu_up_exec}});
+      e1ap_cu_up_setup_procedure_dependencies{.cu_cp_notif = *pdu_notifier, .ev_mng = *ev_mng, .logger = logger});
 }
 
 async_task<void> e1ap_cu_up_impl::handle_cu_up_e1ap_release_request()
