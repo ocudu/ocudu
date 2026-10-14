@@ -220,7 +220,8 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
       get_si_rnti_pdsch_time_domain_list(msg.ran.dl_cfg_common.init_dl_bwp.generic_params.cp, msg.ran.dmrs_typeA_pos);
   const ofdm_symbol_range sib1_symbols = pdsch_td_res_alloc_list[time_resource].symbols;
 
-  // Mapping type B is not supported yet, so a mapping type A resource must fit after CORESET#0 for every SSB beam.
+  // A PDSCH resource must fit after CORESET#0 for every SSB beam. Mapping type B is what makes this possible for
+  // a beam whose Type0-PDCCH monitoring occasion does not start at symbol 0.
   const auto&    pdcch_common      = msg.ran.dl_cfg_common.init_dl_bwp.pdcch_common;
   const auto&    sib1_ss_cfg       = pdcch_common.search_spaces[pdcch_common.sib1_search_space_id];
   const unsigned coreset0_duration = pdcch_common.coreset0->duration();
@@ -232,12 +233,9 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
     const unsigned required_start = sib1_ss_cfg.get_first_symbol_index(ssb_idx) + coreset0_duration;
     const bool     has_valid_resource =
         std::any_of(pdsch_td_res_alloc_list.begin(), pdsch_td_res_alloc_list.end(), [required_start](const auto& r) {
-          return r.map_type != sch_mapping_type::typeB and r.symbols.start() >= required_start;
+          return r.symbols.start() >= required_start;
         });
-    VERIFY(has_valid_resource,
-           "No valid PDSCH time-domain resource to schedule SIB1 for SSB beam {} (PDSCH mapping type B not "
-           "supported)",
-           ssb_idx);
+    VERIFY(has_valid_resource, "No valid PDSCH time-domain resource to schedule SIB1 for SSB beam {}", ssb_idx);
   }
 
   const dmrs_information dmrs_info =

@@ -43,4 +43,33 @@ struct pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration {
 dmrs_symbol_mask pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration& config);
 
+/// \brief Collects the necessary parameters to calculate the DMRS symbol mask for a TypeB PDSCH mapping and single
+/// duration DMRS.
+struct pdsch_dmrs_symbol_mask_mapping_type_B_single_configuration {
+  /// \brief Number of OFDM symbols scheduled for PDSCH.
+  ///
+  /// It corresponds to parameter \f$l_d\f$ as per TS38.211, Section 7.4.1.1.2. For mapping type B, \f$l_d\f$ is the
+  /// duration of the allocation and the DMRS positions are relative to its first symbol.
+  ///
+  /// Possible values are {2, ..., 7}.
+  bounded_integer<uint8_t, 2, 7> duration;
+  /// \brief Index of the first OFDM symbol scheduled for PDSCH within the slot.
+  ///
+  /// It corresponds to \f$l_0\f$ as per TS38.211, Section 7.4.1.1.2, which for mapping type B is the first symbol of
+  /// the allocation rather than a fixed position in the slot.
+  bounded_integer<uint8_t, 0, 13> start_symbol;
+  /// \brief Indicates the number of additional DMRS positions in time domain.
+  ///
+  /// This value is given by higher layer parameter \c dmrs-AdditionalPosition. Possible values are {0...3}.
+  dmrs_additional_positions additional_position;
+};
+
+/// \brief Calculates the DMRS for PDSCH symbol mask for mapping type B and single duration.
+///
+/// It is implemented as per TS38.211 Table 7.4.1.1.2-3, columns for PDSCH mapping type B.
+///
+/// Any configuration that is not covered in the table triggers an assertion.
+dmrs_symbol_mask pdsch_dmrs_symbol_mask_mapping_type_B_single_get(
+    const pdsch_dmrs_symbol_mask_mapping_type_B_single_configuration& config);
+
 } // namespace ocudu

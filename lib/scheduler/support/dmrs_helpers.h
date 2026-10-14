@@ -51,7 +51,22 @@ inline dmrs_information make_dmrs_info_common(const pdsch_time_domain_resource_a
     dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
 
   } else {
-    ocudu_terminate("Mapping type B not supported");
+    // Mapping type B is what makes SIB1 schedulable for an SSB beam whose Type0-PDCCH monitoring occasion does not
+    // start at symbol 0: no mapping type A resource of the default table starts late enough to fit after CORESET#0
+    // in that case.
+    // TS38.214 Section 5.1.2.1 limits a mapping type B PDSCH to 2, 4 or 7 symbols, and to 2, 4 or 6 with extended
+    // cyclic prefix. A longer allocation is therefore an invalid configuration rather than a table row missing here,
+    // and it must fail loudly: the bounds on the duration field below are checked by an assertion, which a release
+    // build removes, and the mask would then be silently wrong.
+    const unsigned nof_symbols = pdsch_td_cfg.symbols.length();
+    report_fatal_error_if_not(
+        nof_symbols >= 2 and nof_symbols <= 7, "Invalid mapping type B PDSCH duration of {} symbols", nof_symbols);
+
+    pdsch_dmrs_symbol_mask_mapping_type_B_single_configuration dmrscfg{};
+    dmrscfg.duration            = nof_symbols;
+    dmrscfg.start_symbol        = pdsch_td_cfg.symbols.start();
+    dmrscfg.additional_position = dmrs_additional_positions::pos2;
+    dmrs.dmrs_symb_pos          = pdsch_dmrs_symbol_mask_mapping_type_B_single_get(dmrscfg);
   }
 
   dmrs.config_type = dmrs_config_type::type1;

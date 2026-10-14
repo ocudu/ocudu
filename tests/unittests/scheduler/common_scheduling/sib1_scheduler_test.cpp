@@ -733,3 +733,55 @@ INSTANTIATE_TEST_SUITE_P(sib1_scheduler_test,
                              .carrier_bw_mhz    = 20,
                              .sib1_rtx_period   = sib1_rtx_periodicity::ms10,
                              .ssb_period        = ssb_periodicity::ms10}));
+
+// A cell may transmit its SS/PBCH block at a position other than 0 within the burst, and it must still deliver SIB1.
+// For the Search Space indexes with M = 1/2, an odd SS/PBCH block index is monitored from symbol N^CORESET_symb rather
+// than from symbol 0 (TS 38.213 Table 13-11), and no mapping type A resource of the default table starts late enough
+// to fit after CORESET#0 once the occasion itself starts late.
+TEST(sib1_scheduler_non_zero_ssb_position, sib1_is_scheduled_with_a_mapping_type_B_resource)
+{
+  constexpr uint8_t ssb_position = 1;
+  // ssb-PositionsInBurst is most-significant-bit first, so position 1 is the second bit.
+  constexpr uint8_t ssb_beam_bitmap = 0b01000000;
+  // Search Space index 5 is one of the rows with M = 1/2.
+  constexpr uint8_t pdcch_config_sib1 = 5U;
+  constexpr uint8_t l_max             = 8U;
+
+  sib1_scheduler_setup t_bench{
+      sib1_scheduler_setup::make_scheduler_expert_cfg({10, aggregation_level::n4, 10, aggregation_level::n4}),
+      sib1_scheduler_setup::make_cell_cfg_req_for_sib_sched(subcarrier_spacing::kHz30,
+                                                            pdcch_config_sib1,
+                                                            ssb_beam_bitmap,
+                                                            l_max,
+                                                            ssb_periodicity::ms5,
+                                                            20,
+                                                            duplex_mode::FDD)};
+
+  const auto&    pdcch_common = t_bench.cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common;
+  const auto&    ss_cfg       = pdcch_common.search_spaces[pdcch_common.sib1_search_space_id];
+  const unsigned first_symbol = ss_cfg.get_first_symbol_index(ssb_position);
+  // Without this the test would pass for the wrong reason, by exercising an occasion that starts at symbol 0 anyway.
+  ASSERT_GT(first_symbol, 0U) << "the chosen Search Space index does not delay the monitoring occasion";
+  const unsigned coreset_duration = pdcch_common.coreset0->duration();
+  // The PDSCH assertion below doubles as a check of which mapping was used, but only while no default mapping type A
+  // row can satisfy it. Those start at symbol 1 or 2, so the required start has to exceed 2 for that to hold.
+  ASSERT_GT(first_symbol + coreset_duration, 2U) << "a default mapping type A resource would fit, so this test would "
+                                                    "no longer distinguish the two mappings";
+
+  bool sib1_scheduled = false;
+  for (unsigned sl_idx = 0; sl_idx != 1000 and not sib1_scheduled; ++sl_idx) {
+    t_bench.run_slot();
+    const auto sibs = t_bench.res_grid[0].result_reader().dl().sibs();
+    if (sibs.empty()) {
+      continue;
+    }
+    sib1_scheduled = true;
+
+    // A start at or after CORESET#0 cannot come from a default mapping type A row, whose latest start is symbol 2, so
+    // this also establishes which mapping was used.
+    const sib_information& sib1 = sibs.back();
+    ASSERT_GE(sib1.pdsch_cfg.symbols.start(), first_symbol + coreset_duration) << "the SIB1 PDSCH overlaps CORESET#0";
+  }
+
+  ASSERT_TRUE(sib1_scheduled) << "SIB1 was never scheduled for a non-zero SS/PBCH block position";
+}

@@ -62,3 +62,23 @@ dmrs_symbol_mask ocudu::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
 
   return mask;
 }
+
+dmrs_symbol_mask ocudu::pdsch_dmrs_symbol_mask_mapping_type_B_single_get(
+    const pdsch_dmrs_symbol_mask_mapping_type_B_single_configuration& config)
+{
+  // For mapping type B, l0 is the first symbol of the allocation and the table positions are relative to it.
+  const unsigned l0 = config.start_symbol.value();
+
+  dmrs_symbol_mask mask(14);
+  mask.set(l0);
+
+  // TS38.211 Table 7.4.1.1.2-3: for mapping type B, the only additional position within a duration of up to seven
+  // symbols is l0 + 4, and it appears from a duration of five symbols onwards. Durations of two to four symbols carry
+  // a single DMRS regardless of dmrs-AdditionalPosition.
+  if (config.additional_position == dmrs_additional_positions::pos0 || config.duration < 5) {
+    return mask;
+  }
+
+  mask.set(l0 + 4);
+  return mask;
+}

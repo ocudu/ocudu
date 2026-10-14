@@ -113,21 +113,29 @@ void sib1_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
       const auto&    pdsch_td_res_alloc_list = get_si_rnti_pdsch_time_domain_list(
           cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.cp, cell_cfg.params.dmrs_typeA_pos);
       bool is_sib1_scheduled = false;
-      for (const auto& pdsch_td_res : pdsch_td_res_alloc_list) {
-        // Check whether PDSCH time domain resource fits in DL symbols of the slot.
-        if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_point)) {
-          continue;
-        }
-        if (pdsch_td_res.map_type == sch_mapping_type::typeB) {
-          continue;
-        }
-        if (pdsch_td_res.symbols.start() >= ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration) {
-          time_resource = std::distance(pdsch_td_res_alloc_list.begin(), &pdsch_td_res);
-          if (allocate_sib1(res_grid, ssb_idx, time_resource)) {
-            // SIB1 Allocation successful.
-            is_sib1_scheduled = true;
-            break;
+      // Mapping type A is preferred, being the longer and therefore more robust allocation. Mapping type B is what
+      // makes SIB1 schedulable for an SS/PBCH block whose Type0-PDCCH monitoring occasion does not start at symbol 0:
+      // no mapping type A resource of the default table starts late enough to fit after CORESET#0 in that case.
+      for (const auto map_type : {sch_mapping_type::typeA, sch_mapping_type::typeB}) {
+        for (const auto& pdsch_td_res : pdsch_td_res_alloc_list) {
+          // Check whether PDSCH time domain resource fits in DL symbols of the slot.
+          if (pdsch_td_res.symbols.stop() > cell_cfg.get_nof_dl_symbol_per_slot(sl_point)) {
+            continue;
           }
+          if (pdsch_td_res.map_type != map_type) {
+            continue;
+          }
+          if (pdsch_td_res.symbols.start() >= ss_cfg.get_first_symbol_index(ssb_idx) + coreset_duration) {
+            time_resource = std::distance(pdsch_td_res_alloc_list.begin(), &pdsch_td_res);
+            if (allocate_sib1(res_grid, ssb_idx, time_resource)) {
+              // SIB1 Allocation successful.
+              is_sib1_scheduled = true;
+              break;
+            }
+          }
+        }
+        if (is_sib1_scheduled) {
+          break;
         }
       }
       if (not is_sib1_scheduled) {
