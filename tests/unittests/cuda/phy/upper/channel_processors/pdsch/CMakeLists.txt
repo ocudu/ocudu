@@ -13,3 +13,12 @@ target_link_libraries(pdsch_fused_kernel_test
         GTest::gtest
         GTest::gtest_main)
 add_cuda_test(pdsch_fused_kernel_test pdsch_fused_kernel_test)
+
+add_executable(transport_block_encode_kernel_test transport_block_encode_kernel_test.cpp)
+target_link_libraries(transport_block_encode_kernel_test
+        ocudu_cuda_pdsch
+        ocudu_cuda_adt
+        ocudulog
+        GTest::gtest
+        GTest::gtest_main)
+add_cuda_test(transport_block_encode_kernel_test transport_block_encode_kernel_test)
