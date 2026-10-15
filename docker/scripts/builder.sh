@@ -180,7 +180,6 @@ if [[ -n "$DPDK_VERSION" ]]; then
         fi
     fi
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
-    export PKG_CONFIG_PATH="${DPDK_DIR}/lib64/pkgconfig:${DPDK_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
     export LD_LIBRARY_PATH="${DPDK_DIR}/lib64:${DPDK_DIR}/lib:${LD_LIBRARY_PATH:-}"
     echo "DPDK_DIR set to $DPDK_DIR"
 fi
