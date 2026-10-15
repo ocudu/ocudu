@@ -1095,8 +1095,7 @@ fedora 44 avx512:
     ENABLE_DPDK: "True"
     BUILD_ARGS: "-DCMAKE_REQUIRE_FIND_PACKAGE_UHD=ON -DCMAKE_REQUIRE_FIND_PACKAGE_DPDK=ON -DCMAKE_REQUIRE_FIND_PACKAGE_ROHC=ON"
     UHD_VERSION: "4.8.0.0"
-    # AVX2 DPDK runs on the AVX512 runner while the gNB itself targets x86-64-v4.
-    DPDK_VERSION: "25.11.3_avx2"
+    DPDK_VERSION: "25.11.3_avx512"
     MARCH: x86-64-v4
     TEST_MODE: full
   tags:
