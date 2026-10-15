@@ -146,8 +146,8 @@ cd "$FOLDER" || exit
 
 # Setup ROHC
 export ROHC_DIR="/opt/rohc"
-export PKG_CONFIG_PATH="${ROHC_DIR}/lib64/pkgconfig:${ROHC_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
-export LD_LIBRARY_PATH="${ROHC_DIR}/lib64:${ROHC_DIR}/lib:${LD_LIBRARY_PATH:-}"
+export PKG_CONFIG_PATH="${ROHC_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export LD_LIBRARY_PATH="${ROHC_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 echo "ROHC_DIR set to $ROHC_DIR"
 
 # Setup UHD
@@ -159,7 +159,7 @@ if [[ -n "$UHD_VERSION" ]]; then
     else
         [ ! -d "/opt/uhd/$UHD_VERSION" ] && echo "UHD version not found" && exit 1
         export UHD_DIR="/opt/uhd/$UHD_VERSION"
-        export LD_LIBRARY_PATH="${UHD_DIR}/lib64:${UHD_DIR}/lib:${LD_LIBRARY_PATH:-}"
+        export LD_LIBRARY_PATH="${UHD_DIR}/lib64:${UHD_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
         echo "UHD_DIR set to $UHD_DIR"
     fi
 fi
@@ -180,7 +180,7 @@ if [[ -n "$DPDK_VERSION" ]]; then
         fi
     fi
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
-    export LD_LIBRARY_PATH="${DPDK_DIR}/lib64:${DPDK_DIR}/lib:${LD_LIBRARY_PATH:-}"
+    export LD_LIBRARY_PATH="${DPDK_DIR}/lib64:${DPDK_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     echo "DPDK_DIR set to $DPDK_DIR"
 fi
 

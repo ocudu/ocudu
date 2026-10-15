@@ -25,7 +25,8 @@ RUN chmod +x /usr/local/bin/install_dependencies.sh /usr/local/bin/builder.sh /u
     python3 -m venv /usr/local/builder_tools && \
     /usr/local/builder_tools/bin/pip install "pandas<3" "psutil"
 
-# Fedora-native compatibility builds; ordinary builds still select the RPMs.
+# Fedora-native UHD/DPDK compatibility artifacts; ordinary builds select their RPMs.
+# Fedora has no ROHC RPM. All builder.sh jobs use the prebuilt ROHC in /opt/rohc.
 ADD uhd /opt/uhd
 ADD dpdk /opt/dpdk
 ADD rohc /opt/rohc

@@ -91,19 +91,18 @@ include:
       fi
 
       BUILD_CMD="${BUILD_ARGS}"
-      export PKG_CONFIG_PATH=/opt/rohc/lib64/pkgconfig:/opt/rohc/lib/pkgconfig:${PKG_CONFIG_PATH}
-      export LD_LIBRARY_PATH=/opt/rohc/lib64:/opt/rohc/lib:${LD_LIBRARY_PATH}
+      export LD_LIBRARY_PATH=/opt/rohc/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       if [ -n "${DPDK_VERSION}" ]; then
         BUILD_CMD="-d ${DPDK_VERSION} ${BUILD_CMD}"
         export LD_LIBRARY_PATH=/opt/dpdk/${DPDK_VERSION}/lib64:/opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/:/opt/dpdk/${DPDK_VERSION}/lib/aarch64-linux-gnu/${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       fi
       if [ -n "${UHD_VERSION}" ]; then
         BUILD_CMD="-u ${UHD_VERSION} ${BUILD_CMD}"
-        export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib64:/opt/uhd/${UHD_VERSION}/lib:${LD_LIBRARY_PATH}
+        export LD_LIBRARY_PATH=/opt/uhd/${UHD_VERSION}/lib64:/opt/uhd/${UHD_VERSION}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
       fi
       if [ -n "${ENABLE_ARMPL}" ]; then
         if ARMPL_DIR=$(ls -d /opt/arm/armpl_* 2>/dev/null); then
-            export LD_LIBRARY_PATH=${ARMPL_DIR}/lib:${LD_LIBRARY_PATH}
+            export LD_LIBRARY_PATH=${ARMPL_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
         fi
       fi
       if [ -n "${COMPILER}" ]; then
