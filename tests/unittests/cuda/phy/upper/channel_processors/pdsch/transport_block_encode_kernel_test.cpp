@@ -80,6 +80,55 @@ TEST_F(transport_block_encode_kernel_test, the_encoder_is_configured_and_reports
   EXPECT_GT(static_cast<unsigned>(gpu.get_lifting_size()), 0U);
 }
 
+TEST_F(transport_block_encode_kernel_test, a_limited_buffer_changes_the_bits_a_retransmission_carries)
+{
+  // A transport block large enough that the limited circular buffer of TS 38.212, Section 5.4.2.1
+  // is shorter than the code blocks, at a redundancy version whose starting position sits late in
+  // the buffer. The encoder has to hand the limit to the rate matcher: without it the selection
+  // wraps at the whole buffer and takes bits the limited one does not hold.
+  cuda::transport_block_encoder_config config = {};
+  config.nof_tb_bits                          = 24576;
+  config.nof_layers                           = 4;
+  config.modulation                           = modulation_scheme::QAM64;
+  config.nof_allocated_bits                   = 49152;
+  config.redundancy_version                   = 2;
+  config.code_rate                            = 0.5F;
+  config.rnti                                 = 0x1234;
+  config.n_id                                 = 1;
+  config.codeword_index                       = 0;
+  config.enable_scrambling                    = true;
+
+  std::vector<uint8_t> payload = make_payload(config.nof_tb_bits / 8);
+
+  cuda::cuda_expected<cuda::device_vector<uint8_t>> d_input = cuda::device_vector<uint8_t>::create(payload.size());
+  ASSERT_TRUE(d_input.has_value());
+  ASSERT_TRUE(cuda::copy_to_device(d_input.value(), span<const uint8_t>(payload)).has_value());
+
+  // Encode once with the whole buffer and once with it limited.
+  std::vector<std::vector<uint8_t>> encoded;
+  for (unsigned nof_buffer_bits : {0U, 12288U}) {
+    config.nof_buffer_bits = nof_buffer_bits;
+    ASSERT_TRUE(gpu.configure(config).has_value()) << "buffer of " << nof_buffer_bits;
+
+    const std::size_t                                 nof_output_bytes = gpu.get_nof_output_bits() / 8;
+    cuda::cuda_expected<cuda::device_vector<uint8_t>> d_out = cuda::device_vector<uint8_t>::create(nof_output_bytes);
+    ASSERT_TRUE(d_out.has_value());
+    ASSERT_TRUE(gpu.encode(d_out.value().data(), d_input.value().data(), stream).has_value());
+    ASSERT_EQ(::cudaDeviceSynchronize(), cudaSuccess);
+
+    std::vector<uint8_t> bits(nof_output_bytes);
+    ASSERT_TRUE(cuda::copy_to_host(span<uint8_t>(bits), d_out.value()).has_value());
+    encoded.push_back(std::move(bits));
+  }
+
+  // The limit reaches the selection, so the two transmissions cannot carry the same bits. An
+  // encoder that ignored it would produce the first sequence twice.
+  EXPECT_NE(encoded[0], encoded[1]);
+
+  // Neither is empty, which the comparison above would not catch on its own.
+  EXPECT_NE(std::accumulate(encoded[1].begin(), encoded[1].end(), 0U), 0U);
+}
+
 TEST_F(transport_block_encode_kernel_test, encoding_the_same_transport_block_twice_gives_the_same_bits)
 {
   cuda::transport_block_encoder_config config = {};

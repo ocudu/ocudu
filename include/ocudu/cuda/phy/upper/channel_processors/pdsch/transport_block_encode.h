@@ -68,6 +68,13 @@ struct transport_block_encoder_config {
   unsigned nof_short_bits = 0;
   /// Rate matched length of a long code block, or zero to derive it.
   unsigned nof_long_bits = 0;
+
+  /// \brief Length the circular buffer is limited to, or zero for the whole of it.
+  ///
+  /// Limited-buffer rate matching, as per TS 38.212, Section 5.4.2.1, shortens the buffer the bit
+  /// selection wraps around to N_ref. The retransmissions of a large transport block select the
+  /// wrong bits without it.
+  unsigned nof_buffer_bits = 0;
 };
 
 /// \brief Encodes a transport block into the bits the grant carries.

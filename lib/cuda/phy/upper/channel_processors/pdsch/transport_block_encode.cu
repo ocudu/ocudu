@@ -90,6 +90,7 @@ struct tb_encoder_config_t {
   int      nof_short_segments;
   int      E_short;
   int      E_long;
+  int      N_ref;
 };
 
 // Mapping from Z to set index (iLS)
@@ -1423,6 +1424,7 @@ cuda_result transport_block_encoder::impl::encoder_configure(transport_block_enc
   rm_cfg.tb_common.mod               = handle->modulation;
   rm_cfg.cb_specific.rm_length       = static_cast<unsigned>(handle->E_long);
   rm_cfg.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
+  rm_cfg.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
   status                             = handle->rate_matcher.configure(rm_cfg);
   if (!status.has_value())
     return status;
@@ -1617,6 +1619,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.tb_common.mod               = handle->modulation;
     rm_cfg_short.cb_specific.rm_length       = static_cast<unsigned>(E_short);
     rm_cfg_short.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
+    rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_short);
     // Note: for all-short case, E_words == rm_words, so use standard batch call
     handle->rate_matcher.rate_match(handle->d_rate_matched, handle->d_encoded_bits, num_cbs, 0, stream);
@@ -1634,6 +1637,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.tb_common.mod               = handle->modulation;
     rm_cfg_short.cb_specific.rm_length       = static_cast<unsigned>(E_short);
     rm_cfg_short.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
+    rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_short);
     handle->rate_matcher.rate_match(handle->d_rate_matched, handle->d_encoded_bits, nof_short, rm_words, stream);
 
@@ -1645,6 +1649,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_long.tb_common.mod               = handle->modulation;
     rm_cfg_long.cb_specific.rm_length       = static_cast<unsigned>(E_long);
     rm_cfg_long.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
+    rm_cfg_long.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_long);
     handle->rate_matcher.rate_match(handle->d_rate_matched + nof_short * rm_words,
                                     handle->d_encoded_bits + nof_short * encoded_words,
@@ -1880,6 +1885,7 @@ cuda_result transport_block_encoder::configure(const transport_block_encoder_con
   cfg.nof_short_segments = static_cast<int>(config.nof_short_codeblocks);
   cfg.E_short            = static_cast<int>(config.nof_short_bits);
   cfg.E_long             = static_cast<int>(config.nof_long_bits);
+  cfg.N_ref              = static_cast<int>(config.nof_buffer_bits);
 
   // The encoder keeps the modulation itself, so the rate matcher can be told which one it packs for.
   state->modulation = config.modulation;
