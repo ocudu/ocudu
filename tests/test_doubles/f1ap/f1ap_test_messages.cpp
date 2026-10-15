@@ -70,13 +70,17 @@ gnb_du_served_cells_item_s ocudu::test_helpers::generate_served_cells_item(const
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(info.tac);
 
-  served_plmns_item_s served_plmn;
-  served_plmn.plmn_id = info.plmn_id.to_bytes();
-  slice_support_item_s slice_support_item;
-  slice_support_item.snssai.sst.from_number(1);
-  served_plmn.ie_exts.tai_slice_support_list_present = true;
-  served_plmn.ie_exts.tai_slice_support_list.push_back(slice_support_item);
-  served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
+  std::vector<plmn_identity> plmns = {info.plmn_id};
+  plmns.insert(plmns.end(), info.additional_plmns.begin(), info.additional_plmns.end());
+  for (const plmn_identity& plmn : plmns) {
+    served_plmns_item_s served_plmn;
+    served_plmn.plmn_id = plmn.to_bytes();
+    slice_support_item_s slice_support_item;
+    slice_support_item.snssai.sst.from_number(1);
+    served_plmn.ie_exts.tai_slice_support_list_present = true;
+    served_plmn.ie_exts.tai_slice_support_list.push_back(slice_support_item);
+    served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
+  }
 
   served_cells_item.served_cell_info.nr_mode_info.set_tdd();
   served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.nr_arfcn = info.nr_arfcn.value();

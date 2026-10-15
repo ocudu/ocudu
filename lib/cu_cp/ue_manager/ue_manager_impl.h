@@ -56,6 +56,9 @@ public:
   /// \param[in] plmns PLMN identities of the UEs to be allowed again.
   void remove_blocked_plmns(const std::vector<plmn_identity>& plmns);
 
+  /// \brief Get the PLMNs for which new UE connections are currently rejected.
+  const std::set<plmn_identity>& get_blocked_plmns() const { return blocked_plmns; }
+
   /// \brief Find the UEs that the given AMF serves.
   /// \param[in] amf_index Index of the AMF that serves the UEs.
   /// \return Vector of pointers to the found UEs.

@@ -499,3 +499,82 @@ TEST_F(cu_cp_mocn_test, when_ues_attach_through_different_amfs_then_ran_ue_ngap_
   // TS 38.401 section 6.2.1: The RAN UE NGAP ID is unique within the NG-RAN node.
   ASSERT_NE(ran_ue_ngap_ids[0], ran_ue_ngap_ids[1]);
 }
+
+//----------------------------------------------------------------------------------//
+// AMF connection loss with a cell shared by both PLMNs                             //
+//----------------------------------------------------------------------------------//
+
+TEST_F(cu_cp_mocn_test, when_the_amf_of_one_plmn_of_a_shared_cell_is_lost_then_the_cell_stays_active_for_the_other)
+{
+  run_ng_setup();
+
+  // A DU with one cell broadcasting both PLMNs (MOCN). The SIB1 lists the first PLMN and 99902.
+  const plmn_identity second_plmn = plmn_identity::parse("99902").value();
+  auto                ret         = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(
+      du_idx,
+      int_to_gnb_du_id(0x11),
+      {test_helpers::served_cell_item_info{
+          .additional_plmns = {second_plmn},
+          .sib1_str =
+              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
+              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  ASSERT_TRUE(this->run_e1_setup(ret.value()));
+
+  // A UE attaches on the first PLMN (AMF 0).
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  ASSERT_TRUE(connect_new_ue(du_idx, du_ue_f1ap_id, to_rnti(0x4601)));
+
+  // The AMF of the second PLMN goes away.
+  ASSERT_TRUE(drop_amf_connection(1));
+
+  // TEST: The cell still serves the first PLMN, so it is not deactivated and its UE is not released.
+  f1ap_message f1ap_pdu;
+  ASSERT_FALSE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{200}))
+      << "no F1AP message (UE release or cell deactivation) is expected after losing only the second PLMN";
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 1U) << "the UE of the first PLMN must stay connected";
+
+  // TEST: A new UE that selects the second PLMN is rejected while its AMF is down.
+  {
+    gnb_du_ue_f1ap_id_t du_ue_f1ap_id_2 = int_to_gnb_du_ue_f1ap_id(1);
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(du_ue_f1ap_id_2, to_rnti(0x4602)));
+    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+    ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu));
+    get_du(du_idx).push_rrc_ul_dcch_message(
+        du_ue_f1ap_id_2, srb_id_t::srb1, test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete(2)));
+
+    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+    ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu))
+        << "a UE of the PLMN without AMF must be released";
+    const auto& ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(
+        int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id_2));
+  }
+
+  // The AMF of the first PLMN goes away too.
+  ASSERT_TRUE(drop_amf_connection(0));
+
+  // TEST: The cell has no available PLMN left: its UE is released and the cell is deactivated.
+  {
+    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+    ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
+    const auto& ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(
+        int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id));
+
+    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+    ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+    const auto& cu_cfg_upd = f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd();
+    ASSERT_TRUE(cu_cfg_upd->cells_to_be_deactiv_list_present) << "the cell must be deactivated";
+    ASSERT_EQ(cu_cfg_upd->cells_to_be_deactiv_list.size(), 1U);
+    f1ap_message ack = test_helpers::generate_gnb_cu_configuration_update_acknowledgement({});
+    ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id = cu_cfg_upd->transaction_id;
+    get_du(du_idx).push_ul_pdu(ack);
+  }
+}

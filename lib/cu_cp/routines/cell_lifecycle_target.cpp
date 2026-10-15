@@ -55,8 +55,10 @@ std::vector<cell_lifecycle_target> ocudu::ocucp::resolve_activation_targets(du_p
   return targets;
 }
 
-std::vector<cell_lifecycle_target> ocudu::ocucp::resolve_deactivation_targets(du_processor_repository&          du_db,
-                                                                              const std::vector<plmn_identity>& plmns)
+std::vector<cell_lifecycle_target>
+ocudu::ocucp::resolve_deactivation_targets(du_processor_repository&          du_db,
+                                           const std::vector<plmn_identity>& plmns,
+                                           const std::set<plmn_identity>&    unavailable_plmns)
 {
   std::vector<cell_lifecycle_target> targets;
   const std::set<plmn_identity>      lost(plmns.begin(), plmns.end());
@@ -71,13 +73,18 @@ std::vector<cell_lifecycle_target> ocudu::ocucp::resolve_deactivation_targets(du
       continue;
     }
 
-    // A served cell is deactivated when it loses any of the lost PLMNs.
-    // TODO: Deactivate only the lost PLMNs when a cell keeps serving the others.
+    // A served cell that loses one of the lost PLMNs is deactivated only if it has no available PLMN left. A cell
+    // that keeps serving another PLMN stays active: the DU cannot stop broadcasting a single PLMN of an active cell,
+    // so the lost PLMNs are only rejected at UE admission (blocked PLMNs) until their AMF reconnects.
     for (const du_cell_configuration& cell : du_ctxt->served_cells) {
       const bool loses_any = std::any_of(cell.served_plmns.begin(), cell.served_plmns.end(), [&lost](const auto& plmn) {
         return lost.count(plmn) != 0;
       });
-      if (loses_any) {
+      const bool keeps_any =
+          std::any_of(cell.served_plmns.begin(), cell.served_plmns.end(), [&unavailable_plmns](const auto& plmn) {
+            return unavailable_plmns.count(plmn) == 0;
+          });
+      if (loses_any && !keeps_any) {
         targets.push_back({du_index, cell.cgi, std::nullopt, {}});
       }
     }

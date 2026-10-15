@@ -41,14 +41,16 @@ struct served_cell_item_info {
     subcarrier_spacing scs          = subcarrier_spacing::kHz30;
   };
 
-  plmn_identity      plmn_id  = plmn_identity::test_value();
-  nr_cell_identity   nci      = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value();
-  pci_t              pci      = 0;
-  tac_t              tac      = 7;
-  nr_band            band     = nr_band::n78;
-  arfcn_t            nr_arfcn = 620688;
-  meas_timing_config meas_timing_cfg;
-  std::string        sib1_str = create_sib1_hex_string(plmn_identity::test_value());
+  plmn_identity plmn_id = plmn_identity::test_value();
+  /// PLMNs served by the cell in addition to \c plmn_id (MOCN). Reported in the Served PLMNs list.
+  std::vector<plmn_identity> additional_plmns;
+  nr_cell_identity           nci      = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value();
+  pci_t                      pci      = 0;
+  tac_t                      tac      = 7;
+  nr_band                    band     = nr_band::n78;
+  arfcn_t                    nr_arfcn = 620688;
+  meas_timing_config         meas_timing_cfg;
+  std::string                sib1_str = create_sib1_hex_string(plmn_identity::test_value());
 };
 
 /// \brief Generates dummy F1 RESET message, sent by the CU to the DU, as per TS 38.473 section 8.2.1.1.

@@ -45,7 +45,9 @@ struct gnb_du_sys_info {
 
 /// Information of served cell being added/modified.
 struct du_served_cell_info {
-  nr_cell_global_id_t                  nr_cgi;
+  nr_cell_global_id_t nr_cgi;
+  /// PLMNs broadcast by the cell in addition to the NR CGI PLMN (e.g. MOCN). Reported in the Served PLMNs list.
+  std::vector<plmn_identity>           additional_plmns;
   pci_t                                pci;
   tac_t                                tac;
   duplex_mode                          duplx_mode;

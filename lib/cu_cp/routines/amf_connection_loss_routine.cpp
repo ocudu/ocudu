@@ -54,13 +54,14 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
   // Stop accepting new UEs for the lost PLMNs.
   ue_mng.add_blocked_plmns(lost_plmns);
 
-  // Release the UEs of the disconnected AMF with a transport cause, then deactivate the cells of the lost PLMNs at
-  // once. The loss of the AMF is a fault, so the cells skip the barring that an operator stop uses.
+  // Release the UEs of the disconnected AMF with a transport cause, then deactivate at once the cells of the lost
+  // PLMNs that have no available PLMN left. A cell that still serves a PLMN of another connected AMF (MOCN) stays
+  // active. The loss of the AMF is a fault, so the cells skip the barring that an operator stop uses.
   CORO_AWAIT_VALUE(cell_deactivation_result deactivation_result,
                    launch_async<cell_deactivation_routine>(
                        cell_deactivation_routine_configuration{
-                           .ran_node_name   = cu_cp_cfg.node.ran_node_name,
-                           .targets         = resolve_deactivation_targets(du_db, lost_plmns),
+                           .ran_node_name = cu_cp_cfg.node.ran_node_name,
+                           .targets       = resolve_deactivation_targets(du_db, lost_plmns, ue_mng.get_blocked_plmns()),
                            .ues_to_release  = collect_ues_for_amf(ue_mng, amf_index),
                            .release_cause   = ngap_cause_t{ngap_cause_transport_t::transport_res_unavailable},
                            .bar_cells_first = false},

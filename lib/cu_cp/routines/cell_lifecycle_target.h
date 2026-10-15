@@ -10,6 +10,7 @@
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/plmn_identity.h"
 #include <optional>
+#include <set>
 #include <vector>
 
 namespace ocudu::ocucp {
@@ -42,9 +43,16 @@ std::vector<cell_lifecycle_target> resolve_activation_targets(du_processor_repos
                                                               const logical_cell_manager&       logical_cells,
                                                               const std::vector<plmn_identity>& plmns);
 
-/// \brief Resolve the served cells (across all DUs) that lose any of the given PLMNs, i.e. the cells to deactivate.
+/// \brief Resolve the served cells (across all DUs) to deactivate after losing the given PLMNs.
+///
+/// A cell is deactivated only when it serves one of the lost PLMNs and none of its served PLMNs remains available,
+/// i.e. every served PLMN is in \p unavailable_plmns. A cell that still serves another available PLMN (e.g. a MOCN
+/// cell whose other AMF is still connected) stays active; UEs of the lost PLMNs are rejected at admission instead.
+/// \param[in] plmns The PLMNs that were lost.
+/// \param[in] unavailable_plmns All PLMNs currently without a serving AMF, including \p plmns.
 std::vector<cell_lifecycle_target> resolve_deactivation_targets(du_processor_repository&          du_db,
-                                                                const std::vector<plmn_identity>& plmns);
+                                                                const std::vector<plmn_identity>& plmns,
+                                                                const std::set<plmn_identity>&    unavailable_plmns);
 
 /// \brief Collect the CU-CP UEs that the given AMF serves, so they can be released when the AMF is lost.
 std::vector<cu_cp_ue_index_t> collect_ues_for_amf(ue_manager& ue_mng, cu_cp_amf_index_t amf_index);
