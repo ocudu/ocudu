@@ -19,6 +19,7 @@
 #include "ocudu/ran/sch/modulation_scheme.h"
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 namespace ocudu {
 namespace cuda {
@@ -52,12 +53,12 @@ struct transport_block_encoder_config {
   /// Scramble the rate matched bits, as the standard requires of a transmitter.
   bool enable_scrambling = true;
 
-  /// Base graph the code blocks are encoded with.
-  ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
+  /// Base graph the code blocks are encoded with, or absent to derive it.
+  std::optional<ldpc_base_graph_type> base_graph;
   /// Number of code blocks the transport block segments into, or zero to derive it.
   unsigned nof_codeblocks = 0;
-  /// Lifting size of the code, or zero to derive it.
-  ldpc::lifting_size_t lifting_size = ldpc::LS2;
+  /// Lifting size of the code, or absent to derive it.
+  std::optional<ldpc::lifting_size_t> lifting_size;
   /// Number of filler bits the segmentation leaves, or zero to derive it.
   unsigned nof_filler_bits = 0;
 

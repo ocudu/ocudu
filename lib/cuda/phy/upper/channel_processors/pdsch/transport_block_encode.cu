@@ -1871,13 +1871,15 @@ cuda_result transport_block_encoder::configure(const transport_block_encoder_con
   cfg.n_ID                = config.n_id;
   cfg.q                   = config.codeword_index;
   cfg.enable_scrambling   = config.enable_scrambling;
-  cfg.base_graph          = (config.base_graph == ldpc_base_graph_type::BG1) ? 1 : 2;
-  cfg.num_code_blocks     = static_cast<int>(config.nof_codeblocks);
-  cfg.lifting_size        = static_cast<int>(config.lifting_size);
-  cfg.nof_filler_bits     = static_cast<int>(config.nof_filler_bits);
-  cfg.nof_short_segments  = static_cast<int>(config.nof_short_codeblocks);
-  cfg.E_short             = static_cast<int>(config.nof_short_bits);
-  cfg.E_long              = static_cast<int>(config.nof_long_bits);
+  // Zero leaves the segmentation to derive it, which is what an absent value asks for.
+  cfg.base_graph =
+      config.base_graph.has_value() ? ((config.base_graph.value() == ldpc_base_graph_type::BG1) ? 1 : 2) : 0;
+  cfg.num_code_blocks    = static_cast<int>(config.nof_codeblocks);
+  cfg.lifting_size       = config.lifting_size.has_value() ? static_cast<int>(config.lifting_size.value()) : 0;
+  cfg.nof_filler_bits    = static_cast<int>(config.nof_filler_bits);
+  cfg.nof_short_segments = static_cast<int>(config.nof_short_codeblocks);
+  cfg.E_short            = static_cast<int>(config.nof_short_bits);
+  cfg.E_long             = static_cast<int>(config.nof_long_bits);
 
   // The encoder keeps the modulation itself, so the rate matcher can be told which one it packs for.
   state->modulation = config.modulation;
