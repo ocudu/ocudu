@@ -42,7 +42,8 @@ struct pdu_session_manager_dependencies {
   task_executor&                ue_ul_exec;
   task_executor&                ue_ctrl_exec;
   task_executor&                crypto_exec;
-  dlt_pcap&                     gtpu_pcap;
+  dlt_pcap&                     ngu_gtpu_pcap;
+  dlt_pcap&                     xnu_gtpu_pcap;
 };
 
 class pdu_session_manager_impl final : public pdu_session_manager_ctrl
@@ -101,28 +102,27 @@ private:
   /// source NG-RAN node, which sends the data it still holds for the UE to it (TS 37.483 section 9.3.2.6).
   std::optional<up_transport_layer_info> allocate_dl_data_forwarding_tnl_info(const pdu_session& session);
 
-  cu_up_ue_index_t                                   ue_index;
-  const std::map<five_qi_t, ocuup::cu_up_qos_config> qos_cfg;
-  security::sec_as_config                            security_info;
-  const ngu_interface_config&                        ngu_config;
-  cu_up_test_mode_config                             test_mode_config;
-  cu_up_ue_logger&                                   logger;
-  std::unique_ptr<token_bucket>                      ue_ambr_limiter;
-  unique_timer&                                      ue_inactivity_timer;
-  timer_factory                                      ue_dl_timer_factory;
-  timer_factory                                      ue_ctrl_timer_factory;
-  gtpu_teid_pool&                                    ngu_teid_allocator;
-  gtpu_teid_pool&                                    xnu_teid_allocator;
-  xnu_session_manager*                               xnu_session_mngr;
-  gtpu_teid_pool&                                    f1u_teid_allocator;
-  gtpu_demux_ctrl&                                   gtpu_rx_demux;
-  task_executor&                                     ue_dl_exec;
-  task_executor&                                     ue_ul_exec;
-  task_executor&                                     ue_ctrl_exec;
-  task_executor&                                     crypto_exec;
-  dlt_pcap&                                          gtpu_pcap;
-  // TODO Xn-U pcap should come as a dependency.
-  std::unique_ptr<dlt_pcap>                                xnu_gtpu_pcap;
+  cu_up_ue_index_t                                         ue_index;
+  const std::map<five_qi_t, ocuup::cu_up_qos_config>       qos_cfg;
+  security::sec_as_config                                  security_info;
+  const ngu_interface_config&                              ngu_config;
+  cu_up_test_mode_config                                   test_mode_config;
+  cu_up_ue_logger&                                         logger;
+  std::unique_ptr<token_bucket>                            ue_ambr_limiter;
+  unique_timer&                                            ue_inactivity_timer;
+  timer_factory                                            ue_dl_timer_factory;
+  timer_factory                                            ue_ctrl_timer_factory;
+  gtpu_teid_pool&                                          ngu_teid_allocator;
+  gtpu_teid_pool&                                          xnu_teid_allocator;
+  xnu_session_manager*                                     xnu_session_mngr;
+  gtpu_teid_pool&                                          f1u_teid_allocator;
+  gtpu_demux_ctrl&                                         gtpu_rx_demux;
+  task_executor&                                           ue_dl_exec;
+  task_executor&                                           ue_ul_exec;
+  task_executor&                                           ue_ctrl_exec;
+  task_executor&                                           crypto_exec;
+  dlt_pcap&                                                ngu_gtpu_pcap;
+  dlt_pcap&                                                xnu_gtpu_pcap;
   e1ap_interface&                                          e1ap;
   f1u_cu_up_gateway&                                       f1u_gw;
   ngu_session_manager&                                     ngu_session_mngr;

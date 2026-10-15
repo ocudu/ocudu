@@ -35,7 +35,8 @@ struct o_cu_up_unit_dependencies {
   std::vector<ocuup::e1_connection_client*>    e1ap_conn_client;
   gtpu_teid_pool&                              f1u_teid_allocator;
   f1u_cu_up_gateway&                           f1u_gateway;
-  dlt_pcap&                                    gtpu_pcap;
+  dlt_pcap&                                    ngu_gtpu_pcap;
+  dlt_pcap&                                    xnu_gtpu_pcap;
   timer_manager&                               timers;
   io_broker&                                   io_brk;
 };

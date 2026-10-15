@@ -47,8 +47,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(cu_up_ue_index_t             
   ue_ul_exec(dependencies.ue_ul_exec),
   ue_ctrl_exec(dependencies.ue_ctrl_exec),
   crypto_exec(dependencies.crypto_exec),
-  gtpu_pcap(dependencies.gtpu_pcap),
-  xnu_gtpu_pcap(create_null_dlt_pcap()),
+  ngu_gtpu_pcap(dependencies.ngu_gtpu_pcap),
+  xnu_gtpu_pcap(dependencies.xnu_gtpu_pcap),
   e1ap(dependencies.e1ap),
   f1u_gw(dependencies.f1u_gw),
   ngu_session_mngr(dependencies.ngu_session_mngr),
@@ -143,7 +143,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   sdap_entity_creation_message sdap_msg = {ue_index, session.pdu_session_id, &new_session->sdap_to_gtpu_adapter};
   new_session->sdap                     = create_sdap(sdap_msg);
 
-  // Create GTPU entity
+  // Create NG-U GTPU entity
   gtpu_tunnel_psup_creation_message msg = {};
   msg.ue_index                          = ue_index;
   msg.cfg.tx.lif                        = gtpu_logical_interface::ngu;
@@ -159,7 +159,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.rx.test_mode                  = test_mode_config.enabled;
   msg.rx_lower                          = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                          = &new_session->gtpu_to_udp_adapter;
-  msg.gtpu_pcap                         = &gtpu_pcap;
+  msg.gtpu_pcap                         = &ngu_gtpu_pcap;
   msg.ue_ctrl_timer_factory             = ue_ctrl_timer_factory;
   new_session->gtpu                     = create_gtpu_tunnel_psup(msg);
 
@@ -361,8 +361,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   security::sec_128_as_config sec_128 = security::truncate_config(security_info);
   auto                        integrity_enabled =
       new_session.security_ind.integrity_protection_ind == integrity_protection_indication_t::not_needed
-                                 ? security::integrity_enabled::off
-                                 : security::integrity_enabled::on;
+          ? security::integrity_enabled::off
+          : security::integrity_enabled::on;
   auto ciphering_enabled =
       new_session.security_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::not_needed
           ? security::ciphering_enabled::off
@@ -465,6 +465,24 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
     if (new_drb->ingress_dl_data_forwarding_tnl_info.has_value()) {
       drb_result.data_forwarding_info.emplace();
       drb_result.data_forwarding_info->dl_data_forwarding = new_drb->ingress_dl_data_forwarding_tnl_info;
+
+      /// Create GTP-U tunnel for DL data forwarding.
+      gtpu_tunnel_pdcp_config fwd_cfg = {
+          .rx = {.lif         = gtpu_logical_interface::xnu,
+                 .local_teid  = {},
+                 .pdcp_sn_len = new_drb->pdcp->get_rx_upper_control_interface().get_sn_size()},
+          .tx = {.lif         = gtpu_logical_interface::xnu,
+                 .peer_teid   = {},
+                 .peer_addr   = {},
+                 .peer_port   = GTPU_PORT,
+                 .pdcp_sn_len = new_drb->pdcp->get_tx_upper_control_interface().get_sn_size()}};
+      auto gtpu_fwd_cfg        = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
+                                                                   .cfg       = fwd_cfg,
+                                                                   .gtpu_pcap = &xnu_gtpu_pcap,
+                                                                   .rx_lower  = nullptr, // TODO add adapter.
+                                                                   .tx_upper  = nullptr};
+      new_drb->gtpu_fwd_target = create_gtpu_tunnel_pdcp(gtpu_fwd_cfg);
+
       logger.log_info("Allocated DL data forwarding tunnel for {}. tnl_info={}",
                       drb_to_setup.drb_id,
                       new_drb->ingress_dl_data_forwarding_tnl_info.value());
@@ -652,15 +670,16 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                    .peer_addr   = drb_to_mod.drb_data_forwarding_info->dl_data_forwarding->tp_address.to_string(),
                    .peer_port   = GTPU_PORT,
                    .pdcp_sn_len = drb->pdcp->get_tx_upper_control_interface().get_sn_size()}};
-        auto gtpu_fwd_cfg = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
-                                                              .cfg       = fwd_cfg,
-                                                              .gtpu_pcap = xnu_gtpu_pcap.get(),
-                                                              .rx_lower  = nullptr,
-                                                              .tx_upper  = &drb->xnu_gtpu_to_udp_adapter};
-        drb->gtpu_fwd     = create_gtpu_tunnel_pdcp(gtpu_fwd_cfg);
+        auto gtpu_fwd_cfg    = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
+                                                                 .cfg       = fwd_cfg,
+                                                                 .gtpu_pcap = &xnu_gtpu_pcap,
+                                                                 .rx_lower  = nullptr,
+                                                                 .tx_upper  = &drb->xnu_gtpu_to_udp_adapter};
+        drb->gtpu_fwd_source = create_gtpu_tunnel_pdcp(gtpu_fwd_cfg);
 
         // Connect PDCP to GTP-U TX.
-        drb->pdcp_to_gtpu_forwarding_adapter.connect_gtpu_forward(*drb->gtpu_fwd->get_tx_lower_layer_interface());
+        drb->pdcp_to_gtpu_forwarding_adapter.connect_gtpu_forward(
+            *drb->gtpu_fwd_source->get_tx_lower_layer_interface());
 
         // Connect GTP-U TX to Xn-U network gateway.
         gtpu_tnl_pdu_session& xnu_gw = xnu_session_mngr->get_next_xnu_gateway();

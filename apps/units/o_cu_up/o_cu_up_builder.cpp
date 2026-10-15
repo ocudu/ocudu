@@ -173,9 +173,9 @@ o_cu_up_unit ocudu::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_c
   if (unit_cfg.e2_cfg.base_config.enable_unit_e2) {
     ocudu_assert(!config.cu_up_cfg.plmns.empty(), "CU-UP PLMN list must not be empty");
     config.e2ap_cfg    = generate_e2_config(unit_cfg.e2_cfg.base_config,
-                                         unit_cfg.cu_up_cfg.gnb_id,
-                                         config.cu_up_cfg.plmns.front(),
-                                         config.cu_up_cfg.cu_up_id);
+                                            unit_cfg.cu_up_cfg.gnb_id,
+                                            config.cu_up_cfg.plmns.front(),
+                                            config.cu_up_cfg.cu_up_id);
     e2_client          = &dependencies.e2_gw;
     e2_cu_metric_iface = &e2_metric_connectors->get_e2_metrics_interface(0);
   }
@@ -213,10 +213,11 @@ o_cu_up_unit ocudu::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_c
                                                       .f1u_teid_allocator   = dependencies.f1u_teid_allocator,
                                                       .f1u_gateway          = dependencies.f1u_gateway,
                                                       .timers               = dependencies.timers,
-                                                      .gtpu_pcap            = dependencies.gtpu_pcap,
+                                                      .ngu_gtpu_pcap        = dependencies.ngu_gtpu_pcap,
+                                                      .xnu_gtpu_pcap        = dependencies.xnu_gtpu_pcap,
                                                       .logger               = ocudulog::fetch_basic_logger("CU-UP", false),
                                                       .pdcp_metric_notifier = pdcp_metric_notifier,
-                                                   // TODO support multiple E1APs.
+                                                      // TODO support multiple E1APs.
                                                       .e1_conn_clients   = {dependencies.e1ap_conn_client},
                                                       .ngu_gws           = std::move(ngu_gws),
                                                       .xnu_gws           = std::move(xnu_gws),

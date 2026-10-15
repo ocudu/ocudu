@@ -58,6 +58,7 @@ private:
   std::unique_ptr<ngu_session_manager>               ngu_session_mngr;
   std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> ngu_sessions;
   std::unique_ptr<gtpu_demux>                        ngu_demux;
+  std::unique_ptr<gtpu_demux>                        xnu_demux;
   std::unique_ptr<gtpu_echo>                         ngu_echo;
   std::unique_ptr<gtpu_teid_pool>                    ngu_teid_allocator;
   std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> xnu_sessions;

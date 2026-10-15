@@ -80,14 +80,30 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
                                                                           .queue_size   = cfg.ngu_cfg.gtpu_queue_size,
                                                                           .batch_size   = cfg.ngu_cfg.gtpu_batch_size},
                                   .teid_linger_checker = *ngu_teid_allocator,
-                                  .gtpu_pcap           = dependencies.gtpu_pcap,
+                                  .gtpu_pcap           = dependencies.ngu_gtpu_pcap,
                                   .rate_limiter        = ngu_limiter.has_value() ? &ngu_limiter.value() : nullptr});
+
+  // Create Xn-U GTP-U demux, if required.
+  xnu_demux = create_gtpu_demux(gtpu_demux_creation_request{
+      .cfg =
+          gtpu_demux_cfg_t{
+              .lif          = gtpu_logical_interface::xnu,
+              .name         = "Xn-U-DEMUX",
+              .warn_on_drop = cfg.xnu_cfg.warn_on_drop,
+              .test_mode    = false,
+              .queue_size   = cfg.xnu_cfg.gtpu_queue_size,
+              .batch_size   = cfg.xnu_cfg.gtpu_batch_size,
+          },
+      .teid_linger_checker = *xnu_teid_allocator,
+      .gtpu_pcap           = dependencies.xnu_gtpu_pcap,
+      .rate_limiter        = nullptr,
+  });
 
   echo_exec_mapper = dependencies.exec_mapper.create_ue_executor_mapper();
   report_error_if_not(echo_exec_mapper, "Could not create CU-UP executor for control TEID");
 
   // Create N3 GTP-U echo and register it at demux.
-  auto ngu_echo_msg = gtpu_echo_creation_message{.gtpu_pcap = dependencies.gtpu_pcap, .tx_upper = gtpu_gw_adapter};
+  auto ngu_echo_msg = gtpu_echo_creation_message{.gtpu_pcap = dependencies.ngu_gtpu_pcap, .tx_upper = gtpu_gw_adapter};
   ngu_echo          = create_gtpu_echo(ngu_echo_msg);
 
   expected<std::unique_ptr<gtpu_demux_dispatch_queue>> batch_q = ngu_demux->add_tunnel(
@@ -161,27 +177,32 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
 
   // > Create CU-UP manager.
   cu_up_mng = std::make_unique<cu_up_manager_impl>(
-      cu_up_manager_impl_config{.cu_up_id      = cfg.cu_up_id,
-                                .cu_up_name    = cfg.cu_up_name,
-                                .max_nof_ues   = cfg.max_nof_ues,
-                                .plmns         = cfg.plmns,
-                                .qos           = cfg.qos,
-                                .ngu_cfg       = cfg.ngu_cfg,
-                                .test_mode_cfg = cfg.test_mode_cfg},
-      cu_up_manager_impl_dependencies{.stop_command         = stop_command,
-                                      .e1aps                = std::move(e1ap_refs),
-                                      .ngu_demux            = *ngu_demux,
-                                      .ngu_session_mngr     = *ngu_session_mngr,
-                                      .ngu_teid_allocator   = *ngu_teid_allocator,
-                                      .xnu_teid_allocator   = *xnu_teid_allocator,
-                                      .xnu_session_mngr     = xnu_session_mngr.get(),
-                                      .f1u_teid_allocator   = dependencies.f1u_teid_allocator,
-                                      .exec_mapper          = dependencies.exec_mapper,
-                                      .f1u_gateway          = dependencies.f1u_gateway,
-                                      .timers               = dependencies.timers,
-                                      .gtpu_pcap            = dependencies.gtpu_pcap,
-                                      .cu_up_task_scheduler = main_ctrl_loop,
-                                      .e1_setup_notifier    = e1_setup_notifier.get()});
+      cu_up_manager_impl_config{
+          .cu_up_id      = cfg.cu_up_id,
+          .cu_up_name    = cfg.cu_up_name,
+          .max_nof_ues   = cfg.max_nof_ues,
+          .plmns         = cfg.plmns,
+          .qos           = cfg.qos,
+          .ngu_cfg       = cfg.ngu_cfg,
+          .test_mode_cfg = cfg.test_mode_cfg,
+      },
+      cu_up_manager_impl_dependencies{
+          .stop_command         = stop_command,
+          .e1aps                = std::move(e1ap_refs),
+          .ngu_demux            = *ngu_demux,
+          .ngu_session_mngr     = *ngu_session_mngr,
+          .ngu_teid_allocator   = *ngu_teid_allocator,
+          .xnu_teid_allocator   = *xnu_teid_allocator,
+          .xnu_session_mngr     = xnu_session_mngr.get(),
+          .f1u_teid_allocator   = dependencies.f1u_teid_allocator,
+          .exec_mapper          = dependencies.exec_mapper,
+          .f1u_gateway          = dependencies.f1u_gateway,
+          .timers               = dependencies.timers,
+          .ngu_gtpu_pcap        = dependencies.ngu_gtpu_pcap,
+          .xnu_gtpu_pcap        = dependencies.xnu_gtpu_pcap,
+          .cu_up_task_scheduler = main_ctrl_loop,
+          .e1_setup_notifier    = e1_setup_notifier.get(),
+      });
 
   // > Connect E1AP(s) to CU-UP manager.
   for (auto& e1ap_cu_up_mng_adapter : e1ap_cu_up_mng_adapters) {

@@ -40,7 +40,8 @@ struct cu_up_manager_impl_dependencies {
   cu_up_executor_mapper&                              exec_mapper;
   f1u_cu_up_gateway&                                  f1u_gateway;
   timer_manager&                                      timers;
-  dlt_pcap&                                           gtpu_pcap;
+  dlt_pcap&                                           ngu_gtpu_pcap;
+  dlt_pcap&                                           xnu_gtpu_pcap;
   fifo_async_task_scheduler&                          cu_up_task_scheduler;
   cu_up_e1_setup_complete_notifier*                   e1_setup_notifier;
 };

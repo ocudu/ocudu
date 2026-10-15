@@ -5,8 +5,10 @@
 
 #pragma once
 
+#include "ocudu/gateways/udp_network_gateway.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_tx.h"
 #include "ocudu/gtpu/gtpu_tunnel_psup_rx.h"
+#include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/sdap/sdap.h"
 
 namespace ocudu::ocuup {

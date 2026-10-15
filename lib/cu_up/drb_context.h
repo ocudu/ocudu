@@ -46,8 +46,11 @@ struct drb_context {
       if (f1u_gw_bearer) {
         f1u_gw_bearer->stop();
       }
-      if (gtpu_fwd) {
-        gtpu_fwd->stop();
+      if (gtpu_fwd_source) {
+        gtpu_fwd_source->stop();
+      }
+      if (gtpu_fwd_target) {
+        gtpu_fwd_target->stop();
       }
       stopped = true;
     }
@@ -74,7 +77,8 @@ struct drb_context {
   std::unique_ptr<f1u_cu_up_gateway_bearer> f1u_gw_bearer;
   std::unique_ptr<f1u_bearer>               f1u;
   std::unique_ptr<pdcp_entity>              pdcp;
-  std::unique_ptr<gtpu_tunnel_pdcp>         gtpu_fwd;
+  std::unique_ptr<gtpu_tunnel_pdcp>         gtpu_fwd_source;
+  std::unique_ptr<gtpu_tunnel_pdcp>         gtpu_fwd_target;
 
   // Adapter PDCP->SDAP
   // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.

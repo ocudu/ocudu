@@ -42,7 +42,8 @@ struct ue_manager_dependencies {
   xnu_session_manager*                                xnu_session_mngr;
   gtpu_teid_pool&                                     f1u_teid_allocator;
   cu_up_executor_mapper&                              exec_pool;
-  dlt_pcap&                                           gtpu_pcap;
+  dlt_pcap&                                           ngu_gtpu_pcap;
+  dlt_pcap&                                           xnu_gtpu_pcap;
   ocudulog::basic_logger&                             logger;
 };
 
@@ -103,7 +104,8 @@ private:
   gtpu_teid_pool&                                     f1u_teid_allocator;
   cu_up_executor_mapper&                              exec_pool;
   task_executor&                                      ctrl_executor;
-  dlt_pcap&                                           gtpu_pcap;
+  dlt_pcap&                                           ngu_gtpu_pcap;
+  dlt_pcap&                                           xnu_gtpu_pcap;
   timer_manager&                                      timers;
   ue_db_t                                             ue_db;
   ue_task_schedulers_t                                ue_task_schedulers;

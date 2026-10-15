@@ -49,7 +49,8 @@ struct ue_context_dependencies {
   xnu_session_manager*                xnu_session_mngr;
   gtpu_teid_pool&                     f1u_teid_allocator;
   gtpu_demux_ctrl&                    gtpu_rx_demux;
-  dlt_pcap&                           gtpu_pcap;
+  dlt_pcap&                           ngu_gtpu_pcap;
+  dlt_pcap&                           xnu_gtpu_pcap;
 };
 
 /// \brief Context for a UE within the CU-UP with storage for all active PDU sessions.
@@ -73,24 +74,27 @@ public:
                         ngu_config_,
                         test_mode_config_,
                         cfg.ue_dl_aggregate_maximum_bit_rate,
-                        {logger,
-                         ue_inactivity_timer,
-                         dependencies.ue_dl_timer_factory,
-                         dependencies.ue_ctrl_timer_factory,
-                         dependencies.e1ap,
-                         dependencies.f1u_gw,
-                         dependencies.ngu_session_mngr,
-                         dependencies.cu_up_mngr_pdcp_if,
-                         dependencies.ngu_teid_allocator,
-                         dependencies.xnu_teid_allocator,
-                         dependencies.xnu_session_mngr,
-                         dependencies.f1u_teid_allocator,
-                         dependencies.gtpu_rx_demux,
-                         ue_exec_mapper->dl_pdu_executor(),
-                         ue_exec_mapper->ul_pdu_executor(),
-                         ue_exec_mapper->ctrl_executor(),
-                         ue_exec_mapper->crypto_executor(),
-                         dependencies.gtpu_pcap}),
+                        {
+                            logger,
+                            ue_inactivity_timer,
+                            dependencies.ue_dl_timer_factory,
+                            dependencies.ue_ctrl_timer_factory,
+                            dependencies.e1ap,
+                            dependencies.f1u_gw,
+                            dependencies.ngu_session_mngr,
+                            dependencies.cu_up_mngr_pdcp_if,
+                            dependencies.ngu_teid_allocator,
+                            dependencies.xnu_teid_allocator,
+                            dependencies.xnu_session_mngr,
+                            dependencies.f1u_teid_allocator,
+                            dependencies.gtpu_rx_demux,
+                            ue_exec_mapper->dl_pdu_executor(),
+                            ue_exec_mapper->ul_pdu_executor(),
+                            ue_exec_mapper->ctrl_executor(),
+                            ue_exec_mapper->crypto_executor(),
+                            dependencies.ngu_gtpu_pcap,
+                            dependencies.xnu_gtpu_pcap,
+                        }),
     ue_dl_timer_factory(dependencies.ue_dl_timer_factory),
     ue_ctrl_timer_factory(dependencies.ue_ctrl_timer_factory)
   {

@@ -31,20 +31,23 @@ protected:
                                         ue_cfg,
                                         ngu_cfg,
                                         cu_up_test_mode_config{},
-                                        ue_context_dependencies{e1ap,
-                                                                std::move(exec_mapper),
-                                                                task_sched,
-                                                                timers,
-                                                                timers,
-                                                                f1u_gw,
-                                                                ngu_session_mngr,
-                                                                pdcp_if,
-                                                                ngu_allocator,
-                                                                xnu_allocator,
-                                                                &xnu_session_mngr,
-                                                                f1u_allocator,
-                                                                gtpu_demux,
-                                                                pcap});
+                                        ue_context_dependencies{
+                                            e1ap,
+                                            std::move(exec_mapper),
+                                            task_sched,
+                                            timers,
+                                            timers,
+                                            f1u_gw,
+                                            ngu_session_mngr,
+                                            pdcp_if,
+                                            ngu_allocator,
+                                            xnu_allocator,
+                                            &xnu_session_mngr,
+                                            f1u_allocator,
+                                            gtpu_demux,
+                                            ngu_gtpu_pcap,
+                                            xnu_gtpu_pcap,
+                                        });
   }
 
   void start_procedure(ue_context& ue_ctx, const e1ap_bearer_context_modification_request& msg)
@@ -83,7 +86,8 @@ private:
   dummy_xnu_session_manager          xnu_session_mngr;
   dummy_gtpu_teid_pool               f1u_allocator;
   dummy_gtpu_demux_ctrl              gtpu_demux;
-  null_dlt_pcap                      pcap;
+  null_dlt_pcap                      ngu_gtpu_pcap;
+  null_dlt_pcap                      xnu_gtpu_pcap;
 
   // NG-U Configs.
   ngu_interface_config ngu_cfg{GTPU_PORT,

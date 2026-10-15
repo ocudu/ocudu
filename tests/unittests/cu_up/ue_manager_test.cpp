@@ -56,7 +56,8 @@ protected:
                                                                   &xnu_session_mngr,
                                                                   *gtpu_f1u_allocator,
                                                                   *cu_up_exec_mapper,
-                                                                  gtpu_pcap,
+                                                                  ngu_gtpu_pcap,
+                                                                  xnu_gtpu_pcap,
                                                                   test_logger});
   }
 
@@ -77,7 +78,8 @@ protected:
   std::unique_ptr<cu_up_manager_pdcp_interface>               pdcp_ctrl_handler;
   std::unique_ptr<cu_up_executor_mapper>                      cu_up_exec_mapper;
   dummy_inner_f1u_bearer                                      f1u_bearer;
-  null_dlt_pcap                                               gtpu_pcap;
+  null_dlt_pcap                                               ngu_gtpu_pcap;
+  null_dlt_pcap                                               xnu_gtpu_pcap;
   std::unique_ptr<f1u_cu_up_gateway>                          f1u_gw;
   std::unique_ptr<ngu_session_manager>                        ngu_session_mngr;
   timer_manager                                               timers;

@@ -26,19 +26,22 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
                                                                 cu_up_manager_pdcp_interface& cu_up_mngr_pdcp_if,
                                                                 ocudulog::basic_logger&       logger)
 {
-  return {{dependencies.e1aps},
-          dependencies.timers,
-          dependencies.f1u_gateway,
-          dependencies.ngu_session_mngr,
-          cu_up_mngr_pdcp_if,
-          dependencies.ngu_demux,
-          dependencies.ngu_teid_allocator,
-          dependencies.xnu_teid_allocator,
-          dependencies.xnu_session_mngr,
-          dependencies.f1u_teid_allocator,
-          dependencies.exec_mapper,
-          dependencies.gtpu_pcap,
-          logger};
+  return {
+      {dependencies.e1aps},
+      dependencies.timers,
+      dependencies.f1u_gateway,
+      dependencies.ngu_session_mngr,
+      cu_up_mngr_pdcp_if,
+      dependencies.ngu_demux,
+      dependencies.ngu_teid_allocator,
+      dependencies.xnu_teid_allocator,
+      dependencies.xnu_session_mngr,
+      dependencies.f1u_teid_allocator,
+      dependencies.exec_mapper,
+      dependencies.ngu_gtpu_pcap,
+      dependencies.xnu_gtpu_pcap,
+      logger,
+  };
 }
 
 cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       config,

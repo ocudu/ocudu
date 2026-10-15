@@ -130,8 +130,10 @@ struct cu_up_dependencies {
   f1u_cu_up_gateway& f1u_gateway;
   /// Time manager.
   timer_manager& timers;
+  /// NG-U PCAP.
+  dlt_pcap& ngu_gtpu_pcap;
   /// PCAP.
-  dlt_pcap& gtpu_pcap;
+  dlt_pcap& xnu_gtpu_pcap;
   /// Logger.
   ocudulog::basic_logger& logger;
   /// PDCP metrics notifier.
