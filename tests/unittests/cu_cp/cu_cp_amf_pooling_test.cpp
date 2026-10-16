@@ -51,8 +51,9 @@ public:
 
     std::optional<unsigned> ret = connect_new_du();
     report_fatal_error_if_not(ret.has_value(), "Failed to connect the DU");
-    du_idx = ret.value();
-    report_fatal_error_if_not(run_f1_setup(du_idx), "F1 Setup failed");
+    du_idx                 = ret.value();
+    const bool f1_setup_ok = run_f1_setup(du_idx);
+    report_fatal_error_if_not(f1_setup_ok, "F1 Setup failed");
 
     ret = connect_new_cu_up();
     report_fatal_error_if_not(ret.has_value(), "Failed to connect the CU-UP");
