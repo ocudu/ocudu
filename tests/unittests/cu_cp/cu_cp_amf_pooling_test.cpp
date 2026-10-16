@@ -9,6 +9,7 @@
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
+#include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
 #include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
@@ -462,4 +463,73 @@ TEST_F(cu_cp_amf_pooling_test, when_ue_requests_a_slice_then_it_is_served_by_the
   ies.s_nssai_list[0].set_sst_sd().from_number((2U << 24U) + 0x10U);
 
   ASSERT_EQ(attach_ue(int_to_gnb_du_ue_f1ap_id(0), rrc_setup_complete), 1);
+}
+
+TEST_F(cu_cp_amf_pooling_test, when_the_first_amf_fails_ng_setup_on_startup_then_the_other_amf_is_still_set_up)
+{
+  get_amf(0).enqueue_next_tx_pdu(generate_ng_setup_failure());
+  get_amf(1).enqueue_next_tx_pdu(generate_ng_setup_response(plmn_identity::test_value(), 1, 255));
+
+  get_cu_cp().start();
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(get_amf(0).try_pop_rx_pdu(ngap_pdu)) << "AMF 0 received no NG Setup Request";
+
+  // The CU-CP did not stop at the failed AMF and sent the NG Setup Request to the other AMF.
+  ASSERT_TRUE(get_amf(1).try_pop_rx_pdu(ngap_pdu)) << "AMF 1 received no NG Setup Request";
+  ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request));
+
+  // AMF 1 serves the PLMN, so the cell of a new DU is activated and new UEs are served by AMF 1.
+  std::optional<unsigned> ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  du_idx = ret.value();
+  ASSERT_TRUE(run_f1_setup(du_idx));
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  ASSERT_TRUE(run_e1_setup(ret.value()));
+  ASSERT_EQ(attach_ue(int_to_gnb_du_ue_f1ap_id(0), test_helpers::create_rrc_setup_complete()), 1);
+}
+
+TEST_F(cu_cp_amf_pooling_test, when_the_last_amf_is_lost_and_another_amf_connects_later_then_the_plmn_is_unblocked)
+{
+  // AMF 1 is down on startup, so only AMF 0 connects. AMF 1 is retried in the background.
+  get_amf(0).enqueue_next_tx_pdu(generate_ng_setup_response(plmn_identity::test_value(), 0, 255));
+  get_amf(1).drop_connection();
+  get_cu_cp().start();
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(get_amf(0).try_pop_rx_pdu(ngap_pdu)) << "AMF 0 received no NG Setup Request";
+
+  std::optional<unsigned> ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  du_idx = ret.value();
+  ASSERT_TRUE(run_f1_setup(du_idx));
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  ASSERT_TRUE(run_e1_setup(ret.value()));
+  ASSERT_EQ(attach_ue(int_to_gnb_du_ue_f1ap_id(0), test_helpers::create_rrc_setup_complete()), 0);
+
+  // AMF 0, the only connected AMF of the PLMN, is lost: its UE is released and the cell is deactivated.
+  ASSERT_TRUE(drop_amf_connection(0));
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(f1ap_pdu));
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+  ASSERT_TRUE(f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd()->cells_to_be_deactiv_list_present);
+  f1ap_message ack = test_helpers::generate_gnb_cu_configuration_update_acknowledgement({});
+  ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id =
+      f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+  get_du(du_idx).push_ul_pdu(ack);
+
+  // AMF 1 comes up and connects through the background retry, so the cell is activated again.
+  ASSERT_TRUE(reconnect_amf(1)) << "AMF 1 did not connect";
+  ASSERT_TRUE(wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+  ASSERT_TRUE(f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd()->cells_to_be_activ_list_present);
+  ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id =
+      f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd()->transaction_id;
+  get_du(du_idx).push_ul_pdu(ack);
+
+  // The PLMN is not blocked any more: a new UE is admitted and served by AMF 1.
+  ASSERT_EQ(attach_ue(int_to_gnb_du_ue_f1ap_id(1), test_helpers::create_rrc_setup_complete()), 1);
 }

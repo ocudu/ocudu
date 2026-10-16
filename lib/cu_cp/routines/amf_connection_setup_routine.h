@@ -40,6 +40,8 @@ private:
 
   ngap_ng_setup_result result_msg = {};
   bool                 success    = false;
+  /// Whether every AMF connected. Unconnected AMFs are retried in the background.
+  bool all_connected = true;
 };
 
 } // namespace ocudu::ocucp

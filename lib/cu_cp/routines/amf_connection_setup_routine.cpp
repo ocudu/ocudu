@@ -41,8 +41,11 @@ void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ct
     amf_index = ngap_it->first;
     ngap      = ngap_it->second;
 
+    // An AMF that cannot be reached does not stop the setup of the others (e.g. another AMF of the pool): unconnected
+    // AMFs are retried in the background.
     if (not ngap->handle_amf_tnl_connection_request()) {
-      CORO_EARLY_RETURN(false);
+      all_connected = false;
+      continue;
     }
 
     // Initiate NG Setup.
@@ -75,11 +78,11 @@ void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ct
 
       // Tear the N2 TNL association down, so that the NG Setup can be retried over a new one.
       CORO_AWAIT(ngap->handle_amf_disconnection_request());
-      CORO_EARLY_RETURN(false);
+      all_connected = false;
     }
   }
 
-  CORO_RETURN(success);
+  CORO_RETURN(all_connected);
 }
 
 void amf_connection_setup_routine::handle_connection_setup_result()
