@@ -51,8 +51,8 @@ struct pdsch_dmrs_symbol_mask_mapping_type_B_single_configuration {
   /// It corresponds to parameter \f$l_d\f$ as per TS38.211, Section 7.4.1.1.2. For mapping type B, \f$l_d\f$ is the
   /// duration of the allocation and the DMRS positions are relative to its first symbol.
   ///
-  /// Possible values are {2, ..., 7}.
-  bounded_integer<uint8_t, 2, 7> duration;
+  /// Possible values are {2, ..., 13}, as per TS38.214 Table 5.1.2.1-1 for normal cyclic prefix.
+  bounded_integer<uint8_t, 2, 13> duration;
   /// \brief Index of the first OFDM symbol scheduled for PDSCH within the slot.
   ///
   /// It corresponds to \f$l_0\f$ as per TS38.211, Section 7.4.1.1.2, which for mapping type B is the first symbol of

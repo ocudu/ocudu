@@ -110,8 +110,8 @@ TEST_P(PdschDmrsSymbolMaskFixture, ANormal)
   unsigned            l1 =
       (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
        config.additional_position == ocudu::dmrs_additional_positions::pos1 && l0 == ocudu::dmrs_typeA_position::pos3)
-                     ? 12
-                     : 11;
+          ? 12
+          : 11;
 
   // Get expected symbol position list from table.
   ASSERT_TRUE(pdsch_dmrs_symbol_mask_mapping_type_A_single_table.count({last_symbol.value(), additional_position}));
@@ -168,7 +168,7 @@ TEST_P(pdsch_dmrs_symbol_mask_type_B_test, positions_are_relative_to_the_allocat
 
   // The same duration is checked at several allocation starts: an implementation that anchored the positions to the
   // slot instead of to the allocation would pass at start 0 alone.
-  for (unsigned start_symbol : {0U, 4U, 5U}) {
+  for (unsigned start_symbol : {0U, 1U, 4U, 5U}) {
     if (start_symbol + param.duration > 14) {
       continue;
     }
@@ -187,18 +187,56 @@ TEST_P(pdsch_dmrs_symbol_mask_type_B_test, positions_are_relative_to_the_allocat
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(pdsch_dmrs_symbol_mask,
-                         pdsch_dmrs_symbol_mask_type_B_test,
-                         ::testing::Values(
-                             // A single DMRS regardless of dmrs-AdditionalPosition for durations below five symbols.
-                             type_B_expectation{2, dmrs_additional_positions::pos0, {0}},
-                             type_B_expectation{2, dmrs_additional_positions::pos2, {0}},
-                             type_B_expectation{4, dmrs_additional_positions::pos0, {0}},
-                             type_B_expectation{4, dmrs_additional_positions::pos1, {0}},
-                             type_B_expectation{4, dmrs_additional_positions::pos2, {0}},
-                             // From five symbols, one additional position at l0 + 4, unless pos0 is configured.
-                             type_B_expectation{6, dmrs_additional_positions::pos0, {0}},
-                             type_B_expectation{6, dmrs_additional_positions::pos2, {0, 4}},
-                             type_B_expectation{7, dmrs_additional_positions::pos0, {0}},
-                             type_B_expectation{7, dmrs_additional_positions::pos1, {0, 4}},
-                             type_B_expectation{7, dmrs_additional_positions::pos2, {0, 4}}));
+INSTANTIATE_TEST_SUITE_P(
+    pdsch_dmrs_symbol_mask,
+    pdsch_dmrs_symbol_mask_type_B_test,
+    // Every cell of the mapping type B columns of TS38.211 Table 7.4.1.1.2-3, durations 2 to 13 symbols
+    // (TS38.214 Table 5.1.2.1-1, normal cyclic prefix), dmrs-AdditionalPosition pos0 to pos3.
+    ::testing::Values(type_B_expectation{2, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{2, dmrs_additional_positions::pos1, {0}},
+                      type_B_expectation{2, dmrs_additional_positions::pos2, {0}},
+                      type_B_expectation{2, dmrs_additional_positions::pos3, {0}},
+                      type_B_expectation{3, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{3, dmrs_additional_positions::pos1, {0}},
+                      type_B_expectation{3, dmrs_additional_positions::pos2, {0}},
+                      type_B_expectation{3, dmrs_additional_positions::pos3, {0}},
+                      type_B_expectation{4, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{4, dmrs_additional_positions::pos1, {0}},
+                      type_B_expectation{4, dmrs_additional_positions::pos2, {0}},
+                      type_B_expectation{4, dmrs_additional_positions::pos3, {0}},
+                      type_B_expectation{5, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{5, dmrs_additional_positions::pos1, {0, 4}},
+                      type_B_expectation{5, dmrs_additional_positions::pos2, {0, 4}},
+                      type_B_expectation{5, dmrs_additional_positions::pos3, {0, 4}},
+                      type_B_expectation{6, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{6, dmrs_additional_positions::pos1, {0, 4}},
+                      type_B_expectation{6, dmrs_additional_positions::pos2, {0, 4}},
+                      type_B_expectation{6, dmrs_additional_positions::pos3, {0, 4}},
+                      type_B_expectation{7, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{7, dmrs_additional_positions::pos1, {0, 4}},
+                      type_B_expectation{7, dmrs_additional_positions::pos2, {0, 4}},
+                      type_B_expectation{7, dmrs_additional_positions::pos3, {0, 4}},
+                      type_B_expectation{8, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{8, dmrs_additional_positions::pos1, {0, 6}},
+                      type_B_expectation{8, dmrs_additional_positions::pos2, {0, 3, 6}},
+                      type_B_expectation{8, dmrs_additional_positions::pos3, {0, 3, 6}},
+                      type_B_expectation{9, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{9, dmrs_additional_positions::pos1, {0, 7}},
+                      type_B_expectation{9, dmrs_additional_positions::pos2, {0, 4, 7}},
+                      type_B_expectation{9, dmrs_additional_positions::pos3, {0, 4, 7}},
+                      type_B_expectation{10, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{10, dmrs_additional_positions::pos1, {0, 7}},
+                      type_B_expectation{10, dmrs_additional_positions::pos2, {0, 4, 7}},
+                      type_B_expectation{10, dmrs_additional_positions::pos3, {0, 4, 7}},
+                      type_B_expectation{11, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{11, dmrs_additional_positions::pos1, {0, 8}},
+                      type_B_expectation{11, dmrs_additional_positions::pos2, {0, 4, 8}},
+                      type_B_expectation{11, dmrs_additional_positions::pos3, {0, 3, 6, 9}},
+                      type_B_expectation{12, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{12, dmrs_additional_positions::pos1, {0, 9}},
+                      type_B_expectation{12, dmrs_additional_positions::pos2, {0, 5, 9}},
+                      type_B_expectation{12, dmrs_additional_positions::pos3, {0, 3, 6, 9}},
+                      type_B_expectation{13, dmrs_additional_positions::pos0, {0}},
+                      type_B_expectation{13, dmrs_additional_positions::pos1, {0, 9}},
+                      type_B_expectation{13, dmrs_additional_positions::pos2, {0, 5, 9}},
+                      type_B_expectation{13, dmrs_additional_positions::pos3, {0, 3, 6, 9}}));
