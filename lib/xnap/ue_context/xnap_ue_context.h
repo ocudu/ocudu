@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <map>
 #include <optional>
+#include <vector>
 
 namespace ocudu::ocucp {
 
@@ -70,19 +71,6 @@ struct xnap_ue_context {
     sn_status_transfer_outcome(timer_db),
     retrieve_ue_context_outcome(timer_db)
   {
-  }
-
-  /// \brief Cancels all transactions pending for this UE, e.g. as part of XNAP shutdown.
-  void cancel_all_transactions()
-  {
-    xn_handover_outcome.stop();
-    sn_status_transfer_outcome.stop();
-    retrieve_ue_context_outcome.stop();
-    // Note: stopping an outcome resumes the awaiting procedure from within this loop. Procedures must not touch the
-    // UE context on the cancellation path, or they would mutate the map being iterated here.
-    for (auto& [cell, outcome] : cho_cell_outcomes) {
-      outcome.stop();
-    }
   }
 
   /// \brief Registers a new in-flight CHO preparation for the given target cell.
@@ -321,9 +309,12 @@ public:
   /// \brief Returns the LOCAL XNAP UE ID this UE uses towards this peer, allocating a UE context if needed.
   ///
   /// All CHO candidate cells served by this peer share one LOCAL XNAP UE ID (TS 38.423 Section 8.2.1.1).
-  /// \return The LOCAL XNAP UE ID, or invalid when no ID could be allocated.
+  /// \return The LOCAL XNAP UE ID, or invalid when shutdown has begun or no ID is available.
   local_xnap_ue_id_t find_or_create_ue_context(cu_cp_ue_index_t ue_index)
   {
+    if (stopping) {
+      return local_xnap_ue_id_t::invalid;
+    }
     auto it = ue_index_to_local_xnap_ue_id.find(ue_index);
     if (it != ue_index_to_local_xnap_ue_id.end()) {
       return it->second;
@@ -499,11 +490,45 @@ public:
 
   size_t size() const { return ues.size(); }
 
-  /// \brief Cancels all transactions pending for all UEs, e.g. as part of XNAP shutdown.
+  /// Returns whether shutdown has closed handover registration.
+  bool is_stopping() const { return stopping; }
+
+  /// Closes handover registration and cancels all pending UE transactions.
   void cancel_all_transactions()
   {
-    for (auto& [id, ue] : ues) {
-      ue.cancel_all_transactions();
+    stopping = true;
+
+    // Stopping an outcome resumes the procedure awaiting it, which may remove a UE context and mutate this map. The
+    // IDs and cells are snapshotted, and each context is re-found before stopping the next outcome.
+    std::vector<local_xnap_ue_id_t> ids;
+    ids.reserve(ues.size());
+    for (const auto& [id, ue] : ues) {
+      ids.push_back(id);
+    }
+    for (local_xnap_ue_id_t id : ids) {
+      /// Cancels an outcome only if its UE context still exists after earlier cancellations.
+      auto stop = [this, id](auto xnap_ue_context::* outcome) {
+        if (auto* ue = find(id)) {
+          (ue->*outcome).stop();
+        }
+      };
+      stop(&xnap_ue_context::xn_handover_outcome);
+      stop(&xnap_ue_context::sn_status_transfer_outcome);
+      stop(&xnap_ue_context::retrieve_ue_context_outcome);
+
+      std::vector<nr_cell_global_id_t> cells;
+      if (auto* ue = find(id)) {
+        for (const auto& [cell, outcome] : ue->cho_cell_outcomes) {
+          cells.push_back(cell);
+        }
+      }
+      for (const auto& cell : cells) {
+        if (auto* ue = find(id)) {
+          if (auto* outcome = ue->find_cho_cell_outcome(cell)) {
+            outcome->stop();
+          }
+        }
+      }
     }
   }
 
@@ -549,6 +574,9 @@ protected:
   local_xnap_ue_id_t next_local_xnap_ue_id = local_xnap_ue_id_t::min;
 
 private:
+  // UE registration and shutdown run on the control executor.
+  bool stopping = false;
+
   timer_manager&          timers;
   task_executor&          ctrl_exec;
   ocudulog::basic_logger& logger;

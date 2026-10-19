@@ -51,8 +51,16 @@ xnap_impl::xnap_impl(xnc_peer_index_t          xnc_index_,
 {
 }
 
+/// Closes admission, cancels pending transactions, and awaits callbacks and UE procedures.
 async_task<void> xnap_impl::stop()
 {
+  bool await_callbacks;
+  {
+    std::lock_guard<std::mutex> lock(pdu_callbacks->mutex);
+    pdu_callbacks->accepting = false;
+    await_callbacks          = pdu_callbacks->nof_active != 0;
+  }
+
   // Stop XN setup procedure if in progress.
   xn_setup_outcome.stop();
 
@@ -62,16 +70,22 @@ async_task<void> xnap_impl::stop()
   // Cancel pending per-UE transactions (e.g. Handover Preparation, SN Status Transfer).
   ue_ctxt_list.cancel_all_transactions();
 
-  if (nof_ue_procedures == 0) {
+  if (not await_callbacks and nof_ue_procedures == 0) {
     return launch_no_op_task();
   }
 
   // Await the UE-associated procedures that are suspended on a CU-CP notifier. Cancelling the XNAP transactions
   // does not resume those, and they access this XNAP instance once they do resume. The caller removes this
   // instance as soon as this task completes.
-  logger.debug("Awaiting the completion of {} UE procedures before stopping XNAP", nof_ue_procedures);
-  return launch_async([this](coro_context<async_task<void>>& ctx) {
+  logger.debug("Awaiting PDU callbacks and {} UE procedures before stopping XNAP", nof_ue_procedures);
+  /// Waits for admitted callbacks before draining the UE procedures they may start.
+  return launch_async([this, await_callbacks](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
+
+    // Admitted callbacks can still start UE procedures.
+    if (await_callbacks) {
+      CORO_AWAIT(pdu_callbacks->done);
+    }
 
     while (nof_ue_procedures != 0) {
       ue_procedures_done.reset();
@@ -82,10 +96,30 @@ async_task<void> xnap_impl::stop()
   });
 }
 
+/// Dispatches an admitted PDU on the control executor and tracks its callback until completion.
 void xnap_impl::handle_message(const xnap_message& msg)
 {
   // Run XNAP protocols in Control executor.
-  if (not ctrl_exec.execute([this, msg]() {
+  /// Admits and dispatches a PDU, rejecting callbacks after shutdown closes admission.
+  if (not ctrl_exec.execute([this, msg, callbacks = pdu_callbacks]() {
+        {
+          std::lock_guard<std::mutex> lock(callbacks->mutex);
+          if (not callbacks->accepting) {
+            return;
+          }
+          ++callbacks->nof_active;
+        }
+        /// Releases callback admission and signals shutdown after the last admitted callback completes.
+        auto on_completion = make_scope_exit([callbacks]() {
+          bool notify_stop;
+          {
+            std::lock_guard<std::mutex> lock(callbacks->mutex);
+            notify_stop = --callbacks->nof_active == 0 and not callbacks->accepting;
+          }
+          if (notify_stop) {
+            callbacks->done.set();
+          }
+        });
         log_xnap_pdu(logger, logger.debug.enabled(), true, msg.pdu);
         switch (msg.pdu.type().value) {
           case xnap_pdu_c::types_opts::init_msg:
@@ -490,6 +524,7 @@ void xnap_impl::handle_ue_context_release(const asn1::xnap::ue_context_release_s
   cu_cp_notifier.on_ue_context_release_received(ue_ctxt.ue_ids.ue_index);
 }
 
+/// Registers a tracked handover task that resolves UE state when execution starts.
 async_task<xnap_handover_preparation_response>
 xnap_impl::handle_handover_request_required(const xnap_handover_request& request)
 {
@@ -502,7 +537,26 @@ xnap_impl::handle_handover_request_required(const xnap_handover_request& request
     return launch_no_op_task(xnap_handover_preparation_response{false});
   }
 
-  xnap_ue_context& ue_ctxt = ue_ctxt_list[local_xnap_ue_id];
+  // Track the queued task without retaining references into a removable UE context.
+  return track_ue_procedure(launch_async(
+      /// Resolves the registered UE at execution time and returns the handover preparation result.
+      [this, request, local_xnap_ue_id, response = xnap_handover_preparation_response{}](
+          coro_context<async_task<xnap_handover_preparation_response>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(response, start_handover_request(request, local_xnap_ue_id));
+        CORO_RETURN(std::move(response));
+      }));
+}
+
+/// Resolves the live UE context and reserves the outcome before starting handover preparation.
+async_task<xnap_handover_preparation_response> xnap_impl::start_handover_request(const xnap_handover_request& request,
+                                                                                 local_xnap_ue_id_t local_xnap_ue_id)
+{
+  auto* ue = ue_ctxt_list.find(local_xnap_ue_id);
+  if (ue_ctxt_list.is_stopping() or ue == nullptr) {
+    return launch_no_op_task(xnap_handover_preparation_response{false});
+  }
+  xnap_ue_context& ue_ctxt = *ue;
 
   // The event source this preparation awaits. A conditional handover gets its own, keyed by target cell, so that
   // parallel candidates each await their own outcome; an immediate handover uses the one of the UE context.
@@ -518,8 +572,8 @@ xnap_impl::handle_handover_request_required(const xnap_handover_request& request
     ue_ctxt.logger.log_debug("Starting HO source preparation");
   }
 
-  return track_ue_procedure(launch_async<xnap_source_handover_preparation_procedure>(
-      request, ue_ctxt, *ho_outcome, ue_ctxt_list, tx_notifier, cu_cp_notifier, timer_factory{timers, ctrl_exec}));
+  return launch_async<xnap_source_handover_preparation_procedure>(
+      request, ue_ctxt, *ho_outcome, ue_ctxt_list, tx_notifier, cu_cp_notifier, timer_factory{timers, ctrl_exec});
 }
 
 void xnap_impl::handle_cho_cancel_required(cu_cp_ue_index_t ue_index, const nr_cell_global_id_t& target_cgi)

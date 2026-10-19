@@ -38,10 +38,16 @@ xnap_source_handover_preparation_procedure::xnap_source_handover_preparation_pro
 {
 }
 
+/// Runs source handover preparation or fails immediately if XNAP shutdown has begun.
 void xnap_source_handover_preparation_procedure::operator()(
     coro_context<async_task<xnap_handover_preparation_response>>& ctx)
 {
   CORO_BEGIN(ctx);
+
+  if (ue_ctxt_list.is_stopping()) {
+    discard_cho_cell_prep();
+    CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
+  }
 
   logger.log_info("\"{}\" started...", name());
 

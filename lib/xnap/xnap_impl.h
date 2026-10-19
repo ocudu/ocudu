@@ -15,6 +15,8 @@
 #include "ocudu/xnap/xnap_configuration.h"
 #include "ocudu/xnap/xnap_message.h"
 #include <algorithm>
+#include <memory>
+#include <mutex>
 
 namespace ocudu::ocucp {
 
@@ -28,9 +30,10 @@ public:
             task_executor&            ctrl_exec_);
   ~xnap_impl() override = default;
 
-  // XNAP message handling.
+  /// Dispatches a received PDU on the control executor while callback admission is open.
   void handle_message(const xnap_message& msg) override;
 
+  /// Closes callback admission, cancels transactions, and awaits admitted callbacks and UE procedures.
   async_task<void> stop() override;
 
   // XNAP ue context removal handler functions.
@@ -79,6 +82,10 @@ public:
   }
 
 private:
+  /// Resolves the UE context and registers its handover outcome when the queued task starts.
+  async_task<xnap_handover_preparation_response> start_handover_request(const xnap_handover_request& request,
+                                                                        local_xnap_ue_id_t           local_xnap_ue_id);
+
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::xnap::init_msg_s& msg);
@@ -166,6 +173,17 @@ private:
 
   /// Set whenever the number of UE-associated procedures in flight drops to zero.
   manual_event_flag ue_procedures_done;
+
+  struct pdu_callback_state {
+    std::mutex mutex;
+    bool       accepting  = true;
+    unsigned   nof_active = 0;
+    /// Completion event accessed on the control executor.
+    manual_event_flag done;
+  };
+
+  /// Admission state shared with queued callbacks that may outlive this instance.
+  std::shared_ptr<pdu_callback_state> pdu_callbacks = std::make_shared<pdu_callback_state>();
 };
 
 } // namespace ocudu::ocucp

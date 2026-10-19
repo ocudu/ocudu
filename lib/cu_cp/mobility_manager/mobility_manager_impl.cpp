@@ -474,6 +474,7 @@ void mobility_manager::handle_ngap_handover(ngap_interface&  ngap,
   ue.get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
 }
 
+/// Builds and queues a tracked XNAP handover request, reporting FIFO rejection.
 void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
                                             xnap_interface&  xnap,
                                             cu_cp_ue&        ue,
@@ -518,11 +519,15 @@ void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
       ue.get_location_manager().get_location_reporting_request());
 
   // Send handover preparation request to the Xn-C handler.
-  auto ho_trigger =
-      [&xnap, request, response = xnap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-        CORO_AWAIT_VALUE(response, xnap.handle_handover_request_required(request));
-        CORO_RETURN();
-      };
-  ue.get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
+  // Register before queueing so XNAP shutdown awaits the handover even while the UE FIFO is busy.
+  /// Awaits the tracked handover task when its turn in the UE FIFO arrives.
+  auto ho_trigger = [task =
+                         xnap.handle_handover_request_required(request)](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(task);
+    CORO_RETURN();
+  };
+  if (!ue.get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)))) {
+    logger.warning("ue={}: Failed to schedule XNAP handover", ue.get_ue_index());
+  }
 }

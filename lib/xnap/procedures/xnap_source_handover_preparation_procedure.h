@@ -24,6 +24,7 @@ public:
                                              xnap_cu_cp_notifier&         cu_cp_notifier_,
                                              timer_factory                timers);
 
+  /// Runs handover preparation unless XNAP shutdown has begun.
   void operator()(coro_context<async_task<xnap_handover_preparation_response>>& ctx);
 
   static const char* name() { return "Handover Preparation Procedure"; }

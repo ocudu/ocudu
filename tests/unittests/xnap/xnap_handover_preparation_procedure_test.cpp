@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/xnap/procedures/xn_setup_procedure_asn1_helpers.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/unittests/rrc/rrc_ue_test_helpers.h"
 #include "tests/unittests/xnap/xnap_test_messages.h"
@@ -11,12 +12,100 @@
 #include "ocudu/ran/inter_cu_handover_messages.h"
 #include "ocudu/security/security.h"
 #include "ocudu/support/async/async_test_utils.h"
+#include "ocudu/support/async/fifo_async_task_scheduler.h"
 #include "ocudu/xnap/xnap_handover.h"
 #include <chrono>
 #include <gtest/gtest.h>
 
 using namespace ocudu;
 using namespace ocucp;
+
+/// Verifies cancellation rejects reentrant handover registration and permits UE removal.
+TEST(xnap_ue_context_list_test, cancellation_can_remove_the_waiting_ue)
+{
+  timer_manager        timers;
+  manual_task_worker   worker{8};
+  auto&                logger = ocudulog::fetch_basic_logger("TEST");
+  xnap_ue_context_list ues{timers, worker, logger};
+  cu_cp_ue_index_t     ue_index{0};
+  local_xnap_ue_id_t   local_id{0};
+  ues.add_ue(ue_index, local_id);
+
+  protocol_transaction_outcome_observer<asn1::xnap::ho_request_ack_s, asn1::xnap::ho_prep_fail_s> observer;
+  /// Checks that cancellation closes registration before resuming and removing the waiting UE.
+  async_task<void>         waiter = launch_async([&](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    observer.subscribe_to(ues[local_id].xn_handover_outcome, std::chrono::seconds{1});
+    CORO_AWAIT(observer);
+    EXPECT_EQ(ues.find_or_create_ue_context(ue_index), local_xnap_ue_id_t::invalid);
+    EXPECT_EQ(ues.find_or_create_ue_context(cu_cp_ue_index_t{1}), local_xnap_ue_id_t::invalid);
+    ues.remove_ue_context(ue_index);
+    CORO_RETURN();
+  });
+  lazy_task_launcher<void> launch_waiter(waiter);
+
+  ues.cancel_all_transactions();
+  EXPECT_TRUE(waiter.ready());
+  EXPECT_FALSE(ues.contains(ue_index));
+}
+
+/// Verifies shutdown discards PDUs that have not passed callback admission.
+TEST_F(xnap_test, stopping_xnap_discards_queued_pdus)
+{
+  manual_task_worker explicit_worker{8, true, true};
+  xnap_impl          local_xnap{xnc_peer_index_t::min, xnap_local_cfg, cu_cp_notifier, timers, explicit_worker};
+  xnap_message       tx_msg;
+  auto               tx_notifier = std::make_unique<dummy_xnap_message_notifier>(tx_msg);
+  auto*              tx_spy      = tx_notifier.get();
+  local_xnap.set_tx_association_notifier(std::move(tx_notifier));
+
+  local_xnap.handle_message(generate_asn1_xn_setup_request(xnap_peer_cfg, {}));
+
+  async_task<void>         stop_task = local_xnap.stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  ASSERT_TRUE(stop_task.ready());
+
+  explicit_worker.run_pending_tasks();
+  EXPECT_TRUE(tx_spy->all_msgs.empty());
+}
+
+/// Verifies shutdown awaits an admitted callback and rejects later callbacks.
+TEST_F(xnap_test, stopping_xnap_awaits_an_admitted_pdu_callback)
+{
+  class stopping_notifier : public xnap_message_notifier
+  {
+  public:
+    /// Binds the notifier to the XNAP instance to stop.
+    explicit stopping_notifier(xnap_impl& xnap_) : xnap(xnap_) {}
+
+    /// Starts shutdown during message delivery and verifies it remains pending.
+    bool on_new_message(const xnap_message& msg) override
+    {
+      ++nof_messages;
+      stop_task = xnap.stop();
+      stop_launcher.emplace(stop_task);
+      EXPECT_FALSE(stop_task.ready());
+      return true;
+    }
+
+    xnap_impl&                              xnap;
+    unsigned                                nof_messages = 0;
+    async_task<void>                        stop_task;
+    std::optional<lazy_task_launcher<void>> stop_launcher;
+  };
+
+  auto  notifier = std::make_unique<stopping_notifier>(*xnap);
+  auto& spy      = *notifier;
+  xnap->set_tx_association_notifier(std::move(notifier));
+
+  auto request = generate_asn1_xn_setup_request(xnap_peer_cfg, {});
+  xnap->handle_message(request);
+
+  ASSERT_EQ(spy.nof_messages, 1U);
+  EXPECT_TRUE(spy.stop_task.ready());
+  xnap->handle_message(request);
+  EXPECT_EQ(spy.nof_messages, 1U);
+}
 
 /// Fixture class for XNAP handover preparation procedure tests.
 class xnap_handover_preparation_procedure_test : public xnap_test
@@ -201,6 +290,54 @@ TEST_F(xnap_handover_preparation_procedure_test, when_xnap_stopped_then_pending_
   // The pending procedure must have failed gracefully.
   ASSERT_TRUE(t.ready());
   ASSERT_FALSE(t.get().success);
+}
+
+/// Verifies shutdown rejects direct handover registration without creating a UE context.
+TEST_F(xnap_handover_preparation_procedure_test, shutdown_rejects_direct_handover_registration)
+{
+  auto ue_index = create_ue();
+  auto sec_ctxt = generate_security_context(ue_mng.find_ue(ue_index)->get_security_manager());
+  auto request  = generate_handover_request(ue_index, sec_ctxt);
+
+  auto                     stop_task = xnap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  ASSERT_TRUE(stop_task.ready());
+
+  auto task = xnap->handle_handover_request_required(request);
+  EXPECT_FALSE(xnap->has_ue_context(ue_index));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher(task);
+  EXPECT_TRUE(task.ready());
+  if (!task.ready()) {
+    tick(task, std::chrono::seconds{10});
+  }
+  ASSERT_TRUE(task.ready());
+  EXPECT_FALSE(task.get().success);
+}
+
+/// Verifies a handover registered before shutdown fails without sending when started afterward.
+TEST_F(xnap_handover_preparation_procedure_test, shutdown_cancels_handover_registered_before_it_starts)
+{
+  run_xn_setup(xnap_peer_cfg);
+  auto ue_index                   = create_ue();
+  auto sec_ctxt                   = generate_security_context(ue_mng.find_ue(ue_index)->get_security_manager());
+  auto request                    = generate_handover_request(ue_index, sec_ctxt);
+  request.is_conditional_handover = true;
+  pop_sent_messages();
+
+  auto                     task      = xnap->handle_handover_request_required(request);
+  auto                     stop_task = xnap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  ASSERT_FALSE(stop_task.ready());
+
+  lazy_task_launcher<xnap_handover_preparation_response> launcher(task);
+  EXPECT_TRUE(task.ready());
+  EXPECT_TRUE(stop_task.ready());
+  EXPECT_TRUE(pop_sent_messages().empty());
+  if (!task.ready()) {
+    tick(task, std::chrono::seconds{10});
+  }
+  ASSERT_TRUE(task.ready());
+  EXPECT_FALSE(task.get().success);
 }
 
 /// Test successful handover preparation procedure.
@@ -559,6 +696,71 @@ protected:
   cu_cp_ue_index_t           ue_index = cu_cp_ue_index_t::invalid;
   security::security_context sec_ctxt;
 };
+
+/// Verifies discarding an unstarted CHO task releases its cell and shutdown registration.
+TEST_F(xnap_cho_preparation_test, discarded_queued_cho_does_not_block_a_retry)
+{
+  pop_sent_messages();
+  {
+    auto discarded = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  }
+  auto retry = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher(retry);
+  EXPECT_FALSE(retry.ready());
+  EXPECT_EQ(pop_sent_messages().size(), 1U);
+
+  auto                     stop_task = xnap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  EXPECT_TRUE(stop_task.ready());
+  ASSERT_TRUE(retry.ready());
+  EXPECT_FALSE(retry.get().success);
+}
+
+/// Verifies a queued handover fails without accessing a removed UE context or sending a PDU.
+TEST_F(xnap_cho_preparation_test, queued_handover_fails_if_its_ue_context_is_removed)
+{
+  pop_sent_messages();
+  auto task = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  xnap->remove_ue_context(ue_index);
+  lazy_task_launcher<xnap_handover_preparation_response> launcher(task);
+  ASSERT_TRUE(task.ready());
+  EXPECT_FALSE(task.get().success);
+  EXPECT_TRUE(pop_sent_messages().empty());
+  EXPECT_FALSE(xnap->has_ue_context(ue_index));
+}
+
+/// Verifies FIFO rejection releases handover tracking and leaves the CHO cell available.
+TEST_F(xnap_cho_preparation_test, rejected_queued_cho_releases_its_registration)
+{
+  fifo_async_task_scheduler fifo{1};
+  manual_event_flag         gate;
+  /// Blocks the FIFO until the test releases its gate.
+  ASSERT_TRUE(fifo.schedule([&gate](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(gate);
+    CORO_RETURN();
+  }));
+  ASSERT_TRUE(fifo.schedule(launch_no_op_task()));
+  /// Owns the tracked CHO task so FIFO rejection destroys it and releases its registration.
+  EXPECT_FALSE(fifo.schedule([task = xnap->handle_handover_request_required(make_cho_request(cell_a))](
+                                 coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(task);
+    CORO_RETURN();
+  }));
+  gate.set();
+
+  pop_sent_messages();
+  auto retry = xnap->handle_handover_request_required(make_cho_request(cell_a));
+  lazy_task_launcher<xnap_handover_preparation_response> launcher(retry);
+  EXPECT_FALSE(retry.ready());
+  EXPECT_EQ(pop_sent_messages().size(), 1U);
+  auto                     stop_task = xnap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+  EXPECT_TRUE(stop_task.ready());
+  ASSERT_TRUE(retry.ready());
+  EXPECT_FALSE(retry.get().success);
+}
 
 /// Two CHO candidates at the same peer share one Source NG-RAN node UE XnAP ID, and each acknowledgement resolves
 /// only the preparation for the cell it names.
