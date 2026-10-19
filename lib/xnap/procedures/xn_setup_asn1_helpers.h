@@ -54,6 +54,9 @@ validate_xn_setup_request_response(const T& asn1_request_response)
     if (not is_valid(static_cast<pci_t>(asn1_served_cell.served_cell_info_nr.nr_pci))) {
       return make_unexpected(std::make_pair(cause, "Invalid PCI in served cell info"));
     }
+    if (not asn1_to_cgi(asn1_served_cell.served_cell_info_nr.cell_id).has_value()) {
+      return make_unexpected(std::make_pair(cause, "Invalid NR CGI in served cell info"));
+    }
     for (const auto& asn1_plmn : asn1_served_cell.served_cell_info_nr.broadcast_plmn) {
       if (not is_valid_plmn(asn1_plmn)) {
         return make_unexpected(std::make_pair(cause, "Invalid PLMN ID in served cell info"));
@@ -111,7 +114,7 @@ static inline xnap_context create_peer_xnap_context(const T& asn1_request_respon
   // Fill served cells list.
   if (asn1_request_response->list_of_served_cells_nr_present) {
     for (const auto& asn1_served_cell : asn1_request_response->list_of_served_cells_nr) {
-      context.list_of_served_cells_nr.push_back(asn1_to_served_cell_info(asn1_served_cell.served_cell_info_nr));
+      context.list_of_served_cells_nr.push_back(*asn1_to_served_cell_info(asn1_served_cell.served_cell_info_nr));
     }
   }
 

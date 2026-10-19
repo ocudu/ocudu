@@ -185,6 +185,7 @@ void xnap_impl::handle_initiating_message(const init_msg_s& msg)
   }
 }
 
+/// Delivers successful XNAP outcomes to the matching procedure after validating any target CGI.
 void xnap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
@@ -209,7 +210,12 @@ void xnap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
               "Discarding HandoverRequestAcknowledge: Requested Target Cell Global ID is not an NR cell");
           break;
         }
-        cell = asn1_to_cgi(ack->ch_oinfo_ack.requested_target_cell_global_id.nr());
+        auto cgi = asn1_to_cgi(ack->ch_oinfo_ack.requested_target_cell_global_id.nr());
+        if (not cgi.has_value()) {
+          ue_ctxt->logger.log_warning("Discarding HandoverRequestAcknowledge: invalid target CGI");
+          break;
+        }
+        cell = *cgi;
       }
       if (!ue_ctxt->deliver_ho_prep_outcome(cell, ack)) {
         ue_ctxt->logger.log_warning("Discarding HandoverRequestAcknowledge: no matching handover preparation");
@@ -225,6 +231,7 @@ void xnap_impl::handle_successful_outcome(const successful_outcome_s& outcome)
   }
 }
 
+/// Delivers unsuccessful XNAP outcomes to the matching procedure after validating any target CGI.
 void xnap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcome)
 {
   switch (outcome.value.type().value) {
@@ -250,7 +257,12 @@ void xnap_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& outcom
               "Discarding HandoverPreparationFailure: Requested Target Cell Global ID is not an NR cell");
           break;
         }
-        cell = asn1_to_cgi(fail->requested_target_cell_global_id.nr());
+        auto cgi = asn1_to_cgi(fail->requested_target_cell_global_id.nr());
+        if (not cgi.has_value()) {
+          ue_ctxt->logger.log_warning("Discarding HandoverPreparationFailure: invalid target CGI");
+          break;
+        }
+        cell = *cgi;
       }
       if (!ue_ctxt->deliver_ho_prep_outcome(cell, fail)) {
         ue_ctxt->logger.log_warning("Discarding HandoverPreparationFailure: no matching handover preparation");
@@ -285,6 +297,7 @@ async_task<bool> xnap_impl::handle_served_cells_update_required()
                                                        logger);
 }
 
+/// Applies a valid peer cell update and sends an acknowledgement, or rejects the update.
 void xnap_impl::handle_ngran_node_cfg_update(const ngran_node_cfg_upd_s& msg)
 {
   if (not peer_ctxt.has_value()) {
@@ -299,7 +312,14 @@ void xnap_impl::handle_ngran_node_cfg_update(const ngran_node_cfg_upd_s& msg)
   const auto& asn1_init_node_choice = msg->cfg_upd_init_node_choice;
   if (asn1_init_node_choice.type() == cfg_upd_init_node_choice_c::types_opts::gnb and
       asn1_init_node_choice.gnb().served_cells_to_upd_nr_present) {
-    update_peer_served_cells(peer_ctxt->list_of_served_cells_nr, asn1_init_node_choice.gnb().served_cells_to_upd_nr);
+    if (not update_peer_served_cells(peer_ctxt->list_of_served_cells_nr,
+                                     asn1_init_node_choice.gnb().served_cells_to_upd_nr)) {
+      logger.warning("Rejecting NGRANNodeConfigurationUpdate. Cause: Invalid NR CGI in Served Cells To Update NR");
+      if (not tx_notifier.on_new_message(generate_asn1_ngran_node_cfg_update_failure(cause_protocol_t::unspecified))) {
+        logger.error("Failed to send NGRANNodeConfigurationUpdateFailure. Cause: no SCTP association available");
+      }
+      return;
+    }
     logger.info("Xn-C peer serves {} cell(s)", peer_ctxt->list_of_served_cells_nr.size());
   }
 
@@ -398,6 +418,7 @@ void xnap_impl::handle_handover_request(const asn1::xnap::ho_request_s& msg)
   }
 }
 
+/// Releases the target UE contexts identified by a handover cancellation.
 void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
 {
   // TS 38.423 Section 8.2.3.2: the cancelled handover is the one on the signalling connection identified by the Source
@@ -407,7 +428,7 @@ void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
   // This is sent from the source to the target, so the source XNAP UE ID is the peer UE ID.
   const peer_xnap_ue_id_t peer_xnap_ue_id = uint_to_peer_xnap_ue_id(msg->source_ng_ran_node_ue_xnap_id);
 
-  // Releases one prepared candidate: the CU-CP drops its UE, then the local XNAP UE context goes.
+  /// Releases a prepared candidate through the CU-CP and removes its local XNAP UE context.
   auto release = [this, &msg](xnap_ue_context& ue_ctxt) {
     const cu_cp_ue_index_t ue_index = ue_ctxt.ue_ids.ue_index;
     ue_ctxt.logger.log_info("Cancelling the handover. Cause: Received HandoverCancel ({})",
@@ -434,6 +455,7 @@ void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
     if (msg->target_cells_to_cancel.size() != 0 and ue_ctxt->ho_target_cell.has_value()) {
       const bool names_this_cell = std::any_of(msg->target_cells_to_cancel.begin(),
                                                msg->target_cells_to_cancel.end(),
+                                               /// Matches a valid NR target cell against the prepared handover cell.
                                                [&ue_ctxt](const asn1::xnap::target_cell_list_item_s& item) {
                                                  return item.target_cell.type() == target_cgi_c::types_opts::nr and
                                                         asn1_to_cgi(item.target_cell.nr()) == *ue_ctxt->ho_target_cell;
@@ -456,8 +478,13 @@ void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
       continue;
     }
     named_a_cell = true;
-    xnap_ue_context* cell_ctxt =
-        ue_ctxt_list.find_by_peer_and_cell(peer_xnap_ue_id, asn1_to_cgi(item.target_cell.nr()));
+    auto cgi     = asn1_to_cgi(item.target_cell.nr());
+    if (not cgi.has_value()) {
+      logger.warning("Ignoring target cell in HandoverCancel: invalid target CGI. peer_xnap_ue_id={}",
+                     msg->source_ng_ran_node_ue_xnap_id);
+      continue;
+    }
+    xnap_ue_context* cell_ctxt = ue_ctxt_list.find_by_peer_and_cell(peer_xnap_ue_id, *cgi);
     if (cell_ctxt == nullptr) {
       logger.info("HandoverCancel names a cell with no prepared UE. peer_xnap_ue_id={}",
                   msg->source_ng_ran_node_ue_xnap_id);
@@ -688,6 +715,7 @@ async_task<expected<cu_cp_status_transfer>> xnap_impl::handle_sn_status_transfer
       xnap_cfg.procedure_timeout, ue_ctxt.sn_status_transfer_outcome, ue_ctxt.logger));
 }
 
+/// Validates the prepared CHO winner, updates its peer UE ID, and notifies the CU-CP.
 void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
 {
   // HandoverSuccess is sent from the target to the source. From the source's perspective,
@@ -706,12 +734,16 @@ void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
     ue_ctxt_ref.logger.log_warning("Discarding HandoverSuccess: Requested Target Cell Global ID is not an NR cell");
     return;
   }
-  const nr_cell_global_id_t winner_cgi = asn1_to_cgi(msg->requested_target_cell_global_id.nr());
+  auto winner_cgi = asn1_to_cgi(msg->requested_target_cell_global_id.nr());
+  if (not winner_cgi.has_value()) {
+    ue_ctxt_ref.logger.log_warning("Discarding HandoverSuccess: invalid target CGI");
+    return;
+  }
 
   // Only a cell we prepared can have won. Adopting the ID first would leave the context addressed by an ID that
   // belongs to no candidate if the peer names a stale or unknown cell.
-  if (ue_ctxt_ref.find_cho_prepared(winner_cgi) == peer_xnap_ue_id_t::invalid) {
-    ue_ctxt_ref.logger.log_warning("Discarding HandoverSuccess: no CHO candidate prepared for {}", winner_cgi);
+  if (ue_ctxt_ref.find_cho_prepared(*winner_cgi) == peer_xnap_ue_id_t::invalid) {
+    ue_ctxt_ref.logger.log_warning("Discarding HandoverSuccess: no CHO candidate prepared for {}", *winner_cgi);
     return;
   }
 
@@ -719,12 +751,13 @@ void xnap_impl::handle_handover_success(const asn1::xnap::ho_success_s& msg)
   // follows addresses the UE by it, and the other candidates' IDs are of no further use.
   ue_ctxt_list.update_peer_xnap_ue_id(local_xnap_ue_id, uint_to_peer_xnap_ue_id(msg->target_ng_ran_node_ue_xnap_id));
 
-  ue_ctxt_ref.logger.log_debug("CHO winner is {}", winner_cgi);
+  ue_ctxt_ref.logger.log_debug("CHO winner is {}", *winner_cgi);
 
   // Notify CU-CP: source must now send SN Status Transfer and release UE context.
-  cu_cp_notifier.on_handover_success_received(ue_ctxt_ref.ue_ids.ue_index, winner_cgi);
+  cu_cp_notifier.on_handover_success_received(ue_ctxt_ref.ue_ids.ue_index, *winner_cgi);
 }
 
+/// Notifies the CU-CP of cancelled CHO candidates, ignoring invalid cell identifiers.
 void xnap_impl::handle_conditional_ho_cancel(const asn1::xnap::conditional_ho_cancel_s& msg)
 {
   // ConditionalHandoverCancel is sent from TARGET to SOURCE (TS 38.423 Section 8.2.9).
@@ -747,14 +780,22 @@ void xnap_impl::handle_conditional_ho_cancel(const asn1::xnap::conditional_ho_ca
   unsigned                         nof_non_nr_cells = 0;
   for (const auto& item : msg->target_cells_to_cancel) {
     if (item.target_cell.type() == target_cgi_c::types_opts::nr) {
-      cancelled_cells.push_back(asn1_to_cgi(item.target_cell.nr()));
+      if (auto cgi = asn1_to_cgi(item.target_cell.nr())) {
+        cancelled_cells.push_back(*cgi);
+      } else {
+        ue_ctxt.logger.log_warning("Ignoring target cell in ConditionalHandoverCancel: invalid target CGI");
+      }
     } else {
       ++nof_non_nr_cells;
     }
   }
   for (const auto& item : msg->conditional_recfg_to_cancel_list) {
     if (item.pcell_id.type() == target_cgi_c::types_opts::nr) {
-      cancelled_cells.push_back(asn1_to_cgi(item.pcell_id.nr()));
+      if (auto cgi = asn1_to_cgi(item.pcell_id.nr())) {
+        cancelled_cells.push_back(*cgi);
+      } else {
+        ue_ctxt.logger.log_warning("Ignoring PCell in ConditionalHandoverCancel: invalid target CGI");
+      }
     } else {
       ++nof_non_nr_cells;
     }

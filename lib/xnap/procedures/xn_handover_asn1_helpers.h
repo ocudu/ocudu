@@ -117,14 +117,19 @@ inline bool asn1_to_ue_context_info_ho_request(xnap_ue_context_info_ho_request& 
 /// \returns True if the conversion was successful, false otherwise.
 inline bool asn1_to_handover_request(xnap_handover_request& request, const asn1::xnap::ho_request_s& asn1_request)
 {
-  // Fill cause.
-  request.cause = asn1_to_cause(asn1_request->cause);
-
   // Fill NR-CGI.
   if (asn1_request->target_cell_global_id.type() != asn1::xnap::target_cgi_c::types_opts::options::nr) {
     return false;
   }
-  request.nr_cgi = asn1_to_cgi(asn1_request->target_cell_global_id.nr());
+  const auto& target_cell = asn1_request->target_cell_global_id.nr();
+  auto        cgi         = asn1_to_cgi(target_cell);
+  if (not cgi.has_value()) {
+    return false;
+  }
+  request.nr_cgi = *cgi;
+
+  // Fill cause.
+  request.cause = asn1_to_cause(asn1_request->cause);
 
   // Fill GUAMI.
   expected<guami_t, std::string> guami = asn1_to_guami(asn1_request->guami);

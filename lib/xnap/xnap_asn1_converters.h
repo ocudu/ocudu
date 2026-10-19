@@ -90,13 +90,15 @@ inline asn1::xnap::nr_cgi_s cgi_to_asn1(const nr_cell_global_id_t& cgi)
 
 /// \brief Converts ASN.1 encoded NR-CGI into internal CGI struct.
 /// \param[in] asn1_cgi The ASN.1 encoded NR-CGI.
-/// \return The internal CGI struct.
-inline nr_cell_global_id_t asn1_to_cgi(const asn1::xnap::nr_cgi_s& asn1_cgi)
+/// \return The internal CGI struct, or an error if the CGI is invalid.
+inline expected<nr_cell_global_id_t> asn1_to_cgi(const asn1::xnap::nr_cgi_s& asn1_cgi)
 {
-  nr_cell_global_id_t cgi = {};
-  cgi.nci                 = nr_cell_identity::create(asn1_cgi.nr_ci.to_number()).value();
-  cgi.plmn_id             = plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes()).value();
-  return cgi;
+  auto nci  = nr_cell_identity::create(asn1_cgi.nr_ci.to_number());
+  auto plmn = plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes());
+  if (not nci.has_value() or not plmn.has_value()) {
+    return make_unexpected(default_error_t{});
+  }
+  return nr_cell_global_id_t{plmn.value(), nci.value()};
 }
 
 /// \brief Converts internal GUAMI struct into ASN.1 encoded GUAMI.
@@ -805,14 +807,19 @@ inline asn1::xnap::served_cell_info_nr_s served_cell_info_nr_to_asn1(const cu_cp
 
 /// \brief Convert XNAP ASN.1 to \c cu_cp_served_cell_info.
 /// \param[in] asn1_served_cell The ASN.1 type served cell info.
-/// \return The common type served cell info.
-inline cu_cp_served_cell_info asn1_to_served_cell_info(const asn1::xnap::served_cell_info_nr_s& asn1_served_cell)
+/// \return The common type served cell info, or an error if the CGI is invalid.
+inline expected<cu_cp_served_cell_info>
+asn1_to_served_cell_info(const asn1::xnap::served_cell_info_nr_s& asn1_served_cell)
 {
   cu_cp_served_cell_info served_cell;
 
   // Fill PCI and cell id.
   served_cell.nr_pci = asn1_served_cell.nr_pci;
-  served_cell.nr_cgi = asn1_to_cgi(asn1_served_cell.cell_id);
+  auto cgi           = asn1_to_cgi(asn1_served_cell.cell_id);
+  if (not cgi.has_value()) {
+    return make_unexpected(cgi.error());
+  }
+  served_cell.nr_cgi = *cgi;
 
   // Fill TAC.
   served_cell.five_gs_tac = asn1_served_cell.tac.to_number();

@@ -3,11 +3,25 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/xnap/procedures/xn_handover_asn1_helpers.h"
 #include "lib/xnap/xnap_asn1_converters.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
+
+/// Verifies an invalid target PLMN fails CGI and handover-request conversion.
+TEST(xnap_asn1_converters_test, handover_request_with_invalid_target_plmn_is_rejected)
+{
+  asn1::xnap::ho_request_s asn1_request;
+  auto&                    target = asn1_request->target_cell_global_id.set_nr();
+  target.plmn_id.from_number(0xffffff);
+  target.nr_ci.from_number(1);
+
+  EXPECT_FALSE(asn1_to_cgi(target).has_value());
+  xnap_handover_request request;
+  EXPECT_FALSE(asn1_to_handover_request(request, asn1_request));
+}
 
 /// The GUAMI must survive a round trip with a PLMN other than the test PLMN.
 ///

@@ -96,25 +96,48 @@ inline xnap_message generate_asn1_ngran_node_cfg_update_failure(xnap_cause_t cau
 /// \brief Apply the cell changes an Xn-C peer reported to the cells stored for it.
 /// \param[out] peer_cells The cells the Xn-C peer serves.
 /// \param[in] asn1_cells_to_upd The Served Cells To Update NR IE received from the peer.
-inline void update_peer_served_cells(std::vector<cu_cp_served_cell_info>&        peer_cells,
+/// \return True if the update was applied, false if an NR CGI is invalid (in which case the stored cells are left
+/// unchanged).
+inline bool update_peer_served_cells(std::vector<cu_cp_served_cell_info>&        peer_cells,
                                      const asn1::xnap::served_cells_to_upd_nr_s& asn1_cells_to_upd)
 {
+  // Validate every NR CGI before mutating the stored cells: TS 38.423 Section 8.4.2.3 requires an update that
+  // cannot be accepted to leave both nodes' existing configuration unchanged.
+  for (const auto& asn1_cgi : asn1_cells_to_upd.served_cells_to_delete_nr) {
+    if (not asn1_to_cgi(asn1_cgi).has_value()) {
+      return false;
+    }
+  }
+  for (const auto& asn1_cell : asn1_cells_to_upd.served_cells_to_modify_nr) {
+    if (not asn1_to_cgi(asn1_cell.old_nr_cgi).has_value() or
+        not asn1_to_cgi(asn1_cell.served_cell_info_nr.cell_id).has_value()) {
+      return false;
+    }
+  }
+  for (const auto& asn1_cell : asn1_cells_to_upd.served_cells_to_add_nr) {
+    if (not asn1_to_cgi(asn1_cell.served_cell_info_nr.cell_id).has_value()) {
+      return false;
+    }
+  }
+
+  /// Finds the stored peer cell with the requested NR CGI.
   auto find_cell = [&peer_cells](const nr_cell_global_id_t& cgi) {
+    /// Matches a stored cell against the requested NR CGI.
     return std::find_if(peer_cells.begin(), peer_cells.end(), [&cgi](const cu_cp_served_cell_info& cell) {
       return cell.nr_cgi == cgi;
     });
   };
 
   for (const auto& asn1_cgi : asn1_cells_to_upd.served_cells_to_delete_nr) {
-    auto cell_it = find_cell(asn1_to_cgi(asn1_cgi));
+    auto cell_it = find_cell(asn1_to_cgi(asn1_cgi).value());
     if (cell_it != peer_cells.end()) {
       peer_cells.erase(cell_it);
     }
   }
 
   for (const auto& asn1_cell : asn1_cells_to_upd.served_cells_to_modify_nr) {
-    cu_cp_served_cell_info cell    = asn1_to_served_cell_info(asn1_cell.served_cell_info_nr);
-    auto                   cell_it = find_cell(asn1_to_cgi(asn1_cell.old_nr_cgi));
+    cu_cp_served_cell_info cell    = asn1_to_served_cell_info(asn1_cell.served_cell_info_nr).value();
+    auto                   cell_it = find_cell(asn1_to_cgi(asn1_cell.old_nr_cgi).value());
     if (cell_it != peer_cells.end()) {
       *cell_it = cell;
     } else {
@@ -123,7 +146,7 @@ inline void update_peer_served_cells(std::vector<cu_cp_served_cell_info>&       
   }
 
   for (const auto& asn1_cell : asn1_cells_to_upd.served_cells_to_add_nr) {
-    cu_cp_served_cell_info cell    = asn1_to_served_cell_info(asn1_cell.served_cell_info_nr);
+    cu_cp_served_cell_info cell    = asn1_to_served_cell_info(asn1_cell.served_cell_info_nr).value();
     auto                   cell_it = find_cell(cell.nr_cgi);
     if (cell_it != peer_cells.end()) {
       *cell_it = cell;
@@ -131,6 +154,8 @@ inline void update_peer_served_cells(std::vector<cu_cp_served_cell_info>&       
       peer_cells.push_back(cell);
     }
   }
+
+  return true;
 }
 
 } // namespace ocudu::ocucp
