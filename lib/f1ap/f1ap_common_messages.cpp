@@ -11,6 +11,7 @@
 using namespace ocudu;
 using namespace asn1::f1ap;
 
+/// Builds an Error Indication with the transaction ID and supplied optional UE IDs and cause.
 f1ap_message ocudu::generate_error_indication(uint8_t                                   transaction_id,
                                               const std::optional<gnb_du_ue_f1ap_id_t>& du_ue_id,
                                               const std::optional<gnb_cu_ue_f1ap_id_t>& cu_ue_id,
@@ -18,7 +19,7 @@ f1ap_message ocudu::generate_error_indication(uint8_t                           
 {
   f1ap_message msg;
   msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_ERROR_IND);
-  asn1::f1ap::error_ind_s error_ind = msg.pdu.init_msg().value.error_ind();
+  asn1::f1ap::error_ind_s& error_ind = msg.pdu.init_msg().value.error_ind();
 
   error_ind->transaction_id = transaction_id;
 

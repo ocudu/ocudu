@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "f1ap_du_reset_procedure.h"
+#include "../../f1ap_common_messages.h"
 #include "../ue_context/f1ap_du_ue_manager.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/f1ap/f1ap_message.h"
@@ -25,11 +26,22 @@ reset_procedure::reset_procedure(const asn1::f1ap::reset_s& msg_,
 {
 }
 
+/// Rejects unsupported reset types and acknowledges supported resets after DU cleanup.
 void reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
   logger.debug("{}: Started with cause=\"{}\".", name(), msg->cause.type().to_string());
+
+  using reset_choice = asn1::f1ap::reset_type_c;
+  if (msg->reset_type.type().value != reset_choice::types_opts::f1_interface and
+      msg->reset_type.type().value != reset_choice::types_opts::part_of_f1_interface) {
+    logger.warning("Ignoring RESET message. Cause: Unsupported reset type");
+    asn1::f1ap::cause_c cause;
+    cause.set_protocol().value = asn1::f1ap::cause_protocol_opts::abstract_syntax_error_reject;
+    msg_notifier.on_new_message(generate_error_indication(msg->transaction_id, {}, {}, cause));
+    CORO_EARLY_RETURN();
+  }
 
   CORO_AWAIT(handle_reset());
 
@@ -40,6 +52,7 @@ void reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
+/// Requests removal of all UEs or the UEs selected by a partial reset.
 async_task<void> reset_procedure::handle_reset()
 {
   using reset_choice = asn1::f1ap::reset_type_c;
@@ -58,11 +71,8 @@ async_task<void> reset_procedure::handle_reset()
         return du_mng.request_reset(ues_to_rem);
       }
     } break;
-    case reset_choice::types_opts::choice_ext:
-      logger.warning("Ignoring RESET message. Cause: choiceExt option not supported");
-      break;
     default:
-      report_fatal_error("Invalid F1 reset type");
+      break;
   }
 
   return launch_no_op_task();

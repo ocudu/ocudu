@@ -64,3 +64,33 @@ TEST_F(f1_reset_test, when_f1_reset_is_received_for_a_specific_ue_then_reset_req
 
   ASSERT_TRUE(test_helpers::is_valid_f1_reset_ack(req, this->f1c_gw.last_tx_pdu()));
 }
+
+/// Verifies that unsupported reset choices produce an Error Indication without resetting UEs.
+TEST_F(f1_reset_test, invalid_reset_type_returns_error_indication_without_reset)
+{
+  for (auto reset_type : {asn1::f1ap::reset_type_c::types::nulltype, asn1::f1ap::reset_type_c::types::choice_ext}) {
+    auto req = test_helpers::generate_f1ap_reset_message();
+    req.pdu.init_msg().value.reset()->reset_type.set(reset_type);
+    req.pdu.init_msg().value.reset()->transaction_id = 23;
+    f1c_gw.clear_tx_pdus();
+
+    f1ap->handle_message(req);
+
+    ASSERT_FALSE(f1ap_du_cfg_handler.last_ues_to_reset.has_value());
+    ASSERT_TRUE(f1c_gw.tx_pdus_sent());
+    ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+    ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.init_msg().value.type().value,
+              asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::error_ind);
+    byte_buffer   encoded;
+    asn1::bit_ref writer(encoded);
+    ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.pack(writer), asn1::OCUDUASN_SUCCESS);
+    asn1::cbit_ref         reader(encoded);
+    asn1::f1ap::f1ap_pdu_c decoded;
+    ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
+    const auto& error = *decoded.init_msg().value.error_ind();
+    EXPECT_EQ(error.transaction_id, req.pdu.init_msg().value.reset()->transaction_id);
+    ASSERT_TRUE(error.cause_present);
+    ASSERT_EQ(error.cause.type().value, asn1::f1ap::cause_c::types_opts::protocol);
+    EXPECT_EQ(error.cause.protocol().value, asn1::f1ap::cause_protocol_opts::abstract_syntax_error_reject);
+  }
+}
