@@ -48,7 +48,8 @@ struct ue_context_dependencies {
   gtpu_teid_pool&                     xnu_teid_allocator;
   xnu_session_manager*                xnu_session_mngr;
   gtpu_teid_pool&                     f1u_teid_allocator;
-  gtpu_demux_ctrl&                    gtpu_rx_demux;
+  gtpu_demux_ctrl&                    ngu_gtpu_rx_demux;
+  gtpu_demux_ctrl&                    xnu_gtpu_rx_demux;
   dlt_pcap&                           ngu_gtpu_pcap;
   dlt_pcap&                           xnu_gtpu_pcap;
 };
@@ -87,7 +88,8 @@ public:
                             dependencies.xnu_teid_allocator,
                             dependencies.xnu_session_mngr,
                             dependencies.f1u_teid_allocator,
-                            dependencies.gtpu_rx_demux,
+                            dependencies.ngu_gtpu_rx_demux,
+                            dependencies.xnu_gtpu_rx_demux,
                             ue_exec_mapper->dl_pdu_executor(),
                             ue_exec_mapper->ul_pdu_executor(),
                             ue_exec_mapper->ctrl_executor(),

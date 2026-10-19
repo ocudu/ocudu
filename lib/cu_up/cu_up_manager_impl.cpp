@@ -33,6 +33,7 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
       dependencies.ngu_session_mngr,
       cu_up_mngr_pdcp_if,
       dependencies.ngu_demux,
+      dependencies.xnu_demux,
       dependencies.ngu_teid_allocator,
       dependencies.xnu_teid_allocator,
       dependencies.xnu_session_mngr,

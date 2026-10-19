@@ -36,7 +36,8 @@ struct ue_manager_dependencies {
   f1u_cu_up_gateway&                                  f1u_gw;
   ngu_session_manager&                                ngu_session_mngr;
   cu_up_manager_pdcp_interface&                       cu_up_mngr_pdcp_if;
-  gtpu_demux_ctrl&                                    gtpu_rx_demux;
+  gtpu_demux_ctrl&                                    ngu_gtpu_rx_demux;
+  gtpu_demux_ctrl&                                    xnu_gtpu_rx_demux;
   gtpu_teid_pool&                                     ngu_teid_allocator;
   gtpu_teid_pool&                                     xnu_teid_allocator;
   xnu_session_manager*                                xnu_session_mngr;
@@ -97,7 +98,8 @@ private:
   f1u_cu_up_gateway&                                  f1u_gw;
   ngu_session_manager&                                ngu_session_mngr;
   cu_up_manager_pdcp_interface&                       cu_up_mngr_pdcp_if;
-  gtpu_demux_ctrl&                                    gtpu_rx_demux;
+  gtpu_demux_ctrl&                                    ngu_gtpu_rx_demux;
+  gtpu_demux_ctrl&                                    xnu_gtpu_rx_demux;
   gtpu_teid_pool&                                     ngu_teid_allocator;
   gtpu_teid_pool&                                     xnu_teid_allocator;
   xnu_session_manager*                                xnu_session_mngr;

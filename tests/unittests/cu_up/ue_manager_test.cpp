@@ -27,7 +27,8 @@ protected:
     ocudulog::init();
 
     // create required objects
-    gtpu_rx_demux      = std::make_unique<dummy_gtpu_demux_ctrl>();
+    ngu_gtpu_rx_demux  = std::make_unique<dummy_gtpu_demux_ctrl>();
+    xnu_gtpu_rx_demux  = std::make_unique<dummy_gtpu_demux_ctrl>();
     gtpu_ngu_allocator = std::make_unique<dummy_gtpu_teid_pool>();
     gtpu_xnu_allocator = std::make_unique<dummy_gtpu_teid_pool>();
     gtpu_f1u_allocator = std::make_unique<dummy_gtpu_teid_pool>();
@@ -50,7 +51,8 @@ protected:
                                                                   *f1u_gw,
                                                                   *ngu_session_mngr,
                                                                   *pdcp_ctrl_handler,
-                                                                  *gtpu_rx_demux,
+                                                                  *ngu_gtpu_rx_demux,
+                                                                  *xnu_gtpu_rx_demux,
                                                                   *gtpu_ngu_allocator,
                                                                   *gtpu_xnu_allocator,
                                                                   &xnu_session_mngr,
@@ -67,7 +69,8 @@ protected:
     ocudulog::flush();
   }
 
-  std::unique_ptr<gtpu_demux_ctrl>                            gtpu_rx_demux;
+  std::unique_ptr<gtpu_demux_ctrl>                            ngu_gtpu_rx_demux;
+  std::unique_ptr<gtpu_demux_ctrl>                            xnu_gtpu_rx_demux;
   std::unique_ptr<gtpu_teid_pool>                             gtpu_ngu_allocator;
   std::unique_ptr<gtpu_teid_pool>                             gtpu_xnu_allocator;
   dummy_xnu_session_manager                                   xnu_session_mngr;

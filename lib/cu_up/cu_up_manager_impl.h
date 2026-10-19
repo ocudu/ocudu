@@ -32,6 +32,7 @@ struct cu_up_manager_impl_dependencies {
   std::atomic<bool>&                                  stop_command;
   std::vector<std::reference_wrapper<e1ap_interface>> e1aps;
   gtpu_demux&                                         ngu_demux;
+  gtpu_demux&                                         xnu_demux;
   ngu_session_manager&                                ngu_session_mngr;
   gtpu_teid_pool&                                     ngu_teid_allocator;
   gtpu_teid_pool&                                     xnu_teid_allocator;

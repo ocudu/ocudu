@@ -42,7 +42,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(cu_up_ue_index_t             
   xnu_teid_allocator(dependencies.xnu_teid_allocator),
   xnu_session_mngr(dependencies.xnu_session_mngr),
   f1u_teid_allocator(dependencies.f1u_teid_allocator),
-  gtpu_rx_demux(dependencies.gtpu_rx_demux),
+  ngu_gtpu_rx_demux(dependencies.ngu_gtpu_rx_demux),
+  xnu_gtpu_rx_demux(dependencies.xnu_gtpu_rx_demux),
   ue_dl_exec(dependencies.ue_dl_exec),
   ue_ul_exec(dependencies.ue_ul_exec),
   ue_ctrl_exec(dependencies.ue_ctrl_exec),
@@ -116,7 +117,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   std::unique_ptr<pdu_session> new_session =
       std::make_unique<pdu_session>(session,
                                     local_teid.value(),
-                                    gtpu_rx_demux,
+                                    ngu_gtpu_rx_demux,
                                     ngu_teid_allocator,
                                     direct_forwarding_path_available ? xnu_teid_allocator : ngu_teid_allocator);
   new_session->direct_forwarding_path = direct_forwarding_path_available;
@@ -169,8 +170,8 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->gtpu_to_udp_adapter.connect_network_gateway(*ngu_gw);
 
   // Register tunnel at demux
-  expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
-      gtpu_rx_demux.add_tunnel(new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface());
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue = ngu_gtpu_rx_demux.add_tunnel(
+      new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface());
   if (!expected_dispatch_queue) {
     logger.log_error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);

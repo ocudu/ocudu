@@ -18,7 +18,8 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
   f1u_gw(dependencies.f1u_gw),
   ngu_session_mngr(dependencies.ngu_session_mngr),
   cu_up_mngr_pdcp_if(dependencies.cu_up_mngr_pdcp_if),
-  gtpu_rx_demux(dependencies.gtpu_rx_demux),
+  ngu_gtpu_rx_demux(dependencies.ngu_gtpu_rx_demux),
+  xnu_gtpu_rx_demux(dependencies.xnu_gtpu_rx_demux),
   ngu_teid_allocator(dependencies.ngu_teid_allocator),
   xnu_teid_allocator(dependencies.xnu_teid_allocator),
   xnu_session_mngr(dependencies.xnu_session_mngr),
@@ -40,7 +41,8 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
 async_task<void> ue_manager::stop()
 {
   // Stopping all UE's. Stop GTP-U demux first.
-  gtpu_rx_demux.stop();
+  ngu_gtpu_rx_demux.stop();
+  xnu_gtpu_rx_demux.stop();
 
   // Stop F1-U gateway. This will internallly stop the GTP-U demux
   // and UDP TX batched queues, if in split CU/DU scenarios.
@@ -161,7 +163,8 @@ ue_context* ue_manager::add_ue(cu_up_e1_index_t e1_index, const ue_context_cfg& 
                                                                          xnu_teid_allocator,
                                                                          xnu_session_mngr,
                                                                          f1u_teid_allocator,
-                                                                         gtpu_rx_demux,
+                                                                         ngu_gtpu_rx_demux,
+                                                                         xnu_gtpu_rx_demux,
                                                                          ngu_gtpu_pcap,
                                                                          xnu_gtpu_pcap,
                                                                      });

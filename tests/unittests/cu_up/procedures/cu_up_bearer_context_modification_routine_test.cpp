@@ -44,7 +44,8 @@ protected:
                                             xnu_allocator,
                                             &xnu_session_mngr,
                                             f1u_allocator,
-                                            gtpu_demux,
+                                            ngu_gtpu_demux,
+                                            xnu_gtpu_demux,
                                             ngu_gtpu_pcap,
                                             xnu_gtpu_pcap,
                                         });
@@ -85,7 +86,8 @@ private:
   dummy_gtpu_teid_pool               xnu_allocator;
   dummy_xnu_session_manager          xnu_session_mngr;
   dummy_gtpu_teid_pool               f1u_allocator;
-  dummy_gtpu_demux_ctrl              gtpu_demux;
+  dummy_gtpu_demux_ctrl              ngu_gtpu_demux;
+  dummy_gtpu_demux_ctrl              xnu_gtpu_demux;
   null_dlt_pcap                      ngu_gtpu_pcap;
   null_dlt_pcap                      xnu_gtpu_pcap;
 

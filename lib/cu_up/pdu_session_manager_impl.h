@@ -37,7 +37,8 @@ struct pdu_session_manager_dependencies {
   gtpu_teid_pool&               xnu_teid_allocator;
   xnu_session_manager*          xnu_session_mngr;
   gtpu_teid_pool&               f1u_teid_allocator;
-  gtpu_demux_ctrl&              gtpu_rx_demux;
+  gtpu_demux_ctrl&              ngu_gtpu_rx_demux;
+  gtpu_demux_ctrl&              xnu_gtpu_rx_demux;
   task_executor&                ue_dl_exec;
   task_executor&                ue_ul_exec;
   task_executor&                ue_ctrl_exec;
@@ -116,7 +117,8 @@ private:
   gtpu_teid_pool&                                          xnu_teid_allocator;
   xnu_session_manager*                                     xnu_session_mngr;
   gtpu_teid_pool&                                          f1u_teid_allocator;
-  gtpu_demux_ctrl&                                         gtpu_rx_demux;
+  gtpu_demux_ctrl&                                         ngu_gtpu_rx_demux;
+  gtpu_demux_ctrl&                                         xnu_gtpu_rx_demux;
   task_executor&                                           ue_dl_exec;
   task_executor&                                           ue_ul_exec;
   task_executor&                                           ue_ctrl_exec;

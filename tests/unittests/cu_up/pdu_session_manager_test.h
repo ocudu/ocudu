@@ -27,7 +27,8 @@ protected:
 
     // create required objects
     security_info      = get_dummy_up_security_info();
-    gtpu_rx_demux      = std::make_unique<dummy_gtpu_demux_ctrl>();
+    ngu_gtpu_rx_demux  = std::make_unique<dummy_gtpu_demux_ctrl>();
+    xnu_gtpu_rx_demux  = std::make_unique<dummy_gtpu_demux_ctrl>();
     gtpu_tx_notifier   = std::make_unique<dummy_gtpu_network_gateway_adapter>();
     f1u_gw             = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     ngu_allocator      = std::make_unique<dummy_gtpu_teid_pool>();
@@ -77,7 +78,8 @@ protected:
                                                                                *xnu_allocator,
                                                                                xnu_session_mngr.get(),
                                                                                *f1u_allocator,
-                                                                               *gtpu_rx_demux,
+                                                                               *ngu_gtpu_rx_demux,
+                                                                               *xnu_gtpu_rx_demux,
                                                                                teid_worker,
                                                                                teid_worker,
                                                                                teid_worker,
@@ -102,7 +104,8 @@ protected:
   manual_task_worker                                          worker{64};
   timer_factory                                               timers_factory{timers_manager, worker};
   unique_timer                                                ue_inactivity_timer;
-  std::unique_ptr<dummy_gtpu_demux_ctrl>                      gtpu_rx_demux;
+  std::unique_ptr<dummy_gtpu_demux_ctrl>                      ngu_gtpu_rx_demux;
+  std::unique_ptr<dummy_gtpu_demux_ctrl>                      xnu_gtpu_rx_demux;
   std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                          f1u_gw;

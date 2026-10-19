@@ -190,6 +190,7 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
           .stop_command         = stop_command,
           .e1aps                = std::move(e1ap_refs),
           .ngu_demux            = *ngu_demux,
+          .xnu_demux            = *xnu_demux,
           .ngu_session_mngr     = *ngu_session_mngr,
           .ngu_teid_allocator   = *ngu_teid_allocator,
           .xnu_teid_allocator   = *xnu_teid_allocator,
