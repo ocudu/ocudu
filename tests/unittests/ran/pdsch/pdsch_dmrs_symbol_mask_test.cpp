@@ -110,8 +110,8 @@ TEST_P(PdschDmrsSymbolMaskFixture, ANormal)
   unsigned            l1 =
       (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
        config.additional_position == ocudu::dmrs_additional_positions::pos1 && l0 == ocudu::dmrs_typeA_position::pos3)
-          ? 12
-          : 11;
+                     ? 12
+                     : 11;
 
   // Get expected symbol position list from table.
   ASSERT_TRUE(pdsch_dmrs_symbol_mask_mapping_type_A_single_table.count({last_symbol.value(), additional_position}));
