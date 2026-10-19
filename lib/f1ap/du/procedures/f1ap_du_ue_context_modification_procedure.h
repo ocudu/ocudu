@@ -21,14 +21,18 @@ public:
                                             f1ap_du_ue&                                 ue_,
                                             const f1ap_du_context&                      ctxt_);
 
+  /// Applies a UE context modification or reports a failure when the request is invalid.
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
   const char* name() const { return "UE Context Modification"; }
 
-  void create_du_request(const asn1::f1ap::ue_context_mod_request_s& msg);
+  /// Builds the DU request and returns false if the SpCell identity is invalid.
+  bool create_du_request(const asn1::f1ap::ue_context_mod_request_s& msg);
   void send_ue_context_modification_response();
-  void send_ue_context_modification_failure();
+  /// Sends a modification failure with the supplied radio-network cause.
+  void send_ue_context_modification_failure(
+      asn1::f1ap::cause_radio_network_opts::options cause = asn1::f1ap::cause_radio_network_opts::unspecified);
 
   async_task<bool> handle_rrc_container();
   async_task<void> handle_tx_action_indicator();

@@ -82,6 +82,29 @@ protected:
   f1ap_message last_ue_ctxt_mod_req;
 };
 
+/// Verifies that an invalid SpCell PLMN is rejected before updating the UE configuration.
+TEST_F(f1ap_du_ue_context_modification_test, invalid_sp_cell_plmn_returns_modification_failure)
+{
+  f1ap_message msg =
+      test_helpers::generate_ue_context_modification_request(gnb_du_ue_f1ap_id_t{0}, gnb_cu_ue_f1ap_id_t{0});
+  auto& request              = *msg.pdu.init_msg().value.ue_context_mod_request();
+  request.sp_cell_id_present = true;
+  request.sp_cell_id.plmn_id.from_number(0xffffff);
+  request.sp_cell_id.nr_cell_id.from_number(1);
+
+  f1ap_du_cfg_handler.last_ue_context_update_req.reset();
+  f1ap->handle_message(msg);
+
+  EXPECT_FALSE(f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  ASSERT_TRUE(f1c_gw.tx_pdus_sent());
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  EXPECT_EQ(f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.type().value,
+            f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail);
+  const auto& cause = f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.ue_context_mod_fail()->cause;
+  ASSERT_EQ(cause.type().value, cause_c::types_opts::radio_network);
+  EXPECT_EQ(cause.radio_network().value, cause_radio_network_opts::cell_not_available);
+}
+
 TEST_F(f1ap_du_ue_context_modification_test, when_f1ap_receives_request_then_f1ap_notifies_du_of_ue_context_update)
 {
   start_procedure({drb_id_t::drb1});
