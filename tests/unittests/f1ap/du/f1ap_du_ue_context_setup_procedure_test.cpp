@@ -299,6 +299,197 @@ TEST_F(f1ap_du_ue_context_setup_test, when_du_fails_to_configure_existing_ue_the
   ASSERT_FALSE(this->f1ap_du_cfg_handler.last_ue_delete_req.has_value());
 }
 
+/// Verifies that an invalid SpCell is rejected before a new UE context is created.
+TEST_F(f1ap_du_ue_context_setup_test, invalid_sp_cell_without_ue_context_returns_setup_failure)
+{
+  auto msg = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  msg.pdu.init_msg().value.ue_context_setup_request()->sp_cell_id.plmn_id.from_number(0xffffff);
+  f1c_gw.clear_tx_pdus();
+
+  f1ap->handle_message(msg);
+
+  EXPECT_FALSE(f1ap_du_cfg_handler.last_ue_context_creation_req.has_value());
+  EXPECT_FALSE(f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  ASSERT_TRUE(f1c_gw.tx_pdus_sent());
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  const auto& failure = *f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.ue_context_setup_fail();
+  EXPECT_FALSE(failure.gnb_du_ue_f1ap_id_present);
+  EXPECT_EQ(failure.gnb_cu_ue_f1ap_id, 0);
+  ASSERT_EQ(failure.cause.type().value, cause_c::types_opts::radio_network);
+  EXPECT_EQ(failure.cause.radio_network().value, cause_radio_network_opts::cell_not_available);
+}
+
+/// Verifies that a valid but unserved SpCell is rejected before creating a UE context.
+TEST_F(f1ap_du_ue_context_setup_test, unknown_sp_cell_without_ue_context_returns_setup_failure)
+{
+  auto msg = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  auto& sp_cell = msg.pdu.init_msg().value.ue_context_setup_request()->sp_cell_id;
+  sp_cell.nr_cell_id.from_number(sp_cell.nr_cell_id.to_number() + 1);
+  f1c_gw.clear_tx_pdus();
+
+  f1ap->handle_message(msg);
+
+  EXPECT_FALSE(f1ap_du_cfg_handler.last_ue_context_creation_req.has_value());
+  ASSERT_TRUE(f1c_gw.tx_pdus_sent());
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  const auto& failure = *f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.ue_context_setup_fail();
+  EXPECT_FALSE(failure.gnb_du_ue_f1ap_id_present);
+  ASSERT_EQ(failure.cause.type().value, cause_c::types_opts::radio_network);
+  EXPECT_EQ(failure.cause.radio_network().value, cause_radio_network_opts::cell_not_available);
+}
+
+/// Verifies that a failed UE allocation reports the default cause without a UE context.
+TEST_F(f1ap_du_ue_context_setup_test, ue_creation_failure_returns_setup_failure)
+{
+  f1ap_du_cfg_handler.next_ue_context_creation_response.result = false;
+  auto msg                                                     = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  f1c_gw.clear_tx_pdus();
+
+  f1ap->handle_message(msg);
+
+  ASSERT_TRUE(f1ap_du_cfg_handler.last_ue_context_creation_req.has_value());
+  EXPECT_FALSE(f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  ASSERT_TRUE(f1c_gw.tx_pdus_sent());
+  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  const auto& failure = *f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.ue_context_setup_fail();
+  EXPECT_FALSE(failure.gnb_du_ue_f1ap_id_present);
+  ASSERT_EQ(failure.cause.type().value, cause_c::types_opts::radio_network);
+  EXPECT_EQ(failure.cause.radio_network().value, cause_radio_network_opts::no_radio_res_available);
+}
+
+/// Verifies that explicitly invalidating an association also invalidates its queued setup requests.
+TEST_F(f1ap_du_ue_context_setup_test, queued_setup_is_discarded_on_disconnect)
+{
+  manual_event_flag task_done;
+  f1ap_du_cfg_handler.schedule_async_task(launch_async([&task_done](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(task_done);
+    CORO_RETURN();
+  }));
+  auto msg = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  msg.pdu.init_msg().value.ue_context_setup_request()->sp_cell_id.plmn_id.from_number(0xffffff);
+  f1ap->handle_message(msg);
+  f1c_gw.clear_tx_pdus();
+
+  async_task<void> disconnection = f1ap->disconnect_from_cu_cp();
+  task_done.set();
+
+  EXPECT_FALSE(f1c_gw.tx_pdus_sent());
+  EXPECT_TRUE(f1ap_du_cfg_handler.task_loop.empty());
+}
+
+/// Verifies that queued setup requests cannot use a notifier from a previous association.
+TEST_F(f1ap_du_ue_context_setup_test, queued_setup_is_discarded_after_reconnection)
+{
+  manual_event_flag task_done;
+  f1ap_du_cfg_handler.schedule_async_task(launch_async([&task_done](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(task_done);
+    CORO_RETURN();
+  }));
+  auto msg = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  msg.pdu.init_msg().value.ue_context_setup_request()->sp_cell_id.plmn_id.from_number(0xffffff);
+  f1ap->handle_message(msg);
+
+  f1c_gw.lose_connection();
+  ctrl_worker.run_pending_tasks();
+  run_f1_setup_procedure();
+  f1c_gw.clear_tx_pdus();
+  task_done.set();
+
+  EXPECT_FALSE(f1ap_du_cfg_handler.last_ue_context_creation_req.has_value());
+  EXPECT_FALSE(f1c_gw.tx_pdus_sent());
+  EXPECT_TRUE(f1ap_du_cfg_handler.task_loop.empty());
+}
+
+/// Verifies that a pending creation failure cannot use the notifier replaced during reconnection.
+TEST_F(f1ap_du_ue_context_setup_test, pending_creation_failure_is_discarded_after_reconnection)
+{
+  f1ap_du_cfg_handler.hold_ue_creation                         = true;
+  f1ap_du_cfg_handler.next_ue_context_creation_response.result = false;
+  auto msg                                                     = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  f1ap->handle_message(msg);
+  ASSERT_TRUE(f1ap_du_cfg_handler.last_ue_context_creation_req.has_value());
+
+  f1c_gw.lose_connection();
+  ctrl_worker.run_pending_tasks();
+  run_f1_setup_procedure();
+  f1c_gw.clear_tx_pdus();
+  f1ap_du_cfg_handler.ue_creation_ready.set();
+
+  EXPECT_FALSE(f1c_gw.tx_pdus_sent());
+  EXPECT_FALSE(f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  EXPECT_TRUE(f1ap_du_cfg_handler.task_loop.empty());
+}
+
+/// Verifies that a configuration result cannot continue a setup on a replacement association.
+TEST_F(f1ap_du_ue_context_setup_test, pending_configuration_is_discarded_after_reconnection)
+{
+  du_creates_f1_logical_connection();
+  f1ap_du_cfg_handler.hold_ue_configuration = true;
+  auto msg                                  = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  start_procedure(msg, false);
+  ASSERT_TRUE(f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+
+  f1c_gw.lose_connection();
+  ctrl_worker.run_pending_tasks();
+  run_f1_setup_procedure();
+  f1c_gw.clear_tx_pdus();
+  f1ap_du_cfg_handler.ue_configuration_ready.set();
+
+  EXPECT_FALSE(f1c_gw.tx_pdus_sent());
+  EXPECT_TRUE(f1ap_du_cfg_handler.task_loop.empty());
+}
+
+/// Verifies that an RRC delivery timeout cannot send a setup failure on a replacement association.
+TEST_F(f1ap_du_ue_context_setup_test, pending_rrc_delivery_is_discarded_after_reconnection)
+{
+  du_creates_f1_logical_connection();
+  auto msg = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  start_procedure(msg);
+
+  f1c_gw.lose_connection();
+  ctrl_worker.run_pending_tasks();
+  run_f1_setup_procedure();
+  f1c_gw.clear_tx_pdus();
+  for (unsigned i = 0; i != 200; ++i) {
+    tick();
+  }
+
+  EXPECT_FALSE(f1c_gw.tx_pdus_sent());
+  EXPECT_TRUE(f1ap_du_cfg_handler.task_loop.empty());
+}
+
+/// Verifies that an invalid SpCell PLMN produces a cell-not-available setup failure.
+TEST_F(f1ap_du_ue_context_setup_test, invalid_sp_cell_plmn_returns_setup_failure)
+{
+  du_creates_f1_logical_connection();
+  f1ap_message msg = test_helpers::generate_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, gnb_du_ue_f1ap_id_t{0}, 1, {}, config_helpers::make_default_du_cell_config().nr_cgi);
+  msg.pdu.init_msg().value.ue_context_setup_request()->sp_cell_id.plmn_id.from_number(0xffffff);
+
+  start_procedure(msg);
+
+  EXPECT_FALSE(this->f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  ASSERT_TRUE(this->f1c_gw.tx_pdus_sent());
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  EXPECT_EQ(this->f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.type().value,
+            f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.ue_context_setup_fail()->cause.type().value,
+            asn1::f1ap::cause_c::types_opts::radio_network);
+  EXPECT_EQ(
+      this->f1c_gw.last_tx_pdu().pdu.unsuccessful_outcome().value.ue_context_setup_fail()->cause.radio_network().value,
+      asn1::f1ap::cause_radio_network_opts::cell_not_available);
+}
+
 TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_pdcp_sn_length_drb_setup_fails)
 {
   f1ap_message msg = test_helpers::generate_ue_context_setup_request(

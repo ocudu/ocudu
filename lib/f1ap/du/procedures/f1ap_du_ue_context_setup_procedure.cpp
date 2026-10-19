@@ -44,32 +44,47 @@ f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     f1ap_du_ue_manager&                           ue_mng_,
     f1ap_du_configurator&                         du_mng_,
     du_ue_index_t                                 ue_index_,
-    const f1ap_du_context&                        ctxt_) :
+    const f1ap_du_context&                        ctxt_,
+    f1ap_message_notifier&                        tx_pdu_notifier_) :
   msg(msg_),
   ue_mng(ue_mng_),
   du_mng(du_mng_),
+  tx_pdu_notifier(tx_pdu_notifier_),
   ue_index(ue_index_),
   logger(ocudulog::fetch_basic_logger("DU-F1")),
-  du_ctxt(ctxt_)
+  du_ctxt(ctxt_),
+  initial_cu_cp_assoc_gen(ctxt_.cu_cp_assoc_gen)
 {
 }
 
+/// Validates the SpCell and establishes the UE context while the CU-CP association remains valid.
 void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  // Find the cell index from the NR-CGI.
-  sp_cell_index =
-      get_cell_index_from_nr_cgi({plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes()).value(),
-                                  nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number()).value()});
-  if (not sp_cell_index.has_value()) {
-    // Failed to create UE context in the DU.
-    logger.warning("{}: Failed to to find spCell with PLMN '{}' and NCI '{}' in DU.",
-                   f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id), name()},
-                   plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes()).value(),
-                   nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number()).value());
-    send_ue_context_setup_failure();
+  if (not is_cu_cp_association_valid()) {
     CORO_EARLY_RETURN();
+  }
+
+  // Find the cell index from the NR-CGI.
+  {
+    auto plmn = plmn_identity::from_bytes(msg->sp_cell_id.plmn_id.to_bytes());
+    auto nci  = nr_cell_identity::create(msg->sp_cell_id.nr_cell_id.to_number());
+    if (not plmn.has_value() or not nci.has_value()) {
+      logger.warning("{}: Invalid SpCell ID in UE Context Setup Request",
+                     f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id), name()});
+      send_ue_context_setup_failure(asn1::f1ap::cause_radio_network_opts::cell_not_available);
+      CORO_EARLY_RETURN();
+    }
+    sp_cell_index = get_cell_index_from_nr_cgi({plmn.value(), nci.value()});
+    if (not sp_cell_index.has_value()) {
+      logger.warning("{}: Failed to find spCell with PLMN '{}' and NCI '{}' in DU.",
+                     f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(msg->gnb_cu_ue_f1ap_id), name()},
+                     plmn.value(),
+                     nci.value());
+      send_ue_context_setup_failure(asn1::f1ap::cause_radio_network_opts::cell_not_available);
+      CORO_EARLY_RETURN();
+    }
   }
 
   if (msg->gnb_du_ue_f1ap_id_present) {
@@ -97,6 +112,9 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     // Request the creation of a new UE context in the DU.
     CORO_AWAIT_VALUE(du_ue_create_response,
                      du_mng.request_ue_creation(f1ap_ue_context_creation_request{ue_index, sp_cell_index.value()}));
+    if (not is_cu_cp_association_valid()) {
+      CORO_EARLY_RETURN();
+    }
     if (not du_ue_create_response->result) {
       // Failed to create UE context in the DU.
       logger.warning("{}: Failed to allocate new UE context in DU.",
@@ -133,6 +151,9 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
 
   // Setup new UE configuration in DU.
   CORO_AWAIT_VALUE(du_ue_cfg_response, request_du_ue_config());
+  if (not is_cu_cp_association_valid()) {
+    CORO_EARLY_RETURN();
+  }
   if (not du_ue_cfg_response.result) {
     CORO_AWAIT(handle_procedure_failure());
     CORO_EARLY_RETURN();
@@ -148,6 +169,9 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
                      f1ap_log_prefix{ue->context, name()});
     }
     CORO_AWAIT_VALUE(rrc_container_delivered, handle_rrc_container());
+    if (not is_cu_cp_association_valid()) {
+      CORO_EARLY_RETURN();
+    }
     if (rrc_container_delivered) {
       logger.debug("{}: RRC container sent successfully.", f1ap_log_prefix{ue->context, name()});
     } else {
@@ -167,6 +191,12 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
   send_ue_context_setup_response();
 
   CORO_RETURN();
+}
+
+/// Returns whether the CU-CP association that received the request is still active.
+bool f1ap_du_ue_context_setup_procedure::is_cu_cp_association_valid() const
+{
+  return du_ctxt.f1c_setup and du_ctxt.cu_cp_assoc_gen == initial_cu_cp_assoc_gen;
 }
 
 async_task<void> f1ap_du_ue_context_setup_procedure::handle_procedure_failure()
@@ -378,7 +408,9 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   logger.debug("{}: Procedure finished successfully.", f1ap_log_prefix{ue->context, name()});
 }
 
-void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
+/// Sends a setup failure with the supplied radio-network cause, including when no UE context exists.
+void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure(
+    asn1::f1ap::cause_radio_network_opts::options cause)
 {
   // Prepare UE CONTEXT SETUP FAILURE message.
   f1ap_message f1ap_msg;
@@ -391,7 +423,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
     resp->gnb_du_ue_f1ap_id         = to_underlying(ue->context.gnb_du_ue_f1ap_id);
   }
 
-  resp->cause.set_radio_network().value = asn1::f1ap::cause_radio_network_opts::no_radio_res_available;
+  resp->cause.set_radio_network().value = cause;
 
   // > RequestedTargetCellGlobalID IE.
   // [TS 38.473, 8.3.1] When a CHO-related setup fails, report the SpCell ID as the target cell so
@@ -402,9 +434,7 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
   }
 
   // Send UE CONTEXT SETUP FAILURE to CU-CP.
-  if (ue != nullptr) {
-    ue->f1ap_msg_notifier.on_new_message(f1ap_msg);
-  }
+  tx_pdu_notifier.on_new_message(f1ap_msg);
 
   logger.debug("{}: Procedure finished with failure.",
                ue == nullptr ? f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(resp->gnb_cu_ue_f1ap_id), name()}

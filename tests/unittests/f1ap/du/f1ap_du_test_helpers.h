@@ -58,8 +58,15 @@ public:
   du_e_cid_meas_response                                 next_e_cid_meas_response;
 
   // F1AP procedures.
-  std::optional<gnbcu_config_update_request>      last_cu_upd_req;
-  gnbcu_config_update_response                    next_cu_upd_resp;
+  std::optional<gnbcu_config_update_request> last_cu_upd_req;
+  gnbcu_config_update_response               next_cu_upd_resp;
+  /// Gate for a UE creation response held by a test.
+  manual_event_flag ue_creation_ready;
+  bool              hold_ue_creation = false;
+  /// Gate for a UE configuration response held by a test.
+  manual_event_flag ue_configuration_ready;
+  bool              hold_ue_configuration = false;
+
   std::optional<f1ap_ue_context_creation_request> last_ue_context_creation_req;
   f1ap_ue_context_creation_response               next_ue_context_creation_response;
   std::optional<f1ap_ue_context_update_request>   last_ue_context_update_req;
@@ -99,17 +106,24 @@ public:
 
   du_ue_index_t find_free_ue_index() override { return next_ue_creation_req.ue_index; }
 
+  /// Creates the F1AP UE context and optionally waits before returning the DU response.
   async_task<f1ap_ue_context_creation_response>
   request_ue_creation(const f1ap_ue_context_creation_request& request) override
   {
     last_ue_context_creation_req = request;
     return launch_async([this](coro_context<async_task<f1ap_ue_context_creation_response>>& ctx) {
       CORO_BEGIN(ctx);
-      last_ue_creation_response = f1ap->handle_ue_creation_request(next_ue_creation_req);
+      if (hold_ue_creation) {
+        CORO_AWAIT(ue_creation_ready);
+      }
+      if (next_ue_context_creation_response.result) {
+        last_ue_creation_response = f1ap->handle_ue_creation_request(next_ue_creation_req);
+      }
       CORO_RETURN(next_ue_context_creation_response);
     });
   }
 
+  /// Configures the F1AP UE context and optionally waits before returning the DU response.
   async_task<f1ap_ue_context_update_response>
   request_ue_context_update(const f1ap_ue_context_update_request& request) override
   {
@@ -117,6 +131,9 @@ public:
     return launch_async([this](coro_context<async_task<f1ap_ue_context_update_response>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_cfg_response = f1ap->handle_ue_configuration_request(next_ue_cfg_req);
+      if (hold_ue_configuration) {
+        CORO_AWAIT(ue_configuration_ready);
+      }
       CORO_RETURN(next_ue_context_update_response);
     });
   }

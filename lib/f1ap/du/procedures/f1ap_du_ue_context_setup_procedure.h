@@ -17,15 +17,21 @@ class f1ap_du_ue_manager;
 class f1ap_du_ue_context_setup_procedure
 {
 public:
+  /// Creates a setup procedure bound to the current CU-CP association.
   f1ap_du_ue_context_setup_procedure(const asn1::f1ap::ue_context_setup_request_s& msg,
                                      f1ap_du_ue_manager&                           ue_mng_,
                                      f1ap_du_configurator&                         du_mng_,
                                      du_ue_index_t                                 ue_index_,
-                                     const f1ap_du_context&                        ctxt_);
+                                     const f1ap_du_context&                        ctxt_,
+                                     f1ap_message_notifier&                        tx_pdu_notifier_);
 
+  /// Validates the SpCell and establishes the UE context while the CU-CP association remains valid.
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
+  /// Returns whether the CU-CP association that received the request is still active.
+  bool is_cu_cp_association_valid() const;
+
   /// Initiates UE Configuration in the DU.
   async_task<f1ap_ue_context_update_response> request_du_ue_config();
 
@@ -33,7 +39,10 @@ private:
   void send_ue_context_setup_response();
 
   /// Sends UE Context Setup Failure to CU.
-  void send_ue_context_setup_failure();
+  ///
+  /// \param[in] cause Cause value reported to the CU, defaults to no radio resources available.
+  void send_ue_context_setup_failure(asn1::f1ap::cause_radio_network_opts::options cause =
+                                         asn1::f1ap::cause_radio_network_opts::no_radio_res_available);
 
   /// Sends UE Context Setup Failure to CU and removes the UE, if created by this procedure.
   async_task<void> handle_procedure_failure();
@@ -50,12 +59,15 @@ private:
   const asn1::f1ap::ue_context_setup_request_s msg;
   f1ap_du_ue_manager&                          ue_mng;
   f1ap_du_configurator&                        du_mng;
+  f1ap_message_notifier&                       tx_pdu_notifier;
   const du_ue_index_t                          ue_index;
   ocudulog::basic_logger&                      logger;
 
   f1ap_du_ue* ue = nullptr;
 
-  const f1ap_du_context&    du_ctxt;
+  const f1ap_du_context& du_ctxt;
+  /// CU-CP association generation captured when the request is scheduled.
+  const unsigned            initial_cu_cp_assoc_gen;
   expected<du_cell_index_t> sp_cell_index = make_unexpected(default_error_t());
 
   std::optional<f1ap_ue_context_creation_response> du_ue_create_response;

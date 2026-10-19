@@ -173,6 +173,7 @@ void f1ap_du_impl::handle_gnb_cu_configuration_update(const gnb_cu_cfg_upd_s& ms
   du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, du_mng, *tx_pdu_notifier));
 }
 
+/// Schedules a UE Context Setup request on the UE task loop for the current CU-CP association.
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
 {
   du_ue_index_t du_ue_index = INVALID_DU_UE_INDEX;
@@ -191,7 +192,8 @@ void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_
 
   // Schedule UE Context Setup Procedure.
   du_mng.get_ue_handler(du_ue_index)
-      .schedule_async_task(launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index, ctxt));
+      .schedule_async_task(
+          launch_async<f1ap_du_ue_context_setup_procedure>(msg, ues, du_mng, du_ue_index, ctxt, *tx_pdu_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg)
@@ -635,9 +637,9 @@ async_task<void> f1ap_du_impl::start_positioning_measurement_procedure_task(asyn
   // The task starts the procedure when its task loop runs it, and ends right away. It starts the procedure only if the
   // CU-CP association did not change while the task was queued.
   return launch_async(
-      [this, assoc_gen = pos_meas_assoc_gen, proc = std::move(proc)](coro_context<async_task<void>>& ctx) mutable {
+      [this, assoc_gen = ctxt.cu_cp_assoc_gen, proc = std::move(proc)](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
-        if (assoc_gen == pos_meas_assoc_gen) {
+        if (assoc_gen == ctxt.cu_cp_assoc_gen) {
           launch_positioning_measurement_procedure(std::move(proc));
         }
         CORO_RETURN();
@@ -654,7 +656,7 @@ void f1ap_du_impl::stop_cu_cp_association_procedures()
   ues.stop_e_cid_measurements();
 
   pos_meas_procs.clear();
-  ++pos_meas_assoc_gen;
+  ++ctxt.cu_cp_assoc_gen;
 }
 
 void f1ap_du_impl::launch_positioning_measurement_procedure(async_task<void> proc)

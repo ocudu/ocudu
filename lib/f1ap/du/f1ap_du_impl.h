@@ -183,8 +183,6 @@ private:
 
   /// Positioning measurement procedures that wait for SRS measurements outside the task loops.
   std::vector<eager_async_task<void>> pos_meas_procs;
-  /// Number of times the procedures tied to the CU-CP association were stopped.
-  unsigned pos_meas_assoc_gen = 0;
 
   f1ap_metrics_collector_impl metrics;
 };
