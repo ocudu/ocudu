@@ -222,8 +222,8 @@ public:
   unsigned   nof_ue_context_transfers           = 0;
   unsigned   nof_up_context_validation_requests = 0;
   bool       up_context_validation_succeeds     = true;
-  bool       up_context_setup_succeeds     = true;
-  unsigned   nof_up_context_setup_requests = 0;
+  bool       up_context_setup_succeeds          = true;
+  unsigned   nof_up_context_setup_requests      = 0;
 
   cu_cp_ue_context_release_request last_cu_cp_ue_context_release_request;
 

@@ -1338,10 +1338,10 @@ TEST_P(du_ran_resource_manager_tester, redcap_admission_rejects_disabled_and_bar
 {
   unsigned idx = 0;
   for (unsigned mode = 0; mode != 2; ++mode) {
-    cell_cfg_list[0].redcap.enabled         = mode != 0;
-    cell_cfg_list[0].redcap.cell_barred     = mode == 1;
-    auto  index                             = to_du_ue_index(idx++);
-    auto* ue                                = create_ue(index);
+    cell_cfg_list[0].redcap.enabled     = mode != 0;
+    cell_cfg_list[0].redcap.cell_barred = mode == 1;
+    auto  index                         = to_du_ue_index(idx++);
+    auto* ue                            = create_ue(index);
     ASSERT_NE(ue, nullptr);
     ue_capability_summary caps;
     caps.is_redcap = true;
