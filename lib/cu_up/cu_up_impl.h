@@ -32,6 +32,9 @@ public:
     return ngu_sessions[0]->get_bind_port();
   }
 
+  /// Gets the NG-U bind port (helper function for testing).
+  std::optional<uint16_t> get_xnu_bind_port() const { return xnu_sessions[0]->get_bind_port(); }
+
   /// Gets the CU-UP manager (helper function for testing).
   cu_up_manager* get_cu_up_manager() const { return cu_up_mng.get(); }
 
@@ -68,7 +71,8 @@ private:
   std::optional<lockfree_token_bucket>               ngu_limiter;
 
   // Adapters
-  std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;
+  std::unique_ptr<network_gateway_data_gtpu_demux_adapter> ngu_gw_data_gtpu_demux_adapter;
+  std::unique_ptr<network_gateway_data_gtpu_demux_adapter> xnu_gw_data_gtpu_demux_adapter;
   gtpu_network_gateway_adapter                             gtpu_gw_adapter;
   std::vector<e1ap_cu_up_manager_adapter>                  e1ap_cu_up_mng_adapters;
 

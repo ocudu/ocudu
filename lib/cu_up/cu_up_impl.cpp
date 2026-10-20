@@ -112,12 +112,12 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
   echo_batched_queue = std::move(*batch_q);
 
   // Connect GTP-U DEMUX to adapter.
-  gw_data_gtpu_demux_adapter = std::make_unique<network_gateway_data_gtpu_demux_adapter>(*ngu_demux);
+  ngu_gw_data_gtpu_demux_adapter = std::make_unique<network_gateway_data_gtpu_demux_adapter>(*ngu_demux);
 
   // Establish new NG-U session and connect the instantiated session to the GTP-U DEMUX adapter, so that the latter
   // is called when new NG-U DL PDUs are received.
   for (const auto& gw : dependencies.ngu_gws) {
-    std::unique_ptr<gtpu_tnl_pdu_session> ngu_session = gw->create(*gw_data_gtpu_demux_adapter);
+    std::unique_ptr<gtpu_tnl_pdu_session> ngu_session = gw->create(*ngu_gw_data_gtpu_demux_adapter);
     if (!ngu_session) {
       report_error("Unable to allocate the required NG-U network resources");
     }
@@ -133,8 +133,10 @@ cu_up::cu_up(const cu_up_config& config_, cu_up_dependencies dependencies) :
   // forwards over Xn-U reaches the same demux as the DL PDUs of the 5GC.
   // TODO the demux keys the tunnels on the TEID alone, so it cannot hold an NG-U and an Xn-U tunnel with the same
   // TEID. Give it the interface as well before the data forwarding tunnels are registered.
+  //
+  xnu_gw_data_gtpu_demux_adapter = std::make_unique<network_gateway_data_gtpu_demux_adapter>(*xnu_demux);
   for (const auto& gw : dependencies.xnu_gws) {
-    std::unique_ptr<gtpu_tnl_pdu_session> xnu_session = gw->create(*gw_data_gtpu_demux_adapter);
+    std::unique_ptr<gtpu_tnl_pdu_session> xnu_session = gw->create(*xnu_gw_data_gtpu_demux_adapter);
     if (!xnu_session) {
       report_error("Unable to allocate the required Xn-U network resources");
     }

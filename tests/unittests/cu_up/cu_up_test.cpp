@@ -157,9 +157,14 @@ protected:
     upf_addr_str = "127.0.0.1";
 
     // Set default UDP configs
-    cu_up_udp_cfg.if_name      = "ngu";       // Random free port selected by the OS.
-    cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
-    cu_up_udp_cfg.bind_address = "127.0.0.2"; // NG-U bind address
+    ngu_cu_up_udp_cfg.if_name      = "ngu";       // Random free port selected by the OS.
+    ngu_cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
+    ngu_cu_up_udp_cfg.bind_address = "127.0.0.2"; // NG-U bind address
+                                                  //
+    // Set default UDP configs
+    xnu_cu_up_udp_cfg.if_name      = "xnu";       // Random free port selected by the OS.
+    xnu_cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
+    xnu_cu_up_udp_cfg.bind_address = "127.0.0.3"; // Xn-U bind address
   }
 
   cu_up_config get_default_cu_up_config()
@@ -197,7 +202,8 @@ protected:
                             .e1_conn_clients      = {&e1ap_client},
                             .ngu_gws              = {},
                             .e1_setup_notifier    = std::move(setup_notifier)};
-    deps.ngu_gws.push_back(create_udp_gtpu_gateway(cu_up_udp_cfg, *broker, *executor, *executor));
+    deps.ngu_gws.push_back(create_udp_gtpu_gateway(ngu_cu_up_udp_cfg, *broker, *executor, *executor));
+    deps.xnu_gws.push_back(create_udp_gtpu_gateway(xnu_cu_up_udp_cfg, *broker, *executor, *executor));
     return deps;
   }
 
@@ -245,7 +251,8 @@ protected:
   std::unique_ptr<ocuup::cu_up>      cu_up;
   ocudulog::basic_logger&            test_logger = ocudulog::fetch_basic_logger("TEST");
 
-  udp_network_gateway_config cu_up_udp_cfg{};
+  udp_network_gateway_config ngu_cu_up_udp_cfg{};
+  udp_network_gateway_config xnu_cu_up_udp_cfg{};
 
   null_dlt_pcap dummy_pcap;
 
@@ -264,6 +271,36 @@ protected:
 
     // Setup bearer
     cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
+  }
+
+  void create_drb_with_dl_forward_info()
+  {
+    // Generate BearerContextSetupRequest
+    e1ap_message asn1_bearer_context_setup_msg = generate_bearer_context_setup_request(9);
+
+    // Convert to common type
+    e1ap_bearer_context_setup_request bearer_context_setup;
+    bearer_context_setup.e1_index = cu_up_e1_index_t{0};
+    fill_e1ap_bearer_context_setup_request(
+        bearer_context_setup, asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
+
+    for (e1ap_pdu_session_res_to_setup_item& pdu_session : bearer_context_setup.pdu_session_res_to_setup_list) {
+      for (e1ap_drb_to_setup_item_ng_ran& drb_to_setup : pdu_session.drb_to_setup_list_ng_ran) {
+        e1ap_data_forwarding_info_request                        data_fwd_req;
+        slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_map_item> qos_flows_forwarded_on_fwd_tunnels;
+        e1ap_qos_flow_map_item                                   qos_item;
+        qos_item.qos_flow_id = uint_to_qos_flow_id(1);
+        data_fwd_req.qos_flows_forwarded_on_fwd_tunnels.emplace(qos_item.qos_flow_id, qos_item);
+        drb_to_setup.drb_data_forwarding_info_request = data_fwd_req;
+      }
+    }
+
+    // Setup bearer
+    e1ap_bearer_context_setup_response response =
+        cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
+    for (auto& item : response.pdu_session_resource_setup_list) {
+      fmt::println("psi={}", item.pdu_session_id);
+    }
   }
 
   struct upf_info_t {
@@ -466,7 +503,7 @@ TEST_F(cu_up_test, dl_data_flow)
   sockaddr_in cu_up_addr;
   cu_up_addr.sin_family      = AF_INET;
   cu_up_addr.sin_port        = htons(cu_up->get_ngu_bind_port().value());
-  cu_up_addr.sin_addr.s_addr = inet_addr(cu_up_udp_cfg.bind_address.c_str());
+  cu_up_addr.sin_addr.s_addr = inet_addr(ngu_cu_up_udp_cfg.bind_address.c_str());
 
   // DL PDU teid=2, qfi=1
   const uint8_t gtpu_ping_vec[] = {
@@ -480,13 +517,13 @@ TEST_F(cu_up_test, dl_data_flow)
   // send message 1
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
-                    << cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
+                    << ngu_cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
                     << ::strerror(errno);
 
   // send message 2
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
-                    << cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
+                    << ngu_cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
                     << ::strerror(errno);
   ::close(upf_info.sock_fd);
 
@@ -586,7 +623,7 @@ TEST_F(cu_up_test, echo_data_flow)
   sockaddr_in cu_up_addr;
   cu_up_addr.sin_family      = AF_INET;
   cu_up_addr.sin_port        = htons(cu_up->get_ngu_bind_port().value());
-  cu_up_addr.sin_addr.s_addr = inet_addr(cu_up_udp_cfg.bind_address.c_str());
+  cu_up_addr.sin_addr.s_addr = inet_addr(ngu_cu_up_udp_cfg.bind_address.c_str());
 
   // Send GTP-U echo request test message.
   const uint8_t gtpu_echo_req_vec[] = {0x32, 0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a, 0x00, 0x00};
@@ -595,7 +632,7 @@ TEST_F(cu_up_test, echo_data_flow)
   ret = sendto(
       upf_info.sock_fd, gtpu_echo_req_vec, sizeof(gtpu_echo_req_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
-                    << cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
+                    << ngu_cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
                     << ::strerror(errno);
 
   // Receive GTP-U echo response message and check result.
@@ -608,6 +645,49 @@ TEST_F(cu_up_test, echo_data_flow)
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(gtpu_echo_resp_vec.begin(), gtpu_echo_resp_vec.end(), rx_buf.begin()));
 
+  ::close(upf_info.sock_fd);
+}
+
+TEST_F(cu_up_test, dl_data_forwarding)
+{
+  cu_up_config cfg = get_default_cu_up_config();
+
+  // Initialize UPF simulator on a random port.
+  upf_info_t upf_info = init_upf();
+  ASSERT_GE(upf_info.sock_fd, 0);
+  cfg.ngu_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
+
+  cu_up_dependencies dependencies = get_default_cu_up_dependencies();
+
+  // Initialize CU-UP
+  init(cfg, std::move(dependencies));
+
+  // Create DRB
+  create_drb_with_dl_forward_info();
+
+  // Send GTP-U DL forward message. DL TEID 2 to go to forward tunnel.
+  const uint8_t gtpu_ping_vec[] = {
+      0x34, 0xff, 0x00, 0x5c, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x85, 0x01, 0x00, 0x01, 0x00, 0x45,
+      0x00, 0x00, 0x54, 0x9b, 0xfb, 0x00, 0x00, 0x40, 0x01, 0x56, 0x5a, 0xc0, 0xa8, 0x04, 0x01, 0xc0, 0xa8,
+      0x03, 0x02, 0x00, 0x00, 0xb8, 0xc0, 0x00, 0x02, 0x00, 0x01, 0x5d, 0x26, 0x77, 0x64, 0x00, 0x00, 0x00,
+      0x00, 0xb1, 0xde, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+      0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
+
+  // Now that the disered buffer size is updated, we push DL PDUs
+  sockaddr_in xnu_cu_up_addr;
+  xnu_cu_up_addr.sin_family      = AF_INET;
+  xnu_cu_up_addr.sin_port        = htons(cu_up->get_xnu_bind_port().value());
+  xnu_cu_up_addr.sin_addr.s_addr = inet_addr(xnu_cu_up_udp_cfg.bind_address.c_str());
+
+  test_logger.info("Sending data to XN-U!!!!!!");
+
+  int ret;
+  ret = sendto(
+      upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&xnu_cu_up_addr, sizeof(xnu_cu_up_addr));
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
+                    << ngu_cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
+                    << ::strerror(errno);
   ::close(upf_info.sock_fd);
 }
 
