@@ -422,6 +422,10 @@ if(OPENSSL_HAS_DTLS_SCTP)
     )
 endif()
 
+# IPSec-MB 
+find_package(IPSecMB)
+#TODO SOBM.
+
 # CUDA
 if (ENABLE_CUDA)
     # The CUDA architecture cannot be guessed: nvcc needs it to emit device code for the
