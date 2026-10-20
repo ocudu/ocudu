@@ -9,6 +9,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
+#include "tests/test_doubles/rrc/redcap_ue_capability_fixture.h"
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -28,7 +29,7 @@ using namespace ocucp;
 class cu_cp_pdu_session_resource_setup_test : public cu_cp_test_environment, public ::testing::Test
 {
 public:
-  explicit cu_cp_pdu_session_resource_setup_test(bool is_redcap = false) :
+  explicit cu_cp_pdu_session_resource_setup_test(std::optional<byte_buffer> nr_capabilities = std::nullopt) :
     cu_cp_test_environment(cu_cp_test_env_params{})
   {
     // Run NG setup to completion.
@@ -47,14 +48,10 @@ public:
     EXPECT_TRUE(this->run_e1_setup(cu_up_idx));
 
     // Connect UE 0x4601.
-    EXPECT_TRUE(connect_new_ue(du_idx,
-                               du_ue_id,
-                               crnti,
-                               plmn_identity::test_value(),
-                               test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()),
-                               is_redcap));
+    EXPECT_TRUE(connect_new_ue(du_idx, du_ue_id, crnti));
     EXPECT_TRUE(authenticate_ue(du_idx, du_ue_id, amf_ue_id));
-    EXPECT_TRUE(setup_ue_security_and_ue_capabilities(du_idx, du_ue_id));
+    EXPECT_TRUE(setup_ue_security_and_ue_capabilities(
+        du_idx, du_ue_id, std::nullopt, true, std::nullopt, std::move(nr_capabilities)));
     ue_ctx = this->find_ue_context(du_idx, du_ue_id);
 
     EXPECT_TRUE(finish_ue_registration(du_idx, cu_up_idx, du_ue_id));
@@ -763,13 +760,39 @@ TEST_F(cu_cp_pdu_session_resource_setup_test,
       generate_rrc_reconfiguration_complete_pdu(1, 9), {psi2}, {}));
 }
 
-class cu_cp_early_redcap_pdu_session_setup_test : public cu_cp_pdu_session_resource_setup_test
+class cu_cp_redcap_pdu_session_setup_test : public cu_cp_pdu_session_resource_setup_test
 {
 public:
-  cu_cp_early_redcap_pdu_session_setup_test() : cu_cp_pdu_session_resource_setup_test(true) {}
+  cu_cp_redcap_pdu_session_setup_test() :
+    cu_cp_pdu_session_resource_setup_test(test_helpers::make_redcap_nr_capability(false))
+  {
+  }
 };
 
-TEST_F(cu_cp_early_redcap_pdu_session_setup_test, decoded_capabilities_drive_bearer_setup)
+TEST_F(cu_cp_redcap_pdu_session_setup_test,
+       when_redcap_ue_reports_no_long_sn_support_then_e1ap_bearers_use_12_bit_pdcp_sn)
 {
-  ASSERT_TRUE(setup_pdu_session(psi, drb_id_t::drb1, qfi));
+  const auto& default_pdcp = get_cu_cp_cfg().bearers.drb_config.at(uint_to_five_qi(9)).pdcp;
+  ASSERT_EQ(default_pdcp.tx.sn_size, pdcp_sn_size::size18bits);
+  ASSERT_EQ(default_pdcp.rx.sn_size, pdcp_sn_size::size18bits);
+
+  auto result = send_pdu_session_resource_setup_request_and_await_bearer_context_setup_request(
+      generate_valid_pdu_session_resource_setup_request_message(
+          ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi, {pdu_session_type_t::ipv4, {{qfi, 9}}}}}));
+  ASSERT_TRUE(result.has_value());
+  const auto& sessions = result.value()
+                             .pdu.init_msg()
+                             .value.bearer_context_setup_request()
+                             ->sys_bearer_context_setup_request.ng_ran_bearer_context_setup_request()
+                             .pdu_session_res_to_setup_list;
+  ASSERT_EQ(sessions.size(), 1U);
+  ASSERT_EQ(sessions[0].drb_to_setup_list_ng_ran.size(), 1U);
+  const auto& drb = sessions[0].drb_to_setup_list_ng_ran[0];
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_dl, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_ul, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_rrc_reconfiguration({}, {{psi, drb_id_t::drb1}}));
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
+      generate_rrc_reconfiguration_complete_pdu(3, 7), {psi}, {}));
 }

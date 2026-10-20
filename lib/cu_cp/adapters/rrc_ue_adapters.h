@@ -231,6 +231,12 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_context_release(request);
   }
 
+  bool on_up_context_validation_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) override
+  {
+    ocudu_assert(up_mng != nullptr, "UP resource manager must not be nullptr");
+    return up_mng->validate_context(ctxt, capabilities);
+  }
+
   bool on_up_context_setup_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) override
   {
     ocudu_assert(up_mng != nullptr, "UP resource manager must not be nullptr");

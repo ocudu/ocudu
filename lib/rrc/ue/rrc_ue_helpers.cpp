@@ -139,6 +139,11 @@ static rrc_ue_capabilities_t decode_capabilities(const asn1::rrc_nr::ue_nr_cap_s
 
 rrc_ue_capabilities_t ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_nr_cap_s& capabilities, rrc_ue_logger& logger)
 {
+  if (logger.get_basic_logger().debug.enabled()) {
+    asn1::json_writer json_writer;
+    capabilities.to_json(json_writer);
+    logger.log_debug("UE Capabilities:\n{}", json_writer.to_string().c_str());
+  }
   auto decoded = decode_capabilities(capabilities);
   if (decoded.rrc_inactive_supported) {
     logger.log_debug("RRC Inactive supported by UE");
@@ -173,7 +178,8 @@ std::optional<rrc_ue_capabilities_t> ocudu::ocucp::decode_ue_nr_capabilities(con
 }
 
 std::optional<rrc_ue_capabilities_t>
-ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_cap_rat_container_list_l& capabilities_list, rrc_ue_logger& logger)
+ocudu::ocucp::get_capabilities(const asn1::rrc_nr::ue_cap_rat_container_list_l& capabilities_list,
+                               rrc_ue_logger&                                   logger)
 {
   bool invalid_nr_container = false;
   // Parse UE capabilities list.

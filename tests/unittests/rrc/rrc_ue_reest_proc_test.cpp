@@ -93,6 +93,10 @@ TEST_F(rrc_ue_reest,
   add_ue_reestablishment_context(old_ue_index);
   receive_valid_reestablishment_request(1, to_rnti(0x4601));
 
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_validation_requests, 1U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_ue_context_transfers, 1U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_setup_requests, 1U);
+
   // check if SRB1 was created
   check_srb1_exists();
 
@@ -171,9 +175,11 @@ TEST_F(rrc_ue_reest, when_reestablishment_is_rejected_locally_then_no_context_is
 TEST_F(rrc_ue_reest, incompatible_imported_up_context_falls_back_to_setup)
 {
   add_ue_reestablishment_context(uint_to_ue_index(0));
-  rrc_ue_cu_cp_notifier.up_context_setup_succeeds = false;
+  rrc_ue_cu_cp_notifier.up_context_validation_succeeds = false;
   receive_valid_reestablishment_request(1, to_rnti(0x4601));
-  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_setup_requests, 1U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_validation_requests, 1U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_ue_context_transfers, 0U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_setup_requests, 0U);
   EXPECT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
 }
 
@@ -184,5 +190,18 @@ TEST_F(rrc_ue_reest, malformed_imported_capabilities_do_not_import_up_context)
   add_ue_reestablishment_context(uint_to_ue_index(0), std::move(caps));
   receive_valid_reestablishment_request(1, to_rnti(0x4601));
   EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_setup_requests, 0U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_ue_context_transfers, 0U);
   EXPECT_EQ(get_srb0_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
+}
+
+TEST_F(rrc_ue_reest, when_validated_context_import_fails_after_transfer_then_ue_is_released)
+{
+  add_ue_reestablishment_context(uint_to_ue_index(0));
+  rrc_ue_cu_cp_notifier.up_context_setup_succeeds = false;
+  receive_valid_reestablishment_request(1, to_rnti(0x4601));
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_validation_requests, 1U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_ue_context_transfers, 1U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.nof_up_context_setup_requests, 1U);
+  EXPECT_EQ(rrc_ue_cu_cp_notifier.last_cu_cp_ue_context_release_request.ue_index, allocated_ue_index);
+  EXPECT_TRUE(rrc_ue_f1ap_notifier.last_rrc_pdu.empty());
 }

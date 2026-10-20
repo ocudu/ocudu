@@ -322,7 +322,12 @@ bool up_resource_manager::validate_context(const up_context& ctx, const rrc_ue_c
       }
     }
   }
-  return count <= std::min<unsigned>(cfg.max_nof_drbs_per_ue, capabilities.redcap->support_of_16_drb ? 16 : 8);
+  const uint8_t max_nof_drbs = get_max_nof_drbs(cfg, capabilities);
+  if (count > max_nof_drbs) {
+    logger.warning("RedCap context contains {} DRBs, exceeding the effective limit ({})", count, max_nof_drbs);
+    return false;
+  }
+  return true;
 }
 
 bool up_resource_manager::set_up_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities)

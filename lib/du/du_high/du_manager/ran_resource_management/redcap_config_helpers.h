@@ -10,12 +10,12 @@
 
 namespace ocudu::odu {
 
-/// Returns whether the cell supports the single-antenna RedCap admission profile.
+/// Returns whether the cell supports RedCap admission.
 inline bool supports_redcap_admission(const du_cell_config& cell)
 {
   const auto& ran = cell.ran;
-  return cell.redcap.enabled and not cell.redcap.cell_barred and ran.dl_carrier.nof_ant == 1 and
-         ran.ul_carrier.nof_ant == 1 and band_helper::get_freq_range(ran.dl_carrier.band) == frequency_range::FR1 and
+  return cell.redcap.enabled and not cell.redcap.cell_barred and
+         band_helper::get_freq_range(ran.dl_carrier.band) == frequency_range::FR1 and
          band_helper::get_freq_range(ran.ul_carrier.band) == frequency_range::FR1 and
          ran.dl_carrier.carrier_bw <= bs_channel_bandwidth::MHz20 and
          ran.ul_carrier.carrier_bw <= bs_channel_bandwidth::MHz20;

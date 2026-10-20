@@ -316,3 +316,38 @@ TEST_F(du_manager_ue_creation_tester, ordinary_initial_access_has_no_redcap_indi
   ASSERT_TRUE(f1ap.last_ue_create.has_value());
   EXPECT_FALSE(f1ap.last_ue_create->is_redcap);
 }
+
+TEST_F(du_manager_ue_creation_tester, when_redcap_accesses_two_antenna_cell_then_srb1_is_created)
+{
+  params.ran.cells[0].redcap.enabled         = true;
+  params.ran.cells[0].ran.dl_carrier.nof_ant = 2;
+  params.ran.cells[0].ran.ul_carrier.nof_ant = 2;
+  start_procedure(to_du_ue_index(0), to_rnti(0x4601), true, {}, std::nullopt, true);
+  ASSERT_TRUE(f1ap.last_ue_create.has_value());
+  EXPECT_TRUE(f1ap.last_ue_create->is_redcap);
+  check_du_to_cu_rrc_container_validity(false);
+}
+
+TEST_F(du_manager_ue_creation_tester, when_redcap_is_disabled_then_srb0_only_reject_path_is_used)
+{
+  params.ran.cells[0].redcap.enabled = false;
+  start_procedure(to_du_ue_index(0), to_rnti(0x4601), true, {}, std::nullopt, true);
+  ASSERT_TRUE(f1ap.last_ue_create.has_value());
+  EXPECT_TRUE(f1ap.last_ue_create->du_cu_rrc_container.empty());
+  ASSERT_EQ(f1ap.last_ue_create->f1c_bearers_to_add.size(), 1U);
+  EXPECT_EQ(f1ap.last_ue_create->f1c_bearers_to_add[0].srb_id, srb_id_t::srb0);
+  ASSERT_TRUE(mac.last_ue_create_msg.has_value());
+  ASSERT_EQ(mac.last_ue_create_msg->bearers.size(), 1U);
+}
+
+TEST_F(du_manager_ue_creation_tester, when_redcap_is_barred_then_srb0_only_reject_path_is_used)
+{
+  params.ran.cells[0].redcap.enabled     = true;
+  params.ran.cells[0].redcap.cell_barred = true;
+  start_procedure(to_du_ue_index(0), to_rnti(0x4601), true, {}, std::nullopt, true);
+  ASSERT_TRUE(f1ap.last_ue_create.has_value());
+  EXPECT_TRUE(f1ap.last_ue_create->du_cu_rrc_container.empty());
+  ASSERT_EQ(f1ap.last_ue_create->f1c_bearers_to_add.size(), 1U);
+  EXPECT_EQ(f1ap.last_ue_create->f1c_bearers_to_add[0].srb_id, srb_id_t::srb0);
+  ASSERT_TRUE(mac.last_ue_create_msg.has_value());
+}

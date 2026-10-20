@@ -108,7 +108,10 @@ public:
 
   up_context get_up_context() const;
   bool       set_up_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities);
-  bool       validate_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities) const;
+
+  /// Checks imported resources against UE capabilities and configured limits without changing the current context.
+  /// Returns false if a RedCap DRB count or PDCP SN length is unsupported.
+  bool validate_context(const up_context& ctx, const rrc_ue_capabilities_t& capabilities) const;
 
   const std::map<pdu_session_id_t, up_pdu_session_context>& get_pdu_sessions_map() const;
 

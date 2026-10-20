@@ -855,3 +855,37 @@ TEST_F(up_resource_manager_test, handover_capabilities_skip_malformed_nr_contain
   ASSERT_EQ(info.pack(malformed_writer), asn1::OCUDUASN_SUCCESS);
   EXPECT_FALSE(decode_handover_capabilities(malformed).has_value());
 }
+
+TEST_F(up_resource_manager_test, when_imported_redcap_drb_count_exceeds_effective_limit_then_context_is_unchanged)
+{
+  for (unsigned configured : {4U, 32U}) {
+    for (bool supports_16_drbs : {false, true}) {
+      const unsigned limit = std::min(configured, supports_16_drbs ? 16U : 8U);
+      for (unsigned count : {limit, limit + 1}) {
+        SCOPED_TRACE(fmt::format("configured={} supports16={} count={}", configured, supports_16_drbs, count));
+        auto source_cfg                = cfg;
+        source_cfg.max_nof_drbs_per_ue = 32;
+        for (auto& qos : source_cfg.five_qi_config) {
+          qos.second.pdcp.tx.sn_size = pdcp_sn_size::size12bits;
+          qos.second.pdcp.rx.sn_size = pdcp_sn_size::size12bits;
+        }
+
+        up_resource_manager source{source_cfg};
+        auto                request = generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, 1, count);
+        auto update = source.calculate_update(request.pdu_session_res_setup_items, rrc_ue_capabilities_t{});
+        up_config_update_result result;
+        result.pdu_sessions_added_list.push_back(update.pdu_sessions_to_setup_list.begin()->second);
+        source.apply_config_update(result);
+        ASSERT_EQ(source.get_nof_drbs(), count);
+
+        cfg.max_nof_drbs_per_ue = configured;
+        up_resource_manager target{cfg};
+        const auto          caps = redcap_bearer_capabilities(false, supports_16_drbs);
+        EXPECT_EQ(target.validate_context(source.get_up_context(), caps), count <= limit);
+        EXPECT_EQ(target.get_nof_drbs(), 0U);
+        EXPECT_EQ(target.set_up_context(source.get_up_context(), caps), count <= limit);
+        EXPECT_EQ(target.get_nof_drbs(), count <= limit ? count : 0U);
+      }
+    }
+  }
+}

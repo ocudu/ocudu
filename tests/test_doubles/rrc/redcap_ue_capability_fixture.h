@@ -23,8 +23,8 @@ inline byte_buffer make_captured_redcap_nr_capability()
       .value();
 }
 
-/// Returns RedCap capabilities and a complete one-DRB source AS configuration.
-inline byte_buffer make_redcap_handover_preparation(bool long_sn_supported, unsigned source_sn_bits = 12)
+/// Returns RedCap NR capabilities with the requested PDCP long-SN support.
+inline byte_buffer make_redcap_nr_capability(bool long_sn_supported)
 {
   auto                      captured = make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
@@ -35,6 +35,13 @@ inline byte_buffer make_redcap_handover_preparation(bool long_sn_supported, unsi
   asn1::bit_ref cap_writer{packed_cap};
   report_fatal_error_if_not(cap.pack(cap_writer) == asn1::OCUDUASN_SUCCESS, "Invalid capability fixture");
 
+  return packed_cap;
+}
+
+/// Returns RedCap capabilities and a complete one-DRB source AS configuration.
+inline byte_buffer make_redcap_handover_preparation(bool long_sn_supported, unsigned source_sn_bits = 12)
+{
+  auto                      packed_cap = make_redcap_nr_capability(long_sn_supported);
   asn1::rrc_nr::rrc_recfg_s reconfiguration;
   auto&                     recfg = reconfiguration.crit_exts.set_rrc_recfg();
   recfg.radio_bearer_cfg_present  = true;

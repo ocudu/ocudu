@@ -202,3 +202,70 @@ TEST_F(rrc_ue_capability_transfer_proc_test, unsupported_cached_capability_messa
   EXPECT_FALSE(rrc_ue->store_ue_capabilities(std::move(packed)));
   EXPECT_TRUE(rrc_ue->get_packed_ue_capability_rat_container_list().empty());
 }
+
+TEST_F(rrc_ue_capability_transfer_proc_test, when_initial_nr_capabilities_are_malformed_then_transfer_fails)
+{
+  rrc_ue_capability_transfer_request request;
+  auto task = get_rrc_ue_control_message_handler()->handle_rrc_ue_capability_transfer_request(request);
+  lazy_task_launcher<bool> launcher(task);
+  ASSERT_FALSE(task.ready());
+
+  asn1::rrc_nr::ul_dcch_msg_s msg;
+  auto&                       info      = msg.msg.set_c1().set_ue_cap_info();
+  info.rrc_transaction_id               = 2;
+  auto& ies                             = info.crit_exts.set_ue_cap_info();
+  ies.ue_cap_rat_container_list_present = true;
+  ies.ue_cap_rat_container_list.resize(1);
+  ies.ue_cap_rat_container_list[0].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  ies.ue_cap_rat_container_list[0].ue_cap_rat_container = byte_buffer::create({0xff}).value();
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(msg.pack(writer), asn1::OCUDUASN_SUCCESS);
+  rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(packed), true);
+
+  ASSERT_TRUE(task.ready());
+  EXPECT_FALSE(task.get());
+  EXPECT_TRUE(rrc_ue->get_packed_ue_capability_rat_container_list().empty());
+  EXPECT_FALSE(rrc_ue->get_capabilities().redcap.has_value());
+
+  // A failed exchange must not be cached as a successful capability transfer.
+  auto retry = get_rrc_ue_control_message_handler()->handle_rrc_ue_capability_transfer_request(request);
+  lazy_task_launcher<bool> retry_launcher(retry);
+  ASSERT_FALSE(retry.ready());
+  info.rrc_transaction_id                               = 3;
+  ies.ue_cap_rat_container_list[0].ue_cap_rat_container = test_helpers::make_redcap_nr_capability(false);
+  byte_buffer   replacement;
+  asn1::bit_ref replacement_writer{replacement};
+  ASSERT_EQ(msg.pack(replacement_writer), asn1::OCUDUASN_SUCCESS);
+  rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(replacement), true);
+  ASSERT_TRUE(retry.ready());
+  EXPECT_TRUE(retry.get());
+  ASSERT_TRUE(rrc_ue->get_capabilities().redcap.has_value());
+}
+
+TEST_F(rrc_ue_capability_transfer_proc_test, when_initial_redcap_capabilities_are_valid_then_summary_is_stored)
+{
+  rrc_ue_capability_transfer_request request;
+  auto task = get_rrc_ue_control_message_handler()->handle_rrc_ue_capability_transfer_request(request);
+  lazy_task_launcher<bool> launcher(task);
+  ASSERT_FALSE(task.ready());
+
+  asn1::rrc_nr::ul_dcch_msg_s msg;
+  auto&                       info      = msg.msg.set_c1().set_ue_cap_info();
+  info.rrc_transaction_id               = 2;
+  auto& ies                             = info.crit_exts.set_ue_cap_info();
+  ies.ue_cap_rat_container_list_present = true;
+  ies.ue_cap_rat_container_list.resize(1);
+  ies.ue_cap_rat_container_list[0].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+  ies.ue_cap_rat_container_list[0].ue_cap_rat_container = test_helpers::make_redcap_nr_capability(false);
+  byte_buffer   packed;
+  asn1::bit_ref writer{packed};
+  ASSERT_EQ(msg.pack(writer), asn1::OCUDUASN_SUCCESS);
+  rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(packed), true);
+
+  ASSERT_TRUE(task.ready());
+  EXPECT_TRUE(task.get());
+  EXPECT_FALSE(rrc_ue->get_packed_ue_capability_rat_container_list().empty());
+  ASSERT_TRUE(rrc_ue->get_capabilities().redcap.has_value());
+  EXPECT_FALSE(rrc_ue->get_capabilities().redcap->pdcp_long_sn_supported);
+}

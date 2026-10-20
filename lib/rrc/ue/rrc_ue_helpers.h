@@ -30,8 +30,8 @@ void log_rrc_message(rrc_ue_logger&    logger,
 
 rrc_ue_capabilities_t get_capabilities(asn1::rrc_nr::ue_nr_cap_s& ue_capabilities, rrc_ue_logger& logger);
 
-std::optional<rrc_ue_capabilities_t> get_capabilities(asn1::rrc_nr::ue_cap_rat_container_list_l& capabilities_list,
-                                                      rrc_ue_logger&                             logger);
+std::optional<rrc_ue_capabilities_t>
+get_capabilities(const asn1::rrc_nr::ue_cap_rat_container_list_l& capabilities_list, rrc_ue_logger& logger);
 
 /// \brief Decodes a coarse UE location and stores it in the UE context, TS 38.300 sec. 16.14.8.
 ///

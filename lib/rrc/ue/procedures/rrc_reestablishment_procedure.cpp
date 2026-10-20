@@ -73,6 +73,10 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   }
 
   if (not is_context_retrieved()) {
+    if (not validate_reestablishment_context()) {
+      CORO_AWAIT(handle_rrc_reestablishment_fallback());
+      CORO_EARLY_RETURN();
+    }
     // Transfer old UE context to new UE context. If it fails, resort to fallback.
     CORO_AWAIT_VALUE(context_transfer_success, cu_cp_notifier.on_ue_transfer_required(old_ue_reest_context.ue_index));
     if (not context_transfer_success) {
@@ -94,7 +98,12 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     }
   } else {
     if (not transfer_reestablishment_context_and_update_keys()) {
-      CORO_AWAIT(handle_rrc_reestablishment_fallback());
+      // The protocol contexts have moved, so an unexpected import failure requires release.
+      logger.log_warning("Could not install the validated UP context after UE context transfer");
+      ue_context_release_request.ue_index = context.ue_index;
+      ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
+      CORO_AWAIT(cu_cp_notifier.on_ue_release_required(ue_context_release_request));
+      cu_cp_notifier.on_rrc_reestablishment_complete(old_ue_reest_context.ue_index);
       CORO_EARLY_RETURN();
     }
   }
@@ -275,24 +284,34 @@ bool rrc_reestablishment_procedure::verify_security_context()
       logger);
 }
 
-bool rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_keys()
+bool rrc_reestablishment_procedure::validate_reestablishment_context()
 {
-  // Store capabilities if available.
+  imported_capabilities = context.capabilities;
   if (old_ue_reest_context.capabilities_list.has_value()) {
-    context.capabilities_list = ue_cap_rat_container_list_to_asn1(old_ue_reest_context.capabilities_list.value());
-
-    // Store parsed capabilities.
-    std::optional<rrc_ue_capabilities_t> caps = get_capabilities(context.capabilities_list.value(), logger);
-    if (not caps.has_value()) {
+    auto capabilities =
+        get_capabilities(ue_cap_rat_container_list_to_asn1(*old_ue_reest_context.capabilities_list), logger);
+    if (not capabilities.has_value()) {
+      log_rejected_reestablishment("Invalid imported UE capabilities");
       return false;
     }
-    context.capabilities = caps.value();
+    imported_capabilities = *capabilities;
   }
-
-  // Transfer UP context from old UE.
-  if (not cu_cp_notifier.on_up_context_setup_required(old_ue_reest_context.up_ctx, context.capabilities)) {
+  if (not cu_cp_notifier.on_up_context_validation_required(old_ue_reest_context.up_ctx, imported_capabilities)) {
+    log_rejected_reestablishment("Imported UP context is incompatible with UE capabilities or configured limits");
     return false;
   }
+  return true;
+}
+
+bool rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_keys()
+{
+  if (not cu_cp_notifier.on_up_context_setup_required(old_ue_reest_context.up_ctx, imported_capabilities)) {
+    return false;
+  }
+  if (old_ue_reest_context.capabilities_list.has_value()) {
+    context.capabilities_list = ue_cap_rat_container_list_to_asn1(*old_ue_reest_context.capabilities_list);
+  }
+  context.capabilities = imported_capabilities;
 
   // Transfer the ongoing location measurements from old UE.
   if (old_ue_reest_context.location_meas_info.has_value()) {

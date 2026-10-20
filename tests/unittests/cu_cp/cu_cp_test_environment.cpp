@@ -650,8 +650,7 @@ bool cu_cp_test_environment::connect_new_ue(unsigned            du_idx,
                                             gnb_du_ue_f1ap_id_t du_ue_id,
                                             rnti_t              crnti,
                                             plmn_identity       plmn,
-                                            byte_buffer         rrc_setup_complete,
-                                            bool                is_redcap)
+                                            byte_buffer         rrc_setup_complete)
 {
   ngap_message ngap_pdu;
   ocudu_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
@@ -660,11 +659,6 @@ bool cu_cp_test_environment::connect_new_ue(unsigned            du_idx,
 
   // Inject Initial UL RRC message.
   f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(du_ue_id, crnti, plmn);
-  if (is_redcap) {
-    auto& initial                      = init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-    initial->nr_red_cap_ue_ind_present = true;
-    initial->nr_red_cap_ue_ind         = asn1::f1ap::nr_red_cap_ue_ind_opts::true_value;
-  }
   test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
   get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
@@ -775,7 +769,8 @@ bool cu_cp_test_environment::setup_ue_security_and_ue_capabilities(
     gnb_du_ue_f1ap_id_t                                        du_ue_id,
     std::optional<cu_cp_core_network_assist_info_for_inactive> cn_assist_info_for_inactive,
     bool                                                       rrc_inactive_supported,
-    std::optional<location_report_request>                     location_reporting_request)
+    std::optional<location_report_request>                     location_reporting_request,
+    std::optional<byte_buffer>                                 nr_capabilities)
 {
   ngap_message ngap_pdu;
   ocudu_assert(not this->get_amf().try_pop_rx_pdu(ngap_pdu), "there are still NGAP messages to pop from AMF");
@@ -827,14 +822,15 @@ bool cu_cp_test_environment::setup_ue_security_and_ue_capabilities(
   }
 
   // Inject UL RRC Message Transfer (containing UE Capability Info).
+  auto capability_info = test_helpers::create_ue_capability_info(2, rrc_inactive_supported);
+  if (nr_capabilities.has_value()) {
+    auto& list = capability_info.msg.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list;
+    list.resize(1);
+    list[0].rat_type             = asn1::rrc_nr::rat_type_opts::nr;
+    list[0].ue_cap_rat_container = std::move(*nr_capabilities);
+  }
   get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
-      du_ue_id,
-      ue_ctx.cu_ue_id.value(),
-      srb_id_t::srb1,
-      4,
-      test_helpers::pack_ul_dcch_msg(test_helpers::create_ue_capability_info(2, rrc_inactive_supported)),
-      rrc_inactive_supported ? std::array<uint8_t, 4>{0x71, 0xd6, 0xa5, 0xfd}
-                             : std::array<uint8_t, 4>{0xce, 0x5c, 0x98, 0xa4}));
+      du_ue_id, ue_ctx.cu_ue_id.value(), srb_id_t::srb1, generate_protected_ul_dcch_pdu(capability_info, 4)));
 
   // Wait for DL RRC Message Transfer (containing NAS Registration Accept).
   result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);

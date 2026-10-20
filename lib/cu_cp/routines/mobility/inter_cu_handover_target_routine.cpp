@@ -103,12 +103,19 @@ void inter_cu_handover_target_routine::operator()(
     merge_old_drb_association_from_as_config(old_drb_association, request.rrc_handover_preparation_information, logger);
     auto capabilities = decode_handover_capabilities(request.rrc_handover_preparation_information);
     if (not capabilities.has_value()) {
+      logger.warning("ue={}: \"{}\" failed. Cause: Invalid forwarded UE capabilities", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
     next_config = ue->get_up_resource_manager().calculate_update(
         request.pdu_session_res_setup_list, *capabilities, old_drb_association);
-    if (next_config.pdu_sessions_to_setup_list.empty() or
-        not preserve_redcap_pdcp_sn_lengths(next_config, request.rrc_handover_preparation_information, *capabilities)) {
+    if (next_config.pdu_sessions_to_setup_list.empty()) {
+      logger.warning("ue={}: \"{}\" failed. Cause: No PDU sessions admitted", request.ue_index, name());
+      CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+    }
+    if (not preserve_redcap_pdcp_sn_lengths(next_config, request.rrc_handover_preparation_information, *capabilities)) {
+      logger.warning("ue={}: \"{}\" failed. Cause: Missing or incompatible source PDCP SN configuration",
+                     request.ue_index,
+                     name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
     }
   }

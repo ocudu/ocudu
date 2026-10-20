@@ -127,9 +127,7 @@ bool ocudu::ocucp::preserve_redcap_pdcp_sn_lengths(up_config_update&            
     return false;
   }
   const auto& source_drbs = reconfiguration.crit_exts.rrc_recfg().radio_bearer_cfg.drb_to_add_mod_list;
-  if (source_drbs.size() > (capabilities.redcap->support_of_16_drb ? 16U : 8U)) {
-    return false;
-  }
+  // Admission limits apply to the target DRBs allocated by the UP resource manager, not all source DRBs.
   for (auto& session : update.pdu_sessions_to_setup_list) {
     for (auto& target : session.second.drb_to_add) {
       const auto old = std::find_if(source_drbs.begin(), source_drbs.end(), [&](const auto& drb) {

@@ -107,9 +107,6 @@ expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context() cons
   // Fetch the DU cell configuration of the primary cell UE is connected to.
   // TODO: Use cell manager
   const auto& cell_cfg = du_params.ran.cells[req.pcell_index];
-  if (req.is_redcap and not supports_redcap_admission(cell_cfg)) {
-    return make_unexpected("RedCap access is disabled or unsupported by this cell configuration");
-  }
   if (not cell_cfg.enabled) {
     return make_unexpected("UE created in inactive cell");
   }
@@ -159,6 +156,11 @@ bool ue_creation_procedure::setup_du_ue_resources()
 {
   // SRB0 is always created.
   ue_ctx->bearers.add_srb(srb_id_t::srb0);
+
+  if (req.is_redcap and not supports_redcap_admission(du_params.ran.cells[req.pcell_index])) {
+    proc_logger.log_proc_warning("RedCap access is disabled or unsupported by this cell; creating SRB0 for RRC Reject");
+    return true;
+  }
 
   if (ue_ctx->resources.resource_alloc_failed()) {
     // In special case, where the RAN resources were not allocated successfully for the UE (e.g. lack of PUCCH space),

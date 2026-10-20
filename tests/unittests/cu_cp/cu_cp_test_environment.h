@@ -180,8 +180,7 @@ public:
       gnb_du_ue_f1ap_id_t du_ue_id,
       rnti_t              crnti,
       plmn_identity       plmn       = plmn_identity::test_value(),
-      byte_buffer rrc_setup_complete = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()),
-      bool        is_redcap          = false);
+      byte_buffer rrc_setup_complete = test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_setup_complete()));
   /// Runs the NAS Authentication for a given UE.
   [[nodiscard]] bool authenticate_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t du_ue_id, amf_ue_id_t amf_ue_id);
 
@@ -191,7 +190,8 @@ public:
       gnb_du_ue_f1ap_id_t                                        du_ue_id,
       std::optional<cu_cp_core_network_assist_info_for_inactive> cn_assist_info_for_inactive = std::nullopt,
       bool                                                       rrc_inactive_supported      = true,
-      std::optional<location_report_request>                     location_reporting_request  = std::nullopt);
+      std::optional<location_report_request>                     location_reporting_request  = std::nullopt,
+      std::optional<byte_buffer>                                 nr_capabilities             = std::nullopt);
 
   /// Get a Location Report, if one is awaited for.
   std::optional<ngap_message>

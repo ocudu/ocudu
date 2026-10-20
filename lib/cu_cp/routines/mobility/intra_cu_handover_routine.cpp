@@ -76,6 +76,10 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
     source_rrc_context = source_ue->get_rrc_ue()->get_transfer_context();
     if (not source_ue->get_up_resource_manager().validate_context(source_rrc_context.up_ctx,
                                                                   source_ue->get_rrc_ue()->get_capabilities())) {
+      logger.warning(
+          "ue={}: \"{}\" failed. Cause: UP context is incompatible with UE capabilities or configured limits",
+          request.source_ue_index,
+          name());
       CORO_EARLY_RETURN(response_msg);
     }
     next_config = to_config_update(source_rrc_context.up_ctx);

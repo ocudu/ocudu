@@ -50,30 +50,14 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
     }
 
     if (response.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list_present) {
-      context.capabilities_list.emplace(response.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list);
-      for (const auto& ue_cap_rat_container :
-           response.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list) {
-        if (ue_cap_rat_container.rat_type.value == asn1::rrc_nr::rat_type_e::nr) {
-          asn1::cbit_ref            bref{ue_cap_rat_container.ue_cap_rat_container.copy()};
-          asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;
-          if (ue_nr_cap.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
-            logger.log_error("Error unpacking UE Capabilities");
-            continue;
-          }
-
-          if (logger.get_basic_logger().debug.enabled()) {
-            asn1::json_writer json_writer;
-            ue_nr_cap.to_json(json_writer);
-            logger.log_debug("UE Capabilities:\n{}", json_writer.to_string().c_str());
-          }
-
-          // Store unpacked capabilities.
-          context.capabilities = get_capabilities(ue_nr_cap, logger);
-
-        } else {
-          logger.log_warning("Unsupported RAT type {}", fmt::underlying(ue_cap_rat_container.rat_type.value));
-        }
+      const auto& list         = response.c1().ue_cap_info().crit_exts.ue_cap_info().ue_cap_rat_container_list;
+      auto        capabilities = get_capabilities(list, logger);
+      if (not capabilities.has_value()) {
+        logger.log_warning("UE capability transfer failed: invalid NR capabilities");
+        CORO_EARLY_RETURN(false);
       }
+      context.capabilities_list = list;
+      context.capabilities      = capabilities.value();
     }
     procedure_result = context.capabilities_list.has_value();
   } else {

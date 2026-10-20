@@ -48,12 +48,18 @@ void retrieved_context_resume_routine::operator()(coro_context<async_task<rrc_re
                             ? std::optional<rrc_ue_capabilities_t>{ue.get_rrc_ue()->get_capabilities()}
                             : decode_handover_capabilities(retrieval_context.rrc_context);
     if (not capabilities.has_value()) {
+      logger.warning("ue={}: \"{}\" failed. Cause: Invalid forwarded UE capabilities", ue.get_ue_index(), name());
       CORO_EARLY_RETURN(response_msg);
     }
     next_config = ue.get_up_resource_manager().calculate_update(
         retrieval_context.pdu_session_res_to_be_setup_list, *capabilities, old_drb_association);
-    if (next_config.pdu_sessions_to_setup_list.empty() or
-        not preserve_redcap_pdcp_sn_lengths(next_config, retrieval_context.rrc_context, *capabilities)) {
+    if (next_config.pdu_sessions_to_setup_list.empty()) {
+      logger.warning("ue={}: \"{}\" failed. Cause: No PDU sessions admitted", ue_index, name());
+      CORO_EARLY_RETURN(response_msg);
+    }
+    if (not preserve_redcap_pdcp_sn_lengths(next_config, retrieval_context.rrc_context, *capabilities)) {
+      logger.warning(
+          "ue={}: \"{}\" failed. Cause: Missing or incompatible source PDCP SN configuration", ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
   }

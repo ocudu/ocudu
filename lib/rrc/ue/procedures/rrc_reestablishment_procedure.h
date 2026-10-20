@@ -60,6 +60,9 @@ private:
   /// \brief Build the request to retrieve the UE context from the peer serving the failure cell.
   rrc_ue_context_retrieval_request make_context_retrieval_request() const;
 
+  /// Validates imported capabilities and UP resources before moving the old UE's protocol contexts.
+  bool validate_reestablishment_context();
+
   /// \brief Transfer the reestablishment context e.g. ue capabilities and update the security keys
   bool transfer_reestablishment_context_and_update_keys();
 
@@ -98,6 +101,7 @@ private:
   rrc_transaction                         transaction;
   eager_async_task<rrc_outcome>           task;
   rrc_ue_reestablishment_context_response old_ue_reest_context;
+  rrc_ue_capabilities_t                   imported_capabilities;
   /// Context retrieved from a peer NG-RAN node; only set when no local old UE context matched.
   rrc_ue_context_retrieval_response context_retrieval_response;
   local_reestablishment_outcome     local_outcome                = local_reestablishment_outcome::rejected;

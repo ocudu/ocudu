@@ -134,6 +134,7 @@ public:
   async_task<bool> on_ue_transfer_required(cu_cp_ue_index_t old_ue_index) override
   {
     logger.info("Requested a UE context transfer from old_ue={}.", old_ue_index);
+    ++nof_ue_context_transfers;
     return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);
@@ -149,6 +150,12 @@ public:
       CORO_BEGIN(ctx);
       CORO_RETURN();
     });
+  }
+
+  bool on_up_context_validation_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) override
+  {
+    ++nof_up_context_validation_requests;
+    return up_context_validation_succeeds;
   }
 
   bool on_up_context_setup_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) override
@@ -212,6 +219,9 @@ public:
 
   /// Returned by on_up_context_required(); allows tests to inject the UE's active DRBs.
   up_context up_ctxt;
+  unsigned   nof_ue_context_transfers           = 0;
+  unsigned   nof_up_context_validation_requests = 0;
+  bool       up_context_validation_succeeds     = true;
   bool       up_context_setup_succeeds     = true;
   unsigned   nof_up_context_setup_requests = 0;
 
