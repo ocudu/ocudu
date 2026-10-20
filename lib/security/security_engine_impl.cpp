@@ -7,6 +7,7 @@
 #include "ciphering_engine_nea1.h"
 #include "ciphering_engine_nea3.h"
 #include "integrity_engine_generic.h"
+#include "integrity_engine_nia2_ipsec_mb.h"
 #include "ocudu/security/ssl.h"
 #if OCUDU_MBEDTLS_PSA
 #include "ciphering_engine_nea2_psa.h"
@@ -33,6 +34,10 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
     ocudu_assert(sec_cfg.k_128_int.has_value(), "Cannot enable integrity protection: No key");
     switch (sec_cfg.integ_algo.value()) {
       case integrity_algorithm::nia2:
+#ifdef OCUDU_HAVE_IPSEC_MB
+        integ_eng = std::make_unique<integrity_engine_nia2_ipsec_mb>(
+            sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
+#else
 #if OCUDU_MBEDTLS_PSA
 #ifdef PSA_WANT_ALG_CMAC
         integ_eng = std::make_unique<integrity_engine_nia2_psa>(
@@ -47,6 +52,7 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
 #else
         integ_eng = std::make_unique<integrity_engine_nia2_non_cmac>(
             sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
+#endif
 #endif
 #endif
         break;
