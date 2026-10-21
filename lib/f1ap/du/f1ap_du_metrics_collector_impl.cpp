@@ -4,11 +4,15 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "f1ap_du_metrics_collector_impl.h"
+#include "f1ap_du_context.h"
 
 using namespace ocudu;
 using namespace odu;
 
-f1ap_metrics_collector_impl::f1ap_metrics_collector_impl(bool enabled) : enabled_flag(enabled) {}
+f1ap_metrics_collector_impl::f1ap_metrics_collector_impl(bool enabled, const f1ap_du_context& du_ctxt_) :
+  enabled_flag(enabled), du_ctxt(du_ctxt_)
+{
+}
 
 void f1ap_metrics_collector_impl::collect_metrics_report(f1ap_metrics_report& report)
 {
@@ -18,6 +22,7 @@ void f1ap_metrics_collector_impl::collect_metrics_report(f1ap_metrics_report& re
   }
 
   // Prepare report.
+  report.connected   = du_ctxt.f1c_setup;
   report.nof_rx_pdus = data.nof_rx_pdus;
   for (const auto& u : ues) {
     report.ues.push_back(u);

@@ -1610,9 +1610,11 @@ static odu::du_test_mode_config generate_test_mode_config(const du_high_unit_con
 void ocudu::generate_du_high_config(odu::du_high_configuration& du_hi_cfg, const du_high_unit_config& du_high_unit_cfg)
 {
   // DU-high configuration.
-  du_hi_cfg.ran.gnb_du_id           = du_high_unit_cfg.gnb_du_id;
-  du_hi_cfg.ran.gnb_du_name         = fmt::format("odu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
-  du_hi_cfg.ran.cells               = generate_du_cell_config(du_high_unit_cfg);
+  du_hi_cfg.ran.gnb_du_id   = du_high_unit_cfg.gnb_du_id;
+  du_hi_cfg.ran.gnb_du_name = fmt::format("odu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
+  du_hi_cfg.ran.cells       = generate_du_cell_config(du_high_unit_cfg);
+  // The F1AP metrics report the CU-CP connection state, which is always of interest.
+  du_hi_cfg.metrics.enable_f1ap     = true;
   du_hi_cfg.metrics.enable_mac      = du_high_unit_cfg.metrics.layers_cfg.enable_mac;
   du_hi_cfg.metrics.enable_rlc      = du_high_unit_cfg.metrics.layers_cfg.enable_rlc;
   du_hi_cfg.metrics.enable_sched    = du_high_unit_cfg.metrics.layers_cfg.enable_scheduler;

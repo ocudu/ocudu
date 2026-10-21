@@ -19,6 +19,8 @@ struct f1ap_metrics_report {
     gnb_du_ue_f1ap_id_t ue_id;
   };
 
+  /// Whether the F1 interface is set up with the CU-CP.
+  bool connected = false;
   /// Number of PDUs received by the F1AP-DU.
   unsigned nof_rx_pdus = 0;
   /// List of UE metrics.

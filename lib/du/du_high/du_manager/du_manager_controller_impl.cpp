@@ -52,6 +52,9 @@ void du_manager_controller_impl::start()
             // time this function returns. They are only activated once the CU-CP accepted the F1 Setup.
             configure_du_cells(proc_ctxt);
 
+            // Report the DU metrics also while the DU is not connected to the CU-CP.
+            proc_ctxt.metrics.start();
+
             main_task_sched.schedule(
                 [this, tk = std::move(setup_tk), max_setup_attempts](coro_context<async_task<void>>& ctx) {
                   CORO_BEGIN(ctx);
@@ -143,6 +146,8 @@ void du_manager_controller_impl::handle_du_stop_request(scoped_sync_token tk)
     while (not proc_ctxt.params.services.du_mng_exec.defer([this, tk]() {
       // Let main loop go out of scope and be destroyed.
       auto main_loop = main_task_sched.request_stop();
+
+      proc_ctxt.metrics.stop();
 
       proc_ctxt.ctxt.running               = false;
       proc_ctxt.ctxt.stop_command_received = false;

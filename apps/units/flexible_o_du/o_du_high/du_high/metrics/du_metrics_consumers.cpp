@@ -31,10 +31,6 @@ void du_metrics_consumer_json::handle_metric(const app_services::metrics_set& me
 {
   const odu::du_metrics_report& report = static_cast<const du_metrics_impl&>(metric).get_report();
 
-  if (!report.mac) {
-    return;
-  }
-
   gateway.send(app_helpers::json_generators::generate_string(report, DEFAULT_JSON_INDENT));
   if (report.mac) {
     gateway.send(app_helpers::json_generators::generate_string(report.mac->sched, DEFAULT_JSON_INDENT));
@@ -45,6 +41,9 @@ void du_metrics_consumer_log::handle_metric(const app_services::metrics_set& met
 {
   const odu::du_metrics_report& report = static_cast<const du_metrics_impl&>(metric).get_report();
 
+  if (report.f1ap) {
+    log_chan("F1AP metrics: connected={}", report.f1ap->connected);
+  }
   proc_consumer.handle_metric(report.du_proc);
   if (report.mac) {
     mac_consumer.handle_metric(report.mac->dl);

@@ -155,6 +155,34 @@ TEST_F(du_high_f1c_retry_test, when_cu_cp_keeps_rejecting_the_f1_setup_then_du_c
   du_hi->stop();
 }
 
+TEST_F(du_high_f1c_retry_test, when_cu_cp_is_not_reachable_then_du_reports_f1_as_disconnected)
+{
+  // CU-CP is not reachable, so no cell gets activated and the MAC does not report metrics.
+  cu_notifier.set_f1_channel_state(false);
+  du_hi->start();
+
+  // The DU metrics are reported nonetheless.
+  ASSERT_TRUE(poll_until([this]() { return du_metrics.last_report.has_value(); }));
+  ASSERT_TRUE(du_metrics.last_report->f1ap.has_value());
+  ASSERT_FALSE(du_metrics.last_report->f1ap->connected);
+  ASSERT_FALSE(du_metrics.last_report->mac.has_value());
+}
+
+TEST_F(du_high_connectivity_test, when_f1_setup_completes_then_du_reports_f1_as_connected)
+{
+  run_f1_setup();
+  du_metrics.last_report.reset();
+
+  ASSERT_TRUE(run_until(
+      [this]() {
+        workers.flush_pending_control_tasks();
+        return du_metrics.last_report.has_value();
+      },
+      10000));
+  ASSERT_TRUE(du_metrics.last_report->f1ap.has_value());
+  ASSERT_TRUE(du_metrics.last_report->f1ap->connected);
+}
+
 TEST_F(du_high_connectivity_test, when_f1_connection_is_lost_then_du_detects_connection_loss)
 {
   run_f1_setup();

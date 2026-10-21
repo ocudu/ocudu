@@ -9,6 +9,7 @@
 #include "ocudu/du/du_high/du_manager/du_manager.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
 #include "ocudu/du/du_high/du_metrics_notifier.h"
+#include "ocudu/support/timers.h"
 
 namespace ocudu {
 
@@ -27,6 +28,14 @@ public:
                                      f1ap_metrics_collector&                         f1ap_collector_);
   ~du_manager_metrics_aggregator_impl() override;
 
+  /// \brief Start reporting the DU metrics while the MAC is not reporting.
+  ///
+  /// The MAC only reports while cells are active, which is not the case while the DU is not connected to the CU-CP.
+  void start();
+
+  /// Stop the reports started with start().
+  void stop();
+
   // DU metrics collector interface
   void aggregate_mac_metrics_report(const mac_metric_report& report) override;
 
@@ -39,13 +48,17 @@ public:
 private:
   void trigger_report();
 
+  void handle_idle_timer_expiry();
+
   const du_manager_params::metrics_config_params params;
   task_executor&                                 du_mng_exec;
   timer_manager&                                 timers;
   f1ap_metrics_collector&                        f1ap_collector;
   du_procedure_metrics_collector                 du_mng_collector;
+  unique_timer                                   idle_timer;
 
-  unsigned          next_version = 0;
+  unsigned          next_version                   = 0;
+  unsigned          nof_periods_without_mac_report = 0;
   du_metrics_report next_report{};
 };
 

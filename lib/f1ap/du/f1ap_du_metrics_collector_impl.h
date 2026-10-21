@@ -14,11 +14,13 @@ struct f1ap_message;
 
 namespace odu {
 
+struct f1ap_du_context;
+
 /// Collector of F1AP metrics.
 class f1ap_metrics_collector_impl final : public f1ap_metrics_collector
 {
 public:
-  f1ap_metrics_collector_impl(bool enabled);
+  f1ap_metrics_collector_impl(bool enabled, const f1ap_du_context& du_ctxt_);
 
   void collect_metrics_report(f1ap_metrics_report& report) override;
 
@@ -36,7 +38,8 @@ private:
     unsigned nof_rx_pdus = 0;
   };
 
-  bool enabled_flag;
+  bool                   enabled_flag;
+  const f1ap_du_context& du_ctxt;
 
   non_persistent_common_data                                        data;
   slotted_id_vector<du_ue_index_t, f1ap_metrics_report::ue_metrics> ues;

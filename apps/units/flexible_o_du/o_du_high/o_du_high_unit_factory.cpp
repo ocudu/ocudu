@@ -167,8 +167,10 @@ build_du_metrics(std::vector<app_services::metrics_config>& metrics,
 {
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
-  // Scheduler or MAC metrics not enabled, do not create consumers and producers.
-  if (!du_hi_cfg.metrics.layers_cfg.enable_mac && !du_hi_cfg.metrics.layers_cfg.enable_scheduler) {
+  // Scheduler or MAC metrics not enabled and nowhere to report the F1AP metrics, do not create consumers and producers.
+  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
+  if (!du_hi_cfg.metrics.layers_cfg.enable_mac && !du_hi_cfg.metrics.layers_cfg.enable_scheduler &&
+      !metrics_config.enable_json_metrics && !metrics_config.enable_log_metrics) {
     return nullptr;
   }
 
@@ -188,7 +190,6 @@ build_du_metrics(std::vector<app_services::metrics_config>& metrics,
   metrics_subcommands.push_back(std::make_unique<du_high_metrics_subcommand_stdout>(*metrics_stdout));
   du_metrics_cfg.consumers.push_back(std::move(metrics_stdout));
 
-  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
   if (metrics_config.enable_log_metrics) {
     du_metrics_cfg.consumers.push_back(
         std::make_unique<du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
