@@ -62,6 +62,10 @@ add_executable(pdsch_mcs_table_test pdsch/pdsch_mcs_table_test.cpp)
 target_link_libraries(pdsch_mcs_table_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 add_test(pdsch_mcs_table_test pdsch_mcs_table_test)
 
+add_executable(tbs_calculator_test sch/tbs_calculator_test.cpp)
+target_link_libraries(tbs_calculator_test ocudu_ran GTest::gtest ocudu_gtest_main)
+gtest_discover_tests(tbs_calculator_test)
+
 add_executable(ra_helper_test prach/ra_helper_test.cpp)
 target_link_libraries(ra_helper_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 add_test(ra_helper_test ra_helper_test)

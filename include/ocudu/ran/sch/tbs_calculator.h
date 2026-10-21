@@ -95,4 +95,18 @@ unsigned tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prim
 /// \return The TBS in bits.
 units::bytes tbs_calculator_calculate(const tbs_calculator_configuration& config);
 
+/// \brief Calculates the TBS for limited buffer rate matching of a DL-SCH transport block.
+///
+/// Calculates the parameter \f$TBS_{LBRM}\f$ of TS 38.212, Section 5.4.2.1 for a DL-SCH transport block not scheduled
+/// by DCI format 4_0, 4_1 or 4_2.
+///
+/// \param[in] max_nof_layers Parameter \f$X\f$, given by \e maxMIMO-Layers of \e PDSCH-ServingCellConfig if configured,
+///                           otherwise by the maximum number of PDSCH layers supported by the UE.
+/// \param[in] max_modulation Maximum modulation: 1024-QAM if the \e mcs-Table of a DL BWP is set to \e qam1024, 256-QAM
+///                           if it is set to \e qam256, otherwise 64-QAM.
+/// \param[in] max_nof_prbs   Maximum number of PRBs across all the configured DL BWPs of the carrier.
+/// \return The TBS for limited buffer rate matching.
+units::bytes
+tbs_calculator_dlsch_lbrm(unsigned max_nof_layers, modulation_scheme max_modulation, unsigned max_nof_prbs);
+
 } // namespace ocudu

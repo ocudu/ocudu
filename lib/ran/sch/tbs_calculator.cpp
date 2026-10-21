@@ -4,10 +4,12 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/ran/sch/tbs_calculator.h"
+#include "ocudu/ran/frame_types.h"
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <algorithm>
+#include <iterator>
 
 using namespace ocudu;
 
@@ -125,4 +127,32 @@ units::bytes ocudu::tbs_calculator_calculate(const tbs_calculator_configuration&
   ocudu_assert(tbs_bits % 8 == 0, "TBS size (i.e., {} bits) must be multiple of bytes.", tbs_bits);
 
   return units::bytes(tbs_bits / 8U);
+}
+
+/// Gets the parameter \f$n_{PRB,LBRM}\f$ from the maximum number of PRBs across the BWPs, as per TS 38.212
+/// Table 5.4.2.1-1.
+static unsigned get_nof_prb_lbrm(unsigned max_nof_prbs)
+{
+  // Each value is also the largest number of PRBs it applies to, except the last one, which applies to more than 217.
+  static constexpr std::array<unsigned, 7> nof_prb_lbrm_values = {32, 66, 107, 135, 162, 217, 273};
+
+  return *std::lower_bound(nof_prb_lbrm_values.begin(), std::prev(nof_prb_lbrm_values.end()), max_nof_prbs);
+}
+
+units::bytes
+ocudu::tbs_calculator_dlsch_lbrm(unsigned max_nof_layers, modulation_scheme max_modulation, unsigned max_nof_prbs)
+{
+  ocudu_assert(max_nof_layers > 0, "The maximum number of layers must be greater than zero.");
+  ocudu_assert(max_nof_prbs > 0, "The maximum number of PRBs must be greater than zero.");
+
+  // As per TS 38.212, Section 5.4.2.1, TBS_LBRM is the TBS given by TS 38.214, Section 5.1.3.2 for the minimum of X and
+  // four layers, the maximum modulation order, a coding rate of 948/1024 and N_RE = 156 * n_PRB, where n_PRB is
+  // n_PRB,LBRM. A full slot without DM-RS or overhead reaches the limit of 156 REs per PRB.
+  return tbs_calculator_calculate({.nof_symb_sh      = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                                   .nof_dmrs_prb     = 0,
+                                   .nof_oh_prb       = 0,
+                                   .mcs_descr        = {.modulation = max_modulation, .target_code_rate = 948.0F},
+                                   .nof_layers       = std::min(max_nof_layers, 4U),
+                                   .tb_scaling_field = 0,
+                                   .n_prb            = get_nof_prb_lbrm(max_nof_prbs)});
 }
