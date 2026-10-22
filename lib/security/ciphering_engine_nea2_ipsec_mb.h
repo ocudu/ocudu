@@ -5,7 +5,7 @@
 
 #pragma once
 
-#if OCUDU_HAVE_IPSEC_MB
+#ifdef OCUDU_HAVE_IPSEC_MB
 #include "ipsec-mb.h"
 #include "ocudu/security/ciphering_engine.h"
 #include "ocudu/security/security.h"

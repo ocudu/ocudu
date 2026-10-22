@@ -5,7 +5,7 @@
 
 #include "ciphering_engine_nea2_ipsec_mb.h"
 
-#if OCUDU_HAVE_IPSEC_MB
+#ifdef OCUDU_HAVE_IPSEC_MB
 
 using namespace ocudu;
 using namespace security;

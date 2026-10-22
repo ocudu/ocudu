@@ -52,7 +52,7 @@ target_link_libraries(ocudu_security PUBLIC ${SEC_LIBRARIES})
 
 if(IPSecMB_FOUND)
 	target_sources(ocudu_security PRIVATE integrity_engine_nia2_ipsec_mb.cpp)
-	target_compile_definitions(ocudu_security PRIVATE OCUDU_HAVE_IPSEC_MB=1)
+	target_compile_definitions(ocudu_security PUBLIC OCUDU_HAVE_IPSEC_MB=1)
 	target_link_libraries(ocudu_security PUBLIC ${IPSEC_MB_LIBRARIES})
 	target_include_directories(ocudu_security PRIVATE ${IPSEC_MB_INCLUDE_DIRS})
     message(STATUS "IPsec-MB security engine enabled")
