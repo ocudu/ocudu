@@ -72,6 +72,7 @@ security_status integrity_engine_nia2_psa::compute_mac(sec_mac& mac, const byte_
   size_t                  mac_len = 0;
   status                          = psa_mac_sign_finish(&op, tmp_mac.data(), tmp_mac.size(), &mac_len);
 
+  logger.warning("Computed MAC. tmp_mac={}", tmp_mac);
   if (status != PSA_SUCCESS || mac_len != tmp_mac.size()) {
     return security_status::integrity_failure;
   }

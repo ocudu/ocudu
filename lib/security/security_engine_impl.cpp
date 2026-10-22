@@ -5,6 +5,7 @@
 
 #include "security_engine_impl.h"
 #include "ciphering_engine_nea1.h"
+#include "ciphering_engine_nea2_ipsec_mb.h"
 #include "ciphering_engine_nea3.h"
 #include "integrity_engine_generic.h"
 #include "integrity_engine_nia2_ipsec_mb.h"
@@ -68,7 +69,9 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
         cipher_eng = std::make_unique<ciphering_engine_nea1>(sec_cfg.k_128_enc, bearer_id, direction);
         break;
       case ciphering_algorithm::nea2:
-#if OCUDU_MBEDTLS_PSA
+#ifdef OCUDU_HAVE_IPSEC_MB
+        cipher_eng = std::make_unique<ciphering_engine_nea2_ipsec_mb>(sec_cfg.k_128_enc, bearer_id, direction);
+#elif OCUDU_MBEDTLS_PSA
         cipher_eng = std::make_unique<ciphering_engine_nea2_psa>(sec_cfg.k_128_enc, bearer_id, direction);
 #else
         cipher_eng = std::make_unique<ciphering_engine_nea2>(sec_cfg.k_128_enc, bearer_id, direction);

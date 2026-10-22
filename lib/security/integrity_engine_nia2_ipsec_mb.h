@@ -5,13 +5,12 @@
 
 #pragma once
 
+#if OCUDU_HAVE_IPSEC_MB
 #include "ocudu/security/integrity_engine.h"
 #include "ocudu/security/security.h"
-#include <psa/crypto.h>
+#include <ipsec-mb.h>
 
 namespace ocudu::security {
-
-#if OCUDU_HAVE_IPSEC_MB
 
 class integrity_engine_nia2_ipsec_mb final : public integrity_engine
 {
@@ -34,8 +33,17 @@ private:
 
   ocudulog::basic_logger& logger;
   bool                    allow_unprotected = false;
+
+  IMB_MGR* mgr = nullptr;
+
+  alignas(16) std::array<uint32_t, 60> expanded_enc_key{};
+  alignas(16) std::array<uint32_t, 60> expanded_dec_key{};
+  alignas(16) std::array<uint8_t, 16> subkey1{};
+  alignas(16) std::array<uint8_t, 16> subkey2{};
+
+  std::array<uint8_t, 9000> linear_buffer = {};
 };
 
-#endif
-
 } // namespace ocudu::security
+
+#endif

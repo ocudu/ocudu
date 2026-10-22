@@ -21,12 +21,69 @@ integrity_engine_nia2_ipsec_mb::integrity_engine_nia2_ipsec_mb(sec_128_key      
   logger(ocudulog::fetch_basic_logger("SEC")),
   allow_unprotected(allow_unprotected_)
 {
+  mgr = alloc_mb_mgr(0);
+
+  if (mgr == nullptr) {
+    report_error("Failed to allocate IPsec-MB manager");
+  }
+
+  init_mb_mgr_auto(mgr, nullptr);
+  IMB_AES_KEYEXP_128(mgr, k_128_int.data(), expanded_enc_key.data(), expanded_dec_key.data());
+  IMB_AES_CMAC_SUBKEY_GEN_128(mgr, expanded_enc_key.data(), subkey1.data(), subkey2.data());
 }
 
-integrity_engine_nia2_ipsec_mb::~integrity_engine_nia2_ipsec_mb() {}
+integrity_engine_nia2_ipsec_mb::~integrity_engine_nia2_ipsec_mb()
+{
+  free_mb_mgr(mgr);
+}
 
 security_status integrity_engine_nia2_ipsec_mb::compute_mac(sec_mac& mac, const byte_buffer_view v, uint32_t count)
 {
+  IMB_JOB* job = IMB_GET_NEXT_JOB(mgr);
+
+  job->cipher_mode      = IMB_CIPHER_NULL;
+  job->cipher_direction = IMB_DIR_ENCRYPT;
+  job->hash_alg         = IMB_AUTH_AES_CMAC;
+  job->chain_order      = IMB_ORDER_HASH_CIPHER;
+  job->key_len_in_bytes = 16;
+
+  job->u.CMAC._key_expanded = expanded_enc_key.data();
+  job->u.CMAC._skey1        = subkey1.data();
+  job->u.CMAC._skey2        = subkey2.data();
+
+  linear_buffer[0] = (count >> 24) & 0xff;
+  linear_buffer[1] = (count >> 16) & 0xff;
+  linear_buffer[2] = (count >> 8) & 0xff;
+  linear_buffer[3] = count & 0xff;
+  linear_buffer[4] = (bearer_id << 3) | (to_number(direction) << 2);
+  linear_buffer[5] = 0;
+  linear_buffer[6] = 0;
+  linear_buffer[7] = 0;
+
+  size_t offset = 8;
+  for (const auto& segment : v.segments()) {
+    std::memcpy(linear_buffer.data() + offset, segment.data(), segment.size());
+    offset += segment.size();
+  }
+
+  job->src                            = linear_buffer.data();
+  job->hash_start_src_offset_in_bytes = 0;
+  job->msg_len_to_hash_in_bytes       = offset;
+
+  std::array<uint8_t, 16> tmp_mac;
+  job->auth_tag_output              = tmp_mac.data();
+  job->auth_tag_output_len_in_bytes = tmp_mac.size();
+
+  IMB_JOB* completed = IMB_SUBMIT_JOB(mgr);
+
+  if (completed == nullptr) {
+    completed = IMB_FLUSH_JOB(mgr);
+  }
+
+  if (completed == nullptr || completed->status != IMB_STATUS_COMPLETED) {
+    return security_status::engine_failure;
+  }
+  std::copy_n(tmp_mac.begin(), mac.size(), mac.begin());
   return security_status::success;
 }
 

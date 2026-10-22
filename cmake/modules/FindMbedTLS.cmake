@@ -22,7 +22,8 @@ endif()
 find_path(
     MBEDTLS_INCLUDE_DIRS
     NAMES mbedtls/md.h
-    HINTS ${_MBEDTLS_INCLUDE_HINTS}
+    HINTS ${MBEDTLS_DIR}/include
+          ${_MBEDTLS_INCLUDE_HINTS}
           ${PC_MBEDTLS_INCLUDEDIR}
           ${CMAKE_INSTALL_PREFIX}/include
     PATHS /usr/local/include
@@ -32,7 +33,8 @@ find_path(
 find_library(
     MBEDTLS_LIBRARIES
     NAMES mbedcrypto
-    HINTS ${_MBEDTLS_LIB_HINTS}
+    HINTS ${MBEDTLS_DIR}/lib
+          ${_MBEDTLS_LIB_HINTS}
           ${PC_MBEDTLS_LIBDIR}
           ${CMAKE_INSTALL_PREFIX}/lib
           ${CMAKE_INSTALL_PREFIX}/lib64
@@ -45,7 +47,8 @@ find_library(
 find_library(
     MBEDTLS_STATIC_LIBRARIES
     NAMES libmbedcrypto.a
-    HINTS ${_MBEDTLS_LIB_HINTS}
+    HINTS ${MBEDTLS_DIR}/lib
+          ${_MBEDTLS_LIB_HINTS}
           ${PC_MBEDTLS_LIBDIR}
           ${CMAKE_INSTALL_PREFIX}/lib
           ${CMAKE_INSTALL_PREFIX}/lib64
