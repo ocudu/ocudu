@@ -6,6 +6,7 @@
 
 #include "ocudu/gateways/baseband/baseband_gateway.h"
 #include "ocudu/gateways/baseband/baseband_gateway_timestamp.h"
+#include "ocudu/radio/radio_capabilities_registry.h"
 #include "ocudu/radio/radio_configuration.h"
 #include "ocudu/radio/radio_event_notifier.h"
 #include "ocudu/radio/radio_management_plane.h"
@@ -19,6 +20,10 @@ public:
   /// \brief Gets the management plane.
   /// \return The reference to the management plane for this radio session.
   virtual radio_management_plane& get_management_plane() = 0;
+
+  /// \brief Gets the capabilities registry.
+  /// \return The reference to the capabilities registry for this radio session.
+  virtual radio_capabilities_registry& get_capabilities() = 0;
 
   /// \brief Gets the data plane.
   /// \param[in] stream_id Stream identifier.

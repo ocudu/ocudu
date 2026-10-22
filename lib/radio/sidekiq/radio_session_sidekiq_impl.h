@@ -12,7 +12,9 @@
 namespace ocudu {
 
 /// Radio session based on Sidekiq that implements the management and data plane functions.
-class radio_session_sidekiq_impl : public radio_session, private radio_management_plane
+class radio_session_sidekiq_impl : public radio_session,
+                                   private radio_management_plane,
+                                   private radio_capabilities_registry
 {
 public:
   /// Returns the current RF timestamp.
@@ -27,10 +29,13 @@ public:
   /// \return True if no exception is caught during initialization. Otherwise false.
   bool is_successful() const { return (state.load() != states::UNINITIALIZED); }
 
-  // See the radio_base interface for documentation.
+  // See the radio_session interface for documentation.
   radio_management_plane& get_management_plane() override { return *this; }
 
-  // See the radio_base interface for documentation.
+  // See the radio_session interface for documentation.
+  radio_capabilities_registry& get_capabilities() override { return *this; }
+
+  // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
   {
     ocudu_assert(stream_id < cards.size(),
@@ -40,10 +45,10 @@ public:
     return *cards[stream_id];
   }
 
-  // See the radio_base interface for documentation.
+  // See the radio_session interface for documentation.
   void start(baseband_gateway_timestamp init_time) override;
 
-  // See the radio_base interface for documentation.
+  // See the radio_session interface for documentation.
   void stop() override;
 
   // See the radio_management_plane interface for documentation.
@@ -57,6 +62,9 @@ public:
 
   // See the radio_management_plane interface for documentation.
   bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override { return false; }
+
+  // See the radio_capabilities_registry interface for documentation.
+  void* query(radio_capability_key key) override { return nullptr; }
 
 private:
   /// Enumerates possible Sidekiq session states.

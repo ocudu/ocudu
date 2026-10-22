@@ -2,6 +2,10 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+add_executable(radio_capabilities_test radio_capabilities_test.cpp)
+target_link_libraries(radio_capabilities_test ocudu_support GTest::gtest GTest::gtest_main)
+add_test(radio_capabilities_test radio_capabilities_test)
+
 add_subdirectory(realtime_loopback)
 
 if (ZEROMQ_FOUND AND ENABLE_ZEROMQ)

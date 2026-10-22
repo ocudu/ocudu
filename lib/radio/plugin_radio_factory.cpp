@@ -41,8 +41,9 @@ public:
     handler.reset();
   }
 
-  radio_management_plane& get_management_plane() override { return session->get_management_plane(); }
-  baseband_gateway&       get_baseband_gateway(unsigned stream_id) override
+  radio_management_plane&      get_management_plane() override { return session->get_management_plane(); }
+  radio_capabilities_registry& get_capabilities() override { return session->get_capabilities(); }
+  baseband_gateway&            get_baseband_gateway(unsigned stream_id) override
   {
     return session->get_baseband_gateway(stream_id);
   }

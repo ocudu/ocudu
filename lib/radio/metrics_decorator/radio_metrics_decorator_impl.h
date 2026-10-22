@@ -102,6 +102,9 @@ public:
   radio_management_plane& get_management_plane() override { return radio_session_base->get_management_plane(); }
 
   // See the radio_session interface for documentation.
+  radio_capabilities_registry& get_capabilities() override { return radio_session_base->get_capabilities(); }
+
+  // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override;
 
   // See the radio_session interface for documentation.

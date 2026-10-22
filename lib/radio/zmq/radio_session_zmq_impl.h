@@ -12,7 +12,7 @@
 namespace ocudu {
 
 /// Describes a ZeroMQ radio based session.
-class radio_session_zmq_impl : public radio_session, public radio_management_plane
+class radio_session_zmq_impl : public radio_session, public radio_management_plane, public radio_capabilities_registry
 {
   /// Radio session logger.
   ocudulog::basic_logger& logger;
@@ -46,6 +46,9 @@ public:
   radio_management_plane& get_management_plane() override { return *this; }
 
   // See the radio_session interface for documentation.
+  radio_capabilities_registry& get_capabilities() override { return *this; }
+
+  // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
   {
     ocudu_assert(stream_id < bb_gateways.size(),
@@ -75,6 +78,9 @@ public:
 
   // See the radio_management_plane interface for documentation.
   bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
+
+  // See the radio_capabilities_registry interface for documentation.
+  void* query(radio_capability_key key) override { return nullptr; }
 };
 
 } // namespace ocudu

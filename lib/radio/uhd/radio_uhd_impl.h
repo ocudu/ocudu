@@ -15,7 +15,7 @@
 namespace ocudu {
 
 /// Describes a radio session based on UHD that also implements the management and data plane functions.
-class radio_session_uhd_impl : public radio_session, private radio_management_plane
+class radio_session_uhd_impl : public radio_session, private radio_management_plane, private radio_capabilities_registry
 {
   /// Maps ports to stream and channel indexes.
   using port_to_stream_channel = std::pair<unsigned, unsigned>;
@@ -86,6 +86,9 @@ public:
   radio_management_plane& get_management_plane() override { return *this; }
 
   // See interface for documentation.
+  radio_capabilities_registry& get_capabilities() override { return *this; }
+
+  // See interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
   {
     ocudu_assert(stream_id < bb_gateways.size(),
@@ -115,6 +118,9 @@ public:
 
   // See interface for documentation.
   baseband_gateway_timestamp read_current_time() override;
+
+  // See the radio_capabilities_registry interface for documentation.
+  void* query(radio_capability_key key) override { return nullptr; }
 };
 
 /// Factory for UHD radio session.

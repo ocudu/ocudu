@@ -31,6 +31,7 @@ namespace ocudu {
 ///                       lost samples.
 class radio_session_realtime_loopback_impl : public radio_session,
                                              public radio_management_plane,
+                                             public radio_capabilities_registry,
                                              public baseband_gateway,
                                              public baseband_gateway_transmitter,
                                              public baseband_gateway_receiver
@@ -52,6 +53,9 @@ public:
 
   // See the radio_session interface for documentation.
   radio_management_plane& get_management_plane() override { return *this; }
+
+  // See the radio_session interface for documentation.
+  radio_capabilities_registry& get_capabilities() override { return *this; }
 
   // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
@@ -81,6 +85,9 @@ public:
 
   // See the radio_management_plane interface for documentation.
   bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
+
+  // See the radio_capabilities_registry interface for documentation.
+  void* query(radio_capability_key key) override { return nullptr; }
 
   // See the baseband_gateway interface for documentation.
   unsigned get_transmitter_optimal_buffer_size() const override { return 0; }
