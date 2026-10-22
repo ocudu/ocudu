@@ -282,7 +282,9 @@ void pusch_processor_impl::process_data(span<uint8_t>                          d
   if (has_sch_data) {
     units::bits tbs            = units::bytes(data.size()).to_bits();
     unsigned    nof_codeblocks = compute_nof_codeblocks(tbs, pdu.codeword->ldpc_base_graph);
-    units::bits Nref           = ldpc::compute_N_ref(pdu.tbs_lbrm, nof_codeblocks);
+    // A zero N_ref leaves the circular buffer unlimited, as required without limited buffer rate matching.
+    units::bits Nref =
+        (pdu.tbs_lbrm != units::bytes(0)) ? ldpc::compute_N_ref(pdu.tbs_lbrm, nof_codeblocks) : units::bits(0);
 
     // Prepare decoder configuration.
     pusch_decoder::configuration decoder_config;

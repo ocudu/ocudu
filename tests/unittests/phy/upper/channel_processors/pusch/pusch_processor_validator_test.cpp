@@ -161,12 +161,6 @@ const std::vector<test_case_t> pusch_processor_validator_test_data = {
      R"(Only two CDM groups without data are currently supported\.)"},
     {[] {
        pusch_processor::pdu_t pdu = base_pdu;
-       pdu.tbs_lbrm               = units::bytes(0);
-       return pdu;
-     },
-     R"(Invalid LBRM size \(0 bytes\)\.)"},
-    {[] {
-       pusch_processor::pdu_t pdu = base_pdu;
        pdu.dc_position            = MAX_NOF_SUBCARRIERS;
        return pdu;
      },

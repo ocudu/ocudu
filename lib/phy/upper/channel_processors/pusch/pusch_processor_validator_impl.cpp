@@ -31,7 +31,6 @@ pusch_processor_validator_impl::pusch_processor_validator_impl(const pusch_proce
 
 error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_processor::pdu_t& pdu) const
 {
-  using namespace units::literals;
   unsigned nof_symbols_slot = get_nsymb_per_slot(pdu.cp);
 
   // The BWP size exceeds the grid size.
@@ -89,11 +88,6 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
     return make_unexpected(fmt::format("Total UCI size (i.e., {}) exceeds the maximum size, i.e., {}.",
                                        nof_uci_bits,
                                        uci_constants::MAX_NOF_PAYLOAD_BITS));
-  }
-
-  // The limited buffer for rate matching size must not be zero.
-  if (pdu.tbs_lbrm == 0_bytes) {
-    return make_unexpected("Invalid LBRM size (0 bytes).");
   }
 
   // The number of OFDM symbols in the DM-RS mask must be equal to the number of OFDM symbols in a slot.

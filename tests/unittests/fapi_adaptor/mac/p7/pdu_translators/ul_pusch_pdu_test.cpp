@@ -72,7 +72,8 @@ TEST_F(mac_to_fapi_pusch_fixture, valid_pusch_pdu_should_pass)
   EXPECT_EQ(pusch_cfg.symbols, fapi_pdu.symbols);
 
   // Maintenance v3.
-  EXPECT_EQ(tbs_lbrm_default, fapi_pdu.tb_size_lbrm_bytes);
+  // Limited buffer rate matching is not applied to the UL-SCH without rateMatching (TS 38.212, Section 6.2.5).
+  EXPECT_EQ(units::bytes(0), fapi_pdu.tb_size_lbrm_bytes);
   EXPECT_EQ(get_ldpc_base_graph(pusch_cfg.mcs_descr.get_normalised_target_code_rate(),
                                 units::bytes(pusch_cfg.tb_size_bytes).to_bits()),
             fapi_pdu.ldpc_base_graph);

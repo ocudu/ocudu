@@ -520,6 +520,38 @@ TEST_P(PuschProcessorFixture, PuschProcessorUnittest)
   }
 }
 
+TEST_P(PuschProcessorFixture, PuschProcessorWithoutLimitedBufferRateMatching)
+{
+  // Without limited buffer rate matching (TS 38.212, Section 6.2.5), the circular buffer of the decoder is not limited.
+  pdu.tbs_lbrm = units::bytes(0);
+  ASSERT_TRUE(validator->is_valid(pdu));
+
+  // Generate transport block.
+  std::vector<uint8_t> transport_block(tbs_dist(rgen));
+  std::generate(transport_block.begin(), transport_block.end(), [&]() { return static_cast<uint8_t>(rgen()); });
+
+  // Create receive buffer.
+  rx_buffer_spy    rm_buffer_spy;
+  unique_rx_buffer rm_buffer(rm_buffer_spy, 0);
+
+  // Resource grid spy.
+  resource_grid_reader_spy rg_spy;
+
+  // Process PDU.
+  pusch_processor_result_notifier_spy result_notifier;
+  pusch_proc->process(transport_block, std::move(rm_buffer), result_notifier, rg_spy, pdu);
+
+  if (pdu.codeword.has_value()) {
+    ASSERT_EQ(1, decoder_spy->get_entries().size());
+    ASSERT_EQ(0, decoder_spy->get_entries().front().config.Nref);
+  } else {
+    ASSERT_EQ(0, decoder_spy->get_entries().size());
+  }
+
+  // Clear decoder spy entries - It makes sure the soft buffer is unlocked before destroying the pool.
+  decoder_spy->clear();
+}
+
 TEST_P(PuschProcessorFixture, HealthTestFormatterInfo)
 {
   // Generate transport block.
