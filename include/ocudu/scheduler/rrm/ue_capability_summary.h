@@ -46,6 +46,8 @@ struct ue_capability_summary {
   static constexpr tx_scheme_codebook_subset default_pusch_tx_coherence = tx_scheme_codebook_subset::non_coherent;
   /// Default PUSCH maximum number of layers.
   static constexpr unsigned default_pusch_max_rank = 1;
+  /// Default PDSCH maximum number of layers.
+  static constexpr unsigned default_pdsch_max_rank = 1;
   /// Default SRS number of transmit ports.
   static constexpr unsigned default_nof_srs_tx_ports = 1;
   /// Default max number of DL/UL HARQ processes.
@@ -69,6 +71,11 @@ struct ue_capability_summary {
     tx_scheme_codebook_subset pusch_tx_coherence = default_pusch_tx_coherence;
     /// Maximum PUSCH number of layers.
     unsigned pusch_max_rank = default_pusch_max_rank;
+    /// \brief Maximum PDSCH number of layers.
+    ///
+    /// It is given by field \e maxNumberMIMO-LayersPDSCH in Information Element \e FeatureSetDownlinkPerCC. A UE that
+    /// does not report the field supports a single layer (see TS 38.306).
+    unsigned pdsch_max_rank = default_pdsch_max_rank;
     /// Maximum number of ports that can be simultaneously used for transmiting Sounding Reference Signals.
     uint8_t nof_srs_tx_ports = default_nof_srs_tx_ports;
     /// Maximum number of DL HARQ processes.
@@ -102,7 +109,7 @@ struct ue_capability_summary {
     {
       return (pusch_qam256_supported == other.pusch_qam256_supported) &&
              (pusch_tx_coherence == other.pusch_tx_coherence) && (pusch_max_rank == other.pusch_max_rank) &&
-             (nof_srs_tx_ports == other.nof_srs_tx_ports) &&
+             (pdsch_max_rank == other.pdsch_max_rank) && (nof_srs_tx_ports == other.nof_srs_tx_ports) &&
              (max_dl_harq_process_num == other.max_dl_harq_process_num) &&
              (max_ul_harq_process_num == other.max_ul_harq_process_num) &&
              (ul_pre_compensation_supported == other.ul_pre_compensation_supported) &&

@@ -105,6 +105,57 @@ TEST(ue_channel_state_manager_test, ri_within_limit_is_used)
   EXPECT_EQ(csm.get_nof_dl_layers(), 3);
 }
 
+// An RI above maxMIMO-Layers, the maximum number of PDSCH layers the UE is configured with, is limited to it.
+TEST(ue_channel_state_manager_test, ri_above_max_mimo_layers_is_limited)
+{
+  ue_channel_state_manager csm = make_channel_state_manager(4);
+  csm.set_max_dl_layers(2);
+
+  csi_report_data report;
+  report.ri = csi_report_data::ri_type{4};
+
+  EXPECT_TRUE(csm.handle_csi_report(report));
+  EXPECT_EQ(csm.get_nof_dl_layers(), 2);
+
+  // The recommended number of layers follows the RI again once the UE is configured with more layers.
+  csm.set_max_dl_layers(4);
+  EXPECT_EQ(csm.get_nof_dl_layers(), 4);
+}
+
+// A PMI only applies to the rank it was reported for, so the layers limited by maxMIMO-Layers keep the PMI of that
+// rank.
+TEST(ue_channel_state_manager_test, pmi_of_an_ri_above_max_mimo_layers_does_not_precode_the_limited_layers)
+{
+  const auto make_pmi = [](uint8_t i_2) {
+    return precoding_matrix_indicator{pmi_typeI_single_panel{
+        .panel_config = {pmi_codebook_single_panel_config::two_one, pmi_codebook_typeI_mode::one},
+        .i_1_1        = 1,
+        .i_1_2        = std::nullopt,
+        .i_1_3        = std::nullopt,
+        .i_2          = i_2}};
+  };
+  const auto get_i_2 = [](const ue_channel_state_manager& csm, unsigned nof_layers) {
+    const precoding_and_beamforming_info precoding = csm.get_precoding(nof_layers);
+    return std::get<pmi_typeI_single_panel>(std::get<precoding_matrix_indicator>(precoding)).i_2;
+  };
+
+  ue_channel_state_manager csm = make_channel_state_manager(4);
+  csm.set_max_dl_layers(2);
+
+  csi_report_data report;
+  report.ri  = csi_report_data::ri_type{2};
+  report.pmi = make_pmi(1);
+  ASSERT_TRUE(csm.handle_csi_report(report));
+
+  report.ri  = csi_report_data::ri_type{4};
+  report.pmi = make_pmi(2);
+  ASSERT_TRUE(csm.handle_csi_report(report));
+
+  ASSERT_EQ(csm.get_nof_dl_layers(), 2);
+  EXPECT_EQ(get_i_2(csm, 2), 1);
+  EXPECT_EQ(get_i_2(csm, 4), 2);
+}
+
 // An RI that exceeds the number of DL ports is invalid and the report is rejected.
 TEST(ue_channel_state_manager_test, ri_above_nof_ports_is_rejected)
 {

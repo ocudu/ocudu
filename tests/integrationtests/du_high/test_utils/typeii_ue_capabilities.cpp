@@ -33,8 +33,30 @@ static supported_csi_rs_res_s::max_num_tx_ports_per_res_e_ to_asn1_nof_tx_ports(
   return result;
 }
 
-byte_buffer
-ocudu::test_helpers::create_typeii_ue_capability_container(nr_band band, unsigned nof_beams, unsigned nof_tx_ports)
+static mimo_layers_dl_e to_asn1_nof_pdsch_layers(unsigned nof_pdsch_layers)
+{
+  mimo_layers_dl_e result;
+  switch (nof_pdsch_layers) {
+    case 2:
+      result.value = mimo_layers_dl_opts::two_layers;
+      break;
+    case 4:
+      result.value = mimo_layers_dl_opts::four_layers;
+      break;
+    case 8:
+      result.value = mimo_layers_dl_opts::eight_layers;
+      break;
+    default:
+      report_fatal_error("Unsupported number of PDSCH layers {}.", nof_pdsch_layers);
+  }
+
+  return result;
+}
+
+byte_buffer ocudu::test_helpers::create_typeii_ue_capability_container(nr_band  band,
+                                                                       unsigned nof_beams,
+                                                                       unsigned nof_tx_ports,
+                                                                       unsigned nof_pdsch_layers)
 {
   // Take the capabilities that the test doubles report, which already carry the Type I codebook of the band.
   ul_dcch_msg_s                msg      = create_ue_capability_info();
@@ -78,6 +100,31 @@ ocudu::test_helpers::create_typeii_ue_capability_container(nr_band band, unsigne
   type2.amplitude_scaling_type.value = codebook_params_s::type2_s_::amplitude_scaling_type_opts::wideband;
   type2.supported_csi_rs_res_list.resize(1);
   type2.supported_csi_rs_res_list[0] = csi_rs_res;
+
+  // Report the number of PDSCH layers of the band, as per TS 38.331, FeatureSetDownlinkPerCC, in a single-carrier band
+  // combination.
+  feature_set_dl_per_cc_s dl_per_cc;
+  dl_per_cc.supported_subcarrier_spacing_dl.value = subcarrier_spacing_opts::khz30;
+  dl_per_cc.supported_bw_dl.set_fr1().value       = supported_bw_c::fr1_opts::mhz100;
+  dl_per_cc.max_num_mimo_layers_pdsch_present     = true;
+  dl_per_cc.max_num_mimo_layers_pdsch             = to_asn1_nof_pdsch_layers(nof_pdsch_layers);
+  ue_cap.feature_sets_present                     = true;
+  ue_cap.feature_sets.feature_sets_dl_per_cc.push_back(dl_per_cc);
+
+  feature_set_dl_s dl_set;
+  dl_set.feature_set_list_per_dl_cc.push_back(ue_cap.feature_sets.feature_sets_dl_per_cc.size());
+  ue_cap.feature_sets.feature_sets_dl.push_back(dl_set);
+
+  feature_set_combination_l feature_set_combination(1);
+  feature_set_combination[0].resize(1);
+  feature_set_combination[0][0].set_nr().dl_set_nr = ue_cap.feature_sets.feature_sets_dl.size();
+  ue_cap.feature_set_combinations.push_back(feature_set_combination);
+
+  band_combination_s band_combination;
+  band_combination.band_list.resize(1);
+  band_combination.band_list[0].set_nr().band_nr = static_cast<uint16_t>(band);
+  band_combination.feature_set_combination       = ue_cap.feature_set_combinations.size() - 1;
+  ue_cap.rf_params.supported_band_combination_list.push_back(band_combination);
 
   // Pack the capabilities back into the container of their RAT.
   byte_buffer packed_ue_cap;

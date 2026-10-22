@@ -7,12 +7,14 @@
 
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/csi_report/csi_report_data.h"
+#include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/pusch/pusch_tpmi_select.h"
 #include "ocudu/ran/srs/srs_channel_matrix.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/scheduler/config/scheduler_expert_config.h"
 #include "ocudu/scheduler/result/pdsch_info.h"
 #include "ocudu/support/math/exponential_averager.h"
+#include <algorithm>
 
 namespace ocudu {
 
@@ -41,7 +43,15 @@ public:
   csi_report_wideband_cqi_type get_wideband_cqi() const { return wideband_cqi; }
 
   /// \brief Gets the number of recommended layers to be used in DL based on reported RI.
-  unsigned get_nof_dl_layers() const { return recommended_dl_layers; }
+  ///
+  /// The number of layers does not exceed the maximum number of PDSCH layers the UE is configured with.
+  unsigned get_nof_dl_layers() const { return std::min(recommended_dl_layers, max_dl_layers); }
+
+  /// \brief Sets the maximum number of PDSCH layers the UE is configured with.
+  ///
+  /// It is given by \c maxMIMO-Layers of \c PDSCH-ServingCellConfig (TS 38.331), which limits the number of layers of
+  /// all the PDSCH transmissions to the UE in the serving cell.
+  void set_max_dl_layers(unsigned max_dl_layers_) { max_dl_layers = max_dl_layers_; }
 
   /// \brief Gets the number of recommended layers to be used in PUSCH based on the reported channel coefficients.
   unsigned get_nof_ul_layers() const;
@@ -113,6 +123,9 @@ private:
 
   /// \brief Recommended nof layers based on reports.
   unsigned recommended_dl_layers = 1;
+
+  /// Maximum number of PDSCH layers the UE is configured with.
+  unsigned max_dl_layers = pdsch_constants::MAX_NOF_LAYERS;
 
   /// \brief List of Recommended PMIs for different number of active layers. Position n is for layer n+1.
   static_vector<precoding_matrix_indicator, NOF_LAYER_CHOICES> recommended_prg_info;

@@ -100,6 +100,14 @@ static constexpr ue_capability_summary::supported_band supported_band_2x2_non_co
     .ul_ta_reporting_supported      = false,
     .ue_specific_k_offset_supported = false};
 
+/// Returns the given band capabilities with the given maximum number of PDSCH layers.
+static constexpr ue_capability_summary::supported_band with_pdsch_max_rank(ue_capability_summary::supported_band band,
+                                                                           unsigned pdsch_max_rank)
+{
+  band.pdsch_max_rank = pdsch_max_rank;
+  return band;
+}
+
 const auto test_cases = to_array<decode_ue_nr_cap_container_params>(
     {decode_ue_nr_cap_container_params{
          .model = "Unknown UE with UL-MIMO and PDSCH VRB-toPRB mapping",
@@ -156,21 +164,21 @@ const auto test_cases = to_array<decode_ue_nr_cap_container_params>(
          .expected_capabilities = {.pdsch_qam256_supported     = true,
                                    .pdsch_qam64lowse_supported = true,
                                    .pusch_qam64lowse_supported = false,
-                                   .bands                      = {{nr_band::n78, supported_band_2x2_non_coherent},
-                                                                  {nr_band::n71, supported_band_no_ul_mimo},
-                                                                  {nr_band::n77, supported_band_no_ul_mimo},
-                                                                  {nr_band::n38, supported_band_no_ul_mimo},
-                                                                  {nr_band::n41, supported_band_no_ul_mimo},
-                                                                  {nr_band::n28, supported_band_no_ul_mimo},
-                                                                  {nr_band::n8, supported_band_no_ul_mimo},
-                                                                  {nr_band::n20, supported_band_no_ul_mimo},
-                                                                  {nr_band::n7, supported_band_no_ul_mimo},
-                                                                  {nr_band::n5, supported_band_no_ul_mimo},
-                                                                  {nr_band::n3, supported_band_no_ul_mimo},
-                                                                  {nr_band::n40, supported_band_no_ul_mimo},
-                                                                  {nr_band::n1, supported_band_no_ul_mimo}},
-                                   .long_drx_cycle_supported   = false,
-                                   .short_drx_cycle_supported  = false,
+                                   .bands = {{nr_band::n78, with_pdsch_max_rank(supported_band_2x2_non_coherent, 4)},
+                                             {nr_band::n71, supported_band_no_ul_mimo},
+                                             {nr_band::n77, supported_band_no_ul_mimo},
+                                             {nr_band::n38, supported_band_no_ul_mimo},
+                                             {nr_band::n41, supported_band_no_ul_mimo},
+                                             {nr_band::n28, supported_band_no_ul_mimo},
+                                             {nr_band::n8, supported_band_no_ul_mimo},
+                                             {nr_band::n20, supported_band_no_ul_mimo},
+                                             {nr_band::n7, supported_band_no_ul_mimo},
+                                             {nr_band::n5, supported_band_no_ul_mimo},
+                                             {nr_band::n3, supported_band_no_ul_mimo},
+                                             {nr_band::n40, supported_band_no_ul_mimo},
+                                             {nr_band::n1, supported_band_no_ul_mimo}},
+                                   .long_drx_cycle_supported                = false,
+                                   .short_drx_cycle_supported               = false,
                                    .pdsch_interleaving_vrb_to_prb_supported = true,
                                    .pdsch_dyn_switch_ra_type0_1_supported   = true,
                                    .ntn_supported                           = false,
@@ -265,18 +273,18 @@ const auto test_cases = to_array<decode_ue_nr_cap_container_params>(
            0x06, 0x73, 0x00
 
           },
-      .expected_capabilities = {.pdsch_qam256_supported                  = true,
-                                .pdsch_qam64lowse_supported              = false,
-                                .pusch_qam64lowse_supported              = false,
-                                .bands                                   = {{nr_band::n3, supported_band_no_ul_mimo},
-                                                                            {nr_band::n20, supported_band_no_ul_mimo},
-                                                                            {nr_band::n7, supported_band_no_ul_mimo},
-                                                                            {nr_band::n8, supported_band_no_ul_mimo},
-                                                                            {nr_band::n28, supported_band_no_ul_mimo},
-                                                                            {nr_band::n38, supported_band_no_ul_mimo},
-                                                                            {nr_band::n78, supported_band_no_ul_mimo},
-                                                                            {nr_band::n1, supported_band_no_ul_mimo},
-                                                                            {nr_band::n40, supported_band_no_ul_mimo}},
+      .expected_capabilities = {.pdsch_qam256_supported     = true,
+                                .pdsch_qam64lowse_supported = false,
+                                .pusch_qam64lowse_supported = false,
+                                .bands = {{nr_band::n3, with_pdsch_max_rank(supported_band_no_ul_mimo, 4)},
+                                          {nr_band::n20, with_pdsch_max_rank(supported_band_no_ul_mimo, 2)},
+                                          {nr_band::n7, with_pdsch_max_rank(supported_band_no_ul_mimo, 4)},
+                                          {nr_band::n8, with_pdsch_max_rank(supported_band_no_ul_mimo, 2)},
+                                          {nr_band::n28, with_pdsch_max_rank(supported_band_no_ul_mimo, 2)},
+                                          {nr_band::n38, with_pdsch_max_rank(supported_band_no_ul_mimo, 4)},
+                                          {nr_band::n78, with_pdsch_max_rank(supported_band_no_ul_mimo, 4)},
+                                          {nr_band::n1, with_pdsch_max_rank(supported_band_no_ul_mimo, 4)},
+                                          {nr_band::n40, with_pdsch_max_rank(supported_band_no_ul_mimo, 4)}},
                                 .long_drx_cycle_supported                = true,
                                 .short_drx_cycle_supported               = true,
                                 .pdsch_interleaving_vrb_to_prb_supported = false,

@@ -57,6 +57,14 @@ static void set_max_dl_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_har
   }
 }
 
+static void set_max_mimo_layers(serving_cell_config& cell_cfg, unsigned max_mimo_layers)
+{
+  // Set \c maxMIMO-Layers, as per TS 38.331, \c PDSCH-ServingCellConfig.
+  if (cell_cfg.pdsch_serv_cell_cfg.has_value()) {
+    cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
+  }
+}
+
 static void set_dl_dci_harq_field_size(serving_cell_config& cell_cfg, unsigned field_size)
 {
   if (cell_cfg.init_dl_bwp.pdsch_cfg.has_value()) {
@@ -120,6 +128,7 @@ void du_pdsch_resource_manager::apply_config(cell_group_config&                 
   set_pdsch_res_alloc(
       serv_cell, select_res_alloc(cell_idx, ue_caps), cell_cfg_list[cell_idx].ran.init_bwp.pdsch.rbg_sz);
   set_max_dl_nof_harqs(serv_cell, select_max_nof_harqs(cell_idx, ue_caps));
+  set_max_mimo_layers(serv_cell, select_max_mimo_layers(cell_idx, ue_caps));
   set_dl_dci_harq_field_size(serv_cell, select_dci_harq_field_size(cell_idx, ue_caps));
   set_dl_harq_feedback_disabled(serv_cell, select_disabled_harq_feedback(cell_idx, ue_caps));
   set_pdsch_td_alloc_list(serv_cell, select_td_alloc_list(cell_idx, ue_caps));
@@ -181,6 +190,25 @@ du_pdsch_resource_manager::select_res_alloc(du_cell_index_t                     
 
   // Default to resource allocation type 1 if the UE capabilities are not available.
   return pdsch_config::resource_allocation::resource_allocation_type_1;
+}
+
+unsigned du_pdsch_resource_manager::select_max_mimo_layers(du_cell_index_t                             cell_idx,
+                                                           const std::optional<ue_capability_summary>& ue_caps) const
+{
+  const unsigned cell_max = cell_cfg_list[cell_idx].ran.init_bwp.pdsch.max_nof_layers;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    return cell_max;
+  }
+
+  // The network does not configure more PDSCH layers than the UE supports. Default to a single layer, which every UE
+  // supports, if the UE capabilities are not available.
+  const nr_band band = cell_cfg_list[cell_idx].ran.dl_carrier.band;
+  if (not ue_caps.has_value() or ue_caps->bands.count(band) == 0) {
+    return std::min(cell_max, ue_capability_summary::default_pdsch_max_rank);
+  }
+
+  return std::min(cell_max, ue_caps->bands.at(band).pdsch_max_rank);
 }
 
 unsigned du_pdsch_resource_manager::select_max_nof_harqs(du_cell_index_t                             cell_idx,

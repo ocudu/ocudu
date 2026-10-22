@@ -22,6 +22,16 @@ static constexpr unsigned DEFAULT_NOF_DL_HARQS = 8;
 /// nrofHARQ-ProcessesForPUSCH.
 static constexpr unsigned DEFAULT_NOF_UL_HARQS = 16;
 
+/// Gets the maximum number of PDSCH layers the UE is configured with, given by \c maxMIMO-Layers (TS 38.331).
+static unsigned get_max_pdsch_layers(const ue_cell_configuration& ue_cell_cfg)
+{
+  const pdsch_serving_cell_config* pdsch_serv_cell = ue_cell_cfg.pdsch_serving_cell_cfg();
+  if (pdsch_serv_cell == nullptr or not pdsch_serv_cell->max_mimo_layers.has_value()) {
+    return pdsch_constants::MAX_NOF_LAYERS;
+  }
+  return *pdsch_serv_cell->max_mimo_layers;
+}
+
 ue_cell::ue_cell(du_ue_index_t                ue_index_,
                  rnti_t                       crnti_val,
                  const ue_cell_configuration& ue_cell_cfg_,
@@ -47,6 +57,7 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   components(std::move(components_)),
   logger(logger_)
 {
+  components.channel_state->set_max_dl_layers(get_max_pdsch_layers(ue_cell_cfg_));
 }
 
 void ue_cell::deactivate()
@@ -83,6 +94,8 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
   }
 
   get_pusch_power_controller().reconfigure(ue_cell_cfg);
+
+  components.channel_state->set_max_dl_layers(get_max_pdsch_layers(ue_cell_cfg));
 }
 
 std::optional<dl_harq_process_handle> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,

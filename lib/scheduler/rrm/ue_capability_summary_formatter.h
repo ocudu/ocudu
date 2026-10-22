@@ -32,6 +32,7 @@ struct formatter<ocudu::ue_capability_summary::supported_band> {
     helper.format_always(ctx, "pusch_qam256_supported={}", params.pusch_qam256_supported);
     helper.format_always(ctx, "pusch_tx_coherence={}", ocudu::to_string(params.pusch_tx_coherence));
     helper.format_always(ctx, "pusch_max_rank={}", params.pusch_max_rank);
+    helper.format_always(ctx, "pdsch_max_rank={}", params.pdsch_max_rank);
     helper.format_always(ctx, "nof_srs_tx_ports={}", params.nof_srs_tx_ports);
     helper.format_always(ctx, "max_dl_harq_process_num={}", params.max_dl_harq_process_num);
     helper.format_always(ctx, "max_ul_harq_process_num={}", params.max_ul_harq_process_num);

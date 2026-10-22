@@ -21,8 +21,12 @@ namespace test_helpers {
 /// \param[in] band        Band that reports the capability.
 /// \param[in] nof_beams   Number of beams \f$L\f$ that the user equipment supports.
 /// \param[in] nof_tx_ports Number of CSI-RS ports per resource that the user equipment supports.
+/// \param[in] nof_pdsch_layers Maximum number of PDSCH layers that the user equipment supports, either 2, 4 or 8.
 /// \return The packed container, ready for the \e CU to DU RRC Information of an F1AP message.
-byte_buffer create_typeii_ue_capability_container(nr_band band, unsigned nof_beams = 4, unsigned nof_tx_ports = 8);
+byte_buffer create_typeii_ue_capability_container(nr_band  band,
+                                                  unsigned nof_beams        = 4,
+                                                  unsigned nof_tx_ports     = 8,
+                                                  unsigned nof_pdsch_layers = 4);
 
 } // namespace test_helpers
 } // namespace ocudu

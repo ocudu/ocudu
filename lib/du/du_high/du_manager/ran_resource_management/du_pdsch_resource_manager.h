@@ -41,6 +41,7 @@ private:
   pdsch_config::resource_allocation select_res_alloc(du_cell_index_t                             cell_idx,
                                                      const std::optional<ue_capability_summary>& ue_caps) const;
   unsigned select_max_nof_harqs(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
+  unsigned select_max_mimo_layers(du_cell_index_t cell_idx, const std::optional<ue_capability_summary>& ue_caps) const;
   unsigned select_dci_harq_field_size(du_cell_index_t                             cell_idx,
                                       const std::optional<ue_capability_summary>& ue_caps) const;
   harq_dl_feedback_disabled_mask

@@ -12,6 +12,9 @@
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "ocudu/mac/mac_pdu_format.h"
+#include "ocudu/ran/csi_report/csi_report_config_helpers.h"
+#include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "ocudu/ran/csi_report/csi_report_on_pusch_helpers.h"
 #include "ocudu/scheduler/config/cg_builder_params.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
@@ -494,4 +497,145 @@ TEST_F(ntn_ue_repository_test, n_ta_updates_are_discarded_until_an_uplink_with_t
     ASSERT_FALSE(fetch_ta_cmd(ue_idx))
         << "N_TA updates measured before the uplink of the UE carried the previous TA command were not discarded";
   }
+}
+
+class mimo_layers_ue_repository_test : public ::testing::Test
+{
+protected:
+  /// Number of DL antenna ports, and therefore of PDSCH layers, of the cell under test.
+  static constexpr unsigned cell_nof_layers = 4;
+
+  static cell_config_builder_params make_builder_params()
+  {
+    cell_config_builder_params params;
+    params.dl_carrier.nof_ant = cell_nof_layers;
+    return params;
+  }
+
+  mimo_layers_ue_repository_test() :
+    expert_cfg(config_helpers::make_default_scheduler_expert_config()),
+    cfg_mng(scheduler_config{expert_cfg, metric_notif}),
+    builder_params(make_builder_params()),
+    sched_cfg(sched_config_helper::make_default_sched_cell_configuration_request(builder_params)),
+    cell_cfg(*cfg_mng.add_cell(sched_cfg)),
+    ue_db(expert_cfg.ue)
+  {
+    ue_db.register_cell(cell_ues);
+  }
+
+  /// Creates a UE configured with the given maxMIMO-Layers.
+  ue_cell& add_ue(unsigned max_mimo_layers)
+  {
+    last_ue_req = sched_config_helper::create_default_sched_ue_creation_request(
+        cell_cfg.params, std::array<lcid_t, 3>{lcid_t::LCID_SRB1, lcid_t::LCID_SRB2, lcid_t::LCID_MIN_DRB});
+    last_ue_req.ue_index = to_du_ue_index(nof_ues);
+    last_ue_req.crnti    = to_rnti(0x4601 + nof_ues);
+    ++nof_ues;
+
+    set_max_mimo_layers(last_ue_req, max_mimo_layers);
+
+    ue_config_update_event  ev     = cfg_mng.add_ue(last_ue_req);
+    const ue_configuration& ue_cfg = ev.next_config();
+    ue_db.add_ue(ue_cfg, {sched_config_helper::to_ue_creation_mode(last_ue_req), last_ue_req.ul_ccch_slot_rx});
+    ev.notify_completion();
+    return ue_db[last_ue_req.ue_index].get_pcell();
+  }
+
+  /// Reconfigures the last UE added with the given maxMIMO-Layers.
+  void reconfigure_ue(unsigned max_mimo_layers)
+  {
+    set_max_mimo_layers(last_ue_req, max_mimo_layers);
+
+    last_ue_req.cfg.cause = sched_ue_config_request::causes::other_rrc_proc;
+    ue_config_update_event ev =
+        cfg_mng.update_ue(sched_ue_reconfiguration_message{last_ue_req.ue_index, last_ue_req.crnti, last_ue_req.cfg});
+    ue_db.reconfigure_ue(ev.next_config(), last_ue_req.cfg.cause);
+    ev.notify_completion();
+  }
+
+  /// Returns the CSI-MeasConfig signalled to the last UE added.
+  const csi_meas_config& ue_csi_meas_cfg() const
+  {
+    return *(*last_ue_req.cfg.cells)[0].ded->serv_cell_cfg.csi_meas_cfg;
+  }
+
+  static void set_max_mimo_layers(sched_ue_creation_request_message& ue_req, unsigned max_mimo_layers)
+  {
+    (*ue_req.cfg.cells)[0].ded->serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
+  }
+
+  scheduler_expert_config                  expert_cfg;
+  sched_cfg_dummy_notifier                 metric_notif;
+  sched_config_manager                     cfg_mng;
+  cell_config_builder_params               builder_params;
+  sched_cell_configuration_request_message sched_cfg;
+  const cell_configuration&                cell_cfg;
+  ue_cell_repository                       cell_ues{cell_cfg, nullptr};
+  ue_repository                            ue_db;
+  /// Number of UEs added.
+  unsigned nof_ues = 0;
+  /// Request of the last UE added.
+  sched_ue_creation_request_message last_ue_req;
+};
+
+TEST_F(mimo_layers_ue_repository_test, csi_report_of_the_scheduler_does_not_depend_on_max_mimo_layers)
+{
+  // The size of the CSI report depends on the ranks allowed by the RI restriction of the UE, as per TS 38.212, Section
+  // 6.3.1.1.2.
+  for (unsigned max_mimo_layers : {1U, 2U, cell_nof_layers}) {
+    const ue_cell&                  ue_cc     = add_ue(max_mimo_layers);
+    const csi_report_configuration& sched_rep = ue_cc.cfg().csi_report_cfg();
+    const csi_report_configuration  signalled = create_csi_report_configuration(ue_csi_meas_cfg());
+
+    ASSERT_EQ(sched_rep.ri_restriction.count(), cell_nof_layers);
+    ASSERT_EQ(sched_rep.ri_restriction, signalled.ri_restriction);
+    ASSERT_EQ(get_csi_report_pucch_size(sched_rep).part1_size, get_csi_report_pucch_size(signalled).part1_size);
+    ASSERT_EQ(get_csi_report_pusch_size(sched_rep).part1_size, get_csi_report_pusch_size(signalled).part1_size);
+    ASSERT_EQ(get_csi_report_pusch_size(sched_rep).part2_max_size, get_csi_report_pusch_size(signalled).part2_max_size);
+  }
+}
+
+TEST_F(mimo_layers_ue_repository_test, reconfiguration_updates_the_pdsch_layers_and_keeps_the_csi_report)
+{
+  // The UE is configured with a single layer until its capabilities are decoded.
+  ue_cell& ue_cc = add_ue(1);
+
+  csi_report_data csi_report;
+  csi_report.ri = csi_report_data::ri_type{cell_nof_layers};
+  ue_cc.handle_csi_report(csi_report);
+  ASSERT_EQ(ue_cc.channel_state_manager().get_nof_dl_layers(), 1);
+
+  const ri_restriction_type ri_restriction = ue_cc.cfg().csi_report_cfg().ri_restriction;
+  const units::bits         csi_pucch_size = get_csi_report_pucch_size(ue_cc.cfg().csi_report_cfg()).part1_size;
+
+  for (unsigned max_mimo_layers : {2U, cell_nof_layers}) {
+    reconfigure_ue(max_mimo_layers);
+
+    ASSERT_EQ(ue_cc.channel_state_manager().get_nof_dl_layers(), max_mimo_layers);
+    ASSERT_EQ(ue_cc.cfg().csi_report_cfg().ri_restriction, ri_restriction);
+    ASSERT_EQ(get_csi_report_pucch_size(ue_cc.cfg().csi_report_cfg()).part1_size, csi_pucch_size);
+  }
+}
+
+TEST_F(mimo_layers_ue_repository_test, pdsch_layers_do_not_exceed_max_mimo_layers)
+{
+  // maxMIMO-Layers of PDSCH-ServingCellConfig limits the number of layers of every PDSCH to the UE (TS 38.331).
+  ue_cell& ue_cc = add_ue(2);
+
+  csi_report_data csi_report;
+  csi_report.ri = csi_report_data::ri_type{cell_nof_layers};
+  ue_cc.handle_csi_report(csi_report);
+
+  ASSERT_EQ(ue_cc.channel_state_manager().get_nof_dl_layers(), 2);
+}
+
+TEST_F(mimo_layers_ue_repository_test, pdsch_layers_follow_the_ri_within_max_mimo_layers)
+{
+  ue_cell& ue_cc = add_ue(cell_nof_layers);
+
+  csi_report_data csi_report;
+  csi_report.ri = csi_report_data::ri_type{cell_nof_layers};
+  ue_cc.handle_csi_report(csi_report);
+
+  ASSERT_EQ(ue_cc.channel_state_manager().get_nof_dl_layers(), cell_nof_layers);
 }

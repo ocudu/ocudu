@@ -25,6 +25,57 @@ static const asn1::rrc_nr::ntn_params_r17_s* get_ntn_params_r17(const asn1::rrc_
   return &v1700->ntn_params_r17;
 }
 
+/// \brief Decodes the maximum number of PDSCH layers that the UE supports in each band.
+///
+/// It is given by \e maxNumberMIMO-LayersPDSCH of the \e FeatureSetDownlinkPerCC of the band carriers, in any of the
+/// band combinations the UE reports. The UE omits the fallback band combinations, such as the single-carrier ones, from
+/// \e supportedBandCombinationList (TS 38.331, Section 5.6.1.4), so the carriers of a band in a carrier aggregation
+/// combination are also considered.
+static void decode_pdsch_max_rank(ue_capability_summary& ue_capability, const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
+{
+  const asn1::rrc_nr::feature_sets_s& feature_sets = ue_cap.feature_sets;
+
+  for (const auto& band_combination : ue_cap.rf_params.supported_band_combination_list) {
+    if (band_combination.feature_set_combination >= ue_cap.feature_set_combinations.size()) {
+      continue;
+    }
+    const auto& feature_sets_per_band = ue_cap.feature_set_combinations[band_combination.feature_set_combination];
+
+    for (unsigned i_band = 0, i_band_end = std::min(band_combination.band_list.size(), feature_sets_per_band.size());
+         i_band != i_band_end;
+         ++i_band) {
+      const asn1::rrc_nr::band_params_c& band_params = band_combination.band_list[i_band];
+      if (band_params.type() != asn1::rrc_nr::band_params_c::types_opts::nr) {
+        continue;
+      }
+      auto band_it = ue_capability.bands.find(static_cast<nr_band>(band_params.nr().band_nr));
+      if (band_it == ue_capability.bands.end()) {
+        continue;
+      }
+
+      for (const asn1::rrc_nr::feature_set_c& feature_set : feature_sets_per_band[i_band]) {
+        if ((feature_set.type() != asn1::rrc_nr::feature_set_c::types_opts::nr) || (feature_set.nr().dl_set_nr == 0) ||
+            (feature_set.nr().dl_set_nr > feature_sets.feature_sets_dl.size())) {
+          continue;
+        }
+
+        for (uint16_t feature_set_per_cc_id :
+             feature_sets.feature_sets_dl[feature_set.nr().dl_set_nr - 1].feature_set_list_per_dl_cc) {
+          if ((feature_set_per_cc_id == 0) || (feature_set_per_cc_id > feature_sets.feature_sets_dl_per_cc.size())) {
+            continue;
+          }
+          const auto& feature_set_per_cc = feature_sets.feature_sets_dl_per_cc[feature_set_per_cc_id - 1];
+          if (feature_set_per_cc.max_num_mimo_layers_pdsch_present) {
+            band_it->second.pdsch_max_rank =
+                std::max(band_it->second.pdsch_max_rank,
+                         static_cast<unsigned>(feature_set_per_cc.max_num_mimo_layers_pdsch.to_number()));
+          }
+        }
+      }
+    }
+  }
+}
+
 /// Helper function to convert advanced UE NR capabilities.
 static expected<ue_capability_summary, std::string> decode_advanced_ue_nr_caps(ue_capability_summary& ue_capability,
                                                                                const asn1::rrc_nr::ue_nr_cap_s& ue_cap)
@@ -326,6 +377,9 @@ expected<ue_capability_summary, std::string> odu::decode_ue_nr_cap_container(con
   // Convert advanced UE NR NTN capabilities.
   decode_advanced_ue_nr_ntn_caps(ue_caps, ue_cap);
   decode_advanced_ue_nr_redcap_caps(ue_caps, ue_cap);
+
+  // Decode the maximum number of PDSCH layers per band.
+  decode_pdsch_max_rank(ue_caps, ue_cap);
 
   return ue_caps;
 }

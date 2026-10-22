@@ -82,6 +82,7 @@ add_executable(du_ran_resource_manager_test
         du_tar_config_test.cpp
         du_ue_koffset_config_test.cpp
         du_csi_codebook_config_test.cpp
+        du_pdsch_mimo_layers_config_test.cpp
         decode_ue_nr_cap_container_test.cpp
         du_meas_config_manager_test.cpp
         du_pxsch_repetition_resource_manager_test.cpp
