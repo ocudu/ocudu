@@ -347,12 +347,14 @@ ubuntu-dpdk-builder arm64:
 .image-build-publish:
   extends: .docker-builder
   stage: publish
+  artifacts: null
   variables:
     OS_FAMILY: none
     OS_NAME: none
     OS_VERSION: none
     MULTI_ARCH_BUILD: "true"
     MODE: publish
+    CONTAINER_SECURITY_ANALYSIS_SKIP: "true"
   tags:
     - $OCUDU_RUNNER_TAG-${PLATFORM}
   timeout: 2 hours

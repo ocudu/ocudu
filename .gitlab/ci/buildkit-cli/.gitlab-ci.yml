@@ -12,6 +12,7 @@ build-and-publish:
   stage: publish
   extends: .docker-builder
   image: ${CI_REGISTRY_IMAGE}/buildkit-cli:latest
+  artifacts: null
   rules:
     - if: $ON_MR
   variables: &image_variables
@@ -21,6 +22,7 @@ build-and-publish:
     BUILD_ARGS: BUILDKIT_CLI_VERSION=${BUILDKIT_CLI_VERSION}
     MULTI_ARCH_BUILD: "true"
     MODE: publish
+    CONTAINER_SECURITY_ANALYSIS_SKIP: "true"
   parallel:
     matrix:
       - PLATFORM: ["arm64", "amd64"]

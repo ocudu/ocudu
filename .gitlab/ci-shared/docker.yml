@@ -26,8 +26,7 @@ variables:
     OVERWRITE: "false"
     ATTESTATION_FILE: ""
     ATTESTATION_EXPECTED_FILES: ""
-    GRYPE_SKIP: "false"
-    CONTAINER_SBOM_SKIP: "false" # Requires GRYPE_SKIP=true
+    CONTAINER_SECURITY_ANALYSIS_SKIP: "false" # Skip container SBOM and vulnerability analysis for CI-only images
     BUILDKITD_FLAGS: "--root ${CI_BUILDS_DIR}/.buildkit-${CI_CONCURRENT_ID}" # Non-overlay root so BuildKit can use the overlayfs snapshotter
     CONTAINER_SPDX_MAX_BYTES: "10000000"
     COSIGN_YES: "true" # Used by Cosign to skip confirmation prompts for non-destructive operations
@@ -70,10 +69,6 @@ variables:
       fi
       if [ -n "$BUILD_SECRETS" ]; then
         BUILD_SECRETS=$(echo "$BUILD_SECRETS" | sed 's/;/ --secret /g; s/^/--secret /')
-      fi
-      if [ "${CONTAINER_SBOM_SKIP}" = "true" ] && [ "${GRYPE_SKIP}" != "true" ]; then
-        echo "CONTAINER_SBOM_SKIP=true requires GRYPE_SKIP=true" >&2
-        exit 1
       fi
       BUILD_ARGS="${BUILD_ARGS} ${BUILD_SECRETS} --opt build-arg:PIP_EXTRA_INDEX_URL=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/pypi/simple"
 
@@ -311,13 +306,13 @@ variables:
           fi
         fi
 
-        if [ "${CONTAINER_SBOM_SKIP}" != "true" ] || [ -n "${ATTESTATION_FILE}" ]; then
+        if [ "${CONTAINER_SECURITY_ANALYSIS_SKIP}" != "true" ] || [ -n "${ATTESTATION_FILE}" ]; then
           # Re-runs replace attestations so SBOM and vulnerability records do not accumulate
           echo "=== Cleaning previous attestations ==="
           cosign clean --type=attestation --force ${IMAGE_DIGEST}
         fi
 
-        if [ "${CONTAINER_SBOM_SKIP}" != "true" ]; then
+        if [ "${CONTAINER_SECURITY_ANALYSIS_SKIP}" != "true" ]; then
           echo "=== Generating container SPDX ==="
           generate_container_spdx "registry:${IMAGE_DIGEST}"
           echo "=== Attesting container SPDX ==="
@@ -330,7 +325,7 @@ variables:
           echo ""
         fi
 
-        if [ "${GRYPE_SKIP}" != "true" ]; then
+        if [ "${CONTAINER_SECURITY_ANALYSIS_SKIP}" != "true" ]; then
           echo "=== Running grype CVE scan on ${IMAGE_DIGEST} ==="
           SCAN_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           # Keep every finding in the report, the failure threshold is applied after attesting it
@@ -346,7 +341,7 @@ variables:
 
     # Scan test builds
     - |
-      if [ "${MODE}" = "test" ] && [ "${GRYPE_SKIP}" != "true" ]; then
+      if [ "${MODE}" = "test" ] && [ "${CONTAINER_SECURITY_ANALYSIS_SKIP}" != "true" ]; then
         # Same inventory and gate as a publish, so a merge request fails where the publish would
         SCAN_SOURCE="oci-archive:image.tar"
         if [ "${SKIP_IMAGE_BUILD}" = "true" ]; then

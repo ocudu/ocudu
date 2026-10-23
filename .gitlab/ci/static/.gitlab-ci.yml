@@ -24,6 +24,7 @@ static version increased:
 build-and-publish:
   stage: publish
   extends: .docker-builder
+  artifacts: null
   rules:
     - if: $ON_MR
   variables: &image_variables
@@ -32,7 +33,7 @@ build-and-publish:
     VERSION: ${DOCKER_STATIC_VERSION}
     MULTI_ARCH_BUILD: "true"
     MODE: publish
-    GRYPE_SKIP: "false"
+    CONTAINER_SECURITY_ANALYSIS_SKIP: "true"
   parallel:
     matrix:
       - PLATFORM: ["arm64", "amd64"]

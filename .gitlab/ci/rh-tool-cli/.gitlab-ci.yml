@@ -12,6 +12,7 @@ rh-tool-cli build-and-publish:
   stage: publish
   extends: .docker-builder
   image: ${CI_REGISTRY_IMAGE}/buildkit-cli:latest
+  artifacts: null
   rules:
     - if: $ON_MR
     - if: $ON_WEB
@@ -26,7 +27,7 @@ rh-tool-cli build-and-publish:
     MULTI_ARCH_BUILD: "true"
     MODE: publish
     PREFLIGHT_VERSION: "1.19.1"
-    GRYPE_SKIP: "true"
+    CONTAINER_SECURITY_ANALYSIS_SKIP: "true"
   parallel:
     matrix:
       - PLATFORM: ["arm64", "amd64"]

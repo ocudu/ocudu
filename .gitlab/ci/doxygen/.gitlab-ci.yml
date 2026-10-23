@@ -13,6 +13,7 @@ stages:
 build-and-publish:
   extends: .docker-builder
   stage: publish
+  artifacts: null
   rules:
     - if: $ON_MR
   variables:
@@ -21,3 +22,4 @@ build-and-publish:
     VERSION: "${DOXYGEN_VERSION}-${PLANTUML_VERSION}"
     BUILD_ARGS: DOXYGEN_VERSION=${DOXYGEN_VERSION};PLANTUML_VERSION=${PLANTUML_VERSION}
     MODE: publish
+    CONTAINER_SECURITY_ANALYSIS_SKIP: "true"
