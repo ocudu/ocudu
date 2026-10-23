@@ -509,13 +509,18 @@ smoke cuda cached:
     - if: $ON_MR
       changes: &cuda_changes
         paths:
-          - lib/cuda/**/*
-          - include/ocudu/cuda/**/*
-          - tests/unittests/cuda/**/*
-          - lib/phy/support/*cuda_visible*
-          - tests/unittests/phy/support/*cuda_visible*
-          - lib/phy/upper/channel_processors/prach/*cuda*
-          - tests/unittests/phy/upper/channel_processors/prach/*cuda*
+          # Any directory named cuda, which is where the kernels and the CUDA layer live.
+          - "**/cuda/**/*"
+          # The accelerated implementations outside those directories. They are named after
+          # the technology, either cuda or gpu, wherever they sit beside their CPU siblings.
+          - "lib/**/*cuda*"
+          - "lib/**/*gpu*"
+          - "include/**/*cuda*"
+          - "include/**/*gpu*"
+          - "tests/**/*cuda*"
+          - "tests/**/*gpu*"
+          - "apps/**/*cuda*"
+          - "apps/**/*gpu*"
           - cmake/modules/add_cuda_test.cmake
           - cmake/modules/FindVkFFT.cmake
     - if: $ON_MR
