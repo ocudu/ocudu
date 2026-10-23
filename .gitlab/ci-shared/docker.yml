@@ -27,6 +27,7 @@ variables:
     ATTESTATION_FILE: ""
     ATTESTATION_EXPECTED_FILES: ""
     GRYPE_SKIP: "false"
+    CONTAINER_SBOM_SKIP: "false" # Requires GRYPE_SKIP=true
     BUILDKITD_FLAGS: "--root ${CI_BUILDS_DIR}/.buildkit-${CI_CONCURRENT_ID}" # Non-overlay root so BuildKit can use the overlayfs snapshotter
     CONTAINER_SPDX_MAX_BYTES: "10000000"
     COSIGN_YES: "true" # Used by Cosign to skip confirmation prompts for non-destructive operations
@@ -69,6 +70,10 @@ variables:
       fi
       if [ -n "$BUILD_SECRETS" ]; then
         BUILD_SECRETS=$(echo "$BUILD_SECRETS" | sed 's/;/ --secret /g; s/^/--secret /')
+      fi
+      if [ "${CONTAINER_SBOM_SKIP}" = "true" ] && [ "${GRYPE_SKIP}" != "true" ]; then
+        echo "CONTAINER_SBOM_SKIP=true requires GRYPE_SKIP=true" >&2
+        exit 1
       fi
       BUILD_ARGS="${BUILD_ARGS} ${BUILD_SECRETS} --opt build-arg:PIP_EXTRA_INDEX_URL=https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/pypi/simple"
 
@@ -306,14 +311,18 @@ variables:
           fi
         fi
 
-        # Re-runs replace attestations so SBOM and vulnerability records do not accumulate
-        echo "=== Cleaning previous attestations ==="
-        cosign clean --type=attestation --force ${IMAGE_DIGEST}
+        if [ "${CONTAINER_SBOM_SKIP}" != "true" ] || [ -n "${ATTESTATION_FILE}" ]; then
+          # Re-runs replace attestations so SBOM and vulnerability records do not accumulate
+          echo "=== Cleaning previous attestations ==="
+          cosign clean --type=attestation --force ${IMAGE_DIGEST}
+        fi
 
-        echo "=== Generating container SPDX ==="
-        generate_container_spdx "registry:${IMAGE_DIGEST}"
-        echo "=== Attesting container SPDX ==="
-        attest_spdx container.spdx.json spdxjson
+        if [ "${CONTAINER_SBOM_SKIP}" != "true" ]; then
+          echo "=== Generating container SPDX ==="
+          generate_container_spdx "registry:${IMAGE_DIGEST}"
+          echo "=== Attesting container SPDX ==="
+          attest_spdx container.spdx.json spdxjson
+        fi
 
         if [ -n "$ATTESTATION_FILE" ]; then
           echo "=== Attesting ${ATTESTATION_FILE} ==="
