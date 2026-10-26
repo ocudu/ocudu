@@ -57,15 +57,34 @@ void ocudu::ocucp::merge_old_drb_association_from_as_config(up_old_drb_associati
   }
 
   for (const auto& drb : recfg_ies.radio_bearer_cfg.drb_to_add_mod_list) {
-    if (!drb.cn_assoc_present ||
-        drb.cn_assoc.type() != asn1::rrc_nr::drb_to_add_mod_s::cn_assoc_c_::types_opts::sdap_cfg) {
+    const drb_id_t drb_id = uint_to_drb_id(drb.drb_id);
+    if (drb.cn_assoc_present and
+        drb.cn_assoc.type() == asn1::rrc_nr::drb_to_add_mod_s::cn_assoc_c_::types_opts::sdap_cfg) {
+      const auto& sdap_cfg = drb.cn_assoc.sdap_cfg();
+      auto&       flows    = old_drb_association[uint_to_pdu_session_id(sdap_cfg.pdu_session)];
+      for (uint8_t qfi : sdap_cfg.mapped_qos_flows_to_add) {
+        flows[uint_to_qos_flow_id(qfi)] = {drb_id};
+      }
+    }
+    if (not drb.pdcp_cfg_present or not drb.pdcp_cfg.drb_present) {
       continue;
     }
-    const auto&      sdap_cfg = drb.cn_assoc.sdap_cfg();
-    pdu_session_id_t psi      = uint_to_pdu_session_id(sdap_cfg.pdu_session);
-    drb_id_t         drb_id   = uint_to_drb_id(drb.drb_id);
-    for (uint8_t qfi : sdap_cfg.mapped_qos_flows_to_add) {
-      old_drb_association[psi][uint_to_qos_flow_id(qfi)] = drb_id;
+    // The flow mapping may already have arrived through the native handover IE.
+    for (auto& session : old_drb_association) {
+      for (auto& flow : session.second) {
+        auto& source = flow.second;
+        if (source.drb_id != drb_id) {
+          continue;
+        }
+        if (drb.pdcp_cfg.drb.pdcp_sn_size_dl_present) {
+          source.pdcp_sn_size_dl =
+              drb.pdcp_cfg.drb.pdcp_sn_size_dl.to_number() == 12 ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
+        }
+        if (drb.pdcp_cfg.drb.pdcp_sn_size_ul_present) {
+          source.pdcp_sn_size_ul =
+              drb.pdcp_cfg.drb.pdcp_sn_size_ul.to_number() == 12 ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
+        }
+      }
     }
   }
 }
@@ -105,52 +124,6 @@ std::optional<rrc_ue_capabilities_t> ocudu::ocucp::decode_handover_capabilities(
     return std::nullopt;
   }
   return rrc_ue_capabilities_t{};
-}
-
-bool ocudu::ocucp::preserve_redcap_pdcp_sn_lengths(up_config_update&            update,
-                                                   const byte_buffer&           container,
-                                                   const rrc_ue_capabilities_t& capabilities)
-{
-  if (not capabilities.redcap.has_value() or update.pdu_sessions_to_setup_list.empty()) {
-    return true;
-  }
-  auto info = unpack_handover_preparation(container);
-  if (not info.has_value() or not info->crit_exts.c1().ho_prep_info().source_cfg_present) {
-    return false;
-  }
-  const auto&               source = info->crit_exts.c1().ho_prep_info().source_cfg;
-  asn1::rrc_nr::rrc_recfg_s reconfiguration;
-  asn1::cbit_ref            reader{source.rrc_recfg};
-  if (reconfiguration.unpack(reader) != asn1::OCUDUASN_SUCCESS or
-      reconfiguration.crit_exts.type() != asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg or
-      not reconfiguration.crit_exts.rrc_recfg().radio_bearer_cfg_present) {
-    return false;
-  }
-  const auto& source_drbs = reconfiguration.crit_exts.rrc_recfg().radio_bearer_cfg.drb_to_add_mod_list;
-  // Admission limits apply to the target DRBs allocated by the UP resource manager, not all source DRBs.
-  for (auto& session : update.pdu_sessions_to_setup_list) {
-    for (auto& target : session.second.drb_to_add) {
-      const auto old = std::find_if(source_drbs.begin(), source_drbs.end(), [&](const auto& drb) {
-        return drb.drb_id == to_underlying(target.first);
-      });
-      if (not target.second.source_drb_id_confirmed or old == source_drbs.end() or not old->pdcp_cfg_present or
-          not old->pdcp_cfg.drb_present or not old->pdcp_cfg.drb.pdcp_sn_size_dl_present or
-          not old->pdcp_cfg.drb.pdcp_sn_size_ul_present) {
-        return false;
-      }
-      const auto dl =
-          old->pdcp_cfg.drb.pdcp_sn_size_dl.to_number() == 12 ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
-      const auto ul =
-          old->pdcp_cfg.drb.pdcp_sn_size_ul.to_number() == 12 ? pdcp_sn_size::size12bits : pdcp_sn_size::size18bits;
-      if (not capabilities.redcap->pdcp_long_sn_supported and
-          (dl != pdcp_sn_size::size12bits or ul != pdcp_sn_size::size12bits)) {
-        return false;
-      }
-      target.second.pdcp_cfg.tx.sn_size = dl;
-      target.second.pdcp_cfg.rx.sn_size = ul;
-    }
-  }
-  return true;
 }
 
 bool ocudu::ocucp::handle_context_setup_response(

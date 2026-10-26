@@ -1269,3 +1269,27 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, redcap_target_handover_allocates_from_fo
   ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
   ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
 }
+
+TEST_F(cu_cp_inter_cu_ng_handover_test,
+       when_ordinary_source_uses_12bit_pdcp_then_target_preserves_it_despite_18bit_defaults)
+{
+  auto                         container = test_helpers::make_redcap_handover_preparation(false);
+  asn1::rrc_nr::ho_prep_info_s info;
+  asn1::cbit_ref               reader{container};
+  ASSERT_EQ(info.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  info.crit_exts.c1().ho_prep_info().ue_cap_rat_list.clear();
+  byte_buffer   ordinary_container;
+  asn1::bit_ref writer{ordinary_container};
+  ASSERT_EQ(info.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request({}, &ordinary_container));
+  const auto& drb = get_pdu_session_res_to_setup_item(e1ap_pdu).drb_to_setup_list_ng_ran[0];
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_dl, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_ul, asn1::e1ap::pdcp_sn_size_opts::s_neg12);
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request({drb_id_t::drb1}));
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}

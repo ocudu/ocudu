@@ -15,23 +15,14 @@
 namespace ocudu {
 namespace ocucp {
 
-/// Decodes the source's AS-Config, embedded in the RRC HandoverPreparationInformation, and merges its DRB-to-QoS-flow
-/// mapping into \c old_drb_association. This lets DRB allocation at this node prefer reusing the source's DRB ID for
-/// the same QoS flow, keeping DRB numbering consistent with the source where possible (DRB IDs are otherwise allocated
-/// independently by each RAN node; see TS 38.300 section 9.2.3.2.3). AS-Config carries the UE's full current radio
-/// bearer configuration (TS 38.331 section 11.2.3), so it is the source of that hint whenever the peer signals PDU
-/// sessions without a DRB-to-QoS-flow mapping.
+/// Merges the source DRB-to-QoS-flow mapping and PDCP SN lengths from AS-Config into the handover association,
+/// as per TS 38.331, Section 11.2.3.
 void merge_old_drb_association_from_as_config(up_old_drb_association&       old_drb_association,
                                               const byte_buffer&            rrc_handover_preparation_information,
                                               const ocudulog::basic_logger& logger);
 
 /// Decodes capabilities forwarded in HandoverPreparationInformation, as per TS 38.331, Section 11.2.2.
 std::optional<rrc_ue_capabilities_t> decode_handover_capabilities(const byte_buffer& container);
-
-/// Preserves supported RedCap PDCP SN lengths from the source AS-Config, as per TS 38.331, Section 6.3.2.
-bool preserve_redcap_pdcp_sn_lengths(up_config_update&            update,
-                                     const byte_buffer&           container,
-                                     const rrc_ue_capabilities_t& capabilities);
 
 /// \brief Handle UE context setup response from target DU and prefills the Bearer context modification.
 bool handle_context_setup_response(cu_cp_intra_cu_handover_response&         response_msg,

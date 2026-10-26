@@ -58,11 +58,6 @@ void retrieved_context_setup_routine::operator()(coro_context<async_task<bool>>&
       logger.warning("ue={}: \"{}\" failed. Cause: No PDU sessions admitted", ue_index, name());
       CORO_EARLY_RETURN(false);
     }
-    if (not preserve_redcap_pdcp_sn_lengths(next_config, retrieval_context.rrc_context, *capabilities)) {
-      logger.warning(
-          "ue={}: \"{}\" failed. Cause: Missing or incompatible source PDCP SN configuration", ue_index, name());
-      CORO_EARLY_RETURN(false);
-    }
   }
 
   // Establish the bearers at the CU-UP from the retrieved PDU session list.

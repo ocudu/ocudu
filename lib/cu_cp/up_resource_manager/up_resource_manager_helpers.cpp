@@ -225,12 +225,13 @@ static drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session
                                   const up_resource_manager_cfg&     cfg,
                                   const rrc_ue_capabilities_t&       capabilities,
                                   const ocudulog::basic_logger&      logger,
-                                  std::optional<drb_id_t>            preferred_drb_id = std::nullopt)
+                                  const up_old_drb_context*          source_drb = nullptr)
 {
   five_qi_t five_qi = get_five_qi(qos_flow, cfg, logger);
   ocudu_assert(five_qi != five_qi_t::invalid, "5QI cannot be invalid.");
 
-  const uint8_t max_nof_drbs = get_max_nof_drbs(cfg, capabilities);
+  const uint8_t max_nof_drbs     = get_max_nof_drbs(cfg, capabilities);
+  const auto    preferred_drb_id = source_drb != nullptr ? std::optional<drb_id_t>{source_drb->drb_id} : std::nullopt;
 
   drb_id_t drb_id =
       allocate_drb_id(new_session_context, full_context, config_update, max_nof_drbs, logger, preferred_drb_id);
@@ -263,6 +264,17 @@ static drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session
   if (capabilities.redcap.has_value() and not capabilities.redcap->pdcp_long_sn_supported) {
     drb_ctx.pdcp_cfg.tx.sn_size = pdcp_sn_size::size12bits;
     drb_ctx.pdcp_cfg.rx.sn_size = pdcp_sn_size::size12bits;
+  }
+  if (drb_ctx.source_drb_id_confirmed) {
+    // An existing source bearer retains its SN lengths even when the target has different QoS defaults.
+    drb_ctx.pdcp_cfg.tx.sn_size = source_drb->pdcp_sn_size_dl.value_or(drb_ctx.pdcp_cfg.tx.sn_size);
+    drb_ctx.pdcp_cfg.rx.sn_size = source_drb->pdcp_sn_size_ul.value_or(drb_ctx.pdcp_cfg.rx.sn_size);
+    if (capabilities.redcap.has_value() and not capabilities.redcap->pdcp_long_sn_supported and
+        (drb_ctx.pdcp_cfg.tx.sn_size != pdcp_sn_size::size12bits or
+         drb_ctx.pdcp_cfg.rx.sn_size != pdcp_sn_size::size12bits)) {
+      logger.warning("Cannot allocate {}: source PDCP SN lengths exceed the UE capabilities", qos_flow.qos_flow_id);
+      return drb_id_t::invalid;
+    }
   }
   drb_ctx.sdap_cfg = set_rrc_sdap_config(drb_ctx);
   drb_ctx.rlc_mod  = (drb_ctx.pdcp_cfg.rlc_mode == pdcp_rlc_mode::am) ? rlc_mode::am : rlc_mode::um_bidir;
@@ -349,20 +361,19 @@ ocudu::ocucp::calculate_update(const slotted_id_vector<pdu_session_id_t, cu_cp_p
         pdu_session.pdu_session_id, pdu_session.pdu_session_type, pdu_session.ul_ngu_up_tnl_info);
 
     auto old_drb_association_it = old_drb_association.find(pdu_session.pdu_session_id);
-    const std::map<qos_flow_id_t, drb_id_t>* old_flow_to_drb_id =
+    const std::map<qos_flow_id_t, up_old_drb_context>* old_flow_to_drb_id =
         old_drb_association_it != old_drb_association.end() ? &old_drb_association_it->second : nullptr;
 
     for (const auto& flow_item : pdu_session.qos_flow_setup_request_items) {
-      std::optional<drb_id_t> preferred_drb_id;
+      const up_old_drb_context* source_drb = nullptr;
       if (old_flow_to_drb_id != nullptr) {
         auto old_drb_id_it = old_flow_to_drb_id->find(flow_item.qos_flow_id);
         if (old_drb_id_it != old_flow_to_drb_id->end()) {
-          preferred_drb_id = old_drb_id_it->second;
+          source_drb = &old_drb_id_it->second;
         }
       }
 
-      auto drb_id =
-          allocate_qos_flow(new_ctxt, flow_item, config, context, cfg, capabilities, logger, preferred_drb_id);
+      auto drb_id = allocate_qos_flow(new_ctxt, flow_item, config, context, cfg, capabilities, logger, source_drb);
       if (drb_id == drb_id_t::invalid) {
         logger.warning("Couldn't allocate {}", flow_item.qos_flow_id);
         continue;
