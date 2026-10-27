@@ -89,8 +89,6 @@ bool ue_context_setup_procedure::find_or_create_f1ap_ue_context()
   ue_ctxt = ue_ctxt_list.find(request.ue_index);
   if (ue_ctxt != nullptr) {
     logger.debug("{}: UE context found", f1ap_ue_log_prefix{ue_ctxt->ue_ids, name()});
-    // Reset release state so the context can be released again if needed (e.g. RRC Resume flow).
-    ue_ctxt->reset_release_state(); // TODO: This is a temporary solution, F1AP context should not be reused
     return true;
   }
 

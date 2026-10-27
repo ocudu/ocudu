@@ -8,6 +8,7 @@
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include <algorithm>
+#include <vector>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -136,26 +137,88 @@ void f1ap_ue_context_list::add_du_ue_f1ap_id(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_d
   ue.logger.set_prefix({ue.ue_ids.ue_index, ue.ue_ids.cu_ue_f1ap_id, ue.ue_ids.du_ue_f1ap_id}, ": ");
 }
 
+void f1ap_ue_context_list::update_ue_index(gnb_cu_ue_f1ap_id_t cu_ue_id, cu_cp_ue_index_t ue_index)
+{
+  ocudu_assert(ue_index != cu_cp_ue_index_t::invalid, "Invalid ue_index={}", ue_index);
+  auto ue_it = ues.find(cu_ue_id);
+  ocudu_assert(ue_it != ues.end(), "cu_ue={}: F1AP UE context not found", fmt::underlying(cu_ue_id));
+
+  f1ap_ue_context& ue = ue_it->second;
+  ue_index_to_ue_f1ap_id.erase(ue.ue_ids.ue_index);
+
+  auto it = ue_index_to_ue_f1ap_id.find(ue_index);
+  if (it != ue_index_to_ue_f1ap_id.end()) {
+    gnb_cu_ue_f1ap_id_t replaced_cu_ue_id = it->second;
+    it->second                            = cu_ue_id;
+    auto replaced_it                      = ues.find(replaced_cu_ue_id);
+    ocudu_assert(replaced_it != ues.end(), "cu_ue={}: F1AP UE context not found", fmt::underlying(replaced_cu_ue_id));
+    if (replaced_it->second.release_complete_event.is_set()) {
+      remove_ue(replaced_cu_ue_id);
+    }
+  } else {
+    ue_index_to_ue_f1ap_id.emplace(ue_index, cu_ue_id);
+  }
+
+  ue.logger.log_debug("Updating ue={}", ue_index);
+  ue.ue_ids.ue_index = ue_index;
+  ue.logger.set_prefix({ue.ue_ids.ue_index, ue.ue_ids.cu_ue_f1ap_id, ue.ue_ids.du_ue_f1ap_id}, ": ");
+}
+
+bool f1ap_ue_context_list::is_replaced(gnb_cu_ue_f1ap_id_t cu_ue_id) const
+{
+  auto it = ues.find(cu_ue_id);
+  if (it == ues.end()) {
+    return false;
+  }
+  auto lookup_it = ue_index_to_ue_f1ap_id.find(it->second.ue_ids.ue_index);
+  return lookup_it == ue_index_to_ue_f1ap_id.end() or lookup_it->second != cu_ue_id;
+}
+
 void f1ap_ue_context_list::remove_ue(cu_cp_ue_index_t ue_index)
 {
   ocudu_assert(ue_index != cu_cp_ue_index_t::invalid, "Invalid ue_index={}", ue_index);
 
-  if (ue_index_to_ue_f1ap_id.find(ue_index) == ue_index_to_ue_f1ap_id.end()) {
+  auto it = ue_index_to_ue_f1ap_id.find(ue_index);
+  if (it == ue_index_to_ue_f1ap_id.end()) {
     logger.warning("ue={}: gNB-CU-UE-F1AP-ID not found", ue_index);
     return;
   }
 
   // Remove UE from lookup
-  gnb_cu_ue_f1ap_id_t cu_ue_id = ue_index_to_ue_f1ap_id.at(ue_index);
-  ue_index_to_ue_f1ap_id.erase(ue_index);
+  gnb_cu_ue_f1ap_id_t cu_ue_id = it->second;
+  ue_index_to_ue_f1ap_id.erase(it);
+  remove_ue(cu_ue_id);
 
-  if (ues.find(cu_ue_id) == ues.end()) {
+  // Remove the replaced UE contexts of the UE. Only replaced UE contexts have no lookup entry.
+  if (ues.size() > ue_index_to_ue_f1ap_id.size()) {
+    std::vector<gnb_cu_ue_f1ap_id_t> replaced_cu_ue_ids;
+    for (const auto& u : ues) {
+      if (u.second.ue_ids.ue_index == ue_index and not u.second.is_release_running()) {
+        replaced_cu_ue_ids.push_back(u.first);
+      }
+    }
+    for (gnb_cu_ue_f1ap_id_t replaced_cu_ue_id : replaced_cu_ue_ids) {
+      remove_ue(replaced_cu_ue_id);
+    }
+  }
+}
+
+void f1ap_ue_context_list::remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  auto it = ues.find(cu_ue_id);
+  if (it == ues.end()) {
     logger.warning("cu_ue={}: F1AP UE context not found", fmt::underlying(cu_ue_id));
     return;
   }
 
-  logger.debug("ue={} cu_ue={}: Removing F1AP UE context", ue_index, fmt::underlying(cu_ue_id));
-  ues.erase(cu_ue_id);
+  // Remove the lookup entry, if the UE context is the current UE context of its UE index.
+  auto lookup_it = ue_index_to_ue_f1ap_id.find(it->second.ue_ids.ue_index);
+  if (lookup_it != ue_index_to_ue_f1ap_id.end() and lookup_it->second == cu_ue_id) {
+    ue_index_to_ue_f1ap_id.erase(lookup_it);
+  }
+
+  logger.debug("ue={} cu_ue={}: Removing F1AP UE context", it->second.ue_ids.ue_index, fmt::underlying(cu_ue_id));
+  ues.erase(it);
   cu_ue_id_alloc.release(cu_ue_id);
 }
 

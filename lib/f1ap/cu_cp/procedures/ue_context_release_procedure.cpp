@@ -17,9 +17,13 @@ using namespace asn1::f1ap;
 
 ue_context_release_procedure::ue_context_release_procedure(const f1ap_configuration&              f1ap_cfg_,
                                                            const f1ap_ue_context_release_command& cmd_,
-                                                           f1ap_ue_context&                       ue_ctxt_,
+                                                           f1ap_ue_context_list&                  ue_ctxt_list_,
                                                            f1ap_message_notifier&                 f1ap_notif_) :
-  f1ap_cfg(f1ap_cfg_), ue_ctxt(ue_ctxt_), f1ap_notifier(f1ap_notif_), logger(ocudulog::fetch_basic_logger("CU-CP-F1"))
+  f1ap_cfg(f1ap_cfg_),
+  ue_ctxt_list(ue_ctxt_list_),
+  ue_ctxt(ue_ctxt_list[cmd_.ue_index]),
+  f1ap_notifier(f1ap_notif_),
+  logger(ocudulog::fetch_basic_logger("CU-CP-F1"))
 {
   command->gnb_cu_ue_f1ap_id = to_underlying(ue_ctxt.ue_ids.cu_ue_f1ap_id);
   command->gnb_du_ue_f1ap_id = to_underlying(*ue_ctxt.ue_ids.du_ue_f1ap_id);
@@ -80,6 +84,13 @@ void ue_context_release_procedure::operator()(coro_context<async_task<cu_cp_ue_i
   // Notify any other callers waiting for release.
   ue_ctxt.release_complete_event.set(release_result);
 
+  // An RRC Resume can replace the UE context while the release runs. No other procedure uses the replaced UE context,
+  // so the release procedure removes it. The event can resume other release callers that remove the UE context. Thus,
+  // the gNB-CU UE F1AP ID comes from the command.
+  if (ue_ctxt_list.is_replaced(int_to_gnb_cu_ue_f1ap_id(command->gnb_cu_ue_f1ap_id))) {
+    ue_ctxt_list.remove_ue(int_to_gnb_cu_ue_f1ap_id(command->gnb_cu_ue_f1ap_id));
+  }
+
   CORO_RETURN(release_result);
 }
 
@@ -99,8 +110,7 @@ cu_cp_ue_index_t ue_context_release_procedure::create_ue_context_release_complet
 {
   if (transaction_sink.successful()) {
     // The UE Context Release Complete carries the ID pair of the released F1-connection (TS 38.473 section 9.2.2.6).
-    // Thus, compare with the gNB-DU UE F1AP ID of the command. The UE context can already hold the ID of a new
-    // F1-connection, e.g. after an RRC Resume.
+    // Thus, compare with the gNB-DU UE F1AP ID of the command.
     if (transaction_sink.response()->gnb_du_ue_f1ap_id != command->gnb_du_ue_f1ap_id) {
       logger.warning("{}: Procedure failed. Cause: gNB-DU-UE-F1AP-ID mismatch.",
                      f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});

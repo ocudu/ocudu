@@ -161,3 +161,51 @@ TEST_F(f1ap_cu_ue_context_test, when_max_cu_ue_f1ap_id_is_allocated_then_allocat
   ASSERT_EQ(cu_ue_id_alloc.allocate(), gnb_cu_ue_f1ap_id_t::max);
   ASSERT_EQ(cu_ue_id_alloc.allocate(), gnb_cu_ue_f1ap_id_t::min);
 }
+
+TEST_F(f1ap_cu_ue_context_test, when_ue_index_is_updated_and_old_release_has_completed_then_old_ue_context_is_removed)
+{
+  cu_cp_ue_index_t ue_index     = uint_to_ue_index(0);
+  cu_cp_ue_index_t new_ue_index = uint_to_ue_index(1);
+  f1ap_ue_context& old_ue       = ue_ctxt_list.add_ue(ue_index, int_to_gnb_cu_ue_f1ap_id(0));
+  ue_ctxt_list.add_ue(new_ue_index, int_to_gnb_cu_ue_f1ap_id(1));
+  old_ue.marked_for_release = true;
+  old_ue.release_complete_event.set(ue_index);
+
+  ue_ctxt_list.update_ue_index(int_to_gnb_cu_ue_f1ap_id(1), ue_index);
+
+  ASSERT_FALSE(ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(0)));
+  ASSERT_FALSE(ue_ctxt_list.contains(new_ue_index));
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.cu_ue_f1ap_id, int_to_gnb_cu_ue_f1ap_id(1));
+  ASSERT_EQ(ue_ctxt_list.size(), 1);
+}
+
+TEST_F(f1ap_cu_ue_context_test, when_ue_index_is_updated_and_old_release_is_running_then_old_ue_context_stays)
+{
+  cu_cp_ue_index_t ue_index = uint_to_ue_index(0);
+  f1ap_ue_context& old_ue   = ue_ctxt_list.add_ue(ue_index, int_to_gnb_cu_ue_f1ap_id(0));
+  ue_ctxt_list.add_ue(uint_to_ue_index(1), int_to_gnb_cu_ue_f1ap_id(1));
+  old_ue.marked_for_release = true;
+
+  ue_ctxt_list.update_ue_index(int_to_gnb_cu_ue_f1ap_id(1), ue_index);
+  ASSERT_TRUE(ue_ctxt_list.is_replaced(int_to_gnb_cu_ue_f1ap_id(0)));
+  ASSERT_EQ(ue_ctxt_list[ue_index].ue_ids.cu_ue_f1ap_id, int_to_gnb_cu_ue_f1ap_id(1));
+
+  // The removal of the UE keeps the replaced UE context, because its release procedure removes it.
+  ue_ctxt_list.remove_ue(ue_index);
+  ASSERT_TRUE(ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(0)));
+  ASSERT_FALSE(ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(1)));
+}
+
+TEST_F(f1ap_cu_ue_context_test, when_ue_index_is_updated_and_old_ue_context_is_not_released_then_it_is_removed_with_ue)
+{
+  cu_cp_ue_index_t ue_index = uint_to_ue_index(0);
+  ue_ctxt_list.add_ue(ue_index, int_to_gnb_cu_ue_f1ap_id(0));
+  ue_ctxt_list.add_ue(uint_to_ue_index(1), int_to_gnb_cu_ue_f1ap_id(1));
+
+  ue_ctxt_list.update_ue_index(int_to_gnb_cu_ue_f1ap_id(1), ue_index);
+  ASSERT_TRUE(ue_ctxt_list.contains(int_to_gnb_cu_ue_f1ap_id(0)));
+  ASSERT_TRUE(ue_ctxt_list.is_replaced(int_to_gnb_cu_ue_f1ap_id(0)));
+
+  ue_ctxt_list.remove_ue(ue_index);
+  ASSERT_EQ(ue_ctxt_list.size(), 0);
+}

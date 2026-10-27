@@ -429,6 +429,24 @@ const cu_cp_test_environment::ue_context* cu_cp_test_environment::find_ue_contex
   return &attached_ues.at(it->second);
 }
 
+void cu_cp_test_environment::update_ue_f1ap_ids(unsigned            du_idx,
+                                                gnb_du_ue_f1ap_id_t old_du_ue_id,
+                                                gnb_du_ue_f1ap_id_t new_du_ue_id,
+                                                gnb_cu_ue_f1ap_id_t new_cu_ue_id)
+{
+  auto& du_ue_ids = du_ue_id_to_ran_ue_id_map.at(du_idx);
+  auto  it        = du_ue_ids.find(old_du_ue_id);
+  report_fatal_error_if_not(it != du_ue_ids.end(), "DU UE ID not found");
+  ran_ue_id_t ran_ue_id = it->second;
+  du_ue_ids.erase(it);
+  report_fatal_error_if_not(du_ue_ids.insert(std::make_pair(new_du_ue_id, ran_ue_id)).second,
+                            "DU UE ID already exists");
+
+  ue_context& ue_ctx = attached_ues.at(ran_ue_id);
+  ue_ctx.du_ue_id    = new_du_ue_id;
+  ue_ctx.cu_ue_id    = new_cu_ue_id;
+}
+
 ngap_message cu_cp_test_environment::generate_amf_ng_setup_response(unsigned amf_idx) const
 {
   auto it = amf_configs.find(amf_idx);

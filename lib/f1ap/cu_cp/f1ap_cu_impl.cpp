@@ -95,7 +95,7 @@ async_task<cu_cp_ue_index_t> f1ap_cu_impl::handle_ue_context_release_command(con
     });
   }
 
-  return launch_async<ue_context_release_procedure>(cfg, msg, ue_ctxt_list[msg.ue_index], tx_pdu_notifier);
+  return launch_async<ue_context_release_procedure>(cfg, msg, ue_ctxt_list, tx_pdu_notifier);
 }
 
 async_task<f1ap_ue_context_modification_response>
@@ -427,27 +427,19 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const asn1::f1ap::init_ul_rrc_m
     return;
   }
 
-  // If the UE context creation was successful, create/update the UE context in the CU-CP and forward the RRC container
-  // to RRC. Otherwise the UE will be rejected and the context will be released by higher layers.
-  if (resp->ue_index != ue_index && ue_ctxt_list.contains(resp->ue_index)) {
-    // This is a resumed UE. Update the existing context with the new DU UE F1AP ID.
-    f1ap_ue_context& resume_ue_ctxt = ue_ctxt_list[resp->ue_index];
-    ue_ctxt_list.add_du_ue_f1ap_id(resume_ue_ctxt.ue_ids.cu_ue_f1ap_id, du_ue_id);
-
-    // Reset release state so the context can be released again if needed (e.g. RRC Resume with invalid MAC).
-    resume_ue_ctxt.reset_release_state(); // TODO: This is a temporary solution, F1AP context should not be reused
-
-    resume_ue_ctxt.logger.log_info("Updated resumed UE context with new DU UE F1AP ID");
-
-    // Note: We the newly created UE will be released and removed by higher layers.
-  } else {
-    // Add SRB notifiers to the UE context.
-    ue_ctxt_list.add_srb0_rrc_notifier(resp->ue_index, resp->f1ap_srb0_notifier);
-    ue_ctxt_list.add_srb1_rrc_notifier(resp->ue_index, resp->f1ap_srb1_notifier);
-    ue_ctxt_list.add_srb2_rrc_notifier(resp->ue_index, resp->f1ap_srb2_notifier);
-
-    ue_ctxt.logger.log_info("Added UE context");
+  // If the UE context creation was successful, add the SRB notifiers and forward the RRC container to RRC. Otherwise
+  // the UE will be rejected and the context will be released by higher layers.
+  if (resp->ue_index != ue_index) {
+    // This is a resumed UE. The new UE context is the new F1-connection of the resumed UE (TS 38.401 section 8.6.2).
+    ue_ctxt_list.update_ue_index(cu_ue_f1ap_id, resp->ue_index);
   }
+
+  // Add SRB notifiers to the UE context.
+  ue_ctxt_list.add_srb0_rrc_notifier(resp->ue_index, resp->f1ap_srb0_notifier);
+  ue_ctxt_list.add_srb1_rrc_notifier(resp->ue_index, resp->f1ap_srb1_notifier);
+  ue_ctxt_list.add_srb2_rrc_notifier(resp->ue_index, resp->f1ap_srb2_notifier);
+
+  ue_ctxt.logger.log_info("Added UE context");
 
   // Forward RRC container.
   std::variant<f1c_initial_ul_bearer_handler*, f1c_ul_bearer_handler*> bearer_var =

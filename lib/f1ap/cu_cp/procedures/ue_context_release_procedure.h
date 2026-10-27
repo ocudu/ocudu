@@ -18,7 +18,7 @@ class ue_context_release_procedure
 public:
   ue_context_release_procedure(const f1ap_configuration&              f1ap_cfg_,
                                const f1ap_ue_context_release_command& cmd_,
-                               f1ap_ue_context&                       ue_ctxt_,
+                               f1ap_ue_context_list&                  ue_ctxt_list_,
                                f1ap_message_notifier&                 f1ap_notif_);
 
   void operator()(coro_context<async_task<cu_cp_ue_index_t>>& ctx);
@@ -33,6 +33,7 @@ private:
   cu_cp_ue_index_t create_ue_context_release_complete();
 
   const f1ap_configuration&            f1ap_cfg;
+  f1ap_ue_context_list&                ue_ctxt_list;
   f1ap_ue_context&                     ue_ctxt;
   asn1::f1ap::ue_context_release_cmd_s command;
   f1ap_message_notifier&               f1ap_notifier;

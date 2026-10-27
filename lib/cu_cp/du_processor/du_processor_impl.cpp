@@ -618,11 +618,10 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
           ue_mng.set_active(resume_ue_index);
           is_resume_request = true;
 
-          // Remove the new UE context that was created for this request since it's a resume request, and we should
-          // reuse the existing context.
+          // Remove the new UE that was created for this request, since the resumed UE takes its place. The F1AP gives
+          // the new F1-connection to the resumed UE.
           logger.debug("ue={}: RRC Resume detected, removing newly created UE context", req.ue_index);
           ue_mng.remove_ue(req.ue_index);
-          f1ap->get_f1ap_ue_context_removal_handler().remove_ue_context(req.ue_index);
         }
       }
     }

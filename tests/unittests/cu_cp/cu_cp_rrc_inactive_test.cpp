@@ -230,6 +230,25 @@ public:
     return true;
   }
 
+  /// Stores the F1AP IDs of the new F1-connection that the CU-CP uses for the resumed UE (TS 38.401 section 8.6.2).
+  void store_resumed_ue_f1ap_ids(const f1ap_message& msg)
+  {
+    const auto& value = msg.pdu.init_msg().value;
+    if (value.type().value == asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request) {
+      update_ue_f1ap_ids(du_idx,
+                         ue_ctx->du_ue_id.value(),
+                         int_to_gnb_du_ue_f1ap_id(value.ue_context_setup_request()->gnb_du_ue_f1ap_id),
+                         int_to_gnb_cu_ue_f1ap_id(value.ue_context_setup_request()->gnb_cu_ue_f1ap_id));
+    } else {
+      report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(msg),
+                                "Expected UE Context Setup Request or UE Context Release Command");
+      update_ue_f1ap_ids(du_idx,
+                         ue_ctx->du_ue_id.value(),
+                         int_to_gnb_du_ue_f1ap_id(value.ue_context_release_cmd()->gnb_du_ue_f1ap_id),
+                         int_to_gnb_cu_ue_f1ap_id(value.ue_context_release_cmd()->gnb_cu_ue_f1ap_id));
+    }
+  }
+
   [[nodiscard]] bool send_f1ap_ue_context_release_complete(gnb_du_ue_f1ap_id_t f1ap_du_ue_id = gnb_du_ue_f1ap_id_t::min)
   {
     report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
@@ -258,6 +277,7 @@ public:
                               "Failed to receive UE Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu, true),
                               "Invalid UE Context Setup Request");
+    store_resumed_ue_f1ap_ids(f1ap_pdu);
 
     return true;
   }
@@ -278,6 +298,7 @@ public:
                               "Failed to receive UE Context Release Command");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
                               "Invalid UE Context Release Command");
+    store_resumed_ue_f1ap_ids(f1ap_pdu);
 
     return true;
   }
@@ -443,6 +464,7 @@ public:
                               "Failed to receive UE Context Setup Request");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu, true),
                               "Invalid UE Context Setup Request");
+    store_resumed_ue_f1ap_ids(f1ap_pdu);
 
     // Inject UE Context Setup Response and wait for Bearer Context Modification Request.
     get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_setup_response(
@@ -528,10 +550,11 @@ public:
 
   [[nodiscard]] bool send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete()
   {
-    // Inject F1AP UE Context Release Complete and wait for N1AP UE Context Release Command.
-    if (!send_f1ap_ue_context_release_complete()) {
-      return false;
-    }
+    // Inject F1AP UE Context Release Complete for the last UE Context Release Command and wait for NGAP UE Context
+    // Release Complete.
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
+                              "The last F1AP DL message is not a UE Context Release Command");
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(f1ap_pdu));
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu), "Failed to receive UE Context Release Complete");
     report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_complete(ngap_pdu),
                               "Invalid UE Context Release Complete");
@@ -1040,9 +1063,14 @@ TEST_F(cu_cp_rrc_inactive_test,
   // The DU confirms the release of the old F1-connection.
   ASSERT_TRUE(send_f1ap_ue_context_release_complete(du_ue_id));
 
-  // The CU-CP continues the resume of the UE.
+  // The CU-CP continues the resume of the UE through a new F1-connection with a new gNB-CU UE F1AP ID (TS 38.401
+  // section 8.6.2).
+  gnb_cu_ue_f1ap_id_t old_cu_ue_id = ue_ctx->cu_ue_id.value();
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu, true));
+  store_resumed_ue_f1ap_ids(f1ap_pdu);
+  ASSERT_NE(ue_ctx->cu_ue_id.value(), old_cu_ue_id);
+  ASSERT_EQ(ue_ctx->du_ue_id.value(), du_ue_id_2);
   ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_dl_rrc_message_transfer());
   ASSERT_TRUE(send_rrc_resume_complete());
@@ -1088,6 +1116,61 @@ TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_is_received_through_anot
   // The CU-CP keeps the suspended UE and the new UE.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 2);
+}
+
+TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_is_received_then_ue_uses_a_new_gnb_cu_ue_f1ap_id)
+{
+  // Connect UE with RRC Inactive support and move it to RRC_INACTIVE.
+  connect_ue_with_rrc_inactive_support();
+  ASSERT_TRUE(trigger_rrc_inactive(du_ue_id));
+  gnb_cu_ue_f1ap_id_t old_cu_ue_id = ue_ctx->cu_ue_id.value();
+
+  // The resume uses a new F1-connection with a new gNB-CU UE F1AP ID (TS 38.401 section 8.6.2).
+  ASSERT_TRUE(send_init_ul_rrc_message_transfer_and_await_ue_context_setup_request());
+  ASSERT_NE(ue_ctx->cu_ue_id.value(), old_cu_ue_id);
+
+  // The CU-CP completes the resume through the new F1-connection.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_dl_rrc_message_transfer());
+  ASSERT_EQ(int_to_gnb_cu_ue_f1ap_id(f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->gnb_cu_ue_f1ap_id),
+            ue_ctx->cu_ue_id.value());
+  ASSERT_TRUE(send_rrc_resume_complete());
+
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_resumes.get_count(resume_cause_t::mo_data), 1);
+}
+
+TEST_F(cu_cp_rrc_inactive_test,
+       when_du_connection_is_lost_before_f1ap_ue_context_release_complete_of_resumed_ue_then_ue_is_reset_once)
+{
+  // Connect UE with RRC Inactive support.
+  connect_ue_with_rrc_inactive_support();
+
+  // Inject Inactivity Notification and await the UE Context Release Command.
+  ASSERT_TRUE(send_ue_level_bearer_context_inactivity_notification_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_release_command());
+
+  // The UE sends the RRC Resume Request before the DU confirms the release of the old F1-connection.
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_init_ul_rrc_message_transfer(
+      du_ue_id_2,
+      crnti_2,
+      plmn_identity::test_value(),
+      {},
+      test_helpers::pack_ul_ccch_msg(test_helpers::create_rrc_resume_request(0x4d8000))));
+
+  // Wait until the CU-CP has created the new F1-connection. The CU-CP worker runs its tasks in order.
+  ASSERT_TRUE(wait_ready_on_cu_cp_worker(std::chrono::milliseconds{1000}, []() { return true; }));
+
+  // The DU connection is lost while the old and the new F1-connection of the UE exist.
+  ASSERT_TRUE(drop_du_connection(du_idx));
+
+  // The CU-CP resets the UE once at the AMF.
+  bool ng_reset_received = false;
+  while (not ng_reset_received and this->wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{1000})) {
+    ng_reset_received = test_helpers::is_valid_ng_reset(ngap_pdu);
+  }
+  ASSERT_TRUE(ng_reset_received);
+  ASSERT_EQ(ngap_pdu.pdu.init_msg().value.ng_reset()->reset_type.part_of_ng_interface().size(), 1);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_bearer_context_modification_for_suspend_fails_then_ue_release_is_requested)

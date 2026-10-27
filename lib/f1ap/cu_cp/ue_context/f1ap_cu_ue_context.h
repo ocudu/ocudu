@@ -41,11 +41,8 @@ struct f1ap_ue_context {
   ue_ul_bearer_manager&       get_ul_bearer_manager() { return bearer_manager; }
   const ue_ul_bearer_manager& get_ul_bearer_manager() const { return bearer_manager; }
 
-  void reset_release_state() // TODO: this is a temporary solution, F1AP context should not be reused
-  {
-    marked_for_release = false;
-    release_complete_event.reset();
-  }
+  /// Checks whether a release procedure runs for this UE context.
+  bool is_release_running() const { return marked_for_release and not release_complete_event.is_set(); }
 
   /// Handles Downlink RRC messages.
   void handle_dl_rrc_message(const f1ap_dl_rrc_message& msg, f1ap_message_notifier& msg_notifier);
@@ -88,7 +85,24 @@ public:
 
   void add_du_ue_f1ap_id(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id);
 
+  /// \brief Gives a UE context to another UE index.
+  ///
+  /// An RRC Resume uses a new UE-associated logical F1-connection (TS 38.401 section 8.6.2). Thus, the UE context of
+  /// the new F1-connection replaces the UE context that the UE index had before. The replaced UE context is removed
+  /// now if its release has completed. If its release is running, the release procedure removes it at the end.
+  /// Otherwise, remove_ue() removes it together with the UE.
+  void update_ue_index(gnb_cu_ue_f1ap_id_t cu_ue_id, cu_cp_ue_index_t ue_index);
+
+  /// Checks whether a UE context was replaced by another UE context of the same UE index.
+  bool is_replaced(gnb_cu_ue_f1ap_id_t cu_ue_id) const;
+
+  /// \brief Removes the UE contexts of a UE.
+  ///
+  /// A replaced UE context with a running release stays. Its release procedure removes it at the end.
   void remove_ue(cu_cp_ue_index_t ue_index);
+
+  /// Removes a UE context.
+  void remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id);
 
   /// \brief Cancels all running F1AP transactions of a UE context.
   ///

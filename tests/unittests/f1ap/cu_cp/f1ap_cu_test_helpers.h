@@ -174,6 +174,11 @@ public:
     if (msg.ue_index == cu_cp_ue_index_t::invalid) {
       response.ue_index = on_new_cu_cp_ue_required();
     }
+    if (next_resumed_ue_index.has_value()) {
+      // Simulate an RRC Resume of an existing UE.
+      response.ue_index = *next_resumed_ue_index;
+      next_resumed_ue_index.reset();
+    }
 
     // Return failure if no UE index is available.
     if (response.ue_index == cu_cp_ue_index_t::invalid) {
@@ -255,6 +260,8 @@ public:
       std::make_unique<dummy_f1ap_ul_dcch_message_notifier>();
   std::unique_ptr<dummy_f1ap_ul_dcch_message_notifier> f1ap_srb2_notifier =
       std::make_unique<dummy_f1ap_ul_dcch_message_notifier>();
+  /// UE index that the next UE RRC context creation returns, to simulate an RRC Resume.
+  std::optional<cu_cp_ue_index_t> next_resumed_ue_index;
 
 private:
   const unsigned            max_nof_supported_ues;

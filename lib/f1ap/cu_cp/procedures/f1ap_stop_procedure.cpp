@@ -44,7 +44,10 @@ async_task<void> f1ap_stop_procedure::handle_transaction_info_loss()
   cu_ue_ids.reserve(ue_ctxt_list.size());
   for (auto& ue : ue_ctxt_list) {
     cu_ue_ids.push_back(ue.first);
-    ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
+    // Add each UE once. A UE context that an RRC Resume replaced has the UE index of the current UE context.
+    if (not ue_ctxt_list.is_replaced(ue.first)) {
+      ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
+    }
   }
 
   // After receiving an F1 Removal Request, no more F1AP Rx PDUs are expected. Cancel running UE F1AP transactions.
