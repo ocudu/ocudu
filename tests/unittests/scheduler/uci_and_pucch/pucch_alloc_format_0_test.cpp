@@ -22,38 +22,37 @@ public:
     pucch_allocator_base_test(
         test_bench_params{.pucch_ded_params = {.f0_or_f1_params = pucch_f0_params{}}, .pucch_res_common = 0U})
   {
-    const auto& cell_resources = t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch;
+    const auto& cell_resources = t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated;
     const auto& res_params     = t_bench.params.pucch_ded_params;
 
     // Set the expected SR grant to the SR resource.
-    pucch_expected_sr =
-        test_helpers::make_pucch_info(t_bench.cell_cfg,
-                                      cell_resources.get_ded(res_params.sr_res_id(pucch_sr_resource_id(0))),
-                                      {.sr_bits = sr_nof_bits::one});
+    pucch_expected_sr = test_helpers::make_pucch_info(t_bench.cell_cfg,
+                                                      cell_resources.get(res_params.sr_res_id(pucch_sr_resource_id(0))),
+                                                      {.sr_bits = sr_nof_bits::one});
 
     // Set the expected HARQ F1 grant to the first resource in Resource Set ID 0.
-    pucch_expected_res_set_0 = test_helpers::make_pucch_info(
-        t_bench.cell_cfg,
-        cell_resources.get_ded(res_params.harq_res_id<0>(pucch_resource_set_config_id(0), 0)),
-        {.harq_ack_nof_bits = 1U});
+    pucch_expected_res_set_0 =
+        test_helpers::make_pucch_info(t_bench.cell_cfg,
+                                      cell_resources.get(res_params.harq_res_id<0>(pucch_resource_set_config_id(0), 0)),
+                                      {.harq_ack_nof_bits = 1U});
 
     // Set the expected Resource Set ID 1 HARQ grant to the first resource in Resource Set ID 1.
-    pucch_expected_res_set_1 = test_helpers::make_pucch_info(
-        t_bench.cell_cfg,
-        cell_resources.get_ded(res_params.harq_res_id<1>(pucch_resource_set_config_id(0), 0)),
-        {.harq_ack_nof_bits = 3U});
+    pucch_expected_res_set_1 =
+        test_helpers::make_pucch_info(t_bench.cell_cfg,
+                                      cell_resources.get(res_params.harq_res_id<1>(pucch_resource_set_config_id(0), 0)),
+                                      {.harq_ack_nof_bits = 3U});
 
     // This PUCCH resource is located on the same symbols and PRBs as the PUCCH Format 0 resource for SR.
     // Resource of Resource Set ID 1.
     pucch_expected_sr_f2 =
         test_helpers::make_pucch_info(t_bench.cell_cfg,
-                                      cell_resources.get_ded(res_params.sr_f2_res_id(pucch_sr_resource_id(0))),
+                                      cell_resources.get(res_params.sr_f2_res_id(pucch_sr_resource_id(0))),
                                       {.harq_ack_nof_bits = 3U});
 
     // Set the expected HARQ CSI grant to the CSI resource.
     pucch_expected_csi =
         test_helpers::make_pucch_info(t_bench.cell_cfg,
-                                      cell_resources.get_ded(res_params.csi_res_id(pucch_csi_resource_id(0))),
+                                      cell_resources.get(res_params.csi_res_id(pucch_csi_resource_id(0))),
                                       {.csi_part1_nof_bits = default_csi_part1_bits});
   }
 

@@ -190,7 +190,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cellcfg_,
   backoff_indicator_value(backoff_ms_to_indicator(sched_cfg.backoff_indicator_duration)),
   pucch_crbs(compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                                 cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
-                                cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
+                                cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources)),
   ssb_ro_map(make_ssb_to_ro_mapping(cell_cfg)),
   cached_init_bwp_info(std::make_unique<cached_bwp_info>(cell_cfg, ssb_ro_map.occasions().td_slot_mapping()))
 {

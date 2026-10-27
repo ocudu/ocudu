@@ -62,32 +62,22 @@ struct cell_dl_bwp_res_config {
 struct cell_pucch_res_config {
   /// List of common PUCCH resources, indexed by \f$r_{PUCCH}\f$ (TS 38.213 Section 9.2.1).
   std::array<pucch_resource, pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES> common;
-  /// List of all supported UE-dedicated PUCCH resources.
-  std::vector<pucch_resource> dedicated;
+  /// UE-dedicated PUCCH resources, and the map from the IDs that the RRM allocates to a UE to them.
+  cell_pucch_resources dedicated;
 
   bool operator==(const cell_pucch_res_config& other) const
   {
-    return common == other.common and dedicated == other.dedicated;
+    return common == other.common and dedicated.resources == other.dedicated.resources;
   }
 
   /// Returns the total number of PUCCH resources in the cell.
-  unsigned nof_total_res() const { return common.size() + dedicated.size(); }
+  unsigned nof_total_res() const { return common.size() + dedicated.resources.size(); }
 
   /// Gets the common PUCCH resource indexed by \f$r_{PUCCH}\f$.
   const pucch_resource& get_cmn(unsigned r_pucch) const
   {
     ocudu_assert(r_pucch < common.size(), "Invalid r_pucch for common PUCCH resource: {}", r_pucch);
     return common[r_pucch];
-  }
-
-  /// Gets the dedicated PUCCH resource indexed by its resource ID.
-  const pucch_resource& get_ded(pucch_res_id_t res_id) const
-  {
-    ocudu_assert(res_id.ded_id() < dedicated.size(),
-                 "PUCCH cell resource ID {} exceeds the size of the dedicated cell resource list ({})",
-                 res_id.ded_id(),
-                 dedicated.size());
-    return dedicated[res_id.ded_id()];
   }
 };
 

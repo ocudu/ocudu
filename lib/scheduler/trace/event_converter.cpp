@@ -222,7 +222,7 @@ flatbuffers::Offset<fbs::CellStartEvent> schedtrace::convert_cell_cfg_to_fb(flat
   for (const pucch_resource& res : pucch_res.common) {
     ul_bwp.pucch_resources.push_back(res);
   }
-  for (const pucch_resource& res : pucch_res.dedicated) {
+  for (const pucch_resource& res : pucch_res.dedicated.resources) {
     ul_bwp.pucch_resources.push_back(res);
   }
   if (const auto& rach_cfg = cell_cfg.params.ul_cfg_common.init_ul_bwp.rach_cfg_common; rach_cfg.has_value()) {

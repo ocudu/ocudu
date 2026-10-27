@@ -61,6 +61,6 @@ cell_bwp_res_config ocudu::make_cell_bwp_res_config(const ran_cell_config& cell_
       .dl = make_cell_dl_bwp_res_config(cell_cfg),
       .ul = {.pucch = {
                  .common    = config_helpers::generate_cell_common_pucch_res_list(pucch_res_common, bwp_size_rbs),
-                 .dedicated = rrm_cfg.pucch.res.resources,
+                 .dedicated = rrm_cfg.pucch.res,
              }}};
 }

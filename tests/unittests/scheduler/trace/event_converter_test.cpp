@@ -151,9 +151,9 @@ TEST(event_converter_test, cell_cfg_pucch_resources_gathering)
   for (unsigned i = 0; i != expected.common.size(); ++i) {
     EXPECT_EQ(schedtrace_cfg.init_ul_bwp.pucch_resources[i].starting_prb, expected.common[i].starting_prb);
   }
-  for (unsigned i = 0; i != expected.dedicated.size(); ++i) {
+  for (unsigned i = 0; i != expected.dedicated.resources.size(); ++i) {
     const pucch_resource& ded = schedtrace_cfg.init_ul_bwp.pucch_resources[expected.common.size() + i];
-    EXPECT_EQ(ded.starting_prb, expected.dedicated[i].starting_prb);
+    EXPECT_EQ(ded.starting_prb, expected.dedicated.resources[i].starting_prb);
     // Dedicated resources reached the wire with their symbols intact, not default-constructed.
     EXPECT_FALSE(ded.syms.empty());
   }

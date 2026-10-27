@@ -25,7 +25,7 @@ static const pucch_resource& get_res(const cell_pucch_res_config& cell_resources
   if (res_id.is_cmn()) {
     return cell_resources.common[res_id.r_pucch()];
   }
-  return cell_resources.dedicated[res_id.ded_id()];
+  return cell_resources.dedicated.resources[res_id.ded_id()];
 }
 
 /// Returns the index of a given PUCCH resource in the collision/multiplexing region matrices.

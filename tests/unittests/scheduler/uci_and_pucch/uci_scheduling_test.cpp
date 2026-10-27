@@ -29,14 +29,15 @@ public:
     csi_period = t_bench.cell_cfg.params.init_bwp.csi->csi_rs_period;
 
     // Set the expected SR grant to the SR resource.
-    pucch_sr_only_test = test_helpers::make_pucch_info(t_bench.cell_cfg,
-                                                       t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated[6],
-                                                       {.sr_bits = sr_nof_bits::one});
+    pucch_sr_only_test =
+        test_helpers::make_pucch_info(t_bench.cell_cfg,
+                                      t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources[6],
+                                      {.sr_bits = sr_nof_bits::one});
 
     // Set the expected HARQ CSI grant to the CSI resource.
     pucch_sr_csi_test =
         test_helpers::make_pucch_info(t_bench.cell_cfg,
-                                      t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated[14],
+                                      t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources[14],
                                       {.sr_bits = sr_nof_bits::one, .csi_part1_nof_bits = default_csi_part1_bits});
   }
 
@@ -336,7 +337,7 @@ public:
     // In the slots with SR + CSI, the expected format is Format 2.
     pucch_csi_and_sr_test =
         test_helpers::make_pucch_info(t_bench.cell_cfg,
-                                      t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated[14],
+                                      t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources[14],
                                       {.sr_bits = sr_nof_bits::one, .csi_part1_nof_bits = default_csi_part1_bits});
 
     pucch_csi_only_test                  = pucch_csi_and_sr_test;

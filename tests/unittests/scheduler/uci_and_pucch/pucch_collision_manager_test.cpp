@@ -144,7 +144,7 @@ TEST(pucch_collision_manager_test, alloc_fails_if_slot_incompatible_with_resourc
 
   auto        cfg_pool = make_test_cell_config_pool(pucch_resource_builder_params{}, 11, cell_params);
   const auto& cell_cfg = cfg_pool->cell_cfg();
-  const auto& ded_res  = cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated;
+  const auto& ded_res  = cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources;
 
   pucch_collision_manager      col_manager(cell_cfg);
   sched_result_grid            results(sched_result_grid_config{1});
@@ -169,7 +169,7 @@ protected:
     cell_cfg(cfg_pool->cell_cfg()),
     bwp_cfg(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params),
     common_res(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.common),
-    ded_res(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated),
+    ded_res(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources),
     col_manager(cell_cfg),
     results(sched_result_grid_config{1}),
     slot_alloc(results, 0, cell_cfg),
@@ -285,7 +285,7 @@ protected:
   pucch_collision_manager_f0_f2_test() :
     cfg_pool(make_test_cell_config_pool(ded_params, 0)),
     cell_cfg(cfg_pool->cell_cfg()),
-    ded_res(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated),
+    ded_res(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources),
     sr_res(ded_res[ded_params.sr_res_id(pucch_sr_resource_id(0)).ded_id()]),
     sr_f2_res(ded_res[ded_params.sr_f2_res_id(pucch_sr_resource_id(0)).ded_id()]),
     col_manager(cell_cfg),

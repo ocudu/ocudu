@@ -50,7 +50,7 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   pucch_crbs(
       ocudu::compute_pucch_crbs(cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                                 cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common,
-                                cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated)),
+                                cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources)),
   logger(ocudulog::fetch_basic_logger("SCHED"))
 {
   // Pre-reserve memory to avoid allocations in RT.
