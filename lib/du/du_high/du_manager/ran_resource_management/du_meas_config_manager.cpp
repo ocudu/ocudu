@@ -246,20 +246,15 @@ du_meas_config_manager::du_meas_config_manager(span<const du_cell_config> cell_c
 {
 }
 
-// Collects SR and periodic-CSI occasions from the UE's PCell serving cell config.
+// Collects SR and periodic-CSI occasions from the resources that the RRM allocates to the UE in its PCell.
 static std::vector<periodic_uci_config> collect_ul_occasions(const ue_cell_config& pcell_ue_cfg,
                                                              const du_cell_config& pcell_common)
 {
   std::vector<periodic_uci_config> out;
 
-  if (pcell_ue_cfg.serv_cell_cfg.ul_config.has_value() &&
-      pcell_ue_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value()) {
-    for (const auto& sr : pcell_ue_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list) {
-      out.push_back({sr_periodicity_to_slot(sr.period), sr.offset});
-    }
-  }
+  out.push_back({sr_periodicity_to_slot(pcell_common.ran.init_bwp.pucch.sr_period), pcell_ue_cfg.rrm.pucch.sr_offset});
 
-  const auto& periodic_csi = pcell_ue_cfg.bwps.front().ul.csi.periodic_report;
+  const auto& periodic_csi = pcell_ue_cfg.rrm.csi.periodic_report;
   if (periodic_csi.has_value() and pcell_common.ran.init_bwp.csi.has_value()) {
     const csi_report_periodicity period =
         csi_helper::convert_csi_resource_period_to_report_period(pcell_common.ran.init_bwp.csi->csi_rs_period);

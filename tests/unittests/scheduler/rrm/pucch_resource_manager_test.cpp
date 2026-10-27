@@ -122,6 +122,29 @@ TEST_F(pucch_resource_manager_tester, when_allocation_fails_then_ue_cell_config_
   ASSERT_EQ(ue_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg,
             default_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg);
   ASSERT_EQ(ue_cfg.serv_cell_cfg.csi_meas_cfg, default_cfg.serv_cell_cfg.csi_meas_cfg);
+  ASSERT_EQ(ue_cfg.rrm, default_cfg.rrm);
+}
+
+TEST_F(pucch_resource_manager_tester, allocated_resources_are_recorded_in_the_ue_rrm_config_and_the_ue_bwp_config)
+{
+  const ue_info* ue = add_ue();
+
+  const ue_pucch_rrm_config&  pucch_rrm = ue->ue_cell_cfg.rrm.pucch;
+  const ue_uplink_bwp_config& ul_bwp    = ue->ue_cell_cfg.bwps[0].ul;
+  ASSERT_EQ(pucch_rrm.res_set_cfg_id, ul_bwp.pucch.res_set_cfg_id);
+  ASSERT_EQ(pucch_rrm.sr_res_id, ul_bwp.pucch.sr_res_id);
+  ASSERT_EQ(pucch_rrm.sr_offset, ul_bwp.pucch.sr_offset);
+  const auto& csi_rrm = ue->ue_cell_cfg.rrm.csi;
+  ASSERT_EQ(csi_rrm.periodic_report.has_value(), ul_bwp.csi.periodic_report.has_value());
+  if (csi_rrm.periodic_report.has_value()) {
+    ASSERT_EQ(csi_rrm.periodic_report->res_id, ul_bwp.csi.periodic_report->pucch_res_id);
+    ASSERT_EQ(csi_rrm.periodic_report->offset, ul_bwp.csi.periodic_report->offset);
+  }
+
+  // The resources of the UE return to the pool when the UE is deallocated.
+  const unsigned nof_free_sr_cfgs = pucch_res_mng.get_nof_free_sr_configs(to_du_cell_index(0));
+  pucch_res_mng.dealloc_resources(ue->ue_cell_cfg);
+  ASSERT_EQ(pucch_res_mng.get_nof_free_sr_configs(to_du_cell_index(0)), nof_free_sr_cfgs + 1);
 }
 
 TEST_F(pucch_resource_manager_tester, sr_and_csi_in_different_symbols_are_allocated_if_their_offsets_never_collide)
@@ -257,6 +280,10 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   full_rep_caps.slot_based_dyn_pucch_rep_r17_supported = true;
   full_rep_caps.bands.emplace(band, ue_capability_summary::supported_band{.pucch_repeat_f0_2_r17_supported = true});
   pucch_res_mng.update_resources(ue_cfg, full_rep_caps);
+  ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
+  ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
+  ASSERT_EQ(ue_cfg.bwps[0].ul.pucch.rep_f1_3_4_enabled, ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
+  ASSERT_EQ(ue_cfg.bwps[0].ul.pucch.rep_f0_2_enabled, ue_cfg.rrm.pucch.rep_f0_2_enabled);
   for (const pucch_resource& res : res_list) {
     const auto cell_res_it = std::find_if(
         cell_res_list.begin(), cell_res_list.end(), [&](const pucch_resource& r) { return r.res_id == res.res_id; });
@@ -269,6 +296,8 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   f1_3_4_only_caps.pucch_repeat_f1_3_4_supported          = true;
   f1_3_4_only_caps.slot_based_dyn_pucch_rep_r17_supported = true;
   pucch_res_mng.update_resources(ue_cfg, f1_3_4_only_caps);
+  ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
+  ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
   for (const pucch_resource& res : res_list) {
     const bool is_f0_or_f2 = res.format() == pucch_format::FORMAT_0 or res.format() == pucch_format::FORMAT_2;
     if (is_f0_or_f2) {
@@ -287,6 +316,8 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   format_only_caps.pucch_repeat_f1_3_4_supported = true;
   format_only_caps.bands.emplace(band, ue_capability_summary::supported_band{.pucch_repeat_f0_2_r17_supported = true});
   pucch_res_mng.update_resources(ue_cfg, format_only_caps);
+  ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
+  ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
   for (const pucch_resource& res : res_list) {
     ASSERT_EQ(res.rep_factor, pucch_repetition_factor::n1);
   }

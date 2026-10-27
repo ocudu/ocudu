@@ -18,6 +18,7 @@
 #include "ocudu/scheduler/config/slice_rrm_policy_config.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
 #include "ocudu/scheduler/rrm/cell_rrm_config.h"
+#include "ocudu/scheduler/rrm/ue_rrm_config.h"
 
 namespace ocudu {
 
@@ -89,6 +90,8 @@ struct sched_ue_resource_alloc_config {
 
 struct ue_cell_config {
   serving_cell_config serv_cell_cfg;
+  /// Resources that the RRM allocates to the UE in this cell.
+  ue_rrm_config rrm;
   // List of BWP configurations for this UE in this cell.
   std::vector<ue_bwp_config> bwps;
 

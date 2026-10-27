@@ -692,6 +692,9 @@ protected:
     ue_cfg.cell_group.cells.emplace(SERVING_PCELL_IDX, ue_cell_config{});
     ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.cell_index = to_du_cell_index(0);
     ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).bwps.emplace_back();
+    // The SR of the UE is in the last slot of its period, so it does not collide with the gap.
+    ue_cfg.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pucch.sr_offset =
+        sr_periodicity_to_slot(cell_cfgs[0].ran.init_bwp.pucch.sr_period) - 1;
     ue_caps.supported_meas_gaps = supported_meas_gap_patterns::all();
   }
 

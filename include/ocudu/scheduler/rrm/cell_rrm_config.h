@@ -30,9 +30,6 @@ struct cell_pucch_rrm_config {
 };
 
 /// \brief Cell resources that the RRM allocates to the UEs of a cell.
-///
-/// The RRM generates it when it creates the cell. The DU keeps it to fill the RRC messages, and the scheduler gets it
-/// in the cell configuration request.
 struct cell_rrm_config {
   cell_pucch_rrm_config pucch;
 };

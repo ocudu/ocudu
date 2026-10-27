@@ -372,17 +372,33 @@ static serving_cell_config make_default_serving_cell_config(const ran_cell_confi
   return serv_cell;
 }
 
-static ue_bwp_config make_default_ue_bwp_cfg(const ran_cell_config& cell_cfg)
+static ue_rrm_config make_default_ue_rrm_cfg(const ran_cell_config& cell_cfg)
+{
+  ue_rrm_config cfg{
+      .pucch =
+          {
+              .res_set_cfg_id = pucch_resource_set_config_id(0),
+              .sr_res_id      = pucch_sr_resource_id(0),
+              .sr_offset = cell_cfg.tdd_cfg.has_value() ? find_next_tdd_full_ul_slot(*cell_cfg.tdd_cfg).value() : 0U,
+          },
+  };
+  if (cell_cfg.init_bwp.csi.has_value() and cell_cfg.init_bwp.csi->csi_report_slot_offset.has_value()) {
+    cfg.csi.periodic_report.emplace(ue_periodic_csi_rrm_config{
+        .res_id = pucch_csi_resource_id(0), .offset = *cell_cfg.init_bwp.csi->csi_report_slot_offset});
+  }
+  return cfg;
+}
+
+static ue_bwp_config make_default_ue_bwp_cfg(const ue_rrm_config& rrm_cfg)
 {
   ue_bwp_config cfg{
       .ul =
           {
               .pucch =
                   {
-                      .res_set_cfg_id = pucch_resource_set_config_id(0),
-                      .sr_res_id      = pucch_sr_resource_id(0),
-                      .sr_offset =
-                          cell_cfg.tdd_cfg.has_value() ? find_next_tdd_full_ul_slot(*cell_cfg.tdd_cfg).value() : 0U,
+                      .res_set_cfg_id = rrm_cfg.pucch.res_set_cfg_id,
+                      .sr_res_id      = rrm_cfg.pucch.sr_res_id,
+                      .sr_offset      = rrm_cfg.pucch.sr_offset,
                   },
               .pusch =
                   {
@@ -395,9 +411,9 @@ static ue_bwp_config make_default_ue_bwp_cfg(const ran_cell_config& cell_cfg)
                   },
           },
   };
-  if (cell_cfg.init_bwp.csi.has_value() and cell_cfg.init_bwp.csi->csi_report_slot_offset.has_value()) {
-    cfg.ul.csi.periodic_report.emplace(ue_periodic_csi_config{
-        .pucch_res_id = pucch_csi_resource_id(0), .offset = *cell_cfg.init_bwp.csi->csi_report_slot_offset});
+  if (rrm_cfg.csi.periodic_report.has_value()) {
+    cfg.ul.csi.periodic_report.emplace(ue_periodic_csi_config{.pucch_res_id = rrm_cfg.csi.periodic_report->res_id,
+                                                              .offset       = rrm_cfg.csi.periodic_report->offset});
   }
 
   return cfg;
@@ -407,7 +423,8 @@ ue_cell_config ocudu::config_helpers::make_default_ue_cell_config(const ran_cell
                                                                   du_cell_index_t        cell_idx)
 {
   ue_cell_config cfg{};
-  cfg.bwps.emplace_back(make_default_ue_bwp_cfg(cell_cfg));
+  cfg.rrm = make_default_ue_rrm_cfg(cell_cfg);
+  cfg.bwps.emplace_back(make_default_ue_bwp_cfg(cfg.rrm));
   cfg.serv_cell_cfg = make_default_serving_cell_config(cell_cfg, cell_idx, cfg.bwps.front());
   return cfg;
 }

@@ -174,16 +174,29 @@ bool pucch_resource_manager::alloc_resources(ue_cell_config& cell_cfg)
     ++cell_ctx.periodic_pucchs_per_slot[offset];
   }
 
+  // Record the allocated SR and CSI resources.
+  ue_pucch_rrm_config& pucch_rrm = cell_cfg.rrm.pucch;
+  pucch_rrm.res_set_cfg_id       = pucch_resource_set_config_id(
+      cell_ctx.ue_idx % cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_res_set_configs);
+  pucch_rrm.sr_res_id = pucch_sr_resource_id(sr_cfg->res);
+  pucch_rrm.sr_offset = sr_cfg->offset;
+  auto& csi_rrm       = cell_cfg.rrm.csi;
+  if (csi_cfg.has_value()) {
+    csi_rrm.periodic_report.emplace(
+        ue_periodic_csi_rrm_config{.res_id = pucch_csi_resource_id(csi_cfg->res), .offset = csi_cfg->offset});
+  } else {
+    csi_rrm.periodic_report.reset();
+  }
+
   // Update the BWP configuration for this UE with the allocated SR and CSI resources.
   auto& ul_bwp                = cell_cfg.init_bwp().ul;
-  ul_bwp.pucch.res_set_cfg_id = pucch_resource_set_config_id(
-      cell_ctx.ue_idx % cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_res_set_configs);
-  ul_bwp.pucch.sr_res_id = pucch_sr_resource_id(sr_cfg->res);
-  ul_bwp.pucch.sr_offset = sr_cfg->offset;
-  if (csi_cfg.has_value()) {
+  ul_bwp.pucch.res_set_cfg_id = pucch_rrm.res_set_cfg_id;
+  ul_bwp.pucch.sr_res_id      = pucch_rrm.sr_res_id;
+  ul_bwp.pucch.sr_offset      = pucch_rrm.sr_offset;
+  if (csi_rrm.periodic_report.has_value()) {
     ul_bwp.csi.periodic_report.emplace(ue_periodic_csi_config{
-        .pucch_res_id = pucch_csi_resource_id(csi_cfg->res),
-        .offset       = csi_cfg->offset,
+        .pucch_res_id = csi_rrm.periodic_report->res_id,
+        .offset       = csi_rrm.periodic_report->offset,
     });
   } else {
     ul_bwp.csi.periodic_report.reset();
@@ -203,25 +216,24 @@ bool pucch_resource_manager::alloc_resources(ue_cell_config& cell_cfg)
 
 void pucch_resource_manager::dealloc_resources(const ue_cell_config& cell_cfg)
 {
-  const auto& ul_bwp   = cell_cfg.bwps[0].ul;
-  auto&       cell_ctx = cells[cell_cfg.serv_cell_cfg.cell_index];
+  const auto& pucch_rrm = cell_cfg.rrm.pucch;
+  const auto& csi_rrm   = cell_cfg.rrm.csi;
+  auto&       cell_ctx  = cells[cell_cfg.serv_cell_cfg.cell_index];
 
   // Return SR resource/offset to the free list.
-  cell_ctx.free_sr_configs.emplace_back(periodic_pucch_config{ul_bwp.pucch.sr_res_id.value(), ul_bwp.pucch.sr_offset});
+  cell_ctx.free_sr_configs.emplace_back(periodic_pucch_config{pucch_rrm.sr_res_id.value(), pucch_rrm.sr_offset});
 
-  ocudu_assert((cell_ctx.pucch_csi_report() != nullptr) == ul_bwp.csi.periodic_report.has_value(),
+  ocudu_assert((cell_ctx.pucch_csi_report() != nullptr) == csi_rrm.periodic_report.has_value(),
                "Periodic CSI report configuration presence mismatch between cell and UE");
   // Return CSI resource/offset to the free list if periodic CSI is configured for this cell.
   if (cell_ctx.pucch_csi_report() != nullptr) {
     cell_ctx.free_csi_configs.emplace_back(
-        periodic_pucch_config{ul_bwp.csi.periodic_report->pucch_res_id.value(), ul_bwp.csi.periodic_report->offset});
+        periodic_pucch_config{csi_rrm.periodic_report->res_id.value(), csi_rrm.periodic_report->offset});
   }
 
   // Remove the SR and CSI offsets from the PUCCH grants-per-slot counter.
   for (auto offset : compute_periodic_uci_slot_offsets(
-           cell_ctx,
-           ul_bwp.pucch.sr_offset,
-           ul_bwp.csi.periodic_report.has_value() ? ul_bwp.csi.periodic_report->offset : 0)) {
+           cell_ctx, pucch_rrm.sr_offset, csi_rrm.periodic_report.has_value() ? csi_rrm.periodic_report->offset : 0)) {
     ocudu_assert(offset < cell_ctx.periodic_pucchs_per_slot.size(),
                  "Index exceeds the size of the PUCCH grants vector");
     ocudu_assert(cell_ctx.periodic_pucchs_per_slot[offset] != 0,
@@ -267,9 +279,11 @@ void pucch_resource_manager::apply_rep_factor_capabilities(ue_cell_config&      
     }
   }
 
-  // Also record the UE's dynamic PUCCH repetition support directly on the UE's scheduler-facing PUCCH config.
-  cell_cfg.init_bwp().ul.pucch.rep_f1_3_4_enabled = dynamic_rep_supported and f1_3_4_supported;
-  cell_cfg.init_bwp().ul.pucch.rep_f0_2_enabled   = dynamic_rep_supported and f0_2_supported;
+  // Record the UE's dynamic PUCCH repetition support, also on the scheduler-facing PUCCH config of the UE.
+  cell_cfg.rrm.pucch.rep_f1_3_4_enabled           = dynamic_rep_supported and f1_3_4_supported;
+  cell_cfg.rrm.pucch.rep_f0_2_enabled             = dynamic_rep_supported and f0_2_supported;
+  cell_cfg.init_bwp().ul.pucch.rep_f1_3_4_enabled = cell_cfg.rrm.pucch.rep_f1_3_4_enabled;
+  cell_cfg.init_bwp().ul.pucch.rep_f0_2_enabled   = cell_cfg.rrm.pucch.rep_f0_2_enabled;
 }
 
 std::vector<pucch_resource_manager::periodic_pucch_config>::const_iterator
