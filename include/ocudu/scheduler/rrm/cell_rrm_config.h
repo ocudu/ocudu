@@ -29,7 +29,7 @@ struct cell_pucch_rrm_config {
   }
 };
 
-/// \brief Cell resources that the RRM allocates to the UEs of a cell.
+/// Cell resources that the RRM allocates to the UEs of a cell.
 struct cell_rrm_config {
   cell_pucch_rrm_config pucch;
 };

@@ -9,6 +9,7 @@
 #include "ocudu/scheduler/config/ran_cell_config.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
 #include "ocudu/scheduler/rrm/cell_rrm_config.h"
+#include "ocudu/scheduler/rrm/ue_rrm_config.h"
 
 namespace ocudu::config_helpers {
 
@@ -20,12 +21,12 @@ namespace ocudu::config_helpers {
 /// i.e. its \c PUCCH-ResourceId, is its position in the list.
 pucch_config build_pucch_config(const ran_cell_config&       cell_cfg,
                                 const cell_pucch_rrm_config& cell_resources,
-                                const ue_bwp_config&         ue_bwp_cfg);
+                                const ue_rrm_config&         ue_rrm_cfg);
 
 /// Gets the UE resource ID of the CSI resource in the PUCCH-Config built by \c build_pucch_config.
 unsigned ue_csi_res_id(const pucch_resource_builder_params& res_params);
 
 /// Build the CSI-MeasConfig for a given UE.
-std::optional<csi_meas_config> build_csi_meas_config(const ran_cell_config& cell_cfg, const ue_bwp_config& ue_bwp_cfg);
+std::optional<csi_meas_config> build_csi_meas_config(const ran_cell_config& cell_cfg, const ue_rrm_config& ue_rrm_cfg);
 
 } // namespace ocudu::config_helpers

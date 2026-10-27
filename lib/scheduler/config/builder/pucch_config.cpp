@@ -46,11 +46,11 @@ unsigned config_helpers::ue_csi_res_id(const pucch_resource_builder_params& res_
 
 pucch_config config_helpers::build_pucch_config(const ran_cell_config&       cell_cfg,
                                                 const cell_pucch_rrm_config& cell_resources,
-                                                const ue_bwp_config&         ue_bwp_cfg)
+                                                const ue_rrm_config&         ue_rrm_cfg)
 {
   const pucch_resource_builder_params& res_params                 = cell_cfg.init_bwp.pucch.resources;
-  const auto&                          ue_pucch_cfg               = ue_bwp_cfg.ul.pucch;
-  const auto&                          ue_periodic_csi_report_cfg = ue_bwp_cfg.ul.csi.periodic_report;
+  const auto&                          ue_pucch_cfg               = ue_rrm_cfg.pucch;
+  const auto&                          ue_periodic_csi_report_cfg = ue_rrm_cfg.csi.periodic_report;
 
   const auto   max_code_rate = res_params.max_code_rate_234();
   pucch_config cfg{
@@ -100,8 +100,7 @@ pucch_config config_helpers::build_pucch_config(const ran_cell_config&       cel
   std::optional<unsigned> csi_res_id;
   if (ue_periodic_csi_report_cfg.has_value()) {
     // Add CSI resource to the CSI resource list.
-    csi_res_id =
-        add_ue_res(res_list, cell_resources.get(res_params.csi_res_id(ue_periodic_csi_report_cfg->pucch_res_id)));
+    csi_res_id = add_ue_res(res_list, cell_resources.get(res_params.csi_res_id(ue_periodic_csi_report_cfg->res_id)));
     ocudu_assert(*csi_res_id == ue_csi_res_id(res_params),
                  "CSI resource at UE resource ID {} differs from the ID used by the CSI report",
                  *csi_res_id);
@@ -138,7 +137,7 @@ pucch_config config_helpers::build_pucch_config(const ran_cell_config&       cel
 
     if (csi_res_id.has_value()) {
       res_set_0.resources.emplace_back(
-          add_ue_res(res_list, cell_resources.get(res_params.csi_f0_res_id(ue_periodic_csi_report_cfg->pucch_res_id))));
+          add_ue_res(res_list, cell_resources.get(res_params.csi_f0_res_id(ue_periodic_csi_report_cfg->res_id))));
       res_set_1.resources.emplace_back(*csi_res_id);
     }
   }

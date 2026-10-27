@@ -147,6 +147,25 @@ ue_cell_res_config& du_cell_config_pool::acquire_ue_cell_cfg()
   return ue_cell_cfg_pool.emplace_back();
 }
 
+/// Builds the BWP configuration of a UE from its BWP parameters and the resources that the RRM allocates to it.
+static ue_bwp_config make_ue_bwp_config(const ue_bwp_config& bwp_cfg, const ue_rrm_config& rrm_cfg)
+{
+  ue_bwp_config cfg = bwp_cfg;
+
+  cfg.ul.pucch.res_set_cfg_id     = rrm_cfg.pucch.res_set_cfg_id;
+  cfg.ul.pucch.sr_res_id          = rrm_cfg.pucch.sr_res_id;
+  cfg.ul.pucch.sr_offset          = rrm_cfg.pucch.sr_offset;
+  cfg.ul.pucch.rep_f1_3_4_enabled = rrm_cfg.pucch.rep_f1_3_4_enabled;
+  cfg.ul.pucch.rep_f0_2_enabled   = rrm_cfg.pucch.rep_f0_2_enabled;
+  cfg.ul.csi.periodic_report.reset();
+  if (rrm_cfg.csi.periodic_report.has_value()) {
+    cfg.ul.csi.periodic_report.emplace(ue_periodic_csi_config{.pucch_res_id = rrm_cfg.csi.periodic_report->res_id,
+                                                              .offset       = rrm_cfg.csi.periodic_report->offset});
+  }
+
+  return cfg;
+}
+
 ue_cell_config_ptr du_cell_config_pool::update_ue(const sched_ue_cell_config& ue_cell)
 {
   ue_cell_res_config& ret = acquire_ue_cell_cfg();
@@ -172,7 +191,7 @@ ue_cell_config_ptr du_cell_config_pool::update_ue(const sched_ue_cell_config& ue
         ret,
         cell_bwps[0]->add_ded_cfg(&serv_cell_cfg.init_dl_bwp,
                                   serv_cell_cfg.ul_config.has_value() ? &serv_cell_cfg.ul_config->init_ul_bwp : nullptr,
-                                  ue_cell.ded->bwps[0]));
+                                  make_ue_bwp_config(ue_cell.ded->bwps[0], ue_cell.ded->rrm)));
   }
 
   // Hand out an intrusive_ptr to the pool-owned slot. Dropping the last reference (possibly on the RT thread) only

@@ -188,24 +188,10 @@ bool pucch_resource_manager::alloc_resources(ue_cell_config& cell_cfg)
     csi_rrm.periodic_report.reset();
   }
 
-  // Update the BWP configuration for this UE with the allocated SR and CSI resources.
-  auto& ul_bwp                = cell_cfg.init_bwp().ul;
-  ul_bwp.pucch.res_set_cfg_id = pucch_rrm.res_set_cfg_id;
-  ul_bwp.pucch.sr_res_id      = pucch_rrm.sr_res_id;
-  ul_bwp.pucch.sr_offset      = pucch_rrm.sr_offset;
-  if (csi_rrm.periodic_report.has_value()) {
-    ul_bwp.csi.periodic_report.emplace(ue_periodic_csi_config{
-        .pucch_res_id = csi_rrm.periodic_report->res_id,
-        .offset       = csi_rrm.periodic_report->offset,
-    });
-  } else {
-    ul_bwp.csi.periodic_report.reset();
-  }
-
   // Fill the serving cell config with the PUCCH-related configuration.
   serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg =
-      config_helpers::build_pucch_config(cell_ctx.cell_params, *cell_ctx.pucch_res, cell_cfg.init_bwp());
-  serv_cell_cfg.csi_meas_cfg = config_helpers::build_csi_meas_config(cell_ctx.cell_params, cell_cfg.init_bwp());
+      config_helpers::build_pucch_config(cell_ctx.cell_params, *cell_ctx.pucch_res, cell_cfg.rrm);
+  serv_cell_cfg.csi_meas_cfg = config_helpers::build_csi_meas_config(cell_ctx.cell_params, cell_cfg.rrm);
 
   // Disable PUCCH repetition until \c update_resources is called with the UE's reported capabilities.
   apply_rep_factor_capabilities(cell_cfg, std::nullopt);
@@ -279,11 +265,9 @@ void pucch_resource_manager::apply_rep_factor_capabilities(ue_cell_config&      
     }
   }
 
-  // Record the UE's dynamic PUCCH repetition support, also on the scheduler-facing PUCCH config of the UE.
-  cell_cfg.rrm.pucch.rep_f1_3_4_enabled           = dynamic_rep_supported and f1_3_4_supported;
-  cell_cfg.rrm.pucch.rep_f0_2_enabled             = dynamic_rep_supported and f0_2_supported;
-  cell_cfg.init_bwp().ul.pucch.rep_f1_3_4_enabled = cell_cfg.rrm.pucch.rep_f1_3_4_enabled;
-  cell_cfg.init_bwp().ul.pucch.rep_f0_2_enabled   = cell_cfg.rrm.pucch.rep_f0_2_enabled;
+  // Enable the repetition for the formats that the UE supports.
+  cell_cfg.rrm.pucch.rep_f1_3_4_enabled = dynamic_rep_supported and f1_3_4_supported;
+  cell_cfg.rrm.pucch.rep_f0_2_enabled   = dynamic_rep_supported and f0_2_supported;
 }
 
 std::vector<pucch_resource_manager::periodic_pucch_config>::const_iterator

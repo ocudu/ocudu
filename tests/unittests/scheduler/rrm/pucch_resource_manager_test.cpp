@@ -69,8 +69,8 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
     // Check that the SR is configured and all UEs have different SR offsets or PUCCH res id.
     const auto& sr_res_list = ue->ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
     ASSERT_FALSE(sr_res_list.empty());
-    const ue_bwp_config& ue_bwp_cfg = ue->ue_cell_cfg.bwps[0];
-    auto ue_sr_res_offset_pair      = std::make_pair(ue_bwp_cfg.ul.pucch.sr_res_id.value(), sr_res_list[0].offset);
+    const ue_rrm_config& ue_rrm_cfg = ue->ue_cell_cfg.rrm;
+    auto ue_sr_res_offset_pair      = std::make_pair(ue_rrm_cfg.pucch.sr_res_id.value(), sr_res_list[0].offset);
     ASSERT_EQ(sr_offsets.count(ue_sr_res_offset_pair), 0);
     sr_offsets.insert(ue_sr_res_offset_pair);
 
@@ -81,9 +81,9 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
       ASSERT_TRUE(has_csi_cfg);
       const auto& csi_res_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
           ue->ue_cell_cfg.serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list.front().report_cfg_type);
-      ASSERT_TRUE(ue_bwp_cfg.ul.csi.periodic_report.has_value());
+      ASSERT_TRUE(ue_rrm_cfg.csi.periodic_report.has_value());
       auto ue_csi_res_offset_pair =
-          std::make_pair(ue_bwp_cfg.ul.csi.periodic_report->pucch_res_id.value(), csi_res_cfg.report_slot_offset);
+          std::make_pair(ue_rrm_cfg.csi.periodic_report->res_id.value(), csi_res_cfg.report_slot_offset);
       ASSERT_EQ(csi_offsets.count(ue_csi_res_offset_pair), 0);
       csi_offsets.insert(ue_csi_res_offset_pair);
     }
@@ -125,21 +125,9 @@ TEST_F(pucch_resource_manager_tester, when_allocation_fails_then_ue_cell_config_
   ASSERT_EQ(ue_cfg.rrm, default_cfg.rrm);
 }
 
-TEST_F(pucch_resource_manager_tester, allocated_resources_are_recorded_in_the_ue_rrm_config_and_the_ue_bwp_config)
+TEST_F(pucch_resource_manager_tester, deallocated_resources_return_to_the_pool)
 {
   const ue_info* ue = add_ue();
-
-  const ue_pucch_rrm_config&  pucch_rrm = ue->ue_cell_cfg.rrm.pucch;
-  const ue_uplink_bwp_config& ul_bwp    = ue->ue_cell_cfg.bwps[0].ul;
-  ASSERT_EQ(pucch_rrm.res_set_cfg_id, ul_bwp.pucch.res_set_cfg_id);
-  ASSERT_EQ(pucch_rrm.sr_res_id, ul_bwp.pucch.sr_res_id);
-  ASSERT_EQ(pucch_rrm.sr_offset, ul_bwp.pucch.sr_offset);
-  const auto& csi_rrm = ue->ue_cell_cfg.rrm.csi;
-  ASSERT_EQ(csi_rrm.periodic_report.has_value(), ul_bwp.csi.periodic_report.has_value());
-  if (csi_rrm.periodic_report.has_value()) {
-    ASSERT_EQ(csi_rrm.periodic_report->res_id, ul_bwp.csi.periodic_report->pucch_res_id);
-    ASSERT_EQ(csi_rrm.periodic_report->offset, ul_bwp.csi.periodic_report->offset);
-  }
 
   // The resources of the UE return to the pool when the UE is deallocated.
   const unsigned nof_free_sr_cfgs = pucch_res_mng.get_nof_free_sr_configs(to_du_cell_index(0));
@@ -180,13 +168,12 @@ TEST_F(pucch_resource_manager_tester, sr_and_csi_in_different_symbols_are_alloca
   ue_cell_config ue_cfg = ocudu::config_helpers::make_default_ue_cell_config(cell_params_f0, f0_cell_idx);
   ASSERT_TRUE(pucch_res_mng.alloc_resources(ue_cfg));
 
-  const auto& ul_bwp = ue_cfg.init_bwp().ul;
-  ASSERT_TRUE(ul_bwp.csi.periodic_report.has_value());
+  ASSERT_TRUE(ue_cfg.rrm.csi.periodic_report.has_value());
   ASSERT_FALSE(csi_helper::are_sr_and_csi_pucchs_scheduled_together(
       sr_periodicity_to_slot(cell_params_f0.init_bwp.pucch.sr_period),
-      ul_bwp.pucch.sr_offset,
+      ue_cfg.rrm.pucch.sr_offset,
       to_underlying(cell_params_f0.init_bwp.csi->csi_rs_period),
-      ul_bwp.csi.periodic_report->offset));
+      ue_cfg.rrm.csi.periodic_report->offset));
 }
 
 TEST_F(pucch_resource_manager_tester, sr_and_csi_do_not_overlap_the_srs_in_the_special_slot)
@@ -216,9 +203,8 @@ TEST_F(pucch_resource_manager_tester, sr_and_csi_do_not_overlap_the_srs_in_the_s
       ASSERT_GT(i, 0);
       break;
     }
-    const auto& ul_bwp = ue_cfg.init_bwp().ul;
-    ASSERT_NE(ul_bwp.pucch.sr_offset % 10, special_slot_idx);
-    ASSERT_NE(ul_bwp.csi.periodic_report.value().offset % 10, special_slot_idx);
+    ASSERT_NE(ue_cfg.rrm.pucch.sr_offset % 10, special_slot_idx);
+    ASSERT_NE(ue_cfg.rrm.csi.periodic_report.value().offset % 10, special_slot_idx);
   }
 }
 
@@ -282,8 +268,6 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   pucch_res_mng.update_resources(ue_cfg, full_rep_caps);
   ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
   ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
-  ASSERT_EQ(ue_cfg.bwps[0].ul.pucch.rep_f1_3_4_enabled, ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
-  ASSERT_EQ(ue_cfg.bwps[0].ul.pucch.rep_f0_2_enabled, ue_cfg.rrm.pucch.rep_f0_2_enabled);
   for (const pucch_resource& res : res_list) {
     const auto cell_res_it = std::find_if(
         cell_res_list.begin(), cell_res_list.end(), [&](const pucch_resource& r) { return r.res_id == res.res_id; });

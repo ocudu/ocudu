@@ -213,16 +213,13 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
                 csi_res_id_end = pucch_csi_resource_id(params.nof_cell_csi_resources);
            csi_res_id != csi_res_id_end;
            ++csi_res_id) {
-        const ue_bwp_config ue_bwp_cfg{
-            .ul =
-                {
-                    .pucch = {.res_set_cfg_id = res_set_cfg_id, .sr_res_id = sr_res_id},
-                    .csi   = {.periodic_report = ue_periodic_csi_config{.pucch_res_id = csi_res_id}},
-                },
+        const ue_rrm_config ue_rrm_cfg{
+            .pucch = {.res_set_cfg_id = res_set_cfg_id, .sr_res_id = sr_res_id},
+            .csi   = {.periodic_report = ue_periodic_csi_rrm_config{.res_id = csi_res_id}},
         };
 
         const auto pucch_cfg =
-            config_helpers::build_pucch_config(cell_cfg, make_cell_rrm_config(cell_cfg).pucch, ue_bwp_cfg);
+            config_helpers::build_pucch_config(cell_cfg, make_cell_rrm_config(cell_cfg).pucch, ue_rrm_cfg);
 
         static constexpr unsigned nof_sr_res_per_ue  = 1;
         const unsigned            nof_csi_res_per_ue = params.nof_cell_csi_resources != 0 ? 1 : 0;
@@ -249,7 +246,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
         ASSERT_TRUE(is_ue_res_of(ue_sr_res_id, params.sr_res_id(sr_res_id)));
 
         // Check the CSI resource (if configured).
-        const auto csi_meas_cfg = config_helpers::build_csi_meas_config(cell_cfg, ue_bwp_cfg);
+        const auto csi_meas_cfg = config_helpers::build_csi_meas_config(cell_cfg, ue_rrm_cfg);
         ASSERT_EQ(params.nof_cell_csi_resources != 0, csi_meas_cfg.has_value());
         std::optional<unsigned> ue_csi_res_id;
         if (params.nof_cell_csi_resources != 0) {

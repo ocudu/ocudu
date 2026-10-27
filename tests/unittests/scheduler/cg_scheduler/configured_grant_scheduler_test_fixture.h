@@ -180,8 +180,8 @@ protected:
     ASSERT_TRUE(ue_cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg.has_value());
     if (cg_params.pucch_rep_enabled) {
       // Same as the UE reporting full support for dynamic PUCCH repetition in its capabilities.
-      ue_cell.init_bwp().ul.pucch.rep_f1_3_4_enabled = true;
-      ue_cell.init_bwp().ul.pucch.rep_f0_2_enabled   = true;
+      ue_cell.rrm.pucch.rep_f1_3_4_enabled = true;
+      ue_cell.rrm.pucch.rep_f0_2_enabled   = true;
     }
     ue_cell.serv_cell_cfg.ul_config->init_ul_bwp.cg_cfg->rrc_configured_ul_grant_cfg->time_domain_offset =
         cg_slot_offset.value_or(default_cg_offset_);
