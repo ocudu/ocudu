@@ -16,7 +16,7 @@ class ciphering_engine_nea2_ipsec_mb final : public ciphering_engine
 {
 public:
   ciphering_engine_nea2_ipsec_mb(sec_128_key k_128_enc_, uint8_t bearer_id_, security_direction direction_);
-  ~ciphering_engine_nea2_ipsec_mb() override = default;
+  ~ciphering_engine_nea2_ipsec_mb() override;
 
   security_status apply_ciphering(byte_buffer& buf, size_t offset, uint32_t count) override;
 

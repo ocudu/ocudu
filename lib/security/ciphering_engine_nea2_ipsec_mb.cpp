@@ -25,6 +25,11 @@ ciphering_engine_nea2_ipsec_mb::ciphering_engine_nea2_ipsec_mb(sec_128_key      
   IMB_AES_KEYEXP_128(mgr, k_128_enc.data(), expanded_enc_key.data(), expanded_dec_key.data());
 }
 
+ciphering_engine_nea2_ipsec_mb::~ciphering_engine_nea2_ipsec_mb()
+{
+  free_mb_mgr(mgr);
+}
+
 security_status ciphering_engine_nea2_ipsec_mb::apply_ciphering(byte_buffer& buf, size_t offset, uint32_t count)
 {
   byte_buffer_view msg{buf.begin() + offset, buf.end()};
