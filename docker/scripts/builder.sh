@@ -146,7 +146,6 @@ cd "$FOLDER" || exit
 
 # Setup ROHC
 export ROHC_DIR="/opt/rohc"
-export PKG_CONFIG_PATH="${ROHC_DIR}/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 export LD_LIBRARY_PATH="${ROHC_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 echo "ROHC_DIR set to $ROHC_DIR"
 
@@ -180,7 +179,7 @@ if [[ -n "$DPDK_VERSION" ]]; then
         fi
     fi
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
-    export LD_LIBRARY_PATH="${DPDK_DIR}/lib64:${DPDK_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="${DPDK_DIR}/lib64:${DPDK_DIR}/lib:${DPDK_DIR}/lib/x86_64-linux-gnu:${DPDK_DIR}/lib/aarch64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     echo "DPDK_DIR set to $DPDK_DIR"
 fi
 

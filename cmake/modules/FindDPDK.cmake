@@ -17,8 +17,9 @@ include(CheckIncludeFile)
 find_package(PkgConfig REQUIRED)
 
 # Set search path
-if (DEFINED ENV{DPDK_DIR})
+if (NOT "$ENV{DPDK_DIR}" STREQUAL "")
     file(TO_CMAKE_PATH "$ENV{DPDK_DIR}" DPDK_SEARCH_PATH)
+    get_filename_component(DPDK_SEARCH_PATH "${DPDK_SEARCH_PATH}" REALPATH)
     set(DPDK_SAVED_PKG_CONFIG_PATH "$ENV{PKG_CONFIG_PATH}")
     set(DPDK_PKG_CONFIG_PATH "${DPDK_SEARCH_PATH}/lib64/pkgconfig:${DPDK_SEARCH_PATH}/lib/pkgconfig")
     if (CMAKE_LIBRARY_ARCHITECTURE)
@@ -26,13 +27,13 @@ if (DEFINED ENV{DPDK_DIR})
     endif ()
     set(ENV{PKG_CONFIG_PATH} "${DPDK_PKG_CONFIG_PATH}:$ENV{PKG_CONFIG_PATH}")
     unset(DPDK_PKG_CONFIG_PATH)
-endif (DEFINED ENV{DPDK_DIR})
+endif ()
 
 # Find DPDK
 unset(DPDK_FOUND CACHE)
 pkg_check_modules(DPDK libdpdk>=${DPDK_MIN_VERSION})
 
-if (DEFINED ENV{DPDK_DIR})
+if (NOT "$ENV{DPDK_DIR}" STREQUAL "")
     set(ENV{PKG_CONFIG_PATH} "${DPDK_SAVED_PKG_CONFIG_PATH}")
     unset(DPDK_SAVED_PKG_CONFIG_PATH)
 endif ()
@@ -40,20 +41,22 @@ endif ()
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(DPDK REQUIRED_VARS DPDK_LDFLAGS VERSION_VAR DPDK_VERSION)
 
-if (DEFINED ENV{DPDK_DIR} AND NOT DPDK_FOUND)
+if (NOT "$ENV{DPDK_DIR}" STREQUAL "" AND NOT DPDK_FOUND)
     message(FATAL_ERROR "DPDK was not found at the requested DPDK path (${DPDK_SEARCH_PATH})")
 endif ()
 
 if (DPDK_FOUND)
     # In case a specific path was provided, check that the library was not relocated after installation.
-    if (DEFINED ENV{DPDK_DIR})
-        if (NOT "${DPDK_PREFIX}" STREQUAL "${DPDK_SEARCH_PATH}")
+    if (NOT "$ENV{DPDK_DIR}" STREQUAL "")
+        get_filename_component(DPDK_PREFIX_REAL "${DPDK_PREFIX}" REALPATH)
+        if (NOT "${DPDK_PREFIX_REAL}" STREQUAL "${DPDK_SEARCH_PATH}")
             message(FATAL_ERROR
                     "DPDK prefix detected by pkg-config (${DPDK_PREFIX}) does not match the requested DPDK path "
                     "(${DPDK_SEARCH_PATH}), the resulting libraries and headers path might be incorrect. "
                     "Please check whether the library was relocated from its original installation directory")
         endif()
-    endif(DEFINED ENV{DPDK_DIR})
+        unset(DPDK_PREFIX_REAL)
+    endif()
 endif (DPDK_FOUND)
 
 if (DPDK_FOUND)
