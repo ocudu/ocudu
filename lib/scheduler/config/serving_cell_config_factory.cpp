@@ -310,7 +310,7 @@ static uplink_config make_default_ue_uplink_config(const ran_cell_config&       
   uplink_config ul_config{};
 
   // >> PUCCH.
-  ul_config.init_ul_bwp.pucch_cfg = config_helpers::build_pucch_config(cell_cfg, pucch_res, ue_rrm_cfg);
+  ul_config.init_ul_bwp.pucch_cfg = config_helpers::build_pucch_config(pucch_res, ue_rrm_cfg);
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config(cell_cfg, ue_bwp_cfg));

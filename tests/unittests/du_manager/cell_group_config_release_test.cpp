@@ -11,6 +11,7 @@
 #include "ocudu/rlc/rlc_srb_config_factory.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;
@@ -39,7 +40,8 @@ protected:
     srb1.mac_cfg = make_default_srb_mac_lc_config(LCID_SRB1);
 
     // The source and the target start with the same complete configuration.
-    odu::calculate_cell_group_config_diff(target, {}, res_cfg);
+    odu::calculate_cell_group_config_diff(
+        target, {}, res_cfg, make_cell_rrm_config(config_helpers::make_default_ran_cell_config()));
     source = target;
   }
 

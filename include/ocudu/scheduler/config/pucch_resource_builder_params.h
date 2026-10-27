@@ -12,6 +12,7 @@
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
+#include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 #include <optional>
 #include <variant>
 #include <vector>
@@ -156,19 +157,6 @@ struct pucch_f4_params {
   }
   bool operator!=(const pucch_f4_params& other) const { return not(*this == other); }
 };
-
-struct pucch_resource_set_config_id_tag;
-/// PUCCH Resource Set configuration ID. Range: 0 to \ref pucch_resource_builder_params::nof_cell_res_set_configs - 1.
-using pucch_resource_set_config_id =
-    strong_type<uint8_t, struct pucch_res_set_cfg_id_tag, strong_equality, strong_increment_decrement>;
-struct pucch_sr_resource_id_tag;
-/// ID for a PUCCH resource used for SR. Range: 0 to \ref pucch_resource_builder_params::nof_cell_sr_resources - 1.
-using pucch_sr_resource_id =
-    strong_type<uint8_t, struct pucch_sr_resource_id_tag, strong_equality, strong_increment_decrement>;
-struct pucch_csi_resource_id_tag;
-/// ID for a PUCCH resource used for CSI. Range: 0 to \ref pucch_resource_builder_params::nof_cell_sr_resources - 1.
-using pucch_csi_resource_id =
-    strong_type<uint8_t, struct pucch_csi_resource_id_tag, strong_equality, strong_increment_decrement>;
 
 /// PUCCH HARQ-ACK repetition configuration for a cell.
 struct pucch_harq_ack_rep_params {

@@ -535,7 +535,8 @@ TEST_F(ue_config_tester, when_source_cell_group_is_included_then_resources_of_on
 {
   // The source cell group configures one PUCCH resource more than the target configuration of the UE.
   asn1::rrc_nr::cell_group_cfg_s src_cell_group;
-  calculate_cell_group_config_diff(src_cell_group, {}, test_ue->resources.value());
+  calculate_cell_group_config_diff(
+      src_cell_group, {}, test_ue->resources.value(), cell_mng.get_cell_rrm_cfg(test_ue->pcell_index));
   auto&                     src_pucch = src_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
   asn1::rrc_nr::pucch_res_s extra_res = src_pucch.res_to_add_mod_list[0];
   extra_res.pucch_res_id              = SOURCE_ONLY_PUCCH_RES_ID;

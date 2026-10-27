@@ -16,7 +16,8 @@
 using namespace ocudu;
 using namespace odu;
 
-dummy_ue_resource_configurator_factory::dummy_ue_resource_configurator_factory()
+dummy_ue_resource_configurator_factory::dummy_ue_resource_configurator_factory() :
+  cell_rrm(make_cell_rrm_config(config_helpers::make_default_ran_cell_config()))
 {
   next_context_update_result.srbs.emplace(srb_id_t::srb1);
   auto& new_srb   = next_context_update_result.srbs[srb_id_t::srb1];

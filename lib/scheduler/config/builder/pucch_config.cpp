@@ -5,7 +5,6 @@
 
 #include "ocudu/adt/format.h"
 #include "ocudu/scheduler/config/serving_cell_config_builder.h"
-#include "ocudu/scheduler/config/time_domain_resource_helper.h"
 
 using namespace ocudu;
 
@@ -27,8 +26,7 @@ static pucch_power_control build_pucch_power_control()
 }
 
 /// Appends a cell resource to the UE's PUCCH resource list and returns its UE resource ID, i.e. its list position.
-static unsigned add_ue_res(static_vector<pucch_resource, MAX_NOF_UE_PUCCH_RESOURCES>& res_list,
-                           const pucch_resource&                                      cell_res)
+static unsigned add_ue_res(static_vector<pucch_res_id_t, MAX_NOF_UE_PUCCH_RESOURCES>& res_list, pucch_res_id_t cell_res)
 {
   res_list.push_back(cell_res);
   return res_list.size() - 1;
@@ -44,69 +42,44 @@ unsigned config_helpers::ue_csi_res_id(const pucch_resource_builder_params& res_
   return nof_set_0_res + nof_sr_res + nof_set_1_res;
 }
 
-pucch_config config_helpers::build_pucch_config(const ran_cell_config&       cell_cfg,
-                                                const cell_pucch_rrm_config& cell_resources,
-                                                const ue_rrm_config&         ue_rrm_cfg)
+config_helpers::ue_pucch_res_layout config_helpers::make_ue_pucch_res_layout(const cell_pucch_resources& cell_resources,
+                                                                             const ue_rrm_config&        ue_rrm_cfg)
 {
-  const pucch_resource_builder_params& res_params                 = cell_cfg.init_bwp.pucch.resources;
-  const auto&                          ue_pucch_cfg               = ue_rrm_cfg.pucch;
-  const auto&                          ue_periodic_csi_report_cfg = ue_rrm_cfg.csi.periodic_report;
+  const auto& ue_periodic_csi_report_cfg = ue_rrm_cfg.csi.periodic_report;
+  const auto& harq_res                   = cell_resources.get_harq(ue_rrm_cfg.pucch.res_set_cfg_id);
+  const auto& sr_res                     = cell_resources.get_sr(ue_rrm_cfg.pucch.sr_res_id);
 
-  const auto   max_code_rate = res_params.max_code_rate_234();
-  pucch_config cfg{
-      .format_1_common_param = pucch_common_all_formats{},
-      .format_2_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
-      .format_3_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
-      .format_4_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
-      .dl_data_to_ul_ack =
-          time_domain_resource_helper::generate_k1_candidates(cell_cfg.tdd_cfg, cell_cfg.init_bwp.pucch.min_k1),
-      .pucch_pw_control = build_pucch_power_control(),
-  };
-
-  auto& res_list    = cfg.pucch_res_list;
-  auto& res_set_0   = cfg.pucch_res_set.emplace_back();
-  res_set_0.id      = pucch_res_set_id::set_0;
-  auto& res_set_1   = cfg.pucch_res_set.emplace_back();
-  res_set_1.id      = pucch_res_set_id::set_1;
-  auto& sr_res_list = cfg.sr_res_list;
-
-  const bool using_02 = cell_cfg.init_bwp.pucch.resources.format_01() == pucch_format::FORMAT_0 and
-                        cell_cfg.init_bwp.pucch.resources.format_234() == pucch_format::FORMAT_2;
+  ue_pucch_res_layout layout;
+  auto&               res_list  = layout.res_list;
+  auto&               res_set_0 = layout.res_set_0;
+  auto&               res_set_1 = layout.res_set_1;
 
   // Add Resource Set ID 0 resources for HARQ-ACK.
-  for (unsigned r_pucch = 0; r_pucch != res_params.res_set_size.value(); ++r_pucch) {
-    const auto& cell_res = cell_resources.get(res_params.harq_res_id<0>(ue_pucch_cfg.res_set_cfg_id, r_pucch));
-
+  for (pucch_res_id_t cell_res : harq_res.set_0) {
     // Add resource to both the PUCCH resource list and Resource Set ID 0.
-    res_set_0.resources.emplace_back(add_ue_res(res_list, cell_res));
+    res_set_0.push_back(add_ue_res(res_list, cell_res));
   }
 
-  // Add SR resource to both the PUCCH resource list and the SR resource list.
-  const unsigned sr_res_id = add_ue_res(res_list, cell_resources.get(res_params.sr_res_id(ue_pucch_cfg.sr_res_id)));
-  sr_res_list.emplace_back(scheduling_request_resource_config{.sr_res_id    = 1,
-                                                              .sr_id        = uint_to_sched_req_id(0),
-                                                              .period       = cell_cfg.init_bwp.pucch.sr_period,
-                                                              .offset       = ue_pucch_cfg.sr_offset,
-                                                              .pucch_res_id = sr_res_id});
+  // Add SR resource to the PUCCH resource list.
+  layout.sr_res_id = add_ue_res(res_list, sr_res.res_id);
 
   // Add Resource Set ID 1 resources for HARQ-ACK.
-  for (unsigned r_pucch = 0; r_pucch != res_params.res_set_size.value(); ++r_pucch) {
-    const auto& res = cell_resources.get(res_params.harq_res_id<1>(ue_pucch_cfg.res_set_cfg_id, r_pucch));
-
+  for (pucch_res_id_t cell_res : harq_res.set_1) {
     // Add resource to both the PUCCH resource list and Resource Set ID 1.
-    res_set_1.resources.emplace_back(add_ue_res(res_list, res));
+    res_set_1.push_back(add_ue_res(res_list, cell_res));
   }
 
-  std::optional<unsigned> csi_res_id;
+  const cell_pucch_resources::res_with_alt* csi_res = nullptr;
   if (ue_periodic_csi_report_cfg.has_value()) {
-    // Add CSI resource to the CSI resource list.
-    csi_res_id = add_ue_res(res_list, cell_resources.get(res_params.csi_res_id(ue_periodic_csi_report_cfg->res_id)));
-    ocudu_assert(*csi_res_id == ue_csi_res_id(res_params),
+    csi_res = &cell_resources.get_csi(ue_periodic_csi_report_cfg->res_id);
+    // Add CSI resource to the PUCCH resource list.
+    layout.csi_res_id = add_ue_res(res_list, csi_res->res_id);
+    ocudu_assert(*layout.csi_res_id == 2U * harq_res.set_0.size() + 1U,
                  "CSI resource at UE resource ID {} differs from the ID used by the CSI report",
-                 *csi_res_id);
+                 *layout.csi_res_id);
   }
 
-  if (using_02) {
+  if (sr_res.alt_res_id.has_value()) {
     // [Implementation-defined] We build the PUCCH-Config of all UEs in a way that will prevent the scheduling of
     // multiple PUCCH transmissions per UE per slot, since not all UEs are capable of that. To achieve this, we make
     // sure that there is always an option to schedule different UCI types on overlapping symbols, so that the UE will
@@ -131,16 +104,47 @@ pucch_config config_helpers::build_pucch_config(const ran_cell_config&       cel
     // - CSI_F0 is a F0 resource in Resource Set ID 0 that overlaps in symbols with the CSI (F2) resource.
     // - SR_F2 is a F2 resource in Resource Set ID 1 that overlaps in symbols with the SR (F0) resource.
     // - CSI_F2 is the same F2 resource in the PUCCH resource list as the CSI resource.
-    res_set_0.resources.emplace_back(sr_res_id);
-    res_set_1.resources.emplace_back(
-        add_ue_res(res_list, cell_resources.get(res_params.sr_f2_res_id(ue_pucch_cfg.sr_res_id))));
+    res_set_0.push_back(layout.sr_res_id);
+    res_set_1.push_back(add_ue_res(res_list, *sr_res.alt_res_id));
 
-    if (csi_res_id.has_value()) {
-      res_set_0.resources.emplace_back(
-          add_ue_res(res_list, cell_resources.get(res_params.csi_f0_res_id(ue_periodic_csi_report_cfg->res_id))));
-      res_set_1.resources.emplace_back(*csi_res_id);
+    if (csi_res != nullptr) {
+      res_set_0.push_back(add_ue_res(res_list, *csi_res->alt_res_id));
+      res_set_1.push_back(*layout.csi_res_id);
     }
   }
+
+  return layout;
+}
+
+pucch_config config_helpers::build_pucch_config(const cell_pucch_rrm_config& cell_resources,
+                                                const ue_rrm_config&         ue_rrm_cfg)
+{
+  const ue_pucch_res_layout layout = make_ue_pucch_res_layout(cell_resources.res, ue_rrm_cfg);
+
+  const auto   max_code_rate = cell_resources.max_code_rate_234;
+  pucch_config cfg{
+      .format_1_common_param = pucch_common_all_formats{},
+      .format_2_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
+      .format_3_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
+      .format_4_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
+      .dl_data_to_ul_ack     = cell_resources.dl_data_to_ul_ack,
+      .pucch_pw_control      = build_pucch_power_control(),
+  };
+
+  for (pucch_res_id_t cell_res_id : layout.res_list) {
+    cfg.pucch_res_list.push_back(cell_resources.res.get(cell_res_id));
+  }
+  auto& res_set_0 = cfg.pucch_res_set.emplace_back();
+  res_set_0.id    = pucch_res_set_id::set_0;
+  res_set_0.resources.assign(layout.res_set_0.begin(), layout.res_set_0.end());
+  auto& res_set_1 = cfg.pucch_res_set.emplace_back();
+  res_set_1.id    = pucch_res_set_id::set_1;
+  res_set_1.resources.assign(layout.res_set_1.begin(), layout.res_set_1.end());
+  cfg.sr_res_list.emplace_back(scheduling_request_resource_config{.sr_res_id    = 1,
+                                                                  .sr_id        = uint_to_sched_req_id(0),
+                                                                  .period       = cell_resources.sr_period,
+                                                                  .offset       = ue_rrm_cfg.pucch.sr_offset,
+                                                                  .pucch_res_id = layout.sr_res_id});
 
   return cfg;
 }

@@ -6,8 +6,8 @@
 #pragma once
 
 #include "ocudu/ran/pucch/pucch_configuration.h"
-#include "ocudu/support/ocudu_assert.h"
-#include <vector>
+#include "ocudu/ran/sr_configuration.h"
+#include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 
 namespace ocudu {
 
@@ -15,18 +15,14 @@ struct ran_cell_config;
 
 /// PUCCH resources that the RRM allocates to the UEs of a cell.
 struct cell_pucch_rrm_config {
-  /// UE-dedicated PUCCH resources of the cell.
-  std::vector<pucch_resource> resources;
-
-  /// Gets a UE-dedicated PUCCH resource by its resource ID.
-  const pucch_resource& get(pucch_res_id_t res_id) const
-  {
-    ocudu_assert(res_id.ded_id() < resources.size(),
-                 "PUCCH cell resource ID {} exceeds the size of the dedicated cell resource list ({})",
-                 res_id.ded_id(),
-                 resources.size());
-    return resources[res_id.ded_id()];
-  }
+  /// UE-dedicated PUCCH resources of the cell, and the map from the IDs that the RRM allocates to a UE to them.
+  cell_pucch_resources res;
+  /// Periodicity of the SR.
+  sr_periodicity sr_period = sr_periodicity::sl_40;
+  /// Maximum code rate of the Format 2, 3 and 4 resources.
+  max_pucch_code_rate max_code_rate_234 = max_pucch_code_rate::not_set;
+  /// Slot offsets between a PDSCH and its HARQ-ACK.
+  static_vector<uint8_t, 8> dl_data_to_ul_ack;
 };
 
 /// Cell resources that the RRM allocates to the UEs of a cell.

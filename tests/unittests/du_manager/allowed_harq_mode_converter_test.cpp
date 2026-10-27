@@ -37,7 +37,7 @@ ul_specific_params generate_ul_specific_params(std::optional<ul_harq_mode> allow
   const du_ue_resource_config dest = make_ue_resource_config(allowed_harq_mode);
 
   cell_group_cfg_s cell_group;
-  calculate_cell_group_config_diff(cell_group, src, dest);
+  calculate_cell_group_config_diff(cell_group, src, dest, {});
 
   report_error_if_not(cell_group.rlc_bearer_to_add_mod_list.size() == 1, "Expected a single bearer");
   return cell_group.rlc_bearer_to_add_mod_list[0].mac_lc_ch_cfg.ul_specific_params;
@@ -75,7 +75,7 @@ TEST(allowed_harq_mode_converter_test, a_packed_mode_survives_an_encode_decode_r
   const du_ue_resource_config dest = make_ue_resource_config(ul_harq_mode::mode_b);
 
   cell_group_cfg_s cell_group;
-  calculate_cell_group_config_diff(cell_group, src, dest);
+  calculate_cell_group_config_diff(cell_group, src, dest, {});
 
   byte_buffer   packed;
   asn1::bit_ref bref{packed};

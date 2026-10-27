@@ -80,7 +80,7 @@ void pucch_resource_manager::add_cell(du_cell_index_t        cell_idx,
   cell_ctx.sr_period_slots = sr_periodicity_to_slot(cell_cfg.init_bwp.pucch.sr_period);
   for (unsigned res = 0; res < cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_sr_resources; ++res) {
     const pucch_resource& sr_res =
-        cell_ctx.pucch_res->get(cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(res)));
+        cell_ctx.pucch_res->res.get(cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(res)));
     for (unsigned offset : get_periodic_pucch_slot_offsets(cell_cfg, cell_ctx.sr_period_slots, sr_res.syms)) {
       cell_ctx.free_sr_configs.emplace_back(periodic_pucch_config{res, offset});
     }
@@ -93,8 +93,8 @@ void pucch_resource_manager::add_cell(du_cell_index_t        cell_idx,
     // Compute the LCM of SR and CSI periods, as they might not be multiples of each other.
     cell_ctx.lcm_csi_sr_period = std::lcm(cell_ctx.sr_period_slots, cell_ctx.csi_period_slots);
     for (unsigned res = 0; res < cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_csi_resources; ++res) {
-      const pucch_resource& csi_res =
-          cell_ctx.pucch_res->get(cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(res)));
+      const pucch_resource& csi_res = cell_ctx.pucch_res->res.get(
+          cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(res)));
       for (unsigned offset : get_periodic_pucch_slot_offsets(cell_cfg, cell_ctx.csi_period_slots, csi_res.syms)) {
         cell_ctx.free_csi_configs.emplace_back(periodic_pucch_config{res, offset});
       }
@@ -190,7 +190,7 @@ bool pucch_resource_manager::alloc_resources(ue_cell_config& cell_cfg)
 
   // Fill the serving cell config with the PUCCH-related configuration.
   serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg =
-      config_helpers::build_pucch_config(cell_ctx.cell_params, *cell_ctx.pucch_res, cell_cfg.rrm);
+      config_helpers::build_pucch_config(*cell_ctx.pucch_res, cell_cfg.rrm);
   serv_cell_cfg.csi_meas_cfg = config_helpers::build_csi_meas_config(cell_ctx.cell_params, cell_cfg.rrm);
 
   // Disable PUCCH repetition until \c update_resources is called with the UE's reported capabilities.
@@ -259,7 +259,7 @@ void pucch_resource_manager::apply_rep_factor_capabilities(ue_cell_config&      
                                       ? f0_2_supported
                                       : f1_3_4_supported;
     if (dynamic_rep_supported and format_supported) {
-      res.rep_factor = cell_ctx.pucch_res->get(res.res_id).rep_factor;
+      res.rep_factor = cell_ctx.pucch_res->res.get(res.res_id).rep_factor;
     } else {
       res.rep_factor = pucch_repetition_factor::n1;
     }
@@ -276,7 +276,7 @@ pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&     
                                                const std::vector<periodic_pucch_config>& free_csi_list,
                                                unsigned                                  csi_report_size) const
 {
-  const pucch_resource& sr_res = cell_ctx.pucch_res->get(
+  const pucch_resource& sr_res = cell_ctx.pucch_res->res.get(
       cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(sr_cfg.res)));
   const unsigned max_pucch_payload = cell_ctx.cell_params.init_bwp.pucch.resources.max_payload_234();
   const auto     is_compatible     = [&](const periodic_pucch_config& csi_cfg) {
@@ -291,7 +291,7 @@ pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&     
     }
 
     // Ensure the CSI and SR resources collide in OFDM symbols, so they are multiplexed.
-    const pucch_resource& csi_res = cell_ctx.pucch_res->get(
+    const pucch_resource& csi_res = cell_ctx.pucch_res->res.get(
         cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(csi_cfg.res)));
     if (not csi_res.syms.overlaps(sr_res.syms)) {
       return false;

@@ -23,7 +23,7 @@ TEST(mac_cell_group_config_converter_test, test_default_initial_sr_cfg_conversio
 {
   auto                           dest_cfg = make_initial_du_ue_resource_config();
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -54,7 +54,7 @@ TEST(mac_cell_group_config_converter_test, test_custom_sr_cfg_conversion)
   dest_mcg_cfg.scheduling_request_config.erase(dest_mcg_cfg.scheduling_request_config.begin());
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -74,7 +74,7 @@ TEST(mac_cell_group_config_converter_test, test_legacy_sr_prohibit_timer_is_not_
   dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms128;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, {});
 
   const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
   ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_present);
@@ -92,7 +92,7 @@ TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_conve
   dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms320;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, {});
 
   const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
   ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_present);
@@ -122,7 +122,7 @@ TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_fills
                                    .max_tx         = sr_max_tx::n8});
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, {});
 
   const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
   ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present());
@@ -146,7 +146,7 @@ TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_survi
   dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms320;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, {});
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
@@ -172,7 +172,7 @@ TEST(mac_cell_group_config_converter_test, test_unchanged_extended_sr_prohibit_t
   const auto dest_cfg                                                         = src_cfg;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, {});
 
   // The UE keeps the stored value (Need M).
   const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
@@ -188,7 +188,7 @@ TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_is_re
   dest_cfg.cell_group.mcg_cfg.scheduling_request_config.front().prohibit_timer = sr_prohib_timer::ms64;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, {});
 
   const auto& rrc_mcg_cfg = rrc_cell_grp_cfg.mac_cell_group_cfg;
   ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_present);
@@ -213,7 +213,7 @@ TEST(mac_cell_group_config_converter_test, test_custom_bsr_cfg_conversion)
   dest_mcg_cfg.bsr_cfg.value().retx_timer        = ocudu::retx_bsr_timer::sf5120;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -230,7 +230,7 @@ TEST(mac_cell_group_config_converter_test, test_default_initial_tag_cfg_conversi
 {
   auto                           dest_cfg = make_initial_du_ue_resource_config();
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -258,7 +258,7 @@ TEST(mac_cell_group_config_converter_test, test_custom_tag_cfg_conversion)
   dest_mcg_cfg.tag_config.erase(dest_mcg_cfg.tag_config.begin());
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -276,7 +276,7 @@ TEST(mac_cell_group_config_converter_test, test_default_initial_phr_cfg_conversi
 {
   auto                           dest_cfg = make_initial_du_ue_resource_config();
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, {}, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -305,7 +305,7 @@ TEST(mac_cell_group_config_converter_test, test_custom_phr_cfg_conversion)
   dest_mcg_cfg.phr_cfg.value().phr_mode               = phr_mode_other_cg::virtual_;
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 
@@ -336,7 +336,7 @@ TEST(serving_cell_config_converter_test, test_phr_cfg_release_conversion)
   dest_mcg_cfg.phr_cfg.reset();
 
   asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
-  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg);
+  odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, {});
 
   ASSERT_TRUE(rrc_cell_grp_cfg.mac_cell_group_cfg_present);
 

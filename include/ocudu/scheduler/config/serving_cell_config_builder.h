@@ -13,15 +13,36 @@
 
 namespace ocudu::config_helpers {
 
+/// \brief Layout of the PUCCH resources of a UE.
+///
+/// [Implementation-defined] The UE PUCCH resource list contains the resources in the following order:
+///   | HARQ Resource Set ID 0 | SR | HARQ Resource Set ID 1 | CSI | (SR_F2) | (CSI_F0) |
+/// Where SR_F2 and CSI_F0 only exist when using Format 0 and Format 2 together. The UE resource ID of each resource,
+/// i.e. its \c PUCCH-ResourceId, is its position in the list.
+struct ue_pucch_res_layout {
+  /// Cell resource of each position of the UE resource list.
+  static_vector<pucch_res_id_t, MAX_NOF_UE_PUCCH_RESOURCES> res_list;
+  /// UE resource IDs of the resources of the HARQ-ACK Resource Set ID 0.
+  static_vector<unsigned, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> res_set_0;
+  /// UE resource IDs of the resources of the HARQ-ACK Resource Set ID 1.
+  static_vector<unsigned, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> res_set_1;
+  /// UE resource ID of the SR resource.
+  unsigned sr_res_id = 0;
+  /// UE resource ID of the CSI resource. Present only if the UE has a periodic CSI report.
+  std::optional<unsigned> csi_res_id;
+};
+
+/// Makes the layout of the PUCCH resources of a UE from the resources that the RRM allocates to it.
+ue_pucch_res_layout make_ue_pucch_res_layout(const cell_pucch_resources& cell_resources,
+                                             const ue_rrm_config&        ue_rrm_cfg);
+
 /// \brief Build the PUCCH-Config for a given UE.
 ///
 /// [Implementation-defined] The UE PUCCH resource list contains the resources in the following order:
 ///   | HARQ Resource Set ID 0 | SR | HARQ Resource Set ID 1 | CSI | (SR_F2) | (CSI_F0) |
 /// Where SR_F2 and CSI_F0 only exist when using Format 0 and Format 2 together. The UE resource ID of each resource,
 /// i.e. its \c PUCCH-ResourceId, is its position in the list.
-pucch_config build_pucch_config(const ran_cell_config&       cell_cfg,
-                                const cell_pucch_rrm_config& cell_resources,
-                                const ue_rrm_config&         ue_rrm_cfg);
+pucch_config build_pucch_config(const cell_pucch_rrm_config& cell_resources, const ue_rrm_config& ue_rrm_cfg);
 
 /// Gets the UE resource ID of the CSI resource in the PUCCH-Config built by \c build_pucch_config.
 unsigned ue_csi_res_id(const pucch_resource_builder_params& res_params);

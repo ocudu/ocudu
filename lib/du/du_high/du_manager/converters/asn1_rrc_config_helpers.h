@@ -10,6 +10,7 @@
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/du/du_cell_config.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 
 namespace ocudu {
 namespace odu {
@@ -32,8 +33,6 @@ asn1::rrc_nr::bwp_ul_common_s make_asn1_rrc_initial_up_bwp(const ul_config_commo
 
 asn1::rrc_nr::tdd_ul_dl_cfg_common_s make_asn1_rrc_tdd_ul_dl_cfg_common(const tdd_ul_dl_config_common& tdd_cfg);
 
-asn1::rrc_nr::pucch_res_set_s make_asn1_rrc_pucch_resource_set(const pucch_resource_set& cfg);
-
 asn1::rrc_nr::sched_request_res_cfg_s make_asn1_rrc_sr_resource(const scheduling_request_resource_config& cfg);
 
 /// Converts a PUCCH resource of the UE's PUCCH resource list, where \c ue_res_id is its position in the list.
@@ -51,9 +50,11 @@ make_asn1_rrc_sri_pusch_pwr_ctrl(const pusch_config::pusch_power_control::sri_pu
 /// \param[out] out The ASN.1 CellGroupConfig struct to fill.
 /// \param[in] src Previous cell group configuration of UE.
 /// \param[in] dest Next cell group configuration of UE.
+/// \param[in] pcell_rrm Resources that the RRM allocates to the UEs of the PCell, for both \c src and \c dest.
 void calculate_cell_group_config_diff(asn1::rrc_nr::cell_group_cfg_s& out,
                                       const du_ue_resource_config&    src,
-                                      const du_ue_resource_config&    dest);
+                                      const du_ue_resource_config&    dest,
+                                      const cell_rrm_config&          pcell_rrm);
 
 /// Compute ReconfigurationWithSync field. This is used, for instance, during handover.
 bool calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_sync_s&    out,

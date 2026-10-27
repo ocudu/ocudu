@@ -163,7 +163,7 @@ TEST(pucch_resource_generator_edge_prbs_test, dedicated_resources_leave_configur
   const unsigned nof_edge_prbs                    = default_edge_prbs + 3;
   cell_cfg.init_bwp.pucch.resources.nof_edge_prbs = nof_edge_prbs;
 
-  const std::vector<pucch_resource> res_list = make_cell_rrm_config(cell_cfg).pucch.resources;
+  const std::vector<pucch_resource> res_list = make_cell_rrm_config(cell_cfg).pucch.res.resources;
   ASSERT_FALSE(res_list.empty());
   unsigned min_prb = bwp_size_rbs;
   unsigned max_prb = 0;
@@ -218,8 +218,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
             .csi   = {.periodic_report = ue_periodic_csi_rrm_config{.res_id = csi_res_id}},
         };
 
-        const auto pucch_cfg =
-            config_helpers::build_pucch_config(cell_cfg, make_cell_rrm_config(cell_cfg).pucch, ue_rrm_cfg);
+        const auto pucch_cfg = config_helpers::build_pucch_config(make_cell_rrm_config(cell_cfg).pucch, ue_rrm_cfg);
 
         static constexpr unsigned nof_sr_res_per_ue  = 1;
         const unsigned            nof_csi_res_per_ue = params.nof_cell_csi_resources != 0 ? 1 : 0;
