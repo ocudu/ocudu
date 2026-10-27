@@ -114,8 +114,8 @@ TEST(asn1_sib1_sched_info_test, pws_si_message_takes_no_position_in_the_si_sched
   const si_scheduling_config        cell_si_sched_cfg =
       make_si_scheduling_info_config(cell_cfg, units::bytes{100}, si_msg_lens, pws_si_msg_lens);
 
-  const sched_cell_configuration_request_message sched_req =
-      make_sched_cell_config_req(to_du_cell_index(0), cell_cfg, cell_si_sched_cfg, 8);
+  const sched_cell_configuration_request_message sched_req = make_sched_cell_config_req(
+      to_du_cell_index(0), cell_cfg, make_cell_rrm_config(cell_cfg.ran), cell_si_sched_cfg, 8);
 
   // The SI window of an SI message derives from its position, and the SIB1 of a cell in the normal operation does not
   // list the SIB8 one. Leaving a position for it would put the SIB3 one in a window the UE does not listen on.

@@ -107,10 +107,13 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
     }
   }
 
+  // The resource managers keep references to the cell resources, so they cannot move.
+  cell_rrm_cfgs.reserve(cell_cfg_list.size());
   for (unsigned cell_idx_uint = 0; cell_idx_uint != cell_cfg_list.size(); ++cell_idx_uint) {
     const auto&           cell     = cell_cfg_list[cell_idx_uint];
     const du_cell_index_t cell_idx = to_du_cell_index(cell_idx_uint);
-    pucch_res_mng.add_cell(cell_idx, cell.ran);
+    cell_rrm_cfgs.push_back(make_cell_rrm_config(cell.ran));
+    pucch_res_mng.add_cell(cell_idx, cell.ran, cell_rrm_cfgs.back());
     srs_res_mng->add_cell(cell_idx, cell.ran);
     csi_res_mng.add_cell(cell_idx, cell.ran);
     if (cell.ran.init_bwp.cg_cfg.has_value()) {
@@ -207,6 +210,11 @@ unsigned du_ran_resource_manager_impl::get_max_nof_established_ue_contexts(du_ce
 unsigned du_ran_resource_manager_impl::get_max_nof_rejected_ue_contexts(du_cell_index_t /* unused */) const
 {
   return max_nof_rejected_ue_ctxts;
+}
+
+const cell_rrm_config& du_ran_resource_manager_impl::get_cell_rrm_config(du_cell_index_t cell_index) const
+{
+  return cell_rrm_cfgs[cell_index];
 }
 
 unsigned du_ran_resource_manager_impl::compute_max_nof_established_ue_ctxts(du_cell_index_t cell_index) const

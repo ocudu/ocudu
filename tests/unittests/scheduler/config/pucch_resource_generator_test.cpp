@@ -163,7 +163,7 @@ TEST(pucch_resource_generator_edge_prbs_test, dedicated_resources_leave_configur
   const unsigned nof_edge_prbs                    = default_edge_prbs + 3;
   cell_cfg.init_bwp.pucch.resources.nof_edge_prbs = nof_edge_prbs;
 
-  const std::vector<pucch_resource> res_list = make_cell_bwp_res_config(cell_cfg).ul.pucch.dedicated;
+  const std::vector<pucch_resource> res_list = make_cell_rrm_config(cell_cfg).pucch.resources;
   ASSERT_FALSE(res_list.empty());
   unsigned min_prb = bwp_size_rbs;
   unsigned max_prb = 0;
@@ -222,7 +222,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
         };
 
         const auto pucch_cfg =
-            config_helpers::build_pucch_config(cell_cfg, make_cell_bwp_res_config(cell_cfg).ul, ue_bwp_cfg);
+            config_helpers::build_pucch_config(cell_cfg, make_cell_rrm_config(cell_cfg).pucch, ue_bwp_cfg);
 
         static constexpr unsigned nof_sr_res_per_ue  = 1;
         const unsigned            nof_csi_res_per_ue = params.nof_cell_csi_resources != 0 ? 1 : 0;
@@ -249,8 +249,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
         ASSERT_TRUE(is_ue_res_of(ue_sr_res_id, params.sr_res_id(sr_res_id)));
 
         // Check the CSI resource (if configured).
-        const auto csi_meas_cfg =
-            config_helpers::build_csi_meas_config(cell_cfg, make_cell_bwp_res_config(cell_cfg).ul, ue_bwp_cfg);
+        const auto csi_meas_cfg = config_helpers::build_csi_meas_config(cell_cfg, ue_bwp_cfg);
         ASSERT_EQ(params.nof_cell_csi_resources != 0, csi_meas_cfg.has_value());
         std::optional<unsigned> ue_csi_res_id;
         if (params.nof_cell_csi_resources != 0) {

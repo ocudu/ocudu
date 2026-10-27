@@ -72,9 +72,11 @@ public:
     f1_params.nof_cyc_shifts                  = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported                   = true;
     cell_cfg_req.ran.init_bwp.pucch.resources = pucch_basic_params;
+    cell_cfg_req.rrm                          = make_cell_rrm_config(cell_cfg_req.ran);
     this->add_cell(cell_cfg_req);
 
-    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg().params);
+    cell_rrm = cell_cfg_req.rrm;
+    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg().params, cell_rrm);
   }
 
   void add_ue_with_drb_qos(logical_channel_config::qos_info drb_qos)
@@ -158,6 +160,7 @@ public:
 
   cell_config_builder_params params;
 
+  cell_rrm_config        cell_rrm;
   pucch_resource_manager pucch_cfg_builder{64};
 
   std::vector<ue_stats> ue_stats_map;

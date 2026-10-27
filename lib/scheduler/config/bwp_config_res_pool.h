@@ -19,8 +19,8 @@ namespace ocudu {
 class bwp_config_res_pool
 {
 public:
-  bwp_config_res_pool(const ran_cell_config& ran_cfg, bwp_id_t bwp_id_) :
-    bwpid(bwp_id_), base_dl_bwp_cmn(ran_cfg.dl_cfg_common.init_dl_bwp), res(make_cell_bwp_res_config(ran_cfg))
+  bwp_config_res_pool(const ran_cell_config& ran_cfg, const cell_rrm_config& rrm_cfg, bwp_id_t bwp_id_) :
+    bwpid(bwp_id_), base_dl_bwp_cmn(ran_cfg.dl_cfg_common.init_dl_bwp), res(make_cell_bwp_res_config(ran_cfg, rrm_cfg))
   {
   }
 

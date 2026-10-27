@@ -474,6 +474,11 @@ public:
   {
     return max_nof_rejected_ue_ctxts;
   }
+
+  const cell_rrm_config& get_cell_rrm_config(du_cell_index_t cell_index) const override { return cell_rrm; }
+
+  /// Resources that the dummy returns for all the cells.
+  cell_rrm_config cell_rrm;
 };
 
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,

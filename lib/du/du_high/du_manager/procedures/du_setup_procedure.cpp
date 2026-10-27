@@ -230,9 +230,9 @@ void odu::configure_du_cells(const du_proc_context_view& ctxt)
 {
   ctxt.cell_mng.remove_all_cells();
 
-  // Save cell configurations.
-  for (const du_cell_config& cell : ctxt.params.ran.cells) {
-    ctxt.cell_mng.add_cell(cell);
+  // Save cell configurations and the resources that the RRM allocates to the UEs of each cell.
+  for (unsigned idx = 0, e = ctxt.params.ran.cells.size(); idx != e; ++idx) {
+    ctxt.cell_mng.add_cell(ctxt.params.ran.cells[idx], ctxt.res_mng.get_cell_rrm_config(to_du_cell_index(idx)));
   }
 
   // Configure MAC Cells (without activating them).
@@ -244,8 +244,11 @@ void odu::configure_du_cells(const du_proc_context_view& ctxt)
     const unsigned max_nof_established_ue_ctxts = ctxt.res_mng.get_max_nof_established_ue_contexts(cell_index);
     const unsigned max_nof_rejected_ue_ctxts    = ctxt.res_mng.get_max_nof_rejected_ue_contexts(cell_index);
 
-    auto sched_cfg = make_sched_cell_config_req(
-        cell_index, du_cfg, sys_info.si_sched_cfg, max_nof_established_ue_ctxts + max_nof_rejected_ue_ctxts);
+    auto                    sched_cfg = make_sched_cell_config_req(cell_index,
+                                                du_cfg,
+                                                ctxt.cell_mng.get_cell_rrm_cfg(cell_index),
+                                                sys_info.si_sched_cfg,
+                                                max_nof_established_ue_ctxts + max_nof_rejected_ue_ctxts);
     error_type<std::string> result =
         config_validators::validate_sched_cell_configuration_request_message(sched_cfg, ctxt.params.mac.sched_cfg);
     if (not result.has_value()) {

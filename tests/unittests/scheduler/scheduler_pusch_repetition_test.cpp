@@ -65,7 +65,8 @@ protected:
     // Add Cell.
     auto cell_req = sched_config_helper::make_default_sched_cell_configuration_request(params);
     this->add_cell(cell_req);
-    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg(to_du_cell_index(0)).params);
+    cell_rrm = cell_req.rrm;
+    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg(to_du_cell_index(0)).params, cell_rrm);
 
     // Add UE with a Rel-16 PUSCH TDRA list that mirrors the common list and appends a repetition entry.
     auto ue_cfg           = sched_config_helper::create_default_sched_ue_creation_request(cell_req.ran, {ue_drb_lcid});
@@ -157,6 +158,7 @@ protected:
   const rnti_t        ue_rnti     = to_rnti(0x4601);
   const lcid_t        ue_drb_lcid = LCID_MIN_DRB;
 
+  cell_rrm_config            cell_rrm;
   pucch_resource_manager     pucch_cfg_builder{64};
   cell_config_builder_params params;
   unsigned                   rep_time_resource = 0;
@@ -490,7 +492,8 @@ protected:
     params.dl_carrier.carrier_bw      = bs_channel_bandwidth::MHz20;
     auto cell_req                     = sched_config_helper::make_default_sched_cell_configuration_request(params);
     add_cell(cell_req);
-    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg(to_du_cell_index(0)).params);
+    cell_rrm = cell_req.rrm;
+    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg(to_du_cell_index(0)).params, cell_rrm);
 
     const auto& common_list = cell_req.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     for (unsigned i = 0; i != nof_ues; ++i) {
@@ -515,6 +518,7 @@ protected:
     }
   }
 
+  cell_rrm_config        cell_rrm;
   pucch_resource_manager pucch_cfg_builder{64};
 };
 

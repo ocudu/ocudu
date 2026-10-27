@@ -7,6 +7,7 @@
 
 #include "du_ue_resource_config.h"
 #include "ocudu/f1ap/du/f1ap_du_ue_context_update.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include "ocudu/scheduler/rrm/ue_capability_summary.h"
 
 namespace ocudu {
@@ -128,6 +129,9 @@ public:
 
   /// Returns the number of extra UE contexts that the given cell can hold for UEs pending an RRC Reject.
   virtual unsigned get_max_nof_rejected_ue_contexts(du_cell_index_t cell_index) const = 0;
+
+  /// Returns the resources that the RRM allocates to the UEs of the given cell.
+  virtual const cell_rrm_config& get_cell_rrm_config(du_cell_index_t cell_index) const = 0;
 };
 
 } // namespace odu

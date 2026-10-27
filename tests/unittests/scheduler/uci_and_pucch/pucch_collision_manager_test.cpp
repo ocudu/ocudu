@@ -31,6 +31,7 @@ make_test_cell_config_pool(const pucch_resource_builder_params& ded_resources   
   auto       sched_req  = sched_config_helper::make_default_sched_cell_configuration_request(cell_params);
   sched_req.ran.init_bwp.pucch.resources                                                 = ded_resources;
   sched_req.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common = pucch_resource_common;
+  sched_req.rrm = make_cell_rrm_config(sched_req.ran);
   return std::make_unique<du_cell_config_pool>(expert_cfg, sched_req);
 }
 

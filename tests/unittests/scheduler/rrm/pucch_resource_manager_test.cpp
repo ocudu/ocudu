@@ -30,7 +30,8 @@ protected:
     cell_cfg(*cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request())),
     cell_cfg_dedicated(ocudu::config_helpers::make_default_ue_cell_config(cell_cfg.params))
   {
-    pucch_res_mng.add_cell(to_du_cell_index(0), cell_cfg.params);
+    cell_rrm = make_cell_rrm_config(cell_cfg.params);
+    pucch_res_mng.add_cell(to_du_cell_index(0), cell_cfg.params, cell_rrm);
   }
 
   struct ue_info {
@@ -51,6 +52,7 @@ protected:
   pucch_resource_builder_params           pucch_params;
   std::vector<ue_info>                    ues;
   unsigned                                ue_cnt = 0;
+  cell_rrm_config                         cell_rrm;
   pucch_resource_manager                  pucch_res_mng{64};
 };
 
@@ -149,7 +151,8 @@ TEST_F(pucch_resource_manager_tester, sr_and_csi_in_different_symbols_are_alloca
   ASSERT_FALSE(sr_res_it->syms.overlaps(csi_res_it->syms));
 
   const du_cell_index_t f0_cell_idx = to_du_cell_index(1);
-  pucch_res_mng.add_cell(f0_cell_idx, cell_params_f0);
+  const cell_rrm_config f0_cell_rrm = make_cell_rrm_config(cell_params_f0);
+  pucch_res_mng.add_cell(f0_cell_idx, cell_params_f0, f0_cell_rrm);
 
   ue_cell_config ue_cfg = ocudu::config_helpers::make_default_ue_cell_config(cell_params_f0, f0_cell_idx);
   ASSERT_TRUE(pucch_res_mng.alloc_resources(ue_cfg));
@@ -179,7 +182,9 @@ TEST_F(pucch_resource_manager_tester, sr_and_csi_do_not_overlap_the_srs_in_the_s
   pucch_res.max_nof_symbols        = 12U;
   pucch_res.nof_cell_sr_resources  = 12;
   pucch_res.nof_cell_csi_resources = 12;
-  pucch_res_mng.add_cell(to_du_cell_index(1), cell_params);
+
+  const cell_rrm_config srs_cell_rrm = make_cell_rrm_config(cell_params);
+  pucch_res_mng.add_cell(to_du_cell_index(1), cell_params, srs_cell_rrm);
 
   // Fill the cell with UEs. No SR or CSI goes in the special slot.
   for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
@@ -223,7 +228,8 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   }));
 
   const du_cell_index_t rep_cell_idx = to_du_cell_index(1);
-  pucch_res_mng.add_cell(rep_cell_idx, cell_params_rep);
+  const cell_rrm_config rep_cell_rrm = make_cell_rrm_config(cell_params_rep);
+  pucch_res_mng.add_cell(rep_cell_idx, cell_params_rep, rep_cell_rrm);
 
   ue_cell_config ue_cfg = ocudu::config_helpers::make_default_ue_cell_config(cell_params_rep, rep_cell_idx);
   ASSERT_TRUE(pucch_res_mng.alloc_resources(ue_cfg));

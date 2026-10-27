@@ -172,11 +172,13 @@ public:
       cell_cfg_msg.ran.ntn_params->ul_harq_mode_b                = true;
     }
 
-    cell_cfgs = {cell_cfg_msg.ran};
+    cell_cfg_msg.rrm = make_cell_rrm_config(cell_cfg_msg.ran);
+    cell_cfgs        = {cell_cfg_msg.ran};
 
     sch->handle_cell_configuration_request(cell_cfg_msg);
 
-    pucch_res_mng.add_cell(to_du_cell_index(0), cell_cfgs[0]);
+    cell_rrm = cell_cfg_msg.rrm;
+    pucch_res_mng.add_cell(to_du_cell_index(0), cell_cfgs[0], cell_rrm);
 
     logger.set_context(next_sl_tx.sfn(), next_sl_tx.slot_index());
   }
@@ -381,6 +383,7 @@ private:
   cell_config_builder_params   builder_params;
   std::vector<ran_cell_config> cell_cfgs;
   ocudulog::basic_logger&      logger;
+  cell_rrm_config              cell_rrm;
   pucch_resource_manager       pucch_res_mng;
 
   std::unique_ptr<mac_scheduler> sch;

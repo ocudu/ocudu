@@ -79,6 +79,7 @@ si_scheduling_config ocudu::odu::make_si_scheduling_info_config(const du_cell_co
 sched_cell_configuration_request_message
 ocudu::odu::make_sched_cell_config_req(du_cell_index_t             cell_index,
                                        const odu::du_cell_config&  du_cfg,
+                                       const cell_rrm_config&      rrm_cfg,
                                        const si_scheduling_config& si_sched_cfg,
                                        unsigned                    max_nof_ue_contexts)
 {
@@ -88,6 +89,7 @@ ocudu::odu::make_sched_cell_config_req(du_cell_index_t             cell_index,
   sched_req.cell_index       = cell_index;
   sched_req.cell_group_index = (du_cell_group_index_t)cell_index; // No CA by default.
   sched_req.ran              = du_cfg.ran;
+  sched_req.rrm              = rrm_cfg;
 
   // Convert SIB1 and SI message info scheduling config. A cell starts out in the normal operation, so the SI messages
   // that only carry a warning are not broadcast yet, and must not take a position that the SIB1 of the cell gives to

@@ -86,6 +86,8 @@ public:
 
   unsigned get_max_nof_rejected_ue_contexts(du_cell_index_t cell_index) const override;
 
+  const cell_rrm_config& get_cell_rrm_config(du_cell_index_t cell_index) const override;
+
   /// \brief Updates a UE's cell configuration context based on the F1 UE Context Update request.
   ///
   /// UE Context updates may include the addition of new bearers, reservation of PUCCH Resources for Scheduling
@@ -140,6 +142,9 @@ private:
   span<const du_cell_config> cell_cfg_list;
   ocudulog::basic_logger&    logger;
   const du_test_mode_config& test_cfg;
+
+  /// Resources that the RRM allocates to the UEs of each cell, indexed by cell index.
+  std::vector<cell_rrm_config> cell_rrm_cfgs;
 
   struct ue_resource_context {
     du_ue_resource_config cg_cfg;

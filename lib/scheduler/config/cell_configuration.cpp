@@ -40,7 +40,7 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   ntn_ref_location_ul_ta(get_ref_location_ul_ta(params.ntn_params))
 {
   // Initialize BWP resources.
-  bwp_res.emplace(to_bwp_id(0), params, to_bwp_id(0));
+  bwp_res.emplace(to_bwp_id(0), params, msg.rrm, to_bwp_id(0));
 
   if (is_tdd()) {
     // Cache list of DL and UL slots in case of TDD

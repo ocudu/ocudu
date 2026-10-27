@@ -191,7 +191,7 @@ TEST_F(du_cell_lock_test, when_cell_restarted_without_bar_then_cellbarred_restor
   // restarts with the live MIB cellBarred already matching the configured value. start() must then skip the
   // restore: the extra awaited reconfigure hop to the cell executor would only delay the cell going active.
   du_cell_manager cell_mng(dependencies.params);
-  cell_mng.add_cell(cell_cfgs[0]);
+  cell_mng.add_cell(cell_cfgs[0], make_cell_rrm_config(cell_cfgs[0].ran));
   dependencies.mac.mac_cell.last_cell_recfg_req.reset();
 
   {

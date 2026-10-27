@@ -147,6 +147,8 @@ protected:
                                     .factors_per_res = std::vector<pucch_repetition_factor>(
                                         pucch_res.res_set_size.value(), pucch_repetition_factor::n4)};
     }
+    // The cell RRM resources depend on the PUCCH parameters, so they are generated after all the changes to them.
+    cell_req.rrm = make_cell_rrm_config(cell_req.ran);
     if (cg_params.extra_pusch_td_alloc) {
       cell_req.ran.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.push_back(extra_pusch_td_res);
     }

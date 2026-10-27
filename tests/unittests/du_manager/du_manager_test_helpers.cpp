@@ -159,6 +159,6 @@ du_manager_test_bench::du_manager_test_bench(span<const du_cell_config> cells) :
 
   // Add cells to cell manager.
   for (const auto& cell : du_cells) {
-    cell_mng.add_cell(cell);
+    cell_mng.add_cell(cell, make_cell_rrm_config(cell.ran));
   }
 }

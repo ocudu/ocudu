@@ -12,6 +12,7 @@
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/scheduler/config/ran_cell_config.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include <vector>
 
 namespace ocudu {
@@ -107,7 +108,7 @@ struct cell_bwp_res_config {
   bool operator==(const cell_bwp_res_config& other) const { return ul == other.ul; }
 };
 
-// Generate the cell-common BWP configuration from the cell configuration.
-cell_bwp_res_config make_cell_bwp_res_config(const ran_cell_config& cell_cfg);
+// Generate the cell-common BWP configuration from the cell configuration and the resources that the RRM allocates.
+cell_bwp_res_config make_cell_bwp_res_config(const ran_cell_config& cell_cfg, const cell_rrm_config& rrm_cfg);
 
 } // namespace ocudu

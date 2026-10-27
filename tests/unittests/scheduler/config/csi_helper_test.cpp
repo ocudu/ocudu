@@ -320,7 +320,8 @@ TEST(cell_csi_config_test, cell_without_csi_has_no_csi_config)
   cell_config_builder_params builder;
   builder.csi_rs_enabled = false;
 
-  ASSERT_FALSE(make_cell_bwp_res_config(config_helpers::make_default_ran_cell_config(builder)).dl.csi.has_value());
+  const ran_cell_config cell_cfg = config_helpers::make_default_ran_cell_config(builder);
+  ASSERT_FALSE(make_cell_bwp_res_config(cell_cfg, make_cell_rrm_config(cell_cfg)).dl.csi.has_value());
 }
 
 struct cell_csi_test_params {
@@ -347,7 +348,7 @@ TEST_P(cell_csi_config_test, cell_csi_config_matches_the_ue_csi_meas_config)
     cell_cfg.init_bwp.csi->type2_codebook.emplace();
   }
 
-  const cell_bwp_csi_config csi = make_cell_bwp_res_config(cell_cfg).dl.csi.value();
+  const cell_bwp_csi_config csi = make_cell_bwp_res_config(cell_cfg, make_cell_rrm_config(cell_cfg)).dl.csi.value();
   const csi_meas_config     ue_csi =
       config_helpers::make_default_ue_cell_config(cell_cfg).serv_cell_cfg.csi_meas_cfg.value();
 

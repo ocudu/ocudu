@@ -124,7 +124,7 @@ make_cell_bwp_pools(const sched_cell_configuration_request_message& req)
 {
   std::vector<std::unique_ptr<bwp_config_pool>> bwps;
   // Note: Create a pool for a single BWP for now.
-  bwps.push_back(std::make_unique<bwp_config_pool>(req.ran, to_bwp_id(0), make_cell_bwp_res_config(req.ran)));
+  bwps.push_back(std::make_unique<bwp_config_pool>(req.ran, to_bwp_id(0), make_cell_bwp_res_config(req.ran, req.rrm)));
   return bwps;
 }
 

@@ -53,6 +53,7 @@ protected:
     auto cell_req = sched_config_helper::make_default_sched_cell_configuration_request(params);
     std::get<pucch_f2_params>(cell_req.ran.init_bwp.pucch.resources.f2_or_f3_or_f4_params).max_code_rate =
         max_pucch_code_rate::dot_35;
+    cell_req.rrm = make_cell_rrm_config(cell_req.ran);
     this->add_cell(cell_req);
 
     // Add UE with a Rel-16 PDSCH TDRA list that mirrors the common list and appends a repetition entry.

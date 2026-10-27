@@ -144,6 +144,7 @@ class pucch_power_control_test_bench : public ::testing::TestWithParam<pucch_pw_
     } else if (tparams.format_set_0 == pucch_format::FORMAT_1) {
       req.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = 11;
     }
+    req.rrm = make_cell_rrm_config(req.ran);
 
     return req;
   }
@@ -178,9 +179,10 @@ protected:
                      format_set_1 == pucch_format::FORMAT_4,
                  "For PUCCH resources set 1, Format 0 and are not valid");
 
-    sched_ue_creation_request_message ue_req = cfg_mng.get_default_ue_config_request();
+    sched_ue_creation_request_message ue_req   = cfg_mng.get_default_ue_config_request();
+    const cell_rrm_config             cell_rrm = make_cell_rrm_config(cell_cfg.params);
     pucch_resource_manager            pucch_builder(cell_cfg.expert_cfg.ue.max_pucchs_per_slot);
-    pucch_builder.add_cell(to_du_cell_index(0), cell_cfg.params);
+    pucch_builder.add_cell(to_du_cell_index(0), cell_cfg.params, cell_rrm);
     pucch_builder.alloc_resources(*ue_req.cfg.cells.value().front().ded);
     add_ue(ue_req);
   }

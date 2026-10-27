@@ -6,8 +6,10 @@
 #pragma once
 
 #include "ocudu/adt/slotted_array.h"
-#include "ocudu/scheduler/config/cell_bwp_res_config.h"
+#include "ocudu/ran/csi_report/csi_report_configuration.h"
+#include "ocudu/scheduler/config/ran_cell_config.h"
 #include "ocudu/scheduler/config/serving_cell_config.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 #include "ocudu/scheduler/rrm/ue_capability_summary.h"
 #include "ocudu/scheduler/scheduler_configurator.h"
 #include <optional>
@@ -27,8 +29,11 @@ public:
   pucch_resource_manager& operator=(const pucch_resource_manager&) = delete;
   pucch_resource_manager& operator=(pucch_resource_manager&&)      = delete;
 
-  /// Add resources for a new DU cell.
-  void add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg);
+  /// \brief Add resources for a new DU cell.
+  ///
+  /// The manager keeps a reference to the PUCCH resources of \c rrm_cfg. The caller must keep \c rrm_cfg valid and at
+  /// the same address until it calls \c rem_cell.
+  void add_cell(du_cell_index_t cell_idx, const ran_cell_config& cell_cfg, const cell_rrm_config& rrm_cfg);
 
   /// Remove all resources for a DU cell.
   void rem_cell(du_cell_index_t cell_idx);
@@ -65,11 +70,14 @@ private:
   };
 
   struct cell_resource_context {
-    ran_cell_config     cell_params;
-    cell_bwp_res_config cell_bwp_cfg;
-    unsigned            lcm_csi_sr_period;
-    unsigned            sr_period_slots;
-    unsigned            csi_period_slots;
+    ran_cell_config cell_params;
+    /// PUCCH resources of the cell that the manager allocates to the UEs. Owned by the caller of \c add_cell.
+    const cell_pucch_rrm_config* pucch_res = nullptr;
+    /// CSI report on PUCCH. Absent if the cell configures no periodic CSI reports.
+    std::optional<csi_report_configuration> csi_report;
+    unsigned                                lcm_csi_sr_period;
+    unsigned                                sr_period_slots;
+    unsigned                                csi_period_slots;
     /// Pool of SR configurations currently available to be allocated to UEs.
     std::vector<periodic_pucch_config> free_sr_configs;
     /// Pool of periodic CSI configurations currently available to be allocated to UEs.
@@ -79,11 +87,7 @@ private:
     std::vector<unsigned> periodic_pucchs_per_slot;
 
     /// CSI report on PUCCH. Null if the cell configures no periodic CSI reports.
-    const csi_report_configuration* pucch_csi_report() const
-    {
-      const auto& csi = cell_bwp_cfg.dl.csi;
-      return csi.has_value() ? csi->pucch_report() : nullptr;
-    }
+    const csi_report_configuration* pucch_csi_report() const { return csi_report.has_value() ? &*csi_report : nullptr; }
   };
 
   const unsigned max_pucch_grants_per_slot;

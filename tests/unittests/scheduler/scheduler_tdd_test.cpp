@@ -139,10 +139,12 @@ protected:
               cell_req.ran.init_bwp.srs_cfg.max_nof_symbols.value(),
               cell_req.ran.init_bwp.srs_cfg.nof_symbols);
     }
+    cell_req.rrm = make_cell_rrm_config(cell_req.ran);
     this->add_cell(cell_req);
 
     // Setup PUCCH and SRS resource builders.
-    pucch_builder.add_cell(to_du_cell_index(0), cell_cfg().params);
+    cell_rrm = cell_req.rrm;
+    pucch_builder.add_cell(to_du_cell_index(0), cell_cfg().params, cell_rrm);
     if (srs_enabled) {
       srs_builder = create_srs_resource_manager(cell_cfg().params);
       srs_builder->add_cell(to_du_cell_index(0), cell_cfg().params);
@@ -172,6 +174,7 @@ protected:
 
   cell_config_builder_params params;
   // Builds a distinct per-UE dedicated PUCCH config from the cell pool for every UE created by these tests.
+  cell_rrm_config        cell_rrm;
   pucch_resource_manager pucch_builder{120};
   // Builds a distinct per-UE periodic SRS occasion from the cell pool. Null when SRS is disabled for the test.
   std::unique_ptr<srs_resource_manager> srs_builder;

@@ -26,6 +26,7 @@ si_scheduling_config make_si_scheduling_info_config(const du_cell_config&    du_
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
 sched_cell_configuration_request_message make_sched_cell_config_req(du_cell_index_t             cell_index,
                                                                     const odu::du_cell_config&  du_cfg,
+                                                                    const cell_rrm_config&      rrm_cfg,
                                                                     const si_scheduling_config& si_sched_cfg,
                                                                     unsigned                    max_nof_ue_contexts);
 

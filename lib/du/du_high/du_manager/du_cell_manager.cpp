@@ -62,7 +62,7 @@ static void fill_si_scheduler_config(si_scheduling_config&                si_sch
   si_sched_cfg = make_si_scheduling_info_config(cell_cfg, sib1_len, si_payload_sizes, pws_payload_sizes);
 }
 
-void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
+void du_cell_manager::add_cell(const du_cell_config& cell_cfg, const cell_rrm_config& rrm)
 {
   // Verify that DU cell configuration is valid. Abort application otherwise.
   auto ret = is_du_cell_config_valid(cell_cfg);
@@ -82,6 +82,7 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   // Save config.
   du_cell_context& cell = *cells.emplace_back(std::make_unique<du_cell_context>());
   cell.cfg              = cell_cfg;
+  cell.rrm              = rrm;
   cell.state            = du_cell_context::state_t::inactive;
   cell.live_barred      = cell_cfg.cell_barred;
   cell.si_cfg.sib1      = sib1.copy();

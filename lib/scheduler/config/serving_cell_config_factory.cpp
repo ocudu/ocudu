@@ -301,15 +301,15 @@ static cg_configuration make_default_cg_config(const cg_builder_params& cg_param
   return cfg;
 }
 
-static uplink_config make_default_ue_uplink_config(const ran_cell_config&     cell_cfg,
-                                                   const cell_bwp_res_config& cell_bwp_cfg,
-                                                   const ue_bwp_config&       ue_bwp_cfg)
+static uplink_config make_default_ue_uplink_config(const ran_cell_config&       cell_cfg,
+                                                   const cell_pucch_rrm_config& pucch_res,
+                                                   const ue_bwp_config&         ue_bwp_cfg)
 {
   // > UL Config.
   uplink_config ul_config{};
 
   // >> PUCCH.
-  ul_config.init_ul_bwp.pucch_cfg = config_helpers::build_pucch_config(cell_cfg, cell_bwp_cfg.ul, ue_bwp_cfg);
+  ul_config.init_ul_bwp.pucch_cfg = config_helpers::build_pucch_config(cell_cfg, pucch_res, ue_bwp_cfg);
 
   // > PUSCH config.
   ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config(cell_cfg, ue_bwp_cfg));
@@ -359,16 +359,15 @@ static serving_cell_config make_default_serving_cell_config(const ran_cell_confi
   // > RadioLinkMonitoringConfig.
   serv_cell.init_dl_bwp.rlm_cfg = make_default_rlm_config(cell_cfg);
 
-  const auto cell_bwp_cfg = make_cell_bwp_res_config(cell_cfg);
-
   // > UL Config.
-  serv_cell.ul_config.emplace(make_default_ue_uplink_config(cell_cfg, cell_bwp_cfg, ue_bwp_cfg));
+  serv_cell.ul_config.emplace(
+      make_default_ue_uplink_config(cell_cfg, make_cell_rrm_config(cell_cfg).pucch, ue_bwp_cfg));
 
   // > pdsch-ServingCellConfig.
   serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config(cell_cfg.init_bwp.pdsch));
 
   // > CSI-MeasConfig.
-  serv_cell.csi_meas_cfg = build_csi_meas_config(cell_cfg, cell_bwp_cfg.ul, ue_bwp_cfg);
+  serv_cell.csi_meas_cfg = build_csi_meas_config(cell_cfg, ue_bwp_cfg);
 
   return serv_cell;
 }

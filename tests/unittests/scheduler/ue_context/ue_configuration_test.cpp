@@ -22,6 +22,7 @@ void widen_pucch_f2_for_csi(sched_cell_configuration_request_message& sched_cfg)
   auto& f2_params         = std::get<pucch_f2_params>(sched_cfg.ran.init_bwp.pucch.resources.f2_or_f3_or_f4_params);
   f2_params.max_code_rate = max_pucch_code_rate::dot_80;
   f2_params.max_nof_rbs   = pucch_f2_params::nof_rbs{3};
+  sched_cfg.rrm           = make_cell_rrm_config(sched_cfg.ran);
 }
 
 // Builds a UE configuration for a cell with the given number of DL antennas and returns the number of PDSCH configs

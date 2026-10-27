@@ -10,9 +10,8 @@
 
 using namespace ocudu;
 
-std::optional<csi_meas_config> config_helpers::build_csi_meas_config(const ran_cell_config&        cell_cfg,
-                                                                     const cell_ul_bwp_res_config& cell_ul_bwp_res,
-                                                                     const ue_bwp_config&          ue_bwp_cfg)
+std::optional<csi_meas_config> config_helpers::build_csi_meas_config(const ran_cell_config& cell_cfg,
+                                                                     const ue_bwp_config&   ue_bwp_cfg)
 {
   if (not cell_cfg.init_bwp.csi.has_value()) {
     return std::nullopt;

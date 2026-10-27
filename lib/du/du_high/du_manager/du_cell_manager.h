@@ -8,6 +8,7 @@
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
 #include "ocudu/mac/cell_configuration.h"
 #include "ocudu/ran/du_types.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 
 namespace ocudu {
 namespace odu {
@@ -20,6 +21,8 @@ struct du_cell_context {
 
   /// Current configuration.
   du_cell_config cfg;
+  /// Resources that the RRM allocates to the UEs of the cell.
+  cell_rrm_config rrm;
   /// Encoded System Information being currently sent by the DU cell.
   mac_cell_sys_info_config si_cfg;
   /// Current cell state.
@@ -69,12 +72,18 @@ public:
 
   du_cell_index_t get_cell_index(pci_t pci) const;
 
-  void add_cell(const du_cell_config& cfg);
+  void add_cell(const du_cell_config& cfg, const cell_rrm_config& rrm);
 
   const du_cell_config& get_cell_cfg(du_cell_index_t cell_index) const
   {
     assert_cell_exists(cell_index);
     return cells[cell_index]->cfg;
+  }
+
+  const cell_rrm_config& get_cell_rrm_cfg(du_cell_index_t cell_index) const
+  {
+    assert_cell_exists(cell_index);
+    return cells[cell_index]->rrm;
   }
   du_cell_config& get_cell_cfg(du_cell_index_t cell_index)
   {

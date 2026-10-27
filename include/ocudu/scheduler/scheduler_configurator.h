@@ -17,6 +17,7 @@
 #include "ocudu/scheduler/config/si_scheduling_config.h"
 #include "ocudu/scheduler/config/slice_rrm_policy_config.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
+#include "ocudu/scheduler/rrm/cell_rrm_config.h"
 
 namespace ocudu {
 
@@ -40,6 +41,9 @@ struct sched_cell_configuration_request_message {
 
   /// RAN-specific cell parameters.
   ran_cell_config ran;
+
+  /// Cell resources that the RRM allocates to the UEs of the cell.
+  cell_rrm_config rrm;
 
   /// Scheduling of SI messages.
   si_scheduling_config si_scheduling;

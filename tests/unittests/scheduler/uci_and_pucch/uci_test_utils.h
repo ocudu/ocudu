@@ -97,6 +97,7 @@ public:
   ue_repository                           ues;
 
   // Other dependencies.
+  cell_rrm_config         cell_rrm;
   pucch_resource_manager  pucch_builder;
   cell_resource_allocator res_grid;
   ocudulog::basic_logger& mac_logger  = ocudulog::fetch_basic_logger("SCHED", true);

@@ -34,7 +34,7 @@ protected:
     // Add and start cells, so that they accept UEs.
     mac_dummy.mac_cell.wait_start.ready_ev.set();
     for (unsigned i = 0; i != cells.size(); ++i) {
-      cell_mng.add_cell(cells[i]);
+      cell_mng.add_cell(cells[i], make_cell_rrm_config(cells[i].ran));
       async_task<bool>         t = cell_mng.start(to_du_cell_index(i));
       lazy_task_launcher<bool> launcher{t};
       report_fatal_error_if_not(t.ready() and t.get(), "Failed to start cell={}", i);

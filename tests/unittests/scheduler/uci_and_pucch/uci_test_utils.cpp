@@ -189,6 +189,7 @@ make_custom_sched_cell_configuration_request(const test_bench_params& params)
   } else {
     req.ran.init_bwp.csi = std::nullopt;
   }
+  req.rrm = make_cell_rrm_config(req.ran);
 
   return req;
 }
@@ -223,7 +224,8 @@ test_bench::test_bench(const test_bench_params& params_) :
   sl_tx{to_numerology_value(cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {
   ues.register_cell(cell_ues);
-  pucch_builder.add_cell(to_du_cell_index(0), cell_cfg.params);
+  cell_rrm = make_cell_rrm_config(cell_cfg.params);
+  pucch_builder.add_cell(to_du_cell_index(0), cell_cfg.params, cell_rrm);
 
   // Add main UE.
   add_ue();

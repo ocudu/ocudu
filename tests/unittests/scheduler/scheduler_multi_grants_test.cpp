@@ -39,10 +39,12 @@ protected:
     f1_params.nof_cyc_shifts                        = pucch_nof_cyclic_shifts::twelve;
     f1_params.occ_supported                         = true;
     sched_cell_cfg_req.ran.init_bwp.pucch.resources = pucch_basic_params;
+    sched_cell_cfg_req.rrm                          = make_cell_rrm_config(sched_cell_cfg_req.ran);
     add_cell(sched_cell_cfg_req);
 
     // Create PUCCH builder that will be used to add UEs.
-    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg(to_du_cell_index(0)).params);
+    cell_rrm = sched_cell_cfg_req.rrm;
+    pucch_cfg_builder.add_cell(to_du_cell_index(0), cell_cfg(to_du_cell_index(0)).params, cell_rrm);
   }
 
   void add_ue()
@@ -74,6 +76,7 @@ protected:
   }
 
   cell_config_builder_params params;
+  cell_rrm_config            cell_rrm;
   pucch_resource_manager     pucch_cfg_builder{64};
   unsigned                   nof_ues = 0;
 };
