@@ -47,8 +47,11 @@ async_task<void> f1_removal_procedure::handle_ue_transaction_info_loss()
   ue_transaction_info_loss_event ev;
 
   // Add DU UEs to the list of UEs with transaction information lost.
+  std::vector<gnb_cu_ue_f1ap_id_t> cu_ue_ids;
+  cu_ue_ids.reserve(ue_list.size());
   ev.ues_lost.reserve(ue_list.size());
   for (auto& ue : ue_list) {
+    cu_ue_ids.push_back(ue.first);
     ev.ues_lost.push_back(ue.second.ue_ids.ue_index);
   }
 
@@ -56,12 +59,12 @@ async_task<void> f1_removal_procedure::handle_ue_transaction_info_loss()
   // mark each UE so that subsequent UE Context Release Procedures skip the F1 round trip (the DU will drop the context
   // locally as part of F1 removal).
   // Note: size of ue_list may change during this operation (e.g. if a concurrent UE context release was being
-  // processed and got cancelled). Therefore, we leverage the list ev.ues_lost for the iteration.
-  for (cu_cp_ue_index_t ue_idx : ev.ues_lost) {
-    auto* u = ue_list.find(ue_idx);
+  // processed and got cancelled). Therefore, we leverage the list cu_ue_ids for the iteration.
+  for (gnb_cu_ue_f1ap_id_t cu_ue_id : cu_ue_ids) {
+    auto* u = ue_list.find(cu_ue_id);
     if (u != nullptr) {
       u->f1_removal_in_progress = true;
-      ue_list.cancel_ue_transactions(ue_idx);
+      ue_list.cancel_ue_transactions(cu_ue_id);
     }
   }
   ev.ues_lost.erase(std::remove_if(ev.ues_lost.begin(),

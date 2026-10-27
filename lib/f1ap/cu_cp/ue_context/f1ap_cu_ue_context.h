@@ -90,11 +90,11 @@ public:
 
   void remove_ue(cu_cp_ue_index_t ue_index);
 
-  /// \brief Cancels all running F1AP transactions of a UE.
+  /// \brief Cancels all running F1AP transactions of a UE context.
   ///
   /// Each cancellation resumes the waiting procedure in-line. That procedure, or the routine that started it, can
   /// remove the F1AP UE context. Thus, this function finds the UE context again before each cancellation.
-  void cancel_ue_transactions(cu_cp_ue_index_t ue_index);
+  void cancel_ue_transactions(gnb_cu_ue_f1ap_id_t cu_ue_id);
 
   void add_srb0_rrc_notifier(cu_cp_ue_index_t ue_index, f1ap_ul_ccch_notifier* srb0_notifier);
   void add_srb1_rrc_notifier(cu_cp_ue_index_t ue_index, f1ap_ul_dcch_notifier* srb1_notifier);

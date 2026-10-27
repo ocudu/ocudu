@@ -159,10 +159,10 @@ void f1ap_ue_context_list::remove_ue(cu_cp_ue_index_t ue_index)
   cu_ue_id_alloc.release(cu_ue_id);
 }
 
-void f1ap_ue_context_list::cancel_ue_transactions(cu_cp_ue_index_t ue_index)
+void f1ap_ue_context_list::cancel_ue_transactions(gnb_cu_ue_f1ap_id_t cu_ue_id)
 {
-  auto stop = [this, ue_index](auto f1ap_ue_transaction_manager::* event_source) {
-    if (f1ap_ue_context* u = find(ue_index)) {
+  auto stop = [this, cu_ue_id](auto f1ap_ue_transaction_manager::* event_source) {
+    if (f1ap_ue_context* u = find(cu_ue_id)) {
       (u->ev_mng.*event_source).stop();
     }
   };
