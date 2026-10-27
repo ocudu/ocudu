@@ -32,19 +32,16 @@ struct ue_pucch_res_layout {
   std::optional<unsigned> csi_res_id;
 };
 
-/// Makes the layout of the PUCCH resources of a UE from the resources that the RRM allocates to it.
-ue_pucch_res_layout make_ue_pucch_res_layout(const cell_pucch_resources& cell_resources,
-                                             const ue_rrm_config&        ue_rrm_cfg);
-
-/// \brief Build the PUCCH-Config for a given UE.
+/// \brief Makes the layout of the PUCCH resources of a UE from the resources that the RRM allocates to it.
 ///
 /// [Implementation-defined] The UE PUCCH resource list contains the resources in the following order:
 ///   | HARQ Resource Set ID 0 | SR | HARQ Resource Set ID 1 | CSI | (SR_F2) | (CSI_F0) |
 /// Where SR_F2 and CSI_F0 only exist when using Format 0 and Format 2 together. The UE resource ID of each resource,
 /// i.e. its \c PUCCH-ResourceId, is its position in the list.
-pucch_config build_pucch_config(const cell_pucch_rrm_config& cell_resources, const ue_rrm_config& ue_rrm_cfg);
+ue_pucch_res_layout make_ue_pucch_res_layout(const cell_pucch_resources& cell_resources,
+                                             const ue_rrm_config&        ue_rrm_cfg);
 
-/// Gets the UE resource ID of the CSI resource in the PUCCH-Config built by \c build_pucch_config.
+/// Gets the UE resource ID of the CSI resource in the layout built by \c make_ue_pucch_res_layout.
 unsigned ue_csi_res_id(const pucch_resource_builder_params& res_params);
 
 /// Build the CSI-MeasConfig for a given UE.

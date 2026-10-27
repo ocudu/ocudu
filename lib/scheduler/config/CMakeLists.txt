@@ -27,7 +27,6 @@ target_link_libraries(sched_config ocudu_ran sched_support sched_config_manager)
 
 add_library(sched_config_manager OBJECT
 		cell_bwp_res_config.cpp
-		cell_rrm_config.cpp
         cell_configuration.cpp
 		pdcch_config_pool.cpp
         ue_configuration.cpp

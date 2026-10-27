@@ -188,9 +188,7 @@ bool pucch_resource_manager::alloc_resources(ue_cell_config& cell_cfg)
     csi_rrm.periodic_report.reset();
   }
 
-  // Fill the serving cell config with the PUCCH-related configuration.
-  serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg =
-      config_helpers::build_pucch_config(*cell_ctx.pucch_res, cell_cfg.rrm);
+  // Fill the serving cell config with the CSI-related configuration.
   serv_cell_cfg.csi_meas_cfg = config_helpers::build_csi_meas_config(cell_ctx.cell_params, cell_cfg.rrm);
 
   // Disable PUCCH repetition until \c update_resources is called with the UE's reported capabilities.
@@ -237,8 +235,7 @@ void pucch_resource_manager::update_resources(ue_cell_config& cell_cfg, const ue
 void pucch_resource_manager::apply_rep_factor_capabilities(ue_cell_config&                             cell_cfg,
                                                            const std::optional<ue_capability_summary>& ue_caps)
 {
-  serving_cell_config&         serv_cell_cfg = cell_cfg.serv_cell_cfg;
-  const cell_resource_context& cell_ctx      = cells[serv_cell_cfg.cell_index];
+  const cell_resource_context& cell_ctx = cells[cell_cfg.serv_cell_cfg.cell_index];
 
   bool f1_3_4_supported      = false;
   bool f0_2_supported        = false;
@@ -252,17 +249,6 @@ void pucch_resource_manager::apply_rep_factor_capabilities(ue_cell_config&      
     // The UE must indicate slotBasedDynamicPUCCH-Rep-r17 to support the dynamic PUCCH repetition indicated via
     // pucch-RepetitionNrofSlots-r17, in addition to the format-specific repetition capability.
     dynamic_rep_supported = ue_caps->slot_based_dyn_pucch_rep_r17_supported;
-  }
-
-  for (pucch_resource& res : serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->pucch_res_list) {
-    const bool format_supported = (res.format() == pucch_format::FORMAT_0 or res.format() == pucch_format::FORMAT_2)
-                                      ? f0_2_supported
-                                      : f1_3_4_supported;
-    if (dynamic_rep_supported and format_supported) {
-      res.rep_factor = cell_ctx.pucch_res->res.get(res.res_id).rep_factor;
-    } else {
-      res.rep_factor = pucch_repetition_factor::n1;
-    }
   }
 
   // Enable the repetition for the formats that the UE supports.

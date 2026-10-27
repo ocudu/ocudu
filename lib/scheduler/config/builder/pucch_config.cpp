@@ -8,23 +8,6 @@
 
 using namespace ocudu;
 
-/// Build the default PUCCH-PowerControl configuration.
-static pucch_power_control build_pucch_power_control()
-{
-  pucch_power_control pw_ctrl;
-  pw_ctrl.delta_pucch_f0 = 0;
-  pw_ctrl.delta_pucch_f1 = 0;
-  pw_ctrl.delta_pucch_f2 = 0;
-  pw_ctrl.delta_pucch_f3 = 0;
-  pw_ctrl.delta_pucch_f4 = 0;
-
-  auto& pucch_pw_set = pw_ctrl.p0_set.emplace_back();
-  pucch_pw_set.id    = 0U;
-  pucch_pw_set.value = 0;
-
-  return pw_ctrl;
-}
-
 /// Appends a cell resource to the UE's PUCCH resource list and returns its UE resource ID, i.e. its list position.
 static unsigned add_ue_res(static_vector<pucch_res_id_t, MAX_NOF_UE_PUCCH_RESOURCES>& res_list, pucch_res_id_t cell_res)
 {
@@ -114,37 +97,4 @@ config_helpers::ue_pucch_res_layout config_helpers::make_ue_pucch_res_layout(con
   }
 
   return layout;
-}
-
-pucch_config config_helpers::build_pucch_config(const cell_pucch_rrm_config& cell_resources,
-                                                const ue_rrm_config&         ue_rrm_cfg)
-{
-  const ue_pucch_res_layout layout = make_ue_pucch_res_layout(cell_resources.res, ue_rrm_cfg);
-
-  const auto   max_code_rate = cell_resources.max_code_rate_234;
-  pucch_config cfg{
-      .format_1_common_param = pucch_common_all_formats{},
-      .format_2_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
-      .format_3_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
-      .format_4_common_param = pucch_common_all_formats{.max_c_rate = max_code_rate, .simultaneous_harq_ack_csi = true},
-      .dl_data_to_ul_ack     = cell_resources.dl_data_to_ul_ack,
-      .pucch_pw_control      = build_pucch_power_control(),
-  };
-
-  for (pucch_res_id_t cell_res_id : layout.res_list) {
-    cfg.pucch_res_list.push_back(cell_resources.res.get(cell_res_id));
-  }
-  auto& res_set_0 = cfg.pucch_res_set.emplace_back();
-  res_set_0.id    = pucch_res_set_id::set_0;
-  res_set_0.resources.assign(layout.res_set_0.begin(), layout.res_set_0.end());
-  auto& res_set_1 = cfg.pucch_res_set.emplace_back();
-  res_set_1.id    = pucch_res_set_id::set_1;
-  res_set_1.resources.assign(layout.res_set_1.begin(), layout.res_set_1.end());
-  cfg.sr_res_list.emplace_back(scheduling_request_resource_config{.sr_res_id    = 1,
-                                                                  .sr_id        = uint_to_sched_req_id(0),
-                                                                  .period       = cell_resources.sr_period,
-                                                                  .offset       = ue_rrm_cfg.pucch.sr_offset,
-                                                                  .pucch_res_id = layout.sr_res_id});
-
-  return cfg;
 }

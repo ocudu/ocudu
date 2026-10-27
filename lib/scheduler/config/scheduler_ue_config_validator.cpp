@@ -202,17 +202,6 @@ static validator_result validate_ue_cells(span<const sched_ue_cell_config> cells
     HANDLE_ERROR(validate_pdsch_cfg(serv_cell_cfg));
 
     if (serv_cell_cfg.ul_config.has_value()) {
-      if (serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value() and
-          serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value() and
-          cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
-        const pucch_config_common& pucch_cfg_common =
-            cell_cfg.params.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value();
-        HANDLE_ERROR(validate_pucch_cfg(serv_cell_cfg,
-                                        cell_cfg.params.init_bwp.pucch.resources,
-                                        cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated,
-                                        pucch_cfg_common,
-                                        cell_cfg.params.dl_carrier.nof_ant));
-      }
       if (serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {
         const auto k1_list = time_domain_resource_helper::generate_k1_candidates(cell_cfg.params.tdd_cfg,
                                                                                  cell_cfg.params.init_bwp.pucch.min_k1);

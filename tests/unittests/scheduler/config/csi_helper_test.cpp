@@ -379,18 +379,3 @@ INSTANTIATE_TEST_SUITE_P(cell_csi_config_test,
                                            cell_csi_test_params{4, false, pdsch_mcs_table::qam64},
                                            cell_csi_test_params{4, true, pdsch_mcs_table::qam256},
                                            cell_csi_test_params{4, true, pdsch_mcs_table::qam64, true}));
-
-TEST(csi_meas_config_validator_test, periodic_csi_report_must_use_pucch_format_2_3_or_4)
-{
-  const ran_cell_config ran_cfg  = config_helpers::make_default_ran_cell_config();
-  serving_cell_config   cell_cfg = config_helpers::make_default_ue_cell_config(ran_cfg).serv_cell_cfg;
-  ASSERT_TRUE(cell_cfg.csi_meas_cfg.has_value());
-  auto& report_cfg = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-      cell_cfg.csi_meas_cfg->csi_report_cfg_list.front().report_cfg_type);
-
-  ASSERT_TRUE(config_validators::validate_csi_meas_cfg(cell_cfg, ran_cfg.tdd_cfg, ran_cfg.ul_cfg_common).has_value());
-
-  // Point the CSI report to the first HARQ-ACK resource, which uses PUCCH Format 0 or 1.
-  report_cfg.pucch_csi_res_list.front().pucch_res_id = 0;
-  ASSERT_FALSE(config_validators::validate_csi_meas_cfg(cell_cfg, ran_cfg.tdd_cfg, ran_cfg.ul_cfg_common).has_value());
-}

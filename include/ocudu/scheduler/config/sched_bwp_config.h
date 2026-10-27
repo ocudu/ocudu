@@ -111,10 +111,6 @@ public:
   {
     return bwp_ul_common->pucch_cfg_common.has_value() ? &*bwp_ul_common->pucch_cfg_common : nullptr;
   }
-  const pucch_config* pucch_ded() const
-  {
-    return bwp_ul_ded.has_value() and bwp_ul_ded->pucch_cfg.has_value() ? &*bwp_ul_ded->pucch_cfg : nullptr;
-  }
 
   const srs_config* srs() const
   {

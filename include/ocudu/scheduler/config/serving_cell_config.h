@@ -203,15 +203,13 @@ struct bwp_downlink {
 /// Used to configure the dedicated UE-specific parameters of an UL BWP.
 /// \remark See TS 38.331, BWP-UplinkDedicated.
 struct bwp_uplink_dedicated {
-  std::optional<pucch_config>     pucch_cfg;
   std::optional<pusch_config>     pusch_cfg;
   std::optional<cg_configuration> cg_cfg;
   std::optional<srs_config>       srs_cfg;
 
   bool operator==(const bwp_uplink_dedicated& other) const
   {
-    return pucch_cfg == other.pucch_cfg and pusch_cfg == other.pusch_cfg and srs_cfg == other.srs_cfg and
-           cg_cfg == other.cg_cfg;
+    return pusch_cfg == other.pusch_cfg and srs_cfg == other.srs_cfg and cg_cfg == other.cg_cfg;
   }
 };
 

@@ -263,6 +263,19 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
           ASSERT_TRUE(is_ue_res_of(res_set_0[pri], params.harq_res_id<0>(res_set_cfg_id, pri)));
         }
 
+        // The resources of Resource Set ID 0 and the SR resource use the F0/F1 format, the ones of Resource Set ID 1
+        // the F2/F3/F4 format.
+        const auto format_of = [&](unsigned ue_res_id) {
+          return cell_rrm.pucch.res.get(layout.res_list[ue_res_id]).format();
+        };
+        for (unsigned ue_res_id : layout.res_set_0) {
+          ASSERT_EQ(format_of(ue_res_id), params.format_01());
+        }
+        for (unsigned ue_res_id : layout.res_set_1) {
+          ASSERT_EQ(format_of(ue_res_id), params.format_234());
+        }
+        ASSERT_EQ(format_of(ue_sr_res_id), params.format_01());
+
         // Check Resource Set ID 1.
         const auto& res_set_1 = layout.res_set_1;
         ASSERT_EQ(params.res_set_size.value() + extra_res_per_res_set, res_set_1.size());
@@ -275,11 +288,16 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
           // Check SR_F0 and SR_F2.
           ASSERT_EQ(ue_sr_res_id, res_set_0[params.res_set_size.value()]);
           ASSERT_TRUE(is_ue_res_of(res_set_1[params.res_set_size.value()], params.sr_f2_res_id(sr_res_id)));
+          // The SR_F2 resource overlaps in symbols with the SR resource, so that the UE multiplexes the UCIs.
+          ASSERT_TRUE(cell_rrm.pucch.res.get(layout.res_list[res_set_1[params.res_set_size.value()]])
+                          .syms.overlaps(cell_rrm.pucch.res.get(layout.res_list[ue_sr_res_id]).syms));
 
           if (ue_csi_res_id.has_value()) {
             // Check CSI_F0 and CSI_F2.
             ASSERT_TRUE(is_ue_res_of(res_set_0[params.res_set_size.value() + 1U], params.csi_f0_res_id(csi_res_id)));
             ASSERT_EQ(*ue_csi_res_id, res_set_1[params.res_set_size.value() + 1U]);
+            ASSERT_TRUE(cell_rrm.pucch.res.get(layout.res_list[res_set_0[params.res_set_size.value() + 1U]])
+                            .syms.overlaps(cell_rrm.pucch.res.get(layout.res_list[*ue_csi_res_id]).syms));
           }
         }
       }
