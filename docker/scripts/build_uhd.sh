@@ -19,6 +19,11 @@ main() {
     local arch="${2:--march=native}"
     local ncores="${3:-$(nproc)}"
 
+    # UHD 4.8 headers rely on transitive fixed-width integer declarations that GCC 16 omits.
+    if [[ "$uhd_version" == "4.8.0.0" ]]; then
+        arch+=" -include cstdint"
+    fi
+
     cd /tmp
     curl -L "https://github.com/EttusResearch/uhd/archive/refs/tags/v${uhd_version}.tar.gz" | tar xzf -
 

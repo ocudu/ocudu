@@ -413,22 +413,10 @@ fedora-uhd-builder avx2:
   variables:
     component: uhd
     component_version: "4.8.0.0"
-    target_arch: "-march=x86-64-v3 -include cstdint"
+    target_arch: -march=x86-64-v3
   artifacts:
     paths:
       - .gitlab/ci/builders/uhd
-    expire_in: 8 hours
-
-fedora-dpdk-builder avx2:
-  extends: .fedora-versioned-dependency-builder
-  variables:
-    component: dpdk
-    component_version: "25.11.3"
-    isa_suffix: _avx2
-    target_arch: -Dcpu_instruction_set=x86-64-v3
-  artifacts:
-    paths:
-      - .gitlab/ci/builders/dpdk
     expire_in: 8 hours
 
 fedora-dpdk-builder avx512:
@@ -787,6 +775,5 @@ image-build-publish [fedora, 44, amd64]:
   needs:
     - builder version increased
     - fedora-uhd-builder avx2
-    - fedora-dpdk-builder avx2
     - fedora-dpdk-builder avx512
     - fedora-rohc-builder avx2

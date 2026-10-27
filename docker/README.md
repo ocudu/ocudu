@@ -194,15 +194,15 @@ images do not ship **`which`** by default, so the Fedora package lists in the in
 
 The `builder-fedora-44` CI image installs Fedora's `uhd-devel` and `dpdk-devel` RPMs for ordinary builds. The existing
 `fedora 44 avx2` Alternative OS lane requires CMake to find both packages; its `UHD_VERSION` and `DPDK_VERSION` remain
-empty, so it uses those repository versions. The image also includes Fedora-built UHD 4.8.0.0, DPDK 25.11.3 (AVX2 and
-AVX512), and ROHC 2.3.1 artifacts. Fedora 44 has no ROHC RPM. Because `builder.sh` always sets `ROHC_DIR=/opt/rohc`, all
-Fedora jobs using it, including nightly `smoke dtls`, use prebuilt ROHC. Both Alternative OS lanes require ROHC. The
+empty, so it uses those repository versions. The image also includes Fedora-built UHD 4.8.0.0, DPDK 25.11.3 (AVX512),
+and ROHC 2.3.1 artifacts. Fedora 44 has no ROHC RPM. Because `builder.sh` always sets `ROHC_DIR=/opt/rohc`, all Fedora
+jobs using it, including nightly `smoke dtls`, use prebuilt ROHC. Both Alternative OS lanes require ROHC. The
 `fedora 44 avx512` scheduled lane selects the explicit UHD and AVX512 DPDK versions, so DPDK's compiler flags and OCUDU
 both target `x86-64-v4`.
 
 The Fedora dependency jobs in `.gitlab/ci/builders/.gitlab-ci.yml` publish or reuse tarballs under
-`packages/generic/{uhd,dpdk,rohc}/fedora-44-amd64-<version>[_avx2|_avx512]/` (the ISA suffix applies only to DPDK). The
-image publication job waits for these artifacts and copies them to `/opt/uhd`, `/opt/dpdk`, and `/opt/rohc`. An empty
+`packages/generic/{uhd,dpdk,rohc}/fedora-44-amd64-<version>[_avx512]/` (the ISA suffix applies only to DPDK). The image
+publication job waits for these artifacts and copies them to `/opt/uhd`, `/opt/dpdk`, and `/opt/rohc`. An empty
 `UHD_VERSION` or `DPDK_VERSION` selects the Fedora RPM. For an explicit DPDK version, `builder.sh` selects the artifact
 directory and CMake rejects missing DPDK or a mismatched pkg-config prefix. An explicit UHD version must match the
 installed RPM or a versioned artifact. Bump `DOCKER_BUILDER_VERSION` in `.gitlab/ci/builders/version.yml` when changing
