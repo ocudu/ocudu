@@ -6,9 +6,11 @@
 #pragma once
 
 #if OCUDU_HAVE_IPSEC_MB
+
+#include "ipsec-mb.h"
+#include "ocudu/ran/pdcp/pdcp_pdu_size.h"
 #include "ocudu/security/integrity_engine.h"
 #include "ocudu/security/security.h"
-#include <ipsec-mb.h>
 
 namespace ocudu::security {
 
@@ -41,7 +43,11 @@ private:
   alignas(16) std::array<uint8_t, 16> subkey1{};
   alignas(16) std::array<uint8_t, 16> subkey2{};
 
-  std::array<uint8_t, 9000> linear_buffer = {};
+  // MAC-I will be computed on the 8 bytes prefix+ PDCP PDU header + SDU size.
+  // We use a buffer of contiguous memory that is big enough to accomotate this.
+  static constexpr size_t             PREAMBLE_SZ    = 8;
+  static constexpr size_t             LINEAR_BUFF_SZ = PREAMBLE_SZ + PDCP_DATA_PDU_HEADER_SIZE_MAX + PDCP_SDU_MAX_SIZE;
+  std::array<uint8_t, LINEAR_BUFF_SZ> linear_buffer  = {};
 };
 
 } // namespace ocudu::security

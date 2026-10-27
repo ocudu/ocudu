@@ -38,8 +38,7 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
 #ifdef OCUDU_HAVE_IPSEC_MB
         integ_eng = std::make_unique<integrity_engine_nia2_ipsec_mb>(
             sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
-#else
-#if OCUDU_MBEDTLS_PSA
+#elif OCUDU_MBEDTLS_PSA
 #ifdef PSA_WANT_ALG_CMAC
         integ_eng = std::make_unique<integrity_engine_nia2_psa>(
             sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
@@ -53,7 +52,6 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
 #else
         integ_eng = std::make_unique<integrity_engine_nia2_non_cmac>(
             sec_cfg.k_128_int.value(), bearer_id, direction, allow_unprotected);
-#endif
 #endif
 #endif
         break;

@@ -7,29 +7,11 @@
 
 #include "pdcp_sn.h"
 #include "ocudu/pdcp/pdcp_config.h"
+#include "ocudu/ran/pdcp/pdcp_pdu_size.h"
 #include "ocudu/ran/rb_id.h"
 #include "ocudu/support/enum_utils.h"
 
 namespace ocudu {
-
-// Header length
-constexpr size_t pdcp_data_pdu_header_size_12bit = 2;
-constexpr size_t pdcp_data_pdu_header_size_18bit = 3;
-constexpr size_t pdcp_data_pdu_header_size_max   = pdcp_data_pdu_header_size_18bit;
-constexpr size_t pdcp_data_pdu_header_size(pdcp_sn_size sn_size)
-{
-  switch (sn_size) {
-    case pdcp_sn_size::size12bits:
-      return pdcp_data_pdu_header_size_12bit;
-    case pdcp_sn_size::size18bits:
-      return pdcp_data_pdu_header_size_18bit;
-    case ocudu::pdcp_sn_size::invalid:
-      break;
-  }
-  ocudu_assertion_failure("Cannot determine PDCP data PDU header size: unsupported sn_size={}",
-                          pdcp_sn_size_to_uint(sn_size));
-  return pdcp_data_pdu_header_size_12bit;
-}
 
 // Window size
 constexpr size_t   pdcp_window_size_12bit = 2048;
@@ -60,7 +42,7 @@ protected:
     rb_id(rb_id_),
     rb_type(rb_type_),
     rlc_mode(rlc_mode_),
-    hdr_len_bytes((pdcp_data_pdu_header_size(sn_size_))),
+    hdr_len_bytes(pdcp_data_pdu_header_size(sn_size_)),
     window_size(pdcp_window_size(sn_size_)),
     sn_size(sn_size_)
   {

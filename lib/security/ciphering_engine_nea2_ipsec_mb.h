@@ -7,6 +7,7 @@
 
 #ifdef OCUDU_HAVE_IPSEC_MB
 #include "ipsec-mb.h"
+#include "ocudu/ran/pdcp/pdcp_pdu_size.h"
 #include "ocudu/security/ciphering_engine.h"
 #include "ocudu/security/security.h"
 
@@ -32,7 +33,10 @@ private:
   alignas(16) std::array<uint32_t, 60> expanded_enc_key{};
   alignas(16) std::array<uint32_t, 60> expanded_dec_key{};
 
-  std::array<uint8_t, 9000> linear_buffer = {};
+  // Ciphering will be done on the PDCP SDU plus the MAC-I if present, but not on the PDCP header.
+  // We use a buffer of contiguous memory that is big enough to accomotate this.
+  static constexpr size_t             LINEAR_BUFF_SZ = PDCP_SDU_MAX_SIZE + sec_mac_len;
+  std::array<uint8_t, LINEAR_BUFF_SZ> linear_buffer  = {};
 };
 
 } // namespace ocudu::security

@@ -60,8 +60,9 @@ security_status integrity_engine_nia2_ipsec_mb::compute_mac(sec_mac& mac, const 
   linear_buffer[6] = 0;
   linear_buffer[7] = 0;
 
-  size_t offset = 8;
+  size_t offset = PREAMBLE_SZ;
   for (const auto& segment : v.segments()) {
+    ocudu_assert((segment.size()) <= LINEAR_BUFF_SZ - offset, "Overflowing linear buffer in NIA2 MAC-I computation");
     std::memcpy(linear_buffer.data() + offset, segment.data(), segment.size());
     offset += segment.size();
   }
@@ -70,7 +71,7 @@ security_status integrity_engine_nia2_ipsec_mb::compute_mac(sec_mac& mac, const 
   job->hash_start_src_offset_in_bytes = 0;
   job->msg_len_to_hash_in_bytes       = offset;
 
-  std::array<uint8_t, 16> tmp_mac;
+  std::array<uint8_t, sec_mac_len> tmp_mac;
   job->auth_tag_output              = tmp_mac.data();
   job->auth_tag_output_len_in_bytes = tmp_mac.size();
 

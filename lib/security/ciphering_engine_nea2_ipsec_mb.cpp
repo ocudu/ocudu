@@ -38,10 +38,12 @@ security_status ciphering_engine_nea2_ipsec_mb::apply_ciphering(byte_buffer& buf
   logger.debug("K_enc: {}", k_128_enc);
   logger.debug(msg.begin(), msg.end(), "Ciphering input:");
 
-  /// Linearize buffer.
+  // Linearize buffer.
   byte_buffer_segment_span_range segments  = msg.modifiable_segments();
   size_t                         cp_offset = 0;
   for (const auto& segment : segments) {
+    ocudu_assert((segment.size()) <= LINEAR_BUFF_SZ - cp_offset,
+                 "Overflowing linear buffer in NEA2 ciphering computation");
     std::memcpy(linear_buffer.data() + cp_offset, segment.data(), segment.size());
     cp_offset += segment.size();
   }
@@ -89,6 +91,8 @@ security_status ciphering_engine_nea2_ipsec_mb::apply_ciphering(byte_buffer& buf
   // Copy encrypted data back into the segments
   cp_offset = 0;
   for (const auto& segment : segments) {
+    ocudu_assert((segment.size()) <= LINEAR_BUFF_SZ - cp_offset,
+                 "Overflowing linear buffer in NEA2 ciphering computation");
     std::memcpy(segment.data(), linear_buffer.data() + cp_offset, segment.size());
     cp_offset += segment.size();
   }
