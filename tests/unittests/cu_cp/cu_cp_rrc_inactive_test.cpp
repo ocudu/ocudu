@@ -1057,6 +1057,39 @@ TEST_F(cu_cp_rrc_inactive_test,
   ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_resumes.get_count(resume_cause_t::mo_data), 1);
 }
 
+TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_is_received_through_another_du_then_rrc_setup_is_sent)
+{
+  // Set up a second DU with another cell.
+  std::optional<unsigned> ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned                            du_idx_2 = ret.value();
+  test_helpers::served_cell_item_info cell_2   = {.nci = nr_cell_identity::create(gnb_id_t{411, 22}, 1).value(),
+                                                  .pci = 2};
+  ASSERT_TRUE(this->run_f1_setup(du_idx_2, int_to_gnb_du_id(0x22), {cell_2}));
+
+  // Connect UE with RRC Inactive support and move it to RRC_INACTIVE.
+  connect_ue_with_rrc_inactive_support();
+  ASSERT_TRUE(trigger_rrc_inactive(du_ue_id));
+
+  // The UE sends an RRC Resume Request through the cell of the second DU.
+  f1ap_message init_ul_rrc_msg = test_helpers::generate_init_ul_rrc_message_transfer(
+      du_ue_id_2,
+      crnti_2,
+      plmn_identity::test_value(),
+      {},
+      test_helpers::pack_ul_ccch_msg(test_helpers::create_rrc_resume_request(0x4d8000)));
+  init_ul_rrc_msg.pdu.init_msg().value.init_ul_rrc_msg_transfer()->nr_cgi.nr_cell_id.from_number(cell_2.nci.value());
+  get_du(du_idx_2).push_ul_pdu(init_ul_rrc_msg);
+
+  // The CU-CP falls back to RRC Setup through the second DU.
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx_2, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer_with_msg4(f1ap_pdu));
+
+  // The CU-CP keeps the suspended UE and the new UE.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.ues.size(), 2);
+}
+
 TEST_F(cu_cp_rrc_inactive_test, when_bearer_context_modification_for_suspend_fails_then_ue_release_is_requested)
 {
   // Connect UE with RRC Inactive support.

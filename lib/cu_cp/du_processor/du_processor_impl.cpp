@@ -595,7 +595,12 @@ du_processor_impl::handle_ue_rrc_context_creation_request(const ue_rrc_context_c
         // The I-RNTI matched no local UE, so the node that suspended it holds the context.
         remote_resume_context = resume_context;
       } else {
-        if (cfg.force_resume_fallback) {
+        const cu_cp_ue* resume_ue = ue_mng.find_du_ue(resume_ue_index);
+        if (resume_ue != nullptr and resume_ue->get_du_index() != cfg.du_index) {
+          // The RRC context of the UE is in the DU processor of another DU. The new UE falls back to RRC Setup
+          // (TS 38.401 section 8.6.2). The CU-CP keeps the suspended UE until its release.
+          logger.info("ue={}: RRC Resume through another DU. Falling back to RRC Setup", resume_ue_index);
+        } else if (cfg.force_resume_fallback) {
           // RRC Resume fallback forced - do not resume. The DU doesn't have a F1AP UE context, so we also remove it
           // here.
           logger.info("ue={}: RRC Resume fallback forced. Removing F1AP UE context", resume_ue_index);
