@@ -7,6 +7,7 @@
 #include "pdcp_test_vectors.h"
 #include "tests/ocudu_test_requirements.h"
 #include "ocudu/pdcp/pdcp_config.h"
+#include "ocudu/ran/pdcp/pdcp_pdu_size.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -619,7 +620,7 @@ TEST_P(pdcp_rx_test_drb, rx_pdu_max_size)
   pdcp_rx_state init_state = {.rx_next = 0, .rx_deliv = 0, .rx_reord = 0};
   pdcp_rx->set_state(init_state);
 
-  const size_t max_pdu_len = pdcp_data_pdu_header_size(config.sn_size) + pdcp_sdu_max_size + security::sec_mac_len;
+  const size_t max_pdu_len = pdcp_data_pdu_header_size(config.sn_size) + PDCP_SDU_MAX_SIZE + security::sec_mac_len;
   auto         make_pdu    = [this](size_t len) {
     byte_buffer pdu;
     get_test_pdu(0, pdu);

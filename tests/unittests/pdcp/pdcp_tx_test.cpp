@@ -7,6 +7,7 @@
 #include "pdcp_test_vectors.h"
 #include "tests/ocudu_test_requirements.h"
 #include "ocudu/pdcp/pdcp_config.h"
+#include "ocudu/ran/pdcp/pdcp_pdu_size.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
@@ -143,7 +144,7 @@ TEST_P(pdcp_tx_test, sdu_max_size)
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
   // SDU of the maximum size is transmitted.
-  byte_buffer max_sdu = byte_buffer::create(std::vector<uint8_t>(pdcp_sdu_max_size, 0xab)).value();
+  byte_buffer max_sdu = byte_buffer::create(std::vector<uint8_t>(PDCP_SDU_MAX_SIZE, 0xab)).value();
   pdcp_tx->handle_sdu(std::move(max_sdu));
   wait_pending_crypto();
   worker.run_pending_tasks();
@@ -151,7 +152,7 @@ TEST_P(pdcp_tx_test, sdu_max_size)
   test_frame.pdu_queue.pop();
 
   // SDU above the maximum size is dropped.
-  byte_buffer big_sdu = byte_buffer::create(std::vector<uint8_t>(pdcp_sdu_max_size + 1, 0xab)).value();
+  byte_buffer big_sdu = byte_buffer::create(std::vector<uint8_t>(PDCP_SDU_MAX_SIZE + 1, 0xab)).value();
   pdcp_tx->handle_sdu(std::move(big_sdu));
   wait_pending_crypto();
   worker.run_pending_tasks();

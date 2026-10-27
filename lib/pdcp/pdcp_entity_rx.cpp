@@ -5,6 +5,7 @@
 
 #include "pdcp_entity_rx.h"
 #include "ocudu/instrumentation/traces/up_traces.h"
+#include "ocudu/ran/pdcp/pdcp_pdu_size.h"
 #include "ocudu/rohc/rohc_decompressor.h"
 #include "ocudu/rohc/rohc_factory.h"
 #include "ocudu/security/security_engine_factory.h"
@@ -236,7 +237,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
   }
   // Drop PDUs that cannot carry an SDU within the maximum PDCP SDU size (TS 38.323 Sec. 4.3.1). Control PDUs are
   // bounded by the same limit. The security engines size their buffers for PDUs within this limit.
-  const size_t max_pdu_len = hdr_len_bytes + pdcp_sdu_max_size + security::sec_mac_len;
+  const size_t max_pdu_len = hdr_len_bytes + PDCP_SDU_MAX_SIZE + security::sec_mac_len;
   if (OCUDU_UNLIKELY(buf.length() > max_pdu_len)) {
     metrics.add_dropped_pdus(1);
     logger.log_warning("Dropping PDU. Cause: PDU too large. pdu_len={} max_pdu_len={}", buf.length(), max_pdu_len);
@@ -646,7 +647,7 @@ byte_buffer pdcp_entity_rx::compile_status_report()
   enc.pack(st.rx_deliv, 32);
 
   // Set bitmap boundaries, ensure to not exceed max control PDU size (9000 Bytes)
-  constexpr uint32_t max_bits     = (pdcp_control_pdu_max_size - 5) * 8;
+  constexpr uint32_t max_bits     = (PDCP_CONTROL_PDU_MAX_SIZE - 5) * 8;
   uint32_t           bitmap_begin = st.rx_deliv + 1; // Bitmap starts from FMC+1
   uint32_t           bitmap_end   = st.rx_next;
   if (bitmap_begin < bitmap_end && bitmap_end - bitmap_begin > max_bits) {

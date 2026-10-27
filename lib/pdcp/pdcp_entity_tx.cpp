@@ -6,6 +6,7 @@
 #include "pdcp_entity_tx.h"
 #include "ocudu/instrumentation/traces/tracy_profiler.h"
 #include "ocudu/instrumentation/traces/up_traces.h"
+#include "ocudu/ran/pdcp/pdcp_pdu_size.h"
 #include "ocudu/rohc/rohc_compressor.h"
 #include "ocudu/rohc/rohc_factory.h"
 #include "ocudu/security/security_engine_factory.h"
@@ -236,9 +237,9 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Drop SDUs above the maximum PDCP SDU size (TS 38.323 Sec. 4.3.1). The security engines size their buffers
   // for PDUs built from SDUs within this limit.
-  if (OCUDU_UNLIKELY(buf.length() > pdcp_sdu_max_size)) {
+  if (OCUDU_UNLIKELY(buf.length() > PDCP_SDU_MAX_SIZE)) {
     logger.log_warning(
-        "Dropping SDU. Cause: SDU too large. sdu_len={} max_sdu_len={}", buf.length(), pdcp_sdu_max_size);
+        "Dropping SDU. Cause: SDU too large. sdu_len={} max_sdu_len={}", buf.length(), PDCP_SDU_MAX_SIZE);
     metrics.add_lost_sdus(1);
     return;
   }
