@@ -11,6 +11,7 @@
 #include "ocudu/ran/configured_grant/cg_configuration.h"
 #include "ocudu/scheduler/config/ran_cell_config_helper.h"
 #include "ocudu/scheduler/config/serving_cell_config_validator.h"
+#include "ocudu/scheduler/config/time_domain_resource_helper.h"
 #include "ocudu/support/config/validator_helpers.h"
 
 using namespace ocudu;
@@ -211,7 +212,12 @@ static validator_result validate_ue_cells(span<const sched_ue_cell_config> cells
                                         cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated,
                                         pucch_cfg_common,
                                         cell_cfg.params.dl_carrier.nof_ant));
-        HANDLE_ERROR(validate_srs_cfg(serv_cell_cfg, cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs));
+      }
+      if (serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {
+        const auto k1_list = time_domain_resource_helper::generate_k1_candidates(cell_cfg.params.tdd_cfg,
+                                                                                 cell_cfg.params.init_bwp.pucch.min_k1);
+        HANDLE_ERROR(
+            validate_srs_cfg(serv_cell_cfg, cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs, k1_list));
       }
 
       HANDLE_ERROR(validate_pusch_cfg(serv_cell_cfg.ul_config.value(), cell_cfg.params.init_bwp.csi.has_value()));

@@ -266,8 +266,7 @@ void test_bench::add_ue()
   }
 
   // TODO: rewrite this test, we should never modify the UE cell config like this in unittests.
-  ue_cell.rrm.pucch.sr_offset                                                   = params.sr_offset;
-  ue_cell.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.sr_offset;
+  ue_cell.rrm.pucch.sr_offset = params.sr_offset;
   if (params.csi_period.has_value()) {
     ue_cell.rrm.csi.periodic_report.value().offset = params.csi_offset;
     auto& csi_report = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(

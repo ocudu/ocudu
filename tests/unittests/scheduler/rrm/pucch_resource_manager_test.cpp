@@ -14,6 +14,7 @@
 #include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_generator.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
+#include "ocudu/scheduler/config/serving_cell_config_builder.h"
 #include "ocudu/scheduler/config/serving_cell_config_factory.h"
 #include "ocudu/scheduler/rrm/pucch_resource_manager.h"
 #include "ocudu/scheduler/rrm/ue_capability_summary.h"
@@ -67,10 +68,8 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
     ASSERT_NE(ue, nullptr);
 
     // Check that the SR is configured and all UEs have different SR offsets or PUCCH res id.
-    const auto& sr_res_list = ue->ue_cell_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
-    ASSERT_FALSE(sr_res_list.empty());
     const ue_rrm_config& ue_rrm_cfg = ue->ue_cell_cfg.rrm;
-    auto ue_sr_res_offset_pair      = std::make_pair(ue_rrm_cfg.pucch.sr_res_id.value(), sr_res_list[0].offset);
+    auto ue_sr_res_offset_pair      = std::make_pair(ue_rrm_cfg.pucch.sr_res_id.value(), ue_rrm_cfg.pucch.sr_offset);
     ASSERT_EQ(sr_offsets.count(ue_sr_res_offset_pair), 0);
     sr_offsets.insert(ue_sr_res_offset_pair);
 
@@ -88,19 +87,15 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
       csi_offsets.insert(ue_csi_res_offset_pair);
     }
 
-    const auto& ue_pucch_cfg = ue->ue_cell_cfg.serv_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
-    // Each UE should have 2 PUCCH resource sets configured
-    ASSERT_EQ(ue_pucch_cfg.pucch_res_set.size(), 2);
-    ASSERT_EQ(ue_pucch_cfg.pucch_res_set[0].resources.size(), pucch_params.res_set_size);
-    ASSERT_EQ(ue_pucch_cfg.pucch_res_set[1].resources.size(), pucch_params.res_set_size);
-    // Make sure UE has all PUCCH resources with different ded_id.
-    {
-      std::set<unsigned> pucch_res_idxs;
-      for (unsigned n = 0; n != ue_pucch_cfg.pucch_res_set[0].resources.size(); ++n) {
-        pucch_res_idxs.count(ue_pucch_cfg.pucch_res_list[n].res_id.ded_id());
-        pucch_res_idxs.insert(ue_pucch_cfg.pucch_res_list[n].res_id.ded_id());
-      }
+    // Each UE should have 2 PUCCH resource sets configured, with all PUCCH resources having different ded_id.
+    const auto layout = config_helpers::make_ue_pucch_res_layout(cell_rrm.pucch.res, ue_rrm_cfg);
+    ASSERT_EQ(layout.res_set_0.size(), pucch_params.res_set_size);
+    ASSERT_EQ(layout.res_set_1.size(), pucch_params.res_set_size);
+    std::set<unsigned> ded_ids;
+    for (pucch_res_id_t res_id : layout.res_list) {
+      ded_ids.insert(res_id.ded_id());
     }
+    ASSERT_EQ(ded_ids.size(), layout.res_list.size());
   }
 
   ASSERT_TRUE(true);
@@ -119,8 +114,6 @@ TEST_F(pucch_resource_manager_tester, when_allocation_fails_then_ue_cell_config_
   }
   ASSERT_FALSE(allocated);
 
-  ASSERT_EQ(ue_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg,
-            default_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg);
   ASSERT_EQ(ue_cfg.serv_cell_cfg.csi_meas_cfg, default_cfg.serv_cell_cfg.csi_meas_cfg);
   ASSERT_EQ(ue_cfg.rrm, default_cfg.rrm);
 }
@@ -243,22 +236,17 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   ue_cell_config ue_cfg = ocudu::config_helpers::make_default_ue_cell_config(cell_params_rep, rep_cell_idx);
   ASSERT_TRUE(pucch_res_mng.alloc_resources(ue_cfg));
 
-  const auto& res_list = ue_cfg.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->pucch_res_list;
-  ASSERT_FALSE(res_list.empty());
-
   // Repetition must start disabled, as the UE capabilities are not yet known.
-  for (const pucch_resource& res : res_list) {
-    ASSERT_EQ(res.rep_factor, pucch_repetition_factor::n1);
-  }
+  ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
+  ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
 
   const nr_band band = cell_params_rep.ul_carrier.band;
 
   // A UE that does not indicate support for dynamic PUCCH repetition must keep repetition disabled.
   ue_capability_summary no_rep_caps;
   pucch_res_mng.update_resources(ue_cfg, no_rep_caps);
-  for (const pucch_resource& res : res_list) {
-    ASSERT_EQ(res.rep_factor, pucch_repetition_factor::n1);
-  }
+  ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
+  ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
 
   // A UE that indicates full support for dynamic PUCCH repetition must have it enabled for every format.
   ue_capability_summary full_rep_caps;
@@ -268,12 +256,6 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   pucch_res_mng.update_resources(ue_cfg, full_rep_caps);
   ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
   ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
-  for (const pucch_resource& res : res_list) {
-    const auto cell_res_it = std::find_if(
-        cell_res_list.begin(), cell_res_list.end(), [&](const pucch_resource& r) { return r.res_id == res.res_id; });
-    ASSERT_NE(cell_res_it, cell_res_list.end());
-    ASSERT_EQ(res.rep_factor, cell_res_it->rep_factor);
-  }
 
   // A UE that supports repetition for F1/3/4, but not for F0/2, must keep repetition disabled for F0/2.
   ue_capability_summary f1_3_4_only_caps;
@@ -282,18 +264,6 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   pucch_res_mng.update_resources(ue_cfg, f1_3_4_only_caps);
   ASSERT_TRUE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
   ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
-  for (const pucch_resource& res : res_list) {
-    const bool is_f0_or_f2 = res.format() == pucch_format::FORMAT_0 or res.format() == pucch_format::FORMAT_2;
-    if (is_f0_or_f2) {
-      // Repetition for F0/2 is not supported by this UE, so it must remain disabled.
-      ASSERT_EQ(res.rep_factor, pucch_repetition_factor::n1);
-    } else {
-      const auto cell_res_it = std::find_if(
-          cell_res_list.begin(), cell_res_list.end(), [&](const pucch_resource& r) { return r.res_id == res.res_id; });
-      ASSERT_NE(cell_res_it, cell_res_list.end());
-      ASSERT_EQ(res.rep_factor, cell_res_it->rep_factor);
-    }
-  }
 
   // A UE that supports repetition, but not the dynamic indication, must keep repetition disabled.
   ue_capability_summary format_only_caps;
@@ -302,7 +272,4 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
   pucch_res_mng.update_resources(ue_cfg, format_only_caps);
   ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f1_3_4_enabled);
   ASSERT_FALSE(ue_cfg.rrm.pucch.rep_f0_2_enabled);
-  for (const pucch_resource& res : res_list) {
-    ASSERT_EQ(res.rep_factor, pucch_repetition_factor::n1);
-  }
 }

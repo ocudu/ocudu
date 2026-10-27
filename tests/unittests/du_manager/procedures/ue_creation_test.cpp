@@ -91,9 +91,8 @@ protected:
 
   void set_sr_offset(du_ue_index_t ue_index, du_cell_index_t cell_idx, unsigned sr_offset)
   {
-    this->cell_res_alloc.next_context_update_result.cell_group.cells.at(SERVING_PCELL_IDX)
-        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0]
-        .offset = sr_offset;
+    this->cell_res_alloc.next_context_update_result.cell_group.cells.at(SERVING_PCELL_IDX).rrm.pucch.sr_offset =
+        sr_offset;
   }
 
   async_task<void>                        proc;
@@ -167,9 +166,7 @@ TEST_F(du_manager_ue_creation_tester,
   // > Generate SR offsets for two UEs.
   du_ue_index_t ue_idx1 = to_du_ue_index(0), ue_idx2 = to_du_ue_index(1);
   unsigned      sr_period =
-      sr_periodicity_to_slot(this->cell_res_alloc.next_context_update_result.cell_group.cells.at(SERVING_PCELL_IDX)
-                                 .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list[0]
-                                 .period);
+      sr_periodicity_to_slot(this->cell_res_alloc.get_cell_rrm_config(to_du_cell_index(0)).pucch.sr_period);
   unsigned sr_offset1 = test_rng::uniform_int<unsigned>(0, sr_period - 1);
   unsigned sr_offset2 = test_rng::uniform_int<unsigned>(0, sr_period - 1);
   // > Create first UE.
@@ -192,14 +189,8 @@ TEST_F(du_manager_ue_creation_tester,
   // > UE SR Offsets passed to scheduler match the ones generated.
   ASSERT_FALSE(req1.mac_cell_group_cfg.scheduling_request_config.empty());
   ASSERT_FALSE(req2.mac_cell_group_cfg.scheduling_request_config.empty());
-  const auto& sr_res_list1 =
-      (*req1.sched_cfg.cells)[0].ded->serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
-  const auto& sr_res_list2 =
-      (*req2.sched_cfg.cells)[0].ded->serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list;
-  ASSERT_FALSE(sr_res_list1.empty());
-  ASSERT_FALSE(sr_res_list2.empty());
-  ASSERT_EQ(sr_res_list1[0].offset, sr_offset1);
-  ASSERT_EQ(sr_res_list2[0].offset, sr_offset2);
+  ASSERT_EQ((*req1.sched_cfg.cells)[0].ded->rrm.pucch.sr_offset, sr_offset1);
+  ASSERT_EQ((*req2.sched_cfg.cells)[0].ded->rrm.pucch.sr_offset, sr_offset2);
 }
 
 TEST_F(du_manager_ue_creation_tester, when_ul_ccch_flush_fails_then_ue_is_destroyed)

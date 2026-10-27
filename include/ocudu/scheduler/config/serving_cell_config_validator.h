@@ -47,8 +47,11 @@ validator_result validate_pusch_cfg(const uplink_config& ul_config, bool has_csi
 /// \brief Validates SRS Config in \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
 /// \param[in] ul_bwp_crbs UL BWP CRB interval.
+/// \param[in] dl_data_to_ul_ack Cell list of k1 values.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
-validator_result validate_srs_cfg(const serving_cell_config& ue_cell_cfg, crb_interval ul_bwp_crbs);
+validator_result validate_srs_cfg(const serving_cell_config& ue_cell_cfg,
+                                  crb_interval               ul_bwp_crbs,
+                                  span<const uint8_t>        dl_data_to_ul_ack);
 
 /// \brief Validates the NZP-CSI-RS Resource list in \c serving_cell_config passed to a UE.
 validator_result validate_nzp_csi_rs_list(span<const nzp_csi_rs_resource>               nzp_csi_rs_list,

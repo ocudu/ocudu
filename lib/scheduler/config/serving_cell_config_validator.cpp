@@ -133,16 +133,6 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   VERIFY(ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value(),
          "Missing configuration for uplinkConfig or pucch-Config in spCellConfig");
 
-  // [Implementation defined] The scheduler expects the resources from the common resource set and Resource Set ID 0 to
-  // use the same format. The formats from the common resource sets are expressed in TS 38.213 Table 9.2.1-1.
-  if (res_params.format_01() == pucch_format::FORMAT_0) {
-    VERIFY(pucch_cfg_common.pucch_resource_common <= 2,
-           "When using PUCCH Format 0, the valid values for pucch_resource_common are {{0, 1, 2}}.");
-  } else {
-    VERIFY(pucch_cfg_common.pucch_resource_common > 2,
-           "When using PUCCH Format 1, the valid values for pucch_resource_common are {{3, ..., 15}}.");
-  }
-
   const auto& pucch_cfg = ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.value();
 
   // Verify the PUCCH resource list.
@@ -229,15 +219,6 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
            "With Format 0, the SR_F2 resource must be present in Resource Set ID 1");
   }
 
-  const auto& init_ul_bwp = ue_cell_cfg.ul_config.value().init_ul_bwp;
-  if (init_ul_bwp.pucch_cfg.has_value()) {
-    const auto& dl_to_ack_lst = init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack;
-    for (const auto& k1 : dl_to_ack_lst) {
-      VERIFY(k1 <= SCHEDULER_MAX_K1, "k1={} value exceeds maximum supported k1", k1);
-      VERIFY(k1 >= 1, "k1={} value below minimum supported k1", k1);
-    }
-  }
-
   return {};
 }
 
@@ -273,7 +254,9 @@ validator_result config_validators::validate_pusch_cfg(const uplink_config& ul_c
   return {};
 }
 
-validator_result config_validators::validate_srs_cfg(const serving_cell_config& ue_cell_cfg, crb_interval ul_bwp_crbs)
+validator_result config_validators::validate_srs_cfg(const serving_cell_config& ue_cell_cfg,
+                                                     crb_interval               ul_bwp_crbs,
+                                                     span<const uint8_t>        dl_data_to_ul_ack)
 {
   VERIFY(ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value(),
          "Missing configuration for uplinkConfig or srs-Config in spCellConfig");
@@ -285,15 +268,9 @@ validator_result config_validators::validate_srs_cfg(const serving_cell_config& 
   const auto& srs_res_set = srs_cfg.srs_res_set_list.front();
   if (std::holds_alternative<srs_config::srs_resource_set::aperiodic_resource_type>(srs_res_set.res_type)) {
     const auto& aperiodic_set = std::get<srs_config::srs_resource_set::aperiodic_resource_type>(srs_res_set.res_type);
-    const auto& init_ul_bwp   = ue_cell_cfg.ul_config.value().init_ul_bwp;
-    unsigned    min_k1        = 0;
-    // This existence of pucch_cfg should be checked by the \ref validate_pucch_cfg().
-    if (init_ul_bwp.pucch_cfg.has_value()) {
-      const auto min_k1_it = std::min_element(init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack.begin(),
-                                              init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack.end());
-      VERIFY(min_k1_it != init_ul_bwp.pucch_cfg.value().dl_data_to_ul_ack.end(), "Expected min k1 from a list");
-      min_k1 = *min_k1_it;
-    }
+    const auto  min_k1_it     = std::min_element(dl_data_to_ul_ack.begin(), dl_data_to_ul_ack.end());
+    VERIFY(min_k1_it != dl_data_to_ul_ack.end(), "Expected min k1 from a list");
+    const unsigned min_k1 = *min_k1_it;
     VERIFY(aperiodic_set.slot_offset.has_value() and aperiodic_set.slot_offset.value() > min_k1,
            "The SRS resource set ID {}'s slot_offset should be greater than the max between min_k1 and max k2",
            fmt::underlying(srs_res_set.id));

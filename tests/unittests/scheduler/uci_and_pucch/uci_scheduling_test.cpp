@@ -329,10 +329,9 @@ public:
   {
     OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MIMO-16-1");
 
-    sr_period = sr_periodicity_to_slot(
-        t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul.ded()->pucch_cfg.value().sr_res_list[0].period);
+    sr_period = sr_periodicity_to_slot(t_bench.cell_rrm.pucch.sr_period);
 
-    sr_offset = t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul.ded()->pucch_cfg.value().sr_res_list[0].offset;
+    sr_offset = t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul.ue_cfg()->pucch.sr_offset;
 
     // In the slots with SR + CSI, the expected format is Format 2.
     pucch_csi_and_sr_test =
