@@ -8,6 +8,7 @@
 #include "ocudu/adt/expected.h"
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
+#include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 
 namespace ocudu {
 
@@ -42,22 +43,23 @@ error_type<const char*> pucch_parameters_validator(const pucch_resource_builder_
 std::array<pucch_resource, pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES>
 generate_cell_common_pucch_res_list(unsigned pucch_res_common, unsigned bwp_size_rbs);
 
-/// \brief Generates the list of cell PUCCH resources from the PUCCH resource builder parameters.
+/// \brief Generates the cell PUCCH resources from the PUCCH resource builder parameters.
 ///
 /// The generated resources are packed on both ends of the BWP as tightly as possible (using multiplexing if
 /// configured), while ensuring they don't collide with each other nor with the PRBs reserved at the BWP edges.
-/// The resources for each UCI type are indexed according to the rules defined in \c pucch_resource_builder_params.
+/// The returned tables map the IDs that the RRM allocates to a UE (resource set configuration, SR and CSI resource) to
+/// the resources of the list.
 ///
 /// \param[in] params PUCCH resource builder parameters.
 /// \param[in] bwp_size_rbs size of the BWP in RBs.
 /// \param[in] dedicated_pucch_rb_start Number of PRBs at each BWP edge reserved before the dedicated PUCCH resources.
-/// \return The list of PUCCH resources for a cell.
-/// \remark The function returns an empty list in the following cases:
+/// \return The PUCCH resources for a cell.
+/// \remark The function returns empty resources in the following cases:
 ///         (i) If overall the RBs occupancy is larger than the BWP size.
 ///         (ii) If F2 intra-slot frequency hopping is enabled with only 1 symbol.
-std::vector<pucch_resource> generate_cell_pucch_res_list(const pucch_resource_builder_params& params,
-                                                         unsigned                             bwp_size_rbs,
-                                                         unsigned                             dedicated_pucch_rb_start);
+cell_pucch_resources generate_cell_pucch_res_list(const pucch_resource_builder_params& params,
+                                                  unsigned                             bwp_size_rbs,
+                                                  unsigned                             dedicated_pucch_rb_start);
 
 } // namespace config_helpers
 } // namespace ocudu

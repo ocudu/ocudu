@@ -38,28 +38,25 @@ public:
     }()})
   {
     const auto& cell_resources = t_bench.cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated;
-    const auto& res_params     = t_bench.params.pucch_ded_params;
-
-    const auto sr_res_id      = pucch_sr_resource_id(0);
-    const auto res_set_cfg_id = pucch_resource_set_config_id(0);
-    const auto csi_res_id     = pucch_csi_resource_id(0);
+    const auto& sr_res         = cell_resources.get_sr(pucch_sr_resource_id(0));
+    const auto& harq_res       = cell_resources.get_harq(pucch_resource_set_config_id(0));
+    const auto& csi_res        = cell_resources.get_csi(pucch_csi_resource_id(0));
 
     // Set the expected SR grant to the SR resource.
     pucch_expected_sr = test_helpers::make_pucch_info(
-        t_bench.cell_cfg, cell_resources.get(res_params.sr_res_id(sr_res_id)), {.sr_bits = sr_nof_bits::one});
+        t_bench.cell_cfg, cell_resources.get(sr_res.res_id), {.sr_bits = sr_nof_bits::one});
 
     // Set the expected Resource Set ID 0 HARQ-ACK grant to the first resource in Resource Set ID 0.
     pucch_expected_res_set_0 = test_helpers::make_pucch_info(
-        t_bench.cell_cfg, cell_resources.get(res_params.harq_res_id<0>(res_set_cfg_id, 0)), {.harq_ack_nof_bits = 1U});
+        t_bench.cell_cfg, cell_resources.get(harq_res.set_0[0]), {.harq_ack_nof_bits = 1U});
 
     // Set the expected Resource Set ID 1 HARQ-ACK grant to the first resource in Resource Set ID 1.
     pucch_expected_res_set_1 = test_helpers::make_pucch_info(
-        t_bench.cell_cfg, cell_resources.get(res_params.harq_res_id<1>(res_set_cfg_id, 0)), {.harq_ack_nof_bits = 3U});
+        t_bench.cell_cfg, cell_resources.get(harq_res.set_1[0]), {.harq_ack_nof_bits = 3U});
 
     // Set the expected HARQ CSI grant to the CSI resource.
-    pucch_expected_csi = test_helpers::make_pucch_info(t_bench.cell_cfg,
-                                                       cell_resources.get(res_params.csi_res_id(csi_res_id)),
-                                                       {.csi_part1_nof_bits = default_csi_part1_bits});
+    pucch_expected_csi = test_helpers::make_pucch_info(
+        t_bench.cell_cfg, cell_resources.get(csi_res.res_id), {.csi_part1_nof_bits = default_csi_part1_bits});
     ocudu_assert(pucch_expected_res_set_1.format() == GetParam(),
                  "PUCCH format mismatch between test parameter and expected grant");
     ocudu_assert(pucch_expected_csi.format() == GetParam(),

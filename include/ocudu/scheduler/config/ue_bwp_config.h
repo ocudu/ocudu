@@ -10,6 +10,7 @@
 #include "ocudu/ran/rnti.h"
 #include "ocudu/ran/srs/srs_configuration.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
+#include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 #include <optional>
 
 namespace ocudu {

@@ -12,7 +12,6 @@
 #include "ocudu/ran/pucch/pucch_constants.h"
 #include "ocudu/ran/pucch/pucch_info.h"
 #include "ocudu/ran/pucch/pucch_mapping.h"
-#include "ocudu/scheduler/rrm/cell_pucch_resources.h"
 #include <optional>
 #include <variant>
 #include <vector>
@@ -232,85 +231,6 @@ struct pucch_resource_builder_params {
       return pucch_format::FORMAT_3;
     }
     return pucch_format::FORMAT_4;
-  }
-
-  // \brief Get the ID of a given Resource Set ID 0/1 resource.
-  //
-  // \param res_set_id The Resource Set ID (0 or 1).
-  // \param res_set_cfg_id The resource set configuration index.
-  // \param pri the index of the resource within the resource set (PUCCH Resource Indicator).
-  // \return The ID of the PUCCH resource.
-  template <unsigned ResourceSetId>
-  pucch_res_id_t harq_res_id(pucch_resource_set_config_id res_set_cfg_id, unsigned pri) const
-  {
-    static_assert(ResourceSetId == 0 or ResourceSetId == 1, "Only Resource Sets ID 0 and 1 are supported");
-    ocudu_assert(res_set_cfg_id.value() < nof_cell_res_set_configs,
-                 "Resource set config index={} exceeds configured number of resource set configs={}",
-                 res_set_cfg_id.value(),
-                 nof_cell_res_set_configs);
-    ocudu_assert(pri < res_set_size.value(),
-                 "Resource index={} exceeds configured resource set size={}",
-                 pri,
-                 res_set_size.value());
-    if constexpr (ResourceSetId == 0) {
-      return pucch_res_id_t::make_ded(res_set_cfg_id.value() * res_set_size.value() + pri);
-    }
-    return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                    res_set_cfg_id.value() * res_set_size.value() + pri);
-  }
-
-  // \brief Get the ID of a given PUCCH resource for SR.
-  //
-  // \param sr_res_id The SR PUCCH resource configuration index.
-  // \return The ID of the PUCCH resource.
-  pucch_res_id_t sr_res_id(pucch_sr_resource_id sr_res_id) const
-  {
-    ocudu_assert(sr_res_id.value() < nof_cell_sr_resources,
-                 "SR resource index={} exceeds configured number of SR resources={}",
-                 sr_res_id.value(),
-                 nof_cell_sr_resources);
-    return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + sr_res_id.value());
-  }
-
-  // \brief Get the ID of a given PUCCH resource for CSI.
-  //
-  // \param csi_res_id The CSI PUCCH resource configuration index.
-  // \return The ID of the PUCCH resource.
-  pucch_res_id_t csi_res_id(pucch_csi_resource_id csi_res_id) const
-  {
-    ocudu_assert(nof_cell_csi_resources != 0 and csi_res_id.value() < nof_cell_csi_resources,
-                 "CSI resource index={} exceeds configured number of CSI resources={}",
-                 csi_res_id.value(),
-                 nof_cell_csi_resources);
-    return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                    nof_cell_res_set_configs * res_set_size.value() + csi_res_id.value());
-  }
-
-  /// \brief Get the ID of the SR_F2 resource associated to a given SR resource.
-  ///
-  /// \param sr_res_id The SR PUCCH resource configuration index.
-  /// \return The ID of the PUCCH resource.
-  pucch_res_id_t sr_f2_res_id(pucch_sr_resource_id sr_res_id) const
-  {
-    ocudu_assert(format_01() == pucch_format::FORMAT_0 and format_234() == pucch_format::FORMAT_2,
-                 "SR_F2 resource is only present in the F0+F2 case");
-    return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                    nof_cell_res_set_configs * res_set_size.value() + nof_cell_csi_resources +
-                                    sr_res_id.value());
-  }
-
-  /// \brief Get the ID of the CSI_F0 resource associated to a given CSI resource.
-  ///
-  /// \param csi_res_id The CSI PUCCH resource configuration index.
-  /// \return The ID of the PUCCH resource.
-  pucch_res_id_t csi_f0_res_id(pucch_csi_resource_id csi_res_id) const
-  {
-    ocudu_assert(nof_cell_csi_resources != 0 and format_01() == pucch_format::FORMAT_0 and
-                     format_234() == pucch_format::FORMAT_2,
-                 "CSI_F0 resource is only present in the F0+F2 case");
-    return pucch_res_id_t::make_ded(nof_cell_res_set_configs * res_set_size.value() + nof_cell_sr_resources +
-                                    nof_cell_res_set_configs * res_set_size.value() + nof_cell_csi_resources +
-                                    nof_cell_sr_resources + csi_res_id.value());
   }
 
   /// Get the number of symbols configured for the Format 0 or 1 resources.

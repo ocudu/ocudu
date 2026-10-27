@@ -15,13 +15,13 @@ static unsigned add_ue_res(static_vector<pucch_res_id_t, MAX_NOF_UE_PUCCH_RESOUR
   return res_list.size() - 1;
 }
 
-unsigned config_helpers::ue_csi_res_id(const pucch_resource_builder_params& res_params)
+unsigned config_helpers::ue_csi_res_id(unsigned res_set_size)
 {
   // The UE resource list holds, in this order: the Resource Set ID 0 resources, the SR resource, the Resource Set ID 1
   // resources and the CSI resource. See \c build_pucch_config.
-  const unsigned nof_set_0_res = res_params.res_set_size.value();
+  const unsigned nof_set_0_res = res_set_size;
   const unsigned nof_sr_res    = 1U;
-  const unsigned nof_set_1_res = res_params.res_set_size.value();
+  const unsigned nof_set_1_res = res_set_size;
   return nof_set_0_res + nof_sr_res + nof_set_1_res;
 }
 
@@ -57,7 +57,7 @@ config_helpers::ue_pucch_res_layout config_helpers::make_ue_pucch_res_layout(con
     csi_res = &cell_resources.get_csi(ue_periodic_csi_report_cfg->res_id);
     // Add CSI resource to the PUCCH resource list.
     layout.csi_res_id = add_ue_res(res_list, csi_res->res_id);
-    ocudu_assert(*layout.csi_res_id == 2U * harq_res.set_0.size() + 1U,
+    ocudu_assert(*layout.csi_res_id == ue_csi_res_id(harq_res.set_0.size()),
                  "CSI resource at UE resource ID {} differs from the ID used by the CSI report",
                  *layout.csi_res_id);
   }

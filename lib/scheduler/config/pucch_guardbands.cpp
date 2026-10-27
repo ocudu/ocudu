@@ -58,13 +58,13 @@ crb_bitmap ocudu::compute_pucch_crbs(const ran_cell_config& cell_cfg)
   const crb_interval ul_bwp_crbs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs;
 
   const unsigned pucch_res_common = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common;
-  const std::vector<pucch_resource> ded_pucch_resources = config_helpers::generate_cell_pucch_res_list(
+  const cell_pucch_resources ded_pucch_resources = config_helpers::generate_cell_pucch_res_list(
       cell_cfg.init_bwp.pucch.resources,
       ul_bwp_crbs.length(),
       config_helpers::get_dedicated_pucch_rb_start(
           cell_cfg.init_bwp.pucch.resources, pucch_res_common, ul_bwp_crbs.length()));
 
-  return compute_pucch_crbs(ul_bwp_crbs, pucch_res_common, ded_pucch_resources);
+  return compute_pucch_crbs(ul_bwp_crbs, pucch_res_common, ded_pucch_resources.resources);
 }
 
 crb_interval ocudu::compute_available_crbs_without_common_pucch(crb_interval ul_bwp_crbs, unsigned pucch_res_common)

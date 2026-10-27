@@ -370,11 +370,11 @@ static unsigned compute_default_msg1_frequency_start(const ran_cell_config& cfg)
       config_helpers::get_dedicated_pucch_rb_start(cfg.init_bwp.pucch.resources, pucch_res_common, bwp_size);
 
   // If the dedicated PUCCH resources do not fit in the BWP, only account for the common ones.
-  std::vector<pucch_resource> ded_res;
+  cell_pucch_resources ded_res;
   if (config_helpers::pucch_parameters_validator(cfg.init_bwp.pucch.resources, bwp_size, ded_rb_start).has_value()) {
     ded_res = config_helpers::generate_cell_pucch_res_list(cfg.init_bwp.pucch.resources, bwp_size, ded_rb_start);
   }
-  const crb_bitmap pucch_prbs     = compute_pucch_crbs(crb_interval{0, bwp_size}, pucch_res_common, ded_res);
+  const crb_bitmap pucch_prbs     = compute_pucch_crbs(crb_interval{0, bwp_size}, pucch_res_common, ded_res.resources);
   const int        last_pucch_prb = pucch_prbs.find_highest(0, bwp_size / 2, true);
 
   // Guardband between the PUCCH and the short PRACH formats.

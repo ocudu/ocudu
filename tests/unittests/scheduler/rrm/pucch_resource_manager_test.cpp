@@ -138,18 +138,19 @@ TEST_F(pucch_resource_manager_tester, sr_and_csi_in_different_symbols_are_alloca
   pucch_res_params.nof_cell_csi_resources = 1;
 
   // Sanity check: the SR and the CSI resources do not overlap in symbols.
-  const unsigned bwp_size_rbs  = cell_params_f0.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-  const auto     cell_res_list = config_helpers::generate_cell_pucch_res_list(
+  const unsigned bwp_size_rbs = cell_params_f0.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+  const auto     cell_res     = config_helpers::generate_cell_pucch_res_list(
       pucch_res_params,
       bwp_size_rbs,
       get_pucch_default_nof_edge_prbs(
           cell_params_f0.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common, bwp_size_rbs));
-  const auto find_res = [&](pucch_res_id_t res_id) {
+  const auto& cell_res_list = cell_res.resources;
+  const auto  find_res      = [&](pucch_res_id_t res_id) {
     return std::find_if(
         cell_res_list.begin(), cell_res_list.end(), [&](const pucch_resource& r) { return r.res_id == res_id; });
   };
-  const auto sr_res_it  = find_res(pucch_res_params.sr_res_id(pucch_sr_resource_id(0)));
-  const auto csi_res_it = find_res(pucch_res_params.csi_res_id(pucch_csi_resource_id(0)));
+  const auto sr_res_it  = find_res(cell_res.get_sr(pucch_sr_resource_id(0)).res_id);
+  const auto csi_res_it = find_res(cell_res.get_csi(pucch_csi_resource_id(0)).res_id);
   ASSERT_NE(sr_res_it, cell_res_list.end());
   ASSERT_NE(csi_res_it, cell_res_list.end());
   ASSERT_FALSE(sr_res_it->syms.overlaps(csi_res_it->syms));
@@ -216,12 +217,14 @@ TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_con
 
   // Sanity check: with this configuration, the cell PUCCH resources of both F1 (Resource Set 0) and F2 (Resource Set 1)
   // do have a repetition factor other than n1.
-  const unsigned bwp_size_rbs  = cell_params_rep.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-  const auto     cell_res_list = config_helpers::generate_cell_pucch_res_list(
-      pucch_res_params,
-      bwp_size_rbs,
-      get_pucch_default_nof_edge_prbs(
-          cell_params_rep.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common, bwp_size_rbs));
+  const unsigned bwp_size_rbs = cell_params_rep.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+  const auto     cell_res_list =
+      config_helpers::generate_cell_pucch_res_list(
+          pucch_res_params,
+          bwp_size_rbs,
+          get_pucch_default_nof_edge_prbs(
+              cell_params_rep.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common, bwp_size_rbs))
+          .resources;
   ASSERT_TRUE(std::any_of(cell_res_list.begin(), cell_res_list.end(), [](const pucch_resource& res) {
     return res.format() == pucch_format::FORMAT_1 and res.rep_factor != pucch_repetition_factor::n1;
   }));

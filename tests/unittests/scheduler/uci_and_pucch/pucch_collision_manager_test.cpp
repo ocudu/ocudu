@@ -286,8 +286,11 @@ protected:
     cfg_pool(make_test_cell_config_pool(ded_params, 0)),
     cell_cfg(cfg_pool->cell_cfg()),
     ded_res(cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.resources),
-    sr_res(ded_res[ded_params.sr_res_id(pucch_sr_resource_id(0)).ded_id()]),
-    sr_f2_res(ded_res[ded_params.sr_f2_res_id(pucch_sr_resource_id(0)).ded_id()]),
+    sr_res(
+        ded_res[cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.get_sr(pucch_sr_resource_id(0)).res_id.ded_id()]),
+    sr_f2_res(
+        ded_res
+            [cell_cfg.bwp_res[to_bwp_id(0)].ul().pucch.dedicated.get_sr(pucch_sr_resource_id(0)).alt_res_id->ded_id()]),
     col_manager(cell_cfg),
     results(sched_result_grid_config{1}),
     slot_alloc(results, 0, cell_cfg),

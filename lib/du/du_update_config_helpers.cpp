@@ -51,12 +51,11 @@ prb_interval config_helpers::find_largest_prb_interval_without_pucch(const pucch
                                                                      unsigned dedicated_pucch_rb_start)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-  const std::vector<pucch_resource>& res_list =
-      generate_cell_pucch_res_list(user_params, bwp_size, dedicated_pucch_rb_start);
+  const cell_pucch_resources cell_res = generate_cell_pucch_res_list(user_params, bwp_size, dedicated_pucch_rb_start);
 
   prb_interval prb_without_pucch = {0, bwp_size};
 
-  for (const auto& pucch_res : res_list) {
+  for (const auto& pucch_res : cell_res.resources) {
     prb_interval inner_prbs = find_pucch_inner_prbs(pucch_res, bwp_size);
     prb_without_pucch.set(std::max(prb_without_pucch.start(), inner_prbs.start()),
                           std::min(prb_without_pucch.stop(), inner_prbs.stop()));

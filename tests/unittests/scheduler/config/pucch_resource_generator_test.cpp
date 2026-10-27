@@ -55,7 +55,7 @@ protected:
 TEST_P(pucch_resource_generator_test, generated_resources_are_consistent_with_parameters)
 {
   std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start).resources;
   const unsigned nof_res_f0_f1 =
       params.nof_cell_sr_resources + params.nof_cell_res_set_configs * params.res_set_size.value();
   const unsigned nof_res_f2_f3_f4 =
@@ -83,7 +83,7 @@ TEST_P(pucch_resource_generator_test, generated_resources_are_consistent_with_pa
 TEST_P(pucch_resource_generator_test, successful_generation_results_in_no_collisions)
 {
   std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start).resources;
   ASSERT_FALSE(res_list.empty());
 
   // Not all resources are checked for the F0+F2 case, since the extra resources there (SR_F0 and CSI_F2) are generated
@@ -138,7 +138,7 @@ static void assert_no_prb_overlap_with_common(span<const pucch_resource> ded_res
 TEST_P(pucch_resource_generator_test, dedicated_resources_do_not_overlap_common_resources)
 {
   const std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start).resources;
   ASSERT_FALSE(res_list.empty());
   assert_no_prb_overlap_with_common(res_list, pucch_res_common, bwp_cfg.crbs.length());
 }
@@ -147,8 +147,11 @@ TEST(pucch_resource_generator_common_res_test, dedicated_resources_do_not_overla
 {
   static constexpr unsigned bwp_size_rbs = 106;
   for (unsigned pucch_res_common = 0; pucch_res_common != 16; ++pucch_res_common) {
-    const std::vector<pucch_resource> res_list = config_helpers::generate_cell_pucch_res_list(
-        pucch_resource_builder_params{}, bwp_size_rbs, get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_size_rbs));
+    const std::vector<pucch_resource> res_list =
+        config_helpers::generate_cell_pucch_res_list(pucch_resource_builder_params{},
+                                                     bwp_size_rbs,
+                                                     get_pucch_default_nof_edge_prbs(pucch_res_common, bwp_size_rbs))
+            .resources;
     ASSERT_FALSE(res_list.empty());
     assert_no_prb_overlap_with_common(res_list, pucch_res_common, bwp_size_rbs);
   }
@@ -180,7 +183,7 @@ TEST(pucch_resource_generator_edge_prbs_test, dedicated_resources_leave_configur
 TEST_P(pucch_resource_generator_test, f1_resources_have_valid_occ_indices)
 {
   const std::vector<pucch_resource> res_list =
-      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start).resources;
   ASSERT_FALSE(res_list.empty());
 
   for (const auto& res : res_list) {
@@ -193,6 +196,56 @@ TEST_P(pucch_resource_generator_test, f1_resources_have_valid_occ_indices)
     const auto&    f1_cfg   = std::get<pucch_resource::f1_config>(res.format_params);
     ASSERT_LT(f1_cfg.time_domain_occ, nof_occs)
         << fmt::format("Invalid OCC index for ded_id={} with nof_syms={}", res.res_id.ded_id(), nof_syms);
+  }
+}
+
+TEST_P(pucch_resource_generator_test, tables_reference_the_resources_of_the_right_format)
+{
+  const cell_pucch_resources cell_res =
+      config_helpers::generate_cell_pucch_res_list(params, bwp_cfg.crbs.length(), dedicated_pucch_rb_start);
+  ASSERT_FALSE(cell_res.resources.empty());
+  ASSERT_EQ(cell_res.harq.size(), params.nof_cell_res_set_configs);
+  ASSERT_EQ(cell_res.sr.size(), params.nof_cell_sr_resources);
+  ASSERT_EQ(cell_res.csi.size(), params.nof_cell_csi_resources);
+  const bool using_02 = params.format_01() == pucch_format::FORMAT_0 and params.format_234() == pucch_format::FORMAT_2;
+
+  // Every table entry references a different resource, with the ID of the resource and the expected format.
+  std::set<unsigned> referenced;
+  const auto         check = [&](pucch_res_id_t id, pucch_format format) {
+    ASSERT_LT(id.ded_id(), cell_res.resources.size());
+    EXPECT_EQ(cell_res.get(id).res_id, id);
+    EXPECT_EQ(cell_res.get(id).format(), format);
+    EXPECT_TRUE(referenced.insert(id.ded_id()).second)
+        << fmt::format("Cell resource {} is referenced twice", id.ded_id());
+  };
+
+  for (const auto& sets : cell_res.harq) {
+    ASSERT_EQ(sets.set_0.size(), params.res_set_size.value());
+    ASSERT_EQ(sets.set_1.size(), params.res_set_size.value());
+    for (pucch_res_id_t id : sets.set_0) {
+      check(id, params.format_01());
+    }
+    for (pucch_res_id_t id : sets.set_1) {
+      check(id, params.format_234());
+    }
+  }
+  for (const auto& sr : cell_res.sr) {
+    check(sr.res_id, params.format_01());
+    ASSERT_EQ(sr.alt_res_id.has_value(), using_02);
+    if (using_02) {
+      // The SR_F2 resource overlaps in symbols with the SR resource.
+      check(*sr.alt_res_id, pucch_format::FORMAT_2);
+      EXPECT_TRUE(cell_res.get(*sr.alt_res_id).syms.overlaps(cell_res.get(sr.res_id).syms));
+    }
+  }
+  for (const auto& csi : cell_res.csi) {
+    check(csi.res_id, params.format_234());
+    ASSERT_EQ(csi.alt_res_id.has_value(), using_02);
+    if (using_02) {
+      // The CSI_F0 resource overlaps in symbols with the CSI resource.
+      check(*csi.alt_res_id, pucch_format::FORMAT_0);
+      EXPECT_TRUE(cell_res.get(*csi.alt_res_id).syms.overlaps(cell_res.get(csi.res_id).syms));
+    }
   }
 }
 
@@ -239,7 +292,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
 
         // Check the SR resource.
         const unsigned ue_sr_res_id = layout.sr_res_id;
-        ASSERT_TRUE(is_ue_res_of(ue_sr_res_id, params.sr_res_id(sr_res_id)));
+        ASSERT_TRUE(is_ue_res_of(ue_sr_res_id, cell_rrm.pucch.res.get_sr(sr_res_id).res_id));
 
         // Check the CSI resource (if configured).
         const auto csi_meas_cfg = config_helpers::build_csi_meas_config(cell_cfg, ue_rrm_cfg);
@@ -252,7 +305,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
           ASSERT_EQ(1U, periodic_report_cfg.pucch_csi_res_list.size());
           ue_csi_res_id = periodic_report_cfg.pucch_csi_res_list.front().pucch_res_id;
           ASSERT_EQ(layout.csi_res_id, ue_csi_res_id);
-          ASSERT_TRUE(is_ue_res_of(*ue_csi_res_id, params.csi_res_id(csi_res_id)));
+          ASSERT_TRUE(is_ue_res_of(*ue_csi_res_id, cell_rrm.pucch.res.get_csi(csi_res_id).res_id));
         }
 
         // Check Resource Set ID 0.
@@ -260,44 +313,28 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
         ASSERT_EQ(params.res_set_size.value() + extra_res_per_res_set, res_set_0.size());
 
         for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
-          ASSERT_TRUE(is_ue_res_of(res_set_0[pri], params.harq_res_id<0>(res_set_cfg_id, pri)));
+          ASSERT_TRUE(is_ue_res_of(res_set_0[pri], cell_rrm.pucch.res.get_harq(res_set_cfg_id).set_0[pri]));
         }
-
-        // The resources of Resource Set ID 0 and the SR resource use the F0/F1 format, the ones of Resource Set ID 1
-        // the F2/F3/F4 format.
-        const auto format_of = [&](unsigned ue_res_id) {
-          return cell_rrm.pucch.res.get(layout.res_list[ue_res_id]).format();
-        };
-        for (unsigned ue_res_id : layout.res_set_0) {
-          ASSERT_EQ(format_of(ue_res_id), params.format_01());
-        }
-        for (unsigned ue_res_id : layout.res_set_1) {
-          ASSERT_EQ(format_of(ue_res_id), params.format_234());
-        }
-        ASSERT_EQ(format_of(ue_sr_res_id), params.format_01());
 
         // Check Resource Set ID 1.
         const auto& res_set_1 = layout.res_set_1;
         ASSERT_EQ(params.res_set_size.value() + extra_res_per_res_set, res_set_1.size());
 
         for (unsigned pri = 0; pri != params.res_set_size.value(); ++pri) {
-          ASSERT_TRUE(is_ue_res_of(res_set_1[pri], params.harq_res_id<1>(res_set_cfg_id, pri)));
+          ASSERT_TRUE(is_ue_res_of(res_set_1[pri], cell_rrm.pucch.res.get_harq(res_set_cfg_id).set_1[pri]));
         }
 
         if (using_02) {
           // Check SR_F0 and SR_F2.
           ASSERT_EQ(ue_sr_res_id, res_set_0[params.res_set_size.value()]);
-          ASSERT_TRUE(is_ue_res_of(res_set_1[params.res_set_size.value()], params.sr_f2_res_id(sr_res_id)));
-          // The SR_F2 resource overlaps in symbols with the SR resource, so that the UE multiplexes the UCIs.
-          ASSERT_TRUE(cell_rrm.pucch.res.get(layout.res_list[res_set_1[params.res_set_size.value()]])
-                          .syms.overlaps(cell_rrm.pucch.res.get(layout.res_list[ue_sr_res_id]).syms));
+          ASSERT_TRUE(
+              is_ue_res_of(res_set_1[params.res_set_size.value()], *cell_rrm.pucch.res.get_sr(sr_res_id).alt_res_id));
 
           if (ue_csi_res_id.has_value()) {
             // Check CSI_F0 and CSI_F2.
-            ASSERT_TRUE(is_ue_res_of(res_set_0[params.res_set_size.value() + 1U], params.csi_f0_res_id(csi_res_id)));
+            ASSERT_TRUE(is_ue_res_of(res_set_0[params.res_set_size.value() + 1U],
+                                     *cell_rrm.pucch.res.get_csi(csi_res_id).alt_res_id));
             ASSERT_EQ(*ue_csi_res_id, res_set_1[params.res_set_size.value() + 1U]);
-            ASSERT_TRUE(cell_rrm.pucch.res.get(layout.res_list[res_set_0[params.res_set_size.value() + 1U]])
-                            .syms.overlaps(cell_rrm.pucch.res.get(layout.res_list[*ue_csi_res_id]).syms));
           }
         }
       }

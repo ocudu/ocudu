@@ -826,9 +826,9 @@ static check_outcome check_pucch_common_ded_overlap(const du_cell_config& cell_c
     reserved_prbs_desc = fmt::format("common PUCCH resources of pucch-ResourceCommon={}", pucch_res_common);
   }
 
-  const std::vector<pucch_resource> ded_res = config_helpers::generate_cell_pucch_res_list(
+  const cell_pucch_resources ded_res = config_helpers::generate_cell_pucch_res_list(
       pucch_params, bwp_size, config_helpers::get_dedicated_pucch_rb_start(pucch_params, pucch_res_common, bwp_size));
-  for (const pucch_resource& res : ded_res) {
+  for (const pucch_resource& res : ded_res.resources) {
     const prb_interval hop1 = res.prbs();
     const prb_interval hop2 =
         res.second_hop_prb.has_value() ? prb_interval::start_and_len(*res.second_hop_prb, hop1.length()) : hop1;

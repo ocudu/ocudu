@@ -511,7 +511,8 @@ TEST_F(pucch_cfg_conversion_test, changing_the_resource_set_config_modifies_only
   ASSERT_EQ(pucch.res_to_add_mod_list.size(), 2 * res_set_size());
   for (const auto& res : pucch.res_to_add_mod_list) {
     ASSERT_NE(res.pucch_res_id, res_set_size());
-    ASSERT_NE(res.pucch_res_id, config_helpers::ue_csi_res_id(cell_cfg.ran.init_bwp.pucch.resources));
+    ASSERT_NE(res.pucch_res_id,
+              config_helpers::ue_csi_res_id(cell_cfg.ran.init_bwp.pucch.resources.res_set_size.value()));
   }
   ASSERT_EQ(pucch.res_to_release_list.size(), 0);
   ASSERT_EQ(pucch.res_set_to_add_mod_list.size(), 0);
@@ -528,7 +529,8 @@ TEST_F(pucch_cfg_conversion_test, removing_the_periodic_csi_report_releases_the_
   const auto pucch = diff_pucch_cfg(src_cfg, dest_cfg);
 
   ASSERT_EQ(pucch.res_to_release_list.size(), 1);
-  ASSERT_EQ(pucch.res_to_release_list[0], config_helpers::ue_csi_res_id(cell_cfg.ran.init_bwp.pucch.resources));
+  ASSERT_EQ(pucch.res_to_release_list[0],
+            config_helpers::ue_csi_res_id(cell_cfg.ran.init_bwp.pucch.resources.res_set_size.value()));
   ASSERT_EQ(pucch.res_to_add_mod_list.size(), 0);
 }
 

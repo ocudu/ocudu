@@ -42,7 +42,7 @@ ue_pucch_res_layout make_ue_pucch_res_layout(const cell_pucch_resources& cell_re
                                              const ue_rrm_config&        ue_rrm_cfg);
 
 /// Gets the UE resource ID of the CSI resource in the layout built by \c make_ue_pucch_res_layout.
-unsigned ue_csi_res_id(const pucch_resource_builder_params& res_params);
+unsigned ue_csi_res_id(unsigned res_set_size);
 
 /// Build the CSI-MeasConfig for a given UE.
 std::optional<csi_meas_config> build_csi_meas_config(const ran_cell_config& cell_cfg, const ue_rrm_config& ue_rrm_cfg);

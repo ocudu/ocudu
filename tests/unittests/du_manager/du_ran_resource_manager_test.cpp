@@ -159,14 +159,15 @@ protected:
                                                        nof_sr_f1_res_per_ue + nof_csi_f2_res_per_ue;
 
     // Check that the SR resource of the PUCCH-Config is the SR resource allocated to the UE.
-    pucch_checker =
-        pucch_checker and layout.res_list[layout.sr_res_id] == res_params.sr_res_id(ue_rrm_cfg.pucch.sr_res_id);
+    pucch_checker = pucch_checker and
+                    layout.res_list[layout.sr_res_id] == cell_rrm.pucch.res.get_sr(ue_rrm_cfg.pucch.sr_res_id).res_id;
 
     // Check that the CSI resource of the CSI report is the CSI resource allocated to the UE.
     if (ue_rrm_cfg.csi.periodic_report.has_value()) {
       const unsigned csi_ue_res_id = get_ue_csi_cfg(ue_cell_cfg.serv_cell_cfg).pucch_csi_res_list.front().pucch_res_id;
-      pucch_checker                = pucch_checker and csi_ue_res_id == layout.csi_res_id and
-                      layout.res_list[csi_ue_res_id] == res_params.csi_res_id(ue_rrm_cfg.csi.periodic_report->res_id);
+      pucch_checker =
+          pucch_checker and csi_ue_res_id == layout.csi_res_id and
+          layout.res_list[csi_ue_res_id] == cell_rrm.pucch.res.get_csi(ue_rrm_cfg.csi.periodic_report->res_id).res_id;
     }
 
     return pucch_checker;
