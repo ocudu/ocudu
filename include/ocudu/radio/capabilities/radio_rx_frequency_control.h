@@ -6,13 +6,14 @@
 
 namespace ocudu {
 
-/// Radio capability that allows modifying the reception center frequency in runtime.
+/// Radio capability that allows modifying the receiver center frequency at runtime.
 class radio_rx_frequency_control
 {
 public:
   virtual ~radio_rx_frequency_control() = default;
 
-  /// \brief Set the reception center frequency of all ports related to a stream.
+  /// \brief Set the receiver center frequency of all ports related to a stream at runtime.
+  ///
   /// \param[in] stream_id      Radio stream identifier.
   /// \param[in] center_freq_Hz New center frequency in Hertz.
   /// \return True if the operation is successful. Otherwise, false.

@@ -51,7 +51,7 @@ public:
                                        const unique_function<baseband_gateway_timestamp()>& current_rf_timestamp_fn);
 
   // See the radio_session interface for documentation.
-  radio_capabilities_registry& get_capabilities() override { return *this; }
+  radio_capabilities_registry& get_capabilities_registry() override { return *this; }
 
   // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
@@ -69,9 +69,6 @@ public:
 
   // See the radio_session interface for documentation.
   void stop() override;
-
-  // See the radio_capabilities_registry interface for documentation.
-  void* query(radio_capability_key key) override { return nullptr; }
 
   // See the baseband_gateway interface for documentation.
   unsigned get_transmitter_optimal_buffer_size() const override { return 0; }
@@ -92,6 +89,9 @@ public:
   void transmit(const baseband_gateway_buffer_reader& data, const baseband_gateway_transmitter_metadata& md) override;
 
 private:
+  // See the radio_capabilities_registry interface for documentation.
+  void* query(radio_capability_key key) override { return nullptr; }
+
   /// Radio session logger.
   ocudulog::basic_logger& logger;
 

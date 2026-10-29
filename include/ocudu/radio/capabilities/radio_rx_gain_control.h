@@ -6,15 +6,16 @@
 
 namespace ocudu {
 
-/// Radio capability that allows modifying the reception gain in runtime.
+/// Radio capability that allows modifying the receiver gain at runtime.
 class radio_rx_gain_control
 {
 public:
   virtual ~radio_rx_gain_control() = default;
 
-  /// \brief Set the reception gain of a given port in runtime.
-  /// \param[in] port_id Indicates the port identifier.
-  /// \param[in] gain_dB Indicates the new gain.
+  /// \brief Set the receiver gain of a given port at runtime.
+  ///
+  /// \param[in] port_id Port identifier.
+  /// \param[in] gain_dB New gain in dB.
   /// \return True if the operation is successful. Otherwise, false.
   /// \note The port identifier is indexed from stream ascending order and then port.
   virtual bool set_rx_gain(unsigned port_id, double gain_dB) = 0;

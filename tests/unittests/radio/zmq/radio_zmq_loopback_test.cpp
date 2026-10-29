@@ -331,7 +331,7 @@ TEST(RadioZmqGainTest, ValidateSetGainReturns)
   std::unique_ptr<radio_session> session = zmq_factory->create(radio_config, *async_task_executor, notifier);
   ASSERT_NE(session, nullptr);
 
-  radio_capabilities_registry& capabilities = session->get_capabilities();
+  radio_capabilities_registry& capabilities = session->get_capabilities_registry();
 
   // The ZMQ radio supports gain control, but not frequency control.
   radio_tx_gain_control* tx_gain = capabilities.get<radio_tx_gain_control>();

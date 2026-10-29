@@ -41,7 +41,7 @@ public:
     handler.reset();
   }
 
-  radio_capabilities_registry& get_capabilities() override { return session->get_capabilities(); }
+  radio_capabilities_registry& get_capabilities_registry() override { return session->get_capabilities_registry(); }
   baseband_gateway&            get_baseband_gateway(unsigned stream_id) override
   {
     return session->get_baseband_gateway(stream_id);

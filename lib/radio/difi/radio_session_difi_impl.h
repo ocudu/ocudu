@@ -44,7 +44,7 @@ public:
   bool is_successful() const { return successful; }
 
   // See radio_session for documentation.
-  radio_capabilities_registry& get_capabilities() override { return *this; }
+  radio_capabilities_registry& get_capabilities_registry() override { return *this; }
 
   // See radio_session for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override;
@@ -58,6 +58,7 @@ public:
   // See radio_session for documentation.
   void stop() override;
 
+private:
   // See radio_tx_gain_control for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
 

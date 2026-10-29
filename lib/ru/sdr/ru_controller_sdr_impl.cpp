@@ -108,7 +108,7 @@ void ru_controller_sdr_impl::set_lower_phy_sectors(std::vector<lower_phy_sector*
   lower_phy_sectors = std::move(sectors);
 
   // Retrieve the capabilities supported by the radio. They remain valid for the lifetime of the radio session.
-  radio_capabilities_registry& capabilities = radio->get_capabilities();
+  radio_capabilities_registry& capabilities = radio->get_capabilities_registry();
 
   gain_controller =
       ru_gain_controller_sdr_impl(capabilities.get<radio_tx_gain_control>(), capabilities.get<radio_rx_gain_control>());

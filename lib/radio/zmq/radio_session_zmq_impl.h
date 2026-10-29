@@ -33,6 +33,7 @@ class radio_session_zmq_impl : public radio_session,
 
 public:
   /// \brief Default constructor.
+  ///
   /// \param[in] config Provides the required parameters to start a ZMQ radio based session.
   /// \param[in] async_task_executor Provides a task executor to perform asynchronous tasks.
   /// \param[in] notification_handler Provides a radio event notification handler.
@@ -48,7 +49,7 @@ public:
   bool is_successful() const { return successful; }
 
   // See the radio_session interface for documentation.
-  radio_capabilities_registry& get_capabilities() override { return *this; }
+  radio_capabilities_registry& get_capabilities_registry() override { return *this; }
 
   // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
@@ -69,6 +70,7 @@ public:
   // See the radio_session interface for documentation.
   void stop() override;
 
+private:
   // See the radio_tx_gain_control interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
 

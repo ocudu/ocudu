@@ -54,6 +54,7 @@ class radio_uhd_tx_stream : public baseband_gateway_transmitter, public uhd_exce
   void run_recv_async_msg();
 
   /// \brief Transmits a single baseband block.
+  ///
   /// \param[out] nof_txd_samples Number of transmitted samples.
   /// \param[in] data             Buffer to transmit.
   /// \param[in] offset           Sample offset in the transmit buffers.
@@ -84,6 +85,7 @@ public:
   };
 
   /// \brief Constructs an UHD transmit stream.
+  ///
   /// \param[in] usrp Provides the USRP context.
   /// \param[in] description Provides the stream configuration parameters.
   /// \param[in] async_executor_ Provides the asynchronous task executor.

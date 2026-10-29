@@ -355,7 +355,7 @@ static void trx_ocudu_set_tx_gain(TRXState* s1, double gain, int chain)
   // Extract context and receiver interface.
   trx_ocudu_session_context& context = *static_cast<trx_ocudu_session_context*>(s1->opaque);
   ocudu_assert(context.session, "Invalid session.");
-  radio_tx_gain_control* control = context.session->get_capabilities().get<radio_tx_gain_control>();
+  radio_tx_gain_control* control = context.session->get_capabilities_registry().get<radio_tx_gain_control>();
 
   // Keep the reported gain unchanged if the gain could not be applied.
   if (control == nullptr || !control->set_tx_gain(chain, gain)) {
@@ -372,7 +372,7 @@ static void trx_ocudu_set_rx_gain(TRXState* s1, double gain, int chain)
   // Extract context and receiver interface.
   trx_ocudu_session_context& context = *static_cast<trx_ocudu_session_context*>(s1->opaque);
   ocudu_assert(context.session, "Invalid session.");
-  radio_rx_gain_control* control = context.session->get_capabilities().get<radio_rx_gain_control>();
+  radio_rx_gain_control* control = context.session->get_capabilities_registry().get<radio_rx_gain_control>();
 
   // Keep the reported gain unchanged if the gain could not be applied.
   if (control == nullptr || !control->set_rx_gain(chain, gain)) {

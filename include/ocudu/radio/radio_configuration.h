@@ -14,6 +14,7 @@ namespace ocudu {
 namespace radio_configuration {
 
 /// \brief Describes clock source configuration.
+///
 /// \note Not all driver and/or devices support all possible combinations.
 struct clock_sources {
   /// Defines the possible clock sources.
@@ -36,6 +37,7 @@ struct clock_sources {
 };
 
 /// \brief Describes frequency settings common for transmit and receive chains.
+///
 /// \note Not all driver and/or devices support a different \c lo_frequency_hz.
 struct lo_frequency {
   /// Baseband center frequency in Hz.
@@ -51,6 +53,7 @@ struct channel {
   /// Initial gain in decibels.
   double gain_dB;
   /// \brief Indicates any device specific parameters to create the port.
+  ///
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
 };
@@ -61,12 +64,14 @@ struct stream {
   /// stream.
   static_vector<channel, RADIO_MAX_NOF_CHANNELS> channels;
   /// \brief Indicates any device specific parameters to create the stream.
+  ///
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
 };
 
 /// \brief Over the wire format. Indicates the data format baseband samples are transported between the baseband unit
 /// and the host.
+///
 /// \note Not all driver and/or devices support this feature.
 enum class over_the_wire_format {
   /// Default, the parameter is unset and let the driver use the default type.
@@ -104,6 +109,7 @@ struct radio {
   /// Indicates the baseband signal transport format between the device and the host.
   over_the_wire_format otw_format;
   /// \brief Transmission mode.
+  ///
   /// \remark Not all drivers and/or devices support discontinuous transmission modes.
   transmission_mode tx_mode;
   /// \brief Power ramping time of the transmit chain in microseconds.
@@ -113,6 +119,7 @@ struct radio {
   /// \remark Not all drivers and/or devices support this feature.
   float power_ramping_us;
   /// \brief Indicates any device specific parameters to create the session.
+  ///
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
   /// Logging level. Leave empty for default.
@@ -178,6 +185,7 @@ public:
   virtual ~validator() = default;
 
   /// \brief Determines whether a radio configuration is valid.
+  ///
   /// \param[in] config Configuration parameters.
   /// \return True if the given radio configuration is valid for the given device, otherwise false.
   virtual bool is_configuration_valid(const radio& config) const = 0;

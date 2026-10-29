@@ -55,6 +55,7 @@ public:
   }
 
   /// \brief Notifies a late or an underflow event.
+  ///
   /// \remark Transitions state end of burst if it is in a burst.
   /// \param[in] time_spec Indicates the time the underflow event occurred.
   void async_event_late_underflow(const uhd::time_spec_t& time_spec)
@@ -68,6 +69,7 @@ public:
   }
 
   /// \brief Notifies an end-of-burst acknowledgement.
+  ///
   /// \remark Transitions state to start burst if it is waiting for the end-of-burst.
   void async_event_end_of_burst_ack()
   {
@@ -78,6 +80,7 @@ public:
   }
 
   /// \brief Handles a new transmission.
+  ///
   /// \param[out] metadata     Destination of the required metadata.
   /// \param[in]  time_spec    Transmission time of the first sample.
   /// \param[in]  is_empty     Empty buffer flag.

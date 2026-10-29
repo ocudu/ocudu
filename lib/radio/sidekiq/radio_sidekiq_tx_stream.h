@@ -89,6 +89,7 @@ private:
   /// Buffer used to align samples into chunks of \c nof_samples_block.
   detail::tx_alignment_buffer alignment_buffer;
   /// \brief RF lates check period in number of RF blocks.
+  ///
   /// \remark A low period may cause a reduction of performance in the Host-FPGA communication.
   static constexpr baseband_gateway_timestamp tx_late_check_period = 1000;
   /// Last timestamp at which lates were checked.

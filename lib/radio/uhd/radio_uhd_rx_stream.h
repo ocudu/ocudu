@@ -35,6 +35,7 @@ class radio_uhd_rx_stream : public uhd_exception_handler, public baseband_gatewa
   rt_stop_event_source stop_control;
 
   /// \brief Receives a single block of baseband samples.
+  ///
   /// \param[out] nof_rxd_samples Indicate the number of samples received in the block.
   /// \param[in,out] buffs Provides the reception buffers.
   /// \param[in] buffer_offset Indicates the data offset in the reception buffers.
@@ -61,6 +62,7 @@ public:
   };
 
   /// \brief Constructs a receive UHD stream.
+  ///
   /// \param[in] usrp Provides the USRP context.
   /// \param[in] description Provides the stream configuration parameters.
   /// \param[in] notifier_ Provides the radio event notification handler.
@@ -69,11 +71,13 @@ public:
                       radio_event_notifier&        notifier_);
 
   /// \brief Starts the stream reception.
+  ///
   /// \param[in] time_spec Indicates the start time of the stream.
   /// \return True if no exception is caught. Otherwise false.
   bool start(const uhd::time_spec_t& time_spec);
 
   /// \brief Stops the reception stream.
+  ///
   /// \return True if no exception is caught. Otherwise false.
   bool stop();
 

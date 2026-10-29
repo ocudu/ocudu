@@ -67,6 +67,7 @@ class radio_capabilities_registry : public radio_base
 {
 public:
   /// \brief Gets the implementation of the capability \c Capability.
+  ///
   /// \tparam Capability Capability interface type, as defined by the application.
   /// \return A pointer to the capability if the radio supports it, otherwise \c nullptr.
   template <typename Capability>

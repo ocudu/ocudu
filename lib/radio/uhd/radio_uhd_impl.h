@@ -41,10 +41,12 @@ class radio_session_uhd_impl : public radio_session,
   double                                                   actual_sampling_rate_Hz = 0.0;
 
   /// \brief Set the synchronization time to GPS mode.
+  ///
   /// \return True if no exception is caught. Otherwise false.
   bool set_time_to_gps_time();
 
   /// \brief Waits for a sensor to be locked.
+  ///
   /// \param[in] sensor_name Indicates the sensor name.
   /// \param[in] is_mboard Indicates if the sensor is from the motherboard or daughterboard.
   /// \param[in] timeout Indicates the amount of time to wait.
@@ -52,62 +54,38 @@ class radio_session_uhd_impl : public radio_session,
   bool wait_sensor_locked(const std::string& sensor_name, bool is_mboard, std::chrono::milliseconds timeout);
 
   /// \brief Set transmission gain from the class itself.
+  ///
   /// \param[in] port_idx Indicates the port index.
   /// \param[in] gain_dB Indicates the gain value.
   /// \return True if the port index and gain value are valid, and no exception is caught. Otherwise false.
   bool set_tx_gain_unprotected(unsigned port_idx, double gain_dB);
 
   /// \brief Set reception gain from the class itself.
+  ///
   /// \param[in] port_idx Indicates the port index.
   /// \param[in] gain_dB Indicates the gain value.
   /// \return True if the port index and gain value are valid, and no exception is caught. Otherwise false.
   bool set_rx_gain_unprotected(unsigned port_idx, double gain_dB);
 
   /// \brief Set transmission frequency.
+  ///
   /// \param[in] port_idx Indicates the port index.
   /// \param[in] frequency Provides the frequency tuning parameters
   /// \return True if the port index and frequency value are valid, and no exception is caught. Otherwise false.
   bool set_tx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency);
 
   /// \brief Set reception frequency.
+  ///
   /// \param[in] port_idx Indicates the port index.
   /// \param[in] frequency Provides the frequency tuning parameters
   /// \return True if the port index and frequency value are valid, and no exception is caught. Otherwise false.
   bool set_rx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency);
 
   /// \brief Start receive streams.
+  ///
   /// \param[in] init_time Time in which the stream shall start.
   /// \return True if no exception is caught. Otherwise false.
   bool start_rx_stream(baseband_gateway_timestamp init_time);
-
-public:
-  /// Constructs a radio session based on UHD.
-  radio_session_uhd_impl(const radio_configuration::radio& radio_config,
-                         task_executor&                    async_executor,
-                         radio_event_notifier&             notifier_);
-
-  /// \brief Indicates that the radio session was initialized succesfully.
-  /// \return True if no exception is caught during initialization. Otherwise false.
-  bool is_successful() const { return is_init_successful; }
-
-  // See interface for documentation.
-  radio_capabilities_registry& get_capabilities() override { return *this; }
-
-  // See interface for documentation.
-  baseband_gateway& get_baseband_gateway(unsigned stream_id) override
-  {
-    ocudu_assert(stream_id < bb_gateways.size(),
-                 "Stream identifier (i.e., {}) exceeds the number of baseband gateways (i.e., {})",
-                 stream_id,
-                 bb_gateways.size());
-    return *bb_gateways[stream_id];
-  }
-
-  // See interface for documentation.
-  void start(baseband_gateway_timestamp init_time) override;
-
-  // See interface for documentation.
-  void stop() override;
 
   // See interface for documentation.
   bool set_tx_gain(unsigned port_idx, double gain_dB) override { return set_tx_gain_unprotected(port_idx, gain_dB); }
@@ -120,9 +98,6 @@ public:
 
   // See interface for documentation.
   bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
-
-  // See interface for documentation.
-  baseband_gateway_timestamp read_current_time() override;
 
   // See the radio_capabilities_registry interface for documentation.
   void* query(radio_capability_key key) override
@@ -141,6 +116,39 @@ public:
     }
     return nullptr;
   }
+
+public:
+  /// Constructs a radio session based on UHD.
+  radio_session_uhd_impl(const radio_configuration::radio& radio_config,
+                         task_executor&                    async_executor,
+                         radio_event_notifier&             notifier_);
+
+  /// \brief Indicates that the radio session was initialized succesfully.
+  ///
+  /// \return True if no exception is caught during initialization. Otherwise false.
+  bool is_successful() const { return is_init_successful; }
+
+  // See interface for documentation.
+  radio_capabilities_registry& get_capabilities_registry() override { return *this; }
+
+  // See interface for documentation.
+  baseband_gateway& get_baseband_gateway(unsigned stream_id) override
+  {
+    ocudu_assert(stream_id < bb_gateways.size(),
+                 "Stream identifier (i.e., {}) exceeds the number of baseband gateways (i.e., {})",
+                 stream_id,
+                 bb_gateways.size());
+    return *bb_gateways[stream_id];
+  }
+
+  // See interface for documentation.
+  void start(baseband_gateway_timestamp init_time) override;
+
+  // See interface for documentation.
+  void stop() override;
+
+  // See interface for documentation.
+  baseband_gateway_timestamp read_current_time() override;
 };
 
 /// Factory for UHD radio session.

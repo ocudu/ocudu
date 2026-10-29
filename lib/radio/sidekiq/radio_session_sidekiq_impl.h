@@ -28,11 +28,12 @@ public:
                              radio_event_notifier&             notifier_);
 
   /// \brief Indicates if the radio session was initialized successfully.
+  ///
   /// \return True if no exception is caught during initialization. Otherwise false.
   bool is_successful() const { return (state.load() != states::UNINITIALIZED); }
 
   // See the radio_session interface for documentation.
-  radio_capabilities_registry& get_capabilities() override { return *this; }
+  radio_capabilities_registry& get_capabilities_registry() override { return *this; }
 
   // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
@@ -49,6 +50,21 @@ public:
 
   // See the radio_session interface for documentation.
   void stop() override;
+
+private:
+  /// \brief Sets transmission gain of an RF port.
+  ///
+  /// \param[in] port_idx Port index.
+  /// \param[in] gain_dB Gain value in dB.
+  /// \return True if the port index and gain value are valid, and no exception is caught. Otherwise false.
+  bool set_tx_gain_unprotected(unsigned port_idx, double gain_dB);
+
+  /// \brief Set reception gain of an RF port.
+  ///
+  /// \param[in] port_idx Port index.
+  /// \param[in] gain_dB Gain value in dB.
+  /// \return True if the port index and gain value are valid, and no exception is caught. Otherwise false.
+  bool set_rx_gain_unprotected(unsigned port_idx, double gain_dB);
 
   // See the radio_tx_gain_control interface for documentation.
   bool set_tx_gain(unsigned port_idx, double gain_dB) override { return set_tx_gain_unprotected(port_idx, gain_dB); }
@@ -68,7 +84,6 @@ public:
     return nullptr;
   }
 
-private:
   /// Enumerates possible Sidekiq session states.
   enum class states { UNINITIALIZED, SUCCESSFUL_INIT, STOP };
   /// Maps ports to card and channel indexes.
@@ -91,17 +106,6 @@ private:
   radio_event_notifier& notifier;
   /// RF logger.
   ocudulog::basic_logger& logger;
-
-  /// \brief Sets transmission gain of an RF port.
-  /// \param[in] port_idx Port index.
-  /// \param[in] gain_dB Gain value in dB.
-  /// \return True if the port index and gain value are valid, and no exception is caught. Otherwise false.
-  bool set_tx_gain_unprotected(unsigned port_idx, double gain_dB);
-
-  /// \brief Set reception gain of an RF port.
-  /// \param[in] port_idx Port index.
-  /// \param[in] gain_dB Gain value in dB.
-  /// \return True if the port index and gain value are valid, and no exception is caught. Otherwise false.
-  bool set_rx_gain_unprotected(unsigned port_idx, double gain_dB);
 };
+
 } // namespace ocudu

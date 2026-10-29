@@ -216,7 +216,7 @@ TEST_P(RealtimeLoopbackRadioFixture, NoCapabilities)
   ASSERT_NE(session, nullptr);
 
   // The loopback radio does not support any capability.
-  radio_capabilities_registry& capabilities = session->get_capabilities();
+  radio_capabilities_registry& capabilities = session->get_capabilities_registry();
   EXPECT_EQ(capabilities.get<radio_tx_gain_control>(), nullptr);
   EXPECT_EQ(capabilities.get<radio_rx_gain_control>(), nullptr);
   EXPECT_EQ(capabilities.get<radio_tx_frequency_control>(), nullptr);

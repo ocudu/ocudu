@@ -13,6 +13,7 @@ class radio_zmq_timer
 {
 public:
   /// \brief Creates a timer.
+  ///
   /// \param[in] start_now Set to true for starting immediately.
   radio_zmq_timer(bool start_now = false)
   {
