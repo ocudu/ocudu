@@ -5,6 +5,8 @@
 #pragma once
 
 #include "radio_zmq_baseband_gateway.h"
+#include "ocudu/radio/capabilities/radio_rx_gain_control.h"
+#include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/radio/radio_session.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <zmq.h>
@@ -12,7 +14,10 @@
 namespace ocudu {
 
 /// Describes a ZeroMQ radio based session.
-class radio_session_zmq_impl : public radio_session, public radio_management_plane, public radio_capabilities_registry
+class radio_session_zmq_impl : public radio_session,
+                               public radio_capabilities_registry,
+                               private radio_tx_gain_control,
+                               private radio_rx_gain_control
 {
   /// Radio session logger.
   ocudulog::basic_logger& logger;
@@ -43,9 +48,6 @@ public:
   bool is_successful() const { return successful; }
 
   // See the radio_session interface for documentation.
-  radio_management_plane& get_management_plane() override { return *this; }
-
-  // See the radio_session interface for documentation.
   radio_capabilities_registry& get_capabilities() override { return *this; }
 
   // See the radio_session interface for documentation.
@@ -67,20 +69,23 @@ public:
   // See the radio_session interface for documentation.
   void stop() override;
 
-  // See the radio_management_plane interface for documentation.
+  // See the radio_tx_gain_control interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
 
-  // See the radio_management_plane interface for documentation.
+  // See the radio_rx_gain_control interface for documentation.
   bool set_rx_gain(unsigned port_id, double gain_dB) override;
 
-  // See the radio_management_plane interface for documentation.
-  bool set_tx_freq(unsigned stream_id, double center_freq_Hz) override;
-
-  // See the radio_management_plane interface for documentation.
-  bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
-
   // See the radio_capabilities_registry interface for documentation.
-  void* query(radio_capability_key key) override { return nullptr; }
+  void* query(radio_capability_key key) override
+  {
+    if (key == get_radio_capability_key<radio_tx_gain_control>()) {
+      return static_cast<radio_tx_gain_control*>(this);
+    }
+    if (key == get_radio_capability_key<radio_rx_gain_control>()) {
+      return static_cast<radio_rx_gain_control*>(this);
+    }
+    return nullptr;
+  }
 };
 
 } // namespace ocudu

@@ -8,6 +8,10 @@
 #include "ocudu/gateways/baseband/baseband_gateway_transmitter.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/ocuduvec/zero.h"
+#include "ocudu/radio/capabilities/radio_rx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_rx_gain_control.h"
+#include "ocudu/radio/capabilities/radio_tx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/math/complex_normal_random.h"
 #include <gtest/gtest.h>
@@ -198,6 +202,28 @@ public:
 
 std::unique_ptr<radio_factory_realtime_loopback_impl> RealtimeLoopbackRadioFixture::factory           = nullptr;
 std::unique_ptr<task_worker>                          RealtimeLoopbackRadioFixture::async_task_worker = nullptr;
+
+TEST_P(RealtimeLoopbackRadioFixture, NoCapabilities)
+{
+  // Asynchronous task executor.
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
+
+  // Notifier.
+  radio_notifier_spy radio_notifier;
+
+  // Create radio session.
+  std::unique_ptr<radio_session> session = factory->create(create_radio_config(), *async_task_executor, radio_notifier);
+  ASSERT_NE(session, nullptr);
+
+  // The loopback radio does not support any capability.
+  radio_capabilities_registry& capabilities = session->get_capabilities();
+  EXPECT_EQ(capabilities.get<radio_tx_gain_control>(), nullptr);
+  EXPECT_EQ(capabilities.get<radio_rx_gain_control>(), nullptr);
+  EXPECT_EQ(capabilities.get<radio_tx_frequency_control>(), nullptr);
+  EXPECT_EQ(capabilities.get<radio_rx_frequency_control>(), nullptr);
+
+  session->stop();
+}
 
 TEST_P(RealtimeLoopbackRadioFixture, RealtimeFlow)
 {

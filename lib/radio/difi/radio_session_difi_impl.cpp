@@ -179,13 +179,6 @@ bool radio_session_difi_impl::set_tx_gain(unsigned port_id, double gain_dB)
   return true;
 }
 
-bool radio_session_difi_impl::set_rx_gain(unsigned port_id, double gain_dB)
-{
-  // Receive gain is not adjustable: context packets describing the stream are emitted by the
-  // transmitter, so this side has no channel on which to advertise a change.
-  return false;
-}
-
 bool radio_session_difi_impl::set_tx_freq(unsigned stream_id, double center_freq_Hz)
 {
   if (stream_id >= bb_gateways.size()) {
@@ -193,10 +186,4 @@ bool radio_session_difi_impl::set_tx_freq(unsigned stream_id, double center_freq
   }
   bb_gateways[stream_id]->get_tx_stream().set_freq(center_freq_Hz);
   return true;
-}
-
-bool radio_session_difi_impl::set_rx_freq(unsigned stream_id, double center_freq_Hz)
-{
-  // Not adjustable, for the same reason as set_rx_gain().
-  return false;
 }

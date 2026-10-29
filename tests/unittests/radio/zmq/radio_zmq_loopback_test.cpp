@@ -6,6 +6,10 @@
 #include "ocudu/gateways/baseband/baseband_gateway_receiver.h"
 #include "ocudu/gateways/baseband/baseband_gateway_transmitter.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
+#include "ocudu/radio/capabilities/radio_rx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_rx_gain_control.h"
+#include "ocudu/radio/capabilities/radio_tx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/radio/radio_factory.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/math/complex_normal_random.h"
@@ -327,27 +331,35 @@ TEST(RadioZmqGainTest, ValidateSetGainReturns)
   std::unique_ptr<radio_session> session = zmq_factory->create(radio_config, *async_task_executor, notifier);
   ASSERT_NE(session, nullptr);
 
-  radio_management_plane& mgmt = session->get_management_plane();
+  radio_capabilities_registry& capabilities = session->get_capabilities();
+
+  // The ZMQ radio supports gain control, but not frequency control.
+  radio_tx_gain_control* tx_gain = capabilities.get<radio_tx_gain_control>();
+  radio_rx_gain_control* rx_gain = capabilities.get<radio_rx_gain_control>();
+  ASSERT_NE(tx_gain, nullptr);
+  ASSERT_NE(rx_gain, nullptr);
+  EXPECT_EQ(capabilities.get<radio_tx_frequency_control>(), nullptr);
+  EXPECT_EQ(capabilities.get<radio_rx_frequency_control>(), nullptr);
 
   // Valid port and gain - must succeed.
-  EXPECT_TRUE(mgmt.set_tx_gain(0, -10.0));
-  EXPECT_TRUE(mgmt.set_rx_gain(0, -3.0));
+  EXPECT_TRUE(tx_gain->set_tx_gain(0, -10.0));
+  EXPECT_TRUE(rx_gain->set_rx_gain(0, -3.0));
 
   // Out-of-range port - must fail.
-  EXPECT_FALSE(mgmt.set_tx_gain(1, 0.0));
-  EXPECT_FALSE(mgmt.set_rx_gain(1, 0.0));
+  EXPECT_FALSE(tx_gain->set_tx_gain(1, 0.0));
+  EXPECT_FALSE(rx_gain->set_rx_gain(1, 0.0));
 
   // Out-of-range gain - must fail.
-  EXPECT_FALSE(mgmt.set_tx_gain(0, +1.0));
-  EXPECT_FALSE(mgmt.set_rx_gain(0, +1.0));
+  EXPECT_FALSE(tx_gain->set_tx_gain(0, +1.0));
+  EXPECT_FALSE(rx_gain->set_rx_gain(0, +1.0));
 
   // NaN gain - must fail.
-  EXPECT_FALSE(mgmt.set_tx_gain(0, std::numeric_limits<float>::quiet_NaN()));
-  EXPECT_FALSE(mgmt.set_rx_gain(0, std::numeric_limits<float>::quiet_NaN()));
+  EXPECT_FALSE(tx_gain->set_tx_gain(0, std::numeric_limits<float>::quiet_NaN()));
+  EXPECT_FALSE(rx_gain->set_rx_gain(0, std::numeric_limits<float>::quiet_NaN()));
 
   // Infinity gain - must fail.
-  EXPECT_FALSE(mgmt.set_tx_gain(0, -std::numeric_limits<float>::infinity()));
-  EXPECT_FALSE(mgmt.set_rx_gain(0, -std::numeric_limits<float>::infinity()));
+  EXPECT_FALSE(tx_gain->set_tx_gain(0, -std::numeric_limits<float>::infinity()));
+  EXPECT_FALSE(rx_gain->set_rx_gain(0, -std::numeric_limits<float>::infinity()));
 
   session->stop();
   async_worker.stop();

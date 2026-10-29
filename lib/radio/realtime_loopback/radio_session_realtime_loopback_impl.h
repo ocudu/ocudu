@@ -30,7 +30,6 @@ namespace ocudu {
 ///                       next call to \c receive() after the overflow has occurred. Zeros are returned in place of the
 ///                       lost samples.
 class radio_session_realtime_loopback_impl : public radio_session,
-                                             public radio_management_plane,
                                              public radio_capabilities_registry,
                                              public baseband_gateway,
                                              public baseband_gateway_transmitter,
@@ -52,9 +51,6 @@ public:
                                        const unique_function<baseband_gateway_timestamp()>& current_rf_timestamp_fn);
 
   // See the radio_session interface for documentation.
-  radio_management_plane& get_management_plane() override { return *this; }
-
-  // See the radio_session interface for documentation.
   radio_capabilities_registry& get_capabilities() override { return *this; }
 
   // See the radio_session interface for documentation.
@@ -73,18 +69,6 @@ public:
 
   // See the radio_session interface for documentation.
   void stop() override;
-
-  // See the radio_management_plane interface for documentation.
-  bool set_tx_gain(unsigned port_id, double gain_dB) override;
-
-  // See the radio_management_plane interface for documentation.
-  bool set_rx_gain(unsigned port_id, double gain_dB) override;
-
-  // See the radio_management_plane interface for documentation.
-  bool set_tx_freq(unsigned stream_id, double center_freq_Hz) override;
-
-  // See the radio_management_plane interface for documentation.
-  bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
 
   // See the radio_capabilities_registry interface for documentation.
   void* query(radio_capability_key key) override { return nullptr; }

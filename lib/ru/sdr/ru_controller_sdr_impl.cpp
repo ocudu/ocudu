@@ -14,6 +14,10 @@
 #include "ocudu/phy/lower/processors/lower_phy_center_freq_controller.h"
 #include "ocudu/phy/lower/processors/lower_phy_cfo_controller.h"
 #include "ocudu/phy/lower/processors/lower_phy_tx_time_offset_controller.h"
+#include "ocudu/radio/capabilities/radio_rx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_rx_gain_control.h"
+#include "ocudu/radio/capabilities/radio_tx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/radio/radio_session.h"
 #include "ocudu/support/math/math_utils.h"
 #include <thread>
@@ -40,7 +44,7 @@ void ru_controller_sdr_impl::start()
     baseband_gateway_timestamp current_radio_ts = radio->read_current_time();
 
     // Calculate some constants that depend on the sampling rate.
-    uint64_t nof_ticks_per_second  = static_cast<uint64_t>(srate_MHz * 1e6);
+    auto     nof_ticks_per_second  = static_cast<uint64_t>(srate_MHz * 1e6);
     uint64_t nof_ticks_subframe    = nof_ticks_per_second / 1000;
     uint64_t nof_ticks_super_frame = NOF_SUBFRAMES_PER_FRAME * NOF_SFNS * nof_ticks_subframe;
     uint64_t start_advance_10ms    = nof_ticks_per_second / 100;
@@ -70,8 +74,8 @@ void ru_controller_sdr_impl::start()
   baseband_gateway_timestamp start_ts     = current_time + static_cast<uint64_t>(delay_s * srate_MHz * 1e6);
 
   // Round start time to the next subframe.
-  uint64_t sf_duration = static_cast<uint64_t>(srate_MHz * 1e3);
-  start_ts             = divide_ceil(start_ts, sf_duration) * sf_duration;
+  auto sf_duration = static_cast<uint64_t>(srate_MHz * 1e3);
+  start_ts         = divide_ceil(start_ts, sf_duration) * sf_duration;
 
   // Start radio and lower physical layer at the given timestamp.
   radio->start(start_ts);
@@ -99,23 +103,30 @@ void ru_controller_sdr_impl::stop()
 void ru_controller_sdr_impl::set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors)
 {
   ocudu_assert(!sectors.empty(), "Could not set empty sectors");
+  ocudu_assert(radio, "The radio must be set before the lower phy sectors");
 
   lower_phy_sectors = std::move(sectors);
 
-  gain_controller           = ru_gain_controller_sdr_impl(&radio);
+  // Retrieve the capabilities supported by the radio. They remain valid for the lifetime of the radio session.
+  radio_capabilities_registry& capabilities = radio->get_capabilities();
+
+  gain_controller =
+      ru_gain_controller_sdr_impl(capabilities.get<radio_tx_gain_control>(), capabilities.get<radio_rx_gain_control>());
   cfo_controller            = ru_cfo_controller_sdr_impl(lower_phy_sectors);
-  center_freq_controller    = ru_center_frequency_controller_sdr_impl(lower_phy_sectors, &radio);
+  center_freq_controller    = ru_center_frequency_controller_sdr_impl(lower_phy_sectors,
+                                                                   capabilities.get<radio_tx_frequency_control>(),
+                                                                   capabilities.get<radio_rx_frequency_control>());
   tx_time_offset_controller = ru_tx_time_offset_controller_sdr_impl(lower_phy_sectors);
 }
 
 bool ru_gain_controller_sdr_impl::set_tx_gain(unsigned port_id, double gain_dB)
 {
-  return (*radio)->get_management_plane().set_tx_gain(port_id, gain_dB);
+  return tx_gain_control && tx_gain_control->set_tx_gain(port_id, gain_dB);
 }
 
 bool ru_gain_controller_sdr_impl::set_rx_gain(unsigned port_id, double gain_dB)
 {
-  return (*radio)->get_management_plane().set_rx_gain(port_id, gain_dB);
+  return rx_gain_control && rx_gain_control->set_rx_gain(port_id, gain_dB);
 }
 
 bool ru_cfo_controller_sdr_impl::set_tx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request)
@@ -142,20 +153,30 @@ bool ru_cfo_controller_sdr_impl::set_rx_cfo(unsigned sector_id, const cfo_compen
 
 bool ru_center_frequency_controller_sdr_impl::set_tx_center_frequency(unsigned sector_id, double center_freq_Hz)
 {
-  (*radio)->get_management_plane().set_tx_freq(sector_id, center_freq_Hz);
-  if (sector_id < phy_sectors.size()) {
-    return phy_sectors[sector_id]->get_tx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
+  if (tx_frequency_control == nullptr || sector_id >= phy_sectors.size()) {
+    return false;
   }
-  return false;
+
+  // Tune the radio first, leave the lower PHY untouched if it fails.
+  if (!tx_frequency_control->set_tx_freq(sector_id, center_freq_Hz)) {
+    return false;
+  }
+
+  return phy_sectors[sector_id]->get_tx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
 }
 
 bool ru_center_frequency_controller_sdr_impl::set_rx_center_frequency(unsigned sector_id, double center_freq_Hz)
 {
-  (*radio)->get_management_plane().set_rx_freq(sector_id, center_freq_Hz);
-  if (sector_id < phy_sectors.size()) {
-    return phy_sectors[sector_id]->get_rx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
+  if (rx_frequency_control == nullptr || sector_id >= phy_sectors.size()) {
+    return false;
   }
-  return false;
+
+  // Tune the radio first, leave the lower PHY untouched if it fails.
+  if (!rx_frequency_control->set_rx_freq(sector_id, center_freq_Hz)) {
+    return false;
+  }
+
+  return phy_sectors[sector_id]->get_rx_center_freq_control().set_carrier_center_frequency(center_freq_Hz);
 }
 
 bool ru_tx_time_offset_controller_sdr_impl::set_tx_time_offset(unsigned sector_id, phy_time_unit tx_time_offset)

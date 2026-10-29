@@ -98,26 +98,6 @@ void radio_session_realtime_loopback_impl::stop()
   stop_control.stop();
 }
 
-bool radio_session_realtime_loopback_impl::set_tx_gain(unsigned port_id, double gain_dB)
-{
-  return true;
-}
-
-bool radio_session_realtime_loopback_impl::set_rx_gain(unsigned port_id, double gain_dB)
-{
-  return true;
-}
-
-bool radio_session_realtime_loopback_impl::set_tx_freq(unsigned stream_id, double center_freq_Hz)
-{
-  return true;
-}
-
-bool radio_session_realtime_loopback_impl::set_rx_freq(unsigned stream_id, double center_freq_Hz)
-{
-  return true;
-}
-
 baseband_gateway_receiver::metadata radio_session_realtime_loopback_impl::receive(baseband_gateway_buffer_writer& data)
 {
   // Sleep until the radio is requested to start.

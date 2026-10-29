@@ -11,21 +11,34 @@
 
 namespace ocudu {
 
-class lower_phy_sector;
 class lower_phy_cfo_controller;
 class lower_phy_controller;
 class lower_phy_metrics_notifier;
+class lower_phy_sector;
+class radio_rx_frequency_control;
+class radio_rx_gain_control;
 class radio_session;
+class radio_tx_frequency_control;
+class radio_tx_gain_control;
 
-/// SDR Radio Unit gain controller implementation.
+/// \brief SDR Radio Unit gain controller implementation.
+///
+/// The gain can be modified only in the directions for which the radio provides the corresponding capability.
 class ru_gain_controller_sdr_impl : public ru_gain_controller
 {
-  radio_session** radio = nullptr;
+  radio_tx_gain_control* tx_gain_control = nullptr;
+  radio_rx_gain_control* rx_gain_control = nullptr;
 
 public:
   ru_gain_controller_sdr_impl() = default;
 
-  explicit ru_gain_controller_sdr_impl(radio_session** radio_) : radio(radio_) {}
+  ru_gain_controller_sdr_impl(radio_tx_gain_control* tx_gain_control_, radio_rx_gain_control* rx_gain_control_) :
+    tx_gain_control(tx_gain_control_), rx_gain_control(rx_gain_control_)
+  {
+  }
+
+  /// Returns true if the radio supports modifying the gain in at least one direction.
+  bool is_supported() const { return tx_gain_control != nullptr || rx_gain_control != nullptr; }
 
   // See interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
@@ -54,19 +67,30 @@ public:
   bool set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) override;
 };
 
-/// SDR Radio Unit center frequency controller implementation.
+/// \brief SDR Radio Unit center frequency controller implementation.
+///
+/// The center frequency can be modified only in the directions for which the radio provides the corresponding
+/// capability. The radio is tuned before the lower PHY, which is left untouched if the radio fails.
 class ru_center_frequency_controller_sdr_impl : public ru_center_frequency_controller
 {
   std::vector<lower_phy_sector*> phy_sectors;
-  radio_session**                radio = nullptr;
+  radio_tx_frequency_control*    tx_frequency_control = nullptr;
+  radio_rx_frequency_control*    rx_frequency_control = nullptr;
 
 public:
   ru_center_frequency_controller_sdr_impl() = default;
 
-  ru_center_frequency_controller_sdr_impl(std::vector<lower_phy_sector*> phy_sectors_, radio_session** radio_) :
-    phy_sectors(std::move(phy_sectors_)), radio(radio_)
+  ru_center_frequency_controller_sdr_impl(std::vector<lower_phy_sector*> phy_sectors_,
+                                          radio_tx_frequency_control*    tx_frequency_control_,
+                                          radio_rx_frequency_control*    rx_frequency_control_) :
+    phy_sectors(std::move(phy_sectors_)),
+    tx_frequency_control(tx_frequency_control_),
+    rx_frequency_control(rx_frequency_control_)
   {
   }
+
+  /// Returns true if the radio supports modifying the center frequency in at least one direction.
+  bool is_supported() const { return tx_frequency_control != nullptr || rx_frequency_control != nullptr; }
 
   // See interface for documentation.
   bool set_tx_center_frequency(unsigned sector_id, double center_freq_Hz) override;
@@ -102,13 +126,19 @@ public:
   ru_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
-  ru_gain_controller* get_gain_controller() override { return &gain_controller; }
+  ru_gain_controller* get_gain_controller() override
+  {
+    return gain_controller.is_supported() ? &gain_controller : nullptr;
+  }
 
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return &cfo_controller; }
 
   // See interface for documentation.
-  ru_center_frequency_controller* get_center_frequency_controller() override { return &center_freq_controller; }
+  ru_center_frequency_controller* get_center_frequency_controller() override
+  {
+    return center_freq_controller.is_supported() ? &center_freq_controller : nullptr;
+  }
 
   // See interface for documentation.
   ru_tx_time_offset_controller* get_tx_time_offset_controller() override { return &tx_time_offset_controller; }

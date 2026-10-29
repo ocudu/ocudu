@@ -9,7 +9,6 @@
 #include "ocudu/radio/radio_capabilities_registry.h"
 #include "ocudu/radio/radio_configuration.h"
 #include "ocudu/radio/radio_event_notifier.h"
-#include "ocudu/radio/radio_management_plane.h"
 
 namespace ocudu {
 
@@ -17,10 +16,6 @@ namespace ocudu {
 class radio_session : public radio_base
 {
 public:
-  /// \brief Gets the management plane.
-  /// \return The reference to the management plane for this radio session.
-  virtual radio_management_plane& get_management_plane() = 0;
-
   /// \brief Gets the capabilities registry.
   /// \return The reference to the capabilities registry for this radio session.
   virtual radio_capabilities_registry& get_capabilities() = 0;

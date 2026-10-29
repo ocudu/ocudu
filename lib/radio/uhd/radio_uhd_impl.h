@@ -9,13 +9,21 @@
 #include "radio_uhd_device.h"
 #include "radio_uhd_device_type.h"
 #include "radio_uhd_multi_usrp.h"
+#include "ocudu/radio/capabilities/radio_rx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_rx_gain_control.h"
+#include "ocudu/radio/capabilities/radio_tx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/radio/radio_factory.h"
-#include "ocudu/radio/radio_management_plane.h"
 
 namespace ocudu {
 
 /// Describes a radio session based on UHD that also implements the management and data plane functions.
-class radio_session_uhd_impl : public radio_session, private radio_management_plane, private radio_capabilities_registry
+class radio_session_uhd_impl : public radio_session,
+                               private radio_capabilities_registry,
+                               private radio_tx_gain_control,
+                               private radio_rx_gain_control,
+                               private radio_tx_frequency_control,
+                               private radio_rx_frequency_control
 {
   /// Maps ports to stream and channel indexes.
   using port_to_stream_channel = std::pair<unsigned, unsigned>;
@@ -83,9 +91,6 @@ public:
   bool is_successful() const { return is_init_successful; }
 
   // See interface for documentation.
-  radio_management_plane& get_management_plane() override { return *this; }
-
-  // See interface for documentation.
   radio_capabilities_registry& get_capabilities() override { return *this; }
 
   // See interface for documentation.
@@ -120,7 +125,22 @@ public:
   baseband_gateway_timestamp read_current_time() override;
 
   // See the radio_capabilities_registry interface for documentation.
-  void* query(radio_capability_key key) override { return nullptr; }
+  void* query(radio_capability_key key) override
+  {
+    if (key == get_radio_capability_key<radio_tx_gain_control>()) {
+      return static_cast<radio_tx_gain_control*>(this);
+    }
+    if (key == get_radio_capability_key<radio_rx_gain_control>()) {
+      return static_cast<radio_rx_gain_control*>(this);
+    }
+    if (key == get_radio_capability_key<radio_tx_frequency_control>()) {
+      return static_cast<radio_tx_frequency_control*>(this);
+    }
+    if (key == get_radio_capability_key<radio_rx_frequency_control>()) {
+      return static_cast<radio_rx_frequency_control*>(this);
+    }
+    return nullptr;
+  }
 };
 
 /// Factory for UHD radio session.

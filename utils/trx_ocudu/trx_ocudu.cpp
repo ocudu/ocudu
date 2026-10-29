@@ -6,6 +6,8 @@
 #include "ocudu/gateways/baseband/baseband_gateway_transmitter.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/ocuduvec/conversion.h"
+#include "ocudu/radio/capabilities/radio_rx_gain_control.h"
+#include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/radio/radio_factory.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/math/complex_normal_random.h"
@@ -353,9 +355,11 @@ static void trx_ocudu_set_tx_gain(TRXState* s1, double gain, int chain)
   // Extract context and receiver interface.
   trx_ocudu_session_context& context = *static_cast<trx_ocudu_session_context*>(s1->opaque);
   ocudu_assert(context.session, "Invalid session.");
-  radio_management_plane& control = context.session->get_management_plane();
+  radio_tx_gain_control* control = context.session->get_capabilities().get<radio_tx_gain_control>();
 
-  control.set_tx_gain(chain, gain);
+  if (control != nullptr) {
+    control->set_tx_gain(chain, gain);
+  }
 
   context.tx_port_channel_gain[chain] = gain;
 }
@@ -367,9 +371,11 @@ static void trx_ocudu_set_rx_gain(TRXState* s1, double gain, int chain)
   // Extract context and receiver interface.
   trx_ocudu_session_context& context = *static_cast<trx_ocudu_session_context*>(s1->opaque);
   ocudu_assert(context.session, "Invalid session.");
-  radio_management_plane& control = context.session->get_management_plane();
+  radio_rx_gain_control* control = context.session->get_capabilities().get<radio_rx_gain_control>();
 
-  control.set_rx_gain(chain, gain);
+  if (control != nullptr) {
+    control->set_rx_gain(chain, gain);
+  }
 
   context.rx_port_channel_gain[chain] = gain;
 }

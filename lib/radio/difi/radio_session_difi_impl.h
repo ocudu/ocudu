@@ -5,6 +5,8 @@
 #pragma once
 
 #include "radio_difi_baseband_gateway.h"
+#include "ocudu/radio/capabilities/radio_tx_frequency_control.h"
+#include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/radio/radio_session.h"
 #include "ocudu/support/executors/task_executor.h"
 #include <memory>
@@ -13,7 +15,10 @@
 namespace ocudu {
 
 /// Describes a DIFI radio session.
-class radio_session_difi_impl : public radio_session, public radio_management_plane, public radio_capabilities_registry
+class radio_session_difi_impl : public radio_session,
+                                public radio_capabilities_registry,
+                                private radio_tx_gain_control,
+                                private radio_tx_frequency_control
 {
   /// Radio session logger.
   ocudulog::basic_logger& logger;
@@ -39,9 +44,6 @@ public:
   bool is_successful() const { return successful; }
 
   // See radio_session for documentation.
-  radio_management_plane& get_management_plane() override { return *this; }
-
-  // See radio_session for documentation.
   radio_capabilities_registry& get_capabilities() override { return *this; }
 
   // See radio_session for documentation.
@@ -56,20 +58,23 @@ public:
   // See radio_session for documentation.
   void stop() override;
 
-  // See radio_management_plane for documentation.
+  // See radio_tx_gain_control for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
 
-  // See radio_management_plane for documentation.
-  bool set_rx_gain(unsigned port_id, double gain_dB) override;
-
-  // See radio_management_plane for documentation.
+  // See radio_tx_frequency_control for documentation.
   bool set_tx_freq(unsigned stream_id, double center_freq_Hz) override;
 
-  // See radio_management_plane for documentation.
-  bool set_rx_freq(unsigned stream_id, double center_freq_Hz) override;
-
   // See the radio_capabilities_registry interface for documentation.
-  void* query(radio_capability_key key) override { return nullptr; }
+  void* query(radio_capability_key key) override
+  {
+    if (key == get_radio_capability_key<radio_tx_gain_control>()) {
+      return static_cast<radio_tx_gain_control*>(this);
+    }
+    if (key == get_radio_capability_key<radio_tx_frequency_control>()) {
+      return static_cast<radio_tx_frequency_control*>(this);
+    }
+    return nullptr;
+  }
 };
 
 } // namespace ocudu
