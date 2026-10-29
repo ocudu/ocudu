@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_configuration.h"
+#include "../support/dmrs_helpers.h"
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
@@ -66,6 +67,22 @@ void search_space_info::update_pdsch_time_domain_list(const ue_cell_configuratio
         break;
     }
   }
+}
+
+pdsch_config_params search_space_info::get_pdsch_config(unsigned              pdsch_td_res_index,
+                                                        const dmrs_port_mask& dmrs_ports,
+                                                        unsigned              nof_cdm_groups_without_data) const
+{
+  pdsch_config_params pdsch_cfg = get_pdsch_config(pdsch_td_res_index, dmrs_ports.count());
+  if (pdsch_cfg.dmrs.dmrs_ports != dmrs_ports or
+      pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data != nof_cdm_groups_without_data) {
+    ocudu_assert(get_dl_dci_format() == dci_dl_format::f1_1, "Only DCI f1_1 signals the PDSCH DM-RS ports");
+    set_pdsch_dmrs_ports(pdsch_cfg.dmrs,
+                         bwp->dl.pdsch().ded()->pdsch_mapping_type_a_dmrs.value(),
+                         dmrs_ports,
+                         nof_cdm_groups_without_data);
+  }
+  return pdsch_cfg;
 }
 
 void search_space_info::update_pdsch_mappings(vrb_to_prb::mapping_type interleaving_bundle_size)

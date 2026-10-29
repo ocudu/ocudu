@@ -44,7 +44,7 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
                                                                   calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
                                                                   pdsch_cfg.nof_oh_prb,
                                                                   mcs_config,
-                                                                  pdsch_cfg.nof_layers},
+                                                                  pdsch_cfg.nof_layers()},
                                        nof_rb_lims.stop());
   ocudu_sanity_check(prbs_tbs.nof_prbs <= nof_rb_lims.stop(), "Error in RB computation");
   if (prbs_tbs.nof_prbs == 0) {
@@ -308,8 +308,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   }
 
   // Compute recommended number of layers, MCS and PRBs.
-  unsigned                          nof_layers;
-  std::optional<mcs_prbs_selection> mcs_prbs_sel;
+  unsigned nof_layers;
   if (h_dl == nullptr) {
     // NewTx Case.
     nof_layers = ue_cc.channel_state_manager().get_nof_dl_layers();
@@ -317,15 +316,17 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       // TS 38.214 limits PDSCH repetition Type A to at most 2 layers.
       nof_layers = std::min(nof_layers, 2U);
     }
-    const pdsch_config_params& pdsch_cfg = ss.get_pdsch_config(*selected_pdsch_td_index, nof_layers);
-    mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pdsch_cfg, ue_cc, pending_bytes, nof_rb_lims);
   } else {
     // ReTx Case.
-    const auto& prev_params              = h_dl->get_grant_params();
-    nof_layers                           = prev_params.nof_layers;
-    const pdsch_config_params& pdsch_cfg = ss.get_pdsch_config(*selected_pdsch_td_index, nof_layers);
-    mcs_prbs_sel                         = compute_retx_nof_rbs_mcs(pdsch_cfg, prev_params, nof_rb_lims);
+    nof_layers = h_dl->get_grant_params().nof_layers;
   }
+  // [Implementation-defined] The PDSCH is a single-user transmission on the default DM-RS ports of its number of
+  // layers.
+  const pdsch_config_params& pdsch_cfg = ss.get_pdsch_config(*selected_pdsch_td_index, nof_layers);
+
+  const std::optional<mcs_prbs_selection> mcs_prbs_sel =
+      h_dl == nullptr ? compute_newtx_required_mcs_and_prbs(pdsch_cfg, ue_cc, pending_bytes, nof_rb_lims)
+                      : compute_retx_nof_rbs_mcs(pdsch_cfg, h_dl->get_grant_params(), nof_rb_lims);
   if (not mcs_prbs_sel.has_value()) {
     return std::nullopt;
   }
@@ -334,12 +335,15 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   ctxt.ss_id              = ss.cfg->get_id();
   ctxt.pdsch_td_res_index = *selected_pdsch_td_index;
   ctxt.recommended_mcs    = mcs_prbs_sel->mcs;
-  ctxt.recommended_ri     = nof_layers;
-  ctxt.nof_rb_lims        = nof_rb_lims;
-  ctxt.expected_nof_rbs   = mcs_prbs_sel->nof_prbs;
-  ctxt.pending_bytes      = units::bytes{pending_bytes};
-  ctxt.restrictions       = restrictions;
-  ctxt.nof_repetitions    = dl_td_mapper.pdsch_td_resources(dci_format)[*selected_pdsch_td_index].rep_number;
+  ctxt.dmrs_ports         = pdsch_cfg.dmrs.dmrs_ports;
+  // A reTx keeps the DM-RS overhead of the original transmission, from which the UE derives the TBS.
+  ctxt.nof_dmrs_cdm_groups_without_data = h_dl == nullptr ? pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data
+                                                          : h_dl->get_grant_params().nof_dmrs_cdm_groups_without_data;
+  ctxt.nof_rb_lims                      = nof_rb_lims;
+  ctxt.expected_nof_rbs                 = mcs_prbs_sel->nof_prbs;
+  ctxt.pending_bytes                    = units::bytes{pending_bytes};
+  ctxt.restrictions                     = restrictions;
+  ctxt.nof_repetitions = dl_td_mapper.pdsch_td_resources(dci_format)[*selected_pdsch_td_index].rep_number;
   return ctxt;
 }
 

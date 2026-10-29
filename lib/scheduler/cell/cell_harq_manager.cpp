@@ -885,14 +885,15 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
   dl_harq_process_impl::alloc_params& prev_params = impl->prev_tx_params;
 
   if (impl->nof_retxs == 0) {
-    prev_params.tbs             = cw.tb_size_bytes;
-    prev_params.dci_cfg_type    = ctx.dci_cfg_type;
-    prev_params.nof_layers      = pdsch.nof_layers;
-    prev_params.nof_repetitions = ctx.nof_repetitions;
-    prev_params.olla_mcs        = ctx.olla_mcs;
-    prev_params.slice_id        = ctx.slice_id;
-    prev_params.cqi             = ctx.cqi.has_value() ? ctx.cqi.value() : cqi_value{1};
-    prev_params.is_fallback     = ctx.is_fallback;
+    prev_params.tbs                              = cw.tb_size_bytes;
+    prev_params.dci_cfg_type                     = ctx.dci_cfg_type;
+    prev_params.nof_layers                       = pdsch.nof_layers;
+    prev_params.nof_dmrs_cdm_groups_without_data = pdsch.dmrs.num_dmrs_cdm_grps_no_data;
+    prev_params.nof_repetitions                  = ctx.nof_repetitions;
+    prev_params.olla_mcs                         = ctx.olla_mcs;
+    prev_params.slice_id                         = ctx.slice_id;
+    prev_params.cqi                              = ctx.cqi.has_value() ? ctx.cqi.value() : cqi_value{1};
+    prev_params.is_fallback                      = ctx.is_fallback;
     prev_params.lc_sched_info.clear();
     for (const dl_msg_lc_info& lc : ue_pdsch.tb_list[CW_INDEX].lc_chs_to_sched) {
       prev_params.lc_sched_info.push_back({lc.lcid, units::bytes{lc.sched_bytes}});
@@ -909,6 +910,8 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
                  cw.mcs_index,
                  pdsch.rbs);
     ocudu_assert(prev_params.nof_layers == pdsch.nof_layers, "Number of layers cannot change during HARQ retxs");
+    ocudu_assert(prev_params.nof_dmrs_cdm_groups_without_data == pdsch.dmrs.num_dmrs_cdm_grps_no_data,
+                 "Number of DM-RS CDM groups without data cannot change during HARQ retxs");
     ocudu_assert(prev_params.nof_repetitions == ctx.nof_repetitions,
                  "Number of PDSCH repetitions cannot change during HARQ retxs");
     ocudu_assert(prev_params.is_fallback == ctx.is_fallback, "Fallback state cannot change across DL HARQ retxs");

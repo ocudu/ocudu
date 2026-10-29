@@ -179,6 +179,13 @@ public:
     dl_newtx_grant_builder& operator=(dl_newtx_grant_builder&&) noexcept = default;
     ~dl_newtx_grant_builder() { ocudu_assert(parent == nullptr, "PDSCH parameters were not set"); }
 
+    /// \brief Sets the DM-RS ports of the PDSCH, which replace the default single-user DM-RS ports of the grant.
+    ///
+    /// The number of layers of the PDSCH is the number of DM-RS ports. The recommended MCS and VRBs of the grant are
+    /// not recomputed.
+    /// \remark It must be called before \ref set_pdsch_params, which asserts that DCI f1_1 can signal the DM-RS ports.
+    void set_dmrs_ports(const dmrs_port_mask& dmrs_ports, unsigned nof_cdm_groups_without_data);
+
     /// \brief Sets the final VRBs for the PDSCH allocation. Returns the slots of any PDSCH repetition occasions that
     /// were actually committed to the resource grid (see \ref dl_repetition_occasion_list).
     dl_repetition_occasion_list set_pdsch_params(const vrb_alloc& alloc_vrbs, bool enable_interleaving);
@@ -346,10 +353,9 @@ private:
 
   std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const cell_slot_resource_allocator& pdsch_alloc,
                                                   const search_space_info&            ss_info,
-                                                  uint8_t                             pdsch_td_res_index,
+                                                  const pdsch_config_params&          pdsch_cfg,
                                                   const prb_bitmap&                   prbs,
-                                                  sch_mcs_index                       mcs,
-                                                  unsigned                            nof_layers) const;
+                                                  sch_mcs_index                       mcs) const;
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell&           ue_cc,
                                                                const search_space_info& ss_info) const;

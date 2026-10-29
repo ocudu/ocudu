@@ -71,12 +71,22 @@ struct search_space_info {
     return pdsch_cfg_list[pdsch_td_res_index].size();
   }
 
+  /// Returns the PDSCH configuration of a single-user transmission with the given number of layers.
   const pdsch_config_params& get_pdsch_config(unsigned pdsch_td_res_index, unsigned nof_layers) const
   {
-    ocudu_assert(pdsch_cfg_list.size() > pdsch_td_res_index and pdsch_cfg_list[pdsch_td_res_index].size() >= nof_layers,
+    ocudu_assert(pdsch_cfg_list.size() > pdsch_td_res_index and nof_layers > 0 and
+                     pdsch_cfg_list[pdsch_td_res_index].size() >= nof_layers,
                  "get_pdsch_config: Invalid params");
     return pdsch_cfg_list[pdsch_td_res_index][nof_layers - 1];
   }
+
+  /// \brief Returns the PDSCH configuration of a transmission on the given DM-RS ports.
+  ///
+  /// The number of layers is the number of DM-RS ports. Only DCI format 1_1 can signal DM-RS ports and CDM groups
+  /// without data other than the ones of the configuration returned for that number of layers.
+  pdsch_config_params get_pdsch_config(unsigned              pdsch_td_res_index,
+                                       const dmrs_port_mask& dmrs_ports,
+                                       unsigned              nof_cdm_groups_without_data) const;
 
   /// \brief Assigns computed PDCCH candidates to a SearchSpace.
   void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates);

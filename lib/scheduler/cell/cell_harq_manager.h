@@ -134,6 +134,8 @@ struct dl_harq_process_impl : public base_harq_process {
     vrb_alloc               rbs;
     uint8_t                 nof_symbols;
     uint8_t                 nof_layers{1};
+    /// Number of DM-RS CDM groups without data. Fixed across HARQ retxs.
+    uint8_t nof_dmrs_cdm_groups_without_data{1};
     /// Number of Rel-16 slot-based PDSCH repetitions of the grant. Value 1 means a single transmission.
     uint8_t                                     nof_repetitions{1};
     bool                                        is_fallback{false};

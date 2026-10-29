@@ -11,6 +11,7 @@
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/slicing/ran_slice_instance.h"
 #include "lib/scheduler/srs/srs_allocator_impl.h"
+#include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_context/ue_cell_repository.h"
@@ -27,7 +28,9 @@
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/duplex_mode.h"
 #include "ocudu/ran/pdcch/search_space.h"
+#include "ocudu/ran/pdsch/pdsch_mcs.h"
 #include "ocudu/ran/sch/sch_segmentation.h"
+#include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/scheduler/config/logical_channel_config_factory.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/support/rb_helper.h"
@@ -43,6 +46,8 @@ struct test_params {
   std::chrono::milliseconds ntn_cs_koffset{0};
   /// k_mac of the cell, which turns it into an NTN one when set.
   std::chrono::milliseconds ntn_k_mac{0};
+  /// Number of DL antenna ports of the cell.
+  unsigned nof_dl_ports = 1;
 };
 
 class ue_grid_allocator_test : public ::testing::TestWithParam<duplex_mode>
@@ -70,7 +75,11 @@ class ue_grid_allocator_test : public ::testing::TestWithParam<duplex_mode>
 protected:
   ue_grid_allocator_test(const test_params& params) :
     sched_cfg(params.sched_cfg),
-    cfg_builder_params(cell_config_builder_profiles::create(GetParam())),
+    cfg_builder_params([&params]() {
+      cell_config_builder_params builder_params = cell_config_builder_profiles::create(GetParam());
+      builder_params.dl_carrier.nof_ant         = params.nof_dl_ports;
+      return builder_params;
+    }()),
     cell_cfg(*[this, &params]() {
       const auto* cfg = cfg_mng.add_cell(make_cell_config_request(cfg_builder_params, params));
       ocudu_assert(cfg != nullptr, "Cell configuration failed");
@@ -1062,6 +1071,148 @@ TEST_P(ue_grid_allocator_pdsch_repetition_test,
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_pdsch_repetition_test,
                          testing::Values(duplex_mode::FDD));
+
+class ue_grid_allocator_dl_mimo_test : public ue_grid_allocator_test
+{
+protected:
+  ue_grid_allocator_dl_mimo_test() :
+    ue_grid_allocator_test(
+        test_params{.sched_cfg = config_helpers::make_default_scheduler_expert_config(), .nof_dl_ports = 4})
+  {
+  }
+
+  void report_ri(const ue& u, unsigned ri)
+  {
+    csi_report_data csi{};
+    csi.first_tb_wideband_cqi = cqi_value{15};
+    csi.ri                    = csi_report_data::ri_type{static_cast<uint8_t>(ri)};
+    csi.valid                 = true;
+    ues[u.ue_index].get_pcell().handle_csi_report(csi);
+  }
+
+  void allocate_dl_newtx_grant_on_ports(const slice_ue& user, const dmrs_port_mask& dmrs_ports, unsigned nof_cdm_groups)
+  {
+    auto result = alloc.allocate_dl_grant(ue_newtx_dl_grant_request{user, current_slot, units::bytes{1000U}, false});
+    if (not result.has_value()) {
+      return;
+    }
+    auto& builder = result.value();
+    builder.set_dmrs_ports(dmrs_ports, nof_cdm_groups);
+    const vrb_alloc vrbs = builder.recommended_vrbs(used_dl_vrbs, MAX_NOF_PRBS, MAX_NOF_PRBS, false);
+    builder.set_pdsch_params(vrbs, false);
+    mark_used_dl_vrbs(vrbs);
+  }
+
+  const dl_msg_alloc* find_pdsch(rnti_t rnti) const
+  {
+    return find_ue_pdsch(rnti, res_grid[0].result_reader().dl().ue_grants());
+  }
+
+  unsigned dci_antenna_ports(rnti_t rnti) const
+  {
+    return find_ue_dl_pdcch(rnti, res_grid[0].result_reader().dl())->dci.as_c_rnti_f1_1().antenna_ports;
+  }
+
+  /// Returns the TBS that the UE derives from the parameters of a PDSCH, as per TS 38.214, Section 5.1.3.2.
+  static units::bytes ue_derived_tbs(const pdsch_information& pdsch)
+  {
+    // The UE of the test has no xOverhead configured, and DCI format 1_1 has no TB scaling field.
+    return tbs_calculator_calculate(
+        tbs_calculator_configuration{.nof_symb_sh  = pdsch.symbols.length(),
+                                     .nof_dmrs_prb = calculate_nof_dmrs_per_rb(pdsch.dmrs),
+                                     .nof_oh_prb   = 0,
+                                     .mcs_descr  = pdsch_mcs_get_config(pdsch.mcs_table, pdsch.codewords[0].mcs_index),
+                                     .nof_layers = pdsch.nof_layers,
+                                     .tb_scaling_field = 0,
+                                     .n_prb            = pdsch.rbs.type1().length()});
+  }
+};
+
+TEST_P(ue_grid_allocator_dl_mimo_test, single_user_pdsch_uses_the_dmrs_ports_of_its_layers)
+{
+  // TS 38.212 Table 7.3.1.2.2-1, values 0, 2, 9 and 10.
+  static constexpr std::array<unsigned, 4> expected_cdm_groups   = {1, 1, 2, 2};
+  static constexpr std::array<unsigned, 4> expected_antenna_port = {0, 2, 9, 10};
+
+  for (unsigned nof_layers = 1; nof_layers <= 4; ++nof_layers) {
+    const ue& u = add_ue(to_du_ue_index(nof_layers - 1), {});
+    report_ri(u, nof_layers);
+
+    ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], units::bytes{1000U}, false); },
+                          [&]() { return find_pdsch(u.crnti) != nullptr; }));
+    const pdsch_information& pdsch = find_pdsch(u.crnti)->pdsch_cfg;
+    dmrs_port_mask           expected_ports(DMRS_MAX_NPORTS);
+    expected_ports.fill(0, nof_layers);
+    ASSERT_EQ(pdsch.nof_layers, nof_layers);
+    ASSERT_EQ(pdsch.dmrs.dmrs_ports, expected_ports);
+    ASSERT_EQ(pdsch.dmrs.num_dmrs_cdm_grps_no_data, expected_cdm_groups[nof_layers - 1]);
+    ASSERT_EQ(dci_antenna_ports(u.crnti), expected_antenna_port[nof_layers - 1]);
+    ASSERT_EQ(pdsch.codewords[0].tb_size_bytes, ue_derived_tbs(pdsch));
+  }
+}
+
+TEST_P(ue_grid_allocator_dl_mimo_test, pdsch_and_dci_use_the_dmrs_ports_of_the_grant)
+{
+  const ue& u = add_ue(to_du_ue_index(0), {});
+
+  // The UE is paired with a UE on antenna ports 1000 and 1001, which leaves no data in CDM groups 0 and 1.
+  dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
+  dmrs_ports.set(2);
+  dmrs_ports.set(3);
+  ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant_on_ports(slice_ues[u.ue_index], dmrs_ports, 2); },
+                        [&]() { return find_pdsch(u.crnti) != nullptr; }));
+  const dl_msg_alloc& grant = *find_pdsch(u.crnti);
+  ASSERT_EQ(grant.pdsch_cfg.nof_layers, 2);
+  ASSERT_EQ(grant.pdsch_cfg.dmrs.dmrs_ports, dmrs_ports);
+  ASSERT_EQ(grant.pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.2.2-1, value 8.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 8);
+  ASSERT_GT(grant.pdsch_cfg.codewords[0].tb_size_bytes.value(), 0);
+}
+
+// The UE derives the TBS of a reTx from the DM-RS overhead signalled in its DCI, hence the reTx keeps the CDM groups
+// without data of the original transmission.
+TEST_P(ue_grid_allocator_dl_mimo_test, retx_keeps_the_cdm_groups_without_data_of_the_original_transmission)
+{
+  const ue& u     = add_ue(to_du_ue_index(0), {});
+  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+
+  // The UE is paired with a UE on antenna ports 1002 and 1003, which leaves no data in CDM groups 0 and 1.
+  dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
+  dmrs_ports.fill(0, 2);
+  ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant_on_ports(slice_ues[u.ue_index], dmrs_ports, 2); },
+                        [&]() { return find_pdsch(u.crnti) != nullptr; }));
+  std::optional<dl_harq_process_handle> h_dl = ue_cc.harqs.find_dl_harq_waiting_ack();
+  ASSERT_TRUE(h_dl.has_value());
+  ASSERT_TRUE(h_dl->dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt));
+
+  ASSERT_TRUE(run_until(
+      [&]() {
+        std::optional<dl_harq_process_handle> h_retx = ue_cc.harqs.find_pending_dl_retx();
+        if (h_retx.has_value()) {
+          allocate_dl_retx_grant(slice_ues[u.ue_index], *h_retx);
+        }
+      },
+      [&]() {
+        const dl_msg_alloc* grant = find_pdsch(u.crnti);
+        return grant != nullptr and grant->context.nof_retxs > 0;
+      }));
+  const dl_msg_alloc& retx = *find_pdsch(u.crnti);
+  ASSERT_EQ(retx.pdsch_cfg.dmrs.dmrs_ports, dmrs_ports);
+  ASSERT_EQ(retx.pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.2.2-1, value 7.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 7);
+  ASSERT_EQ(retx.pdsch_cfg.codewords[0].tb_size_bytes, ue_derived_tbs(retx.pdsch_cfg));
+
+  // With the CDM groups without data of a single-user transmission, the UE would derive another TBS.
+  pdsch_information su_pdsch              = retx.pdsch_cfg;
+  su_pdsch.dmrs.num_dmrs_cdm_grps_no_data = 1;
+  ASSERT_NE(retx.pdsch_cfg.codewords[0].tb_size_bytes, ue_derived_tbs(su_pdsch));
+}
+
+INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
+                         ue_grid_allocator_dl_mimo_test,
+                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
 
 // An NTN cell with a UE whose HARQ processes split between DL HARQ feedback enabled and disabled, so that the
 // allocator has to pick a process by the feedback the logical channels of the grant need.

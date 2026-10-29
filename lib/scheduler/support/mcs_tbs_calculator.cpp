@@ -220,7 +220,7 @@ std::optional<sch_mcs_tbs> ocudu::compute_dl_mcs_tbs(const pdsch_config_params& 
                                                             .nof_dmrs_prb     = dmrs_prbs,
                                                             .nof_oh_prb       = pdsch_params.nof_oh_prb,
                                                             .mcs_descr        = mcs_info,
-                                                            .nof_layers       = pdsch_params.nof_layers,
+                                                            .nof_layers       = pdsch_params.nof_layers(),
                                                             .tb_scaling_field = pdsch_params.tb_scaling_field,
                                                             .n_prb            = nof_prbs});
 
@@ -235,7 +235,7 @@ std::optional<sch_mcs_tbs> ocudu::compute_dl_mcs_tbs(const pdsch_config_params& 
                                  .dmrs_symbol_mask   = pdsch_params.dmrs.dmrs_symb_pos,
                                  .nof_cdm_groups_without_data =
                                      static_cast<unsigned>(pdsch_params.dmrs.num_dmrs_cdm_grps_no_data),
-                                 .nof_layers    = pdsch_params.nof_layers,
+                                 .nof_layers    = pdsch_params.nof_layers(),
                                  .contains_dc   = contains_dc,
                                  .nof_csi_rs_re = nof_csi_rs_re};
 
@@ -250,7 +250,7 @@ std::optional<sch_mcs_tbs> ocudu::compute_dl_mcs_tbs(const pdsch_config_params& 
                                                                       .nof_dmrs_prb     = dmrs_prbs,
                                                                       .nof_oh_prb       = pdsch_params.nof_oh_prb,
                                                                       .mcs_descr        = mcs_info,
-                                                                      .nof_layers       = pdsch_params.nof_layers,
+                                                                      .nof_layers       = pdsch_params.nof_layers(),
                                                                       .tb_scaling_field = pdsch_params.tb_scaling_field,
                                                                       .n_prb            = nof_prbs});
 

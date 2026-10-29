@@ -21,7 +21,6 @@ sched_helper::get_pdsch_config_f1_0_tc_rnti(const cell_configuration&           
   // is in the dedicated resources, configured the after DCI Format 1-0 TC-RNTI is used. Hence, nof_oh_prb is here set
   // as 0.
   static constexpr unsigned nof_oh_prb = 0;
-  static constexpr unsigned nof_layers = 1;
 
   pdsch_config_params pdsch;
 
@@ -31,7 +30,6 @@ sched_helper::get_pdsch_config_f1_0_tc_rnti(const cell_configuration&           
   pdsch.symbols                      = pdsch_td_cfg.symbols;
   pdsch.mcs_table                    = mcs_table;
   pdsch.tb_scaling_field             = tb_scaling_field;
-  pdsch.nof_layers                   = nof_layers;
   pdsch.max_nof_cws_scheduled_by_dci = 1;
 
   return pdsch;
@@ -43,7 +41,6 @@ sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&            
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned        tb_scaling_field = 0;
-  static constexpr unsigned        nof_layers       = 1;
   static constexpr pdsch_mcs_table mcs_table        = pdsch_mcs_table::qam64;
 
   pdsch_config_params pdsch;
@@ -54,7 +51,6 @@ sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&            
   pdsch.symbols                      = pdsch_td_cfg.symbols;
   pdsch.mcs_table                    = mcs_table;
   pdsch.tb_scaling_field             = tb_scaling_field;
-  pdsch.nof_layers                   = nof_layers;
   pdsch.max_nof_cws_scheduled_by_dci = 1;
 
   return pdsch;
@@ -103,7 +99,6 @@ sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&            
   pdsch.symbols                      = pdsch_td_cfg.symbols;
   pdsch.mcs_table                    = pdsch_cfg.mcs_table;
   pdsch.tb_scaling_field             = tb_scaling_field;
-  pdsch.nof_layers                   = nof_layers;
   pdsch.max_nof_cws_scheduled_by_dci = pdsch_cfg.is_max_cw_sched_by_dci_is_two ? 2 : 1;
 
   return pdsch;

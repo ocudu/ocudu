@@ -103,13 +103,10 @@ static void fill_pdsch_prbs(cell_slot_resource_grid& grid,
 
 std::optional<sch_mcs_tbs> ue_cell_grid_allocator::calculate_dl_mcs_tbs(const cell_slot_resource_allocator& pdsch_alloc,
                                                                         const search_space_info&            ss_info,
-                                                                        uint8_t           pdsch_td_res_index,
-                                                                        const prb_bitmap& prbs,
-                                                                        sch_mcs_index     mcs,
-                                                                        unsigned          nof_layers) const
+                                                                        const pdsch_config_params&          pdsch_cfg,
+                                                                        const prb_bitmap&                   prbs,
+                                                                        sch_mcs_index                       mcs) const
 {
-  const auto& pdsch_cfg = ss_info.get_pdsch_config(pdsch_td_res_index, nof_layers);
-
   // The PDSCH is rate-matched around the CSI-RS of its slot, which the TBS does not account for.
   const unsigned nof_csi_rs_re = csi_helper::get_nof_csi_rs_re(
       pdsch_alloc.result_reader().dl().csi_rs(), pdsch_cfg.symbols, prb_to_crb(ss_info.dl_crb_lims, prbs));
@@ -425,13 +422,13 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info& grant, const vrb_alloc& 
   uint8_t                                      pdsch_td_res_index = grant.cfg.pdsch_td_res_index;
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
       ss_info.bwp->dl.td_mapper().pdsch_td_resources(ss_info.get_dl_dci_format())[pdsch_td_res_index];
-  const subcarrier_spacing  scs        = ss_info.bwp->dl.cfg().scs;
-  const cell_configuration& cell_cfg   = ue_cell_cfg.cell_cfg_common;
-  const bool                is_retx    = grant.h_dl.nof_retxs() != 0;
-  const unsigned            nof_layers = grant.cfg.recommended_ri;
-  const sch_mcs_index       mcs        = grant.cfg.recommended_mcs;
-  const auto&               pdsch_cfg  = ss_info.get_pdsch_config(pdsch_td_res_index, nof_layers);
-  const unsigned            k1         = grant.uci_alloc.k1;
+  const subcarrier_spacing  scs      = ss_info.bwp->dl.cfg().scs;
+  const cell_configuration& cell_cfg = ue_cell_cfg.cell_cfg_common;
+  const bool                is_retx  = grant.h_dl.nof_retxs() != 0;
+  const sch_mcs_index       mcs      = grant.cfg.recommended_mcs;
+  const pdsch_config_params pdsch_cfg =
+      ss_info.get_pdsch_config(pdsch_td_res_index, grant.cfg.dmrs_ports, grant.cfg.nof_dmrs_cdm_groups_without_data);
+  const unsigned k1 = grant.uci_alloc.k1;
 
   // Fetch PDCCH and PDSCH resource grid allocators.
 
@@ -459,7 +456,7 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info& grant, const vrb_alloc& 
     mcs_tbs_info = {grant.h_dl.get_grant_params().mcs, grant.h_dl.get_grant_params().tbs};
   } else {
     // It is a newTx.
-    auto mcs_or_error = calculate_dl_mcs_tbs(pdsch_alloc, ss_info, pdsch_td_res_index, prbs, mcs, nof_layers);
+    auto mcs_or_error = calculate_dl_mcs_tbs(pdsch_alloc, ss_info, pdsch_cfg, prbs, mcs);
     if (not mcs_or_error.has_value()) {
       // We give up on more reTxs of this HARQ.
       grant.h_dl.cancel_retxs();
@@ -1483,6 +1480,14 @@ void ue_cell_grid_allocator::post_process_results()
 
   dl_grants.clear();
   ul_grants.clear();
+}
+
+void ue_cell_grid_allocator::dl_newtx_grant_builder::set_dmrs_ports(const dmrs_port_mask& dmrs_ports,
+                                                                    unsigned              nof_cdm_groups_without_data)
+{
+  dl_grant_info& grant                       = parent->dl_grants[grant_index];
+  grant.cfg.dmrs_ports                       = dmrs_ports;
+  grant.cfg.nof_dmrs_cdm_groups_without_data = nof_cdm_groups_without_data;
 }
 
 ue_cell_grid_allocator::dl_repetition_occasion_list

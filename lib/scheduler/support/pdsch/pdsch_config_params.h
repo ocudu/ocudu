@@ -20,9 +20,12 @@ struct pdsch_config_params {
   ofdm_symbol_range symbols;
   unsigned          nof_oh_prb;
   unsigned          tb_scaling_field;
-  unsigned          nof_layers;
   dmrs_information  dmrs;
   unsigned          max_nof_cws_scheduled_by_dci;
+
+  /// Returns the number of layers of the PDSCH, which transmits one layer per DM-RS port (see TS 38.211,
+  /// Section 7.3.1.4).
+  unsigned nof_layers() const { return dmrs.dmrs_ports.count(); }
 };
 
 namespace sched_helper {

@@ -27,8 +27,10 @@ struct dl_sched_context {
   uint8_t pdsch_td_res_index;
   /// Recommended MCS, considering channel state or, in case of reTx, last HARQ MCS.
   sch_mcs_index recommended_mcs;
-  /// Recommended number of layers.
-  unsigned recommended_ri;
+  /// DM-RS ports of the PDSCH, one per layer.
+  dmrs_port_mask dmrs_ports;
+  /// Number of DM-RS CDM groups without data of the PDSCH.
+  uint8_t nof_dmrs_cdm_groups_without_data;
   /// Limits for grant size in RBs.
   interval<unsigned> nof_rb_lims;
   /// Expected number of RBs to allocate.

@@ -19,7 +19,7 @@ constexpr unsigned ntn_ack_wait_timeout = 4;
 
 dl_msg_alloc make_dummy_ue_pdsch_info()
 {
-  dl_msg_alloc       msg;
+  dl_msg_alloc       msg{};
   pdsch_information& pdsch = msg.pdsch_cfg;
   pdsch.rnti               = to_rnti(0x4601);
   pdsch.harq_id            = to_harq_id(0);

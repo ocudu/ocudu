@@ -857,7 +857,7 @@ ue_fallback_scheduler::select_tbs(const pdsch_config_params&          pdsch_cfg,
                                                        nof_dmrs_per_rb,
                                                        pdsch_cfg.nof_oh_prb,
                                                        mcs_config,
-                                                       pdsch_cfg.nof_layers},
+                                                       pdsch_cfg.nof_layers()},
                             unused_crbs.length());
 
     // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
@@ -874,7 +874,7 @@ ue_fallback_scheduler::select_tbs(const pdsch_config_params&          pdsch_cfg,
                                            nof_dmrs_per_rb,
                                            pdsch_cfg.nof_oh_prb,
                                            pdsch_mcs_get_config(pdsch_cfg.mcs_table, chosen_mcs_idx),
-                                           pdsch_cfg.nof_layers,
+                                           pdsch_cfg.nof_layers(),
                                            pdsch_cfg.tb_scaling_field,
                                            prbs_tbs.nof_prbs};
       prbs_tbs.tbs_bytes = tbs_calculator_calculate(tbs_cfg);
@@ -920,7 +920,7 @@ ue_fallback_scheduler::select_tbs(const pdsch_config_params&          pdsch_cfg,
                                                          nof_dmrs_per_rb,
                                                          pdsch_cfg.nof_oh_prb,
                                                          mcs_config,
-                                                         pdsch_cfg.nof_layers},
+                                                         pdsch_cfg.nof_layers()},
                               unused_crbs.length());
       chosen_mcs_idx                       = next_mcs_idx;
       ++next_mcs_idx;

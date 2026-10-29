@@ -498,7 +498,7 @@ double ue_cell::get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_
                                                             .nof_dmrs_prb     = dmrs_prbs,
                                                             .nof_oh_prb       = pdsch_cfg.nof_oh_prb,
                                                             .mcs_descr        = mcs_info,
-                                                            .nof_layers       = pdsch_cfg.nof_layers,
+                                                            .nof_layers       = pdsch_cfg.nof_layers(),
                                                             .tb_scaling_field = pdsch_cfg.tb_scaling_field,
                                                             .n_prb            = nof_prbs});
 

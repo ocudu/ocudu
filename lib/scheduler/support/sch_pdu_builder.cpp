@@ -447,7 +447,7 @@ void ocudu::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   // See TS 38.211, 7.3.1.1. - Scrambling.
   pdsch.n_id =
       get_pdsch_n_id(cell_cfg.params.pci, active_bwp, dci_dl_format::f1_1, ss_info.cfg->is_common_search_space());
-  pdsch.nof_layers = pdsch_cfg.nof_layers;
+  pdsch.nof_layers = pdsch_cfg.nof_layers();
 
   pdsch.mcs_table = pdsch_cfg.mcs_table;
 
@@ -461,7 +461,7 @@ void ocudu::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
 
   // Beamforming and precoding.
-  pdsch.precoding_and_beamforming = cs_mgr.get_precoding(pdsch_cfg.nof_layers);
+  pdsch.precoding_and_beamforming = cs_mgr.get_precoding(pdsch_cfg.nof_layers());
 
   populate_pdsch_pwr_offsets(pdsch, cell_cfg);
 }
