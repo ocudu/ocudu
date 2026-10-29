@@ -99,7 +99,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   } else {
     if (not transfer_reestablishment_context_and_update_keys()) {
       // The protocol contexts have moved, so an unexpected import failure requires release.
-      logger.log_warning("Could not install the validated UP context after UE context transfer");
+      logger.log_warning("Could not set up the validated UP context after UE context transfer");
       ue_context_release_request.ue_index = context.ue_index;
       ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
       CORO_AWAIT(cu_cp_notifier.on_ue_release_required(ue_context_release_request));

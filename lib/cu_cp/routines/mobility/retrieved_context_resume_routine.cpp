@@ -48,7 +48,7 @@ void retrieved_context_resume_routine::operator()(coro_context<async_task<rrc_re
                             ? std::optional<rrc_ue_capabilities_t>{ue.get_rrc_ue()->get_capabilities()}
                             : decode_handover_capabilities(retrieval_context.rrc_context);
     if (not capabilities.has_value()) {
-      logger.warning("ue={}: \"{}\" failed. Cause: Invalid forwarded UE capabilities", ue.get_ue_index(), name());
+      logger.warning("ue={}: \"{}\" failed. Cause: Invalid forwarded UE capabilities", ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
     next_config = ue.get_up_resource_manager().calculate_update(

@@ -581,13 +581,13 @@ public:
   /// \param[in] request The release request.
   virtual async_task<void> on_ue_release_required(const cu_cp_ue_context_release_request& request) = 0;
 
-  /// Checks whether an imported UP context is compatible without changing the UE state.
+  /// \brief Checks whether an imported UP context is compatible without changing the UE state.
   /// \param[in] ctxt The UP context to validate.
   /// \param[in] capabilities The decoded capabilities of the UE.
   /// \return True if the context satisfies the configured limits and UE capabilities.
   virtual bool on_up_context_validation_required(const up_context& ctxt, const rrc_ue_capabilities_t& capabilities) = 0;
 
-  /// Sets up an imported UP context if it satisfies the configured limits and UE capabilities.
+  /// \brief Sets up an imported UP context if it satisfies the configured limits and UE capabilities.
   /// \param[in] ctxt The UP context to set up.
   /// \param[in] capabilities The decoded capabilities of the UE.
   /// \return True on success; false leaves the existing UP context unchanged.
