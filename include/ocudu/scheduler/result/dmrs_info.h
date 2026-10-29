@@ -28,7 +28,7 @@ struct dmrs_information {
   uint8_t num_dmrs_cdm_grps_no_data;
   /// \brief Bitmap of antenna ports. Bit 0 corresponds to antenna port 1000 and bit 11 to antenna port 1011, and
   /// each bit=1 mean DM-RS port used.
-  bounded_bitset<12> dmrs_ports;
+  dmrs_port_mask dmrs_ports;
 };
 
 } // namespace ocudu

@@ -7,7 +7,7 @@
 
 #include "ocudu/adt/span.h"
 #include "ocudu/ran/dmrs/dmrs.h"
-#include <vector>
+#include <optional>
 
 namespace ocudu {
 
@@ -15,15 +15,17 @@ namespace ocudu {
 struct pdsch_antenna_ports_mapping {
   /// Number of DMRS CDM group(s) without data.
   unsigned nof_dmrs_cdm_groups_without_data;
-  /// Contains list of DMRS ports used.
-  /// Example 1: For a cell with 4 DL antenna ports and if the value of DMRS ports list is {0, 3}, then the DMRS ports
-  /// (1000 + 0) = 1000 and (1000 + 3) = 1003 are used.
-  /// Example 2: For a cell with 2 DL antenna ports and if the value of DMRS ports list is {0, 1}, then the DMRS ports
-  /// (1000 + 0) = 1000 and (1000 + 1) = 1001 are used.
-  std::vector<unsigned> dmrs_ports;
-  /// Number of DMRS front-load symbols. Number of front-load symbols equates to maxLength in DMRS-DownlinkConfig whose
-  /// default value is Len1 i.e. 1 symbol.
-  unsigned nof_front_load_symbols = 1;
+  /// DM-RS ports used. Bit \f$p\f$ corresponds to the antenna port \f$1000+p\f$.
+  dmrs_port_mask dmrs_ports;
+  /// Number of front-load DM-RS symbols.
+  unsigned nof_front_load_symbols;
+
+  bool operator==(const pdsch_antenna_ports_mapping& other) const
+  {
+    return nof_dmrs_cdm_groups_without_data == other.nof_dmrs_cdm_groups_without_data &&
+           dmrs_ports == other.dmrs_ports && nof_front_load_symbols == other.nof_front_load_symbols;
+  }
+  bool operator!=(const pdsch_antenna_ports_mapping& other) const { return !(*this == other); }
 };
 
 /// \brief Gets the PDSCH antenna ports mapping table.
@@ -35,44 +37,31 @@ struct pdsch_antenna_ports_mapping {
 /// \param dmrs_cfg_type        UE dedicated DM-RS type configuration.
 /// \param dmrs_max_len         UE dedicated DM-RS maximum length configuration.
 /// \param are_both_cws_enabled Set to true if both codewords are enabled for PDSCH transmission.
-/// \return A constant span view to the PDSCH antenna ports mapping table associated with the given parameters.
-/// \remark A fatal failure is triggered if the specified parameters do not correspond to a valid antenna port mapping
-///         table.
+/// \return A constant span view to the PDSCH antenna ports mapping table associated with the given parameters. The view
+///         is empty if TS 38.212 does not define a table for two codewords with the given DM-RS configuration.
+/// \remark A fatal failure is triggered if the DM-RS type or maximum length are not set.
 span<const pdsch_antenna_ports_mapping> get_pdsch_antenna_port_mapping_table(dmrs_config_type dmrs_cfg_type,
                                                                              dmrs_max_length  dmrs_max_len,
                                                                              bool             are_both_cws_enabled);
 
-/// \brief Returns the PDSCH antenna ports mapping from TS 38.212, tables 7.3.1.2.2-1/2/3/4 based on input
-/// configuration.
-/// \param[in] nof_layers Number of layers.
-/// \param[in] nof_dl_antenna_ports Number of DL antenna ports supported by gNB.
-/// \param[in] dmrs_cfg_type PDSCH DMRS configuration type.
-/// \param[in] dmrs_max_len PDSCH DMRS maximum number of OFDM symbols.
-/// \param[in] are_both_cws_enabled Flag indicating whether Codeword 0 and Codeword 1 are enabled or not.
-/// \return The PDSCH antenna ports mapping from TS 38.212, tables 7.3.1.2.2-1/2/3/4 based on DMRS configuration, nof.
-///         layers etc. If the given input configuration does not match any of the rows in the table, the function
-///         triggers an asserts. But if input configuration matches more than one row in the table, the first matching
-///         row information is returned.
-const pdsch_antenna_ports_mapping& get_pdsch_antenna_port_mapping(unsigned         nof_layers,
-                                                                  unsigned         nof_dl_antenna_ports,
-                                                                  dmrs_config_type dmrs_cfg_type,
-                                                                  dmrs_max_length  dmrs_max_len,
-                                                                  bool             are_both_cws_enabled);
+/// \brief Gets the size of the Antenna port(s) field of DCI format 1_1, as per TS 38.212 Section 7.3.1.2.2.
+/// \param dmrs_cfg_type PDSCH DM-RS configuration type.
+/// \param dmrs_max_len  PDSCH DM-RS maximum number of OFDM symbols.
+/// \return The number of bits of the field, i.e., 4, 5 or 6.
+unsigned get_pdsch_antenna_ports_field_size(dmrs_config_type dmrs_cfg_type, dmrs_max_length dmrs_max_len);
 
-/// \brief Returns the PDSCH antenna ports mapping row index in TS 38.212, tables 7.3.1.2.2-1/2/3/4.
-/// \param[in] nof_layers Number of layers.
-/// \param[in] nof_dl_antenna_ports Number of DL antenna ports supported by gNB.
-/// \param[in] dmrs_cfg_type PDSCH DMRS configuration type.
-/// \param[in] dmrs_max_len PDSCH DMRS maximum number of OFDM symbols.
-/// \param[in] are_both_cws_enabled Flag indicating whether Codeword 0 and Codeword 1 are enabled or not.
-/// \return The PDSCH antenna ports mapping row index from TS 38.212, tables 7.3.1.2.2-1/2/3/4 based on DMRS
-///         configuration, nof. layers etc. If the given input configuration does not match any of the rows in the
-///         table, the function triggers an asserts. But if input configuration matches more than one row in the
-///         table,the first matching row index is returned.
-unsigned get_pdsch_antenna_port_mapping_row_index(unsigned         nof_layers,
-                                                  unsigned         nof_dl_antenna_ports,
-                                                  dmrs_config_type dmrs_cfg_type,
-                                                  dmrs_max_length  dmrs_max_len,
-                                                  bool             are_both_cws_enabled);
+/// \brief Finds the row of TS 38.212 Tables 7.3.1.2.2-1/2/3/4 that signals the given PDSCH antenna ports mapping.
+///
+/// The table is selected from the DM-RS configuration and from the number of codewords, which is given by the number of
+/// DM-RS ports as per TS 38.211 Table 7.3.1.3-1.
+///
+/// \param dmrs_cfg_type PDSCH DM-RS configuration type.
+/// \param dmrs_max_len  PDSCH DM-RS maximum number of OFDM symbols.
+/// \param mapping       DM-RS ports, number of CDM groups without data and number of front-load symbols to signal.
+/// \return The row index, i.e., the value of the Antenna port(s) field of DCI format 1_1, or \c std::nullopt if no row
+///         matches the given mapping.
+std::optional<unsigned> find_pdsch_antenna_port_mapping_row_index(dmrs_config_type                   dmrs_cfg_type,
+                                                                  dmrs_max_length                    dmrs_max_len,
+                                                                  const pdsch_antenna_ports_mapping& mapping);
 
 } // namespace ocudu

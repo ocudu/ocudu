@@ -94,15 +94,18 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg) :
                  .tb_scaling_field = 1,
                  .n_prb            = cell_cfg.params.ul_cfg_common.init_ul_bwp.generic_params.crbs.length()}
 {
-  const unsigned nof_dl_ports  = cell_cfg.params.dl_carrier.nof_ant;
   const unsigned max_dl_layers = cell_cfg.params.init_bwp.pdsch.max_nof_layers;
   dl_dmrs_rbs_per_nof_layers.resize(max_dl_layers);
   for (unsigned nof_layers = 1; nof_layers <= max_dl_layers; ++nof_layers) {
     const pdsch_time_domain_resource_allocation pdsch_td_cfg{
         0, sch_mapping_type::typeA, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}};
     const dmrs_downlink_config dmrs_cfg{};
-    auto                       dmrs = make_dmrs_info_dedicated(
-        pdsch_td_cfg, cell_cfg.params.pci, cell_cfg.params.dmrs_typeA_pos, dmrs_cfg, nof_layers, nof_dl_ports, false);
+    const dmrs_information     dmrs = make_dmrs_info_dedicated(pdsch_td_cfg,
+                                                           cell_cfg.params.pci,
+                                                           cell_cfg.params.dmrs_typeA_pos,
+                                                           dmrs_cfg,
+                                                           get_su_pdsch_dmrs_ports(nof_layers));
+
     dl_dmrs_rbs_per_nof_layers[nof_layers - 1] = calculate_nof_dmrs_per_rb(dmrs);
   }
 

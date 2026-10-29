@@ -6,9 +6,9 @@
 #include "dci_builder.h"
 #include "../cell/cell_harq_manager.h"
 #include "../config/time_domain_mapper.h"
+#include "dmrs_helpers.h"
 #include "ocudu/ran/pdcch/dci_packing.h"
 #include "ocudu/ran/pdcch/search_space.h"
-#include "ocudu/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/support/rb_helper.h"
@@ -265,7 +265,7 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                                   sch_mcs_index                 tb1_mcs_index,
                                   uint8_t                       rv,
                                   const dl_harq_process_handle& h_dl,
-                                  unsigned                      nof_layers,
+                                  const dmrs_information&       dmrs,
                                   uint8_t                       tpc,
                                   bool                          enable_interleaving,
                                   unsigned                      srs_request)
@@ -273,13 +273,6 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   ocudu_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
   ocudu_sanity_check(ss_info.get_dl_dci_format() == dci_dl_format::f1_1, "Invalid DCI format");
-
-  // Two codewords require maxLength=2 for nof_layers > 4 per 3GPP TS 38.212 Table 7.3.1.2.2; the two-codeword table
-  // does not exist otherwise.
-  const auto&           dmrs_cfg             = ss_info.bwp->dl.pdsch().ded()->pdsch_mapping_type_a_dmrs.value();
-  const bool            has_len2             = dmrs_cfg.is_max_length_len2;
-  const bool            are_both_cws_enabled = (nof_layers > 4) && has_len2;
-  const dmrs_max_length max_len              = has_len2 ? dmrs_max_length::len2 : dmrs_max_length::len1;
 
   const bwp_configuration& active_dl_bwp = ss_info.bwp->dl.cfg();
   const auto               k1_candidates = ss_info.bwp->ul.td_mapper().dedicated_k1_candidates();
@@ -290,12 +283,13 @@ void ocudu::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   f1_1.srs_request             = srs_request;
   f1_1.dmrs_seq_initialization = 0;
 
-  f1_1.antenna_ports = get_pdsch_antenna_port_mapping_row_index(nof_layers,
-                                                                ue_cell_cfg.cell_cfg_common.params.dl_carrier.nof_ant,
-                                                                dmrs_cfg.is_dmrs_type2 ? dmrs_config_type::type2
-                                                                                       : dmrs_config_type::type1,
-                                                                max_len,
-                                                                are_both_cws_enabled);
+  const std::optional<unsigned> antenna_ports_row =
+      find_pdsch_antenna_ports_row_index(dmrs, ss_info.bwp->dl.pdsch().ded()->pdsch_mapping_type_a_dmrs.value());
+  ocudu_assert(antenna_ports_row.has_value(),
+               "DCI f1_1 cannot signal DM-RS ports {:#x} with {} CDM group(s) without data",
+               dmrs.dmrs_ports.to_uint64(),
+               dmrs.num_dmrs_cdm_grps_no_data);
+  f1_1.antenna_ports = *antenna_ports_row;
 
   const dci_size_config& dci_sz_cfg = ss_info.dci_sz_cfg;
   const dci_sizes&       dci_sz     = ss_info.dci_sz;

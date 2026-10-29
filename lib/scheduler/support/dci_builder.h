@@ -10,6 +10,7 @@
 #include "ocudu/ran/resource_allocation/resource_allocation_frequency.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/scheduler/result/dci_info.h"
+#include "ocudu/scheduler/result/dmrs_info.h"
 #include "ocudu/scheduler/result/vrb_alloc.h"
 
 namespace ocudu {
@@ -80,7 +81,7 @@ void build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
                            uint8_t                       rv,
                            const dl_harq_process_handle& h_dl);
 
-/// Builds DCI f1_1 for C-RNTI.
+/// Builds DCI f1_1 for C-RNTI. The Antenna port(s) field signals the DM-RS ports of \c dmrs.
 void build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                            const ue_cell_configuration&  ue_cell_cfg,
                            search_space_id               ss_id,
@@ -92,7 +93,7 @@ void build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                            sch_mcs_index                 tb1_mcs_index,
                            uint8_t                       rv,
                            const dl_harq_process_handle& h_dl,
-                           unsigned                      nof_layers,
+                           const dmrs_information&       dmrs,
                            uint8_t                       tpc,
                            bool                          enable_interleaving,
                            unsigned                      srs_request);

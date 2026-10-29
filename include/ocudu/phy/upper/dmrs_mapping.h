@@ -13,41 +13,8 @@
 
 namespace ocudu {
 
-/// Maximum number of ports for DM-RS type 1.
-static constexpr unsigned DMRS_MAX_PORTS_TYPE1 = 8;
-
-/// Maximum number of ports for DM-RS type 2.
-static constexpr unsigned DMRS_MAX_PORTS_TYPE2 = 12;
-
-/// Returns the maximum number of ports supported by the given DM-RS type.
-constexpr unsigned dmrs_max_ports_type(dmrs_config_type type)
-{
-  ocudu_assert(type != dmrs_config_type::not_set, "Invalid DM-RS type.");
-  return (type == dmrs_config_type::type1) ? DMRS_MAX_PORTS_TYPE1 : DMRS_MAX_PORTS_TYPE2;
-}
-
-/// Defines the maximum number of ports the DM-RS can be mapped to.
-constexpr unsigned DMRS_MAX_NPORTS =
-    std::max(dmrs_max_ports_type(dmrs_config_type::type1), dmrs_max_ports_type(dmrs_config_type::type2));
-
 /// Maximum number of DM-RS ports that share a CDM group, as per TS38.211 Tables 7.4.1.1.2-1 and 7.4.1.1.2-2.
 static constexpr unsigned DMRS_MAX_PORTS_PER_CDM_GROUP = 4;
-
-/// \brief DM-RS port mask.
-///
-/// Bit \f$i\f$ set to one indicates that the DM-RS antenna port \f$1000 + i\f$ is used. Transmission layers are mapped
-/// to the selected DM-RS ports in ascending order, as per TS38.211 Section 7.3.1.4.
-using dmrs_port_mask = bounded_bitset<DMRS_MAX_NPORTS>;
-
-/// \brief Gets the CDM group of a DM-RS port.
-///
-/// \param[in] type      DM-RS type.
-/// \param[in] dmrs_port DM-RS port index, starting at zero for antenna port 1000.
-/// \return The CDM group \f$\lambda\f$ given in TS38.211 Tables 7.4.1.1.2-1 and 7.4.1.1.2-2.
-constexpr unsigned get_dmrs_cdm_group_index(dmrs_config_type type, unsigned dmrs_port)
-{
-  return (dmrs_port / 2) % get_max_nof_cdm_groups_without_data(type);
-}
 
 /// \brief Determines whether a DM-RS port requires double-symbol DM-RS.
 ///

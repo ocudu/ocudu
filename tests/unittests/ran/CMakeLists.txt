@@ -54,6 +54,10 @@ add_executable(pdsch_dmrs_symbol_mask_test pdsch/pdsch_dmrs_symbol_mask_test.cpp
 target_link_libraries(pdsch_dmrs_symbol_mask_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
 
+add_executable(pdsch_antenna_port_mapping_test pdsch/pdsch_antenna_port_mapping_test.cpp)
+target_link_libraries(pdsch_antenna_port_mapping_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
+add_test(pdsch_antenna_port_mapping_test pdsch_antenna_port_mapping_test)
+
 add_executable(pdsch_mcs_table_test pdsch/pdsch_mcs_table_test.cpp)
 target_link_libraries(pdsch_mcs_table_test ocudu_ran ocudulog GTest::gtest ocudu_gtest_main)
 add_test(pdsch_mcs_table_test pdsch_mcs_table_test)

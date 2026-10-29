@@ -6,7 +6,6 @@
 #include "pdsch_config_params.h"
 #include "../dmrs_helpers.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/ran/pdsch/pdsch_constants.h"
 
 using namespace ocudu;
 using namespace sched_helper;
@@ -84,11 +83,10 @@ sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&            
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
 
-  // Two codewords require maxLength=2 for nof_layers > 4 per 3GPP TS 38.212 Table 7.3.1.2.2; the two-codeword table
-  // does not exist otherwise.
-  const bool has_len2 =
-      pdsch_cfg.pdsch_mapping_type_a_dmrs.has_value() && pdsch_cfg.pdsch_mapping_type_a_dmrs->is_max_length_len2;
-  const bool are_both_cws_enabled = (nof_layers > pdsch_constants::MAX_NOF_LAYERS_PER_CODEWORD) && has_len2;
+  ocudu_assert(nof_layers <= cell_cfg_common.params.dl_carrier.nof_ant,
+               "Number of DL layers={} cannot be greater than number of DL antenna ports={} of the cell",
+               nof_layers,
+               cell_cfg_common.params.dl_carrier.nof_ant);
 
   pdsch_config_params pdsch;
 
@@ -96,9 +94,7 @@ sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&            
                                         cell_cfg_common.params.pci,
                                         cell_cfg_common.params.dmrs_typeA_pos,
                                         pdsch_cfg.pdsch_mapping_type_a_dmrs.value(),
-                                        nof_layers,
-                                        cell_cfg_common.params.dl_carrier.nof_ant,
-                                        are_both_cws_enabled);
+                                        get_su_pdsch_dmrs_ports(nof_layers));
 
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.

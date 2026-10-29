@@ -8,6 +8,7 @@
 #include "ocudu/adt/interval.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/ran/pdcch/dci_packing_formatters.h"
+#include "ocudu/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "ocudu/ran/resource_block.h"
 #include "ocudu/support/math/math_utils.h"
 #include "fmt/std.h"
@@ -290,20 +291,6 @@ static unsigned ul_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length d
   return 0;
 }
 
-// Computes the DL antenna ports field size for a specific DM-RS configuration.
-static unsigned dl_dmrs_ports_size(dmrs_config_type dmrs_type, dmrs_max_length dmrs_len)
-{
-  // 4, 5 or 6 bits as defined by Tables 7.3.1.2.2-1/2/3/4.
-  unsigned ports_size = 4;
-  if (dmrs_type == dmrs_config_type::type2) {
-    ++ports_size;
-  }
-  if (dmrs_len == dmrs_max_length::len2) {
-    ++ports_size;
-  }
-  return ports_size;
-}
-
 // Computes the antenna ports field size for DCI format 0_1.
 static units::bits ul_ports_size(std::optional<dmrs_config_type> dmrs_A_type,
                                  std::optional<dmrs_max_length>  dmrs_A_max_len,
@@ -337,12 +324,14 @@ static units::bits dl_ports_size(std::optional<dmrs_config_type> dmrs_A_type,
   bool mapping_type_B_configured = dmrs_B_type.has_value() && dmrs_B_max_len.has_value();
 
   units::bits pdsch_dmrs_A_ports_size =
-      mapping_type_A_configured ? units::bits(dl_dmrs_ports_size(dmrs_A_type.value(), dmrs_A_max_len.value()))
-                                : units::bits(0);
+      mapping_type_A_configured
+          ? units::bits(get_pdsch_antenna_ports_field_size(dmrs_A_type.value(), dmrs_A_max_len.value()))
+          : units::bits(0);
 
   units::bits pdsch_dmrs_B_ports_size =
-      mapping_type_B_configured ? units::bits(dl_dmrs_ports_size(dmrs_B_type.value(), dmrs_B_max_len.value()))
-                                : units::bits(0);
+      mapping_type_B_configured
+          ? units::bits(get_pdsch_antenna_ports_field_size(dmrs_B_type.value(), dmrs_B_max_len.value()))
+          : units::bits(0);
 
   return std::max(pdsch_dmrs_A_ports_size, pdsch_dmrs_B_ports_size);
 }

@@ -525,7 +525,7 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info& grant, const vrb_alloc& 
                             mcs_tbs_info.mcs,
                             rv,
                             grant.h_dl,
-                            nof_layers,
+                            pdsch_cfg.dmrs,
                             tpc,
                             enable_interleaving,
                             aperiodic_srs_res_trigger);
