@@ -51,6 +51,21 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
     c.cg_sched->stop();
   }
 
+  // The UE repository drops every UE that has this cell, even as an SCell, without going through the UE removal event
+  // that detaches it from the slice schedulers. Detach it here from the slices of each of its cells, or they would keep
+  // referencing a destroyed UE.
+  for (const ue& u : ue_db) {
+    if (u.find_cell(cell_index) == nullptr) {
+      continue;
+    }
+    for (unsigned i = 0, e = u.nof_cells(); i != e; ++i) {
+      const du_cell_index_t ue_cell_idx = u.get_cell(to_serv_cell_index(i)).cell_index;
+      if (cells.contains(ue_cell_idx)) {
+        cells[ue_cell_idx].slice_sched.rem_ue(u.ue_index);
+      }
+    }
+  }
+
   // Remove UEs from the UE repository associated with this cell.
   ue_db.handle_cell_deactivation(cell_index);
 }

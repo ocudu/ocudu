@@ -289,3 +289,36 @@ TEST_F(sched_ue_removal_test,
   ASSERT_TRUE(notif.last_ue_index_deleted.has_value()) << "UE has not been deleted";
   ASSERT_EQ(notif.last_ue_index_deleted, ue_index);
 }
+
+TEST_F(sched_ue_removal_test, when_cell_is_deactivated_and_reactivated_then_its_ues_are_removed_from_the_slices)
+{
+  // Create UE with pending DL data.
+  const du_ue_index_t ue_index = to_du_ue_index(0);
+  const rnti_t        rnti     = to_rnti(0x4601);
+  add_ue(ue_index, rnti);
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{ue_index, test_lcid_drb, 10000});
+  run_slot();
+
+  // Bring the cell down and straight back up. The cell deactivation drops the UE from the UE repository, so the slices
+  // must not keep scheduling it.
+  sched->handle_cell_deactivation_request(to_du_cell_index(0));
+  sched->handle_cell_activation_request(to_du_cell_index(0));
+
+  const unsigned MAX_COUNT = 100;
+  for (unsigned i = 0; i != MAX_COUNT; ++i) {
+    run_slot();
+    ASSERT_FALSE(this->is_rnti_scheduled(rnti));
+  }
+
+  // A UE created after the cell reactivation gets scheduled.
+  const du_ue_index_t new_ue_index = to_du_ue_index(1);
+  const rnti_t        new_rnti     = to_rnti(0x4602);
+  add_ue(new_ue_index, new_rnti);
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{new_ue_index, test_lcid_drb, 10000});
+  const dl_msg_alloc* alloc = nullptr;
+  for (unsigned i = 0; i != MAX_COUNT and alloc == nullptr; ++i) {
+    run_slot();
+    alloc = find_ue_pdsch(new_rnti, *last_sched_result());
+  }
+  ASSERT_NE(alloc, nullptr) << "the UE created after the cell reactivation was not scheduled";
+}
