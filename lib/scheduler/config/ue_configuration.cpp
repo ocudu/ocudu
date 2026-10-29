@@ -213,20 +213,12 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
         }
       }
       if (opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.has_value()) {
-        dci_sz_cfg.pusch_dmrs_A_type    = opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.value().is_dmrs_type2
-                                              ? dmrs_config_type::type2
-                                              : dmrs_config_type::type1;
-        dci_sz_cfg.pusch_dmrs_A_max_len = opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.value().is_max_length_len2
-                                              ? dmrs_max_length::len2
-                                              : dmrs_max_length::len1;
+        dci_sz_cfg.pusch_dmrs_A_type    = opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.value().type;
+        dci_sz_cfg.pusch_dmrs_A_max_len = opt_pusch_cfg.value().pusch_mapping_type_a_dmrs.value().max_length;
       }
       if (opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.has_value()) {
-        dci_sz_cfg.pusch_dmrs_B_type    = opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.value().is_dmrs_type2
-                                              ? dmrs_config_type::type2
-                                              : dmrs_config_type::type1;
-        dci_sz_cfg.pusch_dmrs_B_max_len = opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.value().is_max_length_len2
-                                              ? dmrs_max_length::len2
-                                              : dmrs_max_length::len1;
+        dci_sz_cfg.pusch_dmrs_B_type    = opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.value().type;
+        dci_sz_cfg.pusch_dmrs_B_max_len = opt_pusch_cfg.value().pusch_mapping_type_b_dmrs.value().max_length;
       }
       if (opt_pusch_cfg->harq_process_num_size_dci_0_1.has_value()) {
         if (opt_pusch_cfg->harq_process_num_size_dci_0_1.value() == pusch_config::harq_process_num_dci_0_1_size::n5) {
@@ -317,20 +309,12 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
       }
     }
     if (opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value()) {
-      dci_sz_cfg.pdsch_dmrs_A_type    = opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.value().is_dmrs_type2
-                                            ? dmrs_config_type::type2
-                                            : dmrs_config_type::type1;
-      dci_sz_cfg.pdsch_dmrs_A_max_len = opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.value().is_max_length_len2
-                                            ? dmrs_max_length::len2
-                                            : dmrs_max_length::len1;
+      dci_sz_cfg.pdsch_dmrs_A_type    = opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.value().type;
+      dci_sz_cfg.pdsch_dmrs_A_max_len = opt_pdsch_cfg->pdsch_mapping_type_a_dmrs.value().max_length;
     }
     if (opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.has_value()) {
-      dci_sz_cfg.pdsch_dmrs_B_type    = opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.value().is_dmrs_type2
-                                            ? dmrs_config_type::type2
-                                            : dmrs_config_type::type1;
-      dci_sz_cfg.pdsch_dmrs_B_max_len = opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.value().is_max_length_len2
-                                            ? dmrs_max_length::len2
-                                            : dmrs_max_length::len1;
+      dci_sz_cfg.pdsch_dmrs_B_type    = opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.value().type;
+      dci_sz_cfg.pdsch_dmrs_B_max_len = opt_pdsch_cfg->pdsch_mapping_type_b_dmrs.value().max_length;
     }
     if (opt_pdsch_cfg->harq_process_num_size_dci_1_1.has_value()) {
       if (opt_pdsch_cfg->harq_process_num_size_dci_1_1.value() == pdsch_config::harq_process_num_dci_1_1_size::n5) {

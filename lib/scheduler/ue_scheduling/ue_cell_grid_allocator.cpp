@@ -1201,7 +1201,7 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
       logger.warning(
           "ue={} rnti={}: Failed to allocate PUSCH. Cause: {} with this "
           "configuration: mcs={} vrbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
-          "harq_bits={} csi1_bits={} csi2_bits={} mcs_table_idx={} dmrs_A_pos={} is_dmrs_type2={} dmrs_add_pos_idx={}",
+          "harq_bits={} csi1_bits={} csi2_bits={} mcs_table_idx={} dmrs_A_pos={} dmrs_type={} dmrs_add_pos_idx={}",
           u.ue_index,
           u.crnti,
           to_string(mcs_tbs_info.error()),
@@ -1217,7 +1217,7 @@ ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interva
           pusch_cfg.max_nof_csi_part2_bits,
           static_cast<unsigned>(pusch_cfg.mcs_table),
           ue_cell_cfg.cell_cfg_common.params.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? "pos2" : "pos3",
-          ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2 ? "yes" : "no",
+          ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value().type,
           static_cast<unsigned>(
               ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value().additional_positions));
     }

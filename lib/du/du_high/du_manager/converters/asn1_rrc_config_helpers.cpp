@@ -1021,7 +1021,7 @@ calculate_pdcch_config_diff(asn1::rrc_nr::pdcch_cfg_s& out, const pdcch_config& 
 
 static void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, const dmrs_downlink_config& cfg)
 {
-  if (cfg.is_dmrs_type2) {
+  if (cfg.type == dmrs_config_type::type2) {
     out.dmrs_type_present = true;
   }
 
@@ -1042,7 +1042,7 @@ static void make_asn1_rrc_dmrs_dl_for_pdsch(asn1::rrc_nr::dmrs_dl_cfg_s& out, co
     }
   }
 
-  if (cfg.is_max_length_len2) {
+  if (cfg.max_length == dmrs_max_length::len2) {
     out.max_len_present = true;
   }
 
@@ -1886,7 +1886,7 @@ static void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
                                             const dmrs_uplink_config&    src,
                                             const dmrs_uplink_config&    dest)
 {
-  if (dest.is_dmrs_type2) {
+  if (dest.type == dmrs_config_type::type2) {
     out.dmrs_type_present = true;
   }
 
@@ -1916,7 +1916,7 @@ static void make_asn1_rrc_dmrs_ul_for_pusch(asn1::rrc_nr::dmrs_ul_cfg_s& out,
     out.phase_tracking_rs.set_release();
   }
 
-  if (dest.is_max_length_len2) {
+  if (dest.max_length == dmrs_max_length::len2) {
     out.max_len_present = true;
   }
 

@@ -54,28 +54,24 @@ struct dmrs_uplink_config {
     bool operator!=(const transform_precoder_enabled& rhs) const { return !(rhs == *this); }
   };
 
-  /// Selection of the DMRS type to be used for UL.
-  /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value type2 to UE. If false, the field
-  /// is absent in NR RRC and the UE uses DMRS type 1.
-  bool is_dmrs_type2{false};
+  /// DMRS type to be used for UL. Mapping to NR RRC: type 2 sets the field, and type 1 leaves it absent.
+  dmrs_config_type type{dmrs_config_type::type1};
   /// Position for additional DM-RS in UL (see TS 38.211, clause 6.4.1.1.3). If the field is not set, the UE applies the
   /// value pos2.
   dmrs_additional_positions additional_positions{dmrs_additional_positions::pos2};
   /// Configures uplink PTRS.
   std::optional<ptrs_uplink_config> ptrs;
-  /// The maximum number of OFDM symbols for UL front loaded DMRS.
-  /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value len2 to UE. If false, the field
-  /// is absent in NR RRC and the UE applies value len1.
-  /// If set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
-  bool                                       is_max_length_len2{false};
+  /// The maximum number of OFDM symbols for UL front loaded DMRS. Mapping to NR RRC: len2 sets the field, and len1
+  /// leaves it absent. If set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI.
+  dmrs_max_length                            max_length{dmrs_max_length::len1};
   std::optional<transform_precoder_disabled> trans_precoder_disabled;
   std::optional<transform_precoder_enabled>  trans_precoder_enabled;
   // TODO: Remaining
 
   bool operator==(const dmrs_uplink_config& rhs) const
   {
-    return is_dmrs_type2 == rhs.is_dmrs_type2 && additional_positions == rhs.additional_positions && ptrs == rhs.ptrs &&
-           is_max_length_len2 == rhs.is_max_length_len2 && trans_precoder_disabled == rhs.trans_precoder_disabled &&
+    return type == rhs.type && additional_positions == rhs.additional_positions && ptrs == rhs.ptrs &&
+           max_length == rhs.max_length && trans_precoder_disabled == rhs.trans_precoder_disabled &&
            trans_precoder_enabled == rhs.trans_precoder_enabled;
   }
   bool operator!=(const dmrs_uplink_config& rhs) const { return !(rhs == *this); }

@@ -73,10 +73,9 @@ inline dmrs_port_mask get_su_pdsch_dmrs_ports(unsigned nof_layers)
 inline std::optional<unsigned> find_pdsch_antenna_ports_row_index(const dmrs_information&     dmrs,
                                                                   const dmrs_downlink_config& dmrs_dl_cfg_ded)
 {
-  const dmrs_max_length max_len = dmrs_dl_cfg_ded.is_max_length_len2 ? dmrs_max_length::len2 : dmrs_max_length::len1;
   // Double-symbol DM-RS is not supported, hence the DM-RS always uses a single front-load symbol.
   return find_pdsch_antenna_port_mapping_row_index(
-      dmrs.config_type, max_len, {dmrs.num_dmrs_cdm_grps_no_data, dmrs.dmrs_ports, 1});
+      dmrs.config_type, dmrs_dl_cfg_ded.max_length, {dmrs.num_dmrs_cdm_grps_no_data, dmrs.dmrs_ports, 1});
 }
 
 /// \brief Sets the DM-RS ports of a PDSCH scheduled by DCI f1_1.
@@ -160,7 +159,7 @@ inline dmrs_information make_dmrs_info_dedicated(const pdsch_time_domain_resourc
   }
 
   dmrs.dmrs_symb_pos = make_pdsch_dmrs_symbol_mask(pdsch_td_cfg, dmrs_typeA_pos, dmrs_dl_cfg_ded.additional_positions);
-  dmrs.config_type   = dmrs_dl_cfg_ded.is_dmrs_type2 ? dmrs_config_type::type2 : dmrs_config_type::type1;
+  dmrs.config_type   = dmrs_dl_cfg_ded.type;
   // TODO: See TS 38.211, 7.4.1.1.1.
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
@@ -260,7 +259,7 @@ inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resourc
     ocudu_terminate("Mapping type B not supported");
   }
 
-  dmrs.config_type = dmrs_ul_cfg.is_dmrs_type2 ? dmrs_config_type::type2 : dmrs_config_type::type1;
+  dmrs.config_type = dmrs_ul_cfg.type;
   // TODO: See TS 38.211, 7.4.1.1.1.
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
