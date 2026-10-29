@@ -101,7 +101,8 @@ void inter_cu_handover_target_routine::operator()(
     // Calculate next user-plane configuration based on incoming setup message.
     up_old_drb_association old_drb_association = build_old_drb_association(request.pdu_session_res_setup_list);
     merge_old_drb_association_from_as_config(old_drb_association, request.rrc_handover_preparation_information, logger);
-    auto capabilities = decode_handover_capabilities(request.rrc_handover_preparation_information);
+    std::optional<rrc_ue_capabilities_t> capabilities =
+        decode_handover_capabilities(request.rrc_handover_preparation_information);
     if (not capabilities.has_value()) {
       logger.warning("ue={}: \"{}\" failed. Cause: Invalid forwarded UE capabilities", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));

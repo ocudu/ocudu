@@ -28,7 +28,9 @@ using rrc_ue_cap_rat_container_list_t = static_vector<rrc_ue_cap_rat_container_t
 
 /// RedCap bearer capabilities, as per TS 38.306, Sections 4.2.21.2 and 4.2.21.3.
 struct rrc_redcap_ue_capabilities {
-  bool support_of_16_drb      = false;
+  /// UE supports up to 16 DRBs instead of the RedCap baseline of 8.
+  bool support_of_16_drb = false;
+  /// UE supports 18-bit PDCP sequence numbers for DRBs instead of only 12-bit sequence numbers.
   bool pdcp_long_sn_supported = false;
 };
 
