@@ -28,7 +28,7 @@ class radio_zmq_rx_stream : public baseband_gateway_receiver
   /// Buffer to hold complex floating-point based samples.
   std::vector<cf_t> cf_buffer;
   /// Per-channel linear amplitude gains. Atomic for lock-free concurrent set/read.
-  std::array<std::atomic<float>, RADIO_MAX_NOF_CHANNELS> channel_gains;
+  std::array<std::atomic<float>, RADIO_MAX_NOF_CHANNELS> channel_gains{};
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx stream.

@@ -50,6 +50,4 @@ template <typename Callable>
   return detail::scope_exit<std::decay_t<Callable>>{std::forward<Callable>(callable)};
 }
 
-#define DEFER(FUNC) auto on_exit_call##__LINE__ = ocudu::make_scope_exit([&]() { FUNC })
-
 } // namespace ocudu

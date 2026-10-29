@@ -251,7 +251,11 @@ bool radio_sidekiq_card::set_tx_gain(unsigned i_channel, double gain_dB)
 
   logger.debug("Setting channel {} Tx gain to {:.2f} dB.", i_channel, gain_dB);
 
-  ocudu_assert(gain_dB >= 0.0, "TX gain cannot be negative.");
+  if (gain_dB < 0.0) {
+    fmt::print(
+        "Error card {} channel {}: the TX gain (i.e. {:.1f} dB) cannot be negative.\n", card_id, i_channel, gain_dB);
+    return false;
+  }
 
   interval<double> atten_dB_range = {0.25 * card_params.tx_param->atten_quarter_db_min,
                                      0.25 * card_params.tx_param->atten_quarter_db_max};
@@ -292,28 +296,32 @@ bool radio_sidekiq_card::set_rx_gain(unsigned i_channel, double gain_dB)
 
   logger.debug("Setting channel {} Rx gain to {:.2f} dB.", i_channel, gain_dB);
 
-  ocudu_assert(gain_dB >= 0.0, "RX gain cannot be negative.");
+  if (gain_dB < 0.0) {
+    fmt::print(
+        "Error card {} channel {}: the RX gain (i.e. {:.1f} dB) cannot be negative.\n", card_id, i_channel, gain_dB);
+    return false;
+  }
 
   // From Sidekiq API doc:
   //
   // For Sidekiq mPCIe (sidekiq_mpcie), Sidekiq M.2 (sidekiq_m2), Sidekiq Stretch (sidekiq_m2_2280), Sidekiq Z2
-  //(sidekiq_z2), and Matchstiq Z3u (sidekiq_z3u) each increment of the gain index value results in approxi-
-  // mately 1 dB of gain, with approximately 76 dB of total gain available. For details on the gain table,
-  // refer to p. 37 of AD9361 Reference Manual UG-570.
+  // (sidekiq_z2), and Matchstiq Z3u (sidekiq_z3u) each increment of the gain index value results in approximately 1 dB
+  // of gain, with approximately 76 dB of total gain available. For details on the gain table, refer to p. 37 of AD9361
+  // Reference Manual UG-570.
   double gain_dB_step = 1.0;
 
-  // For Sidekiq X4 (skiq_x4) and Matchstiq X40 (skiq_x40), each receiver has 30 dB of total gain available,
-  // where an increment of 1 in the gain index results in approximately 0.5 dB increase. For details on the
-  // receiver datapath and gain control blocks, refer to the "Receiver Datapath" on p. 125 of the ADRV9008-
-  // 1/ADRV9008-2/ADRV9009 Hardware Reference Manual (UG-1295)
+  // For Sidekiq X4 (skiq_x4) and Matchstiq X40 (skiq_x40), each receiver has 30 dB of total gain available, where an
+  // increment of 1 in the gain index results in approximately 0.5 dB increase. For details on the receiver datapath and
+  // gain control blocks, refer to the "Receiver Datapath" on p. 125 of the ADRV9008-1/ADRV9008-2/ADRV9009 Hardware
+  // Reference Manual (UG-1295).
   if (card_params.rx_param->gain_index_min == 195) {
     // Sidekiq X4 minimum gain index is 195.
     gain_dB_step = 0.5;
   }
 
   // Expected gain range in decibels.
-  interval<uint16_t> gain_dB_range(
-      0.0, gain_dB_step * (card_params.rx_param->gain_index_max - gain_dB_step * card_params.rx_param->gain_index_min));
+  interval<double> gain_dB_range(
+      0.0, gain_dB_step * (card_params.rx_param->gain_index_max - card_params.rx_param->gain_index_min));
 
   // Check gain range.
   if (!gain_dB_range.contains(gain_dB)) {
@@ -330,7 +338,7 @@ bool radio_sidekiq_card::set_rx_gain(unsigned i_channel, double gain_dB)
 
   // Set the RX gain.
   if (skiq_write_rx_gain(card_id, card_params.rx_param[i_channel].handle, gain_idx)) {
-    fmt::print("Error: setting card {} port {} Rx gain.\n", card_id, i_channel, gain_idx);
+    fmt::print("Error: setting card {} port {} Rx gain.\n", card_id, i_channel);
     return false;
   }
 
@@ -341,7 +349,7 @@ void radio_sidekiq_card::stop()
 {
   // Attempt to transition into STOP state.
   card_states expected_state = card_states::SUCCESSFUL_INIT;
-  bool        to_stop        = state.compare_exchange_weak(expected_state, card_states::STOP);
+  bool        to_stop        = state.compare_exchange_strong(expected_state, card_states::STOP);
 
   if (!to_stop) {
     fmt::print("Error: attempting to stop non-initialized radio card\n");

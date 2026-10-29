@@ -88,6 +88,7 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
         stream->issue_stream_cmd(stream_cmd);
       })) {
     fmt::println("Error: failed to start receive stream {}. {}.", id, get_error_message().c_str());
+    return false;
   }
 
   return true;

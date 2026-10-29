@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_uhd_impl.h"
+#include "ocudu/adt/scope_exit.h"
 #include <thread>
 #include <uhd/utils/thread_priority.h>
 
@@ -152,7 +153,7 @@ bool radio_session_uhd_impl::set_tx_freq(unsigned port_idx, radio_configuration:
 bool radio_session_uhd_impl::set_rx_freq(unsigned port_idx, radio_configuration::lo_frequency frequency)
 {
   if (port_idx >= rx_port_map.size()) {
-    fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)tx_port_map.size());
+    fmt::print("Error: receive port index ({}) exceeds the number of ports ({}).\n", port_idx, (int)rx_port_map.size());
     return false;
   }
 
@@ -191,6 +192,9 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   if (uhd_set_thread_priority(0.90, true) != UHD_ERROR_NONE) {
     fmt::print(stderr, "Warning: Scheduling priority of UHD not changed. Cause: Not enough privileges.\n");
   }
+
+  // Restore the thread priority on any early return. It is released once the explicit restore at the end is reached.
+  auto restore_thread_priority = make_scope_exit([]() { uhd_set_thread_priority(0, false); });
 
   // Set the logging level.
 #ifdef UHD_LOG_INFO
@@ -339,7 +343,9 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
       const radio_configuration::channel& channel = stream.channels[channel_idx];
 
       // Setup gain.
-      set_tx_gain_unprotected(port_idx, channel.gain_dB);
+      if (!set_tx_gain_unprotected(port_idx, channel.gain_dB)) {
+        return;
+      }
 
       // Setup frequency.
       if (!set_tx_freq(port_idx, channel.freq)) {
@@ -417,10 +423,10 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
                      port_idx);
           if (!device.set_rx_antenna(selected_tx_antenna, port_idx)) {
             return;
-          };
+          }
         } else {
           fmt::print("Error: Selected TX antenna, i.e., {}, is not available as RX antenna in channel {}. Same port "
-                     "transmission mode not suppored.\n",
+                     "transmission mode not supported.\n",
                      selected_tx_antenna,
                      port_idx);
         }
@@ -428,7 +434,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
 
       // Inform about ignored argument.
       if (!channel.args.empty()) {
-        fmt::print("Warning: transmitter {} unused args.\n", port_idx);
+        fmt::print("Warning: receiver {} unused args.\n", port_idx);
       }
     }
 
@@ -453,6 +459,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   }
 
   // Restore thread priorities.
+  restore_thread_priority.release();
   if (uhd_set_thread_priority(0, false) != UHD_ERROR_NONE) {
     fmt::print("Error: setting UHD thread priority.\n");
     return;

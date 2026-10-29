@@ -253,7 +253,7 @@ void radio_sidekiq_rx_stream::start(baseband_gateway_timestamp init_time)
   }
 
   rx_states expected_state = rx_states::SUCCESSFUL_INIT;
-  bool      to_streaming   = state.compare_exchange_weak(expected_state, rx_states::STREAMING);
+  bool      to_streaming   = state.compare_exchange_strong(expected_state, rx_states::STREAMING);
 
   ocudu_assert(to_streaming, "Failed to transition into the streaming state.");
 
@@ -270,7 +270,7 @@ void radio_sidekiq_rx_stream::stop()
 {
   // Attempt to transition from STREAMING to WAIT_STOP.
   rx_states expected_state = rx_states::STREAMING;
-  bool      to_wait_stop   = state.compare_exchange_weak(expected_state, rx_states::WAIT_STOP);
+  bool      to_wait_stop   = state.compare_exchange_strong(expected_state, rx_states::WAIT_STOP);
 
   // It the stream was not in STREAMING state, transition directly to STOPPED.
   if (!to_wait_stop) {

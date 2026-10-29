@@ -202,7 +202,7 @@ static void trx_ocudu_write2(TRXState*         s1,
     CPU_ZERO(&cpuset);
     CPU_SET(0, &cpuset);
     if (::pthread_setaffinity_np(tself, sizeof(cpu_set_t), &cpuset) != 0) {
-      ::perror("pthread_setaffinity_np trx_ocudu_read2");
+      ::perror("pthread_setaffinity_np trx_ocudu_write2");
     }
 
     sched_param param{};
@@ -230,7 +230,7 @@ static void trx_ocudu_write2(TRXState*         s1,
   bool ta_present       = md->flags & TRX_WRITE_MD_FLAG_TA_PRESENT;
   bool request_ts       = md->flags & TRX_WRITE_MD_FLAG_CUR_TIMESTAMP_REQ;
 
-  // Ignore transmission if it is padding or an end of burst with zero samples to transmit.
+  // Ignore transmission if it is an end of burst with zero samples to transmit.
   if (end_of_burst && (count == 0)) {
     return;
   }
@@ -357,8 +357,9 @@ static void trx_ocudu_set_tx_gain(TRXState* s1, double gain, int chain)
   ocudu_assert(context.session, "Invalid session.");
   radio_tx_gain_control* control = context.session->get_capabilities().get<radio_tx_gain_control>();
 
-  if (control != nullptr) {
-    control->set_tx_gain(chain, gain);
+  // Keep the reported gain unchanged if the gain could not be applied.
+  if (control == nullptr || !control->set_tx_gain(chain, gain)) {
+    return;
   }
 
   context.tx_port_channel_gain[chain] = gain;
@@ -373,8 +374,9 @@ static void trx_ocudu_set_rx_gain(TRXState* s1, double gain, int chain)
   ocudu_assert(context.session, "Invalid session.");
   radio_rx_gain_control* control = context.session->get_capabilities().get<radio_rx_gain_control>();
 
-  if (control != nullptr) {
-    control->set_rx_gain(chain, gain);
+  // Keep the reported gain unchanged if the gain could not be applied.
+  if (control == nullptr || !control->set_rx_gain(chain, gain)) {
+    return;
   }
 
   context.rx_port_channel_gain[chain] = gain;
@@ -414,8 +416,7 @@ static int trx_ocudu_start(TRXState* s1, const TRXDriverParams* p)
   }
 
   // Check that all sampling rates for all channels are the same.
-  span<const TRXFraction> sampling_rates_frac =
-      span<const TRXFraction>(p->sample_rate, context.rf_port_count).last(context.rf_port_count - 1);
+  span<const TRXFraction> sampling_rates_frac(p->sample_rate, context.rf_port_count);
   ocudu_assert(std::all_of(sampling_rates_frac.begin(),
                            sampling_rates_frac.end(),
                            [&](const TRXFraction& x) {
@@ -455,7 +456,7 @@ static int trx_ocudu_start(TRXState* s1, const TRXDriverParams* p)
       tx_channel_config.freq.center_frequency_Hz  = static_cast<double>(p->tx_freq[tx_port_count]);
       tx_channel_config.gain_dB                   = static_cast<double>(p->tx_gain[tx_port_count]);
       tx_channel_config.args                      = context.tx_port_args[tx_port_count];
-      context.tx_port_channel_gain[rx_port_count] = p->tx_gain[tx_port_count];
+      context.tx_port_channel_gain[tx_port_count] = p->tx_gain[tx_port_count];
       ++tx_port_count;
     }
 
@@ -465,7 +466,7 @@ static int trx_ocudu_start(TRXState* s1, const TRXDriverParams* p)
 
     // Iterate all receive channels of the stream.
     for (int channel = 0; channel != p->rx_port_channel_count[stream]; ++channel) {
-      // Prepare transmit channel configuration.
+      // Prepare receive channel configuration.
       rx_stream_config.channels.emplace_back();
       radio_configuration::channel& rx_channel_config = rx_stream_config.channels.back();
 

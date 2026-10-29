@@ -12,7 +12,7 @@ static int32_t sidekiq_log_level = SKIQ_LOG_INFO;
 static void    rf_sidekiq_log_msg(int32_t priority, const char* message)
 {
   if (priority <= sidekiq_log_level) {
-    fmt::print(message);
+    fmt::print("{}", message);
   }
 }
 
@@ -22,7 +22,7 @@ radio_session_sidekiq_impl::radio_session_sidekiq_impl(const radio_configuration
   async_executor(async_executor_), notifier(notifier_), logger(ocudulog::fetch_basic_logger("RF"))
 {
   if (radio_config.rx_streams.size() > 2 || (radio_config.tx_streams.size() > 2)) {
-    fmt::print("Only up to two channels per stream is currently supported.\n");
+    fmt::print("Only up to two streams are currently supported.\n");
     return;
   }
 
@@ -78,7 +78,7 @@ radio_session_sidekiq_impl::radio_session_sidekiq_impl(const radio_configuration
     fmt::print("The number of available sidekiq cards, i.e., {} is not sufficient to deploy {} Rx and {} Tx streams\n",
                nof_available_cards,
                radio_config.rx_streams.size(),
-               radio_config.rx_streams.size());
+               radio_config.tx_streams.size());
     return;
   }
 
@@ -167,6 +167,7 @@ bool radio_session_sidekiq_impl::set_tx_gain_unprotected(unsigned port_idx, doub
   // Setup gain.
   if (!cards[port_map.first]->set_tx_gain(port_map.second, gain_dB)) {
     fmt::print("Error: setting gain for transmitter in card {} port {}.\n", port_map.first, port_map.second);
+    return false;
   }
 
   return true;
@@ -189,6 +190,7 @@ bool radio_session_sidekiq_impl::set_rx_gain_unprotected(unsigned port_idx, doub
   // Setup gain.
   if (!cards[port_map.first]->set_rx_gain(port_map.second, gain_dB)) {
     fmt::print("Error: setting gain for receiver in card {} port {}.\n", port_map.first, port_map.second);
+    return false;
   }
 
   return true;
@@ -217,7 +219,7 @@ void radio_session_sidekiq_impl::stop()
 {
   // Attempt to transition into STOP state.
   states expected_state = states::SUCCESSFUL_INIT;
-  bool   to_stop        = state.compare_exchange_weak(expected_state, states::STOP);
+  bool   to_stop        = state.compare_exchange_strong(expected_state, states::STOP);
 
   if (!to_stop) {
     fmt::print("Error: attempting to stop non-initialized radio session\n");
@@ -235,7 +237,7 @@ void radio_session_sidekiq_impl::stop()
 
 baseband_gateway_timestamp radio_session_sidekiq_impl::read_current_time()
 {
-  uint64_t ts;
+  uint64_t ts = 0;
 
   // Read the RF timestamp of the first port of card 0.
   if (skiq_read_curr_rx_timestamp(0, skiq_rx_hdl_A1, &ts)) {

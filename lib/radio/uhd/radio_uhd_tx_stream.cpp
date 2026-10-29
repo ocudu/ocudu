@@ -154,7 +154,7 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
         stream          = usrp->get_tx_stream(stream_args);
         max_packet_size = stream->get_max_num_samps();
       })) {
-    fmt::println("Error: failed to create transmit stream {}. {}.\n", stream_id, get_error_message().c_str());
+    fmt::println("Error: failed to create transmit stream {}. {}.", stream_id, get_error_message().c_str());
     return;
   }
 
@@ -244,7 +244,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
         power_ramping_metadata.end_of_burst   = false;
         power_ramping_metadata.time_spec = uhd_metadata.time_spec - time_spec.from_ticks(nof_padding_samples, srate_hz);
 
-        // Modify the actual trasnmission metadata, since we have already started the burst with padding.
+        // Modify the actual transmission metadata, since we have already started the burst with padding.
         uhd_metadata.start_of_burst = false;
         uhd_metadata.has_time_spec  = false;
         do {
@@ -293,7 +293,7 @@ void radio_uhd_tx_stream::transmit(const baseband_gateway_buffer_reader&        
   do {
     unsigned txd_samples = 0;
     if (!transmit_block(txd_samples, tx_data, txd_samples_total, uhd_metadata)) {
-      fmt::println("Error: failed transmitting packet. %s.{}", get_error_message().c_str());
+      fmt::println("Error: failed transmitting packet. {}.", get_error_message().c_str());
       return;
     }
 

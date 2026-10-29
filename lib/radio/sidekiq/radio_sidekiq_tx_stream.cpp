@@ -251,7 +251,7 @@ void radio_sidekiq_tx_stream::transmit(const baseband_gateway_buffer_reader&    
   if (state.load() != tx_states::IN_BURST) {
     // Attempt to transition to IN_BURST. Will fail if the current state is not SUCCESSFUL_INIT.
     radio_sidekiq_tx_stream::tx_states expected_state = tx_states::SUCCESSFUL_INIT;
-    bool                               to_in_burst = state.compare_exchange_weak(expected_state, tx_states::IN_BURST);
+    bool                               to_in_burst = state.compare_exchange_strong(expected_state, tx_states::IN_BURST);
     if (!to_in_burst) {
       return;
     }
@@ -330,7 +330,7 @@ void radio_sidekiq_tx_stream::stop()
 {
   // Attempt to transition from IN_BURST to WAIT_STOP.
   radio_sidekiq_tx_stream::tx_states expected_state = tx_states::IN_BURST;
-  bool to_wait_stop = state.compare_exchange_weak(expected_state, radio_sidekiq_tx_stream::tx_states::WAIT_STOP);
+  bool to_wait_stop = state.compare_exchange_strong(expected_state, radio_sidekiq_tx_stream::tx_states::WAIT_STOP);
 
   // It the stream was not in IN_BURST state, transition directly to STOPPED.
   if (!to_wait_stop) {
