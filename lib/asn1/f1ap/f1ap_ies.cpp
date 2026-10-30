@@ -6805,7 +6805,7 @@ OCUDUASN_CODE srs_res_set_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, srs_res_set_id, (uint8_t)0u, (uint8_t)15u, true, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, srs_res_id_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, srs_res_id_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(res_set_type.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -6818,7 +6818,7 @@ OCUDUASN_CODE srs_res_set_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(srs_res_set_id, bref, (uint8_t)0u, (uint8_t)15u, true, true));
-  HANDLE_CODE(unpack_dyn_seq_of(srs_res_id_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(srs_res_id_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(res_set_type.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -7154,7 +7154,7 @@ OCUDUASN_CODE pos_srs_res_set_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, possrs_res_set_id, (uint8_t)0u, (uint8_t)15u, false, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, poss_rs_res_id_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, poss_rs_res_id_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(posres_set_type.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -7167,7 +7167,7 @@ OCUDUASN_CODE pos_srs_res_set_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(possrs_res_set_id, bref, (uint8_t)0u, (uint8_t)15u, false, true));
-  HANDLE_CODE(unpack_dyn_seq_of(poss_rs_res_id_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(poss_rs_res_id_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(posres_set_type.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -21879,7 +21879,7 @@ OCUDUASN_CODE cells_with_ss_bs_activ_list_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
-  HANDLE_CODE(pack_dyn_seq_of(bref, ss_bs_activ_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, ss_bs_activ_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -21891,7 +21891,7 @@ OCUDUASN_CODE cells_with_ss_bs_activ_list_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.unpack(bref));
-  HANDLE_CODE(unpack_dyn_seq_of(ss_bs_activ_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(ss_bs_activ_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -22731,8 +22731,8 @@ OCUDUASN_CODE cells_to_be_activ_list_item_ext_ies_o::ext_c::pack(bit_ref& bref) 
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
       break;
     case types::ss_bs_within_the_cell_tobe_activ_list:
-      HANDLE_CODE(
-          pack_dyn_seq_of(bref, c.get<ss_bs_to_be_activ_list_l>(), 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+      HANDLE_CODE(pack_dyn_seq_of(
+          bref, c.get<ss_bs_to_be_activ_list_l>(), 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
       break;
     default:
       log_invalid_choice_id(type_, "cells_to_be_activ_list_item_ext_ies_o::ext_c");
@@ -22764,7 +22764,7 @@ OCUDUASN_CODE cells_to_be_activ_list_item_ext_ies_o::ext_c::unpack(cbit_ref& bre
       break;
     case types::ss_bs_within_the_cell_tobe_activ_list:
       HANDLE_CODE(unpack_dyn_seq_of(
-          c.get<ss_bs_to_be_activ_list_l>(), bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+          c.get<ss_bs_to_be_activ_list_l>(), bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
       break;
     default:
       log_invalid_choice_id(type_, "cells_to_be_activ_list_item_ext_ies_o::ext_c");
@@ -22840,7 +22840,7 @@ OCUDUASN_CODE cells_to_be_activ_list_item_ext_ies_container::pack(bit_ref& bref)
     HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pack_dyn_seq_of(
-        bref, ss_bs_within_the_cell_tobe_activ_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+        bref, ss_bs_within_the_cell_tobe_activ_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
   }
 
   return OCUDUASN_SUCCESS;
@@ -22900,7 +22900,7 @@ OCUDUASN_CODE cells_to_be_activ_list_item_ext_ies_container::unpack(cbit_ref& br
         ss_bs_within_the_cell_tobe_activ_list_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
         HANDLE_CODE(unpack_dyn_seq_of(
-            ss_bs_within_the_cell_tobe_activ_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+            ss_bs_within_the_cell_tobe_activ_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
         break;
       }
       default:
@@ -28260,7 +28260,7 @@ OCUDUASN_CODE periodicity_range_c::pack(bit_ref& bref) const
       break;
     case types::periodicity_list:
       HANDLE_CODE(pack_dyn_seq_of(
-          bref, c.get<allowed_periodicity_list_l>(), 1, 8, integer_packer<uint32_t>(0, 640000, true, true)));
+          bref, c.get<allowed_periodicity_list_l>(), 1, 8, integer_packer<uint32_t>(0, 640000, true, true), true));
       break;
     case types::choice_exts:
       HANDLE_CODE(c.get<protocol_ie_single_container_s<periodicity_range_ext_ies_o>>().pack(bref));
@@ -28282,7 +28282,7 @@ OCUDUASN_CODE periodicity_range_c::unpack(cbit_ref& bref)
       break;
     case types::periodicity_list:
       HANDLE_CODE(unpack_dyn_seq_of(
-          c.get<allowed_periodicity_list_l>(), bref, 1, 8, integer_packer<uint32_t>(0, 640000, true, true)));
+          c.get<allowed_periodicity_list_l>(), bref, 1, 8, integer_packer<uint32_t>(0, 640000, true, true), true));
       break;
     case types::choice_exts:
       HANDLE_CODE(c.get<protocol_ie_single_container_s<periodicity_range_ext_ies_o>>().unpack(bref));
@@ -63528,7 +63528,7 @@ OCUDUASN_CODE recommended_ss_bs_for_paging_list_item_s::pack(bit_ref& bref) cons
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
-  HANDLE_CODE(pack_dyn_seq_of(bref, ss_bs_for_paging_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, ss_bs_for_paging_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -63540,7 +63540,7 @@ OCUDUASN_CODE recommended_ss_bs_for_paging_list_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.unpack(bref));
-  HANDLE_CODE(unpack_dyn_seq_of(ss_bs_for_paging_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(ss_bs_for_paging_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -67751,7 +67751,8 @@ OCUDUASN_CODE srs_res_trigger_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_dyn_seq_of(bref, aperiodic_srs_res_trigger_list, 1, 3, integer_packer<uint8_t>(1, 3, false, true)));
+  HANDLE_CODE(
+      pack_dyn_seq_of(bref, aperiodic_srs_res_trigger_list, 1, 3, integer_packer<uint8_t>(1, 3, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -67763,7 +67764,7 @@ OCUDUASN_CODE srs_res_trigger_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(
-      unpack_dyn_seq_of(aperiodic_srs_res_trigger_list, bref, 1, 3, integer_packer<uint8_t>(1, 3, false, true)));
+      unpack_dyn_seq_of(aperiodic_srs_res_trigger_list, bref, 1, 3, integer_packer<uint8_t>(1, 3, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }

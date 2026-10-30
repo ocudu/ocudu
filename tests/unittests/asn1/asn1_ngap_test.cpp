@@ -459,6 +459,38 @@ TEST_F(asn1_ngap_test, session_res_setup_request_pack_and_unpack)
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
+TEST_F(asn1_ngap_test, overload_stop_has_an_empty_ie_container)
+{
+  ngap_pdu_c pdu;
+  pdu.set_init_msg().load_info_obj(ASN1_NGAP_ID_OVERLOAD_STOP);
+
+  ocudu::byte_buffer buf;
+  bit_ref            bref(buf);
+  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(buf, ocudu::make_byte_buffer("00170003000000").value());
+  ASSERT_EQ(test_unpack_roundtrip<ngap_pdu_c>(buf), OCUDUASN_SUCCESS);
+}
+
+TEST_F(asn1_ngap_test, value_range_union_is_one_root_range)
+{
+  // ExpectedActivityPeriod and ExpectedIdlePeriod are INTEGER (1..30|40|...|181, ...), whose root is 1..181.
+  for (const auto& [period, hex] : {std::pair<uint8_t, const char*>{181, "62d168"},
+                                    std::pair<uint8_t, const char*>{40, "609c4e"},
+                                    std::pair<uint8_t, const char*>{30, "60743a"}}) {
+    expected_ue_activity_behaviour_s behaviour;
+    behaviour.expected_activity_period_present = true;
+    behaviour.expected_activity_period         = period;
+    behaviour.expected_idle_period_present     = true;
+    behaviour.expected_idle_period             = period;
+
+    ocudu::byte_buffer buf;
+    bit_ref            bref(buf);
+    ASSERT_EQ(behaviour.pack(bref), OCUDUASN_SUCCESS);
+    ASSERT_EQ(buf, ocudu::make_byte_buffer(hex).value()) << (unsigned)period;
+    ASSERT_EQ(test_unpack_roundtrip<expected_ue_activity_behaviour_s>(buf), OCUDUASN_SUCCESS);
+  }
+}
+
 // Real PDUs from lab captures.
 static const std::vector<capture_pdu> ngap_captures = {
     {"DownlinkNASTransport",

@@ -3949,7 +3949,7 @@ OCUDUASN_CODE srs_res_set_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, srs_res_set_id1, (uint8_t)0u, (uint8_t)15u, false, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, srs_res_id_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, srs_res_id_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(res_set_type.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -3963,7 +3963,7 @@ OCUDUASN_CODE srs_res_set_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(srs_res_set_id1, bref, (uint8_t)0u, (uint8_t)15u, false, true));
-  HANDLE_CODE(unpack_dyn_seq_of(srs_res_id_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(srs_res_id_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(res_set_type.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -4322,7 +4322,8 @@ OCUDUASN_CODE pos_srs_res_set_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, possrs_res_set_id, (uint8_t)0u, (uint8_t)15u, false, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, poss_rs_res_id_per_set_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(
+      pack_dyn_seq_of(bref, poss_rs_res_id_per_set_list, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(posres_set_type.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -4336,7 +4337,8 @@ OCUDUASN_CODE pos_srs_res_set_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(possrs_res_set_id, bref, (uint8_t)0u, (uint8_t)15u, false, true));
-  HANDLE_CODE(unpack_dyn_seq_of(poss_rs_res_id_per_set_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(
+      unpack_dyn_seq_of(poss_rs_res_id_per_set_list, bref, 1, 16, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(posres_set_type.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -15539,7 +15541,7 @@ OCUDUASN_CODE prs_freq_hop_cfg_eutra_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(no_of_freq_hop_bands.pack(bref));
-  HANDLE_CODE(pack_dyn_seq_of(bref, band_positions, 1, 7, integer_packer<uint8_t>(0, 15, true, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, band_positions, 1, 7, integer_packer<uint8_t>(0, 15, true, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -15552,7 +15554,7 @@ OCUDUASN_CODE prs_freq_hop_cfg_eutra_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(no_of_freq_hop_bands.unpack(bref));
-  HANDLE_CODE(unpack_dyn_seq_of(band_positions, bref, 1, 7, integer_packer<uint8_t>(0, 15, true, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(band_positions, bref, 1, 7, integer_packer<uint8_t>(0, 15, true, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -21598,7 +21600,8 @@ OCUDUASN_CODE srs_res_trigger_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_dyn_seq_of(bref, aperiodic_srs_res_trigger_list, 1, 3, integer_packer<uint8_t>(1, 3, false, true)));
+  HANDLE_CODE(
+      pack_dyn_seq_of(bref, aperiodic_srs_res_trigger_list, 1, 3, integer_packer<uint8_t>(1, 3, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -21611,7 +21614,7 @@ OCUDUASN_CODE srs_res_trigger_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(
-      unpack_dyn_seq_of(aperiodic_srs_res_trigger_list, bref, 1, 3, integer_packer<uint8_t>(1, 3, false, true)));
+      unpack_dyn_seq_of(aperiodic_srs_res_trigger_list, bref, 1, 3, integer_packer<uint8_t>(1, 3, false, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -26496,7 +26499,7 @@ OCUDUASN_CODE ue_tx_teg_assoc_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, ue_tx_teg_id, (uint8_t)0u, (uint8_t)7u, false, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, pos_srs_res_id_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, pos_srs_res_id_list, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(time_stamp.pack(bref));
   if (carrier_freq_present) {
     HANDLE_CODE(carrier_freq.pack(bref));
@@ -26515,7 +26518,7 @@ OCUDUASN_CODE ue_tx_teg_assoc_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(ue_tx_teg_id, bref, (uint8_t)0u, (uint8_t)7u, false, true));
-  HANDLE_CODE(unpack_dyn_seq_of(pos_srs_res_id_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(pos_srs_res_id_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, false, true), true));
   HANDLE_CODE(time_stamp.unpack(bref));
   if (carrier_freq_present) {
     HANDLE_CODE(carrier_freq.unpack(bref));
@@ -26714,7 +26717,7 @@ OCUDUASN_CODE wlan_meas_result_item_s::pack(bit_ref& bref) const
     HANDLE_CODE(country_code.pack(bref));
   }
   if (wlan_ch_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, wlan_ch_list, 1, 16, integer_packer<uint16_t>(0, 255, false, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, wlan_ch_list, 1, 16, integer_packer<uint16_t>(0, 255, false, true), true));
   }
   if (wlan_band_present) {
     HANDLE_CODE(wlan_band.pack(bref));
@@ -26756,7 +26759,7 @@ OCUDUASN_CODE wlan_meas_result_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(country_code.unpack(bref));
   }
   if (wlan_ch_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(wlan_ch_list, bref, 1, 16, integer_packer<uint16_t>(0, 255, false, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(wlan_ch_list, bref, 1, 16, integer_packer<uint16_t>(0, 255, false, true), true));
   }
   if (wlan_band_present) {
     HANDLE_CODE(wlan_band.unpack(bref));

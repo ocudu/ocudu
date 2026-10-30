@@ -1195,20 +1195,24 @@ OCUDUASN_CODE unpack_dyn_seq_of(ArrayType& seqof, cbit_ref& bref, uint32_t lb, u
 
 template <class InnerPacker>
 struct SeqOfPacker {
-  SeqOfPacker(uint32_t lb_, uint32_t ub_, InnerPacker packer_) : lb(lb_), ub(ub_), packer(packer_) {}
+  SeqOfPacker(uint32_t lb_, uint32_t ub_, InnerPacker packer_, bool aligned_ = false) :
+    lb(lb_), ub(ub_), packer(packer_), aligned(aligned_)
+  {
+  }
   template <typename T>
   OCUDUASN_CODE pack(bit_ref& bref, const T& topack) const
   {
-    return pack_dyn_seq_of(bref, topack, lb, ub, packer);
+    return pack_dyn_seq_of(bref, topack, lb, ub, packer, aligned);
   }
   template <typename T>
   OCUDUASN_CODE unpack(T& tounpack, cbit_ref& bref)
   {
-    return unpack_dyn_seq_of(tounpack, bref, lb, ub, packer);
+    return unpack_dyn_seq_of(tounpack, bref, lb, ub, packer, aligned);
   }
   uint32_t    lb;
   uint32_t    ub;
   InnerPacker packer;
+  bool        aligned;
 };
 
 template <class ItemType, uint32_t lb, uint32_t ub, bool aligned = false>

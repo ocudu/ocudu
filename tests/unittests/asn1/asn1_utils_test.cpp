@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "ocudu/asn1/asn1_ap_utils.h"
 #include "ocudu/asn1/asn1_utils.h"
 #include "ocudu/support/test_utils.h"
 #include <cmath>
@@ -565,6 +566,42 @@ TEST(asn1_string_test, size_outside_extensible_root_is_encoded_as_unbounded)
   expect_encoding(make_string<printable_string<0, 8, true, true>>(2), "10" + a_chars_hex(2));
   expect_encoding(make_string<printable_string<0, 8, true, true>>(9), "8009" + a_chars_hex(9));
   expect_encoding(make_string<visible_string<1, 150, true, true>>(200), "8080c8" + a_chars_hex(200));
+}
+
+TEST(asn1_ap_container_test, empty_ie_container_holds_zero_ies)
+{
+  expect_encoding(protocol_ie_container_empty_l{}, "0000");
+
+  byte_buffer buf;
+  bit_ref     bref(buf);
+  ASSERT_EQ(protocol_ext_container_empty_l{}.pack(bref), OCUDUASN_ERROR_ENCODE_FAIL);
+
+  // Make sure the log backend has already processed the generated log entries.
+  ocudulog::flush();
+  test_spy->reset_counters();
+}
+
+TEST(asn1_ap_container_test, unknown_ie_in_empty_container_is_skipped_if_ignorable)
+{
+  // One extension IE with id 5, the given criticality and a single octet value.
+  for (const auto& [hex, result] : {std::pair<const char*, OCUDUASN_CODE>{"0000000540"
+                                                                          "0100",
+                                                                          OCUDUASN_SUCCESS},
+                                    std::pair<const char*, OCUDUASN_CODE>{"0000000500"
+                                                                          "0100",
+                                                                          OCUDUASN_ERROR_DECODE_FAIL}}) {
+    byte_buffer                    buf = ocudu::make_byte_buffer(hex).value();
+    cbit_ref                       cbref(buf);
+    protocol_ext_container_empty_l exts;
+    ASSERT_EQ(exts.unpack(cbref), result) << hex;
+    if (result == OCUDUASN_SUCCESS) {
+      ASSERT_EQ(cbref.distance_bytes(), (int)buf.length());
+    }
+  }
+
+  // Make sure the log backend has already processed the generated log entries.
+  ocudulog::flush();
+  test_spy->reset_counters();
 }
 
 TEST(asn1_string_test, utf8_string_size_constraint_is_not_per_visible)

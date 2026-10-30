@@ -264,24 +264,25 @@ struct protocol_ext_empty_o : public detail::base_empty_obj_set {
   static ext_c get_ext(uint32_t id) { return {}; }
 };
 
-/// Empty ProtocolExtensionContainer
-struct protocol_ie_container_empty_l {
+/// ProtocolIE-Container or ProtocolExtensionContainer whose object set is empty, of at least LB items.
+template <uint32_t LB>
+struct protocol_container_empty_l {
   template <class extT_>
   using ie_field_s = protocol_ext_container_item_s<extT_>;
 
   // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const
-  {
-    uint32_t nof_ies = 0;
-    pack_length(bref, nof_ies, 1u, 65535u, true);
-    return OCUDUASN_SUCCESS;
-  }
+  OCUDUASN_CODE pack(bit_ref& bref) const { return pack_length(bref, 0u, LB, 65535u, true); }
   OCUDUASN_CODE unpack(cbit_ref& bref)
   {
     uint32_t nof_ies = 0;
-    unpack_length(nof_ies, bref, 1u, 65535u, true);
-    if (nof_ies > 0) {
-      return OCUDUASN_ERROR_DECODE_FAIL;
+    HANDLE_CODE(unpack_length(nof_ies, bref, LB, 65535u, true));
+    // Every item is unknown, so it is skipped when its criticality allows it.
+    for (; nof_ies > 0; --nof_ies) {
+      uint32_t id = 0;
+      crit_e   crit;
+      HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+      HANDLE_CODE(crit.unpack(bref));
+      HANDLE_CODE(skip_ignored_ie(bref, crit, id));
     }
     return OCUDUASN_SUCCESS;
   }
@@ -292,7 +293,8 @@ struct protocol_ie_container_empty_l {
   }
 };
 
-using protocol_ext_container_empty_l = protocol_ie_container_empty_l;
+using protocol_ie_container_empty_l  = protocol_container_empty_l<0>;
+using protocol_ext_container_empty_l = protocol_container_empty_l<1>;
 
 template <typename ProtocolIEs>
 class elementary_procedure_option

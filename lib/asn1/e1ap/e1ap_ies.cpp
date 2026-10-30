@@ -7097,7 +7097,7 @@ OCUDUASN_CODE bc_bearer_context_to_modify_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, bc_mrb_to_modify_list, 1, 32, true));
   }
   if (bc_mrb_to_rem_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, bc_mrb_to_rem_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, bc_mrb_to_rem_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (ie_exts.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, ie_exts, 1, 65535, true));
@@ -7128,7 +7128,7 @@ OCUDUASN_CODE bc_bearer_context_to_modify_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(bc_mrb_to_modify_list, bref, 1, 32, true));
   }
   if (bc_mrb_to_rem_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(bc_mrb_to_rem_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(bc_mrb_to_rem_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
@@ -7219,7 +7219,7 @@ OCUDUASN_CODE bc_bearer_context_to_modify_required_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   if (bc_mrb_to_rem_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, bc_mrb_to_rem_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, bc_mrb_to_rem_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -7235,7 +7235,7 @@ OCUDUASN_CODE bc_bearer_context_to_modify_required_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   if (bc_mrb_to_rem_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(bc_mrb_to_rem_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(bc_mrb_to_rem_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -19775,7 +19775,7 @@ OCUDUASN_CODE mc_bearer_context_to_modify_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, mc_mrb_to_setup_modify_list, 1, 32, true));
   }
   if (mc_mrb_to_rem_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, mc_mrb_to_rem_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, mc_mrb_to_rem_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -19812,7 +19812,7 @@ OCUDUASN_CODE mc_bearer_context_to_modify_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(mc_mrb_to_setup_modify_list, bref, 1, 32, true));
   }
   if (mc_mrb_to_rem_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(mc_mrb_to_rem_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(mc_mrb_to_rem_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -20136,7 +20136,7 @@ OCUDUASN_CODE mc_bearer_context_to_modify_required_s::pack(bit_ref& bref) const
   }
   if (mc_mrb_to_rem_required_list.size() > 0) {
     HANDLE_CODE(
-        pack_dyn_seq_of(bref, mc_mrb_to_rem_required_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+        pack_dyn_seq_of(bref, mc_mrb_to_rem_required_list, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (mc_mrb_to_modify_required_list.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, mc_mrb_to_modify_required_list, 1, 32, true));
@@ -20162,8 +20162,8 @@ OCUDUASN_CODE mc_bearer_context_to_modify_required_s::unpack(cbit_ref& bref)
     HANDLE_CODE(mbs_multicast_f1_u_context_descriptor.unpack(bref));
   }
   if (mc_mrb_to_rem_required_list_present) {
-    HANDLE_CODE(
-        unpack_dyn_seq_of(mc_mrb_to_rem_required_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(
+        mc_mrb_to_rem_required_list, bref, 1, 32, integer_packer<uint16_t>(1, 512, true, true), true));
   }
   if (mc_mrb_to_modify_required_list_present) {
     HANDLE_CODE(unpack_dyn_seq_of(mc_mrb_to_modify_required_list, bref, 1, 32, true));

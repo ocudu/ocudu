@@ -13100,7 +13100,7 @@ OCUDUASN_CODE ho_request_ack_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<crit_diagnostics_s>().pack(bref));
       break;
     case types::drbs_transferred_to_mn:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::daps_resp_info_list:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<daps_resp_info_list_l>(), 1, 32, true));
@@ -13149,7 +13149,8 @@ OCUDUASN_CODE ho_request_ack_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<crit_diagnostics_s>().unpack(bref));
       break;
     case types::drbs_transferred_to_mn:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(
+          unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::daps_resp_info_list:
       HANDLE_CODE(unpack_dyn_seq_of(c.get<daps_resp_info_list_l>(), bref, 1, 32, true));
@@ -13253,7 +13254,7 @@ OCUDUASN_CODE ho_request_ack_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)137, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_dyn_seq_of(bref, drbs_transferred_to_mn, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, drbs_transferred_to_mn, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
   }
   if (daps_resp_info_list_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)164, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -13352,7 +13353,8 @@ OCUDUASN_CODE ho_request_ack_ies_container::unpack(cbit_ref& bref)
       case 137: {
         drbs_transferred_to_mn_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_dyn_seq_of(drbs_transferred_to_mn, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+        HANDLE_CODE(
+            unpack_dyn_seq_of(drbs_transferred_to_mn, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
         break;
       }
       case 164: {
@@ -22052,7 +22054,7 @@ OCUDUASN_CODE pdu_session_not_admitted_sn_mod_resp_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_ext.size() > 0, 1));
 
   if (pdu_session_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, pdu_session_list, 1, 256, integer_packer<uint16_t>(0, 255, false, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, pdu_session_list, 1, 256, integer_packer<uint16_t>(0, 255, false, true), true));
   }
   if (ie_ext.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, ie_ext, 1, 65535, true));
@@ -22069,7 +22071,7 @@ OCUDUASN_CODE pdu_session_not_admitted_sn_mod_resp_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_ext_present, 1));
 
   if (pdu_session_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(pdu_session_list, bref, 1, 256, integer_packer<uint16_t>(0, 255, false, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(pdu_session_list, bref, 1, 256, integer_packer<uint16_t>(0, 255, false, true), true));
   }
   if (ie_ext_present) {
     HANDLE_CODE(unpack_dyn_seq_of(ie_ext, bref, 1, 65535, true));
@@ -22231,7 +22233,7 @@ OCUDUASN_CODE pdu_session_released_sn_mod_confirm_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, sn_terminated, 1, 256, true));
   }
   if (mn_terminated.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, mn_terminated, 1, 256, integer_packer<uint16_t>(0, 255, false, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, mn_terminated, 1, 256, integer_packer<uint16_t>(0, 255, false, true), true));
   }
   if (ie_ext_present) {
     HANDLE_CODE(ie_ext.pack(bref));
@@ -22252,7 +22254,7 @@ OCUDUASN_CODE pdu_session_released_sn_mod_confirm_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(sn_terminated, bref, 1, 256, true));
   }
   if (mn_terminated_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(mn_terminated, bref, 1, 256, integer_packer<uint16_t>(0, 255, false, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(mn_terminated, bref, 1, 256, integer_packer<uint16_t>(0, 255, false, true), true));
   }
   if (ie_ext_present) {
     HANDLE_CODE(ie_ext.unpack(bref));
@@ -32420,7 +32422,7 @@ OCUDUASN_CODE sn_ode_addition_request_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<desired_act_notif_level_e>().pack(bref));
       break;
     case types::available_drb_ids:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::s_ng_ran_node_max_ip_data_rate_ul:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -32556,7 +32558,8 @@ OCUDUASN_CODE sn_ode_addition_request_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<desired_act_notif_level_e>().unpack(bref));
       break;
     case types::available_drb_ids:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(
+          unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::s_ng_ran_node_max_ip_data_rate_ul:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -32824,7 +32827,7 @@ OCUDUASN_CODE sn_ode_addition_request_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)95, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_dyn_seq_of(bref, available_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, available_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
   }
   if (s_ng_ran_node_max_ip_data_rate_ul_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)105, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -33097,7 +33100,8 @@ OCUDUASN_CODE sn_ode_addition_request_ies_container::unpack(cbit_ref& bref)
       case 95: {
         available_drb_ids_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_dyn_seq_of(available_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+        HANDLE_CODE(
+            unpack_dyn_seq_of(available_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
         break;
       }
       case 105: {
@@ -36855,7 +36859,7 @@ OCUDUASN_CODE sn_ode_mod_confirm_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
       break;
     case types::add_drb_ids:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::crit_diagnostics:
       HANDLE_CODE(c.get<crit_diagnostics_s>().pack(bref));
@@ -36892,7 +36896,8 @@ OCUDUASN_CODE sn_ode_mod_confirm_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
       break;
     case types::add_drb_ids:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(
+          unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::crit_diagnostics:
       HANDLE_CODE(c.get<crit_diagnostics_s>().unpack(bref));
@@ -36972,7 +36977,7 @@ OCUDUASN_CODE sn_ode_mod_confirm_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)96, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_dyn_seq_of(bref, add_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
   }
   if (crit_diagnostics_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)10, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -37045,7 +37050,7 @@ OCUDUASN_CODE sn_ode_mod_confirm_ies_container::unpack(cbit_ref& bref)
       case 96: {
         add_drb_ids_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_dyn_seq_of(add_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+        HANDLE_CODE(unpack_dyn_seq_of(add_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
         break;
       }
       case 10: {
@@ -38581,7 +38586,7 @@ OCUDUASN_CODE sn_ode_mod_request_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<desired_act_notif_level_e>().pack(bref));
       break;
     case types::add_drb_ids:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::s_ng_ran_node_max_ip_data_rate_ul:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -38696,7 +38701,8 @@ OCUDUASN_CODE sn_ode_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<desired_act_notif_level_e>().unpack(bref));
       break;
     case types::add_drb_ids:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(
+          unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::s_ng_ran_node_max_ip_data_rate_ul:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -38926,7 +38932,7 @@ OCUDUASN_CODE sn_ode_mod_request_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)96, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::reject}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_dyn_seq_of(bref, add_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, add_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
   }
   if (s_ng_ran_node_max_ip_data_rate_ul_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)105, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -39157,7 +39163,7 @@ OCUDUASN_CODE sn_ode_mod_request_ies_container::unpack(cbit_ref& bref)
       case 96: {
         add_drb_ids_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_dyn_seq_of(add_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+        HANDLE_CODE(unpack_dyn_seq_of(add_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
         break;
       }
       case 105: {
@@ -41562,7 +41568,7 @@ OCUDUASN_CODE sn_ode_mod_required_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
       break;
     case types::spare_drb_ids:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::required_nof_drb_ids:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)32u, true, true));
@@ -41641,7 +41647,8 @@ OCUDUASN_CODE sn_ode_mod_required_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
       break;
     case types::spare_drb_ids:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(
+          unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     case types::required_nof_drb_ids:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)1u, (uint8_t)32u, true, true));
@@ -41796,7 +41803,7 @@ OCUDUASN_CODE sn_ode_mod_required_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)97, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_dyn_seq_of(bref, spare_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, spare_drb_ids, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
   }
   if (required_nof_drb_ids_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)98, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -41953,7 +41960,7 @@ OCUDUASN_CODE sn_ode_mod_required_ies_container::unpack(cbit_ref& bref)
       case 97: {
         spare_drb_ids_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_dyn_seq_of(spare_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+        HANDLE_CODE(unpack_dyn_seq_of(spare_drb_ids, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
         break;
       }
       case 98: {
@@ -43346,7 +43353,7 @@ OCUDUASN_CODE sn_ode_release_request_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
       break;
     case types::drbs_transferred_to_mn:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<drb_list_l>(), 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     default:
       log_invalid_choice_id(type_, "sn_ode_release_request_ies_o::value_c");
@@ -43377,7 +43384,8 @@ OCUDUASN_CODE sn_ode_release_request_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
       break;
     case types::drbs_transferred_to_mn:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+      HANDLE_CODE(
+          unpack_dyn_seq_of(c.get<drb_list_l>(), bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
       break;
     default:
       log_invalid_choice_id(type_, "sn_ode_release_request_ies_o::value_c");
@@ -43450,7 +43458,7 @@ OCUDUASN_CODE sn_ode_release_request_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)137, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_dyn_seq_of(bref, drbs_transferred_to_mn, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, drbs_transferred_to_mn, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
   }
 
   return OCUDUASN_SUCCESS;
@@ -43511,7 +43519,8 @@ OCUDUASN_CODE sn_ode_release_request_ies_container::unpack(cbit_ref& bref)
       case 137: {
         drbs_transferred_to_mn_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_dyn_seq_of(drbs_transferred_to_mn, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true)));
+        HANDLE_CODE(
+            unpack_dyn_seq_of(drbs_transferred_to_mn, bref, 1, 32, integer_packer<uint8_t>(1, 32, true, true), true));
         break;
       }
       default:

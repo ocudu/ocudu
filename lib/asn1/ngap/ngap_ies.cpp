@@ -5096,7 +5096,7 @@ OCUDUASN_CODE area_scope_of_neigh_cells_item_s::pack(bit_ref& bref) const
 
   HANDLE_CODE(nr_freq_info.pack(bref));
   if (pci_list_for_mdt.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, pci_list_for_mdt, 1, 32, integer_packer<uint16_t>(0, 1007, true, true)));
+    HANDLE_CODE(pack_dyn_seq_of(bref, pci_list_for_mdt, 1, 32, integer_packer<uint16_t>(0, 1007, true, true), true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -5113,7 +5113,7 @@ OCUDUASN_CODE area_scope_of_neigh_cells_item_s::unpack(cbit_ref& bref)
 
   HANDLE_CODE(nr_freq_info.unpack(bref));
   if (pci_list_for_mdt_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(pci_list_for_mdt, bref, 1, 32, integer_packer<uint16_t>(0, 1007, true, true)));
+    HANDLE_CODE(unpack_dyn_seq_of(pci_list_for_mdt, bref, 1, 32, integer_packer<uint16_t>(0, 1007, true, true), true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -9742,10 +9742,10 @@ OCUDUASN_CODE expected_ue_activity_behaviour_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   if (expected_activity_period_present) {
-    HANDLE_CODE(pack_integer(bref, expected_activity_period, (uint8_t)1u, (uint8_t)30u, true, true));
+    HANDLE_CODE(pack_integer(bref, expected_activity_period, (uint8_t)1u, (uint8_t)181u, true, true));
   }
   if (expected_idle_period_present) {
-    HANDLE_CODE(pack_integer(bref, expected_idle_period, (uint8_t)1u, (uint8_t)30u, true, true));
+    HANDLE_CODE(pack_integer(bref, expected_idle_period, (uint8_t)1u, (uint8_t)181u, true, true));
   }
   if (source_of_ue_activity_behaviour_info_present) {
     HANDLE_CODE(source_of_ue_activity_behaviour_info.pack(bref));
@@ -9765,10 +9765,10 @@ OCUDUASN_CODE expected_ue_activity_behaviour_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   if (expected_activity_period_present) {
-    HANDLE_CODE(unpack_integer(expected_activity_period, bref, (uint8_t)1u, (uint8_t)30u, true, true));
+    HANDLE_CODE(unpack_integer(expected_activity_period, bref, (uint8_t)1u, (uint8_t)181u, true, true));
   }
   if (expected_idle_period_present) {
-    HANDLE_CODE(unpack_integer(expected_idle_period, bref, (uint8_t)1u, (uint8_t)30u, true, true));
+    HANDLE_CODE(unpack_integer(expected_idle_period, bref, (uint8_t)1u, (uint8_t)181u, true, true));
   }
   if (source_of_ue_activity_behaviour_info_present) {
     HANDLE_CODE(source_of_ue_activity_behaviour_info.unpack(bref));
@@ -28417,7 +28417,7 @@ OCUDUASN_CODE mbs_mapand_data_forwarding_request_item_s::pack(bit_ref& bref) con
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, mrb_id, (uint16_t)1u, (uint16_t)512u, true, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, mbs_qos_flow_list, 1, 64, integer_packer<uint8_t>(0, 63, true, true)));
+  HANDLE_CODE(pack_dyn_seq_of(bref, mbs_qos_flow_list, 1, 64, integer_packer<uint8_t>(0, 63, true, true), true));
   if (mrb_progress_info_present) {
     HANDLE_CODE(mrb_progress_info.pack(bref));
   }
@@ -28434,7 +28434,7 @@ OCUDUASN_CODE mbs_mapand_data_forwarding_request_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(mrb_id, bref, (uint16_t)1u, (uint16_t)512u, true, true));
-  HANDLE_CODE(unpack_dyn_seq_of(mbs_qos_flow_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, true, true)));
+  HANDLE_CODE(unpack_dyn_seq_of(mbs_qos_flow_list, bref, 1, 64, integer_packer<uint8_t>(0, 63, true, true), true));
   if (mrb_progress_info_present) {
     HANDLE_CODE(mrb_progress_info.unpack(bref));
   }
@@ -37236,7 +37236,7 @@ OCUDUASN_CODE periodicity_range_c::pack(bit_ref& bref) const
       break;
     case types::periodicity_list:
       HANDLE_CODE(pack_dyn_seq_of(
-          bref, c.get<allowed_periodicity_list_l>(), 1, 8, integer_packer<uint32_t>(0, 640000, true, true)));
+          bref, c.get<allowed_periodicity_list_l>(), 1, 8, integer_packer<uint32_t>(0, 640000, true, true), true));
       break;
     case types::choice_exts:
       HANDLE_CODE(c.get<protocol_ie_single_container_s<periodicity_range_ext_ies_o>>().pack(bref));
@@ -37258,7 +37258,7 @@ OCUDUASN_CODE periodicity_range_c::unpack(cbit_ref& bref)
       break;
     case types::periodicity_list:
       HANDLE_CODE(unpack_dyn_seq_of(
-          c.get<allowed_periodicity_list_l>(), bref, 1, 8, integer_packer<uint32_t>(0, 640000, true, true)));
+          c.get<allowed_periodicity_list_l>(), bref, 1, 8, integer_packer<uint32_t>(0, 640000, true, true), true));
       break;
     case types::choice_exts:
       HANDLE_CODE(c.get<protocol_ie_single_container_s<periodicity_range_ext_ies_o>>().unpack(bref));
@@ -47822,7 +47822,8 @@ OCUDUASN_CODE periodicity_list_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_dyn_seq_of(bref, allowed_periodicity_list, 1, 8, integer_packer<uint32_t>(0, 640000, true, true)));
+  HANDLE_CODE(
+      pack_dyn_seq_of(bref, allowed_periodicity_list, 1, 8, integer_packer<uint32_t>(0, 640000, true, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -47834,7 +47835,8 @@ OCUDUASN_CODE periodicity_list_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_dyn_seq_of(allowed_periodicity_list, bref, 1, 8, integer_packer<uint32_t>(0, 640000, true, true)));
+  HANDLE_CODE(
+      unpack_dyn_seq_of(allowed_periodicity_list, bref, 1, 8, integer_packer<uint32_t>(0, 640000, true, true), true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
