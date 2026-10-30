@@ -65,6 +65,10 @@ variables:
             exit $ret
           fi
         fi
+        # Shard tests by stride across `parallel: N` jobs
+        if [[ "${CTEST_SHARDED}" == "True" && "${CI_NODE_TOTAL:-1}" -gt 1 ]]; then
+          CTEST_ARGS="${CTEST_ARGS} -I ${CI_NODE_INDEX},,${CI_NODE_TOTAL}"
+        fi
         export -f launch_tests_ocudu
         status_file=$(mktemp)
         timeout ${TEST_EXECUTION_TIMEOUT} \
@@ -714,8 +718,11 @@ smoke asan:
 smoke valgrind:
   extends: .smoke valgrind
   timeout: 4 hours
+  parallel: 2
   rules:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
+  variables:
+    CTEST_SHARDED: "True"
 
 smoke rtsan:
   extends: .smoke rtsan
@@ -1129,7 +1136,7 @@ sanitizers avx2:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 1 hour
-  timeout: 4 hours
+  timeout: 6 hours
   variables:
     MARCH: x86-64-v3
   tags:
@@ -1202,7 +1209,7 @@ sanitizers arm neon:
   extends: .weekly sanitizers
   tags:
     - ${OCUDU_RUNNER_TAG}-arm64
-  timeout: 4 hours
+  timeout: 6 hours
   variables:
     MCPU: neoverse-n1+crc+crypto+ssbs
   parallel:
