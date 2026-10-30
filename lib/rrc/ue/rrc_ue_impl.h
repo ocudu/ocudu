@@ -167,6 +167,7 @@ private:
   void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) override;
   void on_new_as_security_context(bool security_mode_active) override;
   void on_as_security_activated() override;
+  void on_ul_nas_pdu(byte_buffer nas_pdu) override;
 
   // helpers
   void handle_illegal_pdu_integrity(const char* msg, bool integrity_verified);

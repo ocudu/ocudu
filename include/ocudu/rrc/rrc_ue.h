@@ -185,6 +185,10 @@ public:
   /// Resume and re-establishment activate security without a Security Mode Command, so this is what tells the RRC UE
   /// that anything gated on AS security may now run.
   virtual void on_as_security_activated() = 0;
+
+  /// \brief Send a NAS PDU from the UE to the AMF.
+  /// \param[in] nas_pdu The NAS PDU.
+  virtual void on_ul_nas_pdu(byte_buffer nas_pdu) = 0;
 };
 
 /// Interface to notify about NGAP messages.

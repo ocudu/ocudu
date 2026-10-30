@@ -5,6 +5,7 @@
 
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/e1ap/e1ap_cu_cp_test_messages.h"
+#include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
@@ -578,6 +579,54 @@ TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_context_is_retrieve
   ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu));
   ASSERT_EQ(int_to_srb_id(f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->srb_id), srb_id_t::srb2)
       << "The NAS message was not carried on SRB2";
+}
+
+TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test,
+       when_rrc_resume_complete_carries_nas_then_nas_is_sent_to_the_amf_after_path_switch)
+{
+  ASSERT_TRUE(retrieve_ue_context_for_resume());
+  ASSERT_TRUE(setup_bearers_and_await_rrc_resume());
+
+  // The UE includes a Deregistration Request in the RRCResumeComplete.
+  const byte_buffer           nas_pdu     = make_byte_buffer("7e0045010bf2").value();
+  asn1::rrc_nr::ul_dcch_msg_s ul_dcch_msg = test_helpers::create_rrc_resume_complete();
+  ul_dcch_msg.msg.c1().rrc_resume_complete().crit_exts.rrc_resume_complete().ded_nas_msg = nas_pdu.copy();
+  ASSERT_TRUE(ue_sends_ul_dcch(test_helpers::pack_ul_dcch_msg(ul_dcch_msg), 0));
+
+  // The AMF knows the UE at this node only after the path switch.
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "No Path Switch Request was sent";
+  ASSERT_TRUE(test_helpers::is_valid_path_switch_request(ngap_pdu)) << "Invalid Path Switch Request";
+  const auto& path_switch = *ngap_pdu.pdu.init_msg().value.path_switch_request();
+  get_amf().push_tx_pdu(generate_path_switch_request_ack(uint_to_amf_ue_id(peer_reported_amf_ue_id),
+                                                         uint_to_ran_ue_id(path_switch.ran_ue_ngap_id)));
+
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "The NAS message was not sent to the AMF";
+  ASSERT_TRUE(test_helpers::is_valid_ul_nas_transport_message(ngap_pdu));
+  ASSERT_EQ(ngap_pdu.pdu.init_msg().value.ul_nas_transport()->nas_pdu, nas_pdu)
+      << "The AMF did not get the NAS message of the RRCResumeComplete";
+}
+
+TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test,
+       when_ue_answers_rrc_resume_with_another_message_then_ue_is_released)
+{
+  ASSERT_TRUE(retrieve_ue_context_for_resume());
+  ASSERT_TRUE(setup_bearers_and_await_rrc_resume());
+
+  // The UE answers the RRCResume with an RRCReconfigurationComplete that has the same transaction ID.
+  ASSERT_TRUE(
+      ue_sends_ul_dcch(test_helpers::pack_ul_dcch_msg(test_helpers::create_rrc_reconfiguration_complete(0)), 0));
+
+  ASSERT_TRUE(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu)) << "The UE was not released";
+  ASSERT_TRUE(test_helpers::is_valid_bearer_context_release_command(e1ap_pdu))
+      << "Expected a Bearer Context Release Command";
+  get_cu_up(cu_up_idx).push_tx_pdu(ocucp::generate_bearer_context_release_complete(cu_cp_e1ap_id, cu_up_e1ap_id));
+
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu)) << "No UE Context Release Command was sent to the DU";
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(f1ap_pdu));
+
+  ASSERT_FALSE(this->wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{5}))
+      << "The path was switched for a UE that did not resume";
 }
 
 TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_i_rnti_points_at_no_peer_then_no_retrieval_is_attempted)

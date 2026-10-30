@@ -116,6 +116,15 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT(transaction);
 
   if (transaction.has_response()) {
+    if (not is_rrc_resume_complete(transaction.response())) {
+      logger.log_warning("\"{}\" failed. Cause: Unexpected UL-DCCH message. Requesting UE context release", name());
+      // Close the transaction, because the UE release removes the transaction manager of the RRC UE.
+      transaction = {};
+      CORO_AWAIT(handle_rrc_resume_failure());
+      CORO_EARLY_RETURN();
+    }
+    rrc_resume_complete_msg = transaction.response().msg.c1().rrc_resume_complete();
+
     context.state = rrc_state::connected;
 
     // Notify metrics about successful RRC connection resume.
@@ -135,6 +144,8 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
       }
     }
 
+    send_ul_nas();
+
     for (auto& nas_pdu : context.pending_dl_nas_transport_messages) {
       // If there is a pending DL NAS Transport message, send it to the UE now that it is resumed.
       logger.log_debug("Sending pending DL NAS Transport message to UE after successful resume");
@@ -149,6 +160,16 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
 
   CORO_RETURN();
+}
+
+bool rrc_resume_procedure::is_rrc_resume_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg)
+{
+  using namespace asn1::rrc_nr;
+
+  return msg.msg.type().value == ul_dcch_msg_type_c::types_opts::c1 and
+         msg.msg.c1().type().value == ul_dcch_msg_type_c::c1_c_::types_opts::rrc_resume_complete and
+         msg.msg.c1().rrc_resume_complete().crit_exts.type().value ==
+             rrc_resume_complete_s::crit_exts_c_::types_opts::rrc_resume_complete;
 }
 
 async_task<void> rrc_resume_procedure::handle_rrc_resume_failure()
@@ -327,6 +348,19 @@ void rrc_resume_procedure::send_rrc_resume()
   fill_asn1_rrc_resume_msg(dl_dcch_msg.msg.c1().rrc_resume(), transaction.id(), rrc_resume_context);
 
   rrc_ue_resume_notifier.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+}
+
+void rrc_resume_procedure::send_ul_nas()
+{
+  // The UE includes a NAS PDU from its upper layers in the RRCResumeComplete, see TS 38.331 section 5.3.13.4.
+  const asn1::rrc_nr::rrc_resume_complete_ies_s& resume_complete =
+      rrc_resume_complete_msg.crit_exts.rrc_resume_complete();
+  if (resume_complete.ded_nas_msg.empty()) {
+    return;
+  }
+
+  logger.log_debug("Forwarding the NAS message of the RRC Resume Complete to the AMF");
+  rrc_ue_resume_notifier.on_ul_nas_pdu(resume_complete.ded_nas_msg.copy());
 }
 
 void rrc_resume_procedure::send_pending_dl_nas(byte_buffer& nas_pdu)

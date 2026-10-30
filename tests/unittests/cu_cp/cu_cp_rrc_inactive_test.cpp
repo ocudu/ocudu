@@ -923,6 +923,24 @@ TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_is_received_then_existin
   ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_resumes.get_count(resume_cause_t::mo_data), 1);
 }
 
+TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_complete_carries_nas_then_nas_is_sent_to_the_amf)
+{
+  // Connect UE with RRC Inactive support.
+  connect_ue_with_rrc_inactive_support();
+
+  // Inject Inactivity Notification and handle it.
+  ASSERT_TRUE(trigger_rrc_inactive(du_ue_id));
+
+  // Resume the UE. The RRC Resume Complete contains the NAS PDU 7e0045010bf2 (Deregistration Request).
+  ASSERT_TRUE(resume_ue(
+      du_ue_id_2, crnti_2, 0x4d8000, "1111010001000010", make_byte_buffer("000020c033f00228085f90001cddc4c6").value()));
+
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "The NAS message was not sent to the AMF";
+  ASSERT_TRUE(test_helpers::is_valid_ul_nas_transport_message(ngap_pdu));
+  ASSERT_EQ(ngap_pdu.pdu.init_msg().value.ul_nas_transport()->nas_pdu, make_byte_buffer("7e0045010bf2").value())
+      << "The AMF did not get the NAS message of the RRC Resume Complete";
+}
+
 TEST_F(cu_cp_rrc_inactive_test, when_ue_becomes_inactive_after_resume_then_resume_is_successful_again)
 {
   // Connect UE with RRC Inactive support.

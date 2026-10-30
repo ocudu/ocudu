@@ -8,6 +8,7 @@
 #include "../rrc_ue_context.h"
 #include "../rrc_ue_logger.h"
 #include "rrc_ue_event_manager.h"
+#include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/rrc/rrc_resume.h"
 #include "ocudu/rrc/rrc_ue.h"
 #include "ocudu/support/async/async_task.h"
@@ -39,6 +40,9 @@ public:
   static const char* name() { return "RRC Resume Procedure"; }
 
 private:
+  /// \brief Check that the UE answered the RRC Resume with an RRC Resume Complete.
+  static bool is_rrc_resume_complete(const asn1::rrc_nr::ul_dcch_msg_s& msg);
+
   /// \brief Build the request for retrieving this UE's context from the peer that allocated its I-RNTI.
   rrc_ue_context_retrieval_request make_context_retrieval_request() const;
 
@@ -66,6 +70,9 @@ private:
 
   void send_rrc_resume();
 
+  /// \brief Send the NAS message of the RRC Resume Complete to the AMF, if the UE included one.
+  void send_ul_nas();
+
   /// \brief Send the pending DL NAS Transport message to the UE after a successful resume.
   void send_pending_dl_nas(byte_buffer& nas_pdu);
 
@@ -89,6 +96,8 @@ private:
   const bool context_retrieval_required;
 
   rrc_resume_request request;
+
+  asn1::rrc_nr::rrc_resume_complete_s rrc_resume_complete_msg;
 
   const asn1::rrc_nr::pdcp_cfg_s    srb1_pdcp_cfg;
   std::chrono::milliseconds         procedure_timeout{0};

@@ -916,6 +916,7 @@ public:
   // RRC UE Reestablishment proc notifier.
   void on_new_as_security_context(bool security_mode_active) override {}
   void on_as_security_activated() override {}
+  void on_ul_nas_pdu(byte_buffer nas_pdu) override {}
 
   // Interface functions.
   rrc_ue_controller&              get_controller() override { return *this; }
