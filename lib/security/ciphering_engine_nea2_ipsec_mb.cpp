@@ -34,6 +34,11 @@ security_status ciphering_engine_nea2_ipsec_mb::apply_ciphering(byte_buffer& buf
 {
   byte_buffer_view msg{buf.begin() + offset, buf.end()};
 
+  if (msg.length() > LINEAR_BUFF_SZ) {
+    logger.warning("Failed to apply ciphering, PDU is too large. count={} length={}", count, msg.length());
+    return security_status::engine_failure;
+  }
+
   logger.debug("Applying ciphering. count={}", count);
   logger.debug("K_enc: {}", k_128_enc);
   logger.debug(msg.begin(), msg.end(), "Ciphering input:");

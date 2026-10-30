@@ -41,6 +41,11 @@ security_status integrity_engine_nia2_ipsec_mb::compute_mac(sec_mac& mac, const 
 {
   IMB_JOB* job = IMB_GET_NEXT_JOB(mgr);
 
+  if (v.length() + PREAMBLE_SZ > LINEAR_BUFF_SZ) {
+    logger.warning("Failed to apply integrity, PDU is too large. count={} length={}", count, v.length());
+    return security_status::engine_failure;
+  }
+
   job->cipher_mode      = IMB_CIPHER_NULL;
   job->cipher_direction = IMB_DIR_ENCRYPT;
   job->hash_alg         = IMB_AUTH_AES_CMAC;

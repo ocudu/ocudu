@@ -196,16 +196,16 @@ static void benchmark_pdcp_tx(bench_params                  params,
     metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, dl_exec);
     pdcp_rohc_factory = rohc::create_rohc_factory();
     pdcp_tx           = std::make_unique<pdcp_entity_tx>(0,
-                                                         drb_id_t::drb1,
-                                                         config,
-                                                         *frame,
-                                                         *frame,
-                                                         timer_factory{timers, dl_exec},
-                                                         dl_exec,
-                                                         crypto_exec,
-                                                         params.nof_crypto_threads,
-                                                         *pdcp_rohc_factory,
-                                                         *metrics_agg);
+                                               drb_id_t::drb1,
+                                               config,
+                                               *frame,
+                                               *frame,
+                                               timer_factory{timers, dl_exec},
+                                               dl_exec,
+                                               crypto_exec,
+                                               params.nof_crypto_threads,
+                                               *pdcp_rohc_factory,
+                                               *metrics_agg);
     pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
     const uint32_t max_pdu_size = sdu_len + 9;
