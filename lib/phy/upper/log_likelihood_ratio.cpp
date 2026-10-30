@@ -181,8 +181,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
 {
   const uint8x16_t mask_msb_u8    = vdupq_n_u8(0x80);
   const int8_t     shift_mask[16] = {-7, -6, -5, -4, -3, -2, -1, 0, -7, -6, -5, -4, -3, -2, -1, 0};
-  const int8x16_t  shift_mask_s8 =
-      vcombine_s8(vcreate_s8(*((uint64_t*)shift_mask)), vcreate_s8(*((uint64_t*)&shift_mask[8])));
+  const int8x16_t  shift_mask_s8  = vld1q_s8(shift_mask);
 
   // Number of bits processed on each loop cycle.
   static constexpr unsigned NEON_B_SIZE = 16;
@@ -231,7 +230,8 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
     mask_u8 = vpaddq_u8(mask_u8, mask_u8);
 
     // Write the packed bits into 2 bytes of the internal buffer.
-    vst1q_lane_u16(reinterpret_cast<uint16_t*>(packed_buffer.begin()), vreinterpretq_u16_u8(mask_u8), 0);
+    vst1q_lane_u8(&packed_buffer[0], mask_u8, 0);
+    vst1q_lane_u8(&packed_buffer[1], mask_u8, 1);
 
     // Advance buffer.
     packed_buffer = packed_buffer.last(packed_buffer.size() - (NEON_B_SIZE / 8));
