@@ -205,7 +205,7 @@ struct non_dyn_5qi_descriptor_s {
   bool                                     max_data_burst_volume_present = false;
   bool                                     ie_ext_present                = false;
   uint16_t                                 five_qi                       = 0;
-  uint8_t                                  prio_level_qos                = 1;
+  uint16_t                                 prio_level_qos                = 1;
   uint16_t                                 averaging_win                 = 0;
   uint16_t                                 max_data_burst_volume         = 0;
   non_dyn_5qi_descriptor_ext_ies_container ie_ext;
@@ -311,7 +311,7 @@ struct dyn_5qi_descriptor_s {
   bool                                 averaging_win_present         = false;
   bool                                 max_data_burst_volume_present = false;
   bool                                 ie_ext_present                = false;
-  uint8_t                              prio_level_qos                = 1;
+  uint16_t                             prio_level_qos                = 1;
   uint16_t                             packet_delay_budget           = 0;
   packet_error_rate_s                  packet_error_rate;
   uint16_t                             five_qi = 0;
@@ -1940,7 +1940,7 @@ struct area_of_interest_item_s {
   list_of_tai_sin_ao_i_l                  list_of_tai_sin_ao_i;
   list_of_cells_l                         list_of_cellsin_ao_i;
   list_of_ran_nodesin_ao_i_l              list_of_ran_nodesin_ao_i;
-  uint8_t                                 request_ref_id = 1;
+  uint16_t                                request_ref_id = 1;
   area_of_interest_item_ext_ies_container ie_exts;
   // ...
 
@@ -3666,7 +3666,7 @@ struct beam_meass_report_cfg_s {
   bool                                    max_nrof_rs_idxes_to_report_present = false;
   bool                                    ie_exts_present                     = false;
   beam_meass_report_quant_s               beam_meass_report_quant;
-  uint8_t                                 max_nrof_rs_idxes_to_report = 1;
+  uint16_t                                max_nrof_rs_idxes_to_report = 1;
   beam_meass_report_cfg_ext_ies_container ie_exts;
   // ...
 
@@ -5990,7 +5990,7 @@ struct cell_and_capacity_assist_info_eutra_s {
   bool                                                  max_cell_list_size_present     = false;
   bool                                                  cell_assist_info_eutra_present = false;
   bool                                                  ie_exts_present                = false;
-  uint16_t                                              max_cell_list_size             = 1;
+  uint32_t                                              max_cell_list_size             = 1;
   cell_assist_info_eutra_c                              cell_assist_info_eutra;
   cell_and_capacity_assist_info_eutra_ext_ies_container ie_exts;
   // ...
@@ -6083,7 +6083,7 @@ struct cell_and_capacity_assist_info_nr_s {
   bool                                               max_cell_list_size_present  = false;
   bool                                               cell_assist_info_nr_present = false;
   bool                                               ie_exts_present             = false;
-  uint16_t                                           max_cell_list_size          = 1;
+  uint32_t                                           max_cell_list_size          = 1;
   cell_assist_info_nr_c                              cell_assist_info_nr;
   cell_and_capacity_assist_info_nr_ext_ies_container ie_exts;
   // ...
@@ -6643,9 +6643,9 @@ struct tnl_capacity_ind_s {
   bool                               ext                       = false;
   bool                               ie_exts_present           = false;
   uint32_t                           dl_tnl_offered_capacity   = 1;
-  uint8_t                            dl_tnl_available_capacity = 1;
+  uint16_t                           dl_tnl_available_capacity = 1;
   uint32_t                           ul_tnl_offered_capacity   = 1;
-  uint8_t                            ul_tnl_available_capacity = 1;
+  uint16_t                           ul_tnl_available_capacity = 1;
   tnl_capacity_ind_ext_ies_container ie_exts;
   // ...
 
@@ -6665,7 +6665,7 @@ struct composite_available_capacity_s {
   bool                                           ext                               = false;
   bool                                           cell_capacity_class_value_present = false;
   bool                                           ie_exts_present                   = false;
-  uint8_t                                        cell_capacity_class_value         = 1;
+  uint16_t                                       cell_capacity_class_value         = 1;
   capacity_value_info_s                          capacity_value_info;
   composite_available_capacity_ext_ies_container ie_exts;
   // ...
@@ -6808,11 +6808,11 @@ struct nr_u_ch_item_ext_ies_o {
     OCUDUASN_CODE unpack(cbit_ref& bref);
     void          to_json(json_writer& j) const;
     // getters
-    uint8_t&                ch_occupancy_time_percentage_ul();
-    int8_t&                 energy_detection_thres_ul();
+    uint16_t&               ch_occupancy_time_percentage_ul();
+    int16_t&                energy_detection_thres_ul();
     rr_status_nr_u_s&       rr_status_nr_u();
-    const uint8_t&          ch_occupancy_time_percentage_ul() const;
-    const int8_t&           energy_detection_thres_ul() const;
+    const uint16_t&         ch_occupancy_time_percentage_ul() const;
+    const int16_t&          energy_detection_thres_ul() const;
     const rr_status_nr_u_s& rr_status_nr_u() const;
 
   private:
@@ -6832,8 +6832,8 @@ struct nr_u_ch_item_ext_ies_container {
   bool             ch_occupancy_time_percentage_ul_present = false;
   bool             energy_detection_thres_ul_present       = false;
   bool             rr_status_nr_u_present                  = false;
-  uint8_t          ch_occupancy_time_percentage_ul;
-  int8_t           energy_detection_thres_ul;
+  uint16_t         ch_occupancy_time_percentage_ul;
+  int16_t          energy_detection_thres_ul;
   rr_status_nr_u_s rr_status_nr_u;
 
   // sequence methods
@@ -6847,8 +6847,8 @@ struct nr_u_ch_item_s {
   bool                           ext                             = false;
   bool                           ie_ext_present                  = false;
   uint8_t                        nr_u_ch_id                      = 1;
-  uint8_t                        ch_occupancy_time_percentage_dl = 0;
-  int8_t                         energy_detection_thres_dl       = -100;
+  uint16_t                       ch_occupancy_time_percentage_dl = 0;
+  int16_t                        energy_detection_thres_dl       = -100;
   nr_u_ch_item_ext_ies_container ie_ext;
   // ...
 
@@ -10704,8 +10704,8 @@ struct expected_ue_activity_behaviour_s {
   bool                                             expected_idle_period_present                 = false;
   bool                                             source_of_ue_activity_behaviour_info_present = false;
   bool                                             ie_exts_present                              = false;
-  uint8_t                                          expected_activity_period                     = 1;
-  uint8_t                                          expected_idle_period                         = 1;
+  uint16_t                                         expected_activity_period                     = 1;
+  uint16_t                                         expected_idle_period                         = 1;
   source_of_ue_activity_behaviour_info_e           source_of_ue_activity_behaviour_info;
   expected_ue_activity_behaviour_ext_ies_container ie_exts;
   // ...
@@ -12020,7 +12020,7 @@ struct iab_stc_info_item_s {
   uint32_t                            ssb_freq_info   = 0;
   ssb_subcarrier_spacing_e            ssb_subcarrier_spacing;
   ssb_tx_periodicity_e                ssb_tx_periodicity;
-  uint8_t                             ssb_tx_timing_offset = 0;
+  uint16_t                            ssb_tx_timing_offset = 0;
   ssb_tx_bitmap_c                     ssb_tx_bitmap;
   iab_stc_info_item_ext_ies_container ie_exts;
   // ...
@@ -15364,7 +15364,7 @@ using msg_oversize_notif_ext_ies_container = protocol_ext_container_empty_l;
 struct msg_oversize_notif_s {
   bool                                 ext                = false;
   bool                                 ie_ext_present     = false;
-  uint16_t                             max_cell_list_size = 1;
+  uint32_t                             max_cell_list_size = 1;
   msg_oversize_notif_ext_ies_container ie_ext;
   // ...
 

@@ -146,8 +146,9 @@ void f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
     // List IE in the UE CONTEXT MODIFICATION RESPONSE message.
     auto& list = du_request.serving_cell_mo_list.emplace();
     for (const auto& item : msg->serving_cell_mo_list) {
-      list.emplace_back(f1ap_serving_cell_mo_list_item{item->serving_cell_mo_list_item().serving_cell_mo,
-                                                       item->serving_cell_mo_list_item().ssb_freq});
+      list.emplace_back(
+          f1ap_serving_cell_mo_list_item{static_cast<uint8_t>(item->serving_cell_mo_list_item().serving_cell_mo),
+                                         item->serving_cell_mo_list_item().ssb_freq});
     }
   }
 }

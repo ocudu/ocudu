@@ -1413,11 +1413,11 @@ struct ehc_dl_params_ext_ies_o {
     OCUDUASN_CODE unpack(cbit_ref& bref);
     void          to_json(json_writer& j) const;
     // getters
-    uint16_t&       max_c_id_ehc_dl() { return c; }
-    const uint16_t& max_c_id_ehc_dl() const { return c; }
+    uint32_t&       max_c_id_ehc_dl() { return c; }
+    const uint32_t& max_c_id_ehc_dl() const { return c; }
 
   private:
-    uint16_t c;
+    uint32_t c;
   };
 
   // members lookup methods
@@ -1784,7 +1784,7 @@ struct non_dyn_5qi_descriptor_s {
   bool                                     max_data_burst_volume_present = false;
   bool                                     ie_exts_present               = false;
   uint16_t                                 five_qi                       = 0;
-  uint8_t                                  qos_prio_level                = 0;
+  uint16_t                                 qos_prio_level                = 0;
   uint16_t                                 averaging_win                 = 0;
   uint16_t                                 max_data_burst_volume         = 0;
   non_dyn_5qi_descriptor_ext_ies_container ie_exts;
@@ -1868,7 +1868,7 @@ struct dyn_5qi_descriptor_s {
   bool                                 averaging_win_present         = false;
   bool                                 max_data_burst_volume_present = false;
   bool                                 ie_exts_present               = false;
-  uint8_t                              qos_prio_level                = 0;
+  uint16_t                             qos_prio_level                = 0;
   uint16_t                             packet_delay_budget           = 0;
   packet_error_rate_s                  packet_error_rate;
   uint16_t                             five_qi = 0;
@@ -6336,7 +6336,7 @@ struct hw_capacity_ind_s {
   bool                              ext                  = false;
   bool                              ie_exts_present      = false;
   uint32_t                          offered_throughput   = 1;
-  uint8_t                           available_throughput = 0;
+  uint16_t                          available_throughput = 0;
   hw_capacity_ind_ext_ies_container ie_exts;
   // ...
 
@@ -9266,9 +9266,9 @@ struct tnl_available_capacity_ind_s {
   bool                                         ext                       = false;
   bool                                         ie_exts_present           = false;
   uint32_t                                     dl_tnl_offered_capacity   = 0;
-  uint8_t                                      dl_tnl_available_capacity = 0;
+  uint16_t                                     dl_tnl_available_capacity = 0;
   uint32_t                                     ul_tnl_offered_capacity   = 0;
-  uint8_t                                      ul_tnl_available_capacity = 0;
+  uint16_t                                     ul_tnl_available_capacity = 0;
   tnl_available_capacity_ind_ext_ies_container ie_exts;
   // ...
 

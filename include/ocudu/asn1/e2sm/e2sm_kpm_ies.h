@@ -347,10 +347,10 @@ struct test_cond_value_c {
     assert_choice_type(types::value_bool, type_, "TestCond-Value");
     return c.get<bool>();
   }
-  dyn_bitstring& value_bit_s()
+  unbounded_bitstring<false, true>& value_bit_s()
   {
     assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
-    return c.get<dyn_bitstring>();
+    return c.get<unbounded_bitstring<false, true>>();
   }
   unbounded_octstring<true>& value_oct_s()
   {
@@ -382,10 +382,10 @@ struct test_cond_value_c {
     assert_choice_type(types::value_bool, type_, "TestCond-Value");
     return c.get<bool>();
   }
-  const dyn_bitstring& value_bit_s() const
+  const unbounded_bitstring<false, true>& value_bit_s() const
   {
     assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
-    return c.get<dyn_bitstring>();
+    return c.get<unbounded_bitstring<false, true>>();
   }
   const unbounded_octstring<true>& value_oct_s() const
   {
@@ -405,7 +405,7 @@ struct test_cond_value_c {
   int64_t&                                                 set_value_int();
   int64_t&                                                 set_value_enum();
   bool&                                                    set_value_bool();
-  dyn_bitstring&                                           set_value_bit_s();
+  unbounded_bitstring<false, true>&                        set_value_bit_s();
   unbounded_octstring<true>&                               set_value_oct_s();
   printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& set_value_prt_s();
   real_s&                                                  set_value_real();
@@ -413,9 +413,9 @@ struct test_cond_value_c {
 private:
   types type_;
   choice_buffer_t<bool,
-                  dyn_bitstring,
                   printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
                   real_s,
+                  unbounded_bitstring<false, true>,
                   unbounded_octstring<true>>
       c;
 
@@ -436,19 +436,19 @@ struct meas_value_report_cond_s {
 };
 
 // LogicalOR ::= ENUMERATED
-struct logical_or_opts {
+struct lc_or_opts {
   enum options { true_value, /*...*/ nulltype } value;
 
   const char* to_string() const;
 };
-using logical_or_e = enumerated<logical_or_opts, true>;
+using lc_or_e = enumerated<lc_or_opts, true>;
 
 // MatchCondReportItem ::= SEQUENCE
 struct match_cond_report_item_s {
   bool                     ext           = false;
   bool                     lc_or_present = false;
   meas_value_report_cond_s meas_value_report_cond;
-  logical_or_e             lc_or;
+  lc_or_e                  lc_or;
   // ...
 
   // sequence methods
@@ -815,7 +815,7 @@ struct matching_cond_item_s {
   bool                        ext           = false;
   bool                        lc_or_present = false;
   matching_cond_item_choice_c matching_cond_choice;
-  logical_or_e                lc_or;
+  lc_or_e                     lc_or;
   // ...
 
   // sequence methods
@@ -864,8 +864,8 @@ struct matching_ue_cond_per_sub_item_s {
   bool             ext = false;
   test_cond_info_s test_cond_info;
   // ...
-  bool         lc_or_present = false;
-  logical_or_e lc_or;
+  bool    lc_or_present = false;
+  lc_or_e lc_or;
 
   // sequence methods
   OCUDUASN_CODE pack(bit_ref& bref) const;
@@ -1381,7 +1381,7 @@ struct event_trigger_item_s {
   bool            lc_or_present             = false;
   event_formula_s event_cond;
   uint64_t        event_eval_period = 1;
-  logical_or_e    lc_or;
+  lc_or_e         lc_or;
   // ...
 
   // sequence methods

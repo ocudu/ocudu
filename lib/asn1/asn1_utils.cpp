@@ -1249,8 +1249,8 @@ static OCUDUASN_CODE
 pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uint32_t lb, uint32_t ub, bool is_aligned)
 {
   if (nbits == 0) {
-    log_error("Invalid bitstring size={}", nbits);
-    return OCUDUASN_ERROR_ENCODE_FAIL;
+    // Empty bit string, which only the length prefix encodes.
+    return OCUDUASN_SUCCESS;
   }
   if (is_aligned and (lb != ub or ub > 16)) {
     bref.align_bytes_zero();

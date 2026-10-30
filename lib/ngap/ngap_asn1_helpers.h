@@ -168,7 +168,7 @@ ngap_asn1_to_qos_flow_level_qos_parameters(const asn1::ngap::qos_flow_level_qos_
     const auto& asn1_dyn_5qi = asn1_qos_params.qos_characteristics.dyn5qi();
 
     dyn_5qi_descriptor dyn_5qi  = {};
-    dyn_5qi.qos_prio_level      = qos_prio_level_t{asn1_dyn_5qi.prio_level_qos};
+    dyn_5qi.qos_prio_level      = qos_prio_level_t{static_cast<uint8_t>(asn1_dyn_5qi.prio_level_qos)};
     dyn_5qi.packet_delay_budget = asn1_dyn_5qi.packet_delay_budget;
     dyn_5qi.per.exponent        = asn1_dyn_5qi.packet_error_rate.per_exponent;
     dyn_5qi.per.scalar          = asn1_dyn_5qi.packet_error_rate.per_scalar;

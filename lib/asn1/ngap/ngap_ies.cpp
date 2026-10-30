@@ -2725,7 +2725,7 @@ OCUDUASN_CODE add_cancelledlocation_report_ref_id_item_s::pack(bit_ref& bref) co
   bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, location_report_ref_id_to_be_cancelled, (uint8_t)1u, (uint8_t)64u, true, true));
+  HANDLE_CODE(pack_integer(bref, location_report_ref_id_to_be_cancelled, (uint16_t)1u, (uint16_t)64u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -2737,7 +2737,7 @@ OCUDUASN_CODE add_cancelledlocation_report_ref_id_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(location_report_ref_id_to_be_cancelled, bref, (uint8_t)1u, (uint8_t)64u, true, true));
+  HANDLE_CODE(unpack_integer(location_report_ref_id_to_be_cancelled, bref, (uint16_t)1u, (uint16_t)64u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -3816,7 +3816,7 @@ OCUDUASN_CODE area_of_interest_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(area_of_interest.pack(bref));
-  HANDLE_CODE(pack_integer(bref, location_report_ref_id, (uint8_t)1u, (uint8_t)64u, true, true));
+  HANDLE_CODE(pack_integer(bref, location_report_ref_id, (uint16_t)1u, (uint16_t)64u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -3829,7 +3829,7 @@ OCUDUASN_CODE area_of_interest_item_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(area_of_interest.unpack(bref));
-  HANDLE_CODE(unpack_integer(location_report_ref_id, bref, (uint8_t)1u, (uint8_t)64u, true, true));
+  HANDLE_CODE(unpack_integer(location_report_ref_id, bref, (uint16_t)1u, (uint16_t)64u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -6568,7 +6568,7 @@ OCUDUASN_CODE beam_meass_report_cfg_s::pack(bit_ref& bref) const
     HANDLE_CODE(beam_meass_report_quant.pack(bref));
   }
   if (max_nrof_rs_idxes_to_report_present) {
-    HANDLE_CODE(pack_integer(bref, max_nrof_rs_idxes_to_report, (uint8_t)1u, (uint8_t)64u, true, true));
+    HANDLE_CODE(pack_integer(bref, max_nrof_rs_idxes_to_report, (uint16_t)1u, (uint16_t)64u, true, true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -6587,7 +6587,7 @@ OCUDUASN_CODE beam_meass_report_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(beam_meass_report_quant.unpack(bref));
   }
   if (max_nrof_rs_idxes_to_report_present) {
-    HANDLE_CODE(unpack_integer(max_nrof_rs_idxes_to_report, bref, (uint8_t)1u, (uint8_t)64u, true, true));
+    HANDLE_CODE(unpack_integer(max_nrof_rs_idxes_to_report, bref, (uint16_t)1u, (uint16_t)64u, true, true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -9742,10 +9742,10 @@ OCUDUASN_CODE expected_ue_activity_behaviour_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   if (expected_activity_period_present) {
-    HANDLE_CODE(pack_integer(bref, expected_activity_period, (uint8_t)1u, (uint8_t)181u, true, true));
+    HANDLE_CODE(pack_integer(bref, expected_activity_period, (uint16_t)1u, (uint16_t)181u, true, true));
   }
   if (expected_idle_period_present) {
-    HANDLE_CODE(pack_integer(bref, expected_idle_period, (uint8_t)1u, (uint8_t)181u, true, true));
+    HANDLE_CODE(pack_integer(bref, expected_idle_period, (uint16_t)1u, (uint16_t)181u, true, true));
   }
   if (source_of_ue_activity_behaviour_info_present) {
     HANDLE_CODE(source_of_ue_activity_behaviour_info.pack(bref));
@@ -9765,10 +9765,10 @@ OCUDUASN_CODE expected_ue_activity_behaviour_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   if (expected_activity_period_present) {
-    HANDLE_CODE(unpack_integer(expected_activity_period, bref, (uint8_t)1u, (uint8_t)181u, true, true));
+    HANDLE_CODE(unpack_integer(expected_activity_period, bref, (uint16_t)1u, (uint16_t)181u, true, true));
   }
   if (expected_idle_period_present) {
-    HANDLE_CODE(unpack_integer(expected_idle_period, bref, (uint8_t)1u, (uint8_t)181u, true, true));
+    HANDLE_CODE(unpack_integer(expected_idle_period, bref, (uint16_t)1u, (uint16_t)181u, true, true));
   }
   if (source_of_ue_activity_behaviour_info_present) {
     HANDLE_CODE(source_of_ue_activity_behaviour_info.unpack(bref));
@@ -11268,7 +11268,7 @@ OCUDUASN_CODE composite_available_capacity_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   if (cell_capacity_class_value_present) {
-    HANDLE_CODE(pack_integer(bref, cell_capacity_class_value, (uint8_t)1u, (uint8_t)100u, true, true));
+    HANDLE_CODE(pack_integer(bref, cell_capacity_class_value, (uint16_t)1u, (uint16_t)100u, true, true));
   }
   HANDLE_CODE(pack_integer(bref, capacity_value, (uint8_t)0u, (uint8_t)100u, false, true));
   if (ie_exts_present) {
@@ -11284,7 +11284,7 @@ OCUDUASN_CODE composite_available_capacity_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   if (cell_capacity_class_value_present) {
-    HANDLE_CODE(unpack_integer(cell_capacity_class_value, bref, (uint8_t)1u, (uint8_t)100u, true, true));
+    HANDLE_CODE(unpack_integer(cell_capacity_class_value, bref, (uint16_t)1u, (uint16_t)100u, true, true));
   }
   HANDLE_CODE(unpack_integer(capacity_value, bref, (uint8_t)0u, (uint8_t)100u, false, true));
   if (ie_exts_present) {
@@ -14192,7 +14192,7 @@ OCUDUASN_CODE dyn_5qi_descriptor_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(max_data_burst_volume_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, prio_level_qos, (uint8_t)1u, (uint8_t)127u, true, true));
+  HANDLE_CODE(pack_integer(bref, prio_level_qos, (uint16_t)1u, (uint16_t)127u, true, true));
   HANDLE_CODE(pack_integer(bref, packet_delay_budget, (uint16_t)0u, (uint16_t)1023u, true, true));
   HANDLE_CODE(packet_error_rate.pack(bref));
   if (five_qi_present) {
@@ -14222,7 +14222,7 @@ OCUDUASN_CODE dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(max_data_burst_volume_present, 1));
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(prio_level_qos, bref, (uint8_t)1u, (uint8_t)127u, true, true));
+  HANDLE_CODE(unpack_integer(prio_level_qos, bref, (uint16_t)1u, (uint16_t)127u, true, true));
   HANDLE_CODE(unpack_integer(packet_delay_budget, bref, (uint16_t)0u, (uint16_t)1023u, true, true));
   HANDLE_CODE(packet_error_rate.unpack(bref));
   if (five_qi_present) {
@@ -23346,7 +23346,7 @@ OCUDUASN_CODE intersys_cell_activation_reply_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, activ_cell_list, 1, 16384, true));
-  HANDLE_CODE(pack_integer(bref, activation_id, (uint16_t)0u, (uint16_t)16384u, true, true));
+  HANDLE_CODE(pack_integer(bref, activation_id, (uint32_t)0u, (uint32_t)16384u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -23359,7 +23359,7 @@ OCUDUASN_CODE intersys_cell_activation_reply_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_dyn_seq_of(activ_cell_list, bref, 1, 16384, true));
-  HANDLE_CODE(unpack_integer(activation_id, bref, (uint16_t)0u, (uint16_t)16384u, true, true));
+  HANDLE_CODE(unpack_integer(activation_id, bref, (uint32_t)0u, (uint32_t)16384u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -23392,7 +23392,7 @@ OCUDUASN_CODE intersys_cell_activation_request_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, activation_id, (uint16_t)0u, (uint16_t)16384u, true, true));
+  HANDLE_CODE(pack_integer(bref, activation_id, (uint32_t)0u, (uint32_t)16384u, true, true));
   HANDLE_CODE(pack_dyn_seq_of(bref, cells_to_activ_list, 1, 16384, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -23405,7 +23405,7 @@ OCUDUASN_CODE intersys_cell_activation_request_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(activation_id, bref, (uint16_t)0u, (uint16_t)16384u, true, true));
+  HANDLE_CODE(unpack_integer(activation_id, bref, (uint32_t)0u, (uint32_t)16384u, true, true));
   HANDLE_CODE(unpack_dyn_seq_of(cells_to_activ_list, bref, 1, 16384, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -26559,7 +26559,7 @@ OCUDUASN_CODE location_report_request_type_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, area_of_interest_list, 1, 64, true));
   }
   if (location_report_ref_id_to_be_cancelled_present) {
-    HANDLE_CODE(pack_integer(bref, location_report_ref_id_to_be_cancelled, (uint8_t)1u, (uint8_t)64u, true, true));
+    HANDLE_CODE(pack_integer(bref, location_report_ref_id_to_be_cancelled, (uint16_t)1u, (uint16_t)64u, true, true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -26581,7 +26581,7 @@ OCUDUASN_CODE location_report_request_type_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(area_of_interest_list, bref, 1, 64, true));
   }
   if (location_report_ref_id_to_be_cancelled_present) {
-    HANDLE_CODE(unpack_integer(location_report_ref_id_to_be_cancelled, bref, (uint8_t)1u, (uint8_t)64u, true, true));
+    HANDLE_CODE(unpack_integer(location_report_ref_id_to_be_cancelled, bref, (uint16_t)1u, (uint16_t)64u, true, true));
   }
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
@@ -27473,7 +27473,7 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_s::pack(bit_ref& bref) const
 
   HANDLE_CODE(pack_integer(bref, five_qi, (uint16_t)0u, (uint16_t)255u, true, true));
   if (prio_level_qos_present) {
-    HANDLE_CODE(pack_integer(bref, prio_level_qos, (uint8_t)1u, (uint8_t)127u, true, true));
+    HANDLE_CODE(pack_integer(bref, prio_level_qos, (uint16_t)1u, (uint16_t)127u, true, true));
   }
   if (averaging_win_present) {
     HANDLE_CODE(pack_integer(bref, averaging_win, (uint16_t)0u, (uint16_t)4095u, true, true));
@@ -27497,7 +27497,7 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
 
   HANDLE_CODE(unpack_integer(five_qi, bref, (uint16_t)0u, (uint16_t)255u, true, true));
   if (prio_level_qos_present) {
-    HANDLE_CODE(unpack_integer(prio_level_qos, bref, (uint8_t)1u, (uint8_t)127u, true, true));
+    HANDLE_CODE(unpack_integer(prio_level_qos, bref, (uint16_t)1u, (uint16_t)127u, true, true));
   }
   if (averaging_win_present) {
     HANDLE_CODE(unpack_integer(averaging_win, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
@@ -54884,7 +54884,7 @@ OCUDUASN_CODE ue_presence_in_area_of_interest_item_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, location_report_ref_id, (uint8_t)1u, (uint8_t)64u, true, true));
+  HANDLE_CODE(pack_integer(bref, location_report_ref_id, (uint16_t)1u, (uint16_t)64u, true, true));
   HANDLE_CODE(ue_presence.pack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
@@ -54897,7 +54897,7 @@ OCUDUASN_CODE ue_presence_in_area_of_interest_item_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(location_report_ref_id, bref, (uint8_t)1u, (uint8_t)64u, true, true));
+  HANDLE_CODE(unpack_integer(location_report_ref_id, bref, (uint16_t)1u, (uint16_t)64u, true, true));
   HANDLE_CODE(ue_presence.unpack(bref));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));

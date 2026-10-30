@@ -5,6 +5,7 @@
 
 #include "asn1_test_utils.h"
 #include "ocudu/asn1/e2sm/e2sm.h"
+#include "ocudu/asn1/e2sm/e2sm_kpm_ies.h"
 #include <gtest/gtest.h>
 
 using namespace asn1;
@@ -131,7 +132,7 @@ TEST_F(asn1_e2sm_test, pack_unpack_action_definition_with_negative_test_cond_val
   lower_bound_info.test_value_present                        = true;
   lower_bound_info.test_value.set_value_int()                = -110;
   lower_bound_cond.lc_or_present                             = true;
-  lower_bound_cond.lc_or                                     = logical_or_opts::true_value;
+  lower_bound_cond.lc_or                                     = lc_or_opts::true_value;
   lower_bound_cond.matching_cond_choice.set_test_cond_info() = lower_bound_info;
   meas_cond_item.matching_cond.push_back(lower_bound_cond);
 
@@ -162,4 +163,20 @@ TEST_F(asn1_e2sm_test, pack_unpack_action_definition_with_negative_test_cond_val
   ASSERT_EQ(unpacked_cond.size(), 2);
   ASSERT_EQ(unpacked_cond[0].matching_cond_choice.test_cond_info().test_value.value_int(), -110);
   ASSERT_EQ(unpacked_cond[1].matching_cond_choice.test_cond_info().test_value.value_int(), -50);
+}
+
+// E2SM-RC encodings from asn1tools.
+TEST_F(asn1_e2sm_test, rc_encodings_match_reference)
+{
+  // LogicalOR of E2SM-RC has two root values, unlike the one of E2SM-KPM.
+  EXPECT_EQ(test_unpack_roundtrip<e2sm::e2sm_rc_event_trigger_s>(hex_to_bytes("00000008000002a0")), OCUDUASN_SUCCESS);
+  // Items of a SEQUENCE OF named like messages are not padded to an octet boundary.
+  EXPECT_EQ(test_unpack_roundtrip<e2sm::e2sm_rc_ctrl_msg_s>(hex_to_bytes("400012000101000000000002000040c0fffffffe40")),
+            OCUDUASN_SUCCESS);
+  // Unconstrained BIT STRING of 63 bits and of no bits, whose length is octet-aligned.
+  EXPECT_EQ(test_unpack_roundtrip<e2sm::e2sm_rc_ctrl_outcome_s>(
+                hex_to_bytes("40001400010100000000000000303fa827babf1e74950a")),
+            OCUDUASN_SUCCESS);
+  EXPECT_EQ(test_unpack_roundtrip<e2sm::e2sm_rc_ctrl_outcome_s>(hex_to_bytes("40000c000101000000000000003000")),
+            OCUDUASN_SUCCESS);
 }

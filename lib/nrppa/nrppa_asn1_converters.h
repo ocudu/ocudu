@@ -1482,8 +1482,9 @@ asn1_to_trp_meas_request_item(const asn1::nrppa::trp_meas_request_item_s& asn1_t
 
   // Fill search window info.
   if (asn1_trp_meas_request_item.search_win_info_present) {
-    trp_meas_request_item.search_win_info = {asn1_trp_meas_request_item.search_win_info.expected_propagation_delay,
-                                             asn1_trp_meas_request_item.search_win_info.delay_uncertainty};
+    trp_meas_request_item.search_win_info = {
+        asn1_trp_meas_request_item.search_win_info.expected_propagation_delay,
+        static_cast<uint8_t>(asn1_trp_meas_request_item.search_win_info.delay_uncertainty)};
   }
 
   // Fill IE exts.

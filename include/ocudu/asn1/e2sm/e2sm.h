@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "ocudu/asn1/e2sm/e2sm_kpm_ies.h"
+#include "ocudu/asn1/e2sm/e2sm_common_ies.h"
 
 namespace asn1 {
 namespace e2sm {
@@ -210,10 +210,10 @@ struct ran_param_value_c {
     assert_choice_type(types::value_real, type_, "RANParameter-Value");
     return c.get<real_s>();
   }
-  dyn_bitstring& value_bit_s()
+  unbounded_bitstring<false, true>& value_bit_s()
   {
     assert_choice_type(types::value_bit_s, type_, "RANParameter-Value");
-    return c.get<dyn_bitstring>();
+    return c.get<unbounded_bitstring<false, true>>();
   }
   unbounded_octstring<true>& value_oct_s()
   {
@@ -240,10 +240,10 @@ struct ran_param_value_c {
     assert_choice_type(types::value_real, type_, "RANParameter-Value");
     return c.get<real_s>();
   }
-  const dyn_bitstring& value_bit_s() const
+  const unbounded_bitstring<false, true>& value_bit_s() const
   {
     assert_choice_type(types::value_bit_s, type_, "RANParameter-Value");
-    return c.get<dyn_bitstring>();
+    return c.get<unbounded_bitstring<false, true>>();
   }
   const unbounded_octstring<true>& value_oct_s() const
   {
@@ -258,16 +258,16 @@ struct ran_param_value_c {
   bool&                                                    set_value_boolean();
   int64_t&                                                 set_value_int();
   real_s&                                                  set_value_real();
-  dyn_bitstring&                                           set_value_bit_s();
+  unbounded_bitstring<false, true>&                        set_value_bit_s();
   unbounded_octstring<true>&                               set_value_oct_s();
   printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& set_value_printable_string();
 
 private:
   types type_;
   choice_buffer_t<bool,
-                  dyn_bitstring,
                   printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
                   real_s,
+                  unbounded_bitstring<false, true>,
                   unbounded_octstring<true>>
       c;
 
@@ -350,6 +350,14 @@ private:
   void destroy_();
 };
 
+// LogicalOR-E2SM-RC-IEs ::= ENUMERATED
+struct lc_or_e2sm_rc_ies_opts {
+  enum options { true_value, false_value, /*...*/ nulltype } value;
+
+  const char* to_string() const;
+};
+using lc_or_e2sm_rc_ies_e = enumerated<lc_or_e2sm_rc_ies_opts, true>;
+
 // RANParameter-Testing-Item-Choice-ElementFalse ::= SEQUENCE
 struct ran_param_testing_item_choice_elem_false_s {
   bool                          ext                     = false;
@@ -357,7 +365,7 @@ struct ran_param_testing_item_choice_elem_false_s {
   bool                          lc_or_present           = false;
   ran_param_testing_condition_c ran_param_test_condition;
   ran_param_value_c             ran_param_value;
-  logical_or_e                  lc_or;
+  lc_or_e2sm_rc_ies_e           lc_or;
   // ...
 
   // sequence methods
@@ -473,11 +481,11 @@ struct associated_ue_info_item_s {
   };
 
   // member variables
-  bool         ext           = false;
-  bool         lc_or_present = false;
-  uint32_t     ue_filt_id    = 1;
-  ue_type_c_   ue_type;
-  logical_or_e lc_or;
+  bool                ext           = false;
+  bool                lc_or_present = false;
+  uint32_t            ue_filt_id    = 1;
+  ue_type_c_          ue_type;
+  lc_or_e2sm_rc_ies_e lc_or;
   // ...
 
   // sequence methods
@@ -1280,7 +1288,7 @@ struct ue_group_definition_id_item_s {
   bool                   lc_or_present = false;
   uint64_t               ran_param_id  = 1;
   ran_param_value_type_c ran_param_value_type;
-  logical_or_e           lc_or;
+  lc_or_e2sm_rc_ies_e    lc_or;
   // ...
 
   // sequence methods
@@ -2015,11 +2023,11 @@ struct event_trigger_ue_info_item_s {
   };
 
   // member variables
-  bool         ext                 = false;
-  bool         lc_or_present       = false;
-  uint32_t     event_trigger_ue_id = 1;
-  ue_type_c_   ue_type;
-  logical_or_e lc_or;
+  bool                ext                 = false;
+  bool                lc_or_present       = false;
+  uint32_t            event_trigger_ue_id = 1;
+  ue_type_c_          ue_type;
+  lc_or_e2sm_rc_ies_e lc_or;
   // ...
 
   // sequence methods
@@ -2045,10 +2053,10 @@ struct event_trigger_ue_info_s {
 
 // EventTrigger-UEevent-Info-Item ::= SEQUENCE
 struct event_trigger_ue_event_info_item_s {
-  bool         ext           = false;
-  bool         lc_or_present = false;
-  uint32_t     ue_event_id   = 1;
-  logical_or_e lc_or;
+  bool                ext           = false;
+  bool                lc_or_present = false;
+  uint32_t            ue_event_id   = 1;
+  lc_or_e2sm_rc_ies_e lc_or;
   // ...
 
   // sequence methods
@@ -2092,7 +2100,7 @@ struct e2sm_rc_event_trigger_format1_item_s {
   msg_direction_e_              msg_direction;
   event_trigger_ue_info_s       associated_ue_info;
   event_trigger_ue_event_info_s associated_ue_event;
-  logical_or_e                  lc_or;
+  lc_or_e2sm_rc_ies_e           lc_or;
   // ...
 
   // sequence methods
@@ -2210,11 +2218,11 @@ struct event_trigger_cell_info_item_s {
   };
 
   // member variables
-  bool         ext                   = false;
-  bool         lc_or_present         = false;
-  uint32_t     event_trigger_cell_id = 1;
-  cell_type_c_ cell_type;
-  logical_or_e lc_or;
+  bool                ext                   = false;
+  bool                lc_or_present         = false;
+  uint32_t            event_trigger_cell_id = 1;
+  cell_type_c_        cell_type;
+  lc_or_e2sm_rc_ies_e lc_or;
   // ...
 
   // sequence methods
@@ -2246,7 +2254,7 @@ struct e2sm_rc_event_trigger_format3_item_s {
   uint32_t                  ric_event_trigger_condition_id = 1;
   uint16_t                  e2_node_info_change_id         = 1;
   event_trigger_cell_info_s associated_cell_info;
-  logical_or_e              lc_or;
+  lc_or_e2sm_rc_ies_e       lc_or;
   // ...
 
   // sequence methods
@@ -2280,10 +2288,10 @@ using rrc_state_e = enumerated<rrc_state_opts, true>;
 
 // TriggerType-Choice-RRCstate-Item ::= SEQUENCE
 struct trigger_type_choice_rrc_state_item_s {
-  bool         ext           = false;
-  bool         lc_or_present = false;
-  rrc_state_e  state_changed_to;
-  logical_or_e lc_or;
+  bool                ext           = false;
+  bool                lc_or_present = false;
+  rrc_state_e         state_changed_to;
+  lc_or_e2sm_rc_ies_e lc_or;
   // ...
 
   // sequence methods
@@ -2501,7 +2509,7 @@ struct e2sm_rc_event_trigger_format4_item_s {
   uint32_t                ric_event_trigger_condition_id = 1;
   trigger_type_choice_c   trigger_type;
   event_trigger_ue_info_s associated_ue_info;
-  logical_or_e            lc_or;
+  lc_or_e2sm_rc_ies_e     lc_or;
   // ...
 
   // sequence methods

@@ -2032,7 +2032,7 @@ struct active_ul_bwp_s {
   bool                            ext                    = false;
   bool                            shift7dot5k_hz_present = false;
   bool                            ie_exts_present        = false;
-  uint16_t                        location_and_bw        = 0;
+  uint32_t                        location_and_bw        = 0;
   subcarrier_spacing_e_           subcarrier_spacing;
   cp_e_                           cp;
   uint16_t                        tx_direct_current_location = 0;
@@ -4232,7 +4232,7 @@ struct result_rsrp_eutra_item_s {
   uint16_t                                 pci_eutra         = 0;
   uint32_t                                 earfcn            = 0;
   cgi_eutra_s                              cgi_eutra;
-  uint8_t                                  value_rsrp_eutra = 0;
+  uint16_t                                 value_rsrp_eutra = 0;
   result_rsrp_eutra_item_ext_ies_container ie_exts;
   // ...
 
@@ -6788,10 +6788,10 @@ struct otdoa_cell_info_item_c {
     assert_choice_type(types::tp_type_eutra, type_, "OTDOACell-Information-Item");
     return c.get<tp_type_eutra_e>();
   }
-  uint8_t& nof_dl_frames_extended_eutra()
+  uint16_t& nof_dl_frames_extended_eutra()
   {
     assert_choice_type(types::nof_dl_frames_extended_eutra, type_, "OTDOACell-Information-Item");
-    return c.get<uint8_t>();
+    return c.get<uint16_t>();
   }
   cp_len_eutra_e& crs_cp_len_eutra()
   {
@@ -6893,10 +6893,10 @@ struct otdoa_cell_info_item_c {
     assert_choice_type(types::tp_type_eutra, type_, "OTDOACell-Information-Item");
     return c.get<tp_type_eutra_e>();
   }
-  const uint8_t& nof_dl_frames_extended_eutra() const
+  const uint16_t& nof_dl_frames_extended_eutra() const
   {
     assert_choice_type(types::nof_dl_frames_extended_eutra, type_, "OTDOACell-Information-Item");
-    return c.get<uint8_t>();
+    return c.get<uint16_t>();
   }
   const cp_len_eutra_e& crs_cp_len_eutra() const
   {
@@ -6938,7 +6938,7 @@ struct otdoa_cell_info_item_c {
   uint16_t&                                                      set_prsid_eutra();
   uint16_t&                                                      set_tpid_eutra();
   tp_type_eutra_e&                                               set_tp_type_eutra();
-  uint8_t&                                                       set_nof_dl_frames_extended_eutra();
+  uint16_t&                                                      set_nof_dl_frames_extended_eutra();
   cp_len_eutra_e&                                                set_crs_cp_len_eutra();
   dl_bw_eutra_e&                                                 set_dl_bw_eutra();
   prs_occasion_group_eutra_e&                                    set_prs_occasion_group_eutra();
@@ -7067,23 +7067,23 @@ struct result_utran_item_s {
       assert_choice_type(types::phys_cell_i_du_tra_fdd, type_, "physCellIDUTRAN");
       return c.get<uint16_t>();
     }
-    uint8_t& phys_cell_i_du_tra_tdd()
+    uint16_t& phys_cell_i_du_tra_tdd()
     {
       assert_choice_type(types::phys_cell_i_du_tra_tdd, type_, "physCellIDUTRAN");
-      return c.get<uint8_t>();
+      return c.get<uint16_t>();
     }
     const uint16_t& phys_cell_i_du_tra_fdd() const
     {
       assert_choice_type(types::phys_cell_i_du_tra_fdd, type_, "physCellIDUTRAN");
       return c.get<uint16_t>();
     }
-    const uint8_t& phys_cell_i_du_tra_tdd() const
+    const uint16_t& phys_cell_i_du_tra_tdd() const
     {
       assert_choice_type(types::phys_cell_i_du_tra_tdd, type_, "physCellIDUTRAN");
-      return c.get<uint8_t>();
+      return c.get<uint16_t>();
     }
     uint16_t& set_phys_cell_i_du_tra_fdd();
-    uint8_t&  set_phys_cell_i_du_tra_tdd();
+    uint16_t& set_phys_cell_i_du_tra_tdd();
 
   private:
     types               type_;
@@ -7099,7 +7099,7 @@ struct result_utran_item_s {
   bool                                ie_exts_present    = false;
   uint16_t                            uarfcn             = 0;
   pci_utran_c_                        pci_utran;
-  int8_t                              utra_rs_cp = -5;
+  int16_t                             utra_rs_cp = -5;
   uint8_t                             utra_ec_n0 = 0;
   result_utran_item_ext_ies_container ie_exts;
   // ...
@@ -7158,7 +7158,7 @@ struct result_eutra_item_s {
   bool                                ie_exts_present          = false;
   uint16_t                            pci_eutra                = 0;
   uint32_t                            earfcn                   = 0;
-  uint8_t                             value_rsrp_eutra         = 0;
+  uint16_t                            value_rsrp_eutra         = 0;
   uint8_t                             value_rsrq_eutra         = 0;
   cgi_eutra_s                         cgi_eutra;
   result_eutra_item_ext_ies_container ie_exts;
@@ -7369,7 +7369,7 @@ struct prs_meass_info_list_item_s {
   bool                                       ie_exts_present = false;
   uint32_t                                   point_a         = 0;
   meas_prs_periodicity_e_                    meas_prs_periodicity;
-  uint8_t                                    meas_prs_offset = 0;
+  uint16_t                                   meas_prs_offset = 0;
   meas_prs_len_e_                            meas_prs_len;
   prs_meass_info_list_item_ext_ies_container ie_exts;
   // ...
@@ -9027,7 +9027,7 @@ struct resp_time_s {
   // member variables
   bool                        ext             = false;
   bool                        ie_exts_present = false;
-  uint8_t                     time            = 1;
+  uint16_t                    time            = 1;
   time_unit_e_                time_unit;
   resp_time_ext_ies_container ie_exts;
   // ...
@@ -9316,7 +9316,7 @@ struct search_win_info_s {
   bool                              ext                        = false;
   bool                              ie_exts_present            = false;
   int16_t                           expected_propagation_delay = -3841;
-  uint8_t                           delay_uncertainty          = 1;
+  uint16_t                          delay_uncertainty          = 1;
   search_win_info_ext_ies_container ie_exts;
   // ...
 
@@ -11060,7 +11060,7 @@ struct wlan_meas_result_item_s {
   bool                                    country_code_present    = false;
   bool                                    wlan_band_present       = false;
   bool                                    ie_exts_present         = false;
-  uint8_t                                 wlan_rssi               = 0;
+  uint16_t                                wlan_rssi               = 0;
   bounded_octstring<1, 32, true>          ssi_d;
   fixed_octstring<6, true>                bs_si_d;
   fixed_octstring<6, true>                hes_si_d;

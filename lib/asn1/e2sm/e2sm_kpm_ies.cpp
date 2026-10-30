@@ -829,7 +829,7 @@ void test_cond_value_c::destroy_()
       c.destroy<bool>();
       break;
     case types::value_bit_s:
-      c.destroy<dyn_bitstring>();
+      c.destroy<unbounded_bitstring<false, true>>();
       break;
     case types::value_oct_s:
       c.destroy<unbounded_octstring<true>>();
@@ -857,7 +857,7 @@ void test_cond_value_c::set(types::options e)
       c.init<bool>();
       break;
     case types::value_bit_s:
-      c.init<dyn_bitstring>();
+      c.init<unbounded_bitstring<false, true>>();
       break;
     case types::value_oct_s:
       c.init<unbounded_octstring<true>>();
@@ -888,7 +888,7 @@ test_cond_value_c::test_cond_value_c(const test_cond_value_c& other)
       c.init(other.c.get<bool>());
       break;
     case types::value_bit_s:
-      c.init(other.c.get<dyn_bitstring>());
+      c.init(other.c.get<unbounded_bitstring<false, true>>());
       break;
     case types::value_oct_s:
       c.init(other.c.get<unbounded_octstring<true>>());
@@ -922,7 +922,7 @@ test_cond_value_c& test_cond_value_c::operator=(const test_cond_value_c& other)
       c.set(other.c.get<bool>());
       break;
     case types::value_bit_s:
-      c.set(other.c.get<dyn_bitstring>());
+      c.set(other.c.get<unbounded_bitstring<false, true>>());
       break;
     case types::value_oct_s:
       c.set(other.c.get<unbounded_octstring<true>>());
@@ -956,10 +956,10 @@ bool& test_cond_value_c::set_value_bool()
   set(types::value_bool);
   return c.get<bool>();
 }
-dyn_bitstring& test_cond_value_c::set_value_bit_s()
+unbounded_bitstring<false, true>& test_cond_value_c::set_value_bit_s()
 {
   set(types::value_bit_s);
-  return c.get<dyn_bitstring>();
+  return c.get<unbounded_bitstring<false, true>>();
 }
 unbounded_octstring<true>& test_cond_value_c::set_value_oct_s()
 {
@@ -990,7 +990,7 @@ void test_cond_value_c::to_json(json_writer& j) const
       j.write_bool("valueBool", c.get<bool>());
       break;
     case types::value_bit_s:
-      j.write_str("valueBitS", c.get<dyn_bitstring>().to_string());
+      j.write_str("valueBitS", c.get<unbounded_bitstring<false, true>>().to_string());
       break;
     case types::value_oct_s:
       j.write_str("valueOctS", c.get<unbounded_octstring<true>>().to_string());
@@ -1020,7 +1020,7 @@ OCUDUASN_CODE test_cond_value_c::pack(bit_ref& bref) const
       HANDLE_CODE(bref.pack(c.get<bool>(), 1));
       break;
     case types::value_bit_s:
-      HANDLE_CODE(c.get<dyn_bitstring>().pack(bref));
+      HANDLE_CODE((c.get<unbounded_bitstring<false, true>>().pack(bref)));
       break;
     case types::value_oct_s:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
@@ -1054,7 +1054,7 @@ OCUDUASN_CODE test_cond_value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(bref.unpack(c.get<bool>(), 1));
       break;
     case types::value_bit_s:
-      HANDLE_CODE(c.get<dyn_bitstring>().unpack(bref));
+      HANDLE_CODE((c.get<unbounded_bitstring<false, true>>().unpack(bref)));
       break;
     case types::value_oct_s:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
@@ -1111,10 +1111,10 @@ void meas_value_report_cond_s::to_json(json_writer& j) const
 }
 
 // LogicalOR ::= ENUMERATED
-const char* logical_or_opts::to_string() const
+const char* lc_or_opts::to_string() const
 {
   static const char* names[] = {"true"};
-  return convert_enum_idx(names, 1, value, "logical_or_e");
+  return convert_enum_idx(names, 1, value, "lc_or_e");
 }
 
 // MatchCondReportItem ::= SEQUENCE
@@ -3971,8 +3971,6 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format1_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, granul_period, (uint64_t)1u, (uint64_t)4294967295u, false, true));
   }
 
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_kpm_ind_msg_format1_s::unpack(cbit_ref& bref)
@@ -3994,15 +3992,11 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format1_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_kpm_ind_msg_format1_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-KPM-IndicationMessage-Format1");
   j.start_array("measData");
   for (const auto& e1 : meas_data) {
     e1.to_json(j);
@@ -4019,8 +4013,6 @@ void e2sm_kpm_ind_msg_format1_s::to_json(json_writer& j) const
     j.write_int("granulPeriod", granul_period);
   }
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // MatchingUEidItem ::= SEQUENCE
@@ -4344,8 +4336,6 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format2_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, granul_period, (uint64_t)1u, (uint64_t)4294967295u, false, true));
   }
 
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_kpm_ind_msg_format2_s::unpack(cbit_ref& bref)
@@ -4363,15 +4353,11 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format2_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_kpm_ind_msg_format2_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-KPM-IndicationMessage-Format2");
   j.start_array("measData");
   for (const auto& e1 : meas_data) {
     e1.to_json(j);
@@ -4386,8 +4372,6 @@ void e2sm_kpm_ind_msg_format2_s::to_json(json_writer& j) const
     j.write_int("granulPeriod", granul_period);
   }
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // UEMeasurementReportItem ::= SEQUENCE
@@ -4427,8 +4411,6 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format3_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ue_meas_report_list, 1, 65535, true));
 
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_kpm_ind_msg_format3_s::unpack(cbit_ref& bref)
@@ -4440,23 +4422,17 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format3_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_kpm_ind_msg_format3_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-KPM-IndicationMessage-Format3");
   j.start_array("ueMeasReportList");
   for (const auto& e1 : ue_meas_report_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-KPM-IndicationMessage-Fundamental ::= SEQUENCE
@@ -4464,8 +4440,6 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_fundamental_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(ind_msg_fundamental_formats.pack(bref));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -4478,20 +4452,14 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_fundamental_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_kpm_ind_msg_fundamental_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-KPM-IndicationMessage-Fundamental");
   j.write_fieldname("indicationMessageFundamental-formats");
   ind_msg_fundamental_formats.to_json(j);
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 void e2sm_kpm_ind_msg_fundamental_s::ind_msg_fundamental_formats_c_::destroy_()
@@ -4700,8 +4668,6 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format255_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, multi_report_ind_msg_list, 1, 65535, true));
 
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_kpm_ind_msg_format255_s::unpack(cbit_ref& bref)
@@ -4713,23 +4679,17 @@ OCUDUASN_CODE e2sm_kpm_ind_msg_format255_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_kpm_ind_msg_format255_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-KPM-IndicationMessage-Format255");
   j.start_array("multiReportIndicationMessageList");
   for (const auto& e1 : multi_report_ind_msg_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-KPM-IndicationMessage ::= SEQUENCE

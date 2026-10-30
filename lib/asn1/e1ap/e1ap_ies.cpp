@@ -2852,13 +2852,13 @@ void ehc_dl_params_ext_ies_o::ext_c::to_json(json_writer& j) const
 OCUDUASN_CODE ehc_dl_params_ext_ies_o::ext_c::pack(bit_ref& bref) const
 {
   varlength_field_pack_guard varlen_scope(bref, true);
-  HANDLE_CODE(pack_integer(bref, c, (uint16_t)1u, (uint16_t)32767u, true, true));
+  HANDLE_CODE(pack_integer(bref, c, (uint32_t)1u, (uint32_t)32767u, true, true));
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE ehc_dl_params_ext_ies_o::ext_c::unpack(cbit_ref& bref)
 {
   varlength_field_unpack_guard varlen_scope(bref, true);
-  HANDLE_CODE(unpack_integer(c, bref, (uint16_t)1u, (uint16_t)32767u, true, true));
+  HANDLE_CODE(unpack_integer(c, bref, (uint32_t)1u, (uint32_t)32767u, true, true));
   return OCUDUASN_SUCCESS;
 }
 
@@ -4054,7 +4054,7 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_s::pack(bit_ref& bref) const
 
   HANDLE_CODE(pack_integer(bref, five_qi, (uint16_t)0u, (uint16_t)255u, true, true));
   if (qos_prio_level_present) {
-    HANDLE_CODE(pack_integer(bref, qos_prio_level, (uint8_t)0u, (uint8_t)127u, true, true));
+    HANDLE_CODE(pack_integer(bref, qos_prio_level, (uint16_t)0u, (uint16_t)127u, true, true));
   }
   if (averaging_win_present) {
     HANDLE_CODE(pack_integer(bref, averaging_win, (uint16_t)0u, (uint16_t)4095u, true, true));
@@ -4077,7 +4077,7 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
 
   HANDLE_CODE(unpack_integer(five_qi, bref, (uint16_t)0u, (uint16_t)255u, true, true));
   if (qos_prio_level_present) {
-    HANDLE_CODE(unpack_integer(qos_prio_level, bref, (uint8_t)0u, (uint8_t)127u, true, true));
+    HANDLE_CODE(unpack_integer(qos_prio_level, bref, (uint16_t)0u, (uint16_t)127u, true, true));
   }
   if (averaging_win_present) {
     HANDLE_CODE(unpack_integer(averaging_win, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
@@ -4389,7 +4389,7 @@ OCUDUASN_CODE dyn_5qi_descriptor_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(max_data_burst_volume_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
-  HANDLE_CODE(pack_integer(bref, qos_prio_level, (uint8_t)0u, (uint8_t)127u, true, true));
+  HANDLE_CODE(pack_integer(bref, qos_prio_level, (uint16_t)0u, (uint16_t)127u, true, true));
   HANDLE_CODE(pack_integer(bref, packet_delay_budget, (uint16_t)0u, (uint16_t)1023u, true, true));
   HANDLE_CODE(packet_error_rate.pack(bref));
   if (five_qi_present) {
@@ -4418,7 +4418,7 @@ OCUDUASN_CODE dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(max_data_burst_volume_present, 1));
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
-  HANDLE_CODE(unpack_integer(qos_prio_level, bref, (uint8_t)0u, (uint8_t)127u, true, true));
+  HANDLE_CODE(unpack_integer(qos_prio_level, bref, (uint16_t)0u, (uint16_t)127u, true, true));
   HANDLE_CODE(unpack_integer(packet_delay_budget, bref, (uint16_t)0u, (uint16_t)1023u, true, true));
   HANDLE_CODE(packet_error_rate.unpack(bref));
   if (five_qi_present) {
@@ -17051,7 +17051,7 @@ OCUDUASN_CODE hw_capacity_ind_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, offered_throughput, (uint32_t)1u, (uint32_t)16777216u, true, true));
-  HANDLE_CODE(pack_integer(bref, available_throughput, (uint8_t)0u, (uint8_t)100u, true, true));
+  HANDLE_CODE(pack_integer(bref, available_throughput, (uint16_t)0u, (uint16_t)100u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -17064,7 +17064,7 @@ OCUDUASN_CODE hw_capacity_ind_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(offered_throughput, bref, (uint32_t)1u, (uint32_t)16777216u, true, true));
-  HANDLE_CODE(unpack_integer(available_throughput, bref, (uint8_t)0u, (uint8_t)100u, true, true));
+  HANDLE_CODE(unpack_integer(available_throughput, bref, (uint16_t)0u, (uint16_t)100u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }
@@ -25543,9 +25543,9 @@ OCUDUASN_CODE tnl_available_capacity_ind_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, dl_tnl_offered_capacity, (uint32_t)0u, (uint32_t)16777216u, true, true));
-  HANDLE_CODE(pack_integer(bref, dl_tnl_available_capacity, (uint8_t)0u, (uint8_t)100u, true, true));
+  HANDLE_CODE(pack_integer(bref, dl_tnl_available_capacity, (uint16_t)0u, (uint16_t)100u, true, true));
   HANDLE_CODE(pack_integer(bref, ul_tnl_offered_capacity, (uint32_t)0u, (uint32_t)16777216u, true, true));
-  HANDLE_CODE(pack_integer(bref, ul_tnl_available_capacity, (uint8_t)0u, (uint8_t)100u, true, true));
+  HANDLE_CODE(pack_integer(bref, ul_tnl_available_capacity, (uint16_t)0u, (uint16_t)100u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.pack(bref));
   }
@@ -25558,9 +25558,9 @@ OCUDUASN_CODE tnl_available_capacity_ind_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ie_exts_present, 1));
 
   HANDLE_CODE(unpack_integer(dl_tnl_offered_capacity, bref, (uint32_t)0u, (uint32_t)16777216u, true, true));
-  HANDLE_CODE(unpack_integer(dl_tnl_available_capacity, bref, (uint8_t)0u, (uint8_t)100u, true, true));
+  HANDLE_CODE(unpack_integer(dl_tnl_available_capacity, bref, (uint16_t)0u, (uint16_t)100u, true, true));
   HANDLE_CODE(unpack_integer(ul_tnl_offered_capacity, bref, (uint32_t)0u, (uint32_t)16777216u, true, true));
-  HANDLE_CODE(unpack_integer(ul_tnl_available_capacity, bref, (uint8_t)0u, (uint8_t)100u, true, true));
+  HANDLE_CODE(unpack_integer(ul_tnl_available_capacity, bref, (uint16_t)0u, (uint16_t)100u, true, true));
   if (ie_exts_present) {
     HANDLE_CODE(ie_exts.unpack(bref));
   }

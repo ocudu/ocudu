@@ -1157,7 +1157,7 @@ using add_cancelledlocation_report_ref_id_item_ext_ies_container = protocol_ext_
 struct add_cancelledlocation_report_ref_id_item_s {
   bool                                                       ext                                    = false;
   bool                                                       ie_exts_present                        = false;
-  uint8_t                                                    location_report_ref_id_to_be_cancelled = 1;
+  uint16_t                                                   location_report_ref_id_to_be_cancelled = 1;
   add_cancelledlocation_report_ref_id_item_ext_ies_container ie_exts;
   // ...
 
@@ -1667,7 +1667,7 @@ struct area_of_interest_item_s {
   bool                                    ext             = false;
   bool                                    ie_exts_present = false;
   area_of_interest_s                      area_of_interest;
-  uint8_t                                 location_report_ref_id = 1;
+  uint16_t                                location_report_ref_id = 1;
   area_of_interest_item_ext_ies_container ie_exts;
   // ...
 
@@ -2817,7 +2817,7 @@ struct beam_meass_report_cfg_s {
   bool                                    max_nrof_rs_idxes_to_report_present = false;
   bool                                    ie_exts_present                     = false;
   beam_meass_report_quant_s               beam_meass_report_quant;
-  uint8_t                                 max_nrof_rs_idxes_to_report = 1;
+  uint16_t                                max_nrof_rs_idxes_to_report = 1;
   beam_meass_report_cfg_ext_ies_container ie_exts;
   // ...
 
@@ -4285,8 +4285,8 @@ struct expected_ue_activity_behaviour_s {
   bool                                             expected_idle_period_present                 = false;
   bool                                             source_of_ue_activity_behaviour_info_present = false;
   bool                                             ie_exts_present                              = false;
-  uint8_t                                          expected_activity_period                     = 1;
-  uint8_t                                          expected_idle_period                         = 1;
+  uint16_t                                         expected_activity_period                     = 1;
+  uint16_t                                         expected_idle_period                         = 1;
   source_of_ue_activity_behaviour_info_e           source_of_ue_activity_behaviour_info;
   expected_ue_activity_behaviour_ext_ies_container ie_exts;
   // ...
@@ -4955,7 +4955,7 @@ struct composite_available_capacity_s {
   bool                                           ext                               = false;
   bool                                           cell_capacity_class_value_present = false;
   bool                                           ie_exts_present                   = false;
-  uint8_t                                        cell_capacity_class_value         = 1;
+  uint16_t                                       cell_capacity_class_value         = 1;
   uint8_t                                        capacity_value                    = 0;
   composite_available_capacity_ext_ies_container ie_exts;
   // ...
@@ -6146,7 +6146,7 @@ struct dyn_5qi_descriptor_s {
   bool                                 averaging_win_present         = false;
   bool                                 max_data_burst_volume_present = false;
   bool                                 ie_exts_present               = false;
-  uint8_t                              prio_level_qos                = 1;
+  uint16_t                             prio_level_qos                = 1;
   uint16_t                             packet_delay_budget           = 0;
   packet_error_rate_s                  packet_error_rate;
   uint16_t                             five_qi = 0;
@@ -9793,7 +9793,7 @@ struct intersys_cell_activation_reply_s {
   bool                                             ext             = false;
   bool                                             ie_exts_present = false;
   activ_cell_list_l                                activ_cell_list;
-  uint16_t                                         activation_id = 0;
+  uint32_t                                         activation_id = 0;
   intersys_cell_activation_reply_ext_ies_container ie_exts;
   // ...
 
@@ -9812,7 +9812,7 @@ using intersys_cell_activation_request_ext_ies_container = protocol_ext_containe
 struct intersys_cell_activation_request_s {
   bool                                               ext             = false;
   bool                                               ie_exts_present = false;
-  uint16_t                                           activation_id   = 0;
+  uint32_t                                           activation_id   = 0;
   cells_to_activ_list_l                              cells_to_activ_list;
   intersys_cell_activation_request_ext_ies_container ie_exts;
   // ...
@@ -11060,7 +11060,7 @@ struct location_report_request_type_s {
   event_type_e                                   event_type;
   report_area_e                                  report_area;
   area_of_interest_list_l                        area_of_interest_list;
-  uint8_t                                        location_report_ref_id_to_be_cancelled = 1;
+  uint16_t                                       location_report_ref_id_to_be_cancelled = 1;
   location_report_request_type_ext_ies_container ie_exts;
   // ...
 
@@ -11385,7 +11385,7 @@ struct non_dyn_5qi_descriptor_s {
   bool                                     max_data_burst_volume_present = false;
   bool                                     ie_exts_present               = false;
   uint16_t                                 five_qi                       = 0;
-  uint8_t                                  prio_level_qos                = 1;
+  uint16_t                                 prio_level_qos                = 1;
   uint16_t                                 averaging_win                 = 0;
   uint16_t                                 max_data_burst_volume         = 0;
   non_dyn_5qi_descriptor_ext_ies_container ie_exts;
@@ -20305,7 +20305,7 @@ using ue_presence_in_area_of_interest_item_ext_ies_container = protocol_ext_cont
 struct ue_presence_in_area_of_interest_item_s {
   bool                                                   ext                    = false;
   bool                                                   ie_exts_present        = false;
-  uint8_t                                                location_report_ref_id = 1;
+  uint16_t                                               location_report_ref_id = 1;
   ue_presence_e                                          ue_presence;
   ue_presence_in_area_of_interest_item_ext_ies_container ie_exts;
   // ...

@@ -621,7 +621,7 @@ struct ue_context_mod_request_ies_o {
     execute_dupl_e&                                        execute_dupl();
     rrc_delivery_status_request_e&                         rrc_delivery_status_request();
     res_coordination_transfer_info_s&                      res_coordination_transfer_info();
-    uint8_t&                                               serving_cell_mo();
+    uint16_t&                                              serving_cell_mo();
     needfor_gap_e&                                         needfor_gap();
     full_cfg_e&                                            full_cfg();
     fixed_bitstring<32, false, true>&                      add_rrm_prio_idx();
@@ -716,7 +716,7 @@ struct ue_context_mod_request_ies_o {
     const execute_dupl_e&                                  execute_dupl() const;
     const rrc_delivery_status_request_e&                   rrc_delivery_status_request() const;
     const res_coordination_transfer_info_s&                res_coordination_transfer_info() const;
-    const uint8_t&                                         serving_cell_mo() const;
+    const uint16_t&                                        serving_cell_mo() const;
     const needfor_gap_e&                                   needfor_gap() const;
     const full_cfg_e&                                      full_cfg() const;
     const fixed_bitstring<32, false, true>&                add_rrm_prio_idx() const;
@@ -919,7 +919,7 @@ struct ue_context_mod_request_ies_container {
   execute_dupl_e                                  execute_dupl;
   rrc_delivery_status_request_e                   rrc_delivery_status_request;
   res_coordination_transfer_info_s                res_coordination_transfer_info;
-  uint8_t                                         serving_cell_mo;
+  uint16_t                                        serving_cell_mo;
   needfor_gap_e                                   needfor_gap;
   full_cfg_e                                      full_cfg;
   fixed_bitstring<32, false, true>                add_rrm_prio_idx;
@@ -1812,7 +1812,7 @@ struct ue_context_setup_request_ies_o {
     uint64_t&                                    gnb_du_ue_ambr_ul();
     rrc_delivery_status_request_e&               rrc_delivery_status_request();
     res_coordination_transfer_info_s&            res_coordination_transfer_info();
-    uint8_t&                                     serving_cell_mo();
+    uint16_t&                                    serving_cell_mo();
     uint64_t&                                    new_gnb_cu_ue_f1ap_id();
     fixed_octstring<8, true>&                    ran_ue_id();
     trace_activation_s&                          trace_activation();
@@ -1876,7 +1876,7 @@ struct ue_context_setup_request_ies_o {
     const uint64_t&                              gnb_du_ue_ambr_ul() const;
     const rrc_delivery_status_request_e&         rrc_delivery_status_request() const;
     const res_coordination_transfer_info_s&      res_coordination_transfer_info() const;
-    const uint8_t&                               serving_cell_mo() const;
+    const uint16_t&                              serving_cell_mo() const;
     const uint64_t&                              new_gnb_cu_ue_f1ap_id() const;
     const fixed_octstring<8, true>&              ran_ue_id() const;
     const trace_activation_s&                    trace_activation() const;
@@ -2015,7 +2015,7 @@ struct ue_context_setup_request_ies_container {
   uint64_t                              gnb_du_ue_ambr_ul;
   rrc_delivery_status_request_e         rrc_delivery_status_request;
   res_coordination_transfer_info_s      res_coordination_transfer_info;
-  uint8_t                               serving_cell_mo;
+  uint16_t                              serving_cell_mo;
   uint64_t                              new_gnb_cu_ue_f1ap_id;
   fixed_octstring<8, true>              ran_ue_id;
   trace_activation_s                    trace_activation;

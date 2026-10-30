@@ -299,7 +299,7 @@ void ran_param_value_c::destroy_()
       c.destroy<real_s>();
       break;
     case types::value_bit_s:
-      c.destroy<dyn_bitstring>();
+      c.destroy<unbounded_bitstring<false, true>>();
       break;
     case types::value_oct_s:
       c.destroy<unbounded_octstring<true>>();
@@ -325,7 +325,7 @@ void ran_param_value_c::set(types::options e)
       c.init<real_s>();
       break;
     case types::value_bit_s:
-      c.init<dyn_bitstring>();
+      c.init<unbounded_bitstring<false, true>>();
       break;
     case types::value_oct_s:
       c.init<unbounded_octstring<true>>();
@@ -353,7 +353,7 @@ ran_param_value_c::ran_param_value_c(const ran_param_value_c& other)
       c.init(other.c.get<real_s>());
       break;
     case types::value_bit_s:
-      c.init(other.c.get<dyn_bitstring>());
+      c.init(other.c.get<unbounded_bitstring<false, true>>());
       break;
     case types::value_oct_s:
       c.init(other.c.get<unbounded_octstring<true>>());
@@ -384,7 +384,7 @@ ran_param_value_c& ran_param_value_c::operator=(const ran_param_value_c& other)
       c.set(other.c.get<real_s>());
       break;
     case types::value_bit_s:
-      c.set(other.c.get<dyn_bitstring>());
+      c.set(other.c.get<unbounded_bitstring<false, true>>());
       break;
     case types::value_oct_s:
       c.set(other.c.get<unbounded_octstring<true>>());
@@ -415,10 +415,10 @@ real_s& ran_param_value_c::set_value_real()
   set(types::value_real);
   return c.get<real_s>();
 }
-dyn_bitstring& ran_param_value_c::set_value_bit_s()
+unbounded_bitstring<false, true>& ran_param_value_c::set_value_bit_s()
 {
   set(types::value_bit_s);
-  return c.get<dyn_bitstring>();
+  return c.get<unbounded_bitstring<false, true>>();
 }
 unbounded_octstring<true>& ran_param_value_c::set_value_oct_s()
 {
@@ -444,7 +444,7 @@ void ran_param_value_c::to_json(json_writer& j) const
       j.write_float("valueReal", c.get<real_s>().value);
       break;
     case types::value_bit_s:
-      j.write_str("valueBitS", c.get<dyn_bitstring>().to_string());
+      j.write_str("valueBitS", c.get<unbounded_bitstring<false, true>>().to_string());
       break;
     case types::value_oct_s:
       j.write_str("valueOctS", c.get<unbounded_octstring<true>>().to_string());
@@ -471,7 +471,7 @@ OCUDUASN_CODE ran_param_value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<real_s>().pack(bref));
       break;
     case types::value_bit_s:
-      HANDLE_CODE(c.get<dyn_bitstring>().pack(bref));
+      HANDLE_CODE((c.get<unbounded_bitstring<false, true>>().pack(bref)));
       break;
     case types::value_oct_s:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
@@ -501,7 +501,7 @@ OCUDUASN_CODE ran_param_value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<real_s>().unpack(bref));
       break;
     case types::value_bit_s:
-      HANDLE_CODE(c.get<dyn_bitstring>().unpack(bref));
+      HANDLE_CODE((c.get<unbounded_bitstring<false, true>>().unpack(bref)));
       break;
     case types::value_oct_s:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().unpack(bref));
@@ -680,6 +680,13 @@ const char* ran_param_testing_condition_c::types_opts::to_string() const
   return convert_enum_idx(names, 2, value, "ran_param_testing_condition_c::types");
 }
 
+// LogicalOR-E2SM-RC-IEs ::= ENUMERATED
+const char* lc_or_e2sm_rc_ies_opts::to_string() const
+{
+  static const char* names[] = {"true", "false"};
+  return convert_enum_idx(names, 2, value, "lc_or_e2sm_rc_ies_e");
+}
+
 // RANParameter-Testing-Item-Choice-ElementFalse ::= SEQUENCE
 OCUDUASN_CODE ran_param_testing_item_choice_elem_false_s::pack(bit_ref& bref) const
 {
@@ -727,7 +734,7 @@ void ran_param_testing_item_choice_elem_false_s::to_json(json_writer& j) const
     ran_param_value.to_json(j);
   }
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -890,7 +897,7 @@ void associated_ue_info_item_s::to_json(json_writer& j) const
   j.write_fieldname("ueType");
   ue_type.to_json(j);
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -2940,7 +2947,7 @@ void ue_group_definition_id_item_s::to_json(json_writer& j) const
   j.write_fieldname("ranParameter-valueType");
   ran_param_value_type.to_json(j);
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -3300,8 +3307,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format1_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(pack_integer(bref, ran_param_id, (uint64_t)1u, (uint64_t)4294967295u, true, true));
   HANDLE_CODE(ran_param_value_type.pack(bref));
 
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_rc_ctrl_msg_format1_item_s::unpack(cbit_ref& bref)
@@ -3314,21 +3319,15 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format1_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format1_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format1-Item");
   j.write_int("ranParameter-ID", ran_param_id);
   j.write_fieldname("ranParameter-valueType");
   ran_param_value_type.to_json(j);
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-ControlMessage-Format1 ::= SEQUENCE
@@ -3336,8 +3335,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format1_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ran_p_list, 0, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -3350,23 +3347,17 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format1_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format1_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format1");
   j.start_array("ranP-List");
   for (const auto& e1 : ran_p_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-ControlMessage-Format2-ControlAction-Item ::= SEQUENCE
@@ -3375,8 +3366,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format2_ctrl_action_item_s::pack(bit_ref& bref) c
   bref.pack(false, 1);
   HANDLE_CODE(pack_integer(bref, ric_ctrl_action_id, (uint32_t)1u, (uint32_t)65535u, true, true));
   HANDLE_CODE(ran_p_list.pack(bref));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -3390,21 +3379,15 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format2_ctrl_action_item_s::unpack(cbit_ref& bref
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format2_ctrl_action_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format2-ControlAction-Item");
   j.write_int("ric-ControlAction-ID", ric_ctrl_action_id);
   j.write_fieldname("ranP-List");
   ran_p_list.to_json(j);
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-ControlMessage-Format2-Style-Item ::= SEQUENCE
@@ -3413,8 +3396,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format2_style_item_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(pack_unconstrained_integer(bref, indicated_ctrl_style_type, false, true));
   HANDLE_CODE(pack_dyn_seq_of(bref, ric_ctrl_action_list, 1, 63, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -3428,15 +3409,11 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format2_style_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format2_style_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format2-Style-Item");
   j.write_int("indicated-Control-Style-Type", indicated_ctrl_style_type);
   j.start_array("ric-ControlAction-List");
   for (const auto& e1 : ric_ctrl_action_list) {
@@ -3444,8 +3421,6 @@ void e2sm_rc_ctrl_msg_format2_style_item_s::to_json(json_writer& j) const
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-ControlMessage-Format2 ::= SEQUENCE
@@ -3453,8 +3428,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format2_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ric_ctrl_style_list, 1, 63, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -3467,23 +3440,17 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format2_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format2_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format2");
   j.start_array("ric-ControlStyle-List");
   for (const auto& e1 : ric_ctrl_style_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // EntitySpecific-ranP-ControlParameters ::= SEQUENCE
@@ -3600,8 +3567,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format3_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, entity_agnostic_ctrl_ran_p_list, 0, 65535, true));
   }
 
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_rc_ctrl_msg_format3_s::unpack(cbit_ref& bref)
@@ -3621,15 +3586,11 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format3_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format3_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format3");
   if (list_of_entity_filts_present) {
     j.start_array("listOfEntityFilters");
     for (const auto& e1 : list_of_entity_filts) {
@@ -3645,8 +3606,6 @@ void e2sm_rc_ctrl_msg_format3_s::to_json(json_writer& j) const
     j.end_array();
   }
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-ControlMessage-Format4-Item ::= SEQUENCE
@@ -3659,8 +3618,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format4_item_s::pack(bit_ref& bref) const
   if (ran_param_definition_present) {
     HANDLE_CODE(ran_param_definition.pack(bref));
   }
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -3678,23 +3635,17 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format4_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format4_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format4-Item");
   j.write_int("ranParameter-ID", ran_param_id);
   if (ran_param_definition_present) {
     j.write_fieldname("ranParameter-Definition");
     ran_param_definition.to_json(j);
   }
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-ControlMessage-Format4 ::= SEQUENCE
@@ -3702,8 +3653,6 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format4_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ran_p_list, 0, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -3716,23 +3665,17 @@ OCUDUASN_CODE e2sm_rc_ctrl_msg_format4_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ctrl_msg_format4_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-ControlMessage-Format4");
   j.start_array("ranP-List");
   for (const auto& e1 : ran_p_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-ControlMessage ::= SEQUENCE
@@ -4693,7 +4636,7 @@ void event_trigger_ue_info_item_s::to_json(json_writer& j) const
   j.write_fieldname("ueType");
   ue_type.to_json(j);
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -4899,7 +4842,7 @@ void event_trigger_ue_event_info_item_s::to_json(json_writer& j) const
   j.start_obj();
   j.write_int("ueEventID", ue_event_id);
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -5007,7 +4950,7 @@ void e2sm_rc_event_trigger_format1_item_s::to_json(json_writer& j) const
     associated_ue_event.to_json(j);
   }
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -5216,7 +5159,7 @@ void event_trigger_cell_info_item_s::to_json(json_writer& j) const
   j.write_fieldname("cellType");
   cell_type.to_json(j);
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -5437,7 +5380,7 @@ void e2sm_rc_event_trigger_format3_item_s::to_json(json_writer& j) const
     associated_cell_info.to_json(j);
   }
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -5513,7 +5456,7 @@ void trigger_type_choice_rrc_state_item_s::to_json(json_writer& j) const
   j.start_obj();
   j.write_str("stateChangedTo", state_changed_to.to_string());
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -6000,7 +5943,7 @@ void e2sm_rc_event_trigger_format4_item_s::to_json(json_writer& j) const
     associated_ue_info.to_json(j);
   }
   if (lc_or_present) {
-    j.write_str("logicalOR", "true");
+    j.write_str("logicalOR", lc_or.to_string());
   }
   j.end_obj();
 }
@@ -6600,8 +6543,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format1_item_s::pack(bit_ref& bref) const
   HANDLE_CODE(pack_integer(bref, ran_param_id, (uint64_t)1u, (uint64_t)4294967295u, true, true));
   HANDLE_CODE(ran_param_value_type.pack(bref));
 
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_rc_ind_msg_format1_item_s::unpack(cbit_ref& bref)
@@ -6614,21 +6555,15 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format1_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format1_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format1-Item");
   j.write_int("ranParameter-ID", ran_param_id);
   j.write_fieldname("ranParameter-valueType");
   ran_param_value_type.to_json(j);
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format1 ::= SEQUENCE
@@ -6636,8 +6571,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format1_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ran_p_reported_list, 1, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -6650,23 +6583,17 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format1_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format1_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format1");
   j.start_array("ranP-Reported-List");
   for (const auto& e1 : ran_p_reported_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format2-RANParameter-Item ::= SEQUENCE
@@ -6675,8 +6602,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format2_ran_param_item_s::pack(bit_ref& bref) cons
   bref.pack(false, 1);
   HANDLE_CODE(pack_integer(bref, ran_param_id, (uint64_t)1u, (uint64_t)4294967295u, true, true));
   HANDLE_CODE(ran_param_value_type.pack(bref));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -6690,21 +6615,15 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format2_ran_param_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format2_ran_param_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format2-RANParameter-Item");
   j.write_int("ranParameter-ID", ran_param_id);
   j.write_fieldname("ranParameter-valueType");
   ran_param_value_type.to_json(j);
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format2-Item ::= SEQUENCE
@@ -6713,8 +6632,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format2_item_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(ue_id.pack(bref));
   HANDLE_CODE(pack_dyn_seq_of(bref, ran_p_list, 1, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -6728,15 +6645,11 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format2_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format2_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format2-Item");
   j.write_fieldname("ueID");
   ue_id.to_json(j);
   j.start_array("ranP-List");
@@ -6745,8 +6658,6 @@ void e2sm_rc_ind_msg_format2_item_s::to_json(json_writer& j) const
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format2 ::= SEQUENCE
@@ -6754,8 +6665,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format2_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ue_param_list, 1, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -6768,23 +6677,17 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format2_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format2_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format2");
   j.start_array("ueParameter-List");
   for (const auto& e1 : ue_param_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // NeighbourCell-Item-Choice-NR ::= SEQUENCE
@@ -7175,8 +7078,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format3_item_s::pack(bit_ref& bref) const
       HANDLE_CODE(serving_cell_cfg_common->pack(bref));
     }
   }
-  bref.align_bytes_zero();
-
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2sm_rc_ind_msg_format3_item_s::unpack(cbit_ref& bref)
@@ -7212,15 +7113,11 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format3_item_s::unpack(cbit_ref& bref)
     }
     HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format3_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format3-Item");
   j.write_fieldname("cellGlobal-ID");
   cell_global_id.to_json(j);
   if (cell_context_info.size() > 0) {
@@ -7243,8 +7140,6 @@ void e2sm_rc_ind_msg_format3_item_s::to_json(json_writer& j) const
     }
   }
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format3 ::= SEQUENCE
@@ -7252,8 +7147,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format3_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, cell_info_list, 1, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -7266,23 +7159,17 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format3_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format3_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format3");
   j.start_array("cellInfo-List");
   for (const auto& e1 : cell_info_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format5-Item ::= SEQUENCE
@@ -7291,8 +7178,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format5_item_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(pack_integer(bref, ran_param_id, (uint64_t)1u, (uint64_t)4294967295u, true, true));
   HANDLE_CODE(ran_param_value_type.pack(bref));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -7306,21 +7191,15 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format5_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format5_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format5-Item");
   j.write_int("ranParameter-ID", ran_param_id);
   j.write_fieldname("ranParameter-valueType");
   ran_param_value_type.to_json(j);
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format5 ::= SEQUENCE
@@ -7328,8 +7207,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format5_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ran_p_requested_list, 0, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -7342,23 +7219,17 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format5_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format5_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format5");
   j.start_array("ranP-Requested-List");
   for (const auto& e1 : ran_p_requested_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format6-RANP-Item ::= SEQUENCE
@@ -7367,8 +7238,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_ranp_item_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(pack_integer(bref, ran_param_id, (uint64_t)1u, (uint64_t)4294967295u, true, true));
   HANDLE_CODE(ran_param_value_type.pack(bref));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -7382,21 +7251,15 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_ranp_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format6_ranp_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format6-RANP-Item");
   j.write_int("ranParameter-ID", ran_param_id);
   j.write_fieldname("ranParameter-valueType");
   ran_param_value_type.to_json(j);
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format6-Indication-Item ::= SEQUENCE
@@ -7405,8 +7268,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_ind_item_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(pack_integer(bref, ric_insert_ind_id, (uint32_t)1u, (uint32_t)65535u, true, true));
   HANDLE_CODE(pack_dyn_seq_of(bref, ran_p_insert_ind_list, 0, 65535, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -7420,15 +7281,11 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_ind_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format6_ind_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format6-Indication-Item");
   j.write_int("ric-InsertIndication-ID", ric_insert_ind_id);
   j.start_array("ranP-InsertIndication-List");
   for (const auto& e1 : ran_p_insert_ind_list) {
@@ -7436,8 +7293,6 @@ void e2sm_rc_ind_msg_format6_ind_item_s::to_json(json_writer& j) const
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format6-Style-Item ::= SEQUENCE
@@ -7446,8 +7301,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_style_item_s::pack(bit_ref& bref) const
   bref.pack(false, 1);
   HANDLE_CODE(pack_unconstrained_integer(bref, indicated_insert_style_type, false, true));
   HANDLE_CODE(pack_dyn_seq_of(bref, ric_insert_ind_list, 1, 63, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -7461,15 +7314,11 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_style_item_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format6_style_item_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format6-Style-Item");
   j.write_int("indicated-Insert-Style-Type", indicated_insert_style_type);
   j.start_array("ric-InsertIndication-List");
   for (const auto& e1 : ric_insert_ind_list) {
@@ -7477,8 +7326,6 @@ void e2sm_rc_ind_msg_format6_style_item_s::to_json(json_writer& j) const
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage-Format6 ::= SEQUENCE
@@ -7486,8 +7333,6 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_s::pack(bit_ref& bref) const
 {
   bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, ric_insert_style_list, 1, 63, true));
-
-  bref.align_bytes_zero();
 
   return OCUDUASN_SUCCESS;
 }
@@ -7500,23 +7345,17 @@ OCUDUASN_CODE e2sm_rc_ind_msg_format6_s::unpack(cbit_ref& bref)
     ext_groups_unpacker unknown_ext_unpacker(bref, true);
     HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
-  bref.align_bytes();
-
   return OCUDUASN_SUCCESS;
 }
 void e2sm_rc_ind_msg_format6_s::to_json(json_writer& j) const
 {
-  j.start_array();
   j.start_obj();
-  j.start_obj("E2SM-RC-IndicationMessage-Format6");
   j.start_array("ric-InsertStyle-List");
   for (const auto& e1 : ric_insert_style_list) {
     e1.to_json(j);
   }
   j.end_array();
   j.end_obj();
-  j.end_obj();
-  j.end_array();
 }
 
 // E2SM-RC-IndicationMessage ::= SEQUENCE

@@ -3038,7 +3038,7 @@ struct active_ul_bwp_s {
   // member variables
   bool                            shift7dot5k_hz_present = false;
   bool                            ie_exts_present        = false;
-  uint16_t                        location_and_bw        = 0;
+  uint32_t                        location_and_bw        = 0;
   subcarrier_spacing_e_           subcarrier_spacing;
   cp_e_                           cp;
   uint16_t                        tx_direct_current_location = 0;
@@ -8117,7 +8117,7 @@ using composite_available_capacity_ext_ies_container = protocol_ext_container_em
 struct composite_available_capacity_s {
   bool                                           cell_capacity_class_value_present = false;
   bool                                           ie_exts_present                   = false;
-  uint8_t                                        cell_capacity_class_value         = 1;
+  uint16_t                                       cell_capacity_class_value         = 1;
   capacity_value_s                               capacity_value;
   composite_available_capacity_ext_ies_container ie_exts;
 
@@ -8274,9 +8274,9 @@ struct nr_u_ch_item_ext_ies_o {
     OCUDUASN_CODE unpack(cbit_ref& bref);
     void          to_json(json_writer& j) const;
     // getters
-    uint8_t&                ch_occupancy_time_percentage_ul();
+    uint16_t&               ch_occupancy_time_percentage_ul();
     rr_status_nr_u_s&       rr_status_nr_u();
-    const uint8_t&          ch_occupancy_time_percentage_ul() const;
+    const uint16_t&         ch_occupancy_time_percentage_ul() const;
     const rr_status_nr_u_s& rr_status_nr_u() const;
 
   private:
@@ -8295,7 +8295,7 @@ struct nr_u_ch_item_ext_ies_o {
 struct nr_u_ch_item_ext_ies_container {
   bool             ch_occupancy_time_percentage_ul_present = false;
   bool             rr_status_nr_u_present                  = false;
-  uint8_t          ch_occupancy_time_percentage_ul;
+  uint16_t         ch_occupancy_time_percentage_ul;
   rr_status_nr_u_s rr_status_nr_u;
 
   // sequence methods
@@ -8309,8 +8309,8 @@ struct nr_u_ch_item_s {
   bool                           ext                             = false;
   bool                           ie_exts_present                 = false;
   uint8_t                        nr_u_ch_id                      = 1;
-  uint8_t                        ch_occupancy_time_percentage_dl = 0;
-  int8_t                         energy_detection_thres          = -100;
+  uint16_t                       ch_occupancy_time_percentage_dl = 0;
+  int16_t                        energy_detection_thres          = -100;
   nr_u_ch_item_ext_ies_container ie_exts;
   // ...
 
@@ -8877,7 +8877,7 @@ struct iab_stc_info_item_s {
   uint32_t                            ssb_freq_info   = 0;
   ssb_subcarrier_spacing_e            ssb_subcarrier_spacing;
   ssb_tx_periodicity_e                ssb_tx_periodicity;
-  uint8_t                             ssb_tx_timing_offset = 0;
+  uint16_t                            ssb_tx_timing_offset = 0;
   ssb_tx_bitmap_c                     ssb_tx_bitmap;
   iab_stc_info_item_ext_ies_container ie_exts;
 
@@ -16817,8 +16817,8 @@ using hardware_load_ind_ext_ies_container = protocol_ext_container_empty_l;
 struct hardware_load_ind_s {
   bool                                ext                  = false;
   bool                                ie_exts_present      = false;
-  uint8_t                             dl_hardware_load_ind = 0;
-  uint8_t                             ul_hardware_load_ind = 0;
+  uint16_t                            dl_hardware_load_ind = 0;
+  uint16_t                            ul_hardware_load_ind = 0;
   hardware_load_ind_ext_ies_container ie_exts;
   // ...
 
@@ -21364,38 +21364,38 @@ struct pdc_measured_results_value_c {
   OCUDUASN_CODE unpack(cbit_ref& bref);
   void          to_json(json_writer& j) const;
   // getters
-  uint16_t& pdc_tadv_nr()
+  uint32_t& pdc_tadv_nr()
   {
     assert_choice_type(types::pdc_tadv_nr, type_, "PDCMeasuredResults-Value");
-    return c.get<uint16_t>();
+    return c.get<uint32_t>();
   }
-  uint16_t& pdc_rx_tx_time_diff()
+  uint32_t& pdc_rx_tx_time_diff()
   {
     assert_choice_type(types::pdc_rx_tx_time_diff, type_, "PDCMeasuredResults-Value");
-    return c.get<uint16_t>();
+    return c.get<uint32_t>();
   }
   protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>& choice_ext()
   {
     assert_choice_type(types::choice_ext, type_, "PDCMeasuredResults-Value");
     return c.get<protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>>();
   }
-  const uint16_t& pdc_tadv_nr() const
+  const uint32_t& pdc_tadv_nr() const
   {
     assert_choice_type(types::pdc_tadv_nr, type_, "PDCMeasuredResults-Value");
-    return c.get<uint16_t>();
+    return c.get<uint32_t>();
   }
-  const uint16_t& pdc_rx_tx_time_diff() const
+  const uint32_t& pdc_rx_tx_time_diff() const
   {
     assert_choice_type(types::pdc_rx_tx_time_diff, type_, "PDCMeasuredResults-Value");
-    return c.get<uint16_t>();
+    return c.get<uint32_t>();
   }
   const protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>& choice_ext() const
   {
     assert_choice_type(types::choice_ext, type_, "PDCMeasuredResults-Value");
     return c.get<protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>>();
   }
-  uint16_t&                                                             set_pdc_tadv_nr();
-  uint16_t&                                                             set_pdc_rx_tx_time_diff();
+  uint32_t&                                                             set_pdc_tadv_nr();
+  uint32_t&                                                             set_pdc_rx_tx_time_diff();
   protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>& set_choice_ext();
 
 private:
@@ -21589,7 +21589,7 @@ struct prs_meas_info_list_item_s {
   bool                                      ie_exts_present = false;
   uint32_t                                  point_a         = 0;
   meas_prs_periodicity_e_                   meas_prs_periodicity;
-  uint8_t                                   meas_prs_offset = 0;
+  uint16_t                                  meas_prs_offset = 0;
   meas_prs_len_e_                           meas_prs_len;
   prs_meas_info_list_item_ext_ies_container ie_exts;
   // ...
@@ -24393,7 +24393,7 @@ struct resp_time_s {
   // member variables
   bool                        ext             = false;
   bool                        ie_exts_present = false;
-  uint8_t                     time            = 1;
+  uint16_t                    time            = 1;
   time_unit_e_                time_unit;
   resp_time_ext_ies_container ie_exts;
   // ...
@@ -24529,11 +24529,11 @@ struct scell_to_be_setup_item_ext_ies_o {
     OCUDUASN_CODE unpack(cbit_ref& bref);
     void          to_json(json_writer& j) const;
     // getters
-    uint8_t&       serving_cell_mo() { return c; }
-    const uint8_t& serving_cell_mo() const { return c; }
+    uint16_t&       serving_cell_mo() { return c; }
+    const uint16_t& serving_cell_mo() const { return c; }
 
   private:
-    uint8_t c;
+    uint16_t c;
   };
 
   // members lookup methods
@@ -24579,11 +24579,11 @@ struct scell_to_be_setup_mod_item_ext_ies_o {
     OCUDUASN_CODE unpack(cbit_ref& bref);
     void          to_json(json_writer& j) const;
     // getters
-    uint8_t&       serving_cell_mo() { return c; }
-    const uint8_t& serving_cell_mo() const { return c; }
+    uint16_t&       serving_cell_mo() { return c; }
+    const uint16_t& serving_cell_mo() const { return c; }
 
   private:
-    uint8_t c;
+    uint16_t c;
   };
 
   // members lookup methods
@@ -25690,7 +25690,7 @@ using search_win_info_ext_ies_container = protocol_ext_container_empty_l;
 struct search_win_info_s {
   bool                              ie_exts_present            = false;
   int16_t                           expected_propagation_delay = -3841;
-  uint8_t                           delay_uncertainty          = 1;
+  uint16_t                          delay_uncertainty          = 1;
   search_win_info_ext_ies_container ie_exts;
 
   // sequence methods
@@ -25791,7 +25791,7 @@ using serving_cell_mo_list_item_ext_ies_container = protocol_ext_container_empty
 // ServingCellMO-List-Item ::= SEQUENCE
 struct serving_cell_mo_list_item_s {
   bool                                        ie_exts_present = false;
-  uint8_t                                     serving_cell_mo = 1;
+  uint16_t                                    serving_cell_mo = 1;
   uint32_t                                    ssb_freq        = 0;
   serving_cell_mo_list_item_ext_ies_container ie_exts;
 
@@ -25838,7 +25838,7 @@ struct serving_cell_mo_encoded_in_cgc_item_ext_ies_o {
 // ServingCellMO-encoded-in-CGC-Item ::= SEQUENCE
 struct serving_cell_mo_encoded_in_cgc_item_s {
   bool                                                                    ext             = false;
-  uint8_t                                                                 serving_cell_mo = 1;
+  uint16_t                                                                serving_cell_mo = 1;
   protocol_ext_container_l<serving_cell_mo_encoded_in_cgc_item_ext_ies_o> ie_exts;
   // ...
 
@@ -26018,9 +26018,9 @@ using tnl_capacity_ind_ext_ies_container = protocol_ext_container_empty_l;
 struct tnl_capacity_ind_s {
   bool                               ie_exts_present           = false;
   uint32_t                           dl_tnl_offered_capacity   = 1;
-  uint8_t                            dl_tnl_available_capacity = 0;
+  uint16_t                           dl_tnl_available_capacity = 0;
   uint32_t                           ul_tnl_offered_capacity   = 1;
-  uint8_t                            ul_tnl_available_capacity = 0;
+  uint16_t                           ul_tnl_available_capacity = 0;
   tnl_capacity_ind_ext_ies_container ie_exts;
 
   // sequence methods
@@ -26566,7 +26566,7 @@ struct time_ref_info_s {
   bool                            ie_exts_present        = false;
   unbounded_octstring<true>       ref_time;
   uint16_t                        ref_sfn     = 0;
-  uint16_t                        uncertainty = 0;
+  uint32_t                        uncertainty = 0;
   time_ref_info_ext_ies_container ie_exts;
 
   // sequence methods

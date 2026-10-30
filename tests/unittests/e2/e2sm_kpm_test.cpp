@@ -570,7 +570,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   meas_label1.five_qi_present                               = true;
   meas_label1.five_qi                                       = 1;
   matching_cond_item1.lc_or_present                         = true; // If false use OR, if true then use AND.
-  matching_cond_item1.lc_or                                 = logical_or_opts::true_value;
+  matching_cond_item1.lc_or                                 = lc_or_opts::true_value;
   matching_cond_item1.matching_cond_choice.set_meas_label() = meas_label1;
   meas_cond_item.matching_cond.push_back(matching_cond_item1);
 
@@ -582,7 +582,7 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style3)
   test_cond_info1.test_value_present                            = true;
   test_cond_info1.test_value.set_value_int()                    = -110;
   matching_cond_item2.lc_or_present                             = true; // If false use OR, if true then use AND.
-  matching_cond_item2.lc_or                                     = logical_or_opts::true_value;
+  matching_cond_item2.lc_or                                     = lc_or_opts::true_value;
   matching_cond_item2.matching_cond_choice.set_test_cond_info() = test_cond_info1;
   meas_cond_item.matching_cond.push_back(matching_cond_item2);
 

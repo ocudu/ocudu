@@ -3884,7 +3884,7 @@ void ue_context_mod_request_ies_o::value_c::set(types::options e)
       c = res_coordination_transfer_info_s{};
       break;
     case types::serving_cell_mo:
-      c = uint8_t{};
+      c = uint16_t{};
       break;
     case types::needfor_gap:
       c = needfor_gap_e{};
@@ -4230,10 +4230,10 @@ res_coordination_transfer_info_s& ue_context_mod_request_ies_o::value_c::res_coo
   assert_choice_type(types::res_coordination_transfer_info, type_, "Value");
   return c.get<res_coordination_transfer_info_s>();
 }
-uint8_t& ue_context_mod_request_ies_o::value_c::serving_cell_mo()
+uint16_t& ue_context_mod_request_ies_o::value_c::serving_cell_mo()
 {
   assert_choice_type(types::serving_cell_mo, type_, "Value");
-  return c.get<uint8_t>();
+  return c.get<uint16_t>();
 }
 needfor_gap_e& ue_context_mod_request_ies_o::value_c::needfor_gap()
 {
@@ -4707,10 +4707,10 @@ const res_coordination_transfer_info_s& ue_context_mod_request_ies_o::value_c::r
   assert_choice_type(types::res_coordination_transfer_info, type_, "Value");
   return c.get<res_coordination_transfer_info_s>();
 }
-const uint8_t& ue_context_mod_request_ies_o::value_c::serving_cell_mo() const
+const uint16_t& ue_context_mod_request_ies_o::value_c::serving_cell_mo() const
 {
   assert_choice_type(types::serving_cell_mo, type_, "Value");
-  return c.get<uint8_t>();
+  return c.get<uint16_t>();
 }
 const needfor_gap_e& ue_context_mod_request_ies_o::value_c::needfor_gap() const
 {
@@ -5178,7 +5178,7 @@ void ue_context_mod_request_ies_o::value_c::to_json(json_writer& j) const
       c.get<res_coordination_transfer_info_s>().to_json(j);
       break;
     case types::serving_cell_mo:
-      j.write_int("INTEGER (1..64,...)", c.get<uint8_t>());
+      j.write_int("INTEGER (1..64,...)", c.get<uint16_t>());
       break;
     case types::needfor_gap:
       j.write_str("NeedforGap", "true");
@@ -5594,7 +5594,7 @@ OCUDUASN_CODE ue_context_mod_request_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<res_coordination_transfer_info_s>().pack(bref));
       break;
     case types::serving_cell_mo:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)64u, true, true));
+      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)1u, (uint16_t)64u, true, true));
       break;
     case types::needfor_gap:
       HANDLE_CODE(c.get<needfor_gap_e>().pack(bref));
@@ -5889,7 +5889,7 @@ OCUDUASN_CODE ue_context_mod_request_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<res_coordination_transfer_info_s>().unpack(bref));
       break;
     case types::serving_cell_mo:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)1u, (uint8_t)64u, true, true));
+      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)1u, (uint16_t)64u, true, true));
       break;
     case types::needfor_gap:
       HANDLE_CODE(c.get<needfor_gap_e>().unpack(bref));
@@ -6468,7 +6468,7 @@ OCUDUASN_CODE ue_context_mod_request_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)182, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_integer(bref, serving_cell_mo, (uint8_t)1u, (uint8_t)64u, true, true));
+    HANDLE_CODE(pack_integer(bref, serving_cell_mo, (uint16_t)1u, (uint16_t)64u, true, true));
   }
   if (needfor_gap_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)215, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -7057,7 +7057,7 @@ OCUDUASN_CODE ue_context_mod_request_ies_container::unpack(cbit_ref& bref)
       case 182: {
         serving_cell_mo_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_integer(serving_cell_mo, bref, (uint8_t)1u, (uint8_t)64u, true, true));
+        HANDLE_CODE(unpack_integer(serving_cell_mo, bref, (uint16_t)1u, (uint16_t)64u, true, true));
         break;
       }
       case 215: {
@@ -14137,7 +14137,7 @@ void ue_context_setup_request_ies_o::value_c::set(types::options e)
       c = res_coordination_transfer_info_s{};
       break;
     case types::serving_cell_mo:
-      c = uint8_t{};
+      c = uint16_t{};
       break;
     case types::new_gnb_cu_ue_f1ap_id:
       c = uint64_t{};
@@ -14374,10 +14374,10 @@ res_coordination_transfer_info_s& ue_context_setup_request_ies_o::value_c::res_c
   assert_choice_type(types::res_coordination_transfer_info, type_, "Value");
   return c.get<res_coordination_transfer_info_s>();
 }
-uint8_t& ue_context_setup_request_ies_o::value_c::serving_cell_mo()
+uint16_t& ue_context_setup_request_ies_o::value_c::serving_cell_mo()
 {
   assert_choice_type(types::serving_cell_mo, type_, "Value");
-  return c.get<uint8_t>();
+  return c.get<uint16_t>();
 }
 uint64_t& ue_context_setup_request_ies_o::value_c::new_gnb_cu_ue_f1ap_id()
 {
@@ -14694,10 +14694,10 @@ const res_coordination_transfer_info_s& ue_context_setup_request_ies_o::value_c:
   assert_choice_type(types::res_coordination_transfer_info, type_, "Value");
   return c.get<res_coordination_transfer_info_s>();
 }
-const uint8_t& ue_context_setup_request_ies_o::value_c::serving_cell_mo() const
+const uint16_t& ue_context_setup_request_ies_o::value_c::serving_cell_mo() const
 {
   assert_choice_type(types::serving_cell_mo, type_, "Value");
-  return c.get<uint8_t>();
+  return c.get<uint16_t>();
 }
 const uint64_t& ue_context_setup_request_ies_o::value_c::new_gnb_cu_ue_f1ap_id() const
 {
@@ -15009,7 +15009,7 @@ void ue_context_setup_request_ies_o::value_c::to_json(json_writer& j) const
       c.get<res_coordination_transfer_info_s>().to_json(j);
       break;
     case types::serving_cell_mo:
-      j.write_int("INTEGER (1..64,...)", c.get<uint8_t>());
+      j.write_int("INTEGER (1..64,...)", c.get<uint16_t>());
       break;
     case types::new_gnb_cu_ue_f1ap_id:
       j.write_int("INTEGER (0..4294967295)", c.get<uint64_t>());
@@ -15271,7 +15271,7 @@ OCUDUASN_CODE ue_context_setup_request_ies_o::value_c::pack(bit_ref& bref) const
       HANDLE_CODE(c.get<res_coordination_transfer_info_s>().pack(bref));
       break;
     case types::serving_cell_mo:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)64u, true, true));
+      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)1u, (uint16_t)64u, true, true));
       break;
     case types::new_gnb_cu_ue_f1ap_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
@@ -15473,7 +15473,7 @@ OCUDUASN_CODE ue_context_setup_request_ies_o::value_c::unpack(cbit_ref& bref)
       HANDLE_CODE(c.get<res_coordination_transfer_info_s>().unpack(bref));
       break;
     case types::serving_cell_mo:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)1u, (uint8_t)64u, true, true));
+      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)1u, (uint16_t)64u, true, true));
       break;
     case types::new_gnb_cu_ue_f1ap_id:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
@@ -15871,7 +15871,7 @@ OCUDUASN_CODE ue_context_setup_request_ies_container::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, (uint32_t)182, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(pack_integer(bref, serving_cell_mo, (uint8_t)1u, (uint8_t)64u, true, true));
+    HANDLE_CODE(pack_integer(bref, serving_cell_mo, (uint16_t)1u, (uint16_t)64u, true, true));
   }
   if (new_gnb_cu_ue_f1ap_id_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)217, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -16274,7 +16274,7 @@ OCUDUASN_CODE ue_context_setup_request_ies_container::unpack(cbit_ref& bref)
       case 182: {
         serving_cell_mo_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(unpack_integer(serving_cell_mo, bref, (uint8_t)1u, (uint8_t)64u, true, true));
+        HANDLE_CODE(unpack_integer(serving_cell_mo, bref, (uint16_t)1u, (uint16_t)64u, true, true));
         break;
       }
       case 217: {
