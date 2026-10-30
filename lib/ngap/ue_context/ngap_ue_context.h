@@ -32,6 +32,10 @@ struct ngap_ue_context {
   bool take_over_allowed = false;
   /// Allowed NSSAI of the UE (TS 38.413 section 9.3.1.31).
   std::vector<s_nssai_t> allowed_nssai;
+  /// Maximum number of buffered UL NAS messages that wait for the AMF UE NGAP ID (implementation-defined).
+  static constexpr size_t max_nof_pending_ul_nas_msgs = 8;
+  /// UL NAS messages that the UE sent before the AMF sent the AMF UE NGAP ID (TS 38.413 sections 8.6.2.2 and 8.6.3.1).
+  std::vector<cu_cp_ul_nas_transport> pending_ul_nas_msgs;
 
   unique_timer                                               request_pdu_session_timer;
   bool                                                       release_requested                     = false;

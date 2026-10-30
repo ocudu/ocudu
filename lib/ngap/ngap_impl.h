@@ -147,6 +147,14 @@ private:
   /// \param[in] msg The received DL NAS Transport message.
   void handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transport_s& msg);
 
+  /// \brief Schedules the transmission of an UPLINK NAS TRANSPORT message to the AMF.
+  /// \param[in] ue_ctxt The NGAP UE context with a valid AMF UE NGAP ID.
+  /// \param[in] msg The NAS message of the UE.
+  void send_ul_nas_transport(ngap_ue_context& ue_ctxt, const cu_cp_ul_nas_transport& msg);
+
+  /// \brief Sends the UL NAS messages that wait for the AMF UE NGAP ID, in the order of reception.
+  void send_pending_ul_nas_transports(ngap_ue_context& ue_ctxt);
+
   /// \brief Releases a UE whose Reroute NAS Request procedure failed.
   void release_ue_after_failed_reroute(ngap_ue_context& ue_ctxt);
 

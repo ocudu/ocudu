@@ -575,6 +575,24 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
     return;
   }
 
+  // The UE can send a NAS message before the AMF sends the AMF UE NGAP ID. Store the NAS message until the
+  // UE-associated logical NG-connection exists (TS 38.413 sections 8.6.2.2 and 8.6.3.1).
+  if (ue_ctxt.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
+    if (ue_ctxt.pending_ul_nas_msgs.size() >= ngap_ue_context::max_nof_pending_ul_nas_msgs) {
+      ue_ctxt.logger.log_warning("Dropping ULNASTransport. Cause: {} NAS messages already wait for the AMF UE NGAP ID",
+                                 ue_ctxt.pending_ul_nas_msgs.size());
+      return;
+    }
+    ue_ctxt.logger.log_info("Storing ULNASTransport until the AMF sends the AMF UE NGAP ID");
+    ue_ctxt.pending_ul_nas_msgs.push_back(msg);
+    return;
+  }
+
+  send_ul_nas_transport(ue_ctxt, msg);
+}
+
+void ngap_impl::send_ul_nas_transport(ngap_ue_context& ue_ctxt, const cu_cp_ul_nas_transport& msg)
+{
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_init_msg();
   ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_UL_NAS_TRANSPORT);
@@ -582,28 +600,31 @@ void ngap_impl::handle_ul_nas_transport_message(const cu_cp_ul_nas_transport& ms
   auto& ul_nas_transport_msg = ngap_msg.pdu.init_msg().value.ul_nas_transport();
 
   ul_nas_transport_msg->ran_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.ran_ue_id);
-
-  amf_ue_id_t amf_ue_id = ue_ctxt.ue_ids.amf_ue_id;
-  if (amf_ue_id == amf_ue_id_t::invalid) {
-    logger.warning("ue={}: Dropping ULNAStransport. UE AMF ID not found", msg.ue_index);
-    return;
-  }
-  ul_nas_transport_msg->amf_ue_ngap_id = to_underlying(amf_ue_id);
+  ul_nas_transport_msg->amf_ue_ngap_id = to_underlying(ue_ctxt.ue_ids.amf_ue_id);
 
   fill_asn1_ul_nas_transport(ul_nas_transport_msg, msg);
 
   // Schedule transmission of UL NAS transport message to AMF.
-  ue->schedule_async_task(launch_async([this, msg, ngap_msg](coro_context<async_task<void>>& ctx) {
-    CORO_BEGIN(ctx);
-    if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
-      logger.error("ue={} ran_ue={} amf_ue={}: Cannot send ULNASTransportMessage",
-                   msg.ue_index,
-                   ngap_msg.pdu.init_msg().value.ul_nas_transport()->ran_ue_ngap_id,
-                   ngap_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id);
-      CORO_EARLY_RETURN();
-    }
-    CORO_RETURN();
-  }));
+  ue_ctxt.get_cu_cp_ue()->schedule_async_task(
+      launch_async([this, ue_index = ue_ctxt.ue_ids.ue_index, ngap_msg](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+        if (!tx_pdu_notifier.on_new_message(ngap_msg)) {
+          logger.error("ue={} ran_ue={} amf_ue={}: Cannot send ULNASTransportMessage",
+                       ue_index,
+                       ngap_msg.pdu.init_msg().value.ul_nas_transport()->ran_ue_ngap_id,
+                       ngap_msg.pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id);
+          CORO_EARLY_RETURN();
+        }
+        CORO_RETURN();
+      }));
+}
+
+void ngap_impl::send_pending_ul_nas_transports(ngap_ue_context& ue_ctxt)
+{
+  for (const cu_cp_ul_nas_transport& msg : ue_ctxt.pending_ul_nas_msgs) {
+    send_ul_nas_transport(ue_ctxt, msg);
+  }
+  ue_ctxt.pending_ul_nas_msgs.clear();
 }
 
 void ngap_impl::handle_location_report_transmission(const location_report& msg)
@@ -892,6 +913,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(msg->amf_ue_ngap_id));
     // AMF UE ID is now associated, so count one establishment success.
     metrics_handler.aggregate_ue_associated_logical_ng_connection_establishment_success();
+    send_pending_ul_nas_transports(ue_ctxt);
   }
 
   ngap_dl_nas_transport_message dl_nas_msg;
@@ -966,6 +988,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   if (ue_ctxt.ue_ids.amf_ue_id != uint_to_amf_ue_id(request->amf_ue_ngap_id)) {
     ue_ctxt_list.update_amf_ue_id(ue_ctxt.ue_ids.ran_ue_id, uint_to_amf_ue_id(request->amf_ue_ngap_id));
   }
+  send_pending_ul_nas_transports(ue_ctxt);
 
   // Convert to common type.
   ngap_init_context_setup_request init_ctxt_setup_req;

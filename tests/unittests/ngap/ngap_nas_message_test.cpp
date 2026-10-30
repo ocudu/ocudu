@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "lib/ngap/ue_context/ngap_ue_context.h"
 #include "ngap_test_helpers.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
@@ -46,6 +47,29 @@ protected:
   {
     return n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type() ==
            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ul_nas_transport;
+  }
+
+  /// Returns the UL NAS messages that the NGAP sent to the AMF, in the order of transmission.
+  std::vector<const asn1::ngap::ul_nas_transport_s*> get_sent_ul_nas_transports() const
+  {
+    std::vector<const asn1::ngap::ul_nas_transport_s*> msgs;
+    for (const ngap_message& msg : n2_gw.last_ngap_msgs) {
+      if (msg.pdu.type().value == asn1::ngap::ngap_pdu_c::types_opts::init_msg and
+          msg.pdu.init_msg().value.type() == asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ul_nas_transport) {
+        msgs.push_back(&msg.pdu.init_msg().value.ul_nas_transport());
+      }
+    }
+    return msgs;
+  }
+
+  /// Sends UL NAS messages from the RRC. The first byte of each NAS PDU holds the position of the message.
+  void send_numbered_ul_nas_transports(cu_cp_ue_index_t ue_index, unsigned nof_msgs)
+  {
+    for (unsigned i = 0; i != nof_msgs; ++i) {
+      cu_cp_ul_nas_transport ul_nas_transport = generate_ul_nas_transport_message(ue_index);
+      *ul_nas_transport.nas_pdu.begin()       = i;
+      ngap->handle_ul_nas_transport_message(ul_nas_transport);
+    }
   }
 
   bool was_ue_release_requested(const test_ue& ue) const { return cu_cp_notifier.last_command.ue_index == ue.ue_index; }
@@ -287,6 +311,55 @@ TEST_F(ngap_nas_message_routine_test, when_ue_present_and_amf_set_ul_nas_transpo
 
   // Check that AMF notifier was called with right type.
   ASSERT_TRUE(was_ul_nas_transport_forwarded());
+}
+
+TEST_F(ngap_nas_message_routine_test,
+       when_ul_nas_transports_arrive_before_amf_ue_id_then_they_are_sent_in_order_after_dl_nas_transport)
+{
+  cu_cp_ue_index_t ue_index = this->start_procedure();
+
+  send_numbered_ul_nas_transports(ue_index, 2);
+  ASSERT_TRUE(get_sent_ul_nas_transports().empty());
+
+  run_dl_nas_transport(ue_index);
+
+  auto msgs = get_sent_ul_nas_transports();
+  ASSERT_EQ(msgs.size(), 2);
+  for (unsigned i = 0; i != msgs.size(); ++i) {
+    ASSERT_EQ((*msgs[i])->amf_ue_ngap_id, to_underlying(test_ues.at(ue_index).amf_ue_id.value()));
+    ASSERT_EQ(*(*msgs[i])->nas_pdu.begin(), i);
+  }
+}
+
+TEST_F(ngap_nas_message_routine_test,
+       when_ul_nas_transport_arrives_before_amf_ue_id_then_it_is_sent_after_initial_context_setup_request)
+{
+  cu_cp_ue_index_t ue_index = this->start_procedure();
+
+  send_numbered_ul_nas_transports(ue_index, 1);
+  ASSERT_TRUE(get_sent_ul_nas_transports().empty());
+
+  auto& ue     = test_ues.at(ue_index);
+  ue.amf_ue_id = uint_to_amf_ue_id(10);
+  run_initial_context_setup(ue_index);
+
+  auto msgs = get_sent_ul_nas_transports();
+  ASSERT_EQ(msgs.size(), 1);
+  ASSERT_EQ((*msgs[0])->amf_ue_ngap_id, 10);
+}
+
+TEST_F(ngap_nas_message_routine_test,
+       when_too_many_ul_nas_transports_arrive_before_amf_ue_id_then_the_extra_messages_are_dropped)
+{
+  cu_cp_ue_index_t ue_index = this->start_procedure();
+
+  send_numbered_ul_nas_transports(ue_index, ngap_ue_context::max_nof_pending_ul_nas_msgs + 1);
+
+  run_dl_nas_transport(ue_index);
+
+  auto msgs = get_sent_ul_nas_transports();
+  ASSERT_EQ(msgs.size(), ngap_ue_context::max_nof_pending_ul_nas_msgs);
+  ASSERT_EQ(*(*msgs.back())->nas_pdu.begin(), ngap_ue_context::max_nof_pending_ul_nas_msgs - 1);
 }
 
 /// Test AMF UE ID handling.
