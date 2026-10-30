@@ -70,15 +70,13 @@ public:
 
 TEST_F(trig_ul_sched_test, no_dl_grant_no_pusch)
 {
-  /*
-  Test: UE configured with triggered grant, but BSR/PUSCH is not triggered if there is no PDSCH.
-  Precondition:
-    UE with triggered ul grant is configured
-  Action:
-    UE connected, but no DL scheduling
-  Postcondition:
-    PUSCH is not scheduled
-  */
+  // Test: UE configured with triggered grant, but BSR/PUSCH is not triggered if there is no PDSCH.
+  // Precondition:
+  //   UE with triggered ul grant is configured.
+  // Action:
+  //   UE connected, but no DL scheduling.
+  // Postcondition:
+  //   PUSCH is not scheduled.
 
   // Precondition
   const rnti_t rnti = to_rnti(0x4601);
@@ -93,16 +91,14 @@ TEST_F(trig_ul_sched_test, no_dl_grant_no_pusch)
 
 TEST_F(trig_ul_sched_test, dl_grant_triggers_pusch)
 {
-  /*
-  Test: UE configured with triggered grant, PDSCH triggers BSR and UL grant
-  Precondition:
-    UE with triggered ul grant is configured
-  Action:
-    PDSCH scheduling for UE at slot N
-  Postcondition:
-    PDCCH for UL scheduled at slot N+DELAY_SLOTS, and PUSCH scheduled at N+DELAY_SLOTS+K2
-    UL Grant size choosen according to GRANT_BYTES
-  */
+  // Test: UE configured with triggered grant, PDSCH triggers BSR and UL grant
+  // Precondition:
+  //   UE with triggered ul grant is configured.
+  // Action:
+  //   PDSCH scheduling for UE at slot N.
+  // Postcondition:
+  //   PDCCH for UL scheduled at slot N+DELAY_SLOTS, and PUSCH scheduled at N+DELAY_SLOTS+K2 UL Grant size choosen
+  //   according to GRANT_BYTES.
 
   // Precondition
   const rnti_t rnti = to_rnti(0x4601);
@@ -147,16 +143,14 @@ TEST_F(trig_ul_sched_test, dl_grant_triggers_pusch)
 
 TEST_F(trig_ul_sched_test, only_ue_with_triggered_bearer_gets_pusch)
 {
-  /*
-  Test: Triggered UL grant is only issued to UEs that have a bearer configured with triggered_ul_grant.
-  Precondition:
-    Two UEs: one with triggered UL grant bearer (TRIG_LCID), one with a plain bearer only.
-  Action:
-    DL scheduling for both UEs.
-  Postcondition:
-    Only the triggered UE receives a PUSCH grant.
-    The normal UE does not receive a PUSCH grant.
-  */
+  // Test: Triggered UL grant is only issued to UEs that have a bearer configured with triggered_ul_grant.
+  // Precondition:
+  //   Two UEs: one with triggered UL grant bearer (TRIG_LCID), one with a plain bearer only.
+  // Action:
+  //   DL scheduling for both UEs.
+  // Postcondition:
+  //   Only the triggered UE receives a PUSCH grant.
+  //   The normal UE does not receive a PUSCH grant.
 
   // Precondition
   const rnti_t trig_rnti  = to_rnti(0x4601);
@@ -198,19 +192,17 @@ TEST_F(trig_ul_sched_test, only_ue_with_triggered_bearer_gets_pusch)
 
 TEST_F(trig_ul_sched_test, no_injection_when_pending_bytes_already_sufficient)
 {
-  /*
-  Test: BSR injection is skipped when the UE already has sufficient UL buffer, and the pending grant
-        is cleaned from the queue regardless.
-  Precondition:
-    UE with triggered UL grant bearer.
-  Action:
-    PDSCH at slot N registers a pending_grant (target = N+DELAY_SLOTS).
-    Natural BSR above GRANT_BYTES reported just before the trigger slot.
-    At slot N+DELAY_SLOTS the scheduler sees pending_bytes >= GRANT_BYTES.
-  Postcondition:
-    BSR injection is skipped — PUSCH TBS reflects the natural BSR, not the reduced GRANT_BYTES.
-    Pending grant is cleaned from queue — no PUSCH appears after BSR is drained.
-  */
+  // Test: BSR injection is skipped when the UE already has sufficient UL buffer, and the pending grant
+  //       is cleaned from the queue regardless.
+  // Precondition:
+  //   UE with triggered UL grant bearer.
+  // Action:
+  //   PDSCH at slot N registers a pending_grant (target = N+DELAY_SLOTS).
+  //   Natural BSR above GRANT_BYTES reported just before the trigger slot.
+  //   At slot N+DELAY_SLOTS the scheduler sees pending_bytes >= GRANT_BYTES.
+  // Postcondition:
+  //   BSR injection is skipped — PUSCH TBS reflects the natural BSR, not the reduced GRANT_BYTES.
+  //   Pending grant is cleaned from queue — no PUSCH appears after BSR is drained.
 
   // Precondition
   const du_ue_index_t ue_idx      = to_du_ue_index(0);
@@ -260,6 +252,36 @@ TEST_F(trig_ul_sched_test, no_injection_when_pending_bytes_already_sufficient)
         << "PUSCH at slot " << last_result_slot().system_slot() << " — pending_grant was not cleaned from queue";
   }
 }
+
+TEST_F(trig_ul_sched_test, cell_deactivation_discards_pending_grants_of_removed_ues)
+{
+  // Test:
+  //   The pending triggered UL grants of the UEs removed by a cell deactivation are discarded.
+  //   Precondition:
+  //     UE with triggered UL grant received a PDSCH, so a triggered UL grant is pending.
+  //   Action:
+  //     The cell is deactivated and reactivated before the triggered UL grant is due.
+  //   Postcondition:
+  //     The scheduler runs past the slot the grant was due in, without scheduling the removed UE.
+
+  // Precondition
+  const rnti_t rnti = to_rnti(0x4601);
+  add_ue(make_ue_req(to_du_ue_index(0), rnti, true), true);
+  give_dl_data(to_du_ue_index(0), TRIG_LCID);
+  bool pdsch_found = run_slot_until([&] { return find_ue_pdsch(rnti, *last_sched_result()) != nullptr; }, 20);
+  ASSERT_TRUE(pdsch_found) << "UE did not receive a DL grant within timeout";
+
+  // Action
+  sched->handle_cell_deactivation_request(CELL_IDX);
+  sched->handle_cell_activation_request(CELL_IDX);
+
+  // Postcondition
+  for (unsigned i = 0; i != 2 * DELAY_SLOTS; ++i) {
+    run_slot();
+    ASSERT_EQ(find_ue_ul_pdcch(rnti), nullptr) << "UL PDCCH for a UE removed by the cell deactivation";
+  }
+}
+
 // ---- Unit tests for triggered_ul_grant_scheduler functions ------------------
 
 class trig_ul_grant_unit_test : public ::testing::Test
@@ -325,17 +347,16 @@ protected:
 
 TEST_F(trig_ul_grant_unit_test, process_dl_results_enqueues_grant_for_triggered_lcid)
 {
-  /*
-  Test: process_dl_results enqueues a pending_grant when a DL grant is issued for a triggered LCID.
-  Precondition:
-    UE with triggered UL grant bearer configured.
-    No pending BSR.
-  Action:
-    process_dl_results called with a DL grant for TRIG_LCID.
-    run_slot called at the target slot (sl + DELAY_SLOTS).
-  Postcondition:
-    BSR is injected — pending bytes for TRIG_LCG >= GRANT_BYTES.
-  */
+  // Test: process_dl_results enqueues a pending_grant when a DL grant is issued for a triggered LCID.
+  // Precondition:
+  //   UE with triggered UL grant bearer configured.
+  //   No pending BSR.
+  // Action:
+  //   process_dl_results called with a DL grant for TRIG_LCID.
+  //   run_slot called at the target slot (sl + DELAY_SLOTS).
+  // Postcondition:
+  //   BSR is injected — pending bytes for TRIG_LCG >= GRANT_BYTES.
+
   ue& u = add_ue_to_repo(to_du_ue_index(0), to_rnti(0x4601), true);
   ASSERT_EQ(u.logical_channels().pending_bytes(TRIG_LCG), 0U);
 
@@ -347,16 +368,15 @@ TEST_F(trig_ul_grant_unit_test, process_dl_results_enqueues_grant_for_triggered_
 
 TEST_F(trig_ul_grant_unit_test, process_dl_results_ignores_non_triggered_lcid)
 {
-  /*
-  Test: process_dl_results does not enqueue a grant when the bearer has no triggered_ul_grant config.
-  Precondition:
-    UE configured without triggered UL grant bearer.
-  Action:
-    process_dl_results called with a DL grant for TRIG_LCID.
-    run_slot called at the target slot (sl + DELAY_SLOTS).
-  Postcondition:
-    No BSR is injected — pending bytes for TRIG_LCG remain 0.
-  */
+  // Test: process_dl_results does not enqueue a grant when the bearer has no triggered_ul_grant config.
+  // Precondition:
+  //   UE configured without triggered UL grant bearer.
+  // Action:
+  //   process_dl_results called with a DL grant for TRIG_LCID.
+  //   run_slot called at the target slot (sl + DELAY_SLOTS).
+  // Postcondition:
+  //   No BSR is injected — pending bytes for TRIG_LCG remain 0.
+
   ue& u = add_ue_to_repo(to_du_ue_index(0), to_rnti(0x4601), false);
 
   ul_trig_sched.process_dl_results(sl, make_dl_grant(to_du_ue_index(0), TRIG_LCID));
@@ -367,18 +387,17 @@ TEST_F(trig_ul_grant_unit_test, process_dl_results_ignores_non_triggered_lcid)
 
 TEST_F(trig_ul_grant_unit_test, run_slot_does_not_fire_before_target_slot)
 {
-  /*
-  Test: BSR injection fires exactly at the target slot, not before.
-  Precondition:
-    UE with triggered UL grant bearer configured.
-    Pending grant registered via process_dl_results at slot sl.
-  Action:
-    run_slot called at sl + DELAY_SLOTS - 1 (one slot before target).
-    run_slot called at sl + DELAY_SLOTS (target slot).
-  Postcondition:
-    At sl + DELAY_SLOTS - 1: pending bytes == 0 (no early injection).
-    At sl + DELAY_SLOTS: pending bytes >= GRANT_BYTES (injection fired on time).
-  */
+  // Test: BSR injection fires exactly at the target slot, not before.
+  // Precondition:
+  //   UE with triggered UL grant bearer configured.
+  //   Pending grant registered via process_dl_results at slot sl.
+  // Action:
+  //   run_slot called at sl + DELAY_SLOTS - 1 (one slot before target).
+  //   run_slot called at sl + DELAY_SLOTS (target slot).
+  // Postcondition:
+  //   At sl + DELAY_SLOTS - 1: pending bytes == 0 (no early injection).
+  //   At sl + DELAY_SLOTS: pending bytes >= GRANT_BYTES (injection fired on time).
+
   ue& u = add_ue_to_repo(to_du_ue_index(0), to_rnti(0x4601), true);
   ul_trig_sched.process_dl_results(sl, make_dl_grant(to_du_ue_index(0), TRIG_LCID));
 
@@ -391,17 +410,16 @@ TEST_F(trig_ul_grant_unit_test, run_slot_does_not_fire_before_target_slot)
 
 TEST_F(trig_ul_grant_unit_test, run_slot_skips_injection_when_bsr_already_sufficient)
 {
-  /*
-  Test: BSR injection is skipped when the UE already has sufficient pending bytes at the target slot.
-  Precondition:
-    UE with triggered UL grant bearer configured.
-    Natural BSR of GRANT_BYTES + 1 injected before run_slot.
-  Action:
-    process_dl_results registers a pending grant.
-    run_slot called at the target slot.
-  Postcondition:
-    Pending bytes remain equal to the natural BSR — injection did not overwrite it.
-  */
+  // Test: BSR injection is skipped when the UE already has sufficient pending bytes at the target slot.
+  // Precondition:
+  //   UE with triggered UL grant bearer configured.
+  //   Natural BSR of GRANT_BYTES + 1 injected before run_slot.
+  // Action:
+  //   process_dl_results registers a pending grant.
+  //   run_slot called at the target slot.
+  // Postcondition:
+  //   Pending bytes remain equal to the natural BSR — injection did not overwrite it.
+
   ue& u = add_ue_to_repo(to_du_ue_index(0), to_rnti(0x4601), true);
 
   report_bsr(u, to_du_ue_index(0), to_rnti(0x4601), GRANT_BYTES + 100);
@@ -415,17 +433,16 @@ TEST_F(trig_ul_grant_unit_test, run_slot_skips_injection_when_bsr_already_suffic
 
 TEST_F(trig_ul_grant_unit_test, grant_cleaned_from_queue_after_run_slot)
 {
-  /*
-  Test: A pending grant is removed from the queue after run_slot processes it, preventing re-injection.
-  Precondition:
-    UE with triggered UL grant bearer configured.
-    Pending grant registered and fired at sl + DELAY_SLOTS.
-  Action:
-    BSR zeroed after injection.
-    run_slot called at sl + DELAY_SLOTS + 1 (one slot after the grant fired).
-  Postcondition:
-    Pending bytes remain 0 — no re-injection occurred, grant was cleaned from the queue.
-  */
+  // Test: A pending grant is removed from the queue after run_slot processes it, preventing re-injection.
+  // Precondition:
+  //   UE with triggered UL grant bearer configured.
+  //   Pending grant registered and fired at sl + DELAY_SLOTS.
+  // Action:
+  //   BSR zeroed after injection.
+  //   run_slot called at sl + DELAY_SLOTS + 1 (one slot after the grant fired).
+  // Postcondition:
+  //   Pending bytes remain 0 — no re-injection occurred, grant was cleaned from the queue.
+
   ue& u = add_ue_to_repo(to_du_ue_index(0), to_rnti(0x4601), true);
   ul_trig_sched.process_dl_results(sl, make_dl_grant(to_du_ue_index(0), TRIG_LCID));
   ul_trig_sched.run_slot(sl + DELAY_SLOTS);

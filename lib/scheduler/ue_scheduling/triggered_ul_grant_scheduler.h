@@ -37,6 +37,9 @@ public:
   /// Fires triggered UL grants due by \p pdcch_slot by injecting a synthetic BSR into the affected UEs.
   void run_slot(slot_point pdcch_slot);
 
+  /// Discards the pending triggered UL grants of a UE that is about to be removed.
+  void rem_ue(du_ue_index_t ue_index);
+
 private:
   struct pending_grant {
     pending_grant(slot_point target_pdcch_slot_, du_ue_index_t ue_index_, lcg_id_t lcg_id_, units::bytes bytes_) :

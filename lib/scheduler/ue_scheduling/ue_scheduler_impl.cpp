@@ -45,6 +45,12 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
   ocudu_assert(cells.contains(cell_index), "Cell reference not found in the scheduler");
   auto& c = cells[cell_index];
 
+  // The other cells of the group may be running the UE scheduling, which reads the UEs and slices modified below.
+  std::unique_lock<std::mutex> lock(cell_group_mutex, std::defer_lock);
+  if (cells.size() > 1) {
+    lock.lock();
+  }
+
   // Stop sub-schedulers.
   c.fallback_sched.stop();
   if (c.cg_sched != nullptr) {
@@ -52,8 +58,8 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
   }
 
   // The UE repository drops every UE that has this cell, even as an SCell, without going through the UE removal event
-  // that detaches it from the slice schedulers. Detach it here from the slices of each of its cells, or they would keep
-  // referencing a destroyed UE.
+  // that detaches it from the slice schedulers. Detach it here from the slices and the pending triggered UL grants of
+  // each of its cells, or they would keep referencing a destroyed UE.
   for (const ue& u : ue_db) {
     if (u.find_cell(cell_index) == nullptr) {
       continue;
@@ -62,6 +68,7 @@ void ue_scheduler_impl::do_stop_cell(du_cell_index_t cell_index)
       const du_cell_index_t ue_cell_idx = u.get_cell(to_serv_cell_index(i)).cell_index;
       if (cells.contains(ue_cell_idx)) {
         cells[ue_cell_idx].slice_sched.rem_ue(u.ue_index);
+        cells[ue_cell_idx].trig_ul_sched.rem_ue(u.ue_index);
       }
     }
   }
