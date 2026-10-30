@@ -5977,7 +5977,7 @@ struct extended_gnb_cu_cp_name_s {
   bool                                      gnb_cu_cp_name_utf8_string_present    = false;
   bool                                      ie_exts_present                       = false;
   visible_string<1, 150, true, true>        gnb_cu_cp_name_visible_string;
-  utf8_string<1, 150, true, true>           gnb_cu_cp_name_utf8_string;
+  utf8_string<true>                         gnb_cu_cp_name_utf8_string;
   extended_gnb_cu_cp_name_ext_ies_container ie_exts;
   // ...
 
@@ -5999,7 +5999,7 @@ struct extended_gnb_cu_up_name_s {
   bool                                      gnb_cu_up_name_utf8_string_present    = false;
   bool                                      ie_exts_present                       = false;
   visible_string<1, 150, true, true>        gnb_cu_up_name_visible_string;
-  utf8_string<1, 150, true, true>           gnb_cu_up_name_utf8_string;
+  utf8_string<true>                         gnb_cu_up_name_utf8_string;
   extended_gnb_cu_up_name_ext_ies_container ie_exts;
   // ...
 

@@ -129,7 +129,7 @@ void init_ue_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE init_ue_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ng_5_g_s_tmsi_part1:
       HANDLE_CODE(c.get<fixed_bitstring<39>>().pack(bref));
@@ -146,7 +146,7 @@ OCUDUASN_CODE init_ue_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE init_ue_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ng_5_g_s_tmsi_part1:
@@ -539,7 +539,7 @@ void rrc_sys_info_request_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE rrc_sys_info_request_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::rrc_sys_info_request:
       HANDLE_CODE(c.get<rrc_sys_info_request_ies_s>().pack(bref));
@@ -556,7 +556,7 @@ OCUDUASN_CODE rrc_sys_info_request_s::crit_exts_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE rrc_sys_info_request_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::rrc_sys_info_request:
@@ -603,7 +603,7 @@ void rrc_sys_info_request_s::crit_exts_c_::crit_exts_future_r16_c_::to_json(json
 }
 OCUDUASN_CODE rrc_sys_info_request_s::crit_exts_c_::crit_exts_future_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::rrc_pos_sys_info_request_r16:
       HANDLE_CODE(c.pack(bref));
@@ -619,7 +619,7 @@ OCUDUASN_CODE rrc_sys_info_request_s::crit_exts_c_::crit_exts_future_r16_c_::pac
 OCUDUASN_CODE rrc_sys_info_request_s::crit_exts_c_::crit_exts_future_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::rrc_pos_sys_info_request_r16:

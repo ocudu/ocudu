@@ -14715,7 +14715,7 @@ struct extended_gnb_cu_name_s {
   bool                                   gnb_cu_name_utf8_string_present    = false;
   bool                                   ie_exts_present                    = false;
   visible_string<1, 150, true, true>     gnb_cu_name_visible_string;
-  utf8_string<1, 150, true, true>        gnb_cu_name_utf8_string;
+  utf8_string<true>                      gnb_cu_name_utf8_string;
   extended_gnb_cu_name_ext_ies_container ie_exts;
   // ...
 
@@ -14737,7 +14737,7 @@ struct extended_gnb_du_name_s {
   bool                                   gnb_du_name_utf8_string_present    = false;
   bool                                   ie_exts_present                    = false;
   visible_string<1, 150, true, true>     gnb_du_name_visible_string;
-  utf8_string<1, 150, true, true>        gnb_du_name_utf8_string;
+  utf8_string<true>                      gnb_du_name_utf8_string;
   extended_gnb_du_name_ext_ies_container ie_exts;
   // ...
 

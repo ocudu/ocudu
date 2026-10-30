@@ -3,7 +3,14 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "asn1_test_utils.h"
+#include "ocudu/asn1/rrc_nr/bcch_bch_msg.h"
+#include "ocudu/asn1/rrc_nr/cell_group_config.h"
+#include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
+#include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
+#include "ocudu/asn1/rrc_nr/sys_info.h"
+#include "ocudu/asn1/rrc_nr/ul_ccch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
 #include "ocudu/support/test_utils.h"
 #include <cstdio>
@@ -137,7 +144,7 @@ TEST_F(asn1_rrc_nr_test, when_eutra_nr_capabilities_correct_then_packing_success
   asn1::bit_ref      bref(buffer);
   mrdc_cap.pack(bref);
 
-  ASSERT_EQ(test_pack_unpack_consistency(mrdc_cap), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(mrdc_cap), OCUDUASN_SUCCESS);
 
   //  ocudulog::fetch_basic_logger("RRC").info(
   //      buffer, bref.distance_bytes(), "Packed cap struct ({} bytes):", bref.distance_bytes());
@@ -157,7 +164,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_mrdc_capabilities_correct_then_unpacking_succes
 
   ASSERT_EQ(mrdc_cap.unpack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(mrdc_cap), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(mrdc_cap), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_successful)
@@ -273,7 +280,7 @@ TEST_F(asn1_rrc_nr_test, when_cell_group_config_correct_then_unpacking_successfu
 
   ASSERT_EQ(cell_group_cfg.unpack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(cell_group_cfg), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(cell_group_cfg), OCUDUASN_SUCCESS);
 
   ASSERT_TRUE(cell_group_cfg.sp_cell_cfg_present);
   ASSERT_TRUE(cell_group_cfg.sp_cell_cfg.serv_cell_idx_present);
@@ -347,7 +354,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel15_correct_then_unpacking_su
 
   ASSERT_EQ(ue_nr_cap.unpack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(ue_nr_cap), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(ue_nr_cap), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
@@ -451,7 +458,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel16_correct_then_unpacking_su
 
   ASSERT_EQ(ue_nr_cap.unpack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(ue_nr_cap), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(ue_nr_cap), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
@@ -572,7 +579,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel16_v2_correct_then_unpacking
   ASSERT_TRUE(ue_nr_cap.feature_sets_present);
   ASSERT_EQ(ue_nr_cap.feature_sets.feature_sets_dl.size(), 1);
 
-  ASSERT_EQ(test_pack_unpack_consistency(ue_nr_cap), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(ue_nr_cap), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
@@ -593,4 +600,154 @@ TEST_F(asn1_rrc_nr_test, unpack_malformed_rrc_setup_complete)
 
   cbit_ref bref{pdu};
   ASSERT_NE(rrc_msg.unpack(bref), OCUDUASN_SUCCESS);
+}
+
+TEST_F(asn1_rrc_nr_test, null_ext_choice_alternative_is_an_open_type)
+{
+  location_meas_info_c info;
+  info.set_eutra_fine_timing_detection();
+
+  byte_buffer pdu;
+  bit_ref     bref(pdu);
+  ASSERT_EQ(info.pack(bref), OCUDUASN_SUCCESS);
+
+  // Extension index followed by an open type holding the single zero octet that encodes NULL.
+  uint8_t expected[] = {0x80, 0x01, 0x00};
+  ASSERT_EQ(pdu, byte_buffer::create(expected).value());
+
+  location_meas_info_c info_unpacked;
+  cbit_ref             cbref(pdu);
+  ASSERT_EQ(info_unpacked.unpack(cbref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(info_unpacked.type(), location_meas_info_c::types::eutra_fine_timing_detection);
+  ASSERT_EQ(cbref.distance_bytes(), (int)pdu.length());
+}
+
+TEST_F(asn1_rrc_nr_test, mandatory_ext_group_member_with_first_enum_value)
+{
+  rlf_timers_and_consts_s rlf;
+  rlf.t310.value = rlf_timers_and_consts_s::t310_opts::ms1000;
+  rlf.n310.value = rlf_timers_and_consts_s::n310_opts::n2;
+  rlf.n311.value = rlf_timers_and_consts_s::n311_opts::n3;
+  rlf.ext        = true;
+  rlf.t311.set_present();
+  rlf.t311->value = rlf_timers_and_consts_s::t311_opts::ms1000;
+
+  byte_buffer pdu;
+  bit_ref     bref(pdu);
+  ASSERT_EQ(rlf.pack(bref), OCUDUASN_SUCCESS);
+
+  // The extension group is present although t311 holds the first enumerated value.
+  ASSERT_EQ(pdu, ocudu::make_byte_buffer("a940202000").value());
+
+  rlf_timers_and_consts_s rlf_unpacked;
+  cbit_ref                cbref(pdu);
+  ASSERT_EQ(rlf_unpacked.unpack(cbref), OCUDUASN_SUCCESS);
+  ASSERT_TRUE(rlf_unpacked.t311.is_present());
+  ASSERT_EQ(rlf_unpacked.t311->value, rlf_timers_and_consts_s::t311_opts::ms1000);
+  ASSERT_EQ(test_pack_roundtrip(rlf_unpacked), OCUDUASN_SUCCESS);
+}
+
+// Real PDUs from lab captures.
+static const std::vector<capture_pdu> dl_ccch_msg_captures = {
+    {"RRC Setup",
+     "204004097ae00580088bd76380830f0003e0106341e0400020904c0ca8000fffffffffffd83708420001b81650020c00"
+     "000081a60404542801f9409000113557c841c001040c2050c1c9c48a163068e1e408800004280004005a8000a2042800"
+     "0e205a80010024280014025a8001a1e428001e1e5a80020084280025f48200a7d20902df48280c7d20b035f48300e7d2"
+     "0d03df4838100ba0804430821024b92e4b18166c47456789bc9a074820f177e060870000000e3ff5988d53544a058000"
+     "0865d8000002000000000000ac22b5514011c008a45003f1082b40801c040821001f88415a0200e040420800fc420ad0"
+     "10070302084007e2105680c038201082003f1082b40600140000008218081018201c12000fca04000000200400080600"
+     "0809002200b4000024040089c661fffffe1e8000"},
+};
+
+static const std::vector<capture_pdu> dl_dcch_msg_captures = {
+    {"RRC Reconfiguration",
+     "028a844040404092ae01604b0701f00831a0f0200010482606540007ffffffffffec1b84210000dc0b28050600000040"
+     "d18101250a007e502c00044d55f21070004103081430727122858c1a3879022000010a00010016a00028810a00038816"
+     "a00040090a00050096a00068790a00078796a00080216a00097d208029f48240b7d20a031f482c0d7d20c039f48340f7"
+     "d20e0402e820110ca0b4092e4b92c605ac11d159e26f2687d2083c5df81821c000000243ff5988d5355ca0580000865d"
+     "80000020000000000000c22b5514011c00400820801f88401a0500e020410800fc4200d010070202104007e210068080"
+     "38181042003f1080340601c100841001f88401a03000a000000410c04080c100e0b0007e502800000100200040300040"
+     "480110052000012024044e390000"},
+    {"RRC Reconfiguration",
+     "068a80409a01e0020de3b0a0080c0501c2e01584888bd76380832f00058e01a62afe4090682c80204600412088090004"
+     "011a022487c1c0efc0c10e9080020014800004624044e390001d9f809fca11ecc0df801a004019cb8040708440024040"
+     "018c4c00407fc0418184e2011e848a4140702a00c0888100400000605e40018048104040425ec0062020084280c00002"
+     "a04182020202000341020202020004400947021a5b9d195c9b995d019b5b98cc0c0c419b58d8cc0c0c4119dc1c9cc480"
+     "40"},
+    {"RRC Reestablishment", "1800"},
+    {"Security Mode Command", "220810"},
+    {"DL Information Transfer",
+     "2888efc040b282d5c02fc00840212ee0017e401e221000202de9b26baa80e0001e22000000e2a0a08020000026214080"
+     "2000002080400005442041e00bc037c6810063e33e2063e23e40"},
+    {"UE Capability Enquiry", "3402012001013400"},
+};
+
+static const std::vector<capture_pdu> ul_ccch_msg_captures = {
+    {"RRC Setup Request", "065800000028"},
+    {"RRC Reestablishment Request", "48c0800ebcac"},
+};
+
+static const std::vector<capture_pdu> ul_dcch_msg_captures = {
+    {"RRC Reconfiguration Complete", "0a00"},
+    {"RRC Setup Complete, Registration request",
+     "1010111f8060604c55809f8010424002fc803c443d446cb00000fccb80b8381c4009746d20f7ccdcc296965b13c8a097"
+     "94717c6679d30995fe6a48e3730140593ea50e270e8df76230"},
+    {"RRC Reestablishment Complete", "1800"},
+    {"Security Mode Complete", "2a00"},
+    {"UL Information Transfer",
+     "3a233f011545c27e813f0033808015970080e0ffffc8d8bd801040401088008000084083000000004183000000000005"
+     "000008000006800008800900c092848434b73a32b93732ba00"},
+    {"UE Capability Information",
+     "4c821ff0680ce811d39680b7ef60e1c800005824c5c00060fc340031bff001700298b89b2000002190000d5a0c000600"
+     "7a071e439f000020b801ff800e007fe00151000001b2f8002f800000400e268000000010134b40000003804048f80000"
+     "00000000295500010000096594003caa0a3a00002d003c000400000010020040902800"},
+};
+
+static const std::vector<capture_pdu> mib_captures = {
+    {"MIB", "020d08"},
+};
+
+static const std::vector<capture_pdu> sib1_captures = {
+    {"SIB1",
+     "de0405c04100100800003800000cd86015842680f08001880081599830225986cdc1008000040200010688a08e484c10"
+     "9a4c190000018878112cc893e02c1992afbc0493a441b8a37186e38dcb1befd5b1c00434e21000983710400012000081"
+     "03a8021603380c162da08a"},
+};
+
+static const std::vector<capture_pdu> cell_group_cfg_captures = {
+    {"CellGroupConfig",
+     "5c02b091117aec701065e000b1c034c55fc8120d05900418c00824110120008023405490f8381df81821d23080003000"
+     "000000000560008005a000012020044e330ffffff0f480"},
+};
+
+static const std::vector<capture_pdu> meas_timing_cfg_captures = {
+    {"MeasurementTimingConfiguration", "10113c08050200"},
+};
+
+TEST_F(asn1_rrc_nr_test, captured_pdus_repack_to_same_bytes)
+{
+  for (const capture_pdu& c : dl_ccch_msg_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<dl_ccch_msg_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
+  for (const capture_pdu& c : dl_dcch_msg_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<dl_dcch_msg_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
+  for (const capture_pdu& c : ul_ccch_msg_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<ul_ccch_msg_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
+  for (const capture_pdu& c : ul_dcch_msg_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<ul_dcch_msg_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
+  for (const capture_pdu& c : mib_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<mib_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
+  for (const capture_pdu& c : sib1_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<sib1_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
+  for (const capture_pdu& c : cell_group_cfg_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<cell_group_cfg_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
+  for (const capture_pdu& c : meas_timing_cfg_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<meas_timing_cfg_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
 }

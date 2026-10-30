@@ -73,7 +73,25 @@ uint8_t band_params_sidelink_v1710_s::tx_iuc_scheme2_mode2_sidelink_r17_opts::to
 // BandSidelinkPC5-r16 ::= SEQUENCE
 OCUDUASN_CODE band_sidelink_pc5_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= csi_report_sidelink_r16.is_present();
+  group_flags[0] |= rank_two_reception_r16_present;
+  group_flags[0] |= sl_open_loop_pc_rsrp_report_sidelink_r16_present;
+  group_flags[0] |= sl_rx_256_qam_r16_present;
+  group_flags[1] |= rx_iuc_scheme1_preferred_mode2_sidelink_r17_present;
+  group_flags[1] |= rx_iuc_scheme1_non_preferred_mode2_sidelink_r17_present;
+  group_flags[1] |= rx_iuc_scheme2_mode2_sidelink_r17_present;
+  group_flags[1] |= rx_iuc_scheme1_sci_r17_present;
+  group_flags[1] |= rx_iuc_scheme1_sci_explicit_req_r17_present;
+  group_flags[1] |= scheme2_conflict_determination_rsrp_r17_present;
+  group_flags[2] |= sl_pathloss_based_olpc_sl_rsrp_report_r18_present;
+  group_flags[2] |= sl_ue_cot_sharing_r18_present;
+  group_flags[2] |= sl_psfch_multi_contiguous_rb_r18_present;
+  group_flags[2] |= sl_psfch_multi_non_contiguous_rb_r18_present;
+  group_flags[2] |= sl_ca_communication_r18.is_present();
+  group_flags[2] |= sl_reception_intra_carrier_guard_band_r18_present;
+  group_flags[2] |= sl_pwr_class_unlicensed_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(sl_reception_r16_present, 1));
   HANDLE_CODE(bref.pack(sl_tx_256_qam_r16_present, 1));
   HANDLE_CODE(bref.pack(low_se_64_qam_mcs_table_sidelink_r16_present, 1));
@@ -89,26 +107,8 @@ OCUDUASN_CODE band_sidelink_pc5_r16_s::pack(bit_ref& bref) const
     }
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= csi_report_sidelink_r16.is_present();
-    group_flags[0] |= rank_two_reception_r16_present;
-    group_flags[0] |= sl_open_loop_pc_rsrp_report_sidelink_r16_present;
-    group_flags[0] |= sl_rx_256_qam_r16_present;
-    group_flags[1] |= rx_iuc_scheme1_preferred_mode2_sidelink_r17_present;
-    group_flags[1] |= rx_iuc_scheme1_non_preferred_mode2_sidelink_r17_present;
-    group_flags[1] |= rx_iuc_scheme2_mode2_sidelink_r17_present;
-    group_flags[1] |= rx_iuc_scheme1_sci_r17_present;
-    group_flags[1] |= rx_iuc_scheme1_sci_explicit_req_r17_present;
-    group_flags[1] |= scheme2_conflict_determination_rsrp_r17_present;
-    group_flags[2] |= sl_pathloss_based_olpc_sl_rsrp_report_r18_present;
-    group_flags[2] |= sl_ue_cot_sharing_r18_present;
-    group_flags[2] |= sl_psfch_multi_contiguous_rb_r18_present;
-    group_flags[2] |= sl_psfch_multi_non_contiguous_rb_r18_present;
-    group_flags[2] |= sl_ca_communication_r18.is_present();
-    group_flags[2] |= sl_reception_intra_carrier_guard_band_r18_present;
-    group_flags[2] |= sl_pwr_class_unlicensed_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -453,7 +453,7 @@ void band_sidelink_pc5_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_sidelink_r1
 }
 OCUDUASN_CODE band_sidelink_pc5_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_sidelink_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r16:
       HANDLE_CODE(bref.pack(c.get<fr1_r16_s_>().scs_15k_hz_r16_present, 1));
@@ -488,7 +488,7 @@ OCUDUASN_CODE band_sidelink_pc5_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_si
 OCUDUASN_CODE band_sidelink_pc5_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_sidelink_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r16:
@@ -585,7 +585,7 @@ uint8_t band_sidelink_pc5_r16_s::sl_pwr_class_unlicensed_r18_opts::to_number() c
 // MAC-ParametersSidelink-r17 ::= SEQUENCE
 OCUDUASN_CODE mac_params_sidelink_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(drx_on_sidelink_r17_present, 1));
 
   return OCUDUASN_SUCCESS;
@@ -595,6 +595,10 @@ OCUDUASN_CODE mac_params_sidelink_r17_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(drx_on_sidelink_r17_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mac_params_sidelink_r17_s::to_json(json_writer& j) const
@@ -641,17 +645,17 @@ void mib_sidelink_s::to_json(json_writer& j) const
 // SL-MeasQuantityResult-r16 ::= SEQUENCE
 OCUDUASN_CODE sl_meas_quant_result_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sl_rsrp_ded_sl_prs_rp_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(sl_rsrp_r16_present, 1));
 
   if (sl_rsrp_r16_present) {
     HANDLE_CODE(pack_integer(bref, sl_rsrp_r16, (uint8_t)0u, (uint8_t)127u));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sl_rsrp_ded_sl_prs_rp_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -704,17 +708,17 @@ void sl_meas_quant_result_r16_s::to_json(json_writer& j) const
 // SL-MeasResult-r16 ::= SEQUENCE
 OCUDUASN_CODE sl_meas_result_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sl_result_sl_prs_r18.is_present();
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(sl_result_dmrs_r16_present, 1));
 
   if (sl_result_dmrs_r16_present) {
     HANDLE_CODE(sl_result_dmrs_r16.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sl_result_sl_prs_r18.is_present();
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -769,7 +773,7 @@ void sl_meas_result_r16_s::to_json(json_writer& j) const
 // SL-MeasResults-r16 ::= SEQUENCE
 OCUDUASN_CODE sl_meas_results_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(pack_integer(bref, sl_meas_id_r16, (uint8_t)1u, (uint8_t)64u));
   HANDLE_CODE(sl_meas_result_r16.pack(bref));
 
@@ -781,6 +785,10 @@ OCUDUASN_CODE sl_meas_results_r16_s::unpack(cbit_ref& bref)
   HANDLE_CODE(unpack_integer(sl_meas_id_r16, bref, (uint8_t)1u, (uint8_t)64u));
   HANDLE_CODE(sl_meas_result_r16.unpack(bref));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_meas_results_r16_s::to_json(json_writer& j) const
@@ -885,7 +893,7 @@ void meas_report_sidelink_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE meas_report_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::meas_report_sidelink_r16:
       HANDLE_CODE(c.pack(bref));
@@ -901,7 +909,7 @@ OCUDUASN_CODE meas_report_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE meas_report_sidelink_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::meas_report_sidelink_r16:
@@ -1092,7 +1100,7 @@ void notif_msg_sidelink_r17_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE notif_msg_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::notif_msg_sidelink_r17:
       HANDLE_CODE(c.pack(bref));
@@ -1108,7 +1116,7 @@ OCUDUASN_CODE notif_msg_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE notif_msg_sidelink_r17_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::notif_msg_sidelink_r17:
@@ -1132,14 +1140,14 @@ const char* notif_msg_sidelink_r17_s::crit_exts_c_::types_opts::to_string() cons
 // PDCP-ParametersSidelink-r16 ::= SEQUENCE
 OCUDUASN_CODE pdcp_params_sidelink_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= pdcp_dupl_srb_sidelink_r18_present;
+  group_flags[0] |= pdcp_dupl_drb_sidelink_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(out_of_order_delivery_sidelink_r16_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= pdcp_dupl_srb_sidelink_r18_present;
-    group_flags[0] |= pdcp_dupl_drb_sidelink_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -1343,7 +1351,7 @@ void rrc_recfg_complete_sidelink_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE rrc_recfg_complete_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::rrc_recfg_complete_sidelink_r16:
       HANDLE_CODE(c.pack(bref));
@@ -1359,7 +1367,7 @@ OCUDUASN_CODE rrc_recfg_complete_sidelink_s::crit_exts_c_::pack(bit_ref& bref) c
 OCUDUASN_CODE rrc_recfg_complete_sidelink_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::rrc_recfg_complete_sidelink_r16:
@@ -1472,7 +1480,7 @@ void rrc_recfg_fail_sidelink_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE rrc_recfg_fail_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::rrc_recfg_fail_sidelink_r16:
       HANDLE_CODE(c.pack(bref));
@@ -1488,7 +1496,7 @@ OCUDUASN_CODE rrc_recfg_fail_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE rrc_recfg_fail_sidelink_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::rrc_recfg_fail_sidelink_r16:
@@ -1512,7 +1520,7 @@ const char* rrc_recfg_fail_sidelink_s::crit_exts_c_::types_opts::to_string() con
 // SL-SDAP-ConfigPC5-r16 ::= SEQUENCE
 OCUDUASN_CODE sl_sdap_cfg_pc5_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_mapped_qos_flows_to_add_list_r16.size() > 0, 1));
   HANDLE_CODE(bref.pack(sl_mapped_qos_flows_to_release_list_r16.size() > 0, 1));
 
@@ -1543,6 +1551,10 @@ OCUDUASN_CODE sl_sdap_cfg_pc5_r16_s::unpack(cbit_ref& bref)
   }
   HANDLE_CODE(sl_sdap_hdr_r16.unpack(bref));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_sdap_cfg_pc5_r16_s::to_json(json_writer& j) const
@@ -1575,7 +1587,7 @@ const char* sl_sdap_cfg_pc5_r16_s::sl_sdap_hdr_r16_opts::to_string() const
 // SL-PDCP-ConfigPC5-r16 ::= SEQUENCE
 OCUDUASN_CODE sl_pdcp_cfg_pc5_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_pdcp_sn_size_r16_present, 1));
   HANDLE_CODE(bref.pack(sl_out_of_order_delivery_r16_present, 1));
 
@@ -1595,6 +1607,10 @@ OCUDUASN_CODE sl_pdcp_cfg_pc5_r16_s::unpack(cbit_ref& bref)
     HANDLE_CODE(sl_pdcp_sn_size_r16.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_pdcp_cfg_pc5_r16_s::to_json(json_writer& j) const
@@ -1750,24 +1766,24 @@ void sl_rlc_cfg_pc5_r16_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sl_rlc_cfg_pc5_r16_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::sl_am_rlc_r16:
-      bref.pack(c.get<sl_am_rlc_r16_s_>().ext, 1);
+      bref.pack(false, 1);
       HANDLE_CODE(bref.pack(c.get<sl_am_rlc_r16_s_>().sl_sn_field_len_am_r16_present, 1));
       if (c.get<sl_am_rlc_r16_s_>().sl_sn_field_len_am_r16_present) {
         HANDLE_CODE(c.get<sl_am_rlc_r16_s_>().sl_sn_field_len_am_r16.pack(bref));
       }
       break;
     case types::sl_um_bi_dir_rlc_r16:
-      bref.pack(c.get<sl_um_bi_dir_rlc_r16_s_>().ext, 1);
+      bref.pack(false, 1);
       HANDLE_CODE(bref.pack(c.get<sl_um_bi_dir_rlc_r16_s_>().sl_sn_field_len_um_r16_present, 1));
       if (c.get<sl_um_bi_dir_rlc_r16_s_>().sl_sn_field_len_um_r16_present) {
         HANDLE_CODE(c.get<sl_um_bi_dir_rlc_r16_s_>().sl_sn_field_len_um_r16.pack(bref));
       }
       break;
     case types::sl_um_uni_dir_rlc_r16:
-      bref.pack(c.get<sl_um_uni_dir_rlc_r16_s_>().ext, 1);
+      bref.pack(false, 1);
       HANDLE_CODE(bref.pack(c.get<sl_um_uni_dir_rlc_r16_s_>().sl_sn_field_len_um_r16_present, 1));
       if (c.get<sl_um_uni_dir_rlc_r16_s_>().sl_sn_field_len_um_r16_present) {
         HANDLE_CODE(c.get<sl_um_uni_dir_rlc_r16_s_>().sl_sn_field_len_um_r16.pack(bref));
@@ -1782,7 +1798,7 @@ OCUDUASN_CODE sl_rlc_cfg_pc5_r16_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sl_rlc_cfg_pc5_r16_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::sl_am_rlc_r16:
@@ -1791,6 +1807,10 @@ OCUDUASN_CODE sl_rlc_cfg_pc5_r16_c::unpack(cbit_ref& bref)
       if (c.get<sl_am_rlc_r16_s_>().sl_sn_field_len_am_r16_present) {
         HANDLE_CODE(c.get<sl_am_rlc_r16_s_>().sl_sn_field_len_am_r16.unpack(bref));
       }
+      if (c.get<sl_am_rlc_r16_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+      }
       break;
     case types::sl_um_bi_dir_rlc_r16:
       bref.unpack(c.get<sl_um_bi_dir_rlc_r16_s_>().ext, 1);
@@ -1798,12 +1818,20 @@ OCUDUASN_CODE sl_rlc_cfg_pc5_r16_c::unpack(cbit_ref& bref)
       if (c.get<sl_um_bi_dir_rlc_r16_s_>().sl_sn_field_len_um_r16_present) {
         HANDLE_CODE(c.get<sl_um_bi_dir_rlc_r16_s_>().sl_sn_field_len_um_r16.unpack(bref));
       }
+      if (c.get<sl_um_bi_dir_rlc_r16_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+      }
       break;
     case types::sl_um_uni_dir_rlc_r16:
       bref.unpack(c.get<sl_um_uni_dir_rlc_r16_s_>().ext, 1);
       HANDLE_CODE(bref.unpack(c.get<sl_um_uni_dir_rlc_r16_s_>().sl_sn_field_len_um_r16_present, 1));
       if (c.get<sl_um_uni_dir_rlc_r16_s_>().sl_sn_field_len_um_r16_present) {
         HANDLE_CODE(c.get<sl_um_uni_dir_rlc_r16_s_>().sl_sn_field_len_um_r16.unpack(bref));
+      }
+      if (c.get<sl_um_uni_dir_rlc_r16_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
       }
       break;
     default:
@@ -1822,13 +1850,13 @@ const char* sl_rlc_cfg_pc5_r16_c::types_opts::to_string() const
 // SL-LogicalChannelConfigPC5-r16 ::= SEQUENCE
 OCUDUASN_CODE sl_lc_ch_cfg_pc5_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sl_lc_ch_id_v1800_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(pack_integer(bref, sl_lc_ch_id_r16, (uint8_t)1u, (uint8_t)32u));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sl_lc_ch_id_v1800_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -1875,7 +1903,7 @@ void sl_lc_ch_cfg_pc5_r16_s::to_json(json_writer& j) const
 // SLRB-Config-r16 ::= SEQUENCE
 OCUDUASN_CODE slrb_cfg_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_sdap_cfg_pc5_r16_present, 1));
   HANDLE_CODE(bref.pack(sl_pdcp_cfg_pc5_r16_present, 1));
   HANDLE_CODE(bref.pack(sl_rlc_cfg_pc5_r16_present, 1));
@@ -1919,6 +1947,10 @@ OCUDUASN_CODE slrb_cfg_r16_s::unpack(cbit_ref& bref)
     HANDLE_CODE(sl_mac_lc_ch_cfg_pc5_r16.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void slrb_cfg_r16_s::to_json(json_writer& j) const
@@ -1947,7 +1979,7 @@ void slrb_cfg_r16_s::to_json(json_writer& j) const
 // SL-CSI-RS-Config-r16 ::= SEQUENCE
 OCUDUASN_CODE sl_csi_rs_cfg_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_csi_rs_freq_alloc_r16_present, 1));
   HANDLE_CODE(bref.pack(sl_csi_rs_first_symbol_r16_present, 1));
 
@@ -1973,6 +2005,10 @@ OCUDUASN_CODE sl_csi_rs_cfg_r16_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_integer(sl_csi_rs_first_symbol_r16, bref, (uint8_t)3u, (uint8_t)12u));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_csi_rs_cfg_r16_s::to_json(json_writer& j) const
@@ -2084,7 +2120,7 @@ void sl_csi_rs_cfg_r16_s::sl_csi_rs_freq_alloc_r16_c_::to_json(json_writer& j) c
 }
 OCUDUASN_CODE sl_csi_rs_cfg_r16_s::sl_csi_rs_freq_alloc_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::sl_one_ant_port_r16:
       HANDLE_CODE(c.get<fixed_bitstring<12>>().pack(bref));
@@ -2101,7 +2137,7 @@ OCUDUASN_CODE sl_csi_rs_cfg_r16_s::sl_csi_rs_freq_alloc_r16_c_::pack(bit_ref& br
 OCUDUASN_CODE sl_csi_rs_cfg_r16_s::sl_csi_rs_freq_alloc_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::sl_one_ant_port_r16:
@@ -2126,7 +2162,7 @@ const char* sl_csi_rs_cfg_r16_s::sl_csi_rs_freq_alloc_r16_c_::types_opts::to_str
 // SL-RLC-ChannelConfigPC5-r17 ::= SEQUENCE
 OCUDUASN_CODE sl_rlc_ch_cfg_pc5_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_rlc_cfg_pc5_r17_present, 1));
   HANDLE_CODE(bref.pack(sl_mac_lc_ch_cfg_pc5_r17_present, 1));
 
@@ -2154,6 +2190,10 @@ OCUDUASN_CODE sl_rlc_ch_cfg_pc5_r17_s::unpack(cbit_ref& bref)
     HANDLE_CODE(sl_mac_lc_ch_cfg_pc5_r17.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_rlc_ch_cfg_pc5_r17_s::to_json(json_writer& j) const
@@ -2340,15 +2380,15 @@ void sl_rlc_bearer_cfg_r18_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sl_rlc_bearer_cfg_r18_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::srb:
-      bref.pack(c.get<srb_s_>().ext, 1);
+      bref.pack(false, 1);
       HANDLE_CODE(pack_integer(bref, c.get<srb_s_>().sl_srb_id_with_dupl, (uint8_t)1u, (uint8_t)3u));
       HANDLE_CODE(pack_integer(bref, c.get<srb_s_>().sl_rlc_bearer_cfg_idx_r18, (uint16_t)1u, (uint16_t)512u));
       break;
     case types::drb:
-      bref.pack(c.get<drb_s_>().ext, 1);
+      bref.pack(false, 1);
       HANDLE_CODE(bref.pack(c.get<drb_s_>().sl_rlc_cfg_pc5_r18_present, 1));
       HANDLE_CODE(bref.pack(c.get<drb_s_>().sl_mac_lc_ch_cfg_pc5_r18_present, 1));
       HANDLE_CODE(pack_integer(bref, c.get<drb_s_>().slrb_pc5_cfg_idx_r18, (uint16_t)1u, (uint16_t)512u));
@@ -2369,13 +2409,17 @@ OCUDUASN_CODE sl_rlc_bearer_cfg_r18_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sl_rlc_bearer_cfg_r18_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::srb:
       bref.unpack(c.get<srb_s_>().ext, 1);
       HANDLE_CODE(unpack_integer(c.get<srb_s_>().sl_srb_id_with_dupl, bref, (uint8_t)1u, (uint8_t)3u));
       HANDLE_CODE(unpack_integer(c.get<srb_s_>().sl_rlc_bearer_cfg_idx_r18, bref, (uint16_t)1u, (uint16_t)512u));
+      if (c.get<srb_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+      }
       break;
     case types::drb:
       bref.unpack(c.get<drb_s_>().ext, 1);
@@ -2388,6 +2432,10 @@ OCUDUASN_CODE sl_rlc_bearer_cfg_r18_c::unpack(cbit_ref& bref)
       }
       if (c.get<drb_s_>().sl_mac_lc_ch_cfg_pc5_r18_present) {
         HANDLE_CODE(c.get<drb_s_>().sl_mac_lc_ch_cfg_pc5_r18.unpack(bref));
+      }
+      if (c.get<drb_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
       }
       break;
     default:
@@ -2406,7 +2454,7 @@ const char* sl_rlc_bearer_cfg_r18_c::types_opts::to_string() const
 // SL-SRAP-ConfigPC5-r18 ::= SEQUENCE
 OCUDUASN_CODE sl_srap_cfg_pc5_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_peer_remote_ue_l2_id_r18_present, 1));
   HANDLE_CODE(bref.pack(sl_peer_remote_ue_local_id_r18_present, 1));
   HANDLE_CODE(bref.pack(sl_remote_ue_l2_id_r18_present, 1));
@@ -2448,6 +2496,10 @@ OCUDUASN_CODE sl_srap_cfg_pc5_r18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_integer(sl_remote_ue_local_id_r18, bref, (uint16_t)0u, (uint16_t)255u));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_srap_cfg_pc5_r18_s::to_json(json_writer& j) const
@@ -2842,7 +2894,7 @@ void rrc_recfg_sidelink_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE rrc_recfg_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::rrc_recfg_sidelink_r16:
       HANDLE_CODE(c.pack(bref));
@@ -2858,7 +2910,7 @@ OCUDUASN_CODE rrc_recfg_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE rrc_recfg_sidelink_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::rrc_recfg_sidelink_r16:
@@ -3165,7 +3217,7 @@ void remote_ue_info_sidelink_r17_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE remote_ue_info_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::remote_ue_info_sidelink_r17:
       HANDLE_CODE(c.pack(bref));
@@ -3181,7 +3233,7 @@ OCUDUASN_CODE remote_ue_info_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) c
 OCUDUASN_CODE remote_ue_info_sidelink_r17_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::remote_ue_info_sidelink_r17:
@@ -3233,7 +3285,7 @@ void sbcch_sl_bch_msg_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sbcch_sl_bch_msg_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::c1:
       HANDLE_CODE(c.pack(bref));
@@ -3249,7 +3301,7 @@ OCUDUASN_CODE sbcch_sl_bch_msg_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sbcch_sl_bch_msg_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::c1:
@@ -3294,7 +3346,7 @@ void sbcch_sl_bch_msg_type_c::c1_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sbcch_sl_bch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::mib_sidelink:
       HANDLE_CODE(c.pack(bref));
@@ -3310,7 +3362,7 @@ OCUDUASN_CODE sbcch_sl_bch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE sbcch_sl_bch_msg_type_c::c1_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::mib_sidelink:
@@ -3491,7 +3543,7 @@ void ue_cap_enquiry_sidelink_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_cap_enquiry_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ue_cap_enquiry_sidelink_r16:
       HANDLE_CODE(c.pack(bref));
@@ -3507,7 +3559,7 @@ OCUDUASN_CODE ue_cap_enquiry_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE ue_cap_enquiry_sidelink_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ue_cap_enquiry_sidelink_r16:
@@ -3805,7 +3857,7 @@ void ue_cap_info_sidelink_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_cap_info_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ue_cap_info_sidelink_r16:
       HANDLE_CODE(c.pack(bref));
@@ -3821,7 +3873,7 @@ OCUDUASN_CODE ue_cap_info_sidelink_s::crit_exts_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE ue_cap_info_sidelink_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ue_cap_info_sidelink_r16:
@@ -4010,7 +4062,7 @@ void uu_msg_transfer_sidelink_r17_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE uu_msg_transfer_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::uu_msg_transfer_sidelink_r17:
       HANDLE_CODE(c.pack(bref));
@@ -4026,7 +4078,7 @@ OCUDUASN_CODE uu_msg_transfer_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) 
 OCUDUASN_CODE uu_msg_transfer_sidelink_r17_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::uu_msg_transfer_sidelink_r17:
@@ -4152,7 +4204,7 @@ void ue_assist_info_sidelink_r17_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_assist_info_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ue_assist_info_sidelink_r17:
       HANDLE_CODE(c.pack(bref));
@@ -4168,7 +4220,7 @@ OCUDUASN_CODE ue_assist_info_sidelink_r17_s::crit_exts_c_::pack(bit_ref& bref) c
 OCUDUASN_CODE ue_assist_info_sidelink_r17_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ue_assist_info_sidelink_r17:
@@ -4327,7 +4379,7 @@ void ue_info_request_sidelink_r18_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_info_request_sidelink_r18_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ue_info_request_sidelink_r18:
       HANDLE_CODE(c.pack(bref));
@@ -4343,7 +4395,7 @@ OCUDUASN_CODE ue_info_request_sidelink_r18_s::crit_exts_c_::pack(bit_ref& bref) 
 OCUDUASN_CODE ue_info_request_sidelink_r18_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ue_info_request_sidelink_r18:
@@ -4495,7 +4547,7 @@ void ue_info_resp_sidelink_r18_s::crit_exts_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_info_resp_sidelink_r18_s::crit_exts_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ue_info_resp_sidelink_r18:
       HANDLE_CODE(c.pack(bref));
@@ -4511,7 +4563,7 @@ OCUDUASN_CODE ue_info_resp_sidelink_r18_s::crit_exts_c_::pack(bit_ref& bref) con
 OCUDUASN_CODE ue_info_resp_sidelink_r18_s::crit_exts_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ue_info_resp_sidelink_r18:
@@ -4629,7 +4681,7 @@ void s_cch_msg_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE s_cch_msg_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::c1:
       HANDLE_CODE(c.get<c1_c_>().pack(bref));
@@ -4646,7 +4698,7 @@ OCUDUASN_CODE s_cch_msg_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE s_cch_msg_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::c1:
@@ -4884,7 +4936,7 @@ void s_cch_msg_type_c::c1_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE s_cch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::meas_report_sidelink:
       HANDLE_CODE(c.get<meas_report_sidelink_s>().pack(bref));
@@ -4919,7 +4971,7 @@ OCUDUASN_CODE s_cch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE s_cch_msg_type_c::c1_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::meas_report_sidelink:
@@ -4996,7 +5048,7 @@ void s_cch_msg_type_c::msg_class_ext_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE s_cch_msg_type_c::msg_class_ext_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::c2:
       HANDLE_CODE(c.pack(bref));
@@ -5012,7 +5064,7 @@ OCUDUASN_CODE s_cch_msg_type_c::msg_class_ext_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE s_cch_msg_type_c::msg_class_ext_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::c2:
@@ -5214,7 +5266,7 @@ void s_cch_msg_type_c::msg_class_ext_c_::c2_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE s_cch_msg_type_c::msg_class_ext_c_::c2_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::notif_msg_sidelink_r17:
       HANDLE_CODE(c.get<notif_msg_sidelink_r17_s>().pack(bref));
@@ -5245,7 +5297,7 @@ OCUDUASN_CODE s_cch_msg_type_c::msg_class_ext_c_::c2_c_::pack(bit_ref& bref) con
 OCUDUASN_CODE s_cch_msg_type_c::msg_class_ext_c_::c2_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::notif_msg_sidelink_r17:
@@ -5342,16 +5394,16 @@ void s_cch_msg_s::to_json(json_writer& j) const
 // SL-MeasResultRelay-r17 ::= SEQUENCE
 OCUDUASN_CODE sl_meas_result_relay_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sl_meas_quant_r18_present;
+  group_flags[0] |= sl_relay_ind_mp_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(cell_id_r17.pack(bref));
   HANDLE_CODE(sl_relay_ue_id_r17.pack(bref));
   HANDLE_CODE(sl_meas_result_r17.pack(bref));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sl_meas_quant_r18_present;
-    group_flags[0] |= sl_relay_ind_mp_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);

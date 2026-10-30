@@ -7131,7 +7131,7 @@ struct extended_amf_name_s {
   bool                                amf_name_utf8_string_present    = false;
   bool                                ie_exts_present                 = false;
   visible_string<1, 150, true, true>  amf_name_visible_string;
-  utf8_string<1, 150, true, true>     amf_name_utf8_string;
+  utf8_string<true>                   amf_name_utf8_string;
   extended_amf_name_ext_ies_container ie_exts;
   // ...
 
@@ -7153,7 +7153,7 @@ struct extended_ran_node_name_s {
   bool                                     ran_node_name_utf8_string_present    = false;
   bool                                     ie_exts_present                      = false;
   visible_string<1, 150, true, true>       ran_node_name_visible_string;
-  utf8_string<1, 150, true, true>          ran_node_name_utf8_string;
+  utf8_string<true>                        ran_node_name_utf8_string;
   extended_ran_node_name_ext_ies_container ie_exts;
   // ...
 

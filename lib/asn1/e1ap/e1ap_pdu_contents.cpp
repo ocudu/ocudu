@@ -228,7 +228,7 @@ OCUDUASN_CODE bc_bearer_context_mod_confirm_ies_container::pack(bit_ref& bref) c
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -260,7 +260,7 @@ OCUDUASN_CODE bc_bearer_context_mod_confirm_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE bc_bearer_context_mod_confirm_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -299,8 +299,8 @@ OCUDUASN_CODE bc_bearer_context_mod_confirm_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -543,7 +543,7 @@ OCUDUASN_CODE bc_bearer_context_mod_fail_ies_container::pack(bit_ref& bref) cons
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -575,7 +575,7 @@ OCUDUASN_CODE bc_bearer_context_mod_fail_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE bc_bearer_context_mod_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -614,8 +614,8 @@ OCUDUASN_CODE bc_bearer_context_mod_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -827,7 +827,7 @@ template struct asn1::protocol_ie_field_s<bc_bearer_context_mod_request_ies_o>;
 OCUDUASN_CODE bc_bearer_context_mod_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -853,7 +853,7 @@ OCUDUASN_CODE bc_bearer_context_mod_request_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE bc_bearer_context_mod_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -886,8 +886,8 @@ OCUDUASN_CODE bc_bearer_context_mod_request_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -1096,7 +1096,7 @@ template struct asn1::protocol_ie_field_s<bc_bearer_context_mod_required_ies_o>;
 OCUDUASN_CODE bc_bearer_context_mod_required_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -1122,7 +1122,7 @@ OCUDUASN_CODE bc_bearer_context_mod_required_ies_container::pack(bit_ref& bref) 
 OCUDUASN_CODE bc_bearer_context_mod_required_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -1155,8 +1155,8 @@ OCUDUASN_CODE bc_bearer_context_mod_required_ies_container::unpack(cbit_ref& bre
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -1396,7 +1396,7 @@ OCUDUASN_CODE bc_bearer_context_mod_resp_ies_container::pack(bit_ref& bref) cons
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -1428,7 +1428,7 @@ OCUDUASN_CODE bc_bearer_context_mod_resp_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE bc_bearer_context_mod_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -1467,8 +1467,8 @@ OCUDUASN_CODE bc_bearer_context_mod_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -1680,7 +1680,7 @@ template struct asn1::protocol_ie_field_s<bc_bearer_context_release_cmd_ies_o>;
 OCUDUASN_CODE bc_bearer_context_release_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -1706,7 +1706,7 @@ OCUDUASN_CODE bc_bearer_context_release_cmd_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE bc_bearer_context_release_cmd_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -1739,8 +1739,8 @@ OCUDUASN_CODE bc_bearer_context_release_cmd_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -1949,7 +1949,7 @@ OCUDUASN_CODE bc_bearer_context_release_complete_ies_container::pack(bit_ref& br
 {
   uint32_t nof_ies = 2;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -1975,7 +1975,7 @@ OCUDUASN_CODE bc_bearer_context_release_complete_ies_container::pack(bit_ref& br
 OCUDUASN_CODE bc_bearer_context_release_complete_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -2008,8 +2008,8 @@ OCUDUASN_CODE bc_bearer_context_release_complete_ies_container::unpack(cbit_ref&
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -2218,7 +2218,7 @@ template struct asn1::protocol_ie_field_s<bc_bearer_context_release_request_ies_
 OCUDUASN_CODE bc_bearer_context_release_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -2244,7 +2244,7 @@ OCUDUASN_CODE bc_bearer_context_release_request_ies_container::pack(bit_ref& bre
 OCUDUASN_CODE bc_bearer_context_release_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -2277,8 +2277,8 @@ OCUDUASN_CODE bc_bearer_context_release_request_ies_container::unpack(cbit_ref& 
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -2517,7 +2517,7 @@ OCUDUASN_CODE bc_bearer_context_setup_fail_ies_container::pack(bit_ref& bref) co
   uint32_t nof_ies = 2;
   nof_ies += gnb_cu_up_mbs_e1ap_id_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -2549,7 +2549,7 @@ OCUDUASN_CODE bc_bearer_context_setup_fail_ies_container::pack(bit_ref& bref) co
 OCUDUASN_CODE bc_bearer_context_setup_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -2588,8 +2588,8 @@ OCUDUASN_CODE bc_bearer_context_setup_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -2871,7 +2871,7 @@ OCUDUASN_CODE bc_bearer_context_setup_request_ies_container::pack(bit_ref& bref)
   uint32_t nof_ies = 3;
   nof_ies += associated_session_id_present ? 1 : 0;
   nof_ies += mbs_service_area_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -2909,7 +2909,7 @@ OCUDUASN_CODE bc_bearer_context_setup_request_ies_container::pack(bit_ref& bref)
 OCUDUASN_CODE bc_bearer_context_setup_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -2954,8 +2954,8 @@ OCUDUASN_CODE bc_bearer_context_setup_request_ies_container::unpack(cbit_ref& br
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -3205,7 +3205,7 @@ OCUDUASN_CODE bc_bearer_context_setup_resp_ies_container::pack(bit_ref& bref) co
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -3237,7 +3237,7 @@ OCUDUASN_CODE bc_bearer_context_setup_resp_ies_container::pack(bit_ref& bref) co
 OCUDUASN_CODE bc_bearer_context_setup_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -3276,8 +3276,8 @@ OCUDUASN_CODE bc_bearer_context_setup_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -3489,7 +3489,7 @@ template struct asn1::protocol_ie_field_s<bearer_context_inactivity_notif_ies_o>
 OCUDUASN_CODE bearer_context_inactivity_notif_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -3515,7 +3515,7 @@ OCUDUASN_CODE bearer_context_inactivity_notif_ies_container::pack(bit_ref& bref)
 OCUDUASN_CODE bearer_context_inactivity_notif_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -3548,8 +3548,8 @@ OCUDUASN_CODE bearer_context_inactivity_notif_ies_container::unpack(cbit_ref& br
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -3824,7 +3824,7 @@ void sys_bearer_context_mod_confirm_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sys_bearer_context_mod_confirm_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e_utran_bearer_context_mod_confirm:
       HANDLE_CODE(
@@ -3846,7 +3846,7 @@ OCUDUASN_CODE sys_bearer_context_mod_confirm_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sys_bearer_context_mod_confirm_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e_utran_bearer_context_mod_confirm:
@@ -4092,7 +4092,7 @@ OCUDUASN_CODE bearer_context_mod_confirm_ies_container::pack(bit_ref& bref) cons
   uint32_t nof_ies = 2;
   nof_ies += sys_bearer_context_mod_confirm_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -4124,7 +4124,7 @@ OCUDUASN_CODE bearer_context_mod_confirm_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE bearer_context_mod_confirm_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -4163,8 +4163,8 @@ OCUDUASN_CODE bearer_context_mod_confirm_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -4410,7 +4410,7 @@ OCUDUASN_CODE bearer_context_mod_fail_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -4442,7 +4442,7 @@ OCUDUASN_CODE bearer_context_mod_fail_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE bearer_context_mod_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -4481,8 +4481,8 @@ OCUDUASN_CODE bearer_context_mod_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -4780,7 +4780,7 @@ OCUDUASN_CODE eutran_bearer_context_mod_request_container::pack(bit_ref& bref) c
   nof_ies += drb_to_rem_list_eutran_present ? 1 : 0;
   nof_ies += sub_profile_id_for_rfp_present ? 1 : 0;
   nof_ies += add_rrm_prio_idx_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (drb_to_setup_mod_list_eutran_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)51, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -4818,7 +4818,7 @@ OCUDUASN_CODE eutran_bearer_context_mod_request_container::pack(bit_ref& bref) c
 OCUDUASN_CODE eutran_bearer_context_mod_request_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -4861,8 +4861,8 @@ OCUDUASN_CODE eutran_bearer_context_mod_request_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -5111,7 +5111,7 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_request_container::pack(bit_ref& bref) c
   nof_ies += pdu_session_res_to_setup_mod_list_present ? 1 : 0;
   nof_ies += pdu_session_res_to_modify_list_present ? 1 : 0;
   nof_ies += pdu_session_res_to_rem_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (pdu_session_res_to_setup_mod_list_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)56, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -5137,7 +5137,7 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_request_container::pack(bit_ref& bref) c
 OCUDUASN_CODE ng_ran_bearer_context_mod_request_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -5168,8 +5168,8 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_request_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -5328,7 +5328,7 @@ void sys_bearer_context_mod_request_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sys_bearer_context_mod_request_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e_utran_bearer_context_mod_request:
       HANDLE_CODE(c.get<eutran_bearer_context_mod_request_container>().pack(bref));
@@ -5348,7 +5348,7 @@ OCUDUASN_CODE sys_bearer_context_mod_request_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sys_bearer_context_mod_request_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e_utran_bearer_context_mod_request:
@@ -6129,7 +6129,7 @@ OCUDUASN_CODE bearer_context_mod_request_ies_container::pack(bit_ref& bref) cons
   nof_ies += inactivity_info_request_present ? 1 : 0;
   nof_ies += mt_sdt_info_request_present ? 1 : 0;
   nof_ies += sdt_data_size_thres_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -6264,7 +6264,7 @@ OCUDUASN_CODE bearer_context_mod_request_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE bearer_context_mod_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -6406,8 +6406,8 @@ OCUDUASN_CODE bearer_context_mod_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -6697,7 +6697,7 @@ OCUDUASN_CODE eutran_bearer_context_mod_required_container::pack(bit_ref& bref) 
   uint32_t nof_ies = 0;
   nof_ies += drb_required_to_modify_list_eutran_present ? 1 : 0;
   nof_ies += drb_required_to_rem_list_eutran_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (drb_required_to_modify_list_eutran_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)35, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -6717,7 +6717,7 @@ OCUDUASN_CODE eutran_bearer_context_mod_required_container::pack(bit_ref& bref) 
 OCUDUASN_CODE eutran_bearer_context_mod_required_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -6742,8 +6742,8 @@ OCUDUASN_CODE eutran_bearer_context_mod_required_container::unpack(cbit_ref& bre
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -6937,7 +6937,7 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_required_container::pack(bit_ref& bref) 
   uint32_t nof_ies = 0;
   nof_ies += pdu_session_res_required_to_modify_list_present ? 1 : 0;
   nof_ies += pdu_session_res_to_rem_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (pdu_session_res_required_to_modify_list_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)45, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -6957,7 +6957,7 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_required_container::pack(bit_ref& bref) 
 OCUDUASN_CODE ng_ran_bearer_context_mod_required_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -6982,8 +6982,8 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_required_container::unpack(cbit_ref& bre
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -7135,7 +7135,7 @@ void sys_bearer_context_mod_required_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sys_bearer_context_mod_required_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e_utran_bearer_context_mod_required:
       HANDLE_CODE(c.get<eutran_bearer_context_mod_required_container>().pack(bref));
@@ -7155,7 +7155,7 @@ OCUDUASN_CODE sys_bearer_context_mod_required_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sys_bearer_context_mod_required_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e_utran_bearer_context_mod_required:
@@ -7365,7 +7365,7 @@ template struct asn1::protocol_ie_field_s<bearer_context_mod_required_ies_o>;
 OCUDUASN_CODE bearer_context_mod_required_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -7391,7 +7391,7 @@ OCUDUASN_CODE bearer_context_mod_required_ies_container::pack(bit_ref& bref) con
 OCUDUASN_CODE bearer_context_mod_required_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -7424,8 +7424,8 @@ OCUDUASN_CODE bearer_context_mod_required_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -7719,7 +7719,7 @@ OCUDUASN_CODE eutran_bearer_context_mod_resp_container::pack(bit_ref& bref) cons
   nof_ies += drb_modified_list_eutran_present ? 1 : 0;
   nof_ies += drb_failed_to_modify_list_eutran_present ? 1 : 0;
   nof_ies += retainability_meass_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (drb_setup_mod_list_eutran_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)52, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -7757,7 +7757,7 @@ OCUDUASN_CODE eutran_bearer_context_mod_resp_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE eutran_bearer_context_mod_resp_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -7800,8 +7800,8 @@ OCUDUASN_CODE eutran_bearer_context_mod_resp_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -8130,7 +8130,7 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_resp_container::pack(bit_ref& bref) cons
   nof_ies += pdu_session_res_modified_list_present ? 1 : 0;
   nof_ies += pdu_session_res_failed_to_modify_list_present ? 1 : 0;
   nof_ies += retainability_meass_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (pdu_session_res_setup_mod_list_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)54, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -8168,7 +8168,7 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_resp_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE ng_ran_bearer_context_mod_resp_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -8211,8 +8211,8 @@ OCUDUASN_CODE ng_ran_bearer_context_mod_resp_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -8387,7 +8387,7 @@ void sys_bearer_context_mod_resp_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sys_bearer_context_mod_resp_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e_utran_bearer_context_mod_resp:
       HANDLE_CODE(c.get<eutran_bearer_context_mod_resp_container>().pack(bref));
@@ -8407,7 +8407,7 @@ OCUDUASN_CODE sys_bearer_context_mod_resp_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sys_bearer_context_mod_resp_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e_utran_bearer_context_mod_resp:
@@ -8681,7 +8681,7 @@ OCUDUASN_CODE bearer_context_mod_resp_ies_container::pack(bit_ref& bref) const
   nof_ies += sys_bearer_context_mod_resp_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
   nof_ies += ue_inactivity_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -8719,7 +8719,7 @@ OCUDUASN_CODE bearer_context_mod_resp_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE bearer_context_mod_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -8764,8 +8764,8 @@ OCUDUASN_CODE bearer_context_mod_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -8984,7 +8984,7 @@ template struct asn1::protocol_ie_field_s<bearer_context_release_cmd_ies_o>;
 OCUDUASN_CODE bearer_context_release_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -9010,7 +9010,7 @@ OCUDUASN_CODE bearer_context_release_cmd_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE bearer_context_release_cmd_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -9043,8 +9043,8 @@ OCUDUASN_CODE bearer_context_release_cmd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -9287,7 +9287,7 @@ OCUDUASN_CODE bearer_context_release_complete_ies_container::pack(bit_ref& bref)
   uint32_t nof_ies = 2;
   nof_ies += crit_diagnostics_present ? 1 : 0;
   nof_ies += retainability_meass_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -9319,7 +9319,7 @@ OCUDUASN_CODE bearer_context_release_complete_ies_container::pack(bit_ref& bref)
 OCUDUASN_CODE bearer_context_release_complete_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -9358,8 +9358,8 @@ OCUDUASN_CODE bearer_context_release_complete_ies_container::unpack(cbit_ref& br
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -9611,7 +9611,7 @@ OCUDUASN_CODE bearer_context_release_request_ies_container::pack(bit_ref& bref) 
 {
   uint32_t nof_ies = 3;
   nof_ies += drb_status_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -9643,7 +9643,7 @@ OCUDUASN_CODE bearer_context_release_request_ies_container::pack(bit_ref& bref) 
 OCUDUASN_CODE bearer_context_release_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -9682,8 +9682,8 @@ OCUDUASN_CODE bearer_context_release_request_ies_container::unpack(cbit_ref& bre
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -9932,7 +9932,7 @@ OCUDUASN_CODE bearer_context_setup_fail_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 2;
   nof_ies += gnb_cu_up_ue_e1ap_id_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -9964,7 +9964,7 @@ OCUDUASN_CODE bearer_context_setup_fail_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE bearer_context_setup_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -10003,8 +10003,8 @@ OCUDUASN_CODE bearer_context_setup_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -10231,7 +10231,7 @@ OCUDUASN_CODE eutran_bearer_context_setup_request_container::pack(bit_ref& bref)
   uint32_t nof_ies = 1;
   nof_ies += sub_profile_id_for_rfp_present ? 1 : 0;
   nof_ies += add_rrm_prio_idx_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)32, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -10257,7 +10257,7 @@ OCUDUASN_CODE eutran_bearer_context_setup_request_container::pack(bit_ref& bref)
 OCUDUASN_CODE eutran_bearer_context_setup_request_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -10290,8 +10290,8 @@ OCUDUASN_CODE eutran_bearer_context_setup_request_container::unpack(cbit_ref& br
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -10510,7 +10510,7 @@ void sys_bearer_context_setup_request_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sys_bearer_context_setup_request_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e_utran_bearer_context_setup_request:
       HANDLE_CODE(c.get<eutran_bearer_context_setup_request_container>().pack(bref));
@@ -10531,7 +10531,7 @@ OCUDUASN_CODE sys_bearer_context_setup_request_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sys_bearer_context_setup_request_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e_utran_bearer_context_setup_request:
@@ -11375,7 +11375,7 @@ OCUDUASN_CODE bearer_context_setup_request_ies_container::pack(bit_ref& bref) co
   nof_ies += scg_activation_status_present ? 1 : 0;
   nof_ies += mt_sdt_info_request_present ? 1 : 0;
   nof_ies += sdt_data_size_thres_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -11522,7 +11522,7 @@ OCUDUASN_CODE bearer_context_setup_request_ies_container::pack(bit_ref& bref) co
 OCUDUASN_CODE bearer_context_setup_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 6;
 
@@ -11676,8 +11676,8 @@ OCUDUASN_CODE bearer_context_setup_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -11965,7 +11965,7 @@ OCUDUASN_CODE eutran_bearer_context_setup_resp_container::pack(bit_ref& bref) co
 {
   uint32_t nof_ies = 1;
   nof_ies += drb_failed_list_eutran_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)37, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -11985,7 +11985,7 @@ OCUDUASN_CODE eutran_bearer_context_setup_resp_container::pack(bit_ref& bref) co
 OCUDUASN_CODE eutran_bearer_context_setup_resp_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -12012,8 +12012,8 @@ OCUDUASN_CODE eutran_bearer_context_setup_resp_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -12206,7 +12206,7 @@ OCUDUASN_CODE ng_ran_bearer_context_setup_resp_container::pack(bit_ref& bref) co
 {
   uint32_t nof_ies = 1;
   nof_ies += pdu_session_res_failed_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)46, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -12226,7 +12226,7 @@ OCUDUASN_CODE ng_ran_bearer_context_setup_resp_container::pack(bit_ref& bref) co
 OCUDUASN_CODE ng_ran_bearer_context_setup_resp_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -12253,8 +12253,8 @@ OCUDUASN_CODE ng_ran_bearer_context_setup_resp_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -12406,7 +12406,7 @@ void sys_bearer_context_setup_resp_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sys_bearer_context_setup_resp_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e_utran_bearer_context_setup_resp:
       HANDLE_CODE(c.get<eutran_bearer_context_setup_resp_container>().pack(bref));
@@ -12426,7 +12426,7 @@ OCUDUASN_CODE sys_bearer_context_setup_resp_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sys_bearer_context_setup_resp_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e_utran_bearer_context_setup_resp:
@@ -12668,7 +12668,7 @@ OCUDUASN_CODE bearer_context_setup_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -12700,7 +12700,7 @@ OCUDUASN_CODE bearer_context_setup_resp_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE bearer_context_setup_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -12739,8 +12739,8 @@ OCUDUASN_CODE bearer_context_setup_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -13046,7 +13046,7 @@ OCUDUASN_CODE cell_traffic_trace_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 4;
   nof_ies += privacy_ind_present ? 1 : 0;
   nof_ies += ur_iaddress_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -13090,7 +13090,7 @@ OCUDUASN_CODE cell_traffic_trace_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE cell_traffic_trace_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 4;
 
@@ -13141,8 +13141,8 @@ OCUDUASN_CODE cell_traffic_trace_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -13462,7 +13462,7 @@ OCUDUASN_CODE dl_data_notif_ies_container::pack(bit_ref& bref) const
   nof_ies += pdu_session_to_notify_list_present ? 1 : 0;
   nof_ies += mt_sdt_info_present ? 1 : 0;
   nof_ies += sdt_data_size_thres_crossed_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -13506,7 +13506,7 @@ OCUDUASN_CODE dl_data_notif_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE dl_data_notif_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -13557,8 +13557,8 @@ OCUDUASN_CODE dl_data_notif_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -13789,7 +13789,7 @@ template struct asn1::protocol_ie_field_s<data_usage_report_ies_o>;
 OCUDUASN_CODE data_usage_report_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -13815,7 +13815,7 @@ OCUDUASN_CODE data_usage_report_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE data_usage_report_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -13848,8 +13848,8 @@ OCUDUASN_CODE data_usage_report_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -14059,7 +14059,7 @@ template struct asn1::protocol_ie_field_s<deactiv_trace_ies_o>;
 OCUDUASN_CODE deactiv_trace_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -14085,7 +14085,7 @@ OCUDUASN_CODE deactiv_trace_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE deactiv_trace_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -14118,8 +14118,8 @@ OCUDUASN_CODE deactiv_trace_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -14302,7 +14302,7 @@ template struct asn1::protocol_ie_field_s<e1_release_request_ies_o>;
 OCUDUASN_CODE e1_release_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -14322,7 +14322,7 @@ OCUDUASN_CODE e1_release_request_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE e1_release_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -14349,8 +14349,8 @@ OCUDUASN_CODE e1_release_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -14531,7 +14531,7 @@ OCUDUASN_CODE e1_release_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -14551,7 +14551,7 @@ OCUDUASN_CODE e1_release_resp_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE e1_release_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -14578,8 +14578,8 @@ OCUDUASN_CODE e1_release_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -14857,7 +14857,7 @@ template struct asn1::protocol_ie_field_s<early_forwarding_sn_transfer_ies_o>;
 OCUDUASN_CODE early_forwarding_sn_transfer_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -14883,7 +14883,7 @@ OCUDUASN_CODE early_forwarding_sn_transfer_ies_container::pack(bit_ref& bref) co
 OCUDUASN_CODE early_forwarding_sn_transfer_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -14916,8 +14916,8 @@ OCUDUASN_CODE early_forwarding_sn_transfer_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -15257,7 +15257,7 @@ OCUDUASN_CODE error_ind_ies_container::pack(bit_ref& bref) const
   nof_ies += crit_diagnostics_present ? 1 : 0;
   nof_ies += gnb_cu_cp_mbs_e1ap_id_present ? 1 : 0;
   nof_ies += gnb_cu_up_mbs_e1ap_id_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -15307,7 +15307,7 @@ OCUDUASN_CODE error_ind_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE error_ind_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -15364,8 +15364,8 @@ OCUDUASN_CODE error_ind_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -15742,7 +15742,7 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_ies_container::pack(bit_ref& bref) const
   nof_ies += gnb_cu_cp_tnl_a_to_upd_list_present ? 1 : 0;
   nof_ies += transport_layer_address_info_present ? 1 : 0;
   nof_ies += extended_gnb_cu_cp_name_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -15792,7 +15792,7 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_cp_cfg_upd_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -15849,8 +15849,8 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -16174,7 +16174,7 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_ack_ies_container::pack(bit_ref& bref) const
   nof_ies += gnb_cu_cp_tnl_a_setup_list_present ? 1 : 0;
   nof_ies += gnb_cu_cp_tnl_a_failed_to_setup_list_present ? 1 : 0;
   nof_ies += transport_layer_address_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -16212,7 +16212,7 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_ack_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_cp_cfg_upd_ack_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -16257,8 +16257,8 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_ack_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -16524,7 +16524,7 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_fail_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 2;
   nof_ies += time_to_wait_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -16556,7 +16556,7 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_fail_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_cp_cfg_upd_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -16595,8 +16595,8 @@ OCUDUASN_CODE gnb_cu_cp_cfg_upd_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -16847,7 +16847,7 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_fail_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 2;
   nof_ies += time_to_wait_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -16879,7 +16879,7 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_fail_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_cp_e1_setup_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -16918,8 +16918,8 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -17172,7 +17172,7 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_request_ies_container::pack(bit_ref& bref) cons
   nof_ies += gnb_cu_cp_name_present ? 1 : 0;
   nof_ies += transport_layer_address_info_present ? 1 : 0;
   nof_ies += extended_gnb_cu_cp_name_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -17204,7 +17204,7 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_request_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE gnb_cu_cp_e1_setup_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -17243,8 +17243,8 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -17506,7 +17506,7 @@ OCUDUASN_CODE supported_plmns_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += extended_slice_support_list_present ? 1 : 0;
   nof_ies += extended_nr_cgi_support_list_present ? 1 : 0;
   nof_ies += ecgi_support_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (npn_support_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)110, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -17538,7 +17538,7 @@ OCUDUASN_CODE supported_plmns_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE supported_plmns_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -17575,8 +17575,8 @@ OCUDUASN_CODE supported_plmns_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -17623,7 +17623,7 @@ void supported_plmns_ext_ies_container::to_json(json_writer& j) const
 // SupportedPLMNs-Item ::= SEQUENCE
 OCUDUASN_CODE supported_plmns_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(slice_support_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(nr_cgi_support_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(qos_params_support_list_present, 1));
@@ -17669,6 +17669,10 @@ OCUDUASN_CODE supported_plmns_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void supported_plmns_item_s::to_json(json_writer& j) const
@@ -18075,7 +18079,7 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_resp_ies_container::pack(bit_ref& bref) const
   nof_ies += transport_layer_address_info_present ? 1 : 0;
   nof_ies += extended_gnb_cu_up_name_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -18137,7 +18141,7 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_resp_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_cp_e1_setup_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 4;
 
@@ -18206,8 +18210,8 @@ OCUDUASN_CODE gnb_cu_cp_e1_setup_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -18450,7 +18454,7 @@ template struct asn1::protocol_ie_field_s<gnb_cu_cp_meas_results_info_ies_o>;
 OCUDUASN_CODE gnb_cu_cp_meas_results_info_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -18476,7 +18480,7 @@ OCUDUASN_CODE gnb_cu_cp_meas_results_info_ies_container::pack(bit_ref& bref) con
 OCUDUASN_CODE gnb_cu_cp_meas_results_info_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -18509,8 +18513,8 @@ OCUDUASN_CODE gnb_cu_cp_meas_results_info_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -18920,7 +18924,7 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_ies_container::pack(bit_ref& bref) const
   nof_ies += transport_layer_address_info_present ? 1 : 0;
   nof_ies += extended_gnb_cu_up_name_present ? 1 : 0;
   nof_ies += gnb_cu_up_mbs_support_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -18982,7 +18986,7 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_up_cfg_upd_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -19051,8 +19055,8 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -19307,7 +19311,7 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_ack_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 1;
   nof_ies += crit_diagnostics_present ? 1 : 0;
   nof_ies += transport_layer_address_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -19333,7 +19337,7 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_ack_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_up_cfg_upd_ack_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -19366,8 +19370,8 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_ack_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -19615,7 +19619,7 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_fail_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 2;
   nof_ies += time_to_wait_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -19647,7 +19651,7 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_fail_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_up_cfg_upd_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -19686,8 +19690,8 @@ OCUDUASN_CODE gnb_cu_up_cfg_upd_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -19906,7 +19910,7 @@ void sys_gnb_cu_up_counter_check_request_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sys_gnb_cu_up_counter_check_request_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e_utran_gnb_cu_up_counter_check_request:
       HANDLE_CODE(pack_dyn_seq_of(
@@ -19928,7 +19932,7 @@ OCUDUASN_CODE sys_gnb_cu_up_counter_check_request_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sys_gnb_cu_up_counter_check_request_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e_utran_gnb_cu_up_counter_check_request:
@@ -20141,7 +20145,7 @@ template struct asn1::protocol_ie_field_s<gnb_cu_up_counter_check_request_ies_o>
 OCUDUASN_CODE gnb_cu_up_counter_check_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -20167,7 +20171,7 @@ OCUDUASN_CODE gnb_cu_up_counter_check_request_ies_container::pack(bit_ref& bref)
 OCUDUASN_CODE gnb_cu_up_counter_check_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -20200,8 +20204,8 @@ OCUDUASN_CODE gnb_cu_up_counter_check_request_ies_container::unpack(cbit_ref& br
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -20445,7 +20449,7 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_fail_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 2;
   nof_ies += time_to_wait_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -20477,7 +20481,7 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_fail_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_up_e1_setup_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -20516,8 +20520,8 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -20924,7 +20928,7 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_request_ies_container::pack(bit_ref& bref) cons
   nof_ies += transport_layer_address_info_present ? 1 : 0;
   nof_ies += extended_gnb_cu_up_name_present ? 1 : 0;
   nof_ies += gnb_cu_up_mbs_support_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -20986,7 +20990,7 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_request_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE gnb_cu_up_e1_setup_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 4;
 
@@ -21055,8 +21059,8 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -21368,7 +21372,7 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_resp_ies_container::pack(bit_ref& bref) const
   nof_ies += transport_layer_address_info_present ? 1 : 0;
   nof_ies += extended_gnb_cu_cp_name_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -21406,7 +21410,7 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_resp_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_up_e1_setup_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -21451,8 +21455,8 @@ OCUDUASN_CODE gnb_cu_up_e1_setup_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -21648,7 +21652,7 @@ template struct asn1::protocol_ie_field_s<gnb_cu_up_status_ind_ies_o>;
 OCUDUASN_CODE gnb_cu_up_status_ind_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -21668,7 +21672,7 @@ OCUDUASN_CODE gnb_cu_up_status_ind_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_cu_up_status_ind_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -21695,8 +21699,8 @@ OCUDUASN_CODE gnb_cu_up_status_ind_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -21880,7 +21884,7 @@ OCUDUASN_CODE iab_up_tnl_address_upd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 1;
   nof_ies += dl_up_tnl_address_to_upd_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -21900,7 +21904,7 @@ OCUDUASN_CODE iab_up_tnl_address_upd_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE iab_up_tnl_address_upd_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -21927,8 +21931,8 @@ OCUDUASN_CODE iab_up_tnl_address_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -22149,7 +22153,7 @@ OCUDUASN_CODE iab_up_tnl_address_upd_ack_ies_container::pack(bit_ref& bref) cons
   uint32_t nof_ies = 1;
   nof_ies += crit_diagnostics_present ? 1 : 0;
   nof_ies += ul_up_tnl_address_to_upd_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -22175,7 +22179,7 @@ OCUDUASN_CODE iab_up_tnl_address_upd_ack_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE iab_up_tnl_address_upd_ack_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -22208,8 +22212,8 @@ OCUDUASN_CODE iab_up_tnl_address_upd_ack_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -22461,7 +22465,7 @@ OCUDUASN_CODE iab_up_tnl_address_upd_fail_ies_container::pack(bit_ref& bref) con
   uint32_t nof_ies = 2;
   nof_ies += time_to_wait_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -22493,7 +22497,7 @@ OCUDUASN_CODE iab_up_tnl_address_upd_fail_ies_container::pack(bit_ref& bref) con
 OCUDUASN_CODE iab_up_tnl_address_upd_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -22532,8 +22536,8 @@ OCUDUASN_CODE iab_up_tnl_address_upd_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -22726,7 +22730,7 @@ template struct asn1::protocol_ie_field_s<iabpsk_notif_ies_o>;
 OCUDUASN_CODE iabpsk_notif_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -22746,7 +22750,7 @@ OCUDUASN_CODE iabpsk_notif_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE iabpsk_notif_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -22773,8 +22777,8 @@ OCUDUASN_CODE iabpsk_notif_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -23016,7 +23020,7 @@ OCUDUASN_CODE mc_bearer_context_mod_confirm_ies_container::pack(bit_ref& bref) c
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -23048,7 +23052,7 @@ OCUDUASN_CODE mc_bearer_context_mod_confirm_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE mc_bearer_context_mod_confirm_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -23087,8 +23091,8 @@ OCUDUASN_CODE mc_bearer_context_mod_confirm_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -23368,7 +23372,7 @@ OCUDUASN_CODE mc_bearer_context_mod_fail_ies_container::pack(bit_ref& bref) cons
   uint32_t nof_ies = 3;
   nof_ies += mbs_multicast_f1_u_context_descriptor_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -23406,7 +23410,7 @@ OCUDUASN_CODE mc_bearer_context_mod_fail_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE mc_bearer_context_mod_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -23451,8 +23455,8 @@ OCUDUASN_CODE mc_bearer_context_mod_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -23669,7 +23673,7 @@ template struct asn1::protocol_ie_field_s<mc_bearer_context_mod_request_ies_o>;
 OCUDUASN_CODE mc_bearer_context_mod_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -23695,7 +23699,7 @@ OCUDUASN_CODE mc_bearer_context_mod_request_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE mc_bearer_context_mod_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -23728,8 +23732,8 @@ OCUDUASN_CODE mc_bearer_context_mod_request_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -23938,7 +23942,7 @@ template struct asn1::protocol_ie_field_s<mc_bearer_context_mod_required_ies_o>;
 OCUDUASN_CODE mc_bearer_context_mod_required_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -23964,7 +23968,7 @@ OCUDUASN_CODE mc_bearer_context_mod_required_ies_container::pack(bit_ref& bref) 
 OCUDUASN_CODE mc_bearer_context_mod_required_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -23997,8 +24001,8 @@ OCUDUASN_CODE mc_bearer_context_mod_required_ies_container::unpack(cbit_ref& bre
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -24238,7 +24242,7 @@ OCUDUASN_CODE mc_bearer_context_mod_resp_ies_container::pack(bit_ref& bref) cons
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -24270,7 +24274,7 @@ OCUDUASN_CODE mc_bearer_context_mod_resp_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE mc_bearer_context_mod_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -24309,8 +24313,8 @@ OCUDUASN_CODE mc_bearer_context_mod_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -24522,7 +24526,7 @@ template struct asn1::protocol_ie_field_s<mc_bearer_context_release_cmd_ies_o>;
 OCUDUASN_CODE mc_bearer_context_release_cmd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -24548,7 +24552,7 @@ OCUDUASN_CODE mc_bearer_context_release_cmd_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE mc_bearer_context_release_cmd_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -24581,8 +24585,8 @@ OCUDUASN_CODE mc_bearer_context_release_cmd_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -24791,7 +24795,7 @@ OCUDUASN_CODE mc_bearer_context_release_complete_ies_container::pack(bit_ref& br
 {
   uint32_t nof_ies = 2;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -24817,7 +24821,7 @@ OCUDUASN_CODE mc_bearer_context_release_complete_ies_container::pack(bit_ref& br
 OCUDUASN_CODE mc_bearer_context_release_complete_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -24850,8 +24854,8 @@ OCUDUASN_CODE mc_bearer_context_release_complete_ies_container::unpack(cbit_ref&
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -25060,7 +25064,7 @@ template struct asn1::protocol_ie_field_s<mc_bearer_context_release_request_ies_
 OCUDUASN_CODE mc_bearer_context_release_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -25086,7 +25090,7 @@ OCUDUASN_CODE mc_bearer_context_release_request_ies_container::pack(bit_ref& bre
 OCUDUASN_CODE mc_bearer_context_release_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -25119,8 +25123,8 @@ OCUDUASN_CODE mc_bearer_context_release_request_ies_container::unpack(cbit_ref& 
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -25359,7 +25363,7 @@ OCUDUASN_CODE mc_bearer_context_setup_fail_ies_container::pack(bit_ref& bref) co
   uint32_t nof_ies = 2;
   nof_ies += gnb_cu_up_mbs_e1ap_id_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -25391,7 +25395,7 @@ OCUDUASN_CODE mc_bearer_context_setup_fail_ies_container::pack(bit_ref& bref) co
 OCUDUASN_CODE mc_bearer_context_setup_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 2;
 
@@ -25430,8 +25434,8 @@ OCUDUASN_CODE mc_bearer_context_setup_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -25651,7 +25655,7 @@ template struct asn1::protocol_ie_field_s<mc_bearer_context_setup_request_ies_o>
 OCUDUASN_CODE mc_bearer_context_setup_request_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -25677,7 +25681,7 @@ OCUDUASN_CODE mc_bearer_context_setup_request_ies_container::pack(bit_ref& bref)
 OCUDUASN_CODE mc_bearer_context_setup_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -25710,8 +25714,8 @@ OCUDUASN_CODE mc_bearer_context_setup_request_ies_container::unpack(cbit_ref& br
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -25951,7 +25955,7 @@ OCUDUASN_CODE mc_bearer_context_setup_resp_ies_container::pack(bit_ref& bref) co
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -25983,7 +25987,7 @@ OCUDUASN_CODE mc_bearer_context_setup_resp_ies_container::pack(bit_ref& bref) co
 OCUDUASN_CODE mc_bearer_context_setup_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -26022,8 +26026,8 @@ OCUDUASN_CODE mc_bearer_context_setup_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -26235,7 +26239,7 @@ template struct asn1::protocol_ie_field_s<mc_bearer_notif_ies_o>;
 OCUDUASN_CODE mc_bearer_notif_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -26261,7 +26265,7 @@ OCUDUASN_CODE mc_bearer_notif_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE mc_bearer_notif_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -26294,8 +26298,8 @@ OCUDUASN_CODE mc_bearer_notif_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -26506,7 +26510,7 @@ template struct asn1::protocol_ie_field_s<mrdc_data_usage_report_ies_o>;
 OCUDUASN_CODE mrdc_data_usage_report_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -26532,7 +26536,7 @@ OCUDUASN_CODE mrdc_data_usage_report_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE mrdc_data_usage_report_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -26565,8 +26569,8 @@ OCUDUASN_CODE mrdc_data_usage_report_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -26621,14 +26625,14 @@ const char* e1ap_private_ies_empty_o::value_c::types_opts::to_string() const
 OCUDUASN_CODE private_ie_container_empty_l::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE private_ie_container_empty_l::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
   if (nof_ies > 0) {
     return OCUDUASN_ERROR_DECODE_FAIL;
   }
@@ -26643,7 +26647,7 @@ void private_ie_container_empty_l::to_json(json_writer& j) const
 // PrivateMessage ::= SEQUENCE
 OCUDUASN_CODE private_msg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(private_ies.pack(bref));
 
   bref.align_bytes_zero();
@@ -26655,6 +26659,10 @@ OCUDUASN_CODE private_msg_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(private_ies.unpack(bref));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   bref.align_bytes();
 
   return OCUDUASN_SUCCESS;
@@ -26861,7 +26869,7 @@ void reset_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE reset_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::e1_interface:
       HANDLE_CODE(c.get<reset_all_e>().pack(bref));
@@ -26881,7 +26889,7 @@ OCUDUASN_CODE reset_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE reset_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::e1_interface:
@@ -27094,7 +27102,7 @@ template struct asn1::protocol_ie_field_s<reset_ies_o>;
 OCUDUASN_CODE reset_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -27120,7 +27128,7 @@ OCUDUASN_CODE reset_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE reset_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -27153,8 +27161,8 @@ OCUDUASN_CODE reset_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -27440,7 +27448,7 @@ OCUDUASN_CODE reset_ack_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 1;
   nof_ies += ue_associated_lc_e1_conn_list_res_ack_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -27466,7 +27474,7 @@ OCUDUASN_CODE reset_ack_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE reset_ack_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -27499,8 +27507,8 @@ OCUDUASN_CODE reset_ack_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -27777,7 +27785,7 @@ OCUDUASN_CODE res_status_fail_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 3;
   nof_ies += gnb_cu_up_meas_id_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -27815,7 +27823,7 @@ OCUDUASN_CODE res_status_fail_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE res_status_fail_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -27860,8 +27868,8 @@ OCUDUASN_CODE res_status_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -28172,7 +28180,7 @@ OCUDUASN_CODE res_status_request_ies_container::pack(bit_ref& bref) const
   nof_ies += gnb_cu_up_meas_id_present ? 1 : 0;
   nof_ies += report_characteristics_present ? 1 : 0;
   nof_ies += report_periodicity_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -28216,7 +28224,7 @@ OCUDUASN_CODE res_status_request_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE res_status_request_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -28267,8 +28275,8 @@ OCUDUASN_CODE res_status_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -28521,7 +28529,7 @@ OCUDUASN_CODE res_status_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
   nof_ies += crit_diagnostics_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -28553,7 +28561,7 @@ OCUDUASN_CODE res_status_resp_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE res_status_resp_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -28592,8 +28600,8 @@ OCUDUASN_CODE res_status_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -28870,7 +28878,7 @@ OCUDUASN_CODE res_status_upd_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 3;
   nof_ies += tnl_available_capacity_ind_present ? 1 : 0;
   nof_ies += hw_capacity_ind_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)57, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -28908,7 +28916,7 @@ OCUDUASN_CODE res_status_upd_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE res_status_upd_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -28953,8 +28961,8 @@ OCUDUASN_CODE res_status_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -29171,7 +29179,7 @@ template struct asn1::protocol_ie_field_s<trace_start_ies_o>;
 OCUDUASN_CODE trace_start_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -29197,7 +29205,7 @@ OCUDUASN_CODE trace_start_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE trace_start_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -29230,8 +29238,8 @@ OCUDUASN_CODE trace_start_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -29441,7 +29449,7 @@ template struct asn1::protocol_ie_field_s<ul_data_notif_ies_o>;
 OCUDUASN_CODE ul_data_notif_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)2, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -29467,7 +29475,7 @@ OCUDUASN_CODE ul_data_notif_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE ul_data_notif_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -29500,8 +29508,8 @@ OCUDUASN_CODE ul_data_notif_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {

@@ -42,7 +42,7 @@ void private_ie_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE private_ie_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::local:
       HANDLE_CODE(pack_integer(bref, c, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -58,7 +58,7 @@ OCUDUASN_CODE private_ie_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE private_ie_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::local:

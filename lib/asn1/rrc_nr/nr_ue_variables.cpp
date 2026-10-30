@@ -115,7 +115,7 @@ void cli_triggered_list_r16_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE cli_triggered_list_r16_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::srs_rsrp_triggered_list_r16:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<srs_rsrp_triggered_list_r16_l>(), 1, 32, integer_packer<uint8_t>(0, 63)));
@@ -132,7 +132,7 @@ OCUDUASN_CODE cli_triggered_list_r16_c::pack(bit_ref& bref) const
 OCUDUASN_CODE cli_triggered_list_r16_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::srs_rsrp_triggered_list_r16:
@@ -240,7 +240,7 @@ void cells_triggered_list_item_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE cells_triggered_list_item_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::pci:
       HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)1007u));
@@ -260,7 +260,7 @@ OCUDUASN_CODE cells_triggered_list_item_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE cells_triggered_list_item_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::pci:
@@ -616,7 +616,7 @@ void var_conn_est_fail_report_r16_s::network_id_r18_c_::to_json(json_writer& j) 
 }
 OCUDUASN_CODE var_conn_est_fail_report_r16_s::network_id_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::plmn_id_r18:
       HANDLE_CODE(c.get<plmn_id_s>().pack(bref));
@@ -633,7 +633,7 @@ OCUDUASN_CODE var_conn_est_fail_report_r16_s::network_id_r18_c_::pack(bit_ref& b
 OCUDUASN_CODE var_conn_est_fail_report_r16_s::network_id_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::plmn_id_r18:
@@ -977,7 +977,7 @@ void var_log_meas_cfg_r16_s::report_type_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE var_log_meas_cfg_r16_s::report_type_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::periodical:
       HANDLE_CODE(c.get<logged_periodical_report_cfg_r16_s>().pack(bref));
@@ -994,7 +994,7 @@ OCUDUASN_CODE var_log_meas_cfg_r16_s::report_type_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE var_log_meas_cfg_r16_s::report_type_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::periodical:
@@ -1161,7 +1161,7 @@ void var_log_meas_report_r16_s::id_list_r18_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE var_log_meas_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::plmn_id_list_r18:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
@@ -1178,7 +1178,7 @@ OCUDUASN_CODE var_log_meas_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) con
 OCUDUASN_CODE var_log_meas_report_r16_s::id_list_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::plmn_id_list_r18:
@@ -1362,7 +1362,7 @@ void var_meas_cfg_s::s_measure_cfg_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE var_meas_cfg_s::s_measure_cfg_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ssb_rsrp:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)127u));
@@ -1379,7 +1379,7 @@ OCUDUASN_CODE var_meas_cfg_s::s_measure_cfg_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE var_meas_cfg_s::s_measure_cfg_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ssb_rsrp:
@@ -2011,7 +2011,7 @@ void var_ra_report_r16_s::id_list_r18_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE var_ra_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::plmn_id_list_r18:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
@@ -2028,7 +2028,7 @@ OCUDUASN_CODE var_ra_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE var_ra_report_r16_s::id_list_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::plmn_id_list_r18:
@@ -2178,7 +2178,7 @@ void var_rlf_report_r16_s::id_list_r18_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE var_rlf_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::plmn_id_list_r18:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
@@ -2195,7 +2195,7 @@ OCUDUASN_CODE var_rlf_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE var_rlf_report_r16_s::id_list_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::plmn_id_list_r18:
@@ -2418,7 +2418,7 @@ void var_success_ho_report_r17_s::id_list_r18_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE var_success_ho_report_r17_s::id_list_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::plmn_id_list_r18:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
@@ -2435,7 +2435,7 @@ OCUDUASN_CODE var_success_ho_report_r17_s::id_list_r18_c_::pack(bit_ref& bref) c
 OCUDUASN_CODE var_success_ho_report_r17_s::id_list_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::plmn_id_list_r18:
@@ -2587,7 +2587,7 @@ void var_success_pscell_report_r18_s::id_list_r18_c_::to_json(json_writer& j) co
 }
 OCUDUASN_CODE var_success_pscell_report_r18_s::id_list_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::plmn_id_list_r18:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
@@ -2604,7 +2604,7 @@ OCUDUASN_CODE var_success_pscell_report_r18_s::id_list_r18_c_::pack(bit_ref& bre
 OCUDUASN_CODE var_success_pscell_report_r18_s::id_list_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::plmn_id_list_r18:

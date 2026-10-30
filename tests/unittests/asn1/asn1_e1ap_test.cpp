@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "asn1_test_utils.h"
 #include "ocudu/asn1/e1ap/common.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
@@ -113,7 +114,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   // Get the message.
   const auto& msg = pdu.init_msg().value.bearer_context_setup_request();
@@ -174,7 +175,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp);
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   // Get the message.
   const auto& msg = pdu.successful_outcome().value.bearer_context_setup_resp();
@@ -206,4 +207,35 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
   test_logger.info(
       rx_msg, unpacked_len, "E1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
+}
+
+// Real PDUs from lab captures.
+static const std::vector<capture_pdu> e1ap_captures = {
+    {"GNB-CU-UP-E1SetupRequest",
+     "0003002a0000050039000200000007000200000008400903006f637575705f30000a000120000b0005000000f110"},
+    {"E1ReleaseRequest", "0007000f000002003900020001000040020a00"},
+    {"BearerContextSetupRequest",
+     "000800809a000007000200020000000d0044104820dc7694dc2426b75051db0695a896d71d3de8a4a24415e2ce96a7c0"
+     "032e94c9292044986a713e167e4c883922bcf8b6791484db34f72a90c43f436f207be0cc3c05000e00064002540be400"
+     "003a400300f1100017000140003b0003000077000f0028400001002a002100000104020000010900f8ac1400482d36ef"
+     "41000005300a214e00000080000978"},
+    {"BearerContextModificationRequest",
+     "0009002d0000030002000200000003000200000012001a400001002b001300004001001000000f807f000a0200000001"
+     "00"},
+    {"BearerContextReleaseCommand", "000b0015000003000200020000000300020000000040020a00"},
+    {"GNB-CU-UP-E1SetupResponse", "20030009000001003900020000"},
+    {"E1ReleaseResponse", "20070009000001003900020001"},
+    {"BearerContextSetupResponse",
+     "2008003600000300020002000000030002000000104023400001002e401c00000101f0ac140014000000010000001f7f"
+     "000a0100000001000080"},
+    {"BearerContextModificationResponse",
+     "2009002c00000300020002000000030002000000134019400001003000120002000102000007c0000000000000000000"},
+    {"BearerContextReleaseComplete", "200b000f000002000200020000000300020000"},
+};
+
+TEST_F(asn1_e1ap_test, captured_pdus_repack_to_same_bytes)
+{
+  for (const capture_pdu& c : e1ap_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<e1ap::e1ap_pdu_c>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
 }

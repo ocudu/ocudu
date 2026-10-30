@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "asn1_test_utils.h"
 #include "ocudu/asn1/e2ap/common.h"
 #include "ocudu/asn1/e2ap/e2ap.h"
 #include "ocudu/asn1/e2ap/e2ap_ies.h"
@@ -132,7 +133,7 @@ TEST_F(asn1_e2ap_test, ric_control_request)
   asn1::e2ap::ric_ctrl_request_s& ric_ctrl = pdu.init_msg().value.ric_ctrl_request();
   ASSERT_EQ(ric_ctrl->ran_function_id, 3);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_e2ap_test, ric_control_failure_message)
@@ -147,5 +148,5 @@ TEST_F(asn1_e2ap_test, ric_control_failure_message)
   ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(pdu.type(), asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }

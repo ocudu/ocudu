@@ -110,7 +110,7 @@ void ul_dcch_msg_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ul_dcch_msg_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::c1:
       HANDLE_CODE(c.get<c1_c_>().pack(bref));
@@ -127,7 +127,7 @@ OCUDUASN_CODE ul_dcch_msg_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ul_dcch_msg_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::c1:
@@ -356,7 +356,7 @@ void ul_dcch_msg_type_c::c1_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ul_dcch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::meas_report:
       HANDLE_CODE(c.get<meas_report_s>().pack(bref));
@@ -415,7 +415,7 @@ OCUDUASN_CODE ul_dcch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE ul_dcch_msg_type_c::c1_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::meas_report:
@@ -524,7 +524,7 @@ void ul_dcch_msg_type_c::msg_class_ext_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::c2:
       HANDLE_CODE(c.pack(bref));
@@ -540,7 +540,7 @@ OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::c2:
@@ -748,7 +748,7 @@ void ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ul_ded_msg_segment_r16:
       HANDLE_CODE(c.get<ul_ded_msg_segment_r16_s>().pack(bref));
@@ -802,7 +802,7 @@ OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::pack(bit_ref& bref) c
 OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ul_ded_msg_segment_r16:

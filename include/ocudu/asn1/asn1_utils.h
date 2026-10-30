@@ -1055,6 +1055,10 @@ public:
     uint32_t nbits;
     HANDLE_CODE(bitstring_utils::unpack_length_prefix(nbits, bref, lb, ub, has_ext, is_aligned));
     resize(nbits);
+    if (nbits < lb or nbits > ub) {
+      // Lengths outside the root range are encoded as if unbounded.
+      return bitstring_utils::unpack_bitfield(data(), bref, nbits, 0, std::numeric_limits<uint32_t>::max(), is_aligned);
+    }
     return bitstring_utils::unpack_bitfield(data(), bref, nbits, lb, ub, is_aligned);
   }
 
@@ -1255,9 +1259,9 @@ private:
 template <uint32_t ALB = 0, uint32_t AUB = MAX_ASN_STRING_LENGTH, bool ext = false, bool aligned = false>
 using printable_string = asn_string<32, 122, ALB, AUB, ext, aligned>;
 
-// TODO: Support UTF8String.
-template <uint32_t ALB = 0, uint32_t AUB = MAX_ASN_STRING_LENGTH, bool ext = false, bool aligned = false>
-using utf8_string = asn_string<0, 255, ALB, AUB, ext, aligned>;
+// Size constraints of UTF8String are not PER-visible, so the string is encoded as an unconstrained octet string.
+template <bool aligned = false>
+using utf8_string = asn_string<0, 255, 0, MAX_ASN_STRING_LENGTH, false, aligned>;
 
 template <uint32_t ALB = 0, uint32_t AUB = MAX_ASN_STRING_LENGTH, bool ext = false, bool aligned = false>
 using visible_string = asn_string<32, 126, ALB, AUB, ext, aligned>;
@@ -1464,6 +1468,9 @@ public:
   bool&         operator[](uint32_t idx);
   OCUDUASN_CODE pack(bit_ref& bref) const;
 
+  /// Returns true if any group is flagged as present.
+  bool any() const;
+
 private:
   ext_array<bool> groups;
 };
@@ -1645,50 +1652,6 @@ public:
   OCUDUASN_CODE unpack(cbit_ref& bref) { return unpack_unconstrained_real(value, bref, true); }
   void          to_json(json_writer& j) const { j.write_float(value); }
 };
-
-/*******************
-  Test pack/unpack
-*******************/
-
-template <class Msg>
-int test_pack_unpack_consistency(const Msg& msg)
-{
-  ocudu::byte_buffer buf, buf2;
-  Msg                msg2;
-  asn1::bit_ref      bref(buf), bref3(buf2);
-
-  if (msg.pack(bref) != asn1::OCUDUASN_SUCCESS) {
-    log_error_code(OCUDUASN_ERROR_ENCODE_FAIL, __FILE__, __LINE__);
-    return -1;
-  }
-
-  asn1::cbit_ref bref2(bref);
-  if (msg2.unpack(bref2) != asn1::OCUDUASN_SUCCESS) {
-    log_error_code(OCUDUASN_ERROR_DECODE_FAIL, __FILE__, __LINE__);
-    return -1;
-  }
-  if (msg2.pack(bref3) != asn1::OCUDUASN_SUCCESS) {
-    log_error_code(OCUDUASN_ERROR_ENCODE_FAIL, __FILE__, __LINE__);
-    return -1;
-  }
-
-  // unpack and last pack done for the same number of bits
-  if (bref3.distance() != bref2.distance()) {
-    log_error("[{}][{}] .", __FILE__, __LINE__);
-    return -1;
-  }
-
-  // ensure packed messages are the same
-  if (bref3.distance() != bref.distance()) {
-    log_error("[{}][{}] .", __FILE__, __LINE__);
-    return -1;
-  }
-  if (buf != buf2) {
-    log_error("[{}][{}] .", __FILE__, __LINE__);
-    return -1;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
 /************************
    General Layer Types
@@ -1882,6 +1845,9 @@ struct crit_opts {
   }
 };
 typedef enumerated<crit_opts> crit_e;
+
+// Skips an unknown IE when its criticality is ignore.
+OCUDUASN_CODE skip_ignored_ie(cbit_ref& bref, crit_e crit, uint32_t id);
 
 // Presence ::= ENUMERATED
 struct presence_opts {

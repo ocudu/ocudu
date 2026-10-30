@@ -3410,7 +3410,7 @@ struct rlf_timers_and_consts_s {
   n311_e_ n311;
   // ...
   // group 0
-  t311_e_ t311;
+  copy_ptr<t311_e_> t311;
 
   // sequence methods
   OCUDUASN_CODE pack(bit_ref& bref) const;

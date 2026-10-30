@@ -22,7 +22,7 @@ const char* trigger_msg_opts::to_string() const
 // A2X-PC5-FlowBitRates ::= SEQUENCE
 OCUDUASN_CODE a2_x_pc5_flow_bit_rates_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, a2_x_guaranteed_flow_bit_rate, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -44,6 +44,10 @@ OCUDUASN_CODE a2_x_pc5_flow_bit_rates_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void a2_x_pc5_flow_bit_rates_s::to_json(json_writer& j) const
@@ -61,7 +65,7 @@ void a2_x_pc5_flow_bit_rates_s::to_json(json_writer& j) const
 // A2X-PC5-QoS-Flow-Item ::= SEQUENCE
 OCUDUASN_CODE a2_x_pc5_qos_flow_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(a2_x_pc5_flow_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(a2_x_range_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -97,6 +101,10 @@ OCUDUASN_CODE a2_x_pc5_qos_flow_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void a2_x_pc5_qos_flow_item_s::to_json(json_writer& j) const
@@ -131,7 +139,7 @@ uint16_t a2_x_pc5_qos_flow_item_s::a2_x_range_opts::to_number() const
 // A2X-PC5-QoS-Parameters ::= SEQUENCE
 OCUDUASN_CODE a2_x_pc5_qos_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(a2_x_pc5_link_aggr_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -159,6 +167,10 @@ OCUDUASN_CODE a2_x_pc5_qos_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void a2_x_pc5_qos_params_s::to_json(json_writer& j) const
@@ -374,7 +386,7 @@ void cp_transport_layer_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE cp_transport_layer_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::endpoint_ip_address:
       HANDLE_CODE((c.get<bounded_bitstring<1, 160, true, true>>().pack(bref)));
@@ -391,7 +403,7 @@ OCUDUASN_CODE cp_transport_layer_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE cp_transport_layer_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::endpoint_ip_address:
@@ -416,7 +428,7 @@ const char* cp_transport_layer_info_c::types_opts::to_string() const
 // AMF-TNLAssociationSetupItem ::= SEQUENCE
 OCUDUASN_CODE amf_tnl_assoc_setup_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(amf_tnl_assoc_address.pack(bref));
@@ -436,6 +448,10 @@ OCUDUASN_CODE amf_tnl_assoc_setup_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void amf_tnl_assoc_setup_item_s::to_json(json_writer& j) const
@@ -460,7 +476,7 @@ const char* tnl_assoc_usage_opts::to_string() const
 // AMF-TNLAssociationToAddItem ::= SEQUENCE
 OCUDUASN_CODE amf_tnl_assoc_to_add_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(tnl_assoc_usage_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -490,6 +506,10 @@ OCUDUASN_CODE amf_tnl_assoc_to_add_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void amf_tnl_assoc_to_add_item_s::to_json(json_writer& j) const
@@ -573,7 +593,7 @@ const char* amf_tnl_assoc_to_rem_item_ext_ies_o::ext_c::types_opts::to_string() 
 // AMF-TNLAssociationToRemoveItem ::= SEQUENCE
 OCUDUASN_CODE amf_tnl_assoc_to_rem_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(amf_tnl_assoc_address.pack(bref));
@@ -594,6 +614,10 @@ OCUDUASN_CODE amf_tnl_assoc_to_rem_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void amf_tnl_assoc_to_rem_item_s::to_json(json_writer& j) const
@@ -610,7 +634,7 @@ void amf_tnl_assoc_to_rem_item_s::to_json(json_writer& j) const
 // AMF-TNLAssociationToUpdateItem ::= SEQUENCE
 OCUDUASN_CODE amf_tnl_assoc_to_upd_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(tnl_assoc_usage_present, 1));
   HANDLE_CODE(bref.pack(tnla_ddress_weight_factor_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -646,6 +670,10 @@ OCUDUASN_CODE amf_tnl_assoc_to_upd_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void amf_tnl_assoc_to_upd_item_s::to_json(json_writer& j) const
@@ -762,7 +790,7 @@ void gnb_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE gnb_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::gnb_id:
       HANDLE_CODE((c.get<bounded_bitstring<22, 32, false, true>>().pack(bref)));
@@ -779,7 +807,7 @@ OCUDUASN_CODE gnb_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE gnb_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::gnb_id:
@@ -804,7 +832,7 @@ const char* gnb_id_c::types_opts::to_string() const
 // GlobalGNB-ID ::= SEQUENCE
 OCUDUASN_CODE global_gnb_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -826,6 +854,10 @@ OCUDUASN_CODE global_gnb_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_gnb_id_s::to_json(json_writer& j) const
@@ -977,7 +1009,7 @@ void ng_enb_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ng_enb_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::macro_ng_enb_id:
       HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().pack(bref)));
@@ -1000,7 +1032,7 @@ OCUDUASN_CODE ng_enb_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ng_enb_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::macro_ng_enb_id:
@@ -1031,7 +1063,7 @@ const char* ng_enb_id_c::types_opts::to_string() const
 // GlobalNgENB-ID ::= SEQUENCE
 OCUDUASN_CODE global_ng_enb_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -1053,6 +1085,10 @@ OCUDUASN_CODE global_ng_enb_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_ng_enb_id_s::to_json(json_writer& j) const
@@ -1164,7 +1200,7 @@ void n3_iwf_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE n3_iwf_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::n3_iwf_id:
       HANDLE_CODE((c.get<fixed_bitstring<16, false, true>>().pack(bref)));
@@ -1181,7 +1217,7 @@ OCUDUASN_CODE n3_iwf_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE n3_iwf_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::n3_iwf_id:
@@ -1211,7 +1247,7 @@ uint8_t n3_iwf_id_c::types_opts::to_number() const
 // GlobalN3IWF-ID ::= SEQUENCE
 OCUDUASN_CODE global_n3_iwf_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -1233,6 +1269,10 @@ OCUDUASN_CODE global_n3_iwf_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_n3_iwf_id_s::to_json(json_writer& j) const
@@ -1344,7 +1384,7 @@ void tngf_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE tngf_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::tngf_id:
       HANDLE_CODE((c.get<fixed_bitstring<32, true, true>>().pack(bref)));
@@ -1361,7 +1401,7 @@ OCUDUASN_CODE tngf_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE tngf_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::tngf_id:
@@ -1386,7 +1426,7 @@ const char* tngf_id_c::types_opts::to_string() const
 // GlobalTNGF-ID ::= SEQUENCE
 OCUDUASN_CODE global_tngf_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -1408,6 +1448,10 @@ OCUDUASN_CODE global_tngf_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_tngf_id_s::to_json(json_writer& j) const
@@ -1519,7 +1563,7 @@ void twif_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE twif_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::twif_id:
       HANDLE_CODE((c.get<fixed_bitstring<32, true, true>>().pack(bref)));
@@ -1536,7 +1580,7 @@ OCUDUASN_CODE twif_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE twif_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::twif_id:
@@ -1561,7 +1605,7 @@ const char* twif_id_c::types_opts::to_string() const
 // GlobalTWIF-ID ::= SEQUENCE
 OCUDUASN_CODE global_twif_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -1583,6 +1627,10 @@ OCUDUASN_CODE global_twif_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_twif_id_s::to_json(json_writer& j) const
@@ -1694,7 +1742,7 @@ void w_agf_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE w_agf_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::w_agf_id:
       HANDLE_CODE((c.get<fixed_bitstring<16, true, true>>().pack(bref)));
@@ -1711,7 +1759,7 @@ OCUDUASN_CODE w_agf_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE w_agf_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::w_agf_id:
@@ -1736,7 +1784,7 @@ const char* w_agf_id_c::types_opts::to_string() const
 // GlobalW-AGF-ID ::= SEQUENCE
 OCUDUASN_CODE global_w_agf_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -1758,6 +1806,10 @@ OCUDUASN_CODE global_w_agf_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_w_agf_id_s::to_json(json_writer& j) const
@@ -2091,7 +2143,7 @@ void global_ran_node_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE global_ran_node_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::global_gnb_id:
       HANDLE_CODE(c.get<global_gnb_id_s>().pack(bref));
@@ -2114,7 +2166,7 @@ OCUDUASN_CODE global_ran_node_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE global_ran_node_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::global_gnb_id:
@@ -2153,7 +2205,7 @@ uint8_t global_ran_node_id_c::types_opts::to_number() const
 // TAI ::= SEQUENCE
 OCUDUASN_CODE tai_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -2175,6 +2227,10 @@ OCUDUASN_CODE tai_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_s::to_json(json_writer& j) const
@@ -2307,7 +2363,7 @@ void amf_paging_target_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE amf_paging_target_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::global_ran_node_id:
       HANDLE_CODE(c.get<global_ran_node_id_c>().pack(bref));
@@ -2327,7 +2383,7 @@ OCUDUASN_CODE amf_paging_target_c::pack(bit_ref& bref) const
 OCUDUASN_CODE amf_paging_target_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::global_ran_node_id:
@@ -2355,7 +2411,7 @@ const char* amf_paging_target_c::types_opts::to_string() const
 // AUN3DeviceAccessInfo ::= SEQUENCE
 OCUDUASN_CODE aun3_dev_access_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(aun3_dev_access.pack(bref));
@@ -2377,6 +2433,10 @@ OCUDUASN_CODE aun3_dev_access_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void aun3_dev_access_info_s::to_json(json_writer& j) const
@@ -2406,7 +2466,7 @@ const char* aun3_dev_access_info_s::existing_ng_connwith_same_location_opts::to_
 // NR-CGI ::= SEQUENCE
 OCUDUASN_CODE nr_cgi_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -2428,6 +2488,10 @@ OCUDUASN_CODE nr_cgi_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_cgi_s::to_json(json_writer& j) const
@@ -2445,7 +2509,7 @@ void nr_cgi_s::to_json(json_writer& j) const
 // EUTRA-CGI ::= SEQUENCE
 OCUDUASN_CODE eutra_cgi_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -2467,6 +2531,10 @@ OCUDUASN_CODE eutra_cgi_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutra_cgi_s::to_json(json_writer& j) const
@@ -2599,7 +2667,7 @@ void ngran_cgi_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ngran_cgi_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::nr_cgi:
       HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
@@ -2619,7 +2687,7 @@ OCUDUASN_CODE ngran_cgi_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ngran_cgi_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::nr_cgi:
@@ -2654,7 +2722,7 @@ const char* activation_status_opts::to_string() const
 // AdditionalCancelledlocationReportingReferenceIDItem ::= SEQUENCE
 OCUDUASN_CODE add_cancelledlocation_report_ref_id_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, location_report_ref_id_to_be_cancelled, (uint8_t)1u, (uint8_t)64u, true, true));
@@ -2674,6 +2742,10 @@ OCUDUASN_CODE add_cancelledlocation_report_ref_id_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void add_cancelledlocation_report_ref_id_item_s::to_json(json_writer& j) const
@@ -2690,7 +2762,7 @@ void add_cancelledlocation_report_ref_id_item_s::to_json(json_writer& j) const
 // GTPTunnel ::= SEQUENCE
 OCUDUASN_CODE gtp_tunnel_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(transport_layer_address.pack(bref));
@@ -2712,6 +2784,10 @@ OCUDUASN_CODE gtp_tunnel_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void gtp_tunnel_s::to_json(json_writer& j) const
@@ -2823,7 +2899,7 @@ void up_transport_layer_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE up_transport_layer_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::gtp_tunnel:
       HANDLE_CODE(c.get<gtp_tunnel_s>().pack(bref));
@@ -2840,7 +2916,7 @@ OCUDUASN_CODE up_transport_layer_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE up_transport_layer_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::gtp_tunnel:
@@ -2939,7 +3015,7 @@ uint8_t qos_flow_item_with_data_forwarding_ext_ies_o::ext_c::types_opts::to_numb
 // QosFlowItemWithDataForwarding ::= SEQUENCE
 OCUDUASN_CODE qos_flow_item_with_data_forwarding_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(data_forwarding_accepted_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -2968,6 +3044,10 @@ OCUDUASN_CODE qos_flow_item_with_data_forwarding_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_item_with_data_forwarding_s::to_json(json_writer& j) const
@@ -3048,7 +3128,7 @@ const char* add_dl_up_tnl_info_for_ho_item_ext_ies_o::ext_c::types_opts::to_stri
 // AdditionalDLUPTNLInformationForHOItem ::= SEQUENCE
 OCUDUASN_CODE add_dl_up_tnl_info_for_ho_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(add_dl_forwarding_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -3079,6 +3159,10 @@ OCUDUASN_CODE add_dl_up_tnl_info_for_ho_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void add_dl_up_tnl_info_for_ho_item_s::to_json(json_writer& j) const
@@ -3132,7 +3216,7 @@ const char* pre_emption_vulnerability_opts::to_string() const
 // AllocationAndRetentionPriority ::= SEQUENCE
 OCUDUASN_CODE alloc_and_retention_prio_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, prio_level_arp, (uint8_t)1u, (uint8_t)15u, false, true));
@@ -3156,6 +3240,10 @@ OCUDUASN_CODE alloc_and_retention_prio_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void alloc_and_retention_prio_s::to_json(json_writer& j) const
@@ -3174,7 +3262,7 @@ void alloc_and_retention_prio_s::to_json(json_writer& j) const
 // Allowed-PNI-NPN-Item ::= SEQUENCE
 OCUDUASN_CODE allowed_pni_npn_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -3198,6 +3286,10 @@ OCUDUASN_CODE allowed_pni_npn_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void allowed_pni_npn_item_s::to_json(json_writer& j) const
@@ -3226,7 +3318,7 @@ const char* allowed_pni_npn_item_s::pni_npn_restricted_opts::to_string() const
 // S-NSSAI ::= SEQUENCE
 OCUDUASN_CODE s_nssai_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sd_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -3254,6 +3346,10 @@ OCUDUASN_CODE s_nssai_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void s_nssai_s::to_json(json_writer& j) const
@@ -3273,7 +3369,7 @@ void s_nssai_s::to_json(json_writer& j) const
 // AllowedNSSAI-Item ::= SEQUENCE
 OCUDUASN_CODE allowed_nssai_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(s_nssai.pack(bref));
@@ -3293,6 +3389,10 @@ OCUDUASN_CODE allowed_nssai_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void allowed_nssai_item_s::to_json(json_writer& j) const
@@ -3310,7 +3410,7 @@ void allowed_nssai_item_s::to_json(json_writer& j) const
 // PacketErrorRate ::= SEQUENCE
 OCUDUASN_CODE packet_error_rate_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, per_scalar, (uint8_t)0u, (uint8_t)9u, true, true));
@@ -3332,6 +3432,10 @@ OCUDUASN_CODE packet_error_rate_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void packet_error_rate_s::to_json(json_writer& j) const
@@ -3415,7 +3519,7 @@ uint8_t alt_qos_para_set_item_ext_ies_o::ext_c::types_opts::to_number() const
 // AlternativeQoSParaSetItem ::= SEQUENCE
 OCUDUASN_CODE alt_qos_para_set_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(guaranteed_flow_bit_rate_dl_present, 1));
   HANDLE_CODE(bref.pack(guaranteed_flow_bit_rate_ul_present, 1));
   HANDLE_CODE(bref.pack(packet_delay_budget_present, 1));
@@ -3468,6 +3572,10 @@ OCUDUASN_CODE alt_qos_para_set_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void alt_qos_para_set_item_s::to_json(json_writer& j) const
@@ -3496,7 +3604,7 @@ void alt_qos_para_set_item_s::to_json(json_writer& j) const
 // AreaOfInterestTAIItem ::= SEQUENCE
 OCUDUASN_CODE area_of_interest_tai_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -3516,6 +3624,10 @@ OCUDUASN_CODE area_of_interest_tai_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void area_of_interest_tai_item_s::to_json(json_writer& j) const
@@ -3533,7 +3645,7 @@ void area_of_interest_tai_item_s::to_json(json_writer& j) const
 // AreaOfInterestCellItem ::= SEQUENCE
 OCUDUASN_CODE area_of_interest_cell_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ngran_cgi.pack(bref));
@@ -3553,6 +3665,10 @@ OCUDUASN_CODE area_of_interest_cell_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void area_of_interest_cell_item_s::to_json(json_writer& j) const
@@ -3570,7 +3686,7 @@ void area_of_interest_cell_item_s::to_json(json_writer& j) const
 // AreaOfInterestRANNodeItem ::= SEQUENCE
 OCUDUASN_CODE area_of_interest_ran_node_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(global_ran_node_id.pack(bref));
@@ -3590,6 +3706,10 @@ OCUDUASN_CODE area_of_interest_ran_node_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void area_of_interest_ran_node_item_s::to_json(json_writer& j) const
@@ -3607,7 +3727,7 @@ void area_of_interest_ran_node_item_s::to_json(json_writer& j) const
 // AreaOfInterest ::= SEQUENCE
 OCUDUASN_CODE area_of_interest_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(area_of_interest_tai_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(area_of_interest_cell_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(area_of_interest_ran_node_list.size() > 0, 1));
@@ -3652,6 +3772,10 @@ OCUDUASN_CODE area_of_interest_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void area_of_interest_s::to_json(json_writer& j) const
@@ -3688,7 +3812,7 @@ void area_of_interest_s::to_json(json_writer& j) const
 // AreaOfInterestItem ::= SEQUENCE
 OCUDUASN_CODE area_of_interest_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(area_of_interest.pack(bref));
@@ -3710,6 +3834,10 @@ OCUDUASN_CODE area_of_interest_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void area_of_interest_item_s::to_json(json_writer& j) const
@@ -3728,7 +3856,7 @@ void area_of_interest_item_s::to_json(json_writer& j) const
 // CellBasedMDT-EUTRA ::= SEQUENCE
 OCUDUASN_CODE cell_based_mdt_eutra_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, cell_id_listfor_mdt, 1, 32, true));
@@ -3748,6 +3876,10 @@ OCUDUASN_CODE cell_based_mdt_eutra_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_based_mdt_eutra_s::to_json(json_writer& j) const
@@ -3768,7 +3900,7 @@ void cell_based_mdt_eutra_s::to_json(json_writer& j) const
 // TABasedMDT ::= SEQUENCE
 OCUDUASN_CODE ta_based_mdt_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, ta_listfor_mdt, 1, 8, true));
@@ -3788,6 +3920,10 @@ OCUDUASN_CODE ta_based_mdt_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ta_based_mdt_s::to_json(json_writer& j) const
@@ -3808,7 +3944,7 @@ void ta_based_mdt_s::to_json(json_writer& j) const
 // TAIBasedMDT ::= SEQUENCE
 OCUDUASN_CODE tai_based_mdt_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, tai_listfor_mdt, 1, 8, true));
@@ -3828,6 +3964,10 @@ OCUDUASN_CODE tai_based_mdt_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_based_mdt_s::to_json(json_writer& j) const
@@ -3996,7 +4136,7 @@ void area_scope_of_mdt_eutra_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE area_scope_of_mdt_eutra_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::cell_based:
       HANDLE_CODE(c.get<cell_based_mdt_eutra_s>().pack(bref));
@@ -4021,7 +4161,7 @@ OCUDUASN_CODE area_scope_of_mdt_eutra_c::pack(bit_ref& bref) const
 OCUDUASN_CODE area_scope_of_mdt_eutra_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::cell_based:
@@ -4054,7 +4194,7 @@ const char* area_scope_of_mdt_eutra_c::types_opts::to_string() const
 // CellBasedMDT-NR ::= SEQUENCE
 OCUDUASN_CODE cell_based_mdt_nr_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, cell_id_listfor_mdt, 1, 32, true));
@@ -4074,6 +4214,10 @@ OCUDUASN_CODE cell_based_mdt_nr_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_based_mdt_nr_s::to_json(json_writer& j) const
@@ -4094,7 +4238,7 @@ void cell_based_mdt_nr_s::to_json(json_writer& j) const
 // CAGListforMDTItem ::= SEQUENCE
 OCUDUASN_CODE cag_listfor_mdt_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -4116,6 +4260,10 @@ OCUDUASN_CODE cag_listfor_mdt_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cag_listfor_mdt_item_s::to_json(json_writer& j) const
@@ -4133,7 +4281,7 @@ void cag_listfor_mdt_item_s::to_json(json_writer& j) const
 // PNI-NPNBasedMDT ::= SEQUENCE
 OCUDUASN_CODE pni_npn_based_mdt_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, cag_listfor_mdt, 1, 256, true));
@@ -4153,6 +4301,10 @@ OCUDUASN_CODE pni_npn_based_mdt_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pni_npn_based_mdt_s::to_json(json_writer& j) const
@@ -4173,7 +4325,7 @@ void pni_npn_based_mdt_s::to_json(json_writer& j) const
 // SNPNCellIdListforMDTItem ::= SEQUENCE
 OCUDUASN_CODE sn_pn_cell_id_listfor_mdt_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -4195,6 +4347,10 @@ OCUDUASN_CODE sn_pn_cell_id_listfor_mdt_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sn_pn_cell_id_listfor_mdt_item_s::to_json(json_writer& j) const
@@ -4213,7 +4369,7 @@ void sn_pn_cell_id_listfor_mdt_item_s::to_json(json_writer& j) const
 // SNPN-CellBasedMDT ::= SEQUENCE
 OCUDUASN_CODE sn_pn_cell_based_mdt_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, sn_p_ncell_id_listfor_mdt, 1, 32, true));
@@ -4233,6 +4389,10 @@ OCUDUASN_CODE sn_pn_cell_based_mdt_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sn_pn_cell_based_mdt_s::to_json(json_writer& j) const
@@ -4253,7 +4413,7 @@ void sn_pn_cell_based_mdt_s::to_json(json_writer& j) const
 // SNPNTAIListforMDTItem ::= SEQUENCE
 OCUDUASN_CODE sn_pn_tai_listfor_mdt_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -4275,6 +4435,10 @@ OCUDUASN_CODE sn_pn_tai_listfor_mdt_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sn_pn_tai_listfor_mdt_item_s::to_json(json_writer& j) const
@@ -4293,7 +4457,7 @@ void sn_pn_tai_listfor_mdt_item_s::to_json(json_writer& j) const
 // SNPN-TAIBasedMDT ::= SEQUENCE
 OCUDUASN_CODE sn_pn_tai_based_mdt_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, sn_pn_tai_listfor_mdt, 1, 8, true));
@@ -4313,6 +4477,10 @@ OCUDUASN_CODE sn_pn_tai_based_mdt_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sn_pn_tai_based_mdt_s::to_json(json_writer& j) const
@@ -4333,7 +4501,7 @@ void sn_pn_tai_based_mdt_s::to_json(json_writer& j) const
 // SNPNListforMDTItem ::= SEQUENCE
 OCUDUASN_CODE sn_pn_listfor_mdt_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -4355,6 +4523,10 @@ OCUDUASN_CODE sn_pn_listfor_mdt_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sn_pn_listfor_mdt_item_s::to_json(json_writer& j) const
@@ -4372,7 +4544,7 @@ void sn_pn_listfor_mdt_item_s::to_json(json_writer& j) const
 // SNPN-BasedMDT ::= SEQUENCE
 OCUDUASN_CODE sn_pn_based_mdt_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, sn_pn_listfor_mdt, 1, 16, true));
@@ -4392,6 +4564,10 @@ OCUDUASN_CODE sn_pn_based_mdt_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sn_pn_based_mdt_s::to_json(json_writer& j) const
@@ -4769,7 +4945,7 @@ void area_scope_of_mdt_nr_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE area_scope_of_mdt_nr_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::cell_based:
       HANDLE_CODE(c.get<cell_based_mdt_nr_s>().pack(bref));
@@ -4794,7 +4970,7 @@ OCUDUASN_CODE area_scope_of_mdt_nr_c::pack(bit_ref& bref) const
 OCUDUASN_CODE area_scope_of_mdt_nr_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::cell_based:
@@ -4827,7 +5003,7 @@ const char* area_scope_of_mdt_nr_c::types_opts::to_string() const
 // NRFrequencyBandItem ::= SEQUENCE
 OCUDUASN_CODE nr_freq_band_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_integer(bref, nr_freq_band, (uint16_t)1u, (uint16_t)1024u, true, true));
@@ -4847,6 +5023,10 @@ OCUDUASN_CODE nr_freq_band_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_freq_band_item_s::to_json(json_writer& j) const
@@ -4863,7 +5043,7 @@ void nr_freq_band_item_s::to_json(json_writer& j) const
 // NRFrequencyInfo ::= SEQUENCE
 OCUDUASN_CODE nr_freq_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_integer(bref, nr_arfcn, (uint32_t)0u, (uint32_t)3279165u, false, true));
@@ -4885,6 +5065,10 @@ OCUDUASN_CODE nr_freq_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_freq_info_s::to_json(json_writer& j) const
@@ -4906,7 +5090,7 @@ void nr_freq_info_s::to_json(json_writer& j) const
 // AreaScopeOfNeighCellsItem ::= SEQUENCE
 OCUDUASN_CODE area_scope_of_neigh_cells_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pci_list_for_mdt.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -4935,6 +5119,10 @@ OCUDUASN_CODE area_scope_of_neigh_cells_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void area_scope_of_neigh_cells_item_s::to_json(json_writer& j) const
@@ -4959,7 +5147,7 @@ void area_scope_of_neigh_cells_item_s::to_json(json_writer& j) const
 // CellBasedQMC ::= SEQUENCE
 OCUDUASN_CODE cell_based_qmc_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, cell_id_listfor_qmc, 1, 32, true));
@@ -4979,6 +5167,10 @@ OCUDUASN_CODE cell_based_qmc_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_based_qmc_s::to_json(json_writer& j) const
@@ -4999,7 +5191,7 @@ void cell_based_qmc_s::to_json(json_writer& j) const
 // TABasedQMC ::= SEQUENCE
 OCUDUASN_CODE ta_based_qmc_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, ta_listfor_qmc, 1, 8, true));
@@ -5019,6 +5211,10 @@ OCUDUASN_CODE ta_based_qmc_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ta_based_qmc_s::to_json(json_writer& j) const
@@ -5039,7 +5235,7 @@ void ta_based_qmc_s::to_json(json_writer& j) const
 // TAIBasedQMC ::= SEQUENCE
 OCUDUASN_CODE tai_based_qmc_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, tai_listfor_qmc, 1, 8, true));
@@ -5059,6 +5255,10 @@ OCUDUASN_CODE tai_based_qmc_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_based_qmc_s::to_json(json_writer& j) const
@@ -5079,7 +5279,7 @@ void tai_based_qmc_s::to_json(json_writer& j) const
 // PLMNAreaBasedQMC ::= SEQUENCE
 OCUDUASN_CODE plmn_area_based_qmc_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, plmn_listfor_qmc, 1, 16, true));
@@ -5099,6 +5299,10 @@ OCUDUASN_CODE plmn_area_based_qmc_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void plmn_area_based_qmc_s::to_json(json_writer& j) const
@@ -5276,7 +5480,7 @@ void area_scope_of_qmc_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE area_scope_of_qmc_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::cell_based:
       HANDLE_CODE(c.get<cell_based_qmc_s>().pack(bref));
@@ -5302,7 +5506,7 @@ OCUDUASN_CODE area_scope_of_qmc_c::pack(bit_ref& bref) const
 OCUDUASN_CODE area_scope_of_qmc_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::cell_based:
@@ -5336,7 +5540,7 @@ const char* area_scope_of_qmc_c::types_opts::to_string() const
 // RecommendedCellItem ::= SEQUENCE
 OCUDUASN_CODE recommended_cell_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(time_stayed_in_cell_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -5364,6 +5568,10 @@ OCUDUASN_CODE recommended_cell_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void recommended_cell_item_s::to_json(json_writer& j) const
@@ -5384,7 +5592,7 @@ void recommended_cell_item_s::to_json(json_writer& j) const
 // RecommendedCellsForPaging ::= SEQUENCE
 OCUDUASN_CODE recommended_cells_for_paging_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, recommended_cell_list, 1, 16, true));
@@ -5404,6 +5612,10 @@ OCUDUASN_CODE recommended_cells_for_paging_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void recommended_cells_for_paging_s::to_json(json_writer& j) const
@@ -5424,7 +5636,7 @@ void recommended_cells_for_paging_s::to_json(json_writer& j) const
 // AssistanceDataForRecommendedCells ::= SEQUENCE
 OCUDUASN_CODE assist_data_for_recommended_cells_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(recommended_cells_for_paging.pack(bref));
@@ -5444,6 +5656,10 @@ OCUDUASN_CODE assist_data_for_recommended_cells_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void assist_data_for_recommended_cells_s::to_json(json_writer& j) const
@@ -5468,7 +5684,7 @@ const char* next_paging_area_scope_opts::to_string() const
 // PagingAttemptInformation ::= SEQUENCE
 OCUDUASN_CODE paging_attempt_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(next_paging_area_scope_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -5498,6 +5714,10 @@ OCUDUASN_CODE paging_attempt_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void paging_attempt_info_s::to_json(json_writer& j) const
@@ -5615,7 +5835,7 @@ void npn_paging_assist_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE npn_paging_assist_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::pni_npn_paging_assist:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<allowed_pni_npn_list_l>(), 1, 16, true));
@@ -5632,7 +5852,7 @@ OCUDUASN_CODE npn_paging_assist_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE npn_paging_assist_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::pni_npn_paging_assist:
@@ -5657,7 +5877,7 @@ const char* npn_paging_assist_info_c::types_opts::to_string() const
 // PagingAssisDataforCEcapabUE ::= SEQUENCE
 OCUDUASN_CODE paging_assis_datafor_c_ecapab_ue_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(eutra_cgi.pack(bref));
@@ -5679,6 +5899,10 @@ OCUDUASN_CODE paging_assis_datafor_c_ecapab_ue_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void paging_assis_datafor_c_ecapab_ue_s::to_json(json_writer& j) const
@@ -5851,7 +6075,7 @@ OCUDUASN_CODE assist_data_for_paging_ext_ies_container::pack(bit_ref& bref) cons
   uint32_t nof_ies = 0;
   nof_ies += npn_paging_assist_info_present ? 1 : 0;
   nof_ies += paging_assis_datafor_c_ecapab_ue_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (npn_paging_assist_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)260, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -5871,7 +6095,7 @@ OCUDUASN_CODE assist_data_for_paging_ext_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE assist_data_for_paging_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -5896,8 +6120,8 @@ OCUDUASN_CODE assist_data_for_paging_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -5922,7 +6146,7 @@ void assist_data_for_paging_ext_ies_container::to_json(json_writer& j) const
 // AssistanceDataForPaging ::= SEQUENCE
 OCUDUASN_CODE assist_data_for_paging_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(assist_data_for_recommended_cells_present, 1));
   HANDLE_CODE(bref.pack(paging_attempt_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -5956,6 +6180,10 @@ OCUDUASN_CODE assist_data_for_paging_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void assist_data_for_paging_s::to_json(json_writer& j) const
@@ -5979,7 +6207,7 @@ void assist_data_for_paging_s::to_json(json_writer& j) const
 // AssociatedMBSQosFlowSetupRequestItem ::= SEQUENCE
 OCUDUASN_CODE associated_mbs_qos_flow_setup_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, mbs_qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -6001,6 +6229,10 @@ OCUDUASN_CODE associated_mbs_qos_flow_setup_request_item_s::unpack(cbit_ref& bre
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void associated_mbs_qos_flow_setup_request_item_s::to_json(json_writer& j) const
@@ -6018,7 +6250,7 @@ void associated_mbs_qos_flow_setup_request_item_s::to_json(json_writer& j) const
 // AssociatedMBSQosFlowSetuporModifyRequestItem ::= SEQUENCE
 OCUDUASN_CODE associated_mbs_qos_flow_setupor_modify_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, mbs_qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -6040,6 +6272,10 @@ OCUDUASN_CODE associated_mbs_qos_flow_setupor_modify_request_item_s::unpack(cbit
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void associated_mbs_qos_flow_setupor_modify_request_item_s::to_json(json_writer& j) const
@@ -6123,7 +6359,7 @@ uint8_t associated_qos_flow_item_ext_ies_o::ext_c::types_opts::to_number() const
 // AssociatedQosFlowItem ::= SEQUENCE
 OCUDUASN_CODE associated_qos_flow_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(qos_flow_map_ind_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -6152,6 +6388,10 @@ OCUDUASN_CODE associated_qos_flow_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void associated_qos_flow_item_s::to_json(json_writer& j) const
@@ -6183,7 +6423,7 @@ const char* authenticated_ind_opts::to_string() const
 // AvailableRANVisibleQoEMetrics ::= SEQUENCE
 OCUDUASN_CODE available_ran_visible_qo_e_metrics_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(application_layer_buffer_level_list_present, 1));
   HANDLE_CODE(bref.pack(playout_delay_for_media_startup_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -6217,6 +6457,10 @@ OCUDUASN_CODE available_ran_visible_qo_e_metrics_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void available_ran_visible_qo_e_metrics_s::to_json(json_writer& j) const
@@ -6251,7 +6495,7 @@ const char* available_ran_visible_qo_e_metrics_s::playout_delay_for_media_startu
 // BeamMeasurementsReportQuantity ::= SEQUENCE
 OCUDUASN_CODE beam_meass_report_quant_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(rsrp.pack(bref));
@@ -6275,6 +6519,10 @@ OCUDUASN_CODE beam_meass_report_quant_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void beam_meass_report_quant_s::to_json(json_writer& j) const
@@ -6311,7 +6559,7 @@ const char* beam_meass_report_quant_s::sinr_opts::to_string() const
 // BeamMeasurementsReportConfiguration ::= SEQUENCE
 OCUDUASN_CODE beam_meass_report_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(beam_meass_report_quant_present, 1));
   HANDLE_CODE(bref.pack(max_nrof_rs_idxes_to_report_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -6345,6 +6593,10 @@ OCUDUASN_CODE beam_meass_report_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void beam_meass_report_cfg_s::to_json(json_writer& j) const
@@ -6374,7 +6626,7 @@ const char* bluetooth_meas_cfg_opts::to_string() const
 // BluetoothMeasConfigNameItem ::= SEQUENCE
 OCUDUASN_CODE bluetooth_meas_cfg_name_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(bluetooth_name.pack(bref));
@@ -6394,6 +6646,10 @@ OCUDUASN_CODE bluetooth_meas_cfg_name_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void bluetooth_meas_cfg_name_item_s::to_json(json_writer& j) const
@@ -6410,7 +6666,7 @@ void bluetooth_meas_cfg_name_item_s::to_json(json_writer& j) const
 // BluetoothMeasurementConfiguration ::= SEQUENCE
 OCUDUASN_CODE bluetooth_meas_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(bluetooth_meas_cfg_name_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(bt_rssi_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -6447,6 +6703,10 @@ OCUDUASN_CODE bluetooth_meas_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void bluetooth_meas_cfg_s::to_json(json_writer& j) const
@@ -6479,7 +6739,7 @@ const char* bluetooth_meas_cfg_s::bt_rssi_opts::to_string() const
 // CellIDCancelledEUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE cell_id_cancelled_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(eutra_cgi.pack(bref));
@@ -6501,6 +6761,10 @@ OCUDUASN_CODE cell_id_cancelled_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_id_cancelled_eutra_item_s::to_json(json_writer& j) const
@@ -6519,7 +6783,7 @@ void cell_id_cancelled_eutra_item_s::to_json(json_writer& j) const
 // CancelledCellsInTAI-EUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE cancelled_cells_in_tai_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(eutra_cgi.pack(bref));
@@ -6541,6 +6805,10 @@ OCUDUASN_CODE cancelled_cells_in_tai_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cancelled_cells_in_tai_eutra_item_s::to_json(json_writer& j) const
@@ -6559,7 +6827,7 @@ void cancelled_cells_in_tai_eutra_item_s::to_json(json_writer& j) const
 // TAICancelledEUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE tai_cancelled_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -6581,6 +6849,10 @@ OCUDUASN_CODE tai_cancelled_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_cancelled_eutra_item_s::to_json(json_writer& j) const
@@ -6603,7 +6875,7 @@ void tai_cancelled_eutra_item_s::to_json(json_writer& j) const
 // CancelledCellsInEAI-EUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE cancelled_cells_in_eai_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(eutra_cgi.pack(bref));
@@ -6625,6 +6897,10 @@ OCUDUASN_CODE cancelled_cells_in_eai_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cancelled_cells_in_eai_eutra_item_s::to_json(json_writer& j) const
@@ -6643,7 +6919,7 @@ void cancelled_cells_in_eai_eutra_item_s::to_json(json_writer& j) const
 // EmergencyAreaIDCancelledEUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE emergency_area_id_cancelled_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(emergency_area_id.pack(bref));
@@ -6665,6 +6941,10 @@ OCUDUASN_CODE emergency_area_id_cancelled_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void emergency_area_id_cancelled_eutra_item_s::to_json(json_writer& j) const
@@ -6686,7 +6966,7 @@ void emergency_area_id_cancelled_eutra_item_s::to_json(json_writer& j) const
 // CellIDCancelledNR-Item ::= SEQUENCE
 OCUDUASN_CODE cell_id_cancelled_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -6708,6 +6988,10 @@ OCUDUASN_CODE cell_id_cancelled_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_id_cancelled_nr_item_s::to_json(json_writer& j) const
@@ -6726,7 +7010,7 @@ void cell_id_cancelled_nr_item_s::to_json(json_writer& j) const
 // CancelledCellsInTAI-NR-Item ::= SEQUENCE
 OCUDUASN_CODE cancelled_cells_in_tai_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -6748,6 +7032,10 @@ OCUDUASN_CODE cancelled_cells_in_tai_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cancelled_cells_in_tai_nr_item_s::to_json(json_writer& j) const
@@ -6766,7 +7054,7 @@ void cancelled_cells_in_tai_nr_item_s::to_json(json_writer& j) const
 // TAICancelledNR-Item ::= SEQUENCE
 OCUDUASN_CODE tai_cancelled_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -6788,6 +7076,10 @@ OCUDUASN_CODE tai_cancelled_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_cancelled_nr_item_s::to_json(json_writer& j) const
@@ -6810,7 +7102,7 @@ void tai_cancelled_nr_item_s::to_json(json_writer& j) const
 // CancelledCellsInEAI-NR-Item ::= SEQUENCE
 OCUDUASN_CODE cancelled_cells_in_eai_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -6832,6 +7124,10 @@ OCUDUASN_CODE cancelled_cells_in_eai_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cancelled_cells_in_eai_nr_item_s::to_json(json_writer& j) const
@@ -6850,7 +7146,7 @@ void cancelled_cells_in_eai_nr_item_s::to_json(json_writer& j) const
 // EmergencyAreaIDCancelledNR-Item ::= SEQUENCE
 OCUDUASN_CODE emergency_area_id_cancelled_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(emergency_area_id.pack(bref));
@@ -6872,6 +7168,10 @@ OCUDUASN_CODE emergency_area_id_cancelled_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void emergency_area_id_cancelled_nr_item_s::to_json(json_writer& j) const
@@ -7112,7 +7412,7 @@ void broadcast_cancelled_area_list_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE broadcast_cancelled_area_list_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::cell_id_cancelled_eutra:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<cell_id_cancelled_eutra_l>(), 1, 65535, true));
@@ -7144,7 +7444,7 @@ OCUDUASN_CODE broadcast_cancelled_area_list_c::pack(bit_ref& bref) const
 OCUDUASN_CODE broadcast_cancelled_area_list_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::cell_id_cancelled_eutra:
@@ -7190,7 +7490,7 @@ const char* broadcast_cancelled_area_list_c::types_opts::to_string() const
 // CellIDBroadcastEUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE cell_id_broadcast_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(eutra_cgi.pack(bref));
@@ -7210,6 +7510,10 @@ OCUDUASN_CODE cell_id_broadcast_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_id_broadcast_eutra_item_s::to_json(json_writer& j) const
@@ -7227,7 +7531,7 @@ void cell_id_broadcast_eutra_item_s::to_json(json_writer& j) const
 // CompletedCellsInTAI-EUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE completed_cells_in_tai_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(eutra_cgi.pack(bref));
@@ -7247,6 +7551,10 @@ OCUDUASN_CODE completed_cells_in_tai_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void completed_cells_in_tai_eutra_item_s::to_json(json_writer& j) const
@@ -7264,7 +7572,7 @@ void completed_cells_in_tai_eutra_item_s::to_json(json_writer& j) const
 // TAIBroadcastEUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE tai_broadcast_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -7286,6 +7594,10 @@ OCUDUASN_CODE tai_broadcast_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_broadcast_eutra_item_s::to_json(json_writer& j) const
@@ -7308,7 +7620,7 @@ void tai_broadcast_eutra_item_s::to_json(json_writer& j) const
 // CompletedCellsInEAI-EUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE completed_cells_in_eai_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(eutra_cgi.pack(bref));
@@ -7328,6 +7640,10 @@ OCUDUASN_CODE completed_cells_in_eai_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void completed_cells_in_eai_eutra_item_s::to_json(json_writer& j) const
@@ -7345,7 +7661,7 @@ void completed_cells_in_eai_eutra_item_s::to_json(json_writer& j) const
 // EmergencyAreaIDBroadcastEUTRA-Item ::= SEQUENCE
 OCUDUASN_CODE emergency_area_id_broadcast_eutra_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(emergency_area_id.pack(bref));
@@ -7367,6 +7683,10 @@ OCUDUASN_CODE emergency_area_id_broadcast_eutra_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void emergency_area_id_broadcast_eutra_item_s::to_json(json_writer& j) const
@@ -7388,7 +7708,7 @@ void emergency_area_id_broadcast_eutra_item_s::to_json(json_writer& j) const
 // CellIDBroadcastNR-Item ::= SEQUENCE
 OCUDUASN_CODE cell_id_broadcast_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -7408,6 +7728,10 @@ OCUDUASN_CODE cell_id_broadcast_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_id_broadcast_nr_item_s::to_json(json_writer& j) const
@@ -7425,7 +7749,7 @@ void cell_id_broadcast_nr_item_s::to_json(json_writer& j) const
 // CompletedCellsInTAI-NR-Item ::= SEQUENCE
 OCUDUASN_CODE completed_cells_in_tai_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -7445,6 +7769,10 @@ OCUDUASN_CODE completed_cells_in_tai_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void completed_cells_in_tai_nr_item_s::to_json(json_writer& j) const
@@ -7462,7 +7790,7 @@ void completed_cells_in_tai_nr_item_s::to_json(json_writer& j) const
 // TAIBroadcastNR-Item ::= SEQUENCE
 OCUDUASN_CODE tai_broadcast_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -7484,6 +7812,10 @@ OCUDUASN_CODE tai_broadcast_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_broadcast_nr_item_s::to_json(json_writer& j) const
@@ -7506,7 +7838,7 @@ void tai_broadcast_nr_item_s::to_json(json_writer& j) const
 // CompletedCellsInEAI-NR-Item ::= SEQUENCE
 OCUDUASN_CODE completed_cells_in_eai_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -7526,6 +7858,10 @@ OCUDUASN_CODE completed_cells_in_eai_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void completed_cells_in_eai_nr_item_s::to_json(json_writer& j) const
@@ -7543,7 +7879,7 @@ void completed_cells_in_eai_nr_item_s::to_json(json_writer& j) const
 // EmergencyAreaIDBroadcastNR-Item ::= SEQUENCE
 OCUDUASN_CODE emergency_area_id_broadcast_nr_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(emergency_area_id.pack(bref));
@@ -7565,6 +7901,10 @@ OCUDUASN_CODE emergency_area_id_broadcast_nr_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void emergency_area_id_broadcast_nr_item_s::to_json(json_writer& j) const
@@ -7805,7 +8145,7 @@ void broadcast_completed_area_list_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE broadcast_completed_area_list_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::cell_id_broadcast_eutra:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<cell_id_broadcast_eutra_l>(), 1, 65535, true));
@@ -7837,7 +8177,7 @@ OCUDUASN_CODE broadcast_completed_area_list_c::pack(bit_ref& bref) const
 OCUDUASN_CODE broadcast_completed_area_list_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::cell_id_broadcast_eutra:
@@ -7883,7 +8223,7 @@ const char* broadcast_completed_area_list_c::types_opts::to_string() const
 // SliceSupportItem ::= SEQUENCE
 OCUDUASN_CODE slice_support_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(s_nssai.pack(bref));
@@ -7903,6 +8243,10 @@ OCUDUASN_CODE slice_support_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void slice_support_item_s::to_json(json_writer& j) const
@@ -8013,7 +8357,7 @@ void npn_support_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE npn_support_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::sn_pn:
       HANDLE_CODE((c.get<fixed_bitstring<44, false, true>>().pack(bref)));
@@ -8030,7 +8374,7 @@ OCUDUASN_CODE npn_support_c::pack(bit_ref& bref) const
 OCUDUASN_CODE npn_support_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::sn_pn:
@@ -8055,7 +8399,7 @@ const char* npn_support_c::types_opts::to_string() const
 // TAINSAGSupportItem ::= SEQUENCE
 OCUDUASN_CODE tai_nsag_support_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, nsag_id, (uint16_t)0u, (uint16_t)255u, true, true));
@@ -8077,6 +8421,10 @@ OCUDUASN_CODE tai_nsag_support_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_nsag_support_item_s::to_json(json_writer& j) const
@@ -8288,7 +8636,7 @@ OCUDUASN_CODE broadcast_plmn_item_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += npn_support_present ? 1 : 0;
   nof_ies += extended_tai_slice_support_list_present ? 1 : 0;
   nof_ies += tai_nsag_support_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (npn_support_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)258, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -8314,7 +8662,7 @@ OCUDUASN_CODE broadcast_plmn_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE broadcast_plmn_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -8345,8 +8693,8 @@ OCUDUASN_CODE broadcast_plmn_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -8384,7 +8732,7 @@ void broadcast_plmn_item_ext_ies_container::to_json(json_writer& j) const
 // BroadcastPLMNItem ::= SEQUENCE
 OCUDUASN_CODE broadcast_plmn_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -8406,6 +8754,10 @@ OCUDUASN_CODE broadcast_plmn_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void broadcast_plmn_item_s::to_json(json_writer& j) const
@@ -8427,7 +8779,7 @@ void broadcast_plmn_item_s::to_json(json_writer& j) const
 // MBS-SessionID ::= SEQUENCE
 OCUDUASN_CODE mbs_session_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(nid_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -8455,6 +8807,10 @@ OCUDUASN_CODE mbs_session_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_id_s::to_json(json_writer& j) const
@@ -8737,7 +9093,7 @@ void cause_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE cause_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::radio_network:
       HANDLE_CODE(c.get<cause_radio_network_e>().pack(bref));
@@ -8766,7 +9122,7 @@ OCUDUASN_CODE cause_c::pack(bit_ref& bref) const
 OCUDUASN_CODE cause_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::radio_network:
@@ -8815,7 +9171,7 @@ const char* type_of_error_opts::to_string() const
 // CriticalityDiagnostics-IE-Item ::= SEQUENCE
 OCUDUASN_CODE crit_diagnostics_ie_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ie_crit.pack(bref));
@@ -8839,6 +9195,10 @@ OCUDUASN_CODE crit_diagnostics_ie_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void crit_diagnostics_ie_item_s::to_json(json_writer& j) const
@@ -8857,7 +9217,7 @@ void crit_diagnostics_ie_item_s::to_json(json_writer& j) const
 // CriticalityDiagnostics ::= SEQUENCE
 OCUDUASN_CODE crit_diagnostics_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(proc_code_present, 1));
   HANDLE_CODE(bref.pack(trigger_msg_present, 1));
   HANDLE_CODE(bref.pack(proc_crit_present, 1));
@@ -8908,6 +9268,10 @@ OCUDUASN_CODE crit_diagnostics_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void crit_diagnostics_s::to_json(json_writer& j) const
@@ -8939,7 +9303,7 @@ void crit_diagnostics_s::to_json(json_writer& j) const
 // BroadcastTransportFailureTransfer ::= SEQUENCE
 OCUDUASN_CODE broadcast_transport_fail_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(crit_diagnostics_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -8969,6 +9333,10 @@ OCUDUASN_CODE broadcast_transport_fail_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void broadcast_transport_fail_transfer_s::to_json(json_writer& j) const
@@ -8992,7 +9360,7 @@ void broadcast_transport_fail_transfer_s::to_json(json_writer& j) const
 // MBS-SessionTNLInfoNGRANItem ::= SEQUENCE
 OCUDUASN_CODE mbs_session_tnl_info_ngran_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(shared_ngu_unicast_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -9020,6 +9388,10 @@ OCUDUASN_CODE mbs_session_tnl_info_ngran_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_tnl_info_ngran_item_s::to_json(json_writer& j) const
@@ -9158,7 +9530,7 @@ void mbs_session_tnl_info_ngran_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE mbs_session_tnl_info_ngran_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::locationindependent:
       HANDLE_CODE(c.get<up_transport_layer_info_c>().pack(bref));
@@ -9178,7 +9550,7 @@ OCUDUASN_CODE mbs_session_tnl_info_ngran_c::pack(bit_ref& bref) const
 OCUDUASN_CODE mbs_session_tnl_info_ngran_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::locationindependent:
@@ -9206,7 +9578,7 @@ const char* mbs_session_tnl_info_ngran_c::types_opts::to_string() const
 // BroadcastTransportRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE broadcast_transport_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(mbs_session_id.pack(bref));
@@ -9228,6 +9600,10 @@ OCUDUASN_CODE broadcast_transport_request_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void broadcast_transport_request_transfer_s::to_json(json_writer& j) const
@@ -9247,7 +9623,7 @@ void broadcast_transport_request_transfer_s::to_json(json_writer& j) const
 // BroadcastTransportResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE broadcast_transport_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(mbs_session_id.pack(bref));
@@ -9267,6 +9643,10 @@ OCUDUASN_CODE broadcast_transport_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void broadcast_transport_resp_transfer_s::to_json(json_writer& j) const
@@ -9284,7 +9664,7 @@ void broadcast_transport_resp_transfer_s::to_json(json_writer& j) const
 // BurstArrivalTimeWindow ::= SEQUENCE
 OCUDUASN_CODE burst_arrival_time_win_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_integer(bref, burst_arrival_time_win_start, (uint32_t)0u, (uint32_t)640000u, true, true));
@@ -9306,6 +9686,10 @@ OCUDUASN_CODE burst_arrival_time_win_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void burst_arrival_time_win_s::to_json(json_writer& j) const
@@ -9351,7 +9735,7 @@ const char* source_of_ue_activity_behaviour_info_opts::to_string() const
 // ExpectedUEActivityBehaviour ::= SEQUENCE
 OCUDUASN_CODE expected_ue_activity_behaviour_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(expected_activity_period_present, 1));
   HANDLE_CODE(bref.pack(expected_idle_period_present, 1));
   HANDLE_CODE(bref.pack(source_of_ue_activity_behaviour_info_present, 1));
@@ -9393,6 +9777,10 @@ OCUDUASN_CODE expected_ue_activity_behaviour_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void expected_ue_activity_behaviour_s::to_json(json_writer& j) const
@@ -9436,7 +9824,7 @@ const char* expected_ue_mob_opts::to_string() const
 // ExpectedUEMovingTrajectoryItem ::= SEQUENCE
 OCUDUASN_CODE expected_ue_moving_trajectory_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(time_stayed_in_cell_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -9464,6 +9852,10 @@ OCUDUASN_CODE expected_ue_moving_trajectory_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void expected_ue_moving_trajectory_item_s::to_json(json_writer& j) const
@@ -9484,7 +9876,7 @@ void expected_ue_moving_trajectory_item_s::to_json(json_writer& j) const
 // ExpectedUEBehaviour ::= SEQUENCE
 OCUDUASN_CODE expected_ue_behaviour_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(expected_ue_activity_behaviour_present, 1));
   HANDLE_CODE(bref.pack(expected_ho_interv_present, 1));
   HANDLE_CODE(bref.pack(expected_ue_mob_present, 1));
@@ -9535,6 +9927,10 @@ OCUDUASN_CODE expected_ue_behaviour_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void expected_ue_behaviour_s::to_json(json_writer& j) const
@@ -9567,7 +9963,7 @@ void expected_ue_behaviour_s::to_json(json_writer& j) const
 // CNAssistedRANTuning ::= SEQUENCE
 OCUDUASN_CODE cn_assisted_ran_tuning_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(expected_ue_behaviour_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -9593,6 +9989,10 @@ OCUDUASN_CODE cn_assisted_ran_tuning_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cn_assisted_ran_tuning_s::to_json(json_writer& j) const
@@ -9612,7 +10012,7 @@ void cn_assisted_ran_tuning_s::to_json(json_writer& j) const
 // CNTypeRestrictionsForEquivalentItem ::= SEQUENCE
 OCUDUASN_CODE cn_type_restricts_for_equivalent_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -9634,6 +10034,10 @@ OCUDUASN_CODE cn_type_restricts_for_equivalent_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cn_type_restricts_for_equivalent_item_s::to_json(json_writer& j) const
@@ -9672,7 +10076,7 @@ const char* cn_type_restricts_for_serving_opts::to_string() const
 // COUNTValueForPDCP-SN12 ::= SEQUENCE
 OCUDUASN_CODE count_value_for_pdcp_sn12_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdcp_sn12, (uint16_t)0u, (uint16_t)4095u, false, true));
@@ -9694,6 +10098,10 @@ OCUDUASN_CODE count_value_for_pdcp_sn12_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void count_value_for_pdcp_sn12_s::to_json(json_writer& j) const
@@ -9711,7 +10119,7 @@ void count_value_for_pdcp_sn12_s::to_json(json_writer& j) const
 // COUNTValueForPDCP-SN18 ::= SEQUENCE
 OCUDUASN_CODE count_value_for_pdcp_sn18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdcp_sn18, (uint32_t)0u, (uint32_t)262143u, false, true));
@@ -9733,6 +10141,10 @@ OCUDUASN_CODE count_value_for_pdcp_sn18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void count_value_for_pdcp_sn18_s::to_json(json_writer& j) const
@@ -9757,7 +10169,7 @@ const char* cancel_all_warning_msgs_opts::to_string() const
 // CandidateCellID ::= SEQUENCE
 OCUDUASN_CODE candidate_cell_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(candidate_cell_id.pack(bref));
@@ -9777,6 +10189,10 @@ OCUDUASN_CODE candidate_cell_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void candidate_cell_id_s::to_json(json_writer& j) const
@@ -9794,7 +10210,7 @@ void candidate_cell_id_s::to_json(json_writer& j) const
 // CandidatePCI ::= SEQUENCE
 OCUDUASN_CODE candidate_pci_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, candidate_pci, (uint16_t)0u, (uint16_t)1007u, true, true));
@@ -9816,6 +10232,10 @@ OCUDUASN_CODE candidate_pci_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void candidate_pci_s::to_json(json_writer& j) const
@@ -9948,7 +10368,7 @@ void candidate_cell_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE candidate_cell_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::candidate_cgi:
       HANDLE_CODE(c.get<candidate_cell_id_s>().pack(bref));
@@ -9968,7 +10388,7 @@ OCUDUASN_CODE candidate_cell_c::pack(bit_ref& bref) const
 OCUDUASN_CODE candidate_cell_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::candidate_cgi:
@@ -9996,7 +10416,7 @@ const char* candidate_cell_c::types_opts::to_string() const
 // CandidateCellItem ::= SEQUENCE
 OCUDUASN_CODE candidate_cell_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(candidate_cell.pack(bref));
@@ -10016,6 +10436,10 @@ OCUDUASN_CODE candidate_cell_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void candidate_cell_item_s::to_json(json_writer& j) const
@@ -10033,7 +10457,7 @@ void candidate_cell_item_s::to_json(json_writer& j) const
 // CandidateRelayUEInformationItem ::= SEQUENCE
 OCUDUASN_CODE candidate_relay_ue_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(candidate_relay_ue_id.pack(bref));
@@ -10053,6 +10477,10 @@ OCUDUASN_CODE candidate_relay_ue_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void candidate_relay_ue_info_item_s::to_json(json_writer& j) const
@@ -10069,7 +10497,7 @@ void candidate_relay_ue_info_item_s::to_json(json_writer& j) const
 // Cell-CAGInformation ::= SEQUENCE
 OCUDUASN_CODE cell_cag_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ngran_cgi.pack(bref));
@@ -10091,6 +10519,10 @@ OCUDUASN_CODE cell_cag_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_cag_info_s::to_json(json_writer& j) const
@@ -10234,7 +10666,7 @@ void cell_id_list_for_restart_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE cell_id_list_for_restart_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra_cgi_listfor_restart:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<eutra_cgi_list_l>(), 1, 256, true));
@@ -10254,7 +10686,7 @@ OCUDUASN_CODE cell_id_list_for_restart_c::pack(bit_ref& bref) const
 OCUDUASN_CODE cell_id_list_for_restart_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra_cgi_listfor_restart:
@@ -10289,7 +10721,7 @@ const char* cell_size_opts::to_string() const
 // CellType ::= SEQUENCE
 OCUDUASN_CODE cell_type_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(cell_size.pack(bref));
@@ -10309,6 +10741,10 @@ OCUDUASN_CODE cell_type_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void cell_type_s::to_json(json_writer& j) const
@@ -10430,7 +10866,7 @@ void clock_accuracy_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE clock_accuracy_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::clock_accuracy_value:
       HANDLE_CODE(pack_integer(bref, c.get<uint32_t>(), (uint32_t)1u, (uint32_t)40000000u, true, true));
@@ -10450,7 +10886,7 @@ OCUDUASN_CODE clock_accuracy_c::pack(bit_ref& bref) const
 OCUDUASN_CODE clock_accuracy_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::clock_accuracy_value:
@@ -10478,7 +10914,7 @@ const char* clock_accuracy_c::types_opts::to_string() const
 // ClockQualityAcceptanceCriteria ::= SEQUENCE
 OCUDUASN_CODE clock_quality_acceptance_criteria_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(synchronisation_state_present, 1));
   HANDLE_CODE(bref.pack(traceableto_utc_present, 1));
   HANDLE_CODE(bref.pack(traceableto_gnss_present, 1));
@@ -10544,6 +10980,10 @@ OCUDUASN_CODE clock_quality_acceptance_criteria_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void clock_quality_acceptance_criteria_s::to_json(json_writer& j) const
@@ -10589,7 +11029,7 @@ const char* clock_quality_acceptance_criteria_s::traceableto_gnss_opts::to_strin
 // ClockQualityAcceptanceIndication ::= SEQUENCE
 OCUDUASN_CODE clock_quality_acceptance_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(clock_quality_acceptance_criteria.pack(bref));
@@ -10609,6 +11049,10 @@ OCUDUASN_CODE clock_quality_acceptance_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void clock_quality_acceptance_ind_s::to_json(json_writer& j) const
@@ -10732,7 +11176,7 @@ void clock_quality_detail_level_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE clock_quality_detail_level_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::clock_quality_metrics:
       break;
@@ -10751,7 +11195,7 @@ OCUDUASN_CODE clock_quality_detail_level_c::pack(bit_ref& bref) const
 OCUDUASN_CODE clock_quality_detail_level_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::clock_quality_metrics:
@@ -10778,7 +11222,7 @@ const char* clock_quality_detail_level_c::types_opts::to_string() const
 // ClockQualityReportingControlInfo ::= SEQUENCE
 OCUDUASN_CODE clock_quality_report_ctrl_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(clock_quality_detail_level.pack(bref));
@@ -10798,6 +11242,10 @@ OCUDUASN_CODE clock_quality_report_ctrl_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void clock_quality_report_ctrl_info_s::to_json(json_writer& j) const
@@ -10815,7 +11263,7 @@ void clock_quality_report_ctrl_info_s::to_json(json_writer& j) const
 // CompositeAvailableCapacity ::= SEQUENCE
 OCUDUASN_CODE composite_available_capacity_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(cell_capacity_class_value_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -10843,6 +11291,10 @@ OCUDUASN_CODE composite_available_capacity_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void composite_available_capacity_s::to_json(json_writer& j) const
@@ -10990,7 +11442,7 @@ void ue_id_idx_value_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_id_idx_value_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::idx_len10:
       HANDLE_CODE((c.get<fixed_bitstring<10, false, true>>().pack(bref)));
@@ -11007,7 +11459,7 @@ OCUDUASN_CODE ue_id_idx_value_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ue_id_idx_value_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::idx_len10:
@@ -11056,7 +11508,7 @@ const char* mico_mode_ind_opts::to_string() const
 // TAIListForInactiveItem ::= SEQUENCE
 OCUDUASN_CODE tai_list_for_inactive_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -11076,6 +11528,10 @@ OCUDUASN_CODE tai_list_for_inactive_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_list_for_inactive_item_s::to_json(json_writer& j) const
@@ -11124,7 +11580,7 @@ uint8_t eutra_paging_time_win_opts::to_number() const
 // EUTRA-PagingeDRXInformation ::= SEQUENCE
 OCUDUASN_CODE eutra_paginge_drx_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(eutra_paging_time_win_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -11152,6 +11608,10 @@ OCUDUASN_CODE eutra_paginge_drx_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutra_paginge_drx_info_s::to_json(json_writer& j) const
@@ -11232,7 +11692,7 @@ const char* ue_radio_cap_for_paging_ext_ies_o::ext_c::types_opts::to_string() co
 // UERadioCapabilityForPaging ::= SEQUENCE
 OCUDUASN_CODE ue_radio_cap_for_paging_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ue_radio_cap_for_paging_of_nr.size() > 0, 1));
   HANDLE_CODE(bref.pack(ue_radio_cap_for_paging_of_eutra.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
@@ -11269,6 +11729,10 @@ OCUDUASN_CODE ue_radio_cap_for_paging_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_radio_cap_for_paging_s::to_json(json_writer& j) const
@@ -11329,7 +11793,7 @@ uint8_t nr_paging_time_win_opts::to_number() const
 // NR-PagingeDRXInformation ::= SEQUENCE
 OCUDUASN_CODE nr_paginge_drx_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(nr_paging_time_win_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -11357,6 +11821,10 @@ OCUDUASN_CODE nr_paginge_drx_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_paginge_drx_info_s::to_json(json_writer& j) const
@@ -11383,7 +11851,7 @@ const char* paging_cause_ind_for_voice_service_opts::to_string() const
 // PEIPSassistanceInformation ::= SEQUENCE
 OCUDUASN_CODE pe_ip_sassist_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, cnsubgroup_id, (uint8_t)0u, (uint8_t)7u, true, true));
@@ -11403,6 +11871,10 @@ OCUDUASN_CODE pe_ip_sassist_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pe_ip_sassist_info_s::to_json(json_writer& j) const
@@ -11798,7 +12270,7 @@ OCUDUASN_CODE core_network_assist_info_for_inactive_ext_ies_container::pack(bit_
   nof_ies += pe_ip_sassist_info_present ? 1 : 0;
   nof_ies += hashed_ue_id_idx_value_present ? 1 : 0;
   nof_ies += cn_mt_communication_handling_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (eutra_paginge_drx_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)223, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -11860,7 +12332,7 @@ OCUDUASN_CODE core_network_assist_info_for_inactive_ext_ies_container::pack(bit_
 OCUDUASN_CODE core_network_assist_info_for_inactive_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -11927,8 +12399,8 @@ OCUDUASN_CODE core_network_assist_info_for_inactive_ext_ies_container::unpack(cb
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -11988,7 +12460,7 @@ void core_network_assist_info_for_inactive_ext_ies_container::to_json(json_write
 // CoreNetworkAssistanceInformationForInactive ::= SEQUENCE
 OCUDUASN_CODE core_network_assist_info_for_inactive_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ue_specific_drx_present, 1));
   HANDLE_CODE(bref.pack(mico_mode_ind_present, 1));
   HANDLE_CODE(bref.pack(expected_ue_behaviour_present, 1));
@@ -12036,6 +12508,10 @@ OCUDUASN_CODE core_network_assist_info_for_inactive_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void core_network_assist_info_for_inactive_s::to_json(json_writer& j) const
@@ -12069,7 +12545,7 @@ void core_network_assist_info_for_inactive_s::to_json(json_writer& j) const
 // DAPSRequestInfo ::= SEQUENCE
 OCUDUASN_CODE daps_request_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(da_psi_ndicator.pack(bref));
@@ -12089,6 +12565,10 @@ OCUDUASN_CODE daps_request_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void daps_request_info_s::to_json(json_writer& j) const
@@ -12111,7 +12591,7 @@ const char* daps_request_info_s::da_psi_ndicator_opts::to_string() const
 // DAPSResponseInfo ::= SEQUENCE
 OCUDUASN_CODE daps_resp_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(dapsrespind.pack(bref));
@@ -12131,6 +12611,10 @@ OCUDUASN_CODE daps_resp_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void daps_resp_info_s::to_json(json_writer& j) const
@@ -12153,7 +12637,7 @@ const char* daps_resp_info_s::dapsrespind_opts::to_string() const
 // DAPSResponseInfoItem ::= SEQUENCE
 OCUDUASN_CODE daps_resp_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_integer(bref, drb_id, (uint8_t)1u, (uint8_t)32u, true, true));
@@ -12175,6 +12659,10 @@ OCUDUASN_CODE daps_resp_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void daps_resp_info_item_s::to_json(json_writer& j) const
@@ -12193,7 +12681,7 @@ void daps_resp_info_item_s::to_json(json_writer& j) const
 // DL-CP-SecurityInformation ::= SEQUENCE
 OCUDUASN_CODE dl_cp_security_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(dl_nas_mac.pack(bref));
@@ -12213,6 +12701,10 @@ OCUDUASN_CODE dl_cp_security_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void dl_cp_security_info_s::to_json(json_writer& j) const
@@ -12358,7 +12850,7 @@ void dl_count_choice_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE dl_count_choice_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::count12bits:
       HANDLE_CODE(c.get<count_value_for_pdcp_sn12_s>().pack(bref));
@@ -12378,7 +12870,7 @@ OCUDUASN_CODE dl_count_choice_c::pack(bit_ref& bref) const
 OCUDUASN_CODE dl_count_choice_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::count12bits:
@@ -12411,7 +12903,7 @@ uint8_t dl_count_choice_c::types_opts::to_number() const
 // DRBsSubjectToDLDiscarding-Item ::= SEQUENCE
 OCUDUASN_CODE drbs_subject_to_dl_discarding_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_integer(bref, drb_id, (uint8_t)1u, (uint8_t)32u, true, true));
@@ -12433,6 +12925,10 @@ OCUDUASN_CODE drbs_subject_to_dl_discarding_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drbs_subject_to_dl_discarding_item_s::to_json(json_writer& j) const
@@ -12451,7 +12947,7 @@ void drbs_subject_to_dl_discarding_item_s::to_json(json_writer& j) const
 // DLDiscarding ::= SEQUENCE
 OCUDUASN_CODE dl_discarding_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, drbs_subject_to_dl_discarding, 1, 32, true));
@@ -12471,6 +12967,10 @@ OCUDUASN_CODE dl_discarding_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void dl_discarding_s::to_json(json_writer& j) const
@@ -12498,7 +12998,7 @@ const char* dl_forwarding_opts::to_string() const
 // DRBStatusDL12 ::= SEQUENCE
 OCUDUASN_CODE drb_status_dl12_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(dl_count_value.pack(bref));
@@ -12518,6 +13018,10 @@ OCUDUASN_CODE drb_status_dl12_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drb_status_dl12_s::to_json(json_writer& j) const
@@ -12535,7 +13039,7 @@ void drb_status_dl12_s::to_json(json_writer& j) const
 // DRBStatusDL18 ::= SEQUENCE
 OCUDUASN_CODE drb_status_dl18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(dl_count_value.pack(bref));
@@ -12555,6 +13059,10 @@ OCUDUASN_CODE drb_status_dl18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drb_status_dl18_s::to_json(json_writer& j) const
@@ -12687,7 +13195,7 @@ void drb_status_dl_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE drb_status_dl_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::drb_status_dl12:
       HANDLE_CODE(c.get<drb_status_dl12_s>().pack(bref));
@@ -12707,7 +13215,7 @@ OCUDUASN_CODE drb_status_dl_c::pack(bit_ref& bref) const
 OCUDUASN_CODE drb_status_dl_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::drb_status_dl12:
@@ -12740,7 +13248,7 @@ uint8_t drb_status_dl_c::types_opts::to_number() const
 // DRBStatusUL12 ::= SEQUENCE
 OCUDUASN_CODE drb_status_ul12_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(receive_status_of_ul_pdcp_sdus_present, 1));
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
@@ -12768,6 +13276,10 @@ OCUDUASN_CODE drb_status_ul12_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drb_status_ul12_s::to_json(json_writer& j) const
@@ -12788,7 +13300,7 @@ void drb_status_ul12_s::to_json(json_writer& j) const
 // DRBStatusUL18 ::= SEQUENCE
 OCUDUASN_CODE drb_status_ul18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(receive_status_of_ul_pdcp_sdus_present, 1));
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
@@ -12816,6 +13328,10 @@ OCUDUASN_CODE drb_status_ul18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drb_status_ul18_s::to_json(json_writer& j) const
@@ -12951,7 +13467,7 @@ void drb_status_ul_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE drb_status_ul_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::drb_status_ul12:
       HANDLE_CODE(c.get<drb_status_ul12_s>().pack(bref));
@@ -12971,7 +13487,7 @@ OCUDUASN_CODE drb_status_ul_c::pack(bit_ref& bref) const
 OCUDUASN_CODE drb_status_ul_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::drb_status_ul12:
@@ -13004,7 +13520,7 @@ uint8_t drb_status_ul_c::types_opts::to_number() const
 // DRBsSubjectToEarlyStatusTransfer-Item ::= SEQUENCE
 OCUDUASN_CODE drbs_subject_to_early_status_transfer_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_integer(bref, drb_id, (uint8_t)1u, (uint8_t)32u, true, true));
@@ -13026,6 +13542,10 @@ OCUDUASN_CODE drbs_subject_to_early_status_transfer_item_s::unpack(cbit_ref& bre
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drbs_subject_to_early_status_transfer_item_s::to_json(json_writer& j) const
@@ -13110,7 +13630,7 @@ const char* drbs_subject_to_status_transfer_item_ext_ies_o::ext_c::types_opts::t
 // DRBsSubjectToStatusTransferItem ::= SEQUENCE
 OCUDUASN_CODE drbs_subject_to_status_transfer_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, drb_id, (uint8_t)1u, (uint8_t)32u, true, true));
@@ -13135,6 +13655,10 @@ OCUDUASN_CODE drbs_subject_to_status_transfer_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_ext, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drbs_subject_to_status_transfer_item_s::to_json(json_writer& j) const
@@ -13216,7 +13740,7 @@ const char* drbs_to_qos_flows_map_item_ext_ies_o::ext_c::types_opts::to_string()
 // DRBsToQosFlowsMappingItem ::= SEQUENCE
 OCUDUASN_CODE drbs_to_qos_flows_map_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, drb_id, (uint8_t)1u, (uint8_t)32u, true, true));
@@ -13239,6 +13763,10 @@ OCUDUASN_CODE drbs_to_qos_flows_map_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void drbs_to_qos_flows_map_item_s::to_json(json_writer& j) const
@@ -13266,7 +13794,7 @@ const char* data_forwarding_not_possible_opts::to_string() const
 // DataForwardingResponseDRBItem ::= SEQUENCE
 OCUDUASN_CODE data_forwarding_resp_drb_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_forwarding_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(ul_forwarding_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -13302,6 +13830,10 @@ OCUDUASN_CODE data_forwarding_resp_drb_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void data_forwarding_resp_drb_item_s::to_json(json_writer& j) const
@@ -13326,7 +13858,7 @@ void data_forwarding_resp_drb_item_s::to_json(json_writer& j) const
 // DataForwardingResponseERABListItem ::= SEQUENCE
 OCUDUASN_CODE data_forwarding_resp_erab_list_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, erab_id, (uint8_t)0u, (uint8_t)15u, true, true));
@@ -13348,6 +13880,10 @@ OCUDUASN_CODE data_forwarding_resp_erab_list_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void data_forwarding_resp_erab_list_item_s::to_json(json_writer& j) const
@@ -13561,7 +14097,7 @@ OCUDUASN_CODE dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += extended_packet_delay_budget_present ? 1 : 0;
   nof_ies += cn_packet_delay_budget_dl_present ? 1 : 0;
   nof_ies += cn_packet_delay_budget_ul_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (extended_packet_delay_budget_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)189, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -13587,7 +14123,7 @@ OCUDUASN_CODE dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE dyn_5qi_descriptor_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -13618,8 +14154,8 @@ OCUDUASN_CODE dyn_5qi_descriptor_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -13649,7 +14185,7 @@ void dyn_5qi_descriptor_ext_ies_container::to_json(json_writer& j) const
 // Dynamic5QIDescriptor ::= SEQUENCE
 OCUDUASN_CODE dyn_5qi_descriptor_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(five_qi_present, 1));
   HANDLE_CODE(bref.pack(delay_crit_present, 1));
   HANDLE_CODE(bref.pack(averaging_win_present, 1));
@@ -13705,6 +14241,10 @@ OCUDUASN_CODE dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void dyn_5qi_descriptor_s::to_json(json_writer& j) const
@@ -13887,7 +14427,7 @@ OCUDUASN_CODE erab_info_item_ext_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 0;
   nof_ies += source_tnla_ddr_info_present ? 1 : 0;
   nof_ies += source_node_tnla_ddr_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (source_tnla_ddr_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)284, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -13907,7 +14447,7 @@ OCUDUASN_CODE erab_info_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE erab_info_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -13932,8 +14472,8 @@ OCUDUASN_CODE erab_info_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -13958,7 +14498,7 @@ void erab_info_item_ext_ies_container::to_json(json_writer& j) const
 // E-RABInformationItem ::= SEQUENCE
 OCUDUASN_CODE erab_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_forwarding_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -13986,6 +14526,10 @@ OCUDUASN_CODE erab_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void erab_info_item_s::to_json(json_writer& j) const
@@ -14143,7 +14687,7 @@ void ecn_markingor_congestion_info_report_request_c::to_json(json_writer& j) con
 }
 OCUDUASN_CODE ecn_markingor_congestion_info_report_request_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ecn_marking_at_ra_nr_equest:
       HANDLE_CODE(c.get<ecn_marking_at_ra_nr_equest_e>().pack(bref));
@@ -14167,7 +14711,7 @@ OCUDUASN_CODE ecn_markingor_congestion_info_report_request_c::pack(bit_ref& bref
 OCUDUASN_CODE ecn_markingor_congestion_info_report_request_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ecn_marking_at_ra_nr_equest:
@@ -14200,7 +14744,7 @@ const char* ecn_markingor_congestion_info_report_request_c::types_opts::to_strin
 // ECNMarkingorCongestionInformationReportingStatus-Item ::= SEQUENCE
 OCUDUASN_CODE ecn_markingor_congestion_info_report_status_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -14222,6 +14766,10 @@ OCUDUASN_CODE ecn_markingor_congestion_info_report_status_item_s::unpack(cbit_re
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ecn_markingor_congestion_info_report_status_item_s::to_json(json_writer& j) const
@@ -14399,7 +14947,7 @@ void enb_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE enb_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::macro_enb_id:
       HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().pack(bref)));
@@ -14425,7 +14973,7 @@ OCUDUASN_CODE enb_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE enb_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::macro_enb_id:
@@ -14460,7 +15008,7 @@ const char* enb_id_c::types_opts::to_string() const
 // EPS-TAI ::= SEQUENCE
 OCUDUASN_CODE eps_tai_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -14482,6 +15030,10 @@ OCUDUASN_CODE eps_tai_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eps_tai_s::to_json(json_writer& j) const
@@ -14506,7 +15058,7 @@ const char* e_red_cap_ind_opts::to_string() const
 // EUTRAN-CompositeAvailableCapacityGroup ::= SEQUENCE
 OCUDUASN_CODE eutran_composite_available_capacity_group_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(dl_composite_available_capacity.pack(bref));
@@ -14528,6 +15080,10 @@ OCUDUASN_CODE eutran_composite_available_capacity_group_s::unpack(cbit_ref& bref
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutran_composite_available_capacity_group_s::to_json(json_writer& j) const
@@ -14547,7 +15103,7 @@ void eutran_composite_available_capacity_group_s::to_json(json_writer& j) const
 // EUTRAN-RadioResourceStatus ::= SEQUENCE
 OCUDUASN_CODE eutran_rr_status_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_sched_pdcch_cce_usage_present, 1));
   HANDLE_CODE(bref.pack(ul_sched_pdcch_cce_usage_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -14593,6 +15149,10 @@ OCUDUASN_CODE eutran_rr_status_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutran_rr_status_s::to_json(json_writer& j) const
@@ -14620,7 +15180,7 @@ void eutran_rr_status_s::to_json(json_writer& j) const
 // EUTRAN-CellReportItem ::= SEQUENCE
 OCUDUASN_CODE eutran_cell_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(eutran_nof_active_ues_present, 1));
   HANDLE_CODE(bref.pack(eutran_noof_rrc_conns_present, 1));
   HANDLE_CODE(bref.pack(eutran_rr_status_present, 1));
@@ -14666,6 +15226,10 @@ OCUDUASN_CODE eutran_cell_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutran_cell_report_item_s::to_json(json_writer& j) const
@@ -14695,7 +15259,7 @@ void eutran_cell_report_item_s::to_json(json_writer& j) const
 // EUTRAN-CellToReportItem ::= SEQUENCE
 OCUDUASN_CODE eutran_cell_to_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ecgi.pack(bref));
@@ -14715,6 +15279,10 @@ OCUDUASN_CODE eutran_cell_to_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutran_cell_to_report_item_s::to_json(json_writer& j) const
@@ -14732,7 +15300,7 @@ void eutran_cell_to_report_item_s::to_json(json_writer& j) const
 // EUTRAN-ReportingStatusIEs ::= SEQUENCE
 OCUDUASN_CODE eutran_report_status_ies_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, eutran_cell_report_list, 1, 256, true));
@@ -14752,6 +15320,10 @@ OCUDUASN_CODE eutran_report_status_ies_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutran_report_status_ies_s::to_json(json_writer& j) const
@@ -14772,7 +15344,7 @@ void eutran_report_status_ies_s::to_json(json_writer& j) const
 // EUTRAN-ReportingSystemIEs ::= SEQUENCE
 OCUDUASN_CODE eutran_report_sys_ies_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, eutran_cell_to_report_list, 1, 256, true));
@@ -14792,6 +15364,10 @@ OCUDUASN_CODE eutran_report_sys_ies_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutran_report_sys_ies_s::to_json(json_writer& j) const
@@ -14819,7 +15395,7 @@ const char* early_meas_opts::to_string() const
 // FirstDLCount ::= SEQUENCE
 OCUDUASN_CODE first_dl_count_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, drbs_subject_to_early_status_transfer, 1, 32, true));
@@ -14839,6 +15415,10 @@ OCUDUASN_CODE first_dl_count_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void first_dl_count_s::to_json(json_writer& j) const
@@ -15015,7 +15595,7 @@ void proc_stage_choice_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE proc_stage_choice_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::first_dl_count:
       HANDLE_CODE(c.get<first_dl_count_s>().pack(bref));
@@ -15032,7 +15612,7 @@ OCUDUASN_CODE proc_stage_choice_c::pack(bit_ref& bref) const
 OCUDUASN_CODE proc_stage_choice_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::first_dl_count:
@@ -15057,7 +15637,7 @@ const char* proc_stage_choice_c::types_opts::to_string() const
 // EarlyStatusTransfer-TransparentContainer ::= SEQUENCE
 OCUDUASN_CODE early_status_transfer_transparent_container_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(proc_stage.pack(bref));
@@ -15077,6 +15657,10 @@ OCUDUASN_CODE early_status_transfer_transparent_container_s::unpack(cbit_ref& br
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void early_status_transfer_transparent_container_s::to_json(json_writer& j) const
@@ -15113,7 +15697,7 @@ uint8_t emergency_service_target_cn_opts::to_number() const
 // EmergencyFallbackIndicator ::= SEQUENCE
 OCUDUASN_CODE emergency_fallback_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(emergency_service_target_cn_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -15141,6 +15725,10 @@ OCUDUASN_CODE emergency_fallback_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void emergency_fallback_ind_s::to_json(json_writer& j) const
@@ -15174,7 +15762,7 @@ const char* enhanced_coverage_restrict_opts::to_string() const
 // EquivalentSNPNsItem ::= SEQUENCE
 OCUDUASN_CODE equivalent_sn_p_ns_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -15196,6 +15784,10 @@ OCUDUASN_CODE equivalent_sn_p_ns_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void equivalent_sn_p_ns_item_s::to_json(json_writer& j) const
@@ -15225,7 +15817,7 @@ uint8_t nof_meas_report_levels_opts::to_number() const
 // EventBasedReportingIEs ::= SEQUENCE
 OCUDUASN_CODE event_based_report_ies_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, intersys_res_thres_low, (uint8_t)0u, (uint8_t)100u, false, true));
@@ -15249,6 +15841,10 @@ OCUDUASN_CODE event_based_report_ies_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void event_based_report_ies_s::to_json(json_writer& j) const
@@ -15372,7 +15968,7 @@ void meas_thres_l1_logged_mdt_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE meas_thres_l1_logged_mdt_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::thres_rsrp:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)127u, false, true));
@@ -15392,7 +15988,7 @@ OCUDUASN_CODE meas_thres_l1_logged_mdt_c::pack(bit_ref& bref) const
 OCUDUASN_CODE meas_thres_l1_logged_mdt_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::thres_rsrp:
@@ -15447,7 +16043,7 @@ uint16_t time_to_trigger_opts::to_number() const
 // EventL1LoggedMDTConfig ::= SEQUENCE
 OCUDUASN_CODE event_l1_logged_mdt_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(l1_thres.pack(bref));
@@ -15471,6 +16067,10 @@ OCUDUASN_CODE event_l1_logged_mdt_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void event_l1_logged_mdt_cfg_s::to_json(json_writer& j) const
@@ -15600,7 +16200,7 @@ void event_trigger_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE event_trigger_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::out_of_coverage:
       HANDLE_CODE(c.get<out_of_coverage_e_>().pack(bref));
@@ -15620,7 +16220,7 @@ OCUDUASN_CODE event_trigger_c::pack(bit_ref& bref) const
 OCUDUASN_CODE event_trigger_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::out_of_coverage:
@@ -15729,7 +16329,7 @@ const char* excess_packet_delay_thres_value_opts::to_number_string() const
 // ExcessPacketDelayThresholdItem ::= SEQUENCE
 OCUDUASN_CODE excess_packet_delay_thres_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, five_qi, (uint16_t)0u, (uint16_t)255u, true, true));
@@ -15751,6 +16351,10 @@ OCUDUASN_CODE excess_packet_delay_thres_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void excess_packet_delay_thres_item_s::to_json(json_writer& j) const
@@ -15768,7 +16372,7 @@ void excess_packet_delay_thres_item_s::to_json(json_writer& j) const
 // Extended-AMFName ::= SEQUENCE
 OCUDUASN_CODE extended_amf_name_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(amf_name_visible_string_present, 1));
   HANDLE_CODE(bref.pack(amf_name_utf8_string_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -15802,6 +16406,10 @@ OCUDUASN_CODE extended_amf_name_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void extended_amf_name_s::to_json(json_writer& j) const
@@ -15823,7 +16431,7 @@ void extended_amf_name_s::to_json(json_writer& j) const
 // Extended-RANNodeName ::= SEQUENCE
 OCUDUASN_CODE extended_ran_node_name_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ran_node_name_visible_string_present, 1));
   HANDLE_CODE(bref.pack(ran_node_name_utf8_string_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -15857,6 +16465,10 @@ OCUDUASN_CODE extended_ran_node_name_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void extended_ran_node_name_s::to_json(json_writer& j) const
@@ -15878,7 +16490,7 @@ void extended_ran_node_name_s::to_json(json_writer& j) const
 // ExtendedRATRestrictionInformation ::= SEQUENCE
 OCUDUASN_CODE extended_rat_restrict_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(primary_rat_restrict.pack(bref));
@@ -15900,6 +16512,10 @@ OCUDUASN_CODE extended_rat_restrict_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void extended_rat_restrict_info_s::to_json(json_writer& j) const
@@ -16042,7 +16658,7 @@ void ue_rlf_report_container_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_rlf_report_container_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::nr:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
@@ -16062,7 +16678,7 @@ OCUDUASN_CODE ue_rlf_report_container_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ue_rlf_report_container_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::nr:
@@ -16090,7 +16706,7 @@ const char* ue_rlf_report_container_c::types_opts::to_string() const
 // FailureIndication ::= SEQUENCE
 OCUDUASN_CODE fail_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ue_rlf_report_container.pack(bref));
@@ -16110,6 +16726,10 @@ OCUDUASN_CODE fail_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void fail_ind_s::to_json(json_writer& j) const
@@ -16369,7 +16989,7 @@ OCUDUASN_CODE five_g_pro_se_authorized_ext_ies_container::pack(bit_ref& bref) co
   nof_ies += five_g_pro_se_layer2_multipath_present ? 1 : 0;
   nof_ies += five_g_pro_se_layer2_ue_to_ue_relay_present ? 1 : 0;
   nof_ies += five_g_pro_se_layer2_ue_to_ue_remote_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (five_g_pro_se_layer2_multipath_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)379, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -16395,7 +17015,7 @@ OCUDUASN_CODE five_g_pro_se_authorized_ext_ies_container::pack(bit_ref& bref) co
 OCUDUASN_CODE five_g_pro_se_authorized_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -16426,8 +17046,8 @@ OCUDUASN_CODE five_g_pro_se_authorized_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -16457,7 +17077,7 @@ void five_g_pro_se_authorized_ext_ies_container::to_json(json_writer& j) const
 // FiveG-ProSeAuthorized ::= SEQUENCE
 OCUDUASN_CODE five_g_pro_se_authorized_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(five_g_pro_se_direct_discovery_present, 1));
   HANDLE_CODE(bref.pack(five_g_pro_se_direct_communication_present, 1));
   HANDLE_CODE(bref.pack(five_g_pro_se_layer2_ue_to_network_relay_present, 1));
@@ -16515,6 +17135,10 @@ OCUDUASN_CODE five_g_pro_se_authorized_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void five_g_pro_se_authorized_s::to_json(json_writer& j) const
@@ -16545,7 +17169,7 @@ void five_g_pro_se_authorized_s::to_json(json_writer& j) const
 // FiveGProSePC5FlowBitRates ::= SEQUENCE
 OCUDUASN_CODE five_g_pro_se_pc5_flow_bit_rates_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(
@@ -16569,6 +17193,10 @@ OCUDUASN_CODE five_g_pro_se_pc5_flow_bit_rates_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void five_g_pro_se_pc5_flow_bit_rates_s::to_json(json_writer& j) const
@@ -16598,7 +17226,7 @@ uint16_t range_opts::to_number() const
 // FiveGProSePC5QoSFlowItem ::= SEQUENCE
 OCUDUASN_CODE five_g_pro_se_pc5_qos_flow_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(five_gpro_sepc5_flow_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(five_gpro_serange_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -16634,6 +17262,10 @@ OCUDUASN_CODE five_g_pro_se_pc5_qos_flow_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void five_g_pro_se_pc5_qos_flow_item_s::to_json(json_writer& j) const
@@ -16657,7 +17289,7 @@ void five_g_pro_se_pc5_qos_flow_item_s::to_json(json_writer& j) const
 // FiveG-ProSePC5QoSParameters ::= SEQUENCE
 OCUDUASN_CODE five_g_pro_se_pc5_qos_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(five_g_pro_sepc5_link_aggr_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -16687,6 +17319,10 @@ OCUDUASN_CODE five_g_pro_se_pc5_qos_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void five_g_pro_se_pc5_qos_params_s::to_json(json_writer& j) const
@@ -16710,7 +17346,7 @@ void five_g_pro_se_pc5_qos_params_s::to_json(json_writer& j) const
 // FiveG-S-TMSI ::= SEQUENCE
 OCUDUASN_CODE five_g_s_tmsi_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(amf_set_id.pack(bref));
@@ -16734,6 +17370,10 @@ OCUDUASN_CODE five_g_s_tmsi_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void five_g_s_tmsi_s::to_json(json_writer& j) const
@@ -16779,7 +17419,7 @@ uint8_t nr_paging_time_win_for_rrc_inactive_opts::to_number() const
 // NR-Paging-Long-eDRX-Information-for-RRC-INACTIVE ::= SEQUENCE
 OCUDUASN_CODE nr_paging_long_e_drx_info_for_rrc_inactive_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_paging_long_e_drx_cycle_for_rrc_inactive.pack(bref));
@@ -16801,6 +17441,10 @@ OCUDUASN_CODE nr_paging_long_e_drx_info_for_rrc_inactive_s::unpack(cbit_ref& bre
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_paging_long_e_drx_info_for_rrc_inactive_s::to_json(json_writer& j) const
@@ -16818,7 +17462,7 @@ void nr_paging_long_e_drx_info_for_rrc_inactive_s::to_json(json_writer& j) const
 // HLComActivate ::= SEQUENCE
 OCUDUASN_CODE hl_com_activ_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_paging_long_e_drx_info_for_rrc_inactive.pack(bref));
@@ -16838,6 +17482,10 @@ OCUDUASN_CODE hl_com_activ_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void hl_com_activ_s::to_json(json_writer& j) const
@@ -16855,7 +17503,7 @@ void hl_com_activ_s::to_json(json_writer& j) const
 // HLComDeactivate ::= SEQUENCE
 OCUDUASN_CODE hl_com_deactiv_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ue_reachability_ind.pack(bref));
@@ -16875,6 +17523,10 @@ OCUDUASN_CODE hl_com_deactiv_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void hl_com_deactiv_s::to_json(json_writer& j) const
@@ -17012,7 +17664,7 @@ void five_gc_action_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE five_gc_action_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::hl_com_activ:
       HANDLE_CODE(c.get<hl_com_activ_s>().pack(bref));
@@ -17032,7 +17684,7 @@ OCUDUASN_CODE five_gc_action_c::pack(bit_ref& bref) const
 OCUDUASN_CODE five_gc_action_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::hl_com_activ:
@@ -17060,7 +17712,7 @@ const char* five_gc_action_c::types_opts::to_string() const
 // ForbiddenAreaInformation-Item ::= SEQUENCE
 OCUDUASN_CODE forbidden_area_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -17082,6 +17734,10 @@ OCUDUASN_CODE forbidden_area_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void forbidden_area_info_item_s::to_json(json_writer& j) const
@@ -17103,7 +17759,7 @@ void forbidden_area_info_item_s::to_json(json_writer& j) const
 // GlobalENB-ID ::= SEQUENCE
 OCUDUASN_CODE global_enb_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -17125,6 +17781,10 @@ OCUDUASN_CODE global_enb_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_enb_id_s::to_json(json_writer& j) const
@@ -17143,7 +17803,7 @@ void global_enb_id_s::to_json(json_writer& j) const
 // IntersystemSONeNBID ::= SEQUENCE
 OCUDUASN_CODE intersys_son_enb_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(global_enb_id.pack(bref));
@@ -17165,6 +17825,10 @@ OCUDUASN_CODE intersys_son_enb_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_son_enb_id_s::to_json(json_writer& j) const
@@ -17184,7 +17848,7 @@ void intersys_son_enb_id_s::to_json(json_writer& j) const
 // IntersystemSONNGRANnodeID ::= SEQUENCE
 OCUDUASN_CODE intersys_son_ngran_node_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(global_ran_node_id.pack(bref));
@@ -17206,6 +17870,10 @@ OCUDUASN_CODE intersys_son_ngran_node_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_son_ngran_node_id_s::to_json(json_writer& j) const
@@ -17375,7 +18043,7 @@ const char* gbr_qos_info_ext_ies_o::ext_c::types_opts::to_string() const
 // GBR-QosInformation ::= SEQUENCE
 OCUDUASN_CODE gbr_qos_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(notif_ctrl_present, 1));
   HANDLE_CODE(bref.pack(max_packet_loss_rate_dl_present, 1));
   HANDLE_CODE(bref.pack(max_packet_loss_rate_ul_present, 1));
@@ -17426,6 +18094,10 @@ OCUDUASN_CODE gbr_qos_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void gbr_qos_info_s::to_json(json_writer& j) const
@@ -17453,7 +18125,7 @@ void gbr_qos_info_s::to_json(json_writer& j) const
 // GUAMI ::= SEQUENCE
 OCUDUASN_CODE guami_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -17479,6 +18151,10 @@ OCUDUASN_CODE guami_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void guami_s::to_json(json_writer& j) const
@@ -17505,7 +18181,7 @@ const char* guami_type_opts::to_string() const
 // GlobalCable-ID-new ::= SEQUENCE
 OCUDUASN_CODE global_cable_id_new_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(global_cable_id.pack(bref));
@@ -17527,6 +18203,10 @@ OCUDUASN_CODE global_cable_id_new_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_cable_id_new_s::to_json(json_writer& j) const
@@ -17614,7 +18294,7 @@ const char* global_line_id_ext_ies_o::ext_c::types_opts::to_string() const
 // GlobalLine-ID ::= SEQUENCE
 OCUDUASN_CODE global_line_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(line_type_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -17643,6 +18323,10 @@ OCUDUASN_CODE global_line_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void global_line_id_s::to_json(json_writer& j) const
@@ -17722,7 +18406,7 @@ const char* hfc_node_id_new_ext_ies_o::ext_c::types_opts::to_string() const
 // HFCNode-ID-new ::= SEQUENCE
 OCUDUASN_CODE hfc_node_id_new_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(hfc_node_id.pack(bref));
@@ -17745,6 +18429,10 @@ OCUDUASN_CODE hfc_node_id_new_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void hfc_node_id_new_s::to_json(json_writer& j) const
@@ -17951,7 +18639,7 @@ OCUDUASN_CODE ho_report_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += extended_mob_info_present ? 1 : 0;
   nof_ies += target_cell_c_rnti_present ? 1 : 0;
   nof_ies += time_since_fail_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (extended_mob_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)366, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -17977,7 +18665,7 @@ OCUDUASN_CODE ho_report_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE ho_report_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -18008,8 +18696,8 @@ OCUDUASN_CODE ho_report_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -18039,7 +18727,7 @@ void ho_report_ext_ies_container::to_json(json_writer& j) const
 // HOReport ::= SEQUENCE
 OCUDUASN_CODE ho_report_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(reestcell_cgi_present, 1));
   HANDLE_CODE(bref.pack(sourcecell_c_rnti_present, 1));
   HANDLE_CODE(bref.pack(targetcellin_e_utran_present, 1));
@@ -18105,6 +18793,10 @@ OCUDUASN_CODE ho_report_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ho_report_s::to_json(json_writer& j) const
@@ -18151,7 +18843,7 @@ const char* ho_report_s::ho_report_type_opts::to_string() const
 // QosFlowToBeForwardedItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_to_be_forwarded_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -18171,6 +18863,10 @@ OCUDUASN_CODE qos_flow_to_be_forwarded_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_to_be_forwarded_item_s::to_json(json_writer& j) const
@@ -18187,7 +18883,7 @@ void qos_flow_to_be_forwarded_item_s::to_json(json_writer& j) const
 // QosFlowPerTNLInformation ::= SEQUENCE
 OCUDUASN_CODE qos_flow_per_tnl_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(up_transport_layer_info.pack(bref));
@@ -18209,6 +18905,10 @@ OCUDUASN_CODE qos_flow_per_tnl_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_per_tnl_info_s::to_json(json_writer& j) const
@@ -18231,7 +18931,7 @@ void qos_flow_per_tnl_info_s::to_json(json_writer& j) const
 // QosFlowPerTNLInformationItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_per_tnl_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(qos_flow_per_tnl_info.pack(bref));
@@ -18251,6 +18951,10 @@ OCUDUASN_CODE qos_flow_per_tnl_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_per_tnl_info_item_s::to_json(json_writer& j) const
@@ -18329,7 +19033,7 @@ const char* up_transport_layer_info_item_ext_ies_o::ext_c::types_opts::to_string
 // UPTransportLayerInformationItem ::= SEQUENCE
 OCUDUASN_CODE up_transport_layer_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(ngu_up_tnl_info.pack(bref));
@@ -18350,6 +19054,10 @@ OCUDUASN_CODE up_transport_layer_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void up_transport_layer_info_item_s::to_json(json_writer& j) const
@@ -18366,7 +19074,7 @@ void up_transport_layer_info_item_s::to_json(json_writer& j) const
 // QosFlowWithCauseItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_with_cause_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -18388,6 +19096,10 @@ OCUDUASN_CODE qos_flow_with_cause_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_with_cause_item_s::to_json(json_writer& j) const
@@ -18668,7 +19380,7 @@ OCUDUASN_CODE ho_cmd_transfer_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += add_ul_forwarding_up_tnl_info_present ? 1 : 0;
   nof_ies += data_forwarding_resp_erab_list_present ? 1 : 0;
   nof_ies += qos_flow_failed_to_setup_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (add_dl_forwarding_up_tnl_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)152, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -18706,7 +19418,7 @@ OCUDUASN_CODE ho_cmd_transfer_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE ho_cmd_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -18749,8 +19461,8 @@ OCUDUASN_CODE ho_cmd_transfer_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -18806,7 +19518,7 @@ void ho_cmd_transfer_ext_ies_container::to_json(json_writer& j) const
 // HandoverCommandTransfer ::= SEQUENCE
 OCUDUASN_CODE ho_cmd_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_forwarding_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(qos_flow_to_be_forwarded_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(data_forwarding_resp_drb_list.size() > 0, 1));
@@ -18850,6 +19562,10 @@ OCUDUASN_CODE ho_cmd_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ho_cmd_transfer_s::to_json(json_writer& j) const
@@ -18890,7 +19606,7 @@ const char* ho_flag_opts::to_string() const
 // HandoverPreparationUnsuccessfulTransfer ::= SEQUENCE
 OCUDUASN_CODE ho_prep_unsuccessful_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(cause.pack(bref));
@@ -18910,6 +19626,10 @@ OCUDUASN_CODE ho_prep_unsuccessful_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ho_prep_unsuccessful_transfer_s::to_json(json_writer& j) const
@@ -18934,7 +19654,7 @@ const char* integrity_protection_result_opts::to_string() const
 // SecurityResult ::= SEQUENCE
 OCUDUASN_CODE security_result_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(integrity_protection_result.pack(bref));
@@ -18956,6 +19676,10 @@ OCUDUASN_CODE security_result_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void security_result_s::to_json(json_writer& j) const
@@ -19051,7 +19775,7 @@ uint8_t redundant_pdu_session_info_ext_ies_o::ext_c::types_opts::to_number() con
 // RedundantPDUSessionInformation ::= SEQUENCE
 OCUDUASN_CODE redundant_pdu_session_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(rsn.pack(bref));
@@ -19072,6 +19796,10 @@ OCUDUASN_CODE redundant_pdu_session_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void redundant_pdu_session_info_s::to_json(json_writer& j) const
@@ -19523,7 +20251,7 @@ OCUDUASN_CODE ho_request_ack_transfer_ext_ies_container::pack(bit_ref& bref) con
   nof_ies += mbs_support_ind_present ? 1 : 0;
   nof_ies += pdu_setbased_handling_ind_present ? 1 : 0;
   nof_ies += ecn_markingor_congestion_info_report_status_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (add_dl_up_tnl_info_for_ho_list_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)153, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -19591,7 +20319,7 @@ OCUDUASN_CODE ho_request_ack_transfer_ext_ies_container::pack(bit_ref& bref) con
 OCUDUASN_CODE ho_request_ack_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -19664,8 +20392,8 @@ OCUDUASN_CODE ho_request_ack_transfer_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -19746,7 +20474,7 @@ void ho_request_ack_transfer_ext_ies_container::to_json(json_writer& j) const
 // HandoverRequestAcknowledgeTransfer ::= SEQUENCE
 OCUDUASN_CODE ho_request_ack_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_forwarding_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(security_result_present, 1));
   HANDLE_CODE(bref.pack(qos_flow_failed_to_setup_list.size() > 0, 1));
@@ -19802,6 +20530,10 @@ OCUDUASN_CODE ho_request_ack_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ho_request_ack_transfer_s::to_json(json_writer& j) const
@@ -19846,7 +20578,7 @@ void ho_request_ack_transfer_s::to_json(json_writer& j) const
 // HandoverRequiredTransfer ::= SEQUENCE
 OCUDUASN_CODE ho_required_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(direct_forwarding_path_availability_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -19872,6 +20604,10 @@ OCUDUASN_CODE ho_required_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ho_required_transfer_s::to_json(json_writer& j) const
@@ -19890,7 +20626,7 @@ void ho_required_transfer_s::to_json(json_writer& j) const
 // HandoverResourceAllocationUnsuccessfulTransfer ::= SEQUENCE
 OCUDUASN_CODE ho_res_alloc_unsuccessful_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(crit_diagnostics_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -19918,6 +20654,10 @@ OCUDUASN_CODE ho_res_alloc_unsuccessful_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ho_res_alloc_unsuccessful_transfer_s::to_json(json_writer& j) const
@@ -20102,7 +20842,7 @@ void m1_thres_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE m1_thres_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::thres_rsrp:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)127u, false, true));
@@ -20125,7 +20865,7 @@ OCUDUASN_CODE m1_thres_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE m1_thres_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::thres_rsrp:
@@ -20156,7 +20896,7 @@ const char* m1_thres_type_c::types_opts::to_string() const
 // M1ThresholdEventA2 ::= SEQUENCE
 OCUDUASN_CODE m1_thres_event_a2_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(m1_thres_type.pack(bref));
@@ -20176,6 +20916,10 @@ OCUDUASN_CODE m1_thres_event_a2_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void m1_thres_event_a2_s::to_json(json_writer& j) const
@@ -20290,7 +21034,7 @@ const char* m1_periodic_report_ext_ies_o::ext_c::types_opts::to_string() const
 // M1PeriodicReporting ::= SEQUENCE
 OCUDUASN_CODE m1_periodic_report_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(report_interv.pack(bref));
@@ -20313,6 +21057,10 @@ OCUDUASN_CODE m1_periodic_report_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void m1_periodic_report_s::to_json(json_writer& j) const
@@ -20488,7 +21236,7 @@ OCUDUASN_CODE m1_cfg_ext_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 0;
   nof_ies += include_beam_meass_ind_present ? 1 : 0;
   nof_ies += beam_meass_report_cfg_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (include_beam_meass_ind_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)340, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -20508,7 +21256,7 @@ OCUDUASN_CODE m1_cfg_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE m1_cfg_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -20533,8 +21281,8 @@ OCUDUASN_CODE m1_cfg_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -20559,7 +21307,7 @@ void m1_cfg_ext_ies_container::to_json(json_writer& j) const
 // M1Configuration ::= SEQUENCE
 OCUDUASN_CODE m1_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(m1thres_event_a2_present, 1));
   HANDLE_CODE(bref.pack(m1periodic_report_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -20595,6 +21343,10 @@ OCUDUASN_CODE m1_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void m1_cfg_s::to_json(json_writer& j) const
@@ -20716,7 +21468,7 @@ uint8_t m4_cfg_ext_ies_o::ext_c::types_opts::to_number() const
 // M4Configuration ::= SEQUENCE
 OCUDUASN_CODE m4_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(m4period.pack(bref));
@@ -20739,6 +21491,10 @@ OCUDUASN_CODE m4_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void m4_cfg_s::to_json(json_writer& j) const
@@ -20845,7 +21601,7 @@ uint8_t m5_cfg_ext_ies_o::ext_c::types_opts::to_number() const
 // M5Configuration ::= SEQUENCE
 OCUDUASN_CODE m5_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(m5period.pack(bref));
@@ -20868,6 +21624,10 @@ OCUDUASN_CODE m5_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void m5_cfg_s::to_json(json_writer& j) const
@@ -21081,7 +21841,7 @@ OCUDUASN_CODE m6_cfg_ext_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 0;
   nof_ies += m6_report_amount_present ? 1 : 0;
   nof_ies += excess_packet_delay_thres_cfg_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (m6_report_amount_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)338, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -21101,7 +21861,7 @@ OCUDUASN_CODE m6_cfg_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE m6_cfg_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -21126,8 +21886,8 @@ OCUDUASN_CODE m6_cfg_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -21156,7 +21916,7 @@ void m6_cfg_ext_ies_container::to_json(json_writer& j) const
 // M6Configuration ::= SEQUENCE
 OCUDUASN_CODE m6_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(m6report_interv.pack(bref));
@@ -21178,6 +21938,10 @@ OCUDUASN_CODE m6_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void m6_cfg_s::to_json(json_writer& j) const
@@ -21273,7 +22037,7 @@ uint8_t m7_cfg_ext_ies_o::ext_c::types_opts::to_number() const
 // M7Configuration ::= SEQUENCE
 OCUDUASN_CODE m7_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, m7period, (uint8_t)1u, (uint8_t)60u, true, true));
@@ -21296,6 +22060,10 @@ OCUDUASN_CODE m7_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void m7_cfg_s::to_json(json_writer& j) const
@@ -21319,7 +22087,7 @@ const char* wlan_meas_cfg_opts::to_string() const
 // WLANMeasConfigNameItem ::= SEQUENCE
 OCUDUASN_CODE wlan_meas_cfg_name_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(wlan_name.pack(bref));
@@ -21339,6 +22107,10 @@ OCUDUASN_CODE wlan_meas_cfg_name_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void wlan_meas_cfg_name_item_s::to_json(json_writer& j) const
@@ -21355,7 +22127,7 @@ void wlan_meas_cfg_name_item_s::to_json(json_writer& j) const
 // WLANMeasurementConfiguration ::= SEQUENCE
 OCUDUASN_CODE wlan_meas_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(wlan_meas_cfg_name_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(wlan_rssi_present, 1));
   HANDLE_CODE(bref.pack(wlan_rtt_present, 1));
@@ -21400,6 +22172,10 @@ OCUDUASN_CODE wlan_meas_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void wlan_meas_cfg_s::to_json(json_writer& j) const
@@ -21441,7 +22217,7 @@ const char* wlan_meas_cfg_s::wlan_rtt_opts::to_string() const
 // MDT-Location-Info ::= SEQUENCE
 OCUDUASN_CODE mdt_location_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(mdt_location_info.pack(bref));
@@ -21461,6 +22237,10 @@ OCUDUASN_CODE mdt_location_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mdt_location_info_s::to_json(json_writer& j) const
@@ -21605,7 +22385,7 @@ void sensor_name_cfg_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE sensor_name_cfg_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::uncompensated_barometric_cfg:
       HANDLE_CODE(c.get<uncompensated_barometric_cfg_e_>().pack(bref));
@@ -21628,7 +22408,7 @@ OCUDUASN_CODE sensor_name_cfg_c::pack(bit_ref& bref) const
 OCUDUASN_CODE sensor_name_cfg_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::uncompensated_barometric_cfg:
@@ -21678,7 +22458,7 @@ const char* sensor_name_cfg_c::types_opts::to_string() const
 // SensorMeasConfigNameItem ::= SEQUENCE
 OCUDUASN_CODE sensor_meas_cfg_name_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(sensor_name_cfg.pack(bref));
@@ -21698,6 +22478,10 @@ OCUDUASN_CODE sensor_meas_cfg_name_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sensor_meas_cfg_name_item_s::to_json(json_writer& j) const
@@ -21715,7 +22499,7 @@ void sensor_meas_cfg_name_item_s::to_json(json_writer& j) const
 // SensorMeasurementConfiguration ::= SEQUENCE
 OCUDUASN_CODE sensor_meas_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sensor_meas_cfg_name_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -21744,6 +22528,10 @@ OCUDUASN_CODE sensor_meas_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sensor_meas_cfg_s::to_json(json_writer& j) const
@@ -21767,7 +22555,7 @@ void sensor_meas_cfg_s::to_json(json_writer& j) const
 // ImmediateMDTNr ::= SEQUENCE
 OCUDUASN_CODE immediate_mdt_nr_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(m1_cfg_present, 1));
   HANDLE_CODE(bref.pack(m4_cfg_present, 1));
   HANDLE_CODE(bref.pack(m5_cfg_present, 1));
@@ -21859,6 +22647,10 @@ OCUDUASN_CODE immediate_mdt_nr_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void immediate_mdt_nr_s::to_json(json_writer& j) const
@@ -21911,7 +22703,7 @@ void immediate_mdt_nr_s::to_json(json_writer& j) const
 // RecommendedRANNodeItem ::= SEQUENCE
 OCUDUASN_CODE recommended_ran_node_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(amf_paging_target.pack(bref));
@@ -21931,6 +22723,10 @@ OCUDUASN_CODE recommended_ran_node_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void recommended_ran_node_item_s::to_json(json_writer& j) const
@@ -21948,7 +22744,7 @@ void recommended_ran_node_item_s::to_json(json_writer& j) const
 // RecommendedRANNodesForPaging ::= SEQUENCE
 OCUDUASN_CODE recommended_ran_nodes_for_paging_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, recommended_ran_node_list, 1, 16, true));
@@ -21968,6 +22764,10 @@ OCUDUASN_CODE recommended_ran_nodes_for_paging_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void recommended_ran_nodes_for_paging_s::to_json(json_writer& j) const
@@ -21988,7 +22788,7 @@ void recommended_ran_nodes_for_paging_s::to_json(json_writer& j) const
 // InfoOnRecommendedCellsAndRANNodesForPaging ::= SEQUENCE
 OCUDUASN_CODE info_on_recommended_cells_and_ran_nodes_for_paging_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(recommended_cells_for_paging.pack(bref));
@@ -22010,6 +22810,10 @@ OCUDUASN_CODE info_on_recommended_cells_and_ran_nodes_for_paging_s::unpack(cbit_
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void info_on_recommended_cells_and_ran_nodes_for_paging_s::to_json(json_writer& j) const
@@ -22036,7 +22840,7 @@ const char* integrity_protection_ind_opts::to_string() const
 // InterSystemFailureIndication ::= SEQUENCE
 OCUDUASN_CODE inter_sys_fail_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ue_rlf_report_container_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -22062,6 +22866,10 @@ OCUDUASN_CODE inter_sys_fail_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void inter_sys_fail_ind_s::to_json(json_writer& j) const
@@ -22081,7 +22889,7 @@ void inter_sys_fail_ind_s::to_json(json_writer& j) const
 // TooearlyIntersystemHO ::= SEQUENCE
 OCUDUASN_CODE tooearly_intersys_ho_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ue_rlf_report_container_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -22111,6 +22919,10 @@ OCUDUASN_CODE tooearly_intersys_ho_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tooearly_intersys_ho_s::to_json(json_writer& j) const
@@ -22134,7 +22946,7 @@ void tooearly_intersys_ho_s::to_json(json_writer& j) const
 // IntersystemUnnecessaryHO ::= SEQUENCE
 OCUDUASN_CODE intersys_unnecessary_ho_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(sourcecell_id.pack(bref));
@@ -22160,6 +22972,10 @@ OCUDUASN_CODE intersys_unnecessary_ho_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_unnecessary_ho_s::to_json(json_writer& j) const
@@ -22191,7 +23007,7 @@ const char* intersys_unnecessary_ho_s::early_iratho_opts::to_string() const
 // IntersystemMobilityFailureforVoiceFallback ::= SEQUENCE
 OCUDUASN_CODE intersys_mob_failfor_voice_fallback_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(reconnect_cell_id_present, 1));
   HANDLE_CODE(bref.pack(ue_rlf_report_container_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -22229,6 +23045,10 @@ OCUDUASN_CODE intersys_mob_failfor_voice_fallback_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_mob_failfor_voice_fallback_s::to_json(json_writer& j) const
@@ -22433,7 +23253,7 @@ void inter_sys_ho_report_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE inter_sys_ho_report_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::tooearly_intersys_ho:
       HANDLE_CODE(c.get<tooearly_intersys_ho_s>().pack(bref));
@@ -22453,7 +23273,7 @@ OCUDUASN_CODE inter_sys_ho_report_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE inter_sys_ho_report_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::tooearly_intersys_ho:
@@ -22481,7 +23301,7 @@ const char* inter_sys_ho_report_type_c::types_opts::to_string() const
 // InterSystemHOReport ::= SEQUENCE
 OCUDUASN_CODE inter_sys_ho_report_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ho_report_type.pack(bref));
@@ -22501,6 +23321,10 @@ OCUDUASN_CODE inter_sys_ho_report_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void inter_sys_ho_report_s::to_json(json_writer& j) const
@@ -22518,7 +23342,7 @@ void inter_sys_ho_report_s::to_json(json_writer& j) const
 // IntersystemCellActivationReply ::= SEQUENCE
 OCUDUASN_CODE intersys_cell_activation_reply_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, activ_cell_list, 1, 16384, true));
@@ -22540,6 +23364,10 @@ OCUDUASN_CODE intersys_cell_activation_reply_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_cell_activation_reply_s::to_json(json_writer& j) const
@@ -22561,7 +23389,7 @@ void intersys_cell_activation_reply_s::to_json(json_writer& j) const
 // IntersystemCellActivationRequest ::= SEQUENCE
 OCUDUASN_CODE intersys_cell_activation_request_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, activation_id, (uint16_t)0u, (uint16_t)16384u, true, true));
@@ -22583,6 +23411,10 @@ OCUDUASN_CODE intersys_cell_activation_request_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_cell_activation_request_s::to_json(json_writer& j) const
@@ -22604,7 +23436,7 @@ void intersys_cell_activation_request_s::to_json(json_writer& j) const
 // NotificationCell-Item ::= SEQUENCE
 OCUDUASN_CODE notif_cell_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ngran_cgi.pack(bref));
@@ -22626,6 +23458,10 @@ OCUDUASN_CODE notif_cell_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void notif_cell_item_s::to_json(json_writer& j) const
@@ -22650,7 +23486,7 @@ const char* notif_cell_item_s::notify_flag_opts::to_string() const
 // IntersystemCellStateIndication ::= SEQUENCE
 OCUDUASN_CODE intersys_cell_state_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, notif_cell_list, 1, 16384, true));
@@ -22670,6 +23506,10 @@ OCUDUASN_CODE intersys_cell_state_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_cell_state_ind_s::to_json(json_writer& j) const
@@ -22690,7 +23530,7 @@ void intersys_cell_state_ind_s::to_json(json_writer& j) const
 // NGRAN-CellToReportItem ::= SEQUENCE
 OCUDUASN_CODE ngran_cell_to_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ngran_cgi.pack(bref));
@@ -22710,6 +23550,10 @@ OCUDUASN_CODE ngran_cell_to_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ngran_cell_to_report_item_s::to_json(json_writer& j) const
@@ -22727,7 +23571,7 @@ void ngran_cell_to_report_item_s::to_json(json_writer& j) const
 // NGRAN-ReportingSystemIEs ::= SEQUENCE
 OCUDUASN_CODE ngran_report_sys_ies_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, ngran_cell_to_report_list, 1, 256, true));
@@ -22747,6 +23591,10 @@ OCUDUASN_CODE ngran_report_sys_ies_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ngran_report_sys_ies_s::to_json(json_writer& j) const
@@ -22894,7 +23742,7 @@ void report_sys_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE report_sys_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutran:
       HANDLE_CODE(c.get<eutran_report_sys_ies_s>().pack(bref));
@@ -22916,7 +23764,7 @@ OCUDUASN_CODE report_sys_c::pack(bit_ref& bref) const
 OCUDUASN_CODE report_sys_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutran:
@@ -22946,7 +23794,7 @@ const char* report_sys_c::types_opts::to_string() const
 // IntersystemResourceStatusReply ::= SEQUENCE
 OCUDUASN_CODE intersys_res_status_reply_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(reportsys.pack(bref));
@@ -22966,6 +23814,10 @@ OCUDUASN_CODE intersys_res_status_reply_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_res_status_reply_s::to_json(json_writer& j) const
@@ -22983,7 +23835,7 @@ void intersys_res_status_reply_s::to_json(json_writer& j) const
 // NGRAN-RadioResourceStatus ::= SEQUENCE
 OCUDUASN_CODE ngran_rr_status_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, dl_gbr_prb_usage_for_mimo, (uint8_t)0u, (uint8_t)100u, false, true));
@@ -23013,6 +23865,10 @@ OCUDUASN_CODE ngran_rr_status_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ngran_rr_status_s::to_json(json_writer& j) const
@@ -23034,7 +23890,7 @@ void ngran_rr_status_s::to_json(json_writer& j) const
 // NGRAN-CellReportItem ::= SEQUENCE
 OCUDUASN_CODE ngran_cell_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ngran_nof_active_ues_present, 1));
   HANDLE_CODE(bref.pack(ngran_noof_rrc_conns_present, 1));
   HANDLE_CODE(bref.pack(ngran_rr_status_present, 1));
@@ -23080,6 +23936,10 @@ OCUDUASN_CODE ngran_cell_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ngran_cell_report_item_s::to_json(json_writer& j) const
@@ -23109,7 +23969,7 @@ void ngran_cell_report_item_s::to_json(json_writer& j) const
 // NGRAN-ReportingStatusIEs ::= SEQUENCE
 OCUDUASN_CODE ngran_report_status_ies_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, ngran_cell_report_list, 1, 256, true));
@@ -23129,6 +23989,10 @@ OCUDUASN_CODE ngran_report_status_ies_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ngran_report_status_ies_s::to_json(json_writer& j) const
@@ -23264,7 +24128,7 @@ void res_status_report_sys_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE res_status_report_sys_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutran_report_status:
       HANDLE_CODE(c.get<eutran_report_status_ies_s>().pack(bref));
@@ -23284,7 +24148,7 @@ OCUDUASN_CODE res_status_report_sys_c::pack(bit_ref& bref) const
 OCUDUASN_CODE res_status_report_sys_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutran_report_status:
@@ -23312,7 +24176,7 @@ const char* res_status_report_sys_c::types_opts::to_string() const
 // IntersystemResourceStatusReport ::= SEQUENCE
 OCUDUASN_CODE intersys_res_status_report_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(report_sys.pack(bref));
@@ -23332,6 +24196,10 @@ OCUDUASN_CODE intersys_res_status_report_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_res_status_report_s::to_json(json_writer& j) const
@@ -23372,7 +24240,7 @@ uint16_t report_periodicity_opts::to_number() const
 // PeriodicReportingIEs ::= SEQUENCE
 OCUDUASN_CODE periodic_report_ies_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(report_periodicity.pack(bref));
@@ -23392,6 +24260,10 @@ OCUDUASN_CODE periodic_report_ies_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void periodic_report_ies_s::to_json(json_writer& j) const
@@ -23523,7 +24395,7 @@ void report_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE report_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::event_based_report:
       HANDLE_CODE(c.get<event_based_report_ies_s>().pack(bref));
@@ -23543,7 +24415,7 @@ OCUDUASN_CODE report_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE report_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::event_based_report:
@@ -23571,7 +24443,7 @@ const char* report_type_c::types_opts::to_string() const
 // IntersystemResourceStatusRequest ::= SEQUENCE
 OCUDUASN_CODE intersys_res_status_request_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(report_sys.pack(bref));
@@ -23595,6 +24467,10 @@ OCUDUASN_CODE intersys_res_status_request_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_res_status_request_s::to_json(json_writer& j) const
@@ -23730,7 +24606,7 @@ void intersys_son_transfer_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE intersys_son_transfer_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::from_eutran_to_ngran:
       HANDLE_CODE(c.get<from_eutran_to_ngran_s>().pack(bref));
@@ -23750,7 +24626,7 @@ OCUDUASN_CODE intersys_son_transfer_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE intersys_son_transfer_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::from_eutran_to_ngran:
@@ -24042,7 +24918,7 @@ void intersys_son_info_report_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE intersys_son_info_report_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ho_report_info:
       HANDLE_CODE(c.get<inter_sys_ho_report_s>().pack(bref));
@@ -24062,7 +24938,7 @@ OCUDUASN_CODE intersys_son_info_report_c::pack(bit_ref& bref) const
 OCUDUASN_CODE intersys_son_info_report_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ho_report_info:
@@ -24205,7 +25081,7 @@ void intersys_son_info_request_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE intersys_son_info_request_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ngran_cell_activation:
       HANDLE_CODE(c.get<intersys_cell_activation_request_s>().pack(bref));
@@ -24225,7 +25101,7 @@ OCUDUASN_CODE intersys_son_info_request_c::pack(bit_ref& bref) const
 OCUDUASN_CODE intersys_son_info_request_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ngran_cell_activation:
@@ -24368,7 +25244,7 @@ void intersys_son_info_reply_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE intersys_son_info_reply_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ngran_cell_activation:
       HANDLE_CODE(c.get<intersys_cell_activation_reply_s>().pack(bref));
@@ -24388,7 +25264,7 @@ OCUDUASN_CODE intersys_son_info_reply_c::pack(bit_ref& bref) const
 OCUDUASN_CODE intersys_son_info_reply_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ngran_cell_activation:
@@ -24659,7 +25535,7 @@ void intersys_son_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE intersys_son_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::intersys_son_info_report:
       HANDLE_CODE(c.get<intersys_son_info_report_c>().pack(bref));
@@ -24676,7 +25552,7 @@ OCUDUASN_CODE intersys_son_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE intersys_son_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::intersys_son_info_report:
@@ -24701,7 +25577,7 @@ const char* intersys_son_info_c::types_opts::to_string() const
 // IntersystemSONConfigurationTransfer ::= SEQUENCE
 OCUDUASN_CODE intersys_son_cfg_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(transfer_type.pack(bref));
@@ -24723,6 +25599,10 @@ OCUDUASN_CODE intersys_son_cfg_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void intersys_son_cfg_transfer_s::to_json(json_writer& j) const
@@ -24742,7 +25622,7 @@ void intersys_son_cfg_transfer_s::to_json(json_writer& j) const
 // LAI ::= SEQUENCE
 OCUDUASN_CODE lai_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -24764,6 +25644,10 @@ OCUDUASN_CODE lai_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void lai_s::to_json(json_writer& j) const
@@ -24781,7 +25665,7 @@ void lai_s::to_json(json_writer& j) const
 // LTE-A2X-ServicesAuthorized ::= SEQUENCE
 OCUDUASN_CODE lte_a2_x_services_authorized_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(aerial_ue_present, 1));
   HANDLE_CODE(bref.pack(aerial_ctrller_ue_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -24815,6 +25699,10 @@ OCUDUASN_CODE lte_a2_x_services_authorized_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void lte_a2_x_services_authorized_s::to_json(json_writer& j) const
@@ -24855,7 +25743,7 @@ const char* ltem_ind_opts::to_string() const
 // LTEUESidelinkAggregateMaximumBitrate ::= SEQUENCE
 OCUDUASN_CODE lte_ue_sidelink_aggr_max_bitrate_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, ue_sidelink_aggr_max_bit_rate, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -24875,6 +25763,10 @@ OCUDUASN_CODE lte_ue_sidelink_aggr_max_bitrate_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void lte_ue_sidelink_aggr_max_bitrate_s::to_json(json_writer& j) const
@@ -24905,7 +25797,7 @@ const char* pedestrian_ue_opts::to_string() const
 // LTEV2XServicesAuthorized ::= SEQUENCE
 OCUDUASN_CODE ltev2x_services_authorized_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(vehicle_ue_present, 1));
   HANDLE_CODE(bref.pack(pedestrian_ue_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -24939,6 +25831,10 @@ OCUDUASN_CODE ltev2x_services_authorized_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ltev2x_services_authorized_s::to_json(json_writer& j) const
@@ -24960,7 +25856,7 @@ void ltev2x_services_authorized_s::to_json(json_writer& j) const
 // LastVisitedPSCellInformation ::= SEQUENCE
 OCUDUASN_CODE last_visited_pscell_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pscell_id_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -24988,6 +25884,10 @@ OCUDUASN_CODE last_visited_pscell_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void last_visited_pscell_info_s::to_json(json_writer& j) const
@@ -25073,7 +25973,7 @@ const char* last_visited_ngran_cell_info_ext_ies_o::ext_c::types_opts::to_string
 // LastVisitedNGRANCellInformation ::= SEQUENCE
 OCUDUASN_CODE last_visited_ngran_cell_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(time_ue_stayed_in_cell_enhanced_granularity_present, 1));
   HANDLE_CODE(bref.pack(ho_cause_value_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
@@ -25116,6 +26016,10 @@ OCUDUASN_CODE last_visited_ngran_cell_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void last_visited_ngran_cell_info_s::to_json(json_writer& j) const
@@ -25296,7 +26200,7 @@ void last_visited_cell_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE last_visited_cell_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ngran_cell:
       HANDLE_CODE(c.get<last_visited_ngran_cell_info_s>().pack(bref));
@@ -25322,7 +26226,7 @@ OCUDUASN_CODE last_visited_cell_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE last_visited_cell_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ngran_cell:
@@ -25356,7 +26260,7 @@ const char* last_visited_cell_info_c::types_opts::to_string() const
 // LastVisitedCellItem ::= SEQUENCE
 OCUDUASN_CODE last_visited_cell_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(last_visited_cell_info.pack(bref));
@@ -25376,6 +26280,10 @@ OCUDUASN_CODE last_visited_cell_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void last_visited_cell_item_s::to_json(json_writer& j) const
@@ -25565,7 +26473,7 @@ OCUDUASN_CODE location_report_request_type_ext_ies_container::pack(bit_ref& bref
   uint32_t nof_ies = 0;
   nof_ies += location_report_add_info_present ? 1 : 0;
   nof_ies += add_cancelledlocation_report_ref_id_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (location_report_add_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)170, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -25585,7 +26493,7 @@ OCUDUASN_CODE location_report_request_type_ext_ies_container::pack(bit_ref& bref
 OCUDUASN_CODE location_report_request_type_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -25610,8 +26518,8 @@ OCUDUASN_CODE location_report_request_type_ext_ies_container::unpack(cbit_ref& b
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -25640,7 +26548,7 @@ void location_report_request_type_ext_ies_container::to_json(json_writer& j) con
 // LocationReportingRequestType ::= SEQUENCE
 OCUDUASN_CODE location_report_request_type_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(area_of_interest_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(location_report_ref_id_to_be_cancelled_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -25679,6 +26587,10 @@ OCUDUASN_CODE location_report_request_type_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void location_report_request_type_s::to_json(json_writer& j) const
@@ -25846,7 +26758,7 @@ void logged_mdt_trigger_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE logged_mdt_trigger_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::periodical:
       break;
@@ -25865,7 +26777,7 @@ OCUDUASN_CODE logged_mdt_trigger_c::pack(bit_ref& bref) const
 OCUDUASN_CODE logged_mdt_trigger_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::periodical:
@@ -25953,7 +26865,7 @@ const char* logged_mdt_nr_ext_ies_o::ext_c::types_opts::to_string() const
 // LoggedMDTNr ::= SEQUENCE
 OCUDUASN_CODE logged_mdt_nr_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(bluetooth_meas_cfg_present, 1));
   HANDLE_CODE(bref.pack(wlan_meas_cfg_present, 1));
   HANDLE_CODE(bref.pack(sensor_meas_cfg_present, 1));
@@ -26011,6 +26923,10 @@ OCUDUASN_CODE logged_mdt_nr_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void logged_mdt_nr_s::to_json(json_writer& j) const
@@ -26048,7 +26964,7 @@ void logged_mdt_nr_s::to_json(json_writer& j) const
 // MBS-ServiceAreaInformation ::= SEQUENCE
 OCUDUASN_CODE mbs_service_area_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_service_area_cell_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(mbs_service_area_tai_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -26084,6 +27000,10 @@ OCUDUASN_CODE mbs_service_area_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_service_area_info_s::to_json(json_writer& j) const
@@ -26113,7 +27033,7 @@ void mbs_service_area_info_s::to_json(json_writer& j) const
 // MBS-ServiceAreaInformationItem ::= SEQUENCE
 OCUDUASN_CODE mbs_service_area_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, mbs_area_session_id, (uint32_t)0u, (uint32_t)65535u, true, true));
@@ -26135,6 +27055,10 @@ OCUDUASN_CODE mbs_service_area_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_service_area_info_item_s::to_json(json_writer& j) const
@@ -26271,7 +27195,7 @@ void mbs_service_area_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE mbs_service_area_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::locationindependent:
       HANDLE_CODE(c.get<mbs_service_area_info_s>().pack(bref));
@@ -26291,7 +27215,7 @@ OCUDUASN_CODE mbs_service_area_c::pack(bit_ref& bref) const
 OCUDUASN_CODE mbs_service_area_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::locationindependent:
@@ -26470,7 +27394,7 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) cons
   uint32_t nof_ies = 0;
   nof_ies += cn_packet_delay_budget_dl_present ? 1 : 0;
   nof_ies += cn_packet_delay_budget_ul_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (cn_packet_delay_budget_dl_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)187, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -26490,7 +27414,7 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_ext_ies_container::pack(bit_ref& bref) cons
 OCUDUASN_CODE non_dyn_5qi_descriptor_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -26515,8 +27439,8 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -26541,7 +27465,7 @@ void non_dyn_5qi_descriptor_ext_ies_container::to_json(json_writer& j) const
 // NonDynamic5QIDescriptor ::= SEQUENCE
 OCUDUASN_CODE non_dyn_5qi_descriptor_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(prio_level_qos_present, 1));
   HANDLE_CODE(bref.pack(averaging_win_present, 1));
   HANDLE_CODE(bref.pack(max_data_burst_volume_present, 1));
@@ -26585,6 +27509,10 @@ OCUDUASN_CODE non_dyn_5qi_descriptor_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void non_dyn_5qi_descriptor_s::to_json(json_writer& j) const
@@ -26725,7 +27653,7 @@ void qos_characteristics_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE qos_characteristics_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::non_dyn5qi:
       HANDLE_CODE(c.get<non_dyn_5qi_descriptor_s>().pack(bref));
@@ -26745,7 +27673,7 @@ OCUDUASN_CODE qos_characteristics_c::pack(bit_ref& bref) const
 OCUDUASN_CODE qos_characteristics_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::non_dyn5qi:
@@ -26787,7 +27715,7 @@ const char* qos_monitoring_request_opts::to_string() const
 // PDUsetQoSInformation ::= SEQUENCE
 OCUDUASN_CODE pdu_set_qos_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pdu_set_delay_budget_present, 1));
   HANDLE_CODE(bref.pack(pdu_set_error_rate_present, 1));
   HANDLE_CODE(bref.pack(pdu_set_integrated_handling_info_present, 1));
@@ -26829,6 +27757,10 @@ OCUDUASN_CODE pdu_set_qos_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_set_qos_info_s::to_json(json_writer& j) const
@@ -26860,7 +27792,7 @@ const char* pdu_set_qos_info_s::pdu_set_integrated_handling_info_opts::to_string
 // PDUsetQoSParameters ::= SEQUENCE
 OCUDUASN_CODE pdu_set_qos_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ul_pdu_set_qos_info_present, 1));
   HANDLE_CODE(bref.pack(dl_pdu_set_qos_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -26894,6 +27826,10 @@ OCUDUASN_CODE pdu_set_qos_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_set_qos_params_s::to_json(json_writer& j) const
@@ -27107,7 +28043,7 @@ OCUDUASN_CODE qos_flow_level_qos_params_ext_ies_container::pack(bit_ref& bref) c
   nof_ies += qos_monitoring_request_present ? 1 : 0;
   nof_ies += qos_monitoring_report_freq_present ? 1 : 0;
   nof_ies += pdu_set_qos_params_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (qos_monitoring_request_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)181, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -27133,7 +28069,7 @@ OCUDUASN_CODE qos_flow_level_qos_params_ext_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE qos_flow_level_qos_params_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -27164,8 +28100,8 @@ OCUDUASN_CODE qos_flow_level_qos_params_ext_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -27195,7 +28131,7 @@ void qos_flow_level_qos_params_ext_ies_container::to_json(json_writer& j) const
 // QosFlowLevelQosParameters ::= SEQUENCE
 OCUDUASN_CODE qos_flow_level_qos_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(gbr_qos_info_present, 1));
   HANDLE_CODE(bref.pack(reflective_qos_attribute_present, 1));
   HANDLE_CODE(bref.pack(add_qos_flow_info_present, 1));
@@ -27241,6 +28177,10 @@ OCUDUASN_CODE qos_flow_level_qos_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_level_qos_params_s::to_json(json_writer& j) const
@@ -27270,7 +28210,7 @@ void qos_flow_level_qos_params_s::to_json(json_writer& j) const
 // MBS-QoSFlowsToBeSetupItem ::= SEQUENCE
 OCUDUASN_CODE mbs_qos_flows_to_be_setup_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, mb_sqos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -27292,6 +28232,10 @@ OCUDUASN_CODE mbs_qos_flows_to_be_setup_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_qos_flows_to_be_setup_item_s::to_json(json_writer& j) const
@@ -27415,7 +28359,7 @@ void mrb_progress_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE mrb_progress_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::pdcp_sn_len12:
       HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)4095u, false, true));
@@ -27435,7 +28379,7 @@ OCUDUASN_CODE mrb_progress_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE mrb_progress_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::pdcp_sn_len12:
@@ -27468,7 +28412,7 @@ uint8_t mrb_progress_info_c::types_opts::to_number() const
 // MBS-MappingandDataForwardingRequestItem ::= SEQUENCE
 OCUDUASN_CODE mbs_mapand_data_forwarding_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mrb_progress_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -27498,6 +28442,10 @@ OCUDUASN_CODE mbs_mapand_data_forwarding_request_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_mapand_data_forwarding_request_item_s::to_json(json_writer& j) const
@@ -27523,7 +28471,7 @@ void mbs_mapand_data_forwarding_request_item_s::to_json(json_writer& j) const
 // MBS-ActiveSessionInformation-SourcetoTargetItem ::= SEQUENCE
 OCUDUASN_CODE mbs_active_session_info_sourceto_target_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(mbs_service_area_present, 1));
   HANDLE_CODE(bref.pack(mbs_mapand_data_forwarding_request_list.size() > 0, 1));
@@ -27570,6 +28518,10 @@ OCUDUASN_CODE mbs_active_session_info_sourceto_target_item_s::unpack(cbit_ref& b
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_active_session_info_sourceto_target_item_s::to_json(json_writer& j) const
@@ -27606,7 +28558,7 @@ void mbs_active_session_info_sourceto_target_item_s::to_json(json_writer& j) con
 // MBS-DataForwardingResponseMRBItem ::= SEQUENCE
 OCUDUASN_CODE mbs_data_forwarding_resp_mrb_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mrb_progress_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -27636,6 +28588,10 @@ OCUDUASN_CODE mbs_data_forwarding_resp_mrb_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_data_forwarding_resp_mrb_item_s::to_json(json_writer& j) const
@@ -27658,7 +28614,7 @@ void mbs_data_forwarding_resp_mrb_item_s::to_json(json_writer& j) const
 // MBS-ActiveSessionInformation-TargettoSourceItem ::= SEQUENCE
 OCUDUASN_CODE mbs_active_session_info_targetto_source_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_data_forwarding_resp_mrb_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -27687,6 +28643,10 @@ OCUDUASN_CODE mbs_active_session_info_targetto_source_item_s::unpack(cbit_ref& b
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_active_session_info_targetto_source_item_s::to_json(json_writer& j) const
@@ -27718,7 +28678,7 @@ const char* mbs_assist_info_opts::to_string() const
 // MBS-DistributionReleaseRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE mbs_distribution_release_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(shared_ngu_unicast_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -27756,6 +28716,10 @@ OCUDUASN_CODE mbs_distribution_release_request_transfer_s::unpack(cbit_ref& bref
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_distribution_release_request_transfer_s::to_json(json_writer& j) const
@@ -27782,7 +28746,7 @@ void mbs_distribution_release_request_transfer_s::to_json(json_writer& j) const
 // TAIMBSSupportItem ::= SEQUENCE
 OCUDUASN_CODE tai_mbs_support_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -27802,6 +28766,10 @@ OCUDUASN_CODE tai_mbs_support_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_mbs_support_item_s::to_json(json_writer& j) const
@@ -27885,7 +28853,7 @@ const char* mbs_distribution_setup_request_transfer_ext_ies_o::ext_c::types_opts
 // MBS-DistributionSetupRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE mbs_distribution_setup_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(shared_ngu_unicast_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
@@ -27922,6 +28890,10 @@ OCUDUASN_CODE mbs_distribution_setup_request_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_distribution_setup_request_transfer_s::to_json(json_writer& j) const
@@ -27945,7 +28917,7 @@ void mbs_distribution_setup_request_transfer_s::to_json(json_writer& j) const
 // SharedNGU-MulticastTNLInformation ::= SEQUENCE
 OCUDUASN_CODE shared_ngu_multicast_tnl_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ip_multicast_address.pack(bref));
@@ -27969,6 +28941,10 @@ OCUDUASN_CODE shared_ngu_multicast_tnl_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void shared_ngu_multicast_tnl_info_s::to_json(json_writer& j) const
@@ -27994,7 +28970,7 @@ const char* mbs_session_status_opts::to_string() const
 // MBS-DistributionSetupResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE mbs_distribution_setup_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(shared_ngu_multicast_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(mbs_service_area_present, 1));
@@ -28042,6 +29018,10 @@ OCUDUASN_CODE mbs_distribution_setup_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_distribution_setup_resp_transfer_s::to_json(json_writer& j) const
@@ -28076,7 +29056,7 @@ void mbs_distribution_setup_resp_transfer_s::to_json(json_writer& j) const
 // MBS-DistributionSetupUnsuccessfulTransfer ::= SEQUENCE
 OCUDUASN_CODE mbs_distribution_setup_unsuccessful_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(crit_diagnostics_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -28114,6 +29094,10 @@ OCUDUASN_CODE mbs_distribution_setup_unsuccessful_transfer_s::unpack(cbit_ref& b
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_distribution_setup_unsuccessful_transfer_s::to_json(json_writer& j) const
@@ -28147,7 +29131,7 @@ const char* mbs_up_fail_ind_opts::to_string() const
 // MBS-UP-FailureIndicationItem ::= SEQUENCE
 OCUDUASN_CODE mbs_up_fail_ind_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, mbs_area_session_id, (uint32_t)0u, (uint32_t)65535u, true, true));
@@ -28169,6 +29153,10 @@ OCUDUASN_CODE mbs_up_fail_ind_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_up_fail_ind_item_s::to_json(json_writer& j) const
@@ -28299,7 +29287,7 @@ void mbs_ngu_fail_ind_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE mbs_ngu_fail_ind_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::locationindependent:
       HANDLE_CODE(c.get<mbs_up_fail_ind_e>().pack(bref));
@@ -28319,7 +29307,7 @@ OCUDUASN_CODE mbs_ngu_fail_ind_c::pack(bit_ref& bref) const
 OCUDUASN_CODE mbs_ngu_fail_ind_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::locationindependent:
@@ -28347,7 +29335,7 @@ const char* mbs_ngu_fail_ind_c::types_opts::to_string() const
 // MBS-SessionTNLInfo5GCItem ::= SEQUENCE
 OCUDUASN_CODE mbs_session_tnl_info5_gc_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, mbs_area_session_id, (uint32_t)0u, (uint32_t)65535u, true, true));
@@ -28369,6 +29357,10 @@ OCUDUASN_CODE mbs_session_tnl_info5_gc_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_tnl_info5_gc_item_s::to_json(json_writer& j) const
@@ -28505,7 +29497,7 @@ void mbs_session_tnl_info5_gc_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE mbs_session_tnl_info5_gc_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::locationindependent:
       HANDLE_CODE(c.get<shared_ngu_multicast_tnl_info_s>().pack(bref));
@@ -28525,7 +29517,7 @@ OCUDUASN_CODE mbs_session_tnl_info5_gc_c::pack(bit_ref& bref) const
 OCUDUASN_CODE mbs_session_tnl_info5_gc_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::locationindependent:
@@ -28560,7 +29552,7 @@ const char* mbs_comm_service_type_opts::to_string() const
 // MBSSessionFailedtoSetupItem ::= SEQUENCE
 OCUDUASN_CODE mbs_session_failedto_setup_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -28590,6 +29582,10 @@ OCUDUASN_CODE mbs_session_failedto_setup_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_failedto_setup_item_s::to_json(json_writer& j) const
@@ -28612,7 +29608,7 @@ void mbs_session_failedto_setup_item_s::to_json(json_writer& j) const
 // MBSSessionReleaseResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE mbs_session_release_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_session_tnl_info_ngran_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -28638,6 +29634,10 @@ OCUDUASN_CODE mbs_session_release_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_release_resp_transfer_s::to_json(json_writer& j) const
@@ -28657,7 +29657,7 @@ void mbs_session_release_resp_transfer_s::to_json(json_writer& j) const
 // MBSSessionSetupOrModFailureTransfer ::= SEQUENCE
 OCUDUASN_CODE mbs_session_setup_or_mod_fail_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(crit_diagnostics_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -28685,6 +29685,10 @@ OCUDUASN_CODE mbs_session_setup_or_mod_fail_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_setup_or_mod_fail_transfer_s::to_json(json_writer& j) const
@@ -28981,7 +29985,7 @@ OCUDUASN_CODE mbs_session_setup_or_mod_request_transfer_ies_container::pack(bit_
   nof_ies += mbs_session_fsa_id_list_present ? 1 : 0;
   nof_ies += supported_ue_type_list_present ? 1 : 0;
   nof_ies += mbs_ngu_fail_ind_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (mbs_session_tnl_info5_gc_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)352, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -29019,7 +30023,7 @@ OCUDUASN_CODE mbs_session_setup_or_mod_request_transfer_ies_container::pack(bit_
 OCUDUASN_CODE mbs_session_setup_or_mod_request_transfer_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -29064,8 +30068,8 @@ OCUDUASN_CODE mbs_session_setup_or_mod_request_transfer_ies_container::unpack(cb
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -29119,7 +30123,7 @@ void mbs_session_setup_or_mod_request_transfer_ies_container::to_json(json_write
 // MBSSessionSetupOrModResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE mbs_session_setup_or_mod_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_session_tnl_info_ngran_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -29145,6 +30149,10 @@ OCUDUASN_CODE mbs_session_setup_or_mod_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_setup_or_mod_resp_transfer_s::to_json(json_writer& j) const
@@ -29225,7 +30233,7 @@ const char* mbs_session_setup_request_item_ext_ies_o::ext_c::types_opts::to_stri
 // MBSSessionSetupRequestItem ::= SEQUENCE
 OCUDUASN_CODE mbs_session_setup_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(associated_mbs_qos_flow_setup_request_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
@@ -29263,6 +30271,10 @@ OCUDUASN_CODE mbs_session_setup_request_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_setup_request_item_s::to_json(json_writer& j) const
@@ -29289,7 +30301,7 @@ void mbs_session_setup_request_item_s::to_json(json_writer& j) const
 // MBSSessionSetupResponseItem ::= SEQUENCE
 OCUDUASN_CODE mbs_session_setup_resp_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -29317,6 +30329,10 @@ OCUDUASN_CODE mbs_session_setup_resp_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_setup_resp_item_s::to_json(json_writer& j) const
@@ -29399,7 +30415,7 @@ const char* mbs_session_setupor_modify_request_item_ext_ies_o::ext_c::types_opts
 // MBSSessionSetuporModifyRequestItem ::= SEQUENCE
 OCUDUASN_CODE mbs_session_setupor_modify_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mbs_area_session_id_present, 1));
   HANDLE_CODE(bref.pack(associated_mbs_qos_flow_setupor_modify_request_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(mbs_qos_flow_to_release_list.size() > 0, 1));
@@ -29446,6 +30462,10 @@ OCUDUASN_CODE mbs_session_setupor_modify_request_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_setupor_modify_request_item_s::to_json(json_writer& j) const
@@ -29479,7 +30499,7 @@ void mbs_session_setupor_modify_request_item_s::to_json(json_writer& j) const
 // MBSSessionToReleaseItem ::= SEQUENCE
 OCUDUASN_CODE mbs_session_to_release_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(mbs_session_id.pack(bref));
@@ -29501,6 +30521,10 @@ OCUDUASN_CODE mbs_session_to_release_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mbs_session_to_release_item_s::to_json(json_writer& j) const
@@ -29620,7 +30644,7 @@ void mdt_align_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE mdt_align_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::s_based_mdt:
       HANDLE_CODE((c.get<fixed_octstring<8, true>>().pack(bref)));
@@ -29637,7 +30661,7 @@ OCUDUASN_CODE mdt_align_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE mdt_align_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::s_based_mdt:
@@ -29777,7 +30801,7 @@ void mdt_mode_nr_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE mdt_mode_nr_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::immediate_mdt_nr:
       HANDLE_CODE(c.get<immediate_mdt_nr_s>().pack(bref));
@@ -29797,7 +30821,7 @@ OCUDUASN_CODE mdt_mode_nr_c::pack(bit_ref& bref) const
 OCUDUASN_CODE mdt_mode_nr_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::immediate_mdt_nr:
@@ -29825,7 +30849,7 @@ const char* mdt_mode_nr_c::types_opts::to_string() const
 // PNI-NPN-AreaScopeofMDT ::= SEQUENCE
 OCUDUASN_CODE pni_npn_area_scopeof_mdt_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, cag_listfor_mdt, 1, 256, true));
@@ -29845,6 +30869,10 @@ OCUDUASN_CODE pni_npn_area_scopeof_mdt_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pni_npn_area_scopeof_mdt_s::to_json(json_writer& j) const
@@ -29927,7 +30955,7 @@ const char* mdt_cfg_nr_ext_ies_o::ext_c::types_opts::to_string() const
 // MDT-Configuration-NR ::= SEQUENCE
 OCUDUASN_CODE mdt_cfg_nr_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sig_based_mdt_plmn_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -29961,6 +30989,10 @@ OCUDUASN_CODE mdt_cfg_nr_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mdt_cfg_nr_s::to_json(json_writer& j) const
@@ -29987,7 +31019,7 @@ void mdt_cfg_nr_s::to_json(json_writer& j) const
 // MDT-Configuration-EUTRA ::= SEQUENCE
 OCUDUASN_CODE mdt_cfg_eutra_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sig_based_mdt_plmn_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -30020,6 +31052,10 @@ OCUDUASN_CODE mdt_cfg_eutra_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mdt_cfg_eutra_s::to_json(json_writer& j) const
@@ -30114,7 +31150,7 @@ const char* mdt_cfg_ext_ies_o::ext_c::types_opts::to_string() const
 // MDT-Configuration ::= SEQUENCE
 OCUDUASN_CODE mdt_cfg_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mdt_cfg_nr_present, 1));
   HANDLE_CODE(bref.pack(mdt_cfg_eutra_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
@@ -30149,6 +31185,10 @@ OCUDUASN_CODE mdt_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mdt_cfg_s::to_json(json_writer& j) const
@@ -30190,7 +31230,7 @@ const char* mobile_iab_authorized_opts::to_string() const
 // MobileIAB-MTUserLocationInformation ::= SEQUENCE
 OCUDUASN_CODE mobile_iab_mt_user_location_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -30212,6 +31252,10 @@ OCUDUASN_CODE mobile_iab_mt_user_location_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mobile_iab_mt_user_location_info_s::to_json(json_writer& j) const
@@ -30307,7 +31351,7 @@ const char* rat_restricts_item_ext_ies_o::ext_c::types_opts::to_string() const
 // RATRestrictions-Item ::= SEQUENCE
 OCUDUASN_CODE rat_restricts_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -30330,6 +31374,10 @@ OCUDUASN_CODE rat_restricts_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void rat_restricts_item_s::to_json(json_writer& j) const
@@ -30346,7 +31394,7 @@ void rat_restricts_item_s::to_json(json_writer& j) const
 // ServiceAreaInformation-Item ::= SEQUENCE
 OCUDUASN_CODE service_area_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(allowed_tacs.size() > 0, 1));
   HANDLE_CODE(bref.pack(not_allowed_tacs.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -30384,6 +31432,10 @@ OCUDUASN_CODE service_area_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void service_area_info_item_s::to_json(json_writer& j) const
@@ -30479,7 +31531,7 @@ const char* sn_pn_mob_info_ext_ies_o::ext_c::types_opts::to_string() const
 // SNPN-MobilityInformation ::= SEQUENCE
 OCUDUASN_CODE sn_pn_mob_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(serving_n_id.pack(bref));
@@ -30500,6 +31552,10 @@ OCUDUASN_CODE sn_pn_mob_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sn_pn_mob_info_s::to_json(json_writer& j) const
@@ -30515,7 +31571,7 @@ void sn_pn_mob_info_s::to_json(json_writer& j) const
 // PNI-NPN-MobilityInformation ::= SEQUENCE
 OCUDUASN_CODE pni_npn_mob_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, allowed_pni_npi_list, 1, 16, true));
@@ -30535,6 +31591,10 @@ OCUDUASN_CODE pni_npn_mob_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pni_npn_mob_info_s::to_json(json_writer& j) const
@@ -30670,7 +31730,7 @@ void npn_mob_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE npn_mob_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::sn_pn_mob_info:
       HANDLE_CODE(c.get<sn_pn_mob_info_s>().pack(bref));
@@ -30690,7 +31750,7 @@ OCUDUASN_CODE npn_mob_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE npn_mob_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::sn_pn_mob_info:
@@ -30935,7 +31995,7 @@ OCUDUASN_CODE mob_restrict_list_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += cn_type_restricts_for_serving_present ? 1 : 0;
   nof_ies += cn_type_restricts_for_equivalent_present ? 1 : 0;
   nof_ies += npn_mob_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (last_eutran_plmn_id_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)150, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -30967,7 +32027,7 @@ OCUDUASN_CODE mob_restrict_list_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE mob_restrict_list_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -31004,8 +32064,8 @@ OCUDUASN_CODE mob_restrict_list_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -31044,7 +32104,7 @@ void mob_restrict_list_ext_ies_container::to_json(json_writer& j) const
 // MobilityRestrictionList ::= SEQUENCE
 OCUDUASN_CODE mob_restrict_list_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(equivalent_plmns.size() > 0, 1));
   HANDLE_CODE(bref.pack(rat_restricts.size() > 0, 1));
   HANDLE_CODE(bref.pack(forbidden_area_info.size() > 0, 1));
@@ -31100,6 +32160,10 @@ OCUDUASN_CODE mob_restrict_list_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mob_restrict_list_s::to_json(json_writer& j) const
@@ -31144,7 +32208,7 @@ void mob_restrict_list_s::to_json(json_writer& j) const
 // MulticastGroupPagingArea ::= SEQUENCE
 OCUDUASN_CODE multicast_group_paging_area_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, mbs_area_tai_list, 1, 16, true));
@@ -31164,6 +32228,10 @@ OCUDUASN_CODE multicast_group_paging_area_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void multicast_group_paging_area_s::to_json(json_writer& j) const
@@ -31184,7 +32252,7 @@ void multicast_group_paging_area_s::to_json(json_writer& j) const
 // UE-PagingItem ::= SEQUENCE
 OCUDUASN_CODE ue_paging_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(paging_drx_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -31212,6 +32280,10 @@ OCUDUASN_CODE ue_paging_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_paging_item_s::to_json(json_writer& j) const
@@ -31232,7 +32304,7 @@ void ue_paging_item_s::to_json(json_writer& j) const
 // MulticastGroupPagingAreaItem ::= SEQUENCE
 OCUDUASN_CODE multicast_group_paging_area_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ue_paging_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -31261,6 +32333,10 @@ OCUDUASN_CODE multicast_group_paging_area_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void multicast_group_paging_area_item_s::to_json(json_writer& j) const
@@ -31285,7 +32361,7 @@ void multicast_group_paging_area_item_s::to_json(json_writer& j) const
 // MulticastSessionActivationRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE multicast_session_activation_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(mbs_session_id.pack(bref));
@@ -31305,6 +32381,10 @@ OCUDUASN_CODE multicast_session_activation_request_transfer_s::unpack(cbit_ref& 
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void multicast_session_activation_request_transfer_s::to_json(json_writer& j) const
@@ -31322,7 +32402,7 @@ void multicast_session_activation_request_transfer_s::to_json(json_writer& j) co
 // MulticastSessionDeactivationRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE multicast_session_deactivation_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(mbs_session_id.pack(bref));
@@ -31342,6 +32422,10 @@ OCUDUASN_CODE multicast_session_deactivation_request_transfer_s::unpack(cbit_ref
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void multicast_session_deactivation_request_transfer_s::to_json(json_writer& j) const
@@ -31624,7 +32708,7 @@ OCUDUASN_CODE multicast_session_upd_request_transfer_ies_container::pack(bit_ref
   nof_ies += mbs_qos_flows_to_be_setup_mod_list_present ? 1 : 0;
   nof_ies += mbs_qos_flow_to_release_list_present ? 1 : 0;
   nof_ies += mbs_session_tnl_info5_gc_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   {
     HANDLE_CODE(pack_integer(bref, (uint32_t)299, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -31662,7 +32746,7 @@ OCUDUASN_CODE multicast_session_upd_request_transfer_ies_container::pack(bit_ref
 OCUDUASN_CODE multicast_session_upd_request_transfer_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 1;
 
@@ -31707,8 +32791,8 @@ OCUDUASN_CODE multicast_session_upd_request_transfer_ies_container::unpack(cbit_
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -31758,7 +32842,7 @@ void multicast_session_upd_request_transfer_ies_container::to_json(json_writer& 
 // N6JitterInformation ::= SEQUENCE
 OCUDUASN_CODE n6_jitter_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, n6_jitter_lower_bound, (int16_t)-127, (int16_t)127, false, true));
@@ -31780,6 +32864,10 @@ OCUDUASN_CODE n6_jitter_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void n6_jitter_info_s::to_json(json_writer& j) const
@@ -31835,7 +32923,7 @@ uint16_t nb_iot_paging_e_drx_cycle_opts::to_number() const
 // NB-IoT-Paging-eDRXInfo ::= SEQUENCE
 OCUDUASN_CODE nb_iot_paging_e_drx_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(nb_iot_paging_time_win_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -31863,6 +32951,10 @@ OCUDUASN_CODE nb_iot_paging_e_drx_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nb_iot_paging_e_drx_info_s::to_json(json_writer& j) const
@@ -31894,7 +32986,7 @@ uint16_t nb_iot_paging_drx_opts::to_number() const
 // NGAPIESupportInformationRequestItem ::= SEQUENCE
 OCUDUASN_CODE ngap_ie_support_info_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, ngap_protocol_ie_id, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -31914,6 +33006,10 @@ OCUDUASN_CODE ngap_ie_support_info_request_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ngap_ie_support_info_request_item_s::to_json(json_writer& j) const
@@ -31930,7 +33026,7 @@ void ngap_ie_support_info_request_item_s::to_json(json_writer& j) const
 // NGAPIESupportInformationResponseItem ::= SEQUENCE
 OCUDUASN_CODE ngap_ie_support_info_resp_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, ngap_protocol_ie_id, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -31954,6 +33050,10 @@ OCUDUASN_CODE ngap_ie_support_info_resp_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ngap_ie_support_info_resp_item_s::to_json(json_writer& j) const
@@ -32128,7 +33228,7 @@ void npn_access_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE npn_access_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::pni_npn_access_info:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<cell_cag_list_l>(), 1, 64, true));
@@ -32145,7 +33245,7 @@ OCUDUASN_CODE npn_access_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE npn_access_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::pni_npn_access_info:
@@ -32170,7 +33270,7 @@ const char* npn_access_info_c::types_opts::to_string() const
 // NR-A2X-ServicesAuthorized ::= SEQUENCE
 OCUDUASN_CODE nr_a2_x_services_authorized_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(aerial_ue_present, 1));
   HANDLE_CODE(bref.pack(aerial_ctrller_ue_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -32204,6 +33304,10 @@ OCUDUASN_CODE nr_a2_x_services_authorized_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_a2_x_services_authorized_s::to_json(json_writer& j) const
@@ -32237,7 +33341,7 @@ const char* nr_a2_x_services_authorized_s::aerial_ctrller_ue_opts::to_string() c
 // NRNTNTAIInformation ::= SEQUENCE
 OCUDUASN_CODE nr_ntn_tai_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ue_location_derived_tac_in_nr_ntn_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -32267,6 +33371,10 @@ OCUDUASN_CODE nr_ntn_tai_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_ntn_tai_info_s::to_json(json_writer& j) const
@@ -32291,7 +33399,7 @@ void nr_ntn_tai_info_s::to_json(json_writer& j) const
 // NRUESidelinkAggregateMaximumBitrate ::= SEQUENCE
 OCUDUASN_CODE nr_ue_sidelink_aggr_max_bitrate_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, ue_sidelink_aggr_max_bit_rate, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -32311,6 +33419,10 @@ OCUDUASN_CODE nr_ue_sidelink_aggr_max_bitrate_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_ue_sidelink_aggr_max_bitrate_s::to_json(json_writer& j) const
@@ -32327,7 +33439,7 @@ void nr_ue_sidelink_aggr_max_bitrate_s::to_json(json_writer& j) const
 // NRV2XServicesAuthorized ::= SEQUENCE
 OCUDUASN_CODE nr_v2x_services_authorized_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(vehicle_ue_present, 1));
   HANDLE_CODE(bref.pack(pedestrian_ue_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -32361,6 +33473,10 @@ OCUDUASN_CODE nr_v2x_services_authorized_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void nr_v2x_services_authorized_s::to_json(json_writer& j) const
@@ -32523,7 +33639,7 @@ void overload_resp_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE overload_resp_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::overload_action:
       HANDLE_CODE(c.get<overload_action_e>().pack(bref));
@@ -32540,7 +33656,7 @@ OCUDUASN_CODE overload_resp_c::pack(bit_ref& bref) const
 OCUDUASN_CODE overload_resp_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::overload_action:
@@ -32565,7 +33681,7 @@ const char* overload_resp_c::types_opts::to_string() const
 // SliceOverloadItem ::= SEQUENCE
 OCUDUASN_CODE slice_overload_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(s_nssai.pack(bref));
@@ -32585,6 +33701,10 @@ OCUDUASN_CODE slice_overload_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void slice_overload_item_s::to_json(json_writer& j) const
@@ -32602,7 +33722,7 @@ void slice_overload_item_s::to_json(json_writer& j) const
 // OverloadStartNSSAIItem ::= SEQUENCE
 OCUDUASN_CODE overload_start_nssai_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(slice_overload_resp_present, 1));
   HANDLE_CODE(bref.pack(slice_traffic_load_reduction_ind_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -32638,6 +33758,10 @@ OCUDUASN_CODE overload_start_nssai_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void overload_start_nssai_item_s::to_json(json_writer& j) const
@@ -32665,7 +33789,7 @@ void overload_start_nssai_item_s::to_json(json_writer& j) const
 // PC5FlowBitRates ::= SEQUENCE
 OCUDUASN_CODE pc5_flow_bit_rates_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, guaranteed_flow_bit_rate, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -32687,6 +33811,10 @@ OCUDUASN_CODE pc5_flow_bit_rates_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pc5_flow_bit_rates_s::to_json(json_writer& j) const
@@ -32704,7 +33832,7 @@ void pc5_flow_bit_rates_s::to_json(json_writer& j) const
 // PC5QoSFlowItem ::= SEQUENCE
 OCUDUASN_CODE pc5_qos_flow_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pc5_flow_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(range_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -32740,6 +33868,10 @@ OCUDUASN_CODE pc5_qos_flow_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pc5_qos_flow_item_s::to_json(json_writer& j) const
@@ -32763,7 +33895,7 @@ void pc5_qos_flow_item_s::to_json(json_writer& j) const
 // PC5QoSParameters ::= SEQUENCE
 OCUDUASN_CODE pc5_qos_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pc5_link_aggr_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -32791,6 +33923,10 @@ OCUDUASN_CODE pc5_qos_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pc5_qos_params_s::to_json(json_writer& j) const
@@ -32814,7 +33950,7 @@ void pc5_qos_params_s::to_json(json_writer& j) const
 // PDUSessionAggregateMaximumBitRate ::= SEQUENCE
 OCUDUASN_CODE pdu_session_aggr_max_bit_rate_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_aggr_max_bit_rate_dl, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -32838,6 +33974,10 @@ OCUDUASN_CODE pdu_session_aggr_max_bit_rate_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_aggr_max_bit_rate_s::to_json(json_writer& j) const
@@ -32855,7 +33995,7 @@ void pdu_session_aggr_max_bit_rate_s::to_json(json_writer& j) const
 // PagingPolicyDifferentiationItem ::= SEQUENCE
 OCUDUASN_CODE paging_policy_diff_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(qos_flow_id_present, 1));
   HANDLE_CODE(bref.pack(paging_policy_ind_present, 1));
   HANDLE_CODE(bref.pack(alloc_and_retention_prio_present, 1));
@@ -32913,6 +34053,10 @@ OCUDUASN_CODE paging_policy_diff_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void paging_policy_diff_item_s::to_json(json_writer& j) const
@@ -32944,7 +34088,7 @@ void paging_policy_diff_item_s::to_json(json_writer& j) const
 // PDUSessionForPagingItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_for_paging_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -32966,6 +34110,10 @@ OCUDUASN_CODE pdu_session_for_paging_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_for_paging_item_s::to_json(json_writer& j) const
@@ -32987,7 +34135,7 @@ void pdu_session_for_paging_item_s::to_json(json_writer& j) const
 // PDUSessionListMTCommHReq-Item ::= SEQUENCE
 OCUDUASN_CODE pdu_session_list_mt_comm_h_req_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33007,6 +34155,10 @@ OCUDUASN_CODE pdu_session_list_mt_comm_h_req_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_list_mt_comm_h_req_item_s::to_json(json_writer& j) const
@@ -33023,7 +34175,7 @@ void pdu_session_list_mt_comm_h_req_item_s::to_json(json_writer& j) const
 // PDUSessionResourceAdmittedItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_admitted_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33045,6 +34197,10 @@ OCUDUASN_CODE pdu_session_res_admitted_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_admitted_item_s::to_json(json_writer& j) const
@@ -33062,7 +34218,7 @@ void pdu_session_res_admitted_item_s::to_json(json_writer& j) const
 // PDUSessionResourceFailedToModifyItemModCfm ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_modify_item_mod_cfm_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33084,6 +34240,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_modify_item_mod_cfm_s::unpack(cbit_ref& 
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_modify_item_mod_cfm_s::to_json(json_writer& j) const
@@ -33102,7 +34262,7 @@ void pdu_session_res_failed_to_modify_item_mod_cfm_s::to_json(json_writer& j) co
 // PDUSessionResourceFailedToModifyItemModRes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_modify_item_mod_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33124,6 +34284,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_modify_item_mod_res_s::unpack(cbit_ref& 
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_modify_item_mod_res_s::to_json(json_writer& j) const
@@ -33141,7 +34305,7 @@ void pdu_session_res_failed_to_modify_item_mod_res_s::to_json(json_writer& j) co
 // PDUSessionResourceFailedToResumeItemRESReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_resume_item_res_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33163,6 +34327,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_resume_item_res_req_s::unpack(cbit_ref& 
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_resume_item_res_req_s::to_json(json_writer& j) const
@@ -33181,7 +34349,7 @@ void pdu_session_res_failed_to_resume_item_res_req_s::to_json(json_writer& j) co
 // PDUSessionResourceFailedToResumeItemRESRes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_resume_item_res_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33203,6 +34371,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_resume_item_res_res_s::unpack(cbit_ref& 
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_resume_item_res_res_s::to_json(json_writer& j) const
@@ -33221,7 +34393,7 @@ void pdu_session_res_failed_to_resume_item_res_res_s::to_json(json_writer& j) co
 // PDUSessionResourceFailedToSetupItemCxtFail ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_setup_item_cxt_fail_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33243,6 +34415,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_setup_item_cxt_fail_s::unpack(cbit_ref& 
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_setup_item_cxt_fail_s::to_json(json_writer& j) const
@@ -33260,7 +34436,7 @@ void pdu_session_res_failed_to_setup_item_cxt_fail_s::to_json(json_writer& j) co
 // PDUSessionResourceFailedToSetupItemCxtRes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_setup_item_cxt_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33282,6 +34458,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_setup_item_cxt_res_s::unpack(cbit_ref& b
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_setup_item_cxt_res_s::to_json(json_writer& j) const
@@ -33299,7 +34479,7 @@ void pdu_session_res_failed_to_setup_item_cxt_res_s::to_json(json_writer& j) con
 // PDUSessionResourceFailedToSetupItemHOAck ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_setup_item_ho_ack_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33321,6 +34501,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_setup_item_ho_ack_s::unpack(cbit_ref& br
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_setup_item_ho_ack_s::to_json(json_writer& j) const
@@ -33338,7 +34522,7 @@ void pdu_session_res_failed_to_setup_item_ho_ack_s::to_json(json_writer& j) cons
 // PDUSessionResourceFailedToSetupItemPSReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_setup_item_ps_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33360,6 +34544,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_setup_item_ps_req_s::unpack(cbit_ref& br
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_setup_item_ps_req_s::to_json(json_writer& j) const
@@ -33377,7 +34565,7 @@ void pdu_session_res_failed_to_setup_item_ps_req_s::to_json(json_writer& j) cons
 // PDUSessionResourceFailedToSetupItemSURes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_failed_to_setup_item_su_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33399,6 +34587,10 @@ OCUDUASN_CODE pdu_session_res_failed_to_setup_item_su_res_s::unpack(cbit_ref& br
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_failed_to_setup_item_su_res_s::to_json(json_writer& j) const
@@ -33416,7 +34608,7 @@ void pdu_session_res_failed_to_setup_item_su_res_s::to_json(json_writer& j) cons
 // PDUSessionResourceHandoverItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_ho_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33438,6 +34630,10 @@ OCUDUASN_CODE pdu_session_res_ho_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_ho_item_s::to_json(json_writer& j) const
@@ -33643,7 +34839,7 @@ OCUDUASN_CODE qos_flow_info_item_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += ul_forwarding_present ? 1 : 0;
   nof_ies += source_tnla_ddr_info_present ? 1 : 0;
   nof_ies += source_node_tnla_ddr_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (ul_forwarding_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)163, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -33669,7 +34865,7 @@ OCUDUASN_CODE qos_flow_info_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE qos_flow_info_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -33700,8 +34896,8 @@ OCUDUASN_CODE qos_flow_info_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -33731,7 +34927,7 @@ void qos_flow_info_item_ext_ies_container::to_json(json_writer& j) const
 // QosFlowInformationItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_forwarding_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -33759,6 +34955,10 @@ OCUDUASN_CODE qos_flow_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_info_item_s::to_json(json_writer& j) const
@@ -33778,7 +34978,7 @@ void qos_flow_info_item_s::to_json(json_writer& j) const
 // PDUSessionResourceInformationItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(drbs_to_qos_flows_map_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -33809,6 +35009,10 @@ OCUDUASN_CODE pdu_session_res_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_info_item_s::to_json(json_writer& j) const
@@ -33899,7 +35103,7 @@ const char* pdu_session_res_item_cxt_rel_cpl_ext_ies_o::ext_c::types_opts::to_st
 // PDUSessionResourceItemCxtRelCpl ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_item_cxt_rel_cpl_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33920,6 +35124,10 @@ OCUDUASN_CODE pdu_session_res_item_cxt_rel_cpl_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_item_cxt_rel_cpl_s::to_json(json_writer& j) const
@@ -33935,7 +35143,7 @@ void pdu_session_res_item_cxt_rel_cpl_s::to_json(json_writer& j) const
 // PDUSessionResourceItemCxtRelReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_item_cxt_rel_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33955,6 +35163,10 @@ OCUDUASN_CODE pdu_session_res_item_cxt_rel_req_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_item_cxt_rel_req_s::to_json(json_writer& j) const
@@ -33971,7 +35183,7 @@ void pdu_session_res_item_cxt_rel_req_s::to_json(json_writer& j) const
 // PDUSessionResourceItemHORqd ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_item_ho_rqd_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -33993,6 +35205,10 @@ OCUDUASN_CODE pdu_session_res_item_ho_rqd_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_item_ho_rqd_s::to_json(json_writer& j) const
@@ -34010,7 +35226,7 @@ void pdu_session_res_item_ho_rqd_s::to_json(json_writer& j) const
 // QosFlowModifyConfirmItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_modify_confirm_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -34030,6 +35246,10 @@ OCUDUASN_CODE qos_flow_modify_confirm_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_modify_confirm_item_s::to_json(json_writer& j) const
@@ -34046,7 +35266,7 @@ void qos_flow_modify_confirm_item_s::to_json(json_writer& j) const
 // UPTransportLayerInformationPairItem ::= SEQUENCE
 OCUDUASN_CODE up_transport_layer_info_pair_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ul_ngu_up_tnl_info.pack(bref));
@@ -34068,6 +35288,10 @@ OCUDUASN_CODE up_transport_layer_info_pair_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void up_transport_layer_info_pair_item_s::to_json(json_writer& j) const
@@ -34247,7 +35471,7 @@ OCUDUASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_container::pack(bi
   uint32_t nof_ies = 0;
   nof_ies += redundant_ul_ngu_up_tnl_info_present ? 1 : 0;
   nof_ies += add_redundant_ngu_up_tnl_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (redundant_ul_ngu_up_tnl_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -34267,7 +35491,7 @@ OCUDUASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_container::pack(bi
 OCUDUASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -34292,8 +35516,8 @@ OCUDUASN_CODE pdu_session_res_modify_confirm_transfer_ext_ies_container::unpack(
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -34322,7 +35546,7 @@ void pdu_session_res_modify_confirm_transfer_ext_ies_container::to_json(json_wri
 // PDUSessionResourceModifyConfirmTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_confirm_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(add_ng_u_up_tnl_info.size() > 0, 1));
   HANDLE_CODE(bref.pack(qos_flow_failed_to_modify_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -34362,6 +35586,10 @@ OCUDUASN_CODE pdu_session_res_modify_confirm_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_confirm_transfer_s::to_json(json_writer& j) const
@@ -34398,7 +35626,7 @@ void pdu_session_res_modify_confirm_transfer_s::to_json(json_writer& j) const
 // VolumeTimedReport-Item ::= SEQUENCE
 OCUDUASN_CODE volume_timed_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(start_time_stamp.pack(bref));
@@ -34424,6 +35652,10 @@ OCUDUASN_CODE volume_timed_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void volume_timed_report_item_s::to_json(json_writer& j) const
@@ -34443,7 +35675,7 @@ void volume_timed_report_item_s::to_json(json_writer& j) const
 // PDUSessionUsageReport ::= SEQUENCE
 OCUDUASN_CODE pdu_session_usage_report_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(rat_type.pack(bref));
@@ -34465,6 +35697,10 @@ OCUDUASN_CODE pdu_session_usage_report_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_usage_report_s::to_json(json_writer& j) const
@@ -34492,7 +35728,7 @@ const char* pdu_session_usage_report_s::rat_type_opts::to_string() const
 // QoSFlowsUsageReport-Item ::= SEQUENCE
 OCUDUASN_CODE qos_flows_usage_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -34516,6 +35752,10 @@ OCUDUASN_CODE qos_flows_usage_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flows_usage_report_item_s::to_json(json_writer& j) const
@@ -34544,7 +35784,7 @@ const char* qos_flows_usage_report_item_s::rat_type_opts::to_string() const
 // SecondaryRATUsageInformation ::= SEQUENCE
 OCUDUASN_CODE secondary_rat_usage_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pdu_session_usage_report_present, 1));
   HANDLE_CODE(bref.pack(qos_flows_usage_report_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
@@ -34579,6 +35819,10 @@ OCUDUASN_CODE secondary_rat_usage_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void secondary_rat_usage_info_s::to_json(json_writer& j) const
@@ -34899,7 +36143,7 @@ OCUDUASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_container::pack(bit_re
   nof_ies += add_redundant_dl_qos_flow_per_tnl_info_present ? 1 : 0;
   nof_ies += global_ran_node_id_present ? 1 : 0;
   nof_ies += ecn_markingor_congestion_info_report_status_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (secondary_rat_usage_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)144, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -34943,7 +36187,7 @@ OCUDUASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_container::pack(bit_re
 OCUDUASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -34992,8 +36236,8 @@ OCUDUASN_CODE pdu_session_res_modify_ind_transfer_ext_ies_container::unpack(cbit
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -35046,7 +36290,7 @@ void pdu_session_res_modify_ind_transfer_ext_ies_container::to_json(json_writer&
 // PDUSessionResourceModifyIndicationTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_ind_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(add_dl_qos_flow_per_tnl_info.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -35075,6 +36319,10 @@ OCUDUASN_CODE pdu_session_res_modify_ind_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_ind_transfer_s::to_json(json_writer& j) const
@@ -35099,7 +36347,7 @@ void pdu_session_res_modify_ind_transfer_s::to_json(json_writer& j) const
 // PDUSessionResourceModifyIndicationUnsuccessfulTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_ind_unsuccessful_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(cause.pack(bref));
@@ -35119,6 +36367,10 @@ OCUDUASN_CODE pdu_session_res_modify_ind_unsuccessful_transfer_s::unpack(cbit_re
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_ind_unsuccessful_transfer_s::to_json(json_writer& j) const
@@ -35136,7 +36388,7 @@ void pdu_session_res_modify_ind_unsuccessful_transfer_s::to_json(json_writer& j)
 // PDUSessionResourceModifyItemModCfm ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_item_mod_cfm_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -35158,6 +36410,10 @@ OCUDUASN_CODE pdu_session_res_modify_item_mod_cfm_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_item_mod_cfm_s::to_json(json_writer& j) const
@@ -35175,7 +36431,7 @@ void pdu_session_res_modify_item_mod_cfm_s::to_json(json_writer& j) const
 // PDUSessionResourceModifyItemModInd ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_item_mod_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -35197,6 +36453,10 @@ OCUDUASN_CODE pdu_session_res_modify_item_mod_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_item_mod_ind_s::to_json(json_writer& j) const
@@ -35370,7 +36630,7 @@ OCUDUASN_CODE pdu_session_res_modify_item_mod_req_ext_ies_container::pack(bit_re
   uint32_t nof_ies = 0;
   nof_ies += s_nssai_present ? 1 : 0;
   nof_ies += pdu_session_expected_ue_activity_behaviour_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (s_nssai_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)148, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -35390,7 +36650,7 @@ OCUDUASN_CODE pdu_session_res_modify_item_mod_req_ext_ies_container::pack(bit_re
 OCUDUASN_CODE pdu_session_res_modify_item_mod_req_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -35415,8 +36675,8 @@ OCUDUASN_CODE pdu_session_res_modify_item_mod_req_ext_ies_container::unpack(cbit
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -35441,7 +36701,7 @@ void pdu_session_res_modify_item_mod_req_ext_ies_container::to_json(json_writer&
 // PDUSessionResourceModifyItemModReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_item_mod_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(nas_pdu.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -35472,6 +36732,10 @@ OCUDUASN_CODE pdu_session_res_modify_item_mod_req_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_item_mod_req_s::to_json(json_writer& j) const
@@ -35492,7 +36756,7 @@ void pdu_session_res_modify_item_mod_req_s::to_json(json_writer& j) const
 // PDUSessionResourceModifyItemModRes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_item_mod_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -35514,6 +36778,10 @@ OCUDUASN_CODE pdu_session_res_modify_item_mod_res_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_item_mod_res_s::to_json(json_writer& j) const
@@ -35684,7 +36952,7 @@ OCUDUASN_CODE ul_ngu_up_tnl_modify_item_ext_ies_container::pack(bit_ref& bref) c
   uint32_t nof_ies = 0;
   nof_ies += redundant_ul_ngu_up_tnl_info_present ? 1 : 0;
   nof_ies += redundant_dl_ngu_up_tnl_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (redundant_ul_ngu_up_tnl_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)195, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -35704,7 +36972,7 @@ OCUDUASN_CODE ul_ngu_up_tnl_modify_item_ext_ies_container::pack(bit_ref& bref) c
 OCUDUASN_CODE ul_ngu_up_tnl_modify_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -35729,8 +36997,8 @@ OCUDUASN_CODE ul_ngu_up_tnl_modify_item_ext_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -35755,7 +37023,7 @@ void ul_ngu_up_tnl_modify_item_ext_ies_container::to_json(json_writer& j) const
 // UL-NGU-UP-TNLModifyItem ::= SEQUENCE
 OCUDUASN_CODE ul_ngu_up_tnl_modify_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ul_ngu_up_tnl_info.pack(bref));
@@ -35777,6 +37045,10 @@ OCUDUASN_CODE ul_ngu_up_tnl_modify_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ul_ngu_up_tnl_modify_item_s::to_json(json_writer& j) const
@@ -35796,7 +37068,7 @@ void ul_ngu_up_tnl_modify_item_s::to_json(json_writer& j) const
 // PeriodicityBound ::= SEQUENCE
 OCUDUASN_CODE periodicity_bound_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, periodicity_lower_bound, (uint32_t)0u, (uint32_t)640000u, true, true));
@@ -35818,6 +37090,10 @@ OCUDUASN_CODE periodicity_bound_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void periodicity_bound_s::to_json(json_writer& j) const
@@ -35953,7 +37229,7 @@ void periodicity_range_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE periodicity_range_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::periodicity_bound:
       HANDLE_CODE(c.get<periodicity_bound_s>().pack(bref));
@@ -35974,7 +37250,7 @@ OCUDUASN_CODE periodicity_range_c::pack(bit_ref& bref) const
 OCUDUASN_CODE periodicity_range_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::periodicity_bound:
@@ -36003,7 +37279,7 @@ const char* periodicity_range_c::types_opts::to_string() const
 // RANfeedbacktype-proactive ::= SEQUENCE
 OCUDUASN_CODE ra_nfeedbacktype_proactive_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(periodicity_range_present, 1));
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
@@ -36031,6 +37307,10 @@ OCUDUASN_CODE ra_nfeedbacktype_proactive_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ra_nfeedbacktype_proactive_s::to_json(json_writer& j) const
@@ -36052,7 +37332,7 @@ void ra_nfeedbacktype_proactive_s::to_json(json_writer& j) const
 // RANfeedbacktype-reactive ::= SEQUENCE
 OCUDUASN_CODE ra_nfeedbacktype_reactive_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_ext_present, 1));
 
   HANDLE_CODE(cap_for_bat_adaptation.pack(bref));
@@ -36072,6 +37352,10 @@ OCUDUASN_CODE ra_nfeedbacktype_reactive_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_ext.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ra_nfeedbacktype_reactive_s::to_json(json_writer& j) const
@@ -36209,7 +37493,7 @@ void ra_nfeedbacktype_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ra_nfeedbacktype_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::proactive:
       HANDLE_CODE(c.get<ra_nfeedbacktype_proactive_s>().pack(bref));
@@ -36229,7 +37513,7 @@ OCUDUASN_CODE ra_nfeedbacktype_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ra_nfeedbacktype_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::proactive:
@@ -36452,7 +37736,7 @@ OCUDUASN_CODE tsc_assist_info_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += survival_time_present ? 1 : 0;
   nof_ies += ra_nfeedbacktype_present ? 1 : 0;
   nof_ies += n6_jitter_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (survival_time_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)327, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -36478,7 +37762,7 @@ OCUDUASN_CODE tsc_assist_info_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE tsc_assist_info_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -36509,8 +37793,8 @@ OCUDUASN_CODE tsc_assist_info_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -36540,7 +37824,7 @@ void tsc_assist_info_ext_ies_container::to_json(json_writer& j) const
 // TSCAssistanceInformation ::= SEQUENCE
 OCUDUASN_CODE tsc_assist_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(burst_arrival_time.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -36569,6 +37853,10 @@ OCUDUASN_CODE tsc_assist_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tsc_assist_info_s::to_json(json_writer& j) const
@@ -36588,7 +37876,7 @@ void tsc_assist_info_s::to_json(json_writer& j) const
 // TSCTrafficCharacteristics ::= SEQUENCE
 OCUDUASN_CODE tsc_traffic_characteristics_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(tsc_assist_info_dl_present, 1));
   HANDLE_CODE(bref.pack(tsc_assist_info_ul_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -36622,6 +37910,10 @@ OCUDUASN_CODE tsc_traffic_characteristics_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tsc_traffic_characteristics_s::to_json(json_writer& j) const
@@ -36904,7 +38196,7 @@ OCUDUASN_CODE qos_flow_add_or_modify_request_item_ext_ies_container::pack(bit_re
   nof_ies += ul_ngu_up_tnl_info_present ? 1 : 0;
   nof_ies += dl_tl_container_present ? 1 : 0;
   nof_ies += ecn_markingor_congestion_info_report_request_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (tsc_traffic_characteristics_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)196, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -36942,7 +38234,7 @@ OCUDUASN_CODE qos_flow_add_or_modify_request_item_ext_ies_container::pack(bit_re
 OCUDUASN_CODE qos_flow_add_or_modify_request_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -36985,8 +38277,8 @@ OCUDUASN_CODE qos_flow_add_or_modify_request_item_ext_ies_container::unpack(cbit
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -37026,7 +38318,7 @@ void qos_flow_add_or_modify_request_item_ext_ies_container::to_json(json_writer&
 // QosFlowAddOrModifyRequestItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_add_or_modify_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(qos_flow_level_qos_params_present, 1));
   HANDLE_CODE(bref.pack(erab_id_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -37062,6 +38354,10 @@ OCUDUASN_CODE qos_flow_add_or_modify_request_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_add_or_modify_request_item_s::to_json(json_writer& j) const
@@ -37146,7 +38442,7 @@ const char* security_ind_ext_ies_o::ext_c::types_opts::to_string() const
 // SecurityIndication ::= SEQUENCE
 OCUDUASN_CODE security_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_integrity_protected_data_rate_ul_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -37177,6 +38473,10 @@ OCUDUASN_CODE security_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void security_ind_s::to_json(json_writer& j) const
@@ -37203,7 +38503,7 @@ const char* user_plane_fail_type_opts::to_string() const
 // UserPlaneFailureIndication ::= SEQUENCE
 OCUDUASN_CODE user_plane_fail_ind_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(user_plane_fail_type.pack(bref));
@@ -37227,6 +38527,10 @@ OCUDUASN_CODE user_plane_fail_ind_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_plane_fail_ind_s::to_json(json_writer& j) const
@@ -37825,7 +39129,7 @@ OCUDUASN_CODE pdu_session_res_modify_request_transfer_ies_container::pack(bit_re
   nof_ies += mbs_session_setupor_modify_request_list_present ? 1 : 0;
   nof_ies += mbs_session_to_release_list_present ? 1 : 0;
   nof_ies += user_plane_fail_ind_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (pdu_session_aggr_max_bit_rate_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)130, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -37917,7 +39221,7 @@ OCUDUASN_CODE pdu_session_res_modify_request_transfer_ies_container::pack(bit_re
 OCUDUASN_CODE pdu_session_res_modify_request_transfer_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -38014,8 +39318,8 @@ OCUDUASN_CODE pdu_session_res_modify_request_transfer_ies_container::unpack(cbit
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -38128,7 +39432,7 @@ void pdu_session_res_modify_request_transfer_ies_container::to_json(json_writer&
 // TSCFeedbackInformation ::= SEQUENCE
 OCUDUASN_CODE tsc_feedback_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(adjusted_periodicity_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -38156,6 +39460,10 @@ OCUDUASN_CODE tsc_feedback_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tsc_feedback_info_s::to_json(json_writer& j) const
@@ -38175,7 +39483,7 @@ void tsc_feedback_info_s::to_json(json_writer& j) const
 // TSCTrafficCharacteristicsFeedback ::= SEQUENCE
 OCUDUASN_CODE tsc_traffic_characteristics_feedback_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(tsc_feedback_info_dl_present, 1));
   HANDLE_CODE(bref.pack(tsc_feedback_info_ul_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -38209,6 +39517,10 @@ OCUDUASN_CODE tsc_traffic_characteristics_feedback_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tsc_traffic_characteristics_feedback_s::to_json(json_writer& j) const
@@ -38482,7 +39794,7 @@ OCUDUASN_CODE qos_flow_add_or_modify_resp_item_ext_ies_container::pack(bit_ref& 
   nof_ies += ul_tl_container_present ? 1 : 0;
   nof_ies += dl_ngu_up_tnl_info_present ? 1 : 0;
   nof_ies += an_packet_delay_budget_ul_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (current_qos_para_set_idx_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)221, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -38520,7 +39832,7 @@ OCUDUASN_CODE qos_flow_add_or_modify_resp_item_ext_ies_container::pack(bit_ref& 
 OCUDUASN_CODE qos_flow_add_or_modify_resp_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -38563,8 +39875,8 @@ OCUDUASN_CODE qos_flow_add_or_modify_resp_item_ext_ies_container::unpack(cbit_re
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -38604,7 +39916,7 @@ void qos_flow_add_or_modify_resp_item_ext_ies_container::to_json(json_writer& j)
 // QosFlowAddOrModifyResponseItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_add_or_modify_resp_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -38624,6 +39936,10 @@ OCUDUASN_CODE qos_flow_add_or_modify_resp_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_add_or_modify_resp_item_s::to_json(json_writer& j) const
@@ -39154,7 +40470,7 @@ OCUDUASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_container::pack(bit_r
   nof_ies += ecn_markingor_congestion_info_report_status_present ? 1 : 0;
   nof_ies += pdu_setbased_handling_ind_present ? 1 : 0;
   nof_ies += user_plane_fail_ind_report_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (add_ngu_up_tnl_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)154, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -39234,7 +40550,7 @@ OCUDUASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_container::pack(bit_r
 OCUDUASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -39319,8 +40635,8 @@ OCUDUASN_CODE pdu_session_res_modify_resp_transfer_ext_ies_container::unpack(cbi
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -39419,7 +40735,7 @@ void pdu_session_res_modify_resp_transfer_ext_ies_container::to_json(json_writer
 // PDUSessionResourceModifyResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_ngu_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(ul_ngu_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(qos_flow_add_or_modify_resp_list.size() > 0, 1));
@@ -39480,6 +40796,10 @@ OCUDUASN_CODE pdu_session_res_modify_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_resp_transfer_s::to_json(json_writer& j) const
@@ -39524,7 +40844,7 @@ void pdu_session_res_modify_resp_transfer_s::to_json(json_writer& j) const
 // PDUSessionResourceModifyUnsuccessfulTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_modify_unsuccessful_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(crit_diagnostics_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -39552,6 +40872,10 @@ OCUDUASN_CODE pdu_session_res_modify_unsuccessful_transfer_s::unpack(cbit_ref& b
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_modify_unsuccessful_transfer_s::to_json(json_writer& j) const
@@ -39573,7 +40897,7 @@ void pdu_session_res_modify_unsuccessful_transfer_s::to_json(json_writer& j) con
 // PDUSessionResourceNotifyItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_notify_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -39595,6 +40919,10 @@ OCUDUASN_CODE pdu_session_res_notify_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_notify_item_s::to_json(json_writer& j) const
@@ -39773,7 +41101,7 @@ OCUDUASN_CODE pdu_session_res_notify_released_transfer_ext_ies_container::pack(b
   uint32_t nof_ies = 0;
   nof_ies += secondary_rat_usage_info_present ? 1 : 0;
   nof_ies += user_plane_error_ind_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (secondary_rat_usage_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)144, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -39793,7 +41121,7 @@ OCUDUASN_CODE pdu_session_res_notify_released_transfer_ext_ies_container::pack(b
 OCUDUASN_CODE pdu_session_res_notify_released_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -39818,8 +41146,8 @@ OCUDUASN_CODE pdu_session_res_notify_released_transfer_ext_ies_container::unpack
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -39844,7 +41172,7 @@ void pdu_session_res_notify_released_transfer_ext_ies_container::to_json(json_wr
 // PDUSessionResourceNotifyReleasedTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_notify_released_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(cause.pack(bref));
@@ -39864,6 +41192,10 @@ OCUDUASN_CODE pdu_session_res_notify_released_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_notify_released_transfer_s::to_json(json_writer& j) const
@@ -40039,7 +41371,7 @@ OCUDUASN_CODE qos_flow_notify_item_ext_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 0;
   nof_ies += current_qos_para_set_idx_present ? 1 : 0;
   nof_ies += tsc_traffic_characteristics_feedback_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (current_qos_para_set_idx_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)221, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -40059,7 +41391,7 @@ OCUDUASN_CODE qos_flow_notify_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE qos_flow_notify_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -40084,8 +41416,8 @@ OCUDUASN_CODE qos_flow_notify_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -40110,7 +41442,7 @@ void qos_flow_notify_item_ext_ies_container::to_json(json_writer& j) const
 // QosFlowNotifyItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_notify_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -40132,6 +41464,10 @@ OCUDUASN_CODE qos_flow_notify_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_notify_item_s::to_json(json_writer& j) const
@@ -40149,7 +41485,7 @@ void qos_flow_notify_item_s::to_json(json_writer& j) const
 // QosFlowFeedbackItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_feedback_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(upd_feedback_present, 1));
   HANDLE_CODE(bref.pack(cnpacket_delay_budget_dl_present, 1));
   HANDLE_CODE(bref.pack(cnpacket_delay_budget_ul_present, 1));
@@ -40193,6 +41529,10 @@ OCUDUASN_CODE qos_flow_feedback_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_feedback_item_s::to_json(json_writer& j) const
@@ -40374,7 +41714,7 @@ OCUDUASN_CODE pdu_session_res_notify_transfer_ext_ies_container::pack(bit_ref& b
   uint32_t nof_ies = 0;
   nof_ies += secondary_rat_usage_info_present ? 1 : 0;
   nof_ies += qos_flow_feedback_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (secondary_rat_usage_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)144, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -40394,7 +41734,7 @@ OCUDUASN_CODE pdu_session_res_notify_transfer_ext_ies_container::pack(bit_ref& b
 OCUDUASN_CODE pdu_session_res_notify_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -40419,8 +41759,8 @@ OCUDUASN_CODE pdu_session_res_notify_transfer_ext_ies_container::unpack(cbit_ref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -40449,7 +41789,7 @@ void pdu_session_res_notify_transfer_ext_ies_container::to_json(json_writer& j) 
 // PDUSessionResourceNotifyTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_notify_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(qos_flow_notify_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(qos_flow_released_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -40485,6 +41825,10 @@ OCUDUASN_CODE pdu_session_res_notify_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_notify_transfer_s::to_json(json_writer& j) const
@@ -40514,7 +41858,7 @@ void pdu_session_res_notify_transfer_s::to_json(json_writer& j) const
 // QosFlowAdditionalInfoItemRelCom ::= SEQUENCE
 OCUDUASN_CODE qos_flow_add_info_item_rel_com_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_tl_container.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -40543,6 +41887,10 @@ OCUDUASN_CODE qos_flow_add_info_item_rel_com_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_add_info_item_rel_com_s::to_json(json_writer& j) const
@@ -40628,7 +41976,7 @@ const char* pdu_session_res_release_cmd_transfer_ext_ies_o::ext_c::types_opts::t
 // PDUSessionResourceReleaseCommandTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_release_cmd_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(cause.pack(bref));
@@ -40649,6 +41997,10 @@ OCUDUASN_CODE pdu_session_res_release_cmd_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_release_cmd_transfer_s::to_json(json_writer& j) const
@@ -40665,7 +42017,7 @@ void pdu_session_res_release_cmd_transfer_s::to_json(json_writer& j) const
 // QosFlowAdditionalInfoItemRelRes ::= SEQUENCE
 OCUDUASN_CODE qos_flow_add_info_item_rel_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ul_tl_container.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -40694,6 +42046,10 @@ OCUDUASN_CODE qos_flow_add_info_item_rel_res_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_add_info_item_rel_res_s::to_json(json_writer& j) const
@@ -40872,7 +42228,7 @@ OCUDUASN_CODE pdu_session_res_release_resp_transfer_ext_ies_container::pack(bit_
   uint32_t nof_ies = 0;
   nof_ies += secondary_rat_usage_info_present ? 1 : 0;
   nof_ies += qos_flow_add_info_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (secondary_rat_usage_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)144, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -40892,7 +42248,7 @@ OCUDUASN_CODE pdu_session_res_release_resp_transfer_ext_ies_container::pack(bit_
 OCUDUASN_CODE pdu_session_res_release_resp_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -40917,8 +42273,8 @@ OCUDUASN_CODE pdu_session_res_release_resp_transfer_ext_ies_container::unpack(cb
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -40947,7 +42303,7 @@ void pdu_session_res_release_resp_transfer_ext_ies_container::to_json(json_write
 // PDUSessionResourceReleaseResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_release_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   if (ie_exts_present) {
@@ -40965,6 +42321,10 @@ OCUDUASN_CODE pdu_session_res_release_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_release_resp_transfer_s::to_json(json_writer& j) const
@@ -40980,7 +42340,7 @@ void pdu_session_res_release_resp_transfer_s::to_json(json_writer& j) const
 // PDUSessionResourceReleasedItemNot ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_released_item_not_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41002,6 +42362,10 @@ OCUDUASN_CODE pdu_session_res_released_item_not_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_released_item_not_s::to_json(json_writer& j) const
@@ -41019,7 +42383,7 @@ void pdu_session_res_released_item_not_s::to_json(json_writer& j) const
 // PDUSessionResourceReleasedItemPSAck ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_released_item_ps_ack_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41041,6 +42405,10 @@ OCUDUASN_CODE pdu_session_res_released_item_ps_ack_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_released_item_ps_ack_s::to_json(json_writer& j) const
@@ -41058,7 +42426,7 @@ void pdu_session_res_released_item_ps_ack_s::to_json(json_writer& j) const
 // PDUSessionResourceReleasedItemPSFail ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_released_item_ps_fail_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41080,6 +42448,10 @@ OCUDUASN_CODE pdu_session_res_released_item_ps_fail_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_released_item_ps_fail_s::to_json(json_writer& j) const
@@ -41097,7 +42469,7 @@ void pdu_session_res_released_item_ps_fail_s::to_json(json_writer& j) const
 // PDUSessionResourceReleasedItemRelRes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_released_item_rel_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41119,6 +42491,10 @@ OCUDUASN_CODE pdu_session_res_released_item_rel_res_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_released_item_rel_res_s::to_json(json_writer& j) const
@@ -41136,7 +42512,7 @@ void pdu_session_res_released_item_rel_res_s::to_json(json_writer& j) const
 // PDUSessionResourceResumeItemRESReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_resume_item_res_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41158,6 +42534,10 @@ OCUDUASN_CODE pdu_session_res_resume_item_res_req_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_resume_item_res_req_s::to_json(json_writer& j) const
@@ -41175,7 +42555,7 @@ void pdu_session_res_resume_item_res_req_s::to_json(json_writer& j) const
 // PDUSessionResourceResumeItemRESRes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_resume_item_res_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41197,6 +42577,10 @@ OCUDUASN_CODE pdu_session_res_resume_item_res_res_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_resume_item_res_res_s::to_json(json_writer& j) const
@@ -41214,7 +42598,7 @@ void pdu_session_res_resume_item_res_res_s::to_json(json_writer& j) const
 // PDUSessionResourceSecondaryRATUsageItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_secondary_rat_usage_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41236,6 +42620,10 @@ OCUDUASN_CODE pdu_session_res_secondary_rat_usage_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_secondary_rat_usage_item_s::to_json(json_writer& j) const
@@ -41316,7 +42704,7 @@ const char* pdu_session_res_setup_item_cxt_req_ext_ies_o::ext_c::types_opts::to_
 // PDUSessionResourceSetupItemCxtReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_setup_item_cxt_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(nas_pdu.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -41350,6 +42738,10 @@ OCUDUASN_CODE pdu_session_res_setup_item_cxt_req_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_setup_item_cxt_req_s::to_json(json_writer& j) const
@@ -41371,7 +42763,7 @@ void pdu_session_res_setup_item_cxt_req_s::to_json(json_writer& j) const
 // PDUSessionResourceSetupItemCxtRes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_setup_item_cxt_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41393,6 +42785,10 @@ OCUDUASN_CODE pdu_session_res_setup_item_cxt_res_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_setup_item_cxt_res_s::to_json(json_writer& j) const
@@ -41473,7 +42869,7 @@ const char* pdu_session_res_setup_item_ho_req_ext_ies_o::ext_c::types_opts::to_s
 // PDUSessionResourceSetupItemHOReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_setup_item_ho_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41498,6 +42894,10 @@ OCUDUASN_CODE pdu_session_res_setup_item_ho_req_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_setup_item_ho_req_s::to_json(json_writer& j) const
@@ -41579,7 +42979,7 @@ const char* pdu_session_res_setup_item_su_req_ext_ies_o::ext_c::types_opts::to_s
 // PDUSessionResourceSetupItemSUReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_setup_item_su_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pdu_session_nas_pdu.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -41613,6 +43013,10 @@ OCUDUASN_CODE pdu_session_res_setup_item_su_req_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_setup_item_su_req_s::to_json(json_writer& j) const
@@ -41634,7 +43038,7 @@ void pdu_session_res_setup_item_su_req_s::to_json(json_writer& j) const
 // PDUSessionResourceSetupItemSURes ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_setup_item_su_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -41656,6 +43060,10 @@ OCUDUASN_CODE pdu_session_res_setup_item_su_res_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_setup_item_su_res_s::to_json(json_writer& j) const
@@ -41866,7 +43274,7 @@ OCUDUASN_CODE qos_flow_setup_request_item_ext_ies_container::pack(bit_ref& bref)
   nof_ies += tsc_traffic_characteristics_present ? 1 : 0;
   nof_ies += redundant_qos_flow_ind_present ? 1 : 0;
   nof_ies += ecn_markingor_congestion_info_report_request_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (tsc_traffic_characteristics_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)196, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -41892,7 +43300,7 @@ OCUDUASN_CODE qos_flow_setup_request_item_ext_ies_container::pack(bit_ref& bref)
 OCUDUASN_CODE qos_flow_setup_request_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -41923,8 +43331,8 @@ OCUDUASN_CODE qos_flow_setup_request_item_ext_ies_container::unpack(cbit_ref& br
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -41954,7 +43362,7 @@ void qos_flow_setup_request_item_ext_ies_container::to_json(json_writer& j) cons
 // QosFlowSetupRequestItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_setup_request_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(erab_id_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -41984,6 +43392,10 @@ OCUDUASN_CODE qos_flow_setup_request_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_setup_request_item_s::to_json(json_writer& j) const
@@ -42631,7 +44043,7 @@ OCUDUASN_CODE pdu_session_res_setup_request_transfer_ies_container::pack(bit_ref
   nof_ies += redundant_pdu_session_info_present ? 1 : 0;
   nof_ies += mbs_session_setup_request_list_present ? 1 : 0;
   nof_ies += dl_tl_container_present ? 1 : 0;
-  pack_length(bref, nof_ies, 0u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
 
   if (pdu_session_aggr_max_bit_rate_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)130, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -42735,7 +44147,7 @@ OCUDUASN_CODE pdu_session_res_setup_request_transfer_ies_container::pack(bit_ref
 OCUDUASN_CODE pdu_session_res_setup_request_transfer_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 0u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
 
   uint32_t nof_mandatory_ies = 3;
 
@@ -42846,8 +44258,8 @@ OCUDUASN_CODE pdu_session_res_setup_request_transfer_ies_container::unpack(cbit_
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
   if (nof_mandatory_ies > 0) {
@@ -42956,7 +44368,7 @@ void pdu_session_res_setup_request_transfer_ies_container::to_json(json_writer& 
 // QoSFlowTSCItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_tsc_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(tsc_traffic_characteristics_feedback_present, 1));
   HANDLE_CODE(bref.pack(an_packet_delay_budget_ul_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -42992,6 +44404,10 @@ OCUDUASN_CODE qos_flow_tsc_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_tsc_item_s::to_json(json_writer& j) const
@@ -43479,7 +44895,7 @@ OCUDUASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_container::pack(bit_re
   nof_ies += ul_tl_container_present ? 1 : 0;
   nof_ies += ecn_markingor_congestion_info_report_status_present ? 1 : 0;
   nof_ies += pdu_setbased_handling_ind_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (redundant_dl_qos_flow_per_tnl_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)193, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -43553,7 +44969,7 @@ OCUDUASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_container::pack(bit_re
 OCUDUASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -43632,8 +45048,8 @@ OCUDUASN_CODE pdu_session_res_setup_resp_transfer_ext_ies_container::unpack(cbit
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -43723,7 +45139,7 @@ void pdu_session_res_setup_resp_transfer_ext_ies_container::to_json(json_writer&
 // PDUSessionResourceSetupResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_setup_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(add_dl_qos_flow_per_tnl_info.size() > 0, 1));
   HANDLE_CODE(bref.pack(security_result_present, 1));
   HANDLE_CODE(bref.pack(qos_flow_failed_to_setup_list.size() > 0, 1));
@@ -43769,6 +45185,10 @@ OCUDUASN_CODE pdu_session_res_setup_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_setup_resp_transfer_s::to_json(json_writer& j) const
@@ -43804,7 +45224,7 @@ void pdu_session_res_setup_resp_transfer_s::to_json(json_writer& j) const
 // PDUSessionResourceSetupUnsuccessfulTransfer ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_setup_unsuccessful_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(crit_diagnostics_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -43832,6 +45252,10 @@ OCUDUASN_CODE pdu_session_res_setup_unsuccessful_transfer_s::unpack(cbit_ref& br
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_setup_unsuccessful_transfer_s::to_json(json_writer& j) const
@@ -43853,7 +45277,7 @@ void pdu_session_res_setup_unsuccessful_transfer_s::to_json(json_writer& j) cons
 // PDUSessionResourceSuspendItemSUSReq ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_suspend_item_sus_req_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -43875,6 +45299,10 @@ OCUDUASN_CODE pdu_session_res_suspend_item_sus_req_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_suspend_item_sus_req_s::to_json(json_writer& j) const
@@ -43954,7 +45382,7 @@ const char* pdu_session_res_switched_item_ext_ies_o::ext_c::types_opts::to_strin
 // PDUSessionResourceSwitchedItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_switched_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -43977,6 +45405,10 @@ OCUDUASN_CODE pdu_session_res_switched_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_switched_item_s::to_json(json_writer& j) const
@@ -43993,7 +45425,7 @@ void pdu_session_res_switched_item_s::to_json(json_writer& j) const
 // PDUSessionResourceToBeSwitchedDLItem ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_to_be_switched_dl_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -44015,6 +45447,10 @@ OCUDUASN_CODE pdu_session_res_to_be_switched_dl_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_to_be_switched_dl_item_s::to_json(json_writer& j) const
@@ -44032,7 +45468,7 @@ void pdu_session_res_to_be_switched_dl_item_s::to_json(json_writer& j) const
 // PDUSessionResourceToReleaseItemHOCmd ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_to_release_item_ho_cmd_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -44054,6 +45490,10 @@ OCUDUASN_CODE pdu_session_res_to_release_item_ho_cmd_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_to_release_item_ho_cmd_s::to_json(json_writer& j) const
@@ -44071,7 +45511,7 @@ void pdu_session_res_to_release_item_ho_cmd_s::to_json(json_writer& j) const
 // PDUSessionResourceToReleaseItemRelCmd ::= SEQUENCE
 OCUDUASN_CODE pdu_session_res_to_release_item_rel_cmd_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, pdu_session_id, (uint16_t)0u, (uint16_t)255u, false, true));
@@ -44093,6 +45533,10 @@ OCUDUASN_CODE pdu_session_res_to_release_item_rel_cmd_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdu_session_res_to_release_item_rel_cmd_s::to_json(json_writer& j) const
@@ -44296,7 +45740,7 @@ OCUDUASN_CODE plmn_support_item_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += npn_support_present ? 1 : 0;
   nof_ies += extended_slice_support_list_present ? 1 : 0;
   nof_ies += onboarding_support_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (npn_support_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)258, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -44322,7 +45766,7 @@ OCUDUASN_CODE plmn_support_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE plmn_support_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -44353,8 +45797,8 @@ OCUDUASN_CODE plmn_support_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -44388,7 +45832,7 @@ void plmn_support_item_ext_ies_container::to_json(json_writer& j) const
 // PLMNSupportItem ::= SEQUENCE
 OCUDUASN_CODE plmn_support_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -44410,6 +45854,10 @@ OCUDUASN_CODE plmn_support_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void plmn_support_item_s::to_json(json_writer& j) const
@@ -44552,7 +46000,7 @@ void pws_failed_cell_id_list_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE pws_failed_cell_id_list_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra_cgi_pws_failed_list:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<eutra_cgi_list_l>(), 1, 256, true));
@@ -44572,7 +46020,7 @@ OCUDUASN_CODE pws_failed_cell_id_list_c::pack(bit_ref& bref) const
 OCUDUASN_CODE pws_failed_cell_id_list_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra_cgi_pws_failed_list:
@@ -44619,7 +46067,7 @@ int8_t paging_origin_opts::to_number() const
 // PagingPolicyDifferentiation ::= SEQUENCE
 OCUDUASN_CODE paging_policy_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, pdu_session_for_paging_list, 1, 256, true));
@@ -44639,6 +46087,10 @@ OCUDUASN_CODE paging_policy_diff_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void paging_policy_diff_s::to_json(json_writer& j) const
@@ -44700,7 +46152,7 @@ const char* parent_t_ime_source_opts::to_string() const
 // PartiallyAllowedNSSAI-Item ::= SEQUENCE
 OCUDUASN_CODE partially_allowed_nssai_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(s_nssai.pack(bref));
@@ -44720,6 +46172,10 @@ OCUDUASN_CODE partially_allowed_nssai_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void partially_allowed_nssai_item_s::to_json(json_writer& j) const
@@ -44918,7 +46374,7 @@ OCUDUASN_CODE qos_flow_params_item_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += cn_packet_delay_budget_dl_present ? 1 : 0;
   nof_ies += cn_packet_delay_budget_ul_present ? 1 : 0;
   nof_ies += burst_arrival_time_dl_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (cn_packet_delay_budget_dl_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)187, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -44944,7 +46400,7 @@ OCUDUASN_CODE qos_flow_params_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE qos_flow_params_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -44975,8 +46431,8 @@ OCUDUASN_CODE qos_flow_params_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -45006,7 +46462,7 @@ void qos_flow_params_item_ext_ies_container::to_json(json_writer& j) const
 // QosFlowParametersItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_params_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(alt_qos_para_set_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -45035,6 +46491,10 @@ OCUDUASN_CODE qos_flow_params_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_params_item_s::to_json(json_writer& j) const
@@ -45288,7 +46748,7 @@ OCUDUASN_CODE path_switch_request_ack_transfer_ext_ies_container::pack(bit_ref& 
   nof_ies += redundant_ul_ngu_up_tnl_info_present ? 1 : 0;
   nof_ies += add_redundant_ngu_up_tnl_info_present ? 1 : 0;
   nof_ies += qos_flow_params_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (add_ngu_up_tnl_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)154, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -45320,7 +46780,7 @@ OCUDUASN_CODE path_switch_request_ack_transfer_ext_ies_container::pack(bit_ref& 
 OCUDUASN_CODE path_switch_request_ack_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -45357,8 +46817,8 @@ OCUDUASN_CODE path_switch_request_ack_transfer_ext_ies_container::unpack(cbit_re
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -45405,7 +46865,7 @@ void path_switch_request_ack_transfer_ext_ies_container::to_json(json_writer& j)
 // PathSwitchRequestAcknowledgeTransfer ::= SEQUENCE
 OCUDUASN_CODE path_switch_request_ack_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ul_ngu_up_tnl_info_present, 1));
   HANDLE_CODE(bref.pack(security_ind_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -45439,6 +46899,10 @@ OCUDUASN_CODE path_switch_request_ack_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void path_switch_request_ack_transfer_s::to_json(json_writer& j) const
@@ -45462,7 +46926,7 @@ void path_switch_request_ack_transfer_s::to_json(json_writer& j) const
 // PathSwitchRequestSetupFailedTransfer ::= SEQUENCE
 OCUDUASN_CODE path_switch_request_setup_failed_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(cause.pack(bref));
@@ -45482,6 +46946,10 @@ OCUDUASN_CODE path_switch_request_setup_failed_transfer_s::unpack(cbit_ref& bref
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void path_switch_request_setup_failed_transfer_s::to_json(json_writer& j) const
@@ -45499,7 +46967,7 @@ void path_switch_request_setup_failed_transfer_s::to_json(json_writer& j) const
 // UserPlaneSecurityInformation ::= SEQUENCE
 OCUDUASN_CODE user_plane_security_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(security_result.pack(bref));
@@ -45521,6 +46989,10 @@ OCUDUASN_CODE user_plane_security_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_plane_security_info_s::to_json(json_writer& j) const
@@ -45606,7 +47078,7 @@ uint8_t qos_flow_accepted_item_ext_ies_o::ext_c::types_opts::to_number() const
 // QosFlowAcceptedItem ::= SEQUENCE
 OCUDUASN_CODE qos_flow_accepted_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(pack_integer(bref, qos_flow_id, (uint8_t)0u, (uint8_t)63u, true, true));
@@ -45627,6 +47099,10 @@ OCUDUASN_CODE qos_flow_accepted_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qos_flow_accepted_item_s::to_json(json_writer& j) const
@@ -46029,7 +47505,7 @@ OCUDUASN_CODE path_switch_request_transfer_ext_ies_container::pack(bit_ref& bref
   nof_ies += mbs_support_ind_present ? 1 : 0;
   nof_ies += pdu_setbased_handling_ind_present ? 1 : 0;
   nof_ies += ecn_markingor_congestion_info_report_status_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (add_dl_qos_flow_per_tnl_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)155, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -46091,7 +47567,7 @@ OCUDUASN_CODE path_switch_request_transfer_ext_ies_container::pack(bit_ref& bref
 OCUDUASN_CODE path_switch_request_transfer_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -46158,8 +47634,8 @@ OCUDUASN_CODE path_switch_request_transfer_ext_ies_container::unpack(cbit_ref& b
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -46231,7 +47707,7 @@ void path_switch_request_transfer_ext_ies_container::to_json(json_writer& j) con
 // PathSwitchRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE path_switch_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dl_ngu_tnl_info_reused_present, 1));
   HANDLE_CODE(bref.pack(user_plane_security_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -46269,6 +47745,10 @@ OCUDUASN_CODE path_switch_request_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void path_switch_request_transfer_s::to_json(json_writer& j) const
@@ -46298,7 +47778,7 @@ void path_switch_request_transfer_s::to_json(json_writer& j) const
 // PathSwitchRequestUnsuccessfulTransfer ::= SEQUENCE
 OCUDUASN_CODE path_switch_request_unsuccessful_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(cause.pack(bref));
@@ -46318,6 +47798,10 @@ OCUDUASN_CODE path_switch_request_unsuccessful_transfer_s::unpack(cbit_ref& bref
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void path_switch_request_unsuccessful_transfer_s::to_json(json_writer& j) const
@@ -46335,7 +47819,7 @@ void path_switch_request_unsuccessful_transfer_s::to_json(json_writer& j) const
 // PeriodicityList ::= SEQUENCE
 OCUDUASN_CODE periodicity_list_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, allowed_periodicity_list, 1, 8, integer_packer<uint32_t>(0, 640000, true, true)));
@@ -46355,6 +47839,10 @@ OCUDUASN_CODE periodicity_list_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void periodicity_list_s::to_json(json_writer& j) const
@@ -46389,7 +47877,7 @@ const char* service_type_opts::to_string() const
 // SliceSupportQMC-Item ::= SEQUENCE
 OCUDUASN_CODE slice_support_qmc_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(s_nssai.pack(bref));
@@ -46409,6 +47897,10 @@ OCUDUASN_CODE slice_support_qmc_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void slice_support_qmc_item_s::to_json(json_writer& j) const
@@ -46426,7 +47918,7 @@ void slice_support_qmc_item_s::to_json(json_writer& j) const
 // QoERVQoEReportingPaths ::= SEQUENCE
 OCUDUASN_CODE qo_erv_qo_e_report_paths_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(qo_e_report_path_present, 1));
   HANDLE_CODE(bref.pack(rv_qo_e_report_path_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -46460,6 +47952,10 @@ OCUDUASN_CODE qo_erv_qo_e_report_paths_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qo_erv_qo_e_report_paths_s::to_json(json_writer& j) const
@@ -46690,7 +48186,7 @@ OCUDUASN_CODE ue_app_layer_meas_cfg_info_ext_ies_container::pack(bit_ref& bref) 
   nof_ies += assist_info_qo_e_meas_present ? 1 : 0;
   nof_ies += mbs_comm_service_type_present ? 1 : 0;
   nof_ies += qo_erv_qo_e_report_paths_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (assist_info_qo_e_meas_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)398, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -46716,7 +48212,7 @@ OCUDUASN_CODE ue_app_layer_meas_cfg_info_ext_ies_container::pack(bit_ref& bref) 
 OCUDUASN_CODE ue_app_layer_meas_cfg_info_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -46747,8 +48243,8 @@ OCUDUASN_CODE ue_app_layer_meas_cfg_info_ext_ies_container::unpack(cbit_ref& bre
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -46778,7 +48274,7 @@ void ue_app_layer_meas_cfg_info_ext_ies_container::to_json(json_writer& j) const
 // UEAppLayerMeasConfigInfo ::= SEQUENCE
 OCUDUASN_CODE ue_app_layer_meas_cfg_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(area_scope_of_qmc_present, 1));
   HANDLE_CODE(bref.pack(qo_e_meas_status_present, 1));
   HANDLE_CODE(bref.pack(container_for_app_layer_meas_cfg.size() > 0, 1));
@@ -46860,6 +48356,10 @@ OCUDUASN_CODE ue_app_layer_meas_cfg_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_app_layer_meas_cfg_info_s::to_json(json_writer& j) const
@@ -46912,7 +48412,7 @@ const char* ue_app_layer_meas_cfg_info_s::qo_e_meas_status_opts::to_string() con
 // UEAppLayerMeasInfoItem ::= SEQUENCE
 OCUDUASN_CODE ue_app_layer_meas_info_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ue_app_layer_meas_cfg_info.pack(bref));
@@ -46932,6 +48432,10 @@ OCUDUASN_CODE ue_app_layer_meas_info_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_app_layer_meas_info_item_s::to_json(json_writer& j) const
@@ -46949,7 +48453,7 @@ void ue_app_layer_meas_info_item_s::to_json(json_writer& j) const
 // QMCConfigInfo ::= SEQUENCE
 OCUDUASN_CODE q_mcc_onfig_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, ue_app_layer_meas_info_list, 1, 16, true));
@@ -46969,6 +48473,10 @@ OCUDUASN_CODE q_mcc_onfig_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void q_mcc_onfig_info_s::to_json(json_writer& j) const
@@ -46989,7 +48497,7 @@ void q_mcc_onfig_info_s::to_json(json_writer& j) const
 // QMCDeactivation ::= SEQUENCE
 OCUDUASN_CODE qmc_deactivation_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, qo_e_ref_list, 1, 16, true));
@@ -47009,6 +48517,10 @@ OCUDUASN_CODE qmc_deactivation_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void qmc_deactivation_s::to_json(json_writer& j) const
@@ -47036,7 +48548,7 @@ const char* ran_tss_request_type_opts::to_string() const
 // RANTSSCellItem ::= SEQUENCE
 OCUDUASN_CODE rants_scell_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_cgi.pack(bref));
@@ -47056,6 +48568,10 @@ OCUDUASN_CODE rants_scell_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void rants_scell_item_s::to_json(json_writer& j) const
@@ -47191,7 +48707,7 @@ void ran_tss_scope_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ran_tss_scope_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ran_node_level:
       HANDLE_CODE(c.get<global_gnb_id_s>().pack(bref));
@@ -47211,7 +48727,7 @@ OCUDUASN_CODE ran_tss_scope_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ran_tss_scope_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ran_node_level:
@@ -47239,7 +48755,7 @@ const char* ran_tss_scope_c::types_opts::to_string() const
 // RANStatusTransfer-TransparentContainer ::= SEQUENCE
 OCUDUASN_CODE ran_status_transfer_transparent_container_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, drbs_subject_to_status_transfer_list, 1, 32, true));
@@ -47259,6 +48775,10 @@ OCUDUASN_CODE ran_status_transfer_transparent_container_s::unpack(cbit_ref& bref
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ran_status_transfer_transparent_container_s::to_json(json_writer& j) const
@@ -47279,7 +48799,7 @@ void ran_status_transfer_transparent_container_s::to_json(json_writer& j) const
 // RANTimingSynchronisationStatusInfo ::= SEQUENCE
 OCUDUASN_CODE ran_timing_synchronisation_status_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(synchronisation_state_present, 1));
   HANDLE_CODE(bref.pack(traceableto_utc_present, 1));
   HANDLE_CODE(bref.pack(traceableto_gnss_present, 1));
@@ -47345,6 +48865,10 @@ OCUDUASN_CODE ran_timing_synchronisation_status_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ran_timing_synchronisation_status_info_s::to_json(json_writer& j) const
@@ -47404,7 +48928,7 @@ const char* rat_info_opts::to_string() const
 // RIMInformation ::= SEQUENCE
 OCUDUASN_CODE rim_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(target_gnb_set_id.pack(bref));
@@ -47426,6 +48950,10 @@ OCUDUASN_CODE rim_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void rim_info_s::to_json(json_writer& j) const
@@ -47449,7 +48977,7 @@ const char* rim_info_s::rim_rs_detection_opts::to_string() const
 // TargetRANNodeID-RIM ::= SEQUENCE
 OCUDUASN_CODE target_ran_node_id_rim_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(global_ran_node_id.pack(bref));
@@ -47471,6 +48999,10 @@ OCUDUASN_CODE target_ran_node_id_rim_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_ran_node_id_rim_s::to_json(json_writer& j) const
@@ -47490,7 +49022,7 @@ void target_ran_node_id_rim_s::to_json(json_writer& j) const
 // SourceRANNodeID ::= SEQUENCE
 OCUDUASN_CODE source_ran_node_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(global_ran_node_id.pack(bref));
@@ -47512,6 +49044,10 @@ OCUDUASN_CODE source_ran_node_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void source_ran_node_id_s::to_json(json_writer& j) const
@@ -47531,7 +49067,7 @@ void source_ran_node_id_s::to_json(json_writer& j) const
 // RIMInformationTransfer ::= SEQUENCE
 OCUDUASN_CODE rim_info_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(target_ran_node_id_rim.pack(bref));
@@ -47555,6 +49091,10 @@ OCUDUASN_CODE rim_info_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void rim_info_transfer_s::to_json(json_writer& j) const
@@ -47609,7 +49149,7 @@ const char* rrc_state_opts::to_string() const
 // RSPPFlowBitRates ::= SEQUENCE
 OCUDUASN_CODE rspp_flow_bit_rates_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, guaranteed_flow_bit_rate, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -47631,6 +49171,10 @@ OCUDUASN_CODE rspp_flow_bit_rates_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void rspp_flow_bit_rates_s::to_json(json_writer& j) const
@@ -47648,7 +49192,7 @@ void rspp_flow_bit_rates_s::to_json(json_writer& j) const
 // RSPPQoSFlowItem ::= SEQUENCE
 OCUDUASN_CODE rspp_qos_flow_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(rspp_flow_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(range_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -47684,6 +49228,10 @@ OCUDUASN_CODE rspp_qos_flow_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void rspp_qos_flow_item_s::to_json(json_writer& j) const
@@ -47728,7 +49276,7 @@ const char* reset_all_opts::to_string() const
 // UE-associatedLogicalNG-connectionItem ::= SEQUENCE
 OCUDUASN_CODE ue_associated_lc_ng_conn_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(amf_ue_ngap_id_present, 1));
   HANDLE_CODE(bref.pack(ran_ue_ngap_id_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
@@ -47762,6 +49310,10 @@ OCUDUASN_CODE ue_associated_lc_ng_conn_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_associated_lc_ng_conn_item_s::to_json(json_writer& j) const
@@ -47896,7 +49448,7 @@ void reset_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE reset_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ng_interface:
       HANDLE_CODE(c.get<reset_all_e>().pack(bref));
@@ -47916,7 +49468,7 @@ OCUDUASN_CODE reset_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE reset_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ng_interface:
@@ -47951,7 +49503,7 @@ const char* sl_positioning_ranging_authorized_opts::to_string() const
 // SLPositioningRangingQoSParameters ::= SEQUENCE
 OCUDUASN_CODE sl_positioning_ranging_qos_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(rspp_link_aggr_bit_rates_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -47979,6 +49531,10 @@ OCUDUASN_CODE sl_positioning_ranging_qos_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_positioning_ranging_qos_params_s::to_json(json_writer& j) const
@@ -48002,7 +49558,7 @@ void sl_positioning_ranging_qos_params_s::to_json(json_writer& j) const
 // SLPositioningRangingServiceInfo ::= SEQUENCE
 OCUDUASN_CODE sl_positioning_ranging_service_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_positioning_ranging_qos_params_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -48030,6 +49586,10 @@ OCUDUASN_CODE sl_positioning_ranging_service_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sl_positioning_ranging_service_info_s::to_json(json_writer& j) const
@@ -48112,7 +49672,7 @@ const char* target_ran_node_id_son_ext_ies_o::ext_c::types_opts::to_string() con
 // TargetRANNodeID-SON ::= SEQUENCE
 OCUDUASN_CODE target_ran_node_id_son_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(global_ran_node_id.pack(bref));
@@ -48135,6 +49695,10 @@ OCUDUASN_CODE target_ran_node_id_son_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_ran_node_id_son_s::to_json(json_writer& j) const
@@ -48225,7 +49789,7 @@ const char* xn_ext_tla_item_ext_ies_o::ext_c::types_opts::to_string() const
 // XnExtTLA-Item ::= SEQUENCE
 OCUDUASN_CODE xn_ext_tla_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ip_sec_tla_present, 1));
   HANDLE_CODE(bref.pack(gtp_tlas.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
@@ -48261,6 +49825,10 @@ OCUDUASN_CODE xn_ext_tla_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void xn_ext_tla_item_s::to_json(json_writer& j) const
@@ -48285,7 +49853,7 @@ void xn_ext_tla_item_s::to_json(json_writer& j) const
 // XnTNLConfigurationInfo ::= SEQUENCE
 OCUDUASN_CODE xn_tnl_cfg_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(xn_extended_transport_layer_addresses.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -48314,6 +49882,10 @@ OCUDUASN_CODE xn_tnl_cfg_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void xn_tnl_cfg_info_s::to_json(json_writer& j) const
@@ -48341,7 +49913,7 @@ void xn_tnl_cfg_info_s::to_json(json_writer& j) const
 // SONInformationReply ::= SEQUENCE
 OCUDUASN_CODE son_info_reply_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(xn_tnl_cfg_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -48367,6 +49939,10 @@ OCUDUASN_CODE son_info_reply_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void son_info_reply_s::to_json(json_writer& j) const
@@ -48386,7 +49962,7 @@ void son_info_reply_s::to_json(json_writer& j) const
 // SuccessfulHandoverReport-Item ::= SEQUENCE
 OCUDUASN_CODE successful_ho_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(successful_ho_report_container.pack(bref));
@@ -48406,6 +49982,10 @@ OCUDUASN_CODE successful_ho_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void successful_ho_report_item_s::to_json(json_writer& j) const
@@ -48422,7 +50002,7 @@ void successful_ho_report_item_s::to_json(json_writer& j) const
 // SuccessfulPSCellChangeReport-Item ::= SEQUENCE
 OCUDUASN_CODE successful_pscell_change_report_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(successful_pscell_change_report_container.pack(bref));
@@ -48442,6 +50022,10 @@ OCUDUASN_CODE successful_pscell_change_report_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void successful_pscell_change_report_item_s::to_json(json_writer& j) const
@@ -48729,7 +50313,7 @@ void son_info_report_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE son_info_report_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fail_ind_info:
       HANDLE_CODE(c.get<fail_ind_s>().pack(bref));
@@ -48749,7 +50333,7 @@ OCUDUASN_CODE son_info_report_c::pack(bit_ref& bref) const
 OCUDUASN_CODE son_info_report_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fail_ind_info:
@@ -48949,7 +50533,7 @@ void son_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE son_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::son_info_request:
       HANDLE_CODE(c.get<son_info_request_e>().pack(bref));
@@ -48969,7 +50553,7 @@ OCUDUASN_CODE son_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE son_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::son_info_request:
@@ -48997,7 +50581,7 @@ const char* son_info_c::types_opts::to_string() const
 // SONConfigurationTransfer ::= SEQUENCE
 OCUDUASN_CODE son_cfg_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(xn_tnl_cfg_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -49029,6 +50613,10 @@ OCUDUASN_CODE son_cfg_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void son_cfg_transfer_s::to_json(json_writer& j) const
@@ -49061,7 +50649,7 @@ const char* srvcc_operation_possible_opts::to_string() const
 // ScheduledCommunicationTime ::= SEQUENCE
 OCUDUASN_CODE sched_communication_time_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dayof_week_present, 1));
   HANDLE_CODE(bref.pack(timeof_day_start_present, 1));
   HANDLE_CODE(bref.pack(timeof_day_end_present, 1));
@@ -49103,6 +50691,10 @@ OCUDUASN_CODE sched_communication_time_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sched_communication_time_s::to_json(json_writer& j) const
@@ -49127,7 +50719,7 @@ void sched_communication_time_s::to_json(json_writer& j) const
 // SecondaryRATDataUsageReportTransfer ::= SEQUENCE
 OCUDUASN_CODE secondary_rat_data_usage_report_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(secondary_rat_usage_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -49153,6 +50745,10 @@ OCUDUASN_CODE secondary_rat_data_usage_report_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void secondary_rat_data_usage_report_transfer_s::to_json(json_writer& j) const
@@ -49172,7 +50768,7 @@ void secondary_rat_data_usage_report_transfer_s::to_json(json_writer& j) const
 // SecurityContext ::= SEQUENCE
 OCUDUASN_CODE security_context_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, next_hop_chaining_count, (uint8_t)0u, (uint8_t)7u, false, true));
@@ -49194,6 +50790,10 @@ OCUDUASN_CODE security_context_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void security_context_s::to_json(json_writer& j) const
@@ -49363,7 +50963,7 @@ OCUDUASN_CODE served_guami_item_ext_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 0;
   nof_ies += guami_type_present ? 1 : 0;
   nof_ies += extended_backup_amf_name_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (guami_type_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)176, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -49383,7 +50983,7 @@ OCUDUASN_CODE served_guami_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE served_guami_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -49408,8 +51008,8 @@ OCUDUASN_CODE served_guami_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -49434,7 +51034,7 @@ void served_guami_item_ext_ies_container::to_json(json_writer& j) const
 // ServedGUAMIItem ::= SEQUENCE
 OCUDUASN_CODE served_guami_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(backup_amf_name_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -49462,6 +51062,10 @@ OCUDUASN_CODE served_guami_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void served_guami_item_s::to_json(json_writer& j) const
@@ -49575,7 +51179,7 @@ void ue_history_info_from_the_ue_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_history_info_from_the_ue_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::nr:
       HANDLE_CODE(c.get<unbounded_octstring<true>>().pack(bref));
@@ -49592,7 +51196,7 @@ OCUDUASN_CODE ue_history_info_from_the_ue_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ue_history_info_from_the_ue_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::nr:
@@ -49711,7 +51315,7 @@ void source_node_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE source_node_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::sourceen_gnb_id:
       HANDLE_CODE(c.get<global_gnb_id_s>().pack(bref));
@@ -49728,7 +51332,7 @@ OCUDUASN_CODE source_node_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE source_node_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::sourceen_gnb_id:
@@ -49753,7 +51357,7 @@ const char* source_node_id_c::types_opts::to_string() const
 // TimeBasedHandoverInformation ::= SEQUENCE
 OCUDUASN_CODE time_based_ho_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, ho_win_start, (uint64_t)0u, (uint64_t)549755813887u, false, true));
@@ -49775,6 +51379,10 @@ OCUDUASN_CODE time_based_ho_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void time_based_ho_info_s::to_json(json_writer& j) const
@@ -50227,7 +51835,7 @@ OCUDUASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_i
   nof_ies += candidate_relay_ue_info_list_present ? 1 : 0;
   nof_ies += time_based_ho_info_present ? 1 : 0;
   nof_ies += source_sn_to_target_sn_qmc_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (s_gnb_ue_x2ap_id_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)182, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -50295,7 +51903,7 @@ OCUDUASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_i
 OCUDUASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -50368,8 +51976,8 @@ OCUDUASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_ext_i
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -50446,7 +52054,7 @@ void source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_contai
 // SourceNGRANNode-ToTargetNGRANNode-TransparentContainer ::= SEQUENCE
 OCUDUASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pdu_session_res_info_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(erab_info_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(idx_to_rfsp_present, 1));
@@ -50496,6 +52104,10 @@ OCUDUASN_CODE source_ngran_node_to_target_ngran_node_transparent_container_s::un
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void source_ngran_node_to_target_ngran_node_transparent_container_s::to_json(json_writer& j) const
@@ -50536,7 +52148,7 @@ void source_ngran_node_to_target_ngran_node_transparent_container_s::to_json(jso
 // SourceToTarget-AMFInformationReroute ::= SEQUENCE
 OCUDUASN_CODE source_to_target_amf_info_reroute_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(cfg_nssai_present, 1));
   HANDLE_CODE(bref.pack(rejected_nssai_in_plmn_present, 1));
   HANDLE_CODE(bref.pack(rejected_nssai_in_ta_present, 1));
@@ -50578,6 +52190,10 @@ OCUDUASN_CODE source_to_target_amf_info_reroute_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void source_to_target_amf_info_reroute_s::to_json(json_writer& j) const
@@ -50753,7 +52369,7 @@ OCUDUASN_CODE supported_ta_item_ext_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 0;
   nof_ies += cfg_tac_ind_present ? 1 : 0;
   nof_ies += rat_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (cfg_tac_ind_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)272, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -50773,7 +52389,7 @@ OCUDUASN_CODE supported_ta_item_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE supported_ta_item_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -50798,8 +52414,8 @@ OCUDUASN_CODE supported_ta_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -50824,7 +52440,7 @@ void supported_ta_item_ext_ies_container::to_json(json_writer& j) const
 // SupportedTAItem ::= SEQUENCE
 OCUDUASN_CODE supported_ta_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tac.pack(bref));
@@ -50846,6 +52462,10 @@ OCUDUASN_CODE supported_ta_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void supported_ta_item_s::to_json(json_writer& j) const
@@ -50888,7 +52508,7 @@ const char* suspend_ind_opts::to_string() const
 // TAIListForPagingItem ::= SEQUENCE
 OCUDUASN_CODE tai_list_for_paging_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tai.pack(bref));
@@ -50908,6 +52528,10 @@ OCUDUASN_CODE tai_list_for_paging_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tai_list_for_paging_item_s::to_json(json_writer& j) const
@@ -50925,7 +52549,7 @@ void tai_list_for_paging_item_s::to_json(json_writer& j) const
 // TNLAssociationItem ::= SEQUENCE
 OCUDUASN_CODE tnl_assoc_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(tnl_assoc_address.pack(bref));
@@ -50947,6 +52571,10 @@ OCUDUASN_CODE tnl_assoc_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void tnl_assoc_item_s::to_json(json_writer& j) const
@@ -50966,7 +52594,7 @@ void tnl_assoc_item_s::to_json(json_writer& j) const
 // TargetHomeENB-ID ::= SEQUENCE
 OCUDUASN_CODE target_home_enb_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(plmn_id.pack(bref));
@@ -50990,6 +52618,10 @@ OCUDUASN_CODE target_home_enb_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_home_enb_id_s::to_json(json_writer& j) const
@@ -51070,7 +52702,7 @@ const char* target_ran_node_id_ext_ies_o::ext_c::types_opts::to_string() const
 // TargetRANNodeID ::= SEQUENCE
 OCUDUASN_CODE target_ran_node_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(global_ran_node_id.pack(bref));
@@ -51093,6 +52725,10 @@ OCUDUASN_CODE target_ran_node_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_ran_node_id_s::to_json(json_writer& j) const
@@ -51111,7 +52747,7 @@ void target_ran_node_id_s::to_json(json_writer& j) const
 // TargeteNB-ID ::= SEQUENCE
 OCUDUASN_CODE target_enb_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(global_enb_id.pack(bref));
@@ -51133,6 +52769,10 @@ OCUDUASN_CODE target_enb_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_enb_id_s::to_json(json_writer& j) const
@@ -51152,7 +52792,7 @@ void target_enb_id_s::to_json(json_writer& j) const
 // TargetRNC-ID ::= SEQUENCE
 OCUDUASN_CODE target_rnc_id_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(extended_rnc_id_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -51182,6 +52822,10 @@ OCUDUASN_CODE target_rnc_id_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_rnc_id_s::to_json(json_writer& j) const
@@ -51467,7 +53111,7 @@ void target_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE target_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::target_ran_node_id:
       HANDLE_CODE(c.get<target_ran_node_id_s>().pack(bref));
@@ -51487,7 +53131,7 @@ OCUDUASN_CODE target_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE target_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::target_ran_node_id:
@@ -51584,7 +53228,7 @@ target_ngran_node_to_source_ngran_node_fail_transparent_container_ext_ies_o::ext
 // TargetNGRANNode-ToSourceNGRANNode-FailureTransparentContainer ::= SEQUENCE
 OCUDUASN_CODE target_ngran_node_to_source_ngran_node_fail_transparent_container_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(cell_cag_info_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -51611,6 +53255,10 @@ OCUDUASN_CODE target_ngran_node_to_source_ngran_node_fail_transparent_container_
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_ngran_node_to_source_ngran_node_fail_transparent_container_s::to_json(json_writer& j) const
@@ -51867,7 +53515,7 @@ OCUDUASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_i
   nof_ies += direct_forwarding_path_availability_present ? 1 : 0;
   nof_ies += mbs_active_session_info_targetto_source_list_present ? 1 : 0;
   nof_ies += ngap_ie_support_info_resp_list_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (daps_resp_info_list_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)267, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -51899,7 +53547,7 @@ OCUDUASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_i
 OCUDUASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -51936,8 +53584,8 @@ OCUDUASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_ext_i
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -51984,7 +53632,7 @@ void target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_contai
 // TargetNGRANNode-ToSourceNGRANNode-TransparentContainer ::= SEQUENCE
 OCUDUASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(rrc_container.pack(bref));
@@ -52004,6 +53652,10 @@ OCUDUASN_CODE target_ngran_node_to_source_ngran_node_transparent_container_s::un
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_ngran_node_to_source_ngran_node_transparent_container_s::to_json(json_writer& j) const
@@ -52020,7 +53672,7 @@ void target_ngran_node_to_source_ngran_node_transparent_container_s::to_json(jso
 // TargetNSSAI-Item ::= SEQUENCE
 OCUDUASN_CODE target_nssai_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(s_nssai.pack(bref));
@@ -52040,6 +53692,10 @@ OCUDUASN_CODE target_nssai_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_nssai_item_s::to_json(json_writer& j) const
@@ -52057,7 +53713,7 @@ void target_nssai_item_s::to_json(json_writer& j) const
 // TargetNSSAIInformation ::= SEQUENCE
 OCUDUASN_CODE target_nssai_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_dyn_seq_of(bref, target_nssai, 1, 8, true));
@@ -52079,6 +53735,10 @@ OCUDUASN_CODE target_nssai_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void target_nssai_info_s::to_json(json_writer& j) const
@@ -52162,7 +53822,7 @@ const char* time_sync_assist_info_ext_ies_o::ext_c::types_opts::to_string() cons
 // TimeSyncAssistanceInfo ::= SEQUENCE
 OCUDUASN_CODE time_sync_assist_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(uu_time_sync_error_budget_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -52191,6 +53851,10 @@ OCUDUASN_CODE time_sync_assist_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void time_sync_assist_info_s::to_json(json_writer& j) const
@@ -52399,7 +54063,7 @@ OCUDUASN_CODE trace_activation_ext_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 0;
   nof_ies += mdt_cfg_present ? 1 : 0;
   nof_ies += trace_collection_entity_uri_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (mdt_cfg_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)255, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -52419,7 +54083,7 @@ OCUDUASN_CODE trace_activation_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE trace_activation_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -52444,8 +54108,8 @@ OCUDUASN_CODE trace_activation_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -52470,7 +54134,7 @@ void trace_activation_ext_ies_container::to_json(json_writer& j) const
 // TraceActivation ::= SEQUENCE
 OCUDUASN_CODE trace_activation_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ngran_trace_id.pack(bref));
@@ -52496,6 +54160,10 @@ OCUDUASN_CODE trace_activation_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void trace_activation_s::to_json(json_writer& j) const
@@ -52515,7 +54183,7 @@ void trace_activation_s::to_json(json_writer& j) const
 // UE-DifferentiationInfo ::= SEQUENCE
 OCUDUASN_CODE ue_diff_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(periodic_communication_ind_present, 1));
   HANDLE_CODE(bref.pack(periodic_time_present, 1));
   HANDLE_CODE(bref.pack(sched_communication_time_present, 1));
@@ -52581,6 +54249,10 @@ OCUDUASN_CODE ue_diff_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_diff_info_s::to_json(json_writer& j) const
@@ -52640,7 +54312,7 @@ const char* ue_diff_info_s::battery_ind_opts::to_string() const
 // UE-NGAP-ID-pair ::= SEQUENCE
 OCUDUASN_CODE ue_ngap_id_pair_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
@@ -52662,6 +54334,10 @@ OCUDUASN_CODE ue_ngap_id_pair_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_ngap_id_pair_s::to_json(json_writer& j) const
@@ -52789,7 +54465,7 @@ void ue_ngap_ids_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_ngap_ids_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ue_ngap_id_pair:
       HANDLE_CODE(c.get<ue_ngap_id_pair_s>().pack(bref));
@@ -52809,7 +54485,7 @@ OCUDUASN_CODE ue_ngap_ids_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ue_ngap_ids_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ue_ngap_id_pair:
@@ -52844,7 +54520,7 @@ const char* ue_up_c_iot_support_opts::to_string() const
 // UEAggregateMaximumBitRate ::= SEQUENCE
 OCUDUASN_CODE ue_aggr_max_bit_rate_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, ue_aggr_max_bit_rate_dl, (uint64_t)0u, (uint64_t)4000000000000u, true, true));
@@ -52866,6 +54542,10 @@ OCUDUASN_CODE ue_aggr_max_bit_rate_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_aggr_max_bit_rate_s::to_json(json_writer& j) const
@@ -52897,7 +54577,7 @@ const char* ue_context_request_opts::to_string() const
 // UEContextResumeRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE ue_context_resume_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(qos_flow_failed_to_resume_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -52924,6 +54604,10 @@ OCUDUASN_CODE ue_context_resume_request_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_context_resume_request_transfer_s::to_json(json_writer& j) const
@@ -52946,7 +54630,7 @@ void ue_context_resume_request_transfer_s::to_json(json_writer& j) const
 // UEContextResumeResponseTransfer ::= SEQUENCE
 OCUDUASN_CODE ue_context_resume_resp_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(qos_flow_failed_to_resume_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -52973,6 +54657,10 @@ OCUDUASN_CODE ue_context_resume_resp_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_context_resume_resp_transfer_s::to_json(json_writer& j) const
@@ -52995,7 +54683,7 @@ void ue_context_resume_resp_transfer_s::to_json(json_writer& j) const
 // UEContextSuspendRequestTransfer ::= SEQUENCE
 OCUDUASN_CODE ue_context_suspend_request_transfer_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(suspend_ind_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -53021,6 +54709,10 @@ OCUDUASN_CODE ue_context_suspend_request_transfer_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_context_suspend_request_transfer_s::to_json(json_writer& j) const
@@ -53133,7 +54825,7 @@ void ue_paging_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ue_paging_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::five_g_s_tmsi:
       HANDLE_CODE(c.get<five_g_s_tmsi_s>().pack(bref));
@@ -53150,7 +54842,7 @@ OCUDUASN_CODE ue_paging_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ue_paging_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::five_g_s_tmsi:
@@ -53187,7 +54879,7 @@ const char* ue_presence_opts::to_string() const
 // UEPresenceInAreaOfInterestItem ::= SEQUENCE
 OCUDUASN_CODE ue_presence_in_area_of_interest_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(pack_integer(bref, location_report_ref_id, (uint8_t)1u, (uint8_t)64u, true, true));
@@ -53209,6 +54901,10 @@ OCUDUASN_CODE ue_presence_in_area_of_interest_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_presence_in_area_of_interest_item_s::to_json(json_writer& j) const
@@ -53233,7 +54929,7 @@ const char* ue_retention_info_opts::to_string() const
 // UESecurityCapabilities ::= SEQUENCE
 OCUDUASN_CODE ue_security_cap_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(nr_encryption_algorithms.pack(bref));
@@ -53259,6 +54955,10 @@ OCUDUASN_CODE ue_security_cap_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_security_cap_s::to_json(json_writer& j) const
@@ -53278,7 +54978,7 @@ void ue_security_cap_s::to_json(json_writer& j) const
 // UESliceMaximumBitRateItem ::= SEQUENCE
 OCUDUASN_CODE ue_slice_max_bit_rate_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(s_nssai.pack(bref));
@@ -53302,6 +55002,10 @@ OCUDUASN_CODE ue_slice_max_bit_rate_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_slice_max_bit_rate_item_s::to_json(json_writer& j) const
@@ -53321,7 +55025,7 @@ void ue_slice_max_bit_rate_item_s::to_json(json_writer& j) const
 // UL-CP-SecurityInformation ::= SEQUENCE
 OCUDUASN_CODE ul_cp_security_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(ul_nas_mac.pack(bref));
@@ -53343,6 +55047,10 @@ OCUDUASN_CODE ul_cp_security_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ul_cp_security_info_s::to_json(json_writer& j) const
@@ -53422,7 +55130,7 @@ const char* unavailable_guami_item_ext_ies_o::ext_c::types_opts::to_string() con
 // UnavailableGUAMIItem ::= SEQUENCE
 OCUDUASN_CODE unavailable_guami_item_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(timer_approach_for_guami_removal_present, 1));
   HANDLE_CODE(bref.pack(backup_amf_name_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
@@ -53459,6 +55167,10 @@ OCUDUASN_CODE unavailable_guami_item_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void unavailable_guami_item_s::to_json(json_writer& j) const
@@ -53543,7 +55255,7 @@ const char* user_location_info_eutra_ext_ies_o::ext_c::types_opts::to_string() c
 // UserLocationInformationEUTRA ::= SEQUENCE
 OCUDUASN_CODE user_location_info_eutra_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(time_stamp_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -53574,6 +55286,10 @@ OCUDUASN_CODE user_location_info_eutra_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_location_info_eutra_s::to_json(json_writer& j) const
@@ -53811,7 +55527,7 @@ OCUDUASN_CODE user_location_info_nr_ext_ies_container::pack(bit_ref& bref) const
   nof_ies += n_id_present ? 1 : 0;
   nof_ies += nr_ntn_tai_info_present ? 1 : 0;
   nof_ies += mobile_iab_mt_user_location_info_present ? 1 : 0;
-  pack_length(bref, nof_ies, 1u, 65535u, true);
+  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
 
   if (pscell_info_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)149, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -53843,7 +55559,7 @@ OCUDUASN_CODE user_location_info_nr_ext_ies_container::pack(bit_ref& bref) const
 OCUDUASN_CODE user_location_info_nr_ext_ies_container::unpack(cbit_ref& bref)
 {
   uint32_t nof_ies = 0;
-  unpack_length(nof_ies, bref, 1u, 65535u, true);
+  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
 
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
@@ -53880,8 +55596,8 @@ OCUDUASN_CODE user_location_info_nr_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
-        return OCUDUASN_ERROR_DECODE_FAIL;
+        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
+        break;
     }
   }
 
@@ -53916,7 +55632,7 @@ void user_location_info_nr_ext_ies_container::to_json(json_writer& j) const
 // UserLocationInformationNR ::= SEQUENCE
 OCUDUASN_CODE user_location_info_nr_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(time_stamp_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -53946,6 +55662,10 @@ OCUDUASN_CODE user_location_info_nr_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_location_info_nr_s::to_json(json_writer& j) const
@@ -54031,7 +55751,7 @@ const char* user_location_info_n3_iwf_with_port_num_ext_ies_o::ext_c::types_opts
 // UserLocationInformationN3IWF-with-PortNumber ::= SEQUENCE
 OCUDUASN_CODE user_location_info_n3_iwf_with_port_num_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
   HANDLE_CODE(ip_address.pack(bref));
@@ -54054,6 +55774,10 @@ OCUDUASN_CODE user_location_info_n3_iwf_with_port_num_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_location_info_n3_iwf_with_port_num_s::to_json(json_writer& j) const
@@ -54132,7 +55856,7 @@ const char* user_location_info_tngf_ext_ies_o::ext_c::types_opts::to_string() co
 // UserLocationInformationTNGF ::= SEQUENCE
 OCUDUASN_CODE user_location_info_tngf_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(port_num_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -54163,6 +55887,10 @@ OCUDUASN_CODE user_location_info_tngf_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_location_info_tngf_s::to_json(json_writer& j) const
@@ -54244,7 +55972,7 @@ const char* user_location_info_twif_ext_ies_o::ext_c::types_opts::to_string() co
 // UserLocationInformationTWIF ::= SEQUENCE
 OCUDUASN_CODE user_location_info_twif_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(port_num_present, 1));
   HANDLE_CODE(bref.pack(ie_exts.size() > 0, 1));
 
@@ -54275,6 +56003,10 @@ OCUDUASN_CODE user_location_info_twif_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(ie_exts, bref, 1, 65535, true));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_location_info_twif_s::to_json(json_writer& j) const
@@ -54586,7 +56318,7 @@ void user_location_info_w_agf_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE user_location_info_w_agf_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::global_line_id:
       HANDLE_CODE(c.get<global_line_id_s>().pack(bref));
@@ -54606,7 +56338,7 @@ OCUDUASN_CODE user_location_info_w_agf_c::pack(bit_ref& bref) const
 OCUDUASN_CODE user_location_info_w_agf_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::global_line_id:
@@ -54634,7 +56366,7 @@ const char* user_location_info_w_agf_c::types_opts::to_string() const
 // UserLocationInformationN3IWF-without-PortNumber ::= SEQUENCE
 OCUDUASN_CODE user_location_info_n3_iwf_without_port_num_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(tai_present, 1));
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
@@ -54662,6 +56394,10 @@ OCUDUASN_CODE user_location_info_n3_iwf_without_port_num_s::unpack(cbit_ref& bre
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void user_location_info_n3_iwf_without_port_num_s::to_json(json_writer& j) const
@@ -55040,7 +56776,7 @@ void user_location_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE user_location_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::user_location_info_eutra:
       HANDLE_CODE(c.get<user_location_info_eutra_s>().pack(bref));
@@ -55063,7 +56799,7 @@ OCUDUASN_CODE user_location_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE user_location_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::user_location_info_eutra:
@@ -55105,7 +56841,7 @@ uint8_t user_location_info_c::types_opts::to_number() const
 // WUS-Assistance-Information ::= SEQUENCE
 OCUDUASN_CODE wus_assist_info_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ie_exts_present, 1));
 
   HANDLE_CODE(paging_probability_info.pack(bref));
@@ -55125,6 +56861,10 @@ OCUDUASN_CODE wus_assist_info_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ie_exts.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref, true);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void wus_assist_info_s::to_json(json_writer& j) const
@@ -55310,7 +57050,7 @@ void warning_area_list_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE warning_area_list_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra_cgi_list_for_warning:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<eutra_cgi_list_for_warning_l>(), 1, 65535, true));
@@ -55336,7 +57076,7 @@ OCUDUASN_CODE warning_area_list_c::pack(bit_ref& bref) const
 OCUDUASN_CODE warning_area_list_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra_cgi_list_for_warning:

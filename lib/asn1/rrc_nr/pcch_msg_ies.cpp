@@ -129,7 +129,7 @@ void paging_ue_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE paging_ue_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ng_5_g_s_tmsi:
       HANDLE_CODE(c.get<fixed_bitstring<48>>().pack(bref));
@@ -146,7 +146,7 @@ OCUDUASN_CODE paging_ue_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE paging_ue_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ng_5_g_s_tmsi:
@@ -176,7 +176,7 @@ int8_t paging_ue_id_c::types_opts::to_number() const
 // PagingRecord ::= SEQUENCE
 OCUDUASN_CODE paging_record_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(access_type_present, 1));
 
   HANDLE_CODE(ue_id.pack(bref));
@@ -190,6 +190,10 @@ OCUDUASN_CODE paging_record_s::unpack(cbit_ref& bref)
 
   HANDLE_CODE(ue_id.unpack(bref));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void paging_record_s::to_json(json_writer& j) const

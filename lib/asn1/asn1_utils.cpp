@@ -130,14 +130,15 @@ int bit_ref::distance() const
 
 OCUDUASN_CODE bit_ref::pack(uint64_t val, uint32_t n_bits)
 {
-  ocudu_assert(n_bits < 64, "Invalid number of bits passed to pack()");
+  ocudu_assert(n_bits <= 64, "Invalid number of bits passed to pack()");
   while (n_bits > 0) {
     if (offset == 0) {
       if (not writer.append(0)) {
         return OCUDUASN_ERROR;
       }
     }
-    uint64_t mask = ((1ul << n_bits) - 1ul); // bitmap of n_bits ones.
+    // Bitmap of n_bits ones, avoiding the undefined 64-bit shift.
+    uint64_t mask = n_bits == 64 ? ~0UL : ((1UL << n_bits) - 1UL);
     val           = val & mask;
     if (static_cast<uint32_t>(8U - offset) > n_bits) {
       // in case n_bits < number of bits left in current byte (ie, last iteration).
@@ -227,7 +228,9 @@ int cbit_ref::distance(const cbit_ref& other) const
 template <class T>
 OCUDUASN_CODE cbit_ref::unpack(T& val, uint32_t n_bits)
 {
-  ocudu_assert(n_bits <= sizeof(T) * 8, "unpack_bits() only supports up to {} bits", sizeof(T) * 8);
+  if (n_bits > sizeof(T) * 8) {
+    return OCUDUASN_ERROR_DECODE_FAIL;
+  }
   val = 0;
   while (n_bits > 0) {
     if (it == buffer.end()) {
@@ -424,6 +427,16 @@ ValOrError unpack_enum(uint32_t nof_types, uint32_t nof_exts, bool has_ext, cbit
  * @param ub upper bound
  * @return success or failure
  */
+/// Number of bits needed to represent an unsigned value.
+static uint32_t bit_width(uint64_t v)
+{
+  uint32_t n = 0;
+  for (; v != 0; v >>= 1) {
+    ++n;
+  }
+  return n;
+}
+
 template <class IntType>
 OCUDUASN_CODE pack_constrained_whole_number(bit_ref& bref, IntType n, IntType lb, IntType ub, bool aligned)
 {
@@ -431,38 +444,34 @@ OCUDUASN_CODE pack_constrained_whole_number(bit_ref& bref, IntType n, IntType lb
     log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)n, (long)ub);
     return OCUDUASN_ERROR_ENCODE_FAIL;
   }
-  uint64_t ra = (uint64_t)(ub - lb) + 1; // NOTE: Can overflow if IntType is kept
-  if (ra == 1) {
+  // Unsigned arithmetic, since the range of a 64-bit type does not fit in it.
+  uint64_t max_offset = (uint64_t)ub - (uint64_t)lb;
+  if (max_offset == 0) {
     return OCUDUASN_SUCCESS;
   }
-  uint32_t n_bits   = (uint32_t)std::ceil(std::log2((float)ra)); // bit-field size
-  IntType  toencode = n - lb;
+  uint32_t n_bits   = bit_width(max_offset);
+  uint64_t toencode = (uint64_t)n - (uint64_t)lb;
   if (not aligned) {
     // UNALIGNED variant
-    bref.pack(toencode, n_bits);
-  } else {
-    // ALIGNED variant
-    OCUDUASN_CODE ret;
-    if (ra < 256) {
-      ret = bref.pack(toencode, n_bits);
-    } else if (ra <= ASN_64K) {
-      // both one and two octets cases
-      uint32_t n_octets = ceil_frac(n_bits, 8u);
-      HANDLE_CODE(bref.align_bytes_zero());
-      HANDLE_CODE(bref.pack(0, n_octets * 8 - n_bits));
-      HANDLE_CODE(bref.pack(toencode, n_bits));
-      ret = bref.align_bytes_zero();
-    } else {
-      uint32_t n_bits_len = (uint32_t)std::ceil(std::log2(ceil_frac(n_bits, 8u)));
-      n_bits              = (uint32_t)std::floor(std::log2(std::max(toencode, (IntType)1)) + 1);
-      uint32_t n_octets   = ceil_frac(n_bits, 8u);
-      HANDLE_CODE(bref.pack(n_octets - 1, n_bits_len));
-      HANDLE_CODE(bref.align_bytes_zero());
-      ret = bref.pack(toencode, n_octets * 8u);
-    }
-    return ret;
+    return bref.pack(toencode, n_bits);
   }
-  return OCUDUASN_SUCCESS;
+  // ALIGNED variant
+  if (max_offset < 255) {
+    return bref.pack(toencode, n_bits);
+  }
+  if (max_offset < ASN_64K) {
+    // both one and two octets cases
+    uint32_t n_octets = ceil_frac(n_bits, 8u);
+    HANDLE_CODE(bref.align_bytes_zero());
+    HANDLE_CODE(bref.pack(toencode, n_octets * 8));
+    return bref.align_bytes_zero();
+  }
+  // Octet count as a constrained whole number in 1..max octets, followed by the minimum octets.
+  uint32_t max_octets = ceil_frac(n_bits, 8u);
+  uint32_t n_octets   = std::max(ceil_frac(bit_width(toencode), 8u), 1u);
+  HANDLE_CODE(bref.pack(n_octets - 1, bit_width(max_octets - 1)));
+  HANDLE_CODE(bref.align_bytes_zero());
+  return bref.pack(toencode, n_octets * 8u);
 }
 template OCUDUASN_CODE
 pack_constrained_whole_number<int8_t>(bit_ref& bref, int8_t n, int8_t lb, int8_t ub, bool aligned);
@@ -498,41 +507,36 @@ OCUDUASN_CODE unpack_constrained_whole_number(IntType& n, cbit_ref& bref, IntTyp
     log_error("The condition lb <= ub ({} <= {}) was not met", (long)lb, (long)ub);
     return OCUDUASN_ERROR_DECODE_FAIL;
   }
-  uint64_t ra = (uint64_t)(ub - lb) + 1; // NOTE: Can overflow if IntType is kept.
-  if (ra == 1) {
-    n = lb;
-    return OCUDUASN_SUCCESS;
-  }
-  uint32_t n_bits = (uint32_t)std::ceil(std::log2((float)ra));
-  if (not aligned) {
-    // UNALIGNED variant
-    HANDLE_CODE(bref.unpack(n, n_bits));
-    n += lb;
+  // Unsigned arithmetic, since the range of a 64-bit type does not fit in it.
+  uint64_t max_offset = (uint64_t)ub - (uint64_t)lb;
+  uint64_t offset     = 0;
+  uint32_t n_bits     = bit_width(max_offset);
+  if (max_offset == 0) {
+    // Single value, nothing to decode.
+  } else if (not aligned or max_offset < 255) {
+    HANDLE_CODE(bref.unpack(offset, n_bits));
+  } else if (max_offset < ASN_64K) {
+    HANDLE_CODE(bref.align_bytes());
+    HANDLE_CODE(bref.unpack(offset, ceil_frac(n_bits, 8u) * 8));
+    HANDLE_CODE(bref.align_bytes());
   } else {
-    // ALIGNED variant
-    if (ra < 256) {
-      HANDLE_CODE(bref.unpack(n, n_bits));
-    } else if (ra <= ASN_64K) {
-      uint32_t n_octets = ceil_frac(n_bits, 8u);
-      HANDLE_CODE(bref.align_bytes());
-      HANDLE_CODE(bref.unpack(n, n_octets * 8));
-      HANDLE_CODE(bref.align_bytes());
-    } else {
-      uint32_t n_bits_len = (uint32_t)std::ceil(std::log2(ceil_frac(n_bits, 8u)));
-      uint32_t n_octets;
-      HANDLE_CODE(bref.unpack(n_octets, n_bits_len));
-      n_octets += 1;
-      HANDLE_CODE(bref.align_bytes());
-      HANDLE_CODE(bref.unpack(n, n_octets * 8));
+    uint32_t max_octets = ceil_frac(n_bits, 8u);
+    uint32_t n_octets;
+    HANDLE_CODE(bref.unpack(n_octets, bit_width(max_octets - 1)));
+    n_octets += 1;
+    if (n_octets > max_octets) {
+      log_error("Integer of {} octets exceeds the maximum of {} octets", n_octets, max_octets);
+      return OCUDUASN_ERROR_DECODE_FAIL;
     }
-    n += lb;
+    HANDLE_CODE(bref.align_bytes());
+    HANDLE_CODE(bref.unpack(offset, n_octets * 8));
   }
-
-  if (n > ub) {
-    log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met\n", lb, n, ub);
+  if (offset > max_offset) {
+    log_error(
+        "The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)((uint64_t)lb + offset), (long)ub);
     return OCUDUASN_ERROR_DECODE_FAIL;
   }
-
+  n = (IntType)((uint64_t)lb + offset);
   return OCUDUASN_SUCCESS;
 }
 template OCUDUASN_CODE
@@ -852,18 +856,11 @@ OCUDUASN_CODE pack_integer(bit_ref& bref, IntType n, IntType lb, IntType ub, boo
     log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)n, (long)ub);
     return OCUDUASN_ERROR_ENCODE_FAIL;
   }
+  // Type limits of signed integers stand for absent bounds; unsigned integers are always constrained.
   bool lower_bounded = lb != std::numeric_limits<IntType>::min() or std::is_unsigned<IntType>::value;
-  bool upper_bounded = ub != std::numeric_limits<IntType>::max();
+  bool upper_bounded = ub != std::numeric_limits<IntType>::max() or std::is_unsigned<IntType>::value;
 
   if (within_bounds and lower_bounded and upper_bounded) {
-    // constrained case
-    if (lb == ub) {
-      return OCUDUASN_SUCCESS;
-    }
-    // TODO: Check if we are in the indefinite length case, and pack length prefix if needed
-    //    if(indefinite_length) {
-    //      HANDLE_CODE(pack_length(bref, n, 1, ceilf(log2f()), aligned));
-    //    }
     HANDLE_CODE(pack_constrained_whole_number(bref, n, (IntType)lb, (IntType)ub, aligned));
   } else {
     // See X.691 - 12.2.6
@@ -871,8 +868,8 @@ OCUDUASN_CODE pack_integer(bit_ref& bref, IntType n, IntType lb, IntType ub, boo
       HANDLE_CODE(pack_length(bref, unconstrained_whole_number_length(n), aligned));
       HANDLE_CODE(pack_unconstrained_whole_number(bref, n, aligned));
     } else {
-      // pack as semi-constrained
-      // TODO
+      log_error("Semi-constrained integers are not supported");
+      return OCUDUASN_ERROR_ENCODE_FAIL;
     }
   }
   return OCUDUASN_SUCCESS;
@@ -913,15 +910,11 @@ OCUDUASN_CODE unpack_integer(IntType& n, cbit_ref& bref, IntType lb, IntType ub,
     HANDLE_CODE(bref.unpack(within_bounds, 1));
     within_bounds = not within_bounds;
   }
+  // Type limits of signed integers stand for absent bounds; unsigned integers are always constrained.
   bool lower_bounded = lb != std::numeric_limits<IntType>::min() or std::is_unsigned<IntType>::value;
-  bool upper_bounded = ub != std::numeric_limits<IntType>::max();
+  bool upper_bounded = ub != std::numeric_limits<IntType>::max() or std::is_unsigned<IntType>::value;
 
   if (within_bounds and lower_bounded and upper_bounded) {
-    // constrained case
-    if (lb == ub) {
-      return OCUDUASN_SUCCESS;
-    }
-    // TODO: Check if we are in the indefinite length case, and pack length prefix if needed
     HANDLE_CODE(unpack_constrained_whole_number(n, bref, (IntType)lb, (IntType)ub, aligned));
   } else {
     // See X.691 - 12.2.6
@@ -930,8 +923,8 @@ OCUDUASN_CODE unpack_integer(IntType& n, cbit_ref& bref, IntType lb, IntType ub,
       HANDLE_CODE(unpack_length(len, bref, aligned));
       HANDLE_CODE(unpack_unconstrained_whole_number(n, bref, len, aligned));
     } else {
-      // pack as semi-constrained
-      // TODO
+      log_error("Semi-constrained integers are not supported");
+      return OCUDUASN_ERROR_DECODE_FAIL;
     }
   }
   return OCUDUASN_SUCCESS;
@@ -1239,23 +1232,17 @@ static OCUDUASN_CODE pack_length_prefix(bit_ref& bref,
     HANDLE_CODE(bref.pack(not within_bounds, 1));
   }
 
+  // pack as unbounded if unbounded bitstring or ext is active
+  if (ub == std::numeric_limits<uint32_t>::max() or not within_bounds) {
+    return pack_length(bref, len, is_aligned);
+  }
+
   // do not encode prefix if fixed size
-  if (lb == ub and within_bounds) {
+  if (lb == ub) {
     return OCUDUASN_SUCCESS;
   }
 
-  // pack as unbounded if unbounded bitstring or ext is active
-  if (ub == std::numeric_limits<uint32_t>::max() or not within_bounds) {
-    return pack_length(bref, len);
-  }
-
-  // pack as bounded bitstring
-  uint32_t len_bits = (uint32_t)std::ceil(std::log2(ub - lb));
-  HANDLE_CODE(bref.pack(len - lb, len_bits));
-  if (is_aligned) {
-    HANDLE_CODE(bref.align_bytes_zero());
-  }
-  return OCUDUASN_SUCCESS;
+  return pack_length(bref, len, lb, ub, is_aligned);
 }
 
 static OCUDUASN_CODE
@@ -1284,6 +1271,10 @@ OCUDUASN_CODE
 pack(bit_ref& bref, const uint8_t* data, uint32_t len, uint32_t lb, uint32_t ub, bool has_ext, bool is_aligned)
 {
   HANDLE_CODE(bitstring_utils::pack_length_prefix(bref, len, lb, ub, has_ext, is_aligned));
+  if (len < lb or len > ub) {
+    // Lengths outside the root range are encoded as if unbounded.
+    return pack_bitfield(bref, data, len, 0, std::numeric_limits<uint32_t>::max(), is_aligned);
+  }
   return pack_bitfield(bref, data, len, lb, ub, is_aligned);
 }
 
@@ -1313,12 +1304,11 @@ unpack_length_prefix(uint32_t& len, cbit_ref& bref, uint32_t lb, uint32_t ub, bo
 
   // constrained, simple case
   HANDLE_CODE(unpack_length(len, bref, lb, ub, is_aligned));
-  //  if (is_aligned) {
-  //    HANDLE_CODE(bref.align_bytes_zero());
-  //  }
-  //  uint32_t len_bits = ceilf(log2f(ub - lb));
-  //  HANDLE_CODE(bref.unpack(len, len_bits));
-  //  len += lb;
+  // Lengths with an upper bound of 64K or more are decoded without range check.
+  if (len < lb or len > ub) {
+    log_error("bitstring length={} is not within bounds [{}, {}]", len, lb, ub);
+    return OCUDUASN_ERROR_DECODE_FAIL;
+  }
   return OCUDUASN_SUCCESS;
 }
 
@@ -1430,24 +1420,27 @@ OCUDUASN_CODE
 pack(bit_ref& bref, const std::string& s, size_t lb, size_t ub, size_t alb, size_t aub, bool ext, bool aligned)
 {
   bool within_limits = s.size() >= alb and s.size() <= aub;
-  if (not within_limits) {
-    // TODO: print error
-    // NOTE: This should be valid for exts
+  if (not within_limits and not ext) {
     log_error("The PrintableString size={} is not within the limits [{}, {}]", s.size(), alb, aub);
     return OCUDUASN_ERROR_ENCODE_FAIL;
+  }
+  if (ext) {
+    HANDLE_CODE(bref.pack(not within_limits, 1));
+  }
+  if (not within_limits) {
+    // Sizes outside the root range are encoded as if unbounded.
+    alb = 0;
+    aub = std::numeric_limits<uint32_t>::max();
   }
   size_t b              = asn_string_utils::get_nof_bits_per_char(lb, ub, aligned);
   bool   octet_aligned  = asn_string_utils::is_octet_aligned(b, alb, aub, aligned);
   bool   length_encoded = asn_string_utils::is_length_encoded(alb, aub, aligned);
 
-  if (ext) {
-    HANDLE_CODE(bref.pack(0, 1));
-  }
   if (length_encoded) {
-    pack_length(bref, s.size(), alb, aub, octet_aligned);
+    HANDLE_CODE(pack_length(bref, s.size(), alb, aub, octet_aligned));
   }
   if (octet_aligned) {
-    bref.align_bytes_zero();
+    HANDLE_CODE(bref.align_bytes_zero());
   }
   for (char c : s) {
     HANDLE_CODE(bref.pack(c, b));
@@ -1458,24 +1451,25 @@ pack(bit_ref& bref, const std::string& s, size_t lb, size_t ub, size_t alb, size
 OCUDUASN_CODE
 unpack(std::string& s, cbit_ref& bref, size_t lb, size_t ub, size_t alb, size_t aub, bool ext, bool aligned)
 {
+  bool is_ext = false;
+  if (ext) {
+    HANDLE_CODE(bref.unpack(is_ext, 1));
+  }
+  if (is_ext) {
+    // Sizes outside the root range are encoded as if unbounded.
+    alb = 0;
+    aub = std::numeric_limits<uint32_t>::max();
+  }
   size_t b              = asn_string_utils::get_nof_bits_per_char(lb, ub, aligned);
   bool   octet_aligned  = asn_string_utils::is_octet_aligned(b, alb, aub, aligned);
   bool   length_encoded = asn_string_utils::is_length_encoded(alb, aub, aligned);
-  if (ext) {
-    bool is_ext;
-    HANDLE_CODE(bref.unpack(is_ext, 1));
-    if (is_ext) {
-      log_error("Extension of PrintableString not supported");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-    }
-  }
   if (length_encoded) {
     size_t n;
-    unpack_length(n, bref, alb, aub, octet_aligned);
+    HANDLE_CODE(unpack_length(n, bref, alb, aub, octet_aligned));
     s.resize(n);
   }
   if (octet_aligned) {
-    bref.align_bytes();
+    HANDLE_CODE(bref.align_bytes());
   }
   for (char& c : s) {
     HANDLE_CODE(bref.unpack(c, b));
@@ -1497,6 +1491,16 @@ bool& ext_groups_packer_guard::operator[](uint32_t idx)
     std::fill(&groups[prev_size], &groups[groups.size()], false);
   }
   return groups[idx];
+}
+
+bool ext_groups_packer_guard::any() const
+{
+  for (uint32_t i = 0; i != groups.size(); ++i) {
+    if (groups[i]) {
+      return true;
+    }
+  }
+  return false;
 }
 
 OCUDUASN_CODE ext_groups_packer_guard::pack(asn1::bit_ref& bref) const
@@ -1618,6 +1622,10 @@ OCUDUASN_CODE ext_groups_unpacker::unpack_next_group()
 
 OCUDUASN_CODE ext_groups_unpacker::consume_remaining_groups(cbit_ref& bref)
 {
+  if (state == state_t::unpack_presence_flags) {
+    // No group was unpacked yet, so the presence flags are still pending.
+    HANDLE_CODE(unpack_next_group());
+  }
   while (next_group_idx < nof_unpacked_groups) {
     HANDLE_CODE(unpack_next_group());
   }
@@ -1638,6 +1646,10 @@ varlength_field_pack_guard::varlength_field_pack_guard(bit_ref& bref, bool align
 
 varlength_field_pack_guard::~varlength_field_pack_guard()
 {
+  if (bref_tracker->distance() == 0) {
+    // X.691 replaces an empty complete encoding, e.g. of NULL, with a single zero octet.
+    bref_tracker->pack(0, 8);
+  }
   // fill the spare bits
   uint32_t leftover = 7U - ((bref_tracker->distance() - (uint32_t)1U) % (uint32_t)8U);
   bref_tracker->pack(0, leftover);
@@ -1803,6 +1815,17 @@ std::string json_writer::to_string() const
 /************************
    General Layer Types
 ************************/
+
+OCUDUASN_CODE skip_ignored_ie(cbit_ref& bref, crit_e crit, uint32_t id)
+{
+  if (crit != crit_e::ignore) {
+    log_error("Unpacked object ID={} is not recognized", id);
+    return OCUDUASN_ERROR_DECODE_FAIL;
+  }
+  uint32_t len;
+  HANDLE_CODE(unpack_length(len, bref, true));
+  return bref.advance_bytes(len);
+}
 
 uint32_t detail::base_empty_obj_set::idx_to_id(uint32_t idx)
 {

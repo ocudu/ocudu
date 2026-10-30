@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "asn1_test_utils.h"
 #include "ocudu/asn1/e2sm/e2sm.h"
 #include <gtest/gtest.h>
 
@@ -39,7 +40,7 @@ TEST_F(asn1_e2sm_test, unpack_ric_control_header)
   asn1::e2sm::e2sm_rc_ctrl_hdr_s pdu;
   ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_e2sm_test, unpack_ric_control_message)
@@ -106,7 +107,7 @@ TEST_F(asn1_e2sm_test, unpack_ric_control_message)
   ASSERT_EQ(seq_params[3].ran_param_value_type.type().value,
             asn1::e2sm::ran_param_value_type_c::types_opts::ran_p_choice_elem_false);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_e2sm_test, pack_unpack_action_definition_with_negative_test_cond_values)

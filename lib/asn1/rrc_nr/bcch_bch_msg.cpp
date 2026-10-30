@@ -142,7 +142,7 @@ void bcch_bch_msg_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE bcch_bch_msg_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::mib:
       HANDLE_CODE(c.pack(bref));
@@ -158,7 +158,7 @@ OCUDUASN_CODE bcch_bch_msg_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE bcch_bch_msg_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::mib:

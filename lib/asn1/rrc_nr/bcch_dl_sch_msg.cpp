@@ -44,7 +44,7 @@ void bcch_dl_sch_msg_type_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE bcch_dl_sch_msg_type_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::c1:
       HANDLE_CODE(c.pack(bref));
@@ -60,7 +60,7 @@ OCUDUASN_CODE bcch_dl_sch_msg_type_c::pack(bit_ref& bref) const
 OCUDUASN_CODE bcch_dl_sch_msg_type_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::c1:
@@ -120,7 +120,7 @@ void bcch_dl_sch_msg_type_c::c1_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE bcch_dl_sch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::sys_info:
       HANDLE_CODE(c.get<sys_info_s>().pack(bref));
@@ -137,7 +137,7 @@ OCUDUASN_CODE bcch_dl_sch_msg_type_c::c1_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE bcch_dl_sch_msg_type_c::c1_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::sys_info:

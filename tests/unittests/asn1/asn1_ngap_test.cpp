@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "asn1_test_utils.h"
 #include "ocudu/asn1/ngap/common.h"
 #include "ocudu/asn1/ngap/ngap.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
@@ -72,7 +73,7 @@ TEST_F(asn1_ngap_test, when_setup_message_correct_then_packing_successful)
   asn1::bit_ref      bref(tx_buffer);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
 #if JSON_OUTPUT
@@ -116,7 +117,7 @@ TEST_F(asn1_ngap_test, when_setup_response_correct_then_packing_successful)
   asn1::bit_ref      bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
@@ -149,7 +150,7 @@ TEST_F(asn1_ngap_test, when_setup_failure_correct_then_packing_successful)
   asn1::bit_ref      bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
@@ -202,7 +203,7 @@ TEST_F(asn1_ngap_test, ng_setup_request_pack_and_unpack)
   ASSERT_EQ(ngsetup->default_paging_drx.value, paging_drx_opts::v256);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   json_writer js;
   pdu.to_json(js);
@@ -245,7 +246,7 @@ TEST_F(asn1_ngap_test, ng_setup_response_pack_and_unpack)
   // ...
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_ngap_test, amf_config_update)
@@ -271,7 +272,7 @@ TEST_F(asn1_ngap_test, amf_config_update)
   ASSERT_EQ("tstran", amf_name.to_string());
 
   ASSERT_EQ(sizeof(ngap_msg), std::ceil(bref.distance_bytes()));
-  ASSERT_EQ(OCUDUASN_SUCCESS, test_pack_unpack_consistency(pdu));
+  ASSERT_EQ(OCUDUASN_SUCCESS, test_pack_roundtrip(pdu));
 
   json_writer js;
   pdu.to_json(js);
@@ -312,7 +313,7 @@ TEST_F(asn1_ngap_test, init_ue_msg_pack_and_unpack)
   ASSERT_EQ(container.user_location_info.user_location_info_nr().nr_cgi.plmn_id.to_number(), 0xf110);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_ngap_test, dl_nas_transport_pack_and_unpack)
@@ -341,7 +342,7 @@ TEST_F(asn1_ngap_test, dl_nas_transport_pack_and_unpack)
   ASSERT_EQ(dl_nas->nas_pdu.size(), 42);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_ngap_test, ul_ran_status_transfer_pack_and_unpack)
@@ -368,7 +369,7 @@ TEST_F(asn1_ngap_test, ul_ran_status_transfer_pack_and_unpack)
   ASSERT_EQ(ul_nas->nas_pdu.size(), 21);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_ngap_test, ue_context_release_pack_and_unpack)
@@ -389,7 +390,7 @@ TEST_F(asn1_ngap_test, ue_context_release_pack_and_unpack)
   ASSERT_EQ(pdu.init_msg().value.type().value, ngap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_ngap_test, ue_context_release_complete_pack_and_unpack)
@@ -411,7 +412,7 @@ TEST_F(asn1_ngap_test, ue_context_release_complete_pack_and_unpack)
             ngap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_ngap_test, session_res_setup_request_pack_and_unpack)
@@ -452,8 +453,70 @@ TEST_F(asn1_ngap_test, session_res_setup_request_pack_and_unpack)
             "11000000101010000001000111010010");
 
   ASSERT_EQ(bref2.distance_bytes(), (int)item.pdu_session_res_setup_request_transfer.size());
-  ASSERT_EQ(test_pack_unpack_consistency(req), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(req), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(bref.distance_bytes(), sizeof(ngap_msg));
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
+}
+
+// Real PDUs from lab captures.
+static const std::vector<capture_pdu> ngap_captures = {
+    {"DownlinkNASTransport",
+     "00044047000003000a00032004de005500034004de00260032317e02ba58bbfb057951d39e1c5b66740d12d055d16016"
+     "986ef0f1d2f1d8e2ab282340f69439f6a8e705338ab2bb22da341c"},
+    {"ErrorIndication [Cause: RadioNetwork=interaction-with-other-procedure]",
+     "00094017000003000a400320015500554003400155000f40020640"},
+    {"InitialContextSetupRequest",
+     "000e0080da00000c000a0002006400550002000000124018096cbe0000f110000007000101184002956c016d40021768"
+     "001c00070000f1108001010000000502010000010077000918000c000000000000005e002055bd06a5c3b3ee82b6090d"
+     "e6b71e2f30001d691bcab7516d52f01bc171c895fa002440040000f110002240080123456700ffff0100264048477e02"
+     "d4227c0e017e0042010977000bf200f110800101be0d956c54070000f11000000715050401000001310a040100000104"
+     "0200002a21020f005e01be3408031f19f1031f11f2005b4001000092400100"},
+    {"InitialUEMessage, Registration request [RRCEstablishmentCause=mo-Signalling]",
+     "000f407b0000060055000340077a00260045447e0181813156027e004109000bf200f110f511b2c00003f32e02e0e071"
+     "0025d1b483df33730a5a596c4f22825e51c5f199e74c2657f9a9238dcc050164fa94389c3a37dd0079000f4000f11000"
+     "0004000000f110000001005a400118001a0007046c80c00003f30070400100"},
+    {"NGSetupRequest",
+     "00150036000004001b00090000f110500000019b0052400903006f6375647530310066001000000000070000f1100000"
+     "10080000010015400160"},
+    {"Paging", "0018401900000200734007023640c0000001006740070000f110000001"},
+    {"PDUSessionResourceSetupRequest",
+     "001d0080d9000004000a00020064005500020000004a0080b6004001767e0213d95907037e00680100672e0101c21100"
+     "0901000631300101ff010606271004b71b290501c0a80302220401000001817900060120410101097b00188080210a03"
+     "00000a810608080808000d0408080808001100251c08696e7465726e6574066d6e63303031066d636330303104677072"
+     "7312014020000001360000050082000b1002540be40030b2d05e00008b000a01f0ac1400482d36ef410086000100008a"
+     "000209000088000700010000093800006e400b1002540be40030b2d05e00"},
+    {"UEContextReleaseCommand [Cause: RadioNetwork=radio-connection-with-ue-lost]",
+     "0029001300000200720006020105400105000f40020540"},
+    {"UEContextReleaseRequest [Cause: RadioNetwork=radio-connection-with-ue-lost]",
+     "002a401e000004000a00032001050055000340010500850003000001000f40020540"},
+    {"UERadioCapabilityInfoIndication",
+     "002c40809a000003000a000200640055000200000075408086808404040887fc1a033a0474e5a02dfbd8387200001609"
+     "317000183f0d000c6ffc005c00a62e26c800000864000356830001801e81c790e7c000082e007fe003801ff800544000"
+     "006cbe000be00000100389a00000000404d2f00000007008091f000000000000052aa0002000012cb28007954147c000"
+     "02d003c00040000001002004090280"},
+    {"UplinkNASTransport",
+     "002e406d000004000a0002006400550002000000260047467e02f349ef1f027e006701002b2e0101c1ffff91b17b0020"
+     "8080211001000010810600000000830600000000000a00001000000d00001100120181250908696e7465726e65740079"
+     "400f4000f1100000019b0000f110000007"},
+    {"InitialContextSetupResponse",
+     "200e0026000003000a400320038e0055400340038e004840110000010d0003e0ac150183000003440005"},
+    {"NGSetupResponse",
+     "2015005d000004000100311700616d617269736f66742e616d662e3567632e6d6e633030312e6d63633030312e336770"
+     "706e6574776f726b2e6f726700600008000000f1108001010056400132005000100000f1100001100800000110100000"
+     "2a"},
+    {"PDUSessionResourceSetupResponse",
+     "201d0026000003000a400320010000554003400100004b40110000010d0003e0ac150183000001010005"},
+    {"UEContextReleaseComplete",
+     "2029002b000004000a4003200100005540034001000079400f4000f110000004000000f110000001003c0003000001"},
+    {"InitialContextSetupFailure [Cause: RadioNetwork=no-radio-resources-available-in-target-cell] [Cause: "
+     "Protocol=unspecified]",
+     "400e0020000004000a40032004620055400340046200844006000001020068000f40016c"},
+};
+
+TEST_F(asn1_ngap_test, captured_pdus_repack_to_same_bytes)
+{
+  for (const capture_pdu& c : ngap_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<ngap_pdu_c>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
 }

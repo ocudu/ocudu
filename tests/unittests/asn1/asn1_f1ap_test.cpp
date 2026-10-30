@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+#include "asn1_test_utils.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
@@ -45,6 +46,42 @@ protected:
 #endif
   ocudulog::basic_logger& test_logger = ocudulog::fetch_basic_logger("TEST");
 };
+
+TEST_F(asn1_f1ap_test, unknown_ignore_ie_is_skipped_and_reject_ie_fails)
+{
+  for (auto criticality : {crit_e::ignore, crit_e::reject}) {
+    asn1::f1ap::f1_setup_request_ies_container request;
+    request.transaction_id = 7;
+    request.gnb_du_id      = 1;
+    request.gnb_du_rrc_version.latest_rrc_version.from_number(1);
+
+    byte_buffer encoded;
+    bit_ref     writer(encoded);
+    ASSERT_EQ(request.pack(writer), OCUDUASN_SUCCESS);
+    ASSERT_EQ(encoded[0], 0);
+    ASSERT_EQ(encoded[1], 3);
+
+    byte_buffer with_unknown;
+    ASSERT_TRUE(with_unknown.append(encoded[0]));
+    ASSERT_TRUE(with_unknown.append(uint8_t{4}));
+    bit_ref extra(with_unknown);
+    ASSERT_EQ(pack_integer(extra, uint32_t{1000}, uint32_t{0}, uint32_t{65535}, false, true), OCUDUASN_SUCCESS);
+    ASSERT_EQ(crit_e{criticality}.pack(extra), OCUDUASN_SUCCESS);
+    ASSERT_EQ(pack_length(extra, uint32_t{1}, true), OCUDUASN_SUCCESS);
+    ASSERT_EQ(extra.pack(uint8_t{0x42}, 8), OCUDUASN_SUCCESS);
+    for (unsigned i = 2; i != encoded.length(); ++i) {
+      ASSERT_EQ(extra.pack(encoded[i], 8), OCUDUASN_SUCCESS);
+    }
+
+    asn1::f1ap::f1_setup_request_ies_container decoded;
+    cbit_ref                                   reader(with_unknown);
+    EXPECT_EQ(decoded.unpack(reader), criticality == crit_e::ignore ? OCUDUASN_SUCCESS : OCUDUASN_ERROR_DECODE_FAIL);
+    if (criticality == crit_e::ignore) {
+      EXPECT_EQ(decoded.transaction_id, 7);
+      EXPECT_EQ(decoded.gnb_du_id, 1);
+    }
+  }
+}
 
 // initiating message F1SetupRequest
 TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
@@ -102,7 +139,7 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
   asn1::bit_ref      bref(tx_buffer);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
 #if JSON_OUTPUT
@@ -133,7 +170,7 @@ TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
   asn1::bit_ref      bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
@@ -170,7 +207,7 @@ TEST_F(asn1_f1ap_test, when_setup_failure_correct_then_packing_successful)
   asn1::bit_ref      bref(tx_pdu);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
@@ -239,7 +276,7 @@ TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_succ
   ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
@@ -278,7 +315,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_correct_then_unpacki
   ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer);
 
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
@@ -359,7 +396,7 @@ TEST_F(asn1_f1ap_test, when_e_cid_measurement_initiation_request_correct_then_pa
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_f1ap_test, when_e_cid_measurement_initiation_response_with_ul_aoa_correct_then_packing_successful)
@@ -386,5 +423,74 @@ TEST_F(asn1_f1ap_test, when_e_cid_measurement_initiation_response_with_ul_aoa_co
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
   ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
-  ASSERT_EQ(test_pack_unpack_consistency(pdu), OCUDUASN_SUCCESS);
+  ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
+}
+
+// Real PDUs from lab captures.
+static const std::vector<capture_pdu> f1ap_captures = {
+    {"F1SetupRequest, MIB, SIB1",
+     "00010080c1000005004e00020000002a00020000002d400601806f647530002c00809e0000002b008097480000f11000"
+     "0004000000150000010800f11000000083400700004020000001410009de3000004d002e000710113c08050200000302"
+     "0d085ede0405c041001008000008000020006015842680c08001880081599830225986cdc10080000e0200010688d490"
+     "484c109a4ef18000018838112cc893e0781992affc0493ac21b8637106e28dc61b8e37dfab638750082c0680182c5f41"
+     "1400ab000110"},
+    {"UEContextSetupRequest, Security Mode Command",
+     "0005003f000007002800034003c1002940034003c1003f00090000f1100000040000006b00010000090001000032400a"
+     "0900002208106e91539f009e40053007a12000"},
+    {"UEContextReleaseCommand",
+     "000600280000050028000340010000290003400100000040010a00324009080007100020196d230040400120"},
+    {"UEContextModificationRequest",
+     "00070080da000006002800020000002900020000000900808420808110ff834067408e9cb405bf7b070e400002c1262e"
+     "000307e1a0018dff800b8014c5c4d90000010c80006ad060003003d038f21cf8000105c00ffc007003ff000a8800000d"
+     "97c0017c00000200713400000000809a5e0000000e010123e0000000000000a5540004000025965000f2a828f800005a"
+     "00780008000000200400812050004c000600004b0001080025002b0000240026102000a4400e00000979008000000100"
+     "08000978003e7f000a010000000100000000a1400140009e400530b2d05e00"},
+    {"UEContextReleaseRequest", "000a40170000030028000340010300290003400103000040021020"},
+    {"InitialULRRCMessageTransfer, RRC Setup Request",
+     "000b402f00000500290003400f70006f00090000f1100000040000005f0003005b3c0032000706065c00005ce4004e40"
+     "020071"},
+    {"DLRRCMessageTransfer, RRC Reconfiguration",
+     "000c4080e2000004002800020000002900020000004000012000320080c980c70006068a80409a01e0020de3b0a0080c"
+     "0501c2e01584888bd76380832f00058e01a62afe4090682c80204600412088090004011a022487c1c0efc0c10e908002"
+     "0014800004624044e390001d9f809fca11ecc0df801a004019cb8040708440024040018c4c00407fc0418184e2011e84"
+     "8a4140702a00c0888100400000605e40018048104040425ec0062020084280c00002a041820202020003410202020200"
+     "04400947021a5b9d195c9b995d019b5b98cc0c0c419b58d8cc0c0c4119dc1c9cc48040f0657170"},
+    {"ULRRCMessageTransfer, UE Capability Information",
+     "000d4080a40000040028000200000029000200000040000120003200808b808900044c821ff0680ce811d39680b7ef60"
+     "e1c800005824c5c00060fc340031bff001700298b89b2000002190000d5a0c0006007a071e439f000020b801ff800e00"
+     "7fe00151000001b2f8002f800000400e268000000010134bc0000001c020247c00000000000014aa8000800004b2ca00"
+     "1e55051f00000b400f000100000004008010240a007d9999fe"},
+    {"Paging", "00124027000003007500020000007f00074011b2c00004000071400f0000007040090000f1100000040000"},
+    {"WriteReplaceWarningRequestSIB7",
+     "00140077000004004e00020001008c005e085c42208600301500517a9d429aa5f9fcfc2e4328b2f4f9dcd65789a0f33c"
+     "9dc6f51b0586c00000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+     "0000000000000000000000000703c0008d0002000a008e0002ffff"},
+    {"F1RemovalRequest", "001a0009000001004e00020002"},
+    {"F1SetupResponse",
+     "40010030000004004e000200000052400903006f6375637030310003001100000004000b4000f1100000040000001500"
+     "aa000120"},
+    {"UEContextSetupResponse",
+     "400500814d0000040028000340010000290003400100002700813200812f5c00b001117aec701061e0007c020c683c08"
+     "0004120981950001fffffffffffb06e10840003702ca00418000001034c0808a85003f2812000226aaf9083800208184"
+     "0a1839389142c60d1c3c81100000850000800b50001440850001c40b50002004850002804b5000343c850003c3cb5000"
+     "4428850004be904014fa41205be905018fa41606be90601cfa41a07be9070201741008869042049725c96302dd08e8ac"
+     "f1379340e9041e2efc0c10e0000001c7feb311aa6a8940b000010cbb000000400000000000158456aa28023801148a00"
+     "7e21056810038081042003f1082b40401c080841001f88415a0200e060410800fc420ad018070402104007e2105680c0"
+     "0280000010430102030403824001f9408000000400800100c001012004401680000481c01138cc3fffffc3d000005e00"
+     "0100"},
+    {"UEContextReleaseComplete", "400600110000020028000340010000290003400100"},
+    {"UEContextModificationResponse",
+     "4007007d00000500280003400100002900034001000027004900475c02b091117aec701065e000b1c034c55fc8120d05"
+     "900418c00824110120008023405490f8381df81821d23080003000000000000560008005a000012070044e330ffffff0"
+     "f480001d401000001c400b00001f7f000a020000010100cc40070000cd40021020"},
+    {"WriteReplaceWarningResponse", "4014001c000002004e000200000092000f0000009300090000f1100000019b00"},
+    {"F1RemovalResponse", "401a0009000001004e00020002"},
+    {"UEContextSetupFailure", "80050016000003002800034001d7002940034001d70000400108"},
+};
+
+TEST_F(asn1_f1ap_test, captured_pdus_repack_to_same_bytes)
+{
+  for (const capture_pdu& c : f1ap_captures) {
+    EXPECT_EQ(test_unpack_roundtrip<f1ap::f1ap_pdu_c>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
+  }
 }

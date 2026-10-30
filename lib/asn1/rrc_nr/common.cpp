@@ -366,7 +366,7 @@ void srs_periodicity_and_offset_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE srs_periodicity_and_offset_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::sl1:
       break;
@@ -427,7 +427,7 @@ OCUDUASN_CODE srs_periodicity_and_offset_c::pack(bit_ref& bref) const
 OCUDUASN_CODE srs_periodicity_and_offset_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::sl1:
@@ -659,7 +659,7 @@ void srs_spatial_relation_info_s::ref_sig_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE srs_spatial_relation_info_s::ref_sig_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ssb_idx:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
@@ -680,7 +680,7 @@ OCUDUASN_CODE srs_spatial_relation_info_s::ref_sig_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE srs_spatial_relation_info_s::ref_sig_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ssb_idx:
@@ -709,7 +709,7 @@ const char* srs_spatial_relation_info_s::ref_sig_c_::types_opts::to_string() con
 // SpatialRelationInfo-PDC-r17 ::= SEQUENCE
 OCUDUASN_CODE spatial_relation_info_pdc_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(ref_sig.pack(bref));
 
   return OCUDUASN_SUCCESS;
@@ -719,6 +719,10 @@ OCUDUASN_CODE spatial_relation_info_pdc_r17_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(ref_sig.unpack(bref));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void spatial_relation_info_pdc_r17_s::to_json(json_writer& j) const
@@ -856,7 +860,7 @@ void spatial_relation_info_pdc_r17_s::ref_sig_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ssb_idx:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
@@ -880,7 +884,7 @@ OCUDUASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::pack(bit_ref& bref) c
 OCUDUASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ssb_idx:
@@ -912,7 +916,19 @@ const char* spatial_relation_info_pdc_r17_s::ref_sig_c_::types_opts::to_string()
 // SRS-Resource ::= SEQUENCE
 OCUDUASN_CODE srs_res_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= res_map_r16.is_present();
+  group_flags[1] |= spatial_relation_info_pdc_r17.is_present();
+  group_flags[1] |= res_map_r17.is_present();
+  group_flags[1] |= partial_freq_sr17.is_present();
+  group_flags[1] |= tx_comb_n8_r17.is_present();
+  group_flags[1] |= srs_tci_state_r17.is_present();
+  group_flags[2] |= repeat_factor_v1730_present;
+  group_flags[2] |= srs_dl_or_joint_tci_state_v1730.is_present();
+  group_flags[3] |= nrof_srs_ports_n8_r18_present;
+  group_flags[3] |= comb_offset_hop_r18.is_present();
+  group_flags[3] |= cyclic_shift_hop_r18.is_present();
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(ptrs_port_idx_present, 1));
   HANDLE_CODE(bref.pack(spatial_relation_info_present, 1));
 
@@ -937,20 +953,8 @@ OCUDUASN_CODE srs_res_s::pack(bit_ref& bref) const
     HANDLE_CODE(spatial_relation_info.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= res_map_r16.is_present();
-    group_flags[1] |= spatial_relation_info_pdc_r17.is_present();
-    group_flags[1] |= res_map_r17.is_present();
-    group_flags[1] |= partial_freq_sr17.is_present();
-    group_flags[1] |= tx_comb_n8_r17.is_present();
-    group_flags[1] |= srs_tci_state_r17.is_present();
-    group_flags[2] |= repeat_factor_v1730_present;
-    group_flags[2] |= srs_dl_or_joint_tci_state_v1730.is_present();
-    group_flags[3] |= nrof_srs_ports_n8_r18_present;
-    group_flags[3] |= comb_offset_hop_r18.is_present();
-    group_flags[3] |= cyclic_shift_hop_r18.is_present();
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -1394,7 +1398,7 @@ void srs_res_s::tx_comb_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE srs_res_s::tx_comb_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::n2:
       HANDLE_CODE(pack_integer(bref, c.get<n2_s_>().comb_offset_n2, (uint8_t)0u, (uint8_t)1u));
@@ -1413,7 +1417,7 @@ OCUDUASN_CODE srs_res_s::tx_comb_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE srs_res_s::tx_comb_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::n2:
@@ -1594,17 +1598,17 @@ void srs_res_s::res_type_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE srs_res_s::res_type_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::aperiodic:
-      bref.pack(c.get<aperiodic_s_>().ext, 1);
+      bref.pack(false, 1);
       break;
     case types::semi_persistent:
-      bref.pack(c.get<semi_persistent_s_>().ext, 1);
+      bref.pack(false, 1);
       HANDLE_CODE(c.get<semi_persistent_s_>().periodicity_and_offset_sp.pack(bref));
       break;
     case types::periodic:
-      bref.pack(c.get<periodic_s_>().ext, 1);
+      bref.pack(false, 1);
       HANDLE_CODE(c.get<periodic_s_>().periodicity_and_offset_p.pack(bref));
       break;
     default:
@@ -1616,19 +1620,31 @@ OCUDUASN_CODE srs_res_s::res_type_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE srs_res_s::res_type_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::aperiodic:
       bref.unpack(c.get<aperiodic_s_>().ext, 1);
+      if (c.get<aperiodic_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+      }
       break;
     case types::semi_persistent:
       bref.unpack(c.get<semi_persistent_s_>().ext, 1);
       HANDLE_CODE(c.get<semi_persistent_s_>().periodicity_and_offset_sp.unpack(bref));
+      if (c.get<semi_persistent_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+      }
       break;
     case types::periodic:
       bref.unpack(c.get<periodic_s_>().ext, 1);
       HANDLE_CODE(c.get<periodic_s_>().periodicity_and_offset_p.unpack(bref));
+      if (c.get<periodic_s_>().ext) {
+        ext_groups_unpacker unknown_ext_unpacker(bref);
+        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+      }
       break;
     default:
       log_invalid_choice_id(type_, "srs_res_s::res_type_c_");
@@ -1760,7 +1776,7 @@ void srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::to_json(jso
 }
 OCUDUASN_CODE srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::start_rb_idx_and_freq_scaling_factor2_r17:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)1u));
@@ -1777,7 +1793,7 @@ OCUDUASN_CODE srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::pa
 OCUDUASN_CODE srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::start_rb_idx_and_freq_scaling_factor2_r17:
@@ -1875,7 +1891,7 @@ void srs_res_s::srs_tci_state_r17_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE srs_res_s::srs_tci_state_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::srs_ul_tci_state:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
@@ -1892,7 +1908,7 @@ OCUDUASN_CODE srs_res_s::srs_tci_state_r17_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE srs_res_s::srs_tci_state_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::srs_ul_tci_state:
@@ -2016,7 +2032,7 @@ void srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::to_json(json_writer& 
 }
 OCUDUASN_CODE srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::tx_comb_n4:
       HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
@@ -2033,7 +2049,7 @@ OCUDUASN_CODE srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::pack(bit_ref
 OCUDUASN_CODE srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::tx_comb_n4:
@@ -2182,7 +2198,7 @@ void srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::to_json(json_writer&
 }
 OCUDUASN_CODE srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::tx_comb_n2:
       HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
@@ -2202,7 +2218,7 @@ OCUDUASN_CODE srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::pack(bit_re
 OCUDUASN_CODE srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::tx_comb_n2:

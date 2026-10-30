@@ -32,6 +32,22 @@ TEST(asn1_bit_ref_test, unpack_empty_buffer)
   test_spy->reset_counters();
 }
 
+TEST(asn1_bit_ref_test, unpack_rejects_width_larger_than_destination)
+{
+  byte_buffer pdu = byte_buffer::create({0xff, 0xff, 0xff, 0xff, 0xff}).value();
+  cbit_ref    bref(pdu);
+  uint8_t     narrow = 0;
+  uint16_t    medium = 0;
+  uint32_t    wide   = 0;
+
+  EXPECT_EQ(bref.unpack(narrow, 9), OCUDUASN_ERROR_DECODE_FAIL);
+  EXPECT_EQ(bref.unpack(medium, 17), OCUDUASN_ERROR_DECODE_FAIL);
+  EXPECT_EQ(bref.unpack(wide, 33), OCUDUASN_ERROR_DECODE_FAIL);
+  EXPECT_EQ(bref.distance(), 0);
+  ocudulog::flush();
+  test_spy->reset_counters();
+}
+
 TEST(asn1_bit_ref_test, if_no_pack_is_called_buffer_stays_empty)
 {
   byte_buffer pdu;
@@ -458,6 +474,105 @@ TEST(asn1_bit_string_test, pack_unpack_operators)
   ASSERT_TRUE(bstr3.to_string() == "0000000000000111");
 }
 
+/// Checks that a value packs to the expected hex string and unpacks back to the same encoding.
+template <typename T>
+static void expect_encoding(const T& value, const std::string& expected_hex)
+{
+  byte_buffer buf;
+  bit_ref     bref(buf);
+  ASSERT_EQ(value.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(buf, ocudu::make_byte_buffer(expected_hex).value());
+
+  T        unpacked;
+  cbit_ref cbref(buf);
+  ASSERT_EQ(unpacked.unpack(cbref), OCUDUASN_SUCCESS);
+  byte_buffer repacked;
+  bit_ref     bref2(repacked);
+  ASSERT_EQ(unpacked.pack(bref2), OCUDUASN_SUCCESS);
+  ASSERT_EQ(repacked, buf);
+}
+
+/// Bit string of the given length with its first and last bits set.
+template <typename T>
+static T make_bitstring(uint32_t len)
+{
+  T v;
+  v.resize(len);
+  v.set(0, true);
+  v.set(len - 1, true);
+  return v;
+}
+
+TEST(asn1_bit_string_test, length_encoding_matches_x691)
+{
+  // Aligned length with a range above 255 is a two octet constrained whole number.
+  expect_encoding(make_bitstring<bounded_bitstring<6, 17600, false, true>>(100), "005e80000000000000000000000010");
+  // Upper bound of 64K or more uses an unconstrained length.
+  expect_encoding(make_bitstring<bounded_bitstring<1, 131072, false, true>>(100), "6480000000000000000000000010");
+  expect_encoding(make_bitstring<bounded_bitstring<1, 65536>>(100), "6480000000000000000000000010");
+  // Range sizes that are a power of two plus one.
+  expect_encoding(make_bitstring<bounded_bitstring<1, 2>>(1), "40");
+  expect_encoding(make_bitstring<bounded_bitstring<1, 2>>(2), "e0");
+  expect_encoding(make_bitstring<bounded_bitstring<3, 5>>(4), "64");
+  expect_encoding(make_bitstring<bounded_bitstring<22, 32, false, true>>(25), "3080000080");
+}
+
+TEST(asn1_bit_string_test, length_outside_extensible_root_is_encoded_as_unbounded)
+{
+  expect_encoding(make_bitstring<bounded_bitstring<1, 160, true, true>>(100), "318080000000000000000000000010");
+  expect_encoding(make_bitstring<bounded_bitstring<1, 160, true, true>>(200),
+                  "8080c880000000000000000000000000000000000000000000000001");
+  expect_encoding(make_bitstring<fixed_bitstring<13, true, true>>(13), "4004");
+  expect_encoding(make_bitstring<bounded_bitstring<13, 13, true, true>>(14), "800e8004");
+}
+
+TEST(asn1_bit_string_test, unpack_rejects_length_below_lower_bound)
+{
+  // Unconstrained length determinant of zero for SIZE(1..131072).
+  byte_buffer                               buf = ocudu::make_byte_buffer("00").value();
+  cbit_ref                                  cbref(buf);
+  bounded_bitstring<1, 131072, false, true> v;
+  ASSERT_EQ(v.unpack(cbref), OCUDUASN_ERROR_DECODE_FAIL);
+
+  // Make sure the log backend has already processed the generated log entries.
+  ocudulog::flush();
+  test_spy->reset_counters();
+}
+
+/// String of the given length filled with "a".
+template <typename T>
+static T make_string(uint32_t len)
+{
+  T v;
+  v.from_string(std::string(len, 'a'));
+  return v;
+}
+
+/// Hex encoding of a string of the given length filled with "a".
+static std::string a_chars_hex(uint32_t len)
+{
+  std::string s;
+  for (uint32_t i = 0; i != len; ++i) {
+    s += "61";
+  }
+  return s;
+}
+
+TEST(asn1_string_test, size_outside_extensible_root_is_encoded_as_unbounded)
+{
+  expect_encoding(make_string<printable_string<1, 150, true, true>>(10), "0480" + a_chars_hex(10));
+  expect_encoding(make_string<printable_string<1, 150, true, true>>(200), "8080c8" + a_chars_hex(200));
+  expect_encoding(make_string<printable_string<0, 8, true, true>>(2), "10" + a_chars_hex(2));
+  expect_encoding(make_string<printable_string<0, 8, true, true>>(9), "8009" + a_chars_hex(9));
+  expect_encoding(make_string<visible_string<1, 150, true, true>>(200), "8080c8" + a_chars_hex(200));
+}
+
+TEST(asn1_string_test, utf8_string_size_constraint_is_not_per_visible)
+{
+  expect_encoding(make_string<utf8_string<true>>(10), "0a" + a_chars_hex(10));
+  expect_encoding(make_string<utf8_string<true>>(200), "80c8" + a_chars_hex(200));
+}
+
 TEST(asn1_seq_of_test, pack_unpack_and_operators)
 {
   uint32_t                 fixed_list_size = 33;
@@ -793,6 +908,29 @@ void test_json_writer()
   writer.end_array();
 
   fmt::print("{}\n", writer.to_string().c_str());
+}
+
+TEST(asn1_integer_test, constrained_integer_encoding_matches_x691)
+{
+  // Full 64-bit range, used by the data usage report counters.
+  using u64_aligned   = integer<uint64_t, 0, std::numeric_limits<uint64_t>::max(), false, true>;
+  using u64_unaligned = integer<uint64_t, 0, std::numeric_limits<uint64_t>::max(), false, false>;
+  expect_encoding(u64_aligned{5}, "0005");
+  expect_encoding(u64_aligned{(1ULL << 56) - 1}, "c0ffffffffffffff");
+  expect_encoding(u64_aligned{std::numeric_limits<uint64_t>::max()}, "e0ffffffffffffffff");
+  expect_encoding(u64_unaligned{std::numeric_limits<uint64_t>::max()}, "ffffffffffffffff");
+  // Range just above a power of two.
+  expect_encoding(integer<uint32_t, 0, 16777216, false, true>{16777216}, "c001000000");
+  expect_encoding(integer<uint32_t, 0, 16777216, false, false>{16777216}, "80000000");
+}
+
+TEST(asn1_integer_test, single_value_range_unpacks_to_its_value)
+{
+  byte_buffer buf;
+  cbit_ref    cbref(buf);
+  uint8_t     value = 0;
+  ASSERT_EQ(unpack_integer(value, cbref, (uint8_t)1, (uint8_t)1), OCUDUASN_SUCCESS);
+  ASSERT_EQ(value, 1);
 }
 
 TEST(asn1_integer_test, large_integer_pack_unpack)

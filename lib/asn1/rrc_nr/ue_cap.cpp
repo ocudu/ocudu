@@ -107,7 +107,7 @@ void supported_agg_bw_r17_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE supported_agg_bw_r17_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r17:
       HANDLE_CODE(c.get<fr1_r17_e_>().pack(bref));
@@ -124,7 +124,7 @@ OCUDUASN_CODE supported_agg_bw_r17_c::pack(bit_ref& bref) const
 OCUDUASN_CODE supported_agg_bw_r17_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r17:
@@ -252,7 +252,7 @@ void supported_bw_v1700_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE supported_bw_v1700_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r17:
       HANDLE_CODE(c.get<fr1_r17_e_>().pack(bref));
@@ -269,7 +269,7 @@ OCUDUASN_CODE supported_bw_v1700_c::pack(bit_ref& bref) const
 OCUDUASN_CODE supported_bw_v1700_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r17:
@@ -347,7 +347,7 @@ uint8_t access_stratum_release_opts::to_number() const
 // AerialParameters-r18 ::= SEQUENCE
 OCUDUASN_CODE aerial_params_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(aerial_ue_cap_r18_present, 1));
   HANDLE_CODE(bref.pack(altitude_meas_r18_present, 1));
   HANDLE_CODE(bref.pack(altitude_based_ssb_to_measure_r18_present, 1));
@@ -383,6 +383,10 @@ OCUDUASN_CODE aerial_params_r18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(sl_a2_x_service_r18.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void aerial_params_r18_s::to_json(json_writer& j) const
@@ -457,7 +461,13 @@ uint16_t aggr_bw_opts::to_number() const
 // AppLayerMeasParameters-r17 ::= SEQUENCE
 OCUDUASN_CODE app_layer_meas_params_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= qoe_idle_inactive_meas_report_r18_present;
+  group_flags[0] |= qoe_nrdc_meas_report_r18_present;
+  group_flags[0] |= qoe_add_memory_meas_report_r18_present;
+  group_flags[0] |= qoe_prio_based_discarding_r18_present;
+  group_flags[0] |= srb5_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(qoe_streaming_meas_report_r17_present, 1));
   HANDLE_CODE(bref.pack(qoe_mt_si_meas_report_r17_present, 1));
   HANDLE_CODE(bref.pack(qoe_vr_meas_report_r17_present, 1));
@@ -465,14 +475,8 @@ OCUDUASN_CODE app_layer_meas_params_r17_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(ran_visible_qo_e_vr_meas_report_r17_present, 1));
   HANDLE_CODE(bref.pack(ul_meas_report_app_layer_seg_r17_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= qoe_idle_inactive_meas_report_r18_present;
-    group_flags[0] |= qoe_nrdc_meas_report_r18_present;
-    group_flags[0] |= qoe_add_memory_meas_report_r18_present;
-    group_flags[0] |= qoe_prio_based_discarding_r18_present;
-    group_flags[0] |= srb5_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -784,7 +788,7 @@ void band_params_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_params_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra:
       HANDLE_CODE(bref.pack(c.get<eutra_s_>().ca_bw_class_dl_eutra_present, 1));
@@ -817,7 +821,7 @@ OCUDUASN_CODE band_params_c::pack(bit_ref& bref) const
 OCUDUASN_CODE band_params_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra:
@@ -858,7 +862,7 @@ const char* band_params_c::types_opts::to_string() const
 // CA-ParametersEUTRA ::= SEQUENCE
 OCUDUASN_CODE ca_params_eutra_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(multiple_timing_advance_present, 1));
   HANDLE_CODE(bref.pack(simul_rx_tx_present, 1));
   HANDLE_CODE(bref.pack(supported_naics_2_crs_ap_present, 1));
@@ -892,6 +896,10 @@ OCUDUASN_CODE ca_params_eutra_s::unpack(cbit_ref& bref)
     HANDLE_CODE(supported_bw_combination_set_eutra_v1530.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ca_params_eutra_s::to_json(json_writer& j) const
@@ -921,7 +929,7 @@ void ca_params_eutra_s::to_json(json_writer& j) const
 // CA-ParametersNR ::= SEQUENCE
 OCUDUASN_CODE ca_params_nr_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(dummy_present, 1));
   HANDLE_CODE(bref.pack(parallel_tx_srs_pucch_pusch_present, 1));
   HANDLE_CODE(bref.pack(parallel_tx_prach_srs_pucch_pusch_present, 1));
@@ -953,6 +961,10 @@ OCUDUASN_CODE ca_params_nr_s::unpack(cbit_ref& bref)
     HANDLE_CODE(supported_num_tag.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ca_params_nr_s::to_json(json_writer& j) const
@@ -999,7 +1011,11 @@ uint8_t ca_params_nr_s::supported_num_tag_opts::to_number() const
 // MRDC-Parameters ::= SEQUENCE
 OCUDUASN_CODE mrdc_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= dual_pa_architecture_present;
+  group_flags[0] |= intra_band_endc_support_present;
+  group_flags[0] |= ul_timing_align_eutra_nr_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(single_ul_tx_present, 1));
   HANDLE_CODE(bref.pack(dyn_pwr_sharing_endc_present, 1));
   HANDLE_CODE(bref.pack(tdm_pattern_present, 1));
@@ -1015,12 +1031,8 @@ OCUDUASN_CODE mrdc_params_s::pack(bit_ref& bref) const
     HANDLE_CODE(ul_switching_time_eutra_nr.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= dual_pa_architecture_present;
-    group_flags[0] |= intra_band_endc_support_present;
-    group_flags[0] |= ul_timing_align_eutra_nr_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -1554,7 +1566,7 @@ void band_params_v1540_s::srs_carrier_switch_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_params_v1540_s::srs_carrier_switch_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::nr:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<nr_s_>().srs_switching_times_list_nr, 1, 32));
@@ -1571,7 +1583,7 @@ OCUDUASN_CODE band_params_v1540_s::srs_carrier_switch_c_::pack(bit_ref& bref) co
 OCUDUASN_CODE band_params_v1540_s::srs_carrier_switch_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::nr:
@@ -3424,7 +3436,9 @@ uint8_t ul_tx_switching_band_pair_r16_s::ul_tx_switching_period_r16_opts::to_num
 // BandCombination-UplinkTxSwitch-r16 ::= SEQUENCE
 OCUDUASN_CODE band_combination_ul_tx_switch_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= ul_tx_switching_pusch_trans_coherence_r16_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(band_combination_v1540_present, 1));
   HANDLE_CODE(bref.pack(band_combination_v1560_present, 1));
   HANDLE_CODE(bref.pack(band_combination_v1570_present, 1));
@@ -3458,10 +3472,8 @@ OCUDUASN_CODE band_combination_ul_tx_switch_r16_s::pack(bit_ref& bref) const
     HANDLE_CODE(ul_tx_switching_option_support_r16.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= ul_tx_switching_pusch_trans_coherence_r16_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -10810,7 +10822,7 @@ void ca_params_nr_v1800_s::pdcch_monitoring_ca_ext_r18_c_::to_json(json_writer& 
 }
 OCUDUASN_CODE ca_params_nr_v1800_s::pdcch_monitoring_ca_ext_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::pdcch_monitoring_ca_r18:
       HANDLE_CODE(
@@ -10829,7 +10841,7 @@ OCUDUASN_CODE ca_params_nr_v1800_s::pdcch_monitoring_ca_ext_r18_c_::pack(bit_ref
 OCUDUASN_CODE ca_params_nr_v1800_s::pdcch_monitoring_ca_ext_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::pdcch_monitoring_ca_r18:
@@ -10977,7 +10989,7 @@ void ca_params_nr_v1800_s::pdcch_blind_detection_ca_mixed_ext_r18_c_::to_json(js
 }
 OCUDUASN_CODE ca_params_nr_v1800_s::pdcch_blind_detection_ca_mixed_ext_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::pdcch_blind_detection_ca_mixed_r18:
       HANDLE_CODE(
@@ -10996,7 +11008,7 @@ OCUDUASN_CODE ca_params_nr_v1800_s::pdcch_blind_detection_ca_mixed_ext_r18_c_::p
 OCUDUASN_CODE ca_params_nr_v1800_s::pdcch_blind_detection_ca_mixed_ext_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::pdcch_blind_detection_ca_mixed_r18:
@@ -11221,7 +11233,7 @@ void band_params_v1810_s::srs_ant_switching8_t8_r_r18_s_::downgrade_cfg_r18_c_::
 }
 OCUDUASN_CODE band_params_v1810_s::srs_ant_switching8_t8_r_r18_s_::downgrade_cfg_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::empty_r18:
       break;
@@ -11237,7 +11249,7 @@ OCUDUASN_CODE band_params_v1810_s::srs_ant_switching8_t8_r_r18_s_::downgrade_cfg
 OCUDUASN_CODE band_params_v1810_s::srs_ant_switching8_t8_r_r18_s_::downgrade_cfg_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::empty_r18:
@@ -11388,7 +11400,7 @@ void switching_period_unaffected_band_dual_ul_r18_s::period_unaffected_band_dual
 OCUDUASN_CODE
 switching_period_unaffected_band_dual_ul_r18_s::period_unaffected_band_dual_ul_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::maintained_ul_trans_r18:
       break;
@@ -11406,7 +11418,7 @@ OCUDUASN_CODE
 switching_period_unaffected_band_dual_ul_r18_s::period_unaffected_band_dual_ul_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::maintained_ul_trans_r18:
@@ -11695,7 +11707,7 @@ void ul_tx_switching_add_period_dual_ul_r18_s::ul_tx_switching_between_band_pair
 OCUDUASN_CODE ul_tx_switching_add_period_dual_ul_r18_s::ul_tx_switching_between_band_pairs_r18_s_::
     another_band_pair_or_band_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::band_pair_idx2_r18:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)32u));
@@ -11715,7 +11727,7 @@ OCUDUASN_CODE ul_tx_switching_add_period_dual_ul_r18_s::ul_tx_switching_between_
     another_band_pair_or_band_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::band_pair_idx2_r18:
@@ -12915,7 +12927,7 @@ void band_params_sidelink_discovery_r17_s::sl_tx_mode2_partial_sensing_r17_s_::
 OCUDUASN_CODE band_params_sidelink_discovery_r17_s::sl_tx_mode2_partial_sensing_r17_s_::
     scs_cp_pattern_tx_sidelink_mode_two_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r17:
       HANDLE_CODE(bref.pack(c.get<fr1_r17_s_>().scs_15k_hz_r17_present, 1));
@@ -12953,7 +12965,7 @@ OCUDUASN_CODE band_params_sidelink_discovery_r17_s::sl_tx_mode2_partial_sensing_
     scs_cp_pattern_tx_sidelink_mode_two_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r17:
@@ -13139,7 +13151,7 @@ void band_params_sidelink_eutra_nr_r16_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_params_sidelink_eutra_nr_r16_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra:
       HANDLE_CODE(bref.pack(c.get<eutra_s_>().band_params_sidelink_eutra1_r16.size() > 0, 1));
@@ -13163,7 +13175,7 @@ OCUDUASN_CODE band_params_sidelink_eutra_nr_r16_c::pack(bit_ref& bref) const
 OCUDUASN_CODE band_params_sidelink_eutra_nr_r16_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra:
@@ -13235,7 +13247,7 @@ void band_params_sidelink_eutra_nr_v1630_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_params_sidelink_eutra_nr_v1630_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra:
       break;
@@ -13253,7 +13265,7 @@ OCUDUASN_CODE band_params_sidelink_eutra_nr_v1630_c::pack(bit_ref& bref) const
 OCUDUASN_CODE band_params_sidelink_eutra_nr_v1630_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra:
@@ -13334,7 +13346,7 @@ void band_params_sidelink_eutra_nr_v1710_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_params_sidelink_eutra_nr_v1710_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra:
       break;
@@ -13368,7 +13380,7 @@ OCUDUASN_CODE band_params_sidelink_eutra_nr_v1710_c::pack(bit_ref& bref) const
 OCUDUASN_CODE band_params_sidelink_eutra_nr_v1710_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra:
@@ -13561,7 +13573,7 @@ void band_params_sidelink_eutra_nr_v1710_c::nr_s_::sl_tx_mode2_partial_sensing_r
 OCUDUASN_CODE band_params_sidelink_eutra_nr_v1710_c::nr_s_::sl_tx_mode2_partial_sensing_r17_s_::
     scs_cp_pattern_tx_sidelink_mode_two_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r17:
       HANDLE_CODE(bref.pack(c.get<fr1_r17_s_>().scs_15k_hz_r17_present, 1));
@@ -13599,7 +13611,7 @@ OCUDUASN_CODE band_params_sidelink_eutra_nr_v1710_c::nr_s_::sl_tx_mode2_partial_
     scs_cp_pattern_tx_sidelink_mode_two_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r17:
@@ -15698,7 +15710,183 @@ void codebook_combo_param_multi_trp_r17_s::to_json(json_writer& j) const
 // MIMO-ParametersPerBand ::= SEQUENCE
 OCUDUASN_CODE mimo_params_per_band_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= dummy6_present;
+  group_flags[0] |= beam_management_ssb_csi_rs.is_present();
+  group_flags[0] |= beam_switch_timing.is_present();
+  group_flags[0] |= codebook_params.is_present();
+  group_flags[0] |= csi_rs_im_reception_for_feedback.is_present();
+  group_flags[0] |= csi_rs_proc_framework_for_srs.is_present();
+  group_flags[0] |= csi_report_framework.is_present();
+  group_flags[0] |= csi_rs_for_tracking.is_present();
+  group_flags[0] |= srs_assoc_csi_rs.is_present();
+  group_flags[0] |= spatial_relations.is_present();
+  group_flags[1] |= default_qcl_two_tci_r16_present;
+  group_flags[1] |= codebook_params_per_band_r16.is_present();
+  group_flags[1] |= simul_spatial_relation_upd_pucch_res_group_r16_present;
+  group_flags[1] |= max_num_scell_bfr_r16_present;
+  group_flags[1] |= simul_reception_diff_type_d_r16_present;
+  group_flags[1] |= ssb_csirs_sinr_meas_r16.is_present();
+  group_flags[1] |= non_group_sinr_report_r16_present;
+  group_flags[1] |= group_sinr_report_r16_present;
+  group_flags[1] |= multi_dci_multi_trp_params_r16.is_present();
+  group_flags[1] |= single_dci_sdm_scheme_params_r16.is_present();
+  group_flags[1] |= support_fdm_scheme_a_r16_present;
+  group_flags[1] |= support_code_word_soft_combining_r16_present;
+  group_flags[1] |= support_tdm_scheme_a_r16_present;
+  group_flags[1] |= support_inter_slot_tdm_r16.is_present();
+  group_flags[1] |= low_papr_dmrs_pdsch_r16_present;
+  group_flags[1] |= low_papr_dmrs_pusc_hwithout_precoding_r16_present;
+  group_flags[1] |= low_papr_dmrs_pucch_r16_present;
+  group_flags[1] |= low_papr_dmrs_pusc_hwith_precoding_r16_present;
+  group_flags[1] |= csi_report_framework_ext_r16.is_present();
+  group_flags[1] |= codebook_params_addition_r16.is_present();
+  group_flags[1] |= codebook_combo_params_addition_r16.is_present();
+  group_flags[1] |= beam_correspondence_ssb_based_r16_present;
+  group_flags[1] |= beam_correspondence_csi_rs_based_r16_present;
+  group_flags[1] |= beam_switch_timing_r16.is_present();
+  group_flags[2] |= semi_persistent_l1_sinr_report_pucch_r16.is_present();
+  group_flags[2] |= semi_persistent_l1_sinr_report_pusch_r16_present;
+  group_flags[3] |= spatial_relations_v1640.is_present();
+  group_flags[3] |= support64_candidate_beam_rs_bfr_r16_present;
+  group_flags[4] |= max_mimo_layers_for_multi_dci_m_trp_r16_present;
+  group_flags[5] |= supported_sinr_meas_v1670_present;
+  group_flags[6] |= srs_increased_repeat_r17_present;
+  group_flags[6] |= srs_partial_freq_sr17_present;
+  group_flags[6] |= srs_start_rb_location_hop_partial_r17_present;
+  group_flags[6] |= srs_comb_eight_r17_present;
+  group_flags[6] |= codebook_paramsfetype2_r17.is_present();
+  group_flags[6] |= mtrp_pusch_two_csi_rs_r17_present;
+  group_flags[6] |= mtrp_pucch_inter_slot_r17_present;
+  group_flags[6] |= mtrp_pucch_cyclic_map_r17_present;
+  group_flags[6] |= mtrp_pucch_second_tpc_r17_present;
+  group_flags[6] |= mtrp_bfr_two_bfd_rs_set_r17.is_present();
+  group_flags[6] |= mtrp_bfr_pucch_sr_per_cg_r17_present;
+  group_flags[6] |= mtrp_bfr_assoc_pucch_sr_r17_present;
+  group_flags[6] |= sfn_simul_two_tci_across_multi_cc_r17_present;
+  group_flags[6] |= sfn_default_dl_beam_setup_r17_present;
+  group_flags[6] |= sfn_default_ul_beam_setup_r17_present;
+  group_flags[6] |= srs_trigger_offset_r17_present;
+  group_flags[6] |= srs_trigger_dci_r17_present;
+  group_flags[6] |= codebook_combo_param_mixed_type_r17.is_present();
+  group_flags[6] |= unified_joint_tci_r17.is_present();
+  group_flags[6] |= unified_joint_tci_multi_mac_ce_r17.is_present();
+  group_flags[6] |= unified_joint_tci_per_bwp_ca_r17_present;
+  group_flags[6] |= unified_joint_tci_list_sharing_ca_r17_present;
+  group_flags[6] |= unified_joint_tci_common_multi_cc_r17_present;
+  group_flags[6] |= unified_joint_tci_beam_align_dl_rs_r17_present;
+  group_flags[6] |= unified_joint_tci_pc_assoc_r17_present;
+  group_flags[6] |= unified_joint_tci_legacy_r17_present;
+  group_flags[6] |= unified_joint_tci_legacy_srs_r17_present;
+  group_flags[6] |= unified_joint_tci_legacy_coreset0_r17_present;
+  group_flags[6] |= unified_joint_tci_scell_bfr_r17_present;
+  group_flags[6] |= unified_joint_tci_inter_cell_r17.is_present();
+  group_flags[6] |= unified_separate_tci_r17.is_present();
+  group_flags[6] |= unified_separate_tci_multi_mac_ce_r17.is_present();
+  group_flags[6] |= unified_separate_tci_per_bwp_ca_r17_present;
+  group_flags[6] |= unified_separate_tci_list_sharing_ca_r17.is_present();
+  group_flags[6] |= unified_separate_tci_common_multi_cc_r17_present;
+  group_flags[6] |= unified_separate_tci_inter_cell_r17.is_present();
+  group_flags[6] |= unified_joint_tci_m_trp_inter_cell_bm_r17.is_present();
+  group_flags[6] |= mpe_mitigation_r17.is_present();
+  group_flags[6] |= srs_port_report_r17.is_present();
+  group_flags[6] |= mtrp_pdcch_individual_r17_present;
+  group_flags[6] |= mtrp_pdcch_any_span_3_symbols_r17_present;
+  group_flags[6] |= mtrp_pdcch_two_qcl_type_d_r17_present;
+  group_flags[6] |= mtrp_pusch_csi_rs_r17.is_present();
+  group_flags[6] |= mtrp_pusch_cyclic_map_r17_present;
+  group_flags[6] |= mtrp_pusch_second_tpc_r17_present;
+  group_flags[6] |= mtrp_pusch_two_phr_report_r17_present;
+  group_flags[6] |= mtrp_pusch_a_csi_r17_present;
+  group_flags[6] |= mtrp_pusch_sp_csi_r17_present;
+  group_flags[6] |= mtrp_pusch_cg_r17_present;
+  group_flags[6] |= mtrp_pucch_mac_ce_r17_present;
+  group_flags[6] |= mtrp_pucch_max_num_pc_fr1_r17_present;
+  group_flags[6] |= mtrp_inter_cell_r17.is_present();
+  group_flags[6] |= mtrp_group_based_l1_rsrp_r17.is_present();
+  group_flags[6] |= mtrp_bfd_rs_mac_ce_r17_present;
+  group_flags[6] |= mtrp_csi_enhancement_per_band_r17.is_present();
+  group_flags[6] |= codebook_combo_param_multi_trp_r17.is_present();
+  group_flags[6] |= mtrp_csi_add_csi_r17_present;
+  group_flags[6] |= mtrp_csi_n_max2_r17_present;
+  group_flags[6] |= mtrp_csi_cmr_r17_present;
+  group_flags[6] |= srs_partial_freq_nohop_sr17_present;
+  group_flags[6] |= beam_switch_timing_v1710.is_present();
+  group_flags[6] |= beam_switch_timing_r17.is_present();
+  group_flags[6] |= beam_report_timing_v1710.is_present();
+  group_flags[6] |= max_num_rx_tx_beam_switch_dl_v1710.is_present();
+  group_flags[7] |= srs_port_report_sp_ap_r17_present;
+  group_flags[7] |= max_num_rx_beam_v1720_present;
+  group_flags[7] |= sfn_implicit_rs_two_tci_r17_present;
+  group_flags[7] |= sfn_qcl_type_d_collision_two_tci_r17_present;
+  group_flags[7] |= mtrp_csi_num_cp_u_r17_present;
+  group_flags[8] |= support_rep_num_pdsch_tdra_dci_1_2_r17_present;
+  group_flags[9] |= codebook_paramsetype2_doppler_csi_r18.is_present();
+  group_flags[9] |= codebook_paramsfetype2_doppler_csi_r18.is_present();
+  group_flags[9] |= codebook_paramsetype2_cjt_r18.is_present();
+  group_flags[9] |= codebook_paramsfetype2_cjt_r18.is_present();
+  group_flags[9] |= codebook_combo_params_cjt_r18.is_present();
+  group_flags[9] |= codebook_params_harq_ack_pusch_r18.is_present();
+  group_flags[9] |= tci_joint_tci_upd_single_active_tci_per_cc_r18.is_present();
+  group_flags[9] |= tci_joint_tci_upd_multi_active_tci_per_cc_r18.is_present();
+  group_flags[9] |= tci_sel_dci_r18_present;
+  group_flags[9] |= tci_separate_tci_upd_single_active_tci_per_cc_r18.is_present();
+  group_flags[9] |= tci_separate_tci_upd_multi_active_tci_per_cc_r18.is_present();
+  group_flags[9] |= tci_sel_aperiodic_csi_rs_r18_present;
+  group_flags[9] |= tci_sel_aperiodic_csi_rs_m_dci_r18_present;
+  group_flags[9] |= two_tci_state_pdsch_cjt_tx_scheme_r18_present;
+  group_flags[9] |= tci_joint_tci_upd_single_active_tci_per_cc_per_coreset_r18.is_present();
+  group_flags[9] |= tci_joint_tci_upd_multi_active_tci_per_cc_per_coreset_r18_present;
+  group_flags[9] |= tci_trp_bfr_r18_present;
+  group_flags[9] |= tci_separate_tci_upd_single_active_tci_per_cc_per_coreset_r18.is_present();
+  group_flags[9] |= tci_separate_tci_upd_multi_active_tci_per_cc_per_coreset_r18.is_present();
+  group_flags[9] |= common_tci_single_dci_r18_present;
+  group_flags[9] |= common_tci_multi_dci_r18_present;
+  group_flags[9] |= two_phr_report_r18_present;
+  group_flags[9] |= sp_cell_tag_ind_r18_present;
+  group_flags[9] |= inter_cell_cross_trp_pdcch_order_cfra_r18_present;
+  group_flags[9] |= intra_cell_cross_trp_pdcch_order_cfra_r18_present;
+  group_flags[9] |= overlap_ul_trans_reduction_r18_present;
+  group_flags[9] |= max_periodicity_cmr_r18_present;
+  group_flags[9] |= tdcp_report_r18.is_present();
+  group_flags[9] |= tdcp_res_r18.is_present();
+  group_flags[9] |= timeline_relax_cjt_csi_r18_present;
+  group_flags[9] |= joint_cfg_dmrs_port_dyn_switching_r18_present;
+  group_flags[9] |= srs_comb_offset_hop_r18_present;
+  group_flags[9] |= srs_comb_offset_in_time_r18_present;
+  group_flags[9] |= srs_comb_offset_combined_group_seq_r18_present;
+  group_flags[9] |= srs_comb_offset_hop_within_subset_r18_present;
+  group_flags[9] |= srs_cyclic_shift_hop_r18_present;
+  group_flags[9] |= srs_cyclic_shift_hop_small_granularity_r18_present;
+  group_flags[9] |= srs_cyclic_shift_combined_group_seq_r18_present;
+  group_flags[9] |= cyclic_shift_hop_within_subset_r18_present;
+  group_flags[9] |= srs_cyclic_shift_combined_comb_offset_r18_present;
+  group_flags[9] |= pusch_cb_2_ptrs_single_dci_s_tx2_p_sdm_r18_present;
+  group_flags[9] |= pusch_non_cb_2_ptrs_single_dci_s_tx2_p_sdm_r18_present;
+  group_flags[9] |= pusch_non_cb_single_dci_s_tx2_p_sdm_csi_rs_srs_r18.is_present();
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_csi_rs_res_r18.is_present();
+  group_flags[9] |= dmrs_port_entry_single_dci_sdm_r18_present;
+  group_flags[9] |= pusch_cb_2_ptrs_single_dci_s_tx2_p_sfn_r18_present;
+  group_flags[9] |= pusch_non_cb_2_ptrs_single_dci_s_tx2_p_sfn_r18_present;
+  group_flags[9] |= pusch_non_cb_single_dci_s_tx2_p_sfn_csi_rs_srs_r18.is_present();
+  group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_full_time_full_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_full_time_partial_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_partial_time_full_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_partial_time_partial_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_partial_time_non_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_cg_cg_r18_present;
+  group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_cg_dg_r18_present;
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_full_time_full_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_full_time_partial_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_partial_time_full_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_partial_time_partial_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_partial_time_non_freq_overlap_r18_present;
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_cg_cg_r18_present;
+  group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_cg_dg_r18_present;
+  group_flags[9] |= pucch_repeat_dyn_ind_sfn_r18_present;
+  group_flags[9] |= group_beam_report_s_tx2_p_r18.is_present();
+  group_flags[10] |= simul_cfg_dmrs_dci_1_3_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(tci_state_pdsch_present, 1));
   HANDLE_CODE(bref.pack(add_active_tci_state_pdcch_present, 1));
   HANDLE_CODE(bref.pack(pusch_trans_coherence_present, 1));
@@ -15847,184 +16035,8 @@ OCUDUASN_CODE mimo_params_per_band_s::pack(bit_ref& bref) const
     HANDLE_CODE(dummy4.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= dummy6_present;
-    group_flags[0] |= beam_management_ssb_csi_rs.is_present();
-    group_flags[0] |= beam_switch_timing.is_present();
-    group_flags[0] |= codebook_params.is_present();
-    group_flags[0] |= csi_rs_im_reception_for_feedback.is_present();
-    group_flags[0] |= csi_rs_proc_framework_for_srs.is_present();
-    group_flags[0] |= csi_report_framework.is_present();
-    group_flags[0] |= csi_rs_for_tracking.is_present();
-    group_flags[0] |= srs_assoc_csi_rs.is_present();
-    group_flags[0] |= spatial_relations.is_present();
-    group_flags[1] |= default_qcl_two_tci_r16_present;
-    group_flags[1] |= codebook_params_per_band_r16.is_present();
-    group_flags[1] |= simul_spatial_relation_upd_pucch_res_group_r16_present;
-    group_flags[1] |= max_num_scell_bfr_r16_present;
-    group_flags[1] |= simul_reception_diff_type_d_r16_present;
-    group_flags[1] |= ssb_csirs_sinr_meas_r16.is_present();
-    group_flags[1] |= non_group_sinr_report_r16_present;
-    group_flags[1] |= group_sinr_report_r16_present;
-    group_flags[1] |= multi_dci_multi_trp_params_r16.is_present();
-    group_flags[1] |= single_dci_sdm_scheme_params_r16.is_present();
-    group_flags[1] |= support_fdm_scheme_a_r16_present;
-    group_flags[1] |= support_code_word_soft_combining_r16_present;
-    group_flags[1] |= support_tdm_scheme_a_r16_present;
-    group_flags[1] |= support_inter_slot_tdm_r16.is_present();
-    group_flags[1] |= low_papr_dmrs_pdsch_r16_present;
-    group_flags[1] |= low_papr_dmrs_pusc_hwithout_precoding_r16_present;
-    group_flags[1] |= low_papr_dmrs_pucch_r16_present;
-    group_flags[1] |= low_papr_dmrs_pusc_hwith_precoding_r16_present;
-    group_flags[1] |= csi_report_framework_ext_r16.is_present();
-    group_flags[1] |= codebook_params_addition_r16.is_present();
-    group_flags[1] |= codebook_combo_params_addition_r16.is_present();
-    group_flags[1] |= beam_correspondence_ssb_based_r16_present;
-    group_flags[1] |= beam_correspondence_csi_rs_based_r16_present;
-    group_flags[1] |= beam_switch_timing_r16.is_present();
-    group_flags[2] |= semi_persistent_l1_sinr_report_pucch_r16.is_present();
-    group_flags[2] |= semi_persistent_l1_sinr_report_pusch_r16_present;
-    group_flags[3] |= spatial_relations_v1640.is_present();
-    group_flags[3] |= support64_candidate_beam_rs_bfr_r16_present;
-    group_flags[4] |= max_mimo_layers_for_multi_dci_m_trp_r16_present;
-    group_flags[5] |= supported_sinr_meas_v1670_present;
-    group_flags[6] |= srs_increased_repeat_r17_present;
-    group_flags[6] |= srs_partial_freq_sr17_present;
-    group_flags[6] |= srs_start_rb_location_hop_partial_r17_present;
-    group_flags[6] |= srs_comb_eight_r17_present;
-    group_flags[6] |= codebook_paramsfetype2_r17.is_present();
-    group_flags[6] |= mtrp_pusch_two_csi_rs_r17_present;
-    group_flags[6] |= mtrp_pucch_inter_slot_r17_present;
-    group_flags[6] |= mtrp_pucch_cyclic_map_r17_present;
-    group_flags[6] |= mtrp_pucch_second_tpc_r17_present;
-    group_flags[6] |= mtrp_bfr_two_bfd_rs_set_r17.is_present();
-    group_flags[6] |= mtrp_bfr_pucch_sr_per_cg_r17_present;
-    group_flags[6] |= mtrp_bfr_assoc_pucch_sr_r17_present;
-    group_flags[6] |= sfn_simul_two_tci_across_multi_cc_r17_present;
-    group_flags[6] |= sfn_default_dl_beam_setup_r17_present;
-    group_flags[6] |= sfn_default_ul_beam_setup_r17_present;
-    group_flags[6] |= srs_trigger_offset_r17_present;
-    group_flags[6] |= srs_trigger_dci_r17_present;
-    group_flags[6] |= codebook_combo_param_mixed_type_r17.is_present();
-    group_flags[6] |= unified_joint_tci_r17.is_present();
-    group_flags[6] |= unified_joint_tci_multi_mac_ce_r17.is_present();
-    group_flags[6] |= unified_joint_tci_per_bwp_ca_r17_present;
-    group_flags[6] |= unified_joint_tci_list_sharing_ca_r17_present;
-    group_flags[6] |= unified_joint_tci_common_multi_cc_r17_present;
-    group_flags[6] |= unified_joint_tci_beam_align_dl_rs_r17_present;
-    group_flags[6] |= unified_joint_tci_pc_assoc_r17_present;
-    group_flags[6] |= unified_joint_tci_legacy_r17_present;
-    group_flags[6] |= unified_joint_tci_legacy_srs_r17_present;
-    group_flags[6] |= unified_joint_tci_legacy_coreset0_r17_present;
-    group_flags[6] |= unified_joint_tci_scell_bfr_r17_present;
-    group_flags[6] |= unified_joint_tci_inter_cell_r17.is_present();
-    group_flags[6] |= unified_separate_tci_r17.is_present();
-    group_flags[6] |= unified_separate_tci_multi_mac_ce_r17.is_present();
-    group_flags[6] |= unified_separate_tci_per_bwp_ca_r17_present;
-    group_flags[6] |= unified_separate_tci_list_sharing_ca_r17.is_present();
-    group_flags[6] |= unified_separate_tci_common_multi_cc_r17_present;
-    group_flags[6] |= unified_separate_tci_inter_cell_r17.is_present();
-    group_flags[6] |= unified_joint_tci_m_trp_inter_cell_bm_r17.is_present();
-    group_flags[6] |= mpe_mitigation_r17.is_present();
-    group_flags[6] |= srs_port_report_r17.is_present();
-    group_flags[6] |= mtrp_pdcch_individual_r17_present;
-    group_flags[6] |= mtrp_pdcch_any_span_3_symbols_r17_present;
-    group_flags[6] |= mtrp_pdcch_two_qcl_type_d_r17_present;
-    group_flags[6] |= mtrp_pusch_csi_rs_r17.is_present();
-    group_flags[6] |= mtrp_pusch_cyclic_map_r17_present;
-    group_flags[6] |= mtrp_pusch_second_tpc_r17_present;
-    group_flags[6] |= mtrp_pusch_two_phr_report_r17_present;
-    group_flags[6] |= mtrp_pusch_a_csi_r17_present;
-    group_flags[6] |= mtrp_pusch_sp_csi_r17_present;
-    group_flags[6] |= mtrp_pusch_cg_r17_present;
-    group_flags[6] |= mtrp_pucch_mac_ce_r17_present;
-    group_flags[6] |= mtrp_pucch_max_num_pc_fr1_r17_present;
-    group_flags[6] |= mtrp_inter_cell_r17.is_present();
-    group_flags[6] |= mtrp_group_based_l1_rsrp_r17.is_present();
-    group_flags[6] |= mtrp_bfd_rs_mac_ce_r17_present;
-    group_flags[6] |= mtrp_csi_enhancement_per_band_r17.is_present();
-    group_flags[6] |= codebook_combo_param_multi_trp_r17.is_present();
-    group_flags[6] |= mtrp_csi_add_csi_r17_present;
-    group_flags[6] |= mtrp_csi_n_max2_r17_present;
-    group_flags[6] |= mtrp_csi_cmr_r17_present;
-    group_flags[6] |= srs_partial_freq_nohop_sr17_present;
-    group_flags[6] |= beam_switch_timing_v1710.is_present();
-    group_flags[6] |= beam_switch_timing_r17.is_present();
-    group_flags[6] |= beam_report_timing_v1710.is_present();
-    group_flags[6] |= max_num_rx_tx_beam_switch_dl_v1710.is_present();
-    group_flags[7] |= srs_port_report_sp_ap_r17_present;
-    group_flags[7] |= max_num_rx_beam_v1720_present;
-    group_flags[7] |= sfn_implicit_rs_two_tci_r17_present;
-    group_flags[7] |= sfn_qcl_type_d_collision_two_tci_r17_present;
-    group_flags[7] |= mtrp_csi_num_cp_u_r17_present;
-    group_flags[8] |= support_rep_num_pdsch_tdra_dci_1_2_r17_present;
-    group_flags[9] |= codebook_paramsetype2_doppler_csi_r18.is_present();
-    group_flags[9] |= codebook_paramsfetype2_doppler_csi_r18.is_present();
-    group_flags[9] |= codebook_paramsetype2_cjt_r18.is_present();
-    group_flags[9] |= codebook_paramsfetype2_cjt_r18.is_present();
-    group_flags[9] |= codebook_combo_params_cjt_r18.is_present();
-    group_flags[9] |= codebook_params_harq_ack_pusch_r18.is_present();
-    group_flags[9] |= tci_joint_tci_upd_single_active_tci_per_cc_r18.is_present();
-    group_flags[9] |= tci_joint_tci_upd_multi_active_tci_per_cc_r18.is_present();
-    group_flags[9] |= tci_sel_dci_r18_present;
-    group_flags[9] |= tci_separate_tci_upd_single_active_tci_per_cc_r18.is_present();
-    group_flags[9] |= tci_separate_tci_upd_multi_active_tci_per_cc_r18.is_present();
-    group_flags[9] |= tci_sel_aperiodic_csi_rs_r18_present;
-    group_flags[9] |= tci_sel_aperiodic_csi_rs_m_dci_r18_present;
-    group_flags[9] |= two_tci_state_pdsch_cjt_tx_scheme_r18_present;
-    group_flags[9] |= tci_joint_tci_upd_single_active_tci_per_cc_per_coreset_r18.is_present();
-    group_flags[9] |= tci_joint_tci_upd_multi_active_tci_per_cc_per_coreset_r18_present;
-    group_flags[9] |= tci_trp_bfr_r18_present;
-    group_flags[9] |= tci_separate_tci_upd_single_active_tci_per_cc_per_coreset_r18.is_present();
-    group_flags[9] |= tci_separate_tci_upd_multi_active_tci_per_cc_per_coreset_r18.is_present();
-    group_flags[9] |= common_tci_single_dci_r18_present;
-    group_flags[9] |= common_tci_multi_dci_r18_present;
-    group_flags[9] |= two_phr_report_r18_present;
-    group_flags[9] |= sp_cell_tag_ind_r18_present;
-    group_flags[9] |= inter_cell_cross_trp_pdcch_order_cfra_r18_present;
-    group_flags[9] |= intra_cell_cross_trp_pdcch_order_cfra_r18_present;
-    group_flags[9] |= overlap_ul_trans_reduction_r18_present;
-    group_flags[9] |= max_periodicity_cmr_r18_present;
-    group_flags[9] |= tdcp_report_r18.is_present();
-    group_flags[9] |= tdcp_res_r18.is_present();
-    group_flags[9] |= timeline_relax_cjt_csi_r18_present;
-    group_flags[9] |= joint_cfg_dmrs_port_dyn_switching_r18_present;
-    group_flags[9] |= srs_comb_offset_hop_r18_present;
-    group_flags[9] |= srs_comb_offset_in_time_r18_present;
-    group_flags[9] |= srs_comb_offset_combined_group_seq_r18_present;
-    group_flags[9] |= srs_comb_offset_hop_within_subset_r18_present;
-    group_flags[9] |= srs_cyclic_shift_hop_r18_present;
-    group_flags[9] |= srs_cyclic_shift_hop_small_granularity_r18_present;
-    group_flags[9] |= srs_cyclic_shift_combined_group_seq_r18_present;
-    group_flags[9] |= cyclic_shift_hop_within_subset_r18_present;
-    group_flags[9] |= srs_cyclic_shift_combined_comb_offset_r18_present;
-    group_flags[9] |= pusch_cb_2_ptrs_single_dci_s_tx2_p_sdm_r18_present;
-    group_flags[9] |= pusch_non_cb_2_ptrs_single_dci_s_tx2_p_sdm_r18_present;
-    group_flags[9] |= pusch_non_cb_single_dci_s_tx2_p_sdm_csi_rs_srs_r18.is_present();
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_csi_rs_res_r18.is_present();
-    group_flags[9] |= dmrs_port_entry_single_dci_sdm_r18_present;
-    group_flags[9] |= pusch_cb_2_ptrs_single_dci_s_tx2_p_sfn_r18_present;
-    group_flags[9] |= pusch_non_cb_2_ptrs_single_dci_s_tx2_p_sfn_r18_present;
-    group_flags[9] |= pusch_non_cb_single_dci_s_tx2_p_sfn_csi_rs_srs_r18.is_present();
-    group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_full_time_full_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_full_time_partial_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_partial_time_full_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_partial_time_partial_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_partial_time_non_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_cg_cg_r18_present;
-    group_flags[9] |= two_pusch_cb_multi_dci_s_tx2_p_cg_dg_r18_present;
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_full_time_full_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_full_time_partial_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_partial_time_full_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_partial_time_partial_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_partial_time_non_freq_overlap_r18_present;
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_cg_cg_r18_present;
-    group_flags[9] |= two_pusch_non_cb_multi_dci_s_tx2_p_cg_dg_r18_present;
-    group_flags[9] |= pucch_repeat_dyn_ind_sfn_r18_present;
-    group_flags[9] |= group_beam_report_s_tx2_p_r18.is_present();
-    group_flags[10] |= simul_cfg_dmrs_dci_1_3_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -20570,7 +20582,9 @@ void shared_spec_ch_access_params_per_band_v1650_s::to_json(json_writer& j) cons
 // FR2-2-AccessParamsPerBand-r17 ::= SEQUENCE
 OCUDUASN_CODE fr2_2_access_params_per_band_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= mod64_qam_pusch_fr2_2_r17_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(dl_fr2_2_scs_120k_hz_r17_present, 1));
   HANDLE_CODE(bref.pack(ul_fr2_2_scs_120k_hz_r17_present, 1));
   HANDLE_CODE(bref.pack(init_access_ssb_120k_hz_r17_present, 1));
@@ -20610,10 +20624,8 @@ OCUDUASN_CODE fr2_2_access_params_per_band_r17_s::pack(bit_ref& bref) const
     HANDLE_CODE(bref.pack(support32_ul_harq_process_per_scs_r17.scs_960k_hz_r17_present, 1));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= mod64_qam_pusch_fr2_2_r17_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -20995,7 +21007,7 @@ void shared_spec_ch_access_params_per_band_v1710_s::to_json(json_writer& j) cons
 // PosSRS-RRC-Inactive-OutsideInitialUL-BWP-r17 ::= SEQUENCE
 OCUDUASN_CODE pos_srs_rrc_inactive_outside_init_ul_bwp_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_srs_pos_bw_for_each_scs_within_cc_fr1_r17_present, 1));
   HANDLE_CODE(bref.pack(max_srs_pos_bw_for_each_scs_within_cc_fr2_r17_present, 1));
   HANDLE_CODE(bref.pack(max_num_of_srs_pos_res_sets_r17_present, 1));
@@ -21091,6 +21103,10 @@ OCUDUASN_CODE pos_srs_rrc_inactive_outside_init_ul_bwp_r17_s::unpack(cbit_ref& b
     HANDLE_CODE(max_num_of_semi_persistent_srs_pos_res_per_slot_r17.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pos_srs_rrc_inactive_outside_init_ul_bwp_r17_s::to_json(json_writer& j) const
@@ -21355,7 +21371,7 @@ OCUDUASN_CODE prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::pack(bit_ref&
   if (ppw_dur_of_prs_processing_r17_present) {
     HANDLE_CODE(ppw_dur_of_prs_processing_r17.pack(bref));
   }
-  bref.pack(ppw_max_num_of_dl_prs_res_processed_per_slot_r17.ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ppw_max_num_of_dl_prs_res_processed_per_slot_r17.scs15_r17_present, 1));
   HANDLE_CODE(bref.pack(ppw_max_num_of_dl_prs_res_processed_per_slot_r17.scs30_r17_present, 1));
   HANDLE_CODE(bref.pack(ppw_max_num_of_dl_prs_res_processed_per_slot_r17.scs60_r17_present, 1));
@@ -21404,6 +21420,10 @@ OCUDUASN_CODE prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::unpack(cbit_r
   }
   if (ppw_max_num_of_dl_prs_res_processed_per_slot_r17.scs120_r17_present) {
     HANDLE_CODE(ppw_max_num_of_dl_prs_res_processed_per_slot_r17.scs120_r17.unpack(bref));
+  }
+  if (ppw_max_num_of_dl_prs_res_processed_per_slot_r17.ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
   }
   if (ppw_max_num_of_dl_bw_r17_present) {
     HANDLE_CODE(ppw_max_num_of_dl_bw_r17.unpack(bref));
@@ -21583,7 +21603,7 @@ void prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_dur_of_prs_process
 OCUDUASN_CODE
 prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_dur_of_prs_processing_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::ppw_dur_of_prs_processing1_r17:
       HANDLE_CODE(c.get<ppw_dur_of_prs_processing1_r17_s_>().ppw_dur_of_prs_processing_symbols_n_r17.pack(bref));
@@ -21604,7 +21624,7 @@ OCUDUASN_CODE
 prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_dur_of_prs_processing_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::ppw_dur_of_prs_processing1_r17:
@@ -21884,7 +21904,7 @@ void prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_max_num_of_dl_bw_r
 OCUDUASN_CODE
 prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_max_num_of_dl_bw_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r17:
       HANDLE_CODE(c.get<fr1_r17_e_>().pack(bref));
@@ -21901,7 +21921,7 @@ prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_max_num_of_dl_bw_r17_c_
 OCUDUASN_CODE prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_max_num_of_dl_bw_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r17:
@@ -21970,7 +21990,7 @@ uint8_t prs_processing_cap_outside_m_gin_ppw_per_type_r17_s::ppw_max_num_of_dl_b
 // DL-PRS-MeasurementWithRxFH-RRC-Connected-r18 ::= SEQUENCE
 OCUDUASN_CODE dl_prs_meas_with_rx_fh_rrc_connected_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_prs_bw_across_all_hops_fr1_r18_present, 1));
   HANDLE_CODE(bref.pack(max_prs_bw_across_all_hops_fr2_r18_present, 1));
   HANDLE_CODE(bref.pack(max_fh_hops_r18_present, 1));
@@ -22038,6 +22058,10 @@ OCUDUASN_CODE dl_prs_meas_with_rx_fh_rrc_connected_r18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(num_of_overlapping_prb_r18.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void dl_prs_meas_with_rx_fh_rrc_connected_r18_s::to_json(json_writer& j) const
@@ -22192,7 +22216,7 @@ uint8_t dl_prs_meas_with_rx_fh_rrc_connected_r18_s::num_of_overlapping_prb_r18_o
 // PosSRS-TxFrequencyHoppingRRC-Connected-r18 ::= SEQUENCE
 OCUDUASN_CODE pos_srs_tx_freq_hop_rrc_connected_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_srs_bw_across_all_hops_fr1_r18_present, 1));
   HANDLE_CODE(bref.pack(max_srs_bw_across_all_hops_fr2_r18_present, 1));
   HANDLE_CODE(bref.pack(max_tx_fh_hops_r18_present, 1));
@@ -22282,6 +22306,10 @@ OCUDUASN_CODE pos_srs_tx_freq_hop_rrc_connected_r18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(max_srs_res_semipersistent_r18.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pos_srs_tx_freq_hop_rrc_connected_r18_s::to_json(json_writer& j) const
@@ -22441,7 +22469,7 @@ uint8_t pos_srs_tx_freq_hop_rrc_connected_r18_s::max_srs_res_semipersistent_r18_
 // PosSRS-TxFrequencyHoppingRRC-Inactive-r18 ::= SEQUENCE
 OCUDUASN_CODE pos_srs_tx_freq_hop_rrc_inactive_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_srs_bw_across_all_hops_fr1_r18_present, 1));
   HANDLE_CODE(bref.pack(max_srs_bw_across_all_hops_fr2_r18_present, 1));
   HANDLE_CODE(bref.pack(max_tx_fh_hops_r18_present, 1));
@@ -22523,6 +22551,10 @@ OCUDUASN_CODE pos_srs_tx_freq_hop_rrc_inactive_r18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(max_srs_res_semipersistent_r18.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pos_srs_tx_freq_hop_rrc_inactive_r18_s::to_json(json_writer& j) const
@@ -22667,7 +22699,7 @@ uint8_t pos_srs_tx_freq_hop_rrc_inactive_r18_s::max_srs_res_semipersistent_r18_o
 // PosSRS-BWA-RRC-Inactive-r18 ::= SEQUENCE
 OCUDUASN_CODE pos_srs_bwa_rrc_inactive_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_aggr_bw_two_carriers_fr1_r18_present, 1));
   HANDLE_CODE(bref.pack(max_aggr_bw_two_carriers_fr2_r18_present, 1));
   HANDLE_CODE(bref.pack(max_aggr_bw_three_carriers_fr1_r18_present, 1));
@@ -22739,6 +22771,10 @@ OCUDUASN_CODE pos_srs_bwa_rrc_inactive_r18_s::unpack(cbit_ref& bref)
     HANDLE_CODE(pwr_class_for_three_aggr_carriers_r18.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pos_srs_bwa_rrc_inactive_r18_s::to_json(json_writer& j) const
@@ -23110,7 +23146,7 @@ void lower_msd_r18_s::aggressorband1_r18_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE lower_msd_r18_s::aggressorband1_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::nr:
       HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)1u, (uint16_t)1024u));
@@ -23127,7 +23163,7 @@ OCUDUASN_CODE lower_msd_r18_s::aggressorband1_r18_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE lower_msd_r18_s::aggressorband1_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::nr:
@@ -23152,7 +23188,7 @@ const char* lower_msd_r18_s::aggressorband1_r18_c_::types_opts::to_string() cons
 // MAC-ParametersPerBand-r18 ::= SEQUENCE
 OCUDUASN_CODE mac_params_per_band_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ptm_retx_r18_present, 1));
   HANDLE_CODE(bref.pack(ptm_retx_inactive_r18_present, 1));
 
@@ -23164,6 +23200,10 @@ OCUDUASN_CODE mac_params_per_band_r18_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ptm_retx_r18_present, 1));
   HANDLE_CODE(bref.unpack(ptm_retx_inactive_r18_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mac_params_per_band_r18_s::to_json(json_writer& j) const
@@ -23181,7 +23221,246 @@ void mac_params_per_band_r18_s::to_json(json_writer& j) const
 // BandNR ::= SEQUENCE
 OCUDUASN_CODE band_nr_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= max_ul_duty_cycle_pc2_fr1_present;
+  group_flags[1] |= pucch_spatial_rel_info_mac_ce_present;
+  group_flags[1] |= pwr_boosting_pi2_bpsk_present;
+  group_flags[2] |= max_ul_duty_cycle_fr2_present;
+  group_flags[3] |= ch_bws_dl_v1590.is_present();
+  group_flags[3] |= ch_bws_ul_v1590.is_present();
+  group_flags[4] |= asymmetric_bw_combination_set_present;
+  group_flags[5] |= shared_spec_ch_access_params_per_band_r16.is_present();
+  group_flags[5] |= cancel_overlapping_pusch_r16_present;
+  group_flags[5] |= multiple_rate_matching_eutra_crs_r16.is_present();
+  group_flags[5] |= overlap_rate_matching_eutra_crs_r16_present;
+  group_flags[5] |= pdsch_map_type_b_alt_r16_present;
+  group_flags[5] |= one_slot_periodic_trs_r16_present;
+  group_flags[5] |= olpc_srs_pos_r16.is_present();
+  group_flags[5] |= spatial_relations_srs_pos_r16.is_present();
+  group_flags[5] |= simul_srs_mimo_trans_within_band_r16_present;
+  group_flags[5] |= ch_bw_dl_iab_r16.is_present();
+  group_flags[5] |= ch_bw_ul_iab_r16.is_present();
+  group_flags[5] |= raster_shift7dot5_iab_r16_present;
+  group_flags[5] |= ue_pwr_class_v1610_present;
+  group_flags[5] |= cond_ho_r16_present;
+  group_flags[5] |= cond_ho_fail_r16_present;
+  group_flags[5] |= cond_ho_two_trigger_events_r16_present;
+  group_flags[5] |= cond_pscell_change_r16_present;
+  group_flags[5] |= cond_pscell_change_two_trigger_events_r16_present;
+  group_flags[5] |= mpr_pwr_boost_fr2_r16_present;
+  group_flags[5] |= active_cfg_grant_r16.is_present();
+  group_flags[5] |= joint_release_cfg_grant_type2_r16_present;
+  group_flags[5] |= sps_r16.is_present();
+  group_flags[5] |= joint_release_sps_r16_present;
+  group_flags[5] |= simul_srs_trans_within_band_r16_present;
+  group_flags[5] |= trs_add_bw_r16_present;
+  group_flags[5] |= ho_intra_f_iab_r16_present;
+  group_flags[6] |= simul_tx_srs_ant_switching_intra_band_ul_ca_r16.is_present();
+  group_flags[6] |= shared_spec_ch_access_params_per_band_v1630.is_present();
+  group_flags[7] |= ho_utra_fdd_r16_present;
+  group_flags[7] |= enhanced_ul_transient_period_r16_present;
+  group_flags[7] |= shared_spec_ch_access_params_per_band_v1640.is_present();
+  group_flags[8] |= type1_pusch_repeat_multi_slots_v1650_present;
+  group_flags[8] |= type2_pusch_repeat_multi_slots_v1650_present;
+  group_flags[8] |= pusch_repeat_multi_slots_v1650_present;
+  group_flags[8] |= cfg_ul_grant_type1_v1650_present;
+  group_flags[8] |= cfg_ul_grant_type2_v1650_present;
+  group_flags[8] |= shared_spec_ch_access_params_per_band_v1650.is_present();
+  group_flags[9] |= enhanced_skip_ul_tx_cfg_v1660_present;
+  group_flags[9] |= enhanced_skip_ul_tx_dyn_v1660_present;
+  group_flags[10] |= max_ul_duty_cycle_pc1dot5_mpe_fr1_r16_present;
+  group_flags[10] |= tx_diversity_r16_present;
+  group_flags[11] |= pdsch_1024_qam_fr1_r17_present;
+  group_flags[11] |= ue_pwr_class_v1700_present;
+  group_flags[11] |= fr2_2_access_params_per_band_r17.is_present();
+  group_flags[11] |= rlm_relaxation_r17_present;
+  group_flags[11] |= bfd_relaxation_r17_present;
+  group_flags[11] |= cg_sdt_r17_present;
+  group_flags[11] |= location_based_cond_ho_r17_present;
+  group_flags[11] |= time_based_cond_ho_r17_present;
+  group_flags[11] |= event_a4_based_cond_ho_r17_present;
+  group_flags[11] |= mn_initiated_cond_pscell_change_nrdc_r17_present;
+  group_flags[11] |= sn_initiated_cond_pscell_change_nrdc_r17_present;
+  group_flags[11] |= pdcch_skipping_without_sssg_r17_present;
+  group_flags[11] |= sssg_switching_1_bit_ind_r17_present;
+  group_flags[11] |= sssg_switching_2_bit_ind_r17_present;
+  group_flags[11] |= pdcch_skipping_with_sssg_r17_present;
+  group_flags[11] |= search_space_set_grp_switch_cap2_r17_present;
+  group_flags[11] |= ul_pre_compensation_r17_present;
+  group_flags[11] |= ul_ta_report_r17_present;
+  group_flags[11] |= max_harq_process_num_r17_present;
+  group_flags[11] |= type2_harq_codebook_r17_present;
+  group_flags[11] |= type1_harq_codebook_r17_present;
+  group_flags[11] |= type3_harq_codebook_r17_present;
+  group_flags[11] |= ue_specific_k_offset_r17_present;
+  group_flags[11] |= multi_pdsch_single_dci_fr2_1_scs_120k_hz_r17_present;
+  group_flags[11] |= multi_pusch_single_dci_fr2_1_scs_120k_hz_r17_present;
+  group_flags[11] |= parallel_prs_meas_rrc_inactive_r17_present;
+  group_flags[11] |= nr_ue_tx_teg_id_max_support_r17_present;
+  group_flags[11] |= prs_processing_rrc_inactive_r17_present;
+  group_flags[11] |= prs_processing_win_type1_a_r17_present;
+  group_flags[11] |= prs_processing_win_type1_b_r17_present;
+  group_flags[11] |= prs_processing_win_type2_r17_present;
+  group_flags[11] |= srs_all_pos_res_rrc_inactive_r17.is_present();
+  group_flags[11] |= olpc_srs_pos_rrc_inactive_r17.is_present();
+  group_flags[11] |= spatial_relations_srs_pos_rrc_inactive_r17.is_present();
+  group_flags[11] |= max_num_pusch_type_a_repeat_r17_present;
+  group_flags[11] |= pusch_type_a_repeats_avail_slot_r17_present;
+  group_flags[11] |= tb_processing_multi_slot_pusch_r17_present;
+  group_flags[11] |= tb_processing_rep_multi_slot_pusch_r17_present;
+  group_flags[11] |= max_dur_dmrs_bundling_r17.is_present();
+  group_flags[11] |= pusch_repeat_msg3_r17_present;
+  group_flags[11] |= shared_spec_ch_access_params_per_band_v1710.is_present();
+  group_flags[11] |= parallel_meas_without_restrict_r17_present;
+  group_flags[11] |= max_num_ngso_satellites_within_one_smtc_r17_present;
+  group_flags[11] |= k1_range_ext_r17_present;
+  group_flags[11] |= aperiodic_csi_rs_fast_scell_activation_r17.is_present();
+  group_flags[11] |= aperiodic_csi_rs_add_bw_r17_present;
+  group_flags[11] |= bwp_without_cd_ssb_or_ncd_ssb_red_cap_r17_present;
+  group_flags[11] |= half_duplex_fdd_type_a_red_cap_r17_present;
+  group_flags[11] |= pos_srs_rrc_inactive_outside_init_ul_bwp_r17.is_present();
+  group_flags[11] |= ch_bws_dl_scs_480k_hz_fr2_2_r17_present;
+  group_flags[11] |= ch_bws_ul_scs_480k_hz_fr2_2_r17_present;
+  group_flags[11] |= ch_bws_dl_scs_960k_hz_fr2_2_r17_present;
+  group_flags[11] |= ch_bws_ul_scs_960k_hz_fr2_2_r17_present;
+  group_flags[11] |= ul_gap_fr2_r17_present;
+  group_flags[11] |= one_shot_harq_feedback_triggered_by_dci_1_2_r17_present;
+  group_flags[11] |= one_shot_harq_feedback_phy_prio_r17_present;
+  group_flags[11] |= enhanced_type3_harq_codebook_feedback_r17.is_present();
+  group_flags[11] |= triggered_harq_codebook_retx_r17.is_present();
+  group_flags[12] |= ue_one_shot_ul_timing_adj_r17_present;
+  group_flags[12] |= pucch_repeat_f0_2_r17_present;
+  group_flags[12] |= cqi_4_bits_subband_ntn_shared_spec_ch_access_r17_present;
+  group_flags[12] |= mux_harq_ack_diff_priorities_r17_present;
+  group_flags[12] |= ta_based_pdc_ntn_shared_spec_ch_access_r17_present;
+  group_flags[12] |= ack_nack_feedback_for_multicast_with_dci_enabler_r17_present;
+  group_flags[12] |= max_num_g_rnti_r17_present;
+  group_flags[12] |= dyn_multicast_dci_format4_2_r17_present;
+  group_flags[12] |= max_mod_order_for_multicast_r17.is_present();
+  group_flags[12] |= dyn_slot_repeat_multicast_tn_non_shared_spec_ch_access_r17_present;
+  group_flags[12] |= dyn_slot_repeat_multicast_ntn_shared_spec_ch_access_r17_present;
+  group_flags[12] |= nack_only_feedback_for_multicast_with_dci_enabler_r17_present;
+  group_flags[12] |= ack_nack_feedback_for_sps_multicast_with_dci_enabler_r17_present;
+  group_flags[12] |= max_num_g_cs_rnti_r17_present;
+  group_flags[12] |= re_level_rate_matching_for_multicast_r17_present;
+  group_flags[12] |= pdsch_1024_qam_2_mimo_fr1_r17_present;
+  group_flags[12] |= prs_meas_without_mg_r17_present;
+  group_flags[12] |= max_num_ngso_satellites_per_carrier_r17_present;
+  group_flags[12] |= prs_processing_cap_outside_m_gin_ppw_r17.is_present();
+  group_flags[12] |= srs_semi_persistent_pos_res_rrc_inactive_r17.is_present();
+  group_flags[12] |= ch_bws_dl_scs_120k_hz_fr2_2_r17_present;
+  group_flags[12] |= ch_bws_ul_scs_120k_hz_fr2_2_r17_present;
+  group_flags[13] |= dmrs_bundling_pusch_rep_type_a_r17_present;
+  group_flags[13] |= dmrs_bundling_pusch_rep_type_b_r17_present;
+  group_flags[13] |= dmrs_bundling_pusch_multi_slot_r17_present;
+  group_flags[13] |= dmrs_bundling_pucch_rep_r17_present;
+  group_flags[13] |= inter_slot_freq_hop_inter_slot_bundling_pusch_r17_present;
+  group_flags[13] |= inter_slot_freq_hop_pucch_r17_present;
+  group_flags[13] |= dmrs_bundling_restart_r17_present;
+  group_flags[13] |= dmrs_bundling_non_back_to_back_tx_r17_present;
+  group_flags[14] |= max_dyn_slot_repeat_for_sps_multicast_r17_present;
+  group_flags[14] |= nack_only_feedback_for_sps_multicast_with_dci_enabler_r17_present;
+  group_flags[14] |= sps_multicast_dci_format4_2_r17_present;
+  group_flags[14] |= sps_multicast_multi_cfg_r17_present;
+  group_flags[14] |= prio_ind_in_dci_multicast_r17_present;
+  group_flags[14] |= prio_ind_in_dci_sps_multicast_r17_present;
+  group_flags[14] |= two_harq_ack_codebook_for_unicast_and_multicast_r17_present;
+  group_flags[14] |= multi_pucch_harq_ack_for_multicast_unicast_r17_present;
+  group_flags[14] |= release_sps_multicast_with_cs_rnti_r17_present;
+  group_flags[15] |= pos_ue_ta_auto_adjustment_r18_present;
+  group_flags[15] |= pos_srs_validity_area_rrc_inactive_init_ul_bwp_r18_present;
+  group_flags[15] |= pos_srs_validity_area_rrc_inactive_outside_init_ul_bwp_r18_present;
+  group_flags[15] |= dl_prs_meas_with_rx_fh_rrc_connected_for_red_cap_r18.is_present();
+  group_flags[15] |= pos_srs_tx_fh_rrc_connected_for_red_cap_r18.is_present();
+  group_flags[15] |= pos_srs_tx_fh_rrc_inactive_for_red_cap_r18.is_present();
+  group_flags[15] |= pos_srs_bwa_rrc_inactive_r18.is_present();
+  group_flags[15] |= pos_joint_trigger_by_single_dci_rrc_connected_r18_present;
+  group_flags[15] |= dl_prs_meas_with_rx_fh_rrc_inactivefor_red_cap_r18_present;
+  group_flags[15] |= dl_prs_meas_with_rx_fh_rrc_idlefor_red_cap_r18_present;
+  group_flags[15] |= spatial_adaptation_csi_feedback_r18.is_present();
+  group_flags[15] |= spatial_adaptation_csi_feedback_pusch_r18.is_present();
+  group_flags[15] |= spatial_adaptation_csi_feedback_aperiodic_r18.is_present();
+  group_flags[15] |= spatial_adaptation_csi_feedback_pucch_r18.is_present();
+  group_flags[15] |= pwr_adaptation_csi_feedback_r18.is_present();
+  group_flags[15] |= pwr_adaptation_csi_feedback_pusch_r18.is_present();
+  group_flags[15] |= pwr_adaptation_csi_feedback_aperiodic_r18.is_present();
+  group_flags[15] |= pwr_adaptation_csi_feedback_pucch_r18.is_present();
+  group_flags[15] |= nes_cell_dtx_drx_r18_present;
+  group_flags[15] |= nes_cell_dtx_drx_dci2_9_r18_present;
+  group_flags[15] |= mix_code_book_spatial_adaptation_r18_present;
+  group_flags[15] |= simul_csi_sub_reports_per_cc_r18_present;
+  group_flags[15] |= ntn_dmrs_bundling_ngso_r18_present;
+  group_flags[15] |= ltm_beam_ind_joint_tci_r18.is_present();
+  group_flags[15] |= dummy_ltm_mac_ce_joint_tci_r18.is_present();
+  group_flags[15] |= ltm_beam_ind_separate_tci_r18.is_present();
+  group_flags[15] |= dummy_ltm_mac_ce_separate_tci_r18.is_present();
+  group_flags[15] |= rach_early_ta_meas_r18_present;
+  group_flags[15] |= ue_ta_meas_r18_present;
+  group_flags[15] |= ta_ind_cell_switch_r18_present;
+  group_flags[15] |= triggered_harq_codebook_retx_dci_1_3_r18.is_present();
+  group_flags[15] |= unified_joint_tci_multi_mac_ce_dci_1_3_r18.is_present();
+  group_flags[15] |= unified_separate_tci_multi_mac_ce_intra_cell_r18.is_present();
+  group_flags[15] |= multi_pusch_cg_r18_present;
+  group_flags[15] |= multi_pusch_active_cfg_grant_r18.is_present();
+  group_flags[15] |= joint_release_dci_r18_present;
+  group_flags[15] |= cg_pusch_uto_uci_ind_r18_present;
+  group_flags[15] |= pdcch_monitoring_resumption_after_ul_nack_r18_present;
+  group_flags[15] |= support3_m_hz_ch_bw_symmetric_r18_present;
+  group_flags[15] |= support3_m_hz_ch_bw_asymmetric_r18_present;
+  group_flags[15] |= support12_prb_coreset0_r18_present;
+  group_flags[15] |= nr_pdcch_overlap_lte_crs_re_r18.is_present();
+  group_flags[15] |= nr_pdcch_overlap_lte_crs_re_multi_patterns_r18_present;
+  group_flags[15] |= nr_pdcch_overlap_lte_crs_re_span_3_4_r18_present;
+  group_flags[15] |= two_rate_matching_eutra_crs_patterns_3_4_r18.is_present();
+  group_flags[15] |= overlap_rate_matching_eutra_crs_patterns_3_4_diff_cs_pool_r18_present;
+  group_flags[15] |= ncd_ssb_bwp_wor_r18_present;
+  group_flags[15] |= rlm_bm_bfd_csi_rs_outside_active_bwp_r18_present;
+  group_flags[15] |= prach_coverage_enh_r18_present;
+  group_flags[15] |= prach_repeat_r18_present;
+  group_flags[15] |= dyn_waveform_switch_r18_present;
+  group_flags[15] |= dyn_waveform_switch_phr_r18_present;
+  group_flags[15] |= dyn_waveform_switch_intra_ca_r18_present;
+  group_flags[15] |= multi_pusch_single_dci_non_cons_slots_r18_present;
+  group_flags[15] |= pdc_max_num_prs_res_processed_per_slot_r18.is_present();
+  group_flags[15] |= intra_slot_pdsch_multicast_inactive_r18_present;
+  group_flags[15] |= multicast_inactive_r18_present;
+  group_flags[15] |= thres_based_multicast_resume_r18_present;
+  group_flags[15] |= lower_msd_r18.is_present();
+  group_flags[15] |= lower_msd_endc_r18.is_present();
+  group_flags[15] |= enhanced_ch_raster_r18_present;
+  group_flags[15] |= fast_beam_sweeping_multi_rx_r18_present;
+  group_flags[15] |= beam_sweeping_factor_reduction_r18.is_present();
+  group_flags[15] |= simul_reception_two_qcl_r18_present;
+  group_flags[15] |= meas_enh_ca_inter_freq_fr2_r18_present;
+  group_flags[15] |= tci_state_switch_ind_r18_present;
+  group_flags[15] |= ant_array_type_r18_present;
+  group_flags[15] |= location_based_cond_ho_atg_r18_present;
+  group_flags[15] |= max_output_pwr_atg_r18_present;
+  group_flags[15] |= ltm_fast_processing_cfg_r18.is_present();
+  group_flags[15] |= meas_validation_report_emr_r18_present;
+  group_flags[15] |= meas_validation_report_resel_meass_r18_present;
+  group_flags[15] |= event_a4_based_cond_ho_nes_r18_present;
+  group_flags[15] |= nes_based_cond_ho_with_dci_r18_present;
+  group_flags[15] |= rach_less_ho_cg_r18_present;
+  group_flags[15] |= rach_less_ho_dg_r18_present;
+  group_flags[15] |= location_based_cond_ho_emc_r18_present;
+  group_flags[15] |= mt_cg_sdt_r18_present;
+  group_flags[15] |= pos_srs_precfgure_rrc_inactive_init_ul_bwp_r18_present;
+  group_flags[15] |= pos_srs_precfgure_rrc_inactive_outside_init_ul_bwp_r18_present;
+  group_flags[15] |= cg_sdt_periodicity_ext_r18_present;
+  group_flags[15] |= support_of2_rx_xr_r18_present;
+  group_flags[15] |= cond_ho_with_cand_scg_change_r18_present;
+  group_flags[16] |= mac_params_per_band_r18.is_present();
+  group_flags[16] |= ch_bw_dl_ncr_r18.is_present();
+  group_flags[16] |= ch_bw_ul_ncr_r18.is_present();
+  group_flags[16] |= ncr_pdsch_64_qam_fr2_r18_present;
+  group_flags[16] |= ltm_mcg_intra_freq_r18_present;
+  group_flags[16] |= ltm_scg_intra_freq_r18_present;
+  group_flags[17] |= ltm_mac_ce_joint_tci_r18.is_present();
+  group_flags[17] |= ltm_mac_ce_separate_tci_r18.is_present();
+  group_flags[18] |= event_a4_based_cond_ho_atg_r18_present;
+  group_flags[19] |= pos_srs_tx_fh_with_time_win_for_red_cap_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(modified_mpr_behaviour_present, 1));
   HANDLE_CODE(bref.pack(mimo_params_per_band_present, 1));
   HANDLE_CODE(bref.pack(extended_cp_present, 1));
@@ -23217,247 +23496,8 @@ OCUDUASN_CODE band_nr_s::pack(bit_ref& bref) const
     HANDLE_CODE(ch_bws_ul.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= max_ul_duty_cycle_pc2_fr1_present;
-    group_flags[1] |= pucch_spatial_rel_info_mac_ce_present;
-    group_flags[1] |= pwr_boosting_pi2_bpsk_present;
-    group_flags[2] |= max_ul_duty_cycle_fr2_present;
-    group_flags[3] |= ch_bws_dl_v1590.is_present();
-    group_flags[3] |= ch_bws_ul_v1590.is_present();
-    group_flags[4] |= asymmetric_bw_combination_set_present;
-    group_flags[5] |= shared_spec_ch_access_params_per_band_r16.is_present();
-    group_flags[5] |= cancel_overlapping_pusch_r16_present;
-    group_flags[5] |= multiple_rate_matching_eutra_crs_r16.is_present();
-    group_flags[5] |= overlap_rate_matching_eutra_crs_r16_present;
-    group_flags[5] |= pdsch_map_type_b_alt_r16_present;
-    group_flags[5] |= one_slot_periodic_trs_r16_present;
-    group_flags[5] |= olpc_srs_pos_r16.is_present();
-    group_flags[5] |= spatial_relations_srs_pos_r16.is_present();
-    group_flags[5] |= simul_srs_mimo_trans_within_band_r16_present;
-    group_flags[5] |= ch_bw_dl_iab_r16.is_present();
-    group_flags[5] |= ch_bw_ul_iab_r16.is_present();
-    group_flags[5] |= raster_shift7dot5_iab_r16_present;
-    group_flags[5] |= ue_pwr_class_v1610_present;
-    group_flags[5] |= cond_ho_r16_present;
-    group_flags[5] |= cond_ho_fail_r16_present;
-    group_flags[5] |= cond_ho_two_trigger_events_r16_present;
-    group_flags[5] |= cond_pscell_change_r16_present;
-    group_flags[5] |= cond_pscell_change_two_trigger_events_r16_present;
-    group_flags[5] |= mpr_pwr_boost_fr2_r16_present;
-    group_flags[5] |= active_cfg_grant_r16.is_present();
-    group_flags[5] |= joint_release_cfg_grant_type2_r16_present;
-    group_flags[5] |= sps_r16.is_present();
-    group_flags[5] |= joint_release_sps_r16_present;
-    group_flags[5] |= simul_srs_trans_within_band_r16_present;
-    group_flags[5] |= trs_add_bw_r16_present;
-    group_flags[5] |= ho_intra_f_iab_r16_present;
-    group_flags[6] |= simul_tx_srs_ant_switching_intra_band_ul_ca_r16.is_present();
-    group_flags[6] |= shared_spec_ch_access_params_per_band_v1630.is_present();
-    group_flags[7] |= ho_utra_fdd_r16_present;
-    group_flags[7] |= enhanced_ul_transient_period_r16_present;
-    group_flags[7] |= shared_spec_ch_access_params_per_band_v1640.is_present();
-    group_flags[8] |= type1_pusch_repeat_multi_slots_v1650_present;
-    group_flags[8] |= type2_pusch_repeat_multi_slots_v1650_present;
-    group_flags[8] |= pusch_repeat_multi_slots_v1650_present;
-    group_flags[8] |= cfg_ul_grant_type1_v1650_present;
-    group_flags[8] |= cfg_ul_grant_type2_v1650_present;
-    group_flags[8] |= shared_spec_ch_access_params_per_band_v1650.is_present();
-    group_flags[9] |= enhanced_skip_ul_tx_cfg_v1660_present;
-    group_flags[9] |= enhanced_skip_ul_tx_dyn_v1660_present;
-    group_flags[10] |= max_ul_duty_cycle_pc1dot5_mpe_fr1_r16_present;
-    group_flags[10] |= tx_diversity_r16_present;
-    group_flags[11] |= pdsch_1024_qam_fr1_r17_present;
-    group_flags[11] |= ue_pwr_class_v1700_present;
-    group_flags[11] |= fr2_2_access_params_per_band_r17.is_present();
-    group_flags[11] |= rlm_relaxation_r17_present;
-    group_flags[11] |= bfd_relaxation_r17_present;
-    group_flags[11] |= cg_sdt_r17_present;
-    group_flags[11] |= location_based_cond_ho_r17_present;
-    group_flags[11] |= time_based_cond_ho_r17_present;
-    group_flags[11] |= event_a4_based_cond_ho_r17_present;
-    group_flags[11] |= mn_initiated_cond_pscell_change_nrdc_r17_present;
-    group_flags[11] |= sn_initiated_cond_pscell_change_nrdc_r17_present;
-    group_flags[11] |= pdcch_skipping_without_sssg_r17_present;
-    group_flags[11] |= sssg_switching_1_bit_ind_r17_present;
-    group_flags[11] |= sssg_switching_2_bit_ind_r17_present;
-    group_flags[11] |= pdcch_skipping_with_sssg_r17_present;
-    group_flags[11] |= search_space_set_grp_switch_cap2_r17_present;
-    group_flags[11] |= ul_pre_compensation_r17_present;
-    group_flags[11] |= ul_ta_report_r17_present;
-    group_flags[11] |= max_harq_process_num_r17_present;
-    group_flags[11] |= type2_harq_codebook_r17_present;
-    group_flags[11] |= type1_harq_codebook_r17_present;
-    group_flags[11] |= type3_harq_codebook_r17_present;
-    group_flags[11] |= ue_specific_k_offset_r17_present;
-    group_flags[11] |= multi_pdsch_single_dci_fr2_1_scs_120k_hz_r17_present;
-    group_flags[11] |= multi_pusch_single_dci_fr2_1_scs_120k_hz_r17_present;
-    group_flags[11] |= parallel_prs_meas_rrc_inactive_r17_present;
-    group_flags[11] |= nr_ue_tx_teg_id_max_support_r17_present;
-    group_flags[11] |= prs_processing_rrc_inactive_r17_present;
-    group_flags[11] |= prs_processing_win_type1_a_r17_present;
-    group_flags[11] |= prs_processing_win_type1_b_r17_present;
-    group_flags[11] |= prs_processing_win_type2_r17_present;
-    group_flags[11] |= srs_all_pos_res_rrc_inactive_r17.is_present();
-    group_flags[11] |= olpc_srs_pos_rrc_inactive_r17.is_present();
-    group_flags[11] |= spatial_relations_srs_pos_rrc_inactive_r17.is_present();
-    group_flags[11] |= max_num_pusch_type_a_repeat_r17_present;
-    group_flags[11] |= pusch_type_a_repeats_avail_slot_r17_present;
-    group_flags[11] |= tb_processing_multi_slot_pusch_r17_present;
-    group_flags[11] |= tb_processing_rep_multi_slot_pusch_r17_present;
-    group_flags[11] |= max_dur_dmrs_bundling_r17.is_present();
-    group_flags[11] |= pusch_repeat_msg3_r17_present;
-    group_flags[11] |= shared_spec_ch_access_params_per_band_v1710.is_present();
-    group_flags[11] |= parallel_meas_without_restrict_r17_present;
-    group_flags[11] |= max_num_ngso_satellites_within_one_smtc_r17_present;
-    group_flags[11] |= k1_range_ext_r17_present;
-    group_flags[11] |= aperiodic_csi_rs_fast_scell_activation_r17.is_present();
-    group_flags[11] |= aperiodic_csi_rs_add_bw_r17_present;
-    group_flags[11] |= bwp_without_cd_ssb_or_ncd_ssb_red_cap_r17_present;
-    group_flags[11] |= half_duplex_fdd_type_a_red_cap_r17_present;
-    group_flags[11] |= pos_srs_rrc_inactive_outside_init_ul_bwp_r17.is_present();
-    group_flags[11] |= ch_bws_dl_scs_480k_hz_fr2_2_r17_present;
-    group_flags[11] |= ch_bws_ul_scs_480k_hz_fr2_2_r17_present;
-    group_flags[11] |= ch_bws_dl_scs_960k_hz_fr2_2_r17_present;
-    group_flags[11] |= ch_bws_ul_scs_960k_hz_fr2_2_r17_present;
-    group_flags[11] |= ul_gap_fr2_r17_present;
-    group_flags[11] |= one_shot_harq_feedback_triggered_by_dci_1_2_r17_present;
-    group_flags[11] |= one_shot_harq_feedback_phy_prio_r17_present;
-    group_flags[11] |= enhanced_type3_harq_codebook_feedback_r17.is_present();
-    group_flags[11] |= triggered_harq_codebook_retx_r17.is_present();
-    group_flags[12] |= ue_one_shot_ul_timing_adj_r17_present;
-    group_flags[12] |= pucch_repeat_f0_2_r17_present;
-    group_flags[12] |= cqi_4_bits_subband_ntn_shared_spec_ch_access_r17_present;
-    group_flags[12] |= mux_harq_ack_diff_priorities_r17_present;
-    group_flags[12] |= ta_based_pdc_ntn_shared_spec_ch_access_r17_present;
-    group_flags[12] |= ack_nack_feedback_for_multicast_with_dci_enabler_r17_present;
-    group_flags[12] |= max_num_g_rnti_r17_present;
-    group_flags[12] |= dyn_multicast_dci_format4_2_r17_present;
-    group_flags[12] |= max_mod_order_for_multicast_r17.is_present();
-    group_flags[12] |= dyn_slot_repeat_multicast_tn_non_shared_spec_ch_access_r17_present;
-    group_flags[12] |= dyn_slot_repeat_multicast_ntn_shared_spec_ch_access_r17_present;
-    group_flags[12] |= nack_only_feedback_for_multicast_with_dci_enabler_r17_present;
-    group_flags[12] |= ack_nack_feedback_for_sps_multicast_with_dci_enabler_r17_present;
-    group_flags[12] |= max_num_g_cs_rnti_r17_present;
-    group_flags[12] |= re_level_rate_matching_for_multicast_r17_present;
-    group_flags[12] |= pdsch_1024_qam_2_mimo_fr1_r17_present;
-    group_flags[12] |= prs_meas_without_mg_r17_present;
-    group_flags[12] |= max_num_ngso_satellites_per_carrier_r17_present;
-    group_flags[12] |= prs_processing_cap_outside_m_gin_ppw_r17.is_present();
-    group_flags[12] |= srs_semi_persistent_pos_res_rrc_inactive_r17.is_present();
-    group_flags[12] |= ch_bws_dl_scs_120k_hz_fr2_2_r17_present;
-    group_flags[12] |= ch_bws_ul_scs_120k_hz_fr2_2_r17_present;
-    group_flags[13] |= dmrs_bundling_pusch_rep_type_a_r17_present;
-    group_flags[13] |= dmrs_bundling_pusch_rep_type_b_r17_present;
-    group_flags[13] |= dmrs_bundling_pusch_multi_slot_r17_present;
-    group_flags[13] |= dmrs_bundling_pucch_rep_r17_present;
-    group_flags[13] |= inter_slot_freq_hop_inter_slot_bundling_pusch_r17_present;
-    group_flags[13] |= inter_slot_freq_hop_pucch_r17_present;
-    group_flags[13] |= dmrs_bundling_restart_r17_present;
-    group_flags[13] |= dmrs_bundling_non_back_to_back_tx_r17_present;
-    group_flags[14] |= max_dyn_slot_repeat_for_sps_multicast_r17_present;
-    group_flags[14] |= nack_only_feedback_for_sps_multicast_with_dci_enabler_r17_present;
-    group_flags[14] |= sps_multicast_dci_format4_2_r17_present;
-    group_flags[14] |= sps_multicast_multi_cfg_r17_present;
-    group_flags[14] |= prio_ind_in_dci_multicast_r17_present;
-    group_flags[14] |= prio_ind_in_dci_sps_multicast_r17_present;
-    group_flags[14] |= two_harq_ack_codebook_for_unicast_and_multicast_r17_present;
-    group_flags[14] |= multi_pucch_harq_ack_for_multicast_unicast_r17_present;
-    group_flags[14] |= release_sps_multicast_with_cs_rnti_r17_present;
-    group_flags[15] |= pos_ue_ta_auto_adjustment_r18_present;
-    group_flags[15] |= pos_srs_validity_area_rrc_inactive_init_ul_bwp_r18_present;
-    group_flags[15] |= pos_srs_validity_area_rrc_inactive_outside_init_ul_bwp_r18_present;
-    group_flags[15] |= dl_prs_meas_with_rx_fh_rrc_connected_for_red_cap_r18.is_present();
-    group_flags[15] |= pos_srs_tx_fh_rrc_connected_for_red_cap_r18.is_present();
-    group_flags[15] |= pos_srs_tx_fh_rrc_inactive_for_red_cap_r18.is_present();
-    group_flags[15] |= pos_srs_bwa_rrc_inactive_r18.is_present();
-    group_flags[15] |= pos_joint_trigger_by_single_dci_rrc_connected_r18_present;
-    group_flags[15] |= dl_prs_meas_with_rx_fh_rrc_inactivefor_red_cap_r18_present;
-    group_flags[15] |= dl_prs_meas_with_rx_fh_rrc_idlefor_red_cap_r18_present;
-    group_flags[15] |= spatial_adaptation_csi_feedback_r18.is_present();
-    group_flags[15] |= spatial_adaptation_csi_feedback_pusch_r18.is_present();
-    group_flags[15] |= spatial_adaptation_csi_feedback_aperiodic_r18.is_present();
-    group_flags[15] |= spatial_adaptation_csi_feedback_pucch_r18.is_present();
-    group_flags[15] |= pwr_adaptation_csi_feedback_r18.is_present();
-    group_flags[15] |= pwr_adaptation_csi_feedback_pusch_r18.is_present();
-    group_flags[15] |= pwr_adaptation_csi_feedback_aperiodic_r18.is_present();
-    group_flags[15] |= pwr_adaptation_csi_feedback_pucch_r18.is_present();
-    group_flags[15] |= nes_cell_dtx_drx_r18_present;
-    group_flags[15] |= nes_cell_dtx_drx_dci2_9_r18_present;
-    group_flags[15] |= mix_code_book_spatial_adaptation_r18_present;
-    group_flags[15] |= simul_csi_sub_reports_per_cc_r18_present;
-    group_flags[15] |= ntn_dmrs_bundling_ngso_r18_present;
-    group_flags[15] |= ltm_beam_ind_joint_tci_r18.is_present();
-    group_flags[15] |= dummy_ltm_mac_ce_joint_tci_r18.is_present();
-    group_flags[15] |= ltm_beam_ind_separate_tci_r18.is_present();
-    group_flags[15] |= dummy_ltm_mac_ce_separate_tci_r18.is_present();
-    group_flags[15] |= rach_early_ta_meas_r18_present;
-    group_flags[15] |= ue_ta_meas_r18_present;
-    group_flags[15] |= ta_ind_cell_switch_r18_present;
-    group_flags[15] |= triggered_harq_codebook_retx_dci_1_3_r18.is_present();
-    group_flags[15] |= unified_joint_tci_multi_mac_ce_dci_1_3_r18.is_present();
-    group_flags[15] |= unified_separate_tci_multi_mac_ce_intra_cell_r18.is_present();
-    group_flags[15] |= multi_pusch_cg_r18_present;
-    group_flags[15] |= multi_pusch_active_cfg_grant_r18.is_present();
-    group_flags[15] |= joint_release_dci_r18_present;
-    group_flags[15] |= cg_pusch_uto_uci_ind_r18_present;
-    group_flags[15] |= pdcch_monitoring_resumption_after_ul_nack_r18_present;
-    group_flags[15] |= support3_m_hz_ch_bw_symmetric_r18_present;
-    group_flags[15] |= support3_m_hz_ch_bw_asymmetric_r18_present;
-    group_flags[15] |= support12_prb_coreset0_r18_present;
-    group_flags[15] |= nr_pdcch_overlap_lte_crs_re_r18.is_present();
-    group_flags[15] |= nr_pdcch_overlap_lte_crs_re_multi_patterns_r18_present;
-    group_flags[15] |= nr_pdcch_overlap_lte_crs_re_span_3_4_r18_present;
-    group_flags[15] |= two_rate_matching_eutra_crs_patterns_3_4_r18.is_present();
-    group_flags[15] |= overlap_rate_matching_eutra_crs_patterns_3_4_diff_cs_pool_r18_present;
-    group_flags[15] |= ncd_ssb_bwp_wor_r18_present;
-    group_flags[15] |= rlm_bm_bfd_csi_rs_outside_active_bwp_r18_present;
-    group_flags[15] |= prach_coverage_enh_r18_present;
-    group_flags[15] |= prach_repeat_r18_present;
-    group_flags[15] |= dyn_waveform_switch_r18_present;
-    group_flags[15] |= dyn_waveform_switch_phr_r18_present;
-    group_flags[15] |= dyn_waveform_switch_intra_ca_r18_present;
-    group_flags[15] |= multi_pusch_single_dci_non_cons_slots_r18_present;
-    group_flags[15] |= pdc_max_num_prs_res_processed_per_slot_r18.is_present();
-    group_flags[15] |= intra_slot_pdsch_multicast_inactive_r18_present;
-    group_flags[15] |= multicast_inactive_r18_present;
-    group_flags[15] |= thres_based_multicast_resume_r18_present;
-    group_flags[15] |= lower_msd_r18.is_present();
-    group_flags[15] |= lower_msd_endc_r18.is_present();
-    group_flags[15] |= enhanced_ch_raster_r18_present;
-    group_flags[15] |= fast_beam_sweeping_multi_rx_r18_present;
-    group_flags[15] |= beam_sweeping_factor_reduction_r18.is_present();
-    group_flags[15] |= simul_reception_two_qcl_r18_present;
-    group_flags[15] |= meas_enh_ca_inter_freq_fr2_r18_present;
-    group_flags[15] |= tci_state_switch_ind_r18_present;
-    group_flags[15] |= ant_array_type_r18_present;
-    group_flags[15] |= location_based_cond_ho_atg_r18_present;
-    group_flags[15] |= max_output_pwr_atg_r18_present;
-    group_flags[15] |= ltm_fast_processing_cfg_r18.is_present();
-    group_flags[15] |= meas_validation_report_emr_r18_present;
-    group_flags[15] |= meas_validation_report_resel_meass_r18_present;
-    group_flags[15] |= event_a4_based_cond_ho_nes_r18_present;
-    group_flags[15] |= nes_based_cond_ho_with_dci_r18_present;
-    group_flags[15] |= rach_less_ho_cg_r18_present;
-    group_flags[15] |= rach_less_ho_dg_r18_present;
-    group_flags[15] |= location_based_cond_ho_emc_r18_present;
-    group_flags[15] |= mt_cg_sdt_r18_present;
-    group_flags[15] |= pos_srs_precfgure_rrc_inactive_init_ul_bwp_r18_present;
-    group_flags[15] |= pos_srs_precfgure_rrc_inactive_outside_init_ul_bwp_r18_present;
-    group_flags[15] |= cg_sdt_periodicity_ext_r18_present;
-    group_flags[15] |= support_of2_rx_xr_r18_present;
-    group_flags[15] |= cond_ho_with_cand_scg_change_r18_present;
-    group_flags[16] |= mac_params_per_band_r18.is_present();
-    group_flags[16] |= ch_bw_dl_ncr_r18.is_present();
-    group_flags[16] |= ch_bw_ul_ncr_r18.is_present();
-    group_flags[16] |= ncr_pdsch_64_qam_fr2_r18_present;
-    group_flags[16] |= ltm_mcg_intra_freq_r18_present;
-    group_flags[16] |= ltm_scg_intra_freq_r18_present;
-    group_flags[17] |= ltm_mac_ce_joint_tci_r18.is_present();
-    group_flags[17] |= ltm_mac_ce_separate_tci_r18.is_present();
-    group_flags[18] |= event_a4_based_cond_ho_atg_r18_present;
-    group_flags[19] |= pos_srs_tx_fh_with_time_win_for_red_cap_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -26281,7 +26321,7 @@ void band_nr_s::ch_bws_dl_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bws_dl_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1:
       HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
@@ -26316,7 +26356,7 @@ OCUDUASN_CODE band_nr_s::ch_bws_dl_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bws_dl_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1:
@@ -26474,7 +26514,7 @@ void band_nr_s::ch_bws_ul_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bws_ul_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1:
       HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
@@ -26509,7 +26549,7 @@ OCUDUASN_CODE band_nr_s::ch_bws_ul_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bws_ul_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1:
@@ -26689,7 +26729,7 @@ void band_nr_s::ch_bws_dl_v1590_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bws_dl_v1590_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1:
       HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
@@ -26724,7 +26764,7 @@ OCUDUASN_CODE band_nr_s::ch_bws_dl_v1590_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bws_dl_v1590_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1:
@@ -26882,7 +26922,7 @@ void band_nr_s::ch_bws_ul_v1590_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bws_ul_v1590_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1:
       HANDLE_CODE(bref.pack(c.get<fr1_s_>().scs_15k_hz_present, 1));
@@ -26917,7 +26957,7 @@ OCUDUASN_CODE band_nr_s::ch_bws_ul_v1590_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bws_ul_v1590_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1:
@@ -27075,7 +27115,7 @@ void band_nr_s::ch_bw_dl_iab_r16_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bw_dl_iab_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_100mhz:
       HANDLE_CODE(bref.pack(c.get<fr1_100mhz_s_>().scs_15k_hz_present, 1));
@@ -27095,7 +27135,7 @@ OCUDUASN_CODE band_nr_s::ch_bw_dl_iab_r16_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bw_dl_iab_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_100mhz:
@@ -27238,7 +27278,7 @@ void band_nr_s::ch_bw_ul_iab_r16_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bw_ul_iab_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_100mhz:
       HANDLE_CODE(bref.pack(c.get<fr1_100mhz_s_>().scs_15k_hz_present, 1));
@@ -27258,7 +27298,7 @@ OCUDUASN_CODE band_nr_s::ch_bw_ul_iab_r16_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bw_ul_iab_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_100mhz:
@@ -27610,7 +27650,7 @@ void band_nr_s::max_mod_order_for_multicast_r17_c_::to_json(json_writer& j) cons
 }
 OCUDUASN_CODE band_nr_s::max_mod_order_for_multicast_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r17:
       HANDLE_CODE(c.get<fr1_r17_e_>().pack(bref));
@@ -27627,7 +27667,7 @@ OCUDUASN_CODE band_nr_s::max_mod_order_for_multicast_r17_c_::pack(bit_ref& bref)
 OCUDUASN_CODE band_nr_s::max_mod_order_for_multicast_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r17:
@@ -28260,7 +28300,7 @@ void band_nr_s::unified_joint_tci_multi_mac_ce_dci_1_3_r18_s_::min_beam_applicat
 OCUDUASN_CODE
 band_nr_s::unified_joint_tci_multi_mac_ce_dci_1_3_r18_s_::min_beam_application_time_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r18:
       HANDLE_CODE(bref.pack(c.get<fr1_r18_s_>().scs_15k_hz_r18_present, 1));
@@ -28297,7 +28337,7 @@ OCUDUASN_CODE
 band_nr_s::unified_joint_tci_multi_mac_ce_dci_1_3_r18_s_::min_beam_application_time_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r18:
@@ -28612,7 +28652,7 @@ void band_nr_s::unified_separate_tci_multi_mac_ce_intra_cell_r18_s_::min_beam_ap
 OCUDUASN_CODE band_nr_s::unified_separate_tci_multi_mac_ce_intra_cell_r18_s_::min_beam_application_time_r18_c_::pack(
     bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r18:
       HANDLE_CODE(bref.pack(c.get<fr1_r18_s_>().scs_15k_hz_r18_present, 1));
@@ -28649,7 +28689,7 @@ OCUDUASN_CODE
 band_nr_s::unified_separate_tci_multi_mac_ce_intra_cell_r18_s_::min_beam_application_time_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r18:
@@ -29135,7 +29175,7 @@ void band_nr_s::ch_bw_dl_ncr_r18_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bw_dl_ncr_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_100mhz:
       HANDLE_CODE(bref.pack(c.get<fr1_100mhz_s_>().scs_15k_hz_present, 1));
@@ -29155,7 +29195,7 @@ OCUDUASN_CODE band_nr_s::ch_bw_dl_ncr_r18_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bw_dl_ncr_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_100mhz:
@@ -29298,7 +29338,7 @@ void band_nr_s::ch_bw_ul_ncr_r18_c_::to_json(json_writer& j) const
 }
 OCUDUASN_CODE band_nr_s::ch_bw_ul_ncr_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_100mhz:
       HANDLE_CODE(bref.pack(c.get<fr1_100mhz_s_>().scs_15k_hz_present, 1));
@@ -29318,7 +29358,7 @@ OCUDUASN_CODE band_nr_s::ch_bw_ul_ncr_r18_c_::pack(bit_ref& bref) const
 OCUDUASN_CODE band_nr_s::ch_bw_ul_ncr_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_100mhz:
@@ -29525,7 +29565,40 @@ uint8_t shared_spec_ch_access_params_sidelink_per_band_r18_s::sl_multiple_prb_co
 // BandSidelink-r16 ::= SEQUENCE
 OCUDUASN_CODE band_sidelink_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sl_tx_mode2_r16.is_present();
+  group_flags[0] |= congestion_ctrl_sidelink_r16.is_present();
+  group_flags[0] |= fewer_symbol_slot_sidelink_r16_present;
+  group_flags[0] |= sl_open_loop_pc_rsrp_report_sidelink_r16_present;
+  group_flags[0] |= sl_rx_256_qam_r16_present;
+  group_flags[1] |= ue_pwr_class_sidelink_r16_present;
+  group_flags[2] |= sl_tx_mode2_random_res_sel_r17.is_present();
+  group_flags[2] |= sync_sidelink_v1710.is_present();
+  group_flags[2] |= enb_sync_sidelink_v1710_present;
+  group_flags[2] |= rx_iuc_scheme1_preferred_mode2_sidelink_r17_present;
+  group_flags[2] |= rx_iuc_scheme1_non_preferred_mode2_sidelink_r17_present;
+  group_flags[2] |= rx_iuc_scheme2_mode2_sidelink_r17_present;
+  group_flags[2] |= rx_iuc_scheme1_sci_r17_present;
+  group_flags[2] |= rx_iuc_scheme1_sci_explicit_req_r17_present;
+  group_flags[3] |= shared_spec_ch_access_params_sidelink_per_band_r18.is_present();
+  group_flags[3] |= sl_prs_common_proc_cap_per_band_r18.is_present();
+  group_flags[3] |= sl_prs_rx_in_shared_res_pool_r18_present;
+  group_flags[3] |= sl_prs_rx_in_ded_res_pool_r18.is_present();
+  group_flags[3] |= sl_prs_tx_in_shared_res_pool_r18_present;
+  group_flags[3] |= sl_prs_tx_scheme1_in_ded_res_pool_r18_present;
+  group_flags[3] |= sl_prs_tx_scheme2_in_ded_res_pool_r18_present;
+  group_flags[3] |= sl_prs_congestion_ctrl_r18_present;
+  group_flags[3] |= sl_prs_tx_random_sel_r18_present;
+  group_flags[3] |= sl_prs_tx_using_full_sensing_r18_present;
+  group_flags[3] |= sl_prs_rx_for_band_with_sl_ca_r18_present;
+  group_flags[3] |= sl_prs_tx_for_band_with_sl_ca_r18_present;
+  group_flags[3] |= sl_dyn_sharing_tx_rx_r18_present;
+  group_flags[3] |= sl_ca_communication_r18.is_present();
+  group_flags[3] |= sl_ca_sync_r18_present;
+  group_flags[3] |= sl_ca_psfch_r18.is_present();
+  group_flags[3] |= sl_reception_intra_carrier_guard_band_r18_present;
+  group_flags[4] |= sl_pathloss_based_olpc_sl_rsrp_report_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(sl_reception_r16_present, 1));
   HANDLE_CODE(bref.pack(sl_tx_mode1_r16_present, 1));
   HANDLE_CODE(bref.pack(sync_sidelink_r16_present, 1));
@@ -29560,41 +29633,8 @@ OCUDUASN_CODE band_sidelink_r16_s::pack(bit_ref& bref) const
     HANDLE_CODE(psfch_format_zero_sidelink_r16.psfch_tx_num.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sl_tx_mode2_r16.is_present();
-    group_flags[0] |= congestion_ctrl_sidelink_r16.is_present();
-    group_flags[0] |= fewer_symbol_slot_sidelink_r16_present;
-    group_flags[0] |= sl_open_loop_pc_rsrp_report_sidelink_r16_present;
-    group_flags[0] |= sl_rx_256_qam_r16_present;
-    group_flags[1] |= ue_pwr_class_sidelink_r16_present;
-    group_flags[2] |= sl_tx_mode2_random_res_sel_r17.is_present();
-    group_flags[2] |= sync_sidelink_v1710.is_present();
-    group_flags[2] |= enb_sync_sidelink_v1710_present;
-    group_flags[2] |= rx_iuc_scheme1_preferred_mode2_sidelink_r17_present;
-    group_flags[2] |= rx_iuc_scheme1_non_preferred_mode2_sidelink_r17_present;
-    group_flags[2] |= rx_iuc_scheme2_mode2_sidelink_r17_present;
-    group_flags[2] |= rx_iuc_scheme1_sci_r17_present;
-    group_flags[2] |= rx_iuc_scheme1_sci_explicit_req_r17_present;
-    group_flags[3] |= shared_spec_ch_access_params_sidelink_per_band_r18.is_present();
-    group_flags[3] |= sl_prs_common_proc_cap_per_band_r18.is_present();
-    group_flags[3] |= sl_prs_rx_in_shared_res_pool_r18_present;
-    group_flags[3] |= sl_prs_rx_in_ded_res_pool_r18.is_present();
-    group_flags[3] |= sl_prs_tx_in_shared_res_pool_r18_present;
-    group_flags[3] |= sl_prs_tx_scheme1_in_ded_res_pool_r18_present;
-    group_flags[3] |= sl_prs_tx_scheme2_in_ded_res_pool_r18_present;
-    group_flags[3] |= sl_prs_congestion_ctrl_r18_present;
-    group_flags[3] |= sl_prs_tx_random_sel_r18_present;
-    group_flags[3] |= sl_prs_tx_using_full_sensing_r18_present;
-    group_flags[3] |= sl_prs_rx_for_band_with_sl_ca_r18_present;
-    group_flags[3] |= sl_prs_tx_for_band_with_sl_ca_r18_present;
-    group_flags[3] |= sl_dyn_sharing_tx_rx_r18_present;
-    group_flags[3] |= sl_ca_communication_r18.is_present();
-    group_flags[3] |= sl_ca_sync_r18_present;
-    group_flags[3] |= sl_ca_psfch_r18.is_present();
-    group_flags[3] |= sl_reception_intra_carrier_guard_band_r18_present;
-    group_flags[4] |= sl_pathloss_based_olpc_sl_rsrp_report_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -30238,7 +30278,7 @@ void band_sidelink_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_sidelink_r16_c_
 }
 OCUDUASN_CODE band_sidelink_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_sidelink_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r16:
       HANDLE_CODE(bref.pack(c.get<fr1_r16_s_>().scs_15k_hz_r16_present, 1));
@@ -30273,7 +30313,7 @@ OCUDUASN_CODE band_sidelink_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_sideli
 OCUDUASN_CODE band_sidelink_r16_s::sl_reception_r16_s_::scs_cp_pattern_rx_sidelink_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r16:
@@ -30457,7 +30497,7 @@ void band_sidelink_r16_s::sl_tx_mode1_r16_s_::scs_cp_pattern_tx_sidelink_mode_on
 OCUDUASN_CODE
 band_sidelink_r16_s::sl_tx_mode1_r16_s_::scs_cp_pattern_tx_sidelink_mode_one_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r16:
       HANDLE_CODE(bref.pack(c.get<fr1_r16_s_>().scs_15k_hz_r16_present, 1));
@@ -30494,7 +30534,7 @@ OCUDUASN_CODE
 band_sidelink_r16_s::sl_tx_mode1_r16_s_::scs_cp_pattern_tx_sidelink_mode_one_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r16:
@@ -30750,7 +30790,7 @@ void band_sidelink_r16_s::sl_tx_mode2_random_res_sel_r17_s_::scs_cp_pattern_tx_s
 OCUDUASN_CODE band_sidelink_r16_s::sl_tx_mode2_random_res_sel_r17_s_::scs_cp_pattern_tx_sidelink_mode_two_r17_c_::pack(
     bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r17:
       HANDLE_CODE(bref.pack(c.get<fr1_r17_s_>().scs_15k_hz_r17_present, 1));
@@ -30788,7 +30828,7 @@ band_sidelink_r16_s::sl_tx_mode2_random_res_sel_r17_s_::scs_cp_pattern_tx_sideli
     cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r17:
@@ -30931,7 +30971,7 @@ void band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_sl_prs_bw_
 OCUDUASN_CODE
 band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_sl_prs_bw_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r18:
       HANDLE_CODE(c.get<fr1_r18_e_>().pack(bref));
@@ -30948,7 +30988,7 @@ band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_sl_prs_bw_r18_c
 OCUDUASN_CODE band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_sl_prs_bw_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r18:
@@ -31108,7 +31148,7 @@ OCUDUASN_CODE
 band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_num_of_active_sl_prs_res_in_one_slot_r18_c_::pack(
     bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r18:
       HANDLE_CODE(c.get<fr1_r18_e_>().pack(bref));
@@ -31129,7 +31169,7 @@ band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_num_of_active_s
     cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r18:
@@ -31302,7 +31342,7 @@ OCUDUASN_CODE
 band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_num_of_slots_with_active_sl_prs_res_r18_c_::pack(
     bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1_r18:
       HANDLE_CODE(c.get<fr1_r18_e_>().pack(bref));
@@ -31323,7 +31363,7 @@ band_sidelink_r16_s::sl_prs_common_proc_cap_per_band_r18_s_::max_num_of_slots_wi
     cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1_r18:
@@ -31744,7 +31784,7 @@ void dummy_pdcch_rach_dl_info_r18_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE dummy_pdcch_rach_dl_info_r18_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::not_supported:
       break;
@@ -31768,7 +31808,7 @@ OCUDUASN_CODE dummy_pdcch_rach_dl_info_r18_c::pack(bit_ref& bref) const
 OCUDUASN_CODE dummy_pdcch_rach_dl_info_r18_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::not_supported:
@@ -32246,7 +32286,10 @@ void e_red_cap_params_r18_s::to_json(json_writer& j) const
 // EUTRA-ParametersCommon ::= SEQUENCE
 OCUDUASN_CODE eutra_params_common_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= ne_dc_present;
+  group_flags[1] |= nr_ho_to_en_dc_r16_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(mfbi_eutra_present, 1));
   HANDLE_CODE(bref.pack(modified_mpr_behavior_eutra_present, 1));
   HANDLE_CODE(bref.pack(multi_ns_pmax_eutra_present, 1));
@@ -32256,11 +32299,8 @@ OCUDUASN_CODE eutra_params_common_s::pack(bit_ref& bref) const
     HANDLE_CODE(modified_mpr_behavior_eutra.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= ne_dc_present;
-    group_flags[1] |= nr_ho_to_en_dc_r16_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -32331,7 +32371,7 @@ void eutra_params_common_s::to_json(json_writer& j) const
 // EUTRA-ParametersXDD-Diff ::= SEQUENCE
 OCUDUASN_CODE eutra_params_xdd_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(rsrq_meas_wideband_eutra_present, 1));
 
   return OCUDUASN_SUCCESS;
@@ -32341,6 +32381,10 @@ OCUDUASN_CODE eutra_params_xdd_diff_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(rsrq_meas_wideband_eutra_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutra_params_xdd_diff_s::to_json(json_writer& j) const
@@ -32355,7 +32399,7 @@ void eutra_params_xdd_diff_s::to_json(json_writer& j) const
 // EUTRA-Parameters ::= SEQUENCE
 OCUDUASN_CODE eutra_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(eutra_params_common_present, 1));
   HANDLE_CODE(bref.pack(eutra_params_xdd_diff_present, 1));
 
@@ -32383,6 +32427,10 @@ OCUDUASN_CODE eutra_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(eutra_params_xdd_diff.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void eutra_params_s::to_json(json_writer& j) const
@@ -32507,7 +32555,7 @@ void feature_set_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE feature_set_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::eutra:
       HANDLE_CODE(pack_integer(bref, c.get<eutra_s_>().dl_set_eutra, (uint16_t)0u, (uint16_t)256u));
@@ -32526,7 +32574,7 @@ OCUDUASN_CODE feature_set_c::pack(bit_ref& bref) const
 OCUDUASN_CODE feature_set_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::eutra:
@@ -34925,7 +34973,7 @@ void feature_set_dl_v1800_s::scell_without_ssb_inter_band_ca_r18_c_::to_json(jso
 }
 OCUDUASN_CODE feature_set_dl_v1800_s::scell_without_ssb_inter_band_ca_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::support_of_single_group:
       HANDLE_CODE(c.get<support_of_single_group_e_>().pack(bref));
@@ -34942,7 +34990,7 @@ OCUDUASN_CODE feature_set_dl_v1800_s::scell_without_ssb_inter_band_ca_r18_c_::pa
 OCUDUASN_CODE feature_set_dl_v1800_s::scell_without_ssb_inter_band_ca_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::support_of_single_group:
@@ -35179,7 +35227,7 @@ void supported_bw_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE supported_bw_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::fr1:
       HANDLE_CODE(c.get<fr1_e_>().pack(bref));
@@ -35196,7 +35244,7 @@ OCUDUASN_CODE supported_bw_c::pack(bit_ref& bref) const
 OCUDUASN_CODE supported_bw_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::fr1:
@@ -37518,7 +37566,7 @@ uint8_t feature_set_ul_v1720_s::phy_prioritization_high_prio_dg_low_prio_cg_r17_
 // PosSRS-BWA-RRC-Connected-r18 ::= SEQUENCE
 OCUDUASN_CODE pos_srs_bwa_rrc_connected_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_aggr_bw_two_carriers_fr1_r18_present, 1));
   HANDLE_CODE(bref.pack(max_aggr_bw_two_carriers_fr2_r18_present, 1));
   HANDLE_CODE(bref.pack(max_aggr_bw_three_carriers_fr1_r18_present, 1));
@@ -37576,6 +37624,10 @@ OCUDUASN_CODE pos_srs_bwa_rrc_connected_r18_s::unpack(cbit_ref& bref)
   HANDLE_CODE(max_aggr_res_aperiodic_per_slot_r18.unpack(bref));
   HANDLE_CODE(max_aggr_res_semi_per_slot_r18.unpack(bref));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pos_srs_bwa_rrc_connected_r18_s::to_json(json_writer& j) const
@@ -37736,7 +37788,7 @@ uint8_t pos_srs_bwa_rrc_connected_r18_s::max_aggr_res_semi_per_slot_r18_opts::to
 // PosSRS-BWA-IndependentCA-RRC-Connected-r18 ::= SEQUENCE
 OCUDUASN_CODE pos_srs_bwa_independent_ca_rrc_connected_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_aggr_bw_two_carriers_fr1_r18_present, 1));
   HANDLE_CODE(bref.pack(max_aggr_bw_two_carriers_fr2_r18_present, 1));
   HANDLE_CODE(bref.pack(max_aggr_bw_three_carriers_fr1_r18_present, 1));
@@ -37812,6 +37864,10 @@ OCUDUASN_CODE pos_srs_bwa_independent_ca_rrc_connected_r18_s::unpack(cbit_ref& b
     HANDLE_CODE(pwr_class_for_three_aggr_carriers_r18.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pos_srs_bwa_independent_ca_rrc_connected_r18_s::to_json(json_writer& j) const
@@ -39968,7 +40024,7 @@ void feature_set_ul_per_cc_v1850_s::two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_
 }
 OCUDUASN_CODE feature_set_ul_per_cc_v1850_s::two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::scs_60k_hz_r18:
       HANDLE_CODE(c.get<scs_60k_hz_r18_e_>().pack(bref));
@@ -39991,7 +40047,7 @@ OCUDUASN_CODE feature_set_ul_per_cc_v1850_s::two_pusch_cb_multi_dci_s_tx2_p_add_
 OCUDUASN_CODE feature_set_ul_per_cc_v1850_s::two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::scs_60k_hz_r18:
@@ -40217,7 +40273,7 @@ void feature_set_ul_per_cc_v1850_s::two_pusch_non_cb_multi_dci_s_tx2_p_add_time_
 OCUDUASN_CODE
 feature_set_ul_per_cc_v1850_s::two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::scs_60k_hz_r18:
       HANDLE_CODE(c.get<scs_60k_hz_r18_e_>().pack(bref));
@@ -40240,7 +40296,7 @@ feature_set_ul_per_cc_v1850_s::two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c
 OCUDUASN_CODE feature_set_ul_per_cc_v1850_s::two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::scs_60k_hz_r18:
@@ -40371,7 +40427,38 @@ int16_t feature_set_ul_per_cc_v1850_s::two_pusch_non_cb_multi_dci_s_tx2_p_add_ti
 // FeatureSets ::= SEQUENCE
 OCUDUASN_CODE feature_sets_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= feature_sets_dl_v1540.is_present();
+  group_flags[0] |= feature_sets_ul_v1540.is_present();
+  group_flags[0] |= feature_sets_ul_per_cc_v1540.is_present();
+  group_flags[1] |= feature_sets_dl_v15a0.is_present();
+  group_flags[2] |= feature_sets_dl_v1610.is_present();
+  group_flags[2] |= feature_sets_ul_v1610.is_present();
+  group_flags[2] |= feature_set_dl_per_cc_v1620.is_present();
+  group_flags[3] |= feature_sets_ul_v1630.is_present();
+  group_flags[4] |= feature_sets_ul_v1640.is_present();
+  group_flags[5] |= feature_sets_dl_v1700.is_present();
+  group_flags[5] |= feature_sets_dl_per_cc_v1700.is_present();
+  group_flags[5] |= feature_sets_ul_v1710.is_present();
+  group_flags[5] |= feature_sets_ul_per_cc_v1700.is_present();
+  group_flags[6] |= feature_sets_dl_v1720.is_present();
+  group_flags[6] |= feature_sets_dl_per_cc_v1720.is_present();
+  group_flags[6] |= feature_sets_ul_v1720.is_present();
+  group_flags[7] |= feature_sets_dl_v1730.is_present();
+  group_flags[7] |= feature_sets_dl_per_cc_v1730.is_present();
+  group_flags[8] |= feature_sets_dl_per_cc_v1780.is_present();
+  group_flags[8] |= feature_sets_ul_per_cc_v1780.is_present();
+  group_flags[9] |= feature_sets_dl_v1800.is_present();
+  group_flags[9] |= feature_sets_dl_per_cc_v1800.is_present();
+  group_flags[9] |= feature_sets_ul_v1800.is_present();
+  group_flags[9] |= feature_sets_ul_per_cc_v1800.is_present();
+  group_flags[10] |= feature_sets_dl_v1830.is_present();
+  group_flags[11] |= feature_sets_dl_per_cc_v1840.is_present();
+  group_flags[11] |= feature_sets_ul_per_cc_v1840.is_present();
+  group_flags[12] |= feature_sets_ul_v1850.is_present();
+  group_flags[12] |= feature_sets_ul_per_cc_v1850.is_present();
+  group_flags[13] |= feature_sets_dl_v1860.is_present();
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(feature_sets_dl.size() > 0, 1));
   HANDLE_CODE(bref.pack(feature_sets_dl_per_cc.size() > 0, 1));
   HANDLE_CODE(bref.pack(feature_sets_ul.size() > 0, 1));
@@ -40390,39 +40477,8 @@ OCUDUASN_CODE feature_sets_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, feature_sets_ul_per_cc, 1, 1024));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= feature_sets_dl_v1540.is_present();
-    group_flags[0] |= feature_sets_ul_v1540.is_present();
-    group_flags[0] |= feature_sets_ul_per_cc_v1540.is_present();
-    group_flags[1] |= feature_sets_dl_v15a0.is_present();
-    group_flags[2] |= feature_sets_dl_v1610.is_present();
-    group_flags[2] |= feature_sets_ul_v1610.is_present();
-    group_flags[2] |= feature_set_dl_per_cc_v1620.is_present();
-    group_flags[3] |= feature_sets_ul_v1630.is_present();
-    group_flags[4] |= feature_sets_ul_v1640.is_present();
-    group_flags[5] |= feature_sets_dl_v1700.is_present();
-    group_flags[5] |= feature_sets_dl_per_cc_v1700.is_present();
-    group_flags[5] |= feature_sets_ul_v1710.is_present();
-    group_flags[5] |= feature_sets_ul_per_cc_v1700.is_present();
-    group_flags[6] |= feature_sets_dl_v1720.is_present();
-    group_flags[6] |= feature_sets_dl_per_cc_v1720.is_present();
-    group_flags[6] |= feature_sets_ul_v1720.is_present();
-    group_flags[7] |= feature_sets_dl_v1730.is_present();
-    group_flags[7] |= feature_sets_dl_per_cc_v1730.is_present();
-    group_flags[8] |= feature_sets_dl_per_cc_v1780.is_present();
-    group_flags[8] |= feature_sets_ul_per_cc_v1780.is_present();
-    group_flags[9] |= feature_sets_dl_v1800.is_present();
-    group_flags[9] |= feature_sets_dl_per_cc_v1800.is_present();
-    group_flags[9] |= feature_sets_ul_v1800.is_present();
-    group_flags[9] |= feature_sets_ul_per_cc_v1800.is_present();
-    group_flags[10] |= feature_sets_dl_v1830.is_present();
-    group_flags[11] |= feature_sets_dl_per_cc_v1840.is_present();
-    group_flags[11] |= feature_sets_ul_per_cc_v1840.is_present();
-    group_flags[12] |= feature_sets_ul_v1850.is_present();
-    group_flags[12] |= feature_sets_ul_per_cc_v1850.is_present();
-    group_flags[13] |= feature_sets_dl_v1860.is_present();
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -41250,7 +41306,7 @@ void freq_band_info_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE freq_band_info_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::band_info_eutra:
       HANDLE_CODE(c.get<freq_band_info_eutra_s>().pack(bref));
@@ -41267,7 +41323,7 @@ OCUDUASN_CODE freq_band_info_c::pack(bit_ref& bref) const
 OCUDUASN_CODE freq_band_info_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::band_info_eutra:
@@ -41292,7 +41348,7 @@ const char* freq_band_info_c::types_opts::to_string() const
 // GeneralParametersMRDC-XDD-Diff ::= SEQUENCE
 OCUDUASN_CODE general_params_mrdc_xdd_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(split_srb_with_one_ul_path_present, 1));
   HANDLE_CODE(bref.pack(split_drb_with_ul_both_mcg_scg_present, 1));
   HANDLE_CODE(bref.pack(srb3_present, 1));
@@ -41308,6 +41364,10 @@ OCUDUASN_CODE general_params_mrdc_xdd_diff_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(srb3_present, 1));
   HANDLE_CODE(bref.unpack(dummy_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void general_params_mrdc_xdd_diff_s::to_json(json_writer& j) const
@@ -41397,13 +41457,13 @@ void high_speed_params_v1650_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE high_speed_params_v1650_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE high_speed_params_v1650_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   return OCUDUASN_SUCCESS;
 }
@@ -41444,14 +41504,14 @@ void high_speed_params_v1700_s::to_json(json_writer& j) const
 // IMS-ParametersCommon ::= SEQUENCE
 OCUDUASN_CODE ims_params_common_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= voice_over_scg_bearer_eutra_5_gc_present;
+  group_flags[1] |= voice_fallback_ind_eps_r16_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(voice_over_eutra_5_gc_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= voice_over_scg_bearer_eutra_5_gc_present;
-    group_flags[1] |= voice_fallback_ind_eps_r16_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -41506,7 +41566,7 @@ void ims_params_common_s::to_json(json_writer& j) const
 // IMS-ParametersFRX-Diff ::= SEQUENCE
 OCUDUASN_CODE ims_params_frx_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(voice_over_nr_present, 1));
 
   return OCUDUASN_SUCCESS;
@@ -41516,6 +41576,10 @@ OCUDUASN_CODE ims_params_frx_diff_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(voice_over_nr_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ims_params_frx_diff_s::to_json(json_writer& j) const
@@ -41530,7 +41594,7 @@ void ims_params_frx_diff_s::to_json(json_writer& j) const
 // IMS-Parameters ::= SEQUENCE
 OCUDUASN_CODE ims_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ims_params_common_present, 1));
   HANDLE_CODE(bref.pack(ims_params_frx_diff_present, 1));
 
@@ -41556,6 +41620,10 @@ OCUDUASN_CODE ims_params_s::unpack(cbit_ref& bref)
     HANDLE_CODE(ims_params_frx_diff.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ims_params_s::to_json(json_writer& j) const
@@ -41575,7 +41643,7 @@ void ims_params_s::to_json(json_writer& j) const
 // IMS-ParametersFR2-2-r17 ::= SEQUENCE
 OCUDUASN_CODE ims_params_fr2_2_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(voice_over_nr_r17_present, 1));
 
   return OCUDUASN_SUCCESS;
@@ -41585,6 +41653,10 @@ OCUDUASN_CODE ims_params_fr2_2_r17_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(bref.unpack(voice_over_nr_r17_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ims_params_fr2_2_r17_s::to_json(json_writer& j) const
@@ -41641,7 +41713,7 @@ const char* supported_band_utra_fdd_r16_opts::to_string() const
 // UTRA-FDD-Parameters-r16 ::= SEQUENCE
 OCUDUASN_CODE utra_fdd_params_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(pack_dyn_seq_of(bref, supported_band_list_utra_fdd_r16, 1, 64));
 
   return OCUDUASN_SUCCESS;
@@ -41651,6 +41723,10 @@ OCUDUASN_CODE utra_fdd_params_r16_s::unpack(cbit_ref& bref)
   bref.unpack(ext, 1);
   HANDLE_CODE(unpack_dyn_seq_of(supported_band_list_utra_fdd_r16, bref, 1, 64));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void utra_fdd_params_r16_s::to_json(json_writer& j) const
@@ -41667,17 +41743,17 @@ void utra_fdd_params_r16_s::to_json(json_writer& j) const
 // InterRAT-Parameters ::= SEQUENCE
 OCUDUASN_CODE inter_rat_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= utra_fdd_r16.is_present();
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(eutra_present, 1));
 
   if (eutra_present) {
     HANDLE_CODE(eutra.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= utra_fdd_r16.is_present();
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -41732,48 +41808,48 @@ void inter_rat_params_s::to_json(json_writer& j) const
 // MAC-ParametersCommon ::= SEQUENCE
 OCUDUASN_CODE mac_params_common_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= recommended_bit_rate_present;
+  group_flags[0] |= recommended_bit_rate_query_present;
+  group_flags[1] |= recommended_bit_rate_multiplier_r16_present;
+  group_flags[1] |= pre_emptive_bsr_r16_present;
+  group_flags[1] |= autonomous_tx_r16_present;
+  group_flags[1] |= lch_prio_based_prioritization_r16_present;
+  group_flags[1] |= lch_to_cfg_grant_map_r16_present;
+  group_flags[1] |= lch_to_grant_prio_restrict_r16_present;
+  group_flags[1] |= single_phr_p_r16_present;
+  group_flags[1] |= ul_lbt_fail_detection_recovery_r16_present;
+  group_flags[1] |= tdd_mpe_p_mpr_report_r16_present;
+  group_flags[1] |= lcid_ext_iab_r16_present;
+  group_flags[2] |= sp_cell_bfr_cbra_r16_present;
+  group_flags[3] |= srs_res_id_ext_r16_present;
+  group_flags[4] |= enhanced_uu_drx_for_sidelink_r17_present;
+  group_flags[4] |= mg_activation_request_prs_meas_r17_present;
+  group_flags[4] |= mg_activation_comm_prs_meas_r17_present;
+  group_flags[4] |= intra_cg_prioritization_r17_present;
+  group_flags[4] |= joint_prioritization_cg_retx_timer_r17_present;
+  group_flags[4] |= survival_time_r17_present;
+  group_flags[4] |= lcg_ext_iab_r17_present;
+  group_flags[4] |= harq_feedback_disabled_r17_present;
+  group_flags[4] |= ul_harq_mode_b_r17_present;
+  group_flags[4] |= sr_triggered_by_ta_report_r17_present;
+  group_flags[4] |= extended_drx_cycle_inactive_r17_present;
+  group_flags[4] |= simul_sr_pusch_diff_pucch_groups_r17_present;
+  group_flags[4] |= last_tx_ul_r17_present;
+  group_flags[5] |= harq_rtt_timer_dl_for_ntn_multicast_mbs_r17_present;
+  group_flags[6] |= sr_triggered_by_ta_report_atg_r18_present;
+  group_flags[6] |= extended_drx_cycle_inactive_r18_present;
+  group_flags[6] |= add_bs_table_r18_present;
+  group_flags[6] |= delay_status_report_r18_present;
+  group_flags[6] |= cg_retx_monitoring_disabling_r18_present;
+  group_flags[6] |= non_integer_drx_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(lcp_restrict_present, 1));
   HANDLE_CODE(bref.pack(dummy_present, 1));
   HANDLE_CODE(bref.pack(lch_to_scell_restrict_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= recommended_bit_rate_present;
-    group_flags[0] |= recommended_bit_rate_query_present;
-    group_flags[1] |= recommended_bit_rate_multiplier_r16_present;
-    group_flags[1] |= pre_emptive_bsr_r16_present;
-    group_flags[1] |= autonomous_tx_r16_present;
-    group_flags[1] |= lch_prio_based_prioritization_r16_present;
-    group_flags[1] |= lch_to_cfg_grant_map_r16_present;
-    group_flags[1] |= lch_to_grant_prio_restrict_r16_present;
-    group_flags[1] |= single_phr_p_r16_present;
-    group_flags[1] |= ul_lbt_fail_detection_recovery_r16_present;
-    group_flags[1] |= tdd_mpe_p_mpr_report_r16_present;
-    group_flags[1] |= lcid_ext_iab_r16_present;
-    group_flags[2] |= sp_cell_bfr_cbra_r16_present;
-    group_flags[3] |= srs_res_id_ext_r16_present;
-    group_flags[4] |= enhanced_uu_drx_for_sidelink_r17_present;
-    group_flags[4] |= mg_activation_request_prs_meas_r17_present;
-    group_flags[4] |= mg_activation_comm_prs_meas_r17_present;
-    group_flags[4] |= intra_cg_prioritization_r17_present;
-    group_flags[4] |= joint_prioritization_cg_retx_timer_r17_present;
-    group_flags[4] |= survival_time_r17_present;
-    group_flags[4] |= lcg_ext_iab_r17_present;
-    group_flags[4] |= harq_feedback_disabled_r17_present;
-    group_flags[4] |= ul_harq_mode_b_r17_present;
-    group_flags[4] |= sr_triggered_by_ta_report_r17_present;
-    group_flags[4] |= extended_drx_cycle_inactive_r17_present;
-    group_flags[4] |= simul_sr_pusch_diff_pucch_groups_r17_present;
-    group_flags[4] |= last_tx_ul_r17_present;
-    group_flags[5] |= harq_rtt_timer_dl_for_ntn_multicast_mbs_r17_present;
-    group_flags[6] |= sr_triggered_by_ta_report_atg_r18_present;
-    group_flags[6] |= extended_drx_cycle_inactive_r18_present;
-    group_flags[6] |= add_bs_table_r18_present;
-    group_flags[6] |= delay_status_report_r18_present;
-    group_flags[6] |= cg_retx_monitoring_disabling_r18_present;
-    group_flags[6] |= non_integer_drx_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -42031,7 +42107,13 @@ void mac_params_common_s::to_json(json_writer& j) const
 // MAC-ParametersXDD-Diff ::= SEQUENCE
 OCUDUASN_CODE mac_params_xdd_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= secondary_drx_group_r16_present;
+  group_flags[1] |= enhanced_skip_ul_tx_dyn_r16_present;
+  group_flags[1] |= enhanced_skip_ul_tx_cfg_r16_present;
+  group_flags[2] |= dummy1_present;
+  group_flags[2] |= dummy2_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(skip_ul_tx_dyn_present, 1));
   HANDLE_CODE(bref.pack(lc_ch_sr_delay_timer_present, 1));
   HANDLE_CODE(bref.pack(long_drx_cycle_present, 1));
@@ -42039,14 +42121,8 @@ OCUDUASN_CODE mac_params_xdd_diff_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(multiple_sr_cfgs_present, 1));
   HANDLE_CODE(bref.pack(multiple_cfg_grants_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= secondary_drx_group_r16_present;
-    group_flags[1] |= enhanced_skip_ul_tx_dyn_r16_present;
-    group_flags[1] |= enhanced_skip_ul_tx_cfg_r16_present;
-    group_flags[2] |= dummy1_present;
-    group_flags[2] |= dummy2_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -42293,7 +42369,7 @@ uint8_t min_time_gap_r16_s::scs_120k_hz_r16_opts::to_number() const
 // MAC-ParametersFRX-Diff-r16 ::= SEQUENCE
 OCUDUASN_CODE mac_params_frx_diff_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(direct_mcg_scell_activation_r16_present, 1));
   HANDLE_CODE(bref.pack(direct_mcg_scell_activation_resume_r16_present, 1));
   HANDLE_CODE(bref.pack(direct_scg_scell_activation_r16_present, 1));
@@ -42333,6 +42409,10 @@ OCUDUASN_CODE mac_params_frx_diff_r16_s::unpack(cbit_ref& bref)
     }
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mac_params_frx_diff_r16_s::to_json(json_writer& j) const
@@ -42485,7 +42565,7 @@ uint8_t min_time_gap_fr2_2_r17_s::scs_960k_hz_r17_opts::to_number() const
 // MAC-ParametersFR2-2-r17 ::= SEQUENCE
 OCUDUASN_CODE mac_params_fr2_2_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(direct_mcg_scell_activation_r17_present, 1));
   HANDLE_CODE(bref.pack(direct_mcg_scell_activation_resume_r17_present, 1));
   HANDLE_CODE(bref.pack(direct_scg_scell_activation_r17_present, 1));
@@ -42525,6 +42605,10 @@ OCUDUASN_CODE mac_params_fr2_2_r17_s::unpack(cbit_ref& bref)
     }
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mac_params_fr2_2_r17_s::to_json(json_writer& j) const
@@ -42592,15 +42676,15 @@ void mac_params_v1700_s::to_json(json_writer& j) const
 // MAC-ParametersSidelinkCommon-r16 ::= SEQUENCE
 OCUDUASN_CODE mac_params_sidelink_common_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= drx_on_sidelink_r17_present;
+  group_flags[1] |= sl_lbt_fail_dectection_recovery_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(lcp_restrict_sidelink_r16_present, 1));
   HANDLE_CODE(bref.pack(multiple_cfg_grants_sidelink_r16_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= drx_on_sidelink_r17_present;
-    group_flags[1] |= sl_lbt_fail_dectection_recovery_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -42659,7 +42743,7 @@ void mac_params_sidelink_common_r16_s::to_json(json_writer& j) const
 // MAC-ParametersSidelinkXDD-Diff-r16 ::= SEQUENCE
 OCUDUASN_CODE mac_params_sidelink_xdd_diff_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(multiple_sr_cfgs_sidelink_r16_present, 1));
   HANDLE_CODE(bref.pack(lc_ch_sr_delay_timer_sidelink_r16_present, 1));
 
@@ -42671,6 +42755,10 @@ OCUDUASN_CODE mac_params_sidelink_xdd_diff_r16_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(multiple_sr_cfgs_sidelink_r16_present, 1));
   HANDLE_CODE(bref.unpack(lc_ch_sr_delay_timer_sidelink_r16_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mac_params_sidelink_xdd_diff_r16_s::to_json(json_writer& j) const
@@ -42688,7 +42776,7 @@ void mac_params_sidelink_xdd_diff_r16_s::to_json(json_writer& j) const
 // MAC-ParametersSidelink-r16 ::= SEQUENCE
 OCUDUASN_CODE mac_params_sidelink_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(mac_params_sidelink_common_r16_present, 1));
   HANDLE_CODE(bref.pack(mac_params_sidelink_xdd_diff_r16_present, 1));
 
@@ -42714,6 +42802,10 @@ OCUDUASN_CODE mac_params_sidelink_r16_s::unpack(cbit_ref& bref)
     HANDLE_CODE(mac_params_sidelink_xdd_diff_r16.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void mac_params_sidelink_r16_s::to_json(json_writer& j) const
@@ -42763,7 +42855,95 @@ void mbs_params_r17_s::to_json(json_writer& j) const
 // MeasAndMobParametersCommon ::= SEQUENCE
 OCUDUASN_CODE meas_and_mob_params_common_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= event_b_meas_and_report_present;
+  group_flags[0] |= ho_fdd_tdd_present;
+  group_flags[0] |= eutra_cgi_report_present;
+  group_flags[0] |= nr_cgi_report_present;
+  group_flags[1] |= independent_gap_cfg_present;
+  group_flags[1] |= periodic_eutra_meas_and_report_present;
+  group_flags[1] |= ho_fr1_fr2_present;
+  group_flags[1] |= max_num_csi_rs_rrm_rs_sinr_present;
+  group_flags[2] |= nr_cgi_report_endc_present;
+  group_flags[3] |= eutra_cgi_report_nedc_present;
+  group_flags[3] |= eutra_cgi_report_nrdc_present;
+  group_flags[3] |= nr_cgi_report_nedc_present;
+  group_flags[3] |= nr_cgi_report_nrdc_present;
+  group_flags[4] |= report_add_neigh_meas_for_periodic_r16_present;
+  group_flags[4] |= cond_ho_params_common_r16.is_present();
+  group_flags[4] |= nr_need_for_gap_report_r16_present;
+  group_flags[4] |= supported_gap_pattern_nr_only_r16_present;
+  group_flags[4] |= supported_gap_pattern_nr_only_nedc_r16_present;
+  group_flags[4] |= max_num_cli_rssi_r16_present;
+  group_flags[4] |= max_num_cli_srs_rsrp_r16_present;
+  group_flags[4] |= max_num_per_slot_cli_srs_rsrp_r16_present;
+  group_flags[4] |= mfbi_iab_r16_present;
+  group_flags[4] |= dummy_present;
+  group_flags[4] |= nr_cgi_report_npn_r16_present;
+  group_flags[4] |= idle_inactive_eutra_meas_report_r16_present;
+  group_flags[4] |= idle_inactive_validity_area_r16_present;
+  group_flags[4] |= eutra_autonomous_gaps_r16_present;
+  group_flags[4] |= eutra_autonomous_gaps_nedc_r16_present;
+  group_flags[4] |= eutra_autonomous_gaps_nrdc_r16_present;
+  group_flags[4] |= pcell_t312_r16_present;
+  group_flags[4] |= supported_gap_pattern_r16_present;
+  group_flags[5] |= concurrent_meas_gap_r17.is_present();
+  group_flags[5] |= nr_need_for_gap_ncsg_report_r17_present;
+  group_flags[5] |= eutra_need_for_gap_ncsg_report_r17_present;
+  group_flags[5] |= ncsg_meas_gap_per_fr_r17_present;
+  group_flags[5] |= ncsg_meas_gap_patterns_r17_present;
+  group_flags[5] |= ncsg_meas_gap_nr_patterns_r17_present;
+  group_flags[5] |= precfg_ue_autonomous_meas_gap_r17_present;
+  group_flags[5] |= precfg_nw_ctrl_meas_gap_r17_present;
+  group_flags[5] |= ho_fr1_fr2_2_r17_present;
+  group_flags[5] |= ho_fr2_1_fr2_2_r17_present;
+  group_flags[5] |= independent_gap_cfg_prs_r17_present;
+  group_flags[5] |= rrm_relaxation_rrc_connected_red_cap_r17_present;
+  group_flags[5] |= parallel_meas_gap_r17_present;
+  group_flags[5] |= cond_ho_with_scg_nrdc_r17_present;
+  group_flags[5] |= gnb_id_len_report_r17_present;
+  group_flags[5] |= gnb_id_len_report_endc_r17_present;
+  group_flags[5] |= gnb_id_len_report_nedc_r17_present;
+  group_flags[5] |= gnb_id_len_report_nrdc_r17_present;
+  group_flags[5] |= gnb_id_len_report_npn_r17_present;
+  group_flags[6] |= parallel_smtc_r17_present;
+  group_flags[6] |= concurrent_meas_gap_eutra_r17_present;
+  group_flags[6] |= service_link_prop_delay_diff_report_r17_present;
+  group_flags[6] |= ncsg_symbol_level_schedule_restrict_inter_r17_present;
+  group_flags[7] |= event_d1_meas_report_trigger_r17_present;
+  group_flags[7] |= independent_gap_cfg_max_cc_r17.is_present();
+  group_flags[8] |= inter_sat_meas_r17_present;
+  group_flags[8] |= derive_ssb_idx_from_cell_inter_non_ncsg_r17_present;
+  group_flags[9] |= l3_meas_unknown_scell_activation_r18_present;
+  group_flags[9] |= short_meas_interv_r18_present;
+  group_flags[9] |= nr_need_for_interruption_report_r18_present;
+  group_flags[9] |= meas_seq_cfg_r18_present;
+  group_flags[9] |= cell_individual_offset_per_meas_event_r18_present;
+  group_flags[9] |= event_d2_meas_report_trigger_r18_present;
+  group_flags[9] |= concurrent_meas_gaps_pre_mg_r18_present;
+  group_flags[9] |= dyn_collision_r18_present;
+  group_flags[9] |= concurrent_meas_gaps_ncsg_r18_present;
+  group_flags[9] |= eutra_no_gap_meas_outside_bwp_r18_present;
+  group_flags[9] |= eutra_no_gap_meas_inside_bwp_r18_present;
+  group_flags[9] |= eutra_meas_emw_r18_present;
+  group_flags[9] |= concurrent_meas_crs_inside_bwp_eutra_r18_present;
+  group_flags[9] |= ltm_inter_freq_meas_gap_r18_present;
+  group_flags[9] |= dummy_ltm_fast_ue_processing_r18.is_present();
+  group_flags[9] |= rach_less_ho_inter_freq_r18_present;
+  group_flags[9] |= enter_and_leave_cell_report_r18_present;
+  group_flags[9] |= best_cell_change_report_r18_present;
+  group_flags[9] |= second_best_cell_change_report_r18_present;
+  group_flags[10] |= ltm_inter_freq_r18_present;
+  group_flags[10] |= ltm_mcg_nrdc_r18_present;
+  group_flags[10] |= ltm_rach_less_dg_r18_present;
+  group_flags[10] |= ltm_rach_less_cg_r18_present;
+  group_flags[10] |= ltm_recovery_r18_present;
+  group_flags[10] |= ltm_ref_cfg_r18_present;
+  group_flags[10] |= ltm_mcg_nrdc_release_r18_present;
+  group_flags[10] |= ltm_fast_ue_processing_r18.is_present();
+  group_flags[10] |= ntn_neighbour_cell_info_support_r18_present;
+  group_flags[11] |= ltm_inter_freq_l1_only_in_bc_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(supported_gap_pattern_present, 1));
   HANDLE_CODE(bref.pack(ssb_rlm_present, 1));
   HANDLE_CODE(bref.pack(ssb_and_csi_rs_rlm_present, 1));
@@ -42772,96 +42952,8 @@ OCUDUASN_CODE meas_and_mob_params_common_s::pack(bit_ref& bref) const
     HANDLE_CODE(supported_gap_pattern.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= event_b_meas_and_report_present;
-    group_flags[0] |= ho_fdd_tdd_present;
-    group_flags[0] |= eutra_cgi_report_present;
-    group_flags[0] |= nr_cgi_report_present;
-    group_flags[1] |= independent_gap_cfg_present;
-    group_flags[1] |= periodic_eutra_meas_and_report_present;
-    group_flags[1] |= ho_fr1_fr2_present;
-    group_flags[1] |= max_num_csi_rs_rrm_rs_sinr_present;
-    group_flags[2] |= nr_cgi_report_endc_present;
-    group_flags[3] |= eutra_cgi_report_nedc_present;
-    group_flags[3] |= eutra_cgi_report_nrdc_present;
-    group_flags[3] |= nr_cgi_report_nedc_present;
-    group_flags[3] |= nr_cgi_report_nrdc_present;
-    group_flags[4] |= report_add_neigh_meas_for_periodic_r16_present;
-    group_flags[4] |= cond_ho_params_common_r16.is_present();
-    group_flags[4] |= nr_need_for_gap_report_r16_present;
-    group_flags[4] |= supported_gap_pattern_nr_only_r16_present;
-    group_flags[4] |= supported_gap_pattern_nr_only_nedc_r16_present;
-    group_flags[4] |= max_num_cli_rssi_r16_present;
-    group_flags[4] |= max_num_cli_srs_rsrp_r16_present;
-    group_flags[4] |= max_num_per_slot_cli_srs_rsrp_r16_present;
-    group_flags[4] |= mfbi_iab_r16_present;
-    group_flags[4] |= dummy_present;
-    group_flags[4] |= nr_cgi_report_npn_r16_present;
-    group_flags[4] |= idle_inactive_eutra_meas_report_r16_present;
-    group_flags[4] |= idle_inactive_validity_area_r16_present;
-    group_flags[4] |= eutra_autonomous_gaps_r16_present;
-    group_flags[4] |= eutra_autonomous_gaps_nedc_r16_present;
-    group_flags[4] |= eutra_autonomous_gaps_nrdc_r16_present;
-    group_flags[4] |= pcell_t312_r16_present;
-    group_flags[4] |= supported_gap_pattern_r16_present;
-    group_flags[5] |= concurrent_meas_gap_r17.is_present();
-    group_flags[5] |= nr_need_for_gap_ncsg_report_r17_present;
-    group_flags[5] |= eutra_need_for_gap_ncsg_report_r17_present;
-    group_flags[5] |= ncsg_meas_gap_per_fr_r17_present;
-    group_flags[5] |= ncsg_meas_gap_patterns_r17_present;
-    group_flags[5] |= ncsg_meas_gap_nr_patterns_r17_present;
-    group_flags[5] |= precfg_ue_autonomous_meas_gap_r17_present;
-    group_flags[5] |= precfg_nw_ctrl_meas_gap_r17_present;
-    group_flags[5] |= ho_fr1_fr2_2_r17_present;
-    group_flags[5] |= ho_fr2_1_fr2_2_r17_present;
-    group_flags[5] |= independent_gap_cfg_prs_r17_present;
-    group_flags[5] |= rrm_relaxation_rrc_connected_red_cap_r17_present;
-    group_flags[5] |= parallel_meas_gap_r17_present;
-    group_flags[5] |= cond_ho_with_scg_nrdc_r17_present;
-    group_flags[5] |= gnb_id_len_report_r17_present;
-    group_flags[5] |= gnb_id_len_report_endc_r17_present;
-    group_flags[5] |= gnb_id_len_report_nedc_r17_present;
-    group_flags[5] |= gnb_id_len_report_nrdc_r17_present;
-    group_flags[5] |= gnb_id_len_report_npn_r17_present;
-    group_flags[6] |= parallel_smtc_r17_present;
-    group_flags[6] |= concurrent_meas_gap_eutra_r17_present;
-    group_flags[6] |= service_link_prop_delay_diff_report_r17_present;
-    group_flags[6] |= ncsg_symbol_level_schedule_restrict_inter_r17_present;
-    group_flags[7] |= event_d1_meas_report_trigger_r17_present;
-    group_flags[7] |= independent_gap_cfg_max_cc_r17.is_present();
-    group_flags[8] |= inter_sat_meas_r17_present;
-    group_flags[8] |= derive_ssb_idx_from_cell_inter_non_ncsg_r17_present;
-    group_flags[9] |= l3_meas_unknown_scell_activation_r18_present;
-    group_flags[9] |= short_meas_interv_r18_present;
-    group_flags[9] |= nr_need_for_interruption_report_r18_present;
-    group_flags[9] |= meas_seq_cfg_r18_present;
-    group_flags[9] |= cell_individual_offset_per_meas_event_r18_present;
-    group_flags[9] |= event_d2_meas_report_trigger_r18_present;
-    group_flags[9] |= concurrent_meas_gaps_pre_mg_r18_present;
-    group_flags[9] |= dyn_collision_r18_present;
-    group_flags[9] |= concurrent_meas_gaps_ncsg_r18_present;
-    group_flags[9] |= eutra_no_gap_meas_outside_bwp_r18_present;
-    group_flags[9] |= eutra_no_gap_meas_inside_bwp_r18_present;
-    group_flags[9] |= eutra_meas_emw_r18_present;
-    group_flags[9] |= concurrent_meas_crs_inside_bwp_eutra_r18_present;
-    group_flags[9] |= ltm_inter_freq_meas_gap_r18_present;
-    group_flags[9] |= dummy_ltm_fast_ue_processing_r18.is_present();
-    group_flags[9] |= rach_less_ho_inter_freq_r18_present;
-    group_flags[9] |= enter_and_leave_cell_report_r18_present;
-    group_flags[9] |= best_cell_change_report_r18_present;
-    group_flags[9] |= second_best_cell_change_report_r18_present;
-    group_flags[10] |= ltm_inter_freq_r18_present;
-    group_flags[10] |= ltm_mcg_nrdc_r18_present;
-    group_flags[10] |= ltm_rach_less_dg_r18_present;
-    group_flags[10] |= ltm_rach_less_cg_r18_present;
-    group_flags[10] |= ltm_recovery_r18_present;
-    group_flags[10] |= ltm_ref_cfg_r18_present;
-    group_flags[10] |= ltm_mcg_nrdc_release_r18_present;
-    group_flags[10] |= ltm_fast_ue_processing_r18.is_present();
-    group_flags[10] |= ntn_neighbour_cell_info_support_r18_present;
-    group_flags[11] |= ltm_inter_freq_l1_only_in_bc_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -43653,13 +43745,13 @@ void meas_and_mob_params_common_s::concurrent_meas_gap_r17_c_::to_json(json_writ
 }
 OCUDUASN_CODE meas_and_mob_params_common_s::concurrent_meas_gap_r17_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE meas_and_mob_params_common_s::concurrent_meas_gap_r17_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   return OCUDUASN_SUCCESS;
 }
@@ -43747,19 +43839,19 @@ uint8_t meas_and_mob_params_common_s::ltm_fast_ue_processing_r18_s_::fr1_and_fr2
 // MeasAndMobParametersXDD-Diff ::= SEQUENCE
 OCUDUASN_CODE meas_and_mob_params_xdd_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= ho_inter_f_present;
+  group_flags[0] |= ho_lte_epc_present;
+  group_flags[0] |= ho_lte_5_gc_present;
+  group_flags[1] |= sftd_meas_nr_neigh_present;
+  group_flags[1] |= sftd_meas_nr_neigh_drx_present;
+  group_flags[2] |= dummy_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(intra_and_inter_f_meas_and_report_present, 1));
   HANDLE_CODE(bref.pack(event_a_meas_and_report_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= ho_inter_f_present;
-    group_flags[0] |= ho_lte_epc_present;
-    group_flags[0] |= ho_lte_5_gc_present;
-    group_flags[1] |= sftd_meas_nr_neigh_present;
-    group_flags[1] |= sftd_meas_nr_neigh_drx_present;
-    group_flags[2] |= dummy_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -43845,33 +43937,33 @@ void meas_and_mob_params_xdd_diff_s::to_json(json_writer& j) const
 // MeasAndMobParametersFRX-Diff ::= SEQUENCE
 OCUDUASN_CODE meas_and_mob_params_frx_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= ho_inter_f_present;
+  group_flags[0] |= ho_lte_epc_present;
+  group_flags[0] |= ho_lte_5_gc_present;
+  group_flags[1] |= max_num_res_csi_rs_rlm_present;
+  group_flags[2] |= simul_rx_data_ssb_diff_numerology_present;
+  group_flags[3] |= nr_autonomous_gaps_r16_present;
+  group_flags[3] |= nr_autonomous_gaps_endc_r16_present;
+  group_flags[3] |= nr_autonomous_gaps_nedc_r16_present;
+  group_flags[3] |= nr_autonomous_gaps_nrdc_r16_present;
+  group_flags[3] |= dummy_present;
+  group_flags[3] |= cli_rssi_meas_r16_present;
+  group_flags[3] |= cli_srs_rsrp_meas_r16_present;
+  group_flags[3] |= interfreq_meas_no_gap_r16_present;
+  group_flags[3] |= simul_rx_data_ssb_diff_numerology_inter_r16_present;
+  group_flags[3] |= idle_inactive_nr_meas_report_r16_present;
+  group_flags[3] |= idle_inactive_nr_meas_beam_report_r16_present;
+  group_flags[4] |= increased_numof_csi_rs_per_mo_r16_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(ss_sinr_meas_present, 1));
   HANDLE_CODE(bref.pack(csi_rsrp_and_rsrq_meas_with_ssb_present, 1));
   HANDLE_CODE(bref.pack(csi_rsrp_and_rsrq_meas_without_ssb_present, 1));
   HANDLE_CODE(bref.pack(csi_sinr_meas_present, 1));
   HANDLE_CODE(bref.pack(csi_rs_rlm_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= ho_inter_f_present;
-    group_flags[0] |= ho_lte_epc_present;
-    group_flags[0] |= ho_lte_5_gc_present;
-    group_flags[1] |= max_num_res_csi_rs_rlm_present;
-    group_flags[2] |= simul_rx_data_ssb_diff_numerology_present;
-    group_flags[3] |= nr_autonomous_gaps_r16_present;
-    group_flags[3] |= nr_autonomous_gaps_endc_r16_present;
-    group_flags[3] |= nr_autonomous_gaps_nedc_r16_present;
-    group_flags[3] |= nr_autonomous_gaps_nrdc_r16_present;
-    group_flags[3] |= dummy_present;
-    group_flags[3] |= cli_rssi_meas_r16_present;
-    group_flags[3] |= cli_srs_rsrp_meas_r16_present;
-    group_flags[3] |= interfreq_meas_no_gap_r16_present;
-    group_flags[3] |= simul_rx_data_ssb_diff_numerology_inter_r16_present;
-    group_flags[3] |= idle_inactive_nr_meas_report_r16_present;
-    group_flags[3] |= idle_inactive_nr_meas_beam_report_r16_present;
-    group_flags[4] |= increased_numof_csi_rs_per_mo_r16_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -44110,7 +44202,7 @@ void meas_and_mob_params_s::to_json(json_writer& j) const
 // MeasAndMobParametersFR2-2-r17 ::= SEQUENCE
 OCUDUASN_CODE meas_and_mob_params_fr2_2_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ho_inter_f_r17_present, 1));
   HANDLE_CODE(bref.pack(ho_lte_epc_r17_present, 1));
   HANDLE_CODE(bref.pack(ho_lte_5_gc_r17_present, 1));
@@ -44126,6 +44218,10 @@ OCUDUASN_CODE meas_and_mob_params_fr2_2_r17_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(ho_lte_5_gc_r17_present, 1));
   HANDLE_CODE(bref.unpack(idle_inactive_nr_meas_report_r17_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void meas_and_mob_params_fr2_2_r17_s::to_json(json_writer& j) const
@@ -44738,7 +44834,7 @@ void meas_and_mob_params_mrdc_v1810_s::to_json(json_writer& j) const
 // NAICS-Capability-Entry ::= SEQUENCE
 OCUDUASN_CODE naics_cap_entry_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(pack_integer(bref, nof_naics_capable_cc, (uint8_t)1u, (uint8_t)5u));
   HANDLE_CODE(nof_aggr_prb.pack(bref));
 
@@ -44750,6 +44846,10 @@ OCUDUASN_CODE naics_cap_entry_s::unpack(cbit_ref& bref)
   HANDLE_CODE(unpack_integer(nof_naics_capable_cc, bref, (uint8_t)1u, (uint8_t)5u));
   HANDLE_CODE(nof_aggr_prb.unpack(bref));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void naics_cap_entry_s::to_json(json_writer& j) const
@@ -45095,7 +45195,97 @@ void nrdc_params_v1700_s::to_json(json_writer& j) const
 // Phy-ParametersCommon ::= SEQUENCE
 OCUDUASN_CODE phy_params_common_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= dummy_present;
+  group_flags[1] |= max_num_search_spaces_present;
+  group_flags[1] |= rate_matching_ctrl_resrc_set_dyn_present;
+  group_flags[1] |= max_layers_mimo_ind_present;
+  group_flags[2] |= sp_cell_placement.is_present();
+  group_flags[3] |= two_step_rach_r16_present;
+  group_flags[3] |= dci_format1_2_and0_2_r16_present;
+  group_flags[3] |= monitoring_dci_same_search_space_r16_present;
+  group_flags[3] |= type2_cg_release_dci_0_1_r16_present;
+  group_flags[3] |= type2_cg_release_dci_0_2_r16_present;
+  group_flags[3] |= sps_release_dci_1_1_r16_present;
+  group_flags[3] |= sps_release_dci_1_2_r16_present;
+  group_flags[3] |= csi_trigger_state_non_active_bwp_r16_present;
+  group_flags[3] |= separate_smtc_inter_iab_support_r16_present;
+  group_flags[3] |= separate_rach_iab_support_r16_present;
+  group_flags[3] |= ul_flex_dl_slot_format_semi_static_iab_r16_present;
+  group_flags[3] |= ul_flex_dl_slot_format_dyns_iab_r16_present;
+  group_flags[3] |= dft_s_ofdm_waveform_ul_iab_r16_present;
+  group_flags[3] |= dci_25_ai_rnti_support_iab_r16_present;
+  group_flags[3] |= t_delta_reception_support_iab_r16_present;
+  group_flags[3] |= guard_symbol_report_reception_iab_r16_present;
+  group_flags[3] |= harq_ack_cb_spatial_bundling_pucch_group_r16_present;
+  group_flags[3] |= cross_slot_sched_r16.is_present();
+  group_flags[3] |= max_num_srs_pos_path_loss_estimate_all_serving_cells_r16_present;
+  group_flags[3] |= extended_cg_periodicities_r16_present;
+  group_flags[3] |= extended_sps_periodicities_r16_present;
+  group_flags[3] |= codebook_variants_list_r16.is_present();
+  group_flags[3] |= pusch_repeat_type_a_r16.is_present();
+  group_flags[3] |= dci_dl_prio_ind_r16_present;
+  group_flags[3] |= dci_ul_prio_ind_r16_present;
+  group_flags[3] |= max_num_pathloss_rs_upd_r16_present;
+  group_flags[3] |= type2_harq_ack_codebook_r16_present;
+  group_flags[3] |= max_total_res_for_across_freq_ranges_r16.is_present();
+  group_flags[3] |= harq_ack_separate_multi_dci_multi_trp_r16.is_present();
+  group_flags[3] |= harq_ack_joint_multi_dci_multi_trp_r16_present;
+  group_flags[3] |= bwp_switching_multi_ccs_r16.is_present();
+  group_flags[4] |= target_smtc_scg_r16_present;
+  group_flags[4] |= support_repeat_zero_offset_rv_r16_present;
+  group_flags[4] |= cbg_trans_in_order_pusch_ul_r16_present;
+  group_flags[5] |= bwp_switching_multi_dormancy_ccs_r16.is_present();
+  group_flags[5] |= support_retx_diff_coreset_pool_multi_dci_trp_r16_present;
+  group_flags[5] |= pdcch_monitoring_any_occasions_with_span_gap_cross_carrier_sch_r16_present;
+  group_flags[6] |= new_beam_identifs2_port_csi_rs_r16_present;
+  group_flags[6] |= pathloss_estimation2_port_csi_rs_r16_present;
+  group_flags[7] |= mux_harq_ack_without_pucch_on_pusch_r16_present;
+  group_flags[8] |= guard_symbol_report_reception_iab_r17_present;
+  group_flags[8] |= restricted_iab_du_beam_reception_r17_present;
+  group_flags[8] |= recommended_iab_mt_beam_tx_r17_present;
+  group_flags[8] |= case6_timing_align_reception_iab_r17_present;
+  group_flags[8] |= case7_timing_align_reception_iab_r17_present;
+  group_flags[8] |= dl_tx_pwr_adjustment_iab_r17_present;
+  group_flags[8] |= desired_ul_tx_pwr_adjustment_r17_present;
+  group_flags[8] |= fdm_soft_res_availability_dyn_ind_r17_present;
+  group_flags[8] |= upd_t_delta_range_reception_r17_present;
+  group_flags[8] |= slot_based_dyn_pucch_rep_r17_present;
+  group_flags[8] |= sps_harq_ack_deferral_r17.is_present();
+  group_flags[8] |= unified_joint_tci_common_upd_r17_present;
+  group_flags[8] |= mtrp_pdcch_single_span_r17_present;
+  group_flags[8] |= supported_activ_prs_processing_win_r17_present;
+  group_flags[8] |= cg_time_domain_alloc_ext_r17_present;
+  group_flags[9] |= ta_based_pdc_tn_non_shared_spec_ch_access_r17_present;
+  group_flags[9] |= directional_collision_dc_iab_r17_present;
+  group_flags[10] |= dummy1_present;
+  group_flags[10] |= dummy2_present;
+  group_flags[10] |= dummy3_present;
+  group_flags[10] |= dummy4_present;
+  group_flags[10] |= srs_add_repeat_r17_present;
+  group_flags[10] |= pusch_repeat_cg_sdt_r17_present;
+  group_flags[11] |= multi_pdsch_per_slot_type1_cb_support_r17_present;
+  group_flags[12] |= joint_pwr_spatial_adaptation_r18_present;
+  group_flags[12] |= ncr_aperiodic_beam_ind_access_link_r18.is_present();
+  group_flags[12] |= ncr_semi_persistent_beam_ind_access_link_r18_present;
+  group_flags[12] |= ncr_simul_ul_backhaul_and_c_link_r18_present;
+  group_flags[12] |= ncr_backhaul_beam_ind_r18_present;
+  group_flags[12] |= ncr_adaptive_beam_backhaul_and_c_link_r18_present;
+  group_flags[12] |= nominal_rbg_size_of_cfg_3_fdra_type_0_dci_1_3_r18_present;
+  group_flags[12] |= nominal_rbg_size_of_cfg_3_fdra_type_0_dci_0_3_r18_present;
+  group_flags[12] |= cfgurable_type_1_a_fields_for_dci_0_3_and_1_3_r18_present;
+  group_flags[12] |= fdra_type_1_gty_2_4_8_16_rbs_riv_dci_1_3_and_0_3_r18_present;
+  group_flags[12] |= prio_ind_dl_r18_present;
+  group_flags[12] |= prio_ind_ul_r18_present;
+  group_flags[12] |= dyn_ind_sched_restrict_r18_present;
+  group_flags[12] |= prio_ind_one_slot_harq_r18_present;
+  group_flags[12] |= multi_pusch_dci_0_1_r18_present;
+  group_flags[12] |= multi_pusch_dci_0_2_r18_present;
+  group_flags[12] |= add_sr_periodicities_r18.is_present();
+  group_flags[12] |= pathloss_rs_upd_for_type1_cg_pusch_r18_present;
+  group_flags[12] |= bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18.is_present();
+  group_flags[13] |= ncr_dft_s_ofdm_waveform_ul_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(csi_rs_cfra_for_ho_present, 1));
   HANDLE_CODE(bref.pack(dyn_prb_bundling_dl_present, 1));
   HANDLE_CODE(bref.pack(sp_csi_report_pucch_present, 1));
@@ -45135,98 +45325,8 @@ OCUDUASN_CODE phy_params_common_s::pack(bit_ref& bref) const
     HANDLE_CODE(bwp_switching_delay.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= dummy_present;
-    group_flags[1] |= max_num_search_spaces_present;
-    group_flags[1] |= rate_matching_ctrl_resrc_set_dyn_present;
-    group_flags[1] |= max_layers_mimo_ind_present;
-    group_flags[2] |= sp_cell_placement.is_present();
-    group_flags[3] |= two_step_rach_r16_present;
-    group_flags[3] |= dci_format1_2_and0_2_r16_present;
-    group_flags[3] |= monitoring_dci_same_search_space_r16_present;
-    group_flags[3] |= type2_cg_release_dci_0_1_r16_present;
-    group_flags[3] |= type2_cg_release_dci_0_2_r16_present;
-    group_flags[3] |= sps_release_dci_1_1_r16_present;
-    group_flags[3] |= sps_release_dci_1_2_r16_present;
-    group_flags[3] |= csi_trigger_state_non_active_bwp_r16_present;
-    group_flags[3] |= separate_smtc_inter_iab_support_r16_present;
-    group_flags[3] |= separate_rach_iab_support_r16_present;
-    group_flags[3] |= ul_flex_dl_slot_format_semi_static_iab_r16_present;
-    group_flags[3] |= ul_flex_dl_slot_format_dyns_iab_r16_present;
-    group_flags[3] |= dft_s_ofdm_waveform_ul_iab_r16_present;
-    group_flags[3] |= dci_25_ai_rnti_support_iab_r16_present;
-    group_flags[3] |= t_delta_reception_support_iab_r16_present;
-    group_flags[3] |= guard_symbol_report_reception_iab_r16_present;
-    group_flags[3] |= harq_ack_cb_spatial_bundling_pucch_group_r16_present;
-    group_flags[3] |= cross_slot_sched_r16.is_present();
-    group_flags[3] |= max_num_srs_pos_path_loss_estimate_all_serving_cells_r16_present;
-    group_flags[3] |= extended_cg_periodicities_r16_present;
-    group_flags[3] |= extended_sps_periodicities_r16_present;
-    group_flags[3] |= codebook_variants_list_r16.is_present();
-    group_flags[3] |= pusch_repeat_type_a_r16.is_present();
-    group_flags[3] |= dci_dl_prio_ind_r16_present;
-    group_flags[3] |= dci_ul_prio_ind_r16_present;
-    group_flags[3] |= max_num_pathloss_rs_upd_r16_present;
-    group_flags[3] |= type2_harq_ack_codebook_r16_present;
-    group_flags[3] |= max_total_res_for_across_freq_ranges_r16.is_present();
-    group_flags[3] |= harq_ack_separate_multi_dci_multi_trp_r16.is_present();
-    group_flags[3] |= harq_ack_joint_multi_dci_multi_trp_r16_present;
-    group_flags[3] |= bwp_switching_multi_ccs_r16.is_present();
-    group_flags[4] |= target_smtc_scg_r16_present;
-    group_flags[4] |= support_repeat_zero_offset_rv_r16_present;
-    group_flags[4] |= cbg_trans_in_order_pusch_ul_r16_present;
-    group_flags[5] |= bwp_switching_multi_dormancy_ccs_r16.is_present();
-    group_flags[5] |= support_retx_diff_coreset_pool_multi_dci_trp_r16_present;
-    group_flags[5] |= pdcch_monitoring_any_occasions_with_span_gap_cross_carrier_sch_r16_present;
-    group_flags[6] |= new_beam_identifs2_port_csi_rs_r16_present;
-    group_flags[6] |= pathloss_estimation2_port_csi_rs_r16_present;
-    group_flags[7] |= mux_harq_ack_without_pucch_on_pusch_r16_present;
-    group_flags[8] |= guard_symbol_report_reception_iab_r17_present;
-    group_flags[8] |= restricted_iab_du_beam_reception_r17_present;
-    group_flags[8] |= recommended_iab_mt_beam_tx_r17_present;
-    group_flags[8] |= case6_timing_align_reception_iab_r17_present;
-    group_flags[8] |= case7_timing_align_reception_iab_r17_present;
-    group_flags[8] |= dl_tx_pwr_adjustment_iab_r17_present;
-    group_flags[8] |= desired_ul_tx_pwr_adjustment_r17_present;
-    group_flags[8] |= fdm_soft_res_availability_dyn_ind_r17_present;
-    group_flags[8] |= upd_t_delta_range_reception_r17_present;
-    group_flags[8] |= slot_based_dyn_pucch_rep_r17_present;
-    group_flags[8] |= sps_harq_ack_deferral_r17.is_present();
-    group_flags[8] |= unified_joint_tci_common_upd_r17_present;
-    group_flags[8] |= mtrp_pdcch_single_span_r17_present;
-    group_flags[8] |= supported_activ_prs_processing_win_r17_present;
-    group_flags[8] |= cg_time_domain_alloc_ext_r17_present;
-    group_flags[9] |= ta_based_pdc_tn_non_shared_spec_ch_access_r17_present;
-    group_flags[9] |= directional_collision_dc_iab_r17_present;
-    group_flags[10] |= dummy1_present;
-    group_flags[10] |= dummy2_present;
-    group_flags[10] |= dummy3_present;
-    group_flags[10] |= dummy4_present;
-    group_flags[10] |= srs_add_repeat_r17_present;
-    group_flags[10] |= pusch_repeat_cg_sdt_r17_present;
-    group_flags[11] |= multi_pdsch_per_slot_type1_cb_support_r17_present;
-    group_flags[12] |= joint_pwr_spatial_adaptation_r18_present;
-    group_flags[12] |= ncr_aperiodic_beam_ind_access_link_r18.is_present();
-    group_flags[12] |= ncr_semi_persistent_beam_ind_access_link_r18_present;
-    group_flags[12] |= ncr_simul_ul_backhaul_and_c_link_r18_present;
-    group_flags[12] |= ncr_backhaul_beam_ind_r18_present;
-    group_flags[12] |= ncr_adaptive_beam_backhaul_and_c_link_r18_present;
-    group_flags[12] |= nominal_rbg_size_of_cfg_3_fdra_type_0_dci_1_3_r18_present;
-    group_flags[12] |= nominal_rbg_size_of_cfg_3_fdra_type_0_dci_0_3_r18_present;
-    group_flags[12] |= cfgurable_type_1_a_fields_for_dci_0_3_and_1_3_r18_present;
-    group_flags[12] |= fdra_type_1_gty_2_4_8_16_rbs_riv_dci_1_3_and_0_3_r18_present;
-    group_flags[12] |= prio_ind_dl_r18_present;
-    group_flags[12] |= prio_ind_ul_r18_present;
-    group_flags[12] |= dyn_ind_sched_restrict_r18_present;
-    group_flags[12] |= prio_ind_one_slot_harq_r18_present;
-    group_flags[12] |= multi_pusch_dci_0_1_r18_present;
-    group_flags[12] |= multi_pusch_dci_0_2_r18_present;
-    group_flags[12] |= add_sr_periodicities_r18.is_present();
-    group_flags[12] |= pathloss_rs_upd_for_type1_cg_pusch_r18_present;
-    group_flags[12] |= bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18.is_present();
-    group_flags[13] |= ncr_dft_s_ofdm_waveform_ul_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -46357,7 +46457,7 @@ void phy_params_common_s::bwp_switching_multi_ccs_r16_c_::to_json(json_writer& j
 }
 OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_ccs_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::type1_r16:
       HANDLE_CODE(c.get<type1_r16_e_>().pack(bref));
@@ -46374,7 +46474,7 @@ OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_ccs_r16_c_::pack(bit_ref&
 OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_ccs_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::type1_r16:
@@ -46498,7 +46598,7 @@ void phy_params_common_s::bwp_switching_multi_dormancy_ccs_r16_c_::to_json(json_
 }
 OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_dormancy_ccs_r16_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::type1_r16:
       HANDLE_CODE(c.get<type1_r16_e_>().pack(bref));
@@ -46515,7 +46615,7 @@ OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_dormancy_ccs_r16_c_::pack
 OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_dormancy_ccs_r16_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::type1_r16:
@@ -46681,7 +46781,7 @@ void phy_params_common_s::bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_
 }
 OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::type1_r18:
       HANDLE_CODE(c.get<type1_r18_e_>().pack(bref));
@@ -46698,7 +46798,7 @@ OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_dormancy_cc_dci_0_3_and_1
 OCUDUASN_CODE phy_params_common_s::bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::type1_r18:
@@ -46758,18 +46858,18 @@ uint8_t phy_params_common_s::bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18
 // Phy-ParametersXDD-Diff ::= SEQUENCE
 OCUDUASN_CODE phy_params_xdd_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= dl_sched_offset_pdsch_type_a_present;
+  group_flags[0] |= dl_sched_offset_pdsch_type_b_present;
+  group_flags[0] |= ul_sched_offset_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(dyn_sfi_present, 1));
   HANDLE_CODE(bref.pack(two_pucch_f0_2_consec_symbols_present, 1));
   HANDLE_CODE(bref.pack(two_different_tpc_loop_pusch_present, 1));
   HANDLE_CODE(bref.pack(two_different_tpc_loop_pucch_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= dl_sched_offset_pdsch_type_a_present;
-    group_flags[0] |= dl_sched_offset_pdsch_type_b_present;
-    group_flags[0] |= ul_sched_offset_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -46834,7 +46934,39 @@ void phy_params_xdd_diff_s::to_json(json_writer& j) const
 // Phy-ParametersFRX-Diff ::= SEQUENCE
 OCUDUASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= csi_rs_im_reception_for_feedback.is_present();
+  group_flags[0] |= csi_rs_proc_framework_for_srs.is_present();
+  group_flags[0] |= csi_report_framework.is_present();
+  group_flags[0] |= mux_sr_harq_ack_csi_pucch_once_per_slot.is_present();
+  group_flags[0] |= mux_sr_harq_ack_pucch_present;
+  group_flags[0] |= mux_multiple_group_ctrl_ch_overlap_present;
+  group_flags[0] |= dl_sched_offset_pdsch_type_a_present;
+  group_flags[0] |= dl_sched_offset_pdsch_type_b_present;
+  group_flags[0] |= ul_sched_offset_present;
+  group_flags[0] |= dl_64_qam_mcs_table_alt_present;
+  group_flags[0] |= ul_64_qam_mcs_table_alt_present;
+  group_flags[0] |= cqi_table_alt_present;
+  group_flags[0] |= one_fl_dmrs_two_add_dmrs_ul_present;
+  group_flags[0] |= two_fl_dmrs_two_add_dmrs_ul_present;
+  group_flags[0] |= one_fl_dmrs_three_add_dmrs_ul_present;
+  group_flags[1] |= pdcch_blind_detection_nrdc.is_present();
+  group_flags[1] |= mux_harq_ack_pusch_diff_symbol_present;
+  group_flags[2] |= type1_harq_ack_codebook_r16_present;
+  group_flags[2] |= enhanced_pwr_ctrl_r16_present;
+  group_flags[2] |= simul_tci_act_multiple_cc_r16_present;
+  group_flags[2] |= simul_spatial_relation_multiple_cc_r16_present;
+  group_flags[2] |= cli_rssi_fdm_dl_r16_present;
+  group_flags[2] |= cli_srs_rsrp_fdm_dl_r16_present;
+  group_flags[2] |= max_layers_mimo_adaptation_r16_present;
+  group_flags[2] |= aggregation_factor_sps_dl_r16_present;
+  group_flags[2] |= max_total_res_for_one_freq_range_r16.is_present();
+  group_flags[2] |= csi_report_framework_ext_r16.is_present();
+  group_flags[3] |= two_tci_act_serving_cell_in_cc_list_r16_present;
+  group_flags[4] |= cri_ri_cqi_without_non_pmi_port_ind_r16_present;
+  group_flags[5] |= cqi_4_bits_subband_tn_non_shared_spec_ch_access_r17_present;
+  group_flags[6] |= multiple_coreset_red_cap_r17_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(dyn_sfi_present, 1));
   HANDLE_CODE(bref.pack(dummy1_present, 1));
   HANDLE_CODE(bref.pack(two_fl_dmrs_present, 1));
@@ -46898,40 +47030,8 @@ OCUDUASN_CODE phy_params_frx_diff_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, pdcch_blind_detection_ca, (uint8_t)4u, (uint8_t)16u));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= csi_rs_im_reception_for_feedback.is_present();
-    group_flags[0] |= csi_rs_proc_framework_for_srs.is_present();
-    group_flags[0] |= csi_report_framework.is_present();
-    group_flags[0] |= mux_sr_harq_ack_csi_pucch_once_per_slot.is_present();
-    group_flags[0] |= mux_sr_harq_ack_pucch_present;
-    group_flags[0] |= mux_multiple_group_ctrl_ch_overlap_present;
-    group_flags[0] |= dl_sched_offset_pdsch_type_a_present;
-    group_flags[0] |= dl_sched_offset_pdsch_type_b_present;
-    group_flags[0] |= ul_sched_offset_present;
-    group_flags[0] |= dl_64_qam_mcs_table_alt_present;
-    group_flags[0] |= ul_64_qam_mcs_table_alt_present;
-    group_flags[0] |= cqi_table_alt_present;
-    group_flags[0] |= one_fl_dmrs_two_add_dmrs_ul_present;
-    group_flags[0] |= two_fl_dmrs_two_add_dmrs_ul_present;
-    group_flags[0] |= one_fl_dmrs_three_add_dmrs_ul_present;
-    group_flags[1] |= pdcch_blind_detection_nrdc.is_present();
-    group_flags[1] |= mux_harq_ack_pusch_diff_symbol_present;
-    group_flags[2] |= type1_harq_ack_codebook_r16_present;
-    group_flags[2] |= enhanced_pwr_ctrl_r16_present;
-    group_flags[2] |= simul_tci_act_multiple_cc_r16_present;
-    group_flags[2] |= simul_spatial_relation_multiple_cc_r16_present;
-    group_flags[2] |= cli_rssi_fdm_dl_r16_present;
-    group_flags[2] |= cli_srs_rsrp_fdm_dl_r16_present;
-    group_flags[2] |= max_layers_mimo_adaptation_r16_present;
-    group_flags[2] |= aggregation_factor_sps_dl_r16_present;
-    group_flags[2] |= max_total_res_for_one_freq_range_r16.is_present();
-    group_flags[2] |= csi_report_framework_ext_r16.is_present();
-    group_flags[3] |= two_tci_act_serving_cell_in_cc_list_r16_present;
-    group_flags[4] |= cri_ri_cqi_without_non_pmi_port_ind_r16_present;
-    group_flags[5] |= cqi_4_bits_subband_tn_non_shared_spec_ch_access_r17_present;
-    group_flags[6] |= multiple_coreset_red_cap_r17_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -47482,7 +47582,18 @@ phy_params_frx_diff_s::max_total_res_for_one_freq_range_r16_s_::max_num_res_acro
 // Phy-ParametersFR1 ::= SEQUENCE
 OCUDUASN_CODE phy_params_fr1_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= pdsch_re_map_fr1_per_slot_present;
+  group_flags[1] |= pdcch_monitoring_single_span_first4_sym_r16_present;
+  group_flags[2] |= k1_range_ext_atg_r18_present;
+  group_flags[2] |= max_harq_process_num_atg_r18_present;
+  group_flags[2] |= ul_pre_compensation_atg_r18_present;
+  group_flags[2] |= ul_ta_report_atg_r18_present;
+  group_flags[2] |= adv_receiver_mu_mimo_r18_present;
+  group_flags[2] |= delta_pwr_class_report_r18_present;
+  group_flags[2] |= support12_prb_coreset0_gscn_41637_r18_present;
+  group_flags[2] |= support5_m_hz_ch_bw_20_prb_coreset0_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(pdcch_monitoring_single_occasion_present, 1));
   HANDLE_CODE(bref.pack(scs_60k_hz_present, 1));
   HANDLE_CODE(bref.pack(pdsch_256_qam_fr1_present, 1));
@@ -47492,19 +47603,8 @@ OCUDUASN_CODE phy_params_fr1_s::pack(bit_ref& bref) const
     HANDLE_CODE(pdsch_re_map_fr1_per_symbol.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= pdsch_re_map_fr1_per_slot_present;
-    group_flags[1] |= pdcch_monitoring_single_span_first4_sym_r16_present;
-    group_flags[2] |= k1_range_ext_atg_r18_present;
-    group_flags[2] |= max_harq_process_num_atg_r18_present;
-    group_flags[2] |= ul_pre_compensation_atg_r18_present;
-    group_flags[2] |= ul_ta_report_atg_r18_present;
-    group_flags[2] |= adv_receiver_mu_mimo_r18_present;
-    group_flags[2] |= delta_pwr_class_report_r18_present;
-    group_flags[2] |= support12_prb_coreset0_gscn_41637_r18_present;
-    group_flags[2] |= support5_m_hz_ch_bw_20_prb_coreset0_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -47694,7 +47794,14 @@ uint8_t phy_params_fr1_s::delta_pwr_class_report_r18_opts::to_number() const
 // Phy-ParametersFR2 ::= SEQUENCE
 OCUDUASN_CODE phy_params_fr2_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= pcell_fr2_present;
+  group_flags[0] |= pdsch_re_map_fr2_per_slot_present;
+  group_flags[1] |= default_spatial_relation_pathloss_rs_r16_present;
+  group_flags[1] |= spatial_relation_upd_ap_srs_r16_present;
+  group_flags[1] |= max_num_srs_pos_spatial_relations_all_serving_cells_r16_present;
+  group_flags[2] |= multi_rx_pref_ind_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(dummy_present, 1));
   HANDLE_CODE(bref.pack(pdsch_re_map_fr2_per_symbol_present, 1));
 
@@ -47702,15 +47809,8 @@ OCUDUASN_CODE phy_params_fr2_s::pack(bit_ref& bref) const
     HANDLE_CODE(pdsch_re_map_fr2_per_symbol.pack(bref));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= pcell_fr2_present;
-    group_flags[0] |= pdsch_re_map_fr2_per_slot_present;
-    group_flags[1] |= default_spatial_relation_pathloss_rs_r16_present;
-    group_flags[1] |= spatial_relation_upd_ap_srs_r16_present;
-    group_flags[1] |= max_num_srs_pos_spatial_relations_all_serving_cells_r16_present;
-    group_flags[2] |= multi_rx_pref_ind_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -48040,7 +48140,14 @@ void ue_nr_cap_add_frx_mode_s::to_json(json_writer& j) const
 // UE-BasedPerfMeas-Parameters-r16 ::= SEQUENCE
 OCUDUASN_CODE ue_based_perf_meas_params_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sig_based_log_mdt_override_protect_r17_present;
+  group_flags[0] |= multiple_cef_report_r17_present;
+  group_flags[0] |= excess_packet_delay_r17_present;
+  group_flags[0] |= early_meas_log_r17_present;
+  group_flags[1] |= logged_mdt_pni_npn_r18_present;
+  group_flags[1] |= logged_mdt_sn_pn_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(barometer_meas_report_r16_present, 1));
   HANDLE_CODE(bref.pack(imm_meas_bt_r16_present, 1));
   HANDLE_CODE(bref.pack(imm_meas_wlan_r16_present, 1));
@@ -48052,15 +48159,8 @@ OCUDUASN_CODE ue_based_perf_meas_params_r16_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(gnss_location_r16_present, 1));
   HANDLE_CODE(bref.pack(ul_pdcp_delay_r16_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sig_based_log_mdt_override_protect_r17_present;
-    group_flags[0] |= multiple_cef_report_r17_present;
-    group_flags[0] |= excess_packet_delay_r17_present;
-    group_flags[0] |= early_meas_log_r17_present;
-    group_flags[1] |= logged_mdt_pni_npn_r18_present;
-    group_flags[1] |= logged_mdt_sn_pn_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -48171,22 +48271,22 @@ void ue_based_perf_meas_params_r16_s::to_json(json_writer& j) const
 // SON-Parameters-r16 ::= SEQUENCE
 OCUDUASN_CODE son_params_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= rlf_report_cho_r17_present;
+  group_flags[0] |= rlf_report_daps_r17_present;
+  group_flags[0] |= success_ho_report_r17_present;
+  group_flags[0] |= two_step_rach_report_r17_present;
+  group_flags[0] |= pscell_mhi_report_r17_present;
+  group_flags[0] |= on_demand_si_report_r17_present;
+  group_flags[1] |= cef_report_red_cap_r17_present;
+  group_flags[1] |= rlf_report_red_cap_r17_present;
+  group_flags[2] |= spr_report_r18_present;
+  group_flags[2] |= success_irat_ho_report_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(rach_report_r16_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= rlf_report_cho_r17_present;
-    group_flags[0] |= rlf_report_daps_r17_present;
-    group_flags[0] |= success_ho_report_r17_present;
-    group_flags[0] |= two_step_rach_report_r17_present;
-    group_flags[0] |= pscell_mhi_report_r17_present;
-    group_flags[0] |= on_demand_si_report_r17_present;
-    group_flags[1] |= cef_report_red_cap_r17_present;
-    group_flags[1] |= rlf_report_red_cap_r17_present;
-    group_flags[2] |= spr_report_r18_present;
-    group_flags[2] |= success_irat_ho_report_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -48437,7 +48537,22 @@ void ntn_params_v1820_s::to_json(json_writer& j) const
 // PDCP-Parameters ::= SEQUENCE
 OCUDUASN_CODE pdcp_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= drb_iab_r16_present;
+  group_flags[0] |= non_drb_iab_r16_present;
+  group_flags[0] |= extended_discard_timer_r16_present;
+  group_flags[0] |= continue_ehc_context_r16_present;
+  group_flags[0] |= ehc_r16_present;
+  group_flags[0] |= max_num_ehc_contexts_r16_present;
+  group_flags[0] |= joint_ehc_rohc_cfg_r16_present;
+  group_flags[0] |= pdcp_dupl_more_than_two_rlc_r16_present;
+  group_flags[1] |= long_sn_red_cap_r17_present;
+  group_flags[1] |= udc_r17.is_present();
+  group_flags[2] |= long_sn_ncr_r18_present;
+  group_flags[2] |= support_of_pdu_set_discard_r18_present;
+  group_flags[2] |= psi_based_discard_r18_present;
+  group_flags[2] |= support_of_sn_gap_report_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(ul_only_rohc_profiles_present, 1));
   HANDLE_CODE(bref.pack(continue_rohc_context_present, 1));
   HANDLE_CODE(bref.pack(out_of_order_delivery_present, 1));
@@ -48457,23 +48572,8 @@ OCUDUASN_CODE pdcp_params_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(supported_rohc_profiles.profile0x0104, 1));
   HANDLE_CODE(max_num_rohc_context_sessions.pack(bref));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= drb_iab_r16_present;
-    group_flags[0] |= non_drb_iab_r16_present;
-    group_flags[0] |= extended_discard_timer_r16_present;
-    group_flags[0] |= continue_ehc_context_r16_present;
-    group_flags[0] |= ehc_r16_present;
-    group_flags[0] |= max_num_ehc_contexts_r16_present;
-    group_flags[0] |= joint_ehc_rohc_cfg_r16_present;
-    group_flags[0] |= pdcp_dupl_more_than_two_rlc_r16_present;
-    group_flags[1] |= long_sn_red_cap_r17_present;
-    group_flags[1] |= udc_r17.is_present();
-    group_flags[2] |= long_sn_ncr_r18_present;
-    group_flags[2] |= support_of_pdu_set_discard_r18_present;
-    group_flags[2] |= psi_based_discard_r18_present;
-    group_flags[2] |= support_of_sn_gap_report_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -48806,7 +48906,7 @@ void pdcp_params_mrdc_v1610_s::to_json(json_writer& j) const
 // PDCP-ParametersSidelink-r18 ::= SEQUENCE
 OCUDUASN_CODE pdcp_params_sidelink_r18_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pdcp_dupl_srb_sidelink_r18_present, 1));
   HANDLE_CODE(bref.pack(pdcp_dupl_drb_sidelink_r18_present, 1));
 
@@ -48818,6 +48918,10 @@ OCUDUASN_CODE pdcp_params_sidelink_r18_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(pdcp_dupl_srb_sidelink_r18_present, 1));
   HANDLE_CODE(bref.unpack(pdcp_dupl_drb_sidelink_r18_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pdcp_params_sidelink_r18_s::to_json(json_writer& j) const
@@ -48835,19 +48939,19 @@ void pdcp_params_sidelink_r18_s::to_json(json_writer& j) const
 // Phy-ParametersMRDC ::= SEQUENCE
 OCUDUASN_CODE phy_params_mrdc_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sp_cell_placement.is_present();
+  group_flags[1] |= tdd_pcell_ul_tx_all_ul_sf_r16_present;
+  group_flags[1] |= fdd_pcell_ul_tx_all_ul_sf_r16_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(naics_cap_list.size() > 0, 1));
 
   if (naics_cap_list.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, naics_cap_list, 1, 8));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sp_cell_placement.is_present();
-    group_flags[1] |= tdd_pcell_ul_tx_all_ul_sf_r16_present;
-    group_flags[1] |= fdd_pcell_ul_tx_all_ul_sf_r16_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -48923,7 +49027,7 @@ void phy_params_mrdc_s::to_json(json_writer& j) const
 // Phy-ParametersSharedSpectrumChAccess-r16 ::= SEQUENCE
 OCUDUASN_CODE phy_params_shared_spec_ch_access_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(ss_sinr_meas_r16_present, 1));
   HANDLE_CODE(bref.pack(sp_csi_report_pucch_r16_present, 1));
   HANDLE_CODE(bref.pack(sp_csi_report_pusch_r16_present, 1));
@@ -48975,6 +49079,10 @@ OCUDUASN_CODE phy_params_shared_spec_ch_access_r16_s::unpack(cbit_ref& bref)
     HANDLE_CODE(bref.unpack(mux_sr_harq_ack_csi_pucch_once_per_slot_r16.diff_symbol_r16_present, 1));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void phy_params_shared_spec_ch_access_r16_s::to_json(json_writer& j) const
@@ -49045,7 +49153,7 @@ void phy_params_shared_spec_ch_access_r16_s::to_json(json_writer& j) const
 // PowSav-ParametersCommon-r16 ::= SEQUENCE
 OCUDUASN_CODE pow_sav_params_common_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(drx_pref_r16_present, 1));
   HANDLE_CODE(bref.pack(max_cc_pref_r16_present, 1));
   HANDLE_CODE(bref.pack(release_pref_r16_present, 1));
@@ -49061,6 +49169,10 @@ OCUDUASN_CODE pow_sav_params_common_r16_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(release_pref_r16_present, 1));
   HANDLE_CODE(bref.unpack(min_sched_offset_pref_r16_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pow_sav_params_common_r16_s::to_json(json_writer& j) const
@@ -49084,7 +49196,7 @@ void pow_sav_params_common_r16_s::to_json(json_writer& j) const
 // PowSav-ParametersFRX-Diff-r16 ::= SEQUENCE
 OCUDUASN_CODE pow_sav_params_frx_diff_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_bw_pref_r16_present, 1));
   HANDLE_CODE(bref.pack(max_mimo_layer_pref_r16_present, 1));
 
@@ -49096,6 +49208,10 @@ OCUDUASN_CODE pow_sav_params_frx_diff_r16_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(max_bw_pref_r16_present, 1));
   HANDLE_CODE(bref.unpack(max_mimo_layer_pref_r16_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pow_sav_params_frx_diff_r16_s::to_json(json_writer& j) const
@@ -49113,7 +49229,7 @@ void pow_sav_params_frx_diff_r16_s::to_json(json_writer& j) const
 // PowSav-Parameters-r16 ::= SEQUENCE
 OCUDUASN_CODE pow_sav_params_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pow_sav_params_common_r16_present, 1));
   HANDLE_CODE(bref.pack(pow_sav_params_frx_diff_r16_present, 1));
 
@@ -49139,6 +49255,10 @@ OCUDUASN_CODE pow_sav_params_r16_s::unpack(cbit_ref& bref)
     HANDLE_CODE(pow_sav_params_frx_diff_r16.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pow_sav_params_r16_s::to_json(json_writer& j) const
@@ -49158,7 +49278,7 @@ void pow_sav_params_r16_s::to_json(json_writer& j) const
 // PowSav-ParametersFR2-2-r17 ::= SEQUENCE
 OCUDUASN_CODE pow_sav_params_fr2_2_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(max_bw_pref_r17_present, 1));
   HANDLE_CODE(bref.pack(max_mimo_layer_pref_r17_present, 1));
 
@@ -49170,6 +49290,10 @@ OCUDUASN_CODE pow_sav_params_fr2_2_r17_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(max_bw_pref_r17_present, 1));
   HANDLE_CODE(bref.unpack(max_mimo_layer_pref_r17_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pow_sav_params_fr2_2_r17_s::to_json(json_writer& j) const
@@ -49187,7 +49311,7 @@ void pow_sav_params_fr2_2_r17_s::to_json(json_writer& j) const
 // PowSav-Parameters-v1700 ::= SEQUENCE
 OCUDUASN_CODE pow_sav_params_v1700_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pow_sav_params_fr2_2_r17_present, 1));
 
   if (pow_sav_params_fr2_2_r17_present) {
@@ -49205,6 +49329,10 @@ OCUDUASN_CODE pow_sav_params_v1700_s::unpack(cbit_ref& bref)
     HANDLE_CODE(pow_sav_params_fr2_2_r17.unpack(bref));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void pow_sav_params_v1700_s::to_json(json_writer& j) const
@@ -49220,7 +49348,57 @@ void pow_sav_params_v1700_s::to_json(json_writer& j) const
 // RF-Parameters ::= SEQUENCE
 OCUDUASN_CODE rf_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= supported_band_combination_list_v1540.is_present();
+  group_flags[0] |= srs_switching_time_requested_present;
+  group_flags[1] |= supported_band_combination_list_v1550.is_present();
+  group_flags[2] |= supported_band_combination_list_v1560.is_present();
+  group_flags[3] |= supported_band_combination_list_v1610.is_present();
+  group_flags[3] |= supported_band_combination_list_sidelink_eutra_nr_r16.is_present();
+  group_flags[3] |= supported_band_combination_list_ul_tx_switch_r16.is_present();
+  group_flags[4] |= supported_band_combination_list_v1630.is_present();
+  group_flags[4] |= supported_band_combination_list_sidelink_eutra_nr_v1630.is_present();
+  group_flags[4] |= supported_band_combination_list_ul_tx_switch_v1630.is_present();
+  group_flags[5] |= supported_band_combination_list_v1640.is_present();
+  group_flags[5] |= supported_band_combination_list_ul_tx_switch_v1640.is_present();
+  group_flags[6] |= supported_band_combination_list_v1650.is_present();
+  group_flags[6] |= supported_band_combination_list_ul_tx_switch_v1650.is_present();
+  group_flags[7] |= extended_band_n77_r16_present;
+  group_flags[8] |= supported_band_combination_list_ul_tx_switch_v1670.is_present();
+  group_flags[9] |= supported_band_combination_list_v1680.is_present();
+  group_flags[10] |= supported_band_combination_list_v1690.is_present();
+  group_flags[10] |= supported_band_combination_list_ul_tx_switch_v1690.is_present();
+  group_flags[11] |= supported_band_combination_list_v1700.is_present();
+  group_flags[11] |= supported_band_combination_list_ul_tx_switch_v1700.is_present();
+  group_flags[11] |= supported_band_combination_list_sl_relay_discovery_r17.size() > 0;
+  group_flags[11] |= supported_band_combination_list_sl_non_relay_discovery_r17.size() > 0;
+  group_flags[11] |= supported_band_combination_list_sidelink_eutra_nr_v1710.is_present();
+  group_flags[11] |= sidelink_requested_r17_present;
+  group_flags[11] |= extended_band_n77_2_r17_present;
+  group_flags[12] |= supported_band_combination_list_v1720.is_present();
+  group_flags[12] |= supported_band_combination_list_ul_tx_switch_v1720.is_present();
+  group_flags[13] |= supported_band_combination_list_v1730.is_present();
+  group_flags[13] |= supported_band_combination_list_ul_tx_switch_v1730.is_present();
+  group_flags[13] |= supported_band_combination_list_sl_relay_discovery_v1730.is_present();
+  group_flags[13] |= supported_band_combination_list_sl_non_relay_discovery_v1730.is_present();
+  group_flags[14] |= supported_band_combination_list_v1740.is_present();
+  group_flags[14] |= supported_band_combination_list_ul_tx_switch_v1740.is_present();
+  group_flags[15] |= supported_band_combination_list_v1760.is_present();
+  group_flags[15] |= supported_band_combination_list_ul_tx_switch_v1760.is_present();
+  group_flags[16] |= dummy1.is_present();
+  group_flags[16] |= dummy2.is_present();
+  group_flags[17] |= supported_band_combination_list_v1780.is_present();
+  group_flags[17] |= supported_band_combination_list_ul_tx_switch_v1780.is_present();
+  group_flags[18] |= supported_band_combination_list_v1800.is_present();
+  group_flags[18] |= supported_band_combination_list_ul_tx_switch_v1800.is_present();
+  group_flags[18] |= supported_band_combination_list_sl_u2_u_relay_r18.is_present();
+  group_flags[19] |= supported_band_combination_list_v1830.is_present();
+  group_flags[19] |= supported_band_combination_list_ul_tx_switch_v1830.is_present();
+  group_flags[20] |= supported_band_combination_list_v1840.is_present();
+  group_flags[20] |= supported_band_combination_list_ul_tx_switch_v1840.is_present();
+  group_flags[21] |= supported_band_combination_list_v1860.is_present();
+  group_flags[21] |= supported_band_combination_list_ul_tx_switch_v1860.is_present();
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(supported_band_combination_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(applied_freq_band_list_filt.size() > 0, 1));
 
@@ -49232,58 +49410,8 @@ OCUDUASN_CODE rf_params_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, applied_freq_band_list_filt, 1, 1280));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= supported_band_combination_list_v1540.is_present();
-    group_flags[0] |= srs_switching_time_requested_present;
-    group_flags[1] |= supported_band_combination_list_v1550.is_present();
-    group_flags[2] |= supported_band_combination_list_v1560.is_present();
-    group_flags[3] |= supported_band_combination_list_v1610.is_present();
-    group_flags[3] |= supported_band_combination_list_sidelink_eutra_nr_r16.is_present();
-    group_flags[3] |= supported_band_combination_list_ul_tx_switch_r16.is_present();
-    group_flags[4] |= supported_band_combination_list_v1630.is_present();
-    group_flags[4] |= supported_band_combination_list_sidelink_eutra_nr_v1630.is_present();
-    group_flags[4] |= supported_band_combination_list_ul_tx_switch_v1630.is_present();
-    group_flags[5] |= supported_band_combination_list_v1640.is_present();
-    group_flags[5] |= supported_band_combination_list_ul_tx_switch_v1640.is_present();
-    group_flags[6] |= supported_band_combination_list_v1650.is_present();
-    group_flags[6] |= supported_band_combination_list_ul_tx_switch_v1650.is_present();
-    group_flags[7] |= extended_band_n77_r16_present;
-    group_flags[8] |= supported_band_combination_list_ul_tx_switch_v1670.is_present();
-    group_flags[9] |= supported_band_combination_list_v1680.is_present();
-    group_flags[10] |= supported_band_combination_list_v1690.is_present();
-    group_flags[10] |= supported_band_combination_list_ul_tx_switch_v1690.is_present();
-    group_flags[11] |= supported_band_combination_list_v1700.is_present();
-    group_flags[11] |= supported_band_combination_list_ul_tx_switch_v1700.is_present();
-    group_flags[11] |= supported_band_combination_list_sl_relay_discovery_r17.size() > 0;
-    group_flags[11] |= supported_band_combination_list_sl_non_relay_discovery_r17.size() > 0;
-    group_flags[11] |= supported_band_combination_list_sidelink_eutra_nr_v1710.is_present();
-    group_flags[11] |= sidelink_requested_r17_present;
-    group_flags[11] |= extended_band_n77_2_r17_present;
-    group_flags[12] |= supported_band_combination_list_v1720.is_present();
-    group_flags[12] |= supported_band_combination_list_ul_tx_switch_v1720.is_present();
-    group_flags[13] |= supported_band_combination_list_v1730.is_present();
-    group_flags[13] |= supported_band_combination_list_ul_tx_switch_v1730.is_present();
-    group_flags[13] |= supported_band_combination_list_sl_relay_discovery_v1730.is_present();
-    group_flags[13] |= supported_band_combination_list_sl_non_relay_discovery_v1730.is_present();
-    group_flags[14] |= supported_band_combination_list_v1740.is_present();
-    group_flags[14] |= supported_band_combination_list_ul_tx_switch_v1740.is_present();
-    group_flags[15] |= supported_band_combination_list_v1760.is_present();
-    group_flags[15] |= supported_band_combination_list_ul_tx_switch_v1760.is_present();
-    group_flags[16] |= dummy1.is_present();
-    group_flags[16] |= dummy2.is_present();
-    group_flags[17] |= supported_band_combination_list_v1780.is_present();
-    group_flags[17] |= supported_band_combination_list_ul_tx_switch_v1780.is_present();
-    group_flags[18] |= supported_band_combination_list_v1800.is_present();
-    group_flags[18] |= supported_band_combination_list_ul_tx_switch_v1800.is_present();
-    group_flags[18] |= supported_band_combination_list_sl_u2_u_relay_r18.is_present();
-    group_flags[19] |= supported_band_combination_list_v1830.is_present();
-    group_flags[19] |= supported_band_combination_list_ul_tx_switch_v1830.is_present();
-    group_flags[20] |= supported_band_combination_list_v1840.is_present();
-    group_flags[20] |= supported_band_combination_list_ul_tx_switch_v1840.is_present();
-    group_flags[21] |= supported_band_combination_list_v1860.is_present();
-    group_flags[21] |= supported_band_combination_list_ul_tx_switch_v1860.is_present();
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -50267,7 +50395,53 @@ void rf_params_s::to_json(json_writer& j) const
 // RF-ParametersMRDC ::= SEQUENCE
 OCUDUASN_CODE rf_params_mrdc_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= srs_switching_time_requested_present;
+  group_flags[0] |= supported_band_combination_list_v1540.is_present();
+  group_flags[1] |= supported_band_combination_list_v1550.is_present();
+  group_flags[2] |= supported_band_combination_list_v1560.is_present();
+  group_flags[2] |= supported_band_combination_list_nedc_only.is_present();
+  group_flags[3] |= supported_band_combination_list_v1570.is_present();
+  group_flags[4] |= supported_band_combination_list_v1580.is_present();
+  group_flags[5] |= supported_band_combination_list_v1590.is_present();
+  group_flags[6] |= supported_band_combination_list_nedc_only_v15a0.is_present();
+  group_flags[7] |= supported_band_combination_list_v1610.is_present();
+  group_flags[7] |= supported_band_combination_list_nedc_only_v1610.is_present();
+  group_flags[7] |= supported_band_combination_list_ul_tx_switch_r16.is_present();
+  group_flags[8] |= supported_band_combination_list_v1630.is_present();
+  group_flags[8] |= supported_band_combination_list_nedc_only_v1630.is_present();
+  group_flags[8] |= supported_band_combination_list_ul_tx_switch_v1630.is_present();
+  group_flags[9] |= supported_band_combination_list_v1640.is_present();
+  group_flags[9] |= supported_band_combination_list_nedc_only_v1640.is_present();
+  group_flags[9] |= supported_band_combination_list_ul_tx_switch_v1640.is_present();
+  group_flags[10] |= supported_band_combination_list_ul_tx_switch_v1670.is_present();
+  group_flags[11] |= supported_band_combination_list_v1700.is_present();
+  group_flags[11] |= supported_band_combination_list_ul_tx_switch_v1700.is_present();
+  group_flags[12] |= supported_band_combination_list_v1720.is_present();
+  group_flags[12] |= supported_band_combination_list_nedc_only_v1720.is_present();
+  group_flags[12] |= supported_band_combination_list_ul_tx_switch_v1720.is_present();
+  group_flags[13] |= supported_band_combination_list_v1730.is_present();
+  group_flags[13] |= supported_band_combination_list_nedc_only_v1730.is_present();
+  group_flags[13] |= supported_band_combination_list_ul_tx_switch_v1730.is_present();
+  group_flags[14] |= supported_band_combination_list_v1740.is_present();
+  group_flags[14] |= supported_band_combination_list_nedc_only_v1740.is_present();
+  group_flags[14] |= supported_band_combination_list_ul_tx_switch_v1740.is_present();
+  group_flags[15] |= dummy1.is_present();
+  group_flags[15] |= dummy2.is_present();
+  group_flags[16] |= supported_band_combination_list_v1780.is_present();
+  group_flags[16] |= supported_band_combination_list_nedc_only_v1780.is_present();
+  group_flags[16] |= supported_band_combination_list_ul_tx_switch_v1780.is_present();
+  group_flags[17] |= supported_band_combination_list_v1790.is_present();
+  group_flags[17] |= supported_band_combination_list_ul_tx_switch_v1790.is_present();
+  group_flags[18] |= supported_band_combination_list_v1800.is_present();
+  group_flags[18] |= supported_band_combination_list_ul_tx_switch_v1800.is_present();
+  group_flags[19] |= supported_band_combination_list_v1830.is_present();
+  group_flags[19] |= supported_band_combination_list_ul_tx_switch_v1830.is_present();
+  group_flags[20] |= supported_band_combination_list_v1840.is_present();
+  group_flags[20] |= supported_band_combination_list_ul_tx_switch_v1840.is_present();
+  group_flags[21] |= supported_band_combination_list_v1860.is_present();
+  group_flags[21] |= supported_band_combination_list_ul_tx_switch_v1860.is_present();
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(supported_band_combination_list.size() > 0, 1));
   HANDLE_CODE(bref.pack(applied_freq_band_list_filt.size() > 0, 1));
 
@@ -50278,54 +50452,8 @@ OCUDUASN_CODE rf_params_mrdc_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, applied_freq_band_list_filt, 1, 1280));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= srs_switching_time_requested_present;
-    group_flags[0] |= supported_band_combination_list_v1540.is_present();
-    group_flags[1] |= supported_band_combination_list_v1550.is_present();
-    group_flags[2] |= supported_band_combination_list_v1560.is_present();
-    group_flags[2] |= supported_band_combination_list_nedc_only.is_present();
-    group_flags[3] |= supported_band_combination_list_v1570.is_present();
-    group_flags[4] |= supported_band_combination_list_v1580.is_present();
-    group_flags[5] |= supported_band_combination_list_v1590.is_present();
-    group_flags[6] |= supported_band_combination_list_nedc_only_v15a0.is_present();
-    group_flags[7] |= supported_band_combination_list_v1610.is_present();
-    group_flags[7] |= supported_band_combination_list_nedc_only_v1610.is_present();
-    group_flags[7] |= supported_band_combination_list_ul_tx_switch_r16.is_present();
-    group_flags[8] |= supported_band_combination_list_v1630.is_present();
-    group_flags[8] |= supported_band_combination_list_nedc_only_v1630.is_present();
-    group_flags[8] |= supported_band_combination_list_ul_tx_switch_v1630.is_present();
-    group_flags[9] |= supported_band_combination_list_v1640.is_present();
-    group_flags[9] |= supported_band_combination_list_nedc_only_v1640.is_present();
-    group_flags[9] |= supported_band_combination_list_ul_tx_switch_v1640.is_present();
-    group_flags[10] |= supported_band_combination_list_ul_tx_switch_v1670.is_present();
-    group_flags[11] |= supported_band_combination_list_v1700.is_present();
-    group_flags[11] |= supported_band_combination_list_ul_tx_switch_v1700.is_present();
-    group_flags[12] |= supported_band_combination_list_v1720.is_present();
-    group_flags[12] |= supported_band_combination_list_nedc_only_v1720.is_present();
-    group_flags[12] |= supported_band_combination_list_ul_tx_switch_v1720.is_present();
-    group_flags[13] |= supported_band_combination_list_v1730.is_present();
-    group_flags[13] |= supported_band_combination_list_nedc_only_v1730.is_present();
-    group_flags[13] |= supported_band_combination_list_ul_tx_switch_v1730.is_present();
-    group_flags[14] |= supported_band_combination_list_v1740.is_present();
-    group_flags[14] |= supported_band_combination_list_nedc_only_v1740.is_present();
-    group_flags[14] |= supported_band_combination_list_ul_tx_switch_v1740.is_present();
-    group_flags[15] |= dummy1.is_present();
-    group_flags[15] |= dummy2.is_present();
-    group_flags[16] |= supported_band_combination_list_v1780.is_present();
-    group_flags[16] |= supported_band_combination_list_nedc_only_v1780.is_present();
-    group_flags[16] |= supported_band_combination_list_ul_tx_switch_v1780.is_present();
-    group_flags[17] |= supported_band_combination_list_v1790.is_present();
-    group_flags[17] |= supported_band_combination_list_ul_tx_switch_v1790.is_present();
-    group_flags[18] |= supported_band_combination_list_v1800.is_present();
-    group_flags[18] |= supported_band_combination_list_ul_tx_switch_v1800.is_present();
-    group_flags[19] |= supported_band_combination_list_v1830.is_present();
-    group_flags[19] |= supported_band_combination_list_ul_tx_switch_v1830.is_present();
-    group_flags[20] |= supported_band_combination_list_v1840.is_present();
-    group_flags[20] |= supported_band_combination_list_ul_tx_switch_v1840.is_present();
-    group_flags[21] |= supported_band_combination_list_v1860.is_present();
-    group_flags[21] |= supported_band_combination_list_ul_tx_switch_v1860.is_present();
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -51442,18 +51570,18 @@ void rf_params_mrdc_v16e0_s::to_json(json_writer& j) const
 // RLC-Parameters ::= SEQUENCE
 OCUDUASN_CODE rlc_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= extended_t_poll_retx_r16_present;
+  group_flags[0] |= extended_t_status_prohibit_r16_present;
+  group_flags[1] |= am_with_long_sn_red_cap_r17_present;
+  group_flags[2] |= am_with_long_sn_ncr_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(am_with_short_sn_present, 1));
   HANDLE_CODE(bref.pack(um_with_short_sn_present, 1));
   HANDLE_CODE(bref.pack(um_with_long_sn_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= extended_t_poll_retx_r16_present;
-    group_flags[0] |= extended_t_status_prohibit_r16_present;
-    group_flags[1] |= am_with_long_sn_red_cap_r17_present;
-    group_flags[2] |= am_with_long_sn_ncr_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -51533,7 +51661,7 @@ void rlc_params_s::to_json(json_writer& j) const
 // RLC-ParametersSidelink-r16 ::= SEQUENCE
 OCUDUASN_CODE rlc_params_sidelink_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(am_with_long_sn_sidelink_r16_present, 1));
   HANDLE_CODE(bref.pack(um_with_long_sn_sidelink_r16_present, 1));
 
@@ -51545,6 +51673,10 @@ OCUDUASN_CODE rlc_params_sidelink_r16_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(am_with_long_sn_sidelink_r16_present, 1));
   HANDLE_CODE(bref.unpack(um_with_long_sn_sidelink_r16_present, 1));
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void rlc_params_sidelink_r16_s::to_json(json_writer& j) const
@@ -51611,28 +51743,28 @@ void red_cap_params_v1740_s::to_json(json_writer& j) const
 // RelayParameters-r17 ::= SEQUENCE
 OCUDUASN_CODE relay_params_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= relay_ue_u2_u_operation_l2_r18_present;
+  group_flags[0] |= remote_ue_u2_u_operation_l2_r18_present;
+  group_flags[0] |= remote_ue_u2_n_path_switch_operation_l2_r18_present;
+  group_flags[0] |= multipath_remote_ue_pc5_l2_r18_present;
+  group_flags[0] |= multipath_relay_ue_n3_c_r18_present;
+  group_flags[0] |= multipath_remote_ue_n3_c_r18_present;
+  group_flags[0] |= remote_ue_indirect_path_add_change_to_idle_inactive_relay_r18_present;
+  group_flags[0] |= pdcp_dupl_more_than_one_uu_rlc_r18_present;
+  group_flags[0] |= pdcp_ca_dupl_directpath_drb_r18_present;
+  group_flags[0] |= pdcp_ca_dupl_directpath_srb_r18_present;
+  group_flags[0] |= pdcp_dupl_mp_split_drb_r18_present;
+  group_flags[0] |= pdcp_dupl_mp_split_srb_r18_present;
+  group_flags[0] |= directpath_rlf_recovery_via_srb1_r18_present;
+  group_flags[0] |= split_drb_with_ul_both_direct_indirect_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(relay_ue_operation_l2_r17_present, 1));
   HANDLE_CODE(bref.pack(remote_ue_operation_l2_r17_present, 1));
   HANDLE_CODE(bref.pack(remote_ue_path_switch_to_idle_inactive_relay_r17_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= relay_ue_u2_u_operation_l2_r18_present;
-    group_flags[0] |= remote_ue_u2_u_operation_l2_r18_present;
-    group_flags[0] |= remote_ue_u2_n_path_switch_operation_l2_r18_present;
-    group_flags[0] |= multipath_remote_ue_pc5_l2_r18_present;
-    group_flags[0] |= multipath_relay_ue_n3_c_r18_present;
-    group_flags[0] |= multipath_remote_ue_n3_c_r18_present;
-    group_flags[0] |= remote_ue_indirect_path_add_change_to_idle_inactive_relay_r18_present;
-    group_flags[0] |= pdcp_dupl_more_than_one_uu_rlc_r18_present;
-    group_flags[0] |= pdcp_ca_dupl_directpath_drb_r18_present;
-    group_flags[0] |= pdcp_ca_dupl_directpath_srb_r18_present;
-    group_flags[0] |= pdcp_dupl_mp_split_drb_r18_present;
-    group_flags[0] |= pdcp_dupl_mp_split_srb_r18_present;
-    group_flags[0] |= directpath_rlf_recovery_via_srb1_r18_present;
-    group_flags[0] |= split_drb_with_ul_both_direct_indirect_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -51748,16 +51880,16 @@ void relay_params_r17_s::to_json(json_writer& j) const
 // SDAP-Parameters ::= SEQUENCE
 OCUDUASN_CODE sdap_params_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= sdap_qos_iab_r16_present;
+  group_flags[0] |= sdap_hdr_iab_r16_present;
+  group_flags[1] |= sdap_qos_ncr_r18_present;
+  group_flags[1] |= sdap_hdr_ncr_r18_present;
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(as_reflective_qos_present, 1));
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= sdap_qos_iab_r16_present;
-    group_flags[0] |= sdap_hdr_iab_r16_present;
-    group_flags[1] |= sdap_qos_ncr_r18_present;
-    group_flags[1] |= sdap_hdr_ncr_r18_present;
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -51853,7 +51985,12 @@ void ue_sidelink_cap_add_xdd_mode_r16_s::to_json(json_writer& j) const
 // SidelinkParametersNR-r16 ::= SEQUENCE
 OCUDUASN_CODE sidelink_params_nr_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  ext_groups_packer_guard group_flags;
+  group_flags[0] |= relay_params_r17.is_present();
+  group_flags[1] |= p0_olpc_sidelink_r17_present;
+  group_flags[2] |= pdcp_params_sidelink_r18.is_present();
+  group_flags[2] |= sl_prs_common_proc_cap_per_ue_r18.is_present();
+  bref.pack(ext and group_flags.any(), 1);
   HANDLE_CODE(bref.pack(rlc_params_sidelink_r16_present, 1));
   HANDLE_CODE(bref.pack(mac_params_sidelink_r16_present, 1));
   HANDLE_CODE(bref.pack(fdd_add_ue_sidelink_cap_r16_present, 1));
@@ -51876,13 +52013,8 @@ OCUDUASN_CODE sidelink_params_nr_r16_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, supported_band_list_sidelink_r16, 1, 1024));
   }
 
-  if (ext) {
-    ext_groups_packer_guard group_flags;
-    group_flags[0] |= relay_params_r17.is_present();
-    group_flags[1] |= p0_olpc_sidelink_r17_present;
-    group_flags[2] |= pdcp_params_sidelink_r18.is_present();
-    group_flags[2] |= sl_prs_common_proc_cap_per_ue_r18.is_present();
-    group_flags.pack(bref);
+  if (ext and group_flags.any()) {
+    HANDLE_CODE(group_flags.pack(bref));
 
     if (group_flags[0]) {
       varlength_field_pack_guard varlen_scope(bref, false);
@@ -52159,7 +52291,7 @@ uint8_t sidelink_params_nr_r16_s::sl_prs_common_proc_cap_per_ue_r18_s_::max_num_
 // SidelinkParametersEUTRA-r16 ::= SEQUENCE
 OCUDUASN_CODE sidelink_params_eutra_r16_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(sl_params_eutra1_r16.size() > 0, 1));
   HANDLE_CODE(bref.pack(sl_params_eutra2_r16.size() > 0, 1));
   HANDLE_CODE(bref.pack(sl_params_eutra3_r16.size() > 0, 1));
@@ -52205,6 +52337,10 @@ OCUDUASN_CODE sidelink_params_eutra_r16_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(supported_band_list_sidelink_eutra_r16, bref, 1, 256));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void sidelink_params_eutra_r16_s::to_json(json_writer& j) const
@@ -52979,7 +53115,7 @@ void ue_nr_cap_add_frx_mode_v1610_s::to_json(json_writer& j) const
 // UE-RadioPagingInfo-r17 ::= SEQUENCE
 OCUDUASN_CODE ue_radio_paging_info_r17_s::pack(bit_ref& bref) const
 {
-  bref.pack(ext, 1);
+  bref.pack(false, 1);
   HANDLE_CODE(bref.pack(pei_subgrouping_support_band_list_r17.size() > 0, 1));
 
   if (pei_subgrouping_support_band_list_r17.size() > 0) {
@@ -53000,6 +53136,10 @@ OCUDUASN_CODE ue_radio_paging_info_r17_s::unpack(cbit_ref& bref)
         unpack_dyn_seq_of(pei_subgrouping_support_band_list_r17, bref, 1, 1024, integer_packer<uint16_t>(1, 1024)));
   }
 
+  if (ext) {
+    ext_groups_unpacker unknown_ext_unpacker(bref);
+    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
+  }
   return OCUDUASN_SUCCESS;
 }
 void ue_radio_paging_info_r17_s::to_json(json_writer& j) const

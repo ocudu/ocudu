@@ -5892,7 +5892,7 @@ void xnap_pdu_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE xnap_pdu_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  HANDLE_CODE(type_.pack(bref));
   switch (type_) {
     case types::init_msg:
       HANDLE_CODE(c.get<init_msg_s>().pack(bref));
@@ -5912,7 +5912,7 @@ OCUDUASN_CODE xnap_pdu_c::pack(bit_ref& bref) const
 OCUDUASN_CODE xnap_pdu_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  HANDLE_CODE(e.unpack(bref));
   set(e);
   switch (type_) {
     case types::init_msg:
