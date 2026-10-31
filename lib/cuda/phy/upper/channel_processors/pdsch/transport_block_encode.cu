@@ -6,6 +6,7 @@
 /// \brief Transport block encoding kernels.
 
 #include "ocudu/cuda/adt/cuda_error.h"
+#include "ocudu/cuda/adt/cuda_event.h"
 #include "ocudu/cuda/adt/device_vector.h"
 #include "ocudu/cuda/phy/upper/channel_coding/crc.h"
 #include "ocudu/cuda/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
@@ -541,14 +542,7 @@ struct transport_block_encoder::impl {
   // Secondary stream for parallel scrambler execution (Phase 2 optimization)
   cuda_stream scrambler_stream;
   // Event to sync scrambler completion
-  cudaEvent_t scrambler_done;
-
-  ~impl()
-  {
-    if (scrambler_done) {
-      cudaEventDestroy(scrambler_done);
-    }
-  }
+  cuda_event scrambler_done;
 
   // Required buffer sizes for current config
   size_t tb_with_crc_size;
@@ -1209,6 +1203,14 @@ cuda_expected<std::unique_ptr<transport_block_encoder::impl>> transport_block_en
   }
   ctx->scrambler_stream = std::move(created_stream.value());
 
+  // The scrambling sequence is produced on a stream of its own, and the main stream waits on this
+  // event before it reads the sequence.
+  cuda_expected<cuda_event> created_event = cuda_event::create();
+  if (!created_event.has_value()) {
+    return make_unexpected(created_event.error());
+  }
+  ctx->scrambler_done = std::move(created_event.value());
+
   // Reserve every device buffer for the largest shape the backend accepts, so that neither
   // configure() nor encode() allocates on a slot thread.
   cuda_expected<device_vector<uint32_t>> created_crc = device_vector<uint32_t>::create(1);
@@ -1448,10 +1450,11 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     // Launch scrambler on secondary stream - will run in parallel with main pipeline
     cuda_result scr_status = handle->scrambler_unit.generate(total_bits, handle->scrambler_stream);
     if (scr_status.has_value()) {
-      d_scramble_seq     = handle->scrambler_unit.sequence();
-      scrambler_launched = true;
-      // Record event when scrambler completes
-      cudaEventRecord(handle->scrambler_done, static_cast<::cudaStream_t>(handle->scrambler_stream.native()));
+      d_scramble_seq = handle->scrambler_unit.sequence();
+      // The main stream waits on this event before it reads the sequence. A record that does not
+      // take leaves scrambler_launched false, and the sequence is generated again on the main
+      // stream, which needs no event.
+      scrambler_launched = handle->scrambler_done.record(handle->scrambler_stream).has_value();
     }
   }
 
@@ -1638,7 +1641,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     // TB CRC, segmentation, and LDPC encoding. Now we need to wait for it.
     if (scrambler_launched) {
       // Wait for scrambler stream to complete before using the sequence
-      cudaStreamWaitEvent(native_stream, handle->scrambler_done, 0);
+      cudaStreamWaitEvent(native_stream, static_cast<::cudaEvent_t>(handle->scrambler_done.native()), 0);
     } else {
       // Fallback: generate scrambling sequence synchronously if parallel launch failed
       cuda_result scr_status = handle->scrambler_unit.generate(total_bits, stream);
