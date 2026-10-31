@@ -6,6 +6,7 @@
 /// \brief Transport block encoding kernels.
 
 #include "ocudu/cuda/adt/cuda_error.h"
+#include "ocudu/cuda/adt/device_vector.h"
 #include "ocudu/cuda/phy/upper/channel_coding/crc.h"
 #include "ocudu/cuda/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "ocudu/cuda/phy/upper/channel_coding/ldpc/ldpc_rate_matching.h"
@@ -14,7 +15,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cuda_fp16.h>
-#include <new>
+#include <memory>
 #include <vector>
 
 namespace ocudu {
@@ -499,9 +500,8 @@ __device__ __forceinline__ uint32_t crc24b_update_bytes_parallel_block(const uin
 
 struct transport_block_encoder::impl {
   /// Operations on the encoder state, kept out of the interface.
-  static cuda_result encoder_create(impl** handle);
-  static void        encoder_destroy(impl* handle);
-  static cuda_result encoder_configure(impl* handle, const tb_encoder_config_t* cfg);
+  static cuda_expected<std::unique_ptr<impl>> encoder_create();
+  static cuda_result                          encoder_configure(impl* handle, const tb_encoder_config_t* cfg);
   static cuda_result
              encoder_encode(impl* handle, const uint8_t* d_tb_input, uint8_t* d_output, const cuda_stream& stream);
   static int encoder_get_output_bits(impl* handle);
@@ -517,30 +517,38 @@ struct transport_block_encoder::impl {
   ldpc_rate_matcher rate_matcher;
   scrambler         scrambler_unit;
 
-  // Device buffers
+  // Device buffers, each reserved for the largest shape the backend accepts and kept for the
+  // lifetime of the encoder, so that the slot path never allocates.
   // TB + CRC
-  uint8_t* d_tb_with_crc;
+  device_vector<uint8_t> d_tb_with_crc;
   // Segmented code blocks
-  uint32_t* d_cb_bits;
+  device_vector<uint32_t> d_cb_bits;
   // LDPC encoded
-  uint32_t* d_encoded_bits;
+  device_vector<uint32_t> d_encoded_bits;
   // Rate matched output
-  uint32_t* d_rate_matched;
+  device_vector<uint32_t> d_rate_matched;
   // Bit interleaved (before scrambling)
-  uint32_t* d_interleaved;
+  device_vector<uint32_t> d_interleaved;
   // Scrambled output
-  uint32_t* d_scrambled;
-  // Pre-allocated CRC buffer (avoids malloc in hot path)
-  uint32_t* d_crc;
+  device_vector<uint32_t> d_scrambled;
+  // TB CRC
+  device_vector<uint32_t> d_crc;
   // Scratch for multi-CTA TB CRC
-  uint32_t* d_crc_chunk_crcs;
+  device_vector<uint32_t> d_crc_chunk_crcs;
   // Scratch for multi-CTA TB CRC
-  int* d_crc_chunk_sizes;
+  device_vector<int> d_crc_chunk_sizes;
 
   // Secondary stream for parallel scrambler execution (Phase 2 optimization)
   cuda_stream scrambler_stream;
   // Event to sync scrambler completion
   cudaEvent_t scrambler_done;
+
+  ~impl()
+  {
+    if (scrambler_done) {
+      cudaEventDestroy(scrambler_done);
+    }
+  }
 
   // Required buffer sizes for current config
   size_t tb_with_crc_size;
@@ -549,14 +557,6 @@ struct transport_block_encoder::impl {
   size_t rate_matched_size;
   // Total output words
   size_t output_words;
-
-  // Allocated buffer sizes (for reuse without malloc when size fits)
-  size_t alloc_tb_with_crc_size;
-  size_t alloc_cb_bits_size;
-  size_t alloc_encoded_bits_size;
-  size_t alloc_rate_matched_size;
-  size_t alloc_output_words;
-  int    alloc_crc_chunks;
 
   // Per-CB rate matching (for variable CB lengths per 3GPP TS 38.212 Section 5.4.2.1)
   // Number of CBs with short E
@@ -1180,148 +1180,95 @@ static constexpr size_t MAX_CB_BITS_SIZE      = MAX_PDSCH_CODEBLOCKS * 264 * siz
 static constexpr size_t MAX_ENCODED_BITS_SIZE = MAX_PDSCH_CODEBLOCKS * 792 * sizeof(uint32_t);
 static constexpr size_t MAX_RATE_MATCHED_SIZE = (MAX_OUTPUT_WORDS + MAX_PDSCH_CODEBLOCKS) * sizeof(uint32_t);
 
-cuda_result transport_block_encoder::impl::encoder_create(transport_block_encoder::impl** handle)
+cuda_expected<std::unique_ptr<transport_block_encoder::impl>> transport_block_encoder::impl::encoder_create()
 {
-  if (!handle)
-    return make_unexpected(std::string("The transport block encoding call carries an invalid configuration"));
-
-  transport_block_encoder::impl* ctx = new (std::nothrow) transport_block_encoder::impl();
-  if (!ctx)
-    return make_unexpected(std::string("The transport block encoder could not reserve its device memory"));
+  std::unique_ptr<impl> ctx = std::make_unique<impl>();
 
   // Create the components the chain runs through.
   cuda_expected<ldpc_encoder> created_encoder = ldpc_encoder::create();
   if (!created_encoder.has_value()) {
-    delete ctx;
     return make_unexpected(created_encoder.error());
   }
   ctx->ldpc_enc = std::move(created_encoder.value());
 
   cuda_expected<ldpc_rate_matcher> created_matcher = ldpc_rate_matcher::create();
   if (!created_matcher.has_value()) {
-    delete ctx;
     return make_unexpected(created_matcher.error());
   }
   ctx->rate_matcher = std::move(created_matcher.value());
 
   cuda_expected<scrambler> created_scrambler = scrambler::create();
   if (!created_scrambler.has_value()) {
-    delete ctx;
     return make_unexpected(created_scrambler.error());
   }
   ctx->scrambler_unit = std::move(created_scrambler.value());
 
   cuda_expected<cuda_stream> created_stream = cuda_stream::create();
   if (!created_stream.has_value()) {
-    delete ctx;
     return make_unexpected(created_stream.error());
   }
   ctx->scrambler_stream = std::move(created_stream.value());
 
-  // Pre-allocate CRC buffer (avoids malloc/free in hot encode path)
-  cudaError_t err = cudaMalloc(&ctx->d_crc, sizeof(uint32_t));
-  if (err != cudaSuccess) {
-    delete ctx;
-    return make_unexpected(std::string("The transport block encoder could not reserve its device memory"));
+  // Reserve every device buffer for the largest shape the backend accepts, so that neither
+  // configure() nor encode() allocates on a slot thread.
+  cuda_expected<device_vector<uint32_t>> created_crc = device_vector<uint32_t>::create(1);
+  if (!created_crc.has_value()) {
+    return make_unexpected(created_crc.error());
   }
+  ctx->d_crc = std::move(created_crc.value());
 
-  err = cudaMalloc(&ctx->d_crc_chunk_crcs, MAX_CRC24A_CHUNKS * sizeof(uint32_t));
-  if (err != cudaSuccess)
-    goto alloc_failed;
-  err = cudaMalloc(&ctx->d_crc_chunk_sizes, MAX_CRC24A_CHUNKS * sizeof(int));
-  if (err != cudaSuccess)
-    goto alloc_failed;
-  ctx->alloc_crc_chunks = MAX_CRC24A_CHUNKS;
+  cuda_expected<device_vector<uint32_t>> created_chunk_crcs = device_vector<uint32_t>::create(MAX_CRC24A_CHUNKS);
+  if (!created_chunk_crcs.has_value()) {
+    return make_unexpected(created_chunk_crcs.error());
+  }
+  ctx->d_crc_chunk_crcs = std::move(created_chunk_crcs.value());
 
-  // PRE-ALLOCATE ALL BUFFERS TO MAX SIZE
-  // Avoid cudaMalloc/cudaFree in the slot hot path.
-  err = cudaMalloc(&ctx->d_tb_with_crc, MAX_TB_WITH_CRC_BYTES);
-  if (err != cudaSuccess)
-    goto alloc_failed;
-  ctx->alloc_tb_with_crc_size = MAX_TB_WITH_CRC_BYTES;
+  cuda_expected<device_vector<int>> created_chunk_sizes = device_vector<int>::create(MAX_CRC24A_CHUNKS);
+  if (!created_chunk_sizes.has_value()) {
+    return make_unexpected(created_chunk_sizes.error());
+  }
+  ctx->d_crc_chunk_sizes = std::move(created_chunk_sizes.value());
 
-  err = cudaMalloc(&ctx->d_cb_bits, MAX_CB_BITS_SIZE);
-  if (err != cudaSuccess)
-    goto alloc_failed;
-  ctx->alloc_cb_bits_size = MAX_CB_BITS_SIZE;
+  cuda_expected<device_vector<uint8_t>> created_tb_with_crc = device_vector<uint8_t>::create(MAX_TB_WITH_CRC_BYTES);
+  if (!created_tb_with_crc.has_value()) {
+    return make_unexpected(created_tb_with_crc.error());
+  }
+  ctx->d_tb_with_crc = std::move(created_tb_with_crc.value());
 
-  err = cudaMalloc(&ctx->d_encoded_bits, MAX_ENCODED_BITS_SIZE);
-  if (err != cudaSuccess)
-    goto alloc_failed;
-  ctx->alloc_encoded_bits_size = MAX_ENCODED_BITS_SIZE;
+  cuda_expected<device_vector<uint32_t>> created_cb_bits =
+      device_vector<uint32_t>::create(MAX_CB_BITS_SIZE / sizeof(uint32_t));
+  if (!created_cb_bits.has_value()) {
+    return make_unexpected(created_cb_bits.error());
+  }
+  ctx->d_cb_bits = std::move(created_cb_bits.value());
 
-  err = cudaMalloc(&ctx->d_rate_matched, MAX_RATE_MATCHED_SIZE);
-  if (err != cudaSuccess)
-    goto alloc_failed;
-  ctx->alloc_rate_matched_size = MAX_RATE_MATCHED_SIZE;
+  cuda_expected<device_vector<uint32_t>> created_encoded_bits =
+      device_vector<uint32_t>::create(MAX_ENCODED_BITS_SIZE / sizeof(uint32_t));
+  if (!created_encoded_bits.has_value()) {
+    return make_unexpected(created_encoded_bits.error());
+  }
+  ctx->d_encoded_bits = std::move(created_encoded_bits.value());
 
-  err = cudaMalloc(&ctx->d_interleaved, MAX_OUTPUT_WORDS * sizeof(uint32_t));
-  if (err != cudaSuccess)
-    goto alloc_failed;
+  cuda_expected<device_vector<uint32_t>> created_rate_matched =
+      device_vector<uint32_t>::create(MAX_RATE_MATCHED_SIZE / sizeof(uint32_t));
+  if (!created_rate_matched.has_value()) {
+    return make_unexpected(created_rate_matched.error());
+  }
+  ctx->d_rate_matched = std::move(created_rate_matched.value());
 
-  err = cudaMalloc(&ctx->d_scrambled, MAX_OUTPUT_WORDS * sizeof(uint32_t));
-  if (err != cudaSuccess)
-    goto alloc_failed;
-  ctx->alloc_output_words = MAX_OUTPUT_WORDS;
+  cuda_expected<device_vector<uint32_t>> created_interleaved = device_vector<uint32_t>::create(MAX_OUTPUT_WORDS);
+  if (!created_interleaved.has_value()) {
+    return make_unexpected(created_interleaved.error());
+  }
+  ctx->d_interleaved = std::move(created_interleaved.value());
 
-  // Create secondary stream and event for parallel scrambler execution (Phase 2 optimization)
+  cuda_expected<device_vector<uint32_t>> created_scrambled = device_vector<uint32_t>::create(MAX_OUTPUT_WORDS);
+  if (!created_scrambled.has_value()) {
+    return make_unexpected(created_scrambled.error());
+  }
+  ctx->d_scrambled = std::move(created_scrambled.value());
 
-  *handle = ctx;
-  return {};
-
-alloc_failed:
-  // Clean up on allocation failure
-  if (ctx->d_scrambled)
-    cudaFree(ctx->d_scrambled);
-  if (ctx->d_interleaved)
-    cudaFree(ctx->d_interleaved);
-  if (ctx->d_rate_matched)
-    cudaFree(ctx->d_rate_matched);
-  if (ctx->d_encoded_bits)
-    cudaFree(ctx->d_encoded_bits);
-  if (ctx->d_cb_bits)
-    cudaFree(ctx->d_cb_bits);
-  if (ctx->d_tb_with_crc)
-    cudaFree(ctx->d_tb_with_crc);
-  if (ctx->d_crc_chunk_sizes)
-    cudaFree(ctx->d_crc_chunk_sizes);
-  if (ctx->d_crc_chunk_crcs)
-    cudaFree(ctx->d_crc_chunk_crcs);
-  if (ctx->d_crc)
-    cudaFree(ctx->d_crc);
-  delete ctx;
-  return make_unexpected(std::string("The transport block encoder could not reserve its device memory"));
-}
-
-void transport_block_encoder::impl::encoder_destroy(transport_block_encoder::impl* handle)
-{
-  if (!handle)
-    return;
-
-  // Destroy parallel scrambler stream and event
-  if (handle->scrambler_done)
-    cudaEventDestroy(handle->scrambler_done);
-
-  if (handle->d_tb_with_crc)
-    cudaFree(handle->d_tb_with_crc);
-  if (handle->d_cb_bits)
-    cudaFree(handle->d_cb_bits);
-  if (handle->d_encoded_bits)
-    cudaFree(handle->d_encoded_bits);
-  if (handle->d_rate_matched)
-    cudaFree(handle->d_rate_matched);
-  if (handle->d_interleaved)
-    cudaFree(handle->d_interleaved);
-  if (handle->d_scrambled)
-    cudaFree(handle->d_scrambled);
-  if (handle->d_crc_chunk_sizes)
-    cudaFree(handle->d_crc_chunk_sizes);
-  if (handle->d_crc_chunk_crcs)
-    cudaFree(handle->d_crc_chunk_crcs);
-  if (handle->d_crc)
-    cudaFree(handle->d_crc);
-
-  delete handle;
+  return ctx;
 }
 
 cuda_result transport_block_encoder::impl::encoder_configure(transport_block_encoder::impl* handle,
@@ -1453,11 +1400,12 @@ cuda_result transport_block_encoder::impl::encoder_configure(transport_block_enc
   int required_crc_chunks   = (static_cast<int>((cfg->tb_size_bits + 7) / 8) + PDSCH_CRC24A_MULTI_CTA_CHUNK_BYTES - 1) /
                             PDSCH_CRC24A_MULTI_CTA_CHUNK_BYTES;
 
-  if (static_cast<size_t>(handle->tb_with_crc_size) > handle->alloc_tb_with_crc_size ||
-      required_crc_chunks > handle->alloc_crc_chunks || handle->cb_bits_size > handle->alloc_cb_bits_size ||
-      handle->encoded_bits_size > handle->alloc_encoded_bits_size ||
-      handle->rate_matched_size > handle->alloc_rate_matched_size ||
-      static_cast<size_t>(total_output_words) > handle->alloc_output_words) {
+  if (static_cast<size_t>(handle->tb_with_crc_size) > handle->d_tb_with_crc.size_bytes() ||
+      static_cast<size_t>(required_crc_chunks) > handle->d_crc_chunk_crcs.size() ||
+      handle->cb_bits_size > handle->d_cb_bits.size_bytes() ||
+      handle->encoded_bits_size > handle->d_encoded_bits.size_bytes() ||
+      handle->rate_matched_size > handle->d_rate_matched.size_bytes() ||
+      static_cast<size_t>(total_output_words) > handle->d_interleaved.size()) {
     // Shape exceeds max preallocation (or create() did not finish). Never grow in RT.
     return make_unexpected(std::string("The transport block encoding call carries an invalid configuration"));
   }
@@ -1513,9 +1461,9 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
   // =========================================================================
   // Compute TB CRC
   if (handle->tb_cfg.tb_crc_bits == 24) {
-    crc24a_compute(handle->d_crc, d_tb_input, handle->config.tb_size_bits, stream);
+    crc24a_compute(handle->d_crc.data(), d_tb_input, handle->config.tb_size_bits, stream);
   } else {
-    crc16_compute(reinterpret_cast<uint16_t*>(handle->d_crc), d_tb_input, handle->config.tb_size_bits, stream);
+    crc16_compute(reinterpret_cast<uint16_t*>(handle->d_crc.data()), d_tb_input, handle->config.tb_size_bits, stream);
   }
 
   // Initialize CB CRC table if needed
@@ -1526,8 +1474,8 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
   // Segment TB + attach CRCs
   fused_tb_segment_crc_kernel<<<handle->tb_cfg.num_code_blocks, 256, 0, native_stream>>>(
       d_tb_input,
-      handle->d_crc,
-      handle->d_cb_bits,
+      handle->d_crc.data(),
+      handle->d_cb_bits.data(),
       handle->config.tb_size_bits,
       handle->tb_cfg.tb_crc_bits,
       ldpc_input_bits, // K = Kb * Z (LDPC block size)
@@ -1540,11 +1488,11 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
   {
     cudaStreamSynchronize(native_stream);
     uint32_t h_crc = 0;
-    cudaMemcpy(&h_crc, handle->d_crc, sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&h_crc, handle->d_crc.data(), sizeof(uint32_t), cudaMemcpyDeviceToHost);
     fprintf(stderr, "[GPU PDSCH] TB CRC = 0x%06x (separate compute)\n", h_crc & 0x00FFFFFF);
 
     std::vector<uint32_t> cb_raw(cb_words * handle->tb_cfg.num_code_blocks);
-    cudaMemcpy(cb_raw.data(), handle->d_cb_bits, cb_raw.size() * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    cudaMemcpy(cb_raw.data(), handle->d_cb_bits.data(), cb_raw.size() * sizeof(uint32_t), cudaMemcpyDeviceToHost);
     for (int cb = 0; cb < handle->tb_cfg.num_code_blocks; cb++) {
       fprintf(stderr, "[GPU PDSCH] CB%d data (K*Z=%d bits): first 32 bytes = ", cb, ldpc_input_bits);
       uint8_t* byte_ptr = (uint8_t*)(cb_raw.data() + cb * cb_words);
@@ -1566,7 +1514,8 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 
   // Step 3: LDPC encoding.
   int encoded_words = static_cast<int>(handle->ldpc_enc.get_output_words());
-  handle->ldpc_enc.encode(handle->d_encoded_bits, handle->d_cb_bits, handle->tb_cfg.num_code_blocks, stream);
+  handle->ldpc_enc.encode(
+      handle->d_encoded_bits.data(), handle->d_cb_bits.data(), handle->tb_cfg.num_code_blocks, stream);
 
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
   // Diagnostics: print first few LDPC encoded bytes per CB before rate matching.
@@ -1574,7 +1523,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     cudaStreamSynchronize(native_stream);
     std::vector<uint32_t> enc_diagnostics(handle->tb_cfg.num_code_blocks * encoded_words);
     cudaMemcpy(enc_diagnostics.data(),
-               handle->d_encoded_bits,
+               handle->d_encoded_bits.data(),
                enc_diagnostics.size() * sizeof(uint32_t),
                cudaMemcpyDeviceToHost);
     for (int cb = 0; cb < handle->tb_cfg.num_code_blocks; cb++) {
@@ -1608,7 +1557,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 #endif
 
   // Clear output buffer (needed when E_short < E_long)
-  cudaMemsetAsync(handle->d_rate_matched, 0, num_cbs * rm_words * sizeof(uint32_t), native_stream);
+  cudaMemsetAsync(handle->d_rate_matched.data(), 0, num_cbs * rm_words * sizeof(uint32_t), native_stream);
 
   if (nof_short == num_cbs) {
     // All CBs are short - configure with E_short and single batch call
@@ -1622,10 +1571,10 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_short);
     // Note: for all-short case, E_words == rm_words, so use standard batch call
-    handle->rate_matcher.rate_match(handle->d_rate_matched, handle->d_encoded_bits, num_cbs, 0, stream);
+    handle->rate_matcher.rate_match(handle->d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
   } else if (nof_short == 0) {
     // All CBs are long - already configured with E_long, single batch call
-    handle->rate_matcher.rate_match(handle->d_rate_matched, handle->d_encoded_bits, num_cbs, 0, stream);
+    handle->rate_matcher.rate_match(handle->d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
   } else {
     // Mixed: rate match short CBs first, then long CBs
     // IMPORTANT: Use rm_words stride for uniform buffer layout
@@ -1639,7 +1588,8 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
     rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_short);
-    handle->rate_matcher.rate_match(handle->d_rate_matched, handle->d_encoded_bits, nof_short, rm_words, stream);
+    handle->rate_matcher.rate_match(
+        handle->d_rate_matched.data(), handle->d_encoded_bits.data(), nof_short, rm_words, stream);
 
     // Configure for long CBs
     codeblock_metadata rm_cfg_long          = {};
@@ -1651,8 +1601,8 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_long.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
     rm_cfg_long.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_long);
-    handle->rate_matcher.rate_match(handle->d_rate_matched + nof_short * rm_words,
-                                    handle->d_encoded_bits + nof_short * encoded_words,
+    handle->rate_matcher.rate_match(handle->d_rate_matched.data() + nof_short * rm_words,
+                                    handle->d_encoded_bits.data() + nof_short * encoded_words,
                                     num_cbs - nof_short,
                                     rm_words,
                                     stream);
@@ -1664,7 +1614,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     cudaStreamSynchronize(native_stream);
     std::vector<uint32_t> rm_diagnostics(num_cbs * rm_words);
     cudaMemcpy(rm_diagnostics.data(),
-               handle->d_rate_matched,
+               handle->d_rate_matched.data(),
                rm_diagnostics.size() * sizeof(uint32_t),
                cudaMemcpyDeviceToHost);
     for (int cb = 0; cb < num_cbs; cb++) {
@@ -1702,7 +1652,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     int num_words       = (output_bytes + 3) / 4;
     int num_word_blocks = (num_words + block_size - 1) / block_size;
     interleave_scramble_pack_kernel<<<num_word_blocks, block_size, 0, native_stream>>>(
-        handle->d_rate_matched,
+        handle->d_rate_matched.data(),
         d_scramble_seq,
         d_output,
         nof_short, // Number of short CBs
@@ -1719,7 +1669,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     if (num_cbs > 1) {
       cudaStreamSynchronize(native_stream);
       pdsch_cb_boundary_diagnostics_kernel<<<1, 1, 0, native_stream>>>(
-          handle->d_rate_matched, d_scramble_seq, nof_short, E_short, E_long, rm_words, Q_m, total_bits);
+          handle->d_rate_matched.data(), d_scramble_seq, nof_short, E_short, E_long, rm_words, Q_m, total_bits);
       cudaStreamSynchronize(native_stream);
     }
 #endif
@@ -1768,12 +1718,12 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
   } else {
     // FALLBACK: Separate kernels for edge cases (BPSK or no scrambling)
     int total_words = (total_bits + 31) / 32;
-    cudaMemsetAsync(handle->d_interleaved, 0, total_words * sizeof(uint32_t), native_stream);
+    cudaMemsetAsync(handle->d_interleaved.data(), 0, total_words * sizeof(uint32_t), native_stream);
 
     int num_thread_blocks = (total_bits + block_size - 1) / block_size;
     if (Q_m >= 2) {
-      interleave_and_compact_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(handle->d_rate_matched,
-                                                                                         handle->d_interleaved,
+      interleave_and_compact_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(handle->d_rate_matched.data(),
+                                                                                         handle->d_interleaved.data(),
                                                                                          nof_short,
                                                                                          E_short,
                                                                                          E_long,
@@ -1782,17 +1732,23 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
                                                                                          Q_m,
                                                                                          total_bits);
     } else {
-      compact_cb_bits_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(
-          handle->d_rate_matched, handle->d_interleaved, nof_short, E_short, E_long, rm_words, num_cbs, total_bits);
+      compact_cb_bits_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(handle->d_rate_matched.data(),
+                                                                                  handle->d_interleaved.data(),
+                                                                                  nof_short,
+                                                                                  E_short,
+                                                                                  E_long,
+                                                                                  rm_words,
+                                                                                  num_cbs,
+                                                                                  total_bits);
     }
 
-    uint32_t* d_final_output = handle->d_interleaved;
+    uint32_t* d_final_output = handle->d_interleaved.data();
     if (handle->config.enable_scrambling) {
-      cuda_result scr_status =
-          handle->scrambler_unit.apply_xor(handle->d_scrambled, handle->d_interleaved, total_bits, stream);
+      cuda_result scr_status = handle->scrambler_unit.apply_xor(
+          handle->d_scrambled.data(), handle->d_interleaved.data(), total_bits, stream);
       if (!scr_status.has_value())
         return scr_status;
-      d_final_output = handle->d_scrambled;
+      d_final_output = handle->d_scrambled.data();
     }
 
     int num_byte_blocks = (output_bytes + block_size - 1) / block_size;
@@ -1828,13 +1784,12 @@ int transport_block_encoder::impl::encoder_get_lifting_size(transport_block_enco
 
 cuda_expected<transport_block_encoder> transport_block_encoder::create()
 {
-  impl*       raw    = nullptr;
-  cuda_result status = impl::encoder_create(&raw);
-  if (!status.has_value()) {
-    return make_unexpected(status.error());
+  cuda_expected<std::unique_ptr<impl>> created_state = impl::encoder_create();
+  if (!created_state.has_value()) {
+    return make_unexpected(created_state.error());
   }
 
-  return transport_block_encoder(std::unique_ptr<impl>(raw));
+  return transport_block_encoder(std::move(created_state.value()));
 }
 
 transport_block_encoder::transport_block_encoder() = default;
@@ -1845,14 +1800,7 @@ transport_block_encoder::transport_block_encoder(transport_block_encoder&& other
 
 transport_block_encoder& transport_block_encoder::operator=(transport_block_encoder&& other) noexcept = default;
 
-transport_block_encoder::~transport_block_encoder()
-{
-  if (state != nullptr) {
-    // The helper releases the device memory and then the state itself, so the pointer must not be
-    // deleted a second time.
-    impl::encoder_destroy(state.release());
-  }
-}
+transport_block_encoder::~transport_block_encoder() = default;
 
 bool transport_block_encoder::is_valid() const
 {
