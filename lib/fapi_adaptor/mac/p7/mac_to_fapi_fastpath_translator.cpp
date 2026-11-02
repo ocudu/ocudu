@@ -181,6 +181,23 @@ void mac_to_fapi_fastpath_translator::on_new_downlink_scheduler_results(const ma
   handle_ul_dci_request(dl_res.dl_res.ul_pdcchs(), dl_res.ul_pdcch_pdus, dl_res.slot);
 }
 
+/// \brief Adds the given PDUs to the Tx_Data.request builder.
+///
+/// Each PDSCH PDU of the DL_TTI.request message starts with the PDU of its codeword 0, and the PDUs of its other
+/// codewords share its PDU index.
+static void add_tx_data_pdus(fapi::tx_data_request_builder&         builder,
+                             unsigned&                              nof_pdsch_pdus,
+                             span<const mac_dl_data_result::dl_pdu> pdus)
+{
+  for (const auto& pdu : pdus) {
+    if (pdu.cw_index == 0) {
+      ++nof_pdsch_pdus;
+    }
+    ocudu_assert(nof_pdsch_pdus != 0, "The PDUs of a PDSCH PDU must start with its codeword 0");
+    builder.add_pdu(nof_pdsch_pdus - 1, pdu.cw_index, pdu.pdu);
+  }
+}
+
 void mac_to_fapi_fastpath_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
 {
   auto token = stop_manager.get_token();
@@ -201,39 +218,19 @@ void mac_to_fapi_fastpath_translator::on_new_downlink_data(const mac_dl_data_res
   builder.set_slot(dl_data.slot);
 
   // Make sure PDUs are added to the builder in the same order as for the DL_TTI.request message.
-  unsigned fapi_pdu_index = 0;
+  unsigned nof_pdsch_pdus = 0;
 
   // Add SIB1 PDUs to the Tx_Data.request message.
-  for (const auto& pdu : dl_data.si_pdus) {
-    builder.add_pdu(fapi_pdu_index, pdu.cw_index, pdu.pdu);
-    if (pdu.cw_index == 0) {
-      ++fapi_pdu_index;
-    }
-  }
+  add_tx_data_pdus(builder, nof_pdsch_pdus, dl_data.si_pdus);
 
   // Add RAR PDUs to the Tx_Data.request message.
-  for (const auto& pdu : dl_data.rar_pdus) {
-    builder.add_pdu(fapi_pdu_index, pdu.cw_index, pdu.pdu);
-    if (pdu.cw_index == 0) {
-      ++fapi_pdu_index;
-    }
-  }
+  add_tx_data_pdus(builder, nof_pdsch_pdus, dl_data.rar_pdus);
 
   // Add UE specific PDUs to the Tx_Data.request message.
-  for (const auto& pdu : dl_data.ue_pdus) {
-    builder.add_pdu(fapi_pdu_index, pdu.cw_index, pdu.pdu);
-    if (pdu.cw_index == 0) {
-      ++fapi_pdu_index;
-    }
-  }
+  add_tx_data_pdus(builder, nof_pdsch_pdus, dl_data.ue_pdus);
 
   // Add Paging PDU to the Tx_Data.request message.
-  for (const auto& pdu : dl_data.paging_pdus) {
-    builder.add_pdu(fapi_pdu_index, pdu.cw_index, pdu.pdu);
-    if (pdu.cw_index == 0) {
-      ++fapi_pdu_index;
-    }
-  }
+  add_tx_data_pdus(builder, nof_pdsch_pdus, dl_data.paging_pdus);
 
   if (OCUDU_UNLIKELY(fapi_logger.debug.enabled())) {
     fapi_logger.debug("Sector#{}: {}", sector_id, msg);

@@ -258,6 +258,8 @@ void fapi_to_mac_indications_fastpath_translator::on_uci_indication(const fapi::
     mac_uci_pdu::pucch_f2_or_f3_or_f4_type pucch;
     convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(pucch, *uci_pusch_format_2_3_4);
     mac_pdu.pdu = pucch;
+  } else {
+    return;
   }
 
   if (OCUDU_UNLIKELY(logger.debug.enabled())) {
@@ -272,20 +274,29 @@ void fapi_to_mac_indications_fastpath_translator::on_srs_indication(const fapi::
   mac_srs_indication_message mac_msg;
   mac_msg.sl_rx = msg.slot;
 
-  mac_srs_pdu& mac_pdu        = mac_msg.srss.emplace_back();
-  mac_pdu.rnti                = msg.pdu.rnti;
-  mac_pdu.time_advance_offset = msg.pdu.timing_advance_offset;
+  // A MAC SRS PDU carries a single report, so each report of the FAPI PDU goes into its own MAC SRS PDU.
+  const auto add_srs_pdu = [&]() -> mac_srs_pdu& {
+    mac_srs_pdu& mac_pdu        = mac_msg.srss.emplace_back();
+    mac_pdu.rnti                = msg.pdu.rnti;
+    mac_pdu.time_advance_offset = msg.pdu.timing_advance_offset;
+    return mac_pdu;
+  };
 
   if (msg.pdu.matrix) {
-    mac_pdu.report = mac_srs_pdu::normalized_channel_iq_matrix{*msg.pdu.matrix};
+    add_srs_pdu().report = mac_srs_pdu::normalized_channel_iq_matrix{*msg.pdu.matrix};
   }
 
   if (msg.pdu.positioning) {
     const fapi::srs_positioning_report& positioning = *msg.pdu.positioning;
-    mac_pdu.report                                  = mac_srs_pdu::positioning_report{positioning.ul_relative_toa,
-                                                     to_dBFS(positioning.rsrp),
-                                                     positioning.azimuth_aoa_deg,
-                                                     positioning.zenith_aoa_deg};
+    add_srs_pdu().report                            = mac_srs_pdu::positioning_report{positioning.ul_relative_toa,
+                                                           to_dBFS(positioning.rsrp),
+                                                           positioning.azimuth_aoa_deg,
+                                                           positioning.zenith_aoa_deg};
+  }
+
+  // Nothing to forward when the FAPI PDU carries no report.
+  if (mac_msg.srss.empty()) {
+    return;
   }
 
   if (OCUDU_UNLIKELY(logger.debug.enabled())) {
@@ -329,6 +340,10 @@ void fapi_to_mac_indications_fastpath_translator::on_rach_indication(const fapi:
     mac_pream.index                               = preamble.preamble_index;
     mac_pream.pwr_dBFS                            = to_dBFS(preamble.preamble_pwr);
     mac_pream.time_advance                        = preamble.timing_advance_offset.value();
+  }
+
+  if (occas.preambles.empty()) {
+    return;
   }
 
   if (OCUDU_UNLIKELY(logger.debug.enabled())) {

@@ -76,12 +76,12 @@ void ocudu::fapi_adaptor::convert_pusch_mac_to_fapi(fapi::ul_pusch_pdu_builder& 
 
   const dmrs_information& dmrs_cfg = pusch_pdu.dmrs;
   if (pusch_pdu.transform_precoding) {
-    builder.set_transform_precoding_enabled_parameters(dmrs_cfg.dmrs_scrambling_id);
+    builder.set_transform_precoding_enabled_parameters(pusch_pdu.pusch_dmrs_id);
   } else {
     builder.set_transform_precoding_disabled_parameters(dmrs_cfg.num_dmrs_cdm_grps_no_data);
   }
   builder.set_dmrs_parameters(
-      dmrs_cfg.dmrs_symb_pos, dmrs_cfg.config_type, pusch_pdu.pusch_dmrs_id, dmrs_cfg.n_scid, dmrs_cfg.dmrs_ports);
+      dmrs_cfg.dmrs_symb_pos, dmrs_cfg.config_type, dmrs_cfg.dmrs_scrambling_id, dmrs_cfg.n_scid, dmrs_cfg.dmrs_ports);
 
   const vrb_alloc& rbs = pusch_pdu.rbs;
 

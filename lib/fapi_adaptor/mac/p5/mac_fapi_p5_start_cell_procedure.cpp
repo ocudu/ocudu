@@ -101,10 +101,10 @@ bool mac_fapi_start_cell_procedure::handle_param_transaction_result()
     return transaction_param.response();
   }
 
-  if (transaction_param.failed()) {
-    logger.warning("PARAM.request failed");
-  } else {
-    logger.warning("PARAM.request timeout");
+  if (transaction_param.timeout_expired()) {
+    logger.warning("Timeout waiting for PARAM.response after PARAM.request");
+  } else if (transaction_param.cancelled()) {
+    logger.warning("Cancelled waiting for PARAM.response after PARAM.request");
   }
 
   return false;
@@ -119,10 +119,10 @@ bool mac_fapi_start_cell_procedure::handle_config_transaction_result()
     return transaction_config.response();
   }
 
-  if (transaction_config.failed()) {
-    logger.warning("CONFIG.request failed");
-  } else {
-    logger.warning("CONFIG.request timeout");
+  if (transaction_config.timeout_expired()) {
+    logger.warning("Timeout waiting for CONFIG.response after CONFIG.request");
+  } else if (transaction_config.cancelled()) {
+    logger.warning("Cancelled waiting for CONFIG.response after CONFIG.request");
   }
 
   return false;
@@ -131,13 +131,16 @@ bool mac_fapi_start_cell_procedure::handle_config_transaction_result()
 bool mac_fapi_start_cell_procedure::handle_start_transaction_result()
 {
   if (transaction_start.successful()) {
+    if (!transaction_start.response()) {
+      logger.warning("START.request produced an ERROR.indication");
+    }
     return transaction_start.response();
   }
 
-  if (transaction_start.failed()) {
-    logger.warning("START.request failed");
-  } else if (transaction_param.timeout_expired()) {
-    logger.warning("START.request timeout");
+  if (transaction_start.timeout_expired()) {
+    logger.warning("Timeout waiting for the first SLOT.indication after START.request");
+  } else if (transaction_start.cancelled()) {
+    logger.warning("Cancelled waiting for the first SLOT.indication after START.request");
   }
 
   return false;

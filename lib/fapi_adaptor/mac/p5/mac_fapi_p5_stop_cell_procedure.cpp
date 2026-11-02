@@ -58,13 +58,16 @@ void mac_fapi_stop_cell_procedure::operator()(coro_context<async_task<bool>>& ct
 bool mac_fapi_stop_cell_procedure::handle_stop_transaction_result()
 {
   if (transaction_sink.successful()) {
-    return true;
+    if (!transaction_sink.response()) {
+      logger.warning("STOP.request produced an ERROR.indication");
+    }
+    return transaction_sink.response();
   }
 
-  if (transaction_sink.failed()) {
-    logger.warning("STOP.indication failed");
-  } else {
-    logger.warning("STOP.indication timeout");
+  if (transaction_sink.timeout_expired()) {
+    logger.warning("Timeout waiting for STOP.indication after STOP.request");
+  } else if (transaction_sink.cancelled()) {
+    logger.warning("Cancelled waiting for STOP.indication after STOP.request");
   }
 
   return false;
