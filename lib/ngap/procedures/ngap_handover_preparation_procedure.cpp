@@ -122,7 +122,7 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
 void ngap_handover_preparation_procedure::get_required_handover_context()
 {
   ho_ue_context.pdu_sessions  = request.pdu_sessions;
-  ho_ue_context.rrc_container = rrc_ue_notifier.on_handover_preparation_message_required();
+  ho_ue_context.rrc_container = rrc_ue_notifier.on_handover_preparation_message_required(request.source_cell_group_cfg);
 }
 
 bool ngap_handover_preparation_procedure::send_handover_required()

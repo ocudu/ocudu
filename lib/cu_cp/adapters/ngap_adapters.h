@@ -263,10 +263,10 @@ public:
     return rrc_ue_handler->get_packed_ue_radio_access_cap_info();
   }
 
-  byte_buffer on_handover_preparation_message_required() override
+  byte_buffer on_handover_preparation_message_required(const byte_buffer& master_cell_group) override
   {
     ocudu_assert(rrc_ue_handler != nullptr, "RRC UE handler must not be nullptr");
-    return rrc_ue_handler->get_packed_handover_preparation_message();
+    return rrc_ue_handler->get_packed_handover_preparation_message(master_cell_group);
   }
 
 private:

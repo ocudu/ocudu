@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_cp_test_environment.h"
+#include "lib/cu_cp/routines/mobility/mobility_helpers.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/e1ap/e1ap_cu_cp_test_messages.h"
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
@@ -222,6 +223,8 @@ public:
     // Inject UL RRC Message (containing RRC Measurement Report) and wait for Handover Required.
     get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         f1ap_du_ue_id, f1ap_cu_ue_id, srb_id_t::srb1, std::move(rrc_meas_report)));
+    report_fatal_error_if_not(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx),
+                              "Failed to answer the gNB-DU Configuration Query");
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu), "Failed to receive Handover Required");
     report_fatal_error_if_not(test_helpers::is_valid_handover_required(ngap_pdu), "Invalid Handover Required");
     report_fatal_error_if_not(
@@ -475,6 +478,26 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_preparation_failure_is_rec
   // STATUS: Handover Preparation failed and no further messages are sent to the AMF.
   report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                             "there are still NGAP messages to pop from AMF");
+}
+
+TEST_F(cu_cp_inter_cu_ng_handover_test,
+       when_handover_is_required_then_as_config_contains_master_cell_group_of_source_du)
+{
+  // Attach UE.
+  ASSERT_TRUE(attach_ue());
+
+  // Inject RRC Measurement Report. The source DU answers the gNB-DU Configuration Query, and the CU-CP sends the
+  // Handover Required.
+  ASSERT_TRUE(
+      send_rrc_measurement_report_and_await_handover_required(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+
+  // The AS-Config of the HandoverPreparationInformation carries the cell group configuration of the source DU.
+  ASSERT_EQ(get_master_cell_group_from_as_config(test_helpers::get_rrc_container(ngap_pdu),
+                                                 ocudulog::fetch_basic_logger("TEST")),
+            test_helpers::create_cell_group_config());
+
+  // Inject Handover Preparation Failure to end the handover.
+  ASSERT_TRUE(send_handover_preparation_failure());
 }
 
 TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_command_times_out_then_handover_cancel_is_sent)

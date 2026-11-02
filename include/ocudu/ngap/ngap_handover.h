@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ran/aggregate_maximum_bit_rate.h"
 #include "ocudu/ran/cu_cp_inactive.h"
 #include "ocudu/ran/cu_cp_location_reporting_types.h"
@@ -38,6 +39,7 @@ struct ngap_handover_preparation_request {
   target_ran_node_id_t                                                      target_id;
   nr_cell_identity                                                          nci;
   std::map<pdu_session_id_t, std::vector<cu_cp_drbs_to_qos_flows_map_item>> pdu_sessions;
+  byte_buffer                                                               source_cell_group_cfg;
 };
 
 struct ngap_handover_preparation_response {

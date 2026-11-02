@@ -119,16 +119,16 @@ private:
                                 cu_cp_du_index_t target_du_index);
 
   /// Handles the NGAP handover.
-  static void handle_ngap_handover(ngap_interface&  ngap,
-                                   cu_cp_ue&        ue,
-                                   gnb_id_t         target_gnb_id,
-                                   plmn_identity    target_plmn,
-                                   tac_t            target_tac,
-                                   nr_cell_identity target_nci);
+  void handle_ngap_handover(ngap_interface&  ngap,
+                            cu_cp_ue&        ue,
+                            gnb_id_t         target_gnb_id,
+                            plmn_identity    target_plmn,
+                            tac_t            target_tac,
+                            nr_cell_identity target_nci);
 
   /// Handles the XNAP handover.
   void handle_xnap_handover(ngap_interface&  ngap,
-                            xnap_interface&  xnap,
+                            gnb_id_t         target_gnb_id,
                             cu_cp_ue&        ue,
                             plmn_identity    plmn,
                             nr_cell_identity target_nci);

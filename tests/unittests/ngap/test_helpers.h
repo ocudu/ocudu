@@ -130,7 +130,10 @@ public:
 
   byte_buffer on_ue_radio_access_cap_info_required() override { return make_byte_buffer("deadbeef").value(); }
 
-  byte_buffer on_handover_preparation_message_required() override { return ho_preparation_message.copy(); }
+  byte_buffer on_handover_preparation_message_required(const byte_buffer& /*master_cell_group*/) override
+  {
+    return ho_preparation_message.copy();
+  }
 
   void set_ho_preparation_message(byte_buffer ho_preparation_message_)
   {
@@ -502,7 +505,10 @@ public:
     ho_preparation_message = std::move(ho_preparation_message_);
   }
 
-  byte_buffer get_packed_handover_preparation_message() override { return ho_preparation_message.copy(); }
+  byte_buffer get_packed_handover_preparation_message(const byte_buffer& /*master_cell_group*/) override
+  {
+    return ho_preparation_message.copy();
+  }
 
   byte_buffer last_nas_pdu;
 

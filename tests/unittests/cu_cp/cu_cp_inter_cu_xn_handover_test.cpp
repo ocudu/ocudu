@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_cp_test_environment.h"
+#include "lib/cu_cp/routines/mobility/mobility_helpers.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/e1ap/e1ap_cu_cp_test_messages.h"
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
@@ -12,6 +13,7 @@
 #include "tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "tests/test_doubles/xnap/xnap_test_message_validators.h"
+#include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "tests/unittests/xnap/xnap_test_messages.h"
 #include "ocudu/adt/format.h"
@@ -250,6 +252,8 @@ public:
     // Inject UL RRC Message (containing RRC Measurement Report) and wait for Handover Required.
     get_du(du_idx).push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
         f1ap_du_ue_id, f1ap_cu_ue_id, srb_id_t::srb1, std::move(rrc_meas_report)));
+    report_fatal_error_if_not(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx),
+                              "Failed to answer the gNB-DU Configuration Query");
     report_fatal_error_if_not(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu),
                               "Failed to receive XN Handover Request");
     // report_fatal_error_if_not(test_helpers::is_valid_handover_request(xnap_pdu), "Invalid XN Handover Request");
@@ -452,6 +456,69 @@ TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_preparation_failure_is_rec
   // STATUS: Handover Preparation failed and no further messages are sent to the AMF.
   report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
                             "there are still NGAP messages to pop from AMF");
+}
+
+TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_request_is_sent_then_as_config_contains_master_cell_group)
+{
+  // Attach UE.
+  ASSERT_TRUE(attach_ue());
+
+  // Inject RRC Measurement Report. The source DU answers the gNB-DU Configuration Query, and the CU-CP sends the
+  // Handover Request.
+  ASSERT_TRUE(send_rrc_measurement_report_and_await_handover_request(
+      ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value(), source_local_xnap_ue_id, target_peer_xnap_ue_id));
+
+  // The AS-Config of the HandoverPreparationInformation carries the cell group configuration of the source DU.
+  ASSERT_EQ(get_master_cell_group_from_as_config(test_helpers::get_rrc_container(xnap_pdu),
+                                                 ocudulog::fetch_basic_logger("TEST")),
+            test_helpers::create_cell_group_config());
+
+  // Inject Handover Preparation Failure to end the handover.
+  ASSERT_TRUE(send_handover_preparation_failure(target_peer_xnap_ue_id));
+}
+
+TEST_F(cu_cp_inter_cu_xn_handover_test,
+       when_pdu_session_setup_completes_before_handover_task_then_handover_request_carries_the_new_session)
+{
+  // Attach UE.
+  ASSERT_TRUE(attach_ue());
+
+  // Start the setup of a second PDU session. The CU-CP waits for the Bearer Context Modification Response.
+  const pdu_session_id_t psi2 = uint_to_pdu_session_id(2);
+  const qos_flow_id_t    qfi2 = uint_to_qos_flow_id(2);
+  ASSERT_TRUE(
+      cu_cp_test_environment::send_pdu_session_resource_setup_request_and_await_bearer_context_modification_request(
+          generate_valid_pdu_session_resource_setup_request_message(
+              ue_ctx->amf_ue_id.value(), ue_ctx->ran_ue_id.value(), {{psi2, {pdu_session_type_t::ipv4, {{qfi2, 9}}}}}),
+          cu_up_idx));
+
+  // Trigger the Xn handover while the PDU session setup is in progress. The handover task waits for the setup.
+  ASSERT_TRUE(get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
+      pci_t{0}, crnti, pci_t{4}, plmn_identity::test_value(), 7));
+
+  // Complete the PDU session setup.
+  ASSERT_TRUE(
+      cu_cp_test_environment::send_bearer_context_modification_response_and_await_ue_context_modification_request(
+          du_idx, cu_up_idx, du_ue_id, psi2, drb_id_t::drb2, qfi2));
+  ASSERT_TRUE(
+      cu_cp_test_environment::send_ue_context_modification_response_and_await_bearer_context_modification_request(
+          du_idx, cu_up_idx, du_ue_id, crnti));
+  ASSERT_TRUE(cu_cp_test_environment::send_bearer_context_modification_response_and_await_rrc_reconfiguration(
+      du_idx, cu_up_idx, du_ue_id, {}, {{psi2, drb_id_t::drb2}}));
+  ASSERT_TRUE(cu_cp_test_environment::send_rrc_reconfiguration_complete_and_await_pdu_session_setup_response(
+      du_idx, du_ue_id, generate_rrc_reconfiguration_complete_pdu(0, 8), {psi2}, {}));
+
+  // The source DU answers the gNB-DU Configuration Query, and the CU-CP sends the Handover Request.
+  ASSERT_TRUE(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx));
+  ASSERT_TRUE(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu));
+  ASSERT_EQ(xnap_pdu.pdu.type().value, asn1::xnap::xnap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(xnap_pdu.pdu.init_msg().value.type().value,
+            asn1::xnap::xnap_elem_procs_o::init_msg_c::types_opts::ho_request);
+
+  // The Handover Request carries both PDU sessions.
+  ASSERT_EQ(
+      xnap_pdu.pdu.init_msg().value.ho_request()->ue_context_info_ho_request.pdu_session_res_to_be_setup_list.size(),
+      2U);
 }
 
 TEST_F(cu_cp_inter_cu_xn_handover_test, when_handover_request_is_sent_then_it_carries_the_guami_of_the_serving_amf)
@@ -994,6 +1061,7 @@ TEST_F(cu_cp_inter_cu_xn_handover_test,
   this->get_xnc_cu_cp(xnc_peer_idx).try_pop_rx_pdu(xnap_pdu);
   ASSERT_TRUE(get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
       pci_t{0}, crnti, pci_t{4}, plmn_identity::test_value(), 7));
+  ASSERT_TRUE(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx));
   ASSERT_TRUE(this->wait_for_xnap_tx_pdu(xnc_peer_idx, xnap_pdu));
   ASSERT_EQ(xnap_pdu.pdu.type().value, asn1::xnap::xnap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(xnap_pdu.pdu.init_msg().value.type().value,

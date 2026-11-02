@@ -718,7 +718,10 @@ public:
   // RRC NGAP Message handler.
   void        handle_dl_nas_transport_message(byte_buffer nas_pdu) override {}
   byte_buffer get_packed_ue_radio_access_cap_info() const override { return byte_buffer{}; }
-  byte_buffer get_packed_handover_preparation_message() override { return byte_buffer{}; }
+  byte_buffer get_packed_handover_preparation_message(const byte_buffer& /*master_cell_group*/) override
+  {
+    return byte_buffer{};
+  }
 
   // RRC UE Control Message handler.
 

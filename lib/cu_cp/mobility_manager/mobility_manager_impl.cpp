@@ -446,7 +446,7 @@ void mobility_manager::handle_inter_cu_handover(cu_cp_ue_index_t source_ue_index
   }
 
   logger.debug("ue={}: Requesting XN handover for gnb_id={}", source_ue_index, target_gnb_id.id);
-  handle_xnap_handover(*ngap, *xnap, *ue_context, ue_ctxt.plmn, target_nci);
+  handle_xnap_handover(*ngap, target_gnb_id, *ue_context, ue_ctxt.plmn, target_nci);
 }
 
 void mobility_manager::handle_ngap_handover(ngap_interface&  ngap,
@@ -456,27 +456,56 @@ void mobility_manager::handle_ngap_handover(ngap_interface&  ngap,
                                             tac_t            target_tac,
                                             nr_cell_identity target_nci)
 {
-  ngap_handover_preparation_request request =
-      generate_ngap_handover_preparation_request(ue.get_ue_index(),
-                                                 target_gnb_id,
-                                                 target_plmn,
-                                                 target_tac,
-                                                 target_nci,
-                                                 ue.get_up_resource_manager().get_pdu_sessions_map());
-
-  // Send handover preparation request to the NGAP handler.
-  auto ho_trigger = [&ngap, request, response = ngap_handover_preparation_response{}](
-                        coro_context<async_task<void>>& ctx) mutable {
+  // Query the cell group configuration of the UE at the source DU, so that the target generates its configuration as a
+  // delta to it. Then build the handover preparation request from the UE state after the query, and send it to the
+  // NGAP handler.
+  auto ho_trigger = [this,
+                     &ngap,
+                     ue_index        = ue.get_ue_index(),
+                     source_du_index = ue.get_du_index(),
+                     target_gnb_id,
+                     target_plmn,
+                     target_tac,
+                     target_nci,
+                     source_du             = static_cast<du_processor*>(nullptr),
+                     source_ue             = static_cast<cu_cp_ue*>(nullptr),
+                     source_cell_group_cfg = byte_buffer{},
+                     request               = ngap_handover_preparation_request{},
+                     response = ngap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
+    // The source DU can be removed while the task waits in the UE task queue.
+    source_du = du_db.find_du_processor(source_du_index);
+    if (source_du == nullptr) {
+      logger.warning("ue={}: NG handover skipped. Source DU {} not found", ue_index, source_du_index);
+      CORO_EARLY_RETURN();
+    }
+    CORO_AWAIT(query_ue_cell_group_config(source_cell_group_cfg, source_du->get_f1ap_handler(), ue_index));
+    if (source_cell_group_cfg.empty()) {
+      logger.warning("ue={}: Failed to get the cell group configuration of the source DU", ue_index);
+    }
+
+    // The UE can be removed during the query.
+    source_ue = ue_mng.find_du_ue(ue_index);
+    if (source_ue == nullptr) {
+      logger.warning("ue={}: NG handover skipped. UE not found", ue_index);
+      CORO_EARLY_RETURN();
+    }
+    request                       = generate_ngap_handover_preparation_request(ue_index,
+                                                         target_gnb_id,
+                                                         target_plmn,
+                                                         target_tac,
+                                                         target_nci,
+                                                         source_ue->get_up_resource_manager().get_pdu_sessions_map());
+    request.source_cell_group_cfg = std::move(source_cell_group_cfg);
     CORO_AWAIT_VALUE(response, ngap.get_ngap_control_message_handler().handle_handover_preparation_request(request));
     CORO_RETURN();
   };
   ue.get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)));
 }
 
-/// Builds and queues a tracked XNAP handover request, reporting FIFO rejection.
+/// Builds and queues an XNAP handover request, reporting FIFO rejection.
 void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
-                                            xnap_interface&  xnap,
+                                            gnb_id_t         target_gnb_id,
                                             cu_cp_ue&        ue,
                                             plmn_identity    plmn,
                                             nr_cell_identity target_nci)
@@ -505,26 +534,63 @@ void mobility_manager::handle_xnap_handover(ngap_interface&  ngap,
     return;
   }
 
-  xnap_handover_request request = generate_xnap_handover_request(
-      ue.get_ue_index(),
-      nr_cell_global_id_t{served_guami->plmn, target_nci},
-      served_guami.value(),
-      source_amf_ue_id,
-      ngap_ctxt.amf_addr,
-      ue.get_ue_ambr(),
-      ue.get_security_manager().get_handover_security_context(target_cell_cfg->serving_cell_cfg.pci.value(),
-                                                              target_cell_cfg->serving_cell_cfg.ssb_arfcn->value()),
-      ue.get_up_resource_manager().get_pdu_sessions_map(),
-      ue.get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message(),
-      ue.get_location_manager().get_location_reporting_request());
-
-  // Send handover preparation request to the Xn-C handler.
-  // Register before queueing so XNAP shutdown awaits the handover even while the UE FIFO is busy.
-  /// Awaits the tracked handover task when its turn in the UE FIFO arrives.
-  auto ho_trigger = [task =
-                         xnap.handle_handover_request_required(request)](coro_context<async_task<void>>& ctx) mutable {
+  // Query the cell group configuration of the UE at the source DU, so that the target generates its configuration as a
+  // delta to it. Then build the handover request from the UE state after the query, and send it to the Xn-C handler.
+  auto ho_trigger = [this,
+                     ue_index        = ue.get_ue_index(),
+                     source_du_index = ue.get_du_index(),
+                     target_gnb_id,
+                     target_nr_cgi = nr_cell_global_id_t{served_guami->plmn, target_nci},
+                     guami         = served_guami.value(),
+                     source_amf_ue_id,
+                     amf_addr              = ngap_ctxt.amf_addr,
+                     target_pci            = target_cell_cfg->serving_cell_cfg.pci.value(),
+                     target_ssb_arfcn      = target_cell_cfg->serving_cell_cfg.ssb_arfcn->value(),
+                     source_du             = static_cast<du_processor*>(nullptr),
+                     source_ue             = static_cast<cu_cp_ue*>(nullptr),
+                     source_cell_group_cfg = byte_buffer{},
+                     request               = xnap_handover_request{},
+                     xnap                  = static_cast<xnap_interface*>(nullptr),
+                     response = xnap_handover_preparation_response{}](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
-    CORO_AWAIT(task);
+    // The source DU can be removed while the task waits in the UE task queue.
+    source_du = du_db.find_du_processor(source_du_index);
+    if (source_du == nullptr) {
+      logger.warning("ue={}: XN handover skipped. Source DU {} not found", ue_index, source_du_index);
+      CORO_EARLY_RETURN();
+    }
+    CORO_AWAIT(query_ue_cell_group_config(source_cell_group_cfg, source_du->get_f1ap_handler(), ue_index));
+    if (source_cell_group_cfg.empty()) {
+      logger.warning("ue={}: Failed to get the cell group configuration of the source DU", ue_index);
+    }
+
+    // The UE can be removed during the query.
+    source_ue = ue_mng.find_du_ue(ue_index);
+    if (source_ue == nullptr) {
+      logger.warning("ue={}: XN handover skipped. UE not found", ue_index);
+      CORO_EARLY_RETURN();
+    }
+    request = generate_xnap_handover_request(
+        ue_index,
+        target_nr_cgi,
+        guami,
+        source_amf_ue_id,
+        amf_addr,
+        source_ue->get_ue_ambr(),
+        source_ue->get_security_manager().get_handover_security_context(target_pci, target_ssb_arfcn),
+        source_ue->get_up_resource_manager().get_pdu_sessions_map(),
+        source_ue->get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message(
+            source_cell_group_cfg),
+        source_ue->get_location_manager().get_location_reporting_request());
+
+    // The Xn-C peer can stop and be removed during the query. XNAP tracks the handover task from this call, so that
+    // its shutdown awaits the handover.
+    xnap = xnap_db.find_xnap(target_gnb_id);
+    if (xnap == nullptr) {
+      logger.warning("ue={}: XN handover skipped. Xn-C peer with gnb_id={} not found", ue_index, target_gnb_id.id);
+      CORO_EARLY_RETURN();
+    }
+    CORO_AWAIT_VALUE(response, xnap->handle_handover_request_required(request));
     CORO_RETURN();
   };
   if (!ue.get_task_sched().schedule_async_task(launch_async(std::move(ho_trigger)))) {

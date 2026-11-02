@@ -278,7 +278,7 @@ static rrc_radio_bearer_config build_source_radio_bearer_config(const up_context
   return radio_bearer_config;
 }
 
-byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
+byte_buffer rrc_ue_impl::get_packed_handover_preparation_message(const byte_buffer& master_cell_group)
 {
   struct ho_prep_info_s ho_prep;
   ho_prep_info_ies_s&   ies = ho_prep.crit_exts.set_c1().set_ho_prep_info();
@@ -295,16 +295,23 @@ byte_buffer rrc_ue_impl::get_packed_handover_preparation_message()
   // signalling, so it is built from the UP context rather than from any previously sent RRCReconfiguration.
   rrc_radio_bearer_config source_radio_bearer_cfg =
       build_source_radio_bearer_config(cu_cp_notifier.on_up_context_required());
-  if (!source_radio_bearer_cfg.drb_to_add_mod_list.empty()) {
+  if (!source_radio_bearer_cfg.drb_to_add_mod_list.empty() or !master_cell_group.empty()) {
     ies.source_cfg_present = true;
     rrc_reconfiguration_procedure_request source_cfg_request;
-    source_cfg_request.radio_bearer_cfg = source_radio_bearer_cfg;
+    if (!source_radio_bearer_cfg.drb_to_add_mod_list.empty()) {
+      source_cfg_request.radio_bearer_cfg = source_radio_bearer_cfg;
+    }
+    // The masterCellGroup is the radio resource configuration of the UE in the source cell (TS 38.331 section
+    // 11.2.2). The target DU generates its configuration as a delta to it.
+    if (!master_cell_group.empty()) {
+      source_cfg_request.non_crit_ext.emplace().master_cell_group = master_cell_group.copy();
+    }
     rrc_recfg_s source_recfg;
     fill_asn1_rrc_reconfiguration_msg(source_recfg, 0, source_cfg_request);
     ies.source_cfg.rrc_recfg = pack_into_pdu(source_recfg, "AS-Config RRCReconfiguration");
   }
 
-  // TODO: Fill measurement configuration and MCG/SCG.
+  // TODO: Fill measurement configuration and SCG.
 
   return pack_into_pdu(ho_prep, "handover preparation info");
 }

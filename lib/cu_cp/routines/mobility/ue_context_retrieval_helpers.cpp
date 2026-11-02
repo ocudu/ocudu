@@ -108,8 +108,9 @@ ocudu::ocucp::collect_ue_context_for_retrieval(const xnap_retrieve_ue_context_re
     ue_context_info.pdu_session_res_to_be_setup_list.emplace(pdu_session_id, pdu_session_item);
   }
 
+  // For a retrieved UE context, the AS-Config carries the radio bearer configuration only.
   ue_context_info.rrc_context =
-      ue.get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message();
+      ue.get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message({});
 
   response.guami   = guami;
   response.success = true;

@@ -50,7 +50,7 @@ public:
 
   // rrc_ngap_message_handler
   void        handle_dl_nas_transport_message(byte_buffer nas_pdu) override;
-  byte_buffer get_packed_handover_preparation_message() override;
+  byte_buffer get_packed_handover_preparation_message(const byte_buffer& master_cell_group) override;
 
   // rrc_ue_control_message_handler
   rrc_ue_security_mode_command_context get_security_mode_command_context() override;

@@ -108,7 +108,8 @@ public:
   virtual byte_buffer on_ue_radio_access_cap_info_required() = 0;
 
   /// \brief Get packed handover preparation message for inter-gNB handover.
-  virtual byte_buffer on_handover_preparation_message_required() = 0;
+  /// \param[in] master_cell_group The cellGroupConfig of the UE at the source DU, for the AS-Config.
+  virtual byte_buffer on_handover_preparation_message_required(const byte_buffer& master_cell_group) = 0;
 };
 
 /// NGAP notifier to the CU-CP UE.

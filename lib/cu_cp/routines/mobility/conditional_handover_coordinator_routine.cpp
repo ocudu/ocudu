@@ -11,7 +11,6 @@
 #include "intra_cu_handover_routine.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/xnap/xnap_handover.h"
-#include <algorithm>
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
@@ -156,7 +155,8 @@ std::vector<async_task<cu_cp_cho_candidate>> conditional_handover_coordinator_ro
         ue->get_ue_ambr(),
         ue->get_security_manager().get_handover_security_context(target.pci, target.ssb_arfcn->value()),
         ue->get_up_resource_manager().get_pdu_sessions_map(),
-        ue->get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message(),
+        ue->get_rrc_ue()->get_rrc_ue_control_message_handler().get_packed_handover_preparation_message(
+            source_cell_group_cfg),
         ue->get_location_manager().get_location_reporting_request());
 
     ho_request.is_conditional_handover = true;
@@ -236,17 +236,14 @@ void conditional_handover_coordinator_routine::operator()(coro_context<async_tas
   // Set the CHO state before the first suspension point, so that a new CHO trigger is rejected.
   source_ue->get_cho_context()->state = cu_cp_ue_cho_context::state_t::targets_preparation;
 
-  // Query the cell group configuration of the UE at the source DU once for all intra-CU candidates. The candidates are
-  // prepared in parallel, and the F1AP allows only one UE Context Modification of a UE at a time.
-  if (std::any_of(
-          request.targets.begin(), request.targets.end(), [](const auto& t) { return not t.xnc_index.has_value(); })) {
-    CORO_AWAIT(query_ue_cell_group_config(source_cell_group_cfg,
-                                          du_db.get_du_processor(request.source_du_index).get_f1ap_handler(),
-                                          request.source_ue_index));
-    if (source_cell_group_cfg.empty()) {
-      logger.warning(
-          "ue={}: \"{}\" failed to get the cell group configuration of the source DU", request.source_ue_index, name());
-    }
+  // Query the cell group configuration of the UE at the source DU once for all candidates. The candidates are prepared
+  // in parallel, and the F1AP allows only one UE Context Modification of a UE at a time.
+  CORO_AWAIT(query_ue_cell_group_config(source_cell_group_cfg,
+                                        du_db.get_du_processor(request.source_du_index).get_f1ap_handler(),
+                                        request.source_ue_index));
+  if (source_cell_group_cfg.empty()) {
+    logger.warning(
+        "ue={}: \"{}\" failed to get the cell group configuration of the source DU", request.source_ue_index, name());
   }
 
   // Phase 1: CHO Preparation — launch all intra-CU and inter-CU candidates in parallel.

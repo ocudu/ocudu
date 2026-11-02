@@ -93,7 +93,9 @@ public:
   virtual byte_buffer get_packed_ue_radio_access_cap_info() const = 0;
 
   /// \brief Get the packed Handover Preparation Message.
-  virtual byte_buffer get_packed_handover_preparation_message() = 0;
+  /// \param[in] master_cell_group The cellGroupConfig of the UE at the source DU. If empty, the AS-Config contains no
+  /// masterCellGroup.
+  virtual byte_buffer get_packed_handover_preparation_message(const byte_buffer& master_cell_group) = 0;
 };
 
 /// Interface to notify F1AP about a new SRB PDU.
@@ -395,7 +397,9 @@ public:
                                                unsigned                                     transaction_id) = 0;
 
   /// \brief Get the packed RRC Handover Preparation Message.
-  virtual byte_buffer get_packed_handover_preparation_message() = 0;
+  /// \param[in] master_cell_group The cellGroupConfig of the UE at the source DU. If empty, the AS-Config contains no
+  /// masterCellGroup.
+  virtual byte_buffer get_packed_handover_preparation_message(const byte_buffer& master_cell_group) = 0;
 
   /// \brief Instruct the RRC UE to create a new SRB. It creates all
   /// required intermediate objects (e.g. PDCP) and connects them with one another.

@@ -104,7 +104,7 @@ TEST_F(rrc_ue_ho_prep_info_test, when_ue_has_multiple_pdu_sessions_then_as_confi
   add_drb_to_up_context(pdu_session_id_t::min, drb_id_t::drb1, {qos_flow_id_t::min});
   add_drb_to_up_context(uint_to_pdu_session_id(2), drb_id_t::drb2, {uint_to_qos_flow_id(2)});
 
-  byte_buffer packed_ho_prep = get_rrc_ue_control_message_handler()->get_packed_handover_preparation_message();
+  byte_buffer packed_ho_prep = get_rrc_ue_control_message_handler()->get_packed_handover_preparation_message({});
   ASSERT_FALSE(packed_ho_prep.empty());
 
   asn1::rrc_nr::rrc_recfg_s source_recfg;
@@ -137,11 +137,31 @@ TEST_F(rrc_ue_ho_prep_info_test, when_ue_has_no_drbs_then_as_config_is_absent)
 {
   OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-3", "MVP-FUNC-MOB-4");
 
-  byte_buffer packed_ho_prep = get_rrc_ue_control_message_handler()->get_packed_handover_preparation_message();
+  byte_buffer packed_ho_prep = get_rrc_ue_control_message_handler()->get_packed_handover_preparation_message({});
   ASSERT_FALSE(packed_ho_prep.empty());
 
   asn1::rrc_nr::ho_prep_info_s ho_prep_info;
   asn1::cbit_ref               bref({packed_ho_prep.begin(), packed_ho_prep.end()});
   ASSERT_EQ(asn1::unpack(ho_prep_info, bref), asn1::OCUDUASN_SUCCESS);
   EXPECT_FALSE(ho_prep_info.crit_exts.c1().ho_prep_info().source_cfg_present);
+}
+
+/// AS-Config carries the radio resource configuration of the UE in the source cell, so that the target generates its
+/// configuration as a delta to it (TS 38.331 section 11.2.2).
+TEST_F(rrc_ue_ho_prep_info_test, when_master_cell_group_is_given_then_as_config_contains_it)
+{
+  add_drb_to_up_context(pdu_session_id_t::min, drb_id_t::drb1, {qos_flow_id_t::min});
+  const byte_buffer master_cell_group = byte_buffer::create({0x5c, 0x00, 0xb0, 0x01}).value();
+
+  byte_buffer packed_ho_prep =
+      get_rrc_ue_control_message_handler()->get_packed_handover_preparation_message(master_cell_group);
+  ASSERT_FALSE(packed_ho_prep.empty());
+
+  asn1::rrc_nr::rrc_recfg_s source_recfg;
+  ASSERT_TRUE(unpack_as_config(source_recfg, packed_ho_prep));
+
+  const auto& recfg_ies = source_recfg.crit_exts.rrc_recfg();
+  ASSERT_TRUE(recfg_ies.radio_bearer_cfg_present);
+  ASSERT_TRUE(recfg_ies.non_crit_ext_present);
+  EXPECT_EQ(recfg_ies.non_crit_ext.master_cell_group, master_cell_group);
 }
