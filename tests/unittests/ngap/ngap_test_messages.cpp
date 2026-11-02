@@ -9,6 +9,7 @@
 #include "ocudu/asn1/ngap/common.h"
 #include "ocudu/asn1/ngap/ngap_ies.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
+#include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/ngap/ngap_handover.h"
 #include "ocudu/ngap/ngap_message.h"
 #include "ocudu/ngap/ngap_types.h"
@@ -1140,6 +1141,38 @@ ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id
                        "439f0000240400e03"
                        "00000000100186c0000700809df0000000000000103a0002000012cb2800281c50f0007000f00000004008010240a0")
           .value();
+  if (not params.master_cell_group.empty()) {
+    // Add the masterCellGroup to the AS-Config of the HandoverPreparationInformation.
+    asn1::rrc_nr::ho_prep_info_s ho_prep_info;
+    {
+      asn1::cbit_ref bref{transparent_container.rrc_container};
+      report_fatal_error_if_not(asn1::unpack(ho_prep_info, bref) == asn1::OCUDUASN_SUCCESS,
+                                "Failed to unpack HandoverPreparationInformation");
+    }
+    auto&                     ies = ho_prep_info.crit_exts.c1().ho_prep_info();
+    asn1::rrc_nr::rrc_recfg_s source_recfg;
+    if (ies.source_cfg_present) {
+      asn1::cbit_ref bref{ies.source_cfg.rrc_recfg};
+      report_fatal_error_if_not(asn1::unpack(source_recfg, bref) == asn1::OCUDUASN_SUCCESS,
+                                "Failed to unpack the RRCReconfiguration of the AS-Config");
+    } else {
+      source_recfg.crit_exts.set_rrc_recfg();
+    }
+    auto& recfg_ies                          = source_recfg.crit_exts.rrc_recfg();
+    recfg_ies.non_crit_ext_present           = true;
+    recfg_ies.non_crit_ext.master_cell_group = params.master_cell_group.copy();
+    ies.source_cfg_present                   = true;
+    ies.source_cfg.rrc_recfg.clear();
+    {
+      asn1::bit_ref bref{ies.source_cfg.rrc_recfg};
+      report_fatal_error_if_not(asn1::pack(bref, source_recfg) == asn1::OCUDUASN_SUCCESS,
+                                "Failed to pack the RRCReconfiguration of the AS-Config");
+    }
+    transparent_container.rrc_container.clear();
+    asn1::bit_ref bref{transparent_container.rrc_container};
+    report_fatal_error_if_not(asn1::pack(bref, ho_prep_info) == asn1::OCUDUASN_SUCCESS,
+                              "Failed to pack HandoverPreparationInformation");
+  }
   // Fill PDU session resource info list.
   asn1::ngap::pdu_session_res_info_item_s session_item;
   session_item.pdu_session_id = 1;

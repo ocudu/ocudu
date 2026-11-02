@@ -166,6 +166,13 @@ void inter_cu_handover_target_routine::operator()(
     ue_context_setup_request.cu_to_du_rrc_info.ie_exts.emplace();
     ue_context_setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info =
         request.rrc_handover_preparation_information.copy();
+    // Add the cell group configuration of the source, so that the target DU generates a delta configuration to it
+    // (TS 38.473 section 8.3.1.2).
+    ue_context_setup_request.cu_to_du_rrc_info.ie_exts.value().cell_group_cfg =
+        get_master_cell_group_from_as_config(request.rrc_handover_preparation_information, logger);
+    if (ue_context_setup_request.cu_to_du_rrc_info.ie_exts.value().cell_group_cfg->empty()) {
+      ue_context_setup_request.cu_to_du_rrc_info.ie_exts.value().cell_group_cfg.reset();
+    }
     ue_context_setup_request.cu_to_du_rrc_info.ue_cap_rat_container_list = rrc_context.ue_cap_rat_container_list.copy();
 
     // For CHO, notify the DU to expect a conditional access (C-RNTI CE) from this UE.

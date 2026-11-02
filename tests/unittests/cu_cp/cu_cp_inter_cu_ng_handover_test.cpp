@@ -108,7 +108,8 @@ public:
   }
 
   [[nodiscard]] bool
-  send_bearer_context_setup_response_and_await_ue_context_setup_request(bool with_data_forwarding_info = false)
+  send_bearer_context_setup_response_and_await_ue_context_setup_request(bool with_data_forwarding_info = false,
+                                                                        bool cell_group_config_present = false)
   {
     // Inject Bearer Context Setup Response and wait for UE Context Setup Request.
     get_cu_up(cu_up_idx).push_tx_pdu(generate_bearer_context_setup_response(
@@ -119,7 +120,7 @@ public:
         with_data_forwarding_info));
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu),
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu, cell_group_config_present),
                               "Invalid UE Context Setup Request");
 
     report_fatal_error_if_not(f1ap_pdu.pdu.init_msg().value.ue_context_setup_request()->serving_cell_mo_present,
@@ -778,6 +779,29 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_request_received_then_hand
   get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_ul_nas_transport_message(ngap_pdu));
+}
+
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_as_config_contains_master_cell_group_then_target_du_receives_it)
+{
+  // Inject Handover Request with a masterCellGroup in the AS-Config and await Bearer Context Setup Request.
+  handover_request_params ho_params;
+  ho_params.master_cell_group = test_helpers::create_cell_group_config();
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request(ho_params));
+
+  // Inject Bearer Context Setup Response and await UE Context Setup Request.
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request(false, true));
+
+  // The UE Context Setup Request carries the cell group configuration of the source.
+  ASSERT_EQ(f1ap_pdu.pdu.init_msg().value.ue_context_setup_request()->cu_to_du_rrc_info.ie_exts.cell_group_cfg,
+            ho_params.master_cell_group);
+
+  // Complete the handover.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
 }
 
 // A UE that accesses this target through an inter-CU handover applies the AS security configuration signalled in the

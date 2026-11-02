@@ -24,6 +24,12 @@ void merge_old_drb_association_from_as_config(up_old_drb_association&       old_
 /// Decodes capabilities forwarded in HandoverPreparationInformation, as per TS 38.331, Section 11.2.2.
 std::optional<rrc_ue_capabilities_t> decode_handover_capabilities(const byte_buffer& container);
 
+/// \brief Gets the masterCellGroup of the source's AS-Config, embedded in the RRC HandoverPreparationInformation. The
+/// AS-Config carries the radio resource configuration as used in the source cell (TS 38.331 section 11.2.2).
+/// \return The packed CellGroupConfig, or an empty buffer if the AS-Config does not contain it.
+byte_buffer get_master_cell_group_from_as_config(const byte_buffer&            rrc_handover_preparation_information,
+                                                 const ocudulog::basic_logger& logger);
+
 /// \brief Handle UE context setup response from target DU and prefills the Bearer context modification.
 bool handle_context_setup_response(cu_cp_intra_cu_handover_response&         response_msg,
                                    e1ap_bearer_context_modification_request& bearer_context_modification_request,

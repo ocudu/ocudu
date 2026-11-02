@@ -303,6 +303,9 @@ struct handover_request_params {
   /// Whether the target cell ID in the Source to Target Transparent Container carries a PLMN identity that is not valid
   /// BCD.
   bool invalid_target_cell_plmn_id = false;
+  /// If not empty, the masterCellGroup in the AS-Config of the HandoverPreparationInformation (TS 38.331 section
+  /// 11.2.2).
+  byte_buffer master_cell_group;
 };
 
 /// \brief Generate a valid dummy Handover Request message.

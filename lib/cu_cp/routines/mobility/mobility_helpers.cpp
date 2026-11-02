@@ -11,42 +11,17 @@
 using namespace ocudu;
 using namespace ocudu::ocucp;
 
+/// Decodes the RRCReconfiguration of the source's AS-Config, embedded in the RRC HandoverPreparationInformation.
+static bool unpack_as_config_rrc_reconfiguration(asn1::rrc_nr::rrc_recfg_s&    source_recfg,
+                                                 const byte_buffer&            rrc_handover_preparation_information,
+                                                 const ocudulog::basic_logger& logger);
+
 void ocudu::ocucp::merge_old_drb_association_from_as_config(up_old_drb_association& old_drb_association,
                                                             const byte_buffer& rrc_handover_preparation_information,
                                                             const ocudulog::basic_logger& logger)
 {
-  if (rrc_handover_preparation_information.empty()) {
-    logger.debug("No RRC container received. Cannot derive the source's DRB-to-QoS-flow mapping from AS-Config");
-    return;
-  }
-
-  asn1::rrc_nr::ho_prep_info_s ho_prep_info;
-  asn1::cbit_ref bref({rrc_handover_preparation_information.begin(), rrc_handover_preparation_information.end()});
-  if (asn1::unpack(ho_prep_info, bref) != asn1::OCUDUASN_SUCCESS) {
-    logger.warning("Couldn't unpack HandoverPreparationInformation");
-    return;
-  }
-  if (ho_prep_info.crit_exts.type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::types::c1 or
-      ho_prep_info.crit_exts.c1().type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::c1_c_::types::ho_prep_info) {
-    logger.warning("Unsupported HandoverPreparationInformation critical extension");
-    return;
-  }
-
-  const auto& ies = ho_prep_info.crit_exts.c1().ho_prep_info();
-  if (!ies.source_cfg_present) {
-    // The source may report the mapping through the XnAP-native IE instead, so this is not an error.
-    logger.debug("AS-Config not present in HandoverPreparationInformation");
-    return;
-  }
-
   asn1::rrc_nr::rrc_recfg_s source_recfg;
-  asn1::cbit_ref            recfg_bref({ies.source_cfg.rrc_recfg.begin(), ies.source_cfg.rrc_recfg.end()});
-  if (asn1::unpack(source_recfg, recfg_bref) != asn1::OCUDUASN_SUCCESS) {
-    logger.warning("Couldn't unpack RRCReconfiguration in AS-Config");
-    return;
-  }
-  if (source_recfg.crit_exts.type() != asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg) {
-    logger.warning("Unsupported RRCReconfiguration critical extension in AS-Config");
+  if (not unpack_as_config_rrc_reconfiguration(source_recfg, rrc_handover_preparation_information, logger)) {
     return;
   }
 
@@ -124,6 +99,22 @@ std::optional<rrc_ue_capabilities_t> ocudu::ocucp::decode_handover_capabilities(
     return std::nullopt;
   }
   return rrc_ue_capabilities_t{};
+}
+
+byte_buffer ocudu::ocucp::get_master_cell_group_from_as_config(const byte_buffer& rrc_handover_preparation_information,
+                                                               const ocudulog::basic_logger& logger)
+{
+  asn1::rrc_nr::rrc_recfg_s source_recfg;
+  if (not unpack_as_config_rrc_reconfiguration(source_recfg, rrc_handover_preparation_information, logger)) {
+    return {};
+  }
+
+  const auto& recfg_ies = source_recfg.crit_exts.rrc_recfg();
+  if (not recfg_ies.non_crit_ext_present or recfg_ies.non_crit_ext.master_cell_group.empty()) {
+    logger.debug("No masterCellGroup in AS-Config");
+    return {};
+  }
+  return recfg_ies.non_crit_ext.master_cell_group.copy();
 }
 
 bool ocudu::ocucp::handle_context_setup_response(
@@ -277,4 +268,46 @@ unsigned ocudu::ocucp::cancel_cho_candidates(cu_cp_ue&                          
     }
   }
   return cancelled;
+}
+
+static bool unpack_as_config_rrc_reconfiguration(asn1::rrc_nr::rrc_recfg_s&    source_recfg,
+                                                 const byte_buffer&            rrc_handover_preparation_information,
+                                                 const ocudulog::basic_logger& logger)
+{
+  if (rrc_handover_preparation_information.empty()) {
+    logger.debug("No RRC container received. Cannot decode the AS-Config of the source");
+    return false;
+  }
+
+  asn1::rrc_nr::ho_prep_info_s ho_prep_info;
+  asn1::cbit_ref bref({rrc_handover_preparation_information.begin(), rrc_handover_preparation_information.end()});
+  if (asn1::unpack(ho_prep_info, bref) != asn1::OCUDUASN_SUCCESS) {
+    logger.warning("Couldn't unpack HandoverPreparationInformation");
+    return false;
+  }
+  if (ho_prep_info.crit_exts.type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::types::c1 or
+      ho_prep_info.crit_exts.c1().type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::c1_c_::types::ho_prep_info) {
+    logger.warning("Unsupported HandoverPreparationInformation critical extension");
+    return false;
+  }
+
+  const auto& ies = ho_prep_info.crit_exts.c1().ho_prep_info();
+  if (!ies.source_cfg_present) {
+    // This is not an error. For example, the source can report the DRB-to-QoS-flow mapping through the XnAP-native
+    // IE instead.
+    logger.debug("AS-Config not present in HandoverPreparationInformation");
+    return false;
+  }
+
+  asn1::cbit_ref recfg_bref({ies.source_cfg.rrc_recfg.begin(), ies.source_cfg.rrc_recfg.end()});
+  if (asn1::unpack(source_recfg, recfg_bref) != asn1::OCUDUASN_SUCCESS) {
+    logger.warning("Couldn't unpack RRCReconfiguration in AS-Config");
+    return false;
+  }
+  if (source_recfg.crit_exts.type() != asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg) {
+    logger.warning("Unsupported RRCReconfiguration critical extension in AS-Config");
+    return false;
+  }
+
+  return true;
 }
