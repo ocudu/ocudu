@@ -80,22 +80,31 @@ public:
     EXPECT_NE(ue_ctx, nullptr);
   }
 
-  [[nodiscard]] bool send_rrc_measurement_report_and_await_ue_context_setup_request()
+  void send_rrc_measurement_report()
   {
     report_fatal_error_if_not(not this->get_du(source_du_idx).try_pop_dl_pdu(source_f1ap_pdu),
                               "there are still F1AP DL messages to pop from source DU");
 
-    // Inject UL RRC Message (containing RRC Measurement Report) and wait for UE Context Setup Request.
+    // Inject UL RRC Message (containing RRC Measurement Report).
     get_du(source_du_idx)
         .push_ul_pdu(test_helpers::generate_ul_rrc_message_transfer(
             ue_ctx->du_ue_id.value(),
             ue_ctx->cu_ue_id.value(),
             srb_id_t::srb1,
             make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value()));
+  }
+
+  [[nodiscard]] bool send_rrc_measurement_report_and_await_ue_context_setup_request()
+  {
+    // Inject UL RRC Message (containing RRC Measurement Report) and wait for UE Context Setup Request.
+    send_rrc_measurement_report();
+    report_fatal_error_if_not(await_gnb_du_cfg_query_and_send_ue_context_modification_response(source_du_idx),
+                              "Failed to answer the gNB-DU Configuration Query");
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(target_du_idx, target_f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu),
-                              "Invalid UE Context Setup Request");
+    report_fatal_error_if_not(
+        test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu, true),
+        "Invalid UE Context Setup Request");
     store_target_cu_ue_id();
 
     report_fatal_error_if_not(target_f1ap_pdu.pdu.init_msg().value.ue_context_setup_request()->serving_cell_mo_present,
@@ -122,10 +131,13 @@ public:
     get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
         source_cell_info.pci, ue_ctx->crnti, target_cell_info.pci, target_cell_info.plmn_id, target_cell_info.tac);
 
+    report_fatal_error_if_not(await_gnb_du_cfg_query_and_send_ue_context_modification_response(source_du_idx),
+                              "Failed to answer the gNB-DU Configuration Query");
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(target_du_idx, target_f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu),
-                              "Invalid UE Context Setup Request");
+    report_fatal_error_if_not(
+        test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu, true),
+        "Invalid UE Context Setup Request");
     store_target_cu_ue_id();
     return true;
   }
@@ -135,10 +147,13 @@ public:
     get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
         source_cell_info.pci, ue_ctx->crnti, target_cell_info.pci, target_cell_info.plmn_id, target_cell_info.tac);
 
+    report_fatal_error_if_not(await_gnb_du_cfg_query_and_send_ue_context_modification_response(source_du_idx),
+                              "Failed to answer the gNB-DU Configuration Query");
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(target_du_idx, target_f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu),
-                              "Invalid UE Context Setup Request");
+    report_fatal_error_if_not(
+        test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu, true),
+        "Invalid UE Context Setup Request");
     store_target_cu_ue_id();
     return true;
   }
@@ -393,6 +408,47 @@ TEST_F(cu_cp_inter_du_handover_test, when_ho_starts_then_target_cu_ue_f1ap_id_is
   // The source and the target UE connections exist at the same time. The gNB-CU UE F1AP ID is unique within the
   // CU-CP (TS 38.401 section 6.2.1).
   EXPECT_NE(target_cu_ue_id, ue_ctx->cu_ue_id.value());
+
+  // Inject UE Context Setup Failure to end the handover.
+  ASSERT_TRUE(send_ue_context_setup_failure());
+}
+
+TEST_F(cu_cp_inter_du_handover_test, when_ho_starts_then_target_du_receives_the_cell_group_config_of_the_source_du)
+{
+  send_rrc_measurement_report();
+
+  // The CU-CP queries the cell group configuration of the UE at the source DU.
+  const byte_buffer source_cell_group_cfg = test_helpers::create_cell_group_config();
+  ASSERT_TRUE(
+      await_gnb_du_cfg_query_and_send_ue_context_modification_response(source_du_idx, source_cell_group_cfg.copy()));
+
+  // The UE Context Setup Request at the target DU carries the cell group configuration of the source DU.
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(target_du_idx, target_f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu, true));
+  ASSERT_EQ(target_f1ap_pdu.pdu.init_msg().value.ue_context_setup_request()->cu_to_du_rrc_info.ie_exts.cell_group_cfg,
+            source_cell_group_cfg);
+  store_target_cu_ue_id();
+
+  // Inject UE Context Setup Failure to end the handover.
+  ASSERT_TRUE(send_ue_context_setup_failure());
+}
+
+TEST_F(cu_cp_inter_du_handover_test, when_gnb_du_cfg_query_fails_then_ho_continues_without_source_cell_group_config)
+{
+  send_rrc_measurement_report();
+
+  // The source DU answers the gNB-DU Configuration Query with a UE Context Modification Failure.
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(source_du_idx, source_f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_modification_request(source_f1ap_pdu));
+  ASSERT_TRUE(source_f1ap_pdu.pdu.init_msg().value.ue_context_mod_request()->gnb_du_cfg_query_present);
+  get_du(source_du_idx)
+      .push_ul_pdu(
+          test_helpers::generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+
+  // The UE Context Setup Request at the target DU carries no source cell group configuration.
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(target_du_idx, target_f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu, false));
+  store_target_cu_ue_id();
 
   // Inject UE Context Setup Failure to end the handover.
   ASSERT_TRUE(send_ue_context_setup_failure());

@@ -48,6 +48,7 @@ private:
   cu_cp_ue* target_ue = nullptr; // Pointer to UE in the target DU
 
   rrc_ue_transfer_context source_rrc_context;
+  byte_buffer             source_cell_group_cfg; // cellGroupConfig of the UE at the source DU
 
   f1ap_ue_context_manager& source_du_f1ap_ue_ctxt_mng; // to trigger UE context modification at source DU
   f1ap_ue_context_manager& target_du_f1ap_ue_ctxt_mng; // to trigger UE context creation at target DU

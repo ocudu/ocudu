@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "intra_cu_handover_routine.h"
+#include "../../mobility_manager/mobility_manager_helpers.h"
 #include "../pdu_session_routine_helpers.h"
 #include "handover_reconfiguration_routine.h"
 #include "mobility_helpers.h"
@@ -95,6 +96,20 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
                  request.cho_preparation->cond_recfg_id);
   } else {
     logger.debug("ue={}: \"{}\" started...", request.source_ue_index, name());
+  }
+
+  // [Implementation-defined] Get the cell group configuration of the UE at the source DU with the gNB-DU Configuration
+  // Query (TS 38.473 section 8.3.4.2). The target DU generates its configuration as a delta to it (TS 38.473 section
+  // 8.3.1.2).
+  if (is_cho_preparation) {
+    // The CHO coordinator queries the source DU once for all candidates.
+    source_cell_group_cfg = request.cho_preparation->source_cell_group_cfg.copy();
+  } else {
+    CORO_AWAIT(query_ue_cell_group_config(source_cell_group_cfg, source_du_f1ap_ue_ctxt_mng, request.source_ue_index));
+    if (source_cell_group_cfg.empty()) {
+      logger.warning(
+          "ue={}: \"{}\" failed to get the cell group configuration of the source DU", request.source_ue_index, name());
+    }
   }
 
   {
@@ -291,7 +306,11 @@ bool intra_cu_handover_routine::generate_ue_context_setup_request(f1ap_ue_contex
     return false;
   }
   setup_request.cu_to_du_rrc_info.ie_exts.value().ho_prep_info = std::move(buffer_copy.value());
-  setup_request.cu_to_du_rrc_info.ue_cap_rat_container_list    = transfer_context.ue_cap_rat_container_list.copy();
+  // Add the cell group configuration of the source DU, so that the target DU generates a delta configuration to it.
+  if (not source_cell_group_cfg.empty()) {
+    setup_request.cu_to_du_rrc_info.ie_exts.value().cell_group_cfg = source_cell_group_cfg.copy();
+  }
+  setup_request.cu_to_du_rrc_info.ue_cap_rat_container_list = transfer_context.ue_cap_rat_container_list.copy();
   // Add the ongoing location measurements of the UE, so that the target DU configures their measurement gaps.
   if (transfer_context.location_meas_info.has_value()) {
     setup_request.cu_to_du_rrc_info.ie_exts.value().location_meas_info = transfer_context.location_meas_info->copy();

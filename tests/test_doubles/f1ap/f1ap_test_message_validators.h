@@ -49,7 +49,8 @@ bool is_ul_rrc_msg_transfer_valid(const f1ap_message& msg, srb_id_t srb_id);
 
 // UE Context Setup
 bool is_valid_ue_context_setup_request(const f1ap_message& msg, bool cell_group_config_present = false);
-bool is_valid_ue_context_setup_request_with_ue_capabilities(const f1ap_message& msg);
+bool is_valid_ue_context_setup_request_with_ue_capabilities(const f1ap_message& msg,
+                                                            bool                cell_group_config_present = false);
 bool is_valid_ue_context_setup_response(const f1ap_message& msg);
 bool is_valid_ue_context_setup_response(const f1ap_message& resp_msg, const f1ap_message& req_msg);
 

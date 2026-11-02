@@ -311,9 +311,11 @@ TEST_F(cu_cp_location_measurement_indication_test,
   get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
       pci_t{0}, crnti, pci_t{0}, plmn_identity::test_value(), 7);
 
+  ASSERT_TRUE(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx));
+
   // The UE Context Setup Request for the target UE context carries the location measurements of the UE.
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
-  ASSERT_TRUE(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_setup_request(f1ap_pdu, true));
   const auto& req = f1ap_pdu.pdu.init_msg().value.ue_context_setup_request();
   ASSERT_TRUE(req->cu_to_du_rrc_info.ie_exts_present);
   ASSERT_TRUE(req->cu_to_du_rrc_info.ie_exts.location_meas_info_present);

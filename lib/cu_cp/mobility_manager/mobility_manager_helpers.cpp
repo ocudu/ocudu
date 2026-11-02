@@ -6,9 +6,30 @@
 #include "mobility_manager_helpers.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include "ocudu/ran/plmn_identity.h"
+#include "ocudu/support/async/async_task.h"
 
 using namespace ocudu;
 using namespace ocucp;
+
+async_task<void> ocudu::ocucp::query_ue_cell_group_config(byte_buffer&             cell_group_cfg,
+                                                          f1ap_ue_context_manager& f1ap_ue_ctxt_mng,
+                                                          cu_cp_ue_index_t         ue_index)
+{
+  f1ap_ue_context_modification_request request;
+  request.ue_index         = ue_index;
+  request.gnb_du_cfg_query = true;
+
+  return launch_async(
+      [&cell_group_cfg,
+       &f1ap_ue_ctxt_mng,
+       request  = std::move(request),
+       response = f1ap_ue_context_modification_response{}](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(response, f1ap_ue_ctxt_mng.handle_ue_context_modification_request(request));
+        cell_group_cfg = response.success ? response.du_to_cu_rrc_info.cell_group_cfg.copy() : byte_buffer{};
+        CORO_RETURN();
+      });
+}
 
 ngap_handover_preparation_request ocudu::ocucp::generate_ngap_handover_preparation_request(
     cu_cp_ue_index_t                                          source_ue_index,

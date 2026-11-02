@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ocudu/adt/byte_buffer.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/ran/arfcn.h"
 #include "ocudu/ran/cu_cp_types.h"
@@ -51,6 +52,8 @@ struct cu_cp_intra_cu_cho_response {
 struct cu_cp_cho_preparation_request {
   /// CHO conditional reconfiguration ID (valid range 1..8).
   cond_recfg_id_t cond_recfg_id = 1;
+  /// cellGroupConfig of the UE at the source DU.
+  byte_buffer source_cell_group_cfg;
 };
 
 /// \brief Result of a single CHO candidate preparation.

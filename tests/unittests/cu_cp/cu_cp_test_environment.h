@@ -362,6 +362,12 @@ public:
       const ngap_message& pdu_session_resource_setup_request,
       unsigned            cu_up_idx);
 
+  /// \brief Waits for the UE Context Modification Request with the gNB-DU Configuration Query that the CU-CP sends to
+  /// the source DU of a handover, and answers it with the cellGroupConfig of the UE.
+  [[nodiscard]] bool await_gnb_du_cfg_query_and_send_ue_context_modification_response(
+      unsigned    du_idx,
+      byte_buffer cell_group_cfg = test_helpers::create_cell_group_config());
+
   [[nodiscard]] bool send_bearer_context_setup_response_and_await_ue_context_modification_request(
       unsigned                                                        du_idx,
       unsigned                                                        cu_up_idx,

@@ -989,6 +989,30 @@ bool cu_cp_test_environment::send_pdu_session_resource_setup_request_and_await_b
   return true;
 }
 
+bool cu_cp_test_environment::await_gnb_du_cfg_query_and_send_ue_context_modification_response(
+    unsigned    du_idx,
+    byte_buffer cell_group_cfg)
+{
+  f1ap_message f1ap_pdu;
+  bool         result = this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu);
+  report_fatal_error_if_not(result, "Failed to receive UE Context Modification Request");
+  report_fatal_error_if_not(test_helpers::is_valid_ue_context_modification_request(f1ap_pdu),
+                            "Invalid UE Context Modification Request");
+  const auto& req = f1ap_pdu.pdu.init_msg().value.ue_context_mod_request();
+  report_fatal_error_if_not(req->gnb_du_cfg_query_present,
+                            "UE Context Modification Request does not contain the gNB-DU Configuration Query");
+
+  // Inject UE Context Modification Response with the cellGroupConfig of the UE.
+  get_du(du_idx).push_ul_pdu(
+      test_helpers::generate_ue_context_modification_response(int_to_gnb_du_ue_f1ap_id(req->gnb_du_ue_f1ap_id),
+                                                              int_to_gnb_cu_ue_f1ap_id(req->gnb_cu_ue_f1ap_id),
+                                                              to_rnti(0x4601),
+                                                              {},
+                                                              {},
+                                                              std::move(cell_group_cfg)));
+  return true;
+}
+
 bool cu_cp_test_environment::send_bearer_context_setup_response_and_await_ue_context_modification_request(
     unsigned                                                        du_idx,
     unsigned                                                        cu_up_idx,

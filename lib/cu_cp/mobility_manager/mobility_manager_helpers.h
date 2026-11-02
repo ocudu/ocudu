@@ -6,12 +6,22 @@
 #pragma once
 
 #include "ocudu/cu_cp/up_context.h"
+#include "ocudu/f1ap/cu_cp/f1ap_cu.h"
 #include "ocudu/ngap/ngap.h"
 #include "ocudu/ngap/ngap_handover.h"
 #include "ocudu/ngap/ngap_types.h"
+#include "ocudu/support/async/async_task.h"
 #include "ocudu/xnap/xnap_handover.h"
 
 namespace ocudu::ocucp {
+
+/// \brief Queries the cellGroupConfig of a UE at its DU with the gNB-DU Configuration Query (TS 38.473
+/// section 8.3.4.2).
+/// \param[out] cell_group_cfg The packed CellGroupConfig, or an empty buffer if the DU does not report it. The buffer
+/// must stay valid until the task completes.
+async_task<void> query_ue_cell_group_config(byte_buffer&             cell_group_cfg,
+                                            f1ap_ue_context_manager& f1ap_ue_ctxt_mng,
+                                            cu_cp_ue_index_t         ue_index);
 
 /// \brief Generates an NGAP Handover Preparation Request message based on the provided parameters.
 /// \param[in] source_ue_index The UE index of the source UE context.

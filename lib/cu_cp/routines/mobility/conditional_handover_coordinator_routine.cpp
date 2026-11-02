@@ -11,6 +11,7 @@
 #include "intra_cu_handover_routine.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/xnap/xnap_handover.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
@@ -51,7 +52,8 @@ std::vector<async_task<cu_cp_cho_candidate>> conditional_handover_coordinator_ro
     req.target_pci      = target.pci;
     req.cgi             = target.cgi;
     req.cho_preparation.emplace();
-    req.cho_preparation->cond_recfg_id = static_cast<cond_recfg_id_t>(i + 1);
+    req.cho_preparation->cond_recfg_id         = static_cast<cond_recfg_id_t>(i + 1);
+    req.cho_preparation->source_cell_group_cfg = source_cell_group_cfg.copy();
 
     const cu_cp_du_index_t target_du = target.du_index;
     byte_buffer            sib1 = du_db.get_du_processor(target_du).get_mobility_handler().get_packed_sib1(target.cgi);
@@ -231,8 +233,23 @@ void conditional_handover_coordinator_routine::operator()(coro_context<async_tas
     }
   }
 
-  // Phase 1: CHO Preparation — launch all intra-CU and inter-CU candidates in parallel.
+  // Set the CHO state before the first suspension point, so that a new CHO trigger is rejected.
   source_ue->get_cho_context()->state = cu_cp_ue_cho_context::state_t::targets_preparation;
+
+  // Query the cell group configuration of the UE at the source DU once for all intra-CU candidates. The candidates are
+  // prepared in parallel, and the F1AP allows only one UE Context Modification of a UE at a time.
+  if (std::any_of(
+          request.targets.begin(), request.targets.end(), [](const auto& t) { return not t.xnc_index.has_value(); })) {
+    CORO_AWAIT(query_ue_cell_group_config(source_cell_group_cfg,
+                                          du_db.get_du_processor(request.source_du_index).get_f1ap_handler(),
+                                          request.source_ue_index));
+    if (source_cell_group_cfg.empty()) {
+      logger.warning(
+          "ue={}: \"{}\" failed to get the cell group configuration of the source DU", request.source_ue_index, name());
+    }
+  }
+
+  // Phase 1: CHO Preparation — launch all intra-CU and inter-CU candidates in parallel.
   CORO_AWAIT_VALUE(all_candidates, when_all(build_all_prep_tasks()));
 
   // No need to re-fetch source UE here: this routine runs on the source UE's

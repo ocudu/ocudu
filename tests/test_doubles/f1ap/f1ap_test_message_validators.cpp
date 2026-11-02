@@ -229,9 +229,10 @@ bool ocudu::test_helpers::is_valid_ue_context_setup_request(const f1ap_message& 
   return true;
 }
 
-bool ocudu::test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(const f1ap_message& msg)
+bool ocudu::test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(const f1ap_message& msg,
+                                                                                 bool cell_group_config_present)
 {
-  TRUE_OR_RETURN(is_valid_ue_context_setup_request(msg));
+  TRUE_OR_RETURN(is_valid_ue_context_setup_request(msg, cell_group_config_present));
   TRUE_OR_RETURN(
       msg.pdu.init_msg().value.ue_context_setup_request()->cu_to_du_rrc_info.ue_cap_rat_container_list.size() > 0);
   return true;

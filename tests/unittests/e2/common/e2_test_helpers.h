@@ -1138,8 +1138,11 @@ public:
   trigger_handover(const cu_cp_du_index_t&                       source_du_index,
                    const ocucp::cu_cp_intra_cu_handover_request& handover_req) override
   {
-    handover_triggered = true;
-    last_handover_req  = handover_req;
+    handover_triggered                = true;
+    last_handover_req.source_ue_index = handover_req.source_ue_index;
+    last_handover_req.target_du_index = handover_req.target_du_index;
+    last_handover_req.cgi             = handover_req.cgi;
+    last_handover_req.target_pci      = handover_req.target_pci;
     return launch_async([](coro_context<async_task<ocucp::cu_cp_intra_cu_handover_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(ocucp::cu_cp_intra_cu_handover_response{true});

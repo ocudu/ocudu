@@ -89,9 +89,11 @@ public:
         ue_ctx->cu_ue_id.value(),
         srb_id_t::srb1,
         make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value()));
+    report_fatal_error_if_not(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx),
+                              "Failed to answer the gNB-DU Configuration Query");
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu),
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu, true),
                               "Invalid UE Context Setup Request");
 
     target_cu_ue_id =
@@ -105,9 +107,11 @@ public:
     // Inject UL RRC Message (containing RRC Measurement Report) and wait for UE Context Setup Request.
     get_cu_cp().get_command_handler().get_mobility_command_handler().trigger_handover(
         pci_t{0}, crnti, pci_t{0}, plmn_identity::parse("00101").value(), 7);
+    report_fatal_error_if_not(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx),
+                              "Failed to answer the gNB-DU Configuration Query");
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
                               "Failed to receive UE Context Setup Request");
-    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu),
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu, true),
                               "Invalid UE Context Setup Request");
 
     target_cu_ue_id =
@@ -987,8 +991,9 @@ TEST_F(cu_cp_intra_cell_handover_after_drb_id_wraparound_test,
   increment_count_and_transaction_id();
 
   // intra-cell HO is triggered
+  ASSERT_TRUE(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx));
   report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu), "Failed to receive UE Context Setup Request");
-  report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu),
+  report_fatal_error_if_not(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(f1ap_pdu, true),
                             "Invalid UE Context Setup Request");
 
   // Inject UE Context Setup Response and await UE Context Modification Request.
@@ -1055,6 +1060,8 @@ TEST_F(cu_cp_intra_du_handover_admission_limit_test, when_target_ue_is_not_serva
       srb_id_t::srb1,
       make_byte_buffer("000800410004015f741fe0804bf183fcaa6e9699").value()));
 
+  // The CU-CP queries the source DU, but sends no UE Context Setup Request to the target DU.
+  ASSERT_TRUE(await_gnb_du_cfg_query_and_send_ue_context_modification_response(du_idx));
   ASSERT_FALSE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{100}));
 
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();

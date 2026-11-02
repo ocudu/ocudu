@@ -54,6 +54,7 @@ private:
   cu_cp_intra_cu_cho_response response{};
 
   cu_cp_ue*                         source_ue = nullptr;
+  byte_buffer                       source_cell_group_cfg; // cellGroupConfig of the UE at the source DU
   std::vector<cu_cp_cho_candidate>  all_candidates;
   cu_cp_cho_reconfiguration_request cho_reconfig_request;
   bool                              cho_reconfig_result = false;
