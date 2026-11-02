@@ -621,6 +621,55 @@ TEST_F(ue_config_tester,
   ASSERT_EQ(pucch.res_to_release_list[0], SOURCE_ONLY_PUCCH_RES_ID);
 }
 
+TEST_F(ue_config_tester, when_handover_uses_full_configuration_then_rlc_bearers_are_complete)
+{
+  // No source cell group configuration is included, so the DU uses full configuration (TS 38.473 section 8.3.1.2).
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  req.full_config_required            = true;
+  req.spcell_id                       = this->params.ran.cells[0].nr_cgi;
+  req.ho_prep_info                    = test_helpers::create_ho_prep_info();
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+  ASSERT_TRUE(res.full_config_present);
+
+  asn1::rrc_nr::cell_group_cfg_s cell_group;
+  asn1::cbit_ref                 bref(res.cell_group_cfg);
+  ASSERT_EQ(asn1::unpack(cell_group, bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_TRUE(cell_group.sp_cell_cfg.recfg_with_sync_present);
+
+  // With full configuration, the UE releases its RLC bearers, so each one comes with its complete configuration
+  // (TS 38.331 section 5.3.5.11).
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), 3);
+  for (const auto& bearer : cell_group.rlc_bearer_to_add_mod_list) {
+    ASSERT_TRUE(bearer.rlc_cfg_present);
+    ASSERT_TRUE(bearer.mac_lc_ch_cfg_present);
+    ASSERT_FALSE(bearer.reestablish_rlc_present);
+  }
+}
+
+TEST_F(ue_config_tester, when_source_cell_group_cannot_be_unpacked_then_handover_uses_full_configuration)
+{
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  req.spcell_id                       = this->params.ran.cells[0].nr_cgi;
+  req.ho_prep_info                    = test_helpers::create_ho_prep_info();
+  req.source_cell_group_cfg           = byte_buffer::create({0xff}).value();
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+  ASSERT_TRUE(res.full_config_present);
+
+  asn1::rrc_nr::cell_group_cfg_s cell_group;
+  asn1::cbit_ref                 bref(res.cell_group_cfg);
+  ASSERT_EQ(asn1::unpack(cell_group, bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), 3);
+  for (const auto& bearer : cell_group.rlc_bearer_to_add_mod_list) {
+    ASSERT_TRUE(bearer.rlc_cfg_present);
+    ASSERT_TRUE(bearer.mac_lc_ch_cfg_present);
+    ASSERT_FALSE(bearer.reestablish_rlc_present);
+  }
+}
+
 TEST_F(ue_config_tester,
        when_existing_srb_is_included_in_ue_context_setup_then_it_does_not_get_configured_in_mac_and_f1ap)
 {

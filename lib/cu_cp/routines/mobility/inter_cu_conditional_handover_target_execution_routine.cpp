@@ -166,6 +166,11 @@ bool inter_cu_conditional_handover_target_execution_routine::fill_e1ap_bearer_co
   ng_request.emplace();
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_modify_item>& pdu_sessions =
       ng_request->pdu_session_res_to_modify_list;
+  if (ue->get_ue_context().inter_gnb_handover_full_config) {
+    // With full configuration, the PDCP SN and HFN of the DRBs start from 0 (TS 38.300 section 9.2.3.2.2).
+    logger.info("ue={}: Ignoring SN Status Transfer. Cause: The handover uses full configuration", ue->get_ue_index());
+    return true;
+  }
   for (const cu_cp_drbs_subject_to_status_transfer_item& ngap_drb : sn_status->drbs_subject_to_status_transfer_list) {
     // TS 38.423 Section 8.2.2.1: the list reflects the source's DRB configuration and is not guaranteed to be a
     // subset of the DRBs admitted at this target. DRB IDs are allocated independently by each RAN node (TS 38.300

@@ -378,13 +378,14 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     if (asn1::unpack(*src_cell_group, src_bref) == asn1::OCUDUASN_SUCCESS) {
       calculate_cell_group_config_release(asn1_cell_group, *src_cell_group);
     } else {
-      proc_logger.log_proc_warning("Failed to unpack the source cellGroupConfig. The delta does not release source "
-                                   "elements and re-establishes all RLC bearers");
+      // [Implementation-defined] Without the source configuration, the delta cannot release the source elements.
+      proc_logger.log_proc_warning("Failed to unpack the source cellGroupConfig. Using full configuration");
       src_cell_group.reset();
+      resp.full_config_present = true;
     }
     // For a handover, the handling of the HandoverPreparationInformation below sets the RLC bearers to re-establish,
     // SRB1 included.
-    if (request.ho_prep_info.empty()) {
+    if (request.ho_prep_info.empty() and not resp.full_config_present) {
       auto* it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
                               asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
                               [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
@@ -429,8 +430,11 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
       return make_ue_config_failure();
     }
-    // Set the RLC bearers to reestablish for HO.
-    set_rlc_bearers_to_reestablish(asn1_cell_group, src_cell_group);
+    // Set the RLC bearers to reestablish for HO. With full configuration, the UE releases its RLC bearers and needs
+    // their complete configuration (TS 38.331 section 5.3.5.11).
+    if (not resp.full_config_present) {
+      set_rlc_bearers_to_reestablish(asn1_cell_group, src_cell_group);
+    }
 
     // Fill fields with -- Cond SyncAndCellAdd.
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id_present        = true;

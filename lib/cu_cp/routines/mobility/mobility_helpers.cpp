@@ -185,6 +185,10 @@ bool ocudu::ocucp::handle_context_setup_response(
           e1ap_drb_item.pdcp_cfg->pdcp_reest = true;
         }
 
+        // With full configuration, the UE sets the DRB up anew, so the PDCP COUNT restarts from 0 (TS 38.300 section
+        // 9.2.3.2.2).
+        e1ap_drb_item.pdcp_count_reset = target_ue_context_setup_response.full_cfg.value_or(false);
+
         e1ap_mod_item.drb_to_modify_list_ng_ran.emplace(e1ap_drb_item.drb_id, e1ap_drb_item);
       }
 

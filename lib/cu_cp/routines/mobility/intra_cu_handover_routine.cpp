@@ -218,7 +218,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
                                   {} /* No NAS PDUs required */,
                                   target_ue->get_rrc_ue()->generate_meas_config(source_rrc_context.meas_cfg),
                                   true, /* Reestablish SRBs */
-                                  true /* Reestablish DRBs */,
+                                  not target_ue_context_setup_response.full_cfg.value_or(false) /* Reestablish DRBs */,
                                   target_ue->get_security_manager().get_ncc(), /* Update keys */
                                   target_cell_sib1.copy(),
                                   std::nullopt,
@@ -226,6 +226,11 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
         logger.warning("ue={}: \"{}\" Failed to fill RrcReconfiguration", request.source_ue_index, name());
         CORO_AWAIT(cu_cp_handler.handle_ue_removal_request(target_ue_context_setup_request.ue_index));
         CORO_EARLY_RETURN(response_msg);
+      }
+      // With full configuration, the UE releases its dedicated configuration before it applies the new one (TS 38.331
+      // section 5.3.5.11).
+      if (target_ue_context_setup_response.full_cfg.value_or(false)) {
+        rrc_reconfig_args.non_crit_ext.value().full_cfg_present = true;
       }
     }
 

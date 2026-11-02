@@ -34,6 +34,8 @@ struct cu_cp_ue_context {
   bool reconfiguration_disabled = false;
   /// \brief Flag set when this node sent the RRC Reconfiguration of an inter-gNB handover to the UE.
   bool inter_gnb_handover_execution_requested = false;
+  /// \brief Flag set when the target DU generated a full configuration for an inter-gNB handover.
+  bool inter_gnb_handover_full_config = false;
   /// \brief Pending NR redirect target set before the NGAP round-trip (NGAP carries no redirectedCarrierInfo).
   /// Consumed by ue_context_release_routine once the AMF responds with UE Context Release Command.
   std::optional<cu_cp_release_redirect_nr_info> pending_redirect_nr_info;

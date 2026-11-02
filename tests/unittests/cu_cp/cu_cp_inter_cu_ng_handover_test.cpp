@@ -17,6 +17,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
+#include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/f1ap/f1ap_ue_id_types.h"
@@ -133,10 +134,10 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_ue_context_setup_response_and_await_bearer_context_modification_request()
+  [[nodiscard]] bool send_ue_context_setup_response_and_await_bearer_context_modification_request(bool full_cfg = false)
   {
     // Inject UE Context Setup Response and wait for Bearer Context Modification Request.
-    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_setup_response(
+    f1ap_message ue_ctxt_setup_resp = test_helpers::generate_ue_context_setup_response(
         cu_ue_id,
         du_ue_id,
         crnti,
@@ -149,7 +150,13 @@ public:
             "00021976000000000000000000108ad5450047001800082000e21009c400e0202108001c420138401c080441000388402708038180"
             "842000710804e18070401104000e21009c300080000008218081018201c1a0001c71000000080100020180020240088029800008c4"
             "0089c7001800")
-            .value()));
+            .value());
+    if (full_cfg) {
+      auto& resp             = ue_ctxt_setup_resp.pdu.successful_outcome().value.ue_context_setup_resp();
+      resp->full_cfg_present = true;
+      resp->full_cfg.value   = asn1::f1ap::full_cfg_opts::full;
+    }
+    get_du(du_idx).push_ul_pdu(ue_ctxt_setup_resp);
 
     report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
                               "Failed to receive Bearer Context Modification Request");
@@ -822,6 +829,62 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_as_config_contains_master_cell_grou
   ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request());
   ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
   ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request());
+  ASSERT_TRUE(send_bearer_context_modification_response());
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));
+}
+
+TEST_F(cu_cp_inter_cu_ng_handover_test, when_target_du_uses_full_configuration_then_handover_command_signals_it)
+{
+  // The source sends no masterCellGroup in the AS-Config, so the target DU generates a full configuration.
+  ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request());
+  ASSERT_TRUE(send_bearer_context_setup_response_and_await_ue_context_setup_request());
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_bearer_context_modification_request(true));
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_handover_request_ack());
+
+  // The RRC Reconfiguration in the HandoverCommand signals full configuration and sets the DRB up anew.
+  {
+    const auto& ack = ngap_pdu.pdu.successful_outcome().value.ho_request_ack();
+    asn1::ngap::target_ngran_node_to_source_ngran_node_transparent_container_s container;
+    {
+      asn1::cbit_ref bref(ack->target_to_source_transparent_container);
+      ASSERT_EQ(asn1::unpack(container, bref), asn1::OCUDUASN_SUCCESS);
+    }
+    asn1::rrc_nr::ho_cmd_s ho_cmd;
+    {
+      asn1::cbit_ref bref(container.rrc_container);
+      ASSERT_EQ(asn1::unpack(ho_cmd, bref), asn1::OCUDUASN_SUCCESS);
+    }
+    asn1::rrc_nr::rrc_recfg_s rrc_recfg;
+    {
+      asn1::cbit_ref bref(ho_cmd.crit_exts.c1().ho_cmd().ho_cmd_msg);
+      ASSERT_EQ(asn1::unpack(rrc_recfg, bref), asn1::OCUDUASN_SUCCESS);
+    }
+    const auto& recfg = rrc_recfg.crit_exts.rrc_recfg();
+    ASSERT_TRUE(recfg.non_crit_ext_present);
+    ASSERT_TRUE(recfg.non_crit_ext.full_cfg_present);
+    ASSERT_TRUE(recfg.radio_bearer_cfg_present);
+    ASSERT_EQ(recfg.radio_bearer_cfg.drb_to_add_mod_list.size(), 1);
+    ASSERT_FALSE(recfg.radio_bearer_cfg.drb_to_add_mod_list[0].reestablish_pdcp_present);
+    ASSERT_TRUE(recfg.radio_bearer_cfg.drb_to_add_mod_list[0].pdcp_cfg_present);
+  }
+
+  // The target does not apply the PDCP COUNTs of the source, because they restart from 0 (TS 38.300 section
+  // 9.2.3.2.2).
+  ASSERT_TRUE(send_dl_ran_status_transfer_and_await_bearer_context_modification_request({drb_id_t::drb1}));
+  {
+    const auto& mod_req = e1ap_pdu.pdu.init_msg().value.bearer_context_mod_request();
+    if (mod_req->sys_bearer_context_mod_request_present) {
+      for (const auto& ps :
+           mod_req->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request().pdu_session_res_to_modify_list) {
+        for (const auto& drb : ps.drb_to_modify_list_ng_ran) {
+          ASSERT_FALSE(drb.pdcp_sn_status_info_present);
+        }
+      }
+    }
+  }
+
+  // Complete the handover.
   ASSERT_TRUE(send_bearer_context_modification_response());
   ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_handover_notify_and_ue_context_modification_request());
   ASSERT_TRUE(send_ue_context_modification_response_empty(cu_ue_id, du_ue_id));

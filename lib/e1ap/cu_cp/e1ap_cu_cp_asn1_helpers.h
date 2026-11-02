@@ -583,6 +583,12 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
             asn1_drb_to_mod_item.pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn =
                 drb_to_mod_item.pdcp_sn_status_info->pdcp_status_transfer_dl.pdcp_sn;
           }
+
+          if (drb_to_mod_item.pdcp_count_reset) {
+            asn1_drb_to_mod_item.ie_exts_present                  = true;
+            asn1_drb_to_mod_item.ie_exts.pdcp_count_reset_present = true;
+            asn1_drb_to_mod_item.ie_exts.pdcp_count_reset.value   = asn1::e1ap::pdcp_count_reset_opts::true_value;
+          }
           asn1_res_to_mod_item.drb_to_modify_list_ng_ran.push_back(asn1_drb_to_mod_item);
         }
 

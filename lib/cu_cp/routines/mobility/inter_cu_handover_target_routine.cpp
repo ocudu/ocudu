@@ -210,6 +210,10 @@ void inter_cu_handover_target_routine::operator()(
 
   // Target UE object exists from this point on.
 
+  // The DU generates a full configuration when the source sent no cell group configuration (TS 38.473 section
+  // 8.3.1.2).
+  ue->get_ue_context().inter_gnb_handover_full_config = ue_context_setup_response.full_cfg.value_or(false);
+
   // Store updated cell group config.
   {
     ue_mng.find_du_ue(request.ue_index)
@@ -264,13 +268,18 @@ void inter_cu_handover_target_routine::operator()(
                                 {} /* No NAS PDUs required */,
                                 ue->get_rrc_ue()->generate_meas_config(),
                                 true,
-                                true,
+                                not ue->get_ue_context().inter_gnb_handover_full_config /* Reestablish DRBs */,
                                 ue->get_security_manager().get_ncc(), /* Update keys */
                                 {},
                                 ue->get_security_manager().get_security_algos(),
                                 logger)) {
       logger.warning("ue={}: \"{}\" failed to fill RRC Reconfiguration", request.ue_index, name());
       CORO_EARLY_RETURN(generate_handover_resource_allocation_response(false));
+    }
+    // With full configuration, the UE releases its dedicated configuration before it applies the new one (TS 38.331
+    // section 5.3.5.11).
+    if (ue->get_ue_context().inter_gnb_handover_full_config) {
+      rrc_reconfig_args.non_crit_ext.value().full_cfg_present = true;
     }
 
     // Define transaction ID.

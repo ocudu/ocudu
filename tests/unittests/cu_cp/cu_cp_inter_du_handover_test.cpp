@@ -19,6 +19,8 @@
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
+#include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
+#include "ocudu/asn1/rrc_nr/dl_dcch_msg_ies.h"
 #include "ocudu/cu_cp/cu_cp_cell_command_handler.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
 #include "ocudu/f1ap/f1ap_message.h"
@@ -158,7 +160,9 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool send_ue_context_setup_response_and_await_ue_context_modification_request()
+  [[nodiscard]] bool
+  send_ue_context_setup_response_and_await_ue_context_modification_request(bool full_cfg = false,
+                                                                           const std::vector<drb_id_t>& drbs_setup = {})
   {
     report_fatal_error_if_not(not this->get_du(source_du_idx).try_pop_dl_pdu(source_f1ap_pdu),
                               "there are still F1AP DL messages to pop from source DU");
@@ -168,21 +172,27 @@ public:
                               "there are still E1AP messages to pop from CU UP");
 
     // Inject UE Context Setup Response and await UE Context Modification Request.
-    get_du(target_du_idx)
-        .push_ul_pdu(test_helpers::generate_ue_context_setup_response(
-            target_cu_ue_id,
-            ue_ctx->du_ue_id.value(),
-            crnti,
-            make_byte_buffer(
-                "5c04c00604b0701f00811a0f020001273b8c02692f30004d25e24040008c8040a26418d6d8d76006e08040000101000083446a"
-                "48d802692f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70eb00442c0680182c4602c02052100"
-                "4930b2a0003fe00000000060dc210800078059402830000002068c080a28500071c48000133557c841c001040c2050c1c9c48a"
-                "163068e1e408800044280004045a8000860428000c605a80010064280014065a800185e428001c5e5a80020084280024588240"
-                "a1620a02c5882c0c1620c034588340e1620e03c0e8201003a090440e829024b92a4a1814388e8acf1379343e9041e2efc0c10e"
-                "000000131ffacc46a9aae502c0000432ec0000000000000000002108ad5450047001004082000e21009c400e0208108001c420"
-                "138401c081041000388402708038182042000710804e18070404104000e21009c300080000008218081018201c1a0001c71000"
-                "000080100020180020240088029800008c40089c72018000")
-                .value()));
+    f1ap_message ue_ctxt_setup_resp = test_helpers::generate_ue_context_setup_response(
+        target_cu_ue_id,
+        ue_ctx->du_ue_id.value(),
+        crnti,
+        make_byte_buffer(
+            "5c04c00604b0701f00811a0f020001273b8c02692f30004d25e24040008c8040a26418d6d8d76006e08040000101000083446a"
+            "48d802692f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70eb00442c0680182c4602c02052100"
+            "4930b2a0003fe00000000060dc210800078059402830000002068c080a28500071c48000133557c841c001040c2050c1c9c48a"
+            "163068e1e408800044280004045a8000860428000c605a80010064280014065a800185e428001c5e5a80020084280024588240"
+            "a1620a02c5882c0c1620c034588340e1620e03c0e8201003a090440e829024b92a4a1814388e8acf1379343e9041e2efc0c10e"
+            "000000131ffacc46a9aae502c0000432ec0000000000000000002108ad5450047001004082000e21009c400e0208108001c420"
+            "138401c081041000388402708038182042000710804e18070404104000e21009c300080000008218081018201c1a0001c71000"
+            "000080100020180020240088029800008c40089c72018000")
+            .value(),
+        drbs_setup);
+    if (full_cfg) {
+      auto& resp             = ue_ctxt_setup_resp.pdu.successful_outcome().value.ue_context_setup_resp();
+      resp->full_cfg_present = true;
+      resp->full_cfg.value   = asn1::f1ap::full_cfg_opts::full;
+    }
+    get_du(target_du_idx).push_ul_pdu(ue_ctxt_setup_resp);
 
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(source_du_idx, source_f1ap_pdu),
                               "Failed to receive UE Context Modification Request");
@@ -533,6 +543,66 @@ TEST_F(cu_cp_inter_du_handover_test, when_ho_succeeds_then_source_ue_is_removed)
 
   // STATUS: UE should be removed from source DU.
   ASSERT_EQ(report.ues.size(), 1) << "UE should be removed";
+}
+
+TEST_F(cu_cp_inter_du_handover_test, when_target_du_uses_full_configuration_then_ue_and_cu_up_set_the_drbs_up_anew)
+{
+  // The source DU does not report its cell group configuration, so the target DU generates a full configuration.
+  send_rrc_measurement_report();
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(source_du_idx, source_f1ap_pdu));
+  get_du(source_du_idx)
+      .push_ul_pdu(
+          test_helpers::generate_ue_context_modification_failure(ue_ctx->cu_ue_id.value(), ue_ctx->du_ue_id.value()));
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(target_du_idx, target_f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_setup_request_with_ue_capabilities(target_f1ap_pdu, false));
+  store_target_cu_ue_id();
+
+  // Inject UE Context Setup Response with Full Configuration and await UE Context Modification Request.
+  ASSERT_TRUE(send_ue_context_setup_response_and_await_ue_context_modification_request(true, {drb_id_t::drb1}));
+
+  // The RRC Reconfiguration signals full configuration and sets the DRB up anew (TS 38.331 section 5.3.5.11).
+  {
+    asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
+    byte_buffer    dl_dcch_pdu = test_helpers::extract_dl_dcch_msg(test_helpers::get_rrc_container(source_f1ap_pdu));
+    asn1::cbit_ref bref(dl_dcch_pdu);
+    ASSERT_EQ(asn1::unpack(dl_dcch, bref), asn1::OCUDUASN_SUCCESS);
+    const auto& recfg = dl_dcch.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
+    ASSERT_TRUE(recfg.non_crit_ext_present);
+    ASSERT_TRUE(recfg.non_crit_ext.full_cfg_present);
+    ASSERT_TRUE(recfg.radio_bearer_cfg_present);
+    ASSERT_EQ(recfg.radio_bearer_cfg.drb_to_add_mod_list.size(), 1);
+    const auto& drb = recfg.radio_bearer_cfg.drb_to_add_mod_list[0];
+    ASSERT_FALSE(drb.reestablish_pdcp_present);
+    ASSERT_TRUE(drb.pdcp_cfg_present);
+    ASSERT_TRUE(drb.cn_assoc_present);
+    for (const auto& srb : recfg.radio_bearer_cfg.srb_to_add_mod_list) {
+      ASSERT_TRUE(srb.reestablish_pdcp_present);
+    }
+  }
+
+  // Inject UE Context Modification Response.
+  ASSERT_TRUE(send_ue_context_modification_response(source_du_idx));
+
+  // Inject RRC Reconfiguration Complete and await Bearer Context Modification Request.
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_and_await_bearer_context_modification_request());
+
+  // The CU-UP resets the PDCP COUNT of the DRB (TS 37.483 section 8.3.2.2). The same message carries the new keys, so
+  // that no COUNT value is reused with the same key (TS 33.501 section 6.9.4.5).
+  {
+    const auto& mod_req = e1ap_pdu.pdu.init_msg().value.bearer_context_mod_request();
+    ASSERT_TRUE(mod_req->security_info_present);
+    ASSERT_TRUE(mod_req->sys_bearer_context_mod_request_present);
+    const auto& drb_to_mod = mod_req->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request()
+                                 .pdu_session_res_to_modify_list[0]
+                                 .drb_to_modify_list_ng_ran[0];
+    ASSERT_TRUE(drb_to_mod.ie_exts_present);
+    ASSERT_TRUE(drb_to_mod.ie_exts.pdcp_count_reset_present);
+  }
+
+  // Complete the handover.
+  ASSERT_TRUE(send_bearer_context_modification_response_and_await_ue_context_modification_request());
+  ASSERT_TRUE(send_ue_context_modification_response_and_await_ue_context_release_command());
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete(source_du_idx));
 }
 
 TEST_F(cu_cp_inter_du_handover_test, when_manually_triggered_ho_succeeds_then_source_ue_is_removed)
