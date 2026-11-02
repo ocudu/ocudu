@@ -999,6 +999,12 @@ void pdcp_entity_tx::data_recovery()
   retransmit_all_pdus();
 }
 
+void pdcp_entity_tx::reset_count()
+{
+  reset();
+  logger.log_info("Reset PDCP TX COUNT. {}", st);
+}
+
 void pdcp_entity_tx::reset()
 {
   st = {0, 0, 0, 0, 0};

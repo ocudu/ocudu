@@ -234,6 +234,56 @@ TEST_P(pdcp_rx_reestablish_test, when_drb_am_reestablish_then_state_preserved)
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), exp_nof_decompressors);
 }
 
+TEST_P(pdcp_rx_reestablish_test, when_drb_am_count_is_reset_then_stored_sdus_are_delivered_and_state_restarts)
+{
+  set_sn_size(std::get<pdcp_sn_size>(GetParam()));
+  set_algo(std::get<unsigned>(GetParam()));
+  set_header_compression(std::get<rohc_test_params>(GetParam()).config);
+  set_rb_type(pdcp_rb_type::drb);
+  set_rlc_mode(pdcp_rlc_mode::am);
+  init();
+
+  uint32_t count = 0;
+  pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+  // Prepare 3 PDUs.
+  byte_buffer test_pdu1;
+  get_test_pdu(count, test_pdu1);
+  byte_buffer test_pdu2;
+  get_test_pdu(count + 1, test_pdu2);
+  byte_buffer test_pdu3;
+  get_test_pdu(count + 2, test_pdu3);
+
+  // RX PDU 2 and 3. The PDCP stores them, because PDU 1 is missing.
+  pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+  pdcp_rx->set_state(init_state);
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  ASSERT_EQ(0, test_frame->sdu_queue.size());
+  ASSERT_EQ(3, pdcp_rx->get_state().rx_next);
+  ASSERT_TRUE(pdcp_rx->is_reordering_timer_running());
+
+  // Reset the COUNT. The stored SDUs are delivered and the state starts from 0.
+  pdcp_rx->reset_count();
+  ASSERT_EQ(2, test_frame->sdu_queue.size());
+  {
+    pdcp_rx_state st = pdcp_rx->get_state();
+    ASSERT_EQ(st.rx_next, 0);
+    ASSERT_EQ(st.rx_deliv, 0);
+    ASSERT_EQ(st.rx_reord, 0);
+  }
+  ASSERT_FALSE(pdcp_rx->is_reordering_timer_running());
+
+  // PDU 1 is delivered alone.
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  ASSERT_EQ(3, test_frame->sdu_queue.size());
+  ASSERT_EQ(1, pdcp_rx->get_state().rx_next);
+}
+
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////

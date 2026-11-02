@@ -191,6 +191,53 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   EXPECT_EQ(pdcp_rohc_factory->get_nof_decompressors(), 0);
 }
 
+/// Test DRB AM COUNT reset before re-establishment
+TEST_P(pdcp_tx_reestablish_test, when_drb_am_count_is_reset_then_pdus_dropped_and_reestablish_does_not_retx)
+{
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am);
+
+  // Set state of PDCP entiy
+  pdcp_tx_state st = {0, 0, 0, 0, 0};
+  pdcp_tx->set_state(st);
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::off);
+
+  // Write 5 SDU and confirm their transmission
+  int n_pdus = 5;
+  for (int i = 0; i < n_pdus; i++) {
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
+    pdcp_tx->handle_sdu(std::move(sdu));
+  }
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_pdus_in_window());
+  pdcp_tx->handle_transmit_notification(4);
+  FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size());
+
+  // Reset the COUNT. The stored PDUs are dropped and the state starts from 0.
+  pdcp_tx->reset_count();
+  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
+  {
+    pdcp_tx_state exp_st{0, 0, 0, 0, 0};
+    assert_pdcp_state_with_reordering(pdcp_tx->get_state(), exp_st);
+  }
+
+  // The re-establishment applies the new keys and retransmits no PDU.
+  pdcp_tx->reestablish(sec_cfg);
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size()); // unchanged
+  FLUSH_AND_ASSERT_EQ(0, test_frame.retx_queue.size());
+
+  // The next SDU gets COUNT 0.
+  pdcp_tx->handle_sdu(byte_buffer::create(sdu1).value());
+  wait_pending_crypto();
+  worker.run_pending_tasks();
+  {
+    pdcp_tx_state exp_st{1, 1, 0, 0, 0};
+    assert_pdcp_state_with_reordering(pdcp_tx->get_state(), exp_st);
+  }
+}
+
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////

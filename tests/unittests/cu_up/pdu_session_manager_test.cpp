@@ -722,3 +722,45 @@ int main(int argc, char** argv)
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
+
+TEST_F(pdu_session_manager_test, when_pdcp_count_reset_is_requested_then_pdcp_count_restarts_from_zero)
+{
+  // Setup PDU session with one DRB.
+  pdu_session_id_t psi    = uint_to_pdu_session_id(1);
+  drb_id_t         drb_id = uint_to_drb_id(1);
+  qos_flow_id_t    qfi    = uint_to_qos_flow_id(8);
+  pdu_session_mng->setup_pdu_session(generate_pdu_session_res_to_setup_item(psi, drb_id, qfi, uint_to_five_qi(9)),
+                                     direct_forwarding_path);
+  ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
+
+  // Move the PDCP COUNT of the DRB away from 0.
+  {
+    e1ap_pdu_session_res_to_modify_item modify_item =
+        generate_pdu_session_res_to_modify_item_to_modify_drb(psi, drb_id);
+    auto& status = modify_item.drb_to_modify_list_ng_ran[drb_id].pdcp_sn_status_info.emplace();
+    status.pdcp_status_transfer_ul.count_value.hfn     = 1;
+    status.pdcp_status_transfer_ul.count_value.pdcp_sn = 5;
+    status.pdcp_status_transfer_dl.hfn                 = 2;
+    status.pdcp_status_transfer_dl.pdcp_sn             = 7;
+    ASSERT_TRUE(pdu_session_mng->modify_pdu_session(modify_item, false).success);
+  }
+
+  // Reset the PDCP COUNT, then query it.
+  {
+    e1ap_pdu_session_res_to_modify_item modify_item =
+        generate_pdu_session_res_to_modify_item_to_modify_drb(psi, drb_id);
+    modify_item.drb_to_modify_list_ng_ran[drb_id].pdcp_count_reset = true;
+    ASSERT_TRUE(pdu_session_mng->modify_pdu_session(modify_item, false).success);
+  }
+  e1ap_pdu_session_res_to_modify_item modify_item = generate_pdu_session_res_to_modify_item_to_modify_drb(psi, drb_id);
+  modify_item.drb_to_modify_list_ng_ran[drb_id].pdcp_sn_status_request = true;
+  pdu_session_modification_result mod_result = pdu_session_mng->modify_pdu_session(modify_item, false);
+  ASSERT_TRUE(mod_result.success);
+  ASSERT_EQ(mod_result.drb_modification_results.size(), 1);
+  const auto& sn_status = mod_result.drb_modification_results[0].pdcp_sn_status;
+  ASSERT_TRUE(sn_status.has_value());
+  EXPECT_EQ(sn_status->ul_count.hfn, 0);
+  EXPECT_EQ(sn_status->ul_count.sn, 0);
+  EXPECT_EQ(sn_status->dl_count.hfn, 0);
+  EXPECT_EQ(sn_status->dl_count.sn, 0);
+}

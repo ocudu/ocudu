@@ -278,6 +278,7 @@ struct e1ap_drb_to_modify_item_ng_ran {
   std::vector<e1ap_cell_group_info_item>                         cell_group_to_rem;
   slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> flow_map_info;
   std::optional<uint16_t>                                        drb_inactivity_timer;
+  bool                                                           pdcp_count_reset = false;
 };
 
 struct e1ap_pdu_session_res_to_modify_item {

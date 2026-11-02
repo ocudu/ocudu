@@ -125,6 +125,9 @@ public:
   /// Set the RX count for status transfer.
   virtual void set_count(pdcp_count_info count_info) = 0;
 
+  /// Deliver all stored PDCP SDUs in ascending order of COUNT and reset the RX COUNT to 0.
+  virtual void reset_count() = 0;
+
   /// Tell the PDCP entity to notify when it is finished with processing
   /// the currently in-flight PDUs. No further PDUs should be push after calling
   /// this function until after calling `restart_pdu_processing()`.

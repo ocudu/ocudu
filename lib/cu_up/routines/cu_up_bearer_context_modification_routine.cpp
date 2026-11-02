@@ -5,6 +5,7 @@
 
 #include "cu_up_bearer_context_modification_routine.h"
 #include "../cu_up_manager_helpers.h"
+#include <algorithm>
 
 using namespace ocudu;
 using namespace ocuup;
@@ -25,6 +26,14 @@ void cu_up_bearer_context_modification_routine::operator()(
 
   response.ue_index = ue_ctxt.get_index();
   response.success  = false;
+
+  // A PDCP COUNT reset needs new keys, so that the PDCP does not reuse a COUNT value with the same key (TS 33.501
+  // section 6.9.4.5).
+  if (requests_pdcp_count_reset() and not msg.security_info.has_value()) {
+    ue_ctxt.get_logger().log_warning("Rejecting PDCP COUNT Reset. Cause: The request contains no security information");
+    response.cause = cause_protocol_t::semantic_error;
+    CORO_EARLY_RETURN(response);
+  }
 
   if (msg.bearer_context_status_change.has_value()) {
     // Handle bearer context suspension request.
@@ -126,4 +135,17 @@ void cu_up_bearer_context_modification_routine::operator()(
   // Create response.
   response.success = true;
   CORO_RETURN(response);
+}
+
+bool cu_up_bearer_context_modification_routine::requests_pdcp_count_reset() const
+{
+  if (not msg.ng_ran_bearer_context_mod_request.has_value()) {
+    return false;
+  }
+  const auto& session_list = msg.ng_ran_bearer_context_mod_request->pdu_session_res_to_modify_list;
+  return std::any_of(session_list.begin(), session_list.end(), [](const auto& session) {
+    return std::any_of(session.drb_to_modify_list_ng_ran.begin(),
+                       session.drb_to_modify_list_ng_ran.end(),
+                       [](const auto& drb) { return drb.pdcp_count_reset; });
+  });
 }

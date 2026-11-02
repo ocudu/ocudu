@@ -19,6 +19,8 @@ public:
   static const char* name() { return "CU-UP bearer context modification routine"; }
 
 private:
+  bool requests_pdcp_count_reset() const;
+
   ue_context&                                     ue_ctxt;
   const e1ap_bearer_context_modification_request& msg;
   ocudulog::basic_logger&                         logger;

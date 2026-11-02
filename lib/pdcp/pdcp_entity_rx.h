@@ -134,6 +134,8 @@ public:
     logger.log_info("Setted PDCP RX state. {}", st);
   }
 
+  void reset_count() override;
+
   /// \brief Retrun awaitable to wait for cripto tasks to be
   /// finished.
   manual_event_flag& crypto_awaitable();

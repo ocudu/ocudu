@@ -545,6 +545,9 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
             drb_to_mod_item.pdcp_sn_status_info =
                 e1ap_asn1_to_pdcp_sn_status_info(asn1_drb_to_mod_item.pdcp_sn_status_info);
           }
+          // Fill PDCP COUNT reset.
+          drb_to_mod_item.pdcp_count_reset =
+              asn1_drb_to_mod_item.ie_exts_present and asn1_drb_to_mod_item.ie_exts.pdcp_count_reset_present;
           // Fill DL UP params.
           for (const auto& asn1_dl_up_param : asn1_drb_to_mod_item.dl_up_params) {
             e1ap_up_params_item dl_up_params{.up_tnl_info =

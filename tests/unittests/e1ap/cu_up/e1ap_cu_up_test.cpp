@@ -288,6 +288,33 @@ TEST_F(e1ap_cu_up_test,
   EXPECT_EQ(session_item.ng_ul_up_tnl_info.value().tp_address.to_string(), upf_addr);
 }
 
+TEST_F(e1ap_cu_up_test, when_bearer_context_modification_with_pdcp_count_reset_received_then_reset_is_forwarded)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  e1ap_message bearer_context_modification = generate_bearer_context_modification_request(9, 0);
+  auto&        asn1_drb_to_mod             = bearer_context_modification.pdu.init_msg()
+                              .value.bearer_context_mod_request()
+                              ->sys_bearer_context_mod_request.ng_ran_bearer_context_mod_request()
+                              .pdu_session_res_to_modify_list[0]
+                              .drb_to_modify_list_ng_ran[0];
+  asn1_drb_to_mod.ie_exts_present                  = true;
+  asn1_drb_to_mod.ie_exts.pdcp_count_reset_present = true;
+  asn1_drb_to_mod.ie_exts.pdcp_count_reset.value   = asn1::e1ap::pdcp_count_reset_opts::true_value;
+  e1ap->handle_message(bearer_context_modification);
+
+  // The modification response must indicate success.
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+
+  // Verify the decoded PDCP COUNT reset was forwarded to the CU-UP notifier.
+  const auto& mod_req = cu_up_notifier.last_bearer_context_modification_request;
+  ASSERT_TRUE(mod_req.ng_ran_bearer_context_mod_request.has_value());
+  const auto& session_item = *mod_req.ng_ran_bearer_context_mod_request->pdu_session_res_to_modify_list.begin();
+  ASSERT_EQ(session_item.drb_to_modify_list_ng_ran.size(), 1U);
+  EXPECT_TRUE(session_item.drb_to_modify_list_ng_ran.begin()->pdcp_count_reset);
+}
+
 /// Negative: when ng_ul_up_tnl_info is absent in a pdu_session_res_to_modify_item, the field must not be set in the
 /// decoded output (no phantom population of the optional).
 TEST_F(e1ap_cu_up_test,

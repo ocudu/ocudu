@@ -678,6 +678,12 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       drb_result.pdcp_sn_status->dl_count = pdcp_tx_ctrl.get_count();
     }
 
+    // Reset the PDCP COUNT (TS 37.483 section 8.3.2.2).
+    if (drb_to_mod.pdcp_count_reset) {
+      drb->pdcp->get_tx_upper_control_interface().reset_count();
+      drb->pdcp->get_rx_upper_control_interface().reset_count();
+    }
+
     // Apply PDCP status.
     if (drb_to_mod.pdcp_sn_status_info.has_value()) {
       auto&           pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();

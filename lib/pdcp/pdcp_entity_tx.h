@@ -173,6 +173,8 @@ public:
     logger.log_info("Setted PDCP TX state. {}", st);
   }
 
+  void reset_count() override;
+
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
 

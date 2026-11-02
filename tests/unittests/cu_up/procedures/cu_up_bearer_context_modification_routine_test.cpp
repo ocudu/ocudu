@@ -208,3 +208,33 @@ TEST_F(cu_up_bearer_context_modification_procedure_tester, when_duplicate_resume
   get_procedure_result(resp);
   ASSERT_FALSE(resp.success);
 }
+
+TEST_F(cu_up_bearer_context_modification_procedure_tester,
+       when_pdcp_count_reset_comes_without_security_information_procedure_fails)
+{
+  // Create UE context.
+  std::unique_ptr<ue_context> ue_ctx = create_ue();
+
+  // Prepare Bearer Context Modification Request message with a PDCP COUNT reset, but without new keys.
+  e1ap_bearer_context_modification_request msg = {};
+  msg.ue_index                                 = ue_index;
+  e1ap_pdu_session_res_to_modify_item session;
+  session.pdu_session_id = uint_to_pdu_session_id(1);
+  e1ap_drb_to_modify_item_ng_ran drb;
+  drb.drb_id           = drb_id_t::drb1;
+  drb.pdcp_count_reset = true;
+  session.drb_to_modify_list_ng_ran.emplace(drb.drb_id, drb);
+  msg.ng_ran_bearer_context_mod_request.emplace().pdu_session_res_to_modify_list.emplace(session.pdu_session_id,
+                                                                                         session);
+
+  // Start Procedure.
+  start_procedure(*ue_ctx, msg);
+
+  // The CU-UP rejects the request, because the reset would reuse COUNT values with the same keys.
+  e1ap_bearer_context_modification_response resp;
+  get_procedure_result(resp);
+  ASSERT_FALSE(resp.success);
+  ASSERT_TRUE(resp.cause.has_value());
+  ASSERT_TRUE(std::holds_alternative<cause_protocol_t>(*resp.cause));
+  ASSERT_EQ(std::get<cause_protocol_t>(*resp.cause), cause_protocol_t::semantic_error);
+}

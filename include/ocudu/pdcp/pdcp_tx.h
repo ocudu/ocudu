@@ -185,6 +185,9 @@ public:
   /// Set the TX count for status transfer
   virtual void set_count(pdcp_count_info count_info) = 0;
 
+  /// Reset the TX COUNT to 0 and discard all stored PDCP SDUs and PDUs.
+  virtual void reset_count() = 0;
+
   /// Tell the PDCP entity to notify when it is finished with processing
   /// the currently in-flight PDUs. No further PDUs should be push after calling
   /// this function until after calling `restart_pdu_processing()`.

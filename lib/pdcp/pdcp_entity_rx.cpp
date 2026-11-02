@@ -620,6 +620,17 @@ void pdcp_entity_rx::advance_rx_window(uint32_t stop_count, bool stop_on_gap)
   }
 }
 
+void pdcp_entity_rx::reset_count()
+{
+  if (reordering_timer.is_running()) {
+    reordering_timer.stop();
+  }
+  // The UE restarts its COUNT, so the missing PDUs do not arrive anymore (TS 38.300 section 9.2.3.2.2).
+  advance_rx_window(st.rx_next, false);
+  st = {};
+  logger.log_info("Reset PDCP RX COUNT. {}", st);
+}
+
 void pdcp_entity_rx::discard_rx_window()
 {
   while (st.rx_deliv < st.rx_next) {
