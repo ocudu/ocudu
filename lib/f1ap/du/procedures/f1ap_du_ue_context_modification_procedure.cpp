@@ -94,6 +94,11 @@ bool f1ap_du_ue_context_modification_procedure::create_du_request(const asn1::f1
   // MODIFICATION RESPONSE.
   du_request.full_config_required = msg->full_cfg_present;
 
+  // [TS 38.473, section 8.3.4.2] If the gNB-DU Configuration Query IE is contained in the UE CONTEXT MODIFICATION
+  // REQUEST message, gNB-DU shall include the DU To CU RRC Information IE in the UE CONTEXT MODIFICATION RESPONSE
+  // message.
+  du_request.gnb_du_cfg_query = msg->gnb_du_cfg_query_present;
+
   // >> Pass SRBs to setup/modify.
   for (const auto& srb : msg->srbs_to_be_setup_mod_list) {
     du_request.srbs_to_setup.push_back(int_to_srb_id(srb.value().srbs_to_be_setup_mod_item().srb_id));

@@ -61,6 +61,9 @@ struct f1ap_ue_context_update_request {
   /// \brief If true, the gnb-DU shall generate a cell group configuration using full configuration. Otherwise, delta,
   /// should be used.
   bool full_config_required;
+  /// \brief If true, the gNB-DU shall include its cell group configuration of the UE in the response, as per
+  /// TS 38.473 section 8.3.4.2.
+  bool gnb_du_cfg_query = false;
   /// \brief measConfig selected by the CU-CP. If non-empty, the gnb-DU shall deduce which changes to measConfig need
   /// to be applied as per TS 38.473, 8.3.1.2.
   byte_buffer meas_cfg;

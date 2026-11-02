@@ -47,7 +47,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   if (not changed_detected()) {
     // Nothing to do (e.g. No SCells, DRBs or SRBs to setup or release)
     proc_logger.log_proc_completed();
-    CORO_EARLY_RETURN(make_empty_ue_config_response());
+    CORO_EARLY_RETURN(request.gnb_du_cfg_query ? make_ue_config_query_response() : make_empty_ue_config_response());
   }
 
   if (not handle_conditional_mobility_request()) {
@@ -478,6 +478,22 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       ocudu_assert(code == asn1::OCUDUASN_SUCCESS, "Invalid measGapConfig");
     }
   }
+
+  return resp;
+}
+
+f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_query_response() const
+{
+  f1ap_ue_context_update_response resp;
+  resp.result = true;
+
+  // [Implementation-defined] Only a query without changes gets the complete cellGroupConfig. With changes, the
+  // response carries their delta, because the CU-CP uses it for the RRC reconfiguration of the UE.
+  asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
+  calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources.value());
+  asn1::bit_ref       bref{resp.cell_group_cfg};
+  asn1::OCUDUASN_CODE code = asn1::pack(bref, asn1_cell_group);
+  ocudu_assert(code == asn1::OCUDUASN_SUCCESS, "Invalid cellGroupConfig");
 
   return resp;
 }

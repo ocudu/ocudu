@@ -152,6 +152,35 @@ TEST_F(f1ap_du_ue_context_modification_test,
 }
 
 TEST_F(f1ap_du_ue_context_modification_test,
+       when_request_contains_gnb_du_cfg_query_then_f1ap_forwards_it_to_du_and_returns_the_cell_group_config)
+{
+  const byte_buffer cell_group_cfg = byte_buffer::create({0x1, 0x2, 0x3}).value();
+
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.result         = true;
+  this->f1ap_du_cfg_handler.next_ue_context_update_response.cell_group_cfg = cell_group_cfg.copy();
+
+  f1ap_message msg = test_helpers::generate_ue_context_modification_request(
+      int_to_gnb_du_ue_f1ap_id(0), int_to_gnb_cu_ue_f1ap_id(0), {}, {}, {});
+  auto& req                     = msg.pdu.init_msg().value.ue_context_mod_request();
+  req->gnb_du_cfg_query_present = true;
+  req->gnb_du_cfg_query.value   = asn1::f1ap::gnb_du_cfg_query_opts::true_value;
+  f1ap->handle_message(msg);
+  this->last_ue_ctxt_mod_req = msg;
+
+  // DU manager receives the query.
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req.has_value());
+  ASSERT_TRUE(this->f1ap_du_cfg_handler.last_ue_context_update_req->gnb_du_cfg_query);
+
+  // F1AP returns the cellGroupConfig of the DU.
+  auto sent_pdu = this->f1c_gw.pop_tx_pdu();
+  ASSERT_TRUE(sent_pdu.has_value());
+  ASSERT_TRUE(is_ue_context_modification_response_valid(sent_pdu.value()));
+  const ue_context_mod_resp_s& resp = sent_pdu.value().pdu.successful_outcome().value.ue_context_mod_resp();
+  ASSERT_TRUE(resp->du_to_cu_rrc_info_present);
+  ASSERT_EQ(resp->du_to_cu_rrc_info.cell_group_cfg, cell_group_cfg);
+}
+
+TEST_F(f1ap_du_ue_context_modification_test,
        when_ue_context_mod_req_contains_rrc_container_then_rrc_container_is_sent_to_lower_layers)
 {
   byte_buffer dl_dcch_msg   = byte_buffer::create(test_rng::vector_of_uniform_ints<uint8_t>(100)).value();

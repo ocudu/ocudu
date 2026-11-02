@@ -43,6 +43,7 @@ private:
   async_task<mac_ue_reconfiguration_response> update_mac_and_sched(bool cs_rnti_requested = false);
 
   f1ap_ue_context_update_response        make_ue_config_response();
+  f1ap_ue_context_update_response        make_ue_config_query_response() const;
   static f1ap_ue_context_update_response make_empty_ue_config_response();
   static f1ap_ue_context_update_response make_ue_config_failure();
 

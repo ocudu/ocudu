@@ -383,6 +383,57 @@ TEST_F(ue_config_tester, when_config_is_empty_then_procedure_avoids_configuring_
   ASSERT_TRUE(resp.failed_drbs_setups.empty());
 }
 
+TEST_F(ue_config_tester,
+       when_gnb_du_cfg_query_is_received_then_procedure_reports_full_cell_group_config_without_reconfiguring_ue)
+{
+  f1ap_ue_context_update_request req = create_f1ap_ue_context_update_request(test_ue->ue_index, {}, {});
+  req.gnb_du_cfg_query               = true;
+  start_procedure(req);
+
+  // MAC and F1AP should not receive commands to apply UE configuration update.
+  ASSERT_FALSE(this->mac.last_ue_reconf_msg.has_value());
+  ASSERT_FALSE(this->f1ap.last_ue_config.has_value());
+
+  ASSERT_TRUE(proc.ready());
+  f1ap_ue_context_update_response resp = proc.get();
+  ASSERT_TRUE(resp.result);
+  ASSERT_FALSE(resp.full_config_present);
+  ASSERT_FALSE(resp.cell_group_cfg.empty());
+
+  asn1::rrc_nr::cell_group_cfg_s cell_group;
+  asn1::cbit_ref                 bref(resp.cell_group_cfg);
+  ASSERT_EQ(asn1::unpack(cell_group, bref), asn1::OCUDUASN_SUCCESS);
+
+  // The reported configuration is complete: every RLC bearer comes with its RLC and logical channel configuration.
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), test_ue->resources->srbs.size());
+  for (const auto& bearer : cell_group.rlc_bearer_to_add_mod_list) {
+    ASSERT_TRUE(bearer.rlc_cfg_present);
+    ASSERT_TRUE(bearer.mac_lc_ch_cfg_present);
+    ASSERT_FALSE(bearer.reestablish_rlc_present);
+  }
+  ASSERT_EQ(cell_group.rlc_bearer_to_release_list.size(), 0);
+  ASSERT_TRUE(cell_group.sp_cell_cfg.sp_cell_cfg_ded_present);
+  ASSERT_FALSE(cell_group.sp_cell_cfg.recfg_with_sync_present);
+  ASSERT_TRUE(cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg_present);
+  ASSERT_GT(cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup().res_to_add_mod_list.size(), 0);
+}
+
+TEST_F(ue_config_tester, when_gnb_du_cfg_query_comes_with_changes_then_response_carries_the_delta_of_the_changes)
+{
+  f1ap_ue_context_update_request req   = create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {});
+  req.gnb_du_cfg_query                 = true;
+  f1ap_ue_context_update_response resp = this->configure_ue(req);
+  ASSERT_TRUE(resp.result);
+
+  asn1::rrc_nr::cell_group_cfg_s cell_group;
+  asn1::cbit_ref                 bref(resp.cell_group_cfg);
+  ASSERT_EQ(asn1::unpack(cell_group, bref), asn1::OCUDUASN_SUCCESS);
+
+  // Only the new SRB2 is in the cellGroupConfig, not the SRB1 that the UE already has.
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), 1);
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list[0].lc_ch_id, LCID_SRB2);
+}
+
 TEST_F(ue_config_tester, when_ue_cap_rat_list_present_without_drbs_then_capability_update_is_not_skipped)
 {
   // Regression test for the Xn handover path: the UEContextSetupRequest carries UE capabilities
