@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ue_configuration_procedure.h"
+#include "../converters/asn1_cell_group_release_helpers.h"
 #include "../converters/asn1_rrc_config_helpers.h"
 #include "../converters/rlc_config_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
@@ -365,11 +366,20 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     resp.full_config_present = true;
 
   } else if (not request.source_cell_group_cfg.empty()) {
-    // In case of source cell group configuration is passed, a delta configuration should be generated with it.
-    // TODO: Apply diff using sourceCellGroup. For now, we use fullConfig.
+    // If the CU passes the source cell group configuration, generate a delta configuration to it.
+    // [Implementation-defined] The delta contains the complete configuration of the UE and releases the elements that
+    // only the source configures.
     calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources.value());
     resp.full_config_present = false;
-    auto* it                 = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
+    asn1::rrc_nr::cell_group_cfg_s src_cell_group;
+    asn1::cbit_ref                 src_bref{request.source_cell_group_cfg};
+    if (asn1::unpack(src_cell_group, src_bref) == asn1::OCUDUASN_SUCCESS) {
+      calculate_cell_group_config_release(asn1_cell_group, src_cell_group);
+    } else {
+      proc_logger.log_proc_warning(
+          "Failed to unpack the source cellGroupConfig. The delta does not release source elements");
+    }
+    auto* it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
                             asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
                             [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
     if (it != asn1_cell_group.rlc_bearer_to_add_mod_list.end()) {

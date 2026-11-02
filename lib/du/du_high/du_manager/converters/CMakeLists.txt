@@ -6,6 +6,7 @@
 
 
 set(SOURCES
+        asn1_cell_group_release_helpers.cpp
         asn1_csi_meas_config_helpers.cpp
         asn1_ntn_config_helpers.cpp
         asn1_ref_time_r16_helpers.cpp

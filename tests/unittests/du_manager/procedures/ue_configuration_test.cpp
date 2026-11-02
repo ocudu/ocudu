@@ -7,6 +7,7 @@
 /// \brief Unit tests for the DU UE configuration procedure.
 
 #include "du_manager_procedure_test_helpers.h"
+#include "lib/du/du_high/du_manager/converters/asn1_rrc_config_helpers.h"
 #include "lib/du/du_high/du_manager/procedures/ue_configuration_procedure.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
@@ -20,6 +21,9 @@
 
 using namespace ocudu;
 using namespace odu;
+
+/// PUCCH resource ID that only the source cell group configures.
+static constexpr uint8_t SOURCE_ONLY_PUCCH_RES_ID = 100;
 
 class ue_config_tester : public du_manager_proc_tester, public ::testing::Test
 {
@@ -525,6 +529,36 @@ TEST_F(ue_config_tester,
   f1ap_ue_context_update_response res = this->configure_ue(req);
   ASSERT_TRUE(res.result);
   ASSERT_NO_FATAL_FAILURE(check_du_to_cu_rrc_container(req, res.cell_group_cfg, &reest_cfg_copy, true));
+}
+
+TEST_F(ue_config_tester, when_source_cell_group_is_included_then_resources_of_only_the_source_are_released)
+{
+  // The source cell group configures one PUCCH resource more than the target configuration of the UE.
+  asn1::rrc_nr::cell_group_cfg_s src_cell_group;
+  calculate_cell_group_config_diff(src_cell_group, {}, test_ue->resources.value());
+  auto&                     src_pucch = src_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
+  asn1::rrc_nr::pucch_res_s extra_res = src_pucch.res_to_add_mod_list[0];
+  extra_res.pucch_res_id              = SOURCE_ONLY_PUCCH_RES_ID;
+  src_pucch.res_to_add_mod_list.push_back(extra_res);
+
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  {
+    asn1::bit_ref bref{req.source_cell_group_cfg};
+    ASSERT_EQ(asn1::pack(bref, src_cell_group), asn1::OCUDUASN_SUCCESS);
+  }
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+  ASSERT_FALSE(res.full_config_present);
+
+  asn1::rrc_nr::cell_group_cfg_s cell_group;
+  asn1::cbit_ref                 bref(res.cell_group_cfg);
+  ASSERT_EQ(asn1::unpack(cell_group, bref), asn1::OCUDUASN_SUCCESS);
+  const auto& pucch = cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
+  ASSERT_EQ(pucch.res_to_release_list.size(), 1);
+  ASSERT_EQ(pucch.res_to_release_list[0], SOURCE_ONLY_PUCCH_RES_ID);
+  ASSERT_EQ(pucch.res_to_add_mod_list.size(), src_pucch.res_to_add_mod_list.size() - 1);
+  ASSERT_EQ(cell_group.rlc_bearer_to_release_list.size(), 0);
 }
 
 TEST_F(ue_config_tester,
