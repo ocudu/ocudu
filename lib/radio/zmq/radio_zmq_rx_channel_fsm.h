@@ -21,6 +21,8 @@ class radio_zmq_rx_channel_fsm
     SEND_REQUEST,
     /// Indicates it has been successfully initialized and it is waiting for data to transmit.
     RECEIVE_DATA,
+    /// Indicates the peer disconnected while its response was pending, so the response is not going to arrive.
+    PEER_LOST,
     /// Indicates it is notify_stop.
     STOPPED
   };
@@ -33,7 +35,10 @@ class radio_zmq_rx_channel_fsm
   radio_zmq_timer timer;
 
   /// Same as is_running().
-  bool is_running_unprotected() const { return state == states::SEND_REQUEST || state == states::RECEIVE_DATA; }
+  bool is_running_unprotected() const
+  {
+    return state == states::SEND_REQUEST || state == states::RECEIVE_DATA || state == states::PEER_LOST;
+  }
 
 public:
   /// Notifies that the receive stream has been initialized successfully.
@@ -61,11 +66,33 @@ public:
     }
   }
 
+  /// \brief Notifies that the peer disconnected.
+  ///
+  /// A disconnection matters only while a response is pending. In any other state, the next request is queued and
+  /// delivered to the next peer, so it is ignored.
+  void on_disconnected()
+  {
+    std::scoped_lock lock(mutex);
+    if (state == states::RECEIVE_DATA) {
+      state = states::PEER_LOST;
+    }
+  }
+
+  /// Notifies that the socket was replaced, so the pending response is given up and a new request is sent.
+  void on_reopen_socket()
+  {
+    std::scoped_lock lock(mutex);
+    if (state == states::PEER_LOST) {
+      state = states::SEND_REQUEST;
+      timer.start();
+    }
+  }
+
   /// Notifies that a block of data was sent.
   void data_received()
   {
     std::scoped_lock lock(mutex);
-    if (state == states::RECEIVE_DATA) {
+    if (state == states::RECEIVE_DATA || state == states::PEER_LOST) {
       state = states::SEND_REQUEST;
       timer.start();
     }
@@ -98,7 +125,14 @@ public:
   bool has_pending_response() const
   {
     std::scoped_lock lock(mutex);
-    return state == states::RECEIVE_DATA;
+    return state == states::RECEIVE_DATA || state == states::PEER_LOST;
+  }
+
+  /// Indicates whether the peer disconnected while its response was pending.
+  bool has_disconnected() const
+  {
+    std::scoped_lock lock(mutex);
+    return state == states::PEER_LOST;
   }
 
   /// \brief Checks if the waiting time for request or data has expired.

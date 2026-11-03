@@ -5,6 +5,8 @@
 #include "radio_zmq_rx_channel.h"
 #include "ocudu/ocuduvec/zero.h"
 #include "ocudu/support/synchronization/sync_event.h"
+#include <atomic>
+#include <cstring>
 #include <set>
 
 using namespace ocudu;
@@ -26,8 +28,10 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                      zmq_contex
   logger(ocudulog::fetch_basic_logger(config.channel_id_str, false)),
   circular_buffer(config.buffer_size),
   buffer(config.buffer_size * sizeof(cf_t)),
+  context(zmq_context),
   notification_handler(notification_handler_),
-  async_executor(async_executor_)
+  async_executor(async_executor_),
+  description(config)
 {
   // Set log level.
   logger.set_level(config.log_level);
@@ -38,42 +42,9 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                      zmq_contex
     return;
   }
 
-  // Create socket.
-  sock = ::zmq_socket(zmq_context, config.socket_type);
-  if (sock == nullptr) {
-    logger.error("Failed to open receiver socket ({}). {}.", config.address, ::zmq_strerror(::zmq_errno()));
+  // Create the socket and connect it to the peer.
+  if (!open_socket()) {
     return;
-  }
-
-  // Bind socket.
-  logger.info("Connecting to address {}.", config.address);
-  if (::zmq_connect(sock, config.address.c_str()) == -1) {
-    logger.error("Failed to bind receiver socket ({}). {}.", config.address, ::zmq_strerror(::zmq_errno()));
-    return;
-  }
-
-  // If a timeout is set...
-  if (config.trx_timeout_ms) {
-    int timeout = config.trx_timeout_ms;
-
-    // Set receive timeout.
-    if (::zmq_setsockopt(sock, ZMQ_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set receive timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
-      return;
-    }
-
-    // Set send timeout.
-    if (::zmq_setsockopt(sock, ZMQ_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set send timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
-      return;
-    }
-
-    // Set linger timeout.
-    timeout = config.linger_timeout_ms;
-    if (::zmq_setsockopt(sock, ZMQ_LINGER, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set linger timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
-      return;
-    }
   }
 
   // Indicate the initialization was successful.
@@ -82,10 +53,109 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                      zmq_contex
 
 radio_zmq_rx_channel::~radio_zmq_rx_channel()
 {
-  // Close socket if opened.
+  close_socket();
+}
+
+bool radio_zmq_rx_channel::open_socket()
+{
+  // Create socket.
+  sock = ::zmq_socket(context, description.socket_type);
+  if (sock == nullptr) {
+    logger.error("Failed to open receiver socket ({}). {}.", description.address, ::zmq_strerror(::zmq_errno()));
+    return false;
+  }
+
+  // Monitor the socket to learn when its peer disconnects. The monitor must be set before connecting, otherwise the
+  // first connection is not reported.
+  // Monitor socket addresses cannot be reused. Use a different address every time a socket is reopened.
+  static std::atomic<unsigned> monitor_count{0};
+  monitor_address = fmt::format("inproc://radio_zmq_rx_monitor_{}", monitor_count.fetch_add(1));
+  if (::zmq_socket_monitor(sock, monitor_address.c_str(), ZMQ_EVENT_DISCONNECTED) == -1) {
+    logger.error("Failed to monitor receiver socket ({}). {}.", description.address, ::zmq_strerror(::zmq_errno()));
+    return false;
+  }
+  monitor = ::zmq_socket(context, ZMQ_PAIR);
+  if (monitor == nullptr || ::zmq_connect(monitor, monitor_address.c_str()) == -1) {
+    logger.error("Failed to open the monitor of the receiver socket ({}). {}.",
+                 description.address,
+                 ::zmq_strerror(::zmq_errno()));
+    return false;
+  }
+
+  // Connect socket.
+  logger.info("Connecting to address {}.", description.address);
+  if (::zmq_connect(sock, description.address.c_str()) == -1) {
+    logger.error("Failed to bind receiver socket ({}). {}.", description.address, ::zmq_strerror(::zmq_errno()));
+    return false;
+  }
+
+  // If a timeout is set...
+  if (description.trx_timeout_ms) {
+    int timeout = description.trx_timeout_ms;
+
+    // Set receive timeout.
+    if (::zmq_setsockopt(sock, ZMQ_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+      logger.error("Failed to set receive timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
+      return false;
+    }
+
+    // Set send timeout.
+    if (::zmq_setsockopt(sock, ZMQ_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
+      logger.error("Failed to set send timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
+      return false;
+    }
+
+    // Set linger timeout.
+    timeout = description.linger_timeout_ms;
+    if (::zmq_setsockopt(sock, ZMQ_LINGER, &timeout, sizeof(timeout)) == -1) {
+      logger.error("Failed to set linger timeout on tx socket. {}.", ::zmq_strerror(::zmq_errno()));
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void radio_zmq_rx_channel::close_socket()
+{
+  if (monitor != nullptr) {
+    ::zmq_close(monitor);
+    monitor = nullptr;
+  }
   if (sock != nullptr) {
+    // Drop the request that the lost peer did not take.
+    int linger = 0;
+    ::zmq_setsockopt(sock, ZMQ_LINGER, &linger, sizeof(linger));
     ::zmq_close(sock);
     sock = nullptr;
+  }
+}
+
+void radio_zmq_rx_channel::process_monitor()
+{
+  // An event is a frame with the event and its value, and a frame with the address of the peer.
+  uint8_t event[6];
+  while (::zmq_recv(monitor, event, sizeof(event), ZMQ_DONTWAIT) == sizeof(event)) {
+    uint16_t id = 0;
+    std::memcpy(&id, event, sizeof(id));
+
+    // Notify the monitor events to the FSM.
+    switch (id) {
+      case ZMQ_EVENT_DISCONNECTED:
+        state_fsm.on_disconnected();
+        break;
+      default:
+        break;
+    }
+
+    // Skip the frame with the address of the peer.
+    int    more = 0;
+    size_t size = sizeof(more);
+    ::zmq_getsockopt(monitor, ZMQ_RCVMORE, &more, &size);
+    while (more != 0) {
+      ::zmq_recv(monitor, nullptr, 0, 0);
+      ::zmq_getsockopt(monitor, ZMQ_RCVMORE, &more, &size);
+    }
   }
 }
 
@@ -204,11 +274,29 @@ void radio_zmq_rx_channel::run_async()
     return;
   }
 
+  // A request socket waits for its reply for ever, so the only way to tell that the peer that was asked is gone is its
+  // disconnection, which the FSM keeps only if a response is pending. A slow peer is therefore waited for, as it is not
+  // disconnected.
+  process_monitor();
+
   // Transmit request if it has no pending response, otherwise receive response.
   if (!state_fsm.has_pending_response()) {
     send_request();
   } else {
     receive_response();
+  }
+
+  // A reply that the peer sent before leaving has been received by now. If the request is still pending, its reply
+  // never comes, and the socket cannot send another request, so it is replaced by a new one that connects to the next
+  // peer.
+  if (state_fsm.has_disconnected()) {
+    logger.info("Peer disconnected, requesting data again.");
+    close_socket();
+    if (!open_socket()) {
+      state_fsm.on_error();
+    } else {
+      state_fsm.on_reopen_socket();
+    }
   }
 
   // Check if the state timer expired.

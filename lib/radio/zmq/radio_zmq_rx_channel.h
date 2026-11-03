@@ -28,6 +28,10 @@ class radio_zmq_rx_channel
   rt_stop_event_source stop_control;
   /// ZMQ socket.
   void* sock = nullptr;
+  /// Socket that receives the events of the ZMQ socket, which tell when its peer is lost.
+  void* monitor = nullptr;
+  /// Address of the monitor endpoint.
+  std::string monitor_address;
   /// ZMQ socket type.
   int socket_type;
   /// Logger.
@@ -36,6 +40,8 @@ class radio_zmq_rx_channel
   blocking_queue<cf_t> circular_buffer;
   /// Transmission buffer.
   std::vector<cf_t> buffer;
+  /// ZMQ context.
+  void* context;
   /// Notification handler.
   radio_event_notifier& notification_handler;
   /// Asynchronous task executor.
@@ -80,6 +86,18 @@ public:
   void receive(span<cf_t> buffer);
 
 private:
+  /// Parameters to reopen the socket.
+  channel_description description;
+
+  /// Creates the socket and its monitor, and connects the socket to the peer.
+  bool open_socket();
+
+  /// Closes the monitor and the socket.
+  void close_socket();
+
+  /// Reads the pending events of the socket and notifies them to the FSM.
+  void process_monitor();
+
   void send_request();
 
   void receive_response();
