@@ -6,12 +6,12 @@
 #include "ue_capability_manager.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h" // for ho_prep_info_s
-#include "ocudu/asn1/rrc_nr/ue_cap_utils.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/du/du_cell_config.h"
 #include "ocudu/du/du_high/du_test_mode_config.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/ran/pusch/tx_scheme_configuration.h"
+#include "ocudu/rrc/ue_cap_utils.h"
 
 using namespace ocudu;
 using namespace odu;

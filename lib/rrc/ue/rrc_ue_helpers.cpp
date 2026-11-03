@@ -6,13 +6,13 @@
 #include "rrc_ue_helpers.h"
 #include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
-#include "ocudu/asn1/rrc_nr/ue_cap_utils.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg_ies.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/lpp/reference_location.h"
 #include "ocudu/rrc/rrc_ue.h"
+#include "ocudu/rrc/ue_cap_utils.h"
 #include <type_traits>
 
 using namespace ocudu;
