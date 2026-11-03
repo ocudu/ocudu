@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "ocudu/support/io/transport_layer_address.h"
+#include "ocudu/support/error_handling.h"
 #include "ocudu/support/ocudu_assert.h"
 
 using namespace ocudu;
@@ -23,7 +24,8 @@ transport_layer_address transport_layer_address::create_from_sockaddr(native_typ
   return transport_layer_address(*addr.addr, addr.addrlen);
 }
 
-transport_layer_address transport_layer_address::create_from_string(const std::string& ip_str)
+expected<transport_layer_address, std::string>
+transport_layer_address::try_create_from_string(const std::string& ip_str)
 {
   // Explicit hints, as the defaults include AI_ADDRCONFIG, which rejects IPv6 addresses on hosts without IPv6
   // connectivity.
@@ -32,13 +34,22 @@ transport_layer_address transport_layer_address::create_from_string(const std::s
   ::addrinfo* results;
 
   int err = ::getaddrinfo(ip_str.c_str(), nullptr, &hints, &results);
-  ocudu_assert(err == 0, "Getaddrinfo error: {} - {}", ip_str, ::gai_strerror(err));
+  if (err != 0) {
+    return make_unexpected(std::string(::gai_strerror(err)));
+  }
 
   transport_layer_address res(*results->ai_addr, results->ai_addrlen);
 
   ::freeaddrinfo(results);
 
   return res;
+}
+
+transport_layer_address transport_layer_address::create_from_string(const std::string& ip_str)
+{
+  expected<transport_layer_address, std::string> res = try_create_from_string(ip_str);
+  report_fatal_error_if_not(res.has_value(), "Could not resolve address \"{}\": {}", ip_str, res.error());
+  return *res;
 }
 
 transport_layer_address transport_layer_address::create_from_bytes(span<const uint8_t> ip_bytes)

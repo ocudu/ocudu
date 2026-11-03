@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ocudu/adt/expected.h"
 #include "ocudu/adt/span.h"
 #include "ocudu/support/io/sockets.h"
 #include "fmt/format.h"
@@ -27,7 +28,11 @@ public:
 
   /// Creates a transport_layer_address from a numeric IPv4 or IPv6 address or hostname string.
   /// Supports standard IPv6 notation, including compressed forms (e.g. "2001:db8::1").
+  /// Terminates the application if the string does not resolve.
   static transport_layer_address create_from_string(const std::string& ip_str);
+
+  /// Same as create_from_string, but returns the resolver error message if the string does not resolve.
+  static expected<transport_layer_address, std::string> try_create_from_string(const std::string& ip_str);
 
   /// Creates a transport_layer_address from raw IPv4 or IPv6 bytes in network byte order (4 bytes for IPv4, 16 for
   /// IPv6, as per 3GPP TS 38.414). 160-bit combined IPv4+IPv6 is not yet supported.

@@ -107,6 +107,11 @@ TEST(transport_layer_address_test, ipv4_is_always_different_from_ipv6)
   ASSERT_NE(addr1, addr2);
 }
 
+TEST(transport_layer_address_test, unresolvable_hostname_returns_error)
+{
+  ASSERT_FALSE(transport_layer_address::try_create_from_string("amf.invalid").has_value());
+}
+
 TEST(transport_layer_address_test, ipv6_bytes_with_compressed_address)
 {
   auto addr = transport_layer_address::create_from_string("2001:db8::1");

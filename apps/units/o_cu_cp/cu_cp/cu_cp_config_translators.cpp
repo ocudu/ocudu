@@ -398,10 +398,18 @@ static transport_layer_address get_amf_address(const cu_cp_unit_amf_config_item&
   // TODO: Take the address the SCTP association actually established, which the gateway resolves with
   // sctp_getpaddrs() but does not expose. The remaining configured addresses are multihoming alternatives of the same
   // association, so an AMF whose primary path is not the first of them is reported wrongly.
-  transport_layer_address amf_addr = transport_layer_address::create_from_string(amf_cfg.ip_addrs.front());
-  amf_addr.set_port(amf_cfg.port);
+  // An AMF hostname may not resolve at startup, e.g. when the CU-CP runs without a core. The N2 client resolves it
+  // again on each connection attempt, so startup continues with an empty address.
+  expected<transport_layer_address, std::string> amf_addr =
+      transport_layer_address::try_create_from_string(amf_cfg.ip_addrs.front());
+  if (not amf_addr.has_value()) {
+    ocudulog::fetch_basic_logger("CU-CP").warning(
+        "Could not resolve AMF address \"{}\": {}", amf_cfg.ip_addrs.front(), amf_addr.error());
+    return {};
+  }
+  amf_addr->set_port(amf_cfg.port);
 
-  return amf_addr;
+  return *amf_addr;
 }
 
 /// Generates the NGAP configuration and returns it.
