@@ -964,6 +964,40 @@ TEST(serving_cell_config_converter_test, test_initial_pdsch_serving_cell_cfg_con
       << "For 8 HARQs, this flag can be avoided";
 }
 
+TEST(serving_cell_config_converter_test, max_mimo_layers_is_only_encoded_when_configured)
+{
+  for (std::optional<unsigned> max_mimo_layers : {std::optional<unsigned>{}, {1U}, {2U}, {4U}}) {
+    auto src_cfg = make_initial_du_ue_resource_config();
+
+    odu::du_ue_resource_config dest_cfg{src_cfg};
+    auto&                      dest_pdsch_serving_cell_cfg =
+        dest_cfg.cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg.pdsch_serv_cell_cfg.value();
+    dest_pdsch_serving_cell_cfg.x_ov_head                 = ocudu::x_overhead::xoh6;
+    dest_pdsch_serving_cell_cfg.max_mimo_layers           = max_mimo_layers;
+    dest_pdsch_serving_cell_cfg.processing_type_2_enabled = true;
+
+    asn1::rrc_nr::cell_group_cfg_s rrc_cell_grp_cfg;
+    odu::calculate_cell_group_config_diff(rrc_cell_grp_cfg, src_cfg, dest_cfg, default_cell_rrm());
+
+    // Both fields are in an extension addition group of PDSCH-ServingCellConfig, as per TS 38.331, Section 6.3.2.
+    byte_buffer   packed;
+    asn1::bit_ref bref{packed};
+    ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
+
+    asn1::rrc_nr::cell_group_cfg_s unpacked;
+    asn1::cbit_ref                 cbref{packed};
+    ASSERT_EQ(asn1::unpack(unpacked, cbref), asn1::OCUDUASN_SUCCESS);
+
+    const auto& pdsch_serving_cell_cfg = unpacked.sp_cell_cfg.sp_cell_cfg_ded.pdsch_serving_cell_cfg.setup();
+    ASSERT_EQ(pdsch_serving_cell_cfg.max_mimo_layers_present, max_mimo_layers.has_value());
+    if (max_mimo_layers.has_value()) {
+      ASSERT_EQ(pdsch_serving_cell_cfg.max_mimo_layers, *max_mimo_layers);
+    }
+    ASSERT_TRUE(pdsch_serving_cell_cfg.processing_type2_enabled_present);
+    ASSERT_TRUE(pdsch_serving_cell_cfg.processing_type2_enabled);
+  }
+}
+
 TEST(serving_cell_config_converter_test, test_custom_pdsch_serving_cell_cfg_conversion)
 {
   auto src_cfg = make_initial_du_ue_resource_config();

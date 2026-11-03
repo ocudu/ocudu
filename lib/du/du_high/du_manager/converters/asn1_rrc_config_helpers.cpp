@@ -3219,9 +3219,9 @@ static void calculate_pdsch_serving_cell_cfg_diff(asn1::rrc_nr::pdsch_serving_ce
     out.pucch_cell         = dest.pucch_cell.value();
   }
 
-  if (dest.max_mimo_layers > 0) {
+  if (dest.max_mimo_layers.has_value()) {
     out.max_mimo_layers_present = true;
-    out.max_mimo_layers         = dest.max_mimo_layers;
+    out.max_mimo_layers         = dest.max_mimo_layers.value();
   }
 
   if (dest.processing_type_2_enabled.has_value()) {

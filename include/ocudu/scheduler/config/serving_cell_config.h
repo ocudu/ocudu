@@ -292,9 +292,10 @@ struct pdsch_serving_cell_config {
   /// See TS 38.331, \c nrofHARQ-ProcessesForPDSCH.
   nof_harq_proc_for_pdsch          nof_harq_proc{nof_harq_proc_for_pdsch::n16};
   std::optional<serv_cell_index_t> pucch_cell;
-  /// Maximum number of MIMO layers to be used for PDSCH in all BWPs of this serving cell. Values {1,...,8};
-  unsigned            max_mimo_layers;
-  std::optional<bool> processing_type_2_enabled;
+  /// See TS 38.331, \c maxMIMO-Layers. Maximum number of layers of the PDSCHs in all the BWPs of the serving cell.
+  /// Values {1,...,8}.
+  std::optional<unsigned> max_mimo_layers;
+  std::optional<bool>     processing_type_2_enabled;
 
   bool operator==(const pdsch_serving_cell_config& rhs) const
   {
