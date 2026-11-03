@@ -157,7 +157,7 @@ public:
   virtual e2sm_action_definition handle_packed_e2sm_action_definition(const ocudu::byte_buffer& buf) = 0;
   /// \brief Handle the packed E2SM Event Trigger Definition.
   /// \param[in] buf
-  /// \return Returns the E2SM Event Trigger Definition.
+  /// \return Returns the E2SM Event Trigger Definition, with an UNKNOWN RIC service type if it cannot be decoded.
   virtual e2sm_event_trigger_definition handle_packed_event_trigger_definition(const ocudu::byte_buffer& buf) = 0;
   /// \brief Handle the packed E2 RIC Control Request.
   /// \param[in] req E2 RIC Control Request.

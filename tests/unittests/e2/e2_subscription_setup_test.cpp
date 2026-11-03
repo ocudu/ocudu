@@ -87,6 +87,30 @@ TEST_F(e2_test_subscriber, unsupported_ran_function_returns_specific_failure)
   EXPECT_EQ(failure->ric_request_id.ric_instance_id, 1);
 }
 
+TEST_F(e2_test_subscriber, undecodable_event_trigger_returns_specific_failure)
+{
+  static_cast<dummy_e2sm_handler&>(*e2sm_kpm_packer).event_trigger_definition.ric_service_type =
+      e2sm_event_trigger_definition::UNKNOWN;
+  auto       request = make_subscription_request();
+  e2_message message;
+  message.pdu.set_init_msg().load_info_obj(ASN1_E2AP_ID_RIC_SUB);
+  message.pdu.init_msg().value.ric_sub_request() = request;
+  e2->handle_message(message);
+  task_worker.run_pending_tasks();
+  const auto& pdu = e2_client->last_tx_e2_pdu.pdu;
+  ASSERT_EQ(pdu.type().value, asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome);
+  const auto& failure = pdu.unsuccessful_outcome().value.ric_sub_fail();
+  ASSERT_EQ(failure->cause.type().value, asn1::e2ap::cause_c::types_opts::ric_request);
+  EXPECT_EQ(failure->cause.ric_request(), asn1::e2ap::cause_ric_request_e::event_trigger_not_supported);
+  EXPECT_EQ(failure->ric_request_id.ric_requestor_id, 123);
+  EXPECT_EQ(failure->ric_request_id.ric_instance_id, 1);
+
+  // Rejected request leaves no subscription behind
+  asn1::e2ap::ric_sub_delete_request_s deletion;
+  deletion->ric_request_id = request->ric_request_id;
+  EXPECT_FALSE(e2_subscription_mngr->handle_subscription_delete(deletion).success);
+}
+
 TEST_F(e2_test_subscriber, setup_failure_without_explicit_cause_uses_unspecified)
 {
   auto request = make_subscription_request();

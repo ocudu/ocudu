@@ -54,8 +54,17 @@ e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const ocudu::byte_b
   e2sm_event_trigger_definition       e2sm_event_trigger_def;
   e2sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
   asn1::cbit_ref                      bref(event_trigger_definition);
+  e2sm_event_trigger_def.ric_service_type = e2sm_event_trigger_definition::e2sm_ric_service_type_t::UNKNOWN;
+  e2sm_event_trigger_def.report_period    = 0;
   if (asn1::unpack(e2sm_kpm_event_trigger_def, bref) != asn1::OCUDUASN_SUCCESS) {
     fmt::println("Failed to unpack E2SM KPM Event Trigger Definition");
+    return e2sm_event_trigger_def;
+  }
+  // Only event_definition_format1 carries a report period.
+  if (e2sm_kpm_event_trigger_def.event_definition_formats.type() !=
+      e2sm_kpm_event_trigger_definition_s::event_definition_formats_c_::types::event_definition_format1) {
+    fmt::println("Unsupported E2SM KPM Event Trigger Definition format");
+    return e2sm_event_trigger_def;
   }
 
   e2sm_event_trigger_def.ric_service_type = e2sm_event_trigger_definition::e2sm_ric_service_type_t::REPORT;

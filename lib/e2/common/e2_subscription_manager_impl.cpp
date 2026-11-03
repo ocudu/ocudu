@@ -52,6 +52,13 @@ e2_subscription_manager_impl::handle_subscription_setup(const asn1::e2ap::ric_su
     }
     event_trigger_def = e2sm->get_e2sm_packer().handle_packed_event_trigger_definition(
         msg->ric_sub_details.ric_event_trigger_definition);
+    if (event_trigger_def.ric_service_type == e2sm_event_trigger_definition::UNKNOWN) {
+      // The event trigger definition cannot be decoded or is not supported, as per O-RAN.WG3.TS.E2AP, Section 8.2.1.3.
+      logger.error("Failed to decode the event trigger definition of RAN function {}", msg->ran_function_id);
+      outcome.success                           = false;
+      outcome.cause.emplace().set_ric_request() = cause_ric_request_e::event_trigger_not_supported;
+      return outcome;
+    }
     if (event_trigger_def.report_period == 0) {
       logger.warning("Invalid report period (0ms). Defaulting to {}ms", default_report_period.count());
       subscription.subscription_info.report_period = default_report_period;

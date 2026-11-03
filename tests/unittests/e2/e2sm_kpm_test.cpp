@@ -270,6 +270,45 @@ std::vector<uint32_t> get_reported_ues(const std::vector<std::vector<uint32_t>>&
   return reported_ues;
 }
 
+TEST(e2sm_kpm_event_trigger_test, only_a_decodable_format1_trigger_has_a_report_service_type)
+{
+  dummy_e2sm_kpm_du_meas_provider meas_provider;
+  e2sm_kpm_asn1_packer            packer(meas_provider);
+
+  byte_buffer                         bytes;
+  asn1::bit_ref                       bref(bytes);
+  e2sm_kpm_event_trigger_definition_s trigger;
+  trigger.event_definition_formats.set_event_definition_format1().report_period = 500;
+  ASSERT_EQ(asn1::pack(bref, trigger), asn1::OCUDUASN_SUCCESS);
+  e2sm_event_trigger_definition decoded = packer.handle_packed_event_trigger_definition(bytes);
+  EXPECT_EQ(decoded.ric_service_type, e2sm_event_trigger_definition::REPORT);
+  EXPECT_EQ(decoded.report_period, 500U);
+
+  // Format 2 has no report period
+  byte_buffer   bytes_format2;
+  asn1::bit_ref bref_format2(bytes_format2);
+  auto&         format2 = trigger.event_definition_formats.set_event_definition_format2();
+  format2.event_trigger_list.resize(1);
+  auto& condition    = format2.event_trigger_list[0].event_cond;
+  condition.logic_op = event_lc_operator_opts::equal;
+  for (event_expression_s* expression : {&condition.left_expr, &condition.right_expr}) {
+    expression->param_list.resize(1);
+    expression->param_list[0].param_type.set_value();
+  }
+  ASSERT_EQ(asn1::pack(bref_format2, trigger), asn1::OCUDUASN_SUCCESS);
+  asn1::cbit_ref                      bref_decode(bytes_format2);
+  e2sm_kpm_event_trigger_definition_s decoded_format2;
+  ASSERT_EQ(asn1::unpack(decoded_format2, bref_decode), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(decoded_format2.event_definition_formats.type(),
+            e2sm_kpm_event_trigger_definition_s::event_definition_formats_c_::types::event_definition_format2);
+  EXPECT_EQ(packer.handle_packed_event_trigger_definition(bytes_format2).ric_service_type,
+            e2sm_event_trigger_definition::UNKNOWN);
+
+  // An empty buffer cannot be decoded
+  EXPECT_EQ(packer.handle_packed_event_trigger_definition(byte_buffer{}).ric_service_type,
+            e2sm_event_trigger_definition::UNKNOWN);
+}
+
 // E2 Setup Request is needed for Wireshark to correctly decode the subsequent Subscription Requests
 TEST_P(e2_entity_test_with_pcap, e2sm_kpm_generates_ran_func_desc)
 {
