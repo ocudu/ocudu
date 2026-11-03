@@ -1045,7 +1045,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
                               pdsch_params,
                               units::bytes{tbs_bytes},
                               u.crnti,
-                              cell_cfg,
+                              u.get_pcell().cfg(),
                               u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id),
                               pdcch.dci.as_c_rnti_f1_0(),
                               vrbs,

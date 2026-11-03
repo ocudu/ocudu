@@ -14,6 +14,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/pdcch/dci_format.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
+#include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
 
@@ -589,6 +590,38 @@ static void assert_dci_size_config(search_space_id ss_id, const dci_size_config&
                error_msg);
 }
 
+/// Computes the TBS for limited buffer rate matching of the UE PDSCHs, as per TS 38.212, Section 5.4.2.1.
+static units::bytes compute_pdsch_tbs_lbrm(const ue_cell_configuration& ue_cell_cfg)
+{
+  // [Implementation-defined] Without maxMIMO-Layers, the UE derives TBS_LBRM from the maximum number of PDSCH layers it
+  // supports, which the scheduler does not know.
+  const pdsch_serving_cell_config* pdsch_serv_cell_cfg = ue_cell_cfg.pdsch_serving_cell_cfg();
+  if (pdsch_serv_cell_cfg == nullptr or not pdsch_serv_cell_cfg->max_mimo_layers.has_value()) {
+    return tbs_lbrm_default;
+  }
+
+  // The maximum modulation order is given by the MCS table of the DL BWPs, and the number of PRBs by their size.
+  modulation_scheme max_modulation = modulation_scheme::QAM64;
+  unsigned          max_nof_prbs   = 0;
+  for (const sched_bwp_config& bwp : ue_cell_cfg.bwps()) {
+    max_nof_prbs = std::max(max_nof_prbs, bwp.dl.cfg().crbs.length());
+
+    const pdsch_config* pdsch_cfg = bwp.dl.pdsch().ded();
+    if (pdsch_cfg == nullptr) {
+      continue;
+    }
+    if (pdsch_cfg->mcs_table == pdsch_mcs_table::qam1024) {
+      // Note: TS 38.212, Section 5.4.2.1 assumes 256-QAM instead for a UE that reports pdsch-1024QAM-2MIMO-FR1-r17 and
+      // is configured with more than two layers. The DU does not configure the qam1024 MCS table.
+      max_modulation = modulation_scheme::QAM1024;
+    } else if (pdsch_cfg->mcs_table == pdsch_mcs_table::qam256) {
+      max_modulation = std::max(max_modulation, modulation_scheme::QAM256);
+    }
+  }
+
+  return tbs_calculator_dlsch_lbrm(*pdsch_serv_cell_cfg->max_mimo_layers, max_modulation, max_nof_prbs);
+}
+
 ue_cell_configuration::ue_cell_configuration(rnti_t                                crnti_,
                                              const cell_configuration&             cell_cfg_common_,
                                              const ue_cell_config_ptr&             ue_cell_params_,
@@ -644,6 +677,8 @@ void ue_cell_configuration::reconfigure(const ue_cell_config_ptr&             ue
   for (const sched_bwp_config& bwp : cell_ded->bwps.unsorted()) {
     generate_crnti_monitored_pdcch_candidates(search_spaces, bwp, crnti);
   }
+
+  pdsch_tbs_lbrm_value = compute_pdsch_tbs_lbrm(*this);
 }
 
 void ue_cell_configuration::set_rrm_config(const sched_ue_resource_alloc_config& ue_res_alloc_cfg_)

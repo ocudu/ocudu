@@ -549,7 +549,7 @@ ue_cell_grid_allocator::set_pdsch_params(dl_grant_info& grant, const vrb_alloc& 
                               pdsch_cfg,
                               mcs_tbs_info.tbs,
                               u.crnti,
-                              cell_cfg,
+                              ue_cell_cfg,
                               ss_info,
                               grant.pdcch->dci.as_c_rnti_f1_0(),
                               vrbs.type1(),

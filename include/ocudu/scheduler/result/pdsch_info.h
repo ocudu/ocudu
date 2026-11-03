@@ -14,6 +14,7 @@
 #include "ocudu/ran/precoding/precoding_and_beamforming_info.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
 #include "ocudu/ran/rnti.h"
+#include "ocudu/ran/sch/sch_constants.h"
 #include "ocudu/ran/sib/sib_type.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/ran/time_alignment_config.h"
@@ -76,6 +77,14 @@ struct pdsch_information {
   precoding_and_beamforming_info precoding_and_beamforming;
   /// Transmit power information for the PDSCH.
   tx_power_pdsch_information tx_pwr_info;
+  /// \brief Transport block size for limited buffer rate matching, parameter \f$TBS_{LBRM}\f$ of TS 38.212
+  /// Section 5.4.2.1.
+  ///
+  /// The PDSCHs scheduled with a C-RNTI use the value derived from the UE configuration.
+  /// [Implementation-defined] The other PDSCHs (SI, paging, RAR and Msg4) use \ref tbs_lbrm_default. For a transport
+  /// block of a single codeblock, \f$N_{ref}\f$ is greater than \f$N\f$ for any \f$TBS_{LBRM}\f$ that a UE can derive,
+  /// so that the circular buffer is not limited.
+  units::bytes tbs_lbrm = tbs_lbrm_default;
 };
 
 /// Dummy MAC CE payload.

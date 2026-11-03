@@ -311,6 +311,8 @@ dl_msg_allocation_test_helper unittests::build_valid_dl_msg_alloc_pdu()
                                                                         .nof_remaining_repetitions = 0,
                                                                         .buffer_occupancy          = 0,
                                                                         .olla_offset               = 4}};
+  // TBS_LBRM of a UE configured with two layers, 256-QAM and BWPs of up to 51 PRBs.
+  helper.pdu.pdsch_cfg.tbs_lbrm = units::bytes(18951);
 
   return helper;
 }

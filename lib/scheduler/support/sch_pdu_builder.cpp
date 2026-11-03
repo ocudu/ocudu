@@ -367,12 +367,13 @@ void ocudu::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                     const pdsch_config_params&          pdsch_cfg,
                                     units::bytes                        tbs_bytes,
                                     rnti_t                              rnti,
-                                    const cell_configuration&           cell_cfg,
+                                    const ue_cell_configuration&        ue_cell_cfg,
                                     const search_space_info&            ss_info,
                                     const dci_1_0_c_rnti_configuration& dci_cfg,
                                     const vrb_interval&                 vrbs,
                                     bool                                is_new_data)
 {
+  const cell_configuration&    cell_cfg   = ue_cell_cfg.cell_cfg_common;
   const coreset_configuration& cs_cfg     = ss_info.coreset->cfg();
   const sched_bwp_config&      active_bwp = *ss_info.bwp;
 
@@ -408,6 +409,12 @@ void ocudu::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   cw.mcs_index       = dci_cfg.modulation_coding_scheme;
   cw.mcs_descr       = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = tbs_bytes;
+
+  // The UE uses the TBS_LBRM of its previous configuration until it applies an RRC reconfiguration. A grant sent
+  // meanwhile is decoded with either value. With one layer and the 64-QAM MCS table, the RV 0 bits fit in N_cb for any
+  // TBS_LBRM. N_cb = N for the other RVs while the TBS is at most half of the TBS_LBRM, which holds for the SRB0 and
+  // SRB1 grants up to an initial CQI of 9 (TS 38.212, Section 5.4.2.1).
+  pdsch.tbs_lbrm = ue_cell_cfg.pdsch_tbs_lbrm();
 }
 
 void ocudu::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
@@ -456,6 +463,8 @@ void ocudu::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   cw.mcs_index       = dci_cfg.tb1_modulation_coding_scheme;
   cw.mcs_descr       = pdsch_mcs_get_config(pdsch.mcs_table, cw.mcs_index);
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
+
+  pdsch.tbs_lbrm = ue_cell_cfg.pdsch_tbs_lbrm();
 
   // Beamforming and precoding.
   pdsch.precoding_and_beamforming = cs_mgr.get_precoding(pdsch_cfg.nof_layers());

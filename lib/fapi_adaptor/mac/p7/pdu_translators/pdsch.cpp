@@ -8,7 +8,6 @@
 #include "ocudu/mac/mac_cell_result.h"
 #include "ocudu/ran/precoding/precoding_codebooks.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
-#include "ocudu/ran/sch/sch_constants.h"
 #include "ocudu/scheduler/result/pdsch_info.h"
 
 using namespace ocudu;
@@ -22,8 +21,10 @@ static crb_interval get_crb_interval(const pdsch_information& pdsch_cfg)
   return pdsch_cfg.bwp_cfg->crbs;
 }
 
-static void
-fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch_codeword> codewords, pdsch_mcs_table mcs_table)
+static void fill_codewords(fapi::dl_pdsch_pdu_builder& builder,
+                           span<const pdsch_codeword>  codewords,
+                           pdsch_mcs_table             mcs_table,
+                           units::bytes                tbs_lbrm)
 {
   ocudu_assert(codewords.size() == 1, "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : codewords) {
@@ -37,7 +38,7 @@ fill_codewords(fapi::dl_pdsch_pdu_builder& builder, span<const pdsch_codeword> c
   // NOTE: MAC uses the value of the target code rate x[1024], as per TS 38.214, Section 5.1.3.1, table 5.1.3.1-1.
   float R = cw.mcs_descr.get_normalised_target_code_rate();
   builder.set_ldpc_base_graph(get_ldpc_base_graph(R, units::bytes{cw.tb_size_bytes}.to_bits()))
-      .set_codeword_parameters(tbs_lbrm_default);
+      .set_codeword_parameters(tbs_lbrm);
 }
 
 static void fill_codeword_information(fapi::dl_pdsch_pdu_builder& builder,
@@ -131,7 +132,7 @@ static void fill_pdsch_information(fapi::dl_pdsch_pdu_builder& builder, const pd
   builder.set_ue_specific_parameters(pdsch_cfg.rnti);
 
   // Codewords.
-  fill_codewords(builder, pdsch_cfg.codewords, pdsch_cfg.mcs_table);
+  fill_codewords(builder, pdsch_cfg.codewords, pdsch_cfg.mcs_table, pdsch_cfg.tbs_lbrm);
 
   // DMRS.
   fill_dmrs(builder, pdsch_cfg.dmrs);

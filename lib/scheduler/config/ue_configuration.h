@@ -15,6 +15,7 @@
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/pdcch/pdcch_candidates.h"
 #include "ocudu/ran/resource_allocation/vrb_to_prb.h"
+#include "ocudu/ran/sch/sch_constants.h"
 #include "ocudu/ran/serv_cell_index.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include <optional>
@@ -209,6 +210,11 @@ public:
     return cell_ded->pdsch_serv_cell_cfg.has_value() ? &*cell_ded->pdsch_serv_cell_cfg.value() : nullptr;
   }
 
+  /// \brief Transport block size for limited buffer rate matching of the UE PDSCHs.
+  ///
+  /// Parameter \f$TBS_{LBRM}\f$ of TS 38.212, Section 5.4.2.1, derived from the UE configuration.
+  units::bytes pdsch_tbs_lbrm() const { return pdsch_tbs_lbrm_value; }
+
   /// PUSCH parameters common to all BWPs.
   const pusch_serving_cell_config* pusch_serving_cell_cfg() const
   {
@@ -245,6 +251,9 @@ private:
 
   /// Number of DL ports for this UE.
   unsigned nof_dl_ports = 1;
+
+  /// Transport block size for limited buffer rate matching of the UE PDSCHs.
+  units::bytes pdsch_tbs_lbrm_value = tbs_lbrm_default;
 
   // Parameters relative to the RRM of a UE.
   sched_ue_resource_alloc_config ue_res_alloc_cfg;

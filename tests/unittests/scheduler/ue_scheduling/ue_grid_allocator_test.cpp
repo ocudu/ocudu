@@ -331,6 +331,28 @@ TEST_P(ue_grid_allocator_css_test,
   ASSERT_TRUE(crb_lims.contains(crb_alloc));
 }
 
+TEST_P(ue_grid_allocator_css_test, fallback_dci_pdsch_uses_the_tbs_lbrm_the_ue_derives_from_its_configuration)
+{
+  static const units::bytes nof_bytes_to_schedule{40U};
+
+  sched_ue_creation_request_message ue_creation_req =
+      sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
+  ue_creation_req.cfg.cells->front().ded->serv_cell_cfg.init_dl_bwp.pdcch_cfg =
+      cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  ue& u                    = add_ue(ue_creation_req);
+
+  ASSERT_TRUE(
+      run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule, false); },
+                [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result_reader().dl().ue_grants()) != nullptr; }));
+
+  const pdsch_information& pdsch = res_grid[0].result_reader().dl().ue_grants().back().pdsch_cfg;
+  ASSERT_EQ(pdsch.dci_fmt, dci_dl_format::f1_0);
+  ASSERT_NE(u.ue_cfg_dedicated()->pcell_cfg().pdsch_tbs_lbrm(), tbs_lbrm_default);
+  ASSERT_EQ(pdsch.tbs_lbrm, u.ue_cfg_dedicated()->pcell_cfg().pdsch_tbs_lbrm());
+}
+
 class ue_grid_allocator_default_cfg_test : public ue_grid_allocator_test
 {
 protected:
@@ -359,6 +381,33 @@ TEST_P(ue_grid_allocator_default_cfg_test, when_using_non_fallback_dci_format_us
       run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule, false); },
                 [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result_reader().dl().ue_grants()) != nullptr; }));
   ASSERT_EQ(res_grid[0].result_reader().dl().ue_grants().back().pdsch_cfg.mcs_table, ocudu::pdsch_mcs_table::qam256);
+}
+
+TEST_P(ue_grid_allocator_default_cfg_test, ue_pdsch_uses_the_tbs_lbrm_the_ue_derives_from_its_configuration)
+{
+  static const units::bytes nof_bytes_to_schedule{40U};
+
+  sched_ue_creation_request_message ue_creation_req =
+      sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
+  (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = ocudu::pdsch_mcs_table::qam256;
+  ue_creation_req.ue_index                                                            = to_du_ue_index(0);
+  ue_creation_req.crnti                                                               = to_rnti(0x4601);
+  const unsigned max_mimo_layers =
+      *(*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers;
+
+  const ue& u = add_ue(ue_creation_req);
+
+  ASSERT_TRUE(
+      run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule, false); },
+                [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result_reader().dl().ue_grants()) != nullptr; }));
+
+  // TS 38.212, Section 5.4.2.1: maxMIMO-Layers, 256-QAM (MCS table of the BWP) and the number of PRBs of the BWP.
+  const units::bytes expected_tbs_lbrm =
+      tbs_calculator_dlsch_lbrm(max_mimo_layers,
+                                modulation_scheme::QAM256,
+                                cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.crbs.length());
+  ASSERT_NE(expected_tbs_lbrm, tbs_lbrm_default);
+  ASSERT_EQ(res_grid[0].result_reader().dl().ue_grants().back().pdsch_cfg.tbs_lbrm, expected_tbs_lbrm);
 }
 
 TEST_P(ue_grid_allocator_default_cfg_test, allocates_pdsch_restricted_to_recommended_max_nof_rbs)

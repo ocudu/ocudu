@@ -105,7 +105,7 @@ static void validate_pdsch_information(const pdsch_information& pdsch_cfg, const
   EXPECT_EQ(mac_cw.mcs_index, fapi_cw.mcs_index);
   EXPECT_EQ(mac_cw.mcs_descr.modulation, fapi_cw.qam_mod_order);
   EXPECT_EQ(mac_cw.tb_size_bytes, fapi_cw.tb_size);
-  EXPECT_EQ(tbs_lbrm_default, fapi_pdu.tb_size_lbrm);
+  EXPECT_EQ(pdsch_cfg.tbs_lbrm, fapi_pdu.tb_size_lbrm);
   EXPECT_EQ(get_ldpc_base_graph(mac_cw.mcs_descr.get_normalised_target_code_rate(), mac_cw.tb_size_bytes.to_bits()),
             fapi_pdu.ldpc_base_graph);
 }

@@ -7,6 +7,7 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "ocudu/ran/pdsch/pdsch_constants.h"
+#include "ocudu/ran/sch/tbs_calculator.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include <gtest/gtest.h>
 
@@ -68,6 +69,13 @@ unsigned precomputed_pdsch_layer_configs(unsigned nof_dl_antennas)
   if (pdsch_serv_cell != nullptr) {
     EXPECT_EQ(pdsch_serv_cell->max_mimo_layers, max_configs)
         << "RRC maxMIMO-Layers must match the resolved max DL layers for nof_dl_antennas=" << nof_dl_antennas;
+
+    // The UE derives TBS_LBRM from maxMIMO-Layers, the MCS table and the size of its BWP (TS 38.212, Section 5.4.2.1).
+    EXPECT_EQ(ue_cell_cfg.init_bwp().dl.pdsch().ded()->mcs_table, pdsch_mcs_table::qam256);
+    EXPECT_EQ(ue_cell_cfg.pdsch_tbs_lbrm(),
+              tbs_calculator_dlsch_lbrm(
+                  max_configs, modulation_scheme::QAM256, ue_cell_cfg.init_bwp().dl.cfg().crbs.length()))
+        << "TBS_LBRM must follow the UE configuration for nof_dl_antennas=" << nof_dl_antennas;
   }
 
   ev.notify_completion();
