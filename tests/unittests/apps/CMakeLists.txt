@@ -4,6 +4,7 @@
 
 add_subdirectory(units)
 add_subdirectory(helpers)
+add_subdirectory(services)
 
 # Schema-agnostic YAML round-trip tests for application configurations. See yaml_roundtrip_test_helpers.h
 # for what they verify.

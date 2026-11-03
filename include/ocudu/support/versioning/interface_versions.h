@@ -15,4 +15,8 @@ namespace ocudu {
 /// Version of the JSON metrics, as reported to the remote control metrics subscribers.
 constexpr const char* metrics_interface_version = "1.1";
 
+/// Version of the remote control interface: the JSON request and response envelope, the command names, their
+/// parameters and their results.
+constexpr const char* remote_control_interface_version = "1.0";
+
 } // namespace ocudu

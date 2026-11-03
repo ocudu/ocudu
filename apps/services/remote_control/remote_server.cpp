@@ -5,6 +5,7 @@
 
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/remote_control/remote_command.h"
+#include "apps/services/remote_control/remote_command_dispatcher.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "nlohmann/json.hpp"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -19,58 +20,14 @@
 #ifndef __clang__
 #pragma GCC diagnostic pop
 #endif
-#include "apps/helpers/metrics/helpers.h"
 #include "ocudu/adt/scope_exit.h"
 #include "ocudu/support/executors/unique_thread.h"
-#include <csignal>
 #include <utility>
 
 using namespace ocudu;
 using namespace app_services;
 
-/// Builds an error response encoded in JSON format.
-static std::string build_error_response(std::string_view error, std::optional<std::string> cmd = std::nullopt)
-{
-  nlohmann::json response;
-  response["error"] = error;
-  if (cmd) {
-    response["cmd"] = std::move(*cmd);
-  }
-  response["timestamp"] = app_helpers::get_time_stamp();
-  return response.dump();
-}
-
-/// Builds a successful response encoded in JSON format, nesting a non-null payload under "result".
-static std::string build_success_response(std::string_view cmd, const nlohmann::json& payload = {})
-{
-  nlohmann::json response;
-  response["cmd"]       = cmd;
-  response["timestamp"] = app_helpers::get_time_stamp();
-  if (!payload.is_null()) {
-    response["result"] = payload;
-  }
-  return response.dump();
-}
-
 namespace {
-
-/// Command that manages closing the application.
-class quit_remote_command : public remote_command
-{
-public:
-  // See interface for documentation.
-  std::string_view get_name() const override { return "quit"; }
-
-  // See interface for documentation.
-  std::string_view get_description() const override { return "Quit application"; }
-
-  // See interface for documentation.
-  expected<nlohmann::json, std::string> execute(const nlohmann::json& json) override
-  {
-    std::raise(SIGTERM);
-    return {};
-  }
-};
 
 /// Remote server implementation.
 class remote_server_impl : public remote_server,
@@ -82,17 +39,17 @@ class remote_server_impl : public remote_server,
   struct dummy_type {};
   using socket_type = uWS::WebSocket<false, true, dummy_type>;
 
-  const std::string                                                bind_addr;
-  const unsigned                                                   port;
-  const bool                                                       enable_metrics_subscription;
-  unique_thread                                                    thread;
-  std::atomic<uWS::App*>                                           server;
-  std::atomic<uWS::Loop*>                                          server_loop;
-  std::unordered_map<std::string, std::unique_ptr<remote_command>> commands;
-  std::set<socket_type*>                                           metrics_subscribers;
-  socket_type*                                                     current_cmd_client = nullptr;
-  bool                                                             rejecting_commands = false;
-  stop_event_source                                                stop_control;
+  const std::string         bind_addr;
+  const unsigned            port;
+  const bool                enable_metrics_subscription;
+  unique_thread             thread;
+  std::atomic<uWS::App*>    server;
+  std::atomic<uWS::Loop*>   server_loop;
+  remote_command_dispatcher dispatcher;
+  std::set<socket_type*>    metrics_subscribers;
+  socket_type*              current_cmd_client = nullptr;
+  bool                      rejecting_commands = false;
+  stop_event_source         stop_control;
 
   /// Metrics subscription command.
   class metrics_subscribe_command : public remote_command
@@ -145,25 +102,10 @@ public:
   remote_server_impl(const std::string& bind_addr_, unsigned port_, bool enable_metrics_subscription_) :
     bind_addr(bind_addr_), port(port_), enable_metrics_subscription(enable_metrics_subscription_)
   {
-    // Add the quit command.
-    {
-      auto  quit_cmd = std::make_unique<quit_remote_command>();
-      auto& cmd      = commands[std::string(quit_cmd->get_name())];
-      cmd            = std::move(quit_cmd);
-    }
-
     if (enable_metrics_subscription) {
       // Add the metrics subscription commands.
-      {
-        auto  sub_cmd = std::make_unique<metrics_subscribe_command>(this);
-        auto& cmd     = commands[std::string(sub_cmd->get_name())];
-        cmd           = std::move(sub_cmd);
-      }
-      {
-        auto  unsub_cmd = std::make_unique<metrics_unsubscribe_command>(this);
-        auto& cmd       = commands[std::string(unsub_cmd->get_name())];
-        cmd             = std::move(unsub_cmd);
-      }
+      dispatcher.add_command(std::make_unique<metrics_subscribe_command>(this));
+      dispatcher.add_command(std::make_unique<metrics_unsubscribe_command>(this));
     }
   }
 
@@ -183,33 +125,33 @@ public:
     thread = unique_thread("ws_server", [this, token = start_event.get_token()]() mutable {
       uWS::App ws_server;
       ws_server
-          .ws<dummy_type>("/*",
-                          {.compression              = uWS::CompressOptions(uWS::DISABLED),
-                           .maxPayloadLength         = 16 * 1024,
-                           .idleTimeout              = 120,
-                           .maxBackpressure          = 16 * 1024 * 1024,
-                           .closeOnBackpressureLimit = false,
-                           .resetIdleTimeoutOnSend   = false,
-                           .sendPingsAutomatically   = true,
-                           .message =
-                               [this](socket_type* ws, std::string_view message, uWS::OpCode opCode) {
-                                 // Only parse text based messages.
-                                 if (opCode != uWS::OpCode::TEXT) {
-                                   ws->send(
-                                       build_error_response("This WebSocket server only supports opcode TEXT messages"),
-                                       uWS::OpCode::TEXT,
-                                       false);
-                                   return;
-                                 }
+          .ws<dummy_type>(
+              "/*",
+              {.compression              = uWS::CompressOptions(uWS::DISABLED),
+               .maxPayloadLength         = 16 * 1024,
+               .idleTimeout              = 120,
+               .maxBackpressure          = 16 * 1024 * 1024,
+               .closeOnBackpressureLimit = false,
+               .resetIdleTimeoutOnSend   = false,
+               .sendPingsAutomatically   = true,
+               .message =
+                   [this](socket_type* ws, std::string_view message, uWS::OpCode opCode) {
+                     // Only parse text based messages.
+                     if (opCode != uWS::OpCode::TEXT) {
+                       ws->send(build_remote_error_response("This WebSocket server only supports opcode TEXT messages"),
+                                uWS::OpCode::TEXT,
+                                false);
+                       return;
+                     }
 
-                                 current_cmd_client  = ws;
-                                 auto restore_client = make_scope_exit([this]() { current_cmd_client = nullptr; });
+                     current_cmd_client  = ws;
+                     auto restore_client = make_scope_exit([this]() { current_cmd_client = nullptr; });
 
-                                 // Handle the incoming message and return back the response.
-                                 std::string response = handle_command(message);
-                                 ws->send(response, uWS::OpCode::TEXT, false);
-                               },
-                           .close = [this](socket_type* ws, int, std::string_view) { metrics_subscribers.erase(ws); }})
+                     // Handle the incoming message and return back the response.
+                     std::string response = handle_command(message);
+                     ws->send(response, uWS::OpCode::TEXT, false);
+                   },
+               .close = [this](socket_type* ws, int, std::string_view) { metrics_subscribers.erase(ws); }})
           .listen(bind_addr, port, [this](auto* listen_socket) {
             if (listen_socket) {
               fmt::println("Remote control server listening on {}:{}", bind_addr, port);
@@ -279,8 +221,7 @@ public:
 
     // Store the remote commands.
     for (auto& remote_cmd : remote_cmds) {
-      auto& cmd = commands[std::string(remote_cmd->get_name())];
-      cmd       = std::move(remote_cmd);
+      dispatcher.add_command(std::move(remote_cmd));
     }
   }
 
@@ -303,37 +244,10 @@ private:
   std::string handle_command(std::string_view command)
   {
     if (rejecting_commands) {
-      return build_error_response("Remote server is not accepting commands");
+      return build_remote_error_response("Remote server is not accepting commands");
     }
 
-    nlohmann::json req;
-
-    try {
-      req = nlohmann::json::parse(command);
-    } catch (const nlohmann::json::parse_error& e) {
-      return build_error_response(e.what());
-    }
-
-    auto cmd_key = req.find("cmd");
-    if (cmd_key == req.end()) {
-      return build_error_response("'cmd' object is missing and it is mandatory");
-    }
-
-    if (!cmd_key->is_string()) {
-      return build_error_response("'cmd' object value type should be a string");
-    }
-
-    const auto& cmd_value = cmd_key.value().get_ref<const nlohmann::json::string_t&>();
-    if (auto cmd = commands.find(cmd_value); cmd != commands.end()) {
-      auto response_payload = cmd->second->execute(req);
-      if (!response_payload) {
-        return build_error_response(response_payload.error(), cmd_value);
-      }
-
-      return build_success_response(cmd_value, response_payload.value());
-    }
-
-    return build_error_response(fmt::format("Unknown command type: {}", cmd_value), cmd_value);
+    return dispatcher.handle_request(command);
   }
 };
 

@@ -56,6 +56,23 @@ metrics interface version increased:
     FILE_PATH: include/ocudu/support/versioning/interface_versions.h
     VARIABLE_NAME: metrics_interface_version
 
+remote control interface version increased:
+  extends: .version increased
+  stage: static
+  rules:
+    # The template fetches the MR source branch from origin, not available for forks
+    - if: $ON_MR_FORK
+      when: never
+    - if: $ON_MR
+      changes:
+        paths:
+          - apps/services/remote_control/remote_command*.{h,cpp}
+          - apps/services/remote_control/remote_server*.{h,cpp}
+          - apps/units/**/*remote_command*.{h,cpp}
+  variables:
+    FILE_PATH: include/ocudu/support/versioning/interface_versions.h
+    VARIABLE_NAME: remote_control_interface_version
+
 ################################################################################
 ## CI MR
 ################################################################################
