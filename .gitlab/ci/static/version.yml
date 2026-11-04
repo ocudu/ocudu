@@ -2,6 +2,5 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
-
 variables:
-  DOCKER_STATIC_VERSION: 2026.10.23
+  DOCKER_STATIC_VERSION: 2026.11.10
