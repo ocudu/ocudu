@@ -33,13 +33,13 @@ void xnap_sn_status_transfer_procedure::operator()(coro_context<async_task<expec
   }
 
   if (not transaction_sink.successful()) {
-    logger.log_warning("\"{}\" failed", name());
+    logger.log_info("\"{}\" cancelled", name());
     CORO_EARLY_RETURN(make_unexpected(default_error_t{}));
   }
 
   sn_status_transfer.ue_index = ue_index;
   if (not asn1_to_sn_status_transfer(sn_status_transfer, transaction_sink.response())) {
-    logger.log_warning("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed. Cause: Received invalid SN Status Transfer", name());
     CORO_EARLY_RETURN(make_unexpected(default_error_t{}));
   }
 

@@ -65,7 +65,7 @@ void xnap_new_node_retrieve_ue_context_procedure::operator()(
     } else {
       // Neither a Retrieve UE Context Failure nor a timeout, e.g. the transaction was cancelled because XNAP is
       // stopping.
-      ue_ctxt->logger.log_warning("\"{}\" failed. Cause: Transaction cancelled", name());
+      ue_ctxt->logger.log_info("\"{}\" cancelled", name());
     }
 
     CORO_EARLY_RETURN(xnap_retrieve_ue_context_response{});

@@ -5,6 +5,7 @@
 
 #include "xnap_source_handover_preparation_procedure.h"
 #include "../xnap_asn1_converters.h"
+#include "../xnap_asn1_utils.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap_ies.h"
@@ -92,14 +93,16 @@ void xnap_source_handover_preparation_procedure::operator()(
     }
 
     if (transaction_sink.failed()) {
-      logger.log_warning("\"{}\" failed. Cause: Received Handover Preparation Failure", name());
+      logger.log_warning("\"{}\" failed. Cause: Received Handover Preparation Failure ({})",
+                         name(),
+                         asn1_utils::get_cause_str(transaction_sink.failure()->cause));
       discard_cho_cell_prep();
       CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
     }
 
     // Neither a HandoverPreparationFailure nor a timeout, e.g. the transaction was cancelled because XNAP is
     // stopping. The UE context is being torn down, so do not touch it here.
-    logger.log_warning("\"{}\" failed. Cause: Transaction cancelled", name());
+    logger.log_info("\"{}\" cancelled", name());
     CORO_EARLY_RETURN(xnap_handover_preparation_response{false});
   }
 

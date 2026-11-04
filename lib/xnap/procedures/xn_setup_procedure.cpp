@@ -66,7 +66,11 @@ void xn_setup_procedure::operator()(coro_context<async_task<bool>>& ctx)
   }
 
   if (!transaction_sink.successful()) {
-    logger.warning("\"{}\" failed. Cause: No successful outcome received", name());
+    if (transaction_sink.cancelled()) {
+      logger.info("\"{}\" cancelled", name());
+    } else {
+      logger.warning("\"{}\" failed. Cause: No successful outcome received", name());
+    }
     CORO_EARLY_RETURN(false);
   }
 
@@ -101,9 +105,7 @@ bool xn_setup_procedure::retry_required()
   }
 
   if (!transaction_sink.failed()) {
-    // No response received.
-    logger.warning("\"{}\" failed. No response received", name());
-    fmt::print("\"{}\" failed. No response received\n", name());
+    // The transaction was cancelled, e.g. because XNAP is stopping.
     return false;
   }
 
