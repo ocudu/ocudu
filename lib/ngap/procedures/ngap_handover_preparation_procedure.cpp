@@ -5,6 +5,7 @@
 
 #include "ngap_handover_preparation_procedure.h"
 #include "../ngap_asn1_converters.h"
+#include "../ngap_asn1_utils.h"
 #include "ocudu/asn1/ngap/common.h"
 #include "ocudu/ngap/ngap_message.h"
 
@@ -80,14 +81,16 @@ void ngap_handover_preparation_procedure::operator()(coro_context<async_task<nga
     if (ho_cancel_transaction_sink.timeout_expired()) {
       logger.log_warning("\"{}\" Handover Cancel timed out after {}ms", name(), ng_cancel_ack_timeout.count());
     }
-    if (transaction_sink.successful()) {
+    if (ho_cancel_transaction_sink.successful()) {
       logger.log_debug("\"{}\" Handover Cancel Ack received", name());
     }
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 
   if (transaction_sink.failed()) {
-    logger.log_warning("\"{}\" failed. Cause: Received HandoverPreparationFailure", name());
+    logger.log_warning("\"{}\" failed. Cause: Received HandoverPreparationFailure ({})",
+                       name(),
+                       asn1_utils::get_cause_str(transaction_sink.failure()->cause));
     CORO_EARLY_RETURN(ngap_handover_preparation_response{false});
   }
 

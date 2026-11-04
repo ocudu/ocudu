@@ -32,7 +32,7 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
 {
   CORO_BEGIN(ctx);
 
-  logger.log_info("\"{}\" started...", name());
+  logger.log_info("\"{}\" with cause={} started...", name(), command.cause);
 
   // Notify DU processor about UE Context Release Command.
   CORO_AWAIT_VALUE(ue_context_release_complete, cu_cp_notifier.on_new_ue_context_release_command(command));
