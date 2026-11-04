@@ -18,6 +18,7 @@ rules:
       - lib/mac/**
     allow:
       - include/ocudu/adt/**
+      - include/ocudu/instrumentation/**
       - include/ocudu/mac/**
       - include/ocudu/ocudulog/**
       - include/ocudu/pcap/**
