@@ -63,19 +63,7 @@ rules:
       - include/ocudu/support/config_schema.h
       - lib/support/config_yaml.cpp
       - tests/integrationtests/**
-      - tests/unittests/apps/helpers/config/config_yaml_schema_test.cpp
-      - tests/unittests/apps/units/flexible_du/du_high/du_high_config_autoderivation_test.cpp
-      - tests/unittests/apps/units/flexible_du/du_high/du_high_config_validator_test.cpp
-      - tests/unittests/apps/units/flexible_du/du_high/du_high_coreset0_config_test.cpp
-      - tests/unittests/apps/units/flexible_du/du_high/du_high_sib_config_test.cpp
-      - tests/unittests/apps/units/flexible_du/du_high/du_high_sr_config_test.cpp
-      - tests/unittests/apps/units/flexible_du/split_7_2/ru_ofh_config_cli11_schema_test.cpp
-      - tests/unittests/apps/units/o_cu_cp/cu_cp/cu_cp_unit_config_cli11_schema_test.cpp
-      - tests/unittests/apps/yaml_roundtrip_cu_cp_test.cpp
-      - tests/unittests/apps/yaml_roundtrip_cu_test.cpp
-      - tests/unittests/apps/yaml_roundtrip_cu_up_test.cpp
-      - tests/unittests/apps/yaml_roundtrip_du_test.cpp
-      - tests/unittests/apps/yaml_roundtrip_gnb_test.cpp
+      - tests/unittests/apps/**
       - tests/unittests/support/cli11_utils_schema_test.cpp
       - tests/unittests/support/config_schema_test.cpp
     to: external/CLI/**
