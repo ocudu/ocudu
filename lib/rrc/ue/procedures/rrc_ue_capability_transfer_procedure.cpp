@@ -61,7 +61,12 @@ void rrc_ue_capability_transfer_procedure::operator()(coro_context<async_task<bo
     }
     procedure_result = context.capabilities_list.has_value();
   } else {
-    logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
+    if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+      logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
+    } else {
+      logger.log_info("\"{}\" cancelled", name());
+    }
+    CORO_EARLY_RETURN(false);
   }
 
   logger.log_info("\"{}\" finished successfully", name());

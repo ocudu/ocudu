@@ -48,7 +48,11 @@ void rrc_ue_information_procedure::operator()(coro_context<async_task<void>>& ct
   CORO_AWAIT(transaction);
 
   if (not transaction.has_response()) {
-    logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
+    if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+      logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
+    } else {
+      logger.log_info("\"{}\" cancelled", name());
+    }
     CORO_EARLY_RETURN();
   }
 

@@ -60,7 +60,7 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
     if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
       logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());
     } else {
-      logger.log_warning("\"{}\" cancelled", name());
+      logger.log_info("\"{}\" cancelled", name());
     }
   }
 

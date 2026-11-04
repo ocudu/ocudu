@@ -148,11 +148,13 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       logger.log_info("\"{}\" for old_ue={} finished successfully", name(), old_ue_reest_context.ue_index);
     }
 
-  } else {
+  } else if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
     logger.log_warning("\"{}\" for old_ue={} failed. Cause: timed out after {}ms",
                        name(),
                        old_ue_reest_context.ue_index,
                        procedure_timeout.count());
+  } else {
+    logger.log_info("\"{}\" for old_ue={} cancelled", name(), old_ue_reest_context.ue_index);
   }
 
   // Notify CU-CP to remove the old UE. A retrieved context has no local old UE; the peer's context is released over Xn

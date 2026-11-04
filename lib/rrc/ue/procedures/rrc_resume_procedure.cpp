@@ -155,8 +155,10 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
 
     logger.log_info("\"{}\" finished successfully", name());
 
-  } else {
+  } else if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
     logger.log_warning("\"{}\" failed. Cause: Timeout after {}ms", name(), procedure_timeout.count());
+  } else {
+    logger.log_info("\"{}\" cancelled", name());
   }
 
   CORO_RETURN();
