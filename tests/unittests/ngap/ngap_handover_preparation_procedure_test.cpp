@@ -65,6 +65,43 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_ho_command
   ASSERT_TRUE(t.get().success);
 }
 
+/// Test that the handover preparation fails when the UE context is removed while it waits for the Handover Command.
+TEST_F(ngap_test, when_ue_context_is_removed_during_handover_preparation_then_handover_preparation_fails)
+{
+  OCUDU_TEST_REQUIREMENTS("MVP-FUNC-MOB-4");
+
+  // Setup UE context
+  cu_cp_ue_index_t ue_index = create_ue();
+  run_dl_nas_transport(ue_index); // needed to allocate AMF UE id.
+
+  // Manually add existing PDU sessions to UP manager.
+  add_pdu_session_to_up_manager(
+      ue_index,
+      uint_to_pdu_session_id(1),
+      pdu_session_type_t::ipv4,
+      up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(1)},
+      uint_to_drb_id(1),
+      uint_to_qos_flow_id(0));
+
+  test_ues.at(ue_index).rrc_ue_handler.set_ho_preparation_message({});
+
+  ngap_handover_preparation_request request =
+      generate_handover_preparation_request(ue_index,
+                                            ue_mng.find_ue(ue_index)->get_up_resource_manager().get_pdu_sessions_map(),
+                                            nr_cell_identity::create({1, 22}, 1).value(),
+                                            22);
+
+  async_task<ngap_handover_preparation_response>         t = ngap->handle_handover_preparation_request(request);
+  lazy_task_launcher<ngap_handover_preparation_response> t_launcher(t);
+  ASSERT_FALSE(t.ready());
+
+  // Removing the UE context cancels the pending Handover Command transaction.
+  ngap->remove_ue_context(ue_index);
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().success);
+}
+
 /// Test that a UE without a PDU session is not handed over, as the PDU Session Resource List IE of the HANDOVER
 /// REQUIRED carries at least one item (TS 38.413 section 9.2.3.1).
 TEST_F(ngap_test, when_ue_has_no_pdu_session_then_handover_preparation_is_declined)
