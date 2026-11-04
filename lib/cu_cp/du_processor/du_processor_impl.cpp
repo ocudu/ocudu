@@ -696,7 +696,7 @@ void du_processor_impl::handle_du_initiated_ue_context_release_request(const f1a
     return;
   }
 
-  logger.debug("ue={}: Handling DU initiated UE context release request", request.ue_index);
+  logger.debug("ue={}: Handling DU initiated UE context release request. Cause: {}", request.ue_index, request.cause);
 
   // The DU requested a UE release, so we cancel all ongoing RRC transactions for the UE. This is a UE-specific
   // abnormal failure.
