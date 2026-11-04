@@ -85,8 +85,6 @@ void write_replace_warning_procedure::send_write_replace_warning_request()
 
 f1ap_write_replace_warning_response write_replace_warning_procedure::handle_procedure_result()
 {
-  response.success = false;
-
   if (not transaction.valid()) {
     logger.debug("\"{}\" failed. Cause: Failed to allocate transaction", name());
     return response;
@@ -98,12 +96,13 @@ f1ap_write_replace_warning_response write_replace_warning_procedure::handle_proc
     } else {
       logger.debug("\"{}\" cancelled", name());
     }
+    response.outcome = make_unexpected(transaction.failure_cause());
     return response;
   }
 
   if (transaction.has_response() and transaction.response().has_value()) {
     const auto& resp = transaction.response().value().value.write_replace_warning_resp();
-    response.success = true;
+    response.outcome = default_success_t{};
 
     if (resp->cells_broadcast_completed_list_present) {
       for (const auto& item : resp->cells_broadcast_completed_list) {

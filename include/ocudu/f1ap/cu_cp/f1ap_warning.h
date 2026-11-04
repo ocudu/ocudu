@@ -7,6 +7,7 @@
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/ran/nr_cgi.h"
+#include "ocudu/support/async/protocol_transaction_manager.h"
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -36,9 +37,10 @@ struct f1ap_write_replace_warning_request {
   std::optional<std::vector<nr_cell_global_id_t>> cells_to_be_broadcast;
 };
 
-/// Common type for F1AP WRITE-REPLACE WARNING RESPONSE (TS 38.473 section 8.9.1.2).
+/// Common type for F1AP WRITE-REPLACE WARNING RESPONSE (TS 38.473 section 9.2.4.2).
 struct f1ap_write_replace_warning_response {
-  bool success = false;
+  /// Success if the gNB-DU answered, otherwise the reason why no answer was received.
+  error_type<protocol_transaction_failure> outcome = make_unexpected(protocol_transaction_failure::abnormal);
   /// Cells that completed broadcasting (optional, reported by DU).
   std::vector<nr_cell_global_id_t> cells_broadcast_completed;
 };

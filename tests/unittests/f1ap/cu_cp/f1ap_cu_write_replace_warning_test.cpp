@@ -71,7 +71,7 @@ TEST_F(f1ap_cu_write_replace_warning_test, when_response_received_then_procedure
   f1ap->handle_message(response);
 
   ASSERT_TRUE(t.ready());
-  EXPECT_TRUE(t.get().success);
+  EXPECT_TRUE(t.get().outcome.has_value());
 }
 
 TEST_F(f1ap_cu_write_replace_warning_test, when_response_contains_completed_cells_they_are_reported)
@@ -86,7 +86,7 @@ TEST_F(f1ap_cu_write_replace_warning_test, when_response_contains_completed_cell
   f1ap->handle_message(response);
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(t.get().success);
+  ASSERT_TRUE(t.get().outcome.has_value());
   ASSERT_EQ(t.get().cells_broadcast_completed.size(), 1U);
   EXPECT_EQ(t.get().cells_broadcast_completed[0].plmn_id, plmn_identity::test_value());
 }
@@ -101,7 +101,21 @@ TEST_F(f1ap_cu_write_replace_warning_test, when_timeout_reached_then_procedure_f
   }
 
   ASSERT_TRUE(t.ready());
-  EXPECT_FALSE(t.get().success);
+  ASSERT_FALSE(t.get().outcome.has_value());
+  EXPECT_EQ(t.get().outcome.error(), protocol_transaction_failure::timeout);
+}
+
+TEST_F(f1ap_cu_write_replace_warning_test, when_f1ap_is_stopped_while_waiting_then_procedure_is_cancelled)
+{
+  start_procedure(make_request());
+  ASSERT_FALSE(t.ready());
+
+  async_task<void>         stop_task = f1ap->stop();
+  lazy_task_launcher<void> stop_launcher(stop_task);
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().outcome.has_value());
+  EXPECT_EQ(t.get().outcome.error(), protocol_transaction_failure::cancel);
 }
 
 /// If the F1AP is stopped (e.g. DU removal) before a Write-Replace Warning procedure starts, the request must not
@@ -116,5 +130,6 @@ TEST_F(f1ap_cu_write_replace_warning_test, when_f1ap_already_stopped_then_reques
 
   ASSERT_FALSE(was_request_sent());
   ASSERT_TRUE(t.ready());
-  EXPECT_FALSE(t.get().success);
+  ASSERT_FALSE(t.get().outcome.has_value());
+  EXPECT_EQ(t.get().outcome.error(), protocol_transaction_failure::cancel);
 }

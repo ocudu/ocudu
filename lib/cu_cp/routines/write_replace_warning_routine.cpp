@@ -103,8 +103,16 @@ std::vector<async_task<bool>> cu_cp_write_replace_warning_routine::build_du_task
         CORO_AWAIT_VALUE(f1ap_resp,
                          du_proc.get_f1ap_handler().get_f1ap_warning_manager().handle_write_replace_warning_request(
                              du_requests[req_idx]));
-        if (!f1ap_resp.success) {
-          logger.warning("\"{}\" F1AP write-replace warning request to du={} failed", name(), du_index);
+        if (!f1ap_resp.outcome.has_value()) {
+          if (f1ap_resp.outcome.error() == protocol_transaction_failure::cancel) {
+            logger.info("\"{}\" F1AP write-replace warning request to du={} cancelled", name(), du_index);
+          } else {
+            logger.warning("\"{}\" F1AP write-replace warning request to du={} failed. Cause: {}",
+                           name(),
+                           du_index,
+                           f1ap_resp.outcome.error() == protocol_transaction_failure::timeout ? "Timeout reached"
+                                                                                              : "Transaction failure");
+          }
           success = false;
         }
       }
