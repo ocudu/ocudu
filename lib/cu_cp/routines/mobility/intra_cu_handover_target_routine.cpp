@@ -54,7 +54,14 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
                                                                                               request.timeout));
 
   if (!reconf_result) {
-    logger.warning("ue={}: \"{}\" failed", request.target_ue_index, name());
+    if (reconf_result.error() == protocol_transaction_failure::timeout) {
+      logger.warning("ue={}: \"{}\" failed. Cause: RRC Reconfiguration Complete not received within {}ms",
+                     request.target_ue_index,
+                     name(),
+                     request.timeout.count());
+    } else {
+      logger.info("ue={}: \"{}\" cancelled", request.target_ue_index, name());
+    }
     CORO_EARLY_RETURN();
   }
   // Notify mobility manager about successful handover execution.

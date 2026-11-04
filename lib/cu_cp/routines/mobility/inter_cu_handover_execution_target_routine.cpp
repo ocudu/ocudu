@@ -69,8 +69,14 @@ void inter_cu_handover_execution_target_routine::operator()(coro_context<async_t
   }
 
   if (!completed_events[1]) {
-    logger.warning(
-        "ue={}: \"{}\" failed. Cause: Failed to receive RRC Reconfiguration Complete", ue->get_ue_index(), name());
+    if (reconf_result.error() == protocol_transaction_failure::timeout) {
+      logger.warning("ue={}: \"{}\" failed. Cause: RRC Reconfiguration Complete not received within {}ms",
+                     ue->get_ue_index(),
+                     name(),
+                     reconf_timeout.count());
+    } else {
+      logger.info("ue={}: \"{}\" cancelled", ue->get_ue_index(), name());
+    }
     CORO_EARLY_RETURN();
   }
 

@@ -150,8 +150,14 @@ void conditional_handover_reconfiguration_routine::operator()(coro_context<async
       source_ue.get_rrc_ue()->handle_handover_reconfiguration_complete_expected(transaction_id, request.timeout));
 
   if (!reconfig_result) {
-    logger.warning(
-        "ue={}: \"{}\" failed. RRCReconfigurationComplete not received on source", source_ue.get_ue_index(), name());
+    if (reconfig_result.error() == protocol_transaction_failure::timeout) {
+      logger.warning("ue={}: \"{}\" failed. Cause: RRC Reconfiguration Complete not received on source within {}ms",
+                     source_ue.get_ue_index(),
+                     name(),
+                     request.timeout.count());
+    } else {
+      logger.info("ue={}: \"{}\" cancelled", source_ue.get_ue_index(), name());
+    }
     // Target routines are armed by this point (we waited up to request.timeout on the source transaction). Cancel
     // each target's RRC transaction; each target routine observes the cancellation and self-releases on its own fifo.
     cancel_cho_candidates(source_ue, ue_mng);
