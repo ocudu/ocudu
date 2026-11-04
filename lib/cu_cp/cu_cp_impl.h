@@ -85,8 +85,10 @@ public:
   // cu_cp_rrc_ue_interface.
   bool handle_ue_setup_request(cu_cp_ue_index_t ue_index, establishment_cause_t establishment_cause) override;
   bool handle_ue_setup_complete_received(cu_cp_ue_index_t ue_index, const amf_selection_request& request) override;
-  rrc_ue_reestablishment_context_response
-  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, cu_cp_ue_index_t ue_index) override;
+  rrc_ue_reestablishment_context_response handle_rrc_reestablishment_request(pci_t            old_pci,
+                                                                             rnti_t           old_c_rnti,
+                                                                             reest_cause_t    reest_cause,
+                                                                             cu_cp_ue_index_t ue_index) override;
   async_task<rrc_ue_context_retrieval_response>
                    handle_ue_context_retrieval_required(cu_cp_ue_index_t                        ue_index,
                                                         const rrc_ue_context_retrieval_request& request) override;

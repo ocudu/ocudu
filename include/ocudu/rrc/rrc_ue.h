@@ -546,9 +546,10 @@ public:
   /// \brief Notify about the reception of an RRC Reestablishment Request.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
   /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
-  /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
+  /// \param[in] reest_cause The reestablishment cause contained in the RRC Reestablishment Request.
   /// \returns The RRC Reestablishment UE context for the old UE.
-  virtual rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) = 0;
+  virtual rrc_ue_reestablishment_context_response
+  on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, reest_cause_t reest_cause) = 0;
 
   /// \brief Notify the CU-CP to retrieve the UE context from the peer NG-RAN node that still holds it, over Xn
   /// (TS 38.423 section 8.2.4). Used when no local UE context matches the reestablishment identity, but a peer serves

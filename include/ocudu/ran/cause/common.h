@@ -50,6 +50,9 @@ enum class establishment_cause_t : uint8_t {
   unknown
 };
 
+/// Provides the reestablishment cause for the RRCReestablishmentRequest, see TS 38.331 section 6.2.2.
+enum class reest_cause_t : uint8_t { recfg_fail = 0, ho_fail, other_fail, unknown };
+
 /// RRC connection establishment failure causes per TS 28.552, section 5.1.1.15.3.
 enum class establishment_fail_cause_t : uint8_t { network_reject = 0, no_reply, other };
 
@@ -163,6 +166,20 @@ constexpr const char* format_as(resume_cause_t o)
       return "mps_prio_access";
     case resume_cause_t::mcs_prio_access:
       return "mcs_prio_access";
+    default:
+      return "unknown";
+  }
+}
+
+constexpr const char* format_as(reest_cause_t o)
+{
+  switch (o) {
+    case reest_cause_t::recfg_fail:
+      return "recfg_fail";
+    case reest_cause_t::ho_fail:
+      return "ho_fail";
+    case reest_cause_t::other_fail:
+      return "other_fail";
     default:
       return "unknown";
   }

@@ -182,10 +182,11 @@ public:
     return cu_cp_rrc_ue_handler->handle_ue_setup_complete_received(ue_index, request);
   }
 
-  rrc_ue_reestablishment_context_response on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti) override
+  rrc_ue_reestablishment_context_response
+  on_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, reest_cause_t reest_cause) override
   {
     ocudu_assert(cu_cp_rrc_ue_handler != nullptr, "CU-CP handler must not be nullptr");
-    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, ue_index);
+    return cu_cp_rrc_ue_handler->handle_rrc_reestablishment_request(old_pci, old_c_rnti, reest_cause, ue_index);
   }
 
   async_task<rrc_ue_context_retrieval_response>

@@ -638,8 +638,10 @@ public:
 
   bool next_ue_setup_response = true;
 
-  rrc_ue_reestablishment_context_response
-  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, cu_cp_ue_index_t ue_index) override
+  rrc_ue_reestablishment_context_response handle_rrc_reestablishment_request(pci_t            old_pci,
+                                                                             rnti_t           old_c_rnti,
+                                                                             reest_cause_t    reest_cause,
+                                                                             cu_cp_ue_index_t ue_index) override
   {
     logger.info("ue={} old_pci={} old_c-rnti={}: Received RRC Reestablishment Request", ue_index, old_pci, old_c_rnti);
     return reest_context;

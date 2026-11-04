@@ -310,10 +310,13 @@ public:
   /// \brief Handle the reception of an RRC Reestablishment Request by transfering UE Contexts at the RRC.
   /// \param[in] old_pci The old PCI contained in the RRC Reestablishment Request.
   /// \param[in] old_c_rnti The old C-RNTI contained in the RRC Reestablishment Request.
+  /// \param[in] reest_cause The reestablishment cause contained in the RRC Reestablishment Request.
   /// \param[in] ue_index The new UE index of the UE that sent the Reestablishment Request.
   /// \returns The RRC Reestablishment UE context for the old UE.
-  virtual rrc_ue_reestablishment_context_response
-  handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, cu_cp_ue_index_t ue_index) = 0;
+  virtual rrc_ue_reestablishment_context_response handle_rrc_reestablishment_request(pci_t            old_pci,
+                                                                                     rnti_t           old_c_rnti,
+                                                                                     reest_cause_t    reest_cause,
+                                                                                     cu_cp_ue_index_t ue_index) = 0;
 
   /// \brief Handle a required UE context retrieval from a peer NG-RAN node over Xn (TS 38.423 section 8.2.4).
   /// \param[in] ue_index The index of the UE the context is retrieved for.

@@ -118,6 +118,11 @@ establishment_cause_t asn1_to_establishment_cause(const asn1::rrc_nr::establishm
 /// \return The common resume cause object where the result of the conversion is stored.
 resume_cause_t asn1_to_resume_cause(const asn1::rrc_nr::resume_cause_opts::options& asn1_cause);
 
+/// \brief Converts type ASN.1 reestablishment cause to common type.
+/// \param[in] asn1_cause ASN.1 reestablishment cause object.
+/// \return The common reestablishment cause object where the result of the conversion is stored.
+reest_cause_t asn1_to_reest_cause(const asn1::rrc_nr::reest_cause_opts::options& asn1_cause);
+
 /// \brief Converts type ASN.1 resume cause to common type.
 /// \param[in] asn1_cause ASN.1 resume cause object.
 /// \return The common establishment cause object where the result of the conversion is stored.

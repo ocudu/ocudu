@@ -365,6 +365,20 @@ resume_cause_t ocudu::ocucp::asn1_to_resume_cause(const asn1::rrc_nr::resume_cau
   return cause;
 }
 
+reest_cause_t ocudu::ocucp::asn1_to_reest_cause(const asn1::rrc_nr::reest_cause_opts::options& asn1_cause)
+{
+  switch (asn1_cause) {
+    case asn1::rrc_nr::reest_cause_opts::options::recfg_fail:
+      return reest_cause_t::recfg_fail;
+    case asn1::rrc_nr::reest_cause_opts::options::ho_fail:
+      return reest_cause_t::ho_fail;
+    case asn1::rrc_nr::reest_cause_opts::options::other_fail:
+      return reest_cause_t::other_fail;
+    default:
+      return reest_cause_t::unknown;
+  }
+}
+
 establishment_cause_t
 ocudu::ocucp::asn1_resume_cause_to_establishment_cause(const asn1::rrc_nr::resume_cause_e& asn1_cause)
 {

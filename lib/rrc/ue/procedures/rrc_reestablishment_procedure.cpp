@@ -207,9 +207,10 @@ rrc_reestablishment_procedure::is_local_reestablishment_accepted()
   // Notify the CU-CP about the reestablishment. This will return the old RRC UE context if it exists.
   // Note that this needs to be run before any other sanity check, as it will also cancel an possibly ongoing handover
   // transaction for the old UE.
-  old_ue_reest_context =
-      cu_cp_notifier.on_rrc_reestablishment_request(reestablishment_request.rrc_reest_request.ue_id.pci,
-                                                    to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
+  old_ue_reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
+      reestablishment_request.rrc_reest_request.ue_id.pci,
+      to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti),
+      asn1_to_reest_cause(reestablishment_request.rrc_reest_request.reest_cause.value));
 
   if (context.cfg.force_reestablishment_fallback) {
     log_rejected_reestablishment("RRC Reestablishments were disabled by the app configuration");

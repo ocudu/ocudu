@@ -603,8 +603,10 @@ bool cu_cp_impl::bind_retrieved_ue_to_amf(cu_cp_ue_index_t ue_index)
   return bind_ue_to_amf(ue_index, amf_index.value());
 }
 
-rrc_ue_reestablishment_context_response
-cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti, cu_cp_ue_index_t ue_index)
+rrc_ue_reestablishment_context_response cu_cp_impl::handle_rrc_reestablishment_request(pci_t            old_pci,
+                                                                                       rnti_t           old_c_rnti,
+                                                                                       reest_cause_t    reest_cause,
+                                                                                       cu_cp_ue_index_t ue_index)
 {
   rrc_ue_reestablishment_context_response reest_context{};
 

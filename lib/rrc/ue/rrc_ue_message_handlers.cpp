@@ -122,8 +122,10 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
   if (du_to_cu_container.empty()) {
     // Notify the CU-CP about the reestablishment. This will return the old RRC UE context if it exists and will also
     // cancel an possibly ongoing handover transaction for the old UE.
-    rrc_ue_reestablishment_context_response old_ue_reest_context = cu_cp_notifier.on_rrc_reestablishment_request(
-        msg.rrc_reest_request.ue_id.pci, to_rnti(msg.rrc_reest_request.ue_id.c_rnti));
+    rrc_ue_reestablishment_context_response old_ue_reest_context =
+        cu_cp_notifier.on_rrc_reestablishment_request(msg.rrc_reest_request.ue_id.pci,
+                                                      to_rnti(msg.rrc_reest_request.ue_id.c_rnti),
+                                                      asn1_to_reest_cause(msg.rrc_reest_request.reest_cause.value));
 
     // Release the old UE.
     logger.log_debug("Requesting UE context release for old_ue={}", old_ue_reest_context.ue_index);
