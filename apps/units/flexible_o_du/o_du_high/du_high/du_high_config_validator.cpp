@@ -23,6 +23,7 @@
 #include "ocudu/ran/transform_precoding/transform_precoding_helpers.h"
 #include "ocudu/rlc/rlc_config.h"
 #include "ocudu/scheduler/rrm/ue_capability_summary.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include "ocudu/support/math/math_utils.h"
 #include <algorithm>
 #include <cmath>

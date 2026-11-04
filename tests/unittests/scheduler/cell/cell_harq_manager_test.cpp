@@ -7,6 +7,7 @@
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/scheduler/result/sched_result.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include <gtest/gtest.h>
 
 using namespace ocudu;

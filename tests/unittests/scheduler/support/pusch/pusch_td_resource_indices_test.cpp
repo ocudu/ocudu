@@ -12,6 +12,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config_formatters.h"
 #include "ocudu/scheduler/config/cell_config_builder_params.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include "ocudu/support/format/custom_formattable.h"
 #include "fmt/std.h"
 #include <algorithm>

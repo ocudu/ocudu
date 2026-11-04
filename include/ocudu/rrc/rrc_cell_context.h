@@ -11,6 +11,7 @@
 #include "ocudu/ran/ntn_location_mapping.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/tac.h"
+#include <chrono>
 #include <cstdint>
 
 namespace ocudu {

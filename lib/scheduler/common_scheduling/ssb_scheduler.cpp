@@ -7,6 +7,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/frame_types.h"
 #include "ocudu/ran/ssb/ssb_mapping.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include "ocudu/support/enum_utils.h"
 
 using namespace ocudu;

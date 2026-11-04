@@ -33,6 +33,7 @@
 #include "ocudu/scheduler/config/scheduler_expert_config_factory.h"
 #include "ocudu/scheduler/config/scheduler_expert_config_validator.h"
 #include "ocudu/scheduler/config/time_domain_resource_helper.h"
+#include "ocudu/scheduler/sched_consts.h"
 #include <algorithm>
 #include <cmath>
 

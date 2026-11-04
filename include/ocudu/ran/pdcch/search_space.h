@@ -11,7 +11,7 @@
 #include "ocudu/ran/pdcch/coreset.h"
 #include "ocudu/ran/slot_point.h"
 #include "ocudu/ran/subcarrier_spacing.h"
-#include "ocudu/scheduler/sched_consts.h"
+#include "fmt/format.h"
 #include <variant>
 
 namespace ocudu {
