@@ -11,7 +11,7 @@
 #include "ocudu/ran/qos/qos_parameters.h"
 #include "ocudu/ran/qos/qos_prio_level.h"
 #include "ocudu/ran/s_nssai.h"
-#include "ocudu/sdap/sdap_config.h"
+#include "ocudu/ran/sdap/sdap_config.h"
 #include "fmt/base.h"
 
 namespace ocudu {
