@@ -85,6 +85,9 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::handle_bearer
     fill_e1ap_bearer_context_setup_response(res, fail);
 
     logger.log_warning("\"{}\" failed. Cause: {}", name(), get_cause_str(fail->cause));
+  } else if (transaction_sink.cancelled()) {
+    logger.log_info("\"{}\" cancelled", name());
+    res.success = false;
   } else {
     logger.log_warning(
         "\"{}\" failed. Cause: BearerContextSetupResponse timeout after {} ms", name(), e1ap_cfg.proc_timeout.count());

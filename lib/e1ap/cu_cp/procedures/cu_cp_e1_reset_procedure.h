@@ -32,6 +32,8 @@ private:
 
   bool send_e1_reset();
 
+  void log_aborted_transaction() const;
+
   const e1ap_configuration  e1ap_cfg;
   const cu_cp_reset         reset;
   e1ap_message_notifier&    pdu_notifier;

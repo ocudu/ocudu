@@ -39,7 +39,7 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   // The transaction may already be aborted at this point, e.g. if the E1AP is being stopped. Skip sending the
   // request in that case, since nothing will ever observe its response.
   if (transaction.aborted()) {
-    logger.warning("\"{}\" failed. Cause: Timeout reached for E1ResetAcknowledge reception", name());
+    log_aborted_transaction();
     CORO_EARLY_RETURN();
   }
 
@@ -53,7 +53,7 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_AWAIT(transaction);
 
   if (transaction.aborted()) {
-    logger.warning("\"{}\" failed. Cause: Timeout reached for E1ResetAcknowledge reception", name());
+    log_aborted_transaction();
     CORO_EARLY_RETURN();
   }
 
@@ -62,6 +62,15 @@ void cu_cp_e1_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   logger.info("\"{}\" finished successfully", name());
 
   CORO_RETURN();
+}
+
+void cu_cp_e1_reset_procedure::log_aborted_transaction() const
+{
+  if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+    logger.warning("\"{}\" failed. Cause: Timeout reached for E1ResetAcknowledge reception", name());
+  } else {
+    logger.info("\"{}\" cancelled", name());
+  }
 }
 
 bool cu_cp_e1_reset_procedure::send_e1_reset()

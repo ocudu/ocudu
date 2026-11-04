@@ -60,14 +60,14 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
     fill_e1ap_bearer_context_modification_response(res, fail);
 
-    logger.log_warning("\"{}\" failed", name());
+    logger.log_warning("\"{}\" failed. Cause: {}", name(), get_cause_str(fail->cause));
   } else {
     res.success = false;
 
     if (transaction_sink.timeout_expired()) {
       logger.log_warning("BearerContextModificationResponse timeout");
     } else {
-      logger.log_warning("BearerContextModificationResponse cancelled");
+      logger.log_info("BearerContextModificationResponse cancelled");
     }
   }
   return res;

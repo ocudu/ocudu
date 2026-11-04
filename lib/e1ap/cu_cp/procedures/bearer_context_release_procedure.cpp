@@ -55,6 +55,8 @@ void bearer_context_release_procedure::handle_bearer_context_release_complete()
   if (transaction_sink.successful()) {
     ue_ctxt_list[ue_index].logger.log_info("\"{}\" finished successfully", name());
 
+  } else if (transaction_sink.cancelled()) {
+    ue_ctxt_list[ue_index].logger.log_info("\"{}\" cancelled", name());
   } else {
     ue_ctxt_list[ue_index].logger.log_warning("\"{}\" failed. Cause: timeout.", name());
   }
