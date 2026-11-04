@@ -99,8 +99,11 @@ expected<measurement_response_t, measurement_failure_t>
 f1ap_positioning_measurement_procedure::handle_procedure_outcome()
 {
   if (transaction.aborted()) {
-    // Timeout or cancellation case.
-    logger.warning("\"{}\" failed. Cause: Timeout or cancellation", name());
+    if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+      logger.warning("\"{}\" failed. Cause: Timeout", name());
+    } else {
+      logger.info("\"{}\" cancelled", name());
+    }
     return make_unexpected(create_positioning_measurement_failure(f1ap_cause_radio_network_t::unspecified));
   }
 

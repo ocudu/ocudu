@@ -100,8 +100,11 @@ expected<trp_information_response_t, trp_information_failure_t>
 f1ap_trp_information_exchange_procedure::handle_procedure_outcome()
 {
   if (transaction.aborted()) {
-    // Timeout or cancellation case.
-    logger.warning("\"{}\" failed. Cause: Timeout or cancellation", name());
+    if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+      logger.warning("\"{}\" failed. Cause: Timeout", name());
+    } else {
+      logger.info("\"{}\" cancelled", name());
+    }
     return make_unexpected(create_trp_info_failure(f1ap_cause_radio_network_t::unspecified));
   }
 

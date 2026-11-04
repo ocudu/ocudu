@@ -102,8 +102,12 @@ f1ap_ue_context_modification_response ue_context_modification_procedure::create_
 
     fill_f1ap_ue_context_modification_response(res, fail);
   } else {
-    logger.warning("{}: Procedure failed. Cause: Timeout reached for UEContextModificationResponse reception",
-                   logger_prefix);
+    if (transaction_sink.cancelled()) {
+      logger.info("{}: Procedure cancelled", logger_prefix);
+    } else {
+      logger.warning("{}: Procedure failed. Cause: Timeout reached for UEContextModificationResponse reception",
+                     logger_prefix);
+    }
 
     res.success = false;
     res.cause   = cause_misc_t::unspecified;

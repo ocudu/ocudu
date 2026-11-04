@@ -109,9 +109,13 @@ cu_cp_ue_index_t ue_context_release_procedure::create_ue_context_release_complet
     return ue_ctxt.ue_ids.ue_index;
   }
 
-  logger.warning("{}: Procedure failed. Cause: {}",
-                 f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()},
-                 transaction_sink.timeout_expired() ? "Timeout" : "Transaction failed");
+  if (transaction_sink.cancelled()) {
+    logger.info("{}: Procedure cancelled", f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()});
+  } else {
+    logger.warning("{}: Procedure failed. Cause: {}",
+                   f1ap_ue_log_prefix{ue_ctxt.ue_ids, name()},
+                   transaction_sink.timeout_expired() ? "Timeout" : "Transaction failed");
+  }
 
   return cu_cp_ue_index_t::invalid;
 }

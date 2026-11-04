@@ -147,8 +147,12 @@ f1ap_e_cid_measurement_initiation_procedure::create_e_cid_measurement_result()
                                                       asn1_to_cause(fail->cause)});
 
   } else {
-    logger.warning("{}: Procedure failed. Cause: Timeout reached for ECIDMeasurementInitiationResponse reception",
-                   logger_prefix);
+    if (transaction_sink.cancelled()) {
+      logger.info("{}: Procedure cancelled", logger_prefix);
+    } else {
+      logger.warning("{}: Procedure failed. Cause: Timeout reached for ECIDMeasurementInitiationResponse reception",
+                     logger_prefix);
+    }
 
     res = make_unexpected(e_cid_measurement_failure_t{
         request.lmf_ue_meas_id, request.ran_ue_meas_id, f1ap_cause_t{cause_misc_t::unspecified}});

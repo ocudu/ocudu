@@ -94,13 +94,16 @@ f1ap_gnb_cu_configuration_update_response gnb_cu_configuration_update_procedure:
 
   if (not transaction.valid()) {
     // Transaction could not be allocated.
-    logger.warning("\"{}\" cancelled. Cause: Failed to allocate transaction", name());
+    logger.warning("\"{}\" failed. Cause: Failed to allocate transaction", name());
     return response;
   }
 
   if (transaction.aborted()) {
-    // Timeout or cancellation case.
-    logger.warning("\"{}\" cancelled. Cause: Timeout reached", name());
+    if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+      logger.warning("\"{}\" failed. Cause: Timeout reached", name());
+    } else {
+      logger.info("\"{}\" cancelled", name());
+    }
     return response;
   }
 

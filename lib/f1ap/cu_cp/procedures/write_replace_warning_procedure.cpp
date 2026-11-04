@@ -88,12 +88,16 @@ f1ap_write_replace_warning_response write_replace_warning_procedure::handle_proc
   response.success = false;
 
   if (not transaction.valid()) {
-    logger.debug("\"{}\" cancelled. Cause: Failed to allocate transaction", name());
+    logger.debug("\"{}\" failed. Cause: Failed to allocate transaction", name());
     return response;
   }
 
   if (transaction.aborted()) {
-    logger.debug("\"{}\" cancelled. Cause: Timeout reached", name());
+    if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
+      logger.debug("\"{}\" failed. Cause: Timeout reached", name());
+    } else {
+      logger.debug("\"{}\" cancelled", name());
+    }
     return response;
   }
 

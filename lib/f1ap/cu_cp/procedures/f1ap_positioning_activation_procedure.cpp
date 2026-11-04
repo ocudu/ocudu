@@ -119,10 +119,14 @@ f1ap_positioning_activation_procedure::create_positioning_activation_result()
 
     res = make_unexpected(fill_positioning_activation_failure(fail));
   } else {
-    logger.warning(
-        "{}: Procedure failed. Cause: Timeout reached for PositioningInformationResponse reception (timeout={}ms)",
-        logger_prefix,
-        f1ap_cfg.proc_timeout.count());
+    if (transaction_sink.cancelled()) {
+      logger.info("{}: Procedure cancelled", logger_prefix);
+    } else {
+      logger.warning(
+          "{}: Procedure failed. Cause: Timeout reached for PositioningInformationResponse reception (timeout={}ms)",
+          logger_prefix,
+          f1ap_cfg.proc_timeout.count());
+    }
 
     res = make_unexpected(positioning_activation_failure_t{f1ap_to_nrppa_cause(cause_misc_t::unspecified)});
   }
