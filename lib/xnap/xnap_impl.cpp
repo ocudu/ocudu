@@ -374,8 +374,10 @@ void xnap_impl::handle_handover_cancel(const asn1::xnap::ho_cancel_s& msg)
   const peer_xnap_ue_id_t peer_xnap_ue_id = uint_to_peer_xnap_ue_id(msg->source_ng_ran_node_ue_xnap_id);
 
   // Releases one prepared candidate: the CU-CP drops its UE, then the local XNAP UE context goes.
-  auto release = [this](xnap_ue_context& ue_ctxt) {
+  auto release = [this, &msg](xnap_ue_context& ue_ctxt) {
     const cu_cp_ue_index_t ue_index = ue_ctxt.ue_ids.ue_index;
+    ue_ctxt.logger.log_info("Cancelling the handover. Cause: Received HandoverCancel ({})",
+                            asn1_utils::get_cause_str(msg->cause));
     cu_cp_notifier.on_handover_cancel_received(ue_index);
     ue_ctxt_list.remove_ue_context(ue_index);
   };
