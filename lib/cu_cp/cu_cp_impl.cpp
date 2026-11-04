@@ -629,7 +629,12 @@ rrc_ue_reestablishment_context_response cu_cp_impl::handle_rrc_reestablishment_r
 
   // Cancel any ongoing handover transaction for the UE.
   if (old_ue->get_ho_context().has_value()) {
-    logger.debug("ue={}: Cancelling handover transaction", old_ue_index);
+    logger.warning("ue={}: Cancelling handover to target ue={}. Cause: RRC Reestablishment Request on ue={} with "
+                   "reest_cause={}",
+                   old_ue_index,
+                   old_ue->get_ho_context()->target_ue_index,
+                   ue_index,
+                   reest_cause);
 
     auto* const target_ue = ue_mng.find_du_ue(old_ue->get_ho_context()->target_ue_index);
     if (target_ue == nullptr) {
@@ -645,7 +650,10 @@ rrc_ue_reestablishment_context_response cu_cp_impl::handle_rrc_reestablishment_r
   if (old_ue->get_cho_context().has_value() &&
       old_ue->get_cho_context()->role == cu_cp_ue_cho_context::role_t::source &&
       !old_ue->get_cho_context()->candidates.empty()) {
-    logger.debug("ue={}: Cancelling CHO on reestablishment", old_ue_index);
+    logger.warning("ue={}: Cancelling CHO. Cause: RRC Reestablishment Request on ue={} with reest_cause={}",
+                   old_ue_index,
+                   ue_index,
+                   reest_cause);
     cancel_cho_candidates(*old_ue, ue_mng, &xnap_db);
     old_ue->get_cho_context()->clear();
   }
