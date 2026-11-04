@@ -176,7 +176,7 @@ std::vector<async_task<bool>> inter_cu_handover_execution_target_routine::build_
     CORO_BEGIN(task_ctx);
     CORO_AWAIT_VALUE(reconf_result,
                      ue->get_rrc_ue()->handle_handover_reconfiguration_complete_expected(0, reconf_timeout));
-    CORO_RETURN(reconf_result);
+    CORO_RETURN(reconf_result.has_value());
   }));
   return pending_events;
 }

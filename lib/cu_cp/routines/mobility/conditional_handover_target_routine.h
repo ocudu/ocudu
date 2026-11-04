@@ -56,8 +56,8 @@ private:
 
   ocudulog::basic_logger& logger;
 
-  bool reconf_result    = false;
-  bool ue_context_moved = false;
+  error_type<protocol_transaction_failure> reconf_result;
+  bool                                     ue_context_moved = false;
 
   e1ap_bearer_context_modification_request  bearer_ctx_mod_request;
   e1ap_bearer_context_modification_response bearer_ctx_mod_response;

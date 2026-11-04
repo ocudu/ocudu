@@ -68,8 +68,8 @@ private:
   f1ap_ue_context_manager&                                    f1ap;
   ocudulog::basic_logger&                                     logger;
 
-  std::chrono::milliseconds reconf_timeout;
-  bool                      reconf_result = false;
+  std::chrono::milliseconds                reconf_timeout;
+  error_type<protocol_transaction_failure> reconf_result;
 };
 
 } // namespace ocudu::ocucp

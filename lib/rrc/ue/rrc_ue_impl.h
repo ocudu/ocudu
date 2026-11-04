@@ -67,9 +67,10 @@ public:
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;
   rrc_ue_cond_reconfiguration_context
   get_rrc_ue_cond_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;
-  async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
+  async_task<error_type<protocol_transaction_failure>>
+                   handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
                                                                      std::chrono::milliseconds timeout_ms,
-                                                                     bool release_on_failure = true) override;
+                                                                     bool                      release_on_failure = true) override;
   bool             store_ue_capabilities(byte_buffer ue_capabilities) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
   void             fill_ue_derived_location(cu_cp_user_location_info_nr& user_location_info) const override;

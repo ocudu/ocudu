@@ -72,7 +72,7 @@ private:
   std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
   // (Sub-)routine results.
-  bool                                      reconf_result    = false;
+  error_type<protocol_transaction_failure>  reconf_result;
   bool                                      ue_context_moved = false;
   e1ap_bearer_context_modification_response bearer_context_modification_response;
 };

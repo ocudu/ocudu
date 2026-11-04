@@ -307,10 +307,11 @@ public:
   /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
   /// \param[in] timeout_ms The timeout for the RRC Reconfiguration Complete.
   /// \param[in] release_on_failure If true, trigger a UE release when the transaction fails.
-  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
-  virtual async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
-                                                                             std::chrono::milliseconds timeout_ms,
-                                                                             bool release_on_failure = true) = 0;
+  /// \returns Success if the RRC Reconfiguration Complete was received, the failure cause otherwise.
+  virtual async_task<error_type<protocol_transaction_failure>>
+  handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
+                                                    std::chrono::milliseconds timeout_ms,
+                                                    bool                      release_on_failure = true) = 0;
 
   /// \brief Store UE capabilities received from the NGAP.
   /// \param[in] ue_capabilities The UE capabilities.

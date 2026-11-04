@@ -873,12 +873,13 @@ rrc_ue_impl::get_rrc_ue_cond_reconfiguration_context(const rrc_reconfiguration_p
   return cond_reconf_ctxt;
 }
 
-async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id,
-                                                                                std::chrono::milliseconds timeout_ms,
-                                                                                bool release_on_failure)
+async_task<error_type<protocol_transaction_failure>>
+rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
+                                                               std::chrono::milliseconds timeout_ms,
+                                                               bool                      release_on_failure)
 {
   return launch_async([this, timeout_ms, transaction_id, release_on_failure, transaction = rrc_transaction{}](
-                          coro_context<async_task<bool>>& ctx) mutable {
+                          coro_context<async_task<error_type<protocol_transaction_failure>>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     logger.log_debug("Awaiting RRC Reconfiguration Complete (timeout={}ms)", timeout_ms.count());
@@ -887,10 +888,8 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
 
     CORO_AWAIT(transaction);
 
-    bool procedure_result = false;
     if (transaction.has_response()) {
       logger.log_debug("Received RRC Reconfiguration Complete after HO");
-      procedure_result = true;
 
       // Only a handover target UE enters connected state here. A CHO source UE that acknowledges its conditional
       // reconfiguration is already in connected state.
@@ -922,9 +921,10 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
                    "Did not receive RRC Reconfiguration Complete after HO. Cause: {}. UE release handled externally",
                    cause_str);
       }
+      CORO_EARLY_RETURN(make_unexpected(transaction.failure_cause()));
     }
 
-    CORO_RETURN(procedure_result);
+    CORO_RETURN(default_success_t{});
   });
 }
 

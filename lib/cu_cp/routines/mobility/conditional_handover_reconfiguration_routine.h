@@ -91,9 +91,9 @@ private:
   f1ap_ue_context_modification_request ue_context_mod_request;
 
   // (sub-)routine results
-  f1ap_ue_context_modification_response gap_response;
-  f1ap_ue_context_modification_response ue_context_mod_response;
-  bool                                  reconfig_result = false;
+  f1ap_ue_context_modification_response    gap_response;
+  f1ap_ue_context_modification_response    ue_context_mod_response;
+  error_type<protocol_transaction_failure> reconfig_result;
 };
 
 } // namespace ocudu::ocucp

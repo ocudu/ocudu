@@ -74,9 +74,10 @@ TEST_F(rrc_ue_reconfig, when_connected_ue_sends_handover_reconfig_complete_then_
   ASSERT_EQ(rrc_ue_rrc_du_notifier.nof_new_rrc_connections, 1U);
 
   // The CHO source UE awaits the RRC Reconfiguration Complete for its conditional reconfiguration.
-  async_task<bool> t = get_rrc_ue_control_message_handler()->handle_handover_reconfiguration_complete_expected(
-      1, std::chrono::milliseconds{1000});
-  lazy_task_launcher<bool> t_launcher(t);
+  async_task<error_type<protocol_transaction_failure>> t =
+      get_rrc_ue_control_message_handler()->handle_handover_reconfiguration_complete_expected(
+          1, std::chrono::milliseconds{1000});
+  lazy_task_launcher<error_type<protocol_transaction_failure>> t_launcher(t);
 
   ASSERT_FALSE(t.ready());
 
@@ -84,7 +85,7 @@ TEST_F(rrc_ue_reconfig, when_connected_ue_sends_handover_reconfig_complete_then_
   receive_reconfig_complete();
 
   ASSERT_TRUE(t.ready());
-  ASSERT_TRUE(t.get());
+  ASSERT_TRUE(t.get().has_value());
   ASSERT_EQ(rrc_ue->get_rrc_state(), rrc_state::connected);
   ASSERT_EQ(rrc_ue_rrc_du_notifier.nof_new_rrc_connections, 1U);
 }

@@ -71,8 +71,8 @@ private:
   cu_cp_ue_context_release_command          release_cmd;
   cu_cp_ue_context_release_complete         release_complete;
 
-  std::chrono::milliseconds reconf_timeout{};
-  bool                      reconf_result = false;
+  std::chrono::milliseconds                reconf_timeout{};
+  error_type<protocol_transaction_failure> reconf_result;
 };
 
 } // namespace ocudu::ocucp
