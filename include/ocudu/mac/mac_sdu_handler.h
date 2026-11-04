@@ -7,7 +7,7 @@
 
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/byte_buffer_chain.h"
-#include "ocudu/rlc/rlc_buffer_state.h"
+#include "ocudu/ran/rlc_buffer_state.h"
 
 namespace ocudu {
 
