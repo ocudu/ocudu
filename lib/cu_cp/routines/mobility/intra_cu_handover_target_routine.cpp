@@ -42,6 +42,7 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
 
   if (ue_mng.find_du_ue(request.target_ue_index) == nullptr) {
     logger.warning("Target UE={} got removed", request.target_ue_index);
+    clear_source_handover_context();
     CORO_EARLY_RETURN();
   }
   target_ue = ue_mng.find_du_ue(request.target_ue_index);
@@ -52,6 +53,9 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
   CORO_AWAIT_VALUE(reconf_result,
                    target_ue->get_rrc_ue()->handle_handover_reconfiguration_complete_expected(request.transaction_id,
                                                                                               request.timeout));
+
+  // The handover execution ended, so a reestablishment of the source UE has no target transaction to cancel.
+  clear_source_handover_context();
 
   if (!reconf_result) {
     if (reconf_result.error() == protocol_transaction_failure::timeout) {
@@ -144,6 +148,15 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
   logger.info("ue={}: \"{}\" finished successfully", request.target_ue_index, name());
 
   CORO_RETURN();
+}
+
+void intra_cu_handover_target_routine::clear_source_handover_context()
+{
+  cu_cp_ue* src_ue = ue_mng.find_du_ue(request.source_ue_index);
+  if (src_ue != nullptr and src_ue->get_ho_context().has_value() and
+      src_ue->get_ho_context()->target_ue_index == request.target_ue_index) {
+    src_ue->get_ho_context().reset();
+  }
 }
 
 bool intra_cu_handover_target_routine::add_security_context_to_bearer_context_modification(

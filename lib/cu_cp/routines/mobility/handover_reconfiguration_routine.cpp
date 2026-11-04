@@ -65,6 +65,10 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
 
   generate_ue_context_modification_request();
 
+  // Store handover context in case of a reestablishment. The target routine clears it when the handover ends.
+  source_ue.get_ho_context() = cu_cp_ue_handover_context{
+      .target_ue_index = target_ue_index, .rrc_reconfig_transaction_id = (uint8_t)ho_reconf_ctxt.transaction_id};
+
   // Notify CU-CP to prepare for RRC Reconfig Complete on target DU.
   cu_cp_handler.handle_handover_reconfiguration_sent({target_ue_index,
                                                       source_ue.get_ue_index(),
@@ -81,6 +85,7 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   initialize_handover_ue_release_timer(source_ue.get_ue_index());
 
   if (!ue_context_mod_response.success) {
+    source_ue.get_ho_context().reset();
     logger.debug(
         "source_ue={} target_ue={}: UE context modification failed", source_ue.get_ue_index(), target_ue_index);
     logger.debug("source_ue={} target_ue={}: \"{}\" failed", source_ue.get_ue_index(), target_ue_index, name());
@@ -89,13 +94,6 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
 
   // Store updated cell group config.
   source_ue.get_rrc_ue()->update_cell_group_config(ue_context_mod_response.du_to_cu_rrc_info.cell_group_cfg.copy());
-
-  // Store handover context in case of for possible re-establishment.
-  logger.debug("ue={}: Storing handover context", source_ue.get_ue_index());
-  cu_cp_ue_handover_context ue_ho_ctxt;
-  ue_ho_ctxt.target_ue_index             = target_ue_index;
-  ue_ho_ctxt.rrc_reconfig_transaction_id = (uint8_t)ho_reconf_ctxt.transaction_id;
-  source_ue.get_ho_context()             = ue_ho_ctxt;
 
   logger.debug(
       "source_ue={} target_ue={}: \"{}\" finished successfully", source_ue.get_ue_index(), target_ue_index, name());
