@@ -8,7 +8,7 @@
 #include "ocudu/adt/spmc_slot_ring.h"
 #include "ocudu/adt/static_vector.h"
 #include "ocudu/mac/cell_configuration.h"
-#include "ocudu/ntn/ntn_cell_params.h"
+#include "ocudu/ran/ntn_cell_params.h"
 #include "ocudu/ran/slot_pdu_capacity_constants.h"
 #include "ocudu/scheduler/resource_grid_util.h"
 #include "ocudu/scheduler/result/pucch_info.h"

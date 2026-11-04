@@ -10,7 +10,7 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/du/du_cell_config_helpers.h"
-#include "ocudu/ntn/ntn_cell_params.h"
+#include "ocudu/ran/ntn_cell_params.h"
 #include <chrono>
 #include <gtest/gtest.h>
 

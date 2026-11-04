@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "ocudu/ntn/ntn_cell_params.h"
 #include "ocudu/ran/carrier_configuration.h"
 #include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/n_ta_offset.h"
+#include "ocudu/ran/ntn_cell_params.h"
 #include "ocudu/ran/pci.h"
 #include "ocudu/ran/prs/prs.h"
 #include "ocudu/ran/ssb/ssb_configuration.h"

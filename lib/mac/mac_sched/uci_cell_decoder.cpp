@@ -4,9 +4,9 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "uci_cell_decoder.h"
-#include "ocudu/ntn/ntn_cell_params.h"
 #include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/csi_report/csi_report_on_pusch_helpers.h"
+#include "ocudu/ran/ntn_cell_params.h"
 #include "ocudu/scheduler/resource_grid_util.h"
 #include "ocudu/scheduler/result/pucch_info.h"
 #include "ocudu/scheduler/result/pusch_info.h"

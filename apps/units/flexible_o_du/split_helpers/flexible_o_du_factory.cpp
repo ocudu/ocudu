@@ -26,8 +26,8 @@
 #include "ocudu/fapi_adaptor/phy/p7/phy_fapi_p7_sector_fastpath_adaptor.h"
 #include "ocudu/fapi_adaptor/phy/phy_fapi_fastpath_adaptor.h"
 #include "ocudu/fapi_adaptor/phy/phy_fapi_sector_fastpath_adaptor.h"
-#include "ocudu/ntn/ntn_cell_params.h"
 #include "ocudu/ntn/ntn_configuration_manager.h"
+#include "ocudu/ran/ntn_cell_params.h"
 #include <algorithm>
 
 using namespace ocudu;
