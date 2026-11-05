@@ -88,6 +88,11 @@ void pdu_session_resource_modification_routine::operator()(
     // - if yes, perform intra-cell HO before continuing the procedure, else return early.
   }
 
+  if (next_config.pdu_sessions_to_modify_list.empty()) {
+    logger.info("ue={}: \"{}\" No PDU sessions to modify", modify_request.ue_index, name());
+    CORO_EARLY_RETURN(generate_pdu_session_resource_modify_response(false));
+  }
+
   {
     // Prepare first BearerContextModificationRequest.
     bearer_context_modification_request.ng_ran_bearer_context_mod_request.emplace(); // initialize fresh message

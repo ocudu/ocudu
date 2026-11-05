@@ -4,6 +4,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "cu_cp_test_environment.h"
+#include "cu_cp_test_messages.h"
+#include "lib/cu_cp/routines/pdu_session_resource_modification_routine.h"
 #include "tests/test_doubles/e1ap/e1ap_cu_cp_test_messages.h"
 #include "tests/test_doubles/e1ap/e1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
@@ -21,6 +23,8 @@
 #include "ocudu/ngap/ngap_message.h"
 #include "ocudu/ran/cu_types.h"
 #include "ocudu/ran/rb_id.h"
+#include "ocudu/support/async/async_test_utils.h"
+#include "ocudu/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 #include <optional>
 #include <sys/types.h>
@@ -667,4 +671,105 @@ TEST_F(cu_cp_pdu_session_resource_modify_test,
   EXPECT_FALSE(mob_cfg.remove_report_config(uint_to_report_cfg_id(2)));
   // A serving-cell periodic report must reference a periodical config; id 2 is event-triggered.
   EXPECT_FALSE(mob_cfg.set_periodic_report(serving_nci, uint_to_report_cfg_id(2)));
+}
+
+TEST(pdu_session_resource_modification_routine_test,
+     when_redcap_context_is_incompatible_then_all_sessions_fail_without_modification_signalling)
+{
+  struct unexpected_modification_notifiers : public dummy_f1ap_ue_context_manager,
+                                             public dummy_rrc_ue,
+                                             public cu_cp_mobility_manager_handler {
+    async_task<f1ap_ue_context_modification_response>
+    handle_ue_context_modification_request(const f1ap_ue_context_modification_request&) override
+    {
+      ADD_FAILURE() << "Rejected sessions must not trigger F1AP modification";
+      return launch_no_op_task(f1ap_ue_context_modification_response{});
+    }
+
+    async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request&) override
+    {
+      ADD_FAILURE() << "Rejected sessions must not trigger RRC reconfiguration";
+      return launch_no_op_task(false);
+    }
+
+    async_task<cu_cp_intra_cu_handover_response>
+    handle_intra_cu_handover_request(const cu_cp_intra_cu_handover_request&,
+                                     cu_cp_du_index_t&,
+                                     cu_cp_du_index_t&) override
+    {
+      ADD_FAILURE() << "Rejected sessions must not trigger handover";
+      return launch_no_op_task(cu_cp_intra_cu_handover_response{});
+    }
+
+    async_task<cu_cp_intra_cu_cho_response> handle_intra_cu_cho_request(const cu_cp_intra_cu_cho_request&) override
+    {
+      ADD_FAILURE() << "Rejected sessions must not trigger conditional handover";
+      return launch_no_op_task(cu_cp_intra_cu_cho_response{});
+    }
+
+    void handle_intra_cell_handover_required(cu_cp_ue_index_t) override
+    {
+      ADD_FAILURE() << "Rejected sessions must not trigger key refresh";
+    }
+  } notifiers;
+
+  ocudulog::init();
+  pdcp_config pdcp_cfg{pdcp_rb_type::drb, pdcp_rlc_mode::am};
+  pdcp_cfg.tx.sn_size = pdcp_sn_size::size18bits;
+  pdcp_cfg.rx.sn_size = pdcp_sn_size::size18bits;
+  up_resource_manager_cfg cfg{{{uint_to_five_qi(9), {pdcp_cfg}}, {uint_to_five_qi(7), {pdcp_cfg}}}, 8};
+  up_resource_manager     manager{cfg};
+  auto                    setup  = generate_pdu_session_resource_setup(cu_cp_ue_index_t::min, 2, 1);
+  auto                    update = manager.calculate_update(setup.pdu_session_res_setup_items, {});
+  up_config_update_result result;
+  for (const auto& session : update.pdu_sessions_to_setup_list) {
+    result.pdu_sessions_added_list.push_back(session.second);
+  }
+  manager.apply_config_update(result);
+  ASSERT_EQ(manager.get_nof_pdu_sessions(), 2);
+  ASSERT_EQ(manager.get_nof_drbs(), 2);
+
+  notifiers.decoded_capabilities.redcap.emplace();
+  ASSERT_FALSE(manager.validate_context(manager.get_up_context(), notifiers.get_capabilities()));
+  auto request        = generate_pdu_session_resource_modification(cu_cp_ue_index_t::min, 1, 1);
+  auto second_request = generate_pdu_session_resource_modification(cu_cp_ue_index_t::min, 2, 2);
+  request.pdu_session_res_modify_items.emplace(uint_to_pdu_session_id(2),
+                                               *second_request.pdu_session_res_modify_items.begin());
+  ASSERT_TRUE(manager.validate_request(request));
+
+  timer_manager                     timers;
+  manual_task_worker                worker{16};
+  dummy_ue_task_scheduler           scheduler{timers, worker};
+  dummy_e1ap_bearer_context_manager e1ap;
+  struct : public dummy_cu_cp_rrc_ue_interface {
+    bool handle_ue_setup_request(cu_cp_ue_index_t, establishment_cause_t) override { return false; }
+    bool handle_ue_setup_complete_received(cu_cp_ue_index_t, const amf_selection_request&) override { return false; }
+    async_task<rrc_resume_request_response> handle_rrc_resume_request(const rrc_resume_request&) override
+    {
+      return launch_no_op_task(rrc_resume_request_response{});
+    }
+    void handle_ran_paging_required(cu_cp_ue_index_t) override {}
+    void handle_location_measurement_indication(cu_cp_ue_index_t) override {}
+  } cu_cp_notifier;
+  auto task = launch_async<pdu_session_resource_modification_routine>(request,
+                                                                      e1ap,
+                                                                      notifiers,
+                                                                      &notifiers,
+                                                                      cu_cp_notifier,
+                                                                      notifiers,
+                                                                      scheduler,
+                                                                      manager,
+                                                                      ocudulog::fetch_basic_logger("CU-CP"));
+  lazy_task_launcher<ngap_pdu_session_resource_modify_response> launcher{task};
+  ASSERT_TRUE(task.ready());
+  const auto& response = task.get();
+  EXPECT_TRUE(response.pdu_session_res_modify_list.empty());
+  ASSERT_EQ(response.pdu_session_res_failed_to_modify_list.size(), 2);
+  EXPECT_TRUE(response.pdu_session_res_failed_to_modify_list.contains(uint_to_pdu_session_id(1)));
+  EXPECT_TRUE(response.pdu_session_res_failed_to_modify_list.contains(uint_to_pdu_session_id(2)));
+  EXPECT_FALSE(e1ap.first_e1ap_request.has_value());
+  EXPECT_FALSE(e1ap.second_e1ap_request.has_value());
+  EXPECT_EQ(manager.get_nof_pdu_sessions(), 2);
+  EXPECT_EQ(manager.get_nof_drbs(), 2);
+  EXPECT_EQ(manager.get_total_nof_qos_flows(), 2);
 }
