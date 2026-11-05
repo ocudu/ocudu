@@ -229,6 +229,8 @@ TEST(LoopbackBufferDeathTest, Misuse)
   baseband_gateway_buffer_dynamic too_long(nof_channels, buffer_size + 1);
   baseband_gateway_buffer_dynamic wrong_channels(nof_channels + 1, 10);
 
+#ifdef ASSERTS_ENABLED
+  // Asserts are compiled out unless ASSERTS_ENABLED is defined.
   ASSERT_DEATH(
       {
         loopback_buffer buffer(nof_channels, buffer_size);
@@ -253,6 +255,7 @@ TEST(LoopbackBufferDeathTest, Misuse)
         buffer.read(wrong_channels.get_writer(), 0);
       },
       "Number of channels");
+#endif // ASSERTS_ENABLED
   ASSERT_DEATH(
       {
         loopback_buffer buffer(nof_channels, buffer_size);

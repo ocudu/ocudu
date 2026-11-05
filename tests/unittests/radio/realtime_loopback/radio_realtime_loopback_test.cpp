@@ -1188,6 +1188,8 @@ TEST(RealtimeLoopbackRadioDeathTest, Misuse)
         session->start(0);
       },
       "already running");
+#ifdef ASSERTS_ENABLED
+  // Asserts are compiled out unless ASSERTS_ENABLED is defined.
   ASSERT_DEATH(
       {
         auto session = create(make_radio_config(2, 1));
@@ -1203,6 +1205,7 @@ TEST(RealtimeLoopbackRadioDeathTest, Misuse)
         session->get_baseband_gateway(0).get_receiver().receive(rx_buffer.get_writer());
       },
       "Cannot provide the requested number of samples");
+#endif // ASSERTS_ENABLED
   ASSERT_DEATH(
       {
         radio_configuration::radio config = make_radio_config(2, 1);
