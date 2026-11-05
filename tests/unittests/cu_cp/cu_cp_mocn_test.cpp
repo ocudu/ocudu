@@ -24,6 +24,11 @@
 using namespace ocudu;
 using namespace ocucp;
 
+/// Packed SIB1 of a cell shared by both PLMNs (MOCN): its PLMN identity list holds the first PLMN and 99902.
+static const char* mocn_sib1_hex =
+    "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a235241213042692f1200"
+    "000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228";
+
 static std::vector<std::vector<supported_tracking_area>> make_amf_test_config()
 {
   // Common.
@@ -145,12 +150,8 @@ TEST_F(cu_cp_mocn_test, when_new_f1_setup_request_is_received_and_ngs_are_setup_
 
   // Send F1 Setup Request.
   gnb_du_id_t du_id = int_to_gnb_du_id(0x55);
-  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request(
-      du_id,
-      {test_helpers::served_cell_item_info{
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+  get_du(du_idx).push_ul_pdu(
+      test_helpers::generate_f1_setup_request(du_id, {test_helpers::served_cell_item_info{.sib1_str = mocn_sib1_hex}}));
 
   // Ensure the F1 Setup Response is received and correct.
   f1ap_message f1ap_pdu;
@@ -210,12 +211,8 @@ TEST_F(cu_cp_mocn_test, when_ng_setup_for_amf_supporting_the_dus_plmn_is_success
   ASSERT_TRUE(ret.has_value());
   unsigned    du_idx = *ret;
   gnb_du_id_t du_id  = int_to_gnb_du_id(0x11);
-  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_setup_request(
-      du_id,
-      {test_helpers::served_cell_item_info{
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+  get_du(du_idx).push_ul_pdu(
+      test_helpers::generate_f1_setup_request(du_id, {test_helpers::served_cell_item_info{.sib1_str = mocn_sib1_hex}}));
   f1ap_message f1ap_pdu;
   ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
 
@@ -308,12 +305,7 @@ TEST_F(cu_cp_mocn_test, when_ngs_f1_e1_are_setup_then_ues_can_attach)
   ASSERT_TRUE(ret.has_value());
   unsigned du_idx = ret.value();
   ASSERT_TRUE(this->run_f1_setup(
-      du_idx,
-      int_to_gnb_du_id(0x11),
-      {test_helpers::served_cell_item_info{
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+      du_idx, int_to_gnb_du_id(0x11), {test_helpers::served_cell_item_info{.sib1_str = mocn_sib1_hex}}));
 
   // Setup CU-UP.
   ret = connect_new_cu_up();
@@ -351,12 +343,7 @@ TEST_F(cu_cp_mocn_test, when_ngs_f1_e1_are_setup_and_ue_selects_second_plmn_then
   ASSERT_TRUE(ret.has_value());
   unsigned du_idx = ret.value();
   ASSERT_TRUE(this->run_f1_setup(
-      du_idx,
-      int_to_gnb_du_id(0x11),
-      {test_helpers::served_cell_item_info{
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+      du_idx, int_to_gnb_du_id(0x11), {test_helpers::served_cell_item_info{.sib1_str = mocn_sib1_hex}}));
 
   // Setup CU-UP.
   ret = connect_new_cu_up();
@@ -464,12 +451,7 @@ TEST_F(cu_cp_mocn_test, when_ues_attach_through_different_amfs_then_ran_ue_ngap_
   ASSERT_TRUE(ret.has_value());
   unsigned du_idx = ret.value();
   ASSERT_TRUE(this->run_f1_setup(
-      du_idx,
-      int_to_gnb_du_id(0x11),
-      {test_helpers::served_cell_item_info{
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+      du_idx, int_to_gnb_du_id(0x11), {test_helpers::served_cell_item_info{.sib1_str = mocn_sib1_hex}}));
 
   // Setup CU-UP.
   ret = connect_new_cu_up();
@@ -509,7 +491,7 @@ TEST_F(cu_cp_mocn_test, when_the_amf_of_one_plmn_of_a_shared_cell_is_lost_then_t
 {
   run_ng_setup();
 
-  // A DU with one cell broadcasting both PLMNs (MOCN). The SIB1 lists the first PLMN and 99902.
+  // A DU with one cell broadcasting both PLMNs (MOCN).
   const plmn_identity second_plmn = plmn_identity::parse("99902").value();
   auto                ret         = connect_new_du();
   ASSERT_TRUE(ret.has_value());
@@ -517,11 +499,7 @@ TEST_F(cu_cp_mocn_test, when_the_amf_of_one_plmn_of_a_shared_cell_is_lost_then_t
   ASSERT_TRUE(this->run_f1_setup(
       du_idx,
       int_to_gnb_du_id(0x11),
-      {test_helpers::served_cell_item_info{
-          .additional_plmns = {second_plmn},
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+      {test_helpers::served_cell_item_info{.additional_plmns = {second_plmn}, .sib1_str = mocn_sib1_hex}}));
 
   ret = connect_new_cu_up();
   ASSERT_TRUE(ret.has_value());
@@ -584,7 +562,7 @@ TEST_F(cu_cp_mocn_test, when_both_amfs_of_a_shared_cell_are_lost_and_reconnect_o
 {
   run_ng_setup();
 
-  // A DU with one cell broadcasting both PLMNs (MOCN). The SIB1 lists the first PLMN and 99902.
+  // A DU with one cell broadcasting both PLMNs (MOCN).
   const plmn_identity first_plmn  = plmn_identity::test_value();
   const plmn_identity second_plmn = plmn_identity::parse("99902").value();
   auto                ret         = connect_new_du();
@@ -593,11 +571,7 @@ TEST_F(cu_cp_mocn_test, when_both_amfs_of_a_shared_cell_are_lost_and_reconnect_o
   ASSERT_TRUE(this->run_f1_setup(
       du_idx,
       int_to_gnb_du_id(0x11),
-      {test_helpers::served_cell_item_info{
-          .additional_plmns = {second_plmn},
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+      {test_helpers::served_cell_item_info{.additional_plmns = {second_plmn}, .sib1_str = mocn_sib1_hex}}));
   ret = connect_new_cu_up();
   ASSERT_TRUE(ret.has_value());
   ASSERT_TRUE(this->run_e1_setup(ret.value()));
@@ -673,11 +647,7 @@ TEST_F(cu_cp_mocn_test,
   ASSERT_TRUE(this->run_f1_setup(
       du_idx,
       int_to_gnb_du_id(0x11),
-      {test_helpers::served_cell_item_info{
-          .additional_plmns = {second_plmn},
-          .sib1_str =
-              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
-              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+      {test_helpers::served_cell_item_info{.additional_plmns = {second_plmn}, .sib1_str = mocn_sib1_hex}}));
 
   // TEST: The AMF of the first PLMN is lost. No connected AMF serves either PLMN, so the cell is deactivated.
   ASSERT_TRUE(drop_amf_connection(0));

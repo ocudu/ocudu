@@ -133,6 +133,40 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
             f1ap_pdu_notifier.last_f1ap_msg.pdu.successful_outcome().value.type());
 }
 
+/// Test that the PLMNs after the 6th, signalled in the Extended Served PLMNs List, reach the DU processor.
+TEST_F(f1ap_cu_test, when_f1_setup_request_has_more_than_6_plmns_then_the_extended_served_plmns_are_kept)
+{
+  // A cell with 8 PLMNs: 6 in Served PLMNs, and 2 in the Extended Served PLMNs List.
+  test_helpers::served_cell_item_info cell;
+  for (const char* plmn : {"00102", "00103", "00104", "00105", "00106", "00107", "00108"}) {
+    cell.additional_plmns.push_back(plmn_identity::parse(plmn).value());
+  }
+  f1ap_message f1setup_msg    = test_helpers::generate_f1_setup_request(int_to_gnb_du_id(0x11U), {cell});
+  const auto&  asn1_cell_info = f1setup_msg.pdu.init_msg()
+                                   .value.f1_setup_request()
+                                   ->gnb_du_served_cells_list[0]
+                                   ->gnb_du_served_cells_item()
+                                   .served_cell_info;
+  ASSERT_EQ(asn1_cell_info.served_plmns.size(), 6);
+  ASSERT_EQ(asn1_cell_info.ie_exts.extended_served_plmns_list.size(), 2);
+  byte_buffer   packed;
+  asn1::bit_ref bref{packed};
+  ASSERT_EQ(asn1::pack(bref, f1setup_msg.pdu), asn1::OCUDUASN_SUCCESS);
+
+  du_processor_notifier.next_du_setup_resp = create_du_setup_result_accept(f1setup_msg);
+  f1ap->handle_message(f1setup_msg);
+
+  // The DU processor receives all 8 PLMNs of the cell, in order.
+  ASSERT_EQ(du_processor_notifier.last_f1_setup_request_msg.gnb_du_served_cells_list.size(), 1);
+  const std::vector<plmn_identity>& served_plmns =
+      du_processor_notifier.last_f1_setup_request_msg.gnb_du_served_cells_list[0].served_cell_info.served_plmns;
+  std::vector<plmn_identity> expected_plmns = {cell.plmn_id};
+  expected_plmns.insert(expected_plmns.end(), cell.additional_plmns.begin(), cell.additional_plmns.end());
+  ASSERT_EQ(served_plmns, expected_plmns);
+  ASSERT_EQ(asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp,
+            f1ap_pdu_notifier.last_f1ap_msg.pdu.successful_outcome().value.type());
+}
+
 /// Test the f1 setup failure.
 TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 {

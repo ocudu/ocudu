@@ -70,16 +70,28 @@ gnb_du_served_cells_item_s ocudu::test_helpers::generate_served_cells_item(const
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(info.tac);
 
-  std::vector<plmn_identity> plmns = {info.plmn_id};
+  // Served PLMNs holds the first 6 PLMNs of the cell, and the Extended Served PLMNs List holds PLMNs 7 to 12 (TS 38.473
+  // section 9.3.1.10, Served Cell Information).
+  static constexpr unsigned  max_nof_served_plmns = 6;
+  std::vector<plmn_identity> plmns                = {info.plmn_id};
   plmns.insert(plmns.end(), info.additional_plmns.begin(), info.additional_plmns.end());
-  for (const plmn_identity& plmn : plmns) {
-    served_plmns_item_s served_plmn;
-    served_plmn.plmn_id = plmn.to_bytes();
+  for (unsigned i = 0, e = plmns.size(); i != e; ++i) {
     slice_support_item_s slice_support_item;
     slice_support_item.snssai.sst.from_number(1);
-    served_plmn.ie_exts.tai_slice_support_list_present = true;
-    served_plmn.ie_exts.tai_slice_support_list.push_back(slice_support_item);
-    served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
+    if (i < max_nof_served_plmns) {
+      served_plmns_item_s served_plmn;
+      served_plmn.plmn_id                                = plmns[i].to_bytes();
+      served_plmn.ie_exts.tai_slice_support_list_present = true;
+      served_plmn.ie_exts.tai_slice_support_list.push_back(slice_support_item);
+      served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
+    } else {
+      extended_served_plmns_item_s extended_plmn;
+      extended_plmn.plmn_id = plmns[i].to_bytes();
+      extended_plmn.tai_slice_support_list.push_back(slice_support_item);
+      served_cells_item.served_cell_info.ie_exts_present                            = true;
+      served_cells_item.served_cell_info.ie_exts.extended_served_plmns_list_present = true;
+      served_cells_item.served_cell_info.ie_exts.extended_served_plmns_list.push_back(extended_plmn);
+    }
   }
 
   served_cells_item.served_cell_info.nr_mode_info.set_tdd();

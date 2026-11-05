@@ -42,7 +42,8 @@ struct served_cell_item_info {
   };
 
   plmn_identity plmn_id = plmn_identity::test_value();
-  /// PLMNs served by the cell in addition to \c plmn_id (MOCN). Reported in the Served PLMNs list.
+  /// PLMNs served by the cell in addition to \c plmn_id (MOCN). The first 5 are reported in the Served PLMNs list, and
+  /// the rest (at most 6) in the Extended Served PLMNs List.
   std::vector<plmn_identity> additional_plmns;
   nr_cell_identity           nci      = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value();
   pci_t                      pci      = 0;
