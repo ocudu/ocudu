@@ -23,7 +23,7 @@ class radio_stream_realtime_loopback_impl : public baseband_gateway,
                                             public baseband_gateway_receiver
 {
 public:
-  /// Collects the session resources shared by all the streams.
+  /// Session resources shared by all the streams. The referenced objects outlive the streams.
   struct shared_state {
     /// Returns the current RF timestamp.
     const unique_function<baseband_gateway_timestamp()>& get_current_rf_timestamp;
@@ -35,13 +35,14 @@ public:
 
   /// \brief Creates a loopback stream.
   /// \param[in] nof_channels     Number of channels of the stream.
-  /// \param[in] sampling_rate_Hz Sampling rate in hertz.
+  /// \param[in] sampling_rate_hz Sampling rate in hertz.
   /// \param[in] state            Session resources shared by all the streams.
-  radio_stream_realtime_loopback_impl(unsigned nof_channels, double sampling_rate_Hz, const shared_state& state);
+  radio_stream_realtime_loopback_impl(unsigned nof_channels, double sampling_rate_hz, const shared_state& state);
 
   /// \brief Prepares the stream for receiving samples starting at the given timestamp.
   ///
-  /// It must be called before the session start request is signaled.
+  /// Called before the session signals the start request.
+  /// \param[in] init_time Timestamp of the first received sample.
   void start(baseband_gateway_timestamp init_time);
 
   // See the baseband_gateway interface for documentation.
@@ -73,11 +74,15 @@ private:
   baseband_gateway_timestamp next_receive_timestamp = 0;
   /// Expected timestamp of the next sample to be transmitted.
   baseband_gateway_timestamp next_transmit_timestamp = 0;
-  /// Maximum number of samples the emulated receiver buffers before overflowing.
-  uint64_t max_nof_buffered_rx_samples;
-  /// Maximum number of samples the emulated transmitter buffers ahead of the RF time.
-  uint64_t max_nof_buffered_tx_samples;
-  /// Minimum time, in samples, between passing samples to the emulated transmitter and their transmission.
+  /// Loopback buffer size, in multiples of the buffering depth.
+  static constexpr unsigned nof_buffer_laps = 10;
+
+  /// \brief Buffering depth of the emulated radio, i.e., 10 ms of samples.
+  ///
+  /// The receiver overflows when it lags the RF time by more samples, and the transmitter blocks when it leads the RF
+  /// time by more samples.
+  uint64_t max_nof_buffered_samples;
+  /// Minimum time, in samples, between passing samples to the emulated transmitter and their transmission, i.e., 10 us.
   uint64_t tx_processing_delay_samples;
   /// Loopback buffer connecting the transmitter and the receiver.
   loopback_buffer buffer;

@@ -7,7 +7,6 @@
 #include "radio_stream_realtime_loopback_impl.h"
 #include "ocudu/radio/radio_session.h"
 #include "ocudu/support/executors/task_executor.h"
-#include "ocudu/support/synchronization/stop_event.h"
 #include <memory>
 #include <vector>
 
@@ -19,15 +18,14 @@ namespace ocudu {
 class radio_session_realtime_loopback_impl : public radio_session, public radio_capabilities_registry
 {
 public:
-  /// Forbid default constructor.
-  radio_session_realtime_loopback_impl() = delete;
-
-  /// Constructor that uses the default realtime emulation based on the system clock.
+  /// \brief Creates a session that uses the realtime clock.
+  ///
+  /// The device argument \c rf_time_scale=s, with s > 0, scales the RF clock relative to the steady clock.
   radio_session_realtime_loopback_impl(const radio_configuration::radio& config,
                                        task_executor&                    async_task_executor,
                                        radio_event_notifier&             notification_handler);
 
-  /// Constructor that overrides the default realtime emulation with a custom function.
+  /// Creates a session that uses a custom RF clock. The clock outlives the session.
   radio_session_realtime_loopback_impl(const radio_configuration::radio&                    config,
                                        task_executor&                                       async_task_executor,
                                        radio_event_notifier&                                notification_handler,
@@ -59,39 +57,27 @@ private:
   // See the radio_capabilities_registry interface for documentation.
   void* query(radio_capability_key key) override { return nullptr; }
 
-  /// The system time corresponding to timestamp 0 in nanoseconds.
+  /// Steady clock time, in nanoseconds, of RF timestamp 0.
   std::chrono::nanoseconds ts0_epoch;
-
   /// Sampling rate common to all channels.
   double sampling_rate_hz;
-
-  /// Scales RF time relative to the system clock. Values below 1 slow RF time down.
+  /// Scales RF time relative to the steady clock. Values below 1 slow RF time down.
   double rf_time_scale;
-
   /// Start request flag.
   std::atomic<bool> start_requested;
-
   /// Stop control.
   rt_stop_event_source stop_control;
-
-  /// \brief Derives the current RF timestamp, based on the system time and the epoch of timestamp 0.
+  /// \brief Realtime RF clock, derived from the steady clock and the epoch of RF timestamp 0.
   ///
-  /// This is the timestamp of the samples currently at the antenna port, and is common for the transmitter and receiver
-  /// chains of all the streams.
-  unique_function<baseband_gateway_timestamp()> get_current_rf_timestamp_realtime_clock = [this]() {
-    // Get the time since the epoch.
+  /// It returns the timestamp of the samples currently at the antenna port, common to all the streams.
+  unique_function<baseband_gateway_timestamp()> realtime_clock = [this]() {
     auto time_since_epoch =
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch());
-
     return static_cast<baseband_gateway_timestamp>(static_cast<double>(time_since_epoch.count() - ts0_epoch.count()) *
                                                    sampling_rate_hz * rf_time_scale / 1e9);
   };
-
-  /// \brief Function to be used to compute the current timestamp.
-  ///
-  /// It can be used to override the default realtime emulation function with deterministic clocks for testing purposes.
+  /// RF clock in use, either the realtime clock or a custom clock.
   const unique_function<baseband_gateway_timestamp()>& get_current_rf_timestamp;
-
   /// Loopback streams.
   std::vector<std::unique_ptr<radio_stream_realtime_loopback_impl>> streams;
 };

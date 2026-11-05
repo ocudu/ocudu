@@ -54,7 +54,6 @@ bool loopback_buffer::write(const baseband_gateway_buffer_reader& data, baseband
     zero(std::max(tx_end, write_end - std::min<baseband_gateway_timestamp>(write_end, buffer_size)), timestamp);
   }
 
-  // Compute the location in the buffer where the first sample of the data should be written.
   unsigned write_index      = get_index(timestamp);
   unsigned write_length     = std::min(nof_requested_samples, buffer_size - write_index);
   unsigned remaining_length = nof_requested_samples - write_length;
@@ -108,7 +107,6 @@ unsigned loopback_buffer::read(baseband_gateway_buffer_writer& data, baseband_ga
                    tx_end);
   }
 
-  // Compute the location in the buffer where the first sample of the data should be read.
   unsigned read_index       = get_index(timestamp);
   unsigned read_length      = std::min(available, buffer_size - read_index);
   unsigned remaining_length = available - read_length;

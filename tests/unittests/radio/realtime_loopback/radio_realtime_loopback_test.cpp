@@ -196,6 +196,7 @@ public:
 std::unique_ptr<radio_factory_realtime_loopback_impl> RealtimeLoopbackRadioFixture::factory           = nullptr;
 std::unique_ptr<task_worker>                          RealtimeLoopbackRadioFixture::async_task_worker = nullptr;
 
+// The session exposes no radio capabilities.
 TEST_P(RealtimeLoopbackRadioFixture, NoCapabilities)
 {
   // Asynchronous task executor.
@@ -218,6 +219,7 @@ TEST_P(RealtimeLoopbackRadioFixture, NoCapabilities)
   session->stop();
 }
 
+// Samples transmitted ahead of the realtime RF clock are looped back.
 TEST_P(RealtimeLoopbackRadioFixture, RealtimeFlow)
 {
   // Asynchronous and TX task executors.
@@ -273,6 +275,7 @@ TEST_P(RealtimeLoopbackRadioFixture, RealtimeFlow)
   session->stop();
 }
 
+// Samples transmitted ahead of a manual RF clock are looped back.
 TEST_P(RealtimeLoopbackRadioFixture, NonRealtimeFlow)
 {
   // Asynchronous task executor.
@@ -355,8 +358,7 @@ TEST_P(RealtimeLoopbackRadioFixture, NonRealtimeFlow)
   session->stop();
 }
 
-// Triggers a TX underflow followed by an in-time transmisswhich are in the past compared to the last TX timestampion,
-// and checks that the received samples are still valid.
+// Triggers a TX underflow followed by an in-time transmission, and checks that the received samples are still valid.
 TEST_P(RealtimeLoopbackRadioFixture, TxUnderflow)
 {
   // Asynchronous task executor.
@@ -514,6 +516,7 @@ TEST_P(RealtimeLoopbackRadioFixture, ReceiveAfterTransmitSamplesRunOut)
   session->stop();
 }
 
+// A transmission in the past of the previous one is dropped, and later transmissions are looped back.
 TEST_P(RealtimeLoopbackRadioFixture, TxLate)
 {
   // Asynchronous task executor.
@@ -585,6 +588,7 @@ TEST_P(RealtimeLoopbackRadioFixture, TxLate)
   }
 }
 
+// A clock jump beyond the RX buffering depth zeroes the lost samples and keeps the RX timestamps contiguous.
 TEST_P(RealtimeLoopbackRadioFixture, RxOverflow)
 {
   // Asynchronous task executor.
@@ -653,6 +657,7 @@ TEST_P(RealtimeLoopbackRadioFixture, RxOverflow)
   session->stop();
 }
 
+// An RX overflow that loses part of a request zeroes only the lost samples.
 TEST_P(RealtimeLoopbackRadioFixture, PartialRxOverflow)
 {
   // Asynchronous task executor.
@@ -991,14 +996,15 @@ TEST_P(RealtimeLoopbackRadioFixture, ReceiverStallDoesNotAbortTransmitter)
   session->stop();
 }
 
-// The RF time scale device argument slows down the RF clock relative to the system clock.
+// The RF time scale device argument slows down the RF clock relative to the steady clock. Keys that only end with
+// rf_time_scale are ignored.
 TEST_P(RealtimeLoopbackRadioFixture, RfTimeScale)
 {
   std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
   radio_notifier_spy             radio_notifier;
 
   radio_configuration::radio radio_config = create_radio_config(2);
-  radio_config.args                       = "foo=1,rf_time_scale=0.25,bar=2";
+  radio_config.args                       = "xrf_time_scale=-1,rf_time_scale=0.25,bar=2";
 
   std::unique_ptr<radio_session> session = factory->create(radio_config, *async_task_executor, radio_notifier);
   ASSERT_NE(session, nullptr);
@@ -1101,10 +1107,7 @@ TEST_P(RealtimeLoopbackRadioFixture, StopReleasesBlockedTransmitter)
 }
 
 // Samples transmitted while a stalled receiver catches up are looped back.
-//
-// Disabled: an RX overflow that skips the whole request does not release the loopback buffer, so the transmitted
-// samples are dropped as if they overwrote unread samples.
-TEST_P(RealtimeLoopbackRadioFixture, DISABLED_TransmitWhileReceiverCatchesUp)
+TEST_P(RealtimeLoopbackRadioFixture, TransmitWhileReceiverCatchesUp)
 {
   std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
   radio_notifier_spy             radio_notifier;
@@ -1216,7 +1219,12 @@ TEST(RealtimeLoopbackRadioDeathTest, Misuse)
       "Stream 1 has different number of transmit");
 
   // Invalid RF time scales are reported as user errors.
-  for (const char* args : {"rf_time_scale=0", "rf_time_scale=-1", "rf_time_scale=0.5x", "rf_time_scale=0.5x,foo=1"}) {
+  for (const char* args : {"rf_time_scale=0",
+                           "rf_time_scale=-1",
+                           "rf_time_scale=abc",
+                           "rf_time_scale=",
+                           "rf_time_scale=0.5x",
+                           "rf_time_scale=0.5x,foo=1"}) {
     radio_configuration::radio config = make_radio_config(1, 1);
     config.args                       = args;
     ASSERT_EXIT(create(config), ::testing::ExitedWithCode(1), "Invalid rf_time_scale") << args;

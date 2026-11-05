@@ -12,15 +12,13 @@
 
 namespace ocudu {
 
-/// \brief Sample loopback buffer for the realtime loopback radio.
+/// \brief Single-writer, single-reader circular sample buffer for the realtime loopback radio.
 ///
-/// It allows writing samples with a given timestamp and reading them later on. It is implemented as a circular buffer.
+/// The sample with timestamp t is stored at index t mod N, where N is the buffer size. A write ending at timestamp e is
+/// accepted only if e <= r + N, where r is the timestamp following the last read sample.
 class loopback_buffer
 {
 public:
-  /// Forbid default constructor.
-  loopback_buffer() = delete;
-
   /// \brief Creates a loopback buffer with the given number of channels and samples.
   ///
   /// \param[in] nof_channels Number of channels in the buffer.
@@ -68,9 +66,9 @@ public:
   /// \return The number of samples read from the buffer, the rest of \c data is set to zero.
   unsigned read(baseband_gateway_buffer_writer& data, baseband_gateway_timestamp timestamp);
 
-  /// \brief Sets the internal buffer state to expect a read requested with the given timestamp.
+  /// \brief Sets the timestamp of the first sample to read.
   ///
-  /// It must be called once before writing and reading from the buffer, and must not be called again.
+  /// Called once, before any write or read.
   void set_first_expected_rx_timestamp(baseband_gateway_timestamp timestamp);
 
 private:

@@ -3,35 +3,41 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_session_realtime_loopback_impl.h"
+#include <cstdlib>
+#include <string_view>
 
 using namespace ocudu;
 
+/// Returns the \c rf_time_scale value of the device arguments, or 1 if it is absent.
 static double get_rf_time_scale(const std::string& args)
 {
-  static constexpr char key[] = "rf_time_scale=";
-  const std::size_t     pos   = args.find(key);
+  static constexpr std::string_view key = "rf_time_scale=";
+
+  // The key must start the arguments or follow a comma.
+  std::size_t pos = args.find(key);
+  while (pos != std::string::npos && pos != 0 && args[pos - 1] != ',') {
+    pos = args.find(key, pos + 1);
+  }
   if (pos == std::string::npos) {
     return 1.0;
   }
 
-  const std::size_t value_pos = pos + sizeof(key) - 1;
+  const std::size_t value_pos = pos + key.size();
   const std::size_t comma     = args.find(',', value_pos);
   const std::string value = args.substr(value_pos, comma == std::string::npos ? std::string::npos : comma - value_pos);
 
-  std::size_t  idx   = 0;
-  const double scale = std::stod(value, &idx);
-  report_error_if_not(
-      idx == value.size() && scale > 0.0, "Invalid rf_time_scale in device arguments (i.e., {}).", args);
+  char*        end   = nullptr;
+  const double scale = std::strtod(value.c_str(), &end);
+  report_error_if_not(!value.empty() && (end == value.c_str() + value.size()) && (scale > 0.0),
+                      "Invalid rf_time_scale in device arguments (i.e., {}).",
+                      args);
   return scale;
 }
 
 radio_session_realtime_loopback_impl::radio_session_realtime_loopback_impl(const radio_configuration::radio& config,
                                                                            task_executor&        async_task_executor,
                                                                            radio_event_notifier& notification_handler) :
-  radio_session_realtime_loopback_impl(config,
-                                       async_task_executor,
-                                       notification_handler,
-                                       get_current_rf_timestamp_realtime_clock)
+  radio_session_realtime_loopback_impl(config, async_task_executor, notification_handler, realtime_clock)
 {
 }
 
@@ -68,7 +74,6 @@ radio_session_realtime_loopback_impl::radio_session_realtime_loopback_impl(
   }
 }
 
-// See the radio_session interface for documentation.
 baseband_gateway_timestamp radio_session_realtime_loopback_impl::read_current_time()
 {
   return get_current_rf_timestamp();
@@ -93,6 +98,5 @@ void radio_session_realtime_loopback_impl::start(baseband_gateway_timestamp init
 
 void radio_session_realtime_loopback_impl::stop()
 {
-  // Request the radio to stop.
   stop_control.stop();
 }

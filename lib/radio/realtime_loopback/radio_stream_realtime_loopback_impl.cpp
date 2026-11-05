@@ -5,7 +5,6 @@
 #include "radio_stream_realtime_loopback_impl.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
-#include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer_view.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include <thread>
 
@@ -20,22 +19,15 @@ static void zero_buffer(baseband_gateway_buffer_writer& data)
 }
 
 radio_stream_realtime_loopback_impl::radio_stream_realtime_loopback_impl(unsigned            nof_channels,
-                                                                         double              sampling_rate_Hz,
+                                                                         double              sampling_rate_hz_,
                                                                          const shared_state& state_) :
   logger(ocudulog::fetch_basic_logger("RF")),
-  sampling_rate_hz(sampling_rate_Hz),
+  sampling_rate_hz(sampling_rate_hz_),
   state(state_),
-  max_nof_buffered_rx_samples(static_cast<uint64_t>(sampling_rate_hz / 100)),
-  max_nof_buffered_tx_samples(max_nof_buffered_rx_samples),
+  max_nof_buffered_samples(static_cast<uint64_t>(sampling_rate_hz / 100)),
   tx_processing_delay_samples(static_cast<uint64_t>(sampling_rate_hz / 100000)),
-  buffer(nof_channels, max_nof_buffered_tx_samples * 10)
+  buffer(nof_channels, max_nof_buffered_samples * nof_buffer_laps)
 {
-  report_fatal_error_if_not(tx_processing_delay_samples < max_nof_buffered_tx_samples,
-                            "The emulated TX processing delay must be smaller than the emulated TX buffer size.");
-  report_error_if_not(max_nof_buffered_tx_samples >= static_cast<uint64_t>(sampling_rate_hz / 10000),
-                      "The emulated TX buffer must hold at least 100 microseconds of baseband signal.");
-  report_error_if_not(max_nof_buffered_rx_samples >= static_cast<uint64_t>(sampling_rate_hz / 10000),
-                      "The emulated RX buffer must hold at least 100 microseconds of baseband signal.");
 }
 
 unsigned radio_stream_realtime_loopback_impl::get_receiver_optimal_buffer_size() const
@@ -54,6 +46,13 @@ baseband_gateway_receiver::metadata radio_stream_realtime_loopback_impl::receive
 {
   auto token = state.stop_control.get_token();
 
+  unsigned nof_requested_samples = data.get_nof_samples();
+  ocudu_assert(
+      nof_requested_samples <= max_nof_buffered_samples,
+      "Cannot provide the requested number of samples (i.e., {}), since the maximum RX buffer size is {} samples.",
+      nof_requested_samples,
+      max_nof_buffered_samples);
+
   // Sleep until the radio is requested to start. A stop request releases the caller without samples.
   while (!state.start_requested.load(std::memory_order_acquire)) {
     if (token.is_stop_requested()) {
@@ -64,58 +63,41 @@ baseband_gateway_receiver::metadata radio_stream_realtime_loopback_impl::receive
     std::this_thread::sleep_for(std::chrono::microseconds(1));
   }
 
-  unsigned nof_requested_samples = data.get_nof_samples();
-  ocudu_assert(
-      nof_requested_samples <= max_nof_buffered_rx_samples,
-      "Cannot provide the requested number of samples (i.e., {}), since the maximum RX buffer size is {} samples.",
-      nof_requested_samples,
-      max_nof_buffered_rx_samples);
+  // Every exit path from here on delivers the requested samples, even if they are zeros.
+  metadata md = {.ts = next_receive_timestamp};
+  next_receive_timestamp += nof_requested_samples;
 
   // Samples older than the receive buffering depth are lost, as in a receiver buffer overflow.
   baseband_gateway_timestamp current_rf_timestamp = state.get_current_rf_timestamp();
   baseband_gateway_timestamp earliest_timestamp_in_rx_buffer =
-      current_rf_timestamp > max_nof_buffered_rx_samples ? current_rf_timestamp - max_nof_buffered_rx_samples : 0;
-  if (next_receive_timestamp < earliest_timestamp_in_rx_buffer) {
-    logger.warning(
-        "RX Overflow detected while receiving TS={}, current RF TS: {}", next_receive_timestamp, current_rf_timestamp);
+      current_rf_timestamp > max_nof_buffered_samples ? current_rf_timestamp - max_nof_buffered_samples : 0;
+  if (md.ts < earliest_timestamp_in_rx_buffer) {
+    logger.warning("RX Overflow detected while receiving TS={}, current RF TS: {}", md.ts, current_rf_timestamp);
 
-    uint64_t nof_samples_to_skip = earliest_timestamp_in_rx_buffer - next_receive_timestamp;
-    if (nof_samples_to_skip >= nof_requested_samples) {
-      zero_buffer(data);
-    } else {
-      // Zero the lost samples and fill the remaining ones in the same positions as if there had been no overflow.
-      for (unsigned i_channel = 0, nof_channels = data.get_nof_channels(); i_channel != nof_channels; ++i_channel) {
-        ocuduvec::zero(data.get_channel_buffer(i_channel).first(nof_samples_to_skip));
-      }
-      baseband_gateway_buffer_writer_view offset_buffer(
-          data, nof_samples_to_skip, nof_requested_samples - nof_samples_to_skip);
-      buffer.read(offset_buffer, earliest_timestamp_in_rx_buffer);
+    // Read the whole block so that the loopback buffer releases it, then zero the lost samples.
+    buffer.read(data, md.ts);
+    unsigned nof_lost_samples =
+        std::min<baseband_gateway_timestamp>(earliest_timestamp_in_rx_buffer - md.ts, nof_requested_samples);
+    for (unsigned i_channel = 0, nof_channels = data.get_nof_channels(); i_channel != nof_channels; ++i_channel) {
+      ocuduvec::zero(data.get_channel_buffer(i_channel).first(nof_lost_samples));
     }
-
-    metadata return_md = {.ts = next_receive_timestamp};
-    next_receive_timestamp += nof_requested_samples;
-    return return_md;
+    return md;
   }
 
   // Sleep until all the requested samples are available at the antenna. A stop request releases the caller.
-  baseband_gateway_timestamp last_requested_sample_timestamp = next_receive_timestamp + nof_requested_samples - 1;
+  baseband_gateway_timestamp last_requested_sample_timestamp = md.ts + nof_requested_samples - 1;
   while (last_requested_sample_timestamp > current_rf_timestamp) {
     if (token.is_stop_requested()) {
       zero_buffer(data);
-      metadata return_md = {.ts = next_receive_timestamp};
-      next_receive_timestamp += nof_requested_samples;
-      return return_md;
+      return md;
     }
     OCUDU_RTSAN_SCOPED_DISABLER(scoped_disabler);
     std::this_thread::sleep_for(std::chrono::microseconds(1));
     current_rf_timestamp = state.get_current_rf_timestamp();
   }
 
-  buffer.read(data, next_receive_timestamp);
-
-  metadata return_md = {.ts = next_receive_timestamp};
-  next_receive_timestamp += nof_requested_samples;
-  return return_md;
+  buffer.read(data, md.ts);
+  return md;
 }
 
 void radio_stream_realtime_loopback_impl::transmit(const baseband_gateway_buffer_reader&        data,
@@ -134,11 +116,11 @@ void radio_stream_realtime_loopback_impl::transmit(const baseband_gateway_buffer
 
   // Samples in the past with respect to previous transmissions are late and dropped.
   if (first_requested_sample_ts < next_transmit_timestamp) {
-    logger.warning("TX late detected at while transmitting TS={}, expected TS: {}",
+    logger.warning("TX late detected while transmitting TS={}, expected TS: {}",
                    first_requested_sample_ts,
                    next_transmit_timestamp);
 
-    // Update the next transmit timestamp to the latest sample that could be transmitted.
+    // Skip the late block, so that the next transmission must start after it.
     next_transmit_timestamp = std::max(next_transmit_timestamp, first_requested_sample_ts + nof_requested_samples);
     return;
   }
@@ -158,7 +140,7 @@ void radio_stream_realtime_loopback_impl::transmit(const baseband_gateway_buffer
   // Block while the samples are further ahead of the RF time than the emulated TX buffering depth.
   baseband_gateway_timestamp last_requested_sample_ts = first_requested_sample_ts + nof_requested_samples - 1;
   while (last_requested_sample_ts + tx_processing_delay_samples >
-         state.get_current_rf_timestamp() + max_nof_buffered_tx_samples) {
+         state.get_current_rf_timestamp() + max_nof_buffered_samples) {
     if (token.is_stop_requested()) {
       return;
     }

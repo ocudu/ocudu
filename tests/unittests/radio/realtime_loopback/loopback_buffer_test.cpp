@@ -59,7 +59,7 @@ protected:
     return {static_cast<int16_t>(i_channel + 1), static_cast<int16_t>(timestamp % 30000)};
   }
 
-  // Checks that samples [begin, begin + nof_valid) match the written pattern and the rest are zero.
+  // Checks that samples [timestamp, timestamp + nof_valid) match the written pattern and the rest are zero.
   void check(const baseband_gateway_buffer_reader& data, baseband_gateway_timestamp timestamp, unsigned nof_valid) const
   {
     for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
