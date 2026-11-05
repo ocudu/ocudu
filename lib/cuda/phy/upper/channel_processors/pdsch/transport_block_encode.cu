@@ -311,10 +311,11 @@ __device__ __constant__ uint32_t TB_CRC24B_SLICE2[256];
 __device__ __constant__ uint32_t TB_CRC24B_SLICE3[256];
 __device__ __constant__ uint32_t TB_CRC24B_X_POWERS[21];
 static bool                      tb_crc24b_initialized = false;
-static void                      init_tb_crc24b_table()
+static cuda_result               init_tb_crc24b_table()
 {
-  if (tb_crc24b_initialized)
-    return;
+  if (tb_crc24b_initialized) {
+    return {};
+  }
   uint32_t h_table[256];
   uint32_t h_slice0[256];
   uint32_t h_slice1[256];
@@ -372,13 +373,31 @@ static void                      init_tb_crc24b_table()
     h_x_powers[i] = result & 0xFFFFFF;
   }
 
-  cudaMemcpyToSymbol(TB_CRC24B_TABLE, h_table, sizeof(h_table));
-  cudaMemcpyToSymbol(TB_CRC24B_SLICE0, h_slice0, sizeof(h_slice0));
-  cudaMemcpyToSymbol(TB_CRC24B_SLICE1, h_slice1, sizeof(h_slice1));
-  cudaMemcpyToSymbol(TB_CRC24B_SLICE2, h_slice2, sizeof(h_slice2));
-  cudaMemcpyToSymbol(TB_CRC24B_SLICE3, h_slice3, sizeof(h_slice3));
-  cudaMemcpyToSymbol(TB_CRC24B_X_POWERS, h_x_powers, sizeof(h_x_powers));
+  const struct {
+    const void* symbol;
+    const void* source;
+    std::size_t size;
+  } uploads[] = {
+      {TB_CRC24B_TABLE, h_table, sizeof(h_table)},
+      {TB_CRC24B_SLICE0, h_slice0, sizeof(h_slice0)},
+      {TB_CRC24B_SLICE1, h_slice1, sizeof(h_slice1)},
+      {TB_CRC24B_SLICE2, h_slice2, sizeof(h_slice2)},
+      {TB_CRC24B_SLICE3, h_slice3, sizeof(h_slice3)},
+      {TB_CRC24B_X_POWERS, h_x_powers, sizeof(h_x_powers)},
+  };
+
+  for (const auto& upload : uploads) {
+    if (cuda_result status = check_cuda_error(cudaMemcpyToSymbol(upload.symbol, upload.source, upload.size),
+                                              "upload the code block checksum tables");
+        !status.has_value()) {
+      return status;
+    }
+  }
+
+  // The flag is only set once every table is on the device, so a failed upload is retried by the
+  // next encode rather than leaving the kernels reading uninitialised memory.
   tb_crc24b_initialized = true;
+  return {};
 }
 
 __device__ __forceinline__ uint32_t gf24_multiply_crc24b(uint32_t a, uint32_t b)
@@ -1436,7 +1455,9 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 
   // Initialize CB CRC24B table (once, on first use)
   if (handle->tb_cfg.cb_crc_bits > 0) {
-    init_tb_crc24b_table();
+    if (cuda_result status = init_tb_crc24b_table(); !status.has_value()) {
+      return status;
+    }
   }
 
   // =========================================================================
@@ -1464,15 +1485,13 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
   // Step 2: Segment TB + attach CB CRC
   // =========================================================================
   // Compute TB CRC
-  if (handle->tb_cfg.tb_crc_bits == 24) {
-    crc24a_compute(handle->d_crc.data(), d_tb_input, handle->config.tb_size_bits, stream);
-  } else {
-    crc16_compute(reinterpret_cast<uint16_t*>(handle->d_crc.data()), d_tb_input, handle->config.tb_size_bits, stream);
-  }
-
-  // Initialize CB CRC table if needed
-  if (handle->tb_cfg.cb_crc_bits > 0) {
-    init_tb_crc24b_table();
+  cuda_result crc_status =
+      (handle->tb_cfg.tb_crc_bits == 24)
+          ? crc24a_compute(handle->d_crc.data(), d_tb_input, handle->config.tb_size_bits, stream)
+          : crc16_compute(
+                reinterpret_cast<uint16_t*>(handle->d_crc.data()), d_tb_input, handle->config.tb_size_bits, stream);
+  if (!crc_status.has_value()) {
+    return crc_status;
   }
 
   // Segment TB + attach CRCs
@@ -1487,6 +1506,11 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
       handle->tb_cfg.num_code_blocks,
       cb_words,
       handle->tb_cfg.ldpc_cfg.num_filler_bits);
+
+  if (cuda_result status = check_cuda_error(cudaPeekAtLastError(), "launch the segmentation kernel");
+      !status.has_value()) {
+    return status;
+  }
 
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
   {
@@ -1517,9 +1541,12 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 #endif
 
   // Step 3: LDPC encoding.
-  int encoded_words = static_cast<int>(handle->ldpc_enc.get_output_words());
-  handle->ldpc_enc.encode(
+  int         encoded_words = static_cast<int>(handle->ldpc_enc.get_output_words());
+  cuda_result encode_status = handle->ldpc_enc.encode(
       handle->d_encoded_bits.data(), handle->d_cb_bits.data(), handle->tb_cfg.num_code_blocks, stream);
+  if (!encode_status.has_value()) {
+    return encode_status;
+  }
 
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
   // Diagnostics: print first few LDPC encoded bytes per CB before rate matching.
@@ -1574,12 +1601,22 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.cb_specific.rm_length       = static_cast<unsigned>(E_short);
     rm_cfg_short.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
     rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
-    handle->rate_matcher.configure(rm_cfg_short);
+    if (cuda_result status = handle->rate_matcher.configure(rm_cfg_short); !status.has_value()) {
+      return status;
+    }
     // Note: for all-short case, E_words == rm_words, so use standard batch call
-    handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
+    if (cuda_result status =
+            handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
+        !status.has_value()) {
+      return status;
+    }
   } else if (nof_short == 0) {
     // All CBs are long - already configured with E_long, single batch call
-    handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
+    if (cuda_result status =
+            handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
+        !status.has_value()) {
+      return status;
+    }
   } else {
     // Mixed: rate match short CBs first, then long CBs
     // IMPORTANT: Use rm_words stride for uniform buffer layout
@@ -1592,8 +1629,14 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.cb_specific.rm_length       = static_cast<unsigned>(E_short);
     rm_cfg_short.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
     rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
-    handle->rate_matcher.configure(rm_cfg_short);
-    handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), nof_short, rm_words, stream);
+    if (cuda_result status = handle->rate_matcher.configure(rm_cfg_short); !status.has_value()) {
+      return status;
+    }
+    if (cuda_result status = handle->rate_matcher.rate_match(
+            d_rate_matched.data(), handle->d_encoded_bits.data(), nof_short, rm_words, stream);
+        !status.has_value()) {
+      return status;
+    }
 
     // Configure for long CBs
     codeblock_metadata rm_cfg_long          = {};
@@ -1604,13 +1647,18 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_long.cb_specific.rm_length       = static_cast<unsigned>(E_long);
     rm_cfg_long.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
     rm_cfg_long.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
-    handle->rate_matcher.configure(rm_cfg_long);
+    if (cuda_result status = handle->rate_matcher.configure(rm_cfg_long); !status.has_value()) {
+      return status;
+    }
     span<uint32_t> d_long_half = d_rate_matched.subspan(nof_short * rm_words, (num_cbs - nof_short) * rm_words);
-    handle->rate_matcher.rate_match(d_long_half.data(),
-                                    handle->d_encoded_bits.data() + nof_short * encoded_words,
-                                    num_cbs - nof_short,
-                                    rm_words,
-                                    stream);
+    if (cuda_result status = handle->rate_matcher.rate_match(d_long_half.data(),
+                                                             handle->d_encoded_bits.data() + nof_short * encoded_words,
+                                                             num_cbs - nof_short,
+                                                             rm_words,
+                                                             stream);
+        !status.has_value()) {
+      return status;
+    }
   }
 
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
@@ -1667,6 +1715,11 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
         Q_m,
         total_bits,
         output_bytes);
+
+    if (cuda_result status = check_cuda_error(cudaPeekAtLastError(), "launch the interleave and scramble kernel");
+        !status.has_value()) {
+      return status;
+    }
 
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
     // Run diagnostic kernel for multi-CB boundary tracing.
@@ -1733,6 +1786,11 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
           d_rate_matched.data(), d_interleaved.data(), nof_short, E_short, E_long, rm_words, num_cbs, total_bits);
     }
 
+    if (cuda_result status = check_cuda_error(cudaPeekAtLastError(), "launch the interleave kernel");
+        !status.has_value()) {
+      return status;
+    }
+
     uint32_t* d_final_output = d_interleaved.data();
     if (handle->config.enable_scrambling) {
       cuda_result scr_status =
@@ -1744,6 +1802,11 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 
     int num_byte_blocks = (output_bytes + block_size - 1) / block_size;
     bits_to_bytes_kernel<<<num_byte_blocks, block_size, 0, native_stream>>>(d_final_output, d_output, output_bytes);
+
+    if (cuda_result status = check_cuda_error(cudaPeekAtLastError(), "launch the bit packing kernel");
+        !status.has_value()) {
+      return status;
+    }
   }
 
   return {};
