@@ -5,9 +5,17 @@
 
 #pragma once
 
-#include "../ue_manager/ue_manager_impl.h"
+#include "../cu_cp_impl_interface.h"
 #include "amf_selector.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/support/async/async_task.h"
+#include "ocudu/support/executors/task_executor.h"
+#include "ocudu/support/timers.h"
+#include <atomic>
+#include <chrono>
 #include <future>
+#include <unordered_map>
+#include <vector>
 
 namespace ocudu {
 

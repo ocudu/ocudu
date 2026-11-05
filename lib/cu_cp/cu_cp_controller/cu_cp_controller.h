@@ -6,9 +6,11 @@
 #pragma once
 
 #include "amf_connection_manager.h"
+#include "cu_cp_ue_admission_controller.h"
 #include "cu_up_connection_manager.h"
 #include "du_connection_manager.h"
 #include "xnc_connection_manager.h"
+#include <set>
 
 namespace ocudu::ocucp {
 

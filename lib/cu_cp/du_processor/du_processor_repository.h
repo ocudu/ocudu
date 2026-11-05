@@ -13,6 +13,7 @@
 namespace ocudu::ocucp {
 
 struct cu_cp_configuration;
+class ue_manager;
 
 /// DU processor repository configuration.
 struct du_repository_config {
