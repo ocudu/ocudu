@@ -7,6 +7,7 @@
 #include "ru_sdr_config_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/interval.h"
+#include "ocudu/radio/radio_constants.h"
 #include "ocudu/ran/phy_time_unit.h"
 #include "ocudu/support/string_parsing_utils.h"
 #include <chrono>
@@ -169,6 +170,14 @@ static bool validate_amplitude_control_unit_config(const amplitude_control_unit_
 static bool validate_ru_sdr_appconfig(const ru_sdr_unit_config&                 config,
                                       span<const ru_sdr_cell_validation_config> cell_config)
 {
+  // Each cell uses one radio stream.
+  if (cell_config.size() > RADIO_MAX_NOF_STREAMS) {
+    fmt::println("The number of SDR cells (i.e., {}) exceeds the maximum number of radio streams (i.e., {}).",
+                 cell_config.size(),
+                 RADIO_MAX_NOF_STREAMS);
+    return false;
+  }
+
   if (config.expert_execution_cfg.cell_affinities.size() != cell_config.size()) {
     fmt::println("Using different number of cells for SDR expert execution '{}' than the number of defined cells '{}'",
                  config.expert_execution_cfg.cell_affinities.size(),
