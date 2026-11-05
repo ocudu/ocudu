@@ -133,6 +133,27 @@ TEST_F(slice_ue_repository_test, add_ue_to_slice_repo_alters_repo_size)
   ASSERT_TRUE(slices[SRB_RAN_SLICE_ID.value()]->contains(ue_idx));
 }
 
+TEST_F(slice_ue_repository_test, ues_with_pending_newtx_data_only_include_slice_members)
+{
+  const du_ue_index_t member_idx     = to_du_ue_index(0);
+  const du_ue_index_t non_member_idx = to_du_ue_index(3);
+  add_ue(member_idx);
+  const std::vector<test_lc_ch_cfg> drb_only = {
+      test_lc_ch_cfg{LCID_MIN_DRB, uint_to_lcg_id(1), DEFAULT_DRB_RAN_SLICE_ID}};
+  add_ue(non_member_idx, drb_only);
+  const slice_ue_repository& srb_slice = *slices[SRB_RAN_SLICE_ID.value()];
+
+  ue_db[member_idx].handle_sr_indication(next_slot);
+  ue_db[non_member_idx].handle_sr_indication(next_slot);
+
+  const bounded_bitset<MAX_NOF_DU_UES> ul_ues = srb_slice.get_ues_with_pending_newtx_data(false);
+  ASSERT_TRUE(ul_ues.test(member_idx));
+  ASSERT_EQ(ul_ues.count(), 1);
+
+  slices[SRB_RAN_SLICE_ID.value()]->rem_ue(member_idx);
+  ASSERT_TRUE(srb_slice.get_ues_with_pending_newtx_data(false).none());
+}
+
 TEST_F(slice_ue_repository_test, if_positive_dl_bs_added_to_slice_then_slice_ue_has_pending_bytes)
 {
   du_ue_index_t ue_idx = to_du_ue_index(0);

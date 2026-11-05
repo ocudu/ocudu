@@ -23,6 +23,10 @@ bool slice_ue_repository::add_ue(ue& u)
     ue_cell* ue_cc = u.find_cell(cell_index);
     ocudu_sanity_check(ue_cc != nullptr, "Invalid UE added to RAN slice");
     ue_map.emplace(u.ue_index, u, *ue_cc, slice_id);
+    if (ue_members.size() <= u.ue_index) {
+      ue_members.resize(u.ue_index + 1);
+    }
+    ue_members.set(u.ue_index);
     return true;
   }
   return false;
@@ -78,7 +82,7 @@ void slice_ue_repository::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
 
   if (not slice_u.u.logical_channels().has_slice(slice_id)) {
     // If no more bearers active for this UE, remove it from the slice.
-    ue_map.erase(ue_idx);
+    erase_ue(ue_idx);
   }
 }
 
@@ -87,7 +91,25 @@ void slice_ue_repository::rem_ue(du_ue_index_t ue_index)
   if (not ue_map.contains(ue_index)) {
     return;
   }
+  erase_ue(ue_index);
+}
+
+void slice_ue_repository::erase_ue(du_ue_index_t ue_index)
+{
   ue_map.erase(ue_index);
+  ue_members.reset(ue_index);
+  // Strip trailing zeros, so that the bitset size tracks the highest UE index of the slice.
+  ue_members.resize(static_cast<size_t>(ue_members.find_highest(true) + 1));
+}
+
+bounded_bitset<MAX_NOF_DU_UES> slice_ue_repository::get_ues_with_pending_newtx_data(bool is_dl) const
+{
+  bounded_bitset<MAX_NOF_DU_UES> result = ues.get_ues_with_pending_newtx_data(slice_id, is_dl);
+  // The pending bitset also flags UEs with pending CEs or SRs that may not be part of this slice.
+  bounded_bitset<MAX_NOF_DU_UES> members = ue_members;
+  members.resize(result.size());
+  result &= members;
+  return result;
 }
 
 static units::bytes sum_allocated_ul_harq_bytes(const ue& u, std::optional<ran_slice_id_t> slice_id)
