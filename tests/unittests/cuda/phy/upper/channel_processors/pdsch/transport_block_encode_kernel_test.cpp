@@ -220,3 +220,21 @@ TEST_F(transport_block_encode_kernel_test, a_filler_count_of_zero_is_taken_as_gi
   // read the zero as a request to derive the count would produce the first sequence twice.
   EXPECT_NE(encoded[0], encoded[1]);
 }
+
+TEST_F(transport_block_encode_kernel_test, the_largest_transport_block_is_accepted)
+{
+  // The reservation holds the codeword buffer the LDPC encoder writes, which is all 68 BG1 columns
+  // per code block. A reservation sized for 66 refuses the transport blocks with the most code
+  // blocks, which are the largest downlink grants.
+  cuda::transport_block_encoder_config config = {};
+  config.nof_tb_bits                          = 1277992;
+  config.nof_layers                           = 4;
+  config.modulation                           = modulation_scheme::QAM256;
+  config.nof_allocated_bits                   = 2000000;
+  config.code_rate                            = 0.85F;
+  config.enable_scrambling                    = true;
+
+  cuda::cuda_result configured = gpu.configure(config);
+  ASSERT_TRUE(configured.has_value()) << configured.error();
+  EXPECT_GT(gpu.get_nof_codeblocks(), 147U);
+}
