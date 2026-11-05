@@ -18,6 +18,21 @@ namespace ocudu {
 ///
 /// Connects the transmitter of a stream to the receiver of the same stream through a loopback buffer. All the streams
 /// of a session share the RF clock, the start request and the stop control.
+///
+/// The stream operates in real time, using the RF clock as time reference, and emulates the following real time issues
+/// coming from the stack:
+///
+/// - TX side lates:      a transmission request contains samples in the past with respect to previous transmissions.
+///                       The samples are dropped.
+/// - TX side underflows: a transmission request contains samples that are not ahead of the current RF timestamp by at
+///                       least \ref tx_processing_delay_samples. The samples are dropped.
+/// - TX side blocking:   a transmission request contains samples ahead of the current RF timestamp by more than
+///                       \ref max_nof_buffered_samples. The call blocks until the samples fit or the radio stops.
+/// - RX side overflows:  the next sample to receive lags the current RF timestamp by more than
+///                       \ref max_nof_buffered_samples. This is detected on the next call to \c receive(). Zeros are
+///                       returned in place of the lost samples.
+///
+/// The loopback buffer also drops transmitted samples that would overwrite samples the receiver has not read yet.
 class radio_stream_realtime_loopback_impl : public baseband_gateway,
                                             public baseband_gateway_transmitter,
                                             public baseband_gateway_receiver
