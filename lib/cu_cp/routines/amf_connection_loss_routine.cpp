@@ -75,7 +75,7 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<void>>& ctx
   }
 
   // Try to reconnect to AMF.
-  controller.amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng, cu_cp_cfg.ngap.amf_reconnection_retry_time);
+  controller.amf_connection_handler().reconnect_to_amf(amf_index, cu_cp_cfg.ngap.amf_reconnection_retry_time);
 
   logger.info("\"{}\" finished successfully", name());
 

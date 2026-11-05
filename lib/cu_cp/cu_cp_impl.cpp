@@ -2140,9 +2140,9 @@ void cu_cp_impl::handle_amf_reconnection(cu_cp_amf_index_t amf_index)
 
   std::vector<plmn_identity> served_plmns = ngap_db.find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
 
-  // The AMF serves its PLMNs again, so accept new UEs for them. This also covers an AMF that connects for the first
-  // time through the background retry (e.g. an AMF of the pool that was down on startup) while its PLMN is blocked
-  // because another AMF serving it was lost.
+  // The AMF serves its PLMNs again, so accept new UEs for them. This runs after every successful reconnection,
+  // including an AMF that connects for the first time through the background retry (e.g. an AMF of the pool that was
+  // down on startup) while its PLMN is blocked because another AMF serving it was lost.
   ue_mng.remove_blocked_plmns(served_plmns);
 
   // The common task scheduler takes a void task, so wrap the bool-returning activation routine.

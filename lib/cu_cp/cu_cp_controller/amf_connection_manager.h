@@ -52,12 +52,8 @@ public:
 
   /// \brief Initiates the reconnection to the AMF.
   /// \param[in] amf_index The index of the AMF to reconnect to.
-  /// \param[in] ue_mng The UE manager to re-enable UE connections in case the reconnection was successful. It may be
-  /// null when no UE connection was ever blocked for this AMF, e.g. when the initial connection setup failed.
   /// \param[in] amf_reconnection_retry_time The time to wait before retrying the reconnection.
-  void reconnect_to_amf(cu_cp_amf_index_t         amf_index,
-                        ue_manager*               ue_mng,
-                        std::chrono::milliseconds amf_reconnection_retry_time);
+  void reconnect_to_amf(cu_cp_amf_index_t amf_index, std::chrono::milliseconds amf_reconnection_retry_time);
 
   /// Stops the AMF connection manager.
   void stop();

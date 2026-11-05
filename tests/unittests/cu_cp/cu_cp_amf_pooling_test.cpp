@@ -489,6 +489,30 @@ TEST_F(cu_cp_amf_pooling_test, when_the_first_amf_fails_ng_setup_on_startup_then
   ASSERT_EQ(attach_ue(int_to_gnb_du_ue_f1ap_id(0), test_helpers::create_rrc_setup_complete()), 1);
 }
 
+TEST_F(cu_cp_amf_pooling_test, when_the_first_amf_is_unreachable_on_startup_then_the_other_amf_is_still_set_up)
+{
+  // AMF 0 cannot be reached, so the CU-CP cannot set up its TNL association.
+  get_amf(0).drop_connection();
+  get_amf(1).enqueue_next_tx_pdu(generate_ng_setup_response(plmn_identity::test_value(), 1, 255));
+
+  get_cu_cp().start();
+
+  // The CU-CP did not stop at the unreachable AMF and sent the NG Setup Request to the other AMF.
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(get_amf(1).try_pop_rx_pdu(ngap_pdu)) << "AMF 1 received no NG Setup Request";
+  ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request));
+
+  // AMF 1 serves the PLMN, so the cell of a new DU is activated and new UEs are served by AMF 1.
+  std::optional<unsigned> ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  du_idx = ret.value();
+  ASSERT_TRUE(run_f1_setup(du_idx));
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  ASSERT_TRUE(run_e1_setup(ret.value()));
+  ASSERT_EQ(attach_ue(int_to_gnb_du_ue_f1ap_id(0), test_helpers::create_rrc_setup_complete()), 1);
+}
+
 TEST_F(cu_cp_amf_pooling_test, when_the_last_amf_is_lost_and_another_amf_connects_later_then_the_plmn_is_unblocked)
 {
   // AMF 1 is down on startup, so only AMF 0 connects. AMF 1 is retried in the background.

@@ -69,7 +69,6 @@ void amf_connection_manager::handle_amf_connection_loss(cu_cp_amf_index_t amf_in
 }
 
 void amf_connection_manager::reconnect_to_amf(cu_cp_amf_index_t         amf_index,
-                                              ue_manager*               ue_mng,
                                               std::chrono::milliseconds amf_reconnection_retry_time)
 {
   if (ngaps.find_ngap(amf_index) == nullptr) {
@@ -79,15 +78,12 @@ void amf_connection_manager::reconnect_to_amf(cu_cp_amf_index_t         amf_inde
 
   ngaps.get_ngap_task_scheduler().handle_amf_async_task(
       amf_index,
-      launch_async([this, amf_index, ue_mng, amf_reconnection_retry_time](coro_context<async_task<void>>& ctx) mutable {
+      launch_async([this, amf_index, amf_reconnection_retry_time](coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         CORO_AWAIT(start_amf_reconnection(
             *ngaps.find_ngap(amf_index), timer_factory{timers, cu_cp_exec}, amf_reconnection_retry_time));
 
-        if (ue_mng != nullptr) {
-          ue_mng->remove_blocked_plmns(ngaps.find_ngap(amf_index)->get_ngap_context().get_supported_plmns());
-        }
         set_amf_connected(amf_index, true);
         // Notify CU-CP about the successful reconnection.
         cu_cp_notifier.handle_amf_reconnection(amf_index);
@@ -182,7 +178,7 @@ void amf_connection_manager::retry_unconnected_amfs(std::chrono::milliseconds re
 {
   for (const auto& [amf_index, ngap] : ngaps.get_ngaps()) {
     if (not is_amf_connected(amf_index)) {
-      reconnect_to_amf(amf_index, nullptr, retry_time);
+      reconnect_to_amf(amf_index, retry_time);
     }
   }
 }
