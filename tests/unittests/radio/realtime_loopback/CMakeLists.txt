@@ -12,3 +12,8 @@ add_executable(radio_realtime_loopback_validator_test radio_realtime_loopback_va
 target_link_libraries(radio_realtime_loopback_validator_test ocudu_radio ocudu_support GTest::gtest GTest::gtest_main)
 add_test(radio_realtime_loopback_validator_test radio_realtime_loopback_validator_test)
 
+
+add_executable(loopback_buffer_test loopback_buffer_test.cpp)
+target_link_libraries(loopback_buffer_test ocudu_radio ocudu_support GTest::gtest GTest::gtest_main)
+target_include_directories(loopback_buffer_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/radio/realtime_loopback)
+add_test(loopback_buffer_test loopback_buffer_test)

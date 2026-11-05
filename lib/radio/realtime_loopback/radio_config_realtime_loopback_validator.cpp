@@ -127,11 +127,6 @@ bool radio_config_realtime_loopback_validator::is_configuration_valid(const radi
     return false;
   }
 
-  if (config.tx_streams.size() != 1) {
-    fmt::print("Only a single transmit and receive stream is currently supported.\n");
-    return false;
-  }
-
   for (const radio_configuration::stream& tx_stream : config.tx_streams) {
     if (!validate_stream(tx_stream)) {
       return false;
@@ -140,6 +135,13 @@ bool radio_config_realtime_loopback_validator::is_configuration_valid(const radi
 
   for (const radio_configuration::stream& rx_stream : config.rx_streams) {
     if (!validate_stream(rx_stream)) {
+      return false;
+    }
+  }
+
+  for (unsigned i_stream = 0, nof_streams = config.tx_streams.size(); i_stream != nof_streams; ++i_stream) {
+    if (config.tx_streams[i_stream].channels.size() != config.rx_streams[i_stream].channels.size()) {
+      fmt::print("Transmit and receive number of channels must be equal for each stream.\n");
       return false;
     }
   }

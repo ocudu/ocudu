@@ -4,36 +4,19 @@
 
 #pragma once
 
-#include "loopback_buffer.h"
-#include "ocudu/gateways/baseband/baseband_gateway_receiver.h"
-#include "ocudu/gateways/baseband/baseband_gateway_transmitter.h"
-#include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
+#include "radio_stream_realtime_loopback_impl.h"
 #include "ocudu/radio/radio_session.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/synchronization/stop_event.h"
+#include <memory>
+#include <vector>
 
 namespace ocudu {
 
-/// \brief Implements a realtime loopback radio session.
+/// \brief Realtime loopback radio session.
 ///
-/// This radio implementation sends the transmitted samples to the receive side via a loopback buffer. It operates in
-/// real time using the system clock as time reference, and detects the following real time issues coming from the
-/// stack:
-///
-/// - TX side lates:      when a transmission request contains samples in the past with respect to previous
-///                       transmissions. In this case, the samples are dropped.
-/// - TX side underflows: when a transmission request contains sample timestamps that are not sufficiently ahead (by at
-///                       least \ref tx_processing_delay_samples) of the current RF timestamp for the radio to process
-///                       and transmit them. The samples are dropped.
-/// - RX side overflows:  when a significant amount of time passes between receive calls (more than \ref
-///                       max_nof_buffered_rx_samples), the RX buffer of the radio overflows. This is detected on the
-///                       next call to \c receive() after the overflow has occurred. Zeros are returned in place of the
-///                       lost samples.
-class radio_session_realtime_loopback_impl : public radio_session,
-                                             public radio_capabilities_registry,
-                                             public baseband_gateway,
-                                             public baseband_gateway_transmitter,
-                                             public baseband_gateway_receiver
+/// Each stream loops its transmitted samples back to its receiver. All the streams share the same RF clock.
+class radio_session_realtime_loopback_impl : public radio_session, public radio_capabilities_registry
 {
 public:
   /// Forbid default constructor.
@@ -56,9 +39,11 @@ public:
   // See the radio_session interface for documentation.
   baseband_gateway& get_baseband_gateway(unsigned stream_id) override
   {
-    ocudu_assert(stream_id == 0, "Only a single stream is supported", stream_id);
-
-    return *this;
+    ocudu_assert(stream_id < streams.size(),
+                 "Stream identifier (i.e., {}) exceeds the number of streams (i.e., {}).",
+                 stream_id,
+                 streams.size());
+    return *streams[stream_id];
   }
 
   // See the radio_session interface for documentation.
@@ -70,30 +55,9 @@ public:
   // See the radio_session interface for documentation.
   void stop() override;
 
-  // See the baseband_gateway interface for documentation.
-  unsigned get_transmitter_optimal_buffer_size() const override { return 0; }
-
-  // See the baseband_gateway interface for documentation.
-  unsigned get_receiver_optimal_buffer_size() const override;
-
-  // See the baseband_gateway interface for documentation.
-  baseband_gateway_transmitter& get_transmitter() override { return *this; }
-
-  // See the baseband_gateway interface for documentation.
-  baseband_gateway_receiver& get_receiver() override { return *this; }
-
-  // See the baseband_gateway_receiver interface for documentation.
-  metadata receive(baseband_gateway_buffer_writer& data) override;
-
-  // See the baseband_gateway_transmitter interface for documentation.
-  void transmit(const baseband_gateway_buffer_reader& data, const baseband_gateway_transmitter_metadata& md) override;
-
 private:
   // See the radio_capabilities_registry interface for documentation.
   void* query(radio_capability_key key) override { return nullptr; }
-
-  /// Radio session logger.
-  ocudulog::basic_logger& logger;
 
   /// The system time corresponding to timestamp 0 in nanoseconds.
   std::chrono::nanoseconds ts0_epoch;
@@ -104,51 +68,16 @@ private:
   /// Scales RF time relative to the system clock. Values below 1 slow RF time down.
   double rf_time_scale;
 
-  /// Timestamp of the next sample to deliver to the stack.
-  baseband_gateway_timestamp next_receive_timestamp;
-
-  /// \brief Expected timestamp of the next sample to be transmitted.
-  ///
-  /// It is used to detect late events, where a transmission request contains samples in the past relative to previous
-  /// transmissions.
-  baseband_gateway_timestamp next_transmit_timestamp;
-
-  /// \brief Emulates the buffering depth limitations of the radio receiver.
-  ///
-  /// It is used to simulate overflow events, when the buffer reaches its maximum occupation.
-  uint64_t max_nof_buffered_rx_samples;
-
-  /// \brief Emulates the buffering depth limitations of the radio transmitter.
-  ///
-  /// It is used to block transmit calls in the event that the buffer reaches its maximum occupation.
-  uint64_t max_nof_buffered_tx_samples;
-
-  /// \brief Emulates the transmission processing delay of the radio.
-  ///
-  /// If is used to simulate underflow events. A real radio requires that the samples to be transmitted are passed to
-  /// the driver some time in advance of the actual transmission time. Given a current RF timestamp, if the radio cannot
-  /// retrieve samples from the buffer at \c get_current_rf_timestamp() + \c tx_processing_delay_samples, an underflow
-  /// event is logged.
-  uint64_t tx_processing_delay_samples;
-
-  /// Start request flag. It is used to signal the start of the receive stream.
+  /// Start request flag.
   std::atomic<bool> start_requested;
 
   /// Stop control.
   rt_stop_event_source stop_control;
 
-  /// Loopback buffer, connecting the receive and transmit streams.
-  loopback_buffer buffer;
-
-  /// \brief Function to be used to compute the current timestamp.
-  ///
-  /// It can be used to override the default realtime emulation function with deterministic clocks for testing purposes.
-  const unique_function<baseband_gateway_timestamp()>& get_current_rf_timestamp;
-
   /// \brief Derives the current RF timestamp, based on the system time and the epoch of timestamp 0.
   ///
   /// This is the timestamp of the samples currently at the antenna port, and is common for the transmitter and receiver
-  /// chains.
+  /// chains of all the streams.
   unique_function<baseband_gateway_timestamp()> get_current_rf_timestamp_realtime_clock = [this]() {
     // Get the time since the epoch.
     auto time_since_epoch =
@@ -157,6 +86,14 @@ private:
     return static_cast<baseband_gateway_timestamp>(static_cast<double>(time_since_epoch.count() - ts0_epoch.count()) *
                                                    sampling_rate_hz * rf_time_scale / 1e9);
   };
+
+  /// \brief Function to be used to compute the current timestamp.
+  ///
+  /// It can be used to override the default realtime emulation function with deterministic clocks for testing purposes.
+  const unique_function<baseband_gateway_timestamp()>& get_current_rf_timestamp;
+
+  /// Loopback streams.
+  std::vector<std::unique_ptr<radio_stream_realtime_loopback_impl>> streams;
 };
 
 } // namespace ocudu

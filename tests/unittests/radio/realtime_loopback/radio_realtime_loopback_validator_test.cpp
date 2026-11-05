@@ -125,7 +125,33 @@ const std::vector<test_case_t> realtime_loopback_radio_validator_test_data = {
        config.rx_streams.push_back(base_rx_stream);
        return config;
      },
-     "Only a single transmit and receive stream is currently supported.\n"},
+     ""},
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.tx_streams.assign(4, {{base_tx_channel, base_tx_channel, base_tx_channel, base_tx_channel}, ""});
+       config.rx_streams.assign(4, {{base_rx_channel, base_rx_channel, base_rx_channel, base_rx_channel}, ""});
+       return config;
+     },
+     ""},
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.tx_streams.push_back(base_tx_stream);
+       return config;
+     },
+     "Transmit and receive number of streams must be equal.\n"},
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.tx_streams.front().channels.push_back(base_tx_channel);
+       return config;
+     },
+     "Transmit and receive number of channels must be equal for each stream.\n"},
+    {[] {
+       radio_configuration::radio config = radio_base_config;
+       config.tx_streams.push_back({{base_tx_channel, base_tx_channel}, ""});
+       config.rx_streams.push_back(base_rx_stream);
+       return config;
+     },
+     "Transmit and receive number of channels must be equal for each stream.\n"},
     {[] {
        radio_configuration::radio config = radio_base_config;
        config.tx_streams.front().channels.clear();
