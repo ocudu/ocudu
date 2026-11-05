@@ -78,8 +78,10 @@ const radio_configuration::radio radio_base_config = {base_clock_sources,
                                                       ocudulog::basic_levels::none};
 
 struct test_case_t {
+  /// Returns the configuration under test.
   std::function<radio_configuration::radio()> get_config;
-  std::string                                 message;
+  /// Expected validator output, empty if the configuration is valid.
+  std::string message;
 };
 
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
@@ -89,6 +91,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 }
 
 const std::vector<test_case_t> realtime_loopback_radio_validator_test_data = {
+    // Valid: one stream with one channel.
     {[] {
        radio_configuration::radio config = radio_base_config;
        return config;
@@ -119,6 +122,7 @@ const std::vector<test_case_t> realtime_loopback_radio_validator_test_data = {
        return config;
      },
      "At least one transmit and one receive stream must be configured.\n"},
+    // Valid: two streams with one channel each.
     {[] {
        radio_configuration::radio config = radio_base_config;
        config.tx_streams.push_back(base_tx_stream);
@@ -126,6 +130,7 @@ const std::vector<test_case_t> realtime_loopback_radio_validator_test_data = {
        return config;
      },
      ""},
+    // Valid: four streams with four channels each.
     {[] {
        radio_configuration::radio config = radio_base_config;
        config.tx_streams.assign(4, {{base_tx_channel, base_tx_channel, base_tx_channel, base_tx_channel}, ""});
