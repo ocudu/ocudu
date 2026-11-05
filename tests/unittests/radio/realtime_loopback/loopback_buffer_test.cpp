@@ -216,6 +216,73 @@ TEST_P(LoopbackBufferFixture, OverwriteUnreadSamplesIsDropped)
   check(rx.get_reader(), next_ts, block_size);
 }
 
+// Misusing the buffer is a fatal error.
+TEST(LoopbackBufferDeathTest, Misuse)
+{
+  // Forking is unsafe while the logger backend thread runs.
+  GTEST_FLAG_SET(death_test_style, "threadsafe");
+
+  static constexpr unsigned nof_channels = 2;
+  static constexpr unsigned buffer_size  = 100;
+
+  baseband_gateway_buffer_dynamic block(nof_channels, 10);
+  baseband_gateway_buffer_dynamic too_long(nof_channels, buffer_size + 1);
+  baseband_gateway_buffer_dynamic wrong_channels(nof_channels + 1, 10);
+
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.write(too_long.get_reader(), 0);
+      },
+      "Buffer size is too small");
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.write(wrong_channels.get_reader(), 0);
+      },
+      "Number of channels");
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.read(too_long.get_writer(), 0);
+      },
+      "Buffer size is too small");
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.read(wrong_channels.get_writer(), 0);
+      },
+      "Number of channels");
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.write(block.get_reader(), 20);
+        buffer.write(block.get_reader(), 25);
+      },
+      "in the past");
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.read(block.get_writer(), 20);
+        buffer.read(block.get_writer(), 25);
+      },
+      "in the past");
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.write(block.get_reader(), 0);
+        buffer.set_first_expected_rx_timestamp(5);
+      },
+      "before any sample is written");
+  ASSERT_DEATH(
+      {
+        loopback_buffer buffer(nof_channels, buffer_size);
+        buffer.set_first_expected_rx_timestamp(5);
+        buffer.set_first_expected_rx_timestamp(5);
+      },
+      "only once");
+}
+
 INSTANTIATE_TEST_SUITE_P(LoopbackBufferTest,
                          LoopbackBufferFixture,
                          ::testing::Combine(::testing::Values(1, 4), ::testing::Values(1, 37, 250, 1000)));

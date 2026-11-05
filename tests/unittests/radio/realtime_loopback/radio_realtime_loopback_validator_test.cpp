@@ -189,6 +189,12 @@ const std::vector<test_case_t> realtime_loopback_radio_validator_test_data = {
      },
      "Stream arguments are not currently supported.\n"},
     {[] {
+       radio_configuration::radio config               = radio_base_config;
+       config.tx_streams.front().channels.front().args = "some args";
+       return config;
+     },
+     "Channel arguments are not supported by the loopback realtime radio.\n"},
+    {[] {
        radio_configuration::radio config = radio_base_config;
        config.rx_streams.front().channels.clear();
        return config;
@@ -289,6 +295,9 @@ TEST_P(RealtimeLoopbackRadioValidatorFixture, RealtimeLoopbackRadioValidatorTest
 
   // Create configuration.
   radio_configuration::radio config = param.get_config();
+
+  // Flush pending log entries, as the logger backend also writes to the standard output.
+  ocudulog::flush();
 
   // Redirect stdout to buffer.
   ::testing::internal::CaptureStdout();

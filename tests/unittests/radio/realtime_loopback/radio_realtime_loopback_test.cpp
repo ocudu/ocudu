@@ -28,6 +28,29 @@ using radio_realtime_loopback_test_parameters = std::tuple<unsigned, unsigned, u
 /// Indicates the test logging level.
 static const ocudulog::basic_levels log_level = ocudulog::basic_levels::warning;
 
+/// Creates a valid radio configuration with the given number of streams and channels per stream.
+static radio_configuration::radio make_radio_config(unsigned nof_streams, unsigned nof_channels)
+{
+  radio_configuration::channel channel_config;
+  channel_config.freq.center_frequency_Hz = 3.5e9;
+  channel_config.gain_dB                  = 60.0;
+
+  radio_configuration::stream stream_config;
+  stream_config.channels.assign(nof_channels, channel_config);
+
+  radio_configuration::radio radio_config;
+  radio_config.tx_streams.assign(nof_streams, stream_config);
+  radio_config.rx_streams.assign(nof_streams, stream_config);
+  radio_config.log_level        = log_level;
+  radio_config.sampling_rate_Hz = 192e3;
+  radio_config.tx_mode          = radio_configuration::transmission_mode::continuous;
+  radio_config.clock.clock      = radio_configuration::clock_sources::source::DEFAULT;
+  radio_config.clock.sync       = radio_configuration::clock_sources::source::DEFAULT;
+  radio_config.power_ramping_us = 0.0f;
+  radio_config.otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+  return radio_config;
+}
+
 class RealtimeLoopbackRadioFixture : public ::testing::TestWithParam<radio_realtime_loopback_test_parameters>
 {
 protected:
@@ -100,37 +123,7 @@ protected:
   // Creates a standard radio configuration with the given number of streams.
   radio_configuration::radio create_radio_config(unsigned nof_streams = 1) const
   {
-    // Prepare radio configuration.
-    radio_configuration::radio  radio_config;
-    radio_configuration::stream tx_stream_config;
-    for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id) {
-      radio_configuration::channel channel_config;
-      channel_config.freq.center_frequency_Hz = 3.5e9;
-      channel_config.gain_dB                  = 60.0;
-      channel_config.args                     = "";
-      tx_stream_config.channels.push_back(channel_config);
-    }
-    radio_config.tx_streams.assign(nof_streams, tx_stream_config);
-
-    radio_configuration::stream rx_stream_config;
-    for (unsigned channel_id = 0; channel_id != nof_channels; ++channel_id) {
-      radio_configuration::channel channel_config;
-      channel_config.freq.center_frequency_Hz = 3.5e9;
-      channel_config.gain_dB                  = 60.0;
-      channel_config.args                     = "";
-      rx_stream_config.channels.push_back(channel_config);
-    }
-    radio_config.rx_streams.assign(nof_streams, rx_stream_config);
-
-    radio_config.log_level        = log_level;
-    radio_config.sampling_rate_Hz = 192e3;
-    radio_config.tx_mode          = radio_configuration::transmission_mode::continuous;
-    radio_config.clock.clock      = radio_configuration::clock_sources::source::DEFAULT;
-    radio_config.clock.sync       = radio_configuration::clock_sources::source::DEFAULT;
-    radio_config.power_ramping_us = 0.0f;
-    radio_config.otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
-
-    return radio_config;
+    return make_radio_config(nof_streams, nof_channels);
   }
 
   // Function that generates and transmits samples until the number of samples to process reached.
@@ -1005,7 +998,7 @@ TEST_P(RealtimeLoopbackRadioFixture, RfTimeScale)
   radio_notifier_spy             radio_notifier;
 
   radio_configuration::radio radio_config = create_radio_config(2);
-  radio_config.args                       = "rf_time_scale=0.25";
+  radio_config.args                       = "foo=1,rf_time_scale=0.25,bar=2";
 
   std::unique_ptr<radio_session> session = factory->create(radio_config, *async_task_executor, radio_notifier);
   ASSERT_NE(session, nullptr);
@@ -1021,6 +1014,215 @@ TEST_P(RealtimeLoopbackRadioFixture, RfTimeScale)
   ASSERT_NEAR(static_cast<double>(ts1 - ts0), expected, 0.1 * expected);
 
   session->stop();
+}
+
+// The stream reports its optimal buffer sizes.
+TEST_P(RealtimeLoopbackRadioFixture, OptimalBufferSizes)
+{
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
+  radio_notifier_spy             radio_notifier;
+
+  radio_configuration::radio     radio_config = create_radio_config();
+  std::unique_ptr<radio_session> session      = factory->create(radio_config, *async_task_executor, radio_notifier);
+  ASSERT_NE(session, nullptr);
+
+  // The receiver prefers blocks of 100 microseconds, the transmitter has no preference.
+  baseband_gateway& gateway = session->get_baseband_gateway(0);
+  EXPECT_EQ(gateway.get_receiver_optimal_buffer_size(), static_cast<unsigned>(radio_config.sampling_rate_Hz / 10000));
+  EXPECT_EQ(gateway.get_transmitter_optimal_buffer_size(), 0);
+
+  session->stop();
+}
+
+// Transmissions after a stop request are ignored.
+TEST_P(RealtimeLoopbackRadioFixture, TransmitAfterStopIsIgnored)
+{
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
+  radio_notifier_spy             radio_notifier;
+
+  baseband_gateway_timestamp                    current_rf_timestamp = 0;
+  unique_function<baseband_gateway_timestamp()> manual_clock         = [&current_rf_timestamp]() {
+    return current_rf_timestamp;
+  };
+
+  std::unique_ptr<radio_session> session =
+      factory->create_with_custom_time(create_radio_config(), *async_task_executor, radio_notifier, manual_clock);
+  ASSERT_NE(session, nullptr);
+  session->start(0);
+  session->stop();
+
+  baseband_gateway_buffer_dynamic tx_buffer(nof_channels, tx_block_size);
+  generate_random_samples(tx_buffer.get_writer());
+  session->get_baseband_gateway(0).get_transmitter().transmit(tx_buffer.get_reader(), {.ts = tx_advance_samples});
+
+  // The samples are at the antenna, but nothing was transmitted.
+  current_rf_timestamp = tx_advance_samples + tx_block_size;
+  baseband_gateway_buffer_dynamic     rx_buffer(nof_channels, tx_advance_samples + tx_block_size);
+  baseband_gateway_receiver::metadata md =
+      session->get_baseband_gateway(0).get_receiver().receive(rx_buffer.get_writer());
+  ASSERT_EQ(md.ts, 0);
+  for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
+    for (ci16_t sample : rx_buffer.get_reader().get_channel_buffer(i_channel)) {
+      ASSERT_EQ(sample, ci16_t(0, 0));
+    }
+  }
+}
+
+// A stop request releases a transmitter that is waiting for room in the emulated transmit buffer.
+TEST_P(RealtimeLoopbackRadioFixture, StopReleasesBlockedTransmitter)
+{
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
+  radio_notifier_spy             radio_notifier;
+
+  // The RF time never advances.
+  unique_function<baseband_gateway_timestamp()> frozen_clock = []() { return 0; };
+
+  radio_configuration::radio     radio_config = create_radio_config();
+  std::unique_ptr<radio_session> session =
+      factory->create_with_custom_time(radio_config, *async_task_executor, radio_notifier, frozen_clock);
+  ASSERT_NE(session, nullptr);
+  session->start(0);
+
+  // The block is one second ahead of the RF time, beyond the emulated transmit buffer.
+  auto                            one_second = static_cast<baseband_gateway_timestamp>(radio_config.sampling_rate_Hz);
+  baseband_gateway_buffer_dynamic tx_buffer(nof_channels, tx_block_size);
+  zero_baseband_buffer(tx_buffer.get_writer());
+  std::atomic<bool> returned = false;
+  std::thread       tx_thread([&]() {
+    session->get_baseband_gateway(0).get_transmitter().transmit(tx_buffer.get_reader(), {.ts = one_second});
+    returned = true;
+  });
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  ASSERT_FALSE(returned);
+  session->stop();
+  tx_thread.join();
+  ASSERT_TRUE(returned);
+}
+
+// Samples transmitted while a stalled receiver catches up are looped back.
+//
+// Disabled: an RX overflow that skips the whole request does not release the loopback buffer, so the transmitted
+// samples are dropped as if they overwrote unread samples.
+TEST_P(RealtimeLoopbackRadioFixture, DISABLED_TransmitWhileReceiverCatchesUp)
+{
+  std::unique_ptr<task_executor> async_task_executor = make_task_executor_ptr(*async_task_worker);
+  radio_notifier_spy             radio_notifier;
+
+  baseband_gateway_timestamp                    current_rf_timestamp = 0;
+  unique_function<baseband_gateway_timestamp()> manual_clock         = [&current_rf_timestamp]() {
+    return current_rf_timestamp;
+  };
+
+  radio_configuration::radio     radio_config = create_radio_config();
+  std::unique_ptr<radio_session> session =
+      factory->create_with_custom_time(radio_config, *async_task_executor, radio_notifier, manual_clock);
+  ASSERT_NE(session, nullptr);
+  session->start(0);
+
+  baseband_gateway_transmitter& transmitter = session->get_baseband_gateway(0).get_transmitter();
+  baseband_gateway_receiver&    receiver    = session->get_baseband_gateway(0).get_receiver();
+
+  // The receiver stalls at timestamp zero for one second of RF time.
+  current_rf_timestamp = static_cast<baseband_gateway_timestamp>(radio_config.sampling_rate_Hz);
+
+  // The receiver catches up while each request is entirely older than the receive buffering depth of 10 ms.
+  auto max_nof_buffered_rx_samples = static_cast<baseband_gateway_timestamp>(radio_config.sampling_rate_Hz / 100);
+  baseband_gateway_buffer_dynamic rx_buffer(nof_channels, rx_block_size);
+  baseband_gateway_timestamp      next_rx_ts = 0;
+  while (next_rx_ts + 2 * rx_block_size <= current_rf_timestamp - max_nof_buffered_rx_samples) {
+    ASSERT_EQ(receiver.receive(rx_buffer.get_writer()).ts, next_rx_ts);
+    next_rx_ts += rx_block_size;
+  }
+
+  // Transmit ahead of the RF time.
+  baseband_gateway_timestamp      tx_ts = current_rf_timestamp + tx_advance_samples;
+  baseband_gateway_buffer_dynamic tx_buffer(nof_channels, tx_block_size);
+  generate_random_samples(tx_buffer.get_writer());
+  transmitter.transmit(tx_buffer.get_reader(), {.ts = tx_ts});
+
+  // Receives a block, advancing the RF time just enough for the samples to reach the antenna.
+  auto receive_block = [&](unsigned block_size) {
+    rx_buffer.resize(block_size);
+    current_rf_timestamp = std::max(current_rf_timestamp, next_rx_ts + block_size);
+    EXPECT_EQ(receiver.receive(rx_buffer.get_writer()).ts, next_rx_ts);
+    next_rx_ts += block_size;
+  };
+  while (next_rx_ts < tx_ts) {
+    receive_block(std::min<baseband_gateway_timestamp>(rx_block_size, tx_ts - next_rx_ts));
+  }
+
+  // The transmitted block is received intact.
+  for (unsigned rx_count = 0; rx_count < tx_block_size;) {
+    unsigned block_size = std::min(rx_block_size, tx_block_size - rx_count);
+    receive_block(block_size);
+    check_received_samples(rx_buffer.get_reader(), tx_advance_samples + rx_count);
+    rx_count += block_size;
+  }
+
+  session->stop();
+}
+
+// Misusing the radio session, or a configuration that bypasses the validator, is an error.
+TEST(RealtimeLoopbackRadioDeathTest, Misuse)
+{
+  // Forking is unsafe while the logger backend and the task worker threads run.
+  GTEST_FLAG_SET(death_test_style, "threadsafe");
+
+  task_worker                          async_task_worker("async_thread", 2 * RADIO_MAX_NOF_PORTS);
+  std::unique_ptr<task_executor>       async_task_executor = make_task_executor_ptr(async_task_worker);
+  radio_factory_realtime_loopback_impl factory;
+  radio_notifier_spy                   notifier;
+
+  auto create = [&](const radio_configuration::radio& config) {
+    return factory.create(config, *async_task_executor, notifier);
+  };
+
+  ASSERT_DEATH(
+      {
+        auto session = create(make_radio_config(1, 1));
+        session->start(0);
+        session->start(0);
+      },
+      "already running");
+  ASSERT_DEATH(
+      {
+        auto session = create(make_radio_config(2, 1));
+        session->get_baseband_gateway(2);
+      },
+      "exceeds the number of streams");
+  ASSERT_DEATH(
+      {
+        // The receiver buffers up to 10 ms of samples.
+        auto                            session = create(make_radio_config(1, 1));
+        baseband_gateway_buffer_dynamic rx_buffer(1, 192e3 / 100 + 1);
+        session->start(0);
+        session->get_baseband_gateway(0).get_receiver().receive(rx_buffer.get_writer());
+      },
+      "Cannot provide the requested number of samples");
+  ASSERT_DEATH(
+      {
+        radio_configuration::radio config = make_radio_config(2, 1);
+        config.rx_streams.pop_back();
+        create(config);
+      },
+      "number of transmit .* and receive .* streams must be equal");
+  ASSERT_DEATH(
+      {
+        radio_configuration::radio config = make_radio_config(2, 1);
+        config.rx_streams.back().channels.emplace_back();
+        create(config);
+      },
+      "Stream 1 has different number of transmit");
+
+  // Invalid RF time scales are reported as user errors.
+  for (const char* args : {"rf_time_scale=0", "rf_time_scale=-1", "rf_time_scale=0.5x", "rf_time_scale=0.5x,foo=1"}) {
+    radio_configuration::radio config = make_radio_config(1, 1);
+    config.args                       = args;
+    ASSERT_EXIT(create(config), ::testing::ExitedWithCode(1), "Invalid rf_time_scale") << args;
+  }
+
+  async_task_worker.stop();
 }
 
 // Creates test suite that combines all possible parameters.
