@@ -75,6 +75,10 @@ public:
       for (unsigned amf_idx = 0; amf_idx != 2; ++amf_idx) {
         ngap_message ngap_pdu;
         if (wait_for_ngap_tx_pdu(ngap_pdu, std::chrono::milliseconds{50}, amf_idx)) {
+          // An AMF that is not set up can receive a retried NG Setup Request while the UE attaches. Skip it.
+          if (is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::ng_setup_request)) {
+            continue;
+          }
           report_fatal_error_if_not(test_helpers::is_valid_init_ue_message(ngap_pdu), "Invalid Initial UE Message");
           last_ran_ue_id          = uint_to_ran_ue_id(ngap_pdu.pdu.init_msg().value.init_ue_msg()->ran_ue_ngap_id);
           last_initial_ue_message = ngap_pdu;
