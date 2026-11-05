@@ -8,9 +8,11 @@
 #include "ocudu/cuda/adt/device_vector.h"
 #include "ocudu/cuda/adt/managed_vector.h"
 #include "ocudu/cuda/support/cuda_device.h"
+#include <chrono>
 #include <cuda_runtime.h>
 #include <gtest/gtest.h>
 #include <numeric>
+#include <thread>
 #include <vector>
 
 using namespace ocudu;
@@ -30,6 +32,15 @@ class cuda_adt_test : public ::testing::Test
 protected:
   void SetUp() override { ASSERT_TRUE(has_cuda_device()) << "No CUDA device available."; }
 };
+
+/// Time how long a host function queued with occupy_stream() holds its stream for.
+constexpr std::chrono::milliseconds occupy_stream_for{200};
+
+/// Occupies the stream it is queued on for \c occupy_stream_for, without touching the GPU device.
+void CUDART_CB occupy_stream(void* /* unused */)
+{
+  std::this_thread::sleep_for(occupy_stream_for);
+}
 
 } // namespace
 
@@ -81,6 +92,42 @@ TEST_F(cuda_adt_test, event_records_and_synchronizes)
   cuda_result synchronized = event.value().synchronize();
   ASSERT_TRUE(synchronized.has_value()) << synchronized.error();
   ASSERT_TRUE(event.value().is_completed());
+}
+
+TEST_F(cuda_adt_test, a_stream_waits_for_an_event_recorded_in_another_stream)
+{
+  cuda_expected<cuda_stream> busy = cuda_stream::create();
+  ASSERT_TRUE(busy.has_value()) << busy.error();
+  cuda_expected<cuda_stream> waiting = cuda_stream::create();
+  ASSERT_TRUE(waiting.has_value()) << waiting.error();
+  cuda_expected<cuda_event> event = cuda_event::create();
+  ASSERT_TRUE(event.has_value()) << event.error();
+
+  // The host function holds the first stream long enough for the second one to be seen held back
+  // while it runs.
+  ASSERT_EQ(cudaLaunchHostFunc(static_cast<cudaStream_t>(busy.value().native()), occupy_stream, nullptr), cudaSuccess);
+
+  cuda_result recorded = event.value().record(busy.value());
+  ASSERT_TRUE(recorded.has_value()) << recorded.error();
+
+  cuda_result waited = waiting.value().wait_event(event.value());
+  ASSERT_TRUE(waited.has_value()) << waited.error();
+
+  EXPECT_FALSE(waiting.value().is_completed());
+
+  cuda_result drained = waiting.value().synchronize();
+  ASSERT_TRUE(drained.has_value()) << drained.error();
+  EXPECT_TRUE(busy.value().is_completed());
+}
+
+TEST_F(cuda_adt_test, waiting_on_an_event_that_is_not_valid_reports_an_error)
+{
+  cuda_expected<cuda_stream> stream = cuda_stream::create();
+  ASSERT_TRUE(stream.has_value()) << stream.error();
+
+  cuda_event  invalid;
+  cuda_result waited = stream.value().wait_event(invalid);
+  ASSERT_FALSE(waited.has_value());
 }
 
 TEST_F(cuda_adt_test, event_on_an_invalid_stream_reports_an_error)

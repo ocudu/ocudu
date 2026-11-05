@@ -9,6 +9,8 @@
 namespace ocudu {
 namespace cuda {
 
+class cuda_event;
+
 /// \brief Priority of the work submitted to a CUDA stream.
 enum class cuda_stream_priority {
   /// Default priority.
@@ -59,6 +61,15 @@ public:
   /// and hands the CPU to other threads in between checks, so a caller running at real-time
   /// priority cannot starve the driver threads that would report completion.
   cuda_result synchronize() const;
+
+  /// \brief Queues a wait until the work recorded in an event has completed.
+  ///
+  /// \param[in] event Event the stream waits for. It must have been recorded in another stream.
+  /// \return A successful result, or a description of the error.
+  ///
+  /// \remark The call returns as soon as the wait is queued. It holds back the work queued in this
+  /// stream after it, and leaves the host and every other stream running.
+  cuda_result wait_event(const cuda_event& event) const;
 
   /// \brief Returns true if all the work queued in the stream has completed, without waiting.
   bool is_completed() const;

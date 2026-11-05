@@ -4,6 +4,7 @@
 
 #include "ocudu/cuda/adt/cuda_stream.h"
 #include "cuda_wait.h"
+#include "ocudu/cuda/adt/cuda_event.h"
 #include <cuda_runtime.h>
 #include <utility>
 
@@ -65,6 +66,20 @@ cuda_result cuda_stream::synchronize() const
   ::cudaStream_t stream = static_cast<::cudaStream_t>(handle);
   return check_cuda_error(ocudu::cuda::detail::wait_yielding([stream]() { return ::cudaStreamQuery(stream); }),
                           "stream synchronization");
+}
+
+cuda_result cuda_stream::wait_event(const cuda_event& event) const
+{
+  if (handle == nullptr) {
+    return make_unexpected(std::string("CUDA stream wait failed: the stream is not valid"));
+  }
+  if (!event.is_valid()) {
+    return make_unexpected(std::string("CUDA stream wait failed: the event is not valid"));
+  }
+
+  return check_cuda_error(
+      ::cudaStreamWaitEvent(static_cast<::cudaStream_t>(handle), static_cast<::cudaEvent_t>(event.native()), 0),
+      "stream wait on an event");
 }
 
 bool cuda_stream::is_completed() const
