@@ -35,7 +35,11 @@ struct cell_lifecycle_target {
   std::vector<plmn_identity> plmns;
 };
 
-/// \brief Resolve the deactivated cells (across all DUs) that serve any of the given PLMNs, i.e. the cells to activate.
+/// \brief Resolve the cells (across all DUs) to activate for the given PLMNs.
+///
+/// A deactivated cell is activated for those of its deactivated PLMNs that are given. An active cell with a given
+/// deactivated PLMN (e.g. a MOCN cell activated earlier for another PLMN only) is listed with all the PLMNs it then
+/// serves, so that the PLMN is available again.
 ///
 /// Cells whose logical cell is administratively locked are skipped: a fault-recovery activation (e.g. AMF
 /// reconnection) must not override an operator lock.
@@ -45,14 +49,15 @@ std::vector<cell_lifecycle_target> resolve_activation_targets(du_processor_repos
 
 /// \brief Resolve the served cells (across all DUs) to deactivate after losing the given PLMNs.
 ///
-/// A cell is deactivated only when it serves one of the lost PLMNs and none of its served PLMNs remains available,
-/// i.e. every served PLMN is in \p unavailable_plmns. A cell that still serves another available PLMN (e.g. a MOCN
-/// cell whose other AMF is still connected) stays active; UEs of the lost PLMNs are rejected at admission instead.
+/// A cell is deactivated only when it serves one of the lost PLMNs and none of its served PLMNs has a connected AMF.
+/// A cell that still serves a PLMN of a connected AMF (e.g. a MOCN cell whose other AMF is still connected) stays
+/// active; UEs of the lost PLMNs are rejected at admission instead. A PLMN whose AMF never connected does not keep a
+/// cell active.
 /// \param[in] plmns The PLMNs that were lost.
-/// \param[in] unavailable_plmns All PLMNs currently without a serving AMF, including \p plmns.
+/// \param[in] connected_plmns The PLMNs that a connected AMF serves.
 std::vector<cell_lifecycle_target> resolve_deactivation_targets(du_processor_repository&          du_db,
                                                                 const std::vector<plmn_identity>& plmns,
-                                                                const std::set<plmn_identity>&    unavailable_plmns);
+                                                                const std::set<plmn_identity>&    connected_plmns);
 
 /// \brief Collect the CU-CP UEs that the given AMF serves, so they can be released when the AMF is lost.
 std::vector<cu_cp_ue_index_t> collect_ues_for_amf(ue_manager& ue_mng, cu_cp_amf_index_t amf_index);

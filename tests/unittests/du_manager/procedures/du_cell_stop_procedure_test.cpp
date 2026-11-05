@@ -376,3 +376,24 @@ TEST_F(du_cell_lock_test, when_f1c_connection_is_lost_then_cell_stop_skips_barri
 // du_cell_stop_procedure for unknown CGIs, which trips an assertion in du_cell_manager::is_cell_active.
 // Our coverage of unknown CGIs lives in the CU-CP test where the validation happens before any F1AP
 // message is emitted toward the DU.
+
+TEST_F(du_cell_lock_test, when_cu_activates_a_cell_that_is_already_active_then_the_activation_succeeds)
+{
+  // The CU-CP lists an active cell in Cells to be Activated to make more of its PLMNs available again (e.g. after the
+  // AMF of one PLMN of a MOCN cell reconnects). The cell keeps running and is not reported as failed to activate.
+  const unsigned              nof_starts = dependencies.mac.mac_cell.start_count;
+  gnbcu_config_update_request act_req;
+  f1ap_cell_to_activate       cell_act{};
+  cell_act.cgi = cell_cfgs[0].nr_cgi;
+  act_req.cells_to_activate.push_back(cell_act);
+
+  async_task<gnbcu_config_update_response> act_task =
+      du_mng->get_f1ap_event_handler().handle_cu_context_update_request(act_req);
+  lazy_task_launcher<gnbcu_config_update_response> act_launcher(act_task);
+  pump_until(200, [&]() { return act_launcher.ready(); });
+
+  ASSERT_TRUE(act_launcher.ready()) << "Activation did not complete in time";
+  ASSERT_TRUE(act_launcher.result.value().cells_failed_to_activate.empty())
+      << "an active cell must not fail to activate";
+  ASSERT_EQ(dependencies.mac.mac_cell.start_count, nof_starts) << "the active cell must not be restarted";
+}

@@ -55,6 +55,38 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
   ASSERT_EQ(t.get().value().cells_to_activate.size(), f1_setup_req->gnb_du_served_cells_list.size());
 }
 
+/// Test that a cell with more than 6 PLMNs reports PLMNs 7 onwards in the Extended Served PLMNs List.
+TEST_F(f1ap_du_test, when_cell_has_more_than_6_plmns_then_the_extra_plmns_go_in_the_extended_served_plmns_list)
+{
+  ASSERT_TRUE(f1ap->connect_to_cu_cp());
+  f1_setup_request_message request_msg = generate_f1_setup_request_message();
+  du_served_cell_info&     cell_info   = request_msg.served_cells[0].cell_info;
+  for (unsigned i = 0; i != 7; ++i) {
+    cell_info.additional_plmns.push_back(plmn_identity::parse(fmt::format("9990{}", i + 1)).value());
+  }
+  async_task<f1_setup_result>         t = f1ap->handle_f1_setup_request(request_msg);
+  lazy_task_launcher<f1_setup_result> t_launcher(t);
+
+  // TS 38.473 section 9.3.1.10: Served PLMNs holds up to maxnoofBPLMNs (6) PLMNs, the others go in the Extended Served
+  // PLMNs List.
+  const auto& f1_setup_req     = f1c_gw.last_tx_pdu().pdu.init_msg().value.f1_setup_request();
+  const auto& served_cell_info = f1_setup_req->gnb_du_served_cells_list[0]->gnb_du_served_cells_item().served_cell_info;
+  ASSERT_EQ(served_cell_info.served_plmns.size(), 6U);
+  ASSERT_EQ(plmn_identity::from_bytes(served_cell_info.served_plmns[0].plmn_id.to_bytes()).value(),
+            cell_info.nr_cgi.plmn_id);
+  ASSERT_TRUE(served_cell_info.ie_exts_present);
+  ASSERT_TRUE(served_cell_info.ie_exts.extended_served_plmns_list_present);
+  ASSERT_EQ(served_cell_info.ie_exts.extended_served_plmns_list.size(), 2U);
+  ASSERT_EQ(
+      plmn_identity::from_bytes(served_cell_info.ie_exts.extended_served_plmns_list[1].plmn_id.to_bytes()).value(),
+      cell_info.additional_plmns[6]);
+
+  // The F1 Setup Request can be packed.
+  byte_buffer   packed;
+  asn1::bit_ref bref{packed};
+  ASSERT_EQ(asn1::pack(bref, f1c_gw.last_tx_pdu().pdu), asn1::OCUDUASN_SUCCESS);
+}
+
 /// Test unsuccessful F1 Setup procedure with F1 Setup Failure response with Time To Wait IE.
 TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_procedure_fails_with_time_to_wait)
 {

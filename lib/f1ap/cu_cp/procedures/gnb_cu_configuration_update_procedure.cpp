@@ -147,10 +147,20 @@ static void fill_asn1_gnb_cu_configuration_update(asn1::f1ap::gnb_cu_cfg_upd_s& 
         asn1_cell.ie_exts_present                     = true;
         asn1_cell.ie_exts.available_plmn_list_present = true;
 
-        for (const auto& plmn : cell.available_plmn_list) {
-          available_plmn_list_item_s asn1_plmn;
-          asn1_plmn.plmn_id = plmn.to_bytes();
-          asn1_cell.ie_exts.available_plmn_list.push_back(asn1_plmn);
+        // Available PLMN List holds up to maxnoofBPLMNs (6) PLMNs; PLMNs 7 to 12 go in the Extended Available PLMN
+        // List (TS 38.473 section 9.2.1.10, GNB-CU CONFIGURATION UPDATE).
+        static constexpr unsigned max_nof_available_plmns = 6;
+        for (unsigned i = 0, e = cell.available_plmn_list.size(); i != e; ++i) {
+          if (i < max_nof_available_plmns) {
+            available_plmn_list_item_s asn1_plmn;
+            asn1_plmn.plmn_id = cell.available_plmn_list[i].to_bytes();
+            asn1_cell.ie_exts.available_plmn_list.push_back(asn1_plmn);
+          } else {
+            extended_available_plmn_item_s asn1_plmn;
+            asn1_plmn.plmn_id                                      = cell.available_plmn_list[i].to_bytes();
+            asn1_cell.ie_exts.extended_available_plmn_list_present = true;
+            asn1_cell.ie_exts.extended_available_plmn_list.push_back(asn1_plmn);
+          }
         }
       }
 

@@ -8,6 +8,7 @@
 #include "ocudu/asn1/f1ap/f1ap_ies.h"
 #include "ocudu/ran/band_helper.h"
 #include "ocudu/support/enum_utils.h"
+#include <algorithm>
 
 using namespace asn1::f1ap;
 
@@ -62,24 +63,49 @@ served_cell_info_s ocudu::odu::make_asn1_served_cell_info(const du_served_cell_i
   }
   f1ap_cell.meas_timing_cfg = served_cell.packed_meas_time_cfg.copy();
 
-  // Fill Served PLMNs: the NR CGI PLMN first, then every additional PLMN the cell broadcasts in SIB1 (TS 38.473
-  // Served PLMNs), so that the CU-CP knows all the PLMNs it serves the cell for. All share the cell's slices.
-  f1ap_cell.served_plmns.resize(1 + served_cell.additional_plmns.size());
-  for (unsigned i = 0, e = f1ap_cell.served_plmns.size(); i != e; ++i) {
-    served_plmns_item_s& asn1_plmn = f1ap_cell.served_plmns[i];
-    asn1_plmn.plmn_id = (i == 0 ? served_cell.nr_cgi.plmn_id : served_cell.additional_plmns[i - 1]).to_bytes();
+  // Fill the cell's PLMNs: the NR CGI PLMN first, then every additional PLMN the cell broadcasts in SIB1, so that the
+  // CU-CP knows all the PLMNs it serves the cell for. All share the cell's slices. Served PLMNs holds up to
+  // maxnoofBPLMNs (6) PLMNs; PLMNs 7 to 12 go in the Extended Served PLMNs List (TS 38.473 section 9.3.1.10, Served
+  // Cell Information).
+  slice_support_list_l asn1_slices;
+  for (const s_nssai_t& s_nssai : slices) {
+    slice_support_item_s slice{};
+    slice.snssai.sst.from_number(s_nssai.sst.value());
+    slice.snssai.sd_present = s_nssai.sd.is_set();
+    if (slice.snssai.sd_present) {
+      slice.snssai.sd.from_number(s_nssai.sd.value());
+    }
+    asn1_slices.push_back(slice);
+  }
 
-    // Fill slicing information.
+  static constexpr unsigned max_nof_served_plmns          = 6;
+  static constexpr unsigned max_nof_extended_served_plmns = 6;
+  const unsigned            nof_plmns                     = 1 + served_cell.additional_plmns.size();
+  ocudu_assert(nof_plmns <= max_nof_served_plmns + max_nof_extended_served_plmns,
+               "A cell can serve at most {} PLMNs, but {} are configured",
+               max_nof_served_plmns + max_nof_extended_served_plmns,
+               nof_plmns);
+  auto plmn_bytes = [&served_cell](unsigned i) {
+    return (i == 0 ? served_cell.nr_cgi.plmn_id : served_cell.additional_plmns[i - 1]).to_bytes();
+  };
+
+  f1ap_cell.served_plmns.resize(std::min(nof_plmns, max_nof_served_plmns));
+  for (unsigned i = 0, e = f1ap_cell.served_plmns.size(); i != e; ++i) {
+    served_plmns_item_s& asn1_plmn                   = f1ap_cell.served_plmns[i];
+    asn1_plmn.plmn_id                                = plmn_bytes(i);
     asn1_plmn.ie_exts_present                        = not slices.empty();
     asn1_plmn.ie_exts.tai_slice_support_list_present = not slices.empty();
-    for (const s_nssai_t& s_nssai : slices) {
-      slice_support_item_s slice{};
-      slice.snssai.sst.from_number(s_nssai.sst.value());
-      slice.snssai.sd_present = s_nssai.sd.is_set();
-      if (slice.snssai.sd_present) {
-        slice.snssai.sd.from_number(s_nssai.sd.value());
-      }
-      asn1_plmn.ie_exts.tai_slice_support_list.push_back(slice);
+    asn1_plmn.ie_exts.tai_slice_support_list         = asn1_slices;
+  }
+
+  if (nof_plmns > max_nof_served_plmns) {
+    f1ap_cell.ie_exts_present                            = true;
+    f1ap_cell.ie_exts.extended_served_plmns_list_present = true;
+    f1ap_cell.ie_exts.extended_served_plmns_list.resize(nof_plmns - max_nof_served_plmns);
+    for (unsigned i = 0, e = f1ap_cell.ie_exts.extended_served_plmns_list.size(); i != e; ++i) {
+      extended_served_plmns_item_s& asn1_plmn = f1ap_cell.ie_exts.extended_served_plmns_list[i];
+      asn1_plmn.plmn_id                       = plmn_bytes(max_nof_served_plmns + i);
+      asn1_plmn.tai_slice_support_list        = asn1_slices;
     }
   }
 

@@ -19,6 +19,7 @@
 #include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/ngap/ngap_message.h"
 #include <gtest/gtest.h>
+#include <set>
 
 using namespace ocudu;
 using namespace ocucp;
@@ -577,4 +578,115 @@ TEST_F(cu_cp_mocn_test, when_the_amf_of_one_plmn_of_a_shared_cell_is_lost_then_t
     ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id = cu_cfg_upd->transaction_id;
     get_du(du_idx).push_ul_pdu(ack);
   }
+}
+
+TEST_F(cu_cp_mocn_test, when_both_amfs_of_a_shared_cell_are_lost_and_reconnect_one_by_one_then_both_plmns_are_served)
+{
+  run_ng_setup();
+
+  // A DU with one cell broadcasting both PLMNs (MOCN). The SIB1 lists the first PLMN and 99902.
+  const plmn_identity first_plmn  = plmn_identity::test_value();
+  const plmn_identity second_plmn = plmn_identity::parse("99902").value();
+  auto                ret         = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(
+      du_idx,
+      int_to_gnb_du_id(0x11),
+      {test_helpers::served_cell_item_info{
+          .additional_plmns = {second_plmn},
+          .sib1_str =
+              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
+              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  ASSERT_TRUE(this->run_e1_setup(ret.value()));
+
+  // Waits for a gNB-CU Configuration Update, acknowledges it and returns it.
+  f1ap_message f1ap_pdu;
+  auto         ack_cu_cfg_update = [&]() -> const auto& {
+    const auto&  cu_cfg_upd = f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd();
+    f1ap_message ack        = test_helpers::generate_gnb_cu_configuration_update_acknowledgement({});
+    ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id = cu_cfg_upd->transaction_id;
+    get_du(du_idx).push_ul_pdu(ack);
+    return cu_cfg_upd;
+  };
+  // The PLMNs of the Available PLMN List of the only activated cell.
+  auto activated_plmns = [&]() {
+    std::set<plmn_identity> plmns;
+    const auto&             cu_cfg_upd = f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd();
+    if (!cu_cfg_upd->cells_to_be_activ_list_present || cu_cfg_upd->cells_to_be_activ_list.size() != 1) {
+      return plmns;
+    }
+    const auto& item = cu_cfg_upd->cells_to_be_activ_list[0].value().cells_to_be_activ_list_item();
+    for (const auto& asn1_plmn : item.ie_exts.available_plmn_list) {
+      plmns.insert(plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes()).value());
+    }
+    return plmns;
+  };
+
+  // Both AMFs are lost: the cell keeps serving the first PLMN after the first loss, and is deactivated after the
+  // second.
+  ASSERT_TRUE(drop_amf_connection(1));
+  ASSERT_FALSE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{200}));
+  ASSERT_TRUE(drop_amf_connection(0));
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+  ASSERT_TRUE(ack_cu_cfg_update()->cells_to_be_deactiv_list_present) << "the cell must be deactivated";
+
+  // TEST: The AMF of the second PLMN reconnects first, so the cell is activated for the second PLMN only.
+  ASSERT_TRUE(reconnect_amf(1)) << "AMF 1 did not reconnect";
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}));
+  ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+  ASSERT_EQ(activated_plmns(), (std::set<plmn_identity>{second_plmn}));
+  ack_cu_cfg_update();
+
+  // TEST: When the AMF of the first PLMN reconnects, the active cell is listed again with both PLMNs available.
+  ASSERT_TRUE(reconnect_amf(0)) << "AMF 0 did not reconnect";
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{1000}))
+      << "the first PLMN of the active cell must be made available again";
+  ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+  ASSERT_EQ(activated_plmns(), (std::set<plmn_identity>{first_plmn, second_plmn}));
+  ack_cu_cfg_update();
+
+  // TEST: The AMF of the second PLMN is lost again. The first PLMN still has its AMF, so the cell stays active.
+  ASSERT_TRUE(drop_amf_connection(1));
+  ASSERT_FALSE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, std::chrono::milliseconds{200}))
+      << "the cell must stay active while the AMF of the first PLMN is connected";
+}
+
+TEST_F(cu_cp_mocn_test,
+       when_the_amf_of_a_shared_cell_is_lost_and_the_other_plmn_never_connected_then_the_cell_is_deactivated)
+{
+  // Only the AMF of the first PLMN connects. The AMF of the second PLMN is down from the start, so its PLMN is never
+  // blocked.
+  get_amf(0).enqueue_next_tx_pdu(generate_ng_setup_response());
+  get_amf(1).drop_connection();
+  get_cu_cp().start();
+  ngap_message ngap_pdu;
+  ASSERT_TRUE(get_amf(0).try_pop_rx_pdu(ngap_pdu)) << "AMF 0 received no NG Setup Request";
+
+  const plmn_identity second_plmn = plmn_identity::parse("99902").value();
+  auto                ret         = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(
+      du_idx,
+      int_to_gnb_du_id(0x11),
+      {test_helpers::served_cell_item_info{
+          .additional_plmns = {second_plmn},
+          .sib1_str =
+              "d20405c04300100e6640400000e000cd80018056109a000200046402051320c6b6c61b3704020000080800041a23524121304269"
+              "2f1200000464e35b63224f80b0664abff0124e9106e28dc61b8e372c6fbf56c70ea008580d003058b68228"}}));
+
+  // TEST: The AMF of the first PLMN is lost. No connected AMF serves either PLMN, so the cell is deactivated.
+  ASSERT_TRUE(drop_amf_connection(0));
+  f1ap_message f1ap_pdu;
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_gnb_cu_configuration_update(f1ap_pdu));
+  const auto& cu_cfg_upd = f1ap_pdu.pdu.init_msg().value.gnb_cu_cfg_upd();
+  ASSERT_TRUE(cu_cfg_upd->cells_to_be_deactiv_list_present) << "the cell must be deactivated";
+  f1ap_message ack = test_helpers::generate_gnb_cu_configuration_update_acknowledgement({});
+  ack.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack()->transaction_id = cu_cfg_upd->transaction_id;
+  get_du(du_idx).push_ul_pdu(ack);
 }

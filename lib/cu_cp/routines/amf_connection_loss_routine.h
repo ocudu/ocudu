@@ -9,6 +9,7 @@
 #include "../logical_cell_manager.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "ocudu/support/async/async_task.h"
+#include <set>
 #include <utility>
 
 namespace ocudu::ocucp {
@@ -37,7 +38,9 @@ private:
   /// PLMNs that the CU-CP configures for the disconnected AMF.
   std::vector<plmn_identity> plmns;
   /// PLMNs that no connected AMF serves after the disconnection.
-  std::vector<plmn_identity>        lost_plmns;
+  std::vector<plmn_identity> lost_plmns;
+  /// PLMNs that a connected AMF serves after the disconnection.
+  std::set<plmn_identity>           connected_plmns;
   du_processor_repository&          du_db;
   logical_cell_manager&             logical_cells;
   cu_cp_ue_context_release_handler& ue_release_handler;

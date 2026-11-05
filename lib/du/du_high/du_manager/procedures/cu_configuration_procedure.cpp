@@ -42,6 +42,12 @@ void cu_configuration_procedure::operator()(coro_context<async_task<gnbcu_config
 
   // Activate cells.
   for (list_index = 0; list_index != request.cells_to_activate.size(); ++list_index) {
+    // A cell that is already active keeps running. The CU-CP lists an active cell to make more of its PLMNs
+    // available again (e.g. after an AMF of a MOCN cell reconnects), and the DU broadcasts all the PLMNs of an
+    // active cell anyway.
+    if (is_cell_active(request.cells_to_activate[list_index].cgi)) {
+      continue;
+    }
     CORO_AWAIT_VALUE(bool success, start_cell(request.cells_to_activate[list_index].cgi));
     if (not success) {
       // Failed to start cell.
@@ -53,6 +59,12 @@ void cu_configuration_procedure::operator()(coro_context<async_task<gnbcu_config
   }
 
   CORO_RETURN(resp);
+}
+
+bool cu_configuration_procedure::is_cell_active(const nr_cell_global_id_t& cgi) const
+{
+  const du_cell_index_t cell_index = cell_mng.get_cell_index(cgi);
+  return cell_index != INVALID_DU_CELL_INDEX and cell_mng.has_cell(cell_index) and cell_mng.is_cell_active(cell_index);
 }
 
 async_task<bool> cu_configuration_procedure::start_cell(const nr_cell_global_id_t& cgi)

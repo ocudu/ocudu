@@ -2040,6 +2040,22 @@ static bool validate_additional_tacs(const du_high_unit_base_cell_config& config
   return true;
 }
 
+/// Validates the additional PLMNs broadcast by a cell in SIB1 PLMN-IdentityList (maxPLMN, TS 38.331). The F1 Setup
+/// carries them in Served PLMNs and Extended Served PLMNs List, which hold up to 12 PLMNs together (TS 38.473 section
+/// 9.3.1.10).
+static bool validate_additional_plmns(const du_high_unit_base_cell_config& config)
+{
+  static constexpr unsigned max_nof_plmns = 12;
+  // plmn takes the first of the PLMNs.
+  if (config.additional_plmns.size() + 1 > max_nof_plmns) {
+    fmt::print("A cell can broadcast at most {} PLMNs, but {} are configured.\n",
+               max_nof_plmns,
+               config.additional_plmns.size() + 1);
+    return false;
+  }
+  return true;
+}
+
 static bool validate_redcap_config(const du_high_unit_base_cell_config& config, nr_band band)
 {
   if (not config.redcap_cfg.enabled) {
@@ -2135,6 +2151,9 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
 
   const bool is_ntn_band = band_helper::is_ntn_band(band);
   if (!validate_additional_tacs(config, is_ntn_band)) {
+    return false;
+  }
+  if (!validate_additional_plmns(config)) {
     return false;
   }
   if (config.ntn_cfg) {

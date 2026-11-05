@@ -309,6 +309,15 @@ f1ap_asn1_to_du_served_cell(const asn1::f1ap::served_cell_info_s& asn1_cell_info
       served_cell.served_cell_info.served_plmns.push_back(result.value());
     }
   }
+  // PLMNs 7 to 12 of the cell (TS 38.473 section 9.3.1.10, Served Cell Information).
+  if (asn1_cell_info.ie_exts_present and asn1_cell_info.ie_exts.extended_served_plmns_list_present) {
+    for (const auto& asn1_plmn : asn1_cell_info.ie_exts.extended_served_plmns_list) {
+      auto result = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes());
+      if (result.has_value()) {
+        served_cell.served_cell_info.served_plmns.push_back(result.value());
+      }
+    }
+  }
   served_cell.served_cell_info.nr_mode_info    = f1ap_asn1_to_nr_mode_info(asn1_cell_info.nr_mode_info);
   served_cell.served_cell_info.meas_timing_cfg = asn1_cell_info.meas_timing_cfg.copy();
   if (asn1_cell_info.ie_exts_present and asn1_cell_info.ie_exts.ranac_present) {

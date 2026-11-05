@@ -29,6 +29,7 @@ public:
   void operator()(coro_context<async_task<gnbcu_config_update_response>>& ctx);
 
 private:
+  bool             is_cell_active(const nr_cell_global_id_t& cgi) const;
   async_task<bool> start_cell(const nr_cell_global_id_t& cgi);
   async_task<void> stop_cell(const nr_cell_global_id_t& cgi);
   async_task<void> bar_cell(const f1ap_cell_to_bar& cell);
