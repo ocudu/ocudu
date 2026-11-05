@@ -27,7 +27,7 @@ namespace cuda {
 /// \brief Shape of the transport block a configured encoder accepts.
 ///
 /// The segmentation fields repeat what TS 38.212, Section 5.2.2 derives from the transport block
-/// size and the target code rate. They are given rather than derived so that a caller that has
+/// size and the target code rate. They are not derived but given so that a caller that has
 /// already segmented on the host encodes exactly the same code blocks here. Leaving one at zero
 /// asks the encoder to derive it.
 struct transport_block_encoder_config {
@@ -100,7 +100,7 @@ public:
   transport_block_encoder& operator=(transport_block_encoder&& other) noexcept;
 
   /// Returns true if the encoder holds the state a decode needs.
-  bool is_valid() const;
+  bool is_valid() const { return state != nullptr; }
 
   /// \brief Sets the shape the encoder accepts, reserving the device memory it needs.
   ///

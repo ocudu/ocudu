@@ -5,6 +5,7 @@
 /// \file
 /// \brief Transport block encoding kernels.
 
+#include "ocudu/cuda/adt/cuda_copy.h"
 #include "ocudu/cuda/adt/cuda_error.h"
 #include "ocudu/cuda/adt/cuda_event.h"
 #include "ocudu/cuda/adt/device_vector.h"
@@ -1489,13 +1490,13 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
   {
-    cudaStreamSynchronize(native_stream);
+    (void)stream.synchronize();
     uint32_t h_crc = 0;
-    cudaMemcpy(&h_crc, handle->d_crc.data(), sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    (void)copy_to_host(span<uint32_t>(&h_crc, 1), span<const uint32_t>(handle->d_crc).first(1));
     fprintf(stderr, "[GPU PDSCH] TB CRC = 0x%06x (separate compute)\n", h_crc & 0x00FFFFFF);
 
     std::vector<uint32_t> cb_raw(cb_words * handle->tb_cfg.num_code_blocks);
-    cudaMemcpy(cb_raw.data(), handle->d_cb_bits.data(), cb_raw.size() * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+    (void)copy_to_host(span<uint32_t>(cb_raw), span<const uint32_t>(handle->d_cb_bits).first(cb_raw.size()));
     for (int cb = 0; cb < handle->tb_cfg.num_code_blocks; cb++) {
       fprintf(stderr, "[GPU PDSCH] CB%d data (K*Z=%d bits): first 32 bytes = ", cb, ldpc_input_bits);
       uint8_t* byte_ptr = (uint8_t*)(cb_raw.data() + cb * cb_words);
@@ -1523,12 +1524,10 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
   // Diagnostics: print first few LDPC encoded bytes per CB before rate matching.
   {
-    cudaStreamSynchronize(native_stream);
+    (void)stream.synchronize();
     std::vector<uint32_t> enc_diagnostics(handle->tb_cfg.num_code_blocks * encoded_words);
-    cudaMemcpy(enc_diagnostics.data(),
-               handle->d_encoded_bits.data(),
-               enc_diagnostics.size() * sizeof(uint32_t),
-               cudaMemcpyDeviceToHost);
+    (void)copy_to_host(span<uint32_t>(enc_diagnostics),
+                       span<const uint32_t>(handle->d_encoded_bits).first(enc_diagnostics.size()));
     for (int cb = 0; cb < handle->tb_cfg.num_code_blocks; cb++) {
       fprintf(stderr, "[GPU PDSCH] CB%d LDPC encoded (N=%d words): first 8 bytes = ", cb, encoded_words);
       uint8_t* byte_ptr = (uint8_t*)(enc_diagnostics.data() + cb * encoded_words);
@@ -1560,7 +1559,10 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 #endif
 
   // Clear output buffer (needed when E_short < E_long)
-  cudaMemsetAsync(handle->d_rate_matched.data(), 0, num_cbs * rm_words * sizeof(uint32_t), native_stream);
+  span<uint32_t> d_rate_matched = span<uint32_t>(handle->d_rate_matched).first(num_cbs * rm_words);
+  if (cuda_result status = device_zero_async(d_rate_matched, stream); !status.has_value()) {
+    return status;
+  }
 
   if (nof_short == num_cbs) {
     // All CBs are short - configure with E_short and single batch call
@@ -1574,10 +1576,10 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_short);
     // Note: for all-short case, E_words == rm_words, so use standard batch call
-    handle->rate_matcher.rate_match(handle->d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
+    handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
   } else if (nof_short == 0) {
     // All CBs are long - already configured with E_long, single batch call
-    handle->rate_matcher.rate_match(handle->d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
+    handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), num_cbs, 0, stream);
   } else {
     // Mixed: rate match short CBs first, then long CBs
     // IMPORTANT: Use rm_words stride for uniform buffer layout
@@ -1591,8 +1593,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_short.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
     rm_cfg_short.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_short);
-    handle->rate_matcher.rate_match(
-        handle->d_rate_matched.data(), handle->d_encoded_bits.data(), nof_short, rm_words, stream);
+    handle->rate_matcher.rate_match(d_rate_matched.data(), handle->d_encoded_bits.data(), nof_short, rm_words, stream);
 
     // Configure for long CBs
     codeblock_metadata rm_cfg_long          = {};
@@ -1604,7 +1605,8 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     rm_cfg_long.cb_specific.nof_filler_bits = handle->tb_cfg.ldpc_cfg.num_filler_bits;
     rm_cfg_long.tb_common.Nref              = static_cast<unsigned>(handle->config.N_ref);
     handle->rate_matcher.configure(rm_cfg_long);
-    handle->rate_matcher.rate_match(handle->d_rate_matched.data() + nof_short * rm_words,
+    span<uint32_t> d_long_half = d_rate_matched.subspan(nof_short * rm_words, (num_cbs - nof_short) * rm_words);
+    handle->rate_matcher.rate_match(d_long_half.data(),
                                     handle->d_encoded_bits.data() + nof_short * encoded_words,
                                     num_cbs - nof_short,
                                     rm_words,
@@ -1614,12 +1616,9 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
   // Diagnostics: print first few rate-matched bits per CB.
   {
-    cudaStreamSynchronize(native_stream);
+    (void)stream.synchronize();
     std::vector<uint32_t> rm_diagnostics(num_cbs * rm_words);
-    cudaMemcpy(rm_diagnostics.data(),
-               handle->d_rate_matched.data(),
-               rm_diagnostics.size() * sizeof(uint32_t),
-               cudaMemcpyDeviceToHost);
+    (void)copy_to_host(span<uint32_t>(rm_diagnostics), span<const uint32_t>(d_rate_matched));
     for (int cb = 0; cb < num_cbs; cb++) {
       int E_cb = (cb < nof_short) ? E_short : E_long;
       fprintf(stderr, "[GPU PDSCH] CB%d rate matched (E=%d): first 8 bytes = ", cb, E_cb);
@@ -1641,7 +1640,9 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     // TB CRC, segmentation, and LDPC encoding. Now we need to wait for it.
     if (scrambler_launched) {
       // Wait for scrambler stream to complete before using the sequence
-      cudaStreamWaitEvent(native_stream, static_cast<::cudaEvent_t>(handle->scrambler_done.native()), 0);
+      if (cuda_result status = stream.wait_event(handle->scrambler_done); !status.has_value()) {
+        return status;
+      }
     } else {
       // Fallback: generate scrambling sequence synchronously if parallel launch failed
       cuda_result scr_status = handle->scrambler_unit.generate(total_bits, stream);
@@ -1655,7 +1656,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
     int num_words       = (output_bytes + 3) / 4;
     int num_word_blocks = (num_words + block_size - 1) / block_size;
     interleave_scramble_pack_kernel<<<num_word_blocks, block_size, 0, native_stream>>>(
-        handle->d_rate_matched.data(),
+        d_rate_matched.data(),
         d_scramble_seq,
         d_output,
         nof_short, // Number of short CBs
@@ -1670,20 +1671,19 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
     // Run diagnostic kernel for multi-CB boundary tracing.
     if (num_cbs > 1) {
-      cudaStreamSynchronize(native_stream);
+      (void)stream.synchronize();
       pdsch_cb_boundary_diagnostics_kernel<<<1, 1, 0, native_stream>>>(
-          handle->d_rate_matched.data(), d_scramble_seq, nof_short, E_short, E_long, rm_words, Q_m, total_bits);
-      cudaStreamSynchronize(native_stream);
+          d_rate_matched.data(), d_scramble_seq, nof_short, E_short, E_long, rm_words, Q_m, total_bits);
+      (void)stream.synchronize();
     }
 #endif
 
 #ifdef OCUDU_PHY_CUDA_PDSCH_DIAGNOSTICS
     // Diagnostics: print scrambling sequence and output bytes.
     {
-      cudaStreamSynchronize(native_stream);
+      (void)stream.synchronize();
       std::vector<uint32_t> scr_diagnostics(4);
-      cudaMemcpy(
-          scr_diagnostics.data(), d_scramble_seq, scr_diagnostics.size() * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+      (void)copy_to_host(span<uint32_t>(scr_diagnostics), span<const uint32_t>(d_scramble_seq, scr_diagnostics.size()));
       fprintf(stderr,
               "[GPU PDSCH] Scramble seq (first 4 words): %08x %08x %08x %08x\n",
               scr_diagnostics[0],
@@ -1692,7 +1692,7 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
               scr_diagnostics[3]);
 
       std::vector<uint8_t> out_diagnostics(std::min(32, output_bytes));
-      cudaMemcpy(out_diagnostics.data(), d_output, out_diagnostics.size() * sizeof(uint8_t), cudaMemcpyDeviceToHost);
+      (void)copy_to_host(span<uint8_t>(out_diagnostics), span<const uint8_t>(d_output, out_diagnostics.size()));
       fprintf(stderr, "[GPU PDSCH] Output bytes (first %zu): ", out_diagnostics.size());
       for (size_t i = 0; i < out_diagnostics.size(); i++) {
         fprintf(stderr, "%02x ", out_diagnostics[i]);
@@ -1705,10 +1705,8 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
         int cb_boundary_byte = E_short / 8;
         if (cb_boundary_byte + 8 <= output_bytes) {
           std::vector<uint8_t> boundary_diagnostics(16);
-          cudaMemcpy(boundary_diagnostics.data(),
-                     d_output + cb_boundary_byte - 8,
-                     16 * sizeof(uint8_t),
-                     cudaMemcpyDeviceToHost);
+          (void)copy_to_host(span<uint8_t>(boundary_diagnostics),
+                             span<const uint8_t>(d_output + cb_boundary_byte - 8, boundary_diagnostics.size()));
           fprintf(stderr, "[GPU PDSCH] Bytes at CB boundary (byte %d): ", cb_boundary_byte);
           for (int i = 0; i < 16; i++) {
             fprintf(stderr, "%02x ", boundary_diagnostics[i]);
@@ -1720,35 +1718,25 @@ cuda_result transport_block_encoder::impl::encoder_encode(transport_block_encode
 #endif
   } else {
     // FALLBACK: Separate kernels for edge cases (BPSK or no scrambling)
-    int total_words = (total_bits + 31) / 32;
-    cudaMemsetAsync(handle->d_interleaved.data(), 0, total_words * sizeof(uint32_t), native_stream);
+    int            total_words   = (total_bits + 31) / 32;
+    span<uint32_t> d_interleaved = span<uint32_t>(handle->d_interleaved).first(total_words);
+    if (cuda_result status = device_zero_async(d_interleaved, stream); !status.has_value()) {
+      return status;
+    }
 
     int num_thread_blocks = (total_bits + block_size - 1) / block_size;
     if (Q_m >= 2) {
-      interleave_and_compact_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(handle->d_rate_matched.data(),
-                                                                                         handle->d_interleaved.data(),
-                                                                                         nof_short,
-                                                                                         E_short,
-                                                                                         E_long,
-                                                                                         rm_words,
-                                                                                         num_cbs,
-                                                                                         Q_m,
-                                                                                         total_bits);
+      interleave_and_compact_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(
+          d_rate_matched.data(), d_interleaved.data(), nof_short, E_short, E_long, rm_words, num_cbs, Q_m, total_bits);
     } else {
-      compact_cb_bits_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(handle->d_rate_matched.data(),
-                                                                                  handle->d_interleaved.data(),
-                                                                                  nof_short,
-                                                                                  E_short,
-                                                                                  E_long,
-                                                                                  rm_words,
-                                                                                  num_cbs,
-                                                                                  total_bits);
+      compact_cb_bits_kernel<<<num_thread_blocks, block_size, 0, native_stream>>>(
+          d_rate_matched.data(), d_interleaved.data(), nof_short, E_short, E_long, rm_words, num_cbs, total_bits);
     }
 
-    uint32_t* d_final_output = handle->d_interleaved.data();
+    uint32_t* d_final_output = d_interleaved.data();
     if (handle->config.enable_scrambling) {
-      cuda_result scr_status = handle->scrambler_unit.apply_xor(
-          handle->d_scrambled.data(), handle->d_interleaved.data(), total_bits, stream);
+      cuda_result scr_status =
+          handle->scrambler_unit.apply_xor(handle->d_scrambled.data(), d_interleaved.data(), total_bits, stream);
       if (!scr_status.has_value())
         return scr_status;
       d_final_output = handle->d_scrambled.data();
@@ -1804,11 +1792,6 @@ transport_block_encoder::transport_block_encoder(transport_block_encoder&& other
 transport_block_encoder& transport_block_encoder::operator=(transport_block_encoder&& other) noexcept = default;
 
 transport_block_encoder::~transport_block_encoder() = default;
-
-bool transport_block_encoder::is_valid() const
-{
-  return state != nullptr;
-}
 
 cuda_result transport_block_encoder::configure(const transport_block_encoder_config& config)
 {
