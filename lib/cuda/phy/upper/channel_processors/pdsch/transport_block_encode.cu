@@ -1316,18 +1316,20 @@ cuda_result transport_block_encoder::impl::encoder_configure(transport_block_enc
     handle->tb_cfg.num_code_blocks = cfg->num_code_blocks;
     handle->tb_cfg.cb_crc_bits     = (cfg->num_code_blocks > 1) ? NR_CB_CRC24B_BITS : 0;
   }
-  if (cfg->lifting_size > 0 || cfg->nof_filler_bits > 0) {
+  if (cfg->lifting_size > 0 || cfg->nof_filler_bits >= 0) {
     nr_ldpc_config_t* ldpc_cfg = &handle->tb_cfg.ldpc_cfg;
     int               old_Z    = ldpc_cfg->lifting_size;
     int               new_Z    = (cfg->lifting_size > 0) ? cfg->lifting_size : old_Z;
 
-    if (old_Z != new_Z || cfg->nof_filler_bits > 0 || cfg->base_graph > 0) {
+    if (old_Z != new_Z || cfg->nof_filler_bits >= 0 || cfg->base_graph > 0) {
       ldpc_cfg->lifting_size      = new_Z;
       ldpc_cfg->lifting_set_index = get_lifting_set_index(new_Z);
 
-      int Kb_full                 = (ldpc_cfg->base_graph == 1) ? NR_LDPC_BG1_INFO_NODES : NR_LDPC_BG2_INFO_NODES;
-      int K_prime                 = Kb_full * new_Z;
-      ldpc_cfg->num_filler_bits   = (cfg->nof_filler_bits > 0) ? cfg->nof_filler_bits : ldpc_cfg->num_filler_bits;
+      int Kb_full = (ldpc_cfg->base_graph == 1) ? NR_LDPC_BG1_INFO_NODES : NR_LDPC_BG2_INFO_NODES;
+      int K_prime = Kb_full * new_Z;
+      // A filler count from the CPU segmenter is taken as given, zero included. A code block that
+      // fills K' exactly leaves none, and reading that as "derive it" encodes a different length.
+      ldpc_cfg->num_filler_bits   = (cfg->nof_filler_bits >= 0) ? cfg->nof_filler_bits : ldpc_cfg->num_filler_bits;
       ldpc_cfg->num_info_bits     = K_prime - ldpc_cfg->num_filler_bits;
       handle->tb_cfg.cb_size_bits = ldpc_cfg->num_info_bits;
       handle->tb_cfg.filler_bits  = ldpc_cfg->num_filler_bits;
@@ -1878,7 +1880,7 @@ cuda_result transport_block_encoder::configure(const transport_block_encoder_con
       config.base_graph.has_value() ? ((config.base_graph.value() == ldpc_base_graph_type::BG1) ? 1 : 2) : 0;
   cfg.num_code_blocks    = static_cast<int>(config.nof_codeblocks);
   cfg.lifting_size       = config.lifting_size.has_value() ? static_cast<int>(config.lifting_size.value()) : 0;
-  cfg.nof_filler_bits    = static_cast<int>(config.nof_filler_bits);
+  cfg.nof_filler_bits    = config.nof_filler_bits.has_value() ? static_cast<int>(config.nof_filler_bits.value()) : -1;
   cfg.nof_short_segments = static_cast<int>(config.nof_short_codeblocks);
   cfg.E_short            = static_cast<int>(config.nof_short_bits);
   cfg.E_long             = static_cast<int>(config.nof_long_bits);

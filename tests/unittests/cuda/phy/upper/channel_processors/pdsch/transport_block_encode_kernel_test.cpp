@@ -173,3 +173,50 @@ TEST_F(transport_block_encode_kernel_test, encoding_the_same_transport_block_twi
   // An encoder that produced nothing would also pass the comparison above.
   EXPECT_NE(std::accumulate(first.begin(), first.end(), 0U), 0U);
 }
+
+TEST_F(transport_block_encode_kernel_test, a_filler_count_of_zero_is_taken_as_given)
+{
+  // A transport block whose segmentation leaves filler bits, so that a count of zero from the
+  // caller and the encoder's own count cannot agree.
+  cuda::transport_block_encoder_config config = {};
+  config.nof_tb_bits                          = 280;
+  config.nof_layers                           = 1;
+  config.modulation                           = modulation_scheme::QPSK;
+  config.nof_allocated_bits                   = 1120;
+  config.code_rate                            = 0.25F;
+  config.enable_scrambling                    = false;
+
+  // Derive the shape once, so the lifting size handed back below is the one the encoder picked.
+  ASSERT_TRUE(gpu.configure(config).has_value());
+  config.lifting_size = gpu.get_lifting_size();
+  config.base_graph   = gpu.get_base_graph();
+
+  std::vector<uint8_t> payload = make_payload(config.nof_tb_bits / 8);
+
+  cuda::cuda_expected<cuda::device_vector<uint8_t>> d_input = cuda::device_vector<uint8_t>::create(payload.size());
+  ASSERT_TRUE(d_input.has_value());
+  ASSERT_TRUE(cuda::copy_to_device(d_input.value(), span<const uint8_t>(payload)).has_value());
+
+  // Encode once letting the encoder keep its own filler count, and once with a count of zero.
+  std::vector<std::vector<uint8_t>> encoded;
+  for (bool give_zero_filler : {false, true}) {
+    if (give_zero_filler) {
+      config.nof_filler_bits = 0;
+    }
+    ASSERT_TRUE(gpu.configure(config).has_value()) << "zero filler: " << give_zero_filler;
+
+    const std::size_t                                 nof_output_bytes = gpu.get_nof_output_bits() / 8;
+    cuda::cuda_expected<cuda::device_vector<uint8_t>> d_out = cuda::device_vector<uint8_t>::create(nof_output_bytes);
+    ASSERT_TRUE(d_out.has_value());
+    ASSERT_TRUE(gpu.encode(d_out.value().data(), d_input.value().data(), stream).has_value());
+    ASSERT_EQ(::cudaDeviceSynchronize(), cudaSuccess);
+
+    std::vector<uint8_t> bits(nof_output_bytes);
+    ASSERT_TRUE(cuda::copy_to_host(span<uint8_t>(bits), d_out.value()).has_value());
+    encoded.push_back(std::move(bits));
+  }
+
+  // The information length differs between the two, so the codewords cannot match. An encoder that
+  // read the zero as a request to derive the count would produce the first sequence twice.
+  EXPECT_NE(encoded[0], encoded[1]);
+}

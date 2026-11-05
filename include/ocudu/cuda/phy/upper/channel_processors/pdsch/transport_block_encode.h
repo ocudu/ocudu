@@ -59,8 +59,11 @@ struct transport_block_encoder_config {
   unsigned nof_codeblocks = 0;
   /// Lifting size of the code, or absent to derive it.
   std::optional<ldpc::lifting_size_t> lifting_size;
-  /// Number of filler bits the segmentation leaves, or zero to derive it.
-  unsigned nof_filler_bits = 0;
+  /// \brief Number of filler bits the segmentation leaves, or absent to derive it.
+  ///
+  /// A code block that fills the information length exactly leaves none, so zero is a count a
+  /// caller gives rather than a request to derive one.
+  std::optional<unsigned> nof_filler_bits;
 
   /// Number of code blocks that carry the shorter rate matched length, or zero to derive it.
   unsigned nof_short_codeblocks = 0;
