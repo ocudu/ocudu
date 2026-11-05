@@ -279,6 +279,29 @@ inline f1ap_srbs_setup_mod_item asn1_to_f1ap_srbs_setup_mod_item(const template_
   return srbs_setup_mod_item;
 }
 
+/// \brief Returns all the PLMNs of a cell served by a gNB-DU.
+///
+/// These are the Served PLMNs, followed by PLMNs 7 to 12 of the cell from the Extended Served PLMNs List (TS 38.473
+/// section 9.3.1.10, Served Cell Information). An invalid ASN.1 PLMN ID is left out, so it is not considered in the
+/// response back to the DU.
+inline std::vector<plmn_identity> f1ap_asn1_to_served_plmns(const asn1::f1ap::served_cell_info_s& asn1_cell_info)
+{
+  std::vector<plmn_identity> plmns;
+  for (const auto& asn1_plmn : asn1_cell_info.served_plmns) {
+    if (auto plmn = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes()); plmn.has_value()) {
+      plmns.push_back(plmn.value());
+    }
+  }
+  if (asn1_cell_info.ie_exts_present and asn1_cell_info.ie_exts.extended_served_plmns_list_present) {
+    for (const auto& asn1_plmn : asn1_cell_info.ie_exts.extended_served_plmns_list) {
+      if (auto plmn = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes()); plmn.has_value()) {
+        plmns.push_back(plmn.value());
+      }
+    }
+  }
+  return plmns;
+}
+
 /// \brief Converts the ASN.1 information of a cell served by a gNB-DU.
 /// \param[in] asn1_cell_info The ASN.1 Served Cell Information.
 /// \param[in] asn1_sys_info The ASN.1 gNB-DU System Information, which NG-RAN requires.
@@ -302,22 +325,7 @@ f1ap_asn1_to_du_served_cell(const asn1::f1ap::served_cell_info_s& asn1_cell_info
   if (asn1_cell_info.five_gs_tac_present) {
     served_cell.served_cell_info.five_gs_tac = asn1_cell_info.five_gs_tac.to_number();
   }
-  for (const auto& asn1_plmn : asn1_cell_info.served_plmns) {
-    auto result = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes());
-    // Note: An invalid ASN.1 PLMN ID is not considered in the response back to the DU.
-    if (result.has_value()) {
-      served_cell.served_cell_info.served_plmns.push_back(result.value());
-    }
-  }
-  // PLMNs 7 to 12 of the cell (TS 38.473 section 9.3.1.10, Served Cell Information).
-  if (asn1_cell_info.ie_exts_present and asn1_cell_info.ie_exts.extended_served_plmns_list_present) {
-    for (const auto& asn1_plmn : asn1_cell_info.ie_exts.extended_served_plmns_list) {
-      auto result = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes());
-      if (result.has_value()) {
-        served_cell.served_cell_info.served_plmns.push_back(result.value());
-      }
-    }
-  }
+  served_cell.served_cell_info.served_plmns    = f1ap_asn1_to_served_plmns(asn1_cell_info);
   served_cell.served_cell_info.nr_mode_info    = f1ap_asn1_to_nr_mode_info(asn1_cell_info.nr_mode_info);
   served_cell.served_cell_info.meas_timing_cfg = asn1_cell_info.meas_timing_cfg.copy();
   if (asn1_cell_info.ie_exts_present and asn1_cell_info.ie_exts.ranac_present) {

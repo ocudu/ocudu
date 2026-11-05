@@ -77,23 +77,7 @@ ocudu::ocucp::create_du_setup_request(const asn1::f1ap::f1_setup_request_s& asn1
     if (asn1_served_cell.served_cell_info.five_gs_tac_present) {
       served_cell.served_cell_info.five_gs_tac = asn1_served_cell.served_cell_info.five_gs_tac.to_number();
     }
-    for (const auto& asn1_plmn : asn1_served_cell.served_cell_info.served_plmns) {
-      auto result = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes());
-      // Note: If the ASN.1 PLMN ID is not valid, it is not considered in the response back to the DU.
-      if (result.has_value()) {
-        served_cell.served_cell_info.served_plmns.push_back(result.value());
-      }
-    }
-    // PLMNs 7 to 12 of the cell (TS 38.473 section 9.3.1.10, Served Cell Information).
-    const auto& asn1_cell_info = asn1_served_cell.served_cell_info;
-    if (asn1_cell_info.ie_exts_present and asn1_cell_info.ie_exts.extended_served_plmns_list_present) {
-      for (const auto& asn1_plmn : asn1_cell_info.ie_exts.extended_served_plmns_list) {
-        auto result = plmn_identity::from_bytes(asn1_plmn.plmn_id.to_bytes());
-        if (result.has_value()) {
-          served_cell.served_cell_info.served_plmns.push_back(result.value());
-        }
-      }
-    }
+    served_cell.served_cell_info.served_plmns = f1ap_asn1_to_served_plmns(asn1_served_cell.served_cell_info);
     served_cell.served_cell_info.nr_mode_info =
         f1ap_asn1_to_nr_mode_info(asn1_served_cell.served_cell_info.nr_mode_info);
     served_cell.served_cell_info.meas_timing_cfg = asn1_served_cell.served_cell_info.meas_timing_cfg.copy();
