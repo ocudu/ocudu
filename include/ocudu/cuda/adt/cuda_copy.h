@@ -71,6 +71,27 @@ cuda_result copy_to_host(span<T> dst, const device_vector<T>& src)
   return detail::copy_to_host(dst.data(), src.data(), src.size() * sizeof(T));
 }
 
+/// \brief Copies part of a device block into host memory blocking until the copy completes.
+///
+/// \param[out] dst Destination host data. It must not be smaller than the source.
+/// \param[in]  src View of the source device memory, as \ref device_vector converts to one.
+/// \return A successful result, or a description of the error.
+///
+/// \remark Both parameters are views, so the device memory is the one named \c src. Passing host
+/// memory there reads it as if it were on the device.
+template <typename T>
+cuda_result copy_to_host(span<T> dst, span<const T> src)
+{
+  if (src.size() > dst.size()) {
+    return make_unexpected(std::string("Source device block does not fit in the destination"));
+  }
+  if (src.empty()) {
+    return {};
+  }
+
+  return detail::copy_to_host(dst.data(), src.data(), src.size() * sizeof(T));
+}
+
 /// \brief Queues a copy of host data into a device block.
 ///
 /// \param[out] dst    Destination device block.
@@ -132,6 +153,24 @@ cuda_result device_zero_async(device_vector<T>& data, const cuda_stream& stream)
   }
 
   return detail::device_memset_async(data.data(), 0, data.size_bytes(), stream);
+}
+
+/// \brief Queues a fill of part of a device block with zeros
+///
+/// \param[out] data   View of the device memory to fill, as \ref device_vector converts to one
+/// \param[in]  stream Stream in which the fill is queued
+/// \return A successful result, or a description of the error
+///
+/// \remark The call returns before the fill has completed, so the block must not be read until the
+/// fill is done. \ref cuda_event marks that point
+template <typename T>
+cuda_result device_zero_async(span<T> data, const cuda_stream& stream)
+{
+  if (data.empty()) {
+    return {};
+  }
+
+  return detail::device_memset_async(data.data(), 0, data.size() * sizeof(T), stream);
 }
 
 } // namespace cuda

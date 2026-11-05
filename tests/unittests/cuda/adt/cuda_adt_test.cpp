@@ -8,6 +8,7 @@
 #include "ocudu/cuda/adt/device_vector.h"
 #include "ocudu/cuda/adt/managed_vector.h"
 #include "ocudu/cuda/support/cuda_device.h"
+#include <algorithm>
 #include <chrono>
 #include <cuda_runtime.h>
 #include <gtest/gtest.h>
@@ -224,6 +225,59 @@ TEST_F(cuda_adt_test, copy_larger_than_the_destination_reports_an_error)
 
   cuda_result written = copy_to_device(block.value(), span<const int>(source));
   ASSERT_FALSE(written.has_value());
+}
+
+TEST_F(cuda_adt_test, zeroing_a_view_leaves_the_rest_of_the_block_alone)
+{
+  cuda_expected<cuda_stream> stream = cuda_stream::create();
+  ASSERT_TRUE(stream.has_value()) << stream.error();
+
+  std::vector<int> source(16, 7);
+
+  cuda_expected<device_vector<int>> block = device_vector<int>::create(source.size());
+  ASSERT_TRUE(block.has_value()) << block.error();
+  cuda_result written = copy_to_device(block.value(), span<const int>(source));
+  ASSERT_TRUE(written.has_value()) << written.error();
+
+  cuda_result cleared = device_zero_async(span<int>(block.value()).first(4), stream.value());
+  ASSERT_TRUE(cleared.has_value()) << cleared.error();
+  cuda_result synchronized = stream.value().synchronize();
+  ASSERT_TRUE(synchronized.has_value()) << synchronized.error();
+
+  std::vector<int> destination(source.size(), -1);
+  cuda_result      read = copy_to_host(span<int>(destination), block.value());
+  ASSERT_TRUE(read.has_value()) << read.error();
+
+  std::vector<int> expected(source.size(), 7);
+  std::fill(expected.begin(), expected.begin() + 4, 0);
+  ASSERT_EQ(destination, expected);
+}
+
+TEST_F(cuda_adt_test, a_view_of_a_device_block_is_copied_to_the_host)
+{
+  std::vector<int> source(64);
+  std::iota(source.begin(), source.end(), 100);
+
+  cuda_expected<device_vector<int>> block = device_vector<int>::create(source.size());
+  ASSERT_TRUE(block.has_value()) << block.error();
+  cuda_result written = copy_to_device(block.value(), span<const int>(source));
+  ASSERT_TRUE(written.has_value()) << written.error();
+
+  std::vector<int> destination(8, -1);
+  cuda_result      read = copy_to_host(span<int>(destination), span<const int>(block.value()).subspan(16, 8));
+  ASSERT_TRUE(read.has_value()) << read.error();
+
+  ASSERT_EQ(destination, std::vector<int>(source.begin() + 16, source.begin() + 24));
+}
+
+TEST_F(cuda_adt_test, a_view_larger_than_the_destination_reports_an_error)
+{
+  cuda_expected<device_vector<int>> block = device_vector<int>::create(64);
+  ASSERT_TRUE(block.has_value()) << block.error();
+
+  std::vector<int> destination(8, -1);
+  cuda_result      read = copy_to_host(span<int>(destination), span<const int>(block.value()));
+  ASSERT_FALSE(read.has_value());
 }
 
 TEST_F(cuda_adt_test, managed_vector_allocates_the_requested_size)
