@@ -52,6 +52,9 @@ struct drb_context {
       if (gtpu_fwd_target) {
         gtpu_fwd_target->stop();
       }
+      if (dispatch_queue) {
+        dispatch_queue->stop();
+      }
       stopped = true;
     }
   }
@@ -74,11 +77,12 @@ struct drb_context {
   /// the NG-U pool for an indirect one.
   gtpu_teid_pool& dl_data_forwarding_teid_allocator;
 
-  std::unique_ptr<f1u_cu_up_gateway_bearer> f1u_gw_bearer;
-  std::unique_ptr<f1u_bearer>               f1u;
-  std::unique_ptr<pdcp_entity>              pdcp;
-  std::unique_ptr<gtpu_tunnel_pdcp>         gtpu_fwd_source;
-  std::unique_ptr<gtpu_tunnel_pdcp>         gtpu_fwd_target;
+  std::unique_ptr<f1u_cu_up_gateway_bearer>  f1u_gw_bearer;
+  std::unique_ptr<f1u_bearer>                f1u;
+  std::unique_ptr<pdcp_entity>               pdcp;
+  std::unique_ptr<gtpu_tunnel_pdcp>          gtpu_fwd_source;
+  std::unique_ptr<gtpu_tunnel_pdcp>          gtpu_fwd_target;
+  std::unique_ptr<gtpu_demux_dispatch_queue> dispatch_queue;
 
   // Adapter PDCP->SDAP
   // FIXME: Currently, we assume only one DRB per PDU session and only one QoS flow per DRB.

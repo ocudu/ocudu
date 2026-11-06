@@ -470,7 +470,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
       /// Create GTP-U tunnel for DL data forwarding.
       gtpu_tunnel_pdcp_config fwd_cfg = {
           .rx = {.lif         = gtpu_logical_interface::xnu,
-                 .local_teid  = {},
+                 .local_teid  = new_drb->ingress_dl_data_forwarding_tnl_info->gtp_teid,
                  .pdcp_sn_len = new_drb->pdcp->get_rx_upper_control_interface().get_sn_size()},
           .tx = {.lif         = gtpu_logical_interface::xnu,
                  .peer_teid   = {},
@@ -483,6 +483,12 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                                                    .rx_lower  = nullptr, // TODO add adapter.
                                                                    .tx_upper  = nullptr};
       new_drb->gtpu_fwd_target = create_gtpu_tunnel_pdcp(gtpu_fwd_cfg);
+
+      expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
+          xnu_gtpu_rx_demux.add_tunnel(new_drb->ingress_dl_data_forwarding_tnl_info->gtp_teid,
+                                       ue_dl_exec,
+                                       new_drb->gtpu_fwd_target->get_rx_upper_layer_interface());
+      new_drb->dispatch_queue = std::move(expected_dispatch_queue.value());
 
       logger.log_info("Allocated DL data forwarding tunnel for {}. tnl_info={}",
                       drb_to_setup.drb_id,

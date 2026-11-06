@@ -181,7 +181,14 @@ protected:
     cfg.ngu_cfg.gtpu_batch_size           = 256;
     cfg.ngu_cfg.gtpu_ignore_ue_ambr       = false;
     cfg.ngu_cfg.warn_on_drop              = false;
-    cfg.statistics_report_period          = std::chrono::seconds(1);
+
+    cfg.xnu_cfg.gtpu_reordering_timer     = std::chrono::milliseconds(0);
+    cfg.xnu_cfg.gtpu_rate_limiting_period = std::chrono::milliseconds(100);
+    cfg.xnu_cfg.gtpu_queue_size           = 8192;
+    cfg.xnu_cfg.gtpu_batch_size           = 256;
+    cfg.xnu_cfg.warn_on_drop              = false;
+
+    cfg.statistics_report_period = std::chrono::seconds(1);
 
     return cfg;
   }
@@ -280,7 +287,8 @@ protected:
 
     // Convert to common type
     e1ap_bearer_context_setup_request bearer_context_setup;
-    bearer_context_setup.e1_index = cu_up_e1_index_t{0};
+    bearer_context_setup.e1_index                         = cu_up_e1_index_t{0};
+    bearer_context_setup.direct_forwarding_path_available = true;
     fill_e1ap_bearer_context_setup_request(
         bearer_context_setup, asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
 
