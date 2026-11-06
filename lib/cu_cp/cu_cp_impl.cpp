@@ -2130,6 +2130,7 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(cu_cp_ue_index_t ue_index
 void cu_cp_impl::handle_pending_ue_task_cancellation(cu_cp_ue_index_t ue_index)
 {
   ocudu_assert(ue_mng.find_du_ue(ue_index) != nullptr, "ue={}: Could not find DU UE", ue_index);
+  const cu_cp_cu_up_index_t cu_up_index = ue_mng.find_du_ue(ue_index)->get_cu_up_index();
 
   // Clear all enqueued tasks for this UE.
   ue_mng.get_task_sched().clear_pending_tasks(ue_index);
@@ -2138,6 +2139,14 @@ void cu_cp_impl::handle_pending_ue_task_cancellation(cu_cp_ue_index_t ue_index)
   rrc_ue_interface* rrc_ue = ue_mng.find_du_ue(ue_index)->get_rrc_ue();
   if (rrc_ue != nullptr) {
     rrc_ue->get_controller().stop();
+  }
+
+  // Cancel running E1AP transactions for the UE. A cancelled procedure can remove the UE in-line, so this goes last.
+  if (cu_up_index != cu_cp_cu_up_index_t::invalid) {
+    cu_up_processor* cu_up = cu_up_db.find_cu_up_processor(cu_up_index);
+    if (cu_up != nullptr) {
+      cu_up->stop(ue_index);
+    }
   }
 }
 

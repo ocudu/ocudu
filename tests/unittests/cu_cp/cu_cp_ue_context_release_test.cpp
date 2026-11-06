@@ -694,3 +694,23 @@ TEST_F(cu_cp_ue_context_release_test,
     return this->get_cu_cp().get_metrics_handler().request_metrics_report().ues.empty();
   })) << "UE was not removed";
 }
+
+TEST_F(cu_cp_ue_context_release_test,
+       when_f1_removal_request_is_received_during_bearer_context_release_then_ue_is_removed_without_cu_up_response)
+{
+  // Attach UE and setup PDU session.
+  ASSERT_TRUE(setup_ue_pdu_session());
+
+  // Start the UE release. The CU-UP does not answer the Bearer Context Release Command.
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
+
+  // Inject F1 Removal Request.
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_removal_request(0));
+
+  // The UE is removed before the E1AP procedure timeout.
+  const std::chrono::milliseconds max_removal_time{100};
+  ASSERT_LT(max_removal_time, get_cu_cp_cfg().e1ap.proc_timeout);
+  ASSERT_TRUE(tick_until(max_removal_time, [this]() {
+    return this->get_cu_cp().get_metrics_handler().request_metrics_report().ues.empty();
+  })) << "UE was not removed";
+}
