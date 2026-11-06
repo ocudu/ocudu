@@ -329,16 +329,8 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const bearer_context
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
     // Received a release command for a context that we do not possess.
     // Reply with release complete and log an error.
-    e1ap_message e1ap_msg;
-    e1ap_msg.pdu.set_successful_outcome();
-    e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
-    e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id =
-        msg->gnb_cu_cp_ue_e1ap_id;
-    e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_up_ue_e1ap_id =
-        msg->gnb_cu_up_ue_e1ap_id;
-
     logger.log_error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
-    pdu_notifier->on_new_message(e1ap_msg);
+    send_bearer_context_release_complete(msg);
     return;
   }
 
@@ -358,8 +350,22 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const bearer_context
                                                             .cu_up_notifier = cu_up_notifier,
                                                             .metrics        = metrics,
                                                             .logger         = logger}))) {
-    logger.log_warning("Failed to start Bearer Context Release procedure");
+    // The procedure has no failure message. Reply with release complete, as per TS 37.483 section 8.3.4.2.
+    logger.log_error("ue={}: Failed to start Bearer Context Release procedure", ue_index);
+    send_bearer_context_release_complete(msg);
   }
+}
+
+void e1ap_cu_up_impl::send_bearer_context_release_complete(const bearer_context_release_cmd_s& msg)
+{
+  e1ap_message e1ap_msg;
+  e1ap_msg.pdu.set_successful_outcome();
+  e1ap_msg.pdu.successful_outcome().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_RELEASE);
+  e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_cp_ue_e1ap_id =
+      msg->gnb_cu_cp_ue_e1ap_id;
+  e1ap_msg.pdu.successful_outcome().value.bearer_context_release_complete()->gnb_cu_up_ue_e1ap_id =
+      msg->gnb_cu_up_ue_e1ap_id;
+  pdu_notifier->on_new_message(e1ap_msg);
 }
 
 void e1ap_cu_up_impl::handle_cu_up_e1ap_reset(const reset_s& msg)

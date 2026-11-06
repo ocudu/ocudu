@@ -435,6 +435,21 @@ TEST_F(e1ap_cu_up_test, when_valid_part_of_e1_reset_received_then_reset_ack_sent
             e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
 }
 
+TEST_F(e1ap_cu_up_test,
+       when_bearer_context_release_procedure_cannot_be_scheduled_then_bearer_context_release_complete_is_sent)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  cu_up_notifier.ue_task_scheduling_fails = true;
+  e1ap_message bearer_context_release_cmd = generate_bearer_context_release_command(9, 0);
+  e1ap->handle_message(bearer_context_release_cmd);
+
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_release_complete,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
+}
+
 TEST_F(e1ap_cu_up_test, when_bearer_context_valid_and_resume_requested_dl_status_notification_sent)
 {
   run_e1_setup_procedure();

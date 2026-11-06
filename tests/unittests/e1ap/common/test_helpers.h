@@ -168,6 +168,9 @@ public:
 
   bool on_schedule_ue_async_task(cu_up_ue_index_t ue_index_, async_task<void> task) override
   {
+    if (ue_task_scheduling_fails) {
+      return false;
+    }
     return task_loop.schedule(std::move(task)); // schedule ue task in dummy task loop
   }
 
@@ -179,6 +182,8 @@ public:
   void on_connection_loss(cu_up_e1_index_t e1_index) override {}
 
   void set_ue_index(uint16_t ue_index_) { ue_index = int_to_ue_index(ue_index_); }
+
+  bool ue_task_scheduling_fails = false;
 
   ocuup::e1ap_bearer_context_release_command      last_bearer_context_release_command;
   ocuup::e1ap_bearer_context_modification_request last_bearer_context_modification_request;

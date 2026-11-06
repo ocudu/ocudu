@@ -86,6 +86,9 @@ private:
   /// \param[in] msg The Bearer Context Release Command.
   void handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg);
 
+  /// Sends a Bearer Context Release Complete for the given Bearer Context Release Command.
+  void send_bearer_context_release_complete(const asn1::e1ap::bearer_context_release_cmd_s& msg);
+
   /// \brief Notify about the reception of a CU-UP E1AP reset.
   /// \param[in] msg The received outcome message.
   void handle_cu_up_e1ap_reset(const asn1::e1ap::reset_s& msg);
