@@ -133,6 +133,7 @@ protected:
     upf_addr_str = "127.0.0.1";
 
     // Set default UDP configs
+    cu_up_udp_cfg.if_name      = "ngu";       // Random free port selected by the OS.
     cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
     cu_up_udp_cfg.bind_address = "127.0.0.2"; // NG-U bind address
   }

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "udp_network_gateway_logger.h"
 #include "ocudu/adt/batched_dispatch_queue.h"
 #include "ocudu/gateways/udp_network_gateway.h"
 #include "ocudu/support/executors/task_executor.h"
@@ -86,7 +87,7 @@ private:
 
   udp_network_gateway_config                   config; // configuration
   network_gateway_data_notifier_with_src_addr& data_notifier;
-  ocudulog::basic_logger&                      logger;
+  udp_gateway_logger                           logger;
   task_executor&                               io_tx_executor;
   task_executor&                               io_rx_executor;
 
