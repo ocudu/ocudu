@@ -29,26 +29,6 @@ rules:
       - lib/phy/**
     reason: DU and CU are separate network functions that talk over F1 only. The CU must not see DU-side
       layers, which exist only below the split.
-  - id: cu_cp-must-not-depend-on-cu_up
-    kind: forbidden-edge
-    from:
-      - include/ocudu/cu_cp/**
-      - lib/cu_cp/**
-    to:
-      - include/ocudu/cu_up/**
-      - lib/cu_up/**
-    reason: CU-CP and CU-UP are separate network functions that talk over E1 only, and may run in different
-      processes.
-  - id: cu_up-must-not-depend-on-cu_cp
-    kind: forbidden-edge
-    from:
-      - include/ocudu/cu_up/**
-      - lib/cu_up/**
-    to:
-      - include/ocudu/cu_cp/**
-      - lib/cu_cp/**
-    reason: CU-CP and CU-UP are separate network functions that talk over E1 only, and may run in different
-      processes.
   - id: cu-layers-must-not-depend-on-cu
     kind: forbidden-edge
     from:
@@ -85,25 +65,3 @@ rules:
       - lib/cu_up/**
     reason: These subsystems sit below the CU-CP and CU-UP, which drive them. Including CU headers inverts
       that direction and stops each subsystem from being built or tested without the CU.
-    exempt:
-      - from: include/ocudu/e1ap/cu_up/e1ap_cu_up.h
-        to: include/ocudu/cu_up/cu_up_types.h
-        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. E1AP CU-UP interface takes CU-UP types directly.
-      - from: include/ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h
-        to: include/ocudu/cu_up/cu_up_types.h
-        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Bearer context update messages carry CU-UP types.
-      - from: include/ocudu/f1ap/cu_cp/f1ap_cu.h
-        to: include/ocudu/cu_cp/cu_cp_ue_messages.h
-        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. F1AP CU interface takes CU-CP UE message types directly.
-      - from: include/ocudu/rrc/rrc_config.h
-        to: include/ocudu/cu_cp/cu_cp_types.h
-        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. RRC config embeds CU-CP types.
-      - from: include/ocudu/rrc/rrc_ue.h
-        to: include/ocudu/cu_cp/cu_cp_ue_messages.h
-        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. RRC UE interface takes CU-CP UE message types directly.
-      - from: lib/xnap/procedures/xn_handover_asn1_helpers.h
-        to: include/ocudu/cu_cp/cu_cp_cho_types.h
-        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Xn handover helpers convert CU-CP conditional handover types.
-      - from: lib/xnap/procedures/xnap_source_handover_preparation_procedure.cpp
-        to: include/ocudu/cu_cp/cu_cp_cho_types.h
-        reason: Tracked by https://gitlab.com/ocudu/ocudu/-/issues/39. Handover preparation reads CU-CP conditional handover types.

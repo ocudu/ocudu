@@ -28,3 +28,49 @@ rules:
       - lib/ofh/**
     reason: DU low is driven through FAPI and knows nothing above it. Including DU high or adaptor headers inverts
       the split and pulls scheduling types into the sample path.
+  - id: phy-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/phy/**
+      - lib/phy/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/gateways/baseband/**
+      - include/ocudu/hal/**
+      - include/ocudu/instrumentation/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ocuduvec/**
+      - include/ocudu/phy/**
+      - include/ocudu/ran/**
+      - include/ocudu/support/**
+      - lib/phy/**
+    extra_allow_for_prefix:
+      - prefix: resource_grid_cuda
+        allow:
+          - include/ocudu/cuda/**
+      - prefix: prach_buffer_cuda
+        allow:
+          - include/ocudu/cuda/**
+      - prefix: prach_detector_cuda
+        allow:
+          - include/ocudu/cuda/**
+    reason: Module PHY may only depend on the modules listed in allow; anything else breaks its layering boundary.
+  - id: phy-lower-not-depend-on-phy-upper
+    kind: forbidden-edge
+    from:
+      - include/ocudu/phy/lower/**
+      - lib/phy/lower/**
+    to:
+      - include/ocudu/phy/upper/**
+      - lib/phy/upper/**
+    reason: Lower PHY cannot depend on Upper PHY.
+  - id: phy-upper-not-depend-on-phy-lower-and-gateways
+    kind: forbidden-edge
+    from:
+      - include/ocudu/phy/upper/**
+      - lib/phy/upper/**
+    to:
+      - include/ocudu/phy/lower/**
+      - lib/phy/lower/**
+      - include/ocudu/gateways/baseband/**
+    reason: Upper PHY cannot depend on Lower PHY.

@@ -1,0 +1,77 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: fapi-adaptor-mac-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/fapi_adaptor/mac/**
+      - lib/fapi_adaptor/mac/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/fapi/**
+      - include/ocudu/fapi_adaptor/*.h
+      - include/ocudu/fapi_adaptor/mac/**
+      - include/ocudu/mac/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ran/**
+      - include/ocudu/scheduler/**
+      - include/ocudu/support/**
+      - lib/fapi_adaptor/mac/**
+    reason: Module FAPI Adaptor MAC may only depend on the modules listed in allow; anything else breaks its layering boundary.
+  - id: fapi-adaptor-phy-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/fapi_adaptor/phy/**
+      - lib/fapi_adaptor/phy/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/fapi/**
+      - include/ocudu/fapi_adaptor/*.h
+      - include/ocudu/fapi_adaptor/phy/**
+      - include/ocudu/instrumentation/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ocuduvec/**
+      - include/ocudu/phy/**
+      - include/ocudu/ran/**
+      - include/ocudu/support/**
+      - lib/fapi_adaptor/phy/**
+    reason: Module FAPI Adaptor PHY may only depend on the modules listed in allow; anything else breaks its layering boundary.
+  - id: fapi-adaptor-phy-dummy-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/fapi_adaptor/phy_dummy/**
+      - lib/fapi_adaptor/phy_dummy/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/fapi/**
+      - include/ocudu/fapi_adaptor/phy/**
+      - include/ocudu/fapi_adaptor/phy_dummy/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ran/**
+      - include/ocudu/support/**
+      - lib/fapi_adaptor/phy_dummy/**
+    reason: Module FAPI Adaptor PHY dummy may only depend on the modules listed in allow; anything else breaks its layering boundary.
+  - id: fapi-adaptor-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/fapi_adaptor/*.h
+      - lib/fapi_adaptor/*.cpp
+      - lib/fapi_adaptor/*.h
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/fapi_adaptor/*.h
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ran/**
+      - include/ocudu/support/**
+      - lib/fapi_adaptor/*.h
+    reason: Module FAPI Adaptor may only depend on the modules listed in allow; anything else breaks its layering boundary.

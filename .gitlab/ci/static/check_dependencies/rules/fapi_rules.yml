@@ -1,0 +1,47 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: fapi-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/fapi/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/fapi/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ocuduvec/**
+      - include/ocudu/ran/**
+      - include/ocudu/support/**
+    reason: Module FAPI may only depend on the modules listed in allow; anything else breaks its layering boundary.
+  - id: fapi-common-cannot-include-from-p5-and-p7
+    kind: forbidden-edge
+    from:
+      - include/ocudu/fapi/common/**
+    to:
+      - include/ocudu/fapi/p5/**
+      - include/ocudu/fapi/p7/**
+    reason: Module FAPI Common cannot include modules from FAPI P5 and P7.
+  - id: fapi-p5-cannot-include-from-p7
+    kind: forbidden-edge
+    from:
+      - include/ocudu/fapi/p5/**
+    to:
+      - include/ocudu/fapi/p7/**
+    reason: Module FAPI P5 cannot include modules from FAPI P7.
+  - id: fapi-p7-cannot-include-from-p5
+    kind: forbidden-edge
+    from:
+      - include/ocudu/fapi/p7/**
+    to:
+      - include/ocudu/fapi/p5/**
+    reason: Module FAPI P7 cannot include modules from FAPI P5.

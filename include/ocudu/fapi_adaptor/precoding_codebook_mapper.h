@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "ocudu/mac/mac_cell_result.h"
 #include "ocudu/ocudulog/logger.h"
 #include "ocudu/ran/csi_report/csi_report_data.h"
 #include <vector>

@@ -35,26 +35,6 @@ rules:
     reason: These subsystems sit below the DU manager, which drives them. Including DU headers inverts
       that direction, drags DU configuration types into the cell-processing path and stops each subsystem
       from being built or tested without the DU manager.
-  - id: du_high-must-not-depend-on-du_low
-    kind: forbidden-edge
-    from:
-      - include/ocudu/du/du_high/**
-      - lib/du/du_high/**
-    to:
-      - include/ocudu/du/du_low/**
-      - lib/du/du_low/**
-    reason: The two DU halves meet only through FAPI, and are deployed in separate processes in a split
-      setup. A direct include makes DU-high unbuildable without an L1.
-  - id: du_low-must-not-depend-on-du_high
-    kind: forbidden-edge
-    from:
-      - include/ocudu/du/du_low/**
-      - lib/du/du_low/**
-    to:
-      - include/ocudu/du/du_high/**
-      - lib/du/du_high/**
-    reason: The two DU halves meet only through FAPI, and are deployed in separate processes in a split
-      setup. A direct include makes DU-low unbuildable without an L2.
   - id: du-must-not-depend-on-cu
     kind: forbidden-edge
     from:
@@ -71,3 +51,27 @@ rules:
       - lib/e1ap/**
     reason: DU and CU are separate network functions that talk over F1 only. Reaching across the split
       couples the DU to CU internals and to interfaces it does not terminate.
+  - id: du-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/du/*
+      - lib/du/*
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/asn1/rrc_nr/**
+      - include/ocudu/du/**
+      - include/ocudu/mac/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ran/**
+      - include/ocudu/scheduler/**
+      - include/ocudu/support/**
+      - lib/du/**
+    extra_allow_for_prefix:
+      - prefix: o_
+        allow:
+          - include/ocudu/e2/**
+          - include/ocudu/fapi_adaptor/mac/**
+      - prefix: f1_setup_e2_adapter
+        allow:
+          - include/ocudu/e2/**
+    reason: Module DU may only depend on the modules listed in allow; anything else breaks its layering boundary.

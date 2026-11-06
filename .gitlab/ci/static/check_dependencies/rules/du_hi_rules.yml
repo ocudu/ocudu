@@ -29,3 +29,51 @@ rules:
     reason: DU High is wired to DU low by the application, through interfaces DU high defines itself. Including DU low,
       FAPI or adaptor headers ties DU high to one DU low implementation and breaks the split-6 and split-7.2
       deployments.
+  - id: du_high-must-not-depend-on-du_low
+    transitive: true
+    kind: forbidden-edge
+    from:
+      - include/ocudu/du/du_high/**
+      - lib/du/du_high/**
+    to:
+      - include/ocudu/du/du_low/**
+      - lib/du/du_low/**
+    reason: The two DU halves meet only through FAPI, and are deployed in separate processes in a split
+      setup. A direct include makes DU-high unbuildable without an L1.
+  - id: du_high-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/du/du_high/**
+      - lib/du/du_high/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/f1ap/**
+      - include/ocudu/asn1/rrc_nr/**
+      - include/ocudu/du/*.h
+      - include/ocudu/du/du_high/**
+      - include/ocudu/f1ap/*.h
+      - include/ocudu/f1ap/du/**
+      - include/ocudu/f1ap/gateways/*.h
+      - include/ocudu/f1u/**
+      - include/ocudu/gtpu/**
+      - include/ocudu/mac/**
+      - include/ocudu/ntn/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/lpp/**
+      - include/ocudu/pcap/**
+      - include/ocudu/ran/**
+      - include/ocudu/rlc/**
+      - include/ocudu/scheduler/**
+      - include/ocudu/support/**
+      - lib/du/du_high/**
+    extra_allow_for_prefix:
+      - prefix: o_
+        allow:
+          - include/ocudu/e2/**
+          - include/ocudu/fapi_adaptor/mac/**
+          - include/ocudu/fapi_adaptor/*.h
+      - prefix: f1_setup_e2_adapter
+        allow:
+          - include/ocudu/e2/**
+    reason: Module DU-High may only depend on the modules listed in allow; anything else breaks its layering boundary.

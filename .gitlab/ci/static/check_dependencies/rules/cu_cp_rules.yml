@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# Forbidden and allowed include dependencies for the OCUDU C++ tree, checked by
+# check_dependency_rules.py against a tree from gen_dependency_tree.py.
+#
+# Every rule here is green on the tree it was ported against. Never land a
+# rule that is red without `exempt` entries carrying issue links.
+#
+
+version: 1
+rules:
+  - id: cu_cp-must-not-depend-on-cu_up
+    kind: forbidden-edge
+    from:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+    to:
+      - include/ocudu/cu_up/**
+      - lib/cu_up/**
+    reason: CU-CP and CU-UP are separate network functions that talk over E1 only, and may run in different
+      processes.
+  - id: cu_cp-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/cu_cp/**
+      - lib/cu_cp/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/asn1/*.h
+      - include/ocudu/asn1/rrc_nr/**
+      - include/ocudu/cu_cp/**
+      - include/ocudu/e1ap/common/**
+      - include/ocudu/e1ap/cu_cp/**
+      - include/ocudu/f1ap/*.h
+      - include/ocudu/f1ap/cu_cp/**
+      - include/ocudu/ngap/**
+      - include/ocudu/ntn/**
+      - include/ocudu/nrppa/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/pdcp/**
+      - include/ocudu/ran/**
+      - include/ocudu/rrc/**
+      - include/ocudu/security/**
+      - include/ocudu/support/**
+      - include/ocudu/xnap/**
+      - lib/cu_cp/**
+    extra_allow_for_prefix:
+      - prefix: o_
+        allow:
+          - include/ocudu/e2/**
+      - prefix: ng_setup_e2_adapter
+        allow:
+          - include/ocudu/e2/**
+    reason: Module CU-CP may only depend on the modules listed in allow; anything else breaks its layering boundary.

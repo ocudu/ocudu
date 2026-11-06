@@ -30,3 +30,19 @@ rules:
       - lib/fapi_adaptor/**
     reason: The fronthaul and FAPI interfaces carry L1 data only. Including L2 or adaptor headers gives
       them knowledge of layers on the far side of the interface they define.
+  - id: ofh-allowed-includes
+    kind: allowed-edge
+    from:
+      - include/ocudu/ofh/**
+      - lib/ofh/**
+    allow:
+      - include/ocudu/adt/**
+      - include/ocudu/instrumentation/**
+      - include/ocudu/ocudulog/**
+      - include/ocudu/ocuduvec/**
+      - include/ocudu/ofh/**
+      - include/ocudu/phy/support/**
+      - include/ocudu/ran/**
+      - include/ocudu/support/**
+      - lib/ofh/**
+    reason: Module OFH may only depend on the modules listed in allow; anything else breaks its layering boundary.
