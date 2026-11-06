@@ -96,6 +96,21 @@ public:
     return it != ue_index_to_ue_e1ap_id.end() ? &ues.at(it->second) : nullptr;
   }
 
+  /// Cancels the running bearer context transactions of the UE.
+  void cancel_ue_transactions(cu_cp_ue_index_t ue_index)
+  {
+    // A cancelled procedure can remove the UE context in-line. Thus, find the UE again before each cancel.
+    auto stop = [this, ue_index](auto e1ap_bearer_transaction_manager::* event_source) {
+      if (e1ap_ue_context* u = find_ue(ue_index)) {
+        (u->bearer_ev_mng.*event_source).stop();
+      }
+    };
+    stop(&e1ap_bearer_transaction_manager::context_setup_outcome);
+    stop(&e1ap_bearer_transaction_manager::context_modification_outcome);
+    // The Bearer Context Release Procedure waits for this transaction and removes the UE context. Thus, cancel it last.
+    stop(&e1ap_bearer_transaction_manager::context_release_complete);
+  }
+
   e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
     ocudu_assert(ues.find(cu_cp_ue_e1ap_id) != ues.end(),

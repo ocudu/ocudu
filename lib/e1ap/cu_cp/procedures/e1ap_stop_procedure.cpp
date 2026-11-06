@@ -48,10 +48,7 @@ async_task<void> e1ap_stop_procedure::handle_transaction_info_loss()
   // Note: size of ue_list may change during this operation (e.g. if a concurrent UE context release was being
   // processed and got cancelled). Therefore, we leverage the list ev.ues_lost for the iteration.
   for (cu_cp_ue_index_t ue_idx : ev.ues_lost) {
-    auto* u = ue_ctxt_list.find_ue(ue_idx);
-    if (u != nullptr) {
-      u->bearer_ev_mng.cancel_all();
-    }
+    ue_ctxt_list.cancel_ue_transactions(ue_idx);
   }
   ev.ues_lost.erase(std::remove_if(ev.ues_lost.begin(),
                                    ev.ues_lost.end(),

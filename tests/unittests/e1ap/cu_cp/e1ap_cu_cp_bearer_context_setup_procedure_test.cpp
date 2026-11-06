@@ -168,3 +168,29 @@ TEST_F(e1ap_cu_cp_bearer_context_setup_test,
   ASSERT_TRUE(t.ready());
   ASSERT_FALSE(was_bearer_context_setup_successful());
 }
+
+TEST_F(e1ap_cu_cp_bearer_context_setup_test,
+       when_ue_tasks_are_cancelled_and_caller_removes_ue_after_bearer_setup_failure_then_cancel_does_not_crash)
+{
+  // Test Preamble.
+  auto request = generate_bearer_context_setup_request(uint_to_ue_index(
+      test_rng::uniform_int<uint64_t>(to_underlying(cu_cp_ue_index_t::min), to_underlying(cu_cp_ue_index_t::max))));
+
+  // Start a caller task that removes the bearer context when the Bearer Context Setup fails.
+  async_task<void> caller_task = launch_async(
+      [this, request, resp = e1ap_bearer_context_setup_response{}](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT_VALUE(resp, e1ap->handle_bearer_context_setup_request(request));
+        if (not resp.success) {
+          e1ap->remove_bearer_context(request.ue_index);
+        }
+        CORO_RETURN();
+      });
+  lazy_task_launcher<void> caller_launcher(caller_task);
+  ASSERT_FALSE(caller_task.ready());
+
+  // Cancel the UE tasks. The caller removes the bearer context in-line.
+  e1ap->cancel_ue_tasks(request.ue_index);
+
+  ASSERT_TRUE(caller_task.ready());
+}

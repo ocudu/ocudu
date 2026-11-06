@@ -476,8 +476,7 @@ void e1ap_cu_cp_impl::cancel_ue_tasks(cu_cp_ue_index_t ue_index)
     return;
   }
 
-  auto& u = ue_ctxt_list[ue_index];
-  u.bearer_ev_mng.cancel_all();
+  ue_ctxt_list.cancel_ue_transactions(ue_index);
 }
 
 void e1ap_cu_cp_impl::update_ue_context(cu_cp_ue_index_t ue_index, cu_cp_ue_index_t old_ue_index)
