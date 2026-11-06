@@ -133,6 +133,8 @@ const std::vector<test_case_t> realtime_loopback_radio_validator_test_data = {
     // Valid: four streams with four channels each.
     {[] {
        radio_configuration::radio config = radio_base_config;
+       // A low sampling rate keeps the buffers of the sixteen channels small.
+       config.sampling_rate_Hz = 1e6;
        config.tx_streams.assign(4, {{base_tx_channel, base_tx_channel, base_tx_channel, base_tx_channel}, ""});
        config.rx_streams.assign(4, {{base_rx_channel, base_rx_channel, base_rx_channel, base_rx_channel}, ""});
        return config;
