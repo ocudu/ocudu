@@ -37,6 +37,8 @@ private:
   f1ap_du_processor_notifier& cu_cp_notifier;
   f1ap_ue_context_list&       ue_list;
   ocudulog::basic_logger&     logger;
+
+  async_task<void> ue_reset_task;
 };
 
 } // namespace ocucp

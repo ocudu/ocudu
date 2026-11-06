@@ -666,3 +666,31 @@ TEST_F(cu_cp_ue_context_release_test,
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
 }
+
+TEST_F(cu_cp_ue_context_release_test,
+       when_f1_removal_request_is_received_during_bearer_context_release_then_f1_removal_response_is_sent_at_once)
+{
+  // Attach UE and setup PDU session.
+  ASSERT_TRUE(setup_ue_pdu_session());
+
+  // Start the UE release. The CU-UP does not answer the Bearer Context Release Command.
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
+
+  // Inject F1 Removal Request.
+  get_du(du_idx).push_ul_pdu(test_helpers::generate_f1_removal_request(0));
+
+  // The F1 Removal Response is sent before the E1AP procedure timeout.
+  const std::chrono::milliseconds max_response_time{100};
+  ASSERT_LT(max_response_time, get_cu_cp_cfg().e1ap.proc_timeout);
+  ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu, max_response_time)) << "F1 Removal Response not received";
+  ASSERT_EQ(f1ap_pdu.pdu.type().value, asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(f1ap_pdu.pdu.successful_outcome().value.type().value,
+            asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_removal_resp);
+
+  // The CU-UP answers late, and the UE is removed.
+  get_cu_up(cu_up_idx).push_tx_pdu(
+      generate_bearer_context_release_complete(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+  ASSERT_TRUE(tick_until(std::chrono::milliseconds{100}, [this]() {
+    return this->get_cu_cp().get_metrics_handler().request_metrics_report().ues.empty();
+  })) << "UE was not removed";
+}

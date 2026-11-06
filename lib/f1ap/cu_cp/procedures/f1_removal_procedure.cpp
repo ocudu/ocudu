@@ -33,11 +33,15 @@ void f1_removal_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   // If there are still active UEs, reset their context in other layers.
   if (ue_list.size() > 0) {
-    CORO_AWAIT(handle_ue_transaction_info_loss());
+    ue_reset_task = handle_ue_transaction_info_loss();
   }
 
-  // Send F1 Removal Response
+  // Send F1 Removal Response before the removal of the resources, as per TS 38.473 section 8.2.8.2.
   send_f1_removal_response();
+
+  if (not ue_reset_task.empty()) {
+    CORO_AWAIT(ue_reset_task);
+  }
 
   CORO_RETURN();
 }
