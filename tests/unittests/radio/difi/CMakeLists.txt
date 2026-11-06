@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
 # SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
+include_directories(${CMAKE_SOURCE_DIR})
+
 add_executable(radio_difi_validator_test radio_difi_validator_test.cpp)
 target_link_libraries(radio_difi_validator_test ocudu_radio_difi ocudu_support gtest gtest_main)
 target_include_directories(radio_difi_validator_test PRIVATE

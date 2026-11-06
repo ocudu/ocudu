@@ -10,6 +10,7 @@
 #include "radio_difi_data_packet.h"
 #include "radio_difi_tx_stream.h"
 #include "radio_difi_udp_socket.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/radio/radio_event_notifier.h"
@@ -166,6 +167,8 @@ protected:
 
 TEST_F(TxStreamLoopback, StartSendsContextPacket)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   tx->start(0);
 
   std::vector<uint8_t> pkt;
@@ -191,6 +194,8 @@ TEST_F(TxStreamLoopback, StartSendsContextPacket)
 
 TEST_F(TxStreamLoopback, StartContextPacketEncodesRfFreqAndSampleRate)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   tx->start(0);
 
   std::vector<uint8_t> pkt;
@@ -212,6 +217,8 @@ TEST_F(TxStreamLoopback, StartContextPacketEncodesRfFreqAndSampleRate)
 // timestamp it puts on the wire, or a peer reads our stream as originating in 1970.
 TEST_F(TxStreamLoopback, EpochOffsetShiftsWireTimestamps)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   // One hour of ticks: large enough to be unambiguous, small enough to stay exact.
   const int64_t offset_ticks = static_cast<int64_t>(SAMPLE_RATE) * 3600;
 
@@ -235,6 +242,8 @@ TEST_F(TxStreamLoopback, EpochOffsetShiftsWireTimestamps)
 
 TEST_F(TxStreamLoopback, TransmitSendsDataPacket)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   tx->start(0);
   // Drain the context packet.
   std::vector<uint8_t> ctx;
@@ -282,6 +291,8 @@ TEST_F(TxStreamLoopback, TransmitSendsDataPacket)
 // stays big endian.
 TEST_F(TxStreamLoopback, TransmitLittleEndianPayload)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   ASSERT_NO_FATAL_FAILURE(create_tx(difi_iq_byte_order::little));
   tx->start(0);
   std::vector<uint8_t> ctx;
@@ -307,6 +318,8 @@ TEST_F(TxStreamLoopback, TransmitLittleEndianPayload)
 // hole, and a receiver that concatenates rather than placing by timestamp then runs slow.
 TEST_F(TxStreamLoopback, TransmitEmptyIsSentAsSilence)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   tx->start(0);
   // Drain the context packet.
   std::vector<uint8_t> ctx;
@@ -335,6 +348,8 @@ TEST_F(TxStreamLoopback, TransmitEmptyIsSentAsSilence)
 // timestamp derives from the buffer start, stamp it one tx_start too early.
 TEST_F(TxStreamLoopback, WholeBufferIsTransmittedRegardlessOfTxWindow)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   tx->start(0);
   std::vector<uint8_t> ctx;
   ASSERT_GT(recv_packet(ctx), 0);
@@ -446,6 +461,8 @@ protected:
 
 TEST_F(TxFragmentation, SlotSplitsIntoWholePackets)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   ASSERT_NO_FATAL_FAILURE(open(15007));
 
   const unsigned nof_frags = SLOT_LEN / DIFI_DEFAULT_PKT_SAMPLES;
@@ -485,6 +502,8 @@ TEST_F(TxFragmentation, SlotSplitsIntoWholePackets)
 
 TEST_F(TxFragmentation, ShortFinalFragment)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   ASSERT_NO_FATAL_FAILURE(open(15008));
 
   // One full fragment plus a remainder that must go out as a shorter packet.
@@ -513,6 +532,8 @@ TEST_F(TxFragmentation, ShortFinalFragment)
 // A configured packet size replaces the default: here the slot goes out as three packets of 3840.
 TEST_F(TxFragmentation, ConfiguredPacketSize)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   static constexpr unsigned PKT_SAMPLES = 3840;
   ASSERT_NO_FATAL_FAILURE(open(15045, PKT_SAMPLES));
 
@@ -532,6 +553,8 @@ TEST_F(TxFragmentation, ConfiguredPacketSize)
 
 TEST_F(TxFragmentation, ExactlyOnePacketIsNotFragmented)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   ASSERT_NO_FATAL_FAILURE(open(15009));
 
   transmit_ramp(DIFI_DEFAULT_PKT_SAMPLES, 0);
@@ -687,6 +710,8 @@ static_assert(!std::is_copy_assignable_v<pcap_writer>, "pcap_writer owns a FILE*
 
 TEST_F(TxStreamLoopback, SetFreqSendsUpdatedContextPacket)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   tx->start(0);
   // Drain the startup context packet.
   std::vector<uint8_t> ctx;
@@ -709,6 +734,8 @@ TEST_F(TxStreamLoopback, SetFreqSendsUpdatedContextPacket)
 
 TEST_F(TxStreamLoopback, SetGainSendsUpdatedContextPacket)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   tx->start(0);
   std::vector<uint8_t> ctx;
   ASSERT_GT(recv_packet(ctx), 0);
@@ -734,6 +761,8 @@ TEST_F(TxStreamLoopback, SetGainSendsUpdatedContextPacket)
 // announced, and a sanitizer run must see no race.
 TEST_F(TxStreamLoopback, SettingsChangedWhileTransmittingAreAnnounced)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   static constexpr unsigned NOF_UPDATES  = 500;
   static constexpr unsigned NOF_TRANSMIT = 200;
   static constexpr double   FINAL_RF_dB  = 12.0;
@@ -837,6 +866,8 @@ public:
 /// must be fired before the packet is sent.
 TEST(TxStreamEvents, UnderflowFiredOnTimestampGap)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   static constexpr uint16_t PORT      = 15006;
   static constexpr uint32_t STREAM    = 0x00000009U;
   static constexpr double   SRATE     = 1920000.0;
@@ -916,6 +947,8 @@ TEST(TxStreamConfig, DescriptionScalarDefaultsAreDeterministic)
 /// builder would then size and fill the payload inconsistently.
 TEST(TxStreamConfig, UnsupportedBitDepthIsRejected)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   static constexpr uint16_t PORT = 15040;
 
   // Bound first, so any packet a rejected stream wrongly sent would be waiting to be read.
@@ -947,6 +980,8 @@ TEST(TxStreamConfig, UnsupportedBitDepthIsRejected)
 /// the stream silent.
 TEST(TxStreamConfig, InvalidAddressFailsConstruction)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_tx_stream::stream_description desc;
   desc.ip            = "not.an.address";
   desc.channels      = {{15042, 0}};
@@ -959,6 +994,8 @@ TEST(TxStreamConfig, InvalidAddressFailsConstruction)
 
 TEST(TxStreamConfig, SupportedBitDepthsAreAccepted)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   null_notifier notifier;
 
   for (unsigned bit_depth : {8U, 16U}) {
@@ -994,6 +1031,8 @@ private:
 
 TEST(TxStreamMultiChannel, EachChannelIsItsOwnDifiStream)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-6");
+
   static constexpr unsigned                           NOF_CHANNELS    = 2;
   static constexpr std::array<uint16_t, NOF_CHANNELS> PORTS           = {15043, 15044};
   static constexpr std::array<uint32_t, NOF_CHANNELS> DIFI_STREAM_IDS = {4, 5};

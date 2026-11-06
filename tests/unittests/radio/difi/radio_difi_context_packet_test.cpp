@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_difi_context_packet.h"
+#include "tests/ocudu_test_requirements.h"
 #include <cstring>
 #include <gtest/gtest.h>
 
@@ -44,6 +45,8 @@ static difi_context_packet_params make_params()
 
 TEST(DifiContextPacket, PacketSizeIs108Bytes)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   using namespace units::literals;
 
   EXPECT_EQ(DIFI_CONTEXT_PACKET_SIZE, 108_bytes);
@@ -51,6 +54,8 @@ TEST(DifiContextPacket, PacketSizeIs108Bytes)
 
 TEST(DifiContextPacket, HeaderWordPktN0)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   // type=0x4, static bits = 0x49600000 (UTC), pkt_n=0, size=27=0x1b
   // Expected: 0x4960001b
   auto p      = make_params();
@@ -66,6 +71,8 @@ TEST(DifiContextPacket, HeaderWordPktN0)
 
 TEST(DifiContextPacket, HeaderWordPktN7)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   auto p      = make_params();
   p.ctx_pkt_n = 7;
 
@@ -79,6 +86,8 @@ TEST(DifiContextPacket, HeaderWordPktN7)
 
 TEST(DifiContextPacket, PktNWrapsAt16)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   // ctx_pkt_n is masked to 4 bits, so 17 wraps to 1.
   auto p      = make_params();
   p.ctx_pkt_n = 17; // 17 & 0xf = 1
@@ -92,6 +101,8 @@ TEST(DifiContextPacket, PktNWrapsAt16)
 
 TEST(DifiContextPacket, StreamId)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -102,6 +113,8 @@ TEST(DifiContextPacket, StreamId)
 
 TEST(DifiContextPacket, ClassId)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -115,6 +128,8 @@ TEST(DifiContextPacket, ClassId)
 
 TEST(DifiContextPacket, TimestampFields)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4", "DU-DIFI-3");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -128,6 +143,8 @@ TEST(DifiContextPacket, TimestampFields)
 // so a conformant receiver would discard everything after it.
 TEST(DifiContextPacket, Cif0DeclaresTheStandardFieldSet)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -138,6 +155,8 @@ TEST(DifiContextPacket, Cif0DeclaresTheStandardFieldSet)
 
 TEST(DifiContextPacket, RefPoint)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -148,6 +167,8 @@ TEST(DifiContextPacket, RefPoint)
 
 TEST(DifiContextPacket, BandwidthEqualsFixedPointSampleRate)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -159,6 +180,8 @@ TEST(DifiContextPacket, BandwidthEqualsFixedPointSampleRate)
 
 TEST(DifiContextPacket, IfRefFreqIsZero)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -169,6 +192,8 @@ TEST(DifiContextPacket, IfRefFreqIsZero)
 
 TEST(DifiContextPacket, RfRefFreqEncoding)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   auto p           = make_params();
   p.center_freq_Hz = 3.5e9;
 
@@ -181,6 +206,8 @@ TEST(DifiContextPacket, RfRefFreqEncoding)
 
 TEST(DifiContextPacket, RfRefFreqNegativeIsSignedEncoded)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   // Negative RF freq should round-trip through int64_t fixed-point encoding.
   auto p           = make_params();
   p.center_freq_Hz = -1.0e6;
@@ -195,6 +222,8 @@ TEST(DifiContextPacket, RfRefFreqNegativeIsSignedEncoded)
 
 TEST(DifiContextPacket, SampleRateEncoding)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   auto p           = make_params();
   p.sample_rate_Hz = 7680000.0;
 
@@ -207,6 +236,8 @@ TEST(DifiContextPacket, SampleRateEncoding)
 
 TEST(DifiContextPacket, TimestampAdj10Us)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4", "DU-DIFI-3");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -218,6 +249,8 @@ TEST(DifiContextPacket, TimestampAdj10Us)
 
 TEST(DifiContextPacket, TimestampCalMirrorsFullSecs)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4", "DU-DIFI-3");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -228,6 +261,8 @@ TEST(DifiContextPacket, TimestampCalMirrorsFullSecs)
 
 TEST(DifiContextPacket, StateAndEvent)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -238,6 +273,8 @@ TEST(DifiContextPacket, StateAndEvent)
 
 TEST(DifiContextPacket, PayloadFormat16Bit)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4", "DU-DIFI-2-a");
+
   auto p      = make_params();
   p.bit_depth = 16;
 
@@ -249,6 +286,8 @@ TEST(DifiContextPacket, PayloadFormat16Bit)
 
 TEST(DifiContextPacket, PayloadFormat8Bit)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4", "DU-DIFI-2-a");
+
   auto p      = make_params();
   p.bit_depth = 8;
 
@@ -260,6 +299,8 @@ TEST(DifiContextPacket, PayloadFormat8Bit)
 
 TEST(DifiContextPacket, GainsDefaultZero)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params(); // rf_gain_dB and if_gain_dB are zero-initialised
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value()];
@@ -270,6 +311,8 @@ TEST(DifiContextPacket, GainsDefaultZero)
 
 TEST(DifiContextPacket, RfGainEncoding)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   auto p       = make_params();
   p.rf_gain_dB = 6.0; // 6 * 128 = 768 = 0x0300
   p.if_gain_dB = 0.0;
@@ -286,6 +329,8 @@ TEST(DifiContextPacket, RfGainEncoding)
 
 TEST(DifiContextPacket, IfGainEncoding)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   auto p       = make_params();
   p.rf_gain_dB = 0.0;
   p.if_gain_dB = 3.0; // 3 * 128 = 384 = 0x0180
@@ -304,6 +349,8 @@ TEST(DifiContextPacket, IfGainEncoding)
 
 TEST(DifiContextPacket, BufferSmallerThanPacketAsserts)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-4");
+
   const auto p = make_params();
 
   uint8_t buf[DIFI_CONTEXT_PACKET_SIZE.value() - 1];

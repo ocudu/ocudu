@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_difi_udp_socket.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include <arpa/inet.h>
 #include <array>
@@ -53,6 +54,8 @@ int count_open_fds()
 
 TEST(RadioDifiUdpSocketTest, OpenTxAndRxSucceeds)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket rx(test_socket_logger());
   radio_difi_udp_socket tx(test_socket_logger());
 
@@ -65,6 +68,8 @@ TEST(RadioDifiUdpSocketTest, OpenTxAndRxSucceeds)
 
 TEST(RadioDifiUdpSocketTest, OversizedReceiveBufferIsCappedNotRejected)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket rx(test_socket_logger());
 
   // Far above any default net.core.rmem_max. The kernel caps the request, so opening must still succeed.
@@ -74,6 +79,8 @@ TEST(RadioDifiUdpSocketTest, OversizedReceiveBufferIsCappedNotRejected)
 
 TEST(RadioDifiUdpSocketTest, CloseIsIdempotent)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket sock(test_socket_logger());
   ASSERT_TRUE(sock.open_rx("127.0.0.1", TEST_PORT + 1));
   sock.close();
@@ -84,6 +91,8 @@ TEST(RadioDifiUdpSocketTest, CloseIsIdempotent)
 
 TEST(RadioDifiUdpSocketTest, SendAndReceiveLoopback)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket rx(test_socket_logger());
   radio_difi_udp_socket tx(test_socket_logger());
 
@@ -103,6 +112,8 @@ TEST(RadioDifiUdpSocketTest, SendAndReceiveLoopback)
 
 TEST(RadioDifiUdpSocketTest, TryRecvReturnsImmediatelyWhenNothingIsQueued)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket rx(test_socket_logger());
   ASSERT_TRUE(rx.open_rx("127.0.0.1", TEST_PORT + 10));
 
@@ -119,6 +130,8 @@ TEST(RadioDifiUdpSocketTest, TryRecvReturnsImmediatelyWhenNothingIsQueued)
 
 TEST(RadioDifiUdpSocketTest, TryRecvTakesAQueuedDatagram)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket rx(test_socket_logger());
   radio_difi_udp_socket tx(test_socket_logger());
 
@@ -138,6 +151,8 @@ TEST(RadioDifiUdpSocketTest, TryRecvTakesAQueuedDatagram)
 
 TEST(RadioDifiUdpSocketTest, ZeroLengthDatagramIsNotATimeout)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket rx(test_socket_logger());
   radio_difi_udp_socket tx(test_socket_logger());
 
@@ -157,6 +172,8 @@ TEST(RadioDifiUdpSocketTest, ZeroLengthDatagramIsNotATimeout)
 
 TEST(RadioDifiUdpSocketTest, SendAndRecvOnClosedSocketFail)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket sock(test_socket_logger());
 
   // Never opened.
@@ -178,6 +195,8 @@ TEST(RadioDifiUdpSocketTest, SendAndRecvOnClosedSocketFail)
 
 TEST(RadioDifiUdpSocketTest, ReopeningDoesNotLeakDescriptors)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket sock(test_socket_logger());
 
   ASSERT_TRUE(sock.open_rx("127.0.0.1", TEST_PORT + 7));
@@ -193,6 +212,8 @@ TEST(RadioDifiUdpSocketTest, ReopeningDoesNotLeakDescriptors)
 
 TEST(RadioDifiUdpSocketTest, MultiplePacketsArrivedInOrder)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   radio_difi_udp_socket rx(test_socket_logger());
   radio_difi_udp_socket tx(test_socket_logger());
 
@@ -275,6 +296,8 @@ static bool kernel_stamps_on_arrival(uint16_t port)
 
 TEST(RadioDifiUdpSocketTest, TimestampedReceiveReportsArrival)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   if (!kernel_stamps_on_arrival(TEST_PORT + 14)) {
     GTEST_SKIP() << "This platform stamps datagrams at the read rather than on arrival.";
   }

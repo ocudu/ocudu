@@ -11,6 +11,7 @@
 #include "radio_difi_rx_stream.h"
 #include "radio_difi_tx_stream.h"
 #include "radio_difi_udp_socket.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_reader.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_writer.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -139,6 +140,8 @@ protected:
 
 TEST_F(RxStreamLoopback, ReceiveTimeout)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   // No packet sent — receive() should time out and return current sample_count.
   simple_buffer_writer buf(4);
   const auto           meta = rx->receive(buf);
@@ -148,6 +151,8 @@ TEST_F(RxStreamLoopback, ReceiveTimeout)
 
 TEST_F(RxStreamLoopback, Receive16BitSamples)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1", "DU-DIFI-2-a");
+
   const std::vector<ci16_t> sent = {ci16_t(0x1000, 0x2000), ci16_t(0x3000, static_cast<int16_t>(0x4000))};
   transmit(sent);
 
@@ -161,6 +166,8 @@ TEST_F(RxStreamLoopback, Receive16BitSamples)
 
 TEST_F(RxStreamLoopback, ReceiveSampleCountAdvances)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   const std::vector<ci16_t> sent(8, ci16_t(1, 2));
   transmit(sent);
 
@@ -172,6 +179,8 @@ TEST_F(RxStreamLoopback, ReceiveSampleCountAdvances)
 
 TEST_F(RxStreamLoopback, FirstPacketLatchesTransmitterEpoch)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   // The transmitter stamps its first packet a full second in, while the receiver timeline starts
   // at zero. The epoch latch must absorb that difference rather than read it as a huge gap.
   const auto                ts_ticks = static_cast<baseband_gateway_timestamp>(SAMPLE_RATE);
@@ -188,6 +197,8 @@ TEST_F(RxStreamLoopback, FirstPacketLatchesTransmitterEpoch)
 
 TEST_F(RxStreamLoopback, ReceiveWrongStreamIdDiscarded)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   // Send a well-formed data packet carrying a foreign stream ID through a raw socket, so no
   // context packet is involved and the stream-ID filter is tested in isolation.
   const std::vector<ci16_t> payload = {ci16_t(99, 88)};
@@ -215,6 +226,8 @@ TEST_F(RxStreamLoopback, ReceiveWrongStreamIdDiscarded)
 
 TEST_F(RxStreamLoopback, ContextPacketIsSkipped)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   // Build and send a raw context packet directly via a UDP socket so we can
   // test the type-filter explicitly without relying on SetUp() side effects.
   difi_context_packet_params ctx_params{};
@@ -247,6 +260,8 @@ TEST_F(RxStreamLoopback, ContextPacketIsSkipped)
 
 TEST_F(RxStreamLoopback, UnderrunIsZeroFilled)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   // The packet carries 2 samples of the 8 requested. The remainder must be zero-filled and the timeline
   // must still advance by the whole buffer, since the caller derives the next timestamp from its size.
   const std::vector<ci16_t> sent = {ci16_t(0x0a00, 0x0b00), ci16_t(0x0c00, 0x0d00)};
@@ -266,6 +281,8 @@ TEST_F(RxStreamLoopback, UnderrunIsZeroFilled)
 
 TEST(RxStream8Bit, Receive8BitSamples)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   // Use a dedicated port to avoid conflicts with the 16-bit fixture.
   static constexpr uint16_t PORT_8BIT = 15002;
   static constexpr uint32_t STREAM_8  = 0x00000003U;
@@ -338,6 +355,8 @@ public:
 /// OVERFLOW event must be fired before the samples are written.
 TEST(RxStreamEvents, OverflowFiredOnTimestampGap)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   static constexpr uint16_t PORT      = 15005;
   static constexpr uint32_t STREAM    = 0x00000007U;
   static constexpr double   SRATE     = 1920000.0;
@@ -511,6 +530,8 @@ protected:
 
 TEST_F(RxReassembly, SlotIsReassembledFromSixPackets)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3", "DU-DIFI-7-a");
+
   ASSERT_NO_FATAL_FAILURE(open(15010));
 
   transmit_ramp(SLOT_LEN, 0);
@@ -532,6 +553,8 @@ TEST_F(RxReassembly, SlotIsReassembledFromSixPackets)
 
 TEST_F(RxReassembly, LostDatagramIsZeroFilledAndReportedOnce)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   ASSERT_NO_FATAL_FAILURE(open(15011));
 
   constexpr unsigned FRAG = 64;
@@ -559,6 +582,8 @@ TEST_F(RxReassembly, LostDatagramIsZeroFilledAndReportedOnce)
 
 TEST_F(RxReassembly, StaleDatagramIsDropped)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   ASSERT_NO_FATAL_FAILURE(open(15012));
 
   constexpr unsigned FRAG = 32;
@@ -583,6 +608,8 @@ TEST_F(RxReassembly, StaleDatagramIsDropped)
 // following packet look late, so every boundary would lose samples and raise a spurious overflow.
 TEST_F(RxReassembly, StraddlingPacketTailIsCarriedOver)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3", "DU-DIFI-7-a");
+
   ASSERT_NO_FATAL_FAILURE(open(15015));
 
   constexpr unsigned BUF  = 100;
@@ -631,6 +658,8 @@ TEST_F(RxReassembly, StraddlingPacketTailIsCarriedOver)
 // deliberately wide so the test does not become load-sensitive.
 TEST_F(RxReassembly, SilentUplinkIsPacedAtRealTime)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   ASSERT_NO_FATAL_FAILURE(open(15013));
 
   // 10 slots at 11.52 MHz — a 10 ms budget, long enough to measure reliably.
@@ -656,6 +685,8 @@ TEST_F(RxReassembly, SilentUplinkIsPacedAtRealTime)
 // waiting, so it catches up instead of pacing itself into a backlog.
 TEST_F(RxReassembly, QueuedSamplesAreConsumedWithoutWaitingWhenBehind)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   // A slow sample rate gives the span a long pacing budget, so draining it stays far inside that budget even under
   // a sanitizer or valgrind. The span carries the same bytes at any rate.
   constexpr double SLOW_SRATE = 115200.0;
@@ -711,6 +742,8 @@ TEST_F(RxReassembly, QueuedSamplesAreConsumedWithoutWaitingWhenBehind)
 // would otherwise let the pair run faster than real time, shrinking every processing deadline measured in slots.
 TEST_F(RxReassembly, QueuedSamplesAheadOfTheWallClockArePaced)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   ASSERT_NO_FATAL_FAILURE(open(15030));
 
   // Four slots at 11.52 MHz, a 4 ms span, kept under the default net.core.rmem_max.
@@ -813,6 +846,8 @@ static int16_t swap_int16_bytes(int16_t value)
 /// 16-bit fidelity in big-endian byte order: arbitrary int16 I/Q values survive the round trip unchanged.
 TEST(FidelityRoundTrip, RoundTrip16BitBigEndian)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1", "DU-DIFI-2-a");
+
   const auto [sent, received] = run_round_trip_16bit(difi_iq_byte_order::big, difi_iq_byte_order::big, 15003);
   EXPECT_EQ(received, sent);
 }
@@ -820,6 +855,8 @@ TEST(FidelityRoundTrip, RoundTrip16BitBigEndian)
 /// 16-bit fidelity in little-endian byte order: arbitrary int16 I/Q values survive the round trip unchanged.
 TEST(FidelityRoundTrip, RoundTrip16BitLittleEndian)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1", "DU-DIFI-2-a");
+
   const auto [sent, received] = run_round_trip_16bit(difi_iq_byte_order::little, difi_iq_byte_order::little, 15031);
   EXPECT_EQ(received, sent);
 }
@@ -827,6 +864,8 @@ TEST(FidelityRoundTrip, RoundTrip16BitLittleEndian)
 /// Ends that disagree on the byte order receive every component byte-swapped: nothing corrects a mismatch silently.
 TEST(FidelityRoundTrip, MismatchedByteOrderSwapsEveryComponent)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   const auto [sent, received] = run_round_trip_16bit(difi_iq_byte_order::big, difi_iq_byte_order::little, 15032);
   ASSERT_EQ(received.size(), sent.size());
   for (unsigned i = 0, e = sent.size(); i != e; ++i) {
@@ -840,6 +879,8 @@ TEST(FidelityRoundTrip, MismatchedByteOrderSwapsEveryComponent)
 /// generated as random int8 values shifted into the upper byte.
 TEST(FidelityRoundTrip, RoundTrip8Bit)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1", "DU-DIFI-2-a");
+
   static constexpr uint16_t PORT      = 15004;
   static constexpr uint32_t STREAM    = 0x00000006U;
   static constexpr double   SRATE     = 1920000.0;
@@ -922,6 +963,8 @@ TEST(RxStreamConfig, DescriptionScalarDefaultsAreDeterministic)
 /// A port that is already in use must fail construction, instead of leaving the stream silently zero-filling.
 TEST(RxStreamConfig, PortInUseFailsConstruction)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   static constexpr uint16_t PORT = 15016;
 
   radio_difi_udp_socket holder(test_socket_logger());
@@ -944,6 +987,8 @@ TEST(RxStreamConfig, PortInUseFailsConstruction)
 /// initial time, so those datagrams must be discarded rather than received as current samples.
 TEST(RxStreamStart, DatagramsQueuedBeforeStartAreDiscarded)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   static constexpr uint16_t PORT        = 15017;
   static constexpr uint32_t STREAM_ID   = 0x0000000cU;
   static constexpr double   SRATE       = 1920000.0;
@@ -1111,6 +1156,8 @@ protected:
 
 TEST_F(RxStreamMultiChannel, EachChannelFillsItsOwnBuffer)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-6");
+
   static constexpr std::array<uint16_t, NOF_CHANNELS> PORTS = {15060, 15061};
   static constexpr std::array<uint32_t, NOF_CHANNELS> IDS   = {4, 5};
 
@@ -1133,6 +1180,8 @@ TEST_F(RxStreamMultiChannel, EachChannelFillsItsOwnBuffer)
 
 TEST_F(RxStreamMultiChannel, SilentChannelIsZeroFilledWithoutStallingTheOthers)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-6");
+
   static constexpr std::array<uint16_t, NOF_CHANNELS> PORTS       = {15062, 15063};
   static constexpr std::array<uint32_t, NOF_CHANNELS> IDS         = {6, 7};
   static constexpr unsigned                           NOF_BUFFERS = 3;
@@ -1161,6 +1210,8 @@ TEST_F(RxStreamMultiChannel, SilentChannelIsZeroFilledWithoutStallingTheOthers)
 // clock is not given a mapping of its own: its samples stay where its timestamps put them, here an hour away.
 TEST_F(RxStreamMultiChannel, ChannelOnAnotherClockIsNotRealigned)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-6");
+
   static constexpr std::array<uint16_t, NOF_CHANNELS> PORTS            = {15064, 15065};
   static constexpr std::array<uint32_t, NOF_CHANNELS> IDS              = {8, 9};
   static constexpr unsigned                           SECONDS_PER_HOUR = 3600;

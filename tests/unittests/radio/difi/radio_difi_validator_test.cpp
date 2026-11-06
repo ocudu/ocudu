@@ -4,6 +4,7 @@
 
 #include "radio_difi_stream_config.h"
 #include "radio_factory_difi_impl.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/radio/capabilities/radio_tx_gain_control.h"
 #include "ocudu/radio/radio_constants.h"
 #include "ocudu/radio/radio_factory.h"
@@ -388,6 +389,8 @@ TEST_P(RadioDifiValidatorFixture, RadioDifiValidatorTest)
 // Transmit gain takes the flat port index of radio_tx_gain_control, numbered by stream and then by channel.
 TEST(RadioDifiSessionTest, TxGainUsesFlatPortIndex)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-6");
+
   // ctest runs the DIFI test binaries in parallel, so this test keeps to its own ports, 15050 upwards.
   static constexpr unsigned BASE_PORT    = 15050;
   static constexpr unsigned NOF_STREAMS  = 2;
@@ -429,6 +432,8 @@ TEST(RadioDifiSessionTest, TxGainUsesFlatPortIndex)
 // the size that divides every slot.
 TEST(RadioDifiDeviceArgsTest, PacketSize)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-7-a");
+
   EXPECT_EQ(parse_difi_pkt_samples(""), DIFI_DEFAULT_PKT_SAMPLES);
   EXPECT_EQ(parse_difi_pkt_samples("tx_port=4991, pkt_samples = 7680 "), 7680U);
   EXPECT_EQ(parse_difi_pkt_samples("pkt_samples=1"), 1U);

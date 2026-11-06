@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_difi_data_packet.h"
+#include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/to_array.h"
 #include <cstring>
 #include <gtest/gtest.h>
@@ -45,6 +46,8 @@ static difi_data_packet_params make_params(unsigned bit_depth = 16, uint8_t pkt_
 
 TEST(DifiDataPacket, SizeFor16BitSamples)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1", "DU-DIFI-2-a");
+
   using namespace units::literals;
 
   // 28-byte header + 4 bytes/sample, always 4-byte aligned.
@@ -55,6 +58,8 @@ TEST(DifiDataPacket, SizeFor16BitSamples)
 
 TEST(DifiDataPacket, SizeFor8BitSamples)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1", "DU-DIFI-2-a");
+
   using namespace units::literals;
 
   // 28-byte header + 2 bytes/sample, padded to 4-byte boundary.
@@ -65,6 +70,8 @@ TEST(DifiDataPacket, SizeFor8BitSamples)
 
 TEST(DifiDataPacket, HeaderWordPktN0)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   // DATA_STATIC_BITS = 0x18600000 (UTC), pkt_n=0, size_words = (28+0)/4 = 7
   const auto           p = make_params(16, 0);
   std::vector<uint8_t> buf(difi_data_packet_size(16, 0).value());
@@ -77,6 +84,8 @@ TEST(DifiDataPacket, HeaderWordPktN0)
 
 TEST(DifiDataPacket, HeaderWordPktN5With4Samples)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   const auto           p   = make_params(16, 5);
   const unsigned       nof = 4;
   std::vector<ci16_t>  samples(nof, ci16_t(0, 0));
@@ -91,6 +100,8 @@ TEST(DifiDataPacket, HeaderWordPktN5With4Samples)
 
 TEST(DifiDataPacket, PktNWrapsAt16)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   const auto           p = make_params(16, 18); // 18 & 0xf = 2
   std::vector<uint8_t> buf(difi_data_packet_size(16, 0).value());
   build_difi_data_packet(buf, p, {});
@@ -101,6 +112,8 @@ TEST(DifiDataPacket, PktNWrapsAt16)
 
 TEST(DifiDataPacket, StreamId)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   const auto           p = make_params();
   std::vector<uint8_t> buf(difi_data_packet_size(16, 0).value());
   build_difi_data_packet(buf, p, {});
@@ -110,6 +123,8 @@ TEST(DifiDataPacket, StreamId)
 
 TEST(DifiDataPacket, ClassIdContainsDifiOui)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   const auto           p = make_params();
   std::vector<uint8_t> buf(difi_data_packet_size(16, 0).value());
   build_difi_data_packet(buf, p, {});
@@ -121,6 +136,8 @@ TEST(DifiDataPacket, ClassIdContainsDifiOui)
 
 TEST(DifiDataPacket, TimestampFields)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1", "DU-DIFI-3");
+
   const auto           p = make_params();
   std::vector<uint8_t> buf(difi_data_packet_size(16, 0).value());
   build_difi_data_packet(buf, p, {});
@@ -131,6 +148,8 @@ TEST(DifiDataPacket, TimestampFields)
 
 TEST(DifiDataPacket, Iq16BitSingleSample)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   const auto           p = make_params(16);
   const ci16_t         sample(0x1234, static_cast<int16_t>(0xabcd));
   std::vector<uint8_t> buf(difi_data_packet_size(16, 1).value());
@@ -143,6 +162,8 @@ TEST(DifiDataPacket, Iq16BitSingleSample)
 
 TEST(DifiDataPacket, Iq16BitMultipleSamples)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   const auto                p       = make_params(16);
   const std::vector<ci16_t> samples = {ci16_t(100, -200), ci16_t(300, -400)};
   std::vector<uint8_t>      buf(difi_data_packet_size(16, samples.size()).value());
@@ -176,6 +197,8 @@ class DifiIqByteOrder : public ::testing::TestWithParam<iq_byte_order_case>
 // The payload bytes follow the configured order exactly, component by component.
 TEST_P(DifiIqByteOrder, PayloadBytesFollowTheByteOrder)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   const iq_byte_order_case& param   = GetParam();
   auto                      p       = make_params(16);
   p.iq_byte_order                   = param.order;
@@ -191,6 +214,8 @@ TEST_P(DifiIqByteOrder, PayloadBytesFollowTheByteOrder)
 // The header stays big endian whatever the payload order.
 TEST_P(DifiIqByteOrder, HeaderIsBigEndianRegardless)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   auto p          = make_params(16);
   p.iq_byte_order = GetParam().order;
   const ci16_t         sample(1, 2);
@@ -204,6 +229,8 @@ TEST_P(DifiIqByteOrder, HeaderIsBigEndianRegardless)
 // Pack then unpack recovers every sample, across sizes that exercise the vector widths and the scalar tail.
 TEST_P(DifiIqByteOrder, PackUnpackRoundTrip)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   const difi_iq_byte_order order = GetParam().order;
   for (unsigned nof_samples : {1U, 5U, 16U, 33U, 1920U}) {
     std::vector<ci16_t> samples(nof_samples);
@@ -229,6 +256,8 @@ INSTANTIATE_TEST_SUITE_P(DifiIqByteOrderTest,
 // 8-bit samples are single bytes, so the byte order does not change them.
 TEST(DifiDataPacket, Iq8BitIgnoresByteOrder)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   const ci16_t sample(0x1200, static_cast<int16_t>(0xab00));
   for (difi_iq_byte_order order : {difi_iq_byte_order::big, difi_iq_byte_order::little}) {
     auto p          = make_params(8);
@@ -242,6 +271,8 @@ TEST(DifiDataPacket, Iq8BitIgnoresByteOrder)
 
 TEST(DifiDataPacket, Iq8BitSingleSample)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   // 8-bit: upper byte of int16 is the int8 sample.
   // Sample (0x1200, 0xab00) → packed bytes 0x12, 0xab.
   const auto           p = make_params(8);
@@ -255,6 +286,8 @@ TEST(DifiDataPacket, Iq8BitSingleSample)
 
 TEST(DifiDataPacket, Iq8BitOddSampleCountPaddedToWordBoundary)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-2-a");
+
   // 3 samples × 2 bytes = 6 bytes; padded to 8 bytes → total packet = 36 bytes.
   const auto           p = make_params(8);
   std::vector<ci16_t>  samples(3, ci16_t(0, 0));
@@ -273,6 +306,8 @@ TEST(DifiDataPacket, Iq8BitOddSampleCountPaddedToWordBoundary)
 
 TEST(DifiDataPacket, BufferSmallerThanPacketAsserts)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   const auto          p = make_params(16);
   std::vector<ci16_t> samples(4, ci16_t(0, 0));
   // One byte short of the 44 bytes the packet needs.
@@ -283,6 +318,8 @@ TEST(DifiDataPacket, BufferSmallerThanPacketAsserts)
 
 TEST(DifiDataPacket, PacketLargerThanSizeFieldAsserts)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-1");
+
   // The 16-bit size field tops out at 65535 words; 65529 samples of 16-bit IQ needs 65536.
   const auto           p   = make_params(16);
   const unsigned       nof = 65529;
@@ -298,6 +335,8 @@ TEST(DifiDataPacket, PacketLargerThanSizeFieldAsserts)
 
 TEST(DifiTimestamp, TicksRoundTripAtEveryStandardRate)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   // Every 3GPP sample rate in the split-8 range. The conversion must be exact at all of them,
   // because a single tick of error reads as a lost sample at the receiver.
   static constexpr auto rates = to_array<double>({1920000.0,
@@ -340,6 +379,8 @@ TEST(DifiTimestamp, TicksRoundTripAtEveryStandardRate)
 
 TEST(DifiTimestamp, ZeroSampleRateYieldsZero)
 {
+  OCUDU_TEST_REQUIREMENTS("DU-DIFI-3");
+
   uint32_t full_secs = 0xffffffffU;
   uint64_t frac_ps   = 0xffffffffffffffffULL;
   difi_ticks_to_time(1234, 0.0, full_secs, frac_ps);
