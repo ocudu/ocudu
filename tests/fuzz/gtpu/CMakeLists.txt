@@ -15,3 +15,5 @@ target_link_libraries(gtpu_pdu_fuzzer
 target_compile_options(gtpu_pdu_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
 
 add_dependencies(fuzz_targets gtpu_pdu_fuzzer)
+
+add_fuzz_corpus(gtpu_fuzz_corpus seeds.py)

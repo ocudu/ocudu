@@ -130,13 +130,13 @@ python3 tests/fuzz/gen_corpus.py tests/fuzz/*/seeds.py --zip-dir $OUT
 
 ```bash
 # Default: findings/ inside the build directory
-mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp}
+mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu}
 
 # Alternative: any absolute path
 export FUZZ_OUTPUT_DIR=/tmp/fuzz_findings
 mkdir -p $FUZZ_OUTPUT_DIR/ofh_uplane $FUZZ_OUTPUT_DIR/ofh_ecpri $FUZZ_OUTPUT_DIR/ofh_vlan \
          $FUZZ_OUTPUT_DIR/ngap $FUZZ_OUTPUT_DIR/ngap_cu_cp $FUZZ_OUTPUT_DIR/rrc_ue \
-         $FUZZ_OUTPUT_DIR/rrc_cu_cp
+         $FUZZ_OUTPUT_DIR/rrc_cu_cp $FUZZ_OUTPUT_DIR/gtpu
 ```
 
 `FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`. For manual `afl-fuzz` invocations, pass the path
@@ -329,6 +329,27 @@ up at startup and aborts if security did not activate.
 
 The secured state costs a full Initial Context Setup exchange per input, which is where the throughput difference
 between the two states comes from.
+
+### GTP-U PDU fuzzer
+
+```bash
+afl-fuzz \
+    -i tests/fuzz/corpus/gtpu \
+    -o findings/gtpu \
+    -- ./tests/fuzz/gtpu/gtpu_pdu_fuzzer @@
+```
+
+Covers the mandatory header, the optional fields and the extension-header chain as parsed by `gtpu_dissect_pdu()`,
+without sockets, tunnel state or an encode/decode round trip. Each input is one raw G-PDU with no harness prefix,
+capped at 65,535 payload bytes plus the eight-byte mandatory header. The dissected message is passed to
+`gtpu_extract_msg()` only after a successful dissection, so the extraction path runs on exactly the inputs the parser
+accepts. As in the NGAP harness, the buffer is built with the fallback allocator so that an input which exhausts the
+default pool does not abort the process, and packet storage and dissection state are local to each invocation. Logs are
+disabled as in the other stateless targets, and production validation and assertions are unchanged.
+
+The seeds are the known-good G-PDUs of the unit tests, taken from `tests/unittests/gtpu/gtpu_test_shared.h`: ordinary
+data packets, optional-header and extension-header forms, and the Echo Request, Echo Response and Error Indication
+control messages. No dictionary or additional runtime options are needed for this raw binary format.
 
 ### Running in parallel (recommended)
 
