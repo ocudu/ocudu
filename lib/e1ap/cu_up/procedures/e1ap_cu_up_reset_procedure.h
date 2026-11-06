@@ -14,6 +14,7 @@ namespace ocudu::ocuup {
 /// Holds the E1AP CU-UP reset procedure configuration parameters.
 struct e1ap_cu_up_reset_procedure_configuration {
   asn1::e1ap::reset_s reset_msg;
+  cu_up_e1_index_t    e1_index;
 };
 
 /// Holds the E1AP CU-UP reset procedure dependencies.
@@ -41,6 +42,7 @@ private:
   void send_e1ap_reset_ack();
 
   asn1::e1ap::reset_s          reset_msg;
+  cu_up_e1_index_t             e1_index;
   e1ap_ue_context_list&        ue_ctxt_list;
   e1ap_cu_up_manager_notifier& cu_up_notifier;
   e1ap_message_notifier&       tx_pdu_notifier;

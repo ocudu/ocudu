@@ -186,9 +186,9 @@ void cu_up_manager_impl::handle_e1ap_connection_drop(cu_up_e1_index_t e1_index)
 
 async_task<void> cu_up_manager_impl::handle_e1_reset(const e1ap_reset& msg)
 {
-  // Full E1 reset, release all bearer contexts.
+  // Full E1 reset, release all bearer contexts of the E1 interface.
   if (msg.type == e1ap_reset::full) {
-    return ue_mng->remove_all_ues();
+    return ue_mng->remove_e1_ues(msg.e1_index);
   }
 
   // Partial E1 reset, release the indicated bearer contexts.

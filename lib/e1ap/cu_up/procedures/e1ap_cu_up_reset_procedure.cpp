@@ -13,6 +13,7 @@ using namespace ocuup;
 e1ap_cu_up_reset_procedure::e1ap_cu_up_reset_procedure(const e1ap_cu_up_reset_procedure_configuration& cfg,
                                                        const e1ap_cu_up_reset_procedure_dependencies&  dependencies) :
   reset_msg(cfg.reset_msg),
+  e1_index(cfg.e1_index),
   ue_ctxt_list(dependencies.ue_ctxt_list),
   cu_up_notifier(dependencies.cu_up_notifier),
   tx_pdu_notifier(dependencies.tx_pdu_notifier),
@@ -45,7 +46,7 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_e1_interface_reset(const asn
   // Remove the E1AP IDs of all UEs, as per TS 37.483 section 8.2.1.2.1.
   ue_ctxt_list.clear();
 
-  return cu_up_notifier.on_e1_reset_received({e1ap_reset::full, {}});
+  return cu_up_notifier.on_e1_reset_received({e1ap_reset::full, {}, e1_index});
 }
 
 async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
@@ -90,7 +91,7 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
     ue_ctxt_list.remove_ue(ue_index);
     ues.push_back(ue_index);
   }
-  return cu_up_notifier.on_e1_reset_received({e1ap_reset::partial, ues});
+  return cu_up_notifier.on_e1_reset_received({e1ap_reset::partial, ues, e1_index});
 }
 
 void e1ap_cu_up_reset_procedure::send_e1ap_reset_ack()

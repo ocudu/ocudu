@@ -370,7 +370,7 @@ void e1ap_cu_up_impl::send_bearer_context_release_complete(const bearer_context_
 void e1ap_cu_up_impl::handle_cu_up_e1ap_reset(const reset_s& msg)
 {
   if (!cu_up_notifier.on_schedule_cu_up_async_task(launch_async<e1ap_cu_up_reset_procedure>(
-          e1ap_cu_up_reset_procedure_configuration{.reset_msg = msg},
+          e1ap_cu_up_reset_procedure_configuration{.reset_msg = msg, .e1_index = e1ap_cfg.e1_index},
           e1ap_cu_up_reset_procedure_dependencies{.ue_ctxt_list    = ue_ctxt_list,
                                                   .cu_up_notifier  = cu_up_notifier,
                                                   .tx_pdu_notifier = *pdu_notifier,

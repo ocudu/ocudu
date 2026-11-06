@@ -208,6 +208,7 @@ protected:
   std::unique_ptr<timer_manager> app_timers;
 
   dummy_cu_cp_handler                e1ap_client;
+  dummy_cu_cp_handler                e1ap_client2;
   dummy_e1_setup_notifier*           e1_setup_notifier = nullptr;
   dummy_inner_f1u_bearer             f1u_bearer;
   std::unique_ptr<gtpu_teid_pool>    f1u_teid_allocator;
@@ -303,6 +304,45 @@ TEST_F(cu_up_test, when_cu_cp_is_not_reachable_on_startup_then_cu_up_starts_and_
       wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{5000}))
       << "CU-UP did not retry the E1 connection after the failed attempt on startup";
   ASSERT_EQ(e1ap_client.nof_connection_requests, 2U);
+}
+
+TEST_F(cu_up_test, when_full_e1_reset_is_received_then_only_the_ues_of_that_e1_interface_are_removed)
+{
+  // Connect the CU-UP to two CU-CPs.
+  cu_up_dependencies deps = get_default_cu_up_dependencies();
+  deps.e1_conn_clients    = {&e1ap_client, &e1ap_client2};
+  init(get_default_cu_up_config(), std::move(deps));
+
+  // Create one UE on each E1 interface.
+  static constexpr cu_up_e1_index_t reset_e1_index{0};
+  static constexpr cu_up_e1_index_t other_e1_index{1};
+  for (cu_up_e1_index_t e1_index : {reset_e1_index, other_e1_index}) {
+    e1ap_message asn1_msg = generate_bearer_context_setup_request(9);
+
+    e1ap_bearer_context_setup_request bearer_context_setup;
+    bearer_context_setup.e1_index = e1_index;
+    fill_e1ap_bearer_context_setup_request(bearer_context_setup,
+                                           asn1_msg.pdu.init_msg().value.bearer_context_setup_request());
+    ASSERT_TRUE(cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup).success);
+  }
+  ASSERT_EQ(cu_up->get_cu_up_manager()->get_nof_ues(), 2U);
+
+  // Run a full E1 reset on the first E1 interface.
+  std::atomic<bool> reset_done{false};
+  ASSERT_TRUE(executor->execute([this, &reset_done]() {
+    bool scheduled = cu_up->get_cu_up_manager()->schedule_cu_up_async_task(
+        launch_async([this, &reset_done](coro_context<async_task<void>>& ctx) {
+          CORO_BEGIN(ctx);
+          CORO_AWAIT(cu_up->get_cu_up_manager()->handle_e1_reset(e1ap_reset{e1ap_reset::full, {}, reset_e1_index}));
+          reset_done = true;
+          CORO_RETURN();
+        }));
+    report_fatal_error_if_not(scheduled, "Failed to schedule the E1 reset");
+  }));
+  ASSERT_TRUE(wait_until([&reset_done]() { return reset_done.load(); }, std::chrono::milliseconds{5000}));
+
+  // The UE of the other E1 interface is kept.
+  ASSERT_EQ(cu_up->get_cu_up_manager()->get_nof_ues(), 1U);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

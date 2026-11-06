@@ -85,6 +85,7 @@ struct e1ap_bearer_context_release_command {
 struct e1ap_reset {
   enum { full, partial } type = e1ap_reset::full;
   std::vector<cu_up_ue_index_t> ues;
+  cu_up_e1_index_t              e1_index;
 };
 } // namespace ocuup
 } // namespace ocudu
