@@ -90,7 +90,7 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
     const e1ap_bearer_context_inactivity_notification& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.log_error("ue={}: Dropping BearerContextInactivityNotification. UE does not exist", msg.ue_index);
+    logger.log_info("ue={}: Dropping BearerContextInactivityNotification. UE does not exist", msg.ue_index);
     return;
   }
 
@@ -123,7 +123,7 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
 void e1ap_cu_up_impl::handle_bearer_context_release_request_required(cu_up_ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {
-    logger.log_error("ue={}: Could not initiate BearerContextReleaseRequest. UE does not exist.", ue_index);
+    logger.log_info("ue={}: Could not initiate BearerContextReleaseRequest. UE does not exist.", ue_index);
     return;
   }
 
@@ -147,7 +147,7 @@ void e1ap_cu_up_impl::handle_dl_data_notification_required(cu_up_ue_index_t ue_i
 {
   // Get UE context.
   if (!ue_ctxt_list.contains(ue_index)) {
-    logger.log_error("ue={}: Dropping DL data notification. UE does not exist", ue_index);
+    logger.log_info("ue={}: Dropping DL data notification. UE does not exist", ue_index);
     return;
   }
   e1ap_ue_context& ue_ctxt = ue_ctxt_list[ue_index];
@@ -328,8 +328,8 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const bearer_context
 {
   if (!ue_ctxt_list.contains(int_to_gnb_cu_up_ue_e1ap_id(msg->gnb_cu_up_ue_e1ap_id))) {
     // Received a release command for a context that we do not possess.
-    // Reply with release complete and log an error.
-    logger.log_error("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
+    // Reply with release complete.
+    logger.log_warning("No UE context for the received gnb_cu_up_ue_e1ap_id={} available", msg->gnb_cu_up_ue_e1ap_id);
     send_bearer_context_release_complete(msg);
     return;
   }
