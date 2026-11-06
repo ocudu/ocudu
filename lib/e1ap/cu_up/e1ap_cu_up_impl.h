@@ -16,7 +16,7 @@ namespace ocudu::ocuup {
 class e1ap_event_manager;
 
 /// E1AP CU-CP implementation.
-class e1ap_cu_up_impl final : public e1ap_interface
+class e1ap_cu_up_impl final : public e1ap_interface, public e1ap_event_handler
 {
 public:
   e1ap_cu_up_impl(const e1ap_configuration& e1ap_cfg_, const e1ap_cu_up_impl_dependencies& dependencies);
@@ -33,6 +33,9 @@ public:
 
   // See interface for documentation.
   void handle_message(const e1ap_message& msg) override;
+
+  // See interface for documentation.
+  void handle_connection_loss() override;
 
   // See interface for documentation.
   void handle_bearer_context_inactivity_notification(const e1ap_bearer_context_inactivity_notification& msg) override;
@@ -110,11 +113,11 @@ private:
   timer_manager& timers;
   task_executor& cu_up_exec;
 
-  e1ap_cu_up_connection_handler                       connection_handler;
-  std::unique_ptr<e1ap_message_notifier_with_logging> pdu_notifier;
-
   /// Repository of UE Contexts.
   e1ap_ue_context_list ue_ctxt_list;
+
+  e1ap_cu_up_connection_handler                       connection_handler;
+  std::unique_ptr<e1ap_message_notifier_with_logging> pdu_notifier;
 
   std::unique_ptr<e1ap_event_manager> ev_mng;
 

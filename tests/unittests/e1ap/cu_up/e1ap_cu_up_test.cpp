@@ -512,6 +512,43 @@ TEST_F(e1ap_cu_up_test, when_ue_index_is_reused_after_e1_reset_then_new_bearer_c
   ASSERT_EQ(e1ap_gw.last_tx_e1ap_pdu.pdu.init_msg().value.dl_data_notif()->gnb_cu_cp_ue_e1ap_id, 10U);
 }
 
+TEST_F(e1ap_cu_up_test, when_e1_connection_is_lost_then_no_ue_associated_message_is_sent)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+  e1ap_message last_pdu_before_loss = e1ap_gw.last_tx_e1ap_pdu;
+
+  // Drop the E1 TNL association.
+  e1ap_gw.drop_connection();
+  cu_up_worker.run_pending_tasks();
+
+  // The DL data notification of the UE is dropped, so the last PDU is unchanged.
+  e1ap->handle_dl_data_notification_required(cu_up_ue_index_t{0});
+  ASSERT_EQ(e1ap_gw.last_tx_e1ap_pdu.pdu.type(), last_pdu_before_loss.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::bearer_context_setup_resp,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test, when_ue_index_is_reused_after_e1_reconnection_then_new_bearer_context_ids_are_used)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  // Drop the E1 TNL association and connect again.
+  e1ap_gw.drop_connection();
+  cu_up_worker.run_pending_tasks();
+  run_e1_setup_procedure();
+
+  // Set up a new bearer context. The CU-UP reuses the UE index of the UE of the dropped association.
+  this->setup_bearer(10);
+
+  e1ap->handle_dl_data_notification_required(cu_up_ue_index_t{0});
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::dl_data_notif,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.init_msg().value.type());
+  ASSERT_EQ(e1ap_gw.last_tx_e1ap_pdu.pdu.init_msg().value.dl_data_notif()->gnb_cu_cp_ue_e1ap_id, 10U);
+}
+
 TEST_F(e1ap_cu_up_test,
        when_bearer_context_release_procedure_cannot_be_scheduled_then_bearer_context_release_complete_is_sent)
 {

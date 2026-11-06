@@ -31,12 +31,10 @@ private:
 } // namespace
 
 e1ap_cu_up_connection_handler::e1ap_cu_up_connection_handler(
-    const e1ap_cu_up_connection_handler_configuration& cfg,
-    const e1ap_cu_up_connection_handler_dependencies&  dependencies) :
-  e1_index(cfg.e1_index),
+    const e1ap_cu_up_connection_handler_dependencies& dependencies) :
   e1_client_handler(dependencies.e1ap_client_handler),
   e1ap_pdu_handler(dependencies.e1ap_pdu_handler),
-  cu_up_manager(dependencies.cu_up_manager),
+  e1ap_ev_handler(dependencies.e1ap_ev_handler),
   cu_up_executor(dependencies.cu_up_executor),
   logger(dependencies.logger)
 {
@@ -106,8 +104,8 @@ void e1ap_cu_up_connection_handler::handle_connection_loss_impl()
     // Disconnect Tx path.
     e1ap_notifier.reset();
 
-    // Signal to DU that the E1 connection is lost.
-    cu_up_manager.on_connection_loss(e1_index);
+    // Signal to the E1AP that the E1 connection is lost.
+    e1ap_ev_handler.handle_connection_loss();
   }
 
   // Signal back that the E1 Rx path has been successfully shutdown to any awaiting coroutine.

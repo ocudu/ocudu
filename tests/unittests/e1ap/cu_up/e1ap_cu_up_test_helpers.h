@@ -24,6 +24,9 @@ public:
   std::unique_ptr<e1ap_message_notifier>
   handle_cu_up_connection_request(std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier) override;
 
+  /// Drops the E1 TNL association.
+  void drop_connection() { cu_up_rx_pdu_notifier.reset(); }
+
 private:
   std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier;
 };

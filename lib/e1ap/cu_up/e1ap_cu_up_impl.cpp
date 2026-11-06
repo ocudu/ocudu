@@ -26,13 +26,12 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&           e1ap_cfg_,
   cu_up_notifier(dependencies.cu_up_notifier),
   timers(dependencies.timers),
   cu_up_exec(dependencies.cu_up_exec),
-  connection_handler(e1ap_cu_up_connection_handler_configuration{.e1_index = e1ap_cfg.e1_index},
-                     e1ap_cu_up_connection_handler_dependencies{.e1ap_client_handler = dependencies.e1_client_handler,
+  ue_ctxt_list(e1ap_cfg.max_nof_ues, logger),
+  connection_handler(e1ap_cu_up_connection_handler_dependencies{.e1ap_client_handler = dependencies.e1_client_handler,
                                                                 .e1ap_pdu_handler    = *this,
-                                                                .cu_up_manager       = dependencies.cu_up_notifier,
+                                                                .e1ap_ev_handler     = *this,
                                                                 .cu_up_executor      = cu_up_exec,
                                                                 .logger              = logger}),
-  ue_ctxt_list(e1ap_cfg.max_nof_ues, logger),
   ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec})),
   metrics(e1ap_cfg.metrics_period.count())
 {
@@ -406,6 +405,13 @@ void e1ap_cu_up_impl::handle_unsuccessful_outcome(const unsuccessful_outcome_s& 
   if (!ev_mng->transactions.set_response(*transaction_id, make_unexpected(outcome))) {
     logger.log_warning("Unexpected transaction id={}", *transaction_id);
   }
+}
+
+void e1ap_cu_up_impl::handle_connection_loss()
+{
+  // The CU-UP removes the UEs of a lost E1 TNL association. Thus, remove their E1AP UE contexts as well.
+  ue_ctxt_list.clear();
+  cu_up_notifier.on_connection_loss(e1ap_cfg.e1_index);
 }
 
 void e1ap_cu_up_impl::log_pdu(bool is_rx, const e1ap_message& e1ap_pdu)
