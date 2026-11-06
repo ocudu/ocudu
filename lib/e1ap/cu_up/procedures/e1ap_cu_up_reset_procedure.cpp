@@ -55,24 +55,33 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
   for (const auto& ue : ue_reset_list) {
     if (ue->type() !=
         asn1::e1ap::ue_associated_lc_e1_conn_item_res_o::value_c::types_opts::ue_associated_lc_e1_conn_item) {
-      logger.log_error("\"{}\": Unsupported UE associated logical connection", name());
+      logger.log_warning("\"{}\": Unsupported UE associated logical connection", name());
       continue;
     }
-    asn1::e1ap::ue_associated_lc_e1_conn_item_s lc = ue->ue_associated_lc_e1_conn_item();
-    if (not lc.gnb_cu_up_ue_e1ap_id_present) {
-      logger.log_error("\"{}\": Unsupported UE associated logical connection", name());
-      continue;
-    }
+    const asn1::e1ap::ue_associated_lc_e1_conn_item_s& lc = ue->ue_associated_lc_e1_conn_item();
 
-    gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(lc.gnb_cu_up_ue_e1ap_id);
-    if (cu_up_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
-      logger.log_error("\"{}\": Invalid gNB-CU-UP-UE-E1AP-ID", name());
-      continue;
-    }
-
-    const e1ap_ue_context* ue_ctx = ue_ctxt_list.find_ue(cu_up_e1ap_id);
-    if (ue_ctx == nullptr) {
-      logger.log_info("\"{}\": Could not find UE. cu_up_e1ap_id={}", name(), to_underlying(cu_up_e1ap_id));
+    // Identify the UE by the gNB-CU-UP UE E1AP ID and/or the gNB-CU-CP UE E1AP ID, as per TS 37.483 section 8.2.1.2.1.
+    const e1ap_ue_context* ue_ctx = nullptr;
+    if (lc.gnb_cu_up_ue_e1ap_id_present) {
+      gnb_cu_up_ue_e1ap_id_t cu_up_e1ap_id = int_to_gnb_cu_up_ue_e1ap_id(lc.gnb_cu_up_ue_e1ap_id);
+      if (cu_up_e1ap_id == gnb_cu_up_ue_e1ap_id_t::invalid) {
+        logger.log_warning("\"{}\": Invalid gNB-CU-UP-UE-E1AP-ID", name());
+        continue;
+      }
+      ue_ctx = ue_ctxt_list.find_ue(cu_up_e1ap_id);
+      if (ue_ctx == nullptr) {
+        logger.log_info("\"{}\": Could not find UE. cu_up_e1ap_id={}", name(), to_underlying(cu_up_e1ap_id));
+        continue;
+      }
+    } else if (lc.gnb_cu_cp_ue_e1ap_id_present) {
+      gnb_cu_cp_ue_e1ap_id_t cu_cp_e1ap_id = int_to_gnb_cu_cp_ue_e1ap_id(lc.gnb_cu_cp_ue_e1ap_id);
+      ue_ctx                               = ue_ctxt_list.find_ue(cu_cp_e1ap_id);
+      if (ue_ctx == nullptr) {
+        logger.log_info("\"{}\": Could not find UE. cu_cp_e1ap_id={}", name(), to_underlying(cu_cp_e1ap_id));
+        continue;
+      }
+    } else {
+      // Empty item.
       continue;
     }
 

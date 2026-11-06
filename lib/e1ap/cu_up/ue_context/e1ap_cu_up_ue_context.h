@@ -7,6 +7,7 @@
 
 #include "common/e1ap_logger.h"
 #include "e1ap_ue_logger.h"
+#include <algorithm>
 
 namespace ocudu::ocuup {
 
@@ -59,6 +60,18 @@ public:
   const e1ap_ue_context* find_ue(gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id) const
   {
     auto it = ues.find(cu_up_ue_e1ap_id);
+    if (it == ues.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  }
+
+  /// \brief Search for a UE based on its CU-CP-UE-E1AP-ID.
+  const e1ap_ue_context* find_ue(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id) const
+  {
+    auto it = std::find_if(ues.begin(), ues.end(), [cu_cp_ue_e1ap_id](const auto& u) {
+      return u.second.ue_ids.cu_cp_ue_e1ap_id == cu_cp_ue_e1ap_id;
+    });
     if (it == ues.end()) {
       return nullptr;
     }
