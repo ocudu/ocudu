@@ -10,6 +10,7 @@
 #include "ocudu/ran/pdsch/pdsch_antenna_ports_mapping.h"
 #include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/pdsch/pdsch_dmrs_symbol_mask.h"
+#include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
 #include "ocudu/scheduler/result/dmrs_info.h"
 #include "ocudu/support/error_handling.h"
 
@@ -235,13 +236,16 @@ inline dmrs_information make_dmrs_info_common(const pusch_time_domain_resource_a
   return dmrs;
 }
 
+/// \brief Builds the DM-RS information of a PUSCH scheduled by DCI format 0_1 or of a configured grant PUSCH.
+///
+/// The DM-RS CDM groups without data and the DM-RS ports follow the same row of TS38.212 Tables 7.3.1.1.2-6 to
+/// 7.3.1.1.2-11 as the DCI format 0_1 antenna ports field.
 inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resource_allocation& pusch_td_cfg,
                                                  pci_t                                        pci,
                                                  dmrs_typeA_position                          dmrs_typeA_pos,
                                                  const dmrs_uplink_config&                    dmrs_ul_cfg,
                                                  unsigned                                     nof_layers,
-                                                 unsigned                                     nof_ul_antenna_ports,
-                                                 bool                                         are_both_cws_enabled)
+                                                 bool                                         use_transform_precoder)
 {
   dmrs_information dmrs{};
 
@@ -271,18 +275,11 @@ inline dmrs_information make_dmrs_info_dedicated(const pusch_time_domain_resourc
   dmrs.dmrs_scrambling_id = pci;
   dmrs.low_papr_dmrs      = false;
   dmrs.n_scid             = false;
-  // TODO: Derive antenna port mapping based on PUSCH-Config and other DMRS configuration parameters.
-  // Since in our configuration transformPrecoder=disabled, dmrs-Type=1, maxLength=1, rank = 1, we refer to
-  // Table 7.3.1.1.2-8 in TS 38.212.
-  // Number of DMRS CDM groups without data indicates whether PUSCH is multiplexed with DMRS or not.
-  // For DMRS configuration type 1:
-  //    num_dmrs_cdm_grps_no_data = 1 (multiplexing of DMRS and PUSCH).
-  //    num_dmrs_cdm_grps_no_data = 2 (no multiplexing of DMRS and PUSCH).
-  dmrs.num_dmrs_cdm_grps_no_data = 2;
-  // Port 1000.
-  // Since we are setting num_dmrs_cdm_grps_no_data = 2 it corresponds to row 3 in Table 7.3.1.1.2-8 in TS 38.212.
-  dmrs.dmrs_ports.resize(12);
-  dmrs.dmrs_ports.set(0);
+  // The DCI format 0_1 antenna ports field signals the row of the same mapping, so the UE transmits on these ports.
+  const pusch_antenna_ports_mapping ant_mapping =
+      get_pusch_antenna_port_mapping(nof_layers, use_transform_precoder, dmrs.config_type, dmrs_ul_cfg.max_length);
+  dmrs.num_dmrs_cdm_grps_no_data = ant_mapping.nof_dmrs_cdm_groups_without_data;
+  dmrs.dmrs_ports                = ant_mapping.dmrs_ports;
 
   return dmrs;
 }

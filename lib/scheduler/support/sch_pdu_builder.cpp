@@ -134,8 +134,6 @@ pusch_config_params ocudu::get_pusch_config_f0_1_c_rnti(const ue_cell_configurat
   constexpr unsigned tb_scaling_field = 0;
   // Parameter \c tp-pi2BPSK enabled is not supported yet.
   constexpr bool tp_pi2bpsk_present = false;
-  // TODO: Update the value based on nof. CWs enabled.
-  static constexpr bool are_both_cws_enabled = false;
 
   pusch_config_params pusch;
 
@@ -147,8 +145,7 @@ pusch_config_params ocudu::get_pusch_config_f0_1_c_rnti(const ue_cell_configurat
                                         ue_cell_cfg.cell_cfg_common.params.dmrs_typeA_pos,
                                         ue_cell_cfg.init_bwp().ul.ded()->pusch_cfg->pusch_mapping_type_a_dmrs.value(),
                                         nof_layers,
-                                        ue_cell_cfg.cell_cfg_common.params.ul_carrier.nof_ant,
-                                        are_both_cws_enabled);
+                                        ue_cell_cfg.use_pusch_transform_precoding_dci_0_1());
 
   pusch.symbols = pusch_td_cfg.symbols;
 

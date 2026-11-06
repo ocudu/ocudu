@@ -6,16 +6,18 @@
 #include "ocudu/adt/format.h"
 #include "ocudu/adt/interval.h"
 #include "ocudu/ran/pusch/pusch_antenna_ports_mapping.h"
+#include "ocudu/ran/pusch/pusch_constants.h"
+#include <array>
 
 using namespace ocudu;
 
 // Current range of supported number of layers.
-static constexpr interval<unsigned, true> nof_layers_range(1, 4);
+static constexpr interval<unsigned, true> nof_layers_range(1, pusch_constants::MAX_NOF_LAYERS);
 
-unsigned ocudu::get_pusch_antenna_port_mapping_row_index(unsigned         nof_layers,
-                                                         bool             transform_precoder,
-                                                         dmrs_config_type dmrs_cfg_type,
-                                                         dmrs_max_length  dmrs_max_len)
+pusch_antenna_ports_mapping ocudu::get_pusch_antenna_port_mapping(unsigned         nof_layers,
+                                                                  bool             transform_precoder,
+                                                                  dmrs_config_type dmrs_cfg_type,
+                                                                  dmrs_max_length  dmrs_max_len)
 {
   ocudu_assert(nof_layers_range.contains(nof_layers),
                "The number of layers (i.e., {}) is out of the range {}.",
@@ -25,26 +27,29 @@ unsigned ocudu::get_pusch_antenna_port_mapping_row_index(unsigned         nof_la
   ocudu_assert(dmrs_max_len == dmrs_max_length::len1, "Only DM-RS maximum length 1 is supported.");
 
   if (transform_precoder) {
-    // PHY does not support DM-RS in ports other than 0, hence the selected antenna port value is chosen from Table
-    // 7.3.1.1.2-6 in TS 38.212 based on assumption of max. rank 1 and DM-RS max. length 1.
+    // The PHY supports only DM-RS port 0 with transform precoding, which is row 0 of TS38.212 Table 7.3.1.1.2-6.
     ocudu_assert(nof_layers == 1, "The number of layers (i.e., {}) with transform precoding must be one.", nof_layers);
-    return 0;
+    pusch_antenna_ports_mapping mapping = {.row_index = 0, .nof_dmrs_cdm_groups_without_data = 2};
+    mapping.dmrs_ports.set(0);
+    return mapping;
   }
 
-  switch (nof_layers) {
-    case 1:
-      // PHY does not support nof. DM-RS CDM groups(s) without data other than 2, hence the selected antenna port value
-      // is chosen from Table 7.3.1.1.2-8 in TS 38.212 based on assumption of max. rank 1 and DM-RS max. length 1.
-      return 2;
-    case 2:
-      // PHY does not support nof. DM-RS CDM groups(s) without data other than 2, hence the selected antenna port value
-      // is chosen from Table 7.3.1.1.2-9 in TS 38.212 based on assumption of max. rank 1 and DM-RS max. length 1.
-      return 1;
-    default:
-      // The only value for three and four layers is zero in TS 38.212 Table 7.3.1.1.2-10 for three layers and
-      // Table 7.3.1.1.2-11 for four layers. Based on assumption of DM-RS type 1, and maximum length 1.
-      return 0;
-  }
+  // The PHY supports only two DM-RS CDM groups without data. The selected rows of TS38.212 Tables 7.3.1.1.2-8 to
+  // 7.3.1.1.2-11, one per number of layers, map the layers to DM-RS ports 0 to nof_layers - 1.
+  static constexpr std::array<unsigned, pusch_constants::MAX_NOF_LAYERS> row_index_per_nof_layers = {2, 1, 0, 0};
+
+  pusch_antenna_ports_mapping mapping = {.row_index                        = row_index_per_nof_layers[nof_layers - 1],
+                                         .nof_dmrs_cdm_groups_without_data = 2};
+  mapping.dmrs_ports.fill(0, nof_layers);
+  return mapping;
+}
+
+unsigned ocudu::get_pusch_antenna_port_mapping_row_index(unsigned         nof_layers,
+                                                         bool             transform_precoder,
+                                                         dmrs_config_type dmrs_cfg_type,
+                                                         dmrs_max_length  dmrs_max_len)
+{
+  return get_pusch_antenna_port_mapping(nof_layers, transform_precoder, dmrs_cfg_type, dmrs_max_len).row_index;
 }
 
 unsigned ocudu::get_pusch_precoding_info_row_index(unsigned                                      nof_layers,
@@ -64,15 +69,15 @@ unsigned ocudu::get_pusch_precoding_info_row_index(unsigned                     
                nof_layers,
                max_rank);
 
-  // TS 38.212 Tables 7.3.1.1.2-2 and 7.3.1.1.2-3.
+  // TS38.212 Tables 7.3.1.1.2-2 and 7.3.1.1.2-3.
   if (nof_srs_ports == srs_resource_configuration::one_two_four_enum::four) {
-    // Direct TPMI to row index for maximum rank 1, TS 38.212 Table 7.3.1.1.2-2.
+    // Direct TPMI to row index for maximum rank 1, TS38.212 Table 7.3.1.1.2-2.
     if (max_rank == 1) {
       ocudu_assert(tpmi < 28, "PUSCH TPMI, (i.e., {}) must be lower than 28.", tpmi);
       return tpmi;
     }
 
-    // TPMI to row indices for 1 layer, TS 38.212 Table 7.3.1.1.2-2.
+    // TPMI to row indices for 1 layer, TS38.212 Table 7.3.1.1.2-2.
     if (nof_layers == 1) {
       ocudu_assert(tpmi < 28, "PUSCH TPMI, (i.e., {}) must be lower than 28.", tpmi);
 
@@ -90,7 +95,7 @@ unsigned ocudu::get_pusch_precoding_info_row_index(unsigned                     
       return tpmi + 20;
     }
 
-    // TPMI to row indices for 2 layers, TS 38.212 Table 7.3.1.1.2-2.
+    // TPMI to row indices for 2 layers, TS38.212 Table 7.3.1.1.2-2.
     if (nof_layers == 2) {
       ocudu_assert(tpmi < 22, "PUSCH TPMI, (i.e., {}) must be lower than 22.", tpmi);
 
@@ -143,7 +148,7 @@ unsigned ocudu::get_pusch_precoding_info_row_index(unsigned                     
     }
   }
 
-  // TS 38.212 Tables 7.3.1.1.2-4 and 7.3.1.1.2-5.
+  // TS38.212 Tables 7.3.1.1.2-4 and 7.3.1.1.2-5.
   if (nof_srs_ports == srs_resource_configuration::one_two_four_enum::two) {
     // Direct TPMI to row index for maximum rank 1.
     if (max_rank == 1) {

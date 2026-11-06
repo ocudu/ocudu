@@ -6,6 +6,7 @@
 #include "lib/scheduler/support/dmrs_helpers.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/pci.h"
+#include "ocudu/ran/pusch/pusch_constants.h"
 #include "ocudu/scheduler/config/bwp_configuration.h"
 #include "ocudu/support/error_handling.h"
 #include <gtest/gtest.h>
@@ -140,4 +141,54 @@ TEST(dmrs_helpers_test, make_dmrs_info_common)
       }
     }
   }
+}
+
+/// Fixture of the PUSCH dedicated DM-RS helper, parametrized by the number of layers.
+class dmrs_helpers_pusch_dedicated_test : public ::testing::TestWithParam<unsigned>
+{};
+
+/// Validates the DM-RS information for DCI format 0_1 without transform precoding for every number of layers.
+TEST_P(dmrs_helpers_pusch_dedicated_test, dmrs_ports_cover_all_layers)
+{
+  const unsigned                              nof_layers = GetParam();
+  const pusch_time_domain_resource_allocation pusch_td_cfg{
+      .k2 = 4, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}};
+  const dmrs_uplink_config dmrs_cfg{};
+  const pci_t              pci = 1;
+
+  const dmrs_information dmrs = make_dmrs_info_dedicated(
+      pusch_td_cfg, pci, dmrs_typeA_position::pos2, dmrs_cfg, nof_layers, /* use_transform_precoder= */ false);
+
+  // Rows of TS38.212 Tables 7.3.1.1.2-8 to 7.3.1.1.2-11 with two DM-RS CDM groups without data.
+  static constexpr std::array<unsigned, pusch_constants::MAX_NOF_LAYERS> expected_row_index = {2, 1, 0, 0};
+  ASSERT_EQ(get_pusch_antenna_port_mapping_row_index(
+                nof_layers, /* transform_precoder= */ false, dmrs_config_type::type1, dmrs_max_length::len1),
+            expected_row_index[nof_layers - 1]);
+
+  dmrs_port_mask expected_ports(DMRS_MAX_NPORTS);
+  expected_ports.fill(0, nof_layers);
+  ASSERT_EQ(dmrs.dmrs_ports, expected_ports);
+  ASSERT_EQ(dmrs.dmrs_ports.count(), nof_layers);
+  ASSERT_EQ(dmrs.num_dmrs_cdm_grps_no_data, 2);
+  ASSERT_EQ(dmrs.config_type, dmrs_config_type::type1);
+}
+
+INSTANTIATE_TEST_SUITE_P(dmrs_helpers_test,
+                         dmrs_helpers_pusch_dedicated_test,
+                         ::testing::Range(1U, pusch_constants::MAX_NOF_LAYERS + 1));
+
+/// Validates the DM-RS information for DCI format 0_1 with transform precoding and one layer.
+TEST(dmrs_helpers_test, pusch_dedicated_transform_precoding_uses_port_0)
+{
+  const pusch_time_domain_resource_allocation pusch_td_cfg{
+      .k2 = 4, .map_type = sch_mapping_type::typeA, .symbols = ofdm_symbol_range{0, 14}};
+  const dmrs_uplink_config dmrs_cfg{};
+
+  const dmrs_information dmrs = make_dmrs_info_dedicated(
+      pusch_td_cfg, 1, dmrs_typeA_position::pos2, dmrs_cfg, /* nof_layers= */ 1, /* use_transform_precoder= */ true);
+
+  dmrs_port_mask expected_ports(DMRS_MAX_NPORTS);
+  expected_ports.set(0);
+  ASSERT_EQ(dmrs.dmrs_ports, expected_ports);
+  ASSERT_EQ(dmrs.num_dmrs_cdm_grps_no_data, 2);
 }

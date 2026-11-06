@@ -109,7 +109,6 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg) :
     dl_dmrs_rbs_per_nof_layers[nof_layers - 1] = calculate_nof_dmrs_per_rb(dmrs);
   }
 
-  const unsigned nof_ul_ports  = cell_cfg.params.ul_carrier.nof_ant;
   const unsigned max_ul_layers = cell_cfg.params.init_bwp.pusch.max_nof_layers;
   ul_dmrs_rbs_per_nof_layers.resize(max_ul_layers);
   for (unsigned nof_layers = 1; nof_layers <= max_ul_layers; ++nof_layers) {
@@ -117,7 +116,7 @@ rate_estimator::rate_estimator(const cell_configuration& cell_cfg) :
         2, sch_mapping_type::typeA, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}};
     const dmrs_uplink_config dmrs_cfg{};
     auto                     dmrs = make_dmrs_info_dedicated(
-        pusch_td_cfg, cell_cfg.params.pci, cell_cfg.params.dmrs_typeA_pos, dmrs_cfg, nof_layers, nof_ul_ports, false);
+        pusch_td_cfg, cell_cfg.params.pci, cell_cfg.params.dmrs_typeA_pos, dmrs_cfg, nof_layers, false);
     ul_dmrs_rbs_per_nof_layers[nof_layers - 1] = calculate_nof_dmrs_per_rb(dmrs);
   }
 }

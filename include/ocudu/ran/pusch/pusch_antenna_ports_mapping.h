@@ -10,6 +10,31 @@
 
 namespace ocudu {
 
+/// PUSCH antenna ports mapping of a row in TS38.212 Tables 7.3.1.1.2-6 to 7.3.1.1.2-23.
+struct pusch_antenna_ports_mapping {
+  /// Row index, signalled in the DCI format 0_1 antenna ports field.
+  unsigned row_index;
+  /// Number of DM-RS CDM groups without data.
+  unsigned nof_dmrs_cdm_groups_without_data;
+  /// DM-RS port mask, with bit \f$i\f$ set when DM-RS port \f$i\f$ carries a layer.
+  dmrs_port_mask dmrs_ports = dmrs_port_mask(DMRS_MAX_NPORTS);
+};
+
+/// \brief Returns the PUSCH antenna ports mapping in TS38.212 Tables 7.3.1.1.2-6 to 7.3.1.1.2-23.
+/// \param[in] nof_layers         Number of layers.
+/// \param[in] transform_precoder Set to \c true if the transform precoder is used.
+/// \param[in] dmrs_cfg_type      PUSCH DM-RS configuration type.
+/// \param[in] dmrs_max_len       PUSCH DM-RS maximum number of OFDM symbols.
+/// \return The PUSCH antenna ports mapping.
+/// \remark An assertion is triggered if \c nof_layers is not in the range 1 to \ref pusch_constants::MAX_NOF_LAYERS.
+/// \remark An assertion is triggered if \c dmrs_cfg_type is not \ref dmrs_config_type::type1.
+/// \remark An assertion is triggered if \c dmrs_max_len is not \ref dmrs_max_length::len1.
+/// \remark An assertion is triggered if \c transform_precoder is \c true and \c nof_layers is not one.
+pusch_antenna_ports_mapping get_pusch_antenna_port_mapping(unsigned         nof_layers,
+                                                           bool             transform_precoder,
+                                                           dmrs_config_type dmrs_cfg_type,
+                                                           dmrs_max_length  dmrs_max_len);
+
 /// \brief Returns the PUSCH antenna ports mapping row index in TS 38.212, table 7.3.1.2.2-6 to 7.3.1.2.2-23.
 /// \param[in] nof_layers         Number of layers.
 /// \param[in] transform_precoder Set to \c true if the transform precoder is used.

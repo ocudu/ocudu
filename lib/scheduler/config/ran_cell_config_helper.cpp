@@ -575,16 +575,10 @@ unsigned config_helpers::compute_nof_cg_prbs_per_ue(const ran_cell_config& cell_
   const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_list[cg_td_res_idx];
 
   static constexpr unsigned nof_layers             = 1;
-  static constexpr bool     are_both_cws_enabled   = false;
-  const dmrs_information    dmrs                   = make_dmrs_info_dedicated(pusch_td_cfg,
-                                                         cell_cfg.pci,
-                                                         cell_cfg.dmrs_typeA_pos,
-                                                         cg_cfg.cg_dmrs_cfg,
-                                                         nof_layers,
-                                                         cell_cfg.ul_carrier.nof_ant,
-                                                         are_both_cws_enabled);
-  const unsigned            nof_dmrs_prb           = calculate_nof_dmrs_per_rb(dmrs);
   constexpr bool            use_transform_precoder = false;
+  const dmrs_information    dmrs                   = make_dmrs_info_dedicated(
+      pusch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos, cg_cfg.cg_dmrs_cfg, nof_layers, use_transform_precoder);
+  const unsigned nof_dmrs_prb = calculate_nof_dmrs_per_rb(dmrs);
   // TODO: Import p_pi2bpsk_present from PUSCH Config once it will have been added there.
   constexpr bool            tp_pi2bpsk_present = false;
   const sch_mcs_description mcs_info =

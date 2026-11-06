@@ -56,16 +56,15 @@ pusch_config_params ocudu::build_cg_pusch_cfg_params(const ue_cell_configuration
   pusch_config_params                          pusch_params;
   pusch_params.symbols = pusch_td_cfg.symbols;
 
-  // Build DMRS information from the CG-specific DMRS configuration.
-  static constexpr unsigned nof_layers           = 1;
-  static constexpr bool     are_both_cws_enabled = false;
-  const dmrs_information    dmrs                 = make_dmrs_info_dedicated(pusch_td_cfg,
+  // Build DMRS information from the CG-specific DMRS configuration. Transform precoding is not supported for CG.
+  static constexpr unsigned nof_layers             = 1;
+  static constexpr bool     use_transform_precoder = false;
+  const dmrs_information    dmrs                   = make_dmrs_info_dedicated(pusch_td_cfg,
                                                          cell_cfg.params.pci,
                                                          cell_cfg.params.dmrs_typeA_pos,
                                                          cg_cfg.cg_dmrs_cfg,
                                                          nof_layers,
-                                                         cell_cfg.params.ul_carrier.nof_ant,
-                                                         are_both_cws_enabled);
+                                                         use_transform_precoder);
 
   // Build PUSCH configuration parameters for TBS computation.
   pusch_params.dmrs       = dmrs;
