@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 
 #include "radio_session_realtime_loopback_impl.h"
+#include <cmath>
 #include <cstdlib>
 #include <string_view>
 
@@ -28,7 +29,7 @@ static double get_rf_time_scale(const std::string& args)
 
   char*        end   = nullptr;
   const double scale = std::strtod(value.c_str(), &end);
-  report_error_if_not(!value.empty() && (end == value.c_str() + value.size()) && (scale > 0.0),
+  report_error_if_not(!value.empty() && (end == value.c_str() + value.size()) && std::isfinite(scale) && (scale > 0.0),
                       "Invalid rf_time_scale in device arguments (i.e., {}).",
                       args);
   return scale;

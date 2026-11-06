@@ -1225,6 +1225,8 @@ TEST(RealtimeLoopbackRadioDeathTest, Misuse)
   for (const char* args : {"rf_time_scale=0",
                            "rf_time_scale=-1",
                            "rf_time_scale=abc",
+                           "rf_time_scale=inf",
+                           "rf_time_scale=1e400",
                            "rf_time_scale=",
                            "rf_time_scale=0.5x",
                            "rf_time_scale=0.5x,foo=1"}) {
