@@ -42,6 +42,9 @@ void e1ap_cu_up_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
 
 async_task<void> e1ap_cu_up_reset_procedure::handle_e1_interface_reset(const asn1::e1ap::reset_all_e& reset_all)
 {
+  // Remove the E1AP IDs of all UEs, as per TS 37.483 section 8.2.1.2.1.
+  ue_ctxt_list.clear();
+
   return cu_up_notifier.on_e1_reset_received({e1ap_reset::full, {}});
 }
 
@@ -73,7 +76,10 @@ async_task<void> e1ap_cu_up_reset_procedure::handle_part_of_e1_interface_reset(
       continue;
     }
 
-    ues.push_back(ue_ctx->ue_ids.ue_index);
+    // Remove the E1AP ID of the UE, as per TS 37.483 section 8.2.1.2.1.
+    const cu_up_ue_index_t ue_index = ue_ctx->ue_ids.ue_index;
+    ue_ctxt_list.remove_ue(ue_index);
+    ues.push_back(ue_index);
   }
   return cu_up_notifier.on_e1_reset_received({e1ap_reset::partial, ues});
 }

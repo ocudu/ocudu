@@ -129,6 +129,13 @@ public:
     ues.erase(cu_up_ue_e1ap_id);
   }
 
+  /// Removes all UE contexts.
+  void clear()
+  {
+    ues.clear();
+    ue_index_to_ue_e1ap_id.clear();
+  }
+
   size_t size() const { return ues.size(); }
 
   /// \brief Get the next available GNB-CU-UP-E1AP-UE-ID.

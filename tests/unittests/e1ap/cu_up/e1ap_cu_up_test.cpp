@@ -435,6 +435,54 @@ TEST_F(e1ap_cu_up_test, when_valid_part_of_e1_reset_received_then_reset_ack_sent
             e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
 }
 
+TEST_F(e1ap_cu_up_test, when_part_of_e1_reset_received_then_no_ue_associated_message_is_sent_for_the_reset_ue)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  e1ap_message e1_reset = generate_e1_reset({{gnb_cu_cp_ue_e1ap_id_t{9}, gnb_cu_up_ue_e1ap_id_t{0}}});
+  e1ap->handle_message(e1_reset);
+
+  // The DL data notification of the reset UE is dropped, so the last PDU is still the E1 Reset ACK.
+  e1ap->handle_dl_data_notification_required(cu_up_ue_index_t{0});
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::reset_ack,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test, when_full_e1_reset_received_then_no_ue_associated_message_is_sent_for_the_reset_ue)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  e1ap_message e1_reset = generate_e1_reset({});
+  e1ap->handle_message(e1_reset);
+
+  // The DL data notification of the reset UE is dropped, so the last PDU is still the E1 Reset ACK.
+  e1ap->handle_dl_data_notification_required(cu_up_ue_index_t{0});
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::reset_ack,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
+}
+
+TEST_F(e1ap_cu_up_test, when_ue_index_is_reused_after_e1_reset_then_new_bearer_context_ids_are_used)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  e1ap_message e1_reset = generate_e1_reset({{gnb_cu_cp_ue_e1ap_id_t{9}, gnb_cu_up_ue_e1ap_id_t{0}}});
+  e1ap->handle_message(e1_reset);
+
+  // Set up a new bearer context. The CU-UP reuses the UE index of the reset UE.
+  this->setup_bearer(10);
+
+  e1ap->handle_dl_data_notification_required(cu_up_ue_index_t{0});
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::init_msg, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::options::dl_data_notif,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.init_msg().value.type());
+  ASSERT_EQ(e1ap_gw.last_tx_e1ap_pdu.pdu.init_msg().value.dl_data_notif()->gnb_cu_cp_ue_e1ap_id, 10U);
+}
+
 TEST_F(e1ap_cu_up_test,
        when_bearer_context_release_procedure_cannot_be_scheduled_then_bearer_context_release_complete_is_sent)
 {
