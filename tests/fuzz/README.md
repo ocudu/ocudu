@@ -339,17 +339,11 @@ afl-fuzz \
     -- ./tests/fuzz/gtpu/gtpu_pdu_fuzzer @@
 ```
 
-Covers the mandatory header, the optional fields and the extension-header chain as parsed by `gtpu_dissect_pdu()`,
-without sockets, tunnel state or an encode/decode round trip. Each input is one raw G-PDU with no harness prefix,
-capped at 65,535 payload bytes plus the eight-byte mandatory header. The dissected message is passed to
-`gtpu_extract_msg()` only after a successful dissection, so the extraction path runs on exactly the inputs the parser
-accepts. As in the NGAP harness, the buffer is built with the fallback allocator so that an input which exhausts the
-default pool does not abort the process, and packet storage and dissection state are local to each invocation. Logs are
-disabled as in the other stateless targets, and production validation and assertions are unchanged.
+Dissects pme raw GTP-U PDU per input with the `gtpu_dissect_pdu()` function. The seeds are the test vectors of 
+`test.unittests/gtpu/gtpu_test_shared.h.
 
-The seeds are the known-good G-PDUs of the unit tests, taken from `tests/unittests/gtpu/gtpu_test_shared.h`: ordinary
-data packets, optional-header and extension-header forms, and the Echo Request, Echo Response and Error Indication
-control messages. No dictionary or additional runtime options are needed for this raw binary format.
+Remark: An input is a GTP-U PDU not only a G-PDU, thus the seeds also contain Echo Request, Echo Response and Error
+Indication messages, which are not G-PDUs.
 
 ### Running in parallel (recommended)
 
