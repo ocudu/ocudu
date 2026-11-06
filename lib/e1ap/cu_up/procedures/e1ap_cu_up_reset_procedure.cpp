@@ -91,5 +91,24 @@ void e1ap_cu_up_reset_procedure::send_e1ap_reset_ack()
   asn1::e1ap::reset_ack_s& e1_reset_ack = e1ap_msg.pdu.successful_outcome().value.reset_ack();
   e1_reset_ack->transaction_id          = reset_msg->transaction_id;
 
+  // Include an item for each reset UE association, as per TS 37.483 section 8.2.1.2.1.
+  if (reset_msg->reset_type.type() == asn1::e1ap::reset_type_c::types_opts::part_of_e1_interface) {
+    for (const auto& item : reset_msg->reset_type.part_of_e1_interface()) {
+      if (item->type() !=
+          asn1::e1ap::ue_associated_lc_e1_conn_item_res_o::value_c::types_opts::ue_associated_lc_e1_conn_item) {
+        continue;
+      }
+      const asn1::e1ap::ue_associated_lc_e1_conn_item_s& conn_item = item->ue_associated_lc_e1_conn_item();
+      if (not conn_item.gnb_cu_cp_ue_e1ap_id_present and not conn_item.gnb_cu_up_ue_e1ap_id_present) {
+        continue;
+      }
+      asn1::protocol_ie_single_container_s<asn1::e1ap::ue_associated_lc_e1_conn_item_res_ack_o> ack_item;
+      ack_item->ue_associated_lc_e1_conn_item() = conn_item;
+      e1_reset_ack->ue_associated_lc_e1_conn_list_res_ack.push_back(ack_item);
+    }
+    e1_reset_ack->ue_associated_lc_e1_conn_list_res_ack_present =
+        e1_reset_ack->ue_associated_lc_e1_conn_list_res_ack.size() > 0;
+  }
+
   tx_pdu_notifier.on_new_message(e1ap_msg);
 }

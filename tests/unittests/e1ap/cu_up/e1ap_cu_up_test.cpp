@@ -435,6 +435,35 @@ TEST_F(e1ap_cu_up_test, when_valid_part_of_e1_reset_received_then_reset_ack_sent
             e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
 }
 
+TEST_F(e1ap_cu_up_test, when_part_of_e1_reset_received_then_reset_ack_lists_the_reset_ues)
+{
+  run_e1_setup_procedure();
+  this->setup_bearer(9);
+
+  // Receive E1 Reset message for the UE and for an unknown UE.
+  e1ap_message e1_reset = generate_e1_reset({{gnb_cu_cp_ue_e1ap_id_t{9}, gnb_cu_up_ue_e1ap_id_t{0}},
+                                             {gnb_cu_cp_ue_e1ap_id_t{100}, gnb_cu_up_ue_e1ap_id_t{100}}});
+  e1ap->handle_message(e1_reset);
+
+  // Check the E1 Reset ACK lists both UE associations in the received order.
+  ASSERT_EQ(asn1::e1ap::e1ap_pdu_c::types_opts::options::successful_outcome, e1ap_gw.last_tx_e1ap_pdu.pdu.type());
+  ASSERT_EQ(asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::options::reset_ack,
+            e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.type());
+  const asn1::e1ap::reset_ack_s& reset_ack = e1ap_gw.last_tx_e1ap_pdu.pdu.successful_outcome().value.reset_ack();
+  ASSERT_TRUE(reset_ack->ue_associated_lc_e1_conn_list_res_ack_present);
+  ASSERT_EQ(reset_ack->ue_associated_lc_e1_conn_list_res_ack.size(), 2U);
+  const asn1::e1ap::ue_associated_lc_e1_conn_item_s& first_item =
+      reset_ack->ue_associated_lc_e1_conn_list_res_ack[0]->ue_associated_lc_e1_conn_item();
+  ASSERT_TRUE(first_item.gnb_cu_cp_ue_e1ap_id_present);
+  ASSERT_TRUE(first_item.gnb_cu_up_ue_e1ap_id_present);
+  ASSERT_EQ(first_item.gnb_cu_cp_ue_e1ap_id, 9U);
+  ASSERT_EQ(first_item.gnb_cu_up_ue_e1ap_id, 0U);
+  const asn1::e1ap::ue_associated_lc_e1_conn_item_s& second_item =
+      reset_ack->ue_associated_lc_e1_conn_list_res_ack[1]->ue_associated_lc_e1_conn_item();
+  ASSERT_EQ(second_item.gnb_cu_cp_ue_e1ap_id, 100U);
+  ASSERT_EQ(second_item.gnb_cu_up_ue_e1ap_id, 100U);
+}
+
 TEST_F(e1ap_cu_up_test, when_part_of_e1_reset_received_then_no_ue_associated_message_is_sent_for_the_reset_ue)
 {
   run_e1_setup_procedure();
