@@ -238,3 +238,50 @@ TEST_F(transport_block_encode_kernel_test, the_largest_transport_block_is_accept
   ASSERT_TRUE(configured.has_value()) << configured.error();
   EXPECT_GT(gpu.get_nof_codeblocks(), 147U);
 }
+
+TEST_F(transport_block_encode_kernel_test, a_base_graph_from_the_caller_carries_the_lifting_size_with_it)
+{
+  // A transport block the encoder places on BG2 on its own.
+  cuda::transport_block_encoder_config config = {};
+  config.nof_tb_bits                          = 1000;
+  config.nof_layers                           = 1;
+  config.modulation                           = modulation_scheme::QPSK;
+  config.nof_allocated_bits                   = 2048;
+  config.code_rate                            = 0.5F;
+  config.enable_scrambling                    = false;
+
+  ASSERT_TRUE(gpu.configure(config).has_value());
+  ASSERT_EQ(gpu.get_base_graph(), ldpc_base_graph_type::BG2);
+  ASSERT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), 104U);
+
+  // BG1 holds 22 information columns where BG2 holds 10, so a code block of the same length needs
+  // a smaller lifting size. A base graph that arrives on its own has to carry the rest of the
+  // geometry with it.
+  config.base_graph = ldpc_base_graph_type::BG1;
+  ASSERT_TRUE(gpu.configure(config).has_value());
+  EXPECT_EQ(gpu.get_base_graph(), ldpc_base_graph_type::BG1);
+  EXPECT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), 48U);
+}
+
+TEST_F(transport_block_encode_kernel_test, a_code_block_count_from_the_caller_carries_the_lifting_size_with_it)
+{
+  // A transport block the encoder segments into three code blocks on its own.
+  cuda::transport_block_encoder_config config = {};
+  config.nof_tb_bits                          = 20000;
+  config.nof_layers                           = 1;
+  config.modulation                           = modulation_scheme::QPSK;
+  config.nof_allocated_bits                   = 40960;
+  config.code_rate                            = 0.5F;
+  config.enable_scrambling                    = false;
+
+  ASSERT_TRUE(gpu.configure(config).has_value());
+  ASSERT_EQ(gpu.get_nof_codeblocks(), 3U);
+  ASSERT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), 320U);
+
+  // Spreading the same transport block over four code blocks makes each of them shorter, and a
+  // shorter code block needs a smaller lifting size.
+  config.nof_codeblocks = 4;
+  ASSERT_TRUE(gpu.configure(config).has_value());
+  EXPECT_EQ(gpu.get_nof_codeblocks(), 4U);
+  EXPECT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), 240U);
+}
