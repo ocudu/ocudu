@@ -102,7 +102,7 @@ public:
   transport_block_encoder(transport_block_encoder&& other) noexcept;
   transport_block_encoder& operator=(transport_block_encoder&& other) noexcept;
 
-  /// Returns true if the encoder holds the state a decode needs.
+  /// Returns true if the encoder holds the state an encode needs.
   bool is_valid() const { return state != nullptr; }
 
   /// \brief Sets the shape the encoder accepts, reserving the device memory it needs.
@@ -113,8 +113,15 @@ public:
 
   /// \brief Encodes one transport block.
   ///
-  /// \param[out] d_output   Rate matched bits, one per byte, of \ref get_nof_output_bits() entries.
-  /// \param[in]  d_tb_input Transport block, one bit per byte, in device memory.
+  /// Both buffers hold packed bits, eight to a byte. The input fills a byte from its most
+  /// significant bit, and the output fills a byte from its least significant bit.
+  ///
+  /// \param[out] d_output   Rate matched bits in device memory, bit \c i of the stream in bit
+  ///                        <tt>i % 8</tt> of byte <tt>i / 8</tt>. Holds
+  ///                        <tt>(\ref get_nof_output_bits() + 7) / 8</tt> bytes.
+  /// \param[in]  d_tb_input Transport block in device memory, bit \c i of the block in bit
+  ///                        <tt>7 - i % 8</tt> of byte <tt>i / 8</tt>. Holds
+  ///                        <tt>(nof_tb_bits + 7) / 8</tt> bytes.
   /// \param[in]  stream     Stream the work is queued on.
   /// \return A successful result, or a description of the error.
   cuda_result encode(uint8_t* d_output, const uint8_t* d_tb_input, const cuda_stream& stream);
