@@ -573,6 +573,34 @@ TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_context_is_retrieve
       << "Expected a UE Context Release towards the peer";
 }
 
+TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test,
+       when_path_switch_for_a_resumed_ue_fails_then_the_ue_is_released_and_counted_as_resume_followed_by_release)
+{
+  ASSERT_TRUE(retrieve_ue_context_for_resume());
+  ASSERT_TRUE(setup_bearers_and_await_rrc_resume());
+  ASSERT_TRUE(ue_sends_rrc_resume_complete());
+
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "No Path Switch Request was sent";
+  ASSERT_TRUE(test_helpers::is_valid_path_switch_request(ngap_pdu)) << "Invalid Path Switch Request";
+  const auto& path_switch = *ngap_pdu.pdu.init_msg().value.path_switch_request();
+
+  // The AMF rejects the path switch, so the UE has to be released.
+  get_amf().push_tx_pdu(generate_path_switch_request_failure(uint_to_amf_ue_id(peer_reported_amf_ue_id),
+                                                             uint_to_ran_ue_id(path_switch.ran_ue_ngap_id),
+                                                             ngap_cause_t{ngap_cause_radio_network_t::unspecified}));
+
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu)) << "No NGAP UE Context Release Request was sent";
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(ngap_pdu))
+      << "Expected an NGAP UE Context Release Request after the failed path switch";
+
+  // RRC.ResumeFollowedbyNetworkRelease (TS 28.552 section 5.1.1.18.4) is counted for the release triggered by a path
+  // switch failure rather than a failure of the resume exchange with the UE itself.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(
+      report.dus[0].rrc_metrics.rrc_connection_resumes_followed_by_network_release.get_count(resume_cause_t::mo_data),
+      1);
+}
+
 TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_context_is_retrieved_on_resume_then_nas_is_carried_on_srb2)
 {
   ASSERT_TRUE(retrieve_ue_context_for_resume());

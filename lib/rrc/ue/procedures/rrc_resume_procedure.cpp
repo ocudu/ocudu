@@ -137,9 +137,15 @@ void rrc_resume_procedure::operator()(coro_context<async_task<void>>& ctx)
       CORO_AWAIT_VALUE(path_switch_success, cu_cp_notifier.on_retrieved_context_path_switch_required());
       if (not path_switch_success) {
         logger.log_warning("\"{}\" failed. Requesting UE context release", name());
-        ue_context_release_request.ue_index = context.ue_index;
-        ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
-        CORO_AWAIT(cu_cp_notifier.on_ue_release_required(ue_context_release_request));
+
+        // Notify metrics about RRC connection resume followed by network release.
+        metrics_notifier.on_rrc_connection_resume_followed_by_network_release(
+            asn1_to_resume_cause(resume_request.rrc_resume_request.resume_cause));
+
+        // Close the transaction, because the UE release removes the transaction manager of the RRC UE.
+        transaction = {};
+        CORO_AWAIT(cu_cp_notifier.on_ue_release_required(
+            {.ue_index = context.ue_index, .cause = ngap_cause_radio_network_t::unspecified}));
         CORO_EARLY_RETURN();
       }
     }

@@ -104,7 +104,6 @@ private:
   rrc_transaction                   transaction;
   eager_async_task<rrc_outcome>     task;
   rrc_resume_request_response       rrc_resume_context;
-  cu_cp_ue_context_release_request  ue_context_release_request;
   rrc_ue_context_retrieval_response context_retrieval_response;
   bool                              path_switch_success = false;
 };
