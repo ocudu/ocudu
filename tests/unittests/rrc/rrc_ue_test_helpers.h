@@ -92,8 +92,9 @@ protected:
   {
   }
 
-  void init(const rrc_ue_test_cell_params&         cell_params      = {},
-            std::optional<rrc_ue_transfer_context> transfer_context = std::nullopt)
+  void init(const rrc_ue_test_cell_params&         cell_params             = {},
+            std::optional<rrc_ue_transfer_context> transfer_context        = std::nullopt,
+            bool                                   with_du_to_cu_container = true)
   {
     // Add UE to UE manager.
     allocated_ue_index = ue_mng.add_ue(cu_cp_du_index_t::min);
@@ -106,7 +107,9 @@ protected:
     rrc_ue_creation_message rrc_ue_create_msg{};
     rrc_ue_create_msg.ue_index = allocated_ue_index;
     rrc_ue_create_msg.c_rnti   = to_rnti(0x1234);
-    (void)rrc_ue_create_msg.du_to_cu_container.resize(1);
+    if (with_du_to_cu_container) {
+      (void)rrc_ue_create_msg.du_to_cu_container.resize(1);
+    }
     rrc_ue_create_msg.f1ap_pdu_notifier     = &rrc_ue_f1ap_notifier;
     rrc_ue_create_msg.rrc_ue_cu_cp_notifier = &rrc_ue_cu_cp_notifier;
     rrc_ue_create_msg.measurement_notifier  = &rrc_ue_cu_cp_notifier;

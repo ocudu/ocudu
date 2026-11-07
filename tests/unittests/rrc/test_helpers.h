@@ -264,7 +264,10 @@ public:
 
   void on_successful_rrc_connection_resume_with_fallback(resume_cause_t cause) override {}
 
-  void on_rrc_connection_resume_followed_by_network_release(resume_cause_t cause) override {}
+  void on_rrc_connection_resume_followed_by_network_release(resume_cause_t cause) override
+  {
+    ++nof_resume_followed_by_network_release;
+  }
 
   void on_attempted_rrc_connection_resume_followed_by_rrc_setup(resume_cause_t cause) override {}
 
@@ -274,6 +277,8 @@ public:
   /// Counts the failed RRC connection establishments the RRC UE reported.
   unsigned                   nof_failed_rrc_connection_establishments = 0;
   establishment_fail_cause_t last_establishment_fail_cause            = establishment_fail_cause_t::other;
+  /// Counts the RRC connection resumes followed by network release the RRC UE reported.
+  unsigned nof_resume_followed_by_network_release = 0;
 };
 
 } // namespace ocudu::ocucp

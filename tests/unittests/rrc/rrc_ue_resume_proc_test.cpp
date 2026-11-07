@@ -43,3 +43,16 @@ TEST_F(rrc_ue_resume, when_resume_request_received_without_security_context_then
 
   check_ue_release_requested();
 }
+
+/// Without a DU to CU container the DU cannot serve the UE, so the CU-CP rejects it with an RRCReject, not an
+/// RRCRelease. RRC.ResumeFollowedbyNetworkRelease (TS 28.552 section 5.1.1.18.4) fires on transmission of an
+/// RRCRelease, so it must not be counted here.
+TEST_F(rrc_ue_resume, when_du_to_cu_container_is_missing_then_resume_is_rejected_without_counting_network_release)
+{
+  init({}, std::nullopt, /* with_du_to_cu_container */ false);
+
+  receive_resume_request();
+
+  check_ue_release_requested();
+  ASSERT_EQ(rrc_ue_rrc_du_notifier.nof_resume_followed_by_network_release, 0);
+}
