@@ -29,7 +29,8 @@ public:
                                               rnti_t                         rnti,
                                               search_space_id                ss_id,
                                               aggregation_level              aggr_lvl,
-                                              std::optional<beam_identifier> beam) override;
+                                              std::optional<beam_identifier> beam,
+                                              unsigned                       ssb_idx = 0) override;
 
   pdcch_ul_information* alloc_ul_pdcch_common(cell_slot_resource_allocator&  slot_alloc,
                                               rnti_t                         rnti,
@@ -75,7 +76,8 @@ private:
                                               const search_space_configuration& ss_cfg,
                                               aggregation_level                 aggr_lvl,
                                               span<const pdcch_candidate_type>  candidates,
-                                              std::optional<beam_identifier>    beam);
+                                              std::optional<beam_identifier>    beam,
+                                              unsigned                          ssb_idx = 0);
 
   /// \param rnti RNTI used to scramble the DCI CRC.
   /// \param scrambling_rnti RNTI seeding the PDCCH payload scrambling. It is the UE's C-RNTI for a UE-specific

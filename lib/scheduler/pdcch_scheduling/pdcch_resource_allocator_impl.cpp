@@ -50,7 +50,8 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_common(cell_
                                                                            rnti_t                         rnti,
                                                                            search_space_id                ss_id,
                                                                            aggregation_level              aggr_lvl,
-                                                                           std::optional<beam_identifier> beam)
+                                                                           std::optional<beam_identifier> beam,
+                                                                           unsigned                       ssb_idx)
 {
   // Find Common BWP and CORESET configurations.
   const sched_search_space_config& ss_cfg = *cell_cfg.init_bwp.dl.pdcch().search_spaces()[ss_id];
@@ -65,7 +66,8 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_common(cell_
                                ss_cfg.cfg(),
                                aggr_lvl,
                                pdcch_common_candidates[ss_id][to_aggregation_level_index(aggr_lvl)].candidates,
-                               beam);
+                               beam,
+                               ssb_idx);
 }
 
 pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_common(cell_slot_resource_allocator&  slot_alloc,
@@ -195,7 +197,8 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
                                                                            const search_space_configuration& ss_cfg,
                                                                            aggregation_level                 aggr_lvl,
                                                                            span<const pdcch_candidate_type>  candidates,
-                                                                           std::optional<beam_identifier>    beam)
+                                                                           std::optional<beam_identifier>    beam,
+                                                                           unsigned                          ssb_idx)
 {
   if (not pdcch_helper::is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
     // PDCCH monitoring is not active in this slot.
@@ -220,8 +223,10 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_helper(cell_
   pdcch.ctx.coreset_cfg       = &cs_cfg.cfg();
   pdcch.ctx.rnti              = rnti;
   pdcch.ctx.cces.ncce         = 0;
-  // [Implementation-defined] We allocate the DCI on the SearchSpace starting from symbols 0.
-  pdcch.ctx.starting_symbol   = 0;
+  // For SearchSpace#0 the monitoring occasion of the addressed SS/PBCH block sets the first symbol, as per TS 38.213
+  // Table 13-11: for the indexes with M = 1/2, an odd SS/PBCH block index is monitored from symbol N^CORESET_symb.
+  // [Implementation-defined] Any other SearchSpace is allocated starting from symbol 0.
+  pdcch.ctx.starting_symbol   = ss_cfg.is_search_space0() ? ss_cfg.get_first_symbol_index(ssb_idx) : 0;
   pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
   pdcch.ctx.n_id_pdcch_data   = get_scrambling_n_ID(cell_cfg.params.pci, cs_cfg.cfg(), ss_cfg);
   pdcch.ctx.n_rnti_pdcch_data = get_scrambling_n_RNTI(scrambling_rnti, cs_cfg.cfg(), ss_cfg);

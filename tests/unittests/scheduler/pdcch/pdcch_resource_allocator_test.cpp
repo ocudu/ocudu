@@ -7,6 +7,7 @@
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_slot_resource_allocator.h"
 #include "lib/scheduler/support/pdcch/pdcch_mapping.h"
+#include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/ocudulog/ocudulog.h"
@@ -479,6 +480,55 @@ TEST_F(common_pdcch_allocator_tester, single_pdcch_sib1_allocation)
   ASSERT_EQ(pdcch->ctx.cces.aggr_lvl, aggregation_level::n4);
   ASSERT_EQ(pdcch->ctx.cces.ncce, 0);
   ASSERT_EQ(pdcch->ctx.starting_symbol, 0);
+}
+
+// For the SearchSpace#0 indexes with M = 1/2, the Type0-PDCCH occasions of an even and an odd SS/PBCH block share a
+// slot and the odd one is monitored from symbol N^CORESET_symb (TS 38.213 Table 13-11). The SIB1 DCI of each SS/PBCH
+// block must start on the first symbol of its own occasion, and the two DCIs do not collide.
+TEST(pdcch_resource_allocator_test, sib1_dci_starts_on_the_first_symbol_of_the_ssb_occasion)
+{
+  // CORESET#0 index 0, SearchSpace#0 index 5 (one of the rows with M = 1/2).
+  constexpr uint8_t          pdcch_config_sib1 = 5U;
+  cell_config_builder_params params =
+      cell_config_builder_profiles::create(duplex_mode::FDD, frequency_range::FR1, bs_channel_bandwidth::MHz20);
+  params.scs_common             = subcarrier_spacing::kHz30;
+  params.dl_carrier.arfcn_f_ref = 176300;
+  params.dl_carrier.band        = band_helper::get_band_from_dl_arfcn(params.dl_carrier.arfcn_f_ref);
+  params.cs0_index              = coreset0_index{static_cast<uint8_t>((pdcch_config_sib1 >> 4U) & 0b1111U)};
+  params.ss0_index              = pdcch_config_sib1 & 0b1111U;
+  sched_cell_configuration_request_message msg =
+      sched_config_helper::make_default_sched_cell_configuration_request(params);
+  // SS/PBCH blocks at positions 0 and 1 (most-significant-bit first), L_max = 8.
+  msg.ran.ssb_cfg.ssb_beams = ssb_beam_mapping(ssb_bitmap_t(0b11000000U, 8U));
+
+  test_helpers::test_sched_config_manager cfg_mng{config_helpers::make_default_scheduler_expert_config()};
+  const cell_configuration&               cfg = *cfg_mng.add_cell(msg);
+  cell_resource_allocator                 res_grid{cfg};
+  pdcch_resource_allocator_impl           pdcch_sch(cfg);
+
+  const search_space_configuration& ss0 = cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0];
+  ASSERT_EQ(ss0.get_first_symbol_index(0), 0U);
+  // Otherwise the test would pass for the wrong reason, with both occasions starting at symbol 0.
+  ASSERT_GT(ss0.get_first_symbol_index(1), 0U) << "the chosen SearchSpace#0 index does not delay odd SS/PBCH blocks";
+
+  slot_point sl_tx{to_numerology_value(subcarrier_spacing::kHz30), 0};
+  res_grid.slot_indication(sl_tx);
+  pdcch_sch.slot_indication(sl_tx);
+  while (not pdcch_helper::is_pdcch_monitoring_active(sl_tx, ss0)) {
+    ++sl_tx;
+    res_grid.slot_indication(sl_tx);
+    pdcch_sch.slot_indication(sl_tx);
+  }
+
+  for (uint8_t ssb_idx : {0U, 1U}) {
+    const pdcch_dl_information* pdcch = pdcch_sch.alloc_dl_pdcch_common(
+        res_grid[0], rnti_t::SI_RNTI, to_search_space_id(0), aggregation_level::n4, std::nullopt, ssb_idx);
+    ASSERT_NE(pdcch, nullptr) << "SIB1 DCI for SS/PBCH block " << unsigned(ssb_idx) << " not allocated";
+    ASSERT_EQ(pdcch->ctx.starting_symbol, ss0.get_first_symbol_index(ssb_idx))
+        << "SIB1 DCI for SS/PBCH block " << unsigned(ssb_idx) << " is outside its monitoring occasion";
+    // Both DCIs take the same CCEs, on different symbols: only possible if the CORESET is reserved where it is used.
+    ASSERT_EQ(pdcch->ctx.cces.ncce, 0U);
+  }
 }
 
 TEST_F(common_pdcch_allocator_tester, single_pdcch_rar_allocation)

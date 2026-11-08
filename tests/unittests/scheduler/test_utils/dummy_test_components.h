@@ -32,7 +32,8 @@ public:
                                               rnti_t                         rnti,
                                               search_space_id                ss_id,
                                               aggregation_level              aggr_lvl,
-                                              std::optional<beam_identifier> beam) override
+                                              std::optional<beam_identifier> beam,
+                                              unsigned                       ssb_idx = 0) override
   {
     report_fatal_error_if_not(
         (fmt::underlying(ss_id)) ==

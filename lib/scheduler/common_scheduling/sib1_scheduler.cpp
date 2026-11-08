@@ -194,7 +194,8 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
                                         rnti_t::SI_RNTI,
                                         cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
                                         expert_cfg.sib1_dci_aggr_lev,
-                                        cell_cfg.params.ssb_cfg.ssb_beams.get_beam(ssb_idx));
+                                        cell_cfg.params.ssb_cfg.ssb_beams.get_beam(ssb_idx),
+                                        ssb_idx);
   if (pdcch == nullptr) {
     logger.warning("Could not allocated SIB1's DCI in PDCCH for SSB index {}", ssb_idx);
     return false;

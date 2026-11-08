@@ -102,8 +102,10 @@ bool pdcch_slot_allocator::cancel_last_pdcch(cell_slot_resource_allocator& slot_
   // Read the resources taken by the PDCCH while its PDU is still alive.
   const sched_coreset_config& cs_cfg   = *last_rec.cs_cfg;
   const crb_index_list_span pdcch_crbs = cs_cfg.candidate_crbs(dfs_tree.back().ncce, last_rec.pdcch_ctx->cces.aggr_lvl);
-  const ofdm_symbol_range   symbols{0, (uint8_t)cs_cfg.cfg().duration()};
-  const subcarrier_spacing  scs = last_rec.pdcch_ctx->bwp_cfg->scs;
+  // The CORESET occupies the symbols the DCI starts on.
+  const uint8_t            cs_start = last_rec.pdcch_ctx->starting_symbol;
+  const ofdm_symbol_range  symbols{cs_start, (uint8_t)(cs_start + cs_cfg.cfg().duration())};
+  const subcarrier_spacing scs = last_rec.pdcch_ctx->bwp_cfg->scs;
 
   if (is_dl_pdcch) {
     dl_pdcchs.pop_back();
@@ -196,8 +198,9 @@ bool pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc
   grant_info grant;
   grant.scs = bwp_cfg.scs;
 
-  // Check the current CCE position collides with an existing one.
-  ofdm_symbol_range symbols{0, (uint8_t)cs_cfg.duration()};
+  // Check the current CCE position collides with an existing one. The CORESET occupies the symbols the DCI starts on.
+  const uint8_t     cs_start = record.pdcch_ctx->starting_symbol;
+  ofdm_symbol_range symbols{cs_start, (uint8_t)(cs_start + cs_cfg.duration())};
   if (slot_alloc.dl_res_grid.collides(record.pdcch_ctx->bwp_cfg->scs, symbols, pdcch_crbs)) {
     // Collision detected. Try another CCE position.
     return false;

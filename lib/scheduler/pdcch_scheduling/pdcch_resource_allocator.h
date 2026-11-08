@@ -21,12 +21,15 @@ public:
   /// \param ss_id Search Space Id to use.
   /// \param aggr_lvl Aggregation Level of PDCCH allocation.
   /// \param beam Beam that carries the PDCCH. Nullopt selects the default beams.
+  /// \param ssb_idx Index of the SS/PBCH block whose Type0-PDCCH monitoring occasion the DCI must land on. For
+  /// SearchSpace#0 it selects the first symbol of the occasion, as per TS 38.213 Table 13-11; ignored otherwise.
   /// \return Allocated PDCCH if successful.
   virtual pdcch_dl_information* alloc_dl_pdcch_common(cell_slot_resource_allocator&  slot_alloc,
                                                       rnti_t                         rnti,
                                                       search_space_id                ss_id,
                                                       aggregation_level              aggr_lvl,
-                                                      std::optional<beam_identifier> beam) = 0;
+                                                      std::optional<beam_identifier> beam,
+                                                      unsigned                       ssb_idx = 0) = 0;
 
   /// Allocates RE space for common UL PDCCH, avoiding in the process collisions with other PDCCH allocations.
   /// \param slot_alloc Grid Resources for the slot where PDCCH is going to be allocated.
