@@ -6,6 +6,7 @@
 
 add_library(ocudu_pdsch_processor STATIC
         factories.cpp
+        pdsch_codeword_interleaver.cpp
         pdsch_block_processor_impl.cpp
         pdsch_block_processor_hw_impl.cpp
         pdsch_encoder_hw_impl.cpp

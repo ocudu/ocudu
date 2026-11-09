@@ -21,3 +21,15 @@ target_link_libraries(pdsch_processor_validator_test
         GTest::gtest
         GTest::gtest_main)
 add_test(pdsch_processor_validator_test pdsch_processor_validator_test)
+
+add_executable(pdsch_codeword_interleaver_test pdsch_codeword_interleaver_test.cpp)
+target_link_libraries(pdsch_codeword_interleaver_test
+        ocudu_pdsch_processor
+        ocudu_phy_support
+        ocudulog
+        GTest::gtest
+        GTest::gtest_main)
+target_include_directories(pdsch_codeword_interleaver_test PRIVATE
+        ${CMAKE_SOURCE_DIR}/tests/unittests
+        ${CMAKE_SOURCE_DIR}/lib/phy/upper/channel_processors/pdsch)
+add_test(pdsch_codeword_interleaver_test pdsch_codeword_interleaver_test)
