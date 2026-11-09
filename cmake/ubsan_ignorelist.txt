@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
 # Clang UBSAN ignore list, passed through -fsanitize-ignorelist when ENABLE_UBSAN is set.
 
 # Eigen 3.4.0 broadcasts a std::complex<float> on AVX512 by dereferencing it as a double, which is only 4-byte aligned.
