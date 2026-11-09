@@ -237,6 +237,10 @@ static void convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(mac_uci_pdu::pucch_f2_or_
 
 void fapi_to_mac_indications_fastpath_translator::on_uci_indication(const fapi::uci_indication& msg)
 {
+  if (std::holds_alternative<std::monostate>(msg.pdu)) {
+    return;
+  }
+
   mac_uci_indication_message mac_msg;
   mac_msg.sl_rx = msg.slot;
 
@@ -258,8 +262,6 @@ void fapi_to_mac_indications_fastpath_translator::on_uci_indication(const fapi::
     mac_uci_pdu::pucch_f2_or_f3_or_f4_type pucch;
     convert_fapi_to_mac_pucch_f2_f3_f4_uci_ind(pucch, *uci_pusch_format_2_3_4);
     mac_pdu.pdu = pucch;
-  } else {
-    return;
   }
 
   if (OCUDU_UNLIKELY(logger.debug.enabled())) {

@@ -193,7 +193,7 @@ static void add_tx_data_pdus(fapi::tx_data_request_builder&         builder,
     if (pdu.cw_index == 0) {
       ++nof_pdsch_pdus;
     }
-    ocudu_assert(nof_pdsch_pdus != 0, "The PDUs of a PDSCH PDU must start with its codeword 0");
+    ocudu_assert(nof_pdsch_pdus != 0, "The DL PDU must start with its codeword 0");
     builder.add_pdu(nof_pdsch_pdus - 1, pdu.cw_index, pdu.pdu);
   }
 }
