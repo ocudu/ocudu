@@ -36,7 +36,12 @@ static unsigned add_ue_res(static_vector<pucch_resource, MAX_NOF_UE_PUCCH_RESOUR
 
 unsigned config_helpers::ue_csi_res_id(const pucch_resource_builder_params& res_params)
 {
-  return 2U * res_params.res_set_size.value() + 1U;
+  // The UE resource list holds, in this order: the Resource Set ID 0 resources, the SR resource, the Resource Set ID 1
+  // resources and the CSI resource. See \c build_pucch_config.
+  const unsigned nof_set_0_res = res_params.res_set_size.value();
+  const unsigned nof_sr_res    = 1U;
+  const unsigned nof_set_1_res = res_params.res_set_size.value();
+  return nof_set_0_res + nof_sr_res + nof_set_1_res;
 }
 
 pucch_config config_helpers::build_pucch_config(const ran_cell_config&        cell_cfg,

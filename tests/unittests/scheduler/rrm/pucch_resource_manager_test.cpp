@@ -90,12 +90,12 @@ TEST_F(pucch_resource_manager_tester, when_ues_are_added_their_cfg_have_differen
     ASSERT_EQ(ue_pucch_cfg.pucch_res_set.size(), 2);
     ASSERT_EQ(ue_pucch_cfg.pucch_res_set[0].resources.size(), pucch_params.res_set_size);
     ASSERT_EQ(ue_pucch_cfg.pucch_res_set[1].resources.size(), pucch_params.res_set_size);
-    // Make sure UE has all PUCCH resources with different cell_res_id.
+    // Make sure UE has all PUCCH resources with different ded_id.
     {
       std::set<unsigned> pucch_res_idxs;
       for (unsigned n = 0; n != ue_pucch_cfg.pucch_res_set[0].resources.size(); ++n) {
-        pucch_res_idxs.count(ue_pucch_cfg.pucch_res_list[n].res_id.cell_res_id());
-        pucch_res_idxs.insert(ue_pucch_cfg.pucch_res_list[n].res_id.cell_res_id());
+        pucch_res_idxs.count(ue_pucch_cfg.pucch_res_list[n].res_id.ded_id());
+        pucch_res_idxs.insert(ue_pucch_cfg.pucch_res_list[n].res_id.ded_id());
       }
     }
   }

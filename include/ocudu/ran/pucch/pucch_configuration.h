@@ -156,7 +156,7 @@ struct pucch_resource {
     bool operator!=(const f4_config& rhs) const { return !(rhs == *this); }
   };
 
-  pucch_res_id_t                                                      res_id = pucch_res_id_t::make_ded(0);
+  pucch_res_id_t                                                      res_id;
   uint16_t                                                            starting_prb;
   ofdm_symbol_range                                                   syms;
   std::optional<uint16_t>                                             second_hop_prb;

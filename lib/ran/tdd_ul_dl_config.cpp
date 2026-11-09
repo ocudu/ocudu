@@ -150,9 +150,7 @@ std::vector<unsigned> ocudu::get_ul_slot_offsets(const std::optional<tdd_ul_dl_c
   offsets.reserve(period_slots);
   for (unsigned offset = 0; offset != period_slots; ++offset) {
     if (cfg.has_value()) {
-      const unsigned slot_index =
-          offset % (radio_frame_constants::NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(cfg->ref_scs));
-      if (not get_active_tdd_ul_symbols(*cfg, slot_index, cp).contains(syms)) {
+      if (not get_active_tdd_ul_symbols(*cfg, offset, cp).contains(syms)) {
         continue;
       }
     }

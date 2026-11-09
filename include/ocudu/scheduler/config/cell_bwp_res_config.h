@@ -82,11 +82,11 @@ struct cell_pucch_res_config {
   /// Gets the dedicated PUCCH resource indexed by its resource ID.
   const pucch_resource& get_ded(pucch_res_id_t res_id) const
   {
-    ocudu_assert(res_id.cell_res_id() < dedicated.size(),
+    ocudu_assert(res_id.ded_id() < dedicated.size(),
                  "PUCCH cell resource ID {} exceeds the size of the dedicated cell resource list ({})",
-                 res_id.cell_res_id(),
+                 res_id.ded_id(),
                  dedicated.size());
-    return dedicated[res_id.cell_res_id()];
+    return dedicated[res_id.ded_id()];
   }
 };
 

@@ -123,8 +123,9 @@ The PUCCH structures show the correct split. They are not perfect, but use them 
   dedicated PUCCH resources of the cell.
 - `ue_pucch_config` (`include/ocudu/scheduler/config/ue_bwp_config.h`) holds only IDs and offsets. It holds no copy of a
   resource.
-- `pucch_res_id_t` (`include/ocudu/ran/pucch/pucch_mapping.h`) holds only the cell resource ID. The UE resource ID of
-  the ASN.1 message is the position of the resource in the UE's PUCCH resource list.
+- `pucch_res_id_t` (`include/ocudu/ran/pucch/pucch_mapping.h`) holds a single index over the common and the dedicated
+  PUCCH resources of the cell. The UE resource ID of the ASN.1 message is the position of the resource in the UE's PUCCH
+  resource list.
 
 ## Target
 

@@ -25,7 +25,7 @@ struct test_values<static_vector<pucch_resource, pucch_constants::MAX_NOF_TOT_CE
       static_vector<pucch_resource, pucch_constants::MAX_NOF_TOT_CELL_RESOURCES> list;
       for (unsigned i = 0; i != size; ++i) {
         pucch_resource res = contents[i % contents.size()];
-        res.res_id         = pucch_res_id_t{static_cast<uint16_t>(i)};
+        res.res_id         = pucch_res_id_t::from_idx(i);
         list.push_back(res);
       }
       return list;

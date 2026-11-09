@@ -150,21 +150,21 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
     const auto& res = pucch_cfg.pucch_res_list[ue_res_id];
     // Verify that each PUCCH resource matches the corresponding cell resource.
     VERIFY(res.res_id.is_ded(), "PUCCH resource with UE resource ID {} is not dedicated", ue_res_id);
-    VERIFY(res.res_id.cell_res_id() < cell_pucch_res_list.size(),
-           "PUCCH resource with cell_res_id={} does not exist in the cell configuration",
-           res.res_id.cell_res_id());
+    VERIFY(res.res_id.ded_id() < cell_pucch_res_list.size(),
+           "PUCCH resource with ded_id={} does not exist in the cell configuration",
+           res.res_id.ded_id());
 
-    const auto& cell_res = cell_pucch_res_list[res.res_id.cell_res_id()];
+    const auto& cell_res = cell_pucch_res_list[res.res_id.ded_id()];
     // The UE's repetition factor may be clamped down from the cell's configured value if the UE doesn't support
     // PUCCH repetition for this resource's format.
     pucch_resource cell_res_same_rep = cell_res;
     cell_res_same_rep.rep_factor     = res.rep_factor;
     VERIFY(res == cell_res_same_rep,
-           "PUCCH resource with cell_res_id={} does not match the corresponding cell resource",
-           res.res_id.cell_res_id());
+           "PUCCH resource with ded_id={} does not match the corresponding cell resource",
+           res.res_id.ded_id());
     VERIFY(res.rep_factor == cell_res.rep_factor or res.rep_factor == pucch_repetition_factor::n1,
-           "PUCCH resource with cell_res_id={} has an incorrect repetition factor",
-           res.res_id.cell_res_id());
+           "PUCCH resource with ded_id={} has an incorrect repetition factor",
+           res.res_id.ded_id());
     VERIFY(res.format() == res_params.format_01() or res.format() == res_params.format_234(),
            "Invalid PUCCH format configured for UE resource ID {}",
            ue_res_id);
@@ -569,6 +569,12 @@ validator_result config_validators::validate_csi_meas_cfg(const serving_cell_con
       for (const auto& pucch_res : pucch_csi.pucch_csi_res_list) {
         VERIFY(pucch_res.pucch_res_id < pucch_resources.size(),
                "PUCCH resource id={} does not exist",
+               pucch_res.pucch_res_id);
+        // Periodic CSI reports are sent on PUCCH Format 2, 3 or 4. See TS 38.214, Section 5.2.4.
+        const pucch_format csi_res_format = pucch_resources[pucch_res.pucch_res_id].format();
+        VERIFY(csi_res_format == pucch_format::FORMAT_2 or csi_res_format == pucch_format::FORMAT_3 or
+                   csi_res_format == pucch_format::FORMAT_4,
+               "PUCCH resource id={} used for CSI reporting must be Format 2, 3 or 4",
                pucch_res.pucch_res_id);
       }
     } else if (std::holds_alternative<csi_report_config::aperiodic_report>(rep_cfg.report_cfg_type)) {

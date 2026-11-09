@@ -9,6 +9,7 @@
 #include "ocudu/support/ocudu_assert.h"
 #include "fmt/base.h"
 #include <cstdint>
+#include <limits>
 
 namespace ocudu {
 
@@ -114,33 +115,57 @@ inline pucch_format pucch_f2f3f4_format(pucch_formats formats)
 /// TS38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
-/// \brief Identifier of a PUCCH resource of the cell.
+/// \brief Identifier of a PUCCH resource, either common or dedicated, in a single index space.
 ///
-/// Holds a single index over the common resources followed by the dedicated resources of the cell:
-///   - indices {0, ..., 15} identify the common resources from the default table (TS 38.213 Table 9.2.1-1), where the
-///     index is \f$r_{PUCCH}\f$ (TS 38.213 Section 9.2.1), and
-///   - indices from 16 onwards identify the dedicated resources, where the index is the cell resource ID plus 16.
-struct pucch_res_id_t {
+/// The index space has two ranges:
+///   - [0, 15]: common resources. The index is \f$r_{PUCCH}\f$ of TS 38.213 Table 9.2.1-1.
+///   - [16, ...): dedicated resources. The index is 16 plus the dedicated resource ID (\c ded_id), i.e. its position
+///     in the cell list of dedicated PUCCH resources (0 for the first one).
+///
+/// A default-constructed ID is invalid. Use \c make_cmn, \c make_ded or \c from_idx to create a valid one.
+class pucch_res_id_t
+{
+public:
+  pucch_res_id_t() = default;
+
   /// Number of common PUCCH resources, i.e. the number of rows of TS 38.213 Table 9.2.1-1.
   static constexpr unsigned nof_cmn_res = pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES;
-
-  /// Index over the common and the dedicated resources of the cell.
-  uint16_t idx = nof_cmn_res;
 
   static pucch_res_id_t make_cmn(unsigned r_pucch)
   {
     ocudu_assert(r_pucch < nof_cmn_res, "Invalid r_pucch={} for a common PUCCH resource", r_pucch);
-    return pucch_res_id_t{static_cast<uint16_t>(r_pucch)};
+    return pucch_res_id_t{r_pucch};
   }
-  static pucch_res_id_t make_ded(unsigned cell_res_id)
+  static pucch_res_id_t make_ded(unsigned ded_id)
   {
-    ocudu_assert(cell_res_id < pucch_constants::MAX_NOF_CELL_DED_RESOURCES,
-                 "Invalid cell resource ID={} for a dedicated PUCCH resource",
-                 cell_res_id);
-    return pucch_res_id_t{static_cast<uint16_t>(nof_cmn_res + cell_res_id)};
+    ocudu_assert(ded_id < pucch_constants::MAX_NOF_CELL_DED_RESOURCES,
+                 "Invalid ded_id={} for a dedicated PUCCH resource",
+                 ded_id);
+    return pucch_res_id_t{nof_cmn_res + ded_id};
+  }
+  /// Creates the ID from an index over the common and the dedicated resources, see \c value.
+  static pucch_res_id_t from_idx(unsigned idx)
+  {
+    ocudu_assert(
+        idx < nof_cmn_res + pucch_constants::MAX_NOF_CELL_DED_RESOURCES, "Invalid PUCCH resource index={}", idx);
+    return pucch_res_id_t{idx};
   }
 
-  bool is_cmn() const { return idx < nof_cmn_res; }
+  /// Whether the ID identifies a resource, i.e. it is not default-constructed.
+  bool is_valid() const { return idx != invalid_idx; }
+
+  /// Returns the index over the common resources followed by the dedicated resources.
+  unsigned value() const
+  {
+    ocudu_assert(is_valid(), "Invalid PUCCH resource ID");
+    return idx;
+  }
+
+  bool is_cmn() const
+  {
+    ocudu_assert(is_valid(), "Invalid PUCCH resource ID");
+    return idx < nof_cmn_res;
+  }
   bool is_ded() const { return not is_cmn(); }
 
   /// Returns \f$r_{PUCCH}\f$ of a common resource.
@@ -149,8 +174,8 @@ struct pucch_res_id_t {
     ocudu_assert(is_cmn(), "PUCCH resource ID={} is not common", idx);
     return idx;
   }
-  /// Returns the cell resource ID of a dedicated resource.
-  unsigned cell_res_id() const
+  /// Returns the ID of a dedicated resource, i.e. its position in the cell list of dedicated PUCCH resources.
+  unsigned ded_id() const
   {
     ocudu_assert(is_ded(), "PUCCH resource ID={} is not dedicated", idx);
     return idx - nof_cmn_res;
@@ -158,6 +183,13 @@ struct pucch_res_id_t {
 
   bool operator==(const pucch_res_id_t& rhs) const { return idx == rhs.idx; }
   bool operator!=(const pucch_res_id_t& rhs) const { return !(rhs == *this); }
+
+private:
+  explicit pucch_res_id_t(unsigned idx_) : idx(static_cast<uint16_t>(idx_)) {}
+
+  static constexpr uint16_t invalid_idx = std::numeric_limits<uint16_t>::max();
+
+  uint16_t idx = invalid_idx;
 };
 
 } // namespace ocudu
@@ -175,10 +207,13 @@ struct formatter<ocudu::pucch_res_id_t> {
   template <typename FormatContext>
   auto format(ocudu::pucch_res_id_t res_id, FormatContext& ctx) const
   {
+    if (not res_id.is_valid()) {
+      return format_to(ctx.out(), "invalid");
+    }
     if (res_id.is_cmn()) {
       return format_to(ctx.out(), "cmn({})", res_id.r_pucch());
     }
-    return format_to(ctx.out(), "ded({})", res_id.cell_res_id());
+    return format_to(ctx.out(), "ded({})", res_id.ded_id());
   }
 };
 

@@ -833,8 +833,8 @@ static check_outcome check_pucch_common_ded_overlap(const du_cell_config& cell_c
     const prb_interval hop2 =
         res.second_hop_prb.has_value() ? prb_interval::start_and_len(*res.second_hop_prb, hop1.length()) : hop1;
     CHECK_TRUE(not reserved_prbs.any(hop1.start(), hop1.stop()) and not reserved_prbs.any(hop2.start(), hop2.stop()),
-               "The dedicated PUCCH resource cell_res_id={} in PRBs={} (second hop {}) overlaps the {}",
-               res.res_id.cell_res_id(),
+               "The dedicated PUCCH resource ded_id={} in PRBs={} (second hop {}) overlaps the {}",
+               res.res_id.ded_id(),
                hop1,
                hop2,
                reserved_prbs_desc);

@@ -8,6 +8,7 @@
 #include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/csi_rs/csi_meas_config.h"
 #include "ocudu/ran/pucch/pucch_configuration.h"
+#include "ocudu/ran/pucch/pucch_uci_bits.h"
 #include "ocudu/ran/resource_allocation/ofdm_symbol_range.h"
 #include "ocudu/ran/tdd/tdd_ul_dl_config.h"
 #include "ocudu/scheduler/config/cell_bwp_res_config.h"
@@ -267,7 +268,8 @@ pucch_resource_manager::get_compatible_csi_cfg(const cell_resource_context&     
     }
 
     // Ensure the SR and CSI reports can be sent together in the same PUCCH.
-    return 1U + csi_report_size <= max_pucch_payload;
+    static constexpr unsigned sr_payload_bits = to_underlying(sr_nof_bits::one);
+    return sr_payload_bits + csi_report_size <= max_pucch_payload;
   };
 
   // [Implementation-defined] CSI resource and report periods are the same.

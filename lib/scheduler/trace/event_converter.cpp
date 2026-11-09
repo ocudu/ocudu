@@ -382,8 +382,8 @@ static void convert_fb_to_ul_bwp(ul_bwp_configuration& ul_bwp, const fbs::UlBwp&
   if (fb.pucch_resources() != nullptr) {
     uint16_t cell_res_idx = 0;
     for (const fbs::PucchResource* fb_res : *fb.pucch_resources()) {
-      pucch_resource res;
-      convert_fb_to_pucch_resource(res, *fb_res, pucch_res_id_t{cell_res_idx});
+      pucch_resource res{.res_id = pucch_res_id_t::from_idx(cell_res_idx)};
+      convert_fb_to_pucch_resource(res, *fb_res, res.res_id);
       ul_bwp.pucch_resources.push_back(res);
       ++cell_res_idx;
     }
@@ -548,7 +548,7 @@ void schedtrace::convert_fb_to_bwp_cfg(bwp_configuration& bwp, const fbs::BwpCon
 flatbuffers::Offset<fbs::Pucch> schedtrace::convert_pucch_info_to_fb(flatbuffers::FlatBufferBuilder& fbb,
                                                                      const pucch_info&               pucch)
 {
-  const uint16_t            res_idx     = pucch.res->res_id.idx;
+  const uint16_t            res_idx     = pucch.res->res_id.value();
   fbs::PucchTxParams        params_type = fbs::PucchTxParams::NONE;
   flatbuffers::Offset<void> params;
   if (const auto* f0 = std::get_if<pucch_info::f0_config>(&pucch.format_params)) {

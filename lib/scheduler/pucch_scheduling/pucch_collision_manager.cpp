@@ -19,23 +19,23 @@
 using namespace ocudu;
 using namespace ocudu::detail;
 
-// Returns the pucch_resource associated to a given column in the collision/multiplexing region matrices.
-static const pucch_resource& get_res(const cell_pucch_res_config& cell_resources, unsigned res_idx)
+// Returns the pucch_resource with the given ID.
+static const pucch_resource& get_res(const cell_pucch_res_config& cell_resources, pucch_res_id_t res_id)
 {
-  if (res_idx < pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES) {
-    return cell_resources.common[res_idx];
+  if (res_id.is_cmn()) {
+    return cell_resources.common[res_id.r_pucch()];
   }
-  return cell_resources.dedicated[res_idx - pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES];
+  return cell_resources.dedicated[res_id.ded_id()];
 }
 
 /// Returns the index of a given PUCCH resource in the collision/multiplexing region matrices.
 static unsigned get_res_idx(const cell_pucch_res_config& cell_resources, const pucch_res_id_t& res_id)
 {
-  ocudu_assert(res_id.idx < cell_resources.nof_total_res(),
+  ocudu_assert(res_id.value() < cell_resources.nof_total_res(),
                "PUCCH resource ID {} exceeds the number of cell resources ({})",
-               res_id.idx,
+               res_id,
                cell_resources.nof_total_res());
-  return res_id.idx;
+  return res_id.value();
 }
 
 // Computes a grant_info for one hop of a pucch_resource, for use with the UL resource grid.
@@ -66,7 +66,8 @@ collision_matrix make_collision_matrix(const cell_pucch_res_config& cell_resourc
 
     // Note: The collision matrix is symmetric.
     for (size_t j = i + 1; j != cell_resources.nof_total_res(); ++j) {
-      if (pucch_resources_collide(get_res(cell_resources, i), get_res(cell_resources, j))) {
+      if (pucch_resources_collide(get_res(cell_resources, pucch_res_id_t::from_idx(i)),
+                                  get_res(cell_resources, pucch_res_id_t::from_idx(j)))) {
         matrix[i].set(j);
         matrix[j].set(i);
       }
@@ -96,7 +97,7 @@ mux_regions_matrix make_mux_regions_matrix(const cell_pucch_res_config& cell_res
   static_vector<mux_region, pucch_constants::MAX_NOF_TOT_CELL_RESOURCES> tmp_regions;
 
   for (size_t i = 0; i != cell_resources.nof_total_res(); ++i) {
-    const auto& res = get_res(cell_resources, i);
+    const auto& res = get_res(cell_resources, pucch_res_id_t::from_idx(i));
 
     // Find if the resource belongs to an existing multiplexing region.
     auto* region_it = std::find_if(tmp_regions.begin(), tmp_regions.end(), [&res](const mux_region& region) {
