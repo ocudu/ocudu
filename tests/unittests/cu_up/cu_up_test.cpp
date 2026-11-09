@@ -280,6 +280,36 @@ protected:
     cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
   }
 
+  void initiate_dl_desired_buffer_size(int upf_sock)
+  {
+    // We send a UL message to set desired buffer size in DL bearer
+    // UL message 1
+    nru_ul_message nru_msg1     = {};
+    const uint8_t  t_pdu_arr1[] = {
+        0x80, 0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0xe8, 0x83, 0x40, 0x00, 0x40, 0x01, 0xfa, 0x00, 0xac, 0x10, 0x00,
+        0x03, 0xac, 0x10, 0x00, 0x01, 0x08, 0x00, 0x2c, 0xbe, 0xb4, 0xa4, 0x00, 0x01, 0xd3, 0x45, 0x61, 0x63, 0x00,
+        0x00, 0x00, 0x00, 0x1a, 0x20, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+        0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+        0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
+    span<const uint8_t> t_pdu_span1  = {t_pdu_arr1};
+    byte_buffer         t_pdu_buf1   = byte_buffer::create(t_pdu_span1).value();
+    nru_msg1.t_pdu                   = byte_buffer_chain::create(std::move(t_pdu_buf1)).value();
+    nru_dl_data_delivery_status ddds = {};
+    ddds.desired_buffer_size_for_drb = 1 << 20; // 1MBi RLC SDU size
+    nru_msg1.data_delivery_status    = ddds;
+
+    f1u_bearer.handle_pdu(std::move(nru_msg1));
+
+    test_logger.info("Waiting UL PDU. This is required to update DDDS");
+
+    // We wait here for the UL PDU to arrive, to make sure the DDDS has been processed.
+    // receive message 1
+    std::array<uint8_t, 128> rx_buf;
+    ::recv(upf_sock, rx_buf.data(), rx_buf.size(), 0);
+
+    test_logger.info("Processed UL PDU. DDDS is updated");
+  }
+
   void create_drb_with_dl_forward_info()
   {
     // Generate BearerContextSetupRequest
@@ -481,31 +511,7 @@ TEST_F(cu_up_test, dl_data_flow)
 
   // We send a UL message to set desired buffer size in DL bearer
   // UL message 1
-  nru_ul_message nru_msg1     = {};
-  const uint8_t  t_pdu_arr1[] = {
-      0x80, 0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0xe8, 0x83, 0x40, 0x00, 0x40, 0x01, 0xfa, 0x00, 0xac, 0x10, 0x00,
-      0x03, 0xac, 0x10, 0x00, 0x01, 0x08, 0x00, 0x2c, 0xbe, 0xb4, 0xa4, 0x00, 0x01, 0xd3, 0x45, 0x61, 0x63, 0x00,
-      0x00, 0x00, 0x00, 0x1a, 0x20, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
-      0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
-      0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
-  span<const uint8_t> t_pdu_span1  = {t_pdu_arr1};
-  byte_buffer         t_pdu_buf1   = byte_buffer::create(t_pdu_span1).value();
-  nru_msg1.t_pdu                   = byte_buffer_chain::create(std::move(t_pdu_buf1)).value();
-  nru_dl_data_delivery_status ddds = {};
-  ddds.desired_buffer_size_for_drb = 1 << 20; // 1MBi RLC SDU size
-  nru_msg1.data_delivery_status    = ddds;
-
-  f1u_bearer.handle_pdu(std::move(nru_msg1));
-
-  test_logger.info("Waiting UL PDU. This is required to update DDDS");
-
-  // We wait here for the UL PDU to arrive, to make sure the DDDS has been processed.
-  // receive message 1
-  std::array<uint8_t, 128> rx_buf;
-  int                      ret;
-  ret = ::recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
-
-  test_logger.info("Processed UL PDU. DDDS is updated");
+  initiate_dl_desired_buffer_size(upf_info.sock_fd);
 
   // Now that the disered buffer size is updated, we push DL PDUs
   sockaddr_in cu_up_addr;
@@ -523,7 +529,8 @@ TEST_F(cu_up_test, dl_data_flow)
       0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
   // send message 1
-  ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
+  int ret =
+      sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << ngu_cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
                     << ::strerror(errno);
@@ -536,16 +543,18 @@ TEST_F(cu_up_test, dl_data_flow)
   ::close(upf_info.sock_fd);
 
   // check reception of message 1
-  nru_dl_message          sdu1 = f1u_bearer.wait_tx_sdu();
+  std::optional<nru_dl_message> sdu1 = f1u_bearer.wait_tx_sdu();
+  ASSERT_TRUE(sdu1.has_value());
   std::optional<uint32_t> sdu1_pdcp_sn =
-      get_pdcp_sn(sdu1.t_pdu, pdcp_sn_size::size18bits, /* is_srb = */ false, test_logger);
+      get_pdcp_sn(sdu1->t_pdu, pdcp_sn_size::size18bits, /* is_srb = */ false, test_logger);
   ASSERT_TRUE(sdu1_pdcp_sn.has_value());
   EXPECT_EQ(sdu1_pdcp_sn.value(), 0);
 
   // check reception of message 2
-  nru_dl_message          sdu2 = f1u_bearer.wait_tx_sdu();
+  std::optional<nru_dl_message> sdu2 = f1u_bearer.wait_tx_sdu();
+  ASSERT_TRUE(sdu2.has_value());
   std::optional<uint32_t> sdu2_pdcp_sn =
-      get_pdcp_sn(sdu2.t_pdu, pdcp_sn_size::size18bits, /* is_srb = */ false, test_logger);
+      get_pdcp_sn(sdu2->t_pdu, pdcp_sn_size::size18bits, /* is_srb = */ false, test_logger);
   ASSERT_TRUE(sdu2_pdcp_sn.has_value());
   EXPECT_EQ(sdu2_pdcp_sn.value(), 1);
 
@@ -673,14 +682,17 @@ TEST_F(cu_up_test, dl_data_forwarding)
   // Create DRB
   create_drb_with_dl_forward_info();
 
+  // We send a UL message to set desired buffer size in DL bearer
+  initiate_dl_desired_buffer_size(upf_info.sock_fd);
+
   // Send GTP-U DL forward message. DL TEID 2 to go to forward tunnel.
   const uint8_t gtpu_ping_vec[] = {
-      0x34, 0xff, 0x00, 0x5c, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x85, 0x01, 0x00, 0x01, 0x00, 0x45,
-      0x00, 0x00, 0x54, 0x9b, 0xfb, 0x00, 0x00, 0x40, 0x01, 0x56, 0x5a, 0xc0, 0xa8, 0x04, 0x01, 0xc0, 0xa8,
-      0x03, 0x02, 0x00, 0x00, 0xb8, 0xc0, 0x00, 0x02, 0x00, 0x01, 0x5d, 0x26, 0x77, 0x64, 0x00, 0x00, 0x00,
-      0x00, 0xb1, 0xde, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
-      0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
+      0x34, 0xff, 0x00, 0x60, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, 0x02, 0x01, 0x23, 0x45, 0x00, 0x00,
+      0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0x9b, 0xfb, 0x00, 0x00, 0x40, 0x01, 0x56, 0x5a, 0xc0, 0xa8, 0x04, 0x01,
+      0xc0, 0xa8, 0x03, 0x02, 0x00, 0x00, 0xb8, 0xc0, 0x00, 0x02, 0x00, 0x01, 0x5d, 0x26, 0x77, 0x64, 0x00, 0x00,
+      0x00, 0x00, 0xb1, 0xde, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+      0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
   // Now that the disered buffer size is updated, we push DL PDUs
   sockaddr_in xnu_cu_up_addr;
@@ -688,14 +700,18 @@ TEST_F(cu_up_test, dl_data_forwarding)
   xnu_cu_up_addr.sin_port        = htons(cu_up->get_xnu_bind_port().value());
   xnu_cu_up_addr.sin_addr.s_addr = inet_addr(xnu_cu_up_udp_cfg.bind_address.c_str());
 
-  test_logger.info("Sending data to XN-U!!!!!!");
-
   int ret;
   ret = sendto(
       upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&xnu_cu_up_addr, sizeof(xnu_cu_up_addr));
   ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
                     << ngu_cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
                     << ::strerror(errno);
+
+  // Check forwarded PDU SN and contents.
+  // TODO for now the PDCP adapters are disconnected, as such we check only that nothing was received.
+  std::optional<nru_dl_message> fwd_pdu = f1u_bearer.wait_tx_sdu();
+  ASSERT_FALSE(fwd_pdu.has_value());
+
   ::close(upf_info.sock_fd);
 }
 

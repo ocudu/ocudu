@@ -93,6 +93,9 @@ struct drb_context {
   // Adapter PDCP-> GTP-U forwarding tunnel.
   pdcp_gtpu_forwarding_adapter pdcp_to_gtpu_forwarding_adapter;
 
+  // Adapter GTP-U forwarding tunnel -> PDCP.
+  gtpu_forwarding_pdcp_adapter gtpu_forwarding_to_pdcp_adapter;
+
   // Adapter PDCP->CU-UP Manager.
   // Used for control events.
   pdcp_rx_cu_up_mngr_adapter pdcp_rx_to_cu_up_mngr_adapter;

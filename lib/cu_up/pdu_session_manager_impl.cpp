@@ -467,6 +467,11 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
       drb_result.data_forwarding_info.emplace();
       drb_result.data_forwarding_info->dl_data_forwarding = new_drb->ingress_dl_data_forwarding_tnl_info;
 
+      // TODO TX GTP-U tunnel should only be created if UL forwarding is enabled.
+      std::string xnu_addr;
+      if (not xnu_session_mngr->get_next_xnu_gateway().get_bind_address(xnu_addr)) {
+        logger.log_error("Could not get Xn-U bind address for target forwarding");
+      }
       /// Create GTP-U tunnel for DL data forwarding.
       gtpu_tunnel_pdcp_config fwd_cfg = {
           .rx = {.lif         = gtpu_logical_interface::xnu,
@@ -474,15 +479,18 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                  .pdcp_sn_len = new_drb->pdcp->get_rx_upper_control_interface().get_sn_size()},
           .tx = {.lif         = gtpu_logical_interface::xnu,
                  .peer_teid   = {},
-                 .peer_addr   = {},
+                 .peer_addr   = xnu_addr,
                  .peer_port   = GTPU_PORT,
                  .pdcp_sn_len = new_drb->pdcp->get_tx_upper_control_interface().get_sn_size()}};
-      auto gtpu_fwd_cfg        = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
-                                                                   .cfg       = fwd_cfg,
-                                                                   .gtpu_pcap = &xnu_gtpu_pcap,
-                                                                   .rx_lower  = nullptr, // TODO add adapter.
-                                                                   .tx_upper  = nullptr};
+      auto gtpu_fwd_cfg = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
+                                                            .cfg       = fwd_cfg,
+                                                            .gtpu_pcap = &xnu_gtpu_pcap,
+                                                            .rx_lower  = &new_drb->gtpu_forwarding_to_pdcp_adapter,
+                                                            .tx_upper  = nullptr};
       new_drb->gtpu_fwd_target = create_gtpu_tunnel_pdcp(gtpu_fwd_cfg);
+
+      // Connect PDCP to
+      new_drb->gtpu_forwarding_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
 
       expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
           xnu_gtpu_rx_demux.add_tunnel(new_drb->ingress_dl_data_forwarding_tnl_info->gtp_teid,

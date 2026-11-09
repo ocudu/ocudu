@@ -191,7 +191,7 @@ public:
     tx_sdu_cv.notify_one();
   }
 
-  nru_dl_message wait_tx_sdu()
+  std::optional<nru_dl_message> wait_tx_sdu()
   {
     std::unique_lock<std::mutex> lock(tx_sdu_mutex);
     if (tx_sdu_cv.wait_for(lock, default_wait_timeout, [&]() { return !tx_sdu_list.empty(); })) {
@@ -201,8 +201,7 @@ public:
       return sdu;
     }
     // timeout
-    nru_dl_message sdu = {};
-    return sdu;
+    return std::nullopt;
   }
 
   bool have_tx_sdu()

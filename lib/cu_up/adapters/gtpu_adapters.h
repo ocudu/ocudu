@@ -7,8 +7,10 @@
 
 #include "ocudu/gateways/udp_network_gateway.h"
 #include "ocudu/gtpu/gtpu_tunnel_common_tx.h"
+#include "ocudu/gtpu/gtpu_tunnel_pdcp_rx.h"
 #include "ocudu/gtpu/gtpu_tunnel_psup_rx.h"
 #include "ocudu/ocudulog/ocudulog.h"
+#include "ocudu/pdcp/pdcp_tx.h"
 #include "ocudu/sdap/sdap.h"
 
 namespace ocudu::ocuup {
@@ -62,6 +64,29 @@ public:
 
 private:
   sdap_tx_sdu_handler* sdap_handler = nullptr;
+};
+
+/// Adapter between GTP-U and PDCP. Used for forwarding received DL forwarded data.
+class gtpu_forwarding_pdcp_adapter : public gtpu_tunnel_pdcp_rx_lower_layer_notifier
+{
+public:
+  gtpu_forwarding_pdcp_adapter()           = default;
+  ~gtpu_forwarding_pdcp_adapter() override = default;
+
+  void connect_pdcp(pdcp_tx_upper_data_interface& pdcp_handler_) { pdcp_handler = &pdcp_handler_; }
+
+  // See interface for documentation.
+  void on_new_sdu(byte_buffer tpdu, uint32_t pdcp_pdu_number) override
+  {
+    if (!pdcp_handler) {
+      ocudulog::fetch_basic_logger("GTPU", false).debug("Dropped DL forwarded GTP-U SDU. PDCP DRB not connected.");
+      return;
+    }
+    // TODO. Pass PDU to PDCP.
+  }
+
+private:
+  pdcp_tx_upper_data_interface* pdcp_handler = nullptr;
 };
 
 } // namespace ocudu::ocuup
