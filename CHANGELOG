@@ -6,6 +6,10 @@ SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 Change Log for Releases
 =======================
 
+## Unreleased
+- CMake rejects a non-empty DPDK_DIR when DPDK is missing from that prefix or pkg-config resolves a different prefix,
+  even when DPDK is optional. Unset DPDK_DIR to use automatic discovery. This applies to local and CI builds on all OSes.
+
 ## 26.10
 - Full compliance with ORAN TIFG End-to-End Test Specifications (validated by VALOR labs)
 - Full compliance with ORAN WG11 Security Test Specifications (validated by VALOR labs)

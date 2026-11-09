@@ -11,7 +11,7 @@ main() {
     # Check number of args
     if [ $# -lt 1 ] || [ $# -gt 3 ]; then
         echo >&2 "Illegal number of parameters"
-        echo >&2 "Run like this: \"./build_rohc.sh <rohc_version> [<arch> [<ncores>]]\" where arch is any gcc/clang compatible -march and ncores could be any number or empty for all"
+        echo >&2 "Run like this: \"./build_rohc.sh <rohc_version> [<arch> [<ncores>]]\" where arch is a gcc/clang architecture or CPU target and ncores could be any number or empty for all"
         exit 1
     fi
 
@@ -48,7 +48,15 @@ main() {
     pushd "${rohc_src}"
     export PATH="/usr/bin:/bin:${PATH}"
     ./autogen.sh
-    ./configure --prefix=/opt/rohc
+    local arch_flag="-march=${arch}"
+    case "${arch}" in
+        neoverse-* | cortex-* | native)
+            if [[ "$(uname -m)" == "aarch64" ]]; then
+                arch_flag="-mcpu=${arch}"
+            fi
+            ;;
+    esac
+    CFLAGS="${CFLAGS:--g -O2} ${arch_flag}" ./configure --prefix=/opt/rohc
     make all -j"${ncores}"
     make install
     ldconfig

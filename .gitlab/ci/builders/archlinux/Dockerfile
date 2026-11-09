@@ -25,7 +25,7 @@ RUN install_dependencies.sh && pacman -Syu --noconfirm \
   python-pip
 RUN pip install --break-system-packages gcovr==5.0
 
-ADD builder.sh get_available_cores.sh /usr/local/bin
+ADD builder.sh dependency_runtime_paths.sh get_available_cores.sh /usr/local/bin
 RUN chmod +x /usr/local/bin/builder.sh /usr/local/bin/get_available_cores.sh
 
 RUN python -m venv /usr/local/builder_tools

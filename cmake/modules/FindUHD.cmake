@@ -5,7 +5,18 @@
 
 FIND_PACKAGE(PkgConfig REQUIRED)
 
-#PKG_CHECK_MODULES(UHD uhd)
+# Changing the requested prefix must invalidate discovery from an earlier configure.
+if(NOT "${_UHD_LAST_DIR}" STREQUAL "$ENV{UHD_DIR}")
+  unset(UHD_INCLUDE_DIRS CACHE)
+  unset(UHD_LIBRARIES CACHE)
+  unset(UHD_INCLUDE_DIRS)
+  unset(UHD_LIBRARIES)
+  unset(UHD_FOUND)
+  unset(UHD_VERSION)
+  unset(UHD_LIBRARY_DIR)
+endif()
+set(_UHD_LAST_DIR "$ENV{UHD_DIR}" CACHE INTERNAL "Last requested UHD prefix" FORCE)
+
 IF(NOT UHD_FOUND)
 
 if(NOT "$ENV{UHD_DIR}" STREQUAL "")

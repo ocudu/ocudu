@@ -7,6 +7,8 @@
 
 set -eo pipefail
 
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/dependency_runtime_paths.sh"
+
 # Print help and syntax
 print_help() {
     echo "Script for building OCUDU"
@@ -146,7 +148,6 @@ cd "$FOLDER" || exit
 
 # Setup ROHC
 export ROHC_DIR="/opt/rohc"
-export LD_LIBRARY_PATH="${ROHC_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 echo "ROHC_DIR set to $ROHC_DIR"
 
 # Setup UHD
@@ -158,7 +159,6 @@ if [[ -n "$UHD_VERSION" ]]; then
     else
         [ ! -d "/opt/uhd/$UHD_VERSION" ] && echo "UHD version not found" && exit 1
         export UHD_DIR="/opt/uhd/$UHD_VERSION"
-        export LD_LIBRARY_PATH="${UHD_DIR}/lib64:${UHD_DIR}/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
         echo "UHD_DIR set to $UHD_DIR"
     fi
 fi
@@ -179,7 +179,6 @@ if [[ -n "$DPDK_VERSION" ]]; then
         fi
     fi
     export DPDK_DIR="/opt/dpdk/$DPDK_VERSION"
-    export LD_LIBRARY_PATH="${DPDK_DIR}/lib64:${DPDK_DIR}/lib:${DPDK_DIR}/lib/x86_64-linux-gnu:${DPDK_DIR}/lib/aarch64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     echo "DPDK_DIR set to $DPDK_DIR"
 fi
 
@@ -189,6 +188,8 @@ if [[ "$ARCH" == "aarch64" ]]; then
         export ARMPL_DIR
     fi
 fi
+
+setup_dependency_runtime_paths "$ROHC_DIR" "${UHD_DIR:-}" "${DPDK_DIR:-}" "${ARMPL_DIR:-}"
 
 # Setup cache dir
 mkdir -p "$CACHE_FOLDER"

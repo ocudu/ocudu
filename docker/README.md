@@ -208,6 +208,17 @@ directory and CMake rejects missing DPDK or a mismatched pkg-config prefix. An e
 installed RPM or a versioned artifact. Bump `DOCKER_BUILDER_VERSION` in `.gitlab/ci/builders/version.yml` when changing
 the builder image or its dependency set.
 
+Registry keys include the OS, architecture, dependency version and DPDK ISA suffix, but do not include build flags or
+script contents. A builder image version bump does not invalidate these tarballs. To rebuild a dependency after a script
+or flag change, open **Deploy > Package registry** in the project running the producer pipeline and delete the matching
+package version (for example `rohc` version `fedora-44-amd64-2.3.1`). Rerun its producer job, then rebuild and publish
+the builder image. The producer rebuilds only when the registry returns HTTP 404. Ubuntu producer jobs also reuse
+existing packages; inspect their URLs in `.gitlab/ci/builders/.gitlab-ci.yml` for the matching keys.
+
+`build_rohc.sh` applies the requested architecture to `CFLAGS`. The Fedora ROHC producer targets `x86-64-v3` for both
+Fedora lanes. Invalidate `rohc/fedora-44-amd64-2.3.1` when adopting this flag handling so an older tarball is not
+reused.
+
 ### Building on UBI 10
 
 Use a UBI 10 base such as **`registry.access.redhat.com/ubi10:latest`** (or **`registry.redhat.io/ubi10:latest`** after
