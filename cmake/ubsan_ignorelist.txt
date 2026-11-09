@@ -1,0 +1,5 @@
+# Clang UBSAN ignore list, passed through -fsanitize-ignorelist when ENABLE_UBSAN is set.
+
+# Eigen 3.4.0 broadcasts a std::complex<float> on AVX512 by dereferencing it as a double, which is only 4-byte aligned.
+[alignment]
+src:*/eigen3/Eigen/*

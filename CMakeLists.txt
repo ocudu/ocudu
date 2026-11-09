@@ -243,6 +243,9 @@ endif (ENABLE_TSAN)
 
 if (ENABLE_UBSAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-sanitize=vptr -fno-sanitize-recover=undefined")
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/cmake/ubsan_ignorelist.txt")
+    endif ()
     add_definitions(-DENABLE_UBSAN)
 endif ()
 
