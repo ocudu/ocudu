@@ -73,7 +73,7 @@ public:
       std::generate(buffer_view.begin(), buffer_view.end(), [this]() {
         unsigned index    = random_data_index;
         random_data_index = (random_data_index + 1) % random_data.size();
-        return to_ci16(cf_t(random_data[index].real() * INT16_MAX, random_data[index].imag() * INT16_MAX));
+        return random_data[index];
       });
     }
 
@@ -103,7 +103,7 @@ private:
   baseband_gateway_buffer_pool buffer_pool;
 
   unsigned              random_data_index;
-  std::vector<cf_t>     random_data;
+  std::vector<ci16_t>   random_data;
   std::vector<entry_t>  entries;
   std::vector<unsigned> frame_slots_to_process;
 };
