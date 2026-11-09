@@ -6,6 +6,7 @@
 #include "ocudu/cuda/adt/cuda_stream.h"
 #include "ocudu/cuda/adt/device_vector.h"
 #include "ocudu/cuda/phy/upper/channel_processors/pdsch/transport_block_encode.h"
+#include "ocudu/ran/sch/sch_segmentation.h"
 #include <cuda_runtime.h>
 #include <gtest/gtest.h>
 #include <numeric>
@@ -284,4 +285,38 @@ TEST_F(transport_block_encode_kernel_test, a_code_block_count_from_the_caller_ca
   ASSERT_TRUE(gpu.configure(config).has_value());
   EXPECT_EQ(gpu.get_nof_codeblocks(), 4U);
   EXPECT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), 240U);
+}
+
+TEST_F(transport_block_encode_kernel_test, the_geometry_matches_the_segmentation_of_the_generic_path)
+{
+  // Transport block sizes from the smallest the standard allows up to the largest, at the rates a
+  // downlink grant reaches. A receiver derives the geometry from the transport block size and the
+  // rate alone, so a geometry the encoder derives differently is one that receiver cannot decode.
+  const std::vector<unsigned> sizes = {56,   120,   184,   280,   408,   552,    696,   888,  1160,
+                                       1480, 1864,  2280,  2792,  3496,  3824,   3840,  4096, 6272,
+                                       8192, 12296, 20000, 25600, 51024, 102048, 204800};
+  const std::vector<float>    rates = {0.25F, 0.5F, 0.85F};
+
+  for (float rate : rates) {
+    for (unsigned tbs : sizes) {
+      cuda::transport_block_encoder_config config = {};
+      config.nof_tb_bits                          = tbs;
+      config.nof_layers                           = 1;
+      config.modulation                           = modulation_scheme::QPSK;
+      config.nof_allocated_bits                   = ((static_cast<unsigned>(tbs / rate) + 15U) / 16U) * 16U;
+      config.code_rate                            = rate;
+      config.enable_scrambling                    = false;
+
+      cuda::cuda_result configured = gpu.configure(config);
+      ASSERT_TRUE(configured.has_value()) << "rate " << rate << ", size " << tbs << ": " << configured.error();
+
+      ldpc_base_graph_type base_graph     = get_ldpc_base_graph(rate, units::bits(tbs));
+      unsigned             nof_codeblocks = compute_nof_codeblocks(units::bits(tbs), base_graph);
+      unsigned             lifting_size   = compute_lifting_size(units::bits(tbs), base_graph, nof_codeblocks);
+
+      EXPECT_EQ(gpu.get_base_graph(), base_graph) << "rate " << rate << ", size " << tbs;
+      EXPECT_EQ(gpu.get_nof_codeblocks(), nof_codeblocks) << "rate " << rate << ", size " << tbs;
+      EXPECT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), lifting_size) << "rate " << rate << ", size " << tbs;
+    }
+  }
 }

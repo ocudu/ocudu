@@ -14,6 +14,7 @@
 #include "ocudu/cuda/phy/upper/channel_coding/ldpc/ldpc_rate_matching.h"
 #include "ocudu/cuda/phy/upper/channel_processors/pdsch/transport_block_encode.h"
 #include "ocudu/cuda/phy/upper/sequence_generators/scrambling.h"
+#include "ocudu/ran/sch/sch_segmentation.h"
 #include <cstdio>
 #include <cstring>
 #include <cuda_fp16.h>
@@ -26,10 +27,8 @@ namespace cuda {
 // Shapes of the two base graphs, per TS 38.212, Section 5.3.2. The LDPC encoder carries the same
 // numbers for its own kernels; they are repeated here rather than shared so that neither file
 // reaches into the other's translation unit.
-#define NR_LDPC_BG1_INFO_NODES 22
 #define NR_LDPC_BG1_PARITY_NODES 46
 #define NR_LDPC_BG1_UNPUNCTURED_VARS 66
-#define NR_LDPC_BG2_INFO_NODES 10
 #define NR_LDPC_BG2_PARITY_NODES 42
 #define NR_LDPC_BG2_UNPUNCTURED_VARS 50
 
@@ -39,15 +38,6 @@ namespace cuda {
 #define NR_TB_CRC24A_BITS 24
 #define NR_CB_CRC24B_BITS 24
 #define NR_TB_CRC16_BITS 16
-#define NR_LDPC_MAX_CB_INFO_BITS_BG2 3840
-#define NR_LDPC_MAX_LIFTING_SIZE 384
-
-// Lifting sizes the standard defines, in increasing order, per TS 38.212, Table 5.3.2-1.
-#define NR_LDPC_NUM_LIFTING_SIZES 51
-static const int NR_LDPC_LIFTING_SIZES[NR_LDPC_NUM_LIFTING_SIZES] = {
-    2,  3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  18,  20,
-    22, 24,  26,  28,  30,  32,  36,  40,  44,  48,  52,  56,  60,  64,  72,  80,  88,
-    96, 104, 112, 120, 128, 144, 160, 176, 192, 208, 224, 240, 256, 288, 320, 352, 384};
 
 // Shape of the code the transport block segments into, derived once per configuration.
 struct nr_ldpc_config_t {
@@ -128,52 +118,6 @@ static int get_lifting_set_index(int Z)
 // Transport Block and LDPC Geometry
 // ============================================================================
 
-static int nr_ldpc_get_Kb(int tbs, int bg)
-{
-  if (bg == 1) {
-    // 22
-    return NR_LDPC_BG1_INFO_NODES;
-  } else {
-    // BG2: Per 3GPP TS 38.212, K_b is always 10 for BG2
-    // The old implementation had incorrect TBS-dependent logic that caused
-    // wrong lifting sizes for TBS values like 280 (would select Z=40 instead of Z=30)
-    // 10
-    return NR_LDPC_BG2_INFO_NODES;
-  }
-}
-
-static int nr_ldpc_select_base_graph(int tbs, float rate)
-{
-  // Per TS 38.212 Section 7.2.2
-  // BG2 is selected if any of these conditions are met:
-  //   - A ≤ 292
-  //   - A ≤ 3824 AND R ≤ 0.67
-  //   - R ≤ 0.25
-  // Note: Large TBS can still use BG2 with multiple code blocks!
-  // Note: Use small epsilon for rate comparison to handle float precision
-  //       (TBS is derived from target rate, so TBS/G may slightly exceed target)
-  const float rate_epsilon = 0.001f;
-  bool        cond1        = (tbs <= 292);
-  bool        cond2        = (tbs <= 3824 && rate <= (0.67f + rate_epsilon));
-  bool        cond3        = (rate <= (0.25f + rate_epsilon));
-  int         bg           = (cond1 || cond2 || cond3) ? 2 : 1;
-  return bg;
-}
-
-static int nr_ldpc_compute_lifting_size(int K, int Kb)
-{
-  // Find minimum Z such that K <= Kb * Z
-  // Z must be from the valid lifting size set
-  int min_Z = (K + Kb - 1) / Kb;
-
-  for (int i = 0; i < NR_LDPC_NUM_LIFTING_SIZES; i++) {
-    if (NR_LDPC_LIFTING_SIZES[i] >= min_Z) {
-      return NR_LDPC_LIFTING_SIZES[i];
-    }
-  }
-  return NR_LDPC_MAX_LIFTING_SIZE;
-}
-
 /// \brief Values the segmentation of the caller chose, for the encoder to derive the rest from.
 ///
 /// A base graph, lifting size or code block count of zero asks the encoder to derive that value. A
@@ -186,115 +130,69 @@ struct nr_geometry_overrides {
 };
 
 static cuda_result
-nr_ldpc_init_config(nr_ldpc_config_t* cfg, int cb_info_bits, float rate, const nr_geometry_overrides& overrides)
-{
-  if (!cfg)
-    return make_unexpected(std::string("The transport block encoding call carries an invalid configuration"));
-
-  // cb_info_bits is the code block size including any CRC already attached
-  // (TB CRC for single CB, or TB portion + CB CRC for multi-CB)
-  // We do NOT add additional CRC here - that's handled at the TB layer
-
-  // Select base graph based on the CB size
-  cfg->base_graph = (overrides.base_graph > 0) ? overrides.base_graph : nr_ldpc_select_base_graph(cb_info_bits, rate);
-
-  // Get Kb for lifting size calculation (variable: 6, 8, 9, or 10 for BG2)
-  int Kb_for_Z = nr_ldpc_get_Kb(cb_info_bits, cfg->base_graph);
-
-  // K is the code block size (already includes CRC from TB layer)
-  int K = cb_info_bits;
-
-  // Compute lifting size using the variable Kb
-  cfg->lifting_size = (overrides.lifting_size > 0) ? overrides.lifting_size : nr_ldpc_compute_lifting_size(K, Kb_for_Z);
-  cfg->lifting_set_index = get_lifting_set_index(cfg->lifting_size);
-
-  if (cfg->lifting_set_index < 0) {
-    return make_unexpected(std::string("The lifting size is not one the standard defines"));
-  }
-
-  // Per 3GPP TS 38.212, the LDPC encoder ALWAYS uses the full Kb columns:
-  // - BG1: Kb = 22 (K_b = 22 systematic columns)
-  // - BG2: Kb = 10 (K_b = 10 systematic columns)
-  // The filler bits fill the gap between actual info bits and Kb * Z.
-  int Kb_full = (cfg->base_graph == 1) ? NR_LDPC_BG1_INFO_NODES : NR_LDPC_BG2_INFO_NODES;
-
-  // Information bits K' = Kb_full * Z (this is the message length for LDPC encoding)
-  int K_prime = Kb_full * cfg->lifting_size;
-
-  // Filler bits = K' - actual info bits. A count the caller gives is taken as given, zero
-  // included. A code block that fills K' exactly leaves none, and reading that as a request to
-  // derive one encodes a different length.
-  cfg->num_filler_bits = (overrides.num_filler_bits >= 0) ? overrides.num_filler_bits : (K_prime - K);
-  cfg->num_info_bits   = K_prime - cfg->num_filler_bits;
-
-  // Number of parity bits (N - K)
-  int N = (cfg->base_graph == 1) ? NR_LDPC_BG1_UNPUNCTURED_VARS * cfg->lifting_size
-                                 : NR_LDPC_BG2_UNPUNCTURED_VARS * cfg->lifting_size;
-
-  cfg->num_codeword_bits = N;
-  cfg->num_parity_bits   = N - K_prime;
-
-  // Default settings
-  // Always puncture first 2*Z bits
-  cfg->puncture           = true;
-  cfg->max_parity_nodes   = (cfg->base_graph == 1) ? NR_LDPC_BG1_PARITY_NODES : NR_LDPC_BG2_PARITY_NODES;
-  cfg->redundancy_version = 0;
-
-  return {};
-}
-
-static cuda_result
 nr_tb_init_config(nr_tb_config_t* tb_cfg, int tbs, float rate, const nr_geometry_overrides& overrides)
 {
   if (!tb_cfg)
     return make_unexpected(std::string("The transport block encoding call carries an invalid configuration"));
 
-  tb_cfg->tb_size_bits = tbs;
+  // The segmentation follows get_sch_segmentation_info(), so that a transport block the GPU
+  // encodes and one the CPU encodes reach a receiver with the same geometry.
+  units::bits tb_bits(static_cast<unsigned>(tbs));
+  units::bits tb_crc_bits = compute_tb_crc_size(tb_bits);
 
-  // TB CRC size (16 or 24 bits)
-  tb_cfg->tb_crc_bits = (tbs > 3824) ? NR_TB_CRC24A_BITS : NR_TB_CRC16_BITS;
+  ldpc_base_graph_type base_graph =
+      (overrides.base_graph > 0) ? ((overrides.base_graph == 1) ? ldpc_base_graph_type::BG1 : ldpc_base_graph_type::BG2)
+                                 : get_ldpc_base_graph(rate, tb_bits);
 
-  // B = A + L (TB + CRC)
-  int B = tbs + tb_cfg->tb_crc_bits;
+  int num_code_blocks = (overrides.num_code_blocks > 0) ? overrides.num_code_blocks
+                                                        : static_cast<int>(compute_nof_codeblocks(tb_bits, base_graph));
 
-  // Maximum code block size depends on base graph
-  int bg       = (overrides.base_graph > 0) ? overrides.base_graph : nr_ldpc_select_base_graph(tbs, rate);
-  int K_cb_max = (bg == 1) ? NR_LDPC_MAX_CB_INFO_BITS : NR_LDPC_MAX_CB_INFO_BITS_BG2;
+  int lifting_size =
+      (overrides.lifting_size > 0)
+          ? overrides.lifting_size
+          : static_cast<int>(compute_lifting_size(tb_bits, base_graph, static_cast<unsigned>(num_code_blocks)));
 
-  // Code block segmentation
-  int C = overrides.num_code_blocks;
-  if (C <= 0) {
-    // Add segment-level CRC
-    int B_prime = B + 24;
-    C           = (B <= K_cb_max) ? 1 : ((B_prime + K_cb_max - 1 - 24) / (K_cb_max - 24));
+  tb_cfg->tb_size_bits    = tbs;
+  tb_cfg->tb_crc_bits     = static_cast<int>(tb_crc_bits.value());
+  tb_cfg->num_code_blocks = num_code_blocks;
+  tb_cfg->cb_crc_bits     = (num_code_blocks > 1) ? NR_CB_CRC24B_BITS : 0;
+
+  // Bits of the transport block a code block carries, with the CRC that block holds.
+  int payload_bits_per_cb = static_cast<int>((tb_bits + tb_crc_bits).value()) / num_code_blocks;
+  payload_bits_per_cb += tb_cfg->cb_crc_bits;
+
+  nr_ldpc_config_t* ldpc_cfg  = &tb_cfg->ldpc_cfg;
+  ldpc_cfg->base_graph        = (base_graph == ldpc_base_graph_type::BG1) ? 1 : 2;
+  ldpc_cfg->lifting_size      = lifting_size;
+  ldpc_cfg->lifting_set_index = get_lifting_set_index(lifting_size);
+
+  if (ldpc_cfg->lifting_set_index < 0) {
+    return make_unexpected(std::string("The lifting size is not one the standard defines"));
   }
-  tb_cfg->num_code_blocks = C;
 
-  if (C == 1) {
-    // No CB CRC for single block
-    tb_cfg->cb_crc_bits  = 0;
-    tb_cfg->cb_size_bits = B;
-  } else {
-    // Multiple code blocks with CB CRC
-    tb_cfg->cb_crc_bits = NR_CB_CRC24B_BITS;
-    // Add segment-level CRC
-    int B_prime = B + 24;
+  // K' = Kb_full * Z, the message length the LDPC encoder takes. The filler bits fill the gap
+  // between the bits a code block carries and K'.
+  int K_prime = static_cast<int>(compute_codeblock_size(base_graph, static_cast<unsigned>(lifting_size)).value());
 
-    // Per-CB size
-    int total_cb_bits    = B_prime + (C - 1) * 24;
-    tb_cfg->cb_size_bits = (total_cb_bits + C - 1) / C;
-  }
+  // A filler count the caller gives is taken as given, zero included. A code block that fills K'
+  // exactly leaves none, and reading that as a request to derive one encodes a different length.
+  ldpc_cfg->num_filler_bits =
+      (overrides.num_filler_bits >= 0) ? overrides.num_filler_bits : (K_prime - payload_bits_per_cb);
+  ldpc_cfg->num_info_bits = K_prime - ldpc_cfg->num_filler_bits;
 
-  // Initialize LDPC config for code blocks
-  // NOTE: LDPC encoder receives the full CB including CB CRC (per 3GPP TS 38.212).
-  // The CB CRC is attached BEFORE LDPC encoding, so K = cb_size_bits (NOT cb_size_bits - cb_crc_bits).
-  cuda_result status = nr_ldpc_init_config(&tb_cfg->ldpc_cfg, tb_cfg->cb_size_bits, rate, overrides);
-  if (!status.has_value())
-    return status;
+  tb_cfg->cb_size_bits = ldpc_cfg->num_info_bits;
+  tb_cfg->filler_bits  = ldpc_cfg->num_filler_bits;
 
-  // A filler count the caller gives changes how many transport block bits a code block carries.
-  tb_cfg->cb_size_bits = tb_cfg->ldpc_cfg.num_info_bits;
-  tb_cfg->filler_bits  = tb_cfg->ldpc_cfg.num_filler_bits;
+  int N                       = (base_graph == ldpc_base_graph_type::BG1) ? NR_LDPC_BG1_UNPUNCTURED_VARS * lifting_size
+                                                                          : NR_LDPC_BG2_UNPUNCTURED_VARS * lifting_size;
+  ldpc_cfg->num_codeword_bits = N;
+  ldpc_cfg->num_parity_bits   = N - K_prime;
+
+  // Always puncture first 2*Z bits
+  ldpc_cfg->puncture = true;
+  ldpc_cfg->max_parity_nodes =
+      (base_graph == ldpc_base_graph_type::BG1) ? NR_LDPC_BG1_PARITY_NODES : NR_LDPC_BG2_PARITY_NODES;
+  ldpc_cfg->redundancy_version = 0;
 
   return {};
 }
