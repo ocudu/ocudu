@@ -1101,7 +1101,7 @@ check builders ubuntu versions:
       when: delayed
       start_in: 15 minutes
   variables:
-    VERSIONS_TO_IGNORE: "20.04"
+    VERSIONS_TO_IGNORE: "22.04"
   script:
     - check_if_image_exists ${CI_REGISTRY_IMAGE}/builder-ubuntu- :${DOCKER_BUILDER_VERSION}
 
