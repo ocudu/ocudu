@@ -16,6 +16,7 @@
 /.gitlab-ci.yml
 /.github/
 /.gitlab/
+.coderabbit.yaml
 
 [Deploy][1] @asaezper @ninjab3s
 /docker/
