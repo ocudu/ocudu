@@ -132,12 +132,7 @@ knowledge_base:
       - "docs/agents/**/*.md"
       - files: "ocudu_tools:skills/ocudu-code-review/references/*.md"
         applyTo: "**/*.h,**/*.cpp"
-      - files: "ocudu_docs:docs/dev_guide/code_guide/1_language_libraries.md,\
-        ocudu_docs:docs/dev_guide/code_guide/2_mechanical_source_aspects.md,\
-        ocudu_docs:docs/dev_guide/code_guide/3_style_aspects_high_level.md,\
-        ocudu_docs:docs/dev_guide/code_guide/4_style_aspects_low_level.md,\
-        ocudu_docs:docs/dev_guide/code_guide/5_recommendations.md,\
-        ocudu_docs:docs/dev_guide/code_guide/6_self_generating_docs.md"
+      - files: "ocudu_docs:docs/dev_guide/code_guide/*.md"
         applyTo: "**/*.h,**/*.cpp"
       - files: "ocudu_docs:docs/dev_guide/architecture_guide/3_realization/1_threading_model.md,\
         ocudu_docs:docs/dev_guide/architecture_guide/3_realization/2_async_programming.md,\
