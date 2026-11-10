@@ -129,6 +129,15 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool send_rrc_reconfiguration_complete_zero_mac_i()
+  {
+    // Inject RRC Reconfiguration Complete with the Security Mode Command transaction ID and zero MAC-I
+    f1ap_message ul_rrc_msg_transfer = test_helpers::generate_ul_rrc_message_transfer(
+        du_ue_id, ue_ctx->cu_ue_id.value(), srb_id_t::srb1, make_byte_buffer("00030a0000000000").value());
+    get_du(du_idx).push_ul_pdu(ul_rrc_msg_transfer);
+    return true;
+  }
+
   [[nodiscard]] bool send_security_mode_complete_bad_mac_i()
   {
     // Inject corrupted Security Mode Complete with bad MAC-I
@@ -355,6 +364,22 @@ TEST_F(cu_cp_initial_context_setup_test, when_security_mode_complete_with_zero_m
   ASSERT_TRUE(send_security_mode_complete_zero_mac_i());
 
   // The zero MAC-I PDU is rejected by RRC and cancels the transaction immediately. No need to wait for a timeout.
+
+  // Wait for NGAP Initial Context Setup Failure
+  ASSERT_TRUE(await_initial_context_setup_failure());
+}
+
+TEST_F(cu_cp_initial_context_setup_test,
+       when_security_mode_command_is_answered_with_another_message_then_initial_context_setup_fails)
+{
+  // Inject Initial Context Setup Request
+  ASSERT_TRUE(send_initial_context_setup_request());
+
+  // Wait for F1AP UE Context Setup Request (containing Security Mode Command) and inject UE Context Setup Response
+  ASSERT_TRUE(send_ue_context_setup_request_and_await_response());
+
+  // Inject an unprotected RRC Reconfiguration Complete in place of the Security Mode Complete
+  ASSERT_TRUE(send_rrc_reconfiguration_complete_zero_mac_i());
 
   // Wait for NGAP Initial Context Setup Failure
   ASSERT_TRUE(await_initial_context_setup_failure());

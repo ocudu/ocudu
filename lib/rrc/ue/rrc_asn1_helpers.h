@@ -40,6 +40,10 @@ expected<uint8_t> get_transaction_id(const asn1::rrc_nr::rrc_setup_complete_s& m
 /// Extracts transaction id of UL-DCCH message.
 expected<uint8_t> get_transaction_id(const asn1::rrc_nr::ul_dcch_msg_s& msg);
 
+/// Checks whether the UL-DCCH message is the c1 message of the given type.
+bool is_ul_dcch_c1_msg(const asn1::rrc_nr::ul_dcch_msg_s&                           msg,
+                       asn1::rrc_nr::ul_dcch_msg_type_c::c1_c_::types_opts::options type);
+
 /// \brief Fills ASN.1 RRC Security Mode Command struct.
 /// \param[out] rrc_smc The RRC security mode command ASN.1 struct to fill.
 /// \param[in] int_algo The selected integrity protection algorithm.

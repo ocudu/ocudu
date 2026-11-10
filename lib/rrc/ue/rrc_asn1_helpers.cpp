@@ -52,6 +52,13 @@ expected<uint8_t> ocudu::ocucp::get_transaction_id(const asn1::rrc_nr::ul_dcch_m
   return make_unexpected(default_error_t{});
 }
 
+bool ocudu::ocucp::is_ul_dcch_c1_msg(const asn1::rrc_nr::ul_dcch_msg_s&                           msg,
+                                     asn1::rrc_nr::ul_dcch_msg_type_c::c1_c_::types_opts::options type)
+{
+  using namespace asn1::rrc_nr;
+  return msg.msg.type().value == ul_dcch_msg_type_c::types_opts::c1 and msg.msg.c1().type().value == type;
+}
+
 void ocudu::ocucp::fill_asn1_rrc_smc_msg(asn1::rrc_nr::security_mode_cmd_s&   rrc_smc,
                                          const security::integrity_algorithm& int_algo,
                                          const security::ciphering_algorithm& ciph_algo,
