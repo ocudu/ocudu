@@ -158,9 +158,10 @@ inline e2_message generate_e2_setup_request(std::string oid)
   return e2_msg;
 }
 
-inline e2_message
-generate_ric_control_request_style2_action6(ocudulog::basic_logger&                    logger,
-                                            const std::vector<rrm_policy_ratio_group>& rrm_policy_ratio_list_def)
+/// Wraps an E2SM-RC control header and control message in a RIC Control Request.
+inline e2_message pack_ric_control_request(ocudulog::basic_logger&               logger,
+                                           const asn1::e2sm::e2sm_rc_ctrl_hdr_s& ctrl_hdr,
+                                           const asn1::e2sm::e2sm_rc_ctrl_msg_s& ctrl_msg)
 {
   using namespace asn1::e2ap;
 
@@ -177,6 +178,51 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
   ric_control_request->ric_request_id.ric_requestor_id = 3;
   ric_control_request->ric_request_id.ric_instance_id  = 0;
 
+  ocudu::byte_buffer ctrl_hdr_buff;
+  asn1::bit_ref      bref_hdr(ctrl_hdr_buff);
+  if (ctrl_hdr.pack(bref_hdr) != asn1::OCUDUASN_SUCCESS) {
+    // A truncated request would be rejected whatever the test means to exercise.
+    logger.error("Failed to pack E2SM RC control header");
+    ADD_FAILURE() << "Failed to pack E2SM RC control header";
+  }
+  (void)ric_control_request->ric_ctrl_hdr.resize(ctrl_hdr_buff.length());
+  std::copy(ctrl_hdr_buff.begin(), ctrl_hdr_buff.end(), ric_control_request->ric_ctrl_hdr.begin());
+
+  ocudu::byte_buffer ctrl_msg_buff;
+  asn1::bit_ref      bref_msg(ctrl_msg_buff);
+  if (ctrl_msg.pack(bref_msg) != asn1::OCUDUASN_SUCCESS) {
+    logger.error("Failed to pack E2SM RC control message");
+    ADD_FAILURE() << "Failed to pack E2SM RC control message";
+  }
+  (void)ric_control_request->ric_ctrl_msg.resize(ctrl_msg_buff.length());
+  std::copy(ctrl_msg_buff.begin(), ctrl_msg_buff.end(), ric_control_request->ric_ctrl_msg.begin());
+
+  return e2_msg;
+}
+
+/// Raw encodings that let a test build a malformed RRM policy member.
+struct rrm_policy_member_raw_encoding {
+  /// Octets encoded for RAN parameter 7 in place of the PLMN identity of the policy member.
+  std::optional<std::vector<uint8_t>> plmn_octets;
+  /// Octets encoded for RAN parameter 9 in place of the SST of the policy member.
+  std::optional<std::vector<uint8_t>> sst_octets;
+  /// Octets encoded for RAN parameter 10 in place of the SD of the policy member.
+  std::optional<std::vector<uint8_t>> sd_octets;
+  /// Value encoded for RAN parameter 11 in place of the minimum PRB policy ratio.
+  std::optional<int64_t> min_prb_ratio;
+  /// Encodes RAN parameter 7 as a structure instead of the element it is defined as.
+  bool plmn_as_structure = false;
+  /// Encodes RAN parameter 7 as an integer instead of the octet string it is defined as.
+  bool plmn_as_integer = false;
+  /// Encodes RAN parameter 7 as an element that carries no value.
+  bool plmn_value_absent = false;
+};
+
+inline e2_message
+generate_ric_control_request_style2_action6(ocudulog::basic_logger&                    logger,
+                                            const std::vector<rrm_policy_ratio_group>& rrm_policy_ratio_list_def,
+                                            const rrm_policy_member_raw_encoding&      raw_encoding = {})
+{
   asn1::e2sm::e2sm_rc_ctrl_hdr_s ctrl_hdr;
   ctrl_hdr.ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_decision_present = false;
@@ -184,15 +230,6 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_action_id        = 6;
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.set_gnb_du_ue_id();
   ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id = 4;
-
-  ocudu::byte_buffer ctrl_hdr_buff;
-  asn1::bit_ref      bref_msg(ctrl_hdr_buff);
-  if (ctrl_hdr.pack(bref_msg) != asn1::OCUDUASN_SUCCESS) {
-    logger.error("Failed to pack E2SM RC control header\n");
-  }
-
-  (void)ric_control_request->ric_ctrl_hdr.resize(ctrl_hdr_buff.length());
-  std::copy(ctrl_hdr_buff.begin(), ctrl_hdr_buff.end(), ric_control_request->ric_ctrl_hdr.begin());
 
   asn1::e2sm::e2sm_rc_ctrl_msg_s ctrl_msg;
   ctrl_msg.ric_ctrl_msg_formats.set_ctrl_msg_format1();
@@ -246,11 +283,27 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
       auto& plmn =
           rrm_policy_member.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[0];
       plmn.ran_param_id = 7;
-      plmn.ran_param_value_type.set_ran_p_choice_elem_false();
-      plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
-      asn1::unbounded_octstring<true> plmn_id_asn;
-      plmn_id_asn.from_bytes(policy_member_def.plmn_id.to_bytes());
-      plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s() = plmn_id_asn;
+      if (raw_encoding.plmn_as_structure) {
+        plmn.ran_param_value_type.set_ran_p_choice_structure();
+      } else if (raw_encoding.plmn_as_integer) {
+        plmn.ran_param_value_type.set_ran_p_choice_elem_false();
+        plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+        // A value an octet string accessor would read as the first word of its own representation.
+        plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() = 0x0102030405060708;
+      } else if (raw_encoding.plmn_value_absent) {
+        plmn.ran_param_value_type.set_ran_p_choice_elem_false();
+        plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = false;
+      } else {
+        plmn.ran_param_value_type.set_ran_p_choice_elem_false();
+        plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+        asn1::unbounded_octstring<true> plmn_id_asn;
+        if (raw_encoding.plmn_octets.has_value()) {
+          plmn_id_asn.from_bytes(*raw_encoding.plmn_octets);
+        } else {
+          plmn_id_asn.from_bytes(policy_member_def.plmn_id.to_bytes());
+        }
+        plmn.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s() = plmn_id_asn;
+      }
       //  8 - S-NSSAI.
       auto& nssai =
           rrm_policy_member.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[1];
@@ -262,19 +315,30 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
       sst.ran_param_id = 9;
       sst.ran_param_value_type.set_ran_p_choice_elem_false();
       sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
-      // An SST is an OCTET STRING (SIZE(1)), as per TS 38.473, Section 9.3.1.38.
-      const std::array<uint8_t, 1> sst_bytes = {policy_member_def.s_nssai.sst.value()};
-      sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(sst_bytes);
+      if (raw_encoding.sst_octets.has_value()) {
+        sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(
+            *raw_encoding.sst_octets);
+      } else {
+        // An SST is an OCTET STRING (SIZE(1)), as per TS 38.473, Section 9.3.1.38.
+        const std::array<uint8_t, 1> sst_bytes = {policy_member_def.s_nssai.sst.value()};
+        sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(sst_bytes);
+      }
       // 10 - SD.
       auto& sd        = nssai.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[1];
       sd.ran_param_id = 10;
       sd.ran_param_value_type.set_ran_p_choice_elem_false();
       sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
-      // An SD is an OCTET STRING (SIZE(3)), as per TS 38.473, Section 9.3.1.38.
-      const uint32_t               sd_value = policy_member_def.s_nssai.sd.value();
-      const std::array<uint8_t, 3> sd_bytes = {
-          static_cast<uint8_t>(sd_value >> 16U), static_cast<uint8_t>(sd_value >> 8U), static_cast<uint8_t>(sd_value)};
-      sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(sd_bytes);
+      if (raw_encoding.sd_octets.has_value()) {
+        sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(
+            *raw_encoding.sd_octets);
+      } else {
+        // An SD is an OCTET STRING (SIZE(3)), as per TS 38.473, Section 9.3.1.38.
+        const uint32_t               sd_value = policy_member_def.s_nssai.sd.value();
+        const std::array<uint8_t, 3> sd_bytes = {static_cast<uint8_t>(sd_value >> 16U),
+                                                 static_cast<uint8_t>(sd_value >> 8U),
+                                                 static_cast<uint8_t>(sd_value)};
+        sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(sd_bytes);
+      }
     }
 
     // 11 - Min PRB Policy Ratio.
@@ -284,7 +348,7 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
     min_prb.ran_param_value_type.set_ran_p_choice_elem_false();
     min_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
     min_prb.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_int() =
-        *rrm_policy_ratio_grp.minimum_ratio;
+        raw_encoding.min_prb_ratio.value_or(*rrm_policy_ratio_grp.minimum_ratio);
     // 12 - Max PRB Policy Ratio.
     auto& max_prb = rrm_policy_ratio_list_group.ran_param_value_type.ran_p_choice_structure()
                         .ran_param_structure.seq_of_ran_params[2];
@@ -303,15 +367,89 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
         *rrm_policy_ratio_grp.dedicated_ratio;
   }
 
-  ocudu::byte_buffer ctrl_msg_buff;
-  asn1::bit_ref      bref_msg1(ctrl_msg_buff);
-  if (ctrl_msg.pack(bref_msg1) != asn1::OCUDUASN_SUCCESS) {
-    logger.error("Failed to pack E2SM RC control message\n");
+  return pack_ric_control_request(logger, ctrl_hdr, ctrl_msg);
+}
+
+/// Builds a Control Request for control style 2, action 6, carrying the given RAN parameters at the top level of the
+/// control message. It lets a test place a RAN parameter outside the structure that is meant to enclose it.
+inline e2_message generate_ric_control_request_style2_action6_flat(ocudulog::basic_logger&      logger,
+                                                                   const std::vector<uint64_t>& ran_param_ids)
+{
+  asn1::e2sm::e2sm_rc_ctrl_hdr_s ctrl_hdr;
+  ctrl_hdr.ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_decision_present = false;
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_style_type            = 2;
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ric_ctrl_action_id        = 6;
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.set_gnb_du_ue_id();
+  ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1().ue_id.gnb_du_ue_id().gnb_cu_ue_f1ap_id = 4;
+
+  asn1::e2sm::e2sm_rc_ctrl_msg_s ctrl_msg;
+  ctrl_msg.ric_ctrl_msg_formats.set_ctrl_msg_format1();
+  asn1::e2sm::e2sm_rc_ctrl_msg_format1_s& ctrl_msg_f1 = ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1();
+
+  ctrl_msg_f1.ran_p_list.resize(ran_param_ids.size());
+  for (unsigned i = 0; i != ran_param_ids.size(); ++i) {
+    // A PLMN identity, so that a parameter reaches the executor well formed on its own.
+    const std::array<uint8_t, 3> param_octets = plmn_identity::test_value().to_bytes();
+    auto&                        ran_p        = ctrl_msg_f1.ran_p_list[i];
+    ran_p.ran_param_id                        = ran_param_ids[i];
+    ran_p.ran_param_value_type.set_ran_p_choice_elem_false();
+    ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+    ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(param_octets);
   }
 
-  (void)ric_control_request->ric_ctrl_msg.resize(ctrl_msg_buff.length());
-  std::copy(ctrl_msg_buff.begin(), ctrl_msg_buff.end(), ric_control_request->ric_ctrl_msg.begin());
-  return e2_msg;
+  return pack_ric_control_request(logger, ctrl_hdr, ctrl_msg);
+}
+
+/// Builds a Control Request for control style 3, action 1 (Handover Control), carrying one target NR CGI per entry of
+/// \c target_plmns. It lets a test give the GUAMI or a target cell a malformed PLMN identity.
+inline e2_message generate_ric_control_request_style3_action1(ocudulog::basic_logger&                    logger,
+                                                              const std::array<uint8_t, 3>&              guami_plmn,
+                                                              const std::vector<std::array<uint8_t, 3>>& target_plmns)
+{
+  asn1::e2sm::e2sm_rc_ctrl_hdr_s ctrl_hdr;
+  ctrl_hdr.ric_ctrl_hdr_formats.set_ctrl_hdr_format1();
+  asn1::e2sm::e2sm_rc_ctrl_hdr_format1_s& ctrl_hdr_f1 = ctrl_hdr.ric_ctrl_hdr_formats.ctrl_hdr_format1();
+  ctrl_hdr_f1.ric_ctrl_decision_present               = false;
+  ctrl_hdr_f1.ric_style_type                          = 3;
+  ctrl_hdr_f1.ric_ctrl_action_id                      = 1;
+
+  asn1::e2sm::ue_id_gnb_s& gnb_ue_id = ctrl_hdr_f1.ue_id.set_gnb_ue_id();
+  gnb_ue_id.amf_ue_ngap_id           = 1;
+  gnb_ue_id.guami.plmn_id            = guami_plmn;
+  gnb_ue_id.guami.amf_region_id.from_number(1);
+  gnb_ue_id.guami.amf_set_id.from_number(1);
+  gnb_ue_id.guami.amf_pointer.from_number(1);
+  gnb_ue_id.gnb_cu_ue_f1ap_id_list.resize(1);
+  gnb_ue_id.gnb_cu_ue_f1ap_id_list[0].gnb_cu_ue_f1ap_id = 4;
+
+  asn1::e2sm::e2sm_rc_ctrl_msg_s ctrl_msg;
+  ctrl_msg.ric_ctrl_msg_formats.set_ctrl_msg_format1();
+  asn1::e2sm::e2sm_rc_ctrl_msg_format1_s& ctrl_msg_f1 = ctrl_msg.ric_ctrl_msg_formats.ctrl_msg_format1();
+
+  ctrl_msg_f1.ran_p_list.resize(target_plmns.size());
+  for (unsigned i = 0; i != target_plmns.size(); ++i) {
+    // 4 - NR CGI.
+    asn1::e2sm::nr_cgi_s nr_cgi;
+    nr_cgi.plmn_id = target_plmns[i];
+    nr_cgi.nr_cell_id.from_number(6576);
+
+    ocudu::byte_buffer nr_cgi_buff;
+    asn1::bit_ref      bref_cgi(nr_cgi_buff);
+    if (nr_cgi.pack(bref_cgi) != asn1::OCUDUASN_SUCCESS) {
+      logger.error("Failed to pack NR CGI");
+      ADD_FAILURE() << "Failed to pack NR CGI";
+    }
+    std::vector<uint8_t> nr_cgi_bytes(nr_cgi_buff.begin(), nr_cgi_buff.end());
+
+    auto& ran_p        = ctrl_msg_f1.ran_p_list[i];
+    ran_p.ran_param_id = 4;
+    ran_p.ran_param_value_type.set_ran_p_choice_elem_false();
+    ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
+    ran_p.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(nr_cgi_bytes);
+  }
+
+  return pack_ric_control_request(logger, ctrl_hdr, ctrl_msg);
 }
 
 inline e2_message generate_ric_control_request(ocudulog::basic_logger& logger,
@@ -985,6 +1123,8 @@ public:
                                 const guami_t&             guami,
                                 const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) const override
   {
+    ue_index_requested = true;
+    last_guami         = guami;
     return uint_to_ue_index(1);
   }
 
@@ -998,11 +1138,22 @@ public:
   trigger_handover(const cu_cp_du_index_t&                       source_du_index,
                    const ocucp::cu_cp_intra_cu_handover_request& handover_req) override
   {
+    handover_triggered = true;
+    last_handover_req  = handover_req;
     return launch_async([](coro_context<async_task<ocucp::cu_cp_intra_cu_handover_response>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(ocucp::cu_cp_intra_cu_handover_response{true});
     });
   }
+
+  /// Whether the executor asked for a UE index.
+  mutable bool ue_index_requested = false;
+  /// Whether the executor asked for a handover.
+  bool handover_triggered = false;
+  /// GUAMI of the last UE index lookup.
+  mutable guami_t last_guami;
+  /// Last handover request the executor asked for.
+  ocucp::cu_cp_intra_cu_handover_request last_handover_req;
 };
 
 /// Wraps a manual_event so test fixtures can fire it directly while satisfying e2_node_component_config_provider.
@@ -1060,7 +1211,7 @@ protected:
   std::unique_ptr<e2sm_handler>                           e2sm_kpm_packer;
   std::unique_ptr<e2sm_rc_asn1_packer>                    e2sm_rc_packer;
   std::unique_ptr<dummy_du_configurator>                  du_rc_param_configurator;
-  std::unique_ptr<cu_configurator>                        cu_rc_param_configurator;
+  std::unique_ptr<dummy_cu_configurator>                  cu_rc_param_configurator;
   std::unique_ptr<e2_subscription_manager>                e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>                du_metrics;
   std::unique_ptr<odu::f1ap_ue_id_translator>             f1ap_ue_id_mapper;
