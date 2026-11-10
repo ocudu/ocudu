@@ -5,8 +5,7 @@
 
 #include "rrc_reconfiguration_procedure.h"
 #include "../rrc_asn1_helpers.h"
-#include "ocudu/adt/format.h"
-#include "ocudu/ran/cause/ngap_cause.h"
+#include "../rrc_ue_helpers.h"
 
 using namespace ocudu;
 using namespace ocudu::ocucp;
@@ -54,8 +53,14 @@ void rrc_reconfiguration_procedure::operator()(coro_context<async_task<bool>>& c
   CORO_AWAIT(transaction);
 
   if (transaction.has_response()) {
-    logger.log_info("\"{}\" finished successfully", name());
-    procedure_result = true;
+    if (is_ul_dcch_c1_msg(transaction.response(), ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete)) {
+      logger.log_info("\"{}\" finished successfully", name());
+      procedure_result = true;
+    } else {
+      logger.log_warning("\"{}\" failed. Cause: unexpected {} in place of RRC Reconfiguration Complete",
+                         name(),
+                         get_rrc_message_name(transaction.response()));
+    }
   } else {
     if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
       logger.log_warning("\"{}\" timed out after {}ms", name(), procedure_timeout.count());

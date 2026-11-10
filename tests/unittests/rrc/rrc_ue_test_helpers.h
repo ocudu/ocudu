@@ -11,6 +11,7 @@
 #include "lib/rrc/ue/rrc_ue_impl.h"
 #include "rrc_ue_test_messages.h"
 #include "test_helpers.h"
+#include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
 #include "ocudu/cu_cp/cu_cp_configuration_helpers.h"
@@ -349,6 +350,12 @@ protected:
   {
     // Inject RRC SMC complete into UE object.
     pdcp_ctx->handle_ul_dcch_pdu(srb_id_t::srb1, byte_buffer::create(rrc_smc_complete_pdu).value());
+  }
+
+  /// Delivers a UL-DCCH message on SRB1 to the RRC UE, as PDCP does after the integrity check.
+  void receive_ul_dcch_msg(const asn1::rrc_nr::ul_dcch_msg_s& msg, bool integrity_verified = true)
+  {
+    rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, test_helpers::pack_ul_dcch_msg(msg), integrity_verified);
   }
 
   void check_smc_pdu() { ASSERT_EQ(rrc_ue_f1ap_notifier.last_rrc_pdu, byte_buffer::create(rrc_smc_pdu).value()); }

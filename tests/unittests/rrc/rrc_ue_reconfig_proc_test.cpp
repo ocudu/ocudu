@@ -7,6 +7,7 @@
 #include "rrc_ue_test_messages.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
 #include "ocudu/support/async/async_test_utils.h"
@@ -65,6 +66,26 @@ TEST_F(rrc_ue_reconfig, when_reconfig_complete_received_proc_successful)
   receive_reconfig_complete();
 
   ASSERT_TRUE(t.ready());
+  ASSERT_TRUE(t.get());
+}
+
+TEST_F(rrc_ue_reconfig, when_ue_answers_reconfig_with_another_message_then_proc_fails)
+{
+  static constexpr uint8_t reconfig_transaction_id = 1;
+
+  // Trigger Reconfig
+  rrc_reconfiguration_procedure_request args = generate_rrc_reconfiguration_procedure_request();
+  async_task<bool>         t = get_rrc_ue_control_message_handler()->handle_rrc_reconfiguration_request(args);
+  lazy_task_launcher<bool> t_launcher(t);
+
+  ASSERT_FALSE(t.ready());
+  check_rrc_reconfig_pdu();
+
+  // Receive UE Capability Information with the transaction ID of the RRC Reconfiguration
+  receive_ul_dcch_msg(test_helpers::create_ue_capability_info(reconfig_transaction_id));
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get());
 }
 
 /// Test that a connected UE that acknowledges a CHO configuration does not count as a new RRC connection.
