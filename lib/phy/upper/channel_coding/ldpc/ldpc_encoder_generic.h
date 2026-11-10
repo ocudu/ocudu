@@ -8,51 +8,67 @@
 #pragma once
 
 #include "ldpc_encoder_impl.h"
-#include "ocudu/ocuduvec/bit.h"
+#include "ocudu/support/math/math_utils.h"
 
 namespace ocudu {
 
-/// Generic LDPC encoder implementation without any optimization.
+/// \brief Generic LDPC encoder implementation operating on packed bits.
+///
+/// Each stored variable node holds two consecutive copies of its lifted bits, which turns a circular shift of the node
+/// into a read at a bit offset.
 class ldpc_encoder_generic : public ldpc_encoder_impl
 {
-  void select_strategy() override;
-  void load_input(const bit_buffer& in) override
-  {
-    span<uint8_t> message_ = span<uint8_t>(temp_message).first(in.size());
-    ocuduvec::bit_unpack(message_, in);
+protected:
+  /// Maximum number of bytes of a packed lifted node.
+  static constexpr unsigned max_node_nof_bytes = divide_ceil(ldpc::MAX_LIFTING_SIZE, 8);
 
-    // From now on, the encoder only needs a read-only view of the input message.
-    message = message_;
+  /// Returns the number of bytes of a packed lifted node.
+  unsigned get_node_nof_bytes() const { return divide_ceil(lifting_size, 8U); }
+
+  /// Computes the sum of the variable nodes connected to a check node, modulo 2.
+  /// \param[out] out           Packed sum, with room for \c max_node_nof_bytes bytes. The bits beyond the lifting size
+  ///                           are left undefined.
+  /// \param[in]  i_check       Check node index.
+  /// \param[in]  nof_var_nodes Number of variable nodes considered, starting from the first one.
+  virtual void compute_check_node(span<uint8_t> out, unsigned i_check, unsigned nof_var_nodes) const;
+
+  /// \brief Calls a function for each variable node connected to a check node.
+  ///
+  /// The function receives the doubled storage of the variable node and its circular shift in bits.
+  template <typename Func>
+  void for_each_connected_node(unsigned i_check, unsigned nof_var_nodes, Func&& func) const
+  {
+    // The adjacency row is sorted in ascending order and padded with NO_EDGE.
+    for (uint16_t i_var : current_graph->get_adjacency_row(i_check)) {
+      if (i_var >= nof_var_nodes) {
+        break;
+      }
+      func(nodes[i_var].data(), current_graph->get_lifted_node(i_check, i_var));
+    }
   }
+
+private:
+  // See ldpc_encoder_impl for documentation.
+  void load_input(const bit_buffer& in) override;
+  // See ldpc_encoder_impl for documentation.
   void preprocess_systematic_bits() override;
-  void encode_high_rate() override { (this->*high_rate)(); }
+  // See ldpc_encoder_impl for documentation.
+  void encode_high_rate() override;
+  // See ldpc_encoder_buffer interface for documentation.
   void write_codeblock(span<uint8_t> out, unsigned offset) const override;
 
-  /// Pointer type shortcut.
-  using high_rate_strategy = void (ldpc_encoder_generic::*)();
-  /// Pointer to a high-rate strategy member.
-  high_rate_strategy high_rate;
+  /// Repeats the first lifting size bits of a doubled node storage right behind them.
+  void double_node(span<uint8_t> doubled_node) const;
 
-  /// Carries out the high-rate region encoding for BG1 and lifting size index 6.
-  void high_rate_bg1_i6();
-  /// Carries out the high-rate region encoding for BG1 and lifting size index in {0, 1, 2, 3, 4, 5, 7}.
-  void high_rate_bg1_other();
-  /// Carries out the high-rate region encoding for BG2 and lifting size index in {3, 7}.
-  void high_rate_bg2_i3_7();
-  /// Carries out the high-rate region encoding for BG2 and lifting size index in {0, 1, 2, 4, 5, 6}.
-  void high_rate_bg2_other();
-  /// Carries out the extended region encoding when the lifting size is large.
-  void ext_region_inner(span<uint8_t> output_node, unsigned i_layer) const;
+  /// Number of bytes of a doubled node storage, including room for SIMD loads beyond the second copy.
+  static constexpr unsigned doubled_node_nof_bytes = 2 * max_node_nof_bytes + 32;
+  /// Maximum number of stored variable nodes, that is, systematic nodes and high-rate parity nodes.
+  static constexpr unsigned max_nof_stored_nodes = ldpc::BG1_N_FULL - ldpc::BG1_M + bg_hr_parity_nodes;
 
-  /// Unpacked local copy of the message to encode.
-  std::array<uint8_t, ldpc::MAX_MESSAGE_SIZE> temp_message;
-  /// Read-only view of the message to encode.
-  span<const uint8_t> message;
-  // Set up registers for the largest LS.
-  /// Register to store auxiliary computation results.
-  std::array<std::array<uint8_t, ldpc::MAX_LIFTING_SIZE>, bg_hr_parity_nodes> auxiliary;
-  /// Register to store computed encoded bits.
-  std::array<uint8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> codeblock;
+  /// Systematic and high-rate parity nodes, each stored twice in a row.
+  std::array<std::array<uint8_t, doubled_node_nof_bytes>, max_nof_stored_nodes> nodes = {};
+  /// Contributions of the systematic nodes to the high-rate check nodes.
+  std::array<std::array<uint8_t, max_node_nof_bytes>, bg_hr_parity_nodes> auxiliary = {};
 };
 
 } // namespace ocudu

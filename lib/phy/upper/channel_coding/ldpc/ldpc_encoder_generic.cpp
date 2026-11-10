@@ -5,140 +5,161 @@
 
 #include "ldpc_encoder_generic.h"
 #include "ocudu/ocuduvec/binary.h"
-#include "ocudu/ocuduvec/circ_shift.h"
+#include "ocudu/ocuduvec/bit.h"
 #include "ocudu/ocuduvec/copy.h"
 #include "ocudu/ocuduvec/zero.h"
+#include "ocudu/support/math/bit_ops.h"
+#include <cstring>
 
 using namespace ocudu;
 using namespace ocudu::ldpc;
 
-void ldpc_encoder_generic::select_strategy()
-{
-  ldpc_base_graph_type current_bg       = current_graph->get_base_graph();
-  uint8_t              current_ls_index = current_graph->get_lifting_index();
+/// Number of punctured systematic nodes at the beginning of the codeblock, as per TS38.212 Section 5.3.2.
+static constexpr unsigned nof_punctured_nodes = 2;
 
-  if (current_bg == ldpc_base_graph_type::BG1) {
-    if (current_ls_index == 6) {
-      high_rate = &ldpc_encoder_generic::high_rate_bg1_i6;
-      return;
-    }
-    // If lifting index is not 6.
-    high_rate = &ldpc_encoder_generic::high_rate_bg1_other;
+/// Adds a variable node, circularly shifted to the left by \c shift bits, to \c out modulo 2.
+static void add_shifted_node(span<uint8_t> out, const uint8_t* doubled_node, unsigned shift)
+{
+  const uint8_t* data      = doubled_node + shift / 8;
+  unsigned       bit_shift = shift % 8;
+  for (unsigned i_byte = 0, i_byte_end = out.size(); i_byte != i_byte_end; ++i_byte) {
+    out[i_byte] ^= static_cast<uint8_t>((data[i_byte] << bit_shift) | (data[i_byte + 1] >> (8 - bit_shift)));
+  }
+}
+
+/// Reads the 64 bits starting at bit \c pos, most significant bit first. Nine bytes from \c pos / 8 must be readable.
+static uint64_t load_bits(const uint8_t* data, unsigned pos)
+{
+  uint64_t word;
+  std::memcpy(&word, data + pos / 8, sizeof(word));
+  word           = __builtin_bswap64(word);
+  unsigned shift = pos % 8;
+  return (shift == 0) ? word : ((word << shift) | (data[pos / 8 + sizeof(word)] >> (8 - shift)));
+}
+
+/// Writes the 64 bits at \c node starting at bit \c pos, most significant bit first. The bits before \c pos are
+/// preserved, and nine bytes from \c pos / 8 must be writable.
+static void store_bits(uint8_t* data, unsigned pos, const uint8_t* node)
+{
+  uint64_t word;
+  std::memcpy(&word, node, sizeof(word));
+  word           = __builtin_bswap64(word);
+  unsigned shift = pos % 8;
+  uint8_t  head  = data[pos / 8] & mask_msb_ones<uint8_t>(shift);
+  uint64_t out   = __builtin_bswap64((word >> shift) | (static_cast<uint64_t>(head) << 56));
+  std::memcpy(data + pos / 8, &out, sizeof(out));
+  data[pos / 8 + 8] = static_cast<uint8_t>(word << (8 - shift));
+}
+
+/// Writes the first \c lifting_size bits of \c node twice in a row, most significant bit first.
+static void store_doubled_node(uint8_t* doubled_node, uint64_t node, unsigned lifting_size)
+{
+  node                          = node & mask_msb_ones<uint64_t>(lifting_size);
+  std::array<uint64_t, 2> words = {__builtin_bswap64(node | (node >> lifting_size)),
+                                   __builtin_bswap64(node << (64 - lifting_size))};
+  std::memcpy(doubled_node, words.data(), sizeof(words));
+}
+
+void ldpc_encoder_generic::compute_check_node(span<uint8_t> out, unsigned i_check, unsigned nof_var_nodes) const
+{
+  if (lifting_size <= 64) {
+    // Nodes of up to 64 bits fit in a single 64-bit register.
+    uint64_t sum = 0;
+    for_each_connected_node(i_check, nof_var_nodes, [&sum](const uint8_t* doubled_node, unsigned shift) {
+      sum ^= load_bits(doubled_node, shift);
+    });
+    sum = __builtin_bswap64(sum);
+    std::memcpy(out.data(), &sum, sizeof(sum));
     return;
   }
-  if (current_bg == ldpc_base_graph_type::BG2) {
-    if ((current_ls_index == 3) || (current_ls_index == 7)) {
-      high_rate = &ldpc_encoder_generic::high_rate_bg2_i3_7;
-      return;
-    }
-    // If lifting index is neither 3 nor 7.
-    high_rate = &ldpc_encoder_generic::high_rate_bg2_other;
+
+  // Rounding up to whole vector registers avoids scalar remainders in the vectorized loop.
+  unsigned nof_bytes = divide_ceil(get_node_nof_bytes(), 16U) * 16;
+  out                = out.first(nof_bytes);
+  ocuduvec::zero(out);
+  for_each_connected_node(i_check, nof_var_nodes, [out](const uint8_t* doubled_node, unsigned shift) {
+    add_shifted_node(out, doubled_node, shift);
+  });
+}
+
+void ldpc_encoder_generic::double_node(span<uint8_t> doubled_node) const
+{
+  if (lifting_size % 8 != 0) {
+    store_doubled_node(doubled_node.data(), load_bits(doubled_node.data(), 0), lifting_size);
     return;
   }
-  ocudu_assert(false, "Unreachable code");
+
+  // Copies of constant size are inlined by the compiler, unlike overlapping moves. The bytes beyond the second copy are
+  // padding.
+  std::array<uint8_t, max_node_nof_bytes> first;
+  std::memcpy(first.data(), doubled_node.data(), max_node_nof_bytes);
+  std::memcpy(doubled_node.data() + lifting_size / 8, first.data(), max_node_nof_bytes);
+}
+
+void ldpc_encoder_generic::load_input(const bit_buffer& in)
+{
+  // The padding after the message allows reading every node with a constant size.
+  std::array<uint8_t, MAX_MESSAGE_SIZE / 8 + max_node_nof_bytes> message;
+  ocuduvec::copy(span<uint8_t>(message).first(in.get_buffer().size()), in.get_buffer());
+
+  if (lifting_size % 8 != 0) {
+    for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
+      store_doubled_node(nodes[i_node].data(), load_bits(message.data(), i_node * lifting_size), lifting_size);
+    }
+    return;
+  }
+
+  for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
+    std::memcpy(nodes[i_node].data(), message.data() + i_node * get_node_nof_bytes(), max_node_nof_bytes);
+    double_node(nodes[i_node]);
+  }
 }
 
 void ldpc_encoder_generic::preprocess_systematic_bits()
 {
-  for (auto& row : auxiliary) {
-    std::fill(row.begin(), row.end(), 0);
-  }
-
-  // LDPC codes are systematic: the first bits of the codeblock coincide with the message.
-  ocuduvec::copy(span<uint8_t>(codeblock).first(message.size()), message);
-  // Initialize the rest to zero.
-  ocuduvec::zero(span<uint8_t>(codeblock.data() + message.size(), codeblock_length - message.size()));
-
-  for (unsigned m = 0; m != bg_hr_parity_nodes; ++m) {
-    const ldpc::BG_adjacency_row_t& row = current_graph->get_adjacency_row(m);
-
-    for (uint16_t k : row) {
-      if ((k >= bg_K) || (k == NO_EDGE)) {
-        break;
-      }
-
-      unsigned node_shift = current_graph->get_lifted_node(m, k);
-      if (node_shift == NO_EDGE) {
-        break;
-      }
-
-      span<const uint8_t> message_chunk = message.subspan(static_cast<size_t>(k * lifting_size), lifting_size);
-
-      // Rotate node. Equivalent to:
-      // for (uint16_t l = 0; l != lifting_size; ++l) {
-      //   uint16_t shifted_index = (node_shift + l) % lifting_size;
-      //   auxiliary[m][l] ^= message_chunk[shifted_index];
-      // }
-      auto set_auxiliary_chunk = [this, m]() {
-        if (m < bg_hr_parity_nodes) {
-          return span<uint8_t>(auxiliary[m].data(), lifting_size);
-        }
-        unsigned offset = (bg_K + m) * lifting_size;
-        return span<uint8_t>(codeblock.data() + offset, lifting_size);
-      };
-      span<uint8_t> auxiliary_chunk = set_auxiliary_chunk();
-
-      ocuduvec::binary_xor(auxiliary_chunk.first(lifting_size - node_shift),
-                           message_chunk.last(lifting_size - node_shift),
-                           auxiliary_chunk.first(lifting_size - node_shift));
-      ocuduvec::binary_xor(
-          auxiliary_chunk.last(node_shift), message_chunk.first(node_shift), auxiliary_chunk.last(node_shift));
-    }
+  for (unsigned i_check = 0; i_check != bg_hr_parity_nodes; ++i_check) {
+    compute_check_node(auxiliary[i_check], i_check, bg_K);
   }
 }
 
-void ldpc_encoder_generic::ext_region_inner(span<uint8_t> out_node, unsigned m) const
+void ldpc_encoder_generic::encode_high_rate()
 {
-  span<const uint8_t> codeblock_view(codeblock);
+  // Processing the padding bytes as well lets the compiler vectorize the loops without scalar remainders.
+  static constexpr unsigned nof_bytes = max_node_nof_bytes;
 
-  // Get the adjacency row for the node m.
-  const ldpc::BG_adjacency_row_t& row = current_graph->get_adjacency_row(m);
+  auto aux    = [this](unsigned i) { return span<const uint8_t>(auxiliary[i]).first(nof_bytes); };
+  auto parity = [this](unsigned i) { return span<uint8_t>(nodes[bg_K + i]).first(nof_bytes); };
 
-  // Zero node.
-  ocuduvec::zero(out_node);
+  // The high-rate region has the same structure for all graphs: the first parity node is the sum of the auxiliary
+  // nodes, circularly shifted for BG1 with lifting index 6 and for BG2 with lifting index other than 3 and 7.
+  // Otherwise, the first parity node contributes circularly shifted by one to the second and fourth parity nodes.
+  // Either way, a single circular shift of the sum is needed.
+  bool     is_bg1        = current_graph->get_base_graph() == ldpc_base_graph_type::BG1;
+  unsigned ls_index      = current_graph->get_lifting_index();
+  bool     is_p0_shifted = is_bg1 ? (ls_index == 6) : ((ls_index != 3) && (ls_index != 7));
+  unsigned p0_shift      = is_bg1 ? (lifting_size - 105 % lifting_size) : (lifting_size - 1);
+  unsigned sum_shift     = is_p0_shifted ? p0_shift : 1;
 
-  // Process each of the nodes.
-  for (uint16_t k : row) {
-    // Check if the node is in codeblock range.
-    if ((k >= bg_K) || (k == NO_EDGE)) {
-      break;
-    }
+  std::array<uint8_t, doubled_node_nof_bytes> sum_buffer = {};
+  span<uint8_t>                               sum        = span<uint8_t>(sum_buffer).first(nof_bytes);
+  ocuduvec::binary_xor(sum, aux(0), aux(1));
+  ocuduvec::binary_xor(sum, sum, aux(2));
+  ocuduvec::binary_xor(sum, sum, aux(3));
+  double_node(sum_buffer);
 
-    // Obtain the node cyclic shift.
-    unsigned node_shift = current_graph->get_lifted_node(m, k);
-    if (node_shift == NO_EDGE) {
-      break;
-    }
+  std::array<uint8_t, nof_bytes> p0_contrib = {};
+  add_shifted_node(p0_contrib, sum_buffer.data(), sum_shift);
+  ocuduvec::copy(parity(0), is_p0_shifted ? span<const uint8_t>(p0_contrib) : sum);
 
-    // Get the view of the codeblock node.
-    span<const uint8_t> codeblock_node = codeblock_view.subspan(k * lifting_size, lifting_size);
-
-    // The first time, the node is copied; afterwards combined.
-    if (k == row[0]) {
-      ocuduvec::circ_shift_backward(out_node, codeblock_node, node_shift);
-    } else {
-      ocuduvec::binary_xor(out_node.first(lifting_size - node_shift),
-                           codeblock_node.last(lifting_size - node_shift),
-                           out_node.first(lifting_size - node_shift));
-      ocuduvec::binary_xor(out_node.last(node_shift), codeblock_node.first(node_shift), out_node.last(node_shift));
-    }
+  ocuduvec::binary_xor(parity(1), aux(0), p0_contrib);
+  ocuduvec::binary_xor(parity(3), aux(3), p0_contrib);
+  if (is_bg1) {
+    ocuduvec::binary_xor(parity(2), aux(2), parity(3));
+  } else {
+    ocuduvec::binary_xor(parity(2), aux(1), parity(1));
   }
-
-  for (unsigned k = 0; k != bg_hr_parity_nodes; ++k) {
-    unsigned node_shift = current_graph->get_lifted_node(m, bg_K + k);
-
-    if (node_shift == NO_EDGE) {
-      continue;
-    }
-
-    // At this point, the codeblock nodes in the extended region already contain the contribution from the systematic
-    // bits (they were computed in systematic_bits_inner). All is left to do is to sum the contribution due to the
-    // high-rate region (also stored in codeblock), with the proper circular shifts.
-    span<const uint8_t> in_node = codeblock_view.subspan((bg_K + k) * lifting_size, lifting_size);
-    ocuduvec::binary_xor(out_node.first(lifting_size - node_shift),
-                         in_node.last(lifting_size - node_shift),
-                         out_node.first(lifting_size - node_shift));
-    ocuduvec::binary_xor(out_node.last(node_shift), in_node.first(node_shift), out_node.last(node_shift));
+  for (unsigned i_parity = 0; i_parity != bg_hr_parity_nodes; ++i_parity) {
+    double_node(nodes[bg_K + i_parity]);
   }
 }
 
@@ -150,164 +171,33 @@ void ldpc_encoder_generic::write_codeblock(span<uint8_t> out, unsigned offset) c
                offset,
                bg_N_short * lifting_size);
 
-  // Calculate the node size in bytes, considering SIMD alignment.
-  span<const uint8_t> codeblock_view(codeblock);
+  // Rate matching as per TS38.212 Section 5.4.2.1 always reads from a lifted-node boundary, so node_offset is zero in
+  // 3GPP operation, but the ldpc_encoder_buffer interface allows arbitrary bit offsets.
+  unsigned first_node  = nof_punctured_nodes + offset / lifting_size;
+  unsigned node_offset = offset % lifting_size;
+  unsigned nof_nodes =
+      divide_ceil(node_offset + static_cast<unsigned>(out.size()), static_cast<unsigned>(lifting_size));
 
-  // Select the initial node. The first two blocks are shortened and the last node is not considered, since it can be
-  // incomplete.
-  unsigned i_node_begin = 2 + offset / lifting_size;
+  // Unpacking the whole window at once is considerably faster than unpacking node by node. The padding allows writing
+  // whole nodes in place.
+  static_bit_buffer<MAX_CODEBLOCK_SIZE> packed((nof_nodes - 1) * lifting_size + 8 * max_node_nof_bytes);
+  for (unsigned i_node = first_node, i_node_end = first_node + nof_nodes; i_node != i_node_end; ++i_node) {
+    // Nodes starting at a byte boundary are written in place. The bits beyond the lifting size are overwritten by the
+    // next node.
+    unsigned                                i_packed_bit = (i_node - first_node) * lifting_size;
+    bool                                    is_in_place  = (i_packed_bit % 8 == 0);
+    std::array<uint8_t, max_node_nof_bytes> buffer;
+    span<uint8_t> node = is_in_place ? packed.get_buffer().subspan(i_packed_bit / 8, max_node_nof_bytes) : buffer;
 
-  // Advance the codeblock to the initial node.
-  codeblock_view = codeblock_view.last(codeblock.size() - i_node_begin * lifting_size);
-
-  // Calculate the offset within the first node.
-  offset = offset % lifting_size;
-
-  // End node - counts an extra node if the offset of the first node is not zero.
-  unsigned i_node_end = i_node_begin + divide_ceil(out.size() + offset, lifting_size);
-
-  for (unsigned i_node = i_node_begin; i_node != i_node_end; ++i_node) {
-    // Determine the number of bits to read from this node.
-    unsigned count = std::min(lifting_size - offset, static_cast<unsigned>(out.size()));
-
-    // Check if it is operating in the extended region.
-    if (i_node < bg_hr_parity_nodes + bg_K) {
-      ocuduvec::copy(out.first(count), codeblock_view.subspan(offset, count));
+    // The extended region nodes are computed on demand from the stored nodes.
+    if (i_node < bg_K + bg_hr_parity_nodes) {
+      std::memcpy(node.data(), nodes[i_node].data(), max_node_nof_bytes);
     } else {
-      // Detect if the extended region can be done directly on the output.
-      bool inplace = ((offset == 0) && (count == lifting_size));
-
-      // Create temporary data.
-      static_vector<uint8_t, MAX_LIFTING_SIZE> temp(lifting_size);
-      span<uint8_t>                            node_view = temp;
-
-      // Use direct output for the extended node.
-      if (inplace) {
-        node_view = out.first(lifting_size);
-      }
-
-      // Process extended region for the given node.
-      ext_region_inner(node_view, i_node - bg_K);
-
-      // Copy data if temporal buffer was used.
-      if (!inplace) {
-        ocuduvec::copy(out.first(count), node_view.subspan(offset, count));
-      }
+      compute_check_node(node, i_node - bg_K, bg_K + bg_hr_parity_nodes);
     }
-
-    // Advance codeblock.
-    codeblock_view = codeblock_view.last(codeblock_view.size() - lifting_size);
-
-    // Advance output.
-    out = out.last(out.size() - count);
-
-    // The offset is no longer required after the first node.
-    offset = 0;
+    if (!is_in_place) {
+      store_bits(packed.get_buffer().data(), i_packed_bit, node.data());
+    }
   }
-
-  ocudu_assert(out.empty(), "Not all the output was writen.");
-}
-
-void ldpc_encoder_generic::high_rate_bg1_i6()
-{
-  uint16_t                                                               ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
-
-  unsigned skip0 = bg_K * ls;
-  unsigned skip1 = (bg_K + 1) * ls;
-  unsigned skip2 = (bg_K + 2) * ls;
-  unsigned skip3 = (bg_K + 3) * ls;
-  for (uint16_t k = 0; k != ls; ++k) {
-    int i = (k - 105) % ls;
-    i     = (i >= 0) ? i : i + ls;
-
-    // first chunk of parity bits
-    codeblock[skip0 + k] = aux[0][i] ^ aux[1][i];
-    codeblock[skip0 + k] ^= aux[2][i];
-    codeblock[skip0 + k] ^= aux[3][i];
-    // second chunk of parity bits
-    codeblock[skip1 + k] = aux[0][k] ^ codeblock[skip0 + k];
-    // fourth chunk of parity bits
-    codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + k];
-    // third chunk of parity bits
-    codeblock[skip2 + k] = aux[2][k] ^ codeblock[skip3 + k];
-  }
-}
-
-void ldpc_encoder_generic::high_rate_bg1_other()
-{
-  uint16_t                                                               ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
-
-  unsigned skip0 = bg_K * ls;
-  unsigned skip1 = (bg_K + 1) * ls;
-  unsigned skip2 = (bg_K + 2) * ls;
-  unsigned skip3 = (bg_K + 3) * ls;
-  for (uint16_t k = 0; k != ls; ++k) {
-    // first chunk of parity bits
-    codeblock[skip0 + k] = aux[0][k] ^ aux[1][k];
-    codeblock[skip0 + k] ^= aux[2][k];
-    codeblock[skip0 + k] ^= aux[3][k];
-  }
-  for (uint16_t k = 0; k != ls; ++k) {
-    // second chunk of parity bits
-    codeblock[skip1 + k] = aux[0][k] ^ codeblock[skip0 + ((k + 1) % ls)];
-    // fourth chunk of parity bits
-    codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + ((k + 1) % ls)];
-    // third chunk of parity bits
-    codeblock[skip2 + k] = aux[2][k] ^ codeblock[skip3 + k];
-  }
-}
-
-void ldpc_encoder_generic::high_rate_bg2_i3_7()
-{
-  uint16_t                                                               ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
-
-  unsigned skip0 = bg_K * ls;
-  unsigned skip1 = (bg_K + 1) * ls;
-  unsigned skip2 = (bg_K + 2) * ls;
-  unsigned skip3 = (bg_K + 3) * ls;
-  for (uint16_t k = 0; k != ls; ++k) {
-    // first chunk of parity bits
-    codeblock[skip0 + k] = aux[0][k] ^ aux[1][k];
-    codeblock[skip0 + k] ^= aux[2][k];
-    codeblock[skip0 + k] ^= aux[3][k];
-  }
-  for (uint16_t k = 0; k != ls; ++k) {
-    // second chunk of parity bits
-    codeblock[skip1 + k] = aux[0][k] ^ codeblock[skip0 + ((k + 1) % ls)];
-    // third chunk of parity bits
-    codeblock[skip2 + k] = aux[1][k] ^ codeblock[skip1 + k];
-    // fourth chunk of parity bits
-    codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + ((k + 1) % ls)];
-  }
-}
-
-void ldpc_encoder_generic::high_rate_bg2_other()
-{
-  uint16_t                                                               ls  = lifting_size;
-  std::array<std::array<uint8_t, MAX_LIFTING_SIZE>, bg_hr_parity_nodes>& aux = auxiliary;
-
-  unsigned skip0 = bg_K * ls;
-  unsigned skip1 = (bg_K + 1) * ls;
-  unsigned skip2 = (bg_K + 2) * ls;
-  unsigned skip3 = (bg_K + 3) * ls;
-
-  for (uint16_t k = 0; k != ls; ++k) {
-    int i = (k - 1) % ls;
-    i     = (i >= 0) ? i : i + ls;
-
-    // first chunk of parity bits
-    codeblock[skip0 + k] = aux[0][i] ^ aux[1][i];
-    codeblock[skip0 + k] ^= aux[2][i];
-    codeblock[skip0 + k] ^= aux[3][i];
-
-    // second chunk of parity bits
-    codeblock[skip1 + k] = aux[0][k] ^ codeblock[skip0 + k];
-    // third chunk of parity bits
-    codeblock[skip2 + k] = aux[1][k] ^ codeblock[skip1 + k];
-    // fourth chunk of parity bits
-    codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + k];
-  }
+  ocuduvec::bit_unpack(out, packed, node_offset);
 }

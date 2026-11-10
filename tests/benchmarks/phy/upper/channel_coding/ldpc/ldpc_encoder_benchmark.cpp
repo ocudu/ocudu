@@ -4,10 +4,12 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/phy/upper/channel_coding/channel_coding_factories.h"
+#include "ocudu/phy/upper/channel_coding/ldpc/ldpc_encoder_buffer.h"
 #include "ocudu/support/benchmark_utils.h"
 #include "ocudu/support/error_handling.h"
 #include <getopt.h>
 #include <random>
+#include <vector>
 
 namespace {
 std::mt19937 rgen(0);
@@ -98,9 +100,12 @@ int main(int argc, char** argv)
                        fmt::underlying(ls),
                        cb_length);
 
+        std::vector<uint8_t> codeblock(cb_length);
+
         perf_meas_generic.new_measure(to_string(descr_buffer), data.size(), [&]() {
           const ldpc_encoder_buffer& rm_buffer = encoder->encode(data, encoder_config);
-          do_not_optimize(&rm_buffer);
+          rm_buffer.write_codeblock(codeblock, 0);
+          do_not_optimize(codeblock.data());
         });
       }
     }
