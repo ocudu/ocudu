@@ -19,11 +19,36 @@
 #include "ocudu/scheduler/config/serving_cell_config.h"
 #include "ocudu/scheduler/config/serving_cell_config_builder.h"
 #include "ocudu/scheduler/config/ue_bwp_config.h"
+#include "ocudu/scheduler/rrm/du_srs_resource.h"
+#include <algorithm>
 #include <limits>
 #include <numeric>
 #include <utility>
 
 using namespace ocudu;
+
+/// Lists the slot offsets where a periodic PUCCH with the given symbols fits the UL symbols and does not overlap the
+/// SRS.
+static std::vector<unsigned>
+get_periodic_pucch_slot_offsets(const ran_cell_config& cell_cfg, unsigned period_slots, ofdm_symbol_range pucch_syms)
+{
+  const cyclic_prefix   cp      = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp;
+  std::vector<unsigned> offsets = get_ul_slot_offsets(cell_cfg.tdd_cfg, period_slots, pucch_syms, cp);
+  if (not cell_cfg.tdd_cfg.has_value() or cell_cfg.init_bwp.srs_cfg.srs_type_enabled == srs_type::disabled) {
+    return offsets;
+  }
+
+  // In a partially-UL slot, the SRS can use more symbols than the SRS max_nof_symbols. The PUCCH symbol budget leaves
+  // only the last max_nof_symbols symbols free.
+  const tdd_ul_dl_config_common& tdd_cfg      = *cell_cfg.tdd_cfg;
+  const auto                     overlaps_srs = [&](unsigned offset) {
+    return is_tdd_partial_ul_slot(tdd_cfg, offset) and
+           pucch_syms.overlaps(get_srs_symbols_in_partial_ul_slot(get_active_tdd_ul_symbols(tdd_cfg, offset, cp),
+                                                                  cell_cfg.init_bwp.srs_cfg.nof_symbols));
+  };
+  offsets.erase(std::remove_if(offsets.begin(), offsets.end(), overlaps_srs), offsets.end());
+  return offsets;
+}
 
 pucch_resource_manager::pucch_resource_manager(unsigned max_pucch_grants_per_slot_) :
   // Leave 1 PUCCH grant for HARQ ACKs.
@@ -44,11 +69,10 @@ void pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cell_c
   // Compute SR period and SR configuration list.
   // TODO: Handle more than one SR period.
   cell_ctx.sr_period_slots = sr_periodicity_to_slot(cell_cfg.init_bwp.pucch.sr_period);
-  const cyclic_prefix cp   = cell_ctx.cell_params.ul_cfg_common.init_ul_bwp.generic_params.cp;
   for (unsigned res = 0; res < cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_sr_resources; ++res) {
     const pucch_resource& sr_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
         cell_ctx.cell_params.init_bwp.pucch.resources.sr_res_id(pucch_sr_resource_id(res)));
-    for (unsigned offset : get_ul_slot_offsets(cell_cfg.tdd_cfg, cell_ctx.sr_period_slots, sr_res.syms, cp)) {
+    for (unsigned offset : get_periodic_pucch_slot_offsets(cell_cfg, cell_ctx.sr_period_slots, sr_res.syms)) {
       cell_ctx.free_sr_configs.emplace_back(periodic_pucch_config{res, offset});
     }
   }
@@ -62,7 +86,7 @@ void pucch_resource_manager::add_cell(du_cell_index_t cell_idx, const ran_cell_c
     for (unsigned res = 0; res < cell_ctx.cell_params.init_bwp.pucch.resources.nof_cell_csi_resources; ++res) {
       const pucch_resource& csi_res = cell_ctx.cell_bwp_cfg.ul.pucch.get_ded(
           cell_ctx.cell_params.init_bwp.pucch.resources.csi_res_id(pucch_csi_resource_id(res)));
-      for (unsigned offset : get_ul_slot_offsets(cell_cfg.tdd_cfg, cell_ctx.csi_period_slots, csi_res.syms, cp)) {
+      for (unsigned offset : get_periodic_pucch_slot_offsets(cell_cfg, cell_ctx.csi_period_slots, csi_res.syms)) {
         cell_ctx.free_csi_configs.emplace_back(periodic_pucch_config{res, offset});
       }
     }

@@ -5,6 +5,7 @@
 
 #include "lib/scheduler/config/cell_configuration.h"
 #include "tests/ocudu_test_requirements.h"
+#include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "ocudu/adt/format.h"
@@ -160,6 +161,37 @@ TEST_F(pucch_resource_manager_tester, sr_and_csi_in_different_symbols_are_alloca
       ul_bwp.pucch.sr_offset,
       to_underlying(cell_params_f0.init_bwp.csi->csi_rs_period),
       ul_bwp.csi.periodic_report->offset));
+}
+
+TEST_F(pucch_resource_manager_tester, sr_and_csi_do_not_overlap_the_srs_in_the_special_slot)
+{
+  // DDDDDDSUUU. The SRS uses all 4 UL symbols of the special slot.
+  cell_config_builder_params builder_params = cell_config_builder_profiles::create(duplex_mode::TDD);
+  builder_params.tdd_ul_dl_cfg_common       = tdd_ul_dl_config_common{builder_params.scs_common, {10, 6, 8, 3, 4}};
+  const unsigned  special_slot_idx          = 6;
+  ran_cell_config cell_params = sched_config_helper::make_default_sched_cell_configuration_request(builder_params).ran;
+  cell_params.init_bwp.srs_cfg.srs_type_enabled = srs_type::periodic;
+
+  // 2-symbol PUCCH resources in symbols 0 to 11. The resources in symbols 10 and 11 fit the special slot.
+  auto& pucch_res                  = cell_params.init_bwp.pucch.resources;
+  pucch_res.f0_or_f1_params        = pucch_f0_params{};
+  pucch_res.f2_or_f3_or_f4_params  = pucch_f2_params{.max_nof_rbs = 4U};
+  pucch_res.max_nof_symbols        = 12U;
+  pucch_res.nof_cell_sr_resources  = 12;
+  pucch_res.nof_cell_csi_resources = 12;
+  pucch_res_mng.add_cell(to_du_cell_index(1), cell_params);
+
+  // Fill the cell with UEs. No SR or CSI goes in the special slot.
+  for (unsigned i = 0; i != MAX_NOF_DU_UES; ++i) {
+    ue_cell_config ue_cfg = config_helpers::make_default_ue_cell_config(cell_params, to_du_cell_index(1));
+    if (not pucch_res_mng.alloc_resources(ue_cfg)) {
+      ASSERT_GT(i, 0);
+      break;
+    }
+    const auto& ul_bwp = ue_cfg.init_bwp().ul;
+    ASSERT_NE(ul_bwp.pucch.sr_offset % 10, special_slot_idx);
+    ASSERT_NE(ul_bwp.csi.periodic_report.value().offset % 10, special_slot_idx);
+  }
 }
 
 TEST_F(pucch_resource_manager_tester, repetition_disabled_until_capabilities_confirm_support)
