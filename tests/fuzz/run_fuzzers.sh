@@ -13,7 +13,8 @@
 #   FUZZ_OUTPUT_DIR     Directory for AFL++ output (default: /findings)
 #   FUZZ_CORPUS_DIR     Directory containing seed corpora (default: /corpus)
 #   FUZZ_TARGETS        Space-separated list of targets to run (default: all)
-#                       Valid values: ofh_uplane_decoder_fuzzer
+#                       Valid values: mac_ul_processor_fuzzer
+#                                     ofh_uplane_decoder_fuzzer
 #                                     ofh_ecpri_decoder_fuzzer
 #                                     ofh_vlan_frame_decoder_fuzzer
 #                                     ofh_receiver_fuzzer
@@ -39,6 +40,7 @@ CORPUS_DIR=${FUZZ_CORPUS_DIR:-/corpus}
 
 # All available targets mapped to their corpus sub-directory.
 declare -A ALL_TARGETS=(
+    ["mac_ul_processor_fuzzer"]="mac_ul"
     ["ofh_uplane_decoder_fuzzer"]="ofh_uplane"
     ["ofh_ecpri_decoder_fuzzer"]="ofh_ecpri"
     ["ofh_vlan_frame_decoder_fuzzer"]="ofh_vlan"

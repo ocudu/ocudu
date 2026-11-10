@@ -130,18 +130,53 @@ python3 tests/fuzz/gen_corpus.py tests/fuzz/*/seeds.py --zip-dir $OUT
 
 ```bash
 # Default: findings/ inside the build directory
-mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu,e1ap,f1ap}
+mkdir -p findings/{mac_ul,ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu,e1ap,f1ap}
 
 # Alternative: any absolute path
 export FUZZ_OUTPUT_DIR=/tmp/fuzz_findings
-mkdir -p $FUZZ_OUTPUT_DIR/ofh_uplane $FUZZ_OUTPUT_DIR/ofh_ecpri $FUZZ_OUTPUT_DIR/ofh_vlan \
-         $FUZZ_OUTPUT_DIR/ofh_rx $FUZZ_OUTPUT_DIR/ngap $FUZZ_OUTPUT_DIR/ngap_cu_cp \
-         $FUZZ_OUTPUT_DIR/rrc_ue $FUZZ_OUTPUT_DIR/rrc_cu_cp $FUZZ_OUTPUT_DIR/gtpu \
-         $FUZZ_OUTPUT_DIR/e1ap $FUZZ_OUTPUT_DIR/f1ap
+mkdir -p $FUZZ_OUTPUT_DIR/mac_ul $FUZZ_OUTPUT_DIR/ofh_uplane $FUZZ_OUTPUT_DIR/ofh_ecpri \
+         $FUZZ_OUTPUT_DIR/ofh_vlan $FUZZ_OUTPUT_DIR/ofh_rx $FUZZ_OUTPUT_DIR/ngap \
+         $FUZZ_OUTPUT_DIR/ngap_cu_cp $FUZZ_OUTPUT_DIR/rrc_ue $FUZZ_OUTPUT_DIR/rrc_cu_cp \
+         $FUZZ_OUTPUT_DIR/gtpu $FUZZ_OUTPUT_DIR/e1ap $FUZZ_OUTPUT_DIR/f1ap
 ```
 
 `FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`. For manual `afl-fuzz` invocations, pass the path
 directly via `-o`.
+
+### MAC UL processor fuzzer
+
+```bash
+afl-fuzz \
+    -i tests/fuzz/corpus/mac_ul \
+    -o findings/mac_ul \
+    -- ./tests/fuzz/mac/mac_ul_processor_fuzzer @@
+```
+
+This harness drives a `mac_ul_processor` the way the PHY does, with one Rx data indication per input. The MAC UL is
+reached by any UE that has completed random access, before any RRC or NAS security, so the UL-SCH PDU is entirely
+attacker-controlled.
+
+Unpacking the UL-SCH PDU does not read the MAC CE payloads. `pdu_rx_handler` decodes them while dispatching each subPDU:
+for the attached UE, for a Msg3 (the Buffer Status Report check and the MAC CEs deferred until the UE exists), and when
+formatting the PDU for the log. The harness goes through `pdu_rx_handler` rather than the decoders alone, so that the
+decoders run on exactly those paths.
+
+#### Input format of the MAC UL processor fuzzer
+
+The first byte is a control byte; the remaining bytes are the MAC UL-SCH PDU.
+
+| Bit | Meaning                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------- |
+| 0   | RNTI: 0 = C-RNTI of the attached UE, 1 = TC-RNTI without a UE context (Msg3)                             |
+| 1   | Receive the PDU as a MsgA PUSCH of a 2-step RACH, with a RA preamble index                               |
+| 2   | After a Msg3 with a UL-CCCH SDU, create the UE and hand its deferred MAC CEs back to MAC, as the DU does |
+| 3-7 | Unused                                                                                                   |
+
+The attached UE has C-RNTI `0x4601`, the C-RNTI of the C-RNTI MAC CE seeds, and SRB1, SRB2 and one DRB (LCID 4). The MAC
+UL is rebuilt for every input, so a crash reproduces from its input file alone.
+
+Logs are routed to `/dev/null` at debug level rather than switched off, because the subPDU formatter decodes the MAC CEs
+it prints, which makes it part of the surface under test.
 
 ### OFH U-Plane decoder fuzzer
 
@@ -588,7 +623,7 @@ docker run --rm --privileged \
             -DENABLE_BACKWARD=OFF \
             -DENABLE_WERROR=OFF
         ninja -C /build fuzz_targets
-        PATH=/build/tests/fuzz/ofh:/build/tests/fuzz/ngap:/build/tests/fuzz/rrc:/build/tests/fuzz/gtpu:/build/tests/fuzz/e1ap:/build/tests/fuzz/f1ap:\$PATH \
+        PATH=/build/tests/fuzz/mac:/build/tests/fuzz/ofh:/build/tests/fuzz/ngap:/build/tests/fuzz/rrc:/build/tests/fuzz/gtpu:/build/tests/fuzz/e1ap:/build/tests/fuzz/f1ap:\$PATH \
             FUZZ_OUTPUT_DIR=/findings \
             FUZZ_CORPUS_DIR=/build/tests/fuzz/corpus \
             tests/fuzz/run_fuzzers.sh

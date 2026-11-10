@@ -129,6 +129,7 @@ if (NOT TARGET f1ap_test_doubles)
                           pdcp_test_doubles test_rng)
 endif ()
 
+add_subdirectory(mac)
 add_subdirectory(ofh)
 add_subdirectory(ngap)
 add_subdirectory(rrc)
