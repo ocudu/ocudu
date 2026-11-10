@@ -43,10 +43,29 @@ target_link_libraries(ofh_vlan_frame_decoder_fuzzer
 )
 target_compile_options(ofh_vlan_frame_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
 
+# ---------------------------------------------------------------------------
+# OFH receiver fuzzer
+#
+# Wires the receiver and the uplink request handler of a sector to shared context repositories, and
+# replays uplink requests, received frames and OTA symbols, so that the receiver data flows run against
+# the contexts stored by the uplink request handler.
+# ---------------------------------------------------------------------------
+add_executable(ofh_receiver_fuzzer ofh_receiver_fuzzer.cpp)
+target_include_directories(ofh_receiver_fuzzer PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ofh_receiver_fuzzer
+    ocudu_ofh
+    ocudu_phy_support
+    ocudu_support
+    ocudulog
+    ${FUZZ_SANITIZER_FLAGS_LINK}
+)
+target_compile_options(ofh_receiver_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
+
 add_dependencies(fuzz_targets
     ofh_uplane_decoder_fuzzer
     ofh_ecpri_decoder_fuzzer
     ofh_vlan_frame_decoder_fuzzer
+    ofh_receiver_fuzzer
 )
 
 add_fuzz_corpus(ofh_fuzz_corpus seeds.py)

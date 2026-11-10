@@ -16,6 +16,7 @@
 #                       Valid values: ofh_uplane_decoder_fuzzer
 #                                     ofh_ecpri_decoder_fuzzer
 #                                     ofh_vlan_frame_decoder_fuzzer
+#                                     ofh_receiver_fuzzer
 #                                     ngap_pdu_decoder_fuzzer
 #                                     ngap_cu_cp_fuzzer
 #                                     rrc_ue_fuzzer
@@ -39,6 +40,7 @@ declare -A ALL_TARGETS=(
     ["ofh_uplane_decoder_fuzzer"]="ofh_uplane"
     ["ofh_ecpri_decoder_fuzzer"]="ofh_ecpri"
     ["ofh_vlan_frame_decoder_fuzzer"]="ofh_vlan"
+    ["ofh_receiver_fuzzer"]="ofh_rx"
     ["ngap_pdu_decoder_fuzzer"]="ngap"
     ["ngap_cu_cp_fuzzer"]="ngap_cu_cp"
     ["rrc_ue_fuzzer"]="rrc_ue"

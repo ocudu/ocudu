@@ -130,13 +130,13 @@ python3 tests/fuzz/gen_corpus.py tests/fuzz/*/seeds.py --zip-dir $OUT
 
 ```bash
 # Default: findings/ inside the build directory
-mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu}
+mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu}
 
 # Alternative: any absolute path
 export FUZZ_OUTPUT_DIR=/tmp/fuzz_findings
 mkdir -p $FUZZ_OUTPUT_DIR/ofh_uplane $FUZZ_OUTPUT_DIR/ofh_ecpri $FUZZ_OUTPUT_DIR/ofh_vlan \
-         $FUZZ_OUTPUT_DIR/ngap $FUZZ_OUTPUT_DIR/ngap_cu_cp $FUZZ_OUTPUT_DIR/rrc_ue \
-         $FUZZ_OUTPUT_DIR/rrc_cu_cp $FUZZ_OUTPUT_DIR/gtpu
+         $FUZZ_OUTPUT_DIR/ofh_rx $FUZZ_OUTPUT_DIR/ngap $FUZZ_OUTPUT_DIR/ngap_cu_cp \
+         $FUZZ_OUTPUT_DIR/rrc_ue $FUZZ_OUTPUT_DIR/rrc_cu_cp $FUZZ_OUTPUT_DIR/gtpu
 ```
 
 `FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`. For manual `afl-fuzz` invocations, pass the path
@@ -168,6 +168,73 @@ afl-fuzz \
     -o findings/ofh_vlan \
     -- ./tests/fuzz/ofh/ofh_vlan_frame_decoder_fuzzer @@
 ```
+
+### OFH receiver fuzzer
+
+```bash
+afl-fuzz \
+    -i tests/fuzz/corpus/ofh_rx \
+    -o findings/ofh_rx \
+    -- ./tests/fuzz/ofh/ofh_receiver_fuzzer @@
+```
+
+The decoder fuzzers above stop once a message is decoded, and every value that fits in a field decodes. Whether a
+decoded symbol, PRB range or eAxC may be used depends on the contexts that the PHY has requested and on the
+configuration, which is where the receiver indexes its buffers. This harness wires the receiver and the uplink request
+handler of a sector to shared context repositories, as `create_ofh_sector()` does, and replays an input made of uplink
+requests, received Ethernet frames and OTA symbols on a single thread. Only the Ethernet receiver, the executors and the
+PHY-facing notifier are replaced.
+
+The downlink side of the transmitter is not built: its Ethernet frame pools take most of the time to build a sector, and
+none of it is reachable from received frames. The uplink C-Plane frame pool and the PHY buffers are built once and
+reused, emptied, by every input. Everything else is rebuilt for every input, so a crash reproduces from its input file
+alone.
+
+The PHY-facing notifier aborts when the receiver notifies an uplink symbol or a PRACH window for a slot that was never
+requested. Set `OFH_FUZZ_DEBUG_LOG` to print the OFH logs to stdout when replaying an input, which is the quickest way
+to see how far an input gets.
+
+#### Input format of the OFH receiver fuzzer
+
+The first four bytes configure the sector. Then follows a sequence of operations, each one byte whose three low bits
+select the operation, followed by its arguments. At most 256 operations are replayed, and once they are done the OTA
+time advances until every reception window has closed.
+
+| Byte | Bits | Meaning                                                                                |
+| ---- | ---- | -------------------------------------------------------------------------------------- |
+| 0    | 0    | PRACH C-Plane enabled                                                                  |
+| 0    | 1    | Ignore the start symbol of PRACH U-Plane messages                                      |
+| 0    | 2    | Ignore the eCPRI payload size field                                                    |
+| 0    | 3    | Ignore the eCPRI sequence identifier field                                             |
+| 0    | 4    | Metrics enabled                                                                        |
+| 0    | 5    | Dynamic uplink compression header, instead of the static one                           |
+| 0    | 6    | 30 kHz subcarrier spacing, instead of 15 kHz                                           |
+| 0    | 7    | RU operating bandwidth of 50 MHz, instead of the cell bandwidth                        |
+| 1    | 0-7  | Uplink compression: bit 7 selects BFP, bits 0-3 the bit width (from 2 to 16, or BFP's) |
+| 2    | 0-7  | PRACH compression, as byte 1                                                           |
+| 3    | 0-1  | Number of antennas minus one                                                           |
+| 3    | 2-3  | Cell bandwidth: 5, 10, 20 or 40 MHz                                                    |
+| 3    | 4    | O-RAN FS_Offset configured, with the value of bits 5-7                                 |
+
+| Op  | Arguments                                                   | Effect                                                                   |
+| --- | ----------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 0   | slot delta                                                  | Uplink request for the OTA slot plus the delta, with a resource grid     |
+| 1   | slot delta, format, start symbol, RB offset, TD occasions   | PRACH request with a PRACH buffer, the arguments reduced to valid values |
+| 2   | eAxC, flags, [SEQ_ID], [eCPRI size, 2 bytes], length, bytes | U-Plane message wrapped in valid Ethernet and eCPRI headers              |
+| 3   | length (2 bytes), bytes                                     | Ethernet frame received as is                                            |
+| 4   | number of symbols minus one                                 | OTA time advanced symbol by symbol                                       |
+
+The slot delta is reduced modulo the processing delay of two slots plus two, so that a request can come one slot too
+early and reuse a repository entry. A request becomes visible to the receiver at the next OTA symbol, as in the DU.
+
+The eAxC byte of a U-Plane message selects, with bit 7 clear, a configured uplink eAxC and then a PRACH eAxC, and with
+bit 7 set, the eAxC value of bits 0-6. The flags are:
+
+| Bit | Meaning                                                                                                                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------- |
+| 0-1 | Slot written into the message header: 0 = as in the message, 1 = last uplink request, 2 = last PRACH request, 3 = OTA slot |
+| 2   | Sequence identifier generated by the harness, in order for each eAxC. Otherwise it is read from the input                  |
+| 3   | eCPRI payload size read from the input. Otherwise it is set from the message length                                        |
 
 ### NGAP PDU decoder fuzzer (ASN.1 only)
 
