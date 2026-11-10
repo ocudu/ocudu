@@ -167,9 +167,10 @@ public:
       return false;
     }
 
-    // Update the buffer.
-    span<cbf16_t> prach_out_buffer = context_info.buffer->get_symbol(
-        port, context_info.context.nof_fd_occasions - 1, context_info.context.nof_td_occasions - 1, symbol);
+    // Updates the buffer. A single time- and frequency-domain occasion is always considered.
+    const unsigned i_td_occasion    = 0;
+    const unsigned i_fd_occasion    = 0;
+    span<cbf16_t>  prach_out_buffer = context_info.buffer->get_symbol(port, i_td_occasion, i_fd_occasion, symbol);
 
     // The caller sizes the IQ data from the context it looked up, which may have been replaced since.
     if (re_start > prach_out_buffer.size() || iq_buffer.size() > prach_out_buffer.size() - re_start) {
