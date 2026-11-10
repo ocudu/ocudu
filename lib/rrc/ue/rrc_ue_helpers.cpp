@@ -13,28 +13,9 @@
 #include "ocudu/lpp/reference_location.h"
 #include "ocudu/rrc/rrc_ue.h"
 #include "ocudu/rrc/ue_cap_utils.h"
-#include <type_traits>
 
 using namespace ocudu;
 using namespace ocucp;
-
-namespace {
-
-/// \brief Returns the name of the carried message, which a message class extension holds outside c1.
-///
-/// Reading c1 of a message class extension only logs an ASN.1 error and then reads the wrong member of the union, so
-/// the alternative has to be checked before the name is taken.
-template <class T>
-const char* get_rrc_message_name(const T& msg)
-{
-  using msg_type_t = std::decay_t<decltype(msg.msg)>;
-  if (msg.msg.type().value != msg_type_t::types_opts::c1) {
-    return msg.msg.type().to_string();
-  }
-  return msg.msg.c1().type().to_string();
-}
-
-} // namespace
 
 template <class T>
 void ocudu::ocucp::log_rrc_message(rrc_ue_logger&    logger,
