@@ -6,6 +6,7 @@
 #include "rrc_reestablishment_procedure.h"
 #include "rrc_setup_procedure.h"
 #include "ue/rrc_asn1_converters.h"
+#include "ue/rrc_asn1_helpers.h"
 #include "ue/rrc_ue_helpers.h"
 #include "ue/rrc_ue_security_helpers.h"
 #include "ocudu/adt/format.h"
@@ -125,7 +126,9 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   // Await UE response.
   CORO_AWAIT(transaction);
 
-  if (transaction.has_response()) {
+  if (transaction.has_response() and
+      is_ul_dcch_c1_msg(transaction.response(),
+                        asn1::rrc_nr::ul_dcch_msg_type_c::c1_c_::types_opts::rrc_reest_complete)) {
     context.state = rrc_state::connected;
 
     // Notify metrics about successful RRC connection reestablishment.
@@ -148,6 +151,11 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
       logger.log_info("\"{}\" for old_ue={} finished successfully", name(), old_ue_reest_context.ue_index);
     }
 
+  } else if (transaction.has_response()) {
+    logger.log_warning("\"{}\" for old_ue={} failed. Cause: unexpected {} in place of RRC Reestablishment Complete",
+                       name(),
+                       old_ue_reest_context.ue_index,
+                       get_rrc_message_name(transaction.response()));
   } else if (transaction.failure_cause() == protocol_transaction_failure::timeout) {
     logger.log_warning("\"{}\" for old_ue={} failed. Cause: timed out after {}ms",
                        name(),

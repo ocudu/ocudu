@@ -5,6 +5,7 @@
 
 #include "rrc_ue_test_helpers.h"
 #include "tests/ocudu_test_requirements.h"
+#include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/ran/cu_cp_types.h"
 #include <gtest/gtest.h>
@@ -104,6 +105,24 @@ TEST_F(rrc_ue_reest,
   ASSERT_EQ(get_last_srb(), srb_id_t::srb1);
 
   receive_reestablishment_complete();
+  ASSERT_EQ(rrc_ue->get_rrc_state(), rrc_state::connected);
+}
+
+TEST_F(rrc_ue_reest, when_ue_answers_rrc_reestablishment_with_another_message_then_ue_is_not_connected)
+{
+  OCUDU_TEST_REQUIREMENTS("CU-GEN-3");
+
+  static constexpr uint8_t reest_transaction_id = 0;
+
+  cu_cp_ue_index_t old_ue_index = uint_to_ue_index(0);
+  add_ue_reestablishment_context(old_ue_index);
+  receive_valid_reestablishment_request(1, to_rnti(0x4601));
+  ASSERT_EQ(get_last_srb(), srb_id_t::srb1);
+
+  // Receive RRC Reconfiguration Complete with the transaction ID of the RRC Reestablishment
+  receive_ul_dcch_msg(test_helpers::create_rrc_reconfiguration_complete(reest_transaction_id));
+
+  ASSERT_NE(rrc_ue->get_rrc_state(), rrc_state::connected);
 }
 
 TEST_F(rrc_ue_reest, when_no_local_context_matches_then_context_is_retrieved_from_peer)
