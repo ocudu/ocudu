@@ -10,6 +10,7 @@
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/support/timers.h"
 #include <mutex>
+#include <optional>
 
 namespace ocudu {
 
@@ -43,8 +44,8 @@ public:
 
     // Find a free teid
     bool     found   = false;
-    uint16_t tmp_idx = next_teid_idx;
-    for (uint16_t n = 0; n < max_nof_teids; n++) {
+    uint32_t tmp_idx = next_teid_idx;
+    for (uint32_t n = 0; n < max_nof_teids; n++) {
       tmp_idx = (next_teid_idx + n) % max_nof_teids;
       if (not teid_pool[tmp_idx].is_allocated) {
         teid_pool[tmp_idx].is_allocated = true;
@@ -70,13 +71,17 @@ public:
   [[nodiscard]] bool release_teid(gtpu_teid_t teid) override
   {
     std::lock_guard<std::mutex> guard(pool_mutex);
-    uint32_t                    teid_idx = teid.value() - GTPU_TEID_MIN.value();
-    if (not teid_pool[teid_idx].is_allocated) {
+    std::optional<uint32_t>     teid_idx = get_teid_index(teid);
+    if (not teid_idx.has_value()) {
+      logger.error("Trying to free TEID outside of the pool. teid={}", teid);
+      return false;
+    }
+    if (not teid_pool[*teid_idx].is_allocated) {
       logger.error("Trying to free non-allocated TEID. teid={}", teid);
       return false;
     }
-    teid_pool[teid_idx].is_allocated     = false;
-    teid_pool[teid_idx].linger_timestamp = timers.now() + teid_release_linger_time.count();
+    teid_pool[*teid_idx].is_allocated     = false;
+    teid_pool[*teid_idx].linger_timestamp = timers.now() + teid_release_linger_time.count();
     nof_teids--;
     return true;
   }
@@ -84,8 +89,10 @@ public:
   bool is_teid_lingering(gtpu_teid_t teid) override
   {
     std::lock_guard<std::mutex> guard(pool_mutex);
-    uint32_t                    teid_idx = teid.value() - GTPU_TEID_MIN.value();
-    return is_teid_lingering_no_lock(teid_pool[teid_idx]);
+    // The TEID comes from a received packet, so it may lie outside of the pool. Such a TEID was never allocated, so it
+    // is not lingering either.
+    std::optional<uint32_t> teid_idx = get_teid_index(teid);
+    return teid_idx.has_value() and is_teid_lingering_no_lock(teid_pool[*teid_idx]);
   }
 
   [[nodiscard]] bool full() override
@@ -98,6 +105,15 @@ public:
 
 private:
   [[nodiscard]] bool full_no_lock() const { return nof_teids >= max_nof_teids; }
+
+  /// Returns the index of the given TEID in the pool, or an empty value if the TEID lies outside of the pool.
+  [[nodiscard]] std::optional<uint32_t> get_teid_index(gtpu_teid_t teid) const
+  {
+    if (teid.value() < GTPU_TEID_MIN.value() or teid.value() - GTPU_TEID_MIN.value() >= max_nof_teids) {
+      return std::nullopt;
+    }
+    return teid.value() - GTPU_TEID_MIN.value();
+  }
 
   bool is_teid_lingering_no_lock(const teid_pool_item teid_item) { return timers.now() < teid_item.linger_timestamp; }
 

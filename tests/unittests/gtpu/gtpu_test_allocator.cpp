@@ -157,6 +157,56 @@ TEST(gtpu_pool_test, unused_teid_is_not_lingering)
   }
 }
 
+TEST(gtpu_pool_test, teid_outside_of_pool_is_not_lingering)
+{
+  timer_manager       timers;
+  gtpu_teid_pool_impl pool(MAX_TEIDS, teid_release_linger_time, timers);
+
+  // The demux checks the TEID of every received packet that has no tunnel, so any value must be handled.
+  EXPECT_FALSE(pool.is_teid_lingering(int_to_gtpu_teid(0)));
+  EXPECT_FALSE(pool.is_teid_lingering(int_to_gtpu_teid(MAX_TEIDS + GTPU_TEID_MIN.value())));
+  EXPECT_FALSE(pool.is_teid_lingering(int_to_gtpu_teid(0xffffffff)));
+}
+
+TEST(gtpu_pool_test, release_of_teid_outside_of_pool_fails)
+{
+  timer_manager       timers;
+  gtpu_teid_pool_impl pool(MAX_TEIDS, teid_release_linger_time, timers);
+
+  for (unsigned n = 0; n != MAX_TEIDS; ++n) {
+    ASSERT_TRUE(pool.request_teid().has_value());
+  }
+
+  EXPECT_FALSE(pool.release_teid(int_to_gtpu_teid(0)));
+  EXPECT_FALSE(pool.release_teid(int_to_gtpu_teid(MAX_TEIDS + GTPU_TEID_MIN.value())));
+  EXPECT_FALSE(pool.release_teid(int_to_gtpu_teid(0xffffffff)));
+
+  // The pool is unchanged, so it is still full.
+  EXPECT_TRUE(pool.full());
+}
+
+TEST(gtpu_pool_test, pool_larger_than_16_bit_allocates_all_teids)
+{
+  // The CU-UP sizes its pools for up to MAX_NOF_PDU_SESSIONS TEIDs per UE, well beyond 16-bit indexes.
+  constexpr uint32_t  large_pool_size = 70000;
+  timer_manager       timers;
+  gtpu_teid_pool_impl pool(large_pool_size, teid_release_linger_time, timers);
+
+  for (uint32_t n = 0; n != large_pool_size; ++n) {
+    expected<gtpu_teid_t> teid = pool.request_teid();
+    ASSERT_TRUE(teid.has_value());
+    ASSERT_EQ(teid.value(), int_to_gtpu_teid(n + GTPU_TEID_MIN.value()));
+  }
+  EXPECT_FALSE(pool.request_teid().has_value());
+
+  // A freed TEID past the 16-bit range is allocated again.
+  const gtpu_teid_t high_teid = int_to_gtpu_teid(large_pool_size - 1 + GTPU_TEID_MIN.value());
+  ASSERT_TRUE(pool.release_teid(high_teid));
+  expected<gtpu_teid_t> teid = pool.request_teid();
+  ASSERT_TRUE(teid.has_value());
+  EXPECT_EQ(teid.value(), high_teid);
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
