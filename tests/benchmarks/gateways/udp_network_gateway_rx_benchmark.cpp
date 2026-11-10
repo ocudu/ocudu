@@ -28,7 +28,7 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print("Usage: {} [-b <bind addr>] [-n <nof PDUs>] [-m <rx mmsg>] [-u <t us>]\n", prog);
   fmt::print("\t-b Bind address for socket [Default {}]\n", params.bind_addr);
   fmt::print("\t-n Number of PDUs [Default {}]\n", params.nof_pdus);
-  fmt::print("\t-u Notify large PDU inter arrival time longer than t microseconds [Default {}]\n",
+  fmt::print("\t-u Count PDU interarrival intervals longer than t microseconds [Default {}]\n",
              params.slow_inter_rx_us);
   fmt::print("\t-m Number of RX PDUs in a syscall (rx_mmsg) [Default {}]\n", params.rx_mmsg);
   fmt::print("\t-h Show this message\n");
@@ -143,4 +143,5 @@ int main(int argc, char** argv)
   } else {
     fmt::print("PDU inter arrival time (min/avg/max) [us]: N/A\n");
   }
+  fmt::print("PDU interarrival intervals > {} us: {}\n", params.slow_inter_rx_us, gw_dn.get_nof_slow_intervals());
 }

@@ -5,9 +5,59 @@
 #pragma once
 
 #include "ocudu/gateways/udp_network_gateway_factory.h"
+#include <algorithm>
 #include <arpa/inet.h>
+#include <thread>
 
 namespace ocudu {
+
+/// Submission deadlines for a nonzero target packet rate.
+class udp_benchmark_pacer
+{
+public:
+  udp_benchmark_pacer(unsigned rate_, std::chrono::steady_clock::time_point start) : rate(rate_), deadline(start) {}
+
+  std::chrono::steady_clock::time_point next_deadline(unsigned nof_pdus, std::chrono::steady_clock::time_point now)
+  {
+    const auto interval = std::chrono::duration<double>(static_cast<double>(nof_pdus) / rate);
+    // Discard overdue work rather than replaying missed bursts.
+    deadline = std::max(deadline + std::chrono::duration_cast<std::chrono::steady_clock::duration>(interval), now);
+    return deadline;
+  }
+
+private:
+  unsigned                              rate;
+  std::chrono::steady_clock::time_point deadline;
+};
+
+inline void send_udp_benchmark_pdus(udp_network_gateway&    gateway,
+                                    const byte_buffer&      pdu,
+                                    const sockaddr_storage& dest,
+                                    uint64_t                nof_pdus,
+                                    unsigned                rate,
+                                    unsigned                burst_size)
+{
+  if (burst_size == 0) {
+    report_error("Burst size must be greater than zero");
+  }
+  if (rate == 0) {
+    for (uint64_t i = 0; i != nof_pdus; ++i) {
+      gateway.handle_pdu(pdu.copy(), dest);
+    }
+    return;
+  }
+  udp_benchmark_pacer pacer{rate, std::chrono::steady_clock::now()};
+  while (nof_pdus != 0) {
+    const unsigned count = std::min<uint64_t>(burst_size, nof_pdus);
+    for (unsigned i = 0; i != count; ++i) {
+      gateway.handle_pdu(pdu.copy(), dest);
+    }
+    nof_pdus -= count;
+    // Include the final burst's interval in the measured offered-load window.
+    std::this_thread::sleep_until(pacer.next_deadline(count, std::chrono::steady_clock::now()));
+  }
+}
+
 class dummy_network_gateway_data_notifier_with_src_addr : public network_gateway_data_notifier_with_src_addr
 {
 public:
@@ -36,7 +86,7 @@ public:
       }
       t_sum += duration;
       if (duration.count() > slow_inter_rx_us) {
-        fmt::print("Long inter Rx interval t={}us at n_pdus={}\n", duration.count(), n_pdus);
+        ++nof_slow_intervals;
       }
     } else {
       first   = false;
@@ -51,6 +101,7 @@ public:
 
   uint64_t get_rx_bytes() const { return rx_bytes; }
   uint64_t get_n_pdus() const { return n_pdus; }
+  uint64_t get_nof_slow_intervals() const { return nof_slow_intervals; }
 
   std::chrono::microseconds get_t_min() { return t_min; }
   std::chrono::microseconds get_t_max() { return t_max; }
@@ -73,6 +124,7 @@ private:
   uint64_t rx_bytes = 0;
   uint64_t n_pdus   = 0;
   uint64_t max_pdus;
+  uint64_t nof_slow_intervals = 0;
 
   std::chrono::steady_clock::time_point t_last = std::chrono::steady_clock::now();
   std::chrono::microseconds             t_min  = std::chrono::microseconds::max();

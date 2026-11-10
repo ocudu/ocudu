@@ -52,3 +52,35 @@ TEST(udp_benchmark_test, collectors_account_for_callbacks_independently)
   EXPECT_GE(second.get_t_rx(), std::chrono::microseconds::zero());
   EXPECT_LE(second.get_t_rx(), elapsed);
 }
+
+TEST(udp_benchmark_pacer_test, deadlines_do_not_accumulate_wakeup_delay)
+{
+  using namespace std::chrono;
+  const steady_clock::time_point start{};
+  udp_benchmark_pacer            pacer{1000, start};
+
+  EXPECT_EQ(pacer.next_deadline(10, start), start + milliseconds(10));
+  EXPECT_EQ(pacer.next_deadline(10, start + milliseconds(11)), start + milliseconds(20));
+  EXPECT_EQ(pacer.next_deadline(10, start + milliseconds(21)), start + milliseconds(30));
+}
+
+TEST(udp_benchmark_pacer_test, late_sender_does_not_accumulate_catchup_bursts)
+{
+  using namespace std::chrono;
+  const steady_clock::time_point start{};
+  udp_benchmark_pacer            pacer{1000, start};
+
+  EXPECT_EQ(pacer.next_deadline(10, start), start + milliseconds(10));
+  EXPECT_EQ(pacer.next_deadline(10, start + milliseconds(100)), start + milliseconds(100));
+  EXPECT_EQ(pacer.next_deadline(10, start + milliseconds(100)), start + milliseconds(110));
+}
+
+TEST(udp_benchmark_pacer_test, final_partial_burst_has_proportional_time)
+{
+  using namespace std::chrono;
+  const steady_clock::time_point start{};
+  udp_benchmark_pacer            pacer{1000, start};
+
+  EXPECT_EQ(pacer.next_deadline(10, start), start + milliseconds(10));
+  EXPECT_EQ(pacer.next_deadline(3, start + milliseconds(10)), start + milliseconds(13));
+}

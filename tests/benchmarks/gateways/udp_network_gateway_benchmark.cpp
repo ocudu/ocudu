@@ -8,6 +8,7 @@
 #include "ocudu/support/executors/inline_task_executor.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/io/io_broker_factory.h"
+#include "ocudu/support/string_parsing_utils.h"
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <limits>
@@ -22,17 +23,24 @@ struct bench_params {
   uint16_t rx_port          = 56701;
   uint16_t tx_port          = 56702;
   unsigned rx_mmsg          = 256;
+  unsigned rate             = 0;
+  unsigned burst_size       = 1;
 };
 
 static void usage(const char* prog, const bench_params& params)
 {
-  fmt::print("Usage: {} [-n <nof PDUs>] [-l <PDU len>] [-u <t us>]\n", prog);
+  fmt::print("Usage: {} [-n <nof PDUs>] [-l <PDU len>] [-u <t us>] [-r <PDU/s>] [-B <burst size>]\n", prog);
   fmt::print("\t-l PDU len [Default {}]\n", params.pdu_len);
   fmt::print("\t-n Number of PDUs [Default {}]\n", params.nof_pdus);
-  fmt::print("\t-u Notify large PDU inter arrival time longer than t microseconds [Default {}]\n",
+  fmt::print("\t-u Count PDU interarrival intervals longer than t microseconds [Default {}]\n",
              params.slow_inter_rx_us);
   fmt::print("\t-p TX port [Default {}]\n", params.tx_port);
   fmt::print("\t-P RX port [Default {}]\n", params.rx_port);
+  fmt::print("\t-r Target submission rate in PDU/s, integer in [0, {}] [Default 0, unpaced]\n",
+             std::numeric_limits<unsigned>::max());
+  fmt::print("\t-B PDUs per burst with -r, integer in [1, {}] [Default {}]\n",
+             std::numeric_limits<unsigned>::max(),
+             params.burst_size);
   fmt::print("\t-h Show this message\n");
   fmt::print("Tx rates measure submissions; Rx rates use total observations over the first-to-last span.\n"
              "Unavailable measurements print N/A. Interarrival is not latency; unobserved is not proven loss.\n");
@@ -41,7 +49,7 @@ static void usage(const char* prog, const bench_params& params)
 static void parse_args(int argc, char** argv, bench_params& params)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "l:n:m:u:p:P:h")) != -1) {
+  while ((opt = getopt(argc, argv, "l:n:m:u:p:P:r:B:h")) != -1) {
     switch (opt) {
       case 'l':
         params.pdu_len = std::strtol(optarg, nullptr, 10);
@@ -61,6 +69,22 @@ static void parse_args(int argc, char** argv, bench_params& params)
       case 'P':
         params.rx_port = std::strtol(optarg, nullptr, 10);
         break;
+      case 'r': {
+        auto rate = parse_int<unsigned>(optarg);
+        if (!rate.has_value()) {
+          report_error("Invalid -r value '{}': expected an unsigned integer", optarg);
+        }
+        params.rate = rate.value();
+        break;
+      }
+      case 'B': {
+        auto burst_size = parse_int<unsigned>(optarg);
+        if (!burst_size.has_value() || burst_size.value() == 0) {
+          report_error("Invalid -B value '{}': expected a positive unsigned integer", optarg);
+        }
+        params.burst_size = burst_size.value();
+        break;
+      }
       case 'h':
       default:
         usage(argv[0], params);
@@ -137,12 +161,11 @@ int main(int argc, char** argv)
   sockaddr_storage gw2_addr = to_sockaddr_storage(gw2_cfg.bind_address, gw2_cfg.bind_port);
 
   byte_buffer pdu = make_tx_byte_buffer(params.pdu_len);
+  fmt::print("Offered load: {} PDU/s (0 = unpaced), {} PDUs/burst\n", params.rate, params.burst_size);
 
   auto t_start = std::chrono::steady_clock::now();
 
-  for (uint64_t n = 0; n < params.nof_pdus; n++) {
-    gw1->handle_pdu(pdu.copy(), gw2_addr);
-  }
+  send_udp_benchmark_pdus(*gw1, pdu, gw2_addr, params.nof_pdus, params.rate, params.burst_size);
   auto t_end    = std::chrono::steady_clock::now();
   auto duration = std::chrono::duration<double, std::micro>(t_end - t_start);
   fmt::print("Tx done\n\n");
@@ -191,4 +214,5 @@ int main(int argc, char** argv)
   } else {
     fmt::print("PDU inter arrival time (min/avg/max) [us]: N/A\n");
   }
+  fmt::print("PDU interarrival intervals > {} us: {}\n", params.slow_inter_rx_us, gw2_dn.get_nof_slow_intervals());
 }
