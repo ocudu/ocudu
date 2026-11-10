@@ -105,6 +105,10 @@ inline std::string format_rrc_metrics(const std::vector<cu_cp_metrics_report::du
     }
     fmt::format_to(std::back_inserter(buffer), " ]");
 
+    fmt::format_to(std::back_inserter(buffer),
+                   " idle_state_rrc_release_messages={}",
+                   du_info.rrc_metrics.idle_state_rrc_release_messages);
+
     if (du_info.rrc_metrics.mean_rrc_connection_setup_time.has_value() and
         du_info.rrc_metrics.max_rrc_connection_setup_time.has_value()) {
       fmt::format_to(std::back_inserter(buffer),

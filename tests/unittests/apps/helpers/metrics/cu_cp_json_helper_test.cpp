@@ -34,3 +34,14 @@ TEST(cu_cp_json_helper_test, when_rrc_establishments_fail_then_the_failures_are_
   ASSERT_EQ(failed[fmt::format("{}", establishment_fail_cause_t::no_reply)], 1);
   ASSERT_EQ(failed[fmt::format("{}", establishment_fail_cause_t::network_reject)], 0);
 }
+
+TEST(cu_cp_json_helper_test, when_idle_state_rrc_releases_are_reported_then_they_are_in_the_json)
+{
+  cu_cp_metrics_report           report;
+  cu_cp_metrics_report::du_info& du              = report.dus.emplace_back();
+  du.rrc_metrics.idle_state_rrc_release_messages = 2;
+
+  nlohmann::json json = app_helpers::json_generators::generate(report);
+
+  ASSERT_EQ(json["cu-cp"]["rrcs"]["du"][0]["rrc_connection_establishment"]["idle_state_rrc_release_messages"], 2);
+}

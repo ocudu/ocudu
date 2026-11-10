@@ -129,6 +129,7 @@ void to_json(nlohmann::json& json, const ocudu::cu_cp_metrics_report::du_info& m
       metrics.rrc_metrics.successful_rrc_connection_establishments;
   rrc_connection_establishment["failed_rrc_connection_establishments"] =
       metrics.rrc_metrics.failed_rrc_connection_establishments;
+  rrc_connection_establishment["idle_state_rrc_release_messages"] = metrics.rrc_metrics.idle_state_rrc_release_messages;
   rrc_connection_establishment["mean_rrc_connection_setup_time_ms"] = nullptr;
   rrc_connection_establishment["max_rrc_connection_setup_time_ms"]  = nullptr;
   if (metrics.rrc_metrics.mean_rrc_connection_setup_time.has_value() and
