@@ -178,10 +178,10 @@ public:
   // Tx/Rx interconnect
   void set_status_provider(pdcp_rx_status_provider* status_provider_) { status_provider = status_provider_; }
 
-  /*
-   * SDU/PDU handlers
-   */
-  void handle_sdu(byte_buffer buf) override;
+  //
+  // SDU/PDU handlers
+  //
+  void handle_sdu(byte_buffer buf, std::optional<uint32_t> sn = std::nullopt) override;
 
   void handle_transmit_notification(uint32_t notif_sn) override;
   void handle_delivery_notification(uint32_t notif_sn) override;
@@ -233,6 +233,12 @@ public:
   /// \param[inout] buf Reference to a byte_buffer that is prepended by the header bytes.
   /// \param[in] cpt Control PDU type.
   [[nodiscard]] bool prepend_control_pdu_header(byte_buffer& buf, pdcp_control_pdu_type cpt) const;
+
+  //
+  // Buffering helpers.
+  //
+  void buffer_regular_sdu(byte_buffer buf);
+  void buffer_forwarded_sdu(byte_buffer buf, uint32_t sn);
 
   /*
    * Testing helpers
@@ -317,6 +323,12 @@ private:
   bool                     resume_requested = false;
   ring_buffer<byte_buffer> sdu_buffer{2048};
 
+  struct forward_sdu_info {
+    byte_buffer buf;
+    uint32_t    sn;
+  };
+  ring_buffer<forward_sdu_info> forward_buffer{2048};
+
   /// Apply ciphering and integrity protection to SDU+header buffer.
   /// It will pass this buffer to the crypto engine for parallization.
   void apply_reordering(pdcp_tx_buffer_info buf_info);
@@ -380,6 +392,9 @@ private:
   void handle_delivery_notification_impl(uint32_t notif_sn, bool is_retx);
 
   void handle_reordering_timeout();
+
+  /// TODO docs.
+  expected<uint32_t> estimate_forwareded_sdu_count(uint32_t sn);
 
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;

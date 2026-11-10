@@ -220,10 +220,14 @@ manual_event_flag& pdcp_entity_tx::crypto_awaitable()
 ///
 /// \param sdu Buffer that hold the SDU from higher layers.
 /// \ref TS 38.323 section 5.2.1: Transmit operation
-void pdcp_entity_tx::handle_sdu(byte_buffer buf)
+void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward_sn)
 {
   metrics.add_sdus(1, buf.length());
-  logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
+  if (not forward_sn) {
+    logger.log_debug(buf.begin(), buf.end(), "TX SDU. sdu_len={}", buf.length());
+  } else {
+    logger.log_debug(buf.begin(), buf.end(), "TX forwarded SDU. sdu_len={} sn={}", buf.length(), *forward_sn);
+  }
 
   if (OCUDU_UNLIKELY(stopped)) {
     if (not cfg.custom.warn_on_drop) {
@@ -251,16 +255,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   if (buffering) {
-    if (not sdu_buffer.try_push(std::move(buf))) {
-      if (cfg.custom.warn_on_drop) {
-        logger.log_warning("Dropping SDU. SDU buffer is full");
-      } else {
-        logger.log_debug("Dropping SDU. SDU buffer is full");
-      }
-      metrics.add_lost_sdus(1);
-      return;
+    if (not forward_sn.has_value()) {
+      buffer_regular_sdu(std::move(buf));
+    } else {
+      buffer_forwarded_sdu(std::move(buf), *forward_sn);
     }
-    logger.log_debug("Buffered SDU. Entity is paused. buffer_size={}", sdu_buffer.size());
     return;
   }
 
@@ -321,10 +320,25 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     return;
   }
 
+  /// If this is a forwarded SDU, we need to estimate the COUNT
+  uint32_t pdu_count;
+  if (forward_sn.has_value()) {
+    expected<uint32_t> fwd_count = estimate_forwareded_sdu_count(*forward_sn);
+    if (!fwd_count.has_value()) {
+      logger.log_warning(
+          "Dropping forwarded SDU. Cause COUNT larger then TX_NEXT. count={} tx_next={}", pdu_count, st.tx_next);
+      return;
+    }
+    pdu_count = fwd_count.value();
+  } else {
+    pdu_count = st.tx_next;
+  }
+  logger.log_debug("pdu_count={}", pdu_count);
+
   // Wrap SDU with meta information.
   pdcp_tx_window_sdu_info sdu_info = {
       .sdu                   = {}, // we will store a copy of the SDU here later if required.
-      .count                 = st.tx_next,
+      .count                 = pdu_count,
       .time_of_arrival       = time_of_arrival,
       .tick_point_of_arrival = {} // set later only for finite discard timer
   };
@@ -359,7 +373,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Add SDU info into TX window; determine the SDU length from original buffer.
   tx_window.add_sdu(std::move(sdu_info), buf.length());
-  logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
+  logger.log_debug("Added to tx window. count={} discard_timer={}", pdu_count, cfg.discard_timer);
 
   // Perform header compression if required.
   if (!apply_header_compression(buf)) {
@@ -369,7 +383,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Prepare header
   pdcp_data_pdu_header hdr = {};
-  hdr.sn                   = SN(st.tx_next);
+  hdr.sn                   = SN(pdu_count);
 
   // Pack header
   if (!prepend_data_pdu_header(buf, hdr)) {
@@ -382,7 +396,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   /// Prepare buffer info struct to pass to crypto executor.
   pdcp_tx_buffer_info buf_info{.is_retx = false,
                                .retx_id = retransmit_id,
-                               .count   = st.tx_next,
+                               .count   = pdu_count,
                                .buf     = std::move(buf),
                                .token   = pdcp_crypto_token(token_mngr)};
 
@@ -1566,6 +1580,7 @@ pdcp_entity_tx::early_drop_reason pdcp_entity_tx::check_early_drop(const byte_bu
   if ((st.tx_next - st.tx_next_ack) >= (window_size - 1)) {
     return early_drop_reason::full_window;
   }
+
   return early_drop_reason::no_drop;
 }
 
@@ -1579,4 +1594,53 @@ std::chrono::milliseconds pdcp_entity_tx::compute_next_discard_timeout(tick_poin
   unsigned expire_at_tick_point =
       std::max(oldest_pdu_arrival_tick_point + static_cast<unsigned>(cfg.discard_timer.value()), now);
   return std::chrono::milliseconds{expire_at_tick_point - now};
+}
+
+void pdcp_entity_tx::buffer_regular_sdu(byte_buffer buf)
+{
+  if (not sdu_buffer.try_push(std::move(buf))) {
+    if (cfg.custom.warn_on_drop) {
+      logger.log_warning("Dropping SDU. SDU buffer is full");
+    } else {
+      logger.log_debug("Dropping SDU. SDU buffer is full");
+    }
+    metrics.add_lost_sdus(1);
+    return;
+  }
+}
+
+void pdcp_entity_tx::buffer_forwarded_sdu(byte_buffer buf, uint32_t sn)
+{
+  if (not forward_buffer.try_push(forward_sdu_info{std::move(buf), sn})) {
+    if (cfg.custom.warn_on_drop) {
+      logger.log_warning("Dropping forwared SDU. SDU buffer is full");
+    } else {
+      logger.log_debug("Dropping forwarded SDU. SDU buffer is full");
+    }
+    metrics.add_lost_sdus(1);
+    return;
+  }
+}
+
+expected<uint32_t> pdcp_entity_tx::estimate_forwareded_sdu_count(uint32_t sn)
+{
+  uint32_t rcvd_hfn;
+  uint32_t rcvd_count;
+  if ((int64_t)sn < (int64_t)SN(st.tx_next) - (int64_t)window_size) {
+    rcvd_hfn = HFN(st.tx_next) + 1;
+  } else if (sn >= SN(st.tx_next) + window_size) {
+    uint32_t hfn = HFN(st.tx_next);
+    if (hfn == 0) {
+      return make_unexpected(default_error_t{});
+    }
+    rcvd_hfn = hfn - 1;
+  } else {
+    rcvd_hfn = HFN(st.tx_next);
+  }
+  rcvd_count = COUNT(rcvd_hfn, sn);
+  if (rcvd_count >= st.tx_next) {
+    return make_unexpected(default_error_t{});
+  }
+  return rcvd_count;
+  return rcvd_count;
 }

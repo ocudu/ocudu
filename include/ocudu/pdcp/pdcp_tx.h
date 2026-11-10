@@ -139,7 +139,7 @@ public:
   pdcp_tx_upper_data_interface& operator=(pdcp_tx_upper_data_interface&&)      = delete;
 
   /// Handle the incoming SDU.
-  virtual void handle_sdu(byte_buffer sdu) = 0;
+  virtual void handle_sdu(byte_buffer sdu, std::optional<uint32_t> sn = std::nullopt) = 0;
 };
 
 /// This interface represents the control SAP of the transmitting side of a PDCP entity.

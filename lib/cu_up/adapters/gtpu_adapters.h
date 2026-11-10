@@ -82,7 +82,7 @@ public:
       logger.debug("Dropped DL forwarded GTP-U SDU. PDCP DRB not connected.");
       return;
     }
-    // TODO. Pass PDU to PDCP.
+    pdcp_handler->handle_sdu(std::move(tpdu), pdcp_pdu_number);
   }
 
 private:
