@@ -54,11 +54,19 @@ ran_function_definition_ctrl_action_item_s e2sm_rc_control_action_du_executor_ba
 async_task<e2sm_ric_control_response>
 e2sm_rc_control_action_du_executor_base::return_ctrl_failure(const e2sm_ric_control_request& req)
 {
-  return launch_async([req](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
+  cause_c cause;
+  cause.set_misc().value = cause_misc_e::options::unspecified;
+  return return_ctrl_failure(req, cause);
+}
+
+async_task<e2sm_ric_control_response>
+e2sm_rc_control_action_du_executor_base::return_ctrl_failure(const e2sm_ric_control_request& req, const cause_c& cause)
+{
+  return launch_async([req, cause](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
     CORO_BEGIN(ctx);
     e2sm_ric_control_response e2sm_response;
-    e2sm_response.success                = false;
-    e2sm_response.cause.set_misc().value = cause_misc_e::options::unspecified;
+    e2sm_response.success = false;
+    e2sm_response.cause   = cause;
     CORO_RETURN(e2sm_response);
   });
 }
@@ -240,7 +248,14 @@ bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const 
 async_task<e2sm_ric_control_response>
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ric_control_request& req)
 {
-  odu::du_mac_sched_control_config ctrl_config = convert_to_du_config_request(req);
+  bool                             malformed   = false;
+  odu::du_mac_sched_control_config ctrl_config = convert_to_du_config_request(req, malformed);
+  // If the control message does not respect the RAN parameter definitions, report it as invalid.
+  if (malformed) {
+    cause_c cause;
+    cause.set_ric_request().value = cause_ric_request_e::options::ctrl_msg_invalid;
+    return return_ctrl_failure(req, cause);
+  }
   // If empty request, return failure.
   if (ctrl_config.rrm_policy_ratio_list.empty()) {
     return return_ctrl_failure(req);
@@ -299,7 +314,8 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
 }
 
 odu::du_mac_sched_control_config
-e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_)
+e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_,
+                                                                     bool&                           malformed)
 {
   odu::du_mac_sched_control_config  ctrl_config = {};
   const e2sm_rc_ctrl_hdr_format1_s& ctrl_hdr =
@@ -319,7 +335,6 @@ e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_
     return {};
   }
 
-  bool malformed = false;
   // Use a lambda to define the template function in parse_ran_parameter_value
   auto parse_action_ran_parameter_value_lambda = [this, &malformed](const ran_param_value_type_c&     ran_param,
                                                                     uint64_t                          ran_param_id,

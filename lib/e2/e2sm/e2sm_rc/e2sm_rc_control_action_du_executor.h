@@ -35,6 +35,9 @@ public:
   bool                                  ric_control_action_supported(const e2sm_ric_control_request& req) override = 0;
   async_task<e2sm_ric_control_response> execute_ric_control_action(const e2sm_ric_control_request& req) override   = 0;
   async_task<e2sm_ric_control_response> return_ctrl_failure(const e2sm_ric_control_request& req);
+  /// Returns a RIC Control Failure carrying the given cause.
+  async_task<e2sm_ric_control_response> return_ctrl_failure(const e2sm_ric_control_request& req,
+                                                            const asn1::e2ap::cause_c&      cause);
 
 protected:
   ocudulog::basic_logger&     logger;
@@ -62,7 +65,10 @@ public:
   using T = odu::du_mac_sched_control_config;
 
 private:
-  odu::du_mac_sched_control_config convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_);
+  /// Converts a RIC Control Request into a DU scheduler configuration. Sets \c malformed if a RAN parameter does
+  /// not respect its definition.
+  odu::du_mac_sched_control_config convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_,
+                                                                bool&                           malformed);
   e2sm_ric_control_response        convert_to_e2sm_response(const odu::du_mac_sched_control_config&          du_config_req_,
                                                             const odu::du_mac_sched_control_config_response& du_reponse_);
 };
