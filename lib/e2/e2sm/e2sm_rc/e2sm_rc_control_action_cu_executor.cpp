@@ -92,9 +92,14 @@ e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ri
   }
 
   // Translate UE-IDs.
-  ocucp::amf_ue_id_t amf_ue_id = ocucp::uint_to_amf_ue_id(gnb_ue_id.amf_ue_ngap_id);
-  guami_t            guami;
-  guami.plmn.from_bytes(gnb_ue_id.guami.plmn_id.to_bytes());
+  ocucp::amf_ue_id_t      amf_ue_id  = ocucp::uint_to_amf_ue_id(gnb_ue_id.amf_ue_ngap_id);
+  expected<plmn_identity> guami_plmn = plmn_identity::from_bytes(gnb_ue_id.guami.plmn_id.to_bytes());
+  if (not guami_plmn.has_value()) {
+    logger.error("Ignoring Handover Request. Cause: GUAMI carries an invalid PLMN identity.");
+    return return_ctrl_failure(req);
+  }
+  guami_t guami;
+  guami.plmn                                 = guami_plmn.value();
   guami.amf_set_id                           = static_cast<uint16_t>(gnb_ue_id.guami.amf_set_id.to_number());
   guami.amf_pointer                          = static_cast<uint8_t>(gnb_ue_id.guami.amf_pointer.to_number());
   guami.amf_region_id                        = static_cast<uint8_t>(gnb_ue_id.guami.amf_region_id.to_number());
@@ -114,12 +119,15 @@ e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ri
   }
 
   cu_handover_control_config ho_ctrl_cfg;
+  bool                       malformed = false;
   // Use a lambda to define the templete function in parse_ran_parameter_value
-  auto parse_action_ran_parameter_value_lambda = [this](const ran_param_value_type_c& ran_param,
-                                                        uint64_t                      ran_param_id,
-                                                        uint64_t                      ue_id,
-                                                        cu_handover_control_config&   ctrl_cfg) {
-    this->parse_action_ran_parameter_value(ran_param, ran_param_id, ue_id, ctrl_cfg);
+  auto parse_action_ran_parameter_value_lambda = [this, &malformed](const ran_param_value_type_c& ran_param,
+                                                                    uint64_t                      ran_param_id,
+                                                                    uint64_t                      ue_id,
+                                                                    cu_handover_control_config&   ctrl_cfg) {
+    if (not this->parse_action_ran_parameter_value(ran_param, ran_param_id, ue_id, ctrl_cfg)) {
+      malformed = true;
+    }
   };
   for (auto& ran_p : ctrl_msg.ran_p_list) {
     if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
@@ -129,6 +137,13 @@ e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ri
                                 ho_ctrl_cfg,
                                 parse_action_ran_parameter_value_lambda);
     }
+  }
+
+  // Do not hand the UE over to a target taken from a request that does not respect the RAN parameter definitions,
+  // as an earlier parameter may have left a valid target behind.
+  if (malformed) {
+    logger.error("Ignoring Handover Request. Cause: The control message carries a malformed RAN parameter.");
+    return return_ctrl_failure(req);
   }
 
   ocucp::cu_cp_intra_cu_handover_request handover_req;
@@ -176,30 +191,50 @@ e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ri
   });
 }
 
-void e2sm_rc_control_action_3_1_cu_executor::parse_action_ran_parameter_value(
+bool e2sm_rc_control_action_3_1_cu_executor::parse_action_ran_parameter_value(
     const asn1::e2sm::ran_param_value_type_c& ran_p,
     uint64_t                                  ran_param_id,
     uint64_t                                  ue_id,
     cu_handover_control_config&               ctrl_cfg)
 {
-  if (ran_param_id == 4) {
-    if (ran_p.ran_p_choice_elem_false().ran_param_value_present) {
-      const auto& value_oct = ran_p.ran_p_choice_elem_false().ran_param_value.value_oct_s();
-      if (value_oct.size() != 9) {
-        logger.error("Invalid NR CGI octet string length: {}", value_oct.size());
-        return;
-      }
-      nr_cgi_s             nr_cgi_asn;
-      std::vector<uint8_t> cgi_bytes(value_oct.size());
-      std::copy(value_oct.begin(), value_oct.end(), cgi_bytes.begin());
-      byte_buffer    cgi_buf = byte_buffer::create(cgi_bytes.begin(), cgi_bytes.end()).value();
-      asn1::cbit_ref bref(cgi_buf);
-      if (nr_cgi_asn.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
-        logger.error("Failed to unpack NR CGI");
-        return;
-      }
-      ctrl_cfg.target_cell_id.nci = nr_cell_identity::create(nr_cgi_asn.nr_cell_id.to_number()).value();
-      ctrl_cfg.target_cell_id.plmn_id.parse(nr_cgi_asn.plmn_id.to_string());
-    }
+  if (ran_param_id != 4) {
+    return true;
   }
+  // Reading a RAN parameter as a type it does not hold reinterprets its storage, so the value type has to be checked
+  // before the value is read.
+  if (ran_p.type() != ran_param_value_type_c::types_opts::ran_p_choice_elem_false) {
+    logger.error("Target NR CGI is not an element");
+    return false;
+  }
+  const auto& elem = ran_p.ran_p_choice_elem_false();
+  if (not elem.ran_param_value_present) {
+    logger.error("Target NR CGI carries no value");
+    return false;
+  }
+  if (elem.ran_param_value.type() != ran_param_value_c::types_opts::value_oct_s) {
+    logger.error("Target NR CGI is not an octet string");
+    return false;
+  }
+  const auto& value_oct = elem.ran_param_value.value_oct_s();
+  if (value_oct.size() != 9) {
+    logger.error("Invalid NR CGI octet string length: {}", value_oct.size());
+    return false;
+  }
+  nr_cgi_s             nr_cgi_asn;
+  std::vector<uint8_t> cgi_bytes(value_oct.size());
+  std::copy(value_oct.begin(), value_oct.end(), cgi_bytes.begin());
+  byte_buffer    cgi_buf = byte_buffer::create(cgi_bytes.begin(), cgi_bytes.end()).value();
+  asn1::cbit_ref bref(cgi_buf);
+  if (nr_cgi_asn.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    logger.error("Failed to unpack NR CGI");
+    return false;
+  }
+  expected<plmn_identity> target_plmn = plmn_identity::from_bytes(nr_cgi_asn.plmn_id.to_bytes());
+  if (not target_plmn.has_value()) {
+    logger.error("Invalid PLMN identity in target NR CGI");
+    return false;
+  }
+  ctrl_cfg.target_cell_id.nci     = nr_cell_identity::create(nr_cgi_asn.nr_cell_id.to_number()).value();
+  ctrl_cfg.target_cell_id.plmn_id = target_plmn.value();
+  return true;
 }
