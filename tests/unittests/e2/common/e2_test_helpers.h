@@ -262,8 +262,9 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
       sst.ran_param_id = 9;
       sst.ran_param_value_type.set_ran_p_choice_elem_false();
       sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
-      sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(
-          policy_member_def.s_nssai.sst.value());
+      // An SST is an OCTET STRING (SIZE(1)), as per TS 38.473, Section 9.3.1.38.
+      const std::array<uint8_t, 1> sst_bytes = {policy_member_def.s_nssai.sst.value()};
+      sst.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(sst_bytes);
       // 10 - SD.
       auto& sd        = nssai.ran_param_value_type.ran_p_choice_structure().ran_param_structure.seq_of_ran_params[1];
       sd.ran_param_id = 10;

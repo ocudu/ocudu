@@ -166,8 +166,15 @@ bool e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
     ctrl_cfg.rrm_policy_ratio_list.back().policy_members_list.back().plmn_id = plmn_id.value();
   } else if (ran_param_id == 9) {
     // SST.
+    const auto& sst_octets = ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s();
+    // An SST is an OCTET STRING (SIZE(1)), as per TS 38.473, Section 9.3.1.38.
+    if (sst_octets.size() != 1) {
+      logger.info("E2SM-RC Slice-level PRB quota Control Request: SST (param_id={}) encoded not correctly.",
+                  ran_param_id);
+      return false;
+    }
     ctrl_cfg.rrm_policy_ratio_list.back().policy_members_list.back().s_nssai.sst =
-        slice_service_type{(uint8_t)ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s().to_number()};
+        slice_service_type{static_cast<uint8_t>(sst_octets.to_number())};
   } else if (ran_param_id == 10) {
     // SD.
     const auto& sd_octets = ran_param.ran_p_choice_elem_false().ran_param_value.value_oct_s();
@@ -185,16 +192,32 @@ bool e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
     ctrl_cfg.rrm_policy_ratio_list.back().policy_members_list.back().s_nssai.sd = sd.value();
   } else if (ran_param_id == 11) {
     // Min PRB Policy Ratio.
-    ctrl_cfg.rrm_policy_ratio_list.back().minimum_ratio =
-        ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
+    const int64_t min_ratio = ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
+    if (min_ratio < 0 or min_ratio > 100) {
+      logger.info("E2SM-RC Slice-level PRB quota Control Request: Min PRB Policy Ratio (param_id={}) is out of range.",
+                  ran_param_id);
+      return false;
+    }
+    ctrl_cfg.rrm_policy_ratio_list.back().minimum_ratio = static_cast<unsigned>(min_ratio);
   } else if (ran_param_id == 12) {
     // Max PRB Policy Ratio.
-    ctrl_cfg.rrm_policy_ratio_list.back().maximum_ratio =
-        ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
+    const int64_t max_ratio = ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
+    if (max_ratio < 0 or max_ratio > 100) {
+      logger.info("E2SM-RC Slice-level PRB quota Control Request: Max PRB Policy Ratio (param_id={}) is out of range.",
+                  ran_param_id);
+      return false;
+    }
+    ctrl_cfg.rrm_policy_ratio_list.back().maximum_ratio = static_cast<unsigned>(max_ratio);
   } else if (ran_param_id == 13) {
     // Dedicated PRB Policy Ratio.
-    ctrl_cfg.rrm_policy_ratio_list.back().dedicated_ratio =
-        ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
+    const int64_t ded_ratio = ran_param.ran_p_choice_elem_false().ran_param_value.value_int();
+    if (ded_ratio < 0 or ded_ratio > 100) {
+      logger.info(
+          "E2SM-RC Slice-level PRB quota Control Request: Dedicated PRB Policy Ratio (param_id={}) is out of range.",
+          ran_param_id);
+      return false;
+    }
+    ctrl_cfg.rrm_policy_ratio_list.back().dedicated_ratio = static_cast<unsigned>(ded_ratio);
   } else {
     logger.error("Unknown RAN parameter ID {}", ran_param_id);
   }
