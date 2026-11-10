@@ -269,8 +269,11 @@ generate_ric_control_request_style2_action6(ocudulog::basic_logger&             
       sd.ran_param_id = 10;
       sd.ran_param_value_type.set_ran_p_choice_elem_false();
       sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value_present = true;
-      sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_number(
-          policy_member_def.s_nssai.sd.value());
+      // An SD is an OCTET STRING (SIZE(3)), as per TS 38.473, Section 9.3.1.38.
+      const uint32_t               sd_value = policy_member_def.s_nssai.sd.value();
+      const std::array<uint8_t, 3> sd_bytes = {
+          static_cast<uint8_t>(sd_value >> 16U), static_cast<uint8_t>(sd_value >> 8U), static_cast<uint8_t>(sd_value)};
+      sd.ran_param_value_type.ran_p_choice_elem_false().ran_param_value.set_value_oct_s().from_bytes(sd_bytes);
     }
 
     // 11 - Min PRB Policy Ratio.
