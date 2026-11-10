@@ -204,9 +204,10 @@ The Fedora dependency jobs in `.gitlab/ci/builders/.gitlab-ci.yml` publish or re
 `packages/generic/{uhd,dpdk,rohc}/fedora-44-amd64-<version>[_avx512]/` (the ISA suffix applies only to DPDK). The image
 publication job waits for these artifacts and copies them to `/opt/uhd`, `/opt/dpdk`, and `/opt/rohc`. An empty
 `UHD_VERSION` or `DPDK_VERSION` selects the Fedora RPM. For an explicit DPDK version, `builder.sh` selects the artifact
-directory and CMake rejects missing DPDK or a mismatched pkg-config prefix. An explicit UHD version must match the
-installed RPM or a versioned artifact. Bump `DOCKER_BUILDER_VERSION` in `.gitlab/ci/builders/version.yml` when changing
-the builder image or its dependency set.
+directory. On all OSes, CMake fails when a non-empty `DPDK_DIR` points to a missing DPDK installation or pkg-config
+resolves a different prefix, even when DPDK is optional. Unset `DPDK_DIR` to use automatic discovery. An explicit UHD
+version must match the installed RPM or a versioned artifact. Bump `DOCKER_BUILDER_VERSION` in
+`.gitlab/ci/builders/version.yml` when changing the builder image or its dependency set.
 
 Registry keys include the OS, architecture, dependency version and DPDK ISA suffix, but do not include build flags or
 script contents. A builder image version bump does not invalidate these tarballs. To rebuild a dependency after a script

@@ -7,7 +7,11 @@
 
 set -eo pipefail
 
-source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/dependency_runtime_paths.sh"
+runtime_paths_helper="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/dependency_runtime_paths.sh"
+if [[ -f "$runtime_paths_helper" ]]; then
+    # shellcheck source=dependency_runtime_paths.sh
+    source "$runtime_paths_helper"
+fi
 
 # Print help and syntax
 print_help() {
@@ -189,7 +193,9 @@ if [[ "$ARCH" == "aarch64" ]]; then
     fi
 fi
 
-setup_dependency_runtime_paths "$ROHC_DIR" "${UHD_DIR:-}" "${DPDK_DIR:-}" "${ARMPL_DIR:-}"
+if [[ -f "$runtime_paths_helper" ]]; then
+    setup_dependency_runtime_paths "$ROHC_DIR" "${UHD_DIR:-}" "${DPDK_DIR:-}" "${ARMPL_DIR:-}"
+fi
 
 # Setup cache dir
 mkdir -p "$CACHE_FOLDER"

@@ -394,7 +394,7 @@ variables:
   before_script:
     - ${CI_PROJECT_DIR}/docker/scripts/install_dependencies.sh
     - apt-get install -y --no-install-recommends ccache ninja-build lld
-    - cp ${CI_PROJECT_DIR}/docker/scripts/builder.sh ${CI_PROJECT_DIR}/.gitlab/ci/builders/add_junit_properties.py /usr/local/bin/ && chmod +x /usr/local/bin/builder.sh /usr/local/bin/add_junit_properties.py
+    - cp ${CI_PROJECT_DIR}/docker/scripts/builder.sh ${CI_PROJECT_DIR}/docker/scripts/dependency_runtime_paths.sh ${CI_PROJECT_DIR}/.gitlab/ci/builders/add_junit_properties.py /usr/local/bin/ && chmod +x /usr/local/bin/builder.sh /usr/local/bin/add_junit_properties.py
     - |
       command -v curl >/dev/null 2>&1 || { apt-get update && apt-get install -y --no-install-recommends ca-certificates curl; }
       export VKFFT_ROOT=/opt/vkfft
