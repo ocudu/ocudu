@@ -15,3 +15,5 @@ target_link_libraries(e1ap_pdu_decoder_fuzzer
 target_compile_options(e1ap_pdu_decoder_fuzzer PRIVATE ${FUZZ_SANITIZER_FLAGS_COMPILE})
 
 add_dependencies(fuzz_targets e1ap_pdu_decoder_fuzzer)
+
+add_fuzz_corpus(e1ap_fuzz_corpus seeds.py)

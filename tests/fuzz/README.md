@@ -130,13 +130,14 @@ python3 tests/fuzz/gen_corpus.py tests/fuzz/*/seeds.py --zip-dir $OUT
 
 ```bash
 # Default: findings/ inside the build directory
-mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu}
+mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu,e1ap}
 
 # Alternative: any absolute path
 export FUZZ_OUTPUT_DIR=/tmp/fuzz_findings
 mkdir -p $FUZZ_OUTPUT_DIR/ofh_uplane $FUZZ_OUTPUT_DIR/ofh_ecpri $FUZZ_OUTPUT_DIR/ofh_vlan \
          $FUZZ_OUTPUT_DIR/ofh_rx $FUZZ_OUTPUT_DIR/ngap $FUZZ_OUTPUT_DIR/ngap_cu_cp \
-         $FUZZ_OUTPUT_DIR/rrc_ue $FUZZ_OUTPUT_DIR/rrc_cu_cp $FUZZ_OUTPUT_DIR/gtpu
+         $FUZZ_OUTPUT_DIR/rrc_ue $FUZZ_OUTPUT_DIR/rrc_cu_cp $FUZZ_OUTPUT_DIR/gtpu \
+         $FUZZ_OUTPUT_DIR/e1ap
 ```
 
 `FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`. For manual `afl-fuzz` invocations, pass the path
@@ -411,6 +412,19 @@ Dissects one raw GTP-U PDU per input with the `gtpu_dissect_pdu()` function. The
 
 Remark: An input is a GTP-U PDU not only a G-PDU, thus the seeds also contain Echo Request, Echo Response and Error
 Indication messages, which are not G-PDUs.
+
+### E1AP PDU decoder fuzzer
+
+```bash
+afl-fuzz \
+    -i tests/fuzz/corpus/e1ap \
+    -o findings/e1ap \
+    -- ./tests/fuzz/e1ap/e1ap_pdu_decoder_fuzzer @@
+```
+
+Decodes one raw E1AP PDU per input via `e1ap_asn1_packer::handle_packed_pdu()`, which forwards only successful
+decodes to its message sink. The seeds are the `rx_msg` test vectors of `tests/unittests/asn1/asn1_e1ap_test.cpp`,
+one request and one response, with no harness prefix.
 
 ### Running in parallel (recommended)
 
