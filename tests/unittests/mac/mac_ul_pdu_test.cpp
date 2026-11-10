@@ -255,6 +255,35 @@ TEST(mac_ul_subpdu, decode_long_bsr_with_8_lcgs)
   fmt::print("subPDU: {}\n", subpdu);
 }
 
+// A zero-length Long BSR or Long Truncated BSR MAC CE must be rejected rather than read.
+TEST(mac_ul_pdu, decode_zero_length_long_bsr_fails)
+{
+  // R/F/LCID/L MAC subheader = 0x3e - F=0, LCID=62 (Long BSR), L=0.
+  // R/F/LCID/L MAC subheader = 0x3c - F=0, LCID=60 (Long Truncated BSR), L=0.
+  const std::array<std::pair<uint8_t, bsr_format>, 2> cases = {
+      {{0x3e, bsr_format::LONG_BSR}, {0x3c, bsr_format::LONG_TRUNC_BSR}}};
+
+  for (const auto& [lcid, bsr_fmt] : cases) {
+    // Zero-length CE as the last subPDU of the PDU.
+    mac_ul_sch_pdu pdu;
+    byte_buffer    msg = byte_buffer::create({lcid, 0x00}).value();
+    ASSERT_TRUE(pdu.unpack(msg));
+    ASSERT_EQ(pdu.nof_subpdus(), 1);
+    ASSERT_EQ(pdu.subpdu(0).sdu_length(), 0);
+    ASSERT_FALSE(decode_lbsr(bsr_fmt, pdu.subpdu(0).payload()).has_value());
+    fmt::print("PDU: {}\n", pdu);
+
+    // Zero-length CE followed by another subPDU.
+    // R/LCID MAC subheader = 0x3d - LCID=61 (Short BSR), MAC CE = 0x5f.
+    mac_ul_sch_pdu pdu2;
+    byte_buffer    msg2 = byte_buffer::create({lcid, 0x00, 0x3d, 0x5f}).value();
+    ASSERT_TRUE(pdu2.unpack(msg2));
+    ASSERT_EQ(pdu2.nof_subpdus(), 2);
+    ASSERT_FALSE(decode_lbsr(bsr_fmt, pdu2.subpdu(0).payload()).has_value());
+    fmt::print("PDU: {}\n", pdu2);
+  }
+}
+
 // Test the unpacking function for MAC subPDU with MAC CE (Long Truncated BSR).
 TEST(mac_ul_subpdu, decode_long_trunc_bsr)
 {

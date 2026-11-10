@@ -84,6 +84,12 @@ expected<long_bsr_report> ocudu::decode_lbsr(bsr_format format, byte_buffer_view
                                                         {uint_to_lcg_id(7), 0},
                                                     }};
 
+  // A zero-length CE carries no LCG bitmap, and reading it would access memory outside the payload.
+  if (payload.empty()) {
+    ocudulog::fetch_basic_logger("MAC").warning("Discarding LongBSR CE. Cause: Empty payload.");
+    return make_unexpected(default_error_t{});
+  }
+
   byte_buffer_reader reader = payload;
 
   // read LCG bitmap
