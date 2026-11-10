@@ -91,7 +91,15 @@ bool uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
     span<const cbf16_t> prach_in_data = span<const cbf16_t>(section.iq_samples).subspan(iq_start_re, iq_size_re);
 
     // Copy the data in the buffer.
-    prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data);
+    if (OCUDU_UNLIKELY(!prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data))) {
+      logger.info("Sector#{}: dropped received Open Fronthaul User-Plane PRACH packet for slot '{}', symbol '{}' and "
+                  "eAxC '{}' as it does not fit in the stored PRACH context",
+                  sector_id,
+                  slot,
+                  results.params.symbol_id,
+                  eaxc);
+      return false;
+    }
 
     if (OCUDU_UNLIKELY(logger.debug.enabled())) {
       logger.debug("Sector#{}: handling PRACH in slot '{}', symbol '{}' and port '{}'",

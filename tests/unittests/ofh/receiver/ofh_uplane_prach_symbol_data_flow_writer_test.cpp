@@ -330,3 +330,90 @@ TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, prach_in_three_message_
     }));
   }
 }
+
+TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, symbol_outside_of_prach_occasion_does_not_write)
+{
+  repo->clear(slot);
+
+  custom_prach_pool = create_prach_buffer_pool(nof_symbols, format);
+
+  // Start the PRACH occasion after the first symbol of the slot, so that symbols on both sides of it are valid
+  // User-Plane symbol indices.
+  buffer_context.start_symbol = 1;
+  repo->add(buffer_context, custom_prach_pool->get(), ocudulog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->process_pending_contexts();
+
+  auto& section     = results.sections.back();
+  section.nof_prbs  = (format == prach_format_type::zero) ? 72 : 12;
+  section.start_prb = 0;
+
+  // The symbol right after the PRACH occasion is outside of it for every format.
+  std::vector<unsigned> invalid_symbols = {buffer_context.start_symbol + nof_symbols};
+  // For short preambles, so is the symbol before the occasion. For long preambles, some RUs always set the symbol index
+  // to zero, so that symbol is accepted.
+  if (!is_long_preamble(format)) {
+    invalid_symbols.push_back(buffer_context.start_symbol - 1);
+  }
+
+  for (unsigned symbol_id : invalid_symbols) {
+    results.params.symbol_id = symbol_id;
+    ASSERT_FALSE(writer.write_to_prach_buffer(prach_eaxc[0], results)) << "symbol=" << symbol_id;
+  }
+
+  const prach_context& context = repo->get(slot);
+  ASSERT_FALSE(context.empty());
+  for (unsigned i = 0; i != nof_symbols; ++i) {
+    const auto& sym_data = context.get_symbol_re_written(i);
+    ASSERT_TRUE(std::none_of(sym_data.begin(), sym_data.end(), [](const auto& port) { return port.any(); }));
+  }
+}
+
+TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, long_preamble_symbol_zero_is_written_to_first_symbol)
+{
+  if (!is_long_preamble(format)) {
+    GTEST_SKIP() << "Only RUs sending long preambles set the symbol index to zero";
+  }
+
+  repo->clear(slot);
+
+  custom_prach_pool = create_prach_buffer_pool(nof_symbols, format);
+
+  buffer_context.start_symbol = 1;
+  repo->add(buffer_context, custom_prach_pool->get(), ocudulog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->process_pending_contexts();
+
+  auto& section            = results.sections.back();
+  section.nof_prbs         = 72;
+  section.start_prb        = 0;
+  results.params.symbol_id = 0;
+  ASSERT_TRUE(writer.write_to_prach_buffer(prach_eaxc[0], results));
+
+  const prach_context& context  = repo->get(slot);
+  const auto&          sym_data = context.get_symbol_re_written(0);
+  ASSERT_TRUE(std::all_of(sym_data.begin(), sym_data.end(), [](const auto& port) { return port.all(); }));
+}
+
+TEST_P(ofh_uplane_prach_symbol_data_flow_writer_fixture, write_not_fitting_the_stored_context_does_not_write)
+{
+  static_vector<cbf16_t, prach_constants::LONG_SEQUENCE_LENGTH> samples(preamble_length);
+
+  // The PRACH buffer of the slot is popped, as the closed reception window handler does, before the write.
+  repo->clear(slot);
+  ASSERT_FALSE(repo->write_iq(slot, 0, 0, 0, samples));
+
+  repo->add(buffer_context, prach_pool->get(), ocudulog::fetch_basic_logger("TEST"), std::nullopt);
+  repo->process_pending_contexts();
+  const unsigned nof_ports = repo->get(slot).get_max_nof_ports();
+
+  // Port that does not fit in the PRACH buffer.
+  ASSERT_FALSE(repo->write_iq(slot, nof_ports, 0, 0, samples));
+
+  // IQ data that does not fit in the PRACH symbol from the given start RE.
+  ASSERT_FALSE(repo->write_iq(slot, 0, 0, 1, samples));
+
+  const prach_context& context = repo->get(slot);
+  for (unsigned i = 0; i != nof_symbols; ++i) {
+    const auto& sym_data = context.get_symbol_re_written(i);
+    ASSERT_TRUE(std::none_of(sym_data.begin(), sym_data.end(), [](const auto& port) { return port.any(); }));
+  }
+}

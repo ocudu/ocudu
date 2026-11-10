@@ -131,37 +131,57 @@ public:
     return buffer_stats[symbol].re_written;
   }
 
-  /// Writes the given IQ buffer corresponding to the given symbol and port.
-  void write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cbf16_t> iq_buffer)
+  /// \brief Writes the given IQ buffer corresponding to the given symbol and port.
+  ///
+  /// The symbol is the OFDM symbol index within the slot, as received in the User-Plane message.
+  /// \return \c false if nothing was written, because the context holds no PRACH buffer, the symbol lies outside of the
+  /// PRACH occasion, the port does not fit in the PRACH buffer or the IQ data does not fit in the PRACH symbol.
+  /// Otherwise \c true.
+  [[nodiscard]] bool write_iq(unsigned port, unsigned symbol, unsigned re_start, span<const cbf16_t> iq_buffer)
   {
+    // The closed reception window handler pops PRACH buffers concurrently, so the context may have been cleared since
+    // the caller looked it up.
+    if (!context_info.buffer) {
+      return false;
+    }
+
+    // The symbol comes from the received User-Plane message, which is not checked against the PRACH occasion when the
+    // PRACH Control-Plane is disabled.
     if (is_long_preamble(context_info.context.format)) {
       // Some RUs always set PRACH symbolId to 0 when long format is used ignoring the value indicated in C-Plane.
       if (symbol >= start_symbol) {
         symbol -= start_symbol;
       }
     } else {
+      if (symbol < start_symbol) {
+        return false;
+      }
       symbol -= start_symbol;
     }
 
-    ocudu_assert(context_info.buffer, "No valid PRACH buffer in the context");
-    ocudu_assert(symbol < nof_symbols, "Invalid symbol index");
+    if (symbol >= nof_symbols) {
+      return false;
+    }
 
-    // Skip writing if the given port does not fit in the PRACH buffer.
     if (port >= context_info.buffer->get_max_nof_ports()) {
-      return;
+      return false;
     }
 
     // Update the buffer.
     span<cbf16_t> prach_out_buffer = context_info.buffer->get_symbol(
         port, context_info.context.nof_fd_occasions - 1, context_info.context.nof_td_occasions - 1, symbol);
 
-    ocudu_assert(prach_out_buffer.last(prach_out_buffer.size() - re_start).size() >= iq_buffer.size(),
-                 "Invalid IQ data buffer size to copy as it does not fit into the PRACH buffer");
+    // The caller sizes the IQ data from the context it looked up, which may have been replaced since.
+    if (re_start > prach_out_buffer.size() || iq_buffer.size() > prach_out_buffer.size() - re_start) {
+      return false;
+    }
 
     ocuduvec::copy(prach_out_buffer.subspan(re_start, iq_buffer.size()), iq_buffer);
 
     // Update statistics.
     buffer_stats[symbol].re_written[port].fill(re_start, re_start + iq_buffer.size());
+
+    return true;
   }
 
   /// Tries to get a complete PRACH buffer. A PRACH buffer is considered completed when all the PRBs for all the ports
@@ -250,11 +270,13 @@ public:
     }
   }
 
-  /// Function to write the uplink PRACH buffer.
-  void write_iq(slot_point slot, unsigned port, unsigned symbol, unsigned re_start, span<const cbf16_t> iq_buffer)
+  /// \brief Writes the uplink PRACH buffer of the given slot.
+  /// \return \c false if nothing was written, as described in \ref prach_context::write_iq, otherwise \c true.
+  [[nodiscard]] bool
+  write_iq(slot_point slot, unsigned port, unsigned symbol, unsigned re_start, span<const cbf16_t> iq_buffer)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    entry(slot).write_iq(port, symbol, re_start, iq_buffer);
+    return entry(slot).write_iq(port, symbol, re_start, iq_buffer);
   }
 
   /// Returns the entry of the repository for the given slot.

@@ -94,7 +94,7 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_long_prach_buffer_triggers_n
   ASSERT_FALSE(repo->get(slot).empty());
 
   // Fill the grid.
-  repo->write_iq(slot, port, symbol, 0, samples);
+  ASSERT_TRUE(repo->write_iq(slot, port, symbol, 0, samples));
 
   sender.notify_prach(slot);
 
@@ -139,7 +139,7 @@ TEST(ofh_uplane_prach_data_flow_notifier, completed_short_prach_buffer_triggers_
 
   // Fill the grid.
   for (unsigned i = 0; i != 12; ++i) {
-    repo->write_iq(slot, port, i, 0, samples);
+    ASSERT_TRUE(repo->write_iq(slot, port, i, 0, samples));
   }
 
   sender.notify_prach(slot);
