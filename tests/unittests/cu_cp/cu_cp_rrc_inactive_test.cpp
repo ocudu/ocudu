@@ -700,6 +700,14 @@ TEST_F(cu_cp_rrc_inactive_test,
 
   // Inject Inactivity Notification and await UE Context Release Request.
   ASSERT_TRUE(send_ue_level_bearer_context_inactivity_notification_and_await_ue_context_release_request());
+
+  // The AMF confirms the release; it must be counted as an idle-state release.
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command());
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete());
+
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 //----------------------------------------------------------------------------------//
@@ -715,6 +723,14 @@ TEST_F(
 
   // Inject Inactivity Notification and await UE Context Release Request.
   ASSERT_TRUE(send_ue_level_bearer_context_inactivity_notification_and_await_ue_context_release_request());
+
+  // The AMF confirms the release; it must be counted as an idle-state release.
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command());
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete());
+
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_ue_level_inactivity_message_received_then_ue_is_set_to_rrc_inactive)
@@ -735,6 +751,8 @@ TEST_F(cu_cp_rrc_inactive_test, when_ue_level_inactivity_message_received_then_u
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.dus[0].rrc_metrics.mean_nof_inactive_rrc_connections, 1);
   ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_inactive_rrc_connections, 1);
+  // The RRC Release includes suspendConfig.
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 0);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_amf_rejects_the_resume_cause_then_resume_is_rejected_and_ue_stays_inactive)
@@ -1183,6 +1201,14 @@ TEST_F(cu_cp_rrc_inactive_test, when_bearer_context_modification_for_suspend_fai
 
   // Send Bearer Context Modification Failure and await NGAP UE Context Release Request.
   ASSERT_TRUE(send_bearer_context_modification_failure_and_await_ngap_ue_context_release_request());
+
+  // The AMF confirms the release; it must be counted as an idle-state release.
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
+  ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command());
+  ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete());
+
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_f1ap_ue_context_release_for_suspend_fails_then_ue_release_is_requested)
@@ -1202,6 +1228,19 @@ TEST_F(cu_cp_rrc_inactive_test, when_f1ap_ue_context_release_for_suspend_fails_t
   // Await NGAP UE Context Release Request.
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(test_helpers::is_valid_ue_context_release_request(ngap_pdu));
+
+  // The AMF confirms the release; it must be counted as an idle-state release. The F1AP UE context release was
+  // already answered (with the mismatched ID) for this UE, so this second release completes without another F1AP
+  // round trip to the DU.
+  ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
+
+  get_cu_up(cu_up_idx).push_tx_pdu(
+      generate_bearer_context_release_complete(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+  ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_complete(ngap_pdu));
+
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_for_unknown_ue_is_received_then_fallback_succeeds)
@@ -1297,6 +1336,8 @@ TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_with_invalid_resume_mac_
       1);
   ASSERT_EQ(
       report.dus[0].rrc_metrics.successful_rrc_connection_resumes_with_fallback.get_count(resume_cause_t::mo_data), 0);
+  // The release carries no suspendConfig, so it counts here too, regardless of the resume failure.
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_ue_context_setup_for_rrc_resume_fails_then_release_is_sent)
@@ -1353,6 +1394,8 @@ TEST_F(cu_cp_rrc_inactive_test, when_ue_context_setup_for_rrc_resume_fails_then_
       1);
   ASSERT_EQ(
       report.dus[0].rrc_metrics.successful_rrc_connection_resumes_with_fallback.get_count(resume_cause_t::mo_data), 0);
+  // The release carries no suspendConfig, so it counts here too, regardless of the resume failure.
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_bearer_context_modification_for_rrc_resume_fails_then_release_is_sent)
@@ -1412,6 +1455,8 @@ TEST_F(cu_cp_rrc_inactive_test, when_bearer_context_modification_for_rrc_resume_
       1);
   ASSERT_EQ(
       report.dus[0].rrc_metrics.successful_rrc_connection_resumes_with_fallback.get_count(resume_cause_t::mo_data), 0);
+  // The release carries no suspendConfig, so it counts here too, regardless of the resume failure.
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 TEST_F(cu_cp_rrc_inactive_test, when_rrc_resume_request_with_cause_rna_upd_is_received_then_ue_is_set_to_inactive_again)

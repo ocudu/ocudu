@@ -56,6 +56,11 @@ void rrc_du_metrics_aggregator::aggregate_failed_connection_establishment(establ
   connection_establishment_metrics.failed_rrc_connection_establishments.increase(cause);
 }
 
+void rrc_du_metrics_aggregator::aggregate_idle_state_rrc_release_without_suspend_config()
+{
+  ++connection_establishment_metrics.idle_state_rrc_release_messages;
+}
+
 void rrc_du_metrics_aggregator::aggregate_rrc_connection_setup_time(std::chrono::milliseconds setup_time)
 {
   connection_setup_time_ms.update(setup_time.count());
@@ -121,6 +126,7 @@ void rrc_du_metrics_aggregator::collect_metrics(rrc_du_metrics& metrics)
   metrics.successful_rrc_connection_establishments =
       connection_establishment_metrics.successful_rrc_connection_establishments;
   metrics.failed_rrc_connection_establishments = connection_establishment_metrics.failed_rrc_connection_establishments;
+  metrics.idle_state_rrc_release_messages      = connection_establishment_metrics.idle_state_rrc_release_messages;
   metrics.mean_rrc_connection_setup_time.reset();
   metrics.max_rrc_connection_setup_time.reset();
   if (connection_setup_time_ms.get_nof_observations() != 0) {

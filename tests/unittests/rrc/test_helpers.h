@@ -254,6 +254,8 @@ public:
     last_establishment_fail_cause = cause;
   }
 
+  void on_idle_state_rrc_release_without_suspend_config() override { ++nof_idle_state_rrc_release_messages; }
+
   void on_successful_rrc_connection_reestablishment() override {}
 
   void on_successful_rrc_connection_reestablishment_fallback() override {}
@@ -279,6 +281,9 @@ public:
   establishment_fail_cause_t last_establishment_fail_cause            = establishment_fail_cause_t::other;
   /// Counts the RRC connection resumes followed by network release the RRC UE reported.
   unsigned nof_resume_followed_by_network_release = 0;
+
+  /// Counts the idle-state RRC release messages the RRC UE reported.
+  unsigned nof_idle_state_rrc_release_messages = 0;
 };
 
 } // namespace ocudu::ocucp

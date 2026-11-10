@@ -35,6 +35,11 @@ public:
     metrics_handler.handle_failed_rrc_connection_establishment(cause);
   }
 
+  void on_idle_state_rrc_release_without_suspend_config() override
+  {
+    metrics_handler.handle_idle_state_rrc_release_without_suspend_config();
+  }
+
   void on_successful_rrc_connection_reestablishment() override
   {
     metrics_handler.handle_successful_rrc_reestablishment();
@@ -119,6 +124,7 @@ public:
   void handle_rrc_connection_setup_time(std::chrono::milliseconds setup_time) override;
   void handle_attempted_rrc_setup(establishment_cause_t cause) override;
   void handle_failed_rrc_connection_establishment(establishment_fail_cause_t cause) override;
+  void handle_idle_state_rrc_release_without_suspend_config() override;
   void handle_attempted_rrc_reestablishment() override;
   void handle_successful_rrc_reestablishment() override;
   void handle_successful_rrc_reestablishment_fallback() override;

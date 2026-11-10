@@ -123,6 +123,8 @@ struct rrc_du_metrics {
   rrc_connection_counter_with_cause      attempted_rrc_connection_establishments;
   rrc_connection_counter_with_cause      successful_rrc_connection_establishments;
   rrc_connection_fail_counter_with_cause failed_rrc_connection_establishments;
+  /// \brief Number of idle-state RRC release messages, see TS 28.552 section 5.1.1.15.4.
+  unsigned idle_state_rrc_release_messages;
   /// \brief RRC connection setup time, from the reception of the RRCSetupRequest to the reception of the
   /// RRCSetupComplete. TS 28.552 does not define this metric. The values are empty when no RRC connection was set up in
   /// the reporting period.

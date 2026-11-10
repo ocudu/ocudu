@@ -659,12 +659,15 @@ TEST_F(cu_cp_ue_context_release_test,
   ASSERT_TRUE(rrc_release.redirected_carrier_info_present);
   ASSERT_EQ(rrc_release.redirected_carrier_info.type(), asn1::rrc_nr::redirected_carrier_info_c::types::nr);
   ASSERT_EQ(rrc_release.redirected_carrier_info.nr().carrier_freq, 520000U);
+  // The release carries no suspendConfig either, so it is an idle-state release.
+  ASSERT_FALSE(rrc_release.suspend_cfg_present);
 
   // DU confirms release; CU-CP sends NGAP UE Context Release Complete to the AMF.
   ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete());
 
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 0) << "UE should be removed";
+  ASSERT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1);
 }
 
 TEST_F(cu_cp_ue_context_release_test,

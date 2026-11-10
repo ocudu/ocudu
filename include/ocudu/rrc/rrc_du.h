@@ -171,6 +171,9 @@ public:
   /// \brief Add the failed RRC connection establishment to the metrics.
   virtual void handle_failed_rrc_connection_establishment(establishment_fail_cause_t cause) = 0;
 
+  /// \brief Add the idle-state RRC release message, sent without a suspend configuration, to the metrics.
+  virtual void handle_idle_state_rrc_release_without_suspend_config() = 0;
+
   /// \brief Add the successful RRC connection re-establishment to the metrics.
   virtual void handle_successful_rrc_reestablishment() = 0;
 

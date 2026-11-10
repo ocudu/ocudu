@@ -56,3 +56,16 @@ TEST(rrc_du_metrics_aggregator_test, when_rrc_connection_setup_times_are_added_t
   ASSERT_FALSE(metrics.mean_rrc_connection_setup_time.has_value());
   ASSERT_FALSE(metrics.max_rrc_connection_setup_time.has_value());
 }
+
+TEST(rrc_du_metrics_aggregator_test, when_idle_state_rrc_releases_are_aggregated_then_the_counter_is_reported)
+{
+  rrc_du_metrics_aggregator aggregator;
+
+  aggregator.aggregate_idle_state_rrc_release_without_suspend_config();
+  aggregator.aggregate_idle_state_rrc_release_without_suspend_config();
+
+  rrc_du_metrics metrics;
+  aggregator.collect_metrics(metrics);
+
+  ASSERT_EQ(metrics.idle_state_rrc_release_messages, 2);
+}

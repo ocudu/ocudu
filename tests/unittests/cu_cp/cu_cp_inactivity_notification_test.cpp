@@ -5,10 +5,14 @@
 
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/e1ap/e1ap_cu_cp_test_messages.h"
+#include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/ngap/ngap_test_message_validators.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
+#include "tests/unittests/ngap/ngap_test_messages.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/e1ap/common/e1ap_message.h"
+#include "ocudu/f1ap/f1ap_message.h"
 #include "ocudu/ngap/ngap_message.h"
 #include <gtest/gtest.h>
 
@@ -128,6 +132,36 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool complete_release_and_check_idle_state_release_metric()
+  {
+    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
+                              "there are still F1AP DL messages to pop from DU");
+
+    get_amf().push_tx_pdu(generate_valid_ue_context_release_command_with_amf_ue_ngap_id(ue_ctx->amf_ue_id.value()));
+    report_fatal_error_if_not(this->wait_for_e1ap_tx_pdu(cu_up_idx, e1ap_pdu),
+                              "Failed to receive Bearer Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_bearer_context_release_command(e1ap_pdu),
+                              "Invalid Bearer Context Release Command");
+
+    get_cu_up(cu_up_idx).push_tx_pdu(
+        generate_bearer_context_release_complete(ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+    report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
+                              "Failed to receive F1AP UE Context Release Command");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_command(f1ap_pdu),
+                              "Invalid F1AP UE Context Release Command");
+
+    get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(ue_ctx->cu_ue_id.value(), du_ue_id));
+    report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),
+                              "Failed to receive NGAP UE Context Release Complete");
+    report_fatal_error_if_not(test_helpers::is_valid_ue_context_release_complete(ngap_pdu),
+                              "Invalid NGAP UE Context Release Complete");
+
+    auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+    EXPECT_EQ(report.dus[0].rrc_metrics.idle_state_rrc_release_messages, 1)
+        << "idle_state_rrc_release_messages was not incremented for a data-inactivity release";
+    return report.dus[0].rrc_metrics.idle_state_rrc_release_messages == 1;
+  }
+
   unsigned du_idx    = 0;
   unsigned cu_up_idx = 0;
 
@@ -145,6 +179,7 @@ public:
 
   ngap_message ngap_pdu;
   e1ap_message e1ap_pdu;
+  f1ap_message f1ap_pdu;
 };
 
 TEST_F(cu_cp_inactivity_notification_test,
@@ -168,6 +203,9 @@ TEST_F(cu_cp_inactivity_notification_test,
 {
   // Inject Inactivity Notification and await UE Context Release Request.
   ASSERT_TRUE(send_ue_level_bearer_context_inactivity_notification_and_await_ue_context_release_request());
+
+  // The AMF confirms the release; it must be counted as an idle-state release.
+  ASSERT_TRUE(complete_release_and_check_idle_state_release_metric());
 }
 
 TEST_F(cu_cp_inactivity_notification_test,
@@ -175,6 +213,9 @@ TEST_F(cu_cp_inactivity_notification_test,
 {
   // Inject Inactivity Notification and await UE Context Release Request.
   ASSERT_TRUE(send_drb_level_bearer_context_inactivity_notification_and_await_ue_context_release_request());
+
+  // The AMF confirms the release; it must be counted as an idle-state release.
+  ASSERT_TRUE(complete_release_and_check_idle_state_release_metric());
 }
 
 TEST_F(
@@ -183,4 +224,7 @@ TEST_F(
 {
   // Inject Inactivity Notification and await UE Context Release Request.
   ASSERT_TRUE(send_pdu_session_level_bearer_context_inactivity_notification_and_await_ue_context_release_request());
+
+  // The AMF confirms the release; it must be counted as an idle-state release.
+  ASSERT_TRUE(complete_release_and_check_idle_state_release_metric());
 }

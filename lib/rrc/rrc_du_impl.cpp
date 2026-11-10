@@ -468,6 +468,11 @@ void rrc_du_impl::handle_failed_rrc_connection_establishment(establishment_fail_
   metrics_aggregator.aggregate_failed_connection_establishment(cause);
 }
 
+void rrc_du_impl::handle_idle_state_rrc_release_without_suspend_config()
+{
+  metrics_aggregator.aggregate_idle_state_rrc_release_without_suspend_config();
+}
+
 void rrc_du_impl::handle_attempted_rrc_reestablishment()
 {
   metrics_aggregator.aggregate_attempted_connection_reestablishment();

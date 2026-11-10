@@ -711,6 +711,9 @@ public:
   /// \brief Notify the RRC DU about a failed RRC connection establishment.
   virtual void on_failed_rrc_connection_establishment(establishment_fail_cause_t cause) = 0;
 
+  /// \brief Notify the RRC DU about an idle-state RRCRelease sent to the UE without a suspend configuration.
+  virtual void on_idle_state_rrc_release_without_suspend_config() = 0;
+
   /// \brief Notify the RRC DU about the successful RRC connection re-establishment.
   virtual void on_successful_rrc_connection_reestablishment() = 0;
 

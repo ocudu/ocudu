@@ -1076,6 +1076,12 @@ rrc_ue_impl::get_rrc_ue_release_context(bool                                    
       release_context.rrc_pdu = pdcp_packing_result.pop_pdu();
       release_context.srb_id  = srb_id_t::srb1;
 
+      if (!inactivity_context.has_value()) {
+        // Notify metrics about the idle-state RRCRelease sent without a suspend configuration, see TS 28.552
+        // section 5.1.1.15.4.
+        metrics_notifier.on_idle_state_rrc_release_without_suspend_config();
+      }
+
       // Log Tx message.
       log_rrc_message(logger, Tx, release_context.rrc_pdu, dl_dcch_msg, srb_id_t::srb1, "DCCH DL");
     }

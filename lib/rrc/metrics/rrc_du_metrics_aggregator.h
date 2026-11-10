@@ -24,6 +24,7 @@ struct rrc_connection_establishment_metrics {
   rrc_connection_counter_with_cause      attempted_rrc_connection_establishments;
   rrc_connection_counter_with_cause      successful_rrc_connection_establishments;
   rrc_connection_fail_counter_with_cause failed_rrc_connection_establishments;
+  unsigned                               idle_state_rrc_release_messages = 0;
 };
 
 struct rrc_connection_reestablishment_metrics {
@@ -61,6 +62,8 @@ public:
   void aggregate_successful_connection_establishment(establishment_cause_t cause);
 
   void aggregate_failed_connection_establishment(establishment_fail_cause_t cause);
+
+  void aggregate_idle_state_rrc_release_without_suspend_config();
 
   void aggregate_rrc_connection_setup_time(std::chrono::milliseconds setup_time);
 
