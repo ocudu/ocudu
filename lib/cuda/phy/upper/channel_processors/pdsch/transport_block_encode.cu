@@ -140,6 +140,12 @@ nr_tb_init_config(nr_tb_config_t* tb_cfg, int tbs, float rate, const nr_geometry
   units::bits tb_bits(static_cast<unsigned>(tbs));
   units::bits tb_crc_bits = compute_tb_crc_size(tb_bits);
 
+  // A base graph the caller gives leaves the rate unused. A base graph the encoder derives comes
+  // from the rate, and get_ldpc_base_graph() takes only a rate the standard allows.
+  if ((overrides.base_graph <= 0) && ((rate <= 0.F) || (rate >= 1.F))) {
+    return make_unexpected(std::string("The code rate the base graph is derived from is not between zero and one"));
+  }
+
   ldpc_base_graph_type base_graph =
       (overrides.base_graph > 0) ? ((overrides.base_graph == 1) ? ldpc_base_graph_type::BG1 : ldpc_base_graph_type::BG2)
                                  : get_ldpc_base_graph(rate, tb_bits);

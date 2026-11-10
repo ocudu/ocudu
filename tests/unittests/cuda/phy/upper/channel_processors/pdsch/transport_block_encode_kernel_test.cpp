@@ -264,6 +264,25 @@ TEST_F(transport_block_encode_kernel_test, a_base_graph_from_the_caller_carries_
   EXPECT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), 48U);
 }
 
+TEST_F(transport_block_encode_kernel_test, a_base_graph_the_encoder_derives_needs_a_code_rate)
+{
+  // A configuration that leaves the base graph and the code rate as they come. The base graph is
+  // derived from the rate alone, so this one gives nothing to derive it from.
+  cuda::transport_block_encoder_config config = {};
+  config.nof_tb_bits                          = 1000;
+  config.nof_layers                           = 1;
+  config.modulation                           = modulation_scheme::QPSK;
+  config.nof_allocated_bits                   = 2048;
+  config.enable_scrambling                    = false;
+
+  EXPECT_FALSE(gpu.configure(config).has_value());
+
+  // The rate is read for the base graph alone. A caller that gives the base graph owes no rate.
+  config.base_graph            = ldpc_base_graph_type::BG2;
+  cuda::cuda_result configured = gpu.configure(config);
+  EXPECT_TRUE(configured.has_value()) << configured.error();
+}
+
 TEST_F(transport_block_encode_kernel_test, a_code_block_count_from_the_caller_carries_the_lifting_size_with_it)
 {
   // A transport block the encoder segments into three code blocks on its own.
