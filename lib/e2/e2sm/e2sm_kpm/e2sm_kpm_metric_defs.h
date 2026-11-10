@@ -63,7 +63,7 @@ inline bool is_cell_id_required(const e2sm_kpm_metric_t& metric)
 }
 
 /// Number of E2SM-KPM metrics defined in 3GPP TS 28.552.
-const size_t NOF_3GPP_TS_28_552_METRICS = 279;
+const size_t NOF_3GPP_TS_28_552_METRICS = 280;
 
 /// Number of E2SM-KPM metrics defined in O-RAN.WG3.E2SM-KPM-R003-v3.00
 const size_t NOF_ORAN_E2SM_KPM_METRICS = 9;
@@ -920,6 +920,11 @@ inline span<const e2sm_kpm_metric_t> get_e2sm_kpm_28_552_metrics()
   //                     RRC.ConnEstabFailCause.Other
   {"RRC.ConnEstabFailCause", NRCellCU, CC, INTEGER, "-", NO_LABEL, E2_NODE_LEVEL | UE_LEVEL},
   {"RRC.ConnEstabFailCause.NetworkReject", NRCellCU, CC, INTEGER, "-", NO_LABEL, E2_NODE_LEVEL | UE_LEVEL},
+
+  // 5.1.1.15.4 Number of Idle-state RRC release messages
+  // Description: This measurement provides the nof idle-state RRC release messages (not including suspendConfig in
+  //              RRCRelease) for RRC connections established within the existing NRCellCU.
+  {"RRC.RelWithoutSuspendConfig", NRCellCU, CC, INTEGER, "-", NO_LABEL, E2_NODE_LEVEL | UE_LEVEL},
 
   // --------------------------------------------------------------------------------------------------------------- //
   // 5.1.1.16 UE-associated logical NG-connection related measurements
