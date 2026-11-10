@@ -111,6 +111,27 @@ TEST_F(rrc_ue_reconfig, when_connected_ue_sends_handover_reconfig_complete_then_
   ASSERT_EQ(rrc_ue_rrc_du_notifier.nof_new_rrc_connections, 1U);
 }
 
+TEST_F(rrc_ue_reconfig, when_ue_answers_handover_reconfig_with_another_message_then_ue_is_released)
+{
+  static constexpr uint8_t ho_transaction_id = 1;
+
+  // The UE awaits the RRC Reconfiguration Complete of the handover.
+  async_task<error_type<protocol_transaction_failure>> t =
+      get_rrc_ue_control_message_handler()->handle_handover_reconfiguration_complete_expected(
+          ho_transaction_id, std::chrono::milliseconds{1000});
+  lazy_task_launcher<error_type<protocol_transaction_failure>> t_launcher(t);
+
+  ASSERT_FALSE(t.ready());
+
+  // Receive UE Capability Information with the transaction ID of the RRC Reconfiguration
+  receive_ul_dcch_msg(test_helpers::create_ue_capability_info(ho_transaction_id));
+
+  ASSERT_TRUE(t.ready());
+  ASSERT_FALSE(t.get().has_value());
+  ASSERT_EQ(t.get().error(), protocol_transaction_failure::abnormal);
+  check_ue_release_requested();
+}
+
 // Test that get_rrc_ue_cond_reconfiguration_context() encodes meas_gap_cfg into the outer CHO
 // RRCReconfiguration measConfig when the request carries one.
 TEST_F(rrc_ue_reconfig, when_meas_gap_cfg_in_request_then_outer_cho_rrc_message_includes_it)

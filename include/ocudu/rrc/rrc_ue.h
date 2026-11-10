@@ -307,7 +307,8 @@ public:
   /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
   /// \param[in] timeout_ms The timeout for the RRC Reconfiguration Complete.
   /// \param[in] release_on_failure If true, trigger a UE release when the transaction fails.
-  /// \returns Success if the RRC Reconfiguration Complete was received, the failure cause otherwise.
+  /// \returns Success if the RRC Reconfiguration Complete was received, the failure cause otherwise. Another message
+  /// with the transaction ID gives protocol_transaction_failure::abnormal.
   virtual async_task<error_type<protocol_transaction_failure>>
   handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
                                                     std::chrono::milliseconds timeout_ms,

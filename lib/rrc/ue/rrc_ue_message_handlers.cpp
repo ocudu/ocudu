@@ -889,7 +889,8 @@ rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t          
 
     CORO_AWAIT(transaction);
 
-    if (transaction.has_response()) {
+    if (transaction.has_response() and
+        is_ul_dcch_c1_msg(transaction.response(), ul_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg_complete)) {
       logger.log_debug("Received RRC Reconfiguration Complete after HO");
 
       // Only a handover target UE enters connected state here. A CHO source UE that acknowledges its conditional
@@ -907,11 +908,22 @@ rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t          
       }
 
     } else {
+      // An unexpected message from the UE is an abnormal failure.
+      const protocol_transaction_failure failure =
+          transaction.has_response() ? protocol_transaction_failure::abnormal : transaction.failure_cause();
+
       // A cancellation is an expected outcome of a higher layer aborting the procedure, so it is not logged as a
       // warning.
-      const bool        timed_out = transaction.failure_cause() == protocol_transaction_failure::timeout;
-      const auto        level     = timed_out ? ocudulog::basic_levels::warning : ocudulog::basic_levels::info;
-      const std::string cause_str = timed_out ? fmt::format("timeout ({}ms)", timeout_ms.count()) : "canceled";
+      auto        level = ocudulog::basic_levels::info;
+      std::string cause_str{"canceled"};
+      if (transaction.has_response()) {
+        level     = ocudulog::basic_levels::warning;
+        cause_str = fmt::format("unexpected {}", get_rrc_message_name(transaction.response()));
+      } else if (failure == protocol_transaction_failure::timeout) {
+        level     = ocudulog::basic_levels::warning;
+        cause_str = fmt::format("timeout ({}ms)", timeout_ms.count());
+      }
+
       if (release_on_failure) {
         logger.log(level,
                    "Did not receive RRC Reconfiguration Complete after HO. Cause: {}. Requesting target UE release",
@@ -922,7 +934,7 @@ rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t          
                    "Did not receive RRC Reconfiguration Complete after HO. Cause: {}. UE release handled externally",
                    cause_str);
       }
-      CORO_EARLY_RETURN(make_unexpected(transaction.failure_cause()));
+      CORO_EARLY_RETURN(make_unexpected(failure));
     }
 
     CORO_RETURN(default_success_t{});
