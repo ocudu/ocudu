@@ -8,6 +8,7 @@
 #include "../du_cell_manager.h"
 #include "../du_ue/du_ue_manager_repository.h"
 #include "procedure_logger.h"
+#include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/du/du_high/du_manager/du_manager_mem_resources.h"
 #include "ocudu/du/du_high/du_manager/du_manager_params.h"
 #include "ocudu/mac/mac_ue_configurator.h"
@@ -46,6 +47,9 @@ private:
   f1ap_ue_context_update_response        make_ue_config_query_response() const;
   static f1ap_ue_context_update_response make_empty_ue_config_response();
   static f1ap_ue_context_update_response make_ue_config_failure();
+  /// Sets reestablishRLC for the RLC bearers that the source configures, or for all RLC bearers without the source.
+  static void set_rlc_bearers_to_reestablish(asn1::rrc_nr::cell_group_cfg_s&                      cell_group,
+                                             const std::optional<asn1::rrc_nr::cell_group_cfg_s>& src_cell_group);
 
   void handle_rrc_reconfiguration_complete_ind();
 

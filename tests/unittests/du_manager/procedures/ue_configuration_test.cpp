@@ -559,6 +559,14 @@ TEST_F(ue_config_tester, when_source_cell_group_is_included_then_resources_of_on
   ASSERT_EQ(pucch.res_to_release_list[0], SOURCE_ONLY_PUCCH_RES_ID);
   ASSERT_EQ(pucch.res_to_add_mod_list.size(), src_pucch.res_to_add_mod_list.size() - 1);
   ASSERT_EQ(cell_group.rlc_bearer_to_release_list.size(), 0);
+
+  // The source does not configure SRB2 and DRB1, so their RLC bearers have the complete configuration.
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), 2);
+  for (const auto& bearer : cell_group.rlc_bearer_to_add_mod_list) {
+    ASSERT_TRUE(bearer.rlc_cfg_present);
+    ASSERT_TRUE(bearer.mac_lc_ch_cfg_present);
+    ASSERT_FALSE(bearer.reestablish_rlc_present);
+  }
 }
 
 TEST_F(ue_config_tester,

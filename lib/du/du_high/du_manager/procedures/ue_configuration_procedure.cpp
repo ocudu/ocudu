@@ -342,7 +342,8 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
   ue->reestablished_ue_caps_summary = nullptr;
-  asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
+  asn1::rrc_nr::cell_group_cfg_s                asn1_cell_group;
+  std::optional<asn1::rrc_nr::cell_group_cfg_s> src_cell_group;
   if (ue->reestablished_cfg_pending != nullptr) {
     // In case of reestablishment, we send the full configuration to the UE but without an SRB1 and with SRB2 and DRBs
     // set to "RLCReestablish".
@@ -371,13 +372,14 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     // only the source configures.
     calculate_cell_group_config_diff(asn1_cell_group, {}, ue->resources.value());
     resp.full_config_present = false;
-    asn1::rrc_nr::cell_group_cfg_s src_cell_group;
-    asn1::cbit_ref                 src_bref{request.source_cell_group_cfg};
-    if (asn1::unpack(src_cell_group, src_bref) == asn1::OCUDUASN_SUCCESS) {
-      calculate_cell_group_config_release(asn1_cell_group, src_cell_group);
+    src_cell_group.emplace();
+    asn1::cbit_ref src_bref{request.source_cell_group_cfg};
+    if (asn1::unpack(*src_cell_group, src_bref) == asn1::OCUDUASN_SUCCESS) {
+      calculate_cell_group_config_release(asn1_cell_group, *src_cell_group);
     } else {
-      proc_logger.log_proc_warning(
-          "Failed to unpack the source cellGroupConfig. The delta does not release source elements");
+      proc_logger.log_proc_warning("Failed to unpack the source cellGroupConfig. The delta does not release source "
+                                   "elements and re-establishes all RLC bearers");
+      src_cell_group.reset();
     }
     auto* it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
                             asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
@@ -385,11 +387,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     if (it != asn1_cell_group.rlc_bearer_to_add_mod_list.end()) {
       asn1_cell_group.rlc_bearer_to_add_mod_list.erase(it);
     }
-    for (auto& b : asn1_cell_group.rlc_bearer_to_add_mod_list) {
-      b.rlc_cfg_present         = false;
-      b.mac_lc_ch_cfg_present   = false;
-      b.reestablish_rlc_present = true;
-    }
+    set_rlc_bearers_to_reestablish(asn1_cell_group, src_cell_group);
 
   } else {
     calculate_cell_group_config_diff(asn1_cell_group, prev_ue_res_cfg, ue->resources.value());
@@ -520,6 +518,21 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_empty_ue_config
   f1ap_ue_context_update_response resp;
   resp.result = true;
   return resp;
+}
+
+void ue_configuration_procedure::set_rlc_bearers_to_reestablish(
+    asn1::rrc_nr::cell_group_cfg_s&                      cell_group,
+    const std::optional<asn1::rrc_nr::cell_group_cfg_s>& src_cell_group)
+{
+  if (src_cell_group.has_value()) {
+    calculate_rlc_bearer_reestablishment(cell_group, *src_cell_group);
+    return;
+  }
+  for (auto& b : cell_group.rlc_bearer_to_add_mod_list) {
+    b.rlc_cfg_present         = false;
+    b.mac_lc_ch_cfg_present   = false;
+    b.reestablish_rlc_present = true;
+  }
 }
 
 bool ue_configuration_procedure::changed_detected() const

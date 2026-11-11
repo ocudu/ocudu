@@ -350,6 +350,21 @@ static void calculate_mac_cell_group_config_release(mac_cell_group_cfg_s& out, c
   calculate_field_release(out.tar_cfg_r17, src.tar_cfg_r17);
 }
 
+/// Checks if two RLC bearers serve the same radio bearer. A bearer without servedRadioBearer keeps its radio bearer.
+static bool serve_same_radio_bearer(const rlc_bearer_cfg_s& out, const rlc_bearer_cfg_s& src)
+{
+  if (not out.served_radio_bearer_present or not src.served_radio_bearer_present) {
+    return true;
+  }
+  const auto& out_rb = out.served_radio_bearer;
+  const auto& src_rb = src.served_radio_bearer;
+  if (out_rb.type() != src_rb.type()) {
+    return false;
+  }
+  return out_rb.type() == rlc_bearer_cfg_s::served_radio_bearer_c_::types::srb_id ? out_rb.srb_id() == src_rb.srb_id()
+                                                                                  : out_rb.drb_id() == src_rb.drb_id();
+}
+
 void ocudu::odu::calculate_cell_group_config_release(cell_group_cfg_s& out, const cell_group_cfg_s& src)
 {
   calculate_list_release(out.rlc_bearer_to_release_list,
@@ -382,4 +397,26 @@ void ocudu::odu::calculate_cell_group_config_release(cell_group_cfg_s& out, cons
                          out.scell_to_add_mod_list,
                          src.scell_to_add_mod_list,
                          [](const scell_cfg_s& e) { return e.scell_idx; });
+}
+
+void ocudu::odu::calculate_rlc_bearer_reestablishment(cell_group_cfg_s& out, const cell_group_cfg_s& src)
+{
+  for (auto& bearer : out.rlc_bearer_to_add_mod_list) {
+    const auto* src_bearer =
+        std::find_if(src.rlc_bearer_to_add_mod_list.begin(),
+                     src.rlc_bearer_to_add_mod_list.end(),
+                     [&bearer](const rlc_bearer_cfg_s& e) { return e.lc_ch_id == bearer.lc_ch_id; });
+    if (src_bearer == src.rlc_bearer_to_add_mod_list.end()) {
+      continue;
+    }
+    if (serve_same_radio_bearer(bearer, *src_bearer)) {
+      bearer.rlc_cfg_present         = false;
+      bearer.reestablish_rlc_present = true;
+      continue;
+    }
+    if (std::find(out.rlc_bearer_to_release_list.begin(), out.rlc_bearer_to_release_list.end(), bearer.lc_ch_id) ==
+        out.rlc_bearer_to_release_list.end()) {
+      out.rlc_bearer_to_release_list.push_back(bearer.lc_ch_id);
+    }
+  }
 }
