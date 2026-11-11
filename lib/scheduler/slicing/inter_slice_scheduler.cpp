@@ -16,13 +16,17 @@ using namespace ocudu;
 inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_) :
   cell_cfg(cell_cfg_), logger(ocudulog::fetch_basic_logger("SCHED")), ues(ues_)
 {
-  // Create a number of slices equal to the number of configured RRM Policy members + 1 (default SRB slice) + 1 (default
-  // DRB slice).
-  unsigned capacity = cell_cfg.rrm_policy_members.size() + 2;
-  dl_prio_queue.reserve(capacity);
+  // The capacity is the maximum number of slices, so that creating a slice at runtime does not grow the containers in
+  // the slot processing.
+  constexpr unsigned capacity = MAX_NOF_RAN_SLICES;
+  // A slice can have two candidates (one up to its minimum RBs and one up to its maximum RBs).
+  constexpr unsigned max_candidates_per_slice = 2;
+  dl_prio_queue.reserve(capacity * max_candidates_per_slice);
   // We use a larger capacity for the UL priority queue to account for the maximum number of PUSCH TD resources.
-  ul_prio_queue.reserve(capacity * pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS);
-  slices.reserve(capacity);
+  // shortcut: the NTN UE-specific Koffsets (MAX_NOF_NTN_KOFFSETS_PER_SLICE) are not counted, upgrade if they are used
+  // with many slices.
+  ul_prio_queue.reserve(capacity * max_candidates_per_slice * pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS);
+  slices.reserve(capacity, MAX_NOF_RAN_SLICE_IDS);
 
   // NOTE: We assume nof. CRBs in a cell for both DL and UL are same.
   const unsigned cell_max_rbs = cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
@@ -32,18 +36,22 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // NOTE: We set \c min_prb for default SRB slice to maximum nof. PRBs of a UE carrier to give maximum priority to this
   // slice.
   // TODO: Once test mode does not depend on SRB1, use a more suitable policy for SRBs.
-  slices.emplace_back(
-      SRB_RAN_SLICE_ID,
-      cell_cfg,
-      slice_rrm_policy_config{.rbs = {cell_max_rbs, cell_max_rbs}, .priority = slice_rrm_policy_config::max_priority},
-      create_scheduler_strategy(cell_cfg.expert_cfg.ue.policy_cfg, cell_cfg),
-      ues);
+  slices.emplace(SRB_RAN_SLICE_ID,
+                 std::make_unique<ran_slice_sched_context>(
+                     SRB_RAN_SLICE_ID,
+                     cell_cfg,
+                     slice_rrm_policy_config{.rbs      = {cell_max_rbs, cell_max_rbs},
+                                             .priority = slice_rrm_policy_config::max_priority},
+                     create_scheduler_strategy(cell_cfg.expert_cfg.ue.policy_cfg, cell_cfg),
+                     ues));
   // > Default DRB slice.
-  slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID,
-                      cell_cfg,
-                      slice_rrm_policy_config{.rbs = {0, cell_max_rbs}},
-                      create_scheduler_strategy(cell_cfg.expert_cfg.ue.policy_cfg, cell_cfg),
-                      ues);
+  slices.emplace(
+      DEFAULT_DRB_RAN_SLICE_ID,
+      std::make_unique<ran_slice_sched_context>(DEFAULT_DRB_RAN_SLICE_ID,
+                                                cell_cfg,
+                                                slice_rrm_policy_config{.rbs = {0, cell_max_rbs}},
+                                                create_scheduler_strategy(cell_cfg.expert_cfg.ue.policy_cfg, cell_cfg),
+                                                ues));
   // NOTE: RAN slice IDs 0 and 1 are reserved for default SRB and default DRB slice respectively.
   ran_slice_id_t id_count{2};
   // Configured RRM policy members.
@@ -55,10 +63,13 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
                              std::min(rrm_adjusted.rbs.max(), cell_max_rbs)};
     rrm_adjusted.priority = std::min(rrm.priority, slice_rrm_policy_config::max_priority);
     // Create custom RAN slice based on the RRM policy.
-    slices.emplace_back(
-        id_count, cell_cfg, rrm_adjusted, create_scheduler_strategy(rrm.policy_sched_cfg, cell_cfg), ues);
+    slices.emplace(
+        id_count,
+        std::make_unique<ran_slice_sched_context>(
+            id_count, cell_cfg, rrm_adjusted, create_scheduler_strategy(rrm.policy_sched_cfg, cell_cfg), ues));
     ++id_count;
   }
+  slice_id_range = id_count.value();
 }
 
 /// \brief Adds to \c koffsets the Koffset of each UE of a slice that can take a PDCCH in \c slot_tx.
@@ -120,7 +131,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   while (current_slot != slot_tx) {
     ++current_slot;
     for (auto& slice : slices) {
-      slice.inst.slot_indication(current_slot);
+      slice->inst.slot_indication(current_slot);
     }
   }
 
@@ -158,15 +169,15 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   const bool pdsch_enabled =
       cell_cfg.expert_cfg.ue.enable_csi_rs_pdsch_multiplexing or res_grid[0].result_reader().dl().csi_rs().empty();
   for (const auto& slice : slices) {
-    if (not has_pending_tx(slice, dl_retx_slices, true)) {
+    if (not has_pending_tx(*slice, dl_retx_slices, true)) {
       continue;
     }
     // NOTE: Unlike the old \c pdsch_rb_count member, which was always 0 at this point because slot_tx had not been
     // scheduled yet, \c nof_pdsch_rbs_allocated(slot_tx) can already be non-zero here: a PDSCH repetition occasion
     // targeting slot_tx may have been recorded by an earlier slot's allocation. We must therefore query the up-to-date,
     // per-slot count instead of assuming the slice starts slot_tx with a clean budget.
-    const unsigned pdsch_rb_count = slice.inst.nof_pdsch_rbs_allocated(slot_tx);
-    if (not pdsch_enabled or pdsch_rb_count >= slice.inst.cfg.rbs.max()) {
+    const unsigned pdsch_rb_count = slice->inst.nof_pdsch_rbs_allocated(slot_tx);
+    if (not pdsch_enabled or pdsch_rb_count >= slice->inst.cfg.rbs.max()) {
       // PDSCH is disabled or slice already reached max RBs. We can skip this slice.
       continue;
     }
@@ -174,19 +185,19 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
     interval<unsigned> rb_lims;
     // When minRB > 0, minRB != maxRB, sliceRBs < min_RB, we create two candidates. One with limit set to minRB
     // with high priority, and another one with limit set to maxRB with normal priority.
-    if (pdsch_rb_count < slice.inst.cfg.rbs.min() and slice.inst.cfg.rbs.min() > 0 and
-        slice.inst.cfg.rbs.shared() > 0) {
+    if (pdsch_rb_count < slice->inst.cfg.rbs.min() and slice->inst.cfg.rbs.min() > 0 and
+        slice->inst.cfg.rbs.shared() > 0) {
       // rb_lims starts at pdsch_rb_count (not 0) to account for RBs already reserved in slot_tx by repetition
       // occasions from earlier slots, so the candidate's priority/limits reflect the slice's true remaining budget.
-      rb_lims         = {pdsch_rb_count, slice.inst.cfg.rbs.min()};
-      const auto prio = slice.get_prio(true, slot_tx, slot_tx, rb_lims.stop());
-      dl_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, slot_tx});
-      rb_lims = {slice.inst.cfg.rbs.min(), slice.inst.cfg.rbs.max()};
+      rb_lims         = {pdsch_rb_count, slice->inst.cfg.rbs.min()};
+      const auto prio = slice->get_prio(true, slot_tx, slot_tx, rb_lims.stop());
+      dl_prio_queue.push(slice_candidate_context{slice->inst.id, prio, rb_lims, slot_tx});
+      rb_lims = {slice->inst.cfg.rbs.min(), slice->inst.cfg.rbs.max()};
     } else {
-      rb_lims = {pdsch_rb_count, slice.inst.cfg.rbs.max()};
+      rb_lims = {pdsch_rb_count, slice->inst.cfg.rbs.max()};
     }
-    const auto prio = slice.get_prio(true, slot_tx, slot_tx, rb_lims.stop());
-    dl_prio_queue.push(slice_candidate_context{slice.inst.id, prio, rb_lims, slot_tx});
+    const auto prio = slice->get_prio(true, slot_tx, slot_tx, rb_lims.stop());
+    dl_prio_queue.push(slice_candidate_context{slice->inst.id, prio, rb_lims, slot_tx});
   }
   dl_prio_queue.sort();
 
@@ -198,14 +209,14 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   const bool ue_koffsets_in_use = get_ue_koffset_cfg(cell_cfg.params.ntn_params).has_value();
 
   for (const auto& slice : slices) {
-    if (not has_pending_tx(slice, ul_retx_slices, false)) {
+    if (not has_pending_tx(*slice, ul_retx_slices, false)) {
       continue;
     }
     // Koffsets to offer candidates for. A UE-specific Koffset reaches slots the cell-specific one does not, so each
     // Koffset in use needs its own candidates.
     static_vector<unsigned, MAX_NOF_NTN_KOFFSETS_PER_SLICE> koffsets{cell_cfg.ntn_cs_koffset};
     if (ue_koffsets_in_use) {
-      collect_slice_koffsets(koffsets, slice.inst.get_ues(), slot_tx);
+      collect_slice_koffsets(koffsets, slice->inst.get_ues(), slot_tx);
     }
     // Last k2 given a candidate, per Koffset.
     static_vector<std::optional<unsigned>, MAX_NOF_NTN_KOFFSETS_PER_SLICE> allocated_k2(koffsets.size());
@@ -214,7 +225,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
          cell_cfg.init_bwp.ul.td_mapper().common_pusch_td_res_indices(slot_tx.count())) {
       const pusch_time_domain_resource_allocation& td_res = pusch_time_domain_list[pusch_td_res_idx];
       for (unsigned koffset_idx = 0, nof_koffsets = koffsets.size(); koffset_idx != nof_koffsets; ++koffset_idx) {
-        add_ul_slice_candidates(allocated_k2[koffset_idx], slice, slot_tx, res_grid, td_res, koffsets[koffset_idx]);
+        add_ul_slice_candidates(allocated_k2[koffset_idx], *slice, slot_tx, res_grid, td_res, koffsets[koffset_idx]);
       }
     }
   }
@@ -308,10 +319,10 @@ void inter_slice_scheduler::reconf_ue(du_ue_index_t ue_idx)
   // Outside fallback, the slices follow the new logical channel config right away.
   add_impl(*u);
   for (auto& slice : slices) {
-    if (slice.inst.get_ues().contains(ue_idx) and not u->logical_channels().has_slice(slice.inst.id)) {
+    if (slice->inst.get_ues().contains(ue_idx) and not u->logical_channels().has_slice(slice->inst.id)) {
       // No bearer of the UE is left in this slice.
-      get_policy(slice.inst.id).rem_ue(ue_idx);
-      slice.inst.get_ues().rem_ue(ue_idx);
+      get_policy(slice->inst.id).rem_ue(ue_idx);
+      slice->inst.get_ues().rem_ue(ue_idx);
     }
   }
 }
@@ -322,10 +333,10 @@ void inter_slice_scheduler::rem_ue(du_ue_index_t ue_idx)
   // Note: We take the conservative approach of traversing all slices, because the current UE config might not match
   // the UE repositories inside each slice instance (e.g. in case of fallback or during reconfig).
   for (auto& slice : slices) {
-    if (slice.inst.get_ues().contains(ue_idx)) {
-      get_policy(slice.inst.id).rem_ue(ue_idx);
+    if (slice->inst.get_ues().contains(ue_idx)) {
+      get_policy(slice->inst.id).rem_ue(ue_idx);
     }
-    slice.inst.get_ues().rem_ue(ue_idx);
+    slice->inst.get_ues().rem_ue(ue_idx);
   }
 }
 
@@ -390,16 +401,17 @@ ran_slice_instance& inter_slice_scheduler::get_slice(const logical_channel_confi
 {
   // Return default SRB slice if LCID belongs to a SRB.
   if (lc_cfg.lcid < LCID_MIN_DRB) {
-    return slices[SRB_RAN_SLICE_ID.value()].inst;
+    return slices[SRB_RAN_SLICE_ID]->inst;
   }
-  auto it = std::find_if(slices.begin(), slices.end(), [&lc_cfg](const ran_slice_sched_context& slice) {
-    return slice.inst.cfg.rrc_member == lc_cfg.rrm_policy;
-  });
+  auto it =
+      std::find_if(slices.begin(), slices.end(), [&lc_cfg](const std::unique_ptr<ran_slice_sched_context>& slice) {
+        return slice->inst.cfg.rrc_member == lc_cfg.rrm_policy;
+      });
   if (it == slices.end() or lc_cfg.rrm_policy == rrm_policy_member{}) {
     // Slice with the provided RRM policy member was not found. Return default DRB slice.
-    return slices[DEFAULT_DRB_RAN_SLICE_ID.value()].inst;
+    return slices[DEFAULT_DRB_RAN_SLICE_ID]->inst;
   }
-  return it->inst;
+  return (*it)->inst;
 }
 
 template <bool IsDownlink>
@@ -410,7 +422,7 @@ inter_slice_scheduler::get_next_candidate()
 
   slice_prio_queue& prio_queue = IsDownlink ? dl_prio_queue : ul_prio_queue;
   while (not prio_queue.empty()) {
-    ran_slice_sched_context& chosen_slice = slices[prio_queue.top().id.value()];
+    ran_slice_sched_context& chosen_slice = *slices[prio_queue.top().id];
     interval<unsigned>       rb_lims      = prio_queue.top().rb_lims;
     slot_point               pxsch_slot   = prio_queue.top().slot_tx;
     const unsigned           k2           = prio_queue.top().k2;
@@ -475,12 +487,12 @@ std::optional<ul_ran_slice_candidate> inter_slice_scheduler::get_next_ul_candida
 
 void inter_slice_scheduler::handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& req)
 {
-  for (const auto& rrm : req.rrm_policies) {
+  for (const auto& rrm : req.policies_to_modify) {
     bool found = false;
     for (auto& slice : slices) {
-      if (slice.inst.cfg.rrc_member == rrm.rrc_member) {
-        found              = true;
-        slice.inst.cfg.rbs = rrm.rbs;
+      if (slice->inst.cfg.rrc_member == rrm.rrc_member) {
+        found               = true;
+        slice->inst.cfg.rbs = rrm.rbs;
       }
     }
 
@@ -488,6 +500,116 @@ void inter_slice_scheduler::handle_slice_reconfiguration_request(const du_cell_s
       logger.warning("No slice RRM policy found for {} in cell {}.", rrm.rrc_member, cell_cfg.cell_index);
     }
   }
+
+  for (const auto& new_slice : req.policies_to_create) {
+    create_slice(new_slice);
+  }
+  for (const rrm_policy_member& member : req.policies_to_remove) {
+    remove_slice(member);
+  }
+}
+
+/// Cancels the HARQ retransmissions of the UE cell that were sent for the given RAN slice.
+static void cancel_slice_retxs(ue_cell& ue_cc, ran_slice_id_t slice_id)
+{
+  for (unsigned i = 0, e = ue_cc.harqs.nof_dl_harqs(); i != e; ++i) {
+    if (auto h = ue_cc.harqs.dl_harq(to_harq_id(i)); h.has_value() and h->get_grant_params().slice_id == slice_id) {
+      h->cancel_retxs();
+    }
+  }
+  for (unsigned i = 0, e = ue_cc.harqs.nof_ul_harqs(); i != e; ++i) {
+    if (auto h = ue_cc.harqs.ul_harq(to_harq_id(i)); h.has_value() and h->get_grant_params().slice_id == slice_id) {
+      h->cancel_retxs();
+    }
+  }
+}
+
+void inter_slice_scheduler::create_slice(const du_cell_slice_reconfig_request::rrm_policy_config& new_slice)
+{
+  if (std::any_of(slices.begin(), slices.end(), [&](const std::unique_ptr<ran_slice_sched_context>& slice) {
+        return slice->inst.cfg.rrc_member == new_slice.rrc_member;
+      })) {
+    logger.warning("Slice {} already exists in cell {}.", new_slice.rrc_member, cell_cfg.cell_index);
+    return;
+  }
+  if (slices.size() >= MAX_NOF_RAN_SLICES) {
+    logger.warning("Slice {} not created in cell {}. Cause: Maximum number of slices reached.",
+                   new_slice.rrc_member,
+                   cell_cfg.cell_index);
+    return;
+  }
+
+  const unsigned          cell_max_rbs = cell_cfg.params.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
+  slice_rrm_policy_config cfg;
+  cfg.rrc_member       = new_slice.rrc_member;
+  cfg.rbs              = {std::min(new_slice.rbs.dedicated(), cell_max_rbs),
+                          std::min(new_slice.rbs.min(), cell_max_rbs),
+                          std::min(new_slice.rbs.max(), cell_max_rbs)};
+  cfg.policy_sched_cfg = cell_cfg.expert_cfg.ue.policy_cfg;
+
+  // The dedicated RBs of all the slices have to fit in the cell, or the slices could not be scheduled.
+  unsigned nof_dedicated_rbs = cfg.rbs.dedicated();
+  for (const auto& slice : slices) {
+    nof_dedicated_rbs += slice->inst.cfg.rbs.dedicated();
+  }
+  if (nof_dedicated_rbs > cell_max_rbs) {
+    logger.warning(
+        "Slice {} not created in cell {}. Cause: The dedicated RBs of the slices exceed the {} RBs of the cell.",
+        new_slice.rrc_member,
+        cell_cfg.cell_index,
+        cell_max_rbs);
+    return;
+  }
+
+  // TODO: Allocate the slice context and its policy outside of the slot processing, and pass it in the request.
+  ran_slice_id_t id = DEFAULT_DRB_RAN_SLICE_ID;
+  while (slices.contains(id)) {
+    ++id;
+  }
+  slices.emplace(id,
+                 std::make_unique<ran_slice_sched_context>(
+                     id, cell_cfg, cfg, create_scheduler_strategy(cfg.policy_sched_cfg, cell_cfg), ues, true));
+  slice_id_range = std::max<size_t>(slice_id_range, id.value() + 1);
+  logger.info("Slice {} created in cell {} with id={}", cfg.rrc_member, cell_cfg.cell_index, id.value());
+}
+
+void inter_slice_scheduler::remove_slice(const rrm_policy_member& member)
+{
+  auto it = std::find_if(slices.begin(), slices.end(), [&](const std::unique_ptr<ran_slice_sched_context>& slice) {
+    return slice->inst.cfg.rrc_member == member;
+  });
+  if (it == slices.end()) {
+    logger.warning("Slice {} not removed from cell {}. Cause: Unknown slice.", member, cell_cfg.cell_index);
+    return;
+  }
+  if (not(*it)->is_dynamic) {
+    logger.warning("Slice {} not removed from cell {}. Cause: Not created at runtime.", member, cell_cfg.cell_index);
+    return;
+  }
+
+  // The HARQ retransmissions of the UEs of the removed slice are cancelled, as the ID of a removed slice can be reused.
+  // The UEs keep their place in the other slices, and so their scheduling history.
+  const ran_slice_id_t           id = (*it)->inst.id;
+  bounded_bitset<MAX_NOF_DU_UES> ue_idxs(MAX_NOF_DU_UES);
+  for (const slice_ue& slice_u : (*it)->inst.get_ues()) {
+    ue_idxs.set(slice_u.ue_index());
+    if (ue_cell* ue_cc = ues[slice_u.ue_index()].find_cell(cell_cfg.cell_index); ue_cc != nullptr) {
+      cancel_slice_retxs(*ue_cc, id);
+    }
+  }
+
+  slices.erase(id);
+  while (slice_id_range > 0 and not slices.contains(ran_slice_id_t{static_cast<uint8_t>(slice_id_range - 1)})) {
+    --slice_id_range;
+  }
+
+  // The bearers of the removed slice are now served by the default DRB slice.
+  ue_idxs.for_each(0, ue_idxs.size(), [this](size_t ue_idx) {
+    if (ue* u = fetch_ue_to_update(to_du_ue_index(ue_idx)); u != nullptr) {
+      add_impl(*u);
+    }
+  });
+  logger.info("Slice {} removed from cell {}", member, cell_cfg.cell_index);
 }
 
 template <bool IsDownlink>
@@ -496,8 +618,8 @@ unsigned inter_slice_scheduler::get_nof_used_reserved_rbs(slot_point pxsch_slot)
   unsigned nof_used_rbs = 0;
   for (const auto& slice : slices) {
     const unsigned rb_count =
-        IsDownlink ? slice.inst.nof_pdsch_rbs_allocated(pxsch_slot) : slice.inst.nof_pusch_rbs_allocated(pxsch_slot);
-    nof_used_rbs += std::max(slice.inst.cfg.rbs.dedicated(), rb_count);
+        IsDownlink ? slice->inst.nof_pdsch_rbs_allocated(pxsch_slot) : slice->inst.nof_pusch_rbs_allocated(pxsch_slot);
+    nof_used_rbs += std::max(slice->inst.cfg.rbs.dedicated(), rb_count);
   }
   return nof_used_rbs;
 }

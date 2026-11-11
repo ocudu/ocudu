@@ -164,7 +164,7 @@ TEST_F(single_slice_limited_max_rbs_scheduler_test, multi_ue_limited_to_max_rbs_
   slice_reconfig_req.cell_index = cell_cfg().cell_index;
   du_cell_slice_reconfig_request::rrm_policy_config rrm_policy_cfg{.rrc_member = get_rrm_policy(1, 1),
                                                                    .rbs        = {new_min_rbs, new_max_rbs}};
-  slice_reconfig_req.rrm_policies.emplace_back(rrm_policy_cfg);
+  slice_reconfig_req.policies_to_modify.emplace_back(rrm_policy_cfg);
   sched->handle_slice_reconfiguration_request(slice_reconfig_req);
 
   test_logger.info("Slice reconfiguration applied");
@@ -267,10 +267,10 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs_r
   slice_reconfig_req.cell_index = cell_cfg().cell_index;
   du_cell_slice_reconfig_request::rrm_policy_config rrm_policy_cfg_sl_1{
       .rrc_member = get_rrm_policy(1, 1), .rbs = {new_min_slice1_rbs, new_max_slice1_rbs}};
-  slice_reconfig_req.rrm_policies.emplace_back(rrm_policy_cfg_sl_1);
+  slice_reconfig_req.policies_to_modify.emplace_back(rrm_policy_cfg_sl_1);
   du_cell_slice_reconfig_request::rrm_policy_config rrm_policy_cfg_sl_2{.rrc_member = get_rrm_policy(1, 2),
                                                                         .rbs        = {0, new_max_slice2_rbs}};
-  slice_reconfig_req.rrm_policies.emplace_back(rrm_policy_cfg_sl_2);
+  slice_reconfig_req.policies_to_modify.emplace_back(rrm_policy_cfg_sl_2);
   sched->handle_slice_reconfiguration_request(slice_reconfig_req);
 
   test_logger.info("Slice reconfiguration applied");

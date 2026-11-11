@@ -148,6 +148,13 @@ significant:
 4. The number of slots since the last allocation to the slice.
 5. A round-robin value.
 
+Slices can be created and removed while the cell runs, with `du_cell_slice_reconfig_request` (`policies_to_create` and
+`policies_to_remove`), as a cell event like a change of RB limits. Only a slice created this way can be removed. A
+created slice has no UEs until they are reconfigured, and takes the lowest free RAN slice ID. When a slice is removed,
+its UEs move to the default DRB slice and keep their place in their other slices. The RAN slice IDs of the other slices
+do not change, as a HARQ process keeps the RAN slice ID it was sent for. The HARQ retransmissions pending for the
+removed slice are cancelled, so that a slice created later with the same ID does not get them.
+
 **Intra-slice scheduler** (`ue_scheduling/intra_slice_scheduler.h`) — consumes one slice candidate at a time and
 allocates PDSCH/PUSCH grants for UEs in that slice. Within a slice, UE ordering is determined by the slice's
 `scheduler_policy`.

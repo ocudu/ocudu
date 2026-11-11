@@ -43,16 +43,18 @@ static unsigned compute_expected_pdschs_per_slot(const cell_configuration& cell_
 
 /// \brief Determines whether there is any pending UL retx in the cell, or any UE of the cell served by the RAN slices
 /// with pending UL newTx data or SR.
-static bool has_pending_ul(const ue_repository& ues, cell_harq_manager& cell_harqs, const cell_configuration& cell_cfg)
+static bool has_pending_ul(const ue_repository&      ues,
+                           cell_harq_manager&        cell_harqs,
+                           const cell_configuration& cell_cfg,
+                           unsigned                  nof_ran_slices)
 {
   auto retxs = cell_harqs.pending_ul_retxs();
   if (retxs.begin() != retxs.end()) {
     return true;
   }
-  // Note: The RAN slice IDs follow the ones created by the inter-slice scheduler, i.e. SRB and default DRB slices,
-  // followed by one slice per RRM policy member.
-  const unsigned nof_slices = 2 + cell_cfg.rrm_policy_members.size();
-  for (unsigned i = 0; i != nof_slices; ++i) {
+  // Note: The RAN slice IDs are the ones of the inter-slice scheduler, from 0 to its highest one. An ID without a slice
+  // has no UEs with pending data.
+  for (unsigned i = 0; i != nof_ran_slices; ++i) {
     if (ues.get_ues_with_pending_newtx_data(ran_slice_id_t{static_cast<uint8_t>(i)}, cell_cfg.cell_index, false)
             .any()) {
       return true;
@@ -167,12 +169,12 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
   pending_dl_newtxs.reserve(MAX_UE_PDUS_PER_SLOT);
   pending_ul_newtxs.reserve(MAX_UE_PDUS_PER_SLOT);
 
-  // Pre-reserve memory for slice context.
-  constexpr unsigned max_expected_ran_slices = 8;
-  slice_ctxt_list.reserve(max_expected_ran_slices);
+  // Pre-reserve memory for slice context. Slices can be created at runtime with any ID, so the context of a slice does
+  // not grow the vectors in the slot processing.
+  slice_ctxt_list.reserve(MAX_NOF_RAN_SLICE_IDS);
 }
 
-void intra_slice_scheduler::slot_indication(slot_point sl_tx)
+void intra_slice_scheduler::slot_indication(slot_point sl_tx, unsigned nof_ran_slices)
 {
   pdcch_slot = sl_tx;
   // Reset slots to ensure used RB bitmaps are updated when scheduling the next slot, as allocations could have been
@@ -181,7 +183,7 @@ void intra_slice_scheduler::slot_indication(slot_point sl_tx)
   pusch_slot.clear();
   dl_attempts_count = 0;
   ul_attempts_count = 0;
-  pdcch_cce_budget.slot_indication(sl_tx, has_pending_ul(ues, cell_harqs, cell_alloc.cfg));
+  pdcch_cce_budget.slot_indication(sl_tx, has_pending_ul(ues, cell_harqs, cell_alloc.cfg, nof_ran_slices));
 }
 
 void intra_slice_scheduler::post_process_results()

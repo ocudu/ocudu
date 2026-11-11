@@ -30,8 +30,10 @@ public:
                         cell_metrics_handler&             cell_metrics_,
                         ocudulog::basic_logger&           logger_);
 
-  /// Reset context in preparation for new slot.
-  void slot_indication(slot_point sl_tx);
+  /// \brief Reset context in preparation for new slot.
+  /// \param[in] sl_tx Slot of the PDCCH.
+  /// \param[in] nof_ran_slices Number of RAN slice IDs of the cell, up to the highest one in use.
+  void slot_indication(slot_point sl_tx, unsigned nof_ran_slices);
 
   /// Called once all the UE grants have been allocated for a slot and cell.
   void post_process_results();

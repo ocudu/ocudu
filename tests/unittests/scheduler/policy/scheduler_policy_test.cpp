@@ -89,7 +89,7 @@ protected:
     pucch_alloc.slot_indication(next_slot);
     uci_alloc.slot_indication(next_slot);
     ues.slot_indication(next_slot);
-    intra_slice_sched.slot_indication(next_slot);
+    intra_slice_sched.slot_indication(next_slot, slice_sched.nof_slices());
     slice_sched.slot_indication(next_slot, res_grid);
 
     if (cell_cfg.is_dl_enabled(next_slot)) {

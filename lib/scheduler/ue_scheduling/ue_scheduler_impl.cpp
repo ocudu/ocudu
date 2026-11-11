@@ -212,7 +212,7 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
     group_cell.slice_sched.slot_indication(sl_tx, *group_cell.cell_res_alloc);
 
     // Update intra-slice scheduler context.
-    group_cell.intra_slice_sched.slot_indication(sl_tx);
+    group_cell.intra_slice_sched.slot_indication(sl_tx, group_cell.slice_sched.nof_slice_ids());
 
     // Run slice scheduler policies.
     run_sched_strategy(cell_index);

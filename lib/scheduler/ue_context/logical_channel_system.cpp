@@ -221,7 +221,7 @@ double logical_channel_system_utils::logical_channel_mapper::avg_ul_bits_per_slo
 logical_channel_system::logical_channel_system()
 {
   static constexpr unsigned PRERESERVED_NOF_CES = MAX_NOF_DU_UES;
-  static constexpr unsigned PRERESERVED_SLICES  = 4;
+  static constexpr unsigned PRERESERVED_SLICES  = MAX_NOF_RAN_SLICE_IDS;
 
   // Pre-reserve space to avoid allocations in latency-critical path.
   pending_ces.reserve(PRERESERVED_NOF_CES);

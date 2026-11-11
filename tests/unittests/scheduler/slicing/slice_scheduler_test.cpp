@@ -1171,3 +1171,309 @@ TEST_F(ntn_koffset_slice_scheduler_test, every_koffset_in_use_is_offered_candida
         << "No candidate was ever offered for the Koffset of " << koffset.count() << "ms, so its UE is never scheduled";
   }
 }
+
+// dynamic_slice_scheduler_test
+
+class dynamic_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
+{
+protected:
+  static constexpr unsigned MIN_SLICE_RB = 10;
+  static constexpr unsigned MAX_SLICE_RB = 20;
+  static constexpr unsigned DED_SLICE_RB = 5;
+
+  static rrm_policy_member make_member(uint8_t sst)
+  {
+    return {plmn_identity::test_value(), s_nssai_t{slice_service_type{sst}}};
+  }
+
+  static du_cell_slice_reconfig_request::rrm_policy_config make_policy(uint8_t sst, rrm_policy_ratio_rb_limits rbs)
+  {
+    return {make_member(sst), rbs};
+  }
+
+  void create_slice(uint8_t sst, rrm_policy_ratio_rb_limits rbs = {MIN_SLICE_RB, MAX_SLICE_RB})
+  {
+    du_cell_slice_reconfig_request req;
+    req.cell_index = to_du_cell_index(0);
+    req.policies_to_create.push_back(make_policy(sst, rbs));
+    slice_sched.handle_slice_reconfiguration_request(req);
+  }
+
+  void remove_slice(uint8_t sst)
+  {
+    du_cell_slice_reconfig_request req;
+    req.cell_index = to_du_cell_index(0);
+    req.policies_to_remove.push_back(make_member(sst));
+    slice_sched.handle_slice_reconfiguration_request(req);
+  }
+
+  /// Adds a UE with one DRB mapped to the slice of the given SST, or to the default DRB slice if SST is zero.
+  const ue_configuration* add_ue(du_ue_index_t ue_idx, uint8_t sst)
+  {
+    auto req                = test_cfg.get_default_ue_config_request();
+    req.ue_index            = ue_idx;
+    req.crnti               = to_rnti(0x4601 + ue_idx);
+    req.starts_in_fallback  = false;
+    *req.cfg.lc_config_list = std::initializer_list<logical_channel_config>{
+        create_logical_channel_config(LCID_SRB0),
+        create_logical_channel_config(LCID_SRB1),
+        create_logical_channel_config(LCID_MIN_DRB, sst == 0 ? rrm_policy_member{} : make_member(sst))};
+    return slice_scheduler_test::add_ue(req);
+  }
+
+  /// Adds a UE with a DRB in the slice of each of the given SSTs.
+  const ue_configuration* add_ue_with_two_drbs(du_ue_index_t ue_idx, uint8_t sst1, uint8_t sst2)
+  {
+    auto req                = test_cfg.get_default_ue_config_request();
+    req.ue_index            = ue_idx;
+    req.crnti               = to_rnti(0x4601 + ue_idx);
+    req.starts_in_fallback  = false;
+    *req.cfg.lc_config_list = std::initializer_list<logical_channel_config>{
+        create_logical_channel_config(LCID_SRB0),
+        create_logical_channel_config(LCID_SRB1),
+        create_logical_channel_config(LCID_MIN_DRB, make_member(sst1)),
+        create_logical_channel_config(uint_to_lcid(LCID_MIN_DRB + 1), make_member(sst2))};
+    return slice_scheduler_test::add_ue(req);
+  }
+
+  /// Allocates a UL HARQ of the UE sent for a slice, and NACKs it so that it has a retransmission pending.
+  void nack_ul_harq(du_ue_index_t ue_idx, ran_slice_id_t slice_id)
+  {
+    auto h_ul = ues[ue_idx].get_pcell().harqs.alloc_ul_harq(next_slot, next_slot, 4);
+    ASSERT_TRUE(h_ul.has_value());
+    ul_harq_alloc_context ctxt;
+    ctxt.dci_cfg_type = dci_ul_rnti_config_type::c_rnti_f0_1;
+    ctxt.slice_id     = slice_id;
+    pusch_information pusch;
+    pusch.rnti          = ues[ue_idx].crnti;
+    pusch.harq_id       = h_ul->id();
+    pusch.new_data      = true;
+    pusch.tb_size_bytes = units::bytes{100};
+    h_ul->save_grant_params(ctxt, pusch);
+    h_ul->ul_crc_info(false);
+  }
+
+  /// Whether a UL HARQ of the UE has a retransmission pending.
+  bool has_pending_ul_retx(du_ue_index_t ue_idx)
+  {
+    ue_cell& ue_cc = ues[ue_idx].get_pcell();
+    for (unsigned i = 0, e = ue_cc.harqs.nof_ul_harqs(); i != e; ++i) {
+      if (auto h = ue_cc.harqs.ul_harq(to_harq_id(i)); h.has_value() and h->has_pending_retx()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Runs slots until one carries a PDCCH, and returns the DL candidates of that slot, in the order they are offered.
+  std::vector<dl_ran_slice_candidate> run_dl_slot()
+  {
+    while (not has_active_tdd_dl_symbols(cell_cfg.params.tdd_cfg.value(), next_slot.slot_index())) {
+      run_slot();
+    }
+    run_slot();
+    std::vector<dl_ran_slice_candidate> candidates;
+    while (auto candidate = slice_sched.get_next_dl_candidate()) {
+      candidates.push_back(std::move(candidate.value()));
+    }
+    return candidates;
+  }
+
+  /// Returns the ID of the slice, other than the SRB one, that has the UE as a candidate.
+  std::optional<ran_slice_id_t> drb_slice_of(du_ue_index_t ue_idx)
+  {
+    for (const dl_ran_slice_candidate& candidate : run_dl_slot()) {
+      if (candidate.id() != SRB_RAN_SLICE_ID and candidate.is_candidate(ue_idx, LCID_MIN_DRB)) {
+        return candidate.id();
+      }
+    }
+    return std::nullopt;
+  }
+};
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_is_created_then_its_limits_are_capped_to_the_cell_and_it_is_dynamic)
+{
+  ASSERT_EQ(slice_sched.nof_slices(), 2);
+
+  create_slice(1, {MAX_NOF_PRBS, MAX_NOF_PRBS, MAX_NOF_PRBS});
+
+  ASSERT_EQ(slice_sched.nof_slices(), 3);
+  const slice_rrm_policy_config& cfg = slice_sched.slice_config(ran_slice_id_t{2});
+  ASSERT_EQ(cfg.rrc_member, make_member(1));
+  ASSERT_TRUE(slice_sched.is_dynamic(ran_slice_id_t{2}));
+  ASSERT_EQ(cfg.rbs.dedicated(), cell_cfg.nof_dl_prbs);
+  ASSERT_EQ(cfg.rbs.min(), cell_cfg.nof_dl_prbs);
+  ASSERT_EQ(cfg.rbs.max(), cell_cfg.nof_dl_prbs);
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_is_created_then_ues_of_its_policy_member_are_served_by_it)
+{
+  create_slice(1);
+  ASSERT_NE(this->add_ue(to_du_ue_index(0), 1), nullptr);
+  ASSERT_NE(this->add_ue(to_du_ue_index(1), 0), nullptr);
+
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(0)), ran_slice_id_t{2});
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(1)), DEFAULT_DRB_RAN_SLICE_ID);
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_the_slice_of_a_policy_member_exists_then_its_creation_is_ignored)
+{
+  create_slice(1, {MIN_SLICE_RB, MAX_SLICE_RB});
+  create_slice(1, {0, MAX_NOF_PRBS});
+
+  ASSERT_EQ(slice_sched.nof_slices(), 3);
+  ASSERT_EQ(slice_sched.slice_config(ran_slice_id_t{2}).rbs.min(), MIN_SLICE_RB);
+  ASSERT_EQ(slice_sched.slice_config(ran_slice_id_t{2}).rbs.max(), MAX_SLICE_RB);
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_is_removed_then_its_ues_are_served_by_the_default_drb_slice)
+{
+  create_slice(1);
+  ASSERT_NE(this->add_ue(to_du_ue_index(0), 1), nullptr);
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(0)), ran_slice_id_t{2});
+
+  remove_slice(1);
+
+  ASSERT_EQ(slice_sched.nof_slices(), 2);
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(0)), DEFAULT_DRB_RAN_SLICE_ID);
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_other_than_the_last_is_removed_then_the_other_slices_keep_their_ids)
+{
+  create_slice(1);
+  create_slice(2);
+  create_slice(3);
+  ASSERT_NE(this->add_ue(to_du_ue_index(0), 1), nullptr);
+  ASSERT_NE(this->add_ue(to_du_ue_index(1), 2), nullptr);
+  ASSERT_NE(this->add_ue(to_du_ue_index(2), 3), nullptr);
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(2)), ran_slice_id_t{4});
+
+  remove_slice(2);
+
+  ASSERT_EQ(slice_sched.nof_slices(), 4);
+  ASSERT_EQ(slice_sched.nof_slice_ids(), 5);
+  ASSERT_EQ(slice_sched.slice_config(ran_slice_id_t{4}).rrc_member, make_member(3));
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(0)), ran_slice_id_t{2});
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(1)), DEFAULT_DRB_RAN_SLICE_ID);
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(2)), ran_slice_id_t{4});
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_is_removed_then_the_retxs_pending_for_it_are_cancelled)
+{
+  create_slice(1);
+  create_slice(2);
+  ASSERT_NE(this->add_ue(to_du_ue_index(0), 1), nullptr);
+  ASSERT_NE(this->add_ue(to_du_ue_index(1), 2), nullptr);
+  nack_ul_harq(to_du_ue_index(0), ran_slice_id_t{2});
+  nack_ul_harq(to_du_ue_index(1), ran_slice_id_t{3});
+  ASSERT_TRUE(has_pending_ul_retx(to_du_ue_index(0)));
+  ASSERT_TRUE(has_pending_ul_retx(to_du_ue_index(1)));
+
+  remove_slice(1);
+
+  // Only the retransmission of the removed slice is cancelled.
+  ASSERT_FALSE(has_pending_ul_retx(to_du_ue_index(0)));
+  ASSERT_TRUE(has_pending_ul_retx(to_du_ue_index(1)));
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_is_removed_then_its_ues_keep_the_bearers_of_the_other_slices)
+{
+  create_slice(1);
+  create_slice(2);
+  ASSERT_NE(this->add_ue_with_two_drbs(to_du_ue_index(0), 1, 2), nullptr);
+
+  remove_slice(1);
+
+  // The bearer of the removed slice is served by the default DRB slice, and the other one stays where it was.
+  bool drb1_in_default = false;
+  bool drb2_in_slice_3 = false;
+  for (const dl_ran_slice_candidate& candidate : run_dl_slot()) {
+    drb1_in_default |=
+        candidate.id() == DEFAULT_DRB_RAN_SLICE_ID and candidate.is_candidate(to_du_ue_index(0), LCID_MIN_DRB);
+    drb2_in_slice_3 |= candidate.id() == ran_slice_id_t{3} and
+                       candidate.is_candidate(to_du_ue_index(0), uint_to_lcid(LCID_MIN_DRB + 1));
+  }
+  ASSERT_TRUE(drb1_in_default);
+  ASSERT_TRUE(drb2_in_slice_3);
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_is_removed_then_a_slice_created_next_is_empty)
+{
+  create_slice(1);
+  create_slice(2);
+  ASSERT_NE(this->add_ue(to_du_ue_index(0), 2), nullptr);
+  remove_slice(2);
+  create_slice(3);
+
+  // The slice takes the ID that was freed.
+  ASSERT_EQ(slice_sched.nof_slices(), 4);
+  ASSERT_EQ(slice_sched.slice_config(ran_slice_id_t{3}).rrc_member, make_member(3));
+  ASSERT_EQ(drb_slice_of(to_du_ue_index(0)), DEFAULT_DRB_RAN_SLICE_ID);
+  for (const dl_ran_slice_candidate& candidate : run_dl_slot()) {
+    ASSERT_NE(candidate.id(), ran_slice_id_t{3});
+  }
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_with_dedicated_rbs_is_removed_then_its_rbs_are_released)
+{
+  create_slice(1, {DED_SLICE_RB, MIN_SLICE_RB, MAX_SLICE_RB});
+  ASSERT_NE(this->add_ue(to_du_ue_index(0), 0), nullptr);
+
+  // Dedicated resources are reserved also for an empty slice.
+  std::vector<dl_ran_slice_candidate> candidates = run_dl_slot();
+  ASSERT_FALSE(candidates.empty());
+  ASSERT_EQ(candidates.front().id(), SRB_RAN_SLICE_ID);
+  ASSERT_LE(candidates.front().remaining_rbs(), cell_cfg.nof_dl_prbs - DED_SLICE_RB);
+
+  candidates.clear();
+  remove_slice(1);
+
+  candidates = run_dl_slot();
+  ASSERT_FALSE(candidates.empty());
+  ASSERT_EQ(candidates.front().id(), SRB_RAN_SLICE_ID);
+  ASSERT_EQ(candidates.front().remaining_rbs(), cell_cfg.nof_dl_prbs);
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_the_dedicated_rbs_of_the_slices_exceed_the_cell_then_the_creation_is_ignored)
+{
+  const unsigned more_than_half = cell_cfg.nof_dl_prbs / 2 + 1;
+  create_slice(1, {more_than_half, more_than_half, MAX_NOF_PRBS});
+  create_slice(2, {more_than_half, more_than_half, MAX_NOF_PRBS});
+
+  ASSERT_EQ(slice_sched.nof_slices(), 3);
+  ASSERT_EQ(slice_sched.slice_config(ran_slice_id_t{2}).rrc_member, make_member(1));
+}
+
+TEST_F(dynamic_slice_scheduler_test, when_a_slice_is_unknown_then_its_removal_is_ignored)
+{
+  create_slice(1);
+
+  remove_slice(2);
+
+  ASSERT_EQ(slice_sched.nof_slices(), 3);
+}
+
+TEST_F(rb_ratio_slice_scheduler_test, when_a_slice_was_not_created_at_runtime_then_its_removal_is_ignored)
+{
+  ASSERT_NE(this->add_two_drb_ue(to_du_ue_index(0)), nullptr);
+  ASSERT_EQ(slice_sched.nof_slices(), 4);
+  ASSERT_FALSE(slice_sched.is_dynamic(drb1_slice_id));
+
+  du_cell_slice_reconfig_request req;
+  req.cell_index = to_du_cell_index(0);
+  req.policies_to_remove.push_back({plmn_identity::test_value(), s_nssai_t{slice_service_type{1}}});
+  slice_sched.handle_slice_reconfiguration_request(req);
+
+  ASSERT_EQ(slice_sched.nof_slices(), 4);
+  ASSERT_EQ(slice_sched.slice_config(drb1_slice_id).rrc_member.s_nssai.sst.value(), 1);
+  run_slot();
+  // The SRB slice is the first candidate, and the slice of the UE bearer the next one.
+  auto candidate = slice_sched.get_next_dl_candidate();
+  ASSERT_TRUE(candidate.has_value());
+  ASSERT_EQ(candidate->id(), SRB_RAN_SLICE_ID);
+  candidate = slice_sched.get_next_dl_candidate();
+  ASSERT_TRUE(candidate.has_value());
+  // The UE keeps its bearer in the slice.
+  ASSERT_EQ(candidate->id(), drb1_slice_id);
+  ASSERT_TRUE(candidate->is_candidate(to_du_ue_index(0), uint_to_lcid(LCID_MIN_DRB)));
+}

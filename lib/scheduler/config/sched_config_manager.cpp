@@ -106,7 +106,7 @@ void sched_config_manager::update_cell(const sched_cell_reconfiguration_request_
   if (msg.slice_reconf_req.has_value()) {
     const auto& cell_index = msg.slice_reconf_req->cell_index;
     ocudu_assert(added_cells.contains(cell_index), "cell={} does not exist", cell_index);
-    for (const auto& rrm : msg.slice_reconf_req->rrm_policies) {
+    for (const auto& rrm : msg.slice_reconf_req->policies_to_modify) {
       bool found = false;
       for (slice_rrm_policy_config& slice : added_cells[cell_index]->rrm_policy_members) {
         if (slice.rrc_member == rrm.rrc_member) {

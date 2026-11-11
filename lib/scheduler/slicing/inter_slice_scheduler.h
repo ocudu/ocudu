@@ -8,6 +8,9 @@
 #include "../policy/scheduler_policy.h"
 #include "ran_slice_candidate.h"
 #include "ran_slice_instance.h"
+#include "ocudu/adt/slotted_vector.h"
+#include <memory>
+#include <vector>
 
 namespace ocudu {
 
@@ -24,6 +27,9 @@ class inter_slice_scheduler
   using priority_type                      = uint32_t;
   using slot_count_type                    = uint32_t;
   static constexpr priority_type skip_prio = 0;
+
+  /// Maximum number of RAN slices. The last ID is the logical channel system's "no slice" marker.
+  static constexpr unsigned MAX_NOF_RAN_SLICES = MAX_NOF_RAN_SLICE_IDS - 1;
 
 public:
   inter_slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);
@@ -43,13 +49,33 @@ public:
   /// Get next RAN slice for PUSCH scheduling.
   std::optional<ul_ran_slice_candidate> get_next_ul_candidate();
 
-  size_t                         nof_slices() const { return slices.size(); }
-  const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id.value()].inst.cfg; }
-  scheduler_policy&              get_policy(ran_slice_id_t id) const { return *slices[id.value()].policy; }
+  size_t nof_slices() const { return slices.size(); }
 
+  /// Returns the number of RAN slice IDs up to the highest one in use. The IDs of the slices are stable, so removing a
+  /// slice leaves a hole.
+  size_t nof_slice_ids() const { return slice_id_range; }
+
+  const slice_rrm_policy_config& slice_config(ran_slice_id_t id) const { return slices[id]->inst.cfg; }
+  scheduler_policy&              get_policy(ran_slice_id_t id) const { return *slices[id]->policy; }
+
+  /// Whether the slice was created at runtime, and so it can be removed at runtime.
+  bool is_dynamic(ran_slice_id_t id) const { return slices[id]->is_dynamic; }
+
+  /// \brief Applies new RB limits to slices, and creates and removes slices at runtime.
+  ///
+  /// The UEs of a removed slice move to the default DRB slice, and the RBs of the slice go back to the shared pool. The
+  /// HARQ retransmissions pending for the removed slice are cancelled. A slice created at runtime has no UEs until
+  /// they are reconfigured. The RAN slice IDs of the other slices do not change.
   void handle_slice_reconfiguration_request(const du_cell_slice_reconfig_request& slice_reconf_req);
 
 private:
+  /// Creates a slice at runtime. The slice is ignored if the policy member already has one, or if its dedicated RBs do
+  /// not fit in the cell next to those of the other slices.
+  void create_slice(const du_cell_slice_reconfig_request::rrm_policy_config& new_slice);
+
+  /// Removes a slice created at runtime. The slice is ignored if it is not known or was not created at runtime.
+  void remove_slice(const rrm_policy_member& member);
+
   /// Returns the total number of RBs that are reserved for dedicated RBs + those that have been already allocated to
   /// other slices.
   template <bool IsDownlink>
@@ -59,13 +85,16 @@ private:
   struct ran_slice_sched_context {
     ran_slice_instance                inst;
     std::unique_ptr<scheduler_policy> policy;
+    /// Whether the slice was created at runtime. Only such a slice can be removed at runtime.
+    bool is_dynamic;
 
     ran_slice_sched_context(ran_slice_id_t                    id,
                             const cell_configuration&         cell_cfg,
                             const slice_rrm_policy_config&    cfg,
                             std::unique_ptr<scheduler_policy> policy_,
-                            ue_repository&                    ues_) :
-      inst(id, cell_cfg, cfg, ues_), policy(std::move(policy_))
+                            ue_repository&                    ues_,
+                            bool                              is_dynamic_ = false) :
+      inst(id, cell_cfg, cfg, ues_), policy(std::move(policy_)), is_dynamic(is_dynamic_)
     {
     }
 
@@ -164,7 +193,12 @@ private:
 
   ue_repository& ues;
 
-  std::vector<ran_slice_sched_context> slices;
+  // The slices are indexed by RAN slice ID. The ID of a slice does not change while it exists, as the HARQ processes
+  // keep the ID they were sent for.
+  slotted_id_vector<ran_slice_id_t, std::unique_ptr<ran_slice_sched_context>> slices;
+
+  // Highest RAN slice ID in use plus one.
+  size_t slice_id_range = 0;
 
   // Queue of slice candidates sorted by priority.
   slice_prio_queue dl_prio_queue;

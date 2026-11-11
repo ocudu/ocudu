@@ -85,7 +85,12 @@ struct du_cell_slice_reconfig_request {
     /// RB limits for the RRM policy member.
     rrm_policy_ratio_rb_limits rbs;
   };
-  static_vector<rrm_policy_config, MAX_SLICE_RECONF_POLICIES> rrm_policies;
+  /// New limits of the slices that already exist.
+  static_vector<rrm_policy_config, MAX_SLICE_RECONF_POLICIES> policies_to_modify;
+  /// Slices to create. The slice of a policy member that already exists is left as it is.
+  static_vector<rrm_policy_config, MAX_SLICE_RECONF_POLICIES> policies_to_create;
+  /// Slices to remove. Only a slice created through \c policies_to_create can be removed.
+  static_vector<rrm_policy_member, MAX_SLICE_RECONF_POLICIES> policies_to_remove;
 };
 
 } // namespace ocudu

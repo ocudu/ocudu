@@ -183,7 +183,7 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
 
           if ((policy_cfg.rbs.min() != min_prb) or (policy_cfg.rbs.max() != max_prb)) {
             // Policy configuration has been updated.
-            result.slice_reconf_req->rrm_policies.push_back(
+            result.slice_reconf_req->policies_to_modify.push_back(
                 du_cell_slice_reconfig_request::rrm_policy_config{policy_member, {min_prb, max_prb}});
           }
 
@@ -195,7 +195,7 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
         logger.warning("No RRM policy member found for {} in cell {}", policy_member, cell_index);
       }
 
-      if (result.slice_reconf_req->rrm_policies.full()) {
+      if (result.slice_reconf_req->policies_to_modify.full()) {
         logger.warning("RRM policy update list is full. Discarding further updates for cell {}", cell_index);
         break;
       }
@@ -230,7 +230,7 @@ du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& 
   result.cell_index           = cell_index;
   result.cu_notif_required    = si_updated;
   result.sched_notif_required = si_updated;
-  if (result.slice_reconf_req->rrm_policies.empty()) {
+  if (result.slice_reconf_req->policies_to_modify.empty()) {
     // No RRM policy changes.
     result.slice_reconf_req.reset();
   }
