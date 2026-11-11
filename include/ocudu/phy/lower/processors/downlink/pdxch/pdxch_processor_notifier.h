@@ -30,6 +30,7 @@ public:
   ///
   /// \param[in] context Context in which the resource grid is not available.
   /// \sa lower_phy_rg_handler::handle_resource_grid.
+  /// \warning Do not synchronously stop the PDxCH processor from this notification.
   virtual void on_pdxch_request_late(const resource_grid_context& context) = 0;
 };
 

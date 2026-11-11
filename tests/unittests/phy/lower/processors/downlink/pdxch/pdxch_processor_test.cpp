@@ -7,19 +7,22 @@
 #include "../../../modulation/ofdm_modulator_test_doubles.h"
 #include "pdxch_processor_notifier_test_doubles.h"
 #include "support/compare_sequences.h"
+#include "support/task_executor_test_doubles.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/phy/antenna_ports.h"
-#include "ocudu/phy/lower/processors/downlink/downlink_processor_baseband.h"
 #include "ocudu/phy/lower/processors/downlink/downlink_processor_factories.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_baseband.h"
 #include "ocudu/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
 #include "ocudu/support/executors/manual_task_worker.h"
 #include "ocudu/support/math/math_utils.h"
+#include "ocudu/support/synchronization/sync_event.h"
 #include "fmt/ostream.h"
+#include <atomic>
 #include <gtest/gtest.h>
 #include <random>
+#include <thread>
 
 using namespace ocudu;
 
@@ -154,12 +157,12 @@ protected:
     center_freq_Hz = dist_center_freq_Hz(rgen);
 
     // Prepare configurations.
-    pdxch_processor_configuration config = {.cp              = cp,
-                                            .scs             = scs,
-                                            .srate           = srate,
-                                            .bandwidth_rb    = bandwidth_rb,
-                                            .center_freq_Hz  = center_freq_Hz,
-                                            .tx_ant_topology = tx_ant_topology};
+    config = {.cp              = cp,
+              .scs             = scs,
+              .srate           = srate,
+              .bandwidth_rb    = bandwidth_rb,
+              .center_freq_Hz  = center_freq_Hz,
+              .tx_ant_topology = tx_ant_topology};
 
     // Create processor.
     pdxch_proc = pdxch_proc_factory->create(config, modulation_executor);
@@ -214,6 +217,7 @@ protected:
   unsigned           nof_slots_per_subframe;
   unsigned           nof_slots_per_frame;
 
+  pdxch_processor_configuration    config;
   std::unique_ptr<pdxch_processor> pdxch_proc   = nullptr;
   ofdm_symbol_modulator_spy*       ofdm_mod_spy = nullptr;
   manual_task_worker               modulation_executor;
@@ -517,6 +521,87 @@ TEST_P(LowerPhyDownlinkProcessorFixture, OverflowWithRequest)
     // Assert notifications.
     ASSERT_EQ(pdxch_proc_notifier_spy.get_request_late().size(), 0);
   }
+}
+
+TEST_P(LowerPhyDownlinkProcessorFixture, StopDiscardsRequests)
+{
+  unsigned   sector_id = dist_sector_id(rgen);
+  slot_point slot(to_numerology_value(scs), initial_slot_index);
+
+  // Create notifiers and connect.
+  pdxch_processor_notifier_spy pdxch_proc_notifier_spy;
+  pdxch_proc->connect(pdxch_proc_notifier_spy);
+
+  // Stop the processor without pending requests.
+  pdxch_proc->stop();
+
+  // Request the modulation of a slot after the stop.
+  ofdm_mod_spy->clear_modulate_entries();
+  pdxch_proc->get_request_handler().handle_request(get_shared_grid(), {.slot = slot, .sector = sector_id});
+
+  // The request is discarded without enqueuing any modulation task.
+  ASSERT_FALSE(modulation_executor.try_run_next());
+  ASSERT_TRUE(ofdm_mod_spy->get_modulate_entries().empty());
+
+  // There is no result for the slot.
+  ASSERT_EQ(pdxch_proc->get_baseband().process_slot({.slot = slot, .sector = sector_id}), nullptr);
+  ASSERT_EQ(pdxch_proc_notifier_spy.get_nof_notifications(), 0);
+}
+
+TEST_P(LowerPhyDownlinkProcessorFixture, StopWaitsPendingTasks)
+{
+  unsigned   nof_tx_ports = get_total_nof_ports(tx_ant_topology);
+  unsigned   sector_id    = dist_sector_id(rgen);
+  slot_point slot(to_numerology_value(scs), initial_slot_index);
+
+  // Create a processor whose modulation tasks run when the test selects.
+  manual_task_executor_unordered   modulation_executor_spy;
+  std::unique_ptr<pdxch_processor> processor = pdxch_proc_factory->create(config, modulation_executor_spy);
+  ASSERT_NE(processor, nullptr);
+  pdxch_processor_notifier_spy notifier_spy;
+  processor->connect(notifier_spy);
+
+  // Request the modulation of a slot without running any modulation task.
+  processor->get_request_handler().handle_request(get_shared_grid(), {.slot = slot, .sector = sector_id});
+  ASSERT_EQ(modulation_executor_spy.get_nof_pending_tasks(), nof_symbols_per_slot * nof_tx_ports);
+
+  // Synchronization event.
+  sync_event sync_ev;
+
+  // Stop the processor from a different thread.
+  std::atomic<bool> stopped = false;
+  std::thread       stop_thread([&processor, &stopped, tk = sync_ev.get_token()]() mutable {
+    // Signal that the stop thread already started.
+    tk.reset();
+    processor->stop();
+    stopped = true;
+  });
+
+  // Wait for the stopping thread to start.
+  //
+  // Note: the stop thread signals right before calling stop(). If the stop thread is preempted between the two, the
+  // tasks can complete before the processor requests the stop, and a stop() that does not wait for pending tasks
+  // passes. Closing this window requires a hook inside the processor implementation.
+  sync_ev.wait();
+
+  // The stop blocks while there are pending modulation tasks.
+  EXPECT_FALSE(stopped);
+
+  // Run all the pending modulation tasks. The stop completes afterwards.
+  while (modulation_executor_spy.run_oldest()) {
+  }
+
+  // Wait for the processor to be stopped.
+  stop_thread.join();
+  ASSERT_TRUE(stopped);
+
+  // The modulation result is released by the stop.
+  ASSERT_EQ(processor->get_baseband().process_slot({.slot = slot, .sector = sector_id}), nullptr);
+  ASSERT_EQ(notifier_spy.get_nof_notifications(), 0);
+
+  // Further requests are discarded.
+  processor->get_request_handler().handle_request(get_shared_grid(), {.slot = slot + 1, .sector = sector_id});
+  ASSERT_EQ(modulation_executor_spy.get_nof_pending_tasks(), 0);
 }
 
 // Creates test suite that combines all possible parameters.

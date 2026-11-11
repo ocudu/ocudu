@@ -22,7 +22,10 @@
 #include "ocudu/ran/beamforming/beam_weights_codebook.h"
 #include "ocudu/support/executors/task_executor.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
-#include <thread>
+#include "ocudu/support/synchronization/stop_event.h"
+#include <array>
+#include <atomic>
+#include <numeric>
 
 namespace ocudu {
 
@@ -72,15 +75,8 @@ public:
     }
   }
 
-  /// \brief Waits for the modulator to complete tasks.
-  ///
-  /// This method is necessary for ensuring that no pending task is left while stopping the downlink baseband processor.
-  void wait_for_completion() const
-  {
-    while (current_state.load(std::memory_order_relaxed)) {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
-    }
-  }
+  /// Stops the modulator. It blocks until all the pending modulation tasks are completed.
+  void stop() { stop_control.stop(); }
 
   /// \brief Handles a transmission request.
   ///
@@ -150,7 +146,19 @@ public:
 
       // Process each port individually.
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-        bool success = executor.defer([this, i_symbol_sf, i_port, i_symbol_start]() {
+        // The task keeps a stop token until it is destroyed, so the modulator does not stop with pending tasks.
+        auto token = stop_control.get_token();
+
+        // Skip the modulation of the port if the modulator is stopped.
+        if (OCUDU_UNLIKELY(token.is_stop_requested())) {
+          span<ci16_t> ci16_buf =
+              current_buffer->get_writer()[i_port].subspan(i_symbol_start, symbol_sizes_sf[i_symbol_sf]);
+          ocuduvec::zero(ci16_buf);
+          complete_symbol_task();
+          continue;
+        }
+
+        bool success = executor.defer([this, i_symbol_sf, i_port, i_symbol_start, tk = std::move(token)]() {
           unsigned symbol_size = symbol_sizes_sf[i_symbol_sf];
 
           // Create view to the writer offset.
@@ -257,6 +265,8 @@ private:
   const beam_weights_codebook& beamforming_codebook;
   /// Notifier containing the completion notification callback.
   pdxch_processor_modulator_notifier& notifier;
+  /// Stop control.
+  rt_stop_event_source stop_control;
 };
 
 } // namespace ocudu

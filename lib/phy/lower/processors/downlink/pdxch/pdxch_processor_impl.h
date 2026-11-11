@@ -18,6 +18,8 @@
 #include "ocudu/phy/support/resource_grid_context.h"
 #include "ocudu/ran/beamforming/beam_weights_codebook_generator.h"
 #include "ocudu/support/memory_pool/bounded_object_pool.h"
+#include "ocudu/support/synchronization/stop_event.h"
+#include <algorithm>
 
 namespace ocudu {
 
@@ -69,12 +71,14 @@ public:
   // See pdxch_processor interface for documentation.
   void stop() override
   {
-    // Signal the stop. The downlink transmission handler stops accepting transmissions.
-    stopped = true;
+    // Don't allow further processing requests.
+    stop_control.stop();
 
-    // Wait for all modulators to complete their current tasks.
-    std::for_each(
-        modulators.begin(), modulators.end(), [](const auto& modulator) { modulator->wait_for_completion(); });
+    // Wait for all modulators to complete their pending tasks.
+    std::for_each(modulators.begin(), modulators.end(), [](const auto& modulator) { modulator->stop(); });
+
+    // Release the stored modulation results.
+    requests.clear();
   }
 
   // See pdxch_processor interface for documentation.
@@ -122,8 +126,8 @@ private:
 
   /// Physical layer logger. Used for logging errors when the number of buffers are exhausted or a modulator is busy.
   ocudulog::basic_logger& logger;
-  /// Set to true when upper layers request to stop. The PDxCH processor does not accept more calls
-  std::atomic<bool> stopped = false;
+  /// Stop control. The PDxCH processor does not accept more requests after a stop.
+  rt_stop_event_source stop_control;
   /// Physical channel baseband processor event notifier.
   pdxch_processor_notifier* notifier = nullptr;
   /// Beamfoming codebook.

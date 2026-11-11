@@ -33,7 +33,8 @@ lower_phy_center_freq_controller& pdxch_processor_impl::get_center_freq_control(
 void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, const resource_grid_context& context)
 {
   // Ignore request if the processor has stopped.
-  if (stopped.load(std::memory_order_relaxed)) {
+  auto token = stop_control.get_token();
+  if (OCUDU_UNLIKELY(token.is_stop_requested())) {
     return;
   }
 
