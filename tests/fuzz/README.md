@@ -383,13 +383,13 @@ afl-plot findings/ofh_uplane/main plot_dir && open plot_dir/index.html
 
 ### Locating crash files
 
-Crash inputs are written to `findings/<target>/crashes/` for single-instance runs and to
-`findings/<target>/<instance>/crashes/` for parallel runs (e.g. `findings/ofh_uplane/main/crashes/`). To reproduce a
-crash:
+Crash inputs are written to `findings/<target>/<instance>/crashes/`. The instance is `default` for single-instance runs,
+including those of `run_fuzzers.sh`, and the name given with `-M` or `-S` for parallel runs (e.g.
+`findings/ofh_uplane/main/crashes/`). To reproduce a crash:
 
 ```bash
 ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
-    findings/ofh_uplane/crashes/id:000000,*
+    findings/ofh_uplane/default/crashes/id:000000,*
 ```
 
 ### Minimising a crash
@@ -398,7 +398,7 @@ Reduce a crashing input to its smallest reproducing form before filing a bug:
 
 ```bash
 afl-tmin \
-    -i findings/ofh_uplane/crashes/id:000000,* \
+    -i findings/ofh_uplane/default/crashes/id:000000,* \
     -o minimised_crash \
     -- ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
@@ -410,7 +410,7 @@ ASAN prints a full stack trace when the crash is reproduced. Pipe through `llvm-
 ```bash
 ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer) \
     ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer \
-    findings/ofh_uplane/crashes/id:000000,*
+    findings/ofh_uplane/default/crashes/id:000000,*
 ```
 
 ### Converting a crash to a unit-test literal
@@ -420,11 +420,11 @@ ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer) \
 ```bash
 # Print a C array literal for a single crash file
 python3 ../tests/fuzz/crash_to_hex.py --format c \
-    findings/ofh_uplane/crashes/id:000000,*
+    findings/ofh_uplane/default/crashes/id:000000,*
 
 # Convert all crashes in a directory at once
 python3 ../tests/fuzz/crash_to_hex.py --format c \
-    findings/ofh_uplane/crashes/
+    findings/ofh_uplane/default/crashes/
 ```
 
 Available formats: `hex` (default), `xxd` (annotated hex dump), `c` (C/C++ `uint8_t` array literal). Add the resulting
@@ -440,7 +440,7 @@ base:
 ```bash
 # Merge and deduplicate queue entries into the seed corpus
 afl-cmin \
-    -i findings/ofh_uplane/queue \
+    -i findings/ofh_uplane/default/queue \
     -o tests/fuzz/corpus/ofh_uplane \
     -- ./tests/fuzz/ofh/ofh_uplane_decoder_fuzzer @@
 ```
@@ -515,10 +515,11 @@ findings/
 ├── ngap_pdu_decoder_fuzzer.log
 ├── ngap_cu_cp_fuzzer.log
 ├── ofh_uplane/                     AFL++ output directory
-│   ├── crashes/                    inputs that caused a crash
-│   ├── hangs/                      inputs that caused a hang
-│   ├── queue/                      all corpus entries found
-│   └── fuzzer_stats                run statistics
+│   └── default/                    AFL++ instance directory
+│       ├── crashes/                inputs that caused a crash
+│       ├── hangs/                  inputs that caused a hang
+│       ├── queue/                  all corpus entries found
+│       └── fuzzer_stats            run statistics
 ├── ofh_ecpri/
 ├── ofh_vlan/
 ├── ngap/
@@ -529,9 +530,10 @@ findings/
 
 ### Corpus accumulation
 
-`run_fuzzers.sh` detects a prior queue automatically: if `$FUZZ_OUTPUT_DIR/<target>/queue/` exists when a run starts,
-AFL++ resumes from it (`-i -`); otherwise it starts from the seed corpus (`-i <corpus>`). The GitLab CI cache restores
-`findings/` at the start of each weekly job, so coverage accumulates across runs without any manual intervention.
+`run_fuzzers.sh` detects a prior queue automatically: if `$FUZZ_OUTPUT_DIR/<target>/default/queue/` has entries when a
+run starts, AFL++ resumes from it (`-i -`); otherwise it starts from the seed corpus (`-i <corpus>`). The GitLab CI
+cache restores `findings/` at the start of each weekly job, so coverage accumulates across runs without any manual
+intervention.
 
 ---
 

@@ -26,6 +26,7 @@
 # -----------
 #   0  no crashes found
 #   1  one or more crashes found (artifacts in $FUZZ_OUTPUT_DIR)
+#   2  no crashes found, but afl-fuzz stopped before the timeout of a target
 
 set -euo pipefail
 
@@ -80,6 +81,10 @@ export AFL_SKIP_CPUFREQ=1
 # Allow longer fork-server init (useful with ASAN instrumentation).
 export AFL_FORKSRV_INIT_TMOUT=30000
 
+# Save a seed or resumed queue entry that crashes the target as a crash
+# instead of skipping it, e.g. a cached input that crashes a newer build.
+export AFL_CRASHING_SEEDS_AS_NEW_CRASH=1
+
 # Fix core dump pattern for accurate crash detection.  Falls back gracefully
 # if the container lacks the required privilege.
 if echo core > /proc/sys/kernel/core_pattern 2>/dev/null; then
@@ -104,20 +109,26 @@ echo "============================================================"
 # Run fuzzers sequentially
 # ---------------------------------------------------------------------------
 CRASH_FOUND=0
+RUN_FAILED=0
 TOTAL_EXECS=0
 
 for binary in "${!TARGETS[@]}"; do
     subdir="${TARGETS[$binary]}"
     corpus="${CORPUS_DIR}/${subdir}"
     outdir="${OUTPUT_DIR}/${subdir}"
+    # AFL++ writes the queue, crashes, hangs and statistics of a run without -M or -S into the "default" instance
+    # directory inside the output directory.
+    instance_dir="${outdir}/default"
     logfile="${OUTPUT_DIR}/${binary}.log"
 
     mkdir -p "${outdir}"
 
-    # Use resume mode if a prior queue exists so accumulated corpus carries
+    # Use resume mode if a prior queue has entries so accumulated corpus carries
     # over between CI runs.  On first run (no prior output) start from the
-    # seed corpus instead.
-    if [[ -d "${outdir}/queue" ]]; then
+    # seed corpus instead.  A failed start leaves an empty queue, and an
+    # interrupted resume leaves the entries in _resume, which AFL++ resumes from.
+    if compgen -G "${instance_dir}/queue/id:*" > /dev/null 2>&1 ||
+       compgen -G "${instance_dir}/_resume/id:*" > /dev/null 2>&1; then
         afl_input="-i -"
         mode="resume"
     else
@@ -137,12 +148,19 @@ for binary in "${!TARGETS[@]}"; do
             ${afl_input} \
             -o "${outdir}" \
             -- "${binary}" @@ \
-        2>&1 | tee "${logfile}" || true
+        2>&1 | tee "${logfile}" || status=${PIPESTATUS[0]}
+
+    # timeout exits with 124 when the time is up, which is the normal end of a run.
+    if [[ "${status:-0}" -ne 124 ]]; then
+        echo "    ERROR: afl-fuzz stopped with exit status ${status:-0} – see ${logfile}" >&2
+        RUN_FAILED=1
+    fi
+    unset status
 
     echo "--- [$(date -u '+%H:%M:%S')] ${binary} finished ---"
 
     # Collect stats from the fuzzer_stats file if present.
-    stats_file="${outdir}/fuzzer_stats"
+    stats_file="${instance_dir}/fuzzer_stats"
     if [[ -f "${stats_file}" ]]; then
         execs=$(grep "^execs_done" "${stats_file}" | awk '{print $3}')
         paths=$(grep "^corpus_count" "${stats_file}" | awk '{print $3}')
@@ -151,14 +169,14 @@ for binary in "${!TARGETS[@]}"; do
     fi
 
     # Check for crashes.
-    if compgen -G "${outdir}/crashes/id:*" > /dev/null 2>&1; then
-        echo "    CRASH found in ${binary} – see ${outdir}/crashes/" >&2
+    if compgen -G "${instance_dir}/crashes/id:*" > /dev/null 2>&1; then
+        echo "    CRASH found in ${binary} – see ${instance_dir}/crashes/" >&2
         CRASH_FOUND=1
     fi
 
     # Check for hangs.
-    if compgen -G "${outdir}/hangs/id:*" > /dev/null 2>&1; then
-        echo "    HANG found in ${binary} – see ${outdir}/hangs/" >&2
+    if compgen -G "${instance_dir}/hangs/id:*" > /dev/null 2>&1; then
+        echo "    HANG found in ${binary} – see ${instance_dir}/hangs/" >&2
     fi
 done
 
@@ -172,6 +190,10 @@ if [[ "${CRASH_FOUND}" -eq 1 ]]; then
     echo " Result : CRASHES FOUND – inspect ${OUTPUT_DIR} for details"
     echo "============================================================"
     exit 1
+elif [[ "${RUN_FAILED}" -eq 1 ]]; then
+    echo " Result : no crashes found, but afl-fuzz stopped early – inspect the logs in ${OUTPUT_DIR}"
+    echo "============================================================"
+    exit 2
 else
     echo " Result : no crashes found"
     echo "============================================================"
