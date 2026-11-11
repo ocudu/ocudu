@@ -242,6 +242,15 @@ TEST_F(transport_block_encode_kernel_test, a_filler_count_outside_the_code_block
   // A filler count above K' leaves an information length below zero.
   config.nof_filler_bits = 2000;
   EXPECT_FALSE(gpu.configure(config).has_value());
+
+  // The code block carries 1016 of the 1040 bits of K', so 24 is the largest count that leaves
+  // room for them. A count of 25 leaves an information length of 1015.
+  config.nof_filler_bits       = 24;
+  cuda::cuda_result configured = gpu.configure(config);
+  EXPECT_TRUE(configured.has_value()) << configured.error();
+
+  config.nof_filler_bits = 25;
+  EXPECT_FALSE(gpu.configure(config).has_value());
   config.nof_filler_bits.reset();
 
   // A lifting size of 96 holds 960 bits of a code block that carries 1016, so the count the
