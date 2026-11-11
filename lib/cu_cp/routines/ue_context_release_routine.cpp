@@ -40,6 +40,11 @@ void ue_context_release_routine::operator()(coro_context<async_task<cu_cp_ue_con
     command.redirect_nr_info     = ue->get_ue_context().pending_redirect_nr_info;
   }
 
+  // After a successful handover the UE is connected to the target, so release the source without an RRC message.
+  if (command.cause == ngap_cause_t{ngap_cause_radio_network_t::successful_ho}) {
+    command.requires_rrc_message = false;
+  }
+
   // Prepare context release complete
   {
     release_complete.ue_index = command.ue_index;

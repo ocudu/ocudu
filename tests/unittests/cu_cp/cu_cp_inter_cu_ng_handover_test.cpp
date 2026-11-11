@@ -539,6 +539,8 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_handover_succeeds_then_amf_releases
   // Inject Bearer Context Release Complete and await F1AP UE Context Release Command.
   ASSERT_TRUE(send_bearer_context_release_complete_and_await_f1ap_ue_context_release_command(
       ue_ctx->cu_cp_e1ap_id.value(), ue_ctx->cu_up_e1ap_id.value()));
+  // The UE is connected to the target, so the source sends no RRCRelease.
+  ASSERT_FALSE(f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container_present);
 
   // Inject F1AP UE Context Release Complete and await NGAP UE Context Release Complete.
   ASSERT_TRUE(send_f1ap_ue_context_release_complete_and_await_ngap_ue_context_release_complete(
