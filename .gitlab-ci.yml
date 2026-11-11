@@ -18,6 +18,9 @@ include:
   - local: .gitlab/ci/build.yml
   - local: .gitlab/ci/compose.yml
   - local: .gitlab/ci/scorecard.yml
+  - local: .gitlab/ci/ai.yml
+    rules:
+      - if: $OCUDU_TOOLS_PROJECT  # CI/CD variable; unset: no AI jobs
 
 stages:
   - ci

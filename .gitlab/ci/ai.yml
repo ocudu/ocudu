@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
+# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
+# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+
+# AI jobs from ocudu_tools' ci_box. Included only when the CI/CD variable OCUDU_TOOLS_PROJECT is set.
+
+include:
+  - project: $OCUDU_TOOLS_PROJECT
+    ref: main  # also picks the ci-box image version
+    file: .gitlab/ci/ci-box.yml
+
+# Last, on schedules with a failed job: matches each failure to an ocudu issue, or opens one.
+ci-triage:
+  extends: .ci-triage
