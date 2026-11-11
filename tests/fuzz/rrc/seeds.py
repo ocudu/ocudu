@@ -48,8 +48,12 @@ RRC_SETUP_COMPLETE = (
     "1000000000"
 )
 
+# Source: authenticate_ue() in tests/unittests/cu_cp/cu_cp_test_environment.cpp, PDCP
+# header and MAC-I stripped.
 RRC_UL_INFORMATION_TRANSFER = "3a0abf002b96882dac46355c4f34464ddaf7b43fde37ae80"
 
+# Source: send_rrc_measurement_report() in tests/unittests/cu_cp/cu_cp_nrppa_test.cpp,
+# PDCP header and MAC-I stripped.
 RRC_MEASUREMENT_REPORT = "00410004015f741fe0804bf183fc"
 
 RRC_SEEDS = {
@@ -84,10 +88,10 @@ RRC_SEEDS = {
     "dcch_invalid": seed(DCCH | INTEGRITY_VERIFIED | SECURED, "deadbeef"),
 
     # ULInformationTransfer on a connected UE.
-    "procedure_ul_information_transfer": seed(DCCH | CONNECTED, RRC_UL_INFORMATION_TRANSFER),
+    "dcch_ul_information_transfer": seed(DCCH | CONNECTED, RRC_UL_INFORMATION_TRANSFER),
 
     # MeasurementReport on SRB1 after security activation.
-    "procedure_measurement_report": seed(DCCH | INTEGRITY_VERIFIED | SECURED, RRC_MEASUREMENT_REPORT),
+    "dcch_measurement_report": seed(DCCH | INTEGRITY_VERIFIED | SECURED, RRC_MEASUREMENT_REPORT),
 }
 
 # ---------------------------------------------------------------------------
@@ -137,10 +141,10 @@ RRC_CU_CP_SEEDS = {
     "dcch_invalid": seed(CU_CP_DCCH | CU_CP_SECURED, "deadbeef"),
 
     # ULInformationTransfer with a complete message body, against a connected UE.
-    "procedure_ul_information_transfer": seed(CU_CP_DCCH | CU_CP_CONNECTED, RRC_UL_INFORMATION_TRANSFER),
+    "dcch_ul_information_transfer": seed(CU_CP_DCCH | CU_CP_CONNECTED, RRC_UL_INFORMATION_TRANSFER),
 
     # MeasurementReport with a complete message body, on SRB1 after security activation.
-    "procedure_measurement_report": seed(CU_CP_DCCH | CU_CP_SECURED, RRC_MEASUREMENT_REPORT),
+    "dcch_measurement_report": seed(CU_CP_DCCH | CU_CP_SECURED, RRC_MEASUREMENT_REPORT),
 }
 
 # ---------------------------------------------------------------------------
