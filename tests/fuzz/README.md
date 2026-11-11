@@ -340,7 +340,7 @@ afl-fuzz \
 ```
 
 Dissects PME raw GTP-U PDU per input with the `gtpu_dissect_pdu()` function. The seeds are the test vectors of
-`test.unittests/gtpu/gtpu_test_shared.h.
+`test.unittests/gtpu/gtpu_test_shared.h`.
 
 Remark: An input is a GTP-U PDU not only a G-PDU, thus the seeds also contain Echo Request, Echo Response and Error
 Indication messages, which are not G-PDUs.
