@@ -11,3 +11,5 @@
 
 # Personal agent instructions (see docs/agents/README.md).
 CLAUDE.local.md
+/tests/fuzz/ofh/corpus/
+/tests/fuzz/f1ap/corpus/

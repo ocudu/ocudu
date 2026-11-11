@@ -130,14 +130,14 @@ python3 tests/fuzz/gen_corpus.py tests/fuzz/*/seeds.py --zip-dir $OUT
 
 ```bash
 # Default: findings/ inside the build directory
-mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu,e1ap}
+mkdir -p findings/{ofh_uplane,ofh_ecpri,ofh_vlan,ofh_rx,ngap,ngap_cu_cp,rrc_ue,rrc_cu_cp,gtpu,e1ap,f1ap}
 
 # Alternative: any absolute path
 export FUZZ_OUTPUT_DIR=/tmp/fuzz_findings
 mkdir -p $FUZZ_OUTPUT_DIR/ofh_uplane $FUZZ_OUTPUT_DIR/ofh_ecpri $FUZZ_OUTPUT_DIR/ofh_vlan \
          $FUZZ_OUTPUT_DIR/ofh_rx $FUZZ_OUTPUT_DIR/ngap $FUZZ_OUTPUT_DIR/ngap_cu_cp \
          $FUZZ_OUTPUT_DIR/rrc_ue $FUZZ_OUTPUT_DIR/rrc_cu_cp $FUZZ_OUTPUT_DIR/gtpu \
-         $FUZZ_OUTPUT_DIR/e1ap
+         $FUZZ_OUTPUT_DIR/e1ap $FUZZ_OUTPUT_DIR/f1ap
 ```
 
 `FUZZ_OUTPUT_DIR` is picked up automatically by `run_fuzzers.sh`. For manual `afl-fuzz` invocations, pass the path
@@ -425,6 +425,19 @@ afl-fuzz \
 Decodes one raw E1AP PDU per input via `e1ap_asn1_packer::handle_packed_pdu()`, which forwards only successful decodes
 to its message sink. The seeds are the `rx_msg` test vectors of `tests/unittests/asn1/asn1_e1ap_test.cpp`, one request
 and one response, with no harness prefix.
+
+### F1AP PDU decoder fuzzer
+
+```bash
+afl-fuzz \
+    -i tests/fuzz/corpus/f1ap \
+    -o findings/f1ap \
+    -- ./tests/fuzz/f1ap/f1ap_pdu_decoder_fuzzer @@
+```
+
+Decodes one raw F1AP PDU per input via `f1ap_asn1_packer::handle_packed_pdu()`, which forwards only successful
+decodes to its message sink. The seeds are the test vectors of `tests/unittests/asn1/asn1_f1ap_test.cpp` and
+`tests/unittests/f1ap/du/f1ap_du_ue_context_setup_procedure_test.cpp`, with no harness prefix.
 
 ### Running in parallel (recommended)
 
