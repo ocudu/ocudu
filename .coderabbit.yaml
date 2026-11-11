@@ -14,7 +14,7 @@ reviews:
   high_level_summary_in_walkthrough: false
   review_status: false
   review_info: false
-  review_details: true
+  review_details: false
   collapse_walkthrough: true
   changed_files_summary: false
   sequence_diagrams: false
