@@ -920,6 +920,7 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
   prev_params.mcs         = cw.mcs_index;
   prev_params.rbs         = pdsch.rbs;
   prev_params.nof_symbols = pdsch.symbols.length();
+  prev_params.dmrs_ports  = pdsch.dmrs.dmrs_ports;
 }
 
 bool ul_harq_process_handle::new_retx(slot_point pusch_slot, uint8_t nof_repetitions)

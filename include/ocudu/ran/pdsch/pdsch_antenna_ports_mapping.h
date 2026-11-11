@@ -31,7 +31,7 @@ struct pdsch_antenna_ports_mapping {
 /// \brief Gets the PDSCH antenna ports mapping table.
 ///
 /// Retrieves the antenna port mapping table for PDSCH transmission based on the specified DM-RS configuration
-/// parameters. The mapping table defines how antenna ports are assigned to PDSCH resources according to TS38.212
+/// parameters. The mapping table defines how antenna ports are assigned to PDSCH resources according to TS 38.212
 /// Section 7.3.1.2.2.
 ///
 /// \param dmrs_cfg_type        UE dedicated DM-RS type configuration.

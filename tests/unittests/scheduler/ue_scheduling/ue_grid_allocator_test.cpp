@@ -1108,6 +1108,28 @@ protected:
     return find_ue_pdsch(rnti, res_grid[0].result_reader().dl().ue_grants());
   }
 
+  /// NACKs the DL HARQ process of the UE that waits for an ACK, and allocates its reTx. Returns true if the reTx is
+  /// allocated.
+  bool nack_and_allocate_dl_retx(const ue& u)
+  {
+    ue_cell&                              ue_cc = ues[u.ue_index].get_pcell();
+    std::optional<dl_harq_process_handle> h_dl  = ue_cc.harqs.find_dl_harq_waiting_ack();
+    if (not h_dl.has_value() or not h_dl->dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt)) {
+      return false;
+    }
+    return run_until(
+        [&]() {
+          std::optional<dl_harq_process_handle> h_retx = ue_cc.harqs.find_pending_dl_retx();
+          if (h_retx.has_value()) {
+            allocate_dl_retx_grant(slice_ues[u.ue_index], *h_retx);
+          }
+        },
+        [&]() {
+          const dl_msg_alloc* grant = find_pdsch(u.crnti);
+          return grant != nullptr and grant->context.nof_retxs > 0;
+        });
+  }
+
   unsigned dci_antenna_ports(rnti_t rnti) const
   {
     return find_ue_dl_pdcch(rnti, res_grid[0].result_reader().dl())->dci.as_c_rnti_f1_1().antenna_ports;
@@ -1206,29 +1228,15 @@ TEST_P(ue_grid_allocator_dl_mimo_test, pdsch_and_dci_use_the_dmrs_ports_of_the_g
 // without data of the original transmission.
 TEST_P(ue_grid_allocator_dl_mimo_test, retx_keeps_the_cdm_groups_without_data_of_the_original_transmission)
 {
-  const ue& u     = add_ue(to_du_ue_index(0), {});
-  ue_cell&  ue_cc = ues[u.ue_index].get_pcell();
+  const ue& u = add_ue(to_du_ue_index(0), {});
 
   // The UE is paired with a UE on antenna ports 1002 and 1003, which leaves no data in CDM groups 0 and 1.
   dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
   dmrs_ports.fill(0, 2);
   ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant_on_ports(slice_ues[u.ue_index], dmrs_ports, 2); },
                         [&]() { return find_pdsch(u.crnti) != nullptr; }));
-  std::optional<dl_harq_process_handle> h_dl = ue_cc.harqs.find_dl_harq_waiting_ack();
-  ASSERT_TRUE(h_dl.has_value());
-  ASSERT_TRUE(h_dl->dl_ack_info(mac_harq_ack_report_status::nack, std::nullopt));
+  ASSERT_TRUE(nack_and_allocate_dl_retx(u));
 
-  ASSERT_TRUE(run_until(
-      [&]() {
-        std::optional<dl_harq_process_handle> h_retx = ue_cc.harqs.find_pending_dl_retx();
-        if (h_retx.has_value()) {
-          allocate_dl_retx_grant(slice_ues[u.ue_index], *h_retx);
-        }
-      },
-      [&]() {
-        const dl_msg_alloc* grant = find_pdsch(u.crnti);
-        return grant != nullptr and grant->context.nof_retxs > 0;
-      }));
   const dl_msg_alloc& retx = *find_pdsch(u.crnti);
   ASSERT_EQ(retx.pdsch_cfg.dmrs.dmrs_ports, dmrs_ports);
   ASSERT_EQ(retx.pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data, 2);
@@ -1240,6 +1248,26 @@ TEST_P(ue_grid_allocator_dl_mimo_test, retx_keeps_the_cdm_groups_without_data_of
   pdsch_information su_pdsch              = retx.pdsch_cfg;
   su_pdsch.dmrs.num_dmrs_cdm_grps_no_data = 1;
   ASSERT_NE(retx.pdsch_cfg.codewords[0].tb_size_bytes, ue_derived_tbs(su_pdsch));
+}
+
+TEST_P(ue_grid_allocator_dl_mimo_test, retx_keeps_the_dmrs_ports_of_the_original_transmission)
+{
+  const ue& u = add_ue(to_du_ue_index(0), {});
+
+  // The UE is paired with a UE on antenna ports 1000 and 1001, which are not the default ports of its two layers.
+  dmrs_port_mask dmrs_ports(DMRS_MAX_NPORTS);
+  dmrs_ports.set(2);
+  dmrs_ports.set(3);
+  ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant_on_ports(slice_ues[u.ue_index], dmrs_ports, 2); },
+                        [&]() { return find_pdsch(u.crnti) != nullptr; }));
+  ASSERT_TRUE(nack_and_allocate_dl_retx(u));
+
+  const dl_msg_alloc& retx = *find_pdsch(u.crnti);
+  ASSERT_EQ(retx.pdsch_cfg.dmrs.dmrs_ports, dmrs_ports);
+  ASSERT_EQ(retx.pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data, 2);
+  // TS 38.212 Table 7.3.1.2.2-1, value 8.
+  ASSERT_EQ(dci_antenna_ports(u.crnti), 8);
+  ASSERT_EQ(retx.pdsch_cfg.codewords[0].tb_size_bytes, ue_derived_tbs(retx.pdsch_cfg));
 }
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,

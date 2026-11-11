@@ -23,7 +23,7 @@ inline unsigned to_symbol_index(dmrs_typeA_position pos)
 
 /// \brief Type of DM-RS to be used in DL and UL.
 /// \remark See TS 38.331, DMRS-DownlinkConfig and DMRS-UplinkConfig.
-enum class dmrs_config_type { type1 = 1, type2, not_set };
+enum class dmrs_config_type : uint8_t { type1 = 1, type2, not_set };
 
 /// \brief Position for additional DM-RS in DL (see TS 38.211, Tables 7.4.1.1.2-3 and 7.4.1.1.2-4).
 /// \remark See TS 38.331, DMRS-DownlinkConfig and DMRS-UplinkConfig.
@@ -39,7 +39,7 @@ inline dmrs_additional_positions uint_to_dmrs_additional_positions(uint8_t dmrs_
 /// If set to len2, the UE determines the actual number of DM-RS symbols by the associated DCI. (see TS 38.214,
 /// clause 7.4.1.1.2).
 /// \remark See TS 38.214, DMRS-DownlinkConfig.
-enum class dmrs_max_length { len1 = 1, len2, not_set };
+enum class dmrs_max_length : uint8_t { len1 = 1, len2, not_set };
 
 /// Gets the number of resource elements occupied by DM-RS per PRB and symbol for a given type of DM-RS.
 constexpr unsigned get_nof_re_per_prb(dmrs_config_type type)
@@ -73,14 +73,14 @@ constexpr unsigned DMRS_MAX_NPORTS =
 /// \brief Data type used to represent the DM-RS ports of a PDSCH or PUSCH transmission.
 ///
 /// Bit \f$p\f$ corresponds to the DM-RS port \f$p\f$, i.e., to the antenna port \f$1000+p\f$ in PDSCH. Transmission
-/// layers are mapped to the selected DM-RS ports in ascending order, as per TS38.211 Section 7.3.1.4.
+/// layers are mapped to the selected DM-RS ports in ascending order, as per TS 38.211 Section 7.3.1.4.
 using dmrs_port_mask = bounded_bitset<DMRS_MAX_NPORTS>;
 
 /// \brief Gets the CDM group of a DM-RS port.
 ///
 /// \param[in] type      DM-RS type.
 /// \param[in] dmrs_port DM-RS port index, starting at zero for antenna port 1000.
-/// \return The CDM group \f$\lambda\f$ given in TS38.211 Tables 7.4.1.1.2-1 and 7.4.1.1.2-2.
+/// \return The CDM group \f$\lambda\f$ given in TS 38.211 Tables 7.4.1.1.2-1 and 7.4.1.1.2-2.
 constexpr unsigned get_dmrs_cdm_group_index(dmrs_config_type type, unsigned dmrs_port)
 {
   return (dmrs_port / 2) % get_max_nof_cdm_groups_without_data(type);

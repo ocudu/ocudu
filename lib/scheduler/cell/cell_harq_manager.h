@@ -10,6 +10,7 @@
 #include "ocudu/adt/intrusive_list.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include "ocudu/ran/csi_report/csi_report_data.h"
+#include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/du_types.h"
 #include "ocudu/ran/harq_id.h"
 #include "ocudu/ran/logical_channel/lcid_dl_sch.h"
@@ -136,6 +137,8 @@ struct dl_harq_process_impl : public base_harq_process {
     uint8_t                 nof_layers{1};
     /// Number of DM-RS CDM groups without data. Fixed across HARQ retxs.
     uint8_t nof_dmrs_cdm_groups_without_data{1};
+    /// DM-RS ports of the last transmission, one per layer. A reTx may use other ports.
+    dmrs_port_mask dmrs_ports;
     /// Number of Rel-16 slot-based PDSCH repetitions of the grant. Value 1 means a single transmission.
     uint8_t                                     nof_repetitions{1};
     bool                                        is_fallback{false};

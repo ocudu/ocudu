@@ -307,22 +307,26 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
     return std::nullopt;
   }
 
-  // Compute recommended number of layers, MCS and PRBs.
-  unsigned nof_layers;
-  if (h_dl == nullptr) {
-    // NewTx Case.
-    nof_layers = ue_cc.channel_state_manager().get_nof_dl_layers();
-    if (nof_repetitions.has_value()) {
-      // TS 38.214 limits PDSCH repetition Type A to at most 2 layers.
-      nof_layers = std::min(nof_layers, 2U);
+  // Compute the DM-RS, the recommended MCS and the PRBs.
+  const pdsch_config_params pdsch_cfg = [&]() {
+    if (h_dl == nullptr) {
+      // NewTx Case.
+      unsigned nof_layers = ue_cc.channel_state_manager().get_nof_dl_layers();
+      if (nof_repetitions.has_value()) {
+        // TS 38.214 limits PDSCH repetition Type A to at most 2 layers.
+        nof_layers = std::min(nof_layers, 2U);
+      }
+      // [Implementation-defined] The PDSCH is a single-user transmission on the default DM-RS ports of its number of
+      // layers.
+      return ss.get_pdsch_config(*selected_pdsch_td_index, nof_layers);
     }
-  } else {
-    // ReTx Case.
-    nof_layers = h_dl->get_grant_params().nof_layers;
-  }
-  // [Implementation-defined] The PDSCH is a single-user transmission on the default DM-RS ports of its number of
-  // layers.
-  const pdsch_config_params& pdsch_cfg = ss.get_pdsch_config(*selected_pdsch_td_index, nof_layers);
+    // ReTx Case. The reTx must keep the CDM groups without data of the original transmission, from whose DM-RS
+    // overhead the UE derives the TBS (see TS 38.214, Section 5.1.3.2).
+    // [Implementation-defined] The reTx also keeps the DM-RS ports of the last transmission.
+    const dl_harq_process_handle::grant_params& prev_params = h_dl->get_grant_params();
+    return ss.get_pdsch_config(
+        *selected_pdsch_td_index, prev_params.dmrs_ports, prev_params.nof_dmrs_cdm_groups_without_data);
+  }();
 
   const std::optional<mcs_prbs_selection> mcs_prbs_sel =
       h_dl == nullptr ? compute_newtx_required_mcs_and_prbs(pdsch_cfg, ue_cc, pending_bytes, nof_rb_lims)
@@ -332,13 +336,11 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   }
 
   dl_sched_context ctxt;
-  ctxt.ss_id              = ss.cfg->get_id();
-  ctxt.pdsch_td_res_index = *selected_pdsch_td_index;
-  ctxt.recommended_mcs    = mcs_prbs_sel->mcs;
-  ctxt.dmrs_ports         = pdsch_cfg.dmrs.dmrs_ports;
-  // A reTx keeps the DM-RS overhead of the original transmission, from which the UE derives the TBS.
-  ctxt.nof_dmrs_cdm_groups_without_data = h_dl == nullptr ? pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data
-                                                          : h_dl->get_grant_params().nof_dmrs_cdm_groups_without_data;
+  ctxt.ss_id                            = ss.cfg->get_id();
+  ctxt.pdsch_td_res_index               = *selected_pdsch_td_index;
+  ctxt.recommended_mcs                  = mcs_prbs_sel->mcs;
+  ctxt.dmrs_ports                       = pdsch_cfg.dmrs.dmrs_ports;
+  ctxt.nof_dmrs_cdm_groups_without_data = pdsch_cfg.dmrs.num_dmrs_cdm_grps_no_data;
   ctxt.nof_rb_lims                      = nof_rb_lims;
   ctxt.expected_nof_rbs                 = mcs_prbs_sel->nof_prbs;
   ctxt.pending_bytes                    = units::bytes{pending_bytes};
