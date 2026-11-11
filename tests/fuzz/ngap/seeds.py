@@ -40,6 +40,38 @@ NGAP_SEEDS = {
 
     # Corrupt / non-NGAP payload (triggers unpack failure path).
     "invalid_payload": bytes.fromhex("deadbeef"),
+
+    # DownlinkNASTransport (initiatingMessage / id-DownlinkNASTransport).
+    "procedure_downlink_nas": bytes.fromhex(
+        "0004403e000003000a000200010055000200010026002b2a7e00560002000021681c"
+        "d489650fdcc7c70eca8fa9be44702010c7f0791fa852e282847c9f4ce5c19451"
+    ),
+
+    # InitialUEMessage (initiatingMessage / id-InitialUEMessage).
+    "procedure_initial_ue": bytes.fromhex(
+        "000f4080a20000040055000200010026007d7c7e00417100760100f110000001014d"
+        "436f77425159444b325675417945416e363648396b7a485461465a4b303537414972"
+        "37412b6e6c736149587852334e6973364c566f75466942343ddfabf5cd652eb25414"
+        "91484d41432d53484100858bbb1f42f1256f9a37531a772a2cf2b78ff160488402e"
+        "d489399b6b737420079000f4000f110000000001000f110000075005a400118"
+    ),
+
+    # UEContextReleaseCommand (initiatingMessage / id-UEContextRelease).
+    "procedure_release": bytes.fromhex("002900100000020072000400010001000f400148"),
+
+    # PDUSessionResourceSetupRequest (initiatingMessage / id-PDUSessionResourceSetup).
+    "procedure_session_setup": bytes.fromhex(
+        "001d006c000004000a000200010055000200010026002e2d7e00680100252e0100c2"
+        "110006010003300101060603e80603e8290501c0a80c7b25080764656661756c7412"
+        "01004a0027000001000021000003008b000a01f0c0a811d200000001008600011000"
+        "88000700010000090000"
+    ),
+
+    # UplinkNASTransport (initiatingMessage / id-UplinkNASTransport).
+    "procedure_uplink_nas": bytes.fromhex(
+        "002e403c000004000a0002000100550002000100260016157e00572d105e86219e7d"
+        "da9995e3850384cfbea53b0079400f4000f110000000001000f110000075"
+    ),
 }
 
 # ---------------------------------------------------------------------------
@@ -80,6 +112,14 @@ NGAP_CU_CP_SEEDS["initial_context_setup_request_twice"] = chain(
     CU_CP_CONNECTED,
     NGAP_SEEDS["initial_context_setup_request"],
     NGAP_SEEDS["initial_context_setup_request"],
+)
+
+# NAS delivery followed by the release answering it: a minimal ordering between
+# procedures, which the single-message seeds cannot express.
+NGAP_CU_CP_SEEDS["procedure_nas_then_release"] = chain(
+    CU_CP_SECURED,
+    NGAP_SEEDS["procedure_downlink_nas"],
+    NGAP_SEEDS["procedure_release"],
 )
 
 # ---------------------------------------------------------------------------

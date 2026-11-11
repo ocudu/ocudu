@@ -48,6 +48,10 @@ RRC_SETUP_COMPLETE = (
     "1000000000"
 )
 
+RRC_UL_INFORMATION_TRANSFER = "3a0abf002b96882dac46355c4f34464ddaf7b43fde37ae80"
+
+RRC_MEASUREMENT_REPORT = "00410004015f741fe0804bf183fc"
+
 RRC_SEEDS = {
     # RRCSetupRequest on UL-CCCH against a fresh UE: the pre-authentication entry point.
     "ccch_setup_request": seed(CCCH | FRESH, "1dec89d05766"),
@@ -78,6 +82,12 @@ RRC_SEEDS = {
 
     # Corrupt / non-RRC payload (triggers the unpack failure path).
     "dcch_invalid": seed(DCCH | INTEGRITY_VERIFIED | SECURED, "deadbeef"),
+
+    # ULInformationTransfer on a connected UE.
+    "procedure_ul_information_transfer": seed(DCCH | CONNECTED, RRC_UL_INFORMATION_TRANSFER),
+
+    # MeasurementReport on SRB1 after security activation.
+    "procedure_measurement_report": seed(DCCH | INTEGRITY_VERIFIED | SECURED, RRC_MEASUREMENT_REPORT),
 }
 
 # ---------------------------------------------------------------------------
@@ -125,6 +135,12 @@ RRC_CU_CP_SEEDS = {
 
     # Corrupt / non-RRC payload (triggers the unpack failure path).
     "dcch_invalid": seed(CU_CP_DCCH | CU_CP_SECURED, "deadbeef"),
+
+    # ULInformationTransfer with a complete message body, against a connected UE.
+    "procedure_ul_information_transfer": seed(CU_CP_DCCH | CU_CP_CONNECTED, RRC_UL_INFORMATION_TRANSFER),
+
+    # MeasurementReport with a complete message body, on SRB1 after security activation.
+    "procedure_measurement_report": seed(CU_CP_DCCH | CU_CP_SECURED, RRC_MEASUREMENT_REPORT),
 }
 
 # ---------------------------------------------------------------------------
