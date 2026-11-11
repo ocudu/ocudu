@@ -20,6 +20,7 @@
 #                                     ngap_cu_cp_fuzzer
 #                                     rrc_ue_fuzzer
 #                                     rrc_cu_cp_fuzzer
+#                                     gtpu_pdu_fuzzer
 #
 # Exit status
 # -----------
@@ -41,6 +42,7 @@ declare -A ALL_TARGETS=(
     ["ngap_cu_cp_fuzzer"]="ngap_cu_cp"
     ["rrc_ue_fuzzer"]="rrc_ue"
     ["rrc_cu_cp_fuzzer"]="rrc_cu_cp"
+    ["gtpu_pdu_fuzzer"]="gtpu"
 )
 
 # Optionally restrict which targets run.

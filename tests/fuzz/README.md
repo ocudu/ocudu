@@ -494,7 +494,7 @@ docker run --rm --privileged \
             -DENABLE_BACKWARD=OFF \
             -DENABLE_WERROR=OFF
         ninja -C /build fuzz_targets
-        PATH=/build/tests/fuzz/ofh:/build/tests/fuzz/ngap:/build/tests/fuzz/rrc:\$PATH \
+        PATH=/build/tests/fuzz/ofh:/build/tests/fuzz/ngap:/build/tests/fuzz/rrc:/build/tests/fuzz/gtpu:\$PATH \
             FUZZ_OUTPUT_DIR=/findings \
             FUZZ_CORPUS_DIR=/build/tests/fuzz/corpus \
             tests/fuzz/run_fuzzers.sh
