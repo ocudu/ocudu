@@ -182,9 +182,17 @@ nr_tb_init_config(nr_tb_config_t* tb_cfg, int tbs, float rate, const nr_geometry
 
   // A filler count the caller gives is taken as given, zero included. A code block that fills K'
   // exactly leaves none, and reading that as a request to derive one encodes a different length.
-  ldpc_cfg->num_filler_bits =
-      (overrides.num_filler_bits >= 0) ? overrides.num_filler_bits : (K_prime - payload_bits_per_cb);
-  ldpc_cfg->num_info_bits = K_prime - ldpc_cfg->num_filler_bits;
+  int num_filler_bits = (overrides.num_filler_bits >= 0) ? overrides.num_filler_bits : (K_prime - payload_bits_per_cb);
+
+  // The filler bits sit inside the code block, so a count below zero or above K' describes no
+  // code block the encoder can build. A count above K' leaves an information length below zero,
+  // and a count below zero leaves one above K', which the segmentation kernel writes past.
+  if ((num_filler_bits < 0) || (num_filler_bits > K_prime)) {
+    return make_unexpected(std::string("The filler count does not fit the code block it belongs to"));
+  }
+
+  ldpc_cfg->num_filler_bits = num_filler_bits;
+  ldpc_cfg->num_info_bits   = K_prime - num_filler_bits;
 
   tb_cfg->cb_size_bits = ldpc_cfg->num_info_bits;
   tb_cfg->filler_bits  = ldpc_cfg->num_filler_bits;

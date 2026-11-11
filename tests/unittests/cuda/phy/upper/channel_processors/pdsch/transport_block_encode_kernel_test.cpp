@@ -222,6 +222,34 @@ TEST_F(transport_block_encode_kernel_test, a_filler_count_of_zero_is_taken_as_gi
   EXPECT_NE(encoded[0], encoded[1]);
 }
 
+TEST_F(transport_block_encode_kernel_test, a_filler_count_outside_the_code_block_is_refused)
+{
+  // A transport block of 1000 bits carries its 16 bit checksum in one code block of 1016 bits.
+  // The encoder places it on BG2 with a lifting size of 104, so K' is 1040 and 24 bits are left
+  // for filler.
+  cuda::transport_block_encoder_config config = {};
+  config.nof_tb_bits                          = 1000;
+  config.nof_layers                           = 1;
+  config.modulation                           = modulation_scheme::QPSK;
+  config.nof_allocated_bits                   = 2048;
+  config.code_rate                            = 0.5F;
+  config.enable_scrambling                    = false;
+
+  ASSERT_TRUE(gpu.configure(config).has_value());
+  ASSERT_EQ(gpu.get_base_graph(), ldpc_base_graph_type::BG2);
+  ASSERT_EQ(static_cast<unsigned>(gpu.get_lifting_size()), 104U);
+
+  // A filler count above K' leaves an information length below zero.
+  config.nof_filler_bits = 2000;
+  EXPECT_FALSE(gpu.configure(config).has_value());
+  config.nof_filler_bits.reset();
+
+  // A lifting size of 96 holds 960 bits of a code block that carries 1016, so the count the
+  // encoder derives for it is below zero.
+  config.lifting_size = ldpc::LS96;
+  EXPECT_FALSE(gpu.configure(config).has_value());
+}
+
 TEST_F(transport_block_encode_kernel_test, the_largest_transport_block_is_accepted)
 {
   // The reservation holds the codeword buffer the LDPC encoder writes, which is all 68 BG1 columns
