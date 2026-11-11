@@ -140,7 +140,7 @@ TEST_F(asn1_rrc_nr_test, when_eutra_nr_capabilities_correct_then_packing_success
   // Pack mrdc_cap
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
-  mrdc_cap.pack(bref);
+  asn1::pack(bref, mrdc_cap);
 
   ASSERT_EQ(test_pack_roundtrip(mrdc_cap), OCUDUASN_SUCCESS);
 
@@ -160,7 +160,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_mrdc_capabilities_correct_then_unpacking_succes
   asn1::cbit_ref bref{pdu};
   ue_mrdc_cap_s  mrdc_cap;
 
-  ASSERT_EQ(mrdc_cap.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(mrdc_cap, bref), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(mrdc_cap), OCUDUASN_SUCCESS);
 }
@@ -196,12 +196,12 @@ TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_succ
   cbit_ref    bref(pdu);
   rrc_recfg_s rrc_recfg;
 
-  ASSERT_EQ(rrc_recfg.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(rrc_recfg, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(rrc_recfg.rrc_transaction_id, 0);
 
 #if JSON_OUTPUT
   json_writer jw;
-  rrc_recfg.to_json(jw);
+  asn1::to_json(jw, rrc_recfg);
   test_logger.info("RRC Reconfig: \n {}", jw.to_string().c_str());
 #endif
 
@@ -210,11 +210,11 @@ TEST_F(asn1_rrc_nr_test, when_ue_rrc_reconfiguration_correct_then_unpacking_succ
 
   cell_group_cfg_s cell_group_cfg;
   cbit_ref         bref0(rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group);
-  ASSERT_EQ(cell_group_cfg.unpack(bref0), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cell_group_cfg, bref0), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   json_writer jw1;
-  cell_group_cfg.to_json(jw1);
+  asn1::to_json(jw1, cell_group_cfg);
   test_logger.info("RRC Secondary Cell Group: \n {}", jw1.to_string().c_str());
 #endif
   ASSERT_EQ(cell_group_cfg.cell_group_id, 1);
@@ -231,11 +231,11 @@ TEST_F(asn1_rrc_nr_test, when_radio_bearer_config_correct_then_unpacking_success
 
   cbit_ref           bref(pdu);
   radio_bearer_cfg_s radio_bearer_cfg;
-  ASSERT_EQ(radio_bearer_cfg.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(radio_bearer_cfg, bref), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   json_writer jw;
-  radio_bearer_cfg.to_json(jw);
+  asn1::to_json(jw, radio_bearer_cfg);
   test_logger.info("RRC Bearer CFG Message: \n {}", jw.to_string().c_str());
 #endif
   ASSERT_EQ(radio_bearer_cfg.drb_to_add_mod_list.size(), 1);
@@ -276,7 +276,7 @@ TEST_F(asn1_rrc_nr_test, when_cell_group_config_correct_then_unpacking_successfu
   cbit_ref         bref(pdu);
   cell_group_cfg_s cell_group_cfg;
 
-  ASSERT_EQ(cell_group_cfg.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cell_group_cfg, bref), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(cell_group_cfg), OCUDUASN_SUCCESS);
 
@@ -320,7 +320,7 @@ TEST_F(asn1_rrc_nr_test, when_cell_group_config_correct_then_unpacking_successfu
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
-  cell_group_cfg.to_json(json_writer);
+  asn1::to_json(json_writer, cell_group_cfg);
   test_logger.info("RRC Secondary Cell Group: Content: {}\n", json_writer.to_string().c_str());
 #endif
 }
@@ -350,13 +350,13 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel15_correct_then_unpacking_su
   asn1::cbit_ref            bref{pdu};
   asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;
 
-  ASSERT_EQ(ue_nr_cap.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ue_nr_cap, bref), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(ue_nr_cap), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
-  ue_nr_cap.to_json(json_writer);
+  asn1::to_json(json_writer, ue_nr_cap);
   test_logger.info("UE capabilities: {}\n", json_writer.to_string().c_str());
 #endif
 }
@@ -454,13 +454,13 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel16_correct_then_unpacking_su
   asn1::cbit_ref            bref{pdu};
   asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;
 
-  ASSERT_EQ(ue_nr_cap.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ue_nr_cap, bref), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(ue_nr_cap), OCUDUASN_SUCCESS);
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
-  ue_nr_cap.to_json(json_writer);
+  asn1::to_json(json_writer, ue_nr_cap);
   test_logger.info("UE capabilities: {}\n", json_writer.to_string().c_str());
 #endif
 }
@@ -572,7 +572,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel16_v2_correct_then_unpacking
   asn1::cbit_ref            bref{pdu};
   asn1::rrc_nr::ue_nr_cap_s ue_nr_cap;
 
-  ASSERT_EQ(ue_nr_cap.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ue_nr_cap, bref), OCUDUASN_SUCCESS);
 
   ASSERT_TRUE(ue_nr_cap.feature_sets_present);
   ASSERT_EQ(ue_nr_cap.feature_sets.feature_sets_dl.size(), 1);
@@ -581,7 +581,7 @@ TEST_F(asn1_rrc_nr_test, when_ue_nr_capabilities_rel16_v2_correct_then_unpacking
 
 #if JSON_OUTPUT
   asn1::json_writer json_writer;
-  ue_nr_cap.to_json(json_writer);
+  asn1::to_json(json_writer, ue_nr_cap);
   test_logger.info("UE capabilities: {}\n", json_writer.to_string().c_str());
 #endif
 }
@@ -597,7 +597,7 @@ TEST_F(asn1_rrc_nr_test, unpack_malformed_rrc_setup_complete)
   ul_dcch_msg_s rrc_msg;
 
   cbit_ref bref{pdu};
-  ASSERT_NE(rrc_msg.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_NE(asn1::unpack(rrc_msg, bref), OCUDUASN_SUCCESS);
 }
 
 TEST_F(asn1_rrc_nr_test, null_ext_choice_alternative_is_an_open_type)
@@ -607,7 +607,7 @@ TEST_F(asn1_rrc_nr_test, null_ext_choice_alternative_is_an_open_type)
 
   byte_buffer pdu;
   bit_ref     bref(pdu);
-  ASSERT_EQ(info.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, info), OCUDUASN_SUCCESS);
 
   // Extension index followed by an open type holding the single zero octet that encodes NULL.
   uint8_t expected[] = {0x80, 0x01, 0x00};
@@ -615,7 +615,7 @@ TEST_F(asn1_rrc_nr_test, null_ext_choice_alternative_is_an_open_type)
 
   location_meas_info_c info_unpacked;
   cbit_ref             cbref(pdu);
-  ASSERT_EQ(info_unpacked.unpack(cbref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(info_unpacked, cbref), OCUDUASN_SUCCESS);
   ASSERT_EQ(info_unpacked.type(), location_meas_info_c::types::eutra_fine_timing_detection);
   ASSERT_EQ(cbref.distance_bytes(), (int)pdu.length());
 }
@@ -631,14 +631,14 @@ TEST_F(asn1_rrc_nr_test, mandatory_ext_group_member_with_first_enum_value)
 
   byte_buffer pdu;
   bit_ref     bref(pdu);
-  ASSERT_EQ(rlf.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, rlf), OCUDUASN_SUCCESS);
 
   // The extension group is present although t311 holds the first enumerated value.
   ASSERT_EQ(pdu, ocudu::make_byte_buffer("a940202000").value());
 
   rlf_timers_and_consts_s rlf_unpacked;
   cbit_ref                cbref(pdu);
-  ASSERT_EQ(rlf_unpacked.unpack(cbref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(rlf_unpacked, cbref), OCUDUASN_SUCCESS);
   ASSERT_TRUE(rlf_unpacked.t311.is_present());
   ASSERT_EQ(rlf_unpacked.t311->value, rlf_timers_and_consts_s::t311_opts::ms1000);
   ASSERT_EQ(test_pack_roundtrip(rlf_unpacked), OCUDUASN_SUCCESS);
@@ -751,4 +751,25 @@ TEST_F(asn1_rrc_nr_test, captured_pdus_repack_to_same_bytes)
   for (const capture_pdu& c : meas_timing_cfg_captures) {
     EXPECT_EQ(test_unpack_roundtrip<meas_timing_cfg_s>(hex_to_bytes(c.hex)), OCUDUASN_SUCCESS) << c.name;
   }
+}
+
+TEST_F(asn1_rrc_nr_test, when_choice_is_assigned_then_it_holds_a_copy_of_the_other_alternative)
+{
+  dl_dcch_msg_s recfg;
+  recfg.msg.set_c1().set_rrc_recfg().rrc_transaction_id = 1;
+  dl_dcch_msg_s release;
+  release.msg.set_c1().set_rrc_release().rrc_transaction_id = 2;
+
+  release = recfg;
+  ASSERT_EQ(release.msg.c1().type().value, dl_dcch_msg_type_c::c1_c_::types::rrc_recfg);
+  ASSERT_EQ(release.msg.c1().rrc_recfg().rrc_transaction_id, 1);
+
+  // Assigning the same alternative replaces its value.
+  recfg.msg.c1().rrc_recfg().rrc_transaction_id = 3;
+  release                                       = recfg;
+  ASSERT_EQ(release.msg.c1().rrc_recfg().rrc_transaction_id, 3);
+
+  const dl_dcch_msg_s& self = release;
+  release                   = self;
+  ASSERT_EQ(release.msg.c1().rrc_recfg().rrc_transaction_id, 3);
 }

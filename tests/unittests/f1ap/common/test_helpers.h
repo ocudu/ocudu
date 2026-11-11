@@ -17,7 +17,7 @@ inline bool is_f1ap_pdu_packable(const asn1::f1ap::f1ap_pdu_c& pdu)
 {
   byte_buffer   buffer;
   asn1::bit_ref bref(buffer);
-  return pdu.pack(bref) == asn1::OCUDUASN_SUCCESS;
+  return asn1::pack(bref, pdu) == asn1::OCUDUASN_SUCCESS;
 }
 
 /// Reusable notifier class that a) stores the received PDU for test inspection and b)

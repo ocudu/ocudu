@@ -32,7 +32,7 @@ byte_buffer ocudu::odu::pack_ref_time_r16(std::chrono::system_clock::time_point 
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  if (rrc_ref_time.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, rrc_ref_time) != asn1::OCUDUASN_SUCCESS) {
     ocudu_assertion_failure("Failed to PER-pack ReferenceTime-r16");
   }
   return buf;

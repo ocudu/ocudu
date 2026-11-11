@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/radio_bearer_cfg.h"
+#include "ocudu/asn1/asn1_codec.h"
 
 using namespace asn1;
 using namespace asn1::rrc_nr;
@@ -13,28 +14,27 @@ using namespace asn1::rrc_nr;
  ******************************************************************************/
 
 // CipheringAlgorithm ::= ENUMERATED
-const char* ciphering_algorithm_opts::to_string() const
-{
-  static const char* names[] = {"nea0", "nea1", "nea2", "nea3", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 8, value, "ciphering_algorithm_e");
-}
-uint8_t ciphering_algorithm_opts::to_number() const
+static const char* enum_names_ciphering_algorithm_e_values[] =
+    {"nea0", "nea1", "nea2", "nea3", "spare4", "spare3", "spare2", "spare1"};
+const asn1::table::enum_desc ciphering_algorithm_opts::desc = {enum_names_ciphering_algorithm_e_values,
+                                                               8,
+                                                               "ciphering_algorithm_e"};
+uint8_t                      ciphering_algorithm_opts::to_number() const
 {
   static const uint8_t numbers[] = {0, 1, 2, 3};
   return map_enum_number(numbers, 4, value, "ciphering_algorithm_e");
 }
 
 // UL-DataSplitThreshold ::= ENUMERATED
-const char* ul_data_split_thres_opts::to_string() const
-{
-  static const char* names[] = {"b0",       "b100",     "b200",     "b400",     "b800",     "b1600",    "b3200",
-                                "b6400",    "b12800",   "b25600",   "b51200",   "b102400",  "b204800",  "b409600",
-                                "b819200",  "b1228800", "b1638400", "b2457600", "b3276800", "b4096000", "b4915200",
-                                "b5734400", "b6553600", "infinity", "spare8",   "spare7",   "spare6",   "spare5",
-                                "spare4",   "spare3",   "spare2",   "spare1"};
-  return convert_enum_idx(names, 32, value, "ul_data_split_thres_e");
-}
-int32_t ul_data_split_thres_opts::to_number() const
+static const char* enum_names_ul_data_split_thres_e_values[] = {
+    "b0",       "b100",     "b200",     "b400",     "b800",     "b1600",    "b3200",    "b6400",
+    "b12800",   "b25600",   "b51200",   "b102400",  "b204800",  "b409600",  "b819200",  "b1228800",
+    "b1638400", "b2457600", "b3276800", "b4096000", "b4915200", "b5734400", "b6553600", "infinity",
+    "spare8",   "spare7",   "spare6",   "spare5",   "spare4",   "spare3",   "spare2",   "spare1"};
+const asn1::table::enum_desc ul_data_split_thres_opts::desc = {enum_names_ul_data_split_thres_e_values,
+                                                               32,
+                                                               "ul_data_split_thres_e"};
+int32_t                      ul_data_split_thres_opts::to_number() const
 {
   static const int32_t numbers[] = {0,       100,     200,     400,     800,     1600,    3200,    6400,
                                     12800,   25600,   51200,   102400,  204800,  409600,  819200,  1228800,
@@ -43,12 +43,12 @@ int32_t ul_data_split_thres_opts::to_number() const
 }
 
 // DiscardTimerExt-r16 ::= ENUMERATED
-const char* discard_timer_ext_r16_opts::to_string() const
-{
-  static const char* names[] = {"ms0dot5", "ms1", "ms2", "ms4", "ms6", "ms8", "spare2", "spare1"};
-  return convert_enum_idx(names, 8, value, "discard_timer_ext_r16_e");
-}
-float discard_timer_ext_r16_opts::to_number() const
+static const char* enum_names_discard_timer_ext_r16_e_values[] =
+    {"ms0dot5", "ms1", "ms2", "ms4", "ms6", "ms8", "spare2", "spare1"};
+const asn1::table::enum_desc discard_timer_ext_r16_opts::desc = {enum_names_discard_timer_ext_r16_e_values,
+                                                                 8,
+                                                                 "discard_timer_ext_r16_e"};
+float                        discard_timer_ext_r16_opts::to_number() const
 {
   static const float numbers[] = {0.5, 1.0, 2.0, 4.0, 6.0, 8.0};
   return map_enum_number(numbers, 6, value, "discard_timer_ext_r16_e");
@@ -60,85 +60,130 @@ const char* discard_timer_ext_r16_opts::to_number_string() const
 }
 
 // EthernetHeaderCompression-r16 ::= SEQUENCE
-OCUDUASN_CODE ethernet_hdr_compress_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {ehc_dl_r16_present, ehc_ul_r16_present}));
+static const asn1::table::seq_field seq_table_ethernet_hdr_compress_r16_s_ehc_common_r16_s__fields[] = {
+    {offsetof(ethernet_hdr_compress_r16_s::ehc_common_r16_s_, ehc_c_id_len_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16)>(),
+     decltype(ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16)::has_ext,
+     false,
+     decltype(ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16)::nof_types,
+     decltype(ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16)::nof_exts,
+     nullptr,
+     &ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_opts::desc}};
+static const asn1::table::field_name seq_table_ethernet_hdr_compress_r16_s_ehc_common_r16_s__names[] = {
+    {"ehc-CID-Length-r16", nullptr}};
+static const asn1::table::seq_desc seq_table_ethernet_hdr_compress_r16_s_ehc_common_r16_s_ = {
+    {seq_table_ethernet_hdr_compress_r16_s_ehc_common_r16_s__fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_ethernet_hdr_compress_r16_s_ehc_common_r16_s__names};
+static const asn1::table::seq_field seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s__fields[] = {
+    {0,
+     (int32_t)offsetof(ethernet_hdr_compress_r16_s::ehc_dl_r16_s_, drb_continue_ehc_dl_r16_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s__names[] = {
+    {"drb-ContinueEHC-DL-r16", "true"}};
+static const asn1::table::seq_opt seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s__opts[] = {
+    {0, (int32_t)offsetof(ethernet_hdr_compress_r16_s::ehc_dl_r16_s_, drb_continue_ehc_dl_r16_present)}};
+static const asn1::table::seq_desc seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s_ = {
+    {seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s__fields,
+     1,
+     UINT64_C(0x0),
+     seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s__opts,
+     1},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s__names};
+static const asn1::table::seq_field seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s__fields[] = {
+    {offsetof(ethernet_hdr_compress_r16_s::ehc_ul_r16_s_, max_c_id_ehc_ul_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(32767),
+     nullptr},
+    {0,
+     (int32_t)offsetof(ethernet_hdr_compress_r16_s::ehc_ul_r16_s_, drb_continue_ehc_ul_r16_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s__names[] = {
+    {"maxCID-EHC-UL-r16", nullptr},
+    {"drb-ContinueEHC-UL-r16", "true"}};
+static const asn1::table::seq_opt seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s__opts[] = {
+    {1, (int32_t)offsetof(ethernet_hdr_compress_r16_s::ehc_ul_r16_s_, drb_continue_ehc_ul_r16_present)}};
+static const asn1::table::seq_desc seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s_ = {
+    {seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s__fields,
+     2,
+     UINT64_C(0x1),
+     seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s__opts,
+     1},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s__names};
+static const asn1::table::seq_field seq_table_ethernet_hdr_compress_r16_s_fields[] = {
+    {offsetof(ethernet_hdr_compress_r16_s, ehc_common_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_ethernet_hdr_compress_r16_s_ehc_common_r16_s_},
+    {offsetof(ethernet_hdr_compress_r16_s, ehc_dl_r16),
+     (int32_t)offsetof(ethernet_hdr_compress_r16_s, ehc_dl_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_ethernet_hdr_compress_r16_s_ehc_dl_r16_s_},
+    {offsetof(ethernet_hdr_compress_r16_s, ehc_ul_r16),
+     (int32_t)offsetof(ethernet_hdr_compress_r16_s, ehc_ul_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_ethernet_hdr_compress_r16_s_ehc_ul_r16_s_}};
+static const asn1::table::field_name seq_table_ethernet_hdr_compress_r16_s_names[] = {{"ehc-Common-r16", nullptr},
+                                                                                      {"ehc-Downlink-r16", nullptr},
+                                                                                      {"ehc-Uplink-r16", nullptr}};
+static const asn1::table::seq_opt    seq_table_ethernet_hdr_compress_r16_s_opts[]  = {
+    {1, (int32_t)offsetof(ethernet_hdr_compress_r16_s, ehc_dl_r16_present)},
+    {2, (int32_t)offsetof(ethernet_hdr_compress_r16_s, ehc_ul_r16_present)}};
+const asn1::table::seq_desc ethernet_hdr_compress_r16_s::desc = {
+    {seq_table_ethernet_hdr_compress_r16_s_fields, 3, UINT64_C(0x1), seq_table_ethernet_hdr_compress_r16_s_opts, 2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_ethernet_hdr_compress_r16_s_names};
 
-  HANDLE_CODE(bref.pack(false, 1));
-  HANDLE_CODE(ehc_common_r16.ehc_c_id_len_r16.pack(bref));
-  if (ehc_dl_r16_present) {
-    HANDLE_CODE(pack_bits(bref, {false, ehc_dl_r16.drb_continue_ehc_dl_r16_present}));
-  }
-  if (ehc_ul_r16_present) {
-    HANDLE_CODE(pack_bits(bref, {false, ehc_ul_r16.drb_continue_ehc_ul_r16_present}));
-    HANDLE_CODE(pack_integer(bref, ehc_ul_r16.max_c_id_ehc_ul_r16, (uint16_t)1u, (uint16_t)32767u));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ethernet_hdr_compress_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_bits(bref, {&ehc_dl_r16_present, &ehc_ul_r16_present}));
-
-  bool ehc_common_r16_ext;
-  HANDLE_CODE(bref.unpack(ehc_common_r16_ext, 1));
-  HANDLE_CODE(ehc_common_r16.ehc_c_id_len_r16.unpack(bref));
-  if (ehc_common_r16_ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  if (ehc_dl_r16_present) {
-    bool ehc_dl_r16_ext;
-    HANDLE_CODE(unpack_bits(bref, {&ehc_dl_r16_ext, &ehc_dl_r16.drb_continue_ehc_dl_r16_present}));
-    if (ehc_dl_r16_ext) {
-      ext_groups_unpacker unknown_ext_unpacker(bref);
-      HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-    }
-  }
-  if (ehc_ul_r16_present) {
-    bool ehc_ul_r16_ext;
-    HANDLE_CODE(unpack_bits(bref, {&ehc_ul_r16_ext, &ehc_ul_r16.drb_continue_ehc_ul_r16_present}));
-    HANDLE_CODE(unpack_integer(ehc_ul_r16.max_c_id_ehc_ul_r16, bref, (uint16_t)1u, (uint16_t)32767u));
-    if (ehc_ul_r16_ext) {
-      ext_groups_unpacker unknown_ext_unpacker(bref);
-      HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void ethernet_hdr_compress_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("ehc-Common-r16");
-  j.start_obj();
-  j.write_str("ehc-CID-Length-r16", ehc_common_r16.ehc_c_id_len_r16.to_string());
-  j.end_obj();
-  if (ehc_dl_r16_present) {
-    j.write_fieldname("ehc-Downlink-r16");
-    j.start_obj();
-    if (ehc_dl_r16.drb_continue_ehc_dl_r16_present) {
-      j.write_str("drb-ContinueEHC-DL-r16", "true");
-    }
-    j.end_obj();
-  }
-  if (ehc_ul_r16_present) {
-    j.write_fieldname("ehc-Uplink-r16");
-    j.start_obj();
-    j.write_int("maxCID-EHC-UL-r16", ehc_ul_r16.max_c_id_ehc_ul_r16);
-    if (ehc_ul_r16.drb_continue_ehc_ul_r16_present) {
-      j.write_str("drb-ContinueEHC-UL-r16", "true");
-    }
-    j.end_obj();
-  }
-  j.end_obj();
-}
-
-const char* ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_opts::to_string() const
-{
-  static const char* names[] = {"bits7", "bits15"};
-  return convert_enum_idx(names, 2, value, "ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_e_");
-}
+static const char* enum_names_ethernet_hdr_compress_r16_s_ehc_common_r16_s__ehc_c_id_len_r16_e__values[] = {"bits7",
+                                                                                                            "bits15"};
+const asn1::table::enum_desc ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_opts::desc = {
+    enum_names_ethernet_hdr_compress_r16_s_ehc_common_r16_s__ehc_c_id_len_r16_e__values,
+    2,
+    "ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_e_"};
 uint8_t ethernet_hdr_compress_r16_s::ehc_common_r16_s_::ehc_c_id_len_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {7, 15};
@@ -159,124 +204,125 @@ void ul_data_compress_r17_c::set_drb_continue_udc()
 {
   set(types::drb_continue_udc);
 }
-void ul_data_compress_r17_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::new_setup:
-      j.write_fieldname("newSetup");
-      j.start_obj();
-      j.write_str("bufferSize-r17", c.buffer_size_r17.to_string());
-      if (c.dictionary_r17_present) {
-        j.write_str("dictionary-r17", c.dictionary_r17.to_string());
-      }
-      j.end_obj();
-      break;
-    case types::drb_continue_udc:
-      j.write_null("drb-ContinueUDC");
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_data_compress_r17_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ul_data_compress_r17_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::new_setup:
-      HANDLE_CODE(bref.pack(c.dictionary_r17_present, 1));
-      HANDLE_CODE(c.buffer_size_r17.pack(bref));
-      if (c.dictionary_r17_present) {
-        HANDLE_CODE(c.dictionary_r17.pack(bref));
-      }
-      break;
-    case types::drb_continue_udc:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_data_compress_r17_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_data_compress_r17_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::new_setup:
-      HANDLE_CODE(bref.unpack(c.dictionary_r17_present, 1));
-      HANDLE_CODE(c.buffer_size_r17.unpack(bref));
-      if (c.dictionary_r17_present) {
-        HANDLE_CODE(c.dictionary_r17.unpack(bref));
-      }
-      break;
-    case types::drb_continue_udc:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_data_compress_r17_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field seq_table_ul_data_compress_r17_c_new_setup_s__fields[] = {
+    {offsetof(ul_data_compress_r17_c::new_setup_s_, buffer_size_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(ul_data_compress_r17_c::new_setup_s_::buffer_size_r17)>(),
+     decltype(ul_data_compress_r17_c::new_setup_s_::buffer_size_r17)::has_ext,
+     false,
+     decltype(ul_data_compress_r17_c::new_setup_s_::buffer_size_r17)::nof_types,
+     decltype(ul_data_compress_r17_c::new_setup_s_::buffer_size_r17)::nof_exts,
+     nullptr,
+     &ul_data_compress_r17_c::new_setup_s_::buffer_size_r17_opts::desc},
+    {offsetof(ul_data_compress_r17_c::new_setup_s_, dictionary_r17),
+     (int32_t)offsetof(ul_data_compress_r17_c::new_setup_s_, dictionary_r17_present),
+     asn1::table::enum_op<decltype(ul_data_compress_r17_c::new_setup_s_::dictionary_r17)>(),
+     decltype(ul_data_compress_r17_c::new_setup_s_::dictionary_r17)::has_ext,
+     false,
+     decltype(ul_data_compress_r17_c::new_setup_s_::dictionary_r17)::nof_types,
+     decltype(ul_data_compress_r17_c::new_setup_s_::dictionary_r17)::nof_exts,
+     nullptr,
+     &ul_data_compress_r17_c::new_setup_s_::dictionary_r17_opts::desc}};
+static const asn1::table::field_name seq_table_ul_data_compress_r17_c_new_setup_s__names[] = {
+    {"bufferSize-r17", nullptr},
+    {"dictionary-r17", nullptr}};
+static const asn1::table::seq_opt seq_table_ul_data_compress_r17_c_new_setup_s__opts[] = {
+    {1, (int32_t)offsetof(ul_data_compress_r17_c::new_setup_s_, dictionary_r17_present)}};
+static const asn1::table::seq_desc seq_table_ul_data_compress_r17_c_new_setup_s_ = {
+    {seq_table_ul_data_compress_r17_c_new_setup_s__fields,
+     2,
+     UINT64_C(0x1),
+     seq_table_ul_data_compress_r17_c_new_setup_s__opts,
+     1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_ul_data_compress_r17_c_new_setup_s__names};
+static const asn1::table::seq_field choice_table_ul_data_compress_r17_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_ul_data_compress_r17_c_new_setup_s_},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr}};
+static const asn1::table::field_name choice_table_ul_data_compress_r17_c_names[] = {{"newSetup", nullptr},
+                                                                                    {"drb-ContinueUDC", nullptr}};
+const asn1::table::choice_desc       ul_data_compress_r17_c::desc                = {
+    asn1::table::enum_int_type<ul_data_compress_r17_c::types>(),
+    ul_data_compress_r17_c::types::nof_types,
+    ul_data_compress_r17_c::types::nof_exts,
+    ul_data_compress_r17_c::types::has_ext,
+    false,
+    choice_table_ul_data_compress_r17_c_alternatives,
+    &asn1::table::choice_set<ul_data_compress_r17_c>,
+    choice_table_ul_data_compress_r17_c_names,
+    "ul_data_compress_r17_c",
+    offsetof(ul_data_compress_r17_c, type_),
+    offsetof(ul_data_compress_r17_c, c),
+    false};
 
-const char* ul_data_compress_r17_c::new_setup_s_::buffer_size_r17_opts::to_string() const
-{
-  static const char* names[] = {"kbyte2", "kbyte4", "kbyte8", "spare1"};
-  return convert_enum_idx(names, 4, value, "ul_data_compress_r17_c::new_setup_s_::buffer_size_r17_e_");
-}
+static const char*           enum_names_ul_data_compress_r17_c_new_setup_s__buffer_size_r17_e__values[] = {"kbyte2",
+                                                                                                           "kbyte4",
+                                                                                                           "kbyte8",
+                                                                                                           "spare1"};
+const asn1::table::enum_desc ul_data_compress_r17_c::new_setup_s_::buffer_size_r17_opts::desc           = {
+    enum_names_ul_data_compress_r17_c_new_setup_s__buffer_size_r17_e__values,
+    4,
+    "ul_data_compress_r17_c::new_setup_s_::buffer_size_r17_e_"};
 uint8_t ul_data_compress_r17_c::new_setup_s_::buffer_size_r17_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 8};
   return map_enum_number(numbers, 3, value, "ul_data_compress_r17_c::new_setup_s_::buffer_size_r17_e_");
 }
 
-const char* ul_data_compress_r17_c::new_setup_s_::dictionary_r17_opts::to_string() const
-{
-  static const char* names[] = {"sip-SDP", "operator"};
-  return convert_enum_idx(names, 2, value, "ul_data_compress_r17_c::new_setup_s_::dictionary_r17_e_");
-}
+static const char* enum_names_ul_data_compress_r17_c_new_setup_s__dictionary_r17_e__values[] = {"sip-SDP", "operator"};
+const asn1::table::enum_desc ul_data_compress_r17_c::new_setup_s_::dictionary_r17_opts::desc = {
+    enum_names_ul_data_compress_r17_c_new_setup_s__dictionary_r17_e__values,
+    2,
+    "ul_data_compress_r17_c::new_setup_s_::dictionary_r17_e_"};
 
-const char* ul_data_compress_r17_c::types_opts::to_string() const
-{
-  static const char* names[] = {"newSetup", "drb-ContinueUDC"};
-  return convert_enum_idx(names, 2, value, "ul_data_compress_r17_c::types");
-}
+static const char*           enum_names_ul_data_compress_r17_c_types_values[] = {"newSetup", "drb-ContinueUDC"};
+const asn1::table::enum_desc ul_data_compress_r17_c::types_opts::desc = {enum_names_ul_data_compress_r17_c_types_values,
+                                                                         2,
+                                                                         "ul_data_compress_r17_c::types"};
 
 // DiscardTimerExt2-r17 ::= ENUMERATED
-const char* discard_timer_ext2_r17_opts::to_string() const
-{
-  static const char* names[] = {"ms2000", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 4, value, "discard_timer_ext2_r17_e");
-}
-uint16_t discard_timer_ext2_r17_opts::to_number() const
+static const char*           enum_names_discard_timer_ext2_r17_e_values[] = {"ms2000", "spare3", "spare2", "spare1"};
+const asn1::table::enum_desc discard_timer_ext2_r17_opts::desc            = {enum_names_discard_timer_ext2_r17_e_values,
+                                                                             4,
+                                                                             "discard_timer_ext2_r17_e"};
+uint16_t                     discard_timer_ext2_r17_opts::to_number() const
 {
   static const uint16_t numbers[] = {2000};
   return map_enum_number(numbers, 1, value, "discard_timer_ext2_r17_e");
 }
 
 // DiscardTimerForLowImportance-r18 ::= ENUMERATED
-const char* discard_timer_for_low_importance_r18_opts::to_string() const
-{
-  static const char* names[] = {"ms0",
-                                "ms2",
-                                "ms4",
-                                "ms6",
-                                "ms8",
-                                "ms10",
-                                "ms12",
-                                "ms14",
-                                "ms18",
-                                "ms22",
-                                "ms26",
-                                "ms30",
-                                "ms40",
-                                "ms50",
-                                "ms75",
-                                "ms100"};
-  return convert_enum_idx(names, 16, value, "discard_timer_for_low_importance_r18_e");
-}
+static const char*           enum_names_discard_timer_for_low_importance_r18_e_values[] = {"ms0",
+                                                                                           "ms2",
+                                                                                           "ms4",
+                                                                                           "ms6",
+                                                                                           "ms8",
+                                                                                           "ms10",
+                                                                                           "ms12",
+                                                                                           "ms14",
+                                                                                           "ms18",
+                                                                                           "ms22",
+                                                                                           "ms26",
+                                                                                           "ms30",
+                                                                                           "ms40",
+                                                                                           "ms50",
+                                                                                           "ms75",
+                                                                                           "ms100"};
+const asn1::table::enum_desc discard_timer_for_low_importance_r18_opts::desc            = {
+    enum_names_discard_timer_for_low_importance_r18_e_values,
+    16,
+    "discard_timer_for_low_importance_r18_e"};
 uint8_t discard_timer_for_low_importance_r18_opts::to_number() const
 {
   static const uint8_t numbers[] = {0, 2, 4, 6, 8, 10, 12, 14, 18, 22, 26, 30, 40, 50, 75, 100};
@@ -284,472 +330,580 @@ uint8_t discard_timer_for_low_importance_r18_opts::to_number() const
 }
 
 // PDCP-Config ::= SEQUENCE
-OCUDUASN_CODE pdcp_cfg_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(4);
-  group_flags[0] |= ciphering_disabled_present;
-  group_flags[1] |= discard_timer_ext_r16.is_present();
-  group_flags[1] |= more_than_two_rlc_drb_r16.is_present();
-  group_flags[1] |= ethernet_hdr_compress_r16.is_present();
-  group_flags[2] |= survival_time_state_support_r17_present;
-  group_flags[2] |= ul_data_compress_r17.is_present();
-  group_flags[2] |= discard_timer_ext2_r17.is_present();
-  group_flags[2] |= init_rx_deliv_r17_present;
-  group_flags[3] |= pdu_set_discard_r18_present;
-  group_flags[3] |= discard_timer_for_low_importance_r18.is_present();
-  group_flags[3] |= primary_path_on_indirect_path_r18_present;
-  group_flags[3] |= sn_gap_report_r18_present;
-  HANDLE_CODE(pack_bits(bref, {group_flags.any(), drb_present, more_than_one_rlc_present, t_reordering_present}));
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_drb_s__fields[] = {
+    {offsetof(pdcp_cfg_s::drb_s_, discard_timer),
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_, discard_timer_present),
+     asn1::table::enum_op<decltype(pdcp_cfg_s::drb_s_::discard_timer)>(),
+     decltype(pdcp_cfg_s::drb_s_::discard_timer)::has_ext,
+     false,
+     decltype(pdcp_cfg_s::drb_s_::discard_timer)::nof_types,
+     decltype(pdcp_cfg_s::drb_s_::discard_timer)::nof_exts,
+     nullptr,
+     &pdcp_cfg_s::drb_s_::discard_timer_opts::desc},
+    {offsetof(pdcp_cfg_s::drb_s_, pdcp_sn_size_ul),
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_, pdcp_sn_size_ul_present),
+     asn1::table::enum_op<decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_ul)>(),
+     decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_ul)::has_ext,
+     false,
+     decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_ul)::nof_types,
+     decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_ul)::nof_exts,
+     nullptr,
+     &pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_opts::desc},
+    {offsetof(pdcp_cfg_s::drb_s_, pdcp_sn_size_dl),
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_, pdcp_sn_size_dl_present),
+     asn1::table::enum_op<decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_dl)>(),
+     decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_dl)::has_ext,
+     false,
+     decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_dl)::nof_types,
+     decltype(pdcp_cfg_s::drb_s_::pdcp_sn_size_dl)::nof_exts,
+     nullptr,
+     &pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_opts::desc},
+    {offsetof(pdcp_cfg_s::drb_s_, hdr_compress),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &pdcp_cfg_s::drb_s_::hdr_compress_c_::desc},
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_, integrity_protection_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_, status_report_required_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_, out_of_order_delivery_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_drb_s__names[] = {{"discardTimer", nullptr},
+                                                                            {"pdcp-SN-SizeUL", nullptr},
+                                                                            {"pdcp-SN-SizeDL", nullptr},
+                                                                            {"headerCompression", nullptr},
+                                                                            {"integrityProtection", "enabled"},
+                                                                            {"statusReportRequired", "true"},
+                                                                            {"outOfOrderDelivery", "true"}};
+static const asn1::table::seq_opt    seq_table_pdcp_cfg_s_drb_s__opts[]  = {
+    {0, (int32_t)offsetof(pdcp_cfg_s::drb_s_, discard_timer_present)},
+    {1, (int32_t)offsetof(pdcp_cfg_s::drb_s_, pdcp_sn_size_ul_present)},
+    {2, (int32_t)offsetof(pdcp_cfg_s::drb_s_, pdcp_sn_size_dl_present)},
+    {4, (int32_t)offsetof(pdcp_cfg_s::drb_s_, integrity_protection_present)},
+    {5, (int32_t)offsetof(pdcp_cfg_s::drb_s_, status_report_required_present)},
+    {6, (int32_t)offsetof(pdcp_cfg_s::drb_s_, out_of_order_delivery_present)}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_drb_s_ = {
+    {seq_table_pdcp_cfg_s_drb_s__fields, 7, UINT64_C(0x8), seq_table_pdcp_cfg_s_drb_s__opts, 6},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_drb_s__names};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s__fields[] = {
+    {offsetof(pdcp_cfg_s::more_than_one_rlc_s_::primary_path_s_, cell_group),
+     (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_::primary_path_s_, cell_group_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(3),
+     nullptr},
+    {offsetof(pdcp_cfg_s::more_than_one_rlc_s_::primary_path_s_, lc_ch),
+     (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_::primary_path_s_, lc_ch_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(32),
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s__names[] = {
+    {"cellGroup", nullptr},
+    {"logicalChannel", nullptr}};
+static const asn1::table::seq_opt seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s__opts[] = {
+    {0, (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_::primary_path_s_, cell_group_present)},
+    {1, (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_::primary_path_s_, lc_ch_present)}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s_ = {
+    {seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s__fields,
+     2,
+     UINT64_C(0x0),
+     seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s__opts,
+     2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s__names};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_more_than_one_rlc_s__fields[] = {
+    {offsetof(pdcp_cfg_s::more_than_one_rlc_s_, primary_path),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_pdcp_cfg_s_more_than_one_rlc_s__primary_path_s_},
+    {offsetof(pdcp_cfg_s::more_than_one_rlc_s_, ul_data_split_thres),
+     (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_, ul_data_split_thres_present),
+     asn1::table::enum_op<decltype(pdcp_cfg_s::more_than_one_rlc_s_::ul_data_split_thres)>(),
+     decltype(pdcp_cfg_s::more_than_one_rlc_s_::ul_data_split_thres)::has_ext,
+     false,
+     decltype(pdcp_cfg_s::more_than_one_rlc_s_::ul_data_split_thres)::nof_types,
+     decltype(pdcp_cfg_s::more_than_one_rlc_s_::ul_data_split_thres)::nof_exts,
+     nullptr,
+     &ul_data_split_thres_opts::desc},
+    {offsetof(pdcp_cfg_s::more_than_one_rlc_s_, pdcp_dupl),
+     (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_, pdcp_dupl_present),
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_more_than_one_rlc_s__names[] = {
+    {"primaryPath", nullptr},
+    {"ul-DataSplitThreshold", nullptr},
+    {"pdcp-Duplication", nullptr}};
+static const asn1::table::seq_opt seq_table_pdcp_cfg_s_more_than_one_rlc_s__opts[] = {
+    {1, (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_, ul_data_split_thres_present)},
+    {2, (int32_t)offsetof(pdcp_cfg_s::more_than_one_rlc_s_, pdcp_dupl_present)}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_more_than_one_rlc_s_ = {
+    {seq_table_pdcp_cfg_s_more_than_one_rlc_s__fields,
+     3,
+     UINT64_C(0x1),
+     seq_table_pdcp_cfg_s_more_than_one_rlc_s__opts,
+     2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_more_than_one_rlc_s__names};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s__fields[] = {
+    {offsetof(pdcp_cfg_s::more_than_two_rlc_drb_r16_s_, split_secondary_path_r16),
+     (int32_t)offsetof(pdcp_cfg_s::more_than_two_rlc_drb_r16_s_, split_secondary_path_r16_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(32),
+     nullptr},
+    {offsetof(pdcp_cfg_s::more_than_two_rlc_drb_r16_s_, dupl_state_r16),
+     (int32_t)offsetof(pdcp_cfg_s::more_than_two_rlc_drb_r16_s_, dupl_state_r16_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     3,
+     3,
+     &asn1::table::list_codec<decltype(pdcp_cfg_s::more_than_two_rlc_drb_r16_s_::dupl_state_r16),
+                              asn1::table::bool_json,
+                              asn1::table::bool_items<true>>::value}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s__names[] = {
+    {"splitSecondaryPath-r16", nullptr},
+    {"duplicationState-r16", nullptr}};
+static const asn1::table::seq_opt seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s__opts[] = {
+    {0, (int32_t)offsetof(pdcp_cfg_s::more_than_two_rlc_drb_r16_s_, split_secondary_path_r16_present)},
+    {1, (int32_t)offsetof(pdcp_cfg_s::more_than_two_rlc_drb_r16_s_, dupl_state_r16_present)}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s_ = {
+    {seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s__fields,
+     2,
+     UINT64_C(0x0),
+     seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s__opts,
+     2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s__names};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_discard_timer_ext_r16_setup_release_alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<setup_release_c<discard_timer_ext_r16_e>::value_type>(),
+     setup_release_c<discard_timer_ext_r16_e>::value_type::has_ext,
+     false,
+     setup_release_c<discard_timer_ext_r16_e>::value_type::nof_types,
+     setup_release_c<discard_timer_ext_r16_e>::value_type::nof_exts,
+     nullptr,
+     &discard_timer_ext_r16_opts::desc}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_discard_timer_ext_r16_setup_release_names[] = {
+    {"release", nullptr},
+    {"setup", nullptr}};
+static const asn1::table::choice_desc seq_table_pdcp_cfg_s_discard_timer_ext_r16_setup_release = {
+    asn1::table::enum_int_type<asn1::setup_release_e>(),
+    2,
+    0,
+    false,
+    false,
+    seq_table_pdcp_cfg_s_discard_timer_ext_r16_setup_release_alternatives,
+    nullptr,
+    seq_table_pdcp_cfg_s_discard_timer_ext_r16_setup_release_names,
+    "setup_release_c",
+    setup_release_c<discard_timer_ext_r16_e>::type_offset(),
+    setup_release_c<discard_timer_ext_r16_e>::value_offset()};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_ethernet_hdr_compress_r16_setup_release_alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &ethernet_hdr_compress_r16_s::desc}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_ethernet_hdr_compress_r16_setup_release_names[] = {
+    {"release", nullptr},
+    {"setup", nullptr}};
+static const asn1::table::choice_desc seq_table_pdcp_cfg_s_ethernet_hdr_compress_r16_setup_release = {
+    asn1::table::enum_int_type<asn1::setup_release_e>(),
+    2,
+    0,
+    false,
+    false,
+    seq_table_pdcp_cfg_s_ethernet_hdr_compress_r16_setup_release_alternatives,
+    nullptr,
+    seq_table_pdcp_cfg_s_ethernet_hdr_compress_r16_setup_release_names,
+    "setup_release_c",
+    setup_release_c<ethernet_hdr_compress_r16_s>::type_offset(),
+    setup_release_c<ethernet_hdr_compress_r16_s>::value_offset()};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_ul_data_compress_r17_setup_release_alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &ul_data_compress_r17_c::desc}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_ul_data_compress_r17_setup_release_names[] = {
+    {"release", nullptr},
+    {"setup", nullptr}};
+static const asn1::table::choice_desc seq_table_pdcp_cfg_s_ul_data_compress_r17_setup_release = {
+    asn1::table::enum_int_type<asn1::setup_release_e>(),
+    2,
+    0,
+    false,
+    false,
+    seq_table_pdcp_cfg_s_ul_data_compress_r17_setup_release_alternatives,
+    nullptr,
+    seq_table_pdcp_cfg_s_ul_data_compress_r17_setup_release_names,
+    "setup_release_c",
+    setup_release_c<ul_data_compress_r17_c>::type_offset(),
+    setup_release_c<ul_data_compress_r17_c>::value_offset()};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_discard_timer_ext2_r17_setup_release_alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<setup_release_c<discard_timer_ext2_r17_e>::value_type>(),
+     setup_release_c<discard_timer_ext2_r17_e>::value_type::has_ext,
+     false,
+     setup_release_c<discard_timer_ext2_r17_e>::value_type::nof_types,
+     setup_release_c<discard_timer_ext2_r17_e>::value_type::nof_exts,
+     nullptr,
+     &discard_timer_ext2_r17_opts::desc}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_discard_timer_ext2_r17_setup_release_names[] = {
+    {"release", nullptr},
+    {"setup", nullptr}};
+static const asn1::table::choice_desc seq_table_pdcp_cfg_s_discard_timer_ext2_r17_setup_release = {
+    asn1::table::enum_int_type<asn1::setup_release_e>(),
+    2,
+    0,
+    false,
+    false,
+    seq_table_pdcp_cfg_s_discard_timer_ext2_r17_setup_release_alternatives,
+    nullptr,
+    seq_table_pdcp_cfg_s_discard_timer_ext2_r17_setup_release_names,
+    "setup_release_c",
+    setup_release_c<discard_timer_ext2_r17_e>::type_offset(),
+    setup_release_c<discard_timer_ext2_r17_e>::value_offset()};
+static const asn1::table::seq_field
+    seq_table_pdcp_cfg_s_discard_timer_for_low_importance_r18_setup_release_alternatives[] = {
+        {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+        {0,
+         asn1::table::seq_field::mandatory,
+         asn1::table::enum_op<setup_release_c<discard_timer_for_low_importance_r18_e>::value_type>(),
+         setup_release_c<discard_timer_for_low_importance_r18_e>::value_type::has_ext,
+         false,
+         setup_release_c<discard_timer_for_low_importance_r18_e>::value_type::nof_types,
+         setup_release_c<discard_timer_for_low_importance_r18_e>::value_type::nof_exts,
+         nullptr,
+         &discard_timer_for_low_importance_r18_opts::desc}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_discard_timer_for_low_importance_r18_setup_release_names[] = {
+    {"release", nullptr},
+    {"setup", nullptr}};
+static const asn1::table::choice_desc seq_table_pdcp_cfg_s_discard_timer_for_low_importance_r18_setup_release = {
+    asn1::table::enum_int_type<asn1::setup_release_e>(),
+    2,
+    0,
+    false,
+    false,
+    seq_table_pdcp_cfg_s_discard_timer_for_low_importance_r18_setup_release_alternatives,
+    nullptr,
+    seq_table_pdcp_cfg_s_discard_timer_for_low_importance_r18_setup_release_names,
+    "setup_release_c",
+    setup_release_c<discard_timer_for_low_importance_r18_e>::type_offset(),
+    setup_release_c<discard_timer_for_low_importance_r18_e>::value_offset()};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_fields[] = {
+    {offsetof(pdcp_cfg_s, drb),
+     (int32_t)offsetof(pdcp_cfg_s, drb_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_pdcp_cfg_s_drb_s_},
+    {offsetof(pdcp_cfg_s, more_than_one_rlc),
+     (int32_t)offsetof(pdcp_cfg_s, more_than_one_rlc_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_pdcp_cfg_s_more_than_one_rlc_s_},
+    {offsetof(pdcp_cfg_s, t_reordering),
+     (int32_t)offsetof(pdcp_cfg_s, t_reordering_present),
+     asn1::table::enum_op<decltype(pdcp_cfg_s::t_reordering)>(),
+     decltype(pdcp_cfg_s::t_reordering)::has_ext,
+     false,
+     decltype(pdcp_cfg_s::t_reordering)::nof_types,
+     decltype(pdcp_cfg_s::t_reordering)::nof_exts,
+     nullptr,
+     &pdcp_cfg_s::t_reordering_opts::desc}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_names[] = {{"drb", nullptr},
+                                                                     {"moreThanOneRLC", nullptr},
+                                                                     {"t-Reordering", nullptr}};
+static const asn1::table::seq_opt    seq_table_pdcp_cfg_s_opts[]  = {
+    {0, (int32_t)offsetof(pdcp_cfg_s, drb_present)},
+    {1, (int32_t)offsetof(pdcp_cfg_s, more_than_one_rlc_present)},
+    {2, (int32_t)offsetof(pdcp_cfg_s, t_reordering_present)}};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_g0_fields[] = {
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s, ciphering_disabled_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_g0_names[] = {{"cipheringDisabled", "true"}};
+static const asn1::table::seq_opt    seq_table_pdcp_cfg_s_g0_opts[]  = {
+    {0, (int32_t)offsetof(pdcp_cfg_s, ciphering_disabled_present)}};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_g1_fields[] = {
+    {offsetof(pdcp_cfg_s, discard_timer_ext_r16),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(pdcp_cfg_s::discard_timer_ext_r16)>::value,
+     &seq_table_pdcp_cfg_s_discard_timer_ext_r16_setup_release},
+    {offsetof(pdcp_cfg_s, more_than_two_rlc_drb_r16),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(pdcp_cfg_s::more_than_two_rlc_drb_r16)>::value,
+     &seq_table_pdcp_cfg_s_more_than_two_rlc_drb_r16_s_},
+    {offsetof(pdcp_cfg_s, ethernet_hdr_compress_r16),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(pdcp_cfg_s::ethernet_hdr_compress_r16)>::value,
+     &seq_table_pdcp_cfg_s_ethernet_hdr_compress_r16_setup_release}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_g1_names[]  = {{"discardTimerExt-r16", nullptr},
+                                                                         {"moreThanTwoRLC-DRB-r16", nullptr},
+                                                                         {"ethernetHeaderCompression-r16", nullptr}};
+static const asn1::table::seq_opt    seq_table_pdcp_cfg_s_g1_opts[]   = {{0, asn1::table::seq_field::ptr_presence},
+                                                                         {1, asn1::table::seq_field::ptr_presence},
+                                                                         {2, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_field  seq_table_pdcp_cfg_s_g2_fields[] = {
+    {0,
+      (int32_t)offsetof(pdcp_cfg_s, survival_time_state_support_r17_present),
+      asn1::table::field_op::none,
+      false,
+      false,
+      0,
+      0,
+      nullptr},
+    {offsetof(pdcp_cfg_s, ul_data_compress_r17),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::choice,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(pdcp_cfg_s::ul_data_compress_r17)>::value,
+      &seq_table_pdcp_cfg_s_ul_data_compress_r17_setup_release},
+    {offsetof(pdcp_cfg_s, discard_timer_ext2_r17),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::choice,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(pdcp_cfg_s::discard_timer_ext2_r17)>::value,
+      &seq_table_pdcp_cfg_s_discard_timer_ext2_r17_setup_release},
+    {offsetof(pdcp_cfg_s, init_rx_deliv_r17),
+      (int32_t)offsetof(pdcp_cfg_s, init_rx_deliv_r17_present),
+      asn1::table::field_op::codec,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::object_codec<decltype(pdcp_cfg_s::init_rx_deliv_r17), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_g2_names[] = {{"survivalTimeStateSupport-r17", "true"},
+                                                                        {"uplinkDataCompression-r17", nullptr},
+                                                                        {"discardTimerExt2-r17", nullptr},
+                                                                        {"initialRX-DELIV-r17", nullptr}};
+static const asn1::table::seq_opt    seq_table_pdcp_cfg_s_g2_opts[]  = {
+    {0, (int32_t)offsetof(pdcp_cfg_s, survival_time_state_support_r17_present)},
+    {1, asn1::table::seq_field::ptr_presence},
+    {2, asn1::table::seq_field::ptr_presence},
+    {3, (int32_t)offsetof(pdcp_cfg_s, init_rx_deliv_r17_present)}};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_g3_fields[] = {
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s, pdu_set_discard_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s, discard_timer_for_low_importance_r18),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(pdcp_cfg_s::discard_timer_for_low_importance_r18)>::value,
+     &seq_table_pdcp_cfg_s_discard_timer_for_low_importance_r18_setup_release},
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s, primary_path_on_indirect_path_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s, sn_gap_report_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_g3_names[] = {{"pdu-SetDiscard-r18", "true"},
+                                                                        {"discardTimerForLowImportance-r18", nullptr},
+                                                                        {"primaryPathOnIndirectPath-r18", "true"},
+                                                                        {"sn-GapReport-r18", "true"}};
+static const asn1::table::seq_opt    seq_table_pdcp_cfg_s_g3_opts[]  = {
+    {0, (int32_t)offsetof(pdcp_cfg_s, pdu_set_discard_r18_present)},
+    {1, asn1::table::seq_field::ptr_presence},
+    {2, (int32_t)offsetof(pdcp_cfg_s, primary_path_on_indirect_path_r18_present)},
+    {3, (int32_t)offsetof(pdcp_cfg_s, sn_gap_report_r18_present)}};
+static const asn1::table::seq_group seq_table_pdcp_cfg_s_groups[] = {
+    {{seq_table_pdcp_cfg_s_g0_fields, 1, UINT64_C(0x0), seq_table_pdcp_cfg_s_g0_opts, 1},
+     false,
+     seq_table_pdcp_cfg_s_g0_names},
+    {{seq_table_pdcp_cfg_s_g1_fields, 3, UINT64_C(0x0), seq_table_pdcp_cfg_s_g1_opts, 3},
+     false,
+     seq_table_pdcp_cfg_s_g1_names},
+    {{seq_table_pdcp_cfg_s_g2_fields, 4, UINT64_C(0x0), seq_table_pdcp_cfg_s_g2_opts, 4},
+     false,
+     seq_table_pdcp_cfg_s_g2_names},
+    {{seq_table_pdcp_cfg_s_g3_fields, 4, UINT64_C(0x0), seq_table_pdcp_cfg_s_g3_opts, 4},
+     false,
+     seq_table_pdcp_cfg_s_g3_names}};
+const asn1::table::seq_desc pdcp_cfg_s::desc = {
+    {seq_table_pdcp_cfg_s_fields, 3, UINT64_C(0x0), seq_table_pdcp_cfg_s_opts, 3},
+    true,
+    false,
+    seq_table_pdcp_cfg_s_groups,
+    4,
+    seq_table_pdcp_cfg_s_names};
 
-  if (drb_present) {
-    HANDLE_CODE(pack_bits(bref,
-                          {drb.discard_timer_present,
-                           drb.pdcp_sn_size_ul_present,
-                           drb.pdcp_sn_size_dl_present,
-                           drb.integrity_protection_present,
-                           drb.status_report_required_present,
-                           drb.out_of_order_delivery_present}));
-    if (drb.discard_timer_present) {
-      HANDLE_CODE(drb.discard_timer.pack(bref));
-    }
-    if (drb.pdcp_sn_size_ul_present) {
-      HANDLE_CODE(drb.pdcp_sn_size_ul.pack(bref));
-    }
-    if (drb.pdcp_sn_size_dl_present) {
-      HANDLE_CODE(drb.pdcp_sn_size_dl.pack(bref));
-    }
-    HANDLE_CODE(drb.hdr_compress.pack(bref));
-  }
-  if (more_than_one_rlc_present) {
-    HANDLE_CODE(pack_bits(bref, {more_than_one_rlc.ul_data_split_thres_present, more_than_one_rlc.pdcp_dupl_present}));
-    HANDLE_CODE(pack_bits(
-        bref, {more_than_one_rlc.primary_path.cell_group_present, more_than_one_rlc.primary_path.lc_ch_present}));
-    if (more_than_one_rlc.primary_path.cell_group_present) {
-      HANDLE_CODE(pack_integer(bref, more_than_one_rlc.primary_path.cell_group, (uint8_t)0u, (uint8_t)3u));
-    }
-    if (more_than_one_rlc.primary_path.lc_ch_present) {
-      HANDLE_CODE(pack_integer(bref, more_than_one_rlc.primary_path.lc_ch, (uint8_t)1u, (uint8_t)32u));
-    }
-    if (more_than_one_rlc.ul_data_split_thres_present) {
-      HANDLE_CODE(more_than_one_rlc.ul_data_split_thres.pack(bref));
-    }
-    if (more_than_one_rlc.pdcp_dupl_present) {
-      HANDLE_CODE(bref.pack(more_than_one_rlc.pdcp_dupl, 1));
-    }
-  }
-  if (t_reordering_present) {
-    HANDLE_CODE(t_reordering.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(bref.pack(ciphering_disabled_present, 1));
-    }
-    if (group_flags[1]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref,
-                            {discard_timer_ext_r16.is_present(),
-                             more_than_two_rlc_drb_r16.is_present(),
-                             ethernet_hdr_compress_r16.is_present()}));
-      if (discard_timer_ext_r16.is_present()) {
-        HANDLE_CODE(discard_timer_ext_r16->pack(bref));
-      }
-      if (more_than_two_rlc_drb_r16.is_present()) {
-        HANDLE_CODE(pack_bits(bref,
-                              {more_than_two_rlc_drb_r16->split_secondary_path_r16_present,
-                               more_than_two_rlc_drb_r16->dupl_state_r16_present}));
-        if (more_than_two_rlc_drb_r16->split_secondary_path_r16_present) {
-          HANDLE_CODE(
-              pack_integer(bref, more_than_two_rlc_drb_r16->split_secondary_path_r16, (uint8_t)1u, (uint8_t)32u));
-        }
-        if (more_than_two_rlc_drb_r16->dupl_state_r16_present) {
-          HANDLE_CODE(pack_fixed_seq_of(bref,
-                                        more_than_two_rlc_drb_r16->dupl_state_r16,
-                                        more_than_two_rlc_drb_r16->dupl_state_r16.size(),
-                                        BitPacker(1)));
-        }
-      }
-      if (ethernet_hdr_compress_r16.is_present()) {
-        HANDLE_CODE(ethernet_hdr_compress_r16->pack(bref));
-      }
-    }
-    if (group_flags[2]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref,
-                            {survival_time_state_support_r17_present,
-                             ul_data_compress_r17.is_present(),
-                             discard_timer_ext2_r17.is_present(),
-                             init_rx_deliv_r17_present}));
-      if (ul_data_compress_r17.is_present()) {
-        HANDLE_CODE(ul_data_compress_r17->pack(bref));
-      }
-      if (discard_timer_ext2_r17.is_present()) {
-        HANDLE_CODE(discard_timer_ext2_r17->pack(bref));
-      }
-      if (init_rx_deliv_r17_present) {
-        HANDLE_CODE(init_rx_deliv_r17.pack(bref));
-      }
-    }
-    if (group_flags[3]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref,
-                            {pdu_set_discard_r18_present,
-                             discard_timer_for_low_importance_r18.is_present(),
-                             primary_path_on_indirect_path_r18_present,
-                             sn_gap_report_r18_present}));
-      if (discard_timer_for_low_importance_r18.is_present()) {
-        HANDLE_CODE(discard_timer_for_low_importance_r18->pack(bref));
-      }
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE pdcp_cfg_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &drb_present, &more_than_one_rlc_present, &t_reordering_present}));
-
-  if (drb_present) {
-    HANDLE_CODE(unpack_bits(bref,
-                            {&drb.discard_timer_present,
-                             &drb.pdcp_sn_size_ul_present,
-                             &drb.pdcp_sn_size_dl_present,
-                             &drb.integrity_protection_present,
-                             &drb.status_report_required_present,
-                             &drb.out_of_order_delivery_present}));
-    if (drb.discard_timer_present) {
-      HANDLE_CODE(drb.discard_timer.unpack(bref));
-    }
-    if (drb.pdcp_sn_size_ul_present) {
-      HANDLE_CODE(drb.pdcp_sn_size_ul.unpack(bref));
-    }
-    if (drb.pdcp_sn_size_dl_present) {
-      HANDLE_CODE(drb.pdcp_sn_size_dl.unpack(bref));
-    }
-    HANDLE_CODE(drb.hdr_compress.unpack(bref));
-  }
-  if (more_than_one_rlc_present) {
-    HANDLE_CODE(
-        unpack_bits(bref, {&more_than_one_rlc.ul_data_split_thres_present, &more_than_one_rlc.pdcp_dupl_present}));
-    HANDLE_CODE(unpack_bits(
-        bref, {&more_than_one_rlc.primary_path.cell_group_present, &more_than_one_rlc.primary_path.lc_ch_present}));
-    if (more_than_one_rlc.primary_path.cell_group_present) {
-      HANDLE_CODE(unpack_integer(more_than_one_rlc.primary_path.cell_group, bref, (uint8_t)0u, (uint8_t)3u));
-    }
-    if (more_than_one_rlc.primary_path.lc_ch_present) {
-      HANDLE_CODE(unpack_integer(more_than_one_rlc.primary_path.lc_ch, bref, (uint8_t)1u, (uint8_t)32u));
-    }
-    if (more_than_one_rlc.ul_data_split_thres_present) {
-      HANDLE_CODE(more_than_one_rlc.ul_data_split_thres.unpack(bref));
-    }
-    if (more_than_one_rlc.pdcp_dupl_present) {
-      HANDLE_CODE(bref.unpack(more_than_one_rlc.pdcp_dupl, 1));
-    }
-  }
-  if (t_reordering_present) {
-    HANDLE_CODE(t_reordering.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(ciphering_disabled_present, 1));
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      unpack_presence_flag(discard_timer_ext_r16, bref);
-      unpack_presence_flag(more_than_two_rlc_drb_r16, bref);
-      unpack_presence_flag(ethernet_hdr_compress_r16, bref);
-      if (discard_timer_ext_r16.is_present()) {
-        HANDLE_CODE(discard_timer_ext_r16->unpack(bref));
-      }
-      if (more_than_two_rlc_drb_r16.is_present()) {
-        HANDLE_CODE(unpack_bits(bref,
-                                {&more_than_two_rlc_drb_r16->split_secondary_path_r16_present,
-                                 &more_than_two_rlc_drb_r16->dupl_state_r16_present}));
-        if (more_than_two_rlc_drb_r16->split_secondary_path_r16_present) {
-          HANDLE_CODE(
-              unpack_integer(more_than_two_rlc_drb_r16->split_secondary_path_r16, bref, (uint8_t)1u, (uint8_t)32u));
-        }
-        if (more_than_two_rlc_drb_r16->dupl_state_r16_present) {
-          HANDLE_CODE(unpack_fixed_seq_of(more_than_two_rlc_drb_r16->dupl_state_r16,
-                                          bref,
-                                          more_than_two_rlc_drb_r16->dupl_state_r16.size(),
-                                          BitPacker(1)));
-        }
-      }
-      if (ethernet_hdr_compress_r16.is_present()) {
-        HANDLE_CODE(ethernet_hdr_compress_r16->unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(survival_time_state_support_r17_present, 1));
-      unpack_presence_flag(ul_data_compress_r17, bref);
-      unpack_presence_flag(discard_timer_ext2_r17, bref);
-      HANDLE_CODE(bref.unpack(init_rx_deliv_r17_present, 1));
-      if (ul_data_compress_r17.is_present()) {
-        HANDLE_CODE(ul_data_compress_r17->unpack(bref));
-      }
-      if (discard_timer_ext2_r17.is_present()) {
-        HANDLE_CODE(discard_timer_ext2_r17->unpack(bref));
-      }
-      if (init_rx_deliv_r17_present) {
-        HANDLE_CODE(init_rx_deliv_r17.unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(pdu_set_discard_r18_present, 1));
-      unpack_presence_flag(discard_timer_for_low_importance_r18, bref);
-      HANDLE_CODE(unpack_bits(bref, {&primary_path_on_indirect_path_r18_present, &sn_gap_report_r18_present}));
-      if (discard_timer_for_low_importance_r18.is_present()) {
-        HANDLE_CODE(discard_timer_for_low_importance_r18->unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void pdcp_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (drb_present) {
-    j.write_fieldname("drb");
-    j.start_obj();
-    if (drb.discard_timer_present) {
-      j.write_str("discardTimer", drb.discard_timer.to_string());
-    }
-    if (drb.pdcp_sn_size_ul_present) {
-      j.write_str("pdcp-SN-SizeUL", drb.pdcp_sn_size_ul.to_string());
-    }
-    if (drb.pdcp_sn_size_dl_present) {
-      j.write_str("pdcp-SN-SizeDL", drb.pdcp_sn_size_dl.to_string());
-    }
-    j.write_fieldname("headerCompression");
-    drb.hdr_compress.to_json(j);
-    if (drb.integrity_protection_present) {
-      j.write_str("integrityProtection", "enabled");
-    }
-    if (drb.status_report_required_present) {
-      j.write_str("statusReportRequired", "true");
-    }
-    if (drb.out_of_order_delivery_present) {
-      j.write_str("outOfOrderDelivery", "true");
-    }
-    j.end_obj();
-  }
-  if (more_than_one_rlc_present) {
-    j.write_fieldname("moreThanOneRLC");
-    j.start_obj();
-    j.write_fieldname("primaryPath");
-    j.start_obj();
-    if (more_than_one_rlc.primary_path.cell_group_present) {
-      j.write_int("cellGroup", more_than_one_rlc.primary_path.cell_group);
-    }
-    if (more_than_one_rlc.primary_path.lc_ch_present) {
-      j.write_int("logicalChannel", more_than_one_rlc.primary_path.lc_ch);
-    }
-    j.end_obj();
-    if (more_than_one_rlc.ul_data_split_thres_present) {
-      j.write_str("ul-DataSplitThreshold", more_than_one_rlc.ul_data_split_thres.to_string());
-    }
-    if (more_than_one_rlc.pdcp_dupl_present) {
-      j.write_bool("pdcp-Duplication", more_than_one_rlc.pdcp_dupl);
-    }
-    j.end_obj();
-  }
-  if (t_reordering_present) {
-    j.write_str("t-Reordering", t_reordering.to_string());
-  }
-  if (ciphering_disabled_present) {
-    j.write_str("cipheringDisabled", "true");
-  }
-  if (discard_timer_ext_r16.is_present()) {
-    j.write_fieldname("discardTimerExt-r16");
-    discard_timer_ext_r16->to_json(j);
-  }
-  if (more_than_two_rlc_drb_r16.is_present()) {
-    j.write_fieldname("moreThanTwoRLC-DRB-r16");
-    j.start_obj();
-    if (more_than_two_rlc_drb_r16->split_secondary_path_r16_present) {
-      j.write_int("splitSecondaryPath-r16", more_than_two_rlc_drb_r16->split_secondary_path_r16);
-    }
-    if (more_than_two_rlc_drb_r16->dupl_state_r16_present) {
-      j.start_array("duplicationState-r16");
-      for (const auto& e1 : more_than_two_rlc_drb_r16->dupl_state_r16) {
-        j.write_bool(e1);
-      }
-      j.end_array();
-    }
-    j.end_obj();
-  }
-  if (ethernet_hdr_compress_r16.is_present()) {
-    j.write_fieldname("ethernetHeaderCompression-r16");
-    ethernet_hdr_compress_r16->to_json(j);
-  }
-  if (survival_time_state_support_r17_present) {
-    j.write_str("survivalTimeStateSupport-r17", "true");
-  }
-  if (ul_data_compress_r17.is_present()) {
-    j.write_fieldname("uplinkDataCompression-r17");
-    ul_data_compress_r17->to_json(j);
-  }
-  if (discard_timer_ext2_r17.is_present()) {
-    j.write_fieldname("discardTimerExt2-r17");
-    discard_timer_ext2_r17->to_json(j);
-  }
-  if (init_rx_deliv_r17_present) {
-    j.write_fieldname("initialRX-DELIV-r17");
-    init_rx_deliv_r17.to_json(j);
-  }
-  if (pdu_set_discard_r18_present) {
-    j.write_str("pdu-SetDiscard-r18", "true");
-  }
-  if (discard_timer_for_low_importance_r18.is_present()) {
-    j.write_fieldname("discardTimerForLowImportance-r18");
-    discard_timer_for_low_importance_r18->to_json(j);
-  }
-  if (primary_path_on_indirect_path_r18_present) {
-    j.write_str("primaryPathOnIndirectPath-r18", "true");
-  }
-  if (sn_gap_report_r18_present) {
-    j.write_str("sn-GapReport-r18", "true");
-  }
-  j.end_obj();
-}
-
-const char* pdcp_cfg_s::drb_s_::discard_timer_opts::to_string() const
-{
-  static const char* names[] = {"ms10",
-                                "ms20",
-                                "ms30",
-                                "ms40",
-                                "ms50",
-                                "ms60",
-                                "ms75",
-                                "ms100",
-                                "ms150",
-                                "ms200",
-                                "ms250",
-                                "ms300",
-                                "ms500",
-                                "ms750",
-                                "ms1500",
-                                "infinity"};
-  return convert_enum_idx(names, 16, value, "pdcp_cfg_s::drb_s_::discard_timer_e_");
-}
+static const char*           enum_names_pdcp_cfg_s_drb_s__discard_timer_e__values[] = {"ms10",
+                                                                                       "ms20",
+                                                                                       "ms30",
+                                                                                       "ms40",
+                                                                                       "ms50",
+                                                                                       "ms60",
+                                                                                       "ms75",
+                                                                                       "ms100",
+                                                                                       "ms150",
+                                                                                       "ms200",
+                                                                                       "ms250",
+                                                                                       "ms300",
+                                                                                       "ms500",
+                                                                                       "ms750",
+                                                                                       "ms1500",
+                                                                                       "infinity"};
+const asn1::table::enum_desc pdcp_cfg_s::drb_s_::discard_timer_opts::desc           = {
+    enum_names_pdcp_cfg_s_drb_s__discard_timer_e__values,
+    16,
+    "pdcp_cfg_s::drb_s_::discard_timer_e_"};
 int16_t pdcp_cfg_s::drb_s_::discard_timer_opts::to_number() const
 {
   static const int16_t numbers[] = {10, 20, 30, 40, 50, 60, 75, 100, 150, 200, 250, 300, 500, 750, 1500, -1};
   return map_enum_number(numbers, 16, value, "pdcp_cfg_s::drb_s_::discard_timer_e_");
 }
 
-const char* pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_opts::to_string() const
-{
-  static const char* names[] = {"len12bits", "len18bits"};
-  return convert_enum_idx(names, 2, value, "pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_e_");
-}
+static const char*           enum_names_pdcp_cfg_s_drb_s__pdcp_sn_size_ul_e__values[] = {"len12bits", "len18bits"};
+const asn1::table::enum_desc pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_opts::desc           = {
+    enum_names_pdcp_cfg_s_drb_s__pdcp_sn_size_ul_e__values,
+    2,
+    "pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_e_"};
 uint8_t pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_opts::to_number() const
 {
   static const uint8_t numbers[] = {12, 18};
   return map_enum_number(numbers, 2, value, "pdcp_cfg_s::drb_s_::pdcp_sn_size_ul_e_");
 }
 
-const char* pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_opts::to_string() const
-{
-  static const char* names[] = {"len12bits", "len18bits"};
-  return convert_enum_idx(names, 2, value, "pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_e_");
-}
+static const char*           enum_names_pdcp_cfg_s_drb_s__pdcp_sn_size_dl_e__values[] = {"len12bits", "len18bits"};
+const asn1::table::enum_desc pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_opts::desc           = {
+    enum_names_pdcp_cfg_s_drb_s__pdcp_sn_size_dl_e__values,
+    2,
+    "pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_e_"};
 uint8_t pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_opts::to_number() const
 {
   static const uint8_t numbers[] = {12, 18};
   return map_enum_number(numbers, 2, value, "pdcp_cfg_s::drb_s_::pdcp_sn_size_dl_e_");
 }
 
-void pdcp_cfg_s::drb_s_::hdr_compress_c_::destroy_()
-{
-  switch (type_) {
-    case types::rohc:
-      c.destroy<rohc_s_>();
-      break;
-    case types::ul_only_rohc:
-      c.destroy<ul_only_rohc_s_>();
-      break;
-    default:
-      break;
-  }
-}
-void pdcp_cfg_s::drb_s_::hdr_compress_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::not_used:
-      break;
-    case types::rohc:
-      c.init<rohc_s_>();
-      break;
-    case types::ul_only_rohc:
-      c.init<ul_only_rohc_s_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdcp_cfg_s::drb_s_::hdr_compress_c_");
-  }
-}
-pdcp_cfg_s::drb_s_::hdr_compress_c_::hdr_compress_c_(const pdcp_cfg_s::drb_s_::hdr_compress_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::not_used:
-      break;
-    case types::rohc:
-      c.init(other.c.get<rohc_s_>());
-      break;
-    case types::ul_only_rohc:
-      c.init(other.c.get<ul_only_rohc_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdcp_cfg_s::drb_s_::hdr_compress_c_");
-  }
-}
-pdcp_cfg_s::drb_s_::hdr_compress_c_&
-pdcp_cfg_s::drb_s_::hdr_compress_c_::operator=(const pdcp_cfg_s::drb_s_::hdr_compress_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::not_used:
-      break;
-    case types::rohc:
-      c.set(other.c.get<rohc_s_>());
-      break;
-    case types::ul_only_rohc:
-      c.set(other.c.get<ul_only_rohc_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdcp_cfg_s::drb_s_::hdr_compress_c_");
-  }
+static const asn1::table::storage_ops* const choice_storage_pdcp_cfg_s_drb_s__hdr_compress_c__alternatives[] = {
+    nullptr,
+    &asn1::table::alternative_ops<pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_, false>::value,
+    &asn1::table::alternative_ops<pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_, false>::value};
+const asn1::table::choice_storage_desc pdcp_cfg_s::drb_s_::hdr_compress_c_::storage_desc = {
+    choice_storage_pdcp_cfg_s_drb_s__hdr_compress_c__alternatives,
+    3,
+    "pdcp_cfg_s::drb_s_::hdr_compress_c_"};
 
-  return *this;
-}
 void pdcp_cfg_s::drb_s_::hdr_compress_c_::set_not_used()
 {
   set(types::not_used);
@@ -764,148 +918,259 @@ pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_& pdcp_cfg_s::drb_s_::hdr_co
   set(types::ul_only_rohc);
   return c.get<ul_only_rohc_s_>();
 }
-void pdcp_cfg_s::drb_s_::hdr_compress_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::not_used:
-      j.write_null("notUsed");
-      break;
-    case types::rohc:
-      j.write_fieldname("rohc");
-      j.start_obj();
-      if (c.get<rohc_s_>().max_c_id_present) {
-        j.write_int("maxCID", c.get<rohc_s_>().max_c_id);
-      }
-      j.write_fieldname("profiles");
-      j.start_obj();
-      j.write_bool("profile0x0001", c.get<rohc_s_>().profiles.profile0x0001);
-      j.write_bool("profile0x0002", c.get<rohc_s_>().profiles.profile0x0002);
-      j.write_bool("profile0x0003", c.get<rohc_s_>().profiles.profile0x0003);
-      j.write_bool("profile0x0004", c.get<rohc_s_>().profiles.profile0x0004);
-      j.write_bool("profile0x0006", c.get<rohc_s_>().profiles.profile0x0006);
-      j.write_bool("profile0x0101", c.get<rohc_s_>().profiles.profile0x0101);
-      j.write_bool("profile0x0102", c.get<rohc_s_>().profiles.profile0x0102);
-      j.write_bool("profile0x0103", c.get<rohc_s_>().profiles.profile0x0103);
-      j.write_bool("profile0x0104", c.get<rohc_s_>().profiles.profile0x0104);
-      j.end_obj();
-      if (c.get<rohc_s_>().drb_continue_rohc_present) {
-        j.write_str("drb-ContinueROHC", "true");
-      }
-      j.end_obj();
-      break;
-    case types::ul_only_rohc:
-      j.write_fieldname("uplinkOnlyROHC");
-      j.start_obj();
-      if (c.get<ul_only_rohc_s_>().max_c_id_present) {
-        j.write_int("maxCID", c.get<ul_only_rohc_s_>().max_c_id);
-      }
-      j.write_fieldname("profiles");
-      j.start_obj();
-      j.write_bool("profile0x0006", c.get<ul_only_rohc_s_>().profiles.profile0x0006);
-      j.end_obj();
-      if (c.get<ul_only_rohc_s_>().drb_continue_rohc_present) {
-        j.write_str("drb-ContinueROHC", "true");
-      }
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdcp_cfg_s::drb_s_::hdr_compress_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE pdcp_cfg_s::drb_s_::hdr_compress_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::not_used:
-      break;
-    case types::rohc:
-      HANDLE_CODE(pack_bits(bref, {c.get<rohc_s_>().max_c_id_present, c.get<rohc_s_>().drb_continue_rohc_present}));
-      if (c.get<rohc_s_>().max_c_id_present) {
-        HANDLE_CODE(pack_integer(bref, c.get<rohc_s_>().max_c_id, (uint16_t)1u, (uint16_t)16383u));
-      }
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0001, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0002, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0003, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0004, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0006, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0101, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0102, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0103, 1));
-      HANDLE_CODE(bref.pack(c.get<rohc_s_>().profiles.profile0x0104, 1));
-      break;
-    case types::ul_only_rohc:
-      HANDLE_CODE(pack_bits(
-          bref, {c.get<ul_only_rohc_s_>().max_c_id_present, c.get<ul_only_rohc_s_>().drb_continue_rohc_present}));
-      if (c.get<ul_only_rohc_s_>().max_c_id_present) {
-        HANDLE_CODE(pack_integer(bref, c.get<ul_only_rohc_s_>().max_c_id, (uint16_t)1u, (uint16_t)16383u));
-      }
-      HANDLE_CODE(bref.pack(c.get<ul_only_rohc_s_>().profiles.profile0x0006, 1));
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdcp_cfg_s::drb_s_::hdr_compress_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE pdcp_cfg_s::drb_s_::hdr_compress_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::not_used:
-      break;
-    case types::rohc:
-      HANDLE_CODE(unpack_bits(bref, {&c.get<rohc_s_>().max_c_id_present, &c.get<rohc_s_>().drb_continue_rohc_present}));
-      if (c.get<rohc_s_>().max_c_id_present) {
-        HANDLE_CODE(unpack_integer(c.get<rohc_s_>().max_c_id, bref, (uint16_t)1u, (uint16_t)16383u));
-      }
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0001, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0002, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0003, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0004, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0006, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0101, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0102, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0103, 1));
-      HANDLE_CODE(bref.unpack(c.get<rohc_s_>().profiles.profile0x0104, 1));
-      break;
-    case types::ul_only_rohc:
-      HANDLE_CODE(unpack_bits(
-          bref, {&c.get<ul_only_rohc_s_>().max_c_id_present, &c.get<ul_only_rohc_s_>().drb_continue_rohc_present}));
-      if (c.get<ul_only_rohc_s_>().max_c_id_present) {
-        HANDLE_CODE(unpack_integer(c.get<ul_only_rohc_s_>().max_c_id, bref, (uint16_t)1u, (uint16_t)16383u));
-      }
-      HANDLE_CODE(bref.unpack(c.get<ul_only_rohc_s_>().profiles.profile0x0006, 1));
-      break;
-    default:
-      log_invalid_choice_id(type_, "pdcp_cfg_s::drb_s_::hdr_compress_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__profiles_s__fields[] = {
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0001),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0002),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0003),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0004),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0006),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0101),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0102),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0103),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_::profiles_s_, profile0x0104),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__profiles_s__names[] = {
+    {"profile0x0001", nullptr},
+    {"profile0x0002", nullptr},
+    {"profile0x0003", nullptr},
+    {"profile0x0004", nullptr},
+    {"profile0x0006", nullptr},
+    {"profile0x0101", nullptr},
+    {"profile0x0102", nullptr},
+    {"profile0x0103", nullptr},
+    {"profile0x0104", nullptr}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__profiles_s_ = {
+    {seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__profiles_s__fields, 9, UINT64_C(0x1ff), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__profiles_s__names};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__fields[] = {
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_, max_c_id),
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_, max_c_id_present),
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(16383),
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_, profiles),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__profiles_s_},
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_, drb_continue_rohc_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__names[] = {
+    {"maxCID", nullptr},
+    {"profiles", nullptr},
+    {"drb-ContinueROHC", "true"}};
+static const asn1::table::seq_opt seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__opts[] = {
+    {0, (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_, max_c_id_present)},
+    {2, (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::rohc_s_, drb_continue_rohc_present)}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s_ = {
+    {seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__fields,
+     3,
+     UINT64_C(0x2),
+     seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__opts,
+     2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s__names};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__profiles_s__fields[] = {
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_::profiles_s_, profile0x0006),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__profiles_s__names[] = {
+    {"profile0x0006", nullptr}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__profiles_s_ = {
+    {seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__profiles_s__fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__profiles_s__names};
+static const asn1::table::seq_field seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__fields[] = {
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_, max_c_id),
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_, max_c_id_present),
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(16383),
+     nullptr},
+    {offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_, profiles),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__profiles_s_},
+    {0,
+     (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_, drb_continue_rohc_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__names[] = {
+    {"maxCID", nullptr},
+    {"profiles", nullptr},
+    {"drb-ContinueROHC", "true"}};
+static const asn1::table::seq_opt seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__opts[] = {
+    {0, (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_, max_c_id_present)},
+    {2, (int32_t)offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_::ul_only_rohc_s_, drb_continue_rohc_present)}};
+static const asn1::table::seq_desc seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s_ = {
+    {seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__fields,
+     3,
+     UINT64_C(0x2),
+     seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__opts,
+     2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s__names};
+static const asn1::table::seq_field choice_table_pdcp_cfg_s_drb_s__hdr_compress_c__alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__rohc_s_},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_pdcp_cfg_s_drb_s__hdr_compress_c__ul_only_rohc_s_}};
+static const asn1::table::field_name choice_table_pdcp_cfg_s_drb_s__hdr_compress_c__names[] = {
+    {"notUsed", nullptr},
+    {"rohc", nullptr},
+    {"uplinkOnlyROHC", nullptr}};
+const asn1::table::choice_desc pdcp_cfg_s::drb_s_::hdr_compress_c_::desc = {
+    asn1::table::enum_int_type<pdcp_cfg_s::drb_s_::hdr_compress_c_::types>(),
+    pdcp_cfg_s::drb_s_::hdr_compress_c_::types::nof_types,
+    pdcp_cfg_s::drb_s_::hdr_compress_c_::types::nof_exts,
+    pdcp_cfg_s::drb_s_::hdr_compress_c_::types::has_ext,
+    false,
+    choice_table_pdcp_cfg_s_drb_s__hdr_compress_c__alternatives,
+    nullptr,
+    choice_table_pdcp_cfg_s_drb_s__hdr_compress_c__names,
+    "pdcp_cfg_s::drb_s_::hdr_compress_c_",
+    offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_, c.type),
+    offsetof(pdcp_cfg_s::drb_s_::hdr_compress_c_, c.value),
+    false,
+    &pdcp_cfg_s::drb_s_::hdr_compress_c_::storage_desc};
 
-const char* pdcp_cfg_s::drb_s_::hdr_compress_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"notUsed", "rohc", "uplinkOnlyROHC"};
-  return convert_enum_idx(names, 3, value, "pdcp_cfg_s::drb_s_::hdr_compress_c_::types");
-}
+static const char* enum_names_pdcp_cfg_s_drb_s__hdr_compress_c__types_values[] = {"notUsed", "rohc", "uplinkOnlyROHC"};
+const asn1::table::enum_desc pdcp_cfg_s::drb_s_::hdr_compress_c_::types_opts::desc = {
+    enum_names_pdcp_cfg_s_drb_s__hdr_compress_c__types_values,
+    3,
+    "pdcp_cfg_s::drb_s_::hdr_compress_c_::types"};
 
-const char* pdcp_cfg_s::t_reordering_opts::to_string() const
-{
-  static const char* names[] = {"ms0",     "ms1",     "ms2",     "ms4",     "ms5",     "ms8",     "ms10",    "ms15",
-                                "ms20",    "ms30",    "ms40",    "ms50",    "ms60",    "ms80",    "ms100",   "ms120",
-                                "ms140",   "ms160",   "ms180",   "ms200",   "ms220",   "ms240",   "ms260",   "ms280",
-                                "ms300",   "ms500",   "ms750",   "ms1000",  "ms1250",  "ms1500",  "ms1750",  "ms2000",
-                                "ms2250",  "ms2500",  "ms2750",  "ms3000",  "spare28", "spare27", "spare26", "spare25",
-                                "spare24", "spare23", "spare22", "spare21", "spare20", "spare19", "spare18", "spare17",
-                                "spare16", "spare15", "spare14", "spare13", "spare12", "spare11", "spare10", "spare09",
-                                "spare08", "spare07", "spare06", "spare05", "spare04", "spare03", "spare02", "spare01"};
-  return convert_enum_idx(names, 64, value, "pdcp_cfg_s::t_reordering_e_");
-}
-uint16_t pdcp_cfg_s::t_reordering_opts::to_number() const
+static const char* enum_names_pdcp_cfg_s_t_reordering_e__values[] = {
+    "ms0",     "ms1",     "ms2",     "ms4",     "ms5",     "ms8",     "ms10",    "ms15",    "ms20",    "ms30",
+    "ms40",    "ms50",    "ms60",    "ms80",    "ms100",   "ms120",   "ms140",   "ms160",   "ms180",   "ms200",
+    "ms220",   "ms240",   "ms260",   "ms280",   "ms300",   "ms500",   "ms750",   "ms1000",  "ms1250",  "ms1500",
+    "ms1750",  "ms2000",  "ms2250",  "ms2500",  "ms2750",  "ms3000",  "spare28", "spare27", "spare26", "spare25",
+    "spare24", "spare23", "spare22", "spare21", "spare20", "spare19", "spare18", "spare17", "spare16", "spare15",
+    "spare14", "spare13", "spare12", "spare11", "spare10", "spare09", "spare08", "spare07", "spare06", "spare05",
+    "spare04", "spare03", "spare02", "spare01"};
+const asn1::table::enum_desc pdcp_cfg_s::t_reordering_opts::desc = {enum_names_pdcp_cfg_s_t_reordering_e__values,
+                                                                    64,
+                                                                    "pdcp_cfg_s::t_reordering_e_"};
+uint16_t                     pdcp_cfg_s::t_reordering_opts::to_number() const
 {
   static const uint16_t numbers[] = {0,   1,   2,   4,    5,    8,    10,   15,   20,   30,   40,   50,
                                      60,  80,  100, 120,  140,  160,  180,  200,  220,  240,  260,  280,
@@ -914,329 +1179,280 @@ uint16_t pdcp_cfg_s::t_reordering_opts::to_number() const
 }
 
 // SRB-ToAddMod ::= SEQUENCE
-OCUDUASN_CODE srb_to_add_mod_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(2);
-  group_flags[0] |= srb_id_v1700_present;
-  group_flags[1] |= srb_id_v1800_present;
-  group_flags[1] |= n3c_bearer_associated_r18_present;
-  HANDLE_CODE(
-      pack_bits(bref, {group_flags.any(), reestablish_pdcp_present, discard_on_pdcp_present, pdcp_cfg_present}));
-
-  HANDLE_CODE(pack_integer(bref, srb_id, (uint8_t)1u, (uint8_t)3u));
-  if (pdcp_cfg_present) {
-    HANDLE_CODE(pdcp_cfg.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(bref.pack(srb_id_v1700_present, 1));
-      if (srb_id_v1700_present) {
-        HANDLE_CODE(pack_integer(bref, srb_id_v1700, (uint8_t)4u, (uint8_t)4u));
-      }
-    }
-    if (group_flags[1]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref, {srb_id_v1800_present, n3c_bearer_associated_r18_present}));
-      if (srb_id_v1800_present) {
-        HANDLE_CODE(pack_integer(bref, srb_id_v1800, (uint8_t)5u, (uint8_t)5u));
-      }
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srb_to_add_mod_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &reestablish_pdcp_present, &discard_on_pdcp_present, &pdcp_cfg_present}));
-
-  HANDLE_CODE(unpack_integer(srb_id, bref, (uint8_t)1u, (uint8_t)3u));
-  if (pdcp_cfg_present) {
-    HANDLE_CODE(pdcp_cfg.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(srb_id_v1700_present, 1));
-      if (srb_id_v1700_present) {
-        HANDLE_CODE(unpack_integer(srb_id_v1700, bref, (uint8_t)4u, (uint8_t)4u));
-      }
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(unpack_bits(bref, {&srb_id_v1800_present, &n3c_bearer_associated_r18_present}));
-      if (srb_id_v1800_present) {
-        HANDLE_CODE(unpack_integer(srb_id_v1800, bref, (uint8_t)5u, (uint8_t)5u));
-      }
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void srb_to_add_mod_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("srb-Identity", srb_id);
-  if (reestablish_pdcp_present) {
-    j.write_str("reestablishPDCP", "true");
-  }
-  if (discard_on_pdcp_present) {
-    j.write_str("discardOnPDCP", "true");
-  }
-  if (pdcp_cfg_present) {
-    j.write_fieldname("pdcp-Config");
-    pdcp_cfg.to_json(j);
-  }
-  if (srb_id_v1700_present) {
-    j.write_int("srb-Identity-v1700", srb_id_v1700);
-  }
-  if (srb_id_v1800_present) {
-    j.write_int("srb-Identity-v1800", srb_id_v1800);
-  }
-  if (n3c_bearer_associated_r18_present) {
-    j.write_str("n3c-BearerAssociated-r18", "true");
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_srb_to_add_mod_s_fields[] = {
+    {offsetof(srb_to_add_mod_s, srb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(3),
+     nullptr},
+    {0,
+     (int32_t)offsetof(srb_to_add_mod_s, reestablish_pdcp_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {0,
+     (int32_t)offsetof(srb_to_add_mod_s, discard_on_pdcp_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(srb_to_add_mod_s, pdcp_cfg),
+     (int32_t)offsetof(srb_to_add_mod_s, pdcp_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &pdcp_cfg_s::desc}};
+static const asn1::table::field_name seq_table_srb_to_add_mod_s_names[] = {{"srb-Identity", nullptr},
+                                                                           {"reestablishPDCP", "true"},
+                                                                           {"discardOnPDCP", "true"},
+                                                                           {"pdcp-Config", nullptr}};
+static const asn1::table::seq_opt    seq_table_srb_to_add_mod_s_opts[]  = {
+    {1, (int32_t)offsetof(srb_to_add_mod_s, reestablish_pdcp_present)},
+    {2, (int32_t)offsetof(srb_to_add_mod_s, discard_on_pdcp_present)},
+    {3, (int32_t)offsetof(srb_to_add_mod_s, pdcp_cfg_present)}};
+static const asn1::table::seq_field seq_table_srb_to_add_mod_s_g0_fields[] = {
+    {offsetof(srb_to_add_mod_s, srb_id_v1700),
+     (int32_t)offsetof(srb_to_add_mod_s, srb_id_v1700_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(4),
+     UINT64_C(4),
+     nullptr}};
+static const asn1::table::field_name seq_table_srb_to_add_mod_s_g0_names[] = {{"srb-Identity-v1700", nullptr}};
+static const asn1::table::seq_opt    seq_table_srb_to_add_mod_s_g0_opts[]  = {
+    {0, (int32_t)offsetof(srb_to_add_mod_s, srb_id_v1700_present)}};
+static const asn1::table::seq_field seq_table_srb_to_add_mod_s_g1_fields[] = {
+    {offsetof(srb_to_add_mod_s, srb_id_v1800),
+     (int32_t)offsetof(srb_to_add_mod_s, srb_id_v1800_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(5),
+     UINT64_C(5),
+     nullptr},
+    {0,
+     (int32_t)offsetof(srb_to_add_mod_s, n3c_bearer_associated_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_srb_to_add_mod_s_g1_names[] = {{"srb-Identity-v1800", nullptr},
+                                                                              {"n3c-BearerAssociated-r18", "true"}};
+static const asn1::table::seq_opt    seq_table_srb_to_add_mod_s_g1_opts[]  = {
+    {0, (int32_t)offsetof(srb_to_add_mod_s, srb_id_v1800_present)},
+    {1, (int32_t)offsetof(srb_to_add_mod_s, n3c_bearer_associated_r18_present)}};
+static const asn1::table::seq_group seq_table_srb_to_add_mod_s_groups[] = {
+    {{seq_table_srb_to_add_mod_s_g0_fields, 1, UINT64_C(0x0), seq_table_srb_to_add_mod_s_g0_opts, 1},
+     false,
+     seq_table_srb_to_add_mod_s_g0_names},
+    {{seq_table_srb_to_add_mod_s_g1_fields, 2, UINT64_C(0x0), seq_table_srb_to_add_mod_s_g1_opts, 2},
+     false,
+     seq_table_srb_to_add_mod_s_g1_names}};
+const asn1::table::seq_desc srb_to_add_mod_s::desc = {
+    {seq_table_srb_to_add_mod_s_fields, 4, UINT64_C(0x1), seq_table_srb_to_add_mod_s_opts, 3},
+    true,
+    false,
+    seq_table_srb_to_add_mod_s_groups,
+    2,
+    seq_table_srb_to_add_mod_s_names};
 
 // SDAP-Config ::= SEQUENCE
-OCUDUASN_CODE sdap_cfg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, mapped_qos_flows_to_add.size() > 0, mapped_qos_flows_to_release.size() > 0}));
+static const asn1::table::seq_field seq_table_sdap_cfg_s_fields[] = {
+    {offsetof(sdap_cfg_s, pdu_session),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(sdap_cfg_s, sdap_hdr_dl),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(sdap_cfg_s::sdap_hdr_dl)>(),
+     decltype(sdap_cfg_s::sdap_hdr_dl)::has_ext,
+     false,
+     decltype(sdap_cfg_s::sdap_hdr_dl)::nof_types,
+     decltype(sdap_cfg_s::sdap_hdr_dl)::nof_exts,
+     nullptr,
+     &sdap_cfg_s::sdap_hdr_dl_opts::desc},
+    {offsetof(sdap_cfg_s, sdap_hdr_ul),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(sdap_cfg_s::sdap_hdr_ul)>(),
+     decltype(sdap_cfg_s::sdap_hdr_ul)::has_ext,
+     false,
+     decltype(sdap_cfg_s::sdap_hdr_ul)::nof_types,
+     decltype(sdap_cfg_s::sdap_hdr_ul)::nof_exts,
+     nullptr,
+     &sdap_cfg_s::sdap_hdr_ul_opts::desc},
+    {offsetof(sdap_cfg_s, default_drb),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(sdap_cfg_s, mapped_qos_flows_to_add),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::list_codec<decltype(sdap_cfg_s::mapped_qos_flows_to_add),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(63), false, false>>::value},
+    {offsetof(sdap_cfg_s, mapped_qos_flows_to_release),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::list_codec<decltype(sdap_cfg_s::mapped_qos_flows_to_release),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(63), false, false>>::value}};
+static const asn1::table::field_name seq_table_sdap_cfg_s_names[] = {{"pdu-Session", nullptr},
+                                                                     {"sdap-HeaderDL", nullptr},
+                                                                     {"sdap-HeaderUL", nullptr},
+                                                                     {"defaultDRB", nullptr},
+                                                                     {"mappedQoS-FlowsToAdd", nullptr},
+                                                                     {"mappedQoS-FlowsToRelease", nullptr}};
+static const asn1::table::seq_opt    seq_table_sdap_cfg_s_opts[]  = {{4, asn1::table::seq_field::list_presence},
+                                                                     {5, asn1::table::seq_field::list_presence}};
+const asn1::table::seq_desc          sdap_cfg_s::desc             = {
+    {seq_table_sdap_cfg_s_fields, 6, UINT64_C(0xf), seq_table_sdap_cfg_s_opts, 2},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_sdap_cfg_s_names};
 
-  HANDLE_CODE(pack_integer(bref, pdu_session, (uint16_t)0u, (uint16_t)255u));
-  HANDLE_CODE(sdap_hdr_dl.pack(bref));
-  HANDLE_CODE(sdap_hdr_ul.pack(bref));
-  HANDLE_CODE(bref.pack(default_drb, 1));
-  if (mapped_qos_flows_to_add.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, mapped_qos_flows_to_add, 1, 64, integer_packer<uint8_t>(0, 63)));
-  }
-  if (mapped_qos_flows_to_release.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, mapped_qos_flows_to_release, 1, 64, integer_packer<uint8_t>(0, 63)));
-  }
+static const char*           enum_names_sdap_cfg_s_sdap_hdr_dl_e__values[] = {"present", "absent"};
+const asn1::table::enum_desc sdap_cfg_s::sdap_hdr_dl_opts::desc = {enum_names_sdap_cfg_s_sdap_hdr_dl_e__values,
+                                                                   2,
+                                                                   "sdap_cfg_s::sdap_hdr_dl_e_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE sdap_cfg_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  bool mapped_qos_flows_to_add_present;
-  bool mapped_qos_flows_to_release_present;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &mapped_qos_flows_to_add_present, &mapped_qos_flows_to_release_present}));
-
-  HANDLE_CODE(unpack_integer(pdu_session, bref, (uint16_t)0u, (uint16_t)255u));
-  HANDLE_CODE(sdap_hdr_dl.unpack(bref));
-  HANDLE_CODE(sdap_hdr_ul.unpack(bref));
-  HANDLE_CODE(bref.unpack(default_drb, 1));
-  if (mapped_qos_flows_to_add_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(mapped_qos_flows_to_add, bref, 1, 64, integer_packer<uint8_t>(0, 63)));
-  }
-  if (mapped_qos_flows_to_release_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(mapped_qos_flows_to_release, bref, 1, 64, integer_packer<uint8_t>(0, 63)));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void sdap_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("pdu-Session", pdu_session);
-  j.write_str("sdap-HeaderDL", sdap_hdr_dl.to_string());
-  j.write_str("sdap-HeaderUL", sdap_hdr_ul.to_string());
-  j.write_bool("defaultDRB", default_drb);
-  if (mapped_qos_flows_to_add.size() > 0) {
-    j.start_array("mappedQoS-FlowsToAdd");
-    for (const auto& e1 : mapped_qos_flows_to_add) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  if (mapped_qos_flows_to_release.size() > 0) {
-    j.start_array("mappedQoS-FlowsToRelease");
-    for (const auto& e1 : mapped_qos_flows_to_release) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  j.end_obj();
-}
-
-const char* sdap_cfg_s::sdap_hdr_dl_opts::to_string() const
-{
-  static const char* names[] = {"present", "absent"};
-  return convert_enum_idx(names, 2, value, "sdap_cfg_s::sdap_hdr_dl_e_");
-}
-
-const char* sdap_cfg_s::sdap_hdr_ul_opts::to_string() const
-{
-  static const char* names[] = {"present", "absent"};
-  return convert_enum_idx(names, 2, value, "sdap_cfg_s::sdap_hdr_ul_e_");
-}
+static const char*           enum_names_sdap_cfg_s_sdap_hdr_ul_e__values[] = {"present", "absent"};
+const asn1::table::enum_desc sdap_cfg_s::sdap_hdr_ul_opts::desc = {enum_names_sdap_cfg_s_sdap_hdr_ul_e__values,
+                                                                   2,
+                                                                   "sdap_cfg_s::sdap_hdr_ul_e_"};
 
 // DRB-ToAddMod ::= SEQUENCE
-OCUDUASN_CODE drb_to_add_mod_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(2);
-  group_flags[0] |= daps_cfg_r16_present;
-  group_flags[1] |= n3c_bearer_associated_r18_present;
-  HANDLE_CODE(pack_bits(
-      bref, {group_flags.any(), cn_assoc_present, reestablish_pdcp_present, recover_pdcp_present, pdcp_cfg_present}));
+static const asn1::table::seq_field seq_table_drb_to_add_mod_s_fields[] = {
+    {offsetof(drb_to_add_mod_s, cn_assoc),
+     (int32_t)offsetof(drb_to_add_mod_s, cn_assoc_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &drb_to_add_mod_s::cn_assoc_c_::desc},
+    {offsetof(drb_to_add_mod_s, drb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(32),
+     nullptr},
+    {0,
+     (int32_t)offsetof(drb_to_add_mod_s, reestablish_pdcp_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {0,
+     (int32_t)offsetof(drb_to_add_mod_s, recover_pdcp_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(drb_to_add_mod_s, pdcp_cfg),
+     (int32_t)offsetof(drb_to_add_mod_s, pdcp_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &pdcp_cfg_s::desc}};
+static const asn1::table::field_name seq_table_drb_to_add_mod_s_names[] = {{"cnAssociation", nullptr},
+                                                                           {"drb-Identity", nullptr},
+                                                                           {"reestablishPDCP", "true"},
+                                                                           {"recoverPDCP", "true"},
+                                                                           {"pdcp-Config", nullptr}};
+static const asn1::table::seq_opt    seq_table_drb_to_add_mod_s_opts[]  = {
+    {0, (int32_t)offsetof(drb_to_add_mod_s, cn_assoc_present)},
+    {2, (int32_t)offsetof(drb_to_add_mod_s, reestablish_pdcp_present)},
+    {3, (int32_t)offsetof(drb_to_add_mod_s, recover_pdcp_present)},
+    {4, (int32_t)offsetof(drb_to_add_mod_s, pdcp_cfg_present)}};
+static const asn1::table::seq_field seq_table_drb_to_add_mod_s_g0_fields[] = {
+    {0,
+     (int32_t)offsetof(drb_to_add_mod_s, daps_cfg_r16_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_drb_to_add_mod_s_g0_names[] = {{"daps-Config-r16", "true"}};
+static const asn1::table::seq_opt    seq_table_drb_to_add_mod_s_g0_opts[]  = {
+    {0, (int32_t)offsetof(drb_to_add_mod_s, daps_cfg_r16_present)}};
+static const asn1::table::seq_field seq_table_drb_to_add_mod_s_g1_fields[] = {
+    {0,
+     (int32_t)offsetof(drb_to_add_mod_s, n3c_bearer_associated_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_drb_to_add_mod_s_g1_names[] = {{"n3c-BearerAssociated-r18", "true"}};
+static const asn1::table::seq_opt    seq_table_drb_to_add_mod_s_g1_opts[]  = {
+    {0, (int32_t)offsetof(drb_to_add_mod_s, n3c_bearer_associated_r18_present)}};
+static const asn1::table::seq_group seq_table_drb_to_add_mod_s_groups[] = {
+    {{seq_table_drb_to_add_mod_s_g0_fields, 1, UINT64_C(0x0), seq_table_drb_to_add_mod_s_g0_opts, 1},
+     false,
+     seq_table_drb_to_add_mod_s_g0_names},
+    {{seq_table_drb_to_add_mod_s_g1_fields, 1, UINT64_C(0x0), seq_table_drb_to_add_mod_s_g1_opts, 1},
+     false,
+     seq_table_drb_to_add_mod_s_g1_names}};
+const asn1::table::seq_desc drb_to_add_mod_s::desc = {
+    {seq_table_drb_to_add_mod_s_fields, 5, UINT64_C(0x2), seq_table_drb_to_add_mod_s_opts, 4},
+    true,
+    false,
+    seq_table_drb_to_add_mod_s_groups,
+    2,
+    seq_table_drb_to_add_mod_s_names};
 
-  if (cn_assoc_present) {
-    HANDLE_CODE(cn_assoc.pack(bref));
-  }
-  HANDLE_CODE(pack_integer(bref, drb_id, (uint8_t)1u, (uint8_t)32u));
-  if (pdcp_cfg_present) {
-    HANDLE_CODE(pdcp_cfg.pack(bref));
-  }
+static const asn1::table::storage_ops* const choice_storage_drb_to_add_mod_s_cn_assoc_c__alternatives[] = {
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<sdap_cfg_s, false>::value};
+const asn1::table::choice_storage_desc drb_to_add_mod_s::cn_assoc_c_::storage_desc = {
+    choice_storage_drb_to_add_mod_s_cn_assoc_c__alternatives,
+    2,
+    "drb_to_add_mod_s::cn_assoc_c_"};
 
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(bref.pack(daps_cfg_r16_present, 1));
-    }
-    if (group_flags[1]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(bref.pack(n3c_bearer_associated_r18_present, 1));
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE drb_to_add_mod_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(
-      bref, {&ext, &cn_assoc_present, &reestablish_pdcp_present, &recover_pdcp_present, &pdcp_cfg_present}));
-
-  if (cn_assoc_present) {
-    HANDLE_CODE(cn_assoc.unpack(bref));
-  }
-  HANDLE_CODE(unpack_integer(drb_id, bref, (uint8_t)1u, (uint8_t)32u));
-  if (pdcp_cfg_present) {
-    HANDLE_CODE(pdcp_cfg.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(daps_cfg_r16_present, 1));
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(n3c_bearer_associated_r18_present, 1));
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void drb_to_add_mod_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (cn_assoc_present) {
-    j.write_fieldname("cnAssociation");
-    cn_assoc.to_json(j);
-  }
-  j.write_int("drb-Identity", drb_id);
-  if (reestablish_pdcp_present) {
-    j.write_str("reestablishPDCP", "true");
-  }
-  if (recover_pdcp_present) {
-    j.write_str("recoverPDCP", "true");
-  }
-  if (pdcp_cfg_present) {
-    j.write_fieldname("pdcp-Config");
-    pdcp_cfg.to_json(j);
-  }
-  if (daps_cfg_r16_present) {
-    j.write_str("daps-Config-r16", "true");
-  }
-  if (n3c_bearer_associated_r18_present) {
-    j.write_str("n3c-BearerAssociated-r18", "true");
-  }
-  j.end_obj();
-}
-
-void drb_to_add_mod_s::cn_assoc_c_::destroy_()
-{
-  switch (type_) {
-    case types::sdap_cfg:
-      c.destroy<sdap_cfg_s>();
-      break;
-    default:
-      break;
-  }
-}
-void drb_to_add_mod_s::cn_assoc_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::eps_bearer_id:
-      break;
-    case types::sdap_cfg:
-      c.init<sdap_cfg_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "drb_to_add_mod_s::cn_assoc_c_");
-  }
-}
-drb_to_add_mod_s::cn_assoc_c_::cn_assoc_c_(const drb_to_add_mod_s::cn_assoc_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::eps_bearer_id:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sdap_cfg:
-      c.init(other.c.get<sdap_cfg_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "drb_to_add_mod_s::cn_assoc_c_");
-  }
-}
-drb_to_add_mod_s::cn_assoc_c_& drb_to_add_mod_s::cn_assoc_c_::operator=(const drb_to_add_mod_s::cn_assoc_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::eps_bearer_id:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sdap_cfg:
-      c.set(other.c.get<sdap_cfg_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "drb_to_add_mod_s::cn_assoc_c_");
-  }
-
-  return *this;
-}
 uint8_t& drb_to_add_mod_s::cn_assoc_c_::set_eps_bearer_id()
 {
   set(types::eps_bearer_id);
@@ -1247,251 +1463,162 @@ sdap_cfg_s& drb_to_add_mod_s::cn_assoc_c_::set_sdap_cfg()
   set(types::sdap_cfg);
   return c.get<sdap_cfg_s>();
 }
-void drb_to_add_mod_s::cn_assoc_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::eps_bearer_id:
-      j.write_int("eps-BearerIdentity", c.get<uint8_t>());
-      break;
-    case types::sdap_cfg:
-      j.write_fieldname("sdap-Config");
-      c.get<sdap_cfg_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "drb_to_add_mod_s::cn_assoc_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE drb_to_add_mod_s::cn_assoc_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::eps_bearer_id:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)15u));
-      break;
-    case types::sdap_cfg:
-      HANDLE_CODE(c.get<sdap_cfg_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "drb_to_add_mod_s::cn_assoc_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE drb_to_add_mod_s::cn_assoc_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::eps_bearer_id:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)15u));
-      break;
-    case types::sdap_cfg:
-      HANDLE_CODE(c.get<sdap_cfg_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "drb_to_add_mod_s::cn_assoc_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_drb_to_add_mod_s_cn_assoc_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &sdap_cfg_s::desc}};
+static const asn1::table::field_name choice_table_drb_to_add_mod_s_cn_assoc_c__names[] = {
+    {"eps-BearerIdentity", nullptr},
+    {"sdap-Config", nullptr}};
+const asn1::table::choice_desc drb_to_add_mod_s::cn_assoc_c_::desc = {
+    asn1::table::enum_int_type<drb_to_add_mod_s::cn_assoc_c_::types>(),
+    drb_to_add_mod_s::cn_assoc_c_::types::nof_types,
+    drb_to_add_mod_s::cn_assoc_c_::types::nof_exts,
+    drb_to_add_mod_s::cn_assoc_c_::types::has_ext,
+    false,
+    choice_table_drb_to_add_mod_s_cn_assoc_c__alternatives,
+    nullptr,
+    choice_table_drb_to_add_mod_s_cn_assoc_c__names,
+    "drb_to_add_mod_s::cn_assoc_c_",
+    offsetof(drb_to_add_mod_s::cn_assoc_c_, c.type),
+    offsetof(drb_to_add_mod_s::cn_assoc_c_, c.value),
+    false,
+    &drb_to_add_mod_s::cn_assoc_c_::storage_desc};
 
-const char* drb_to_add_mod_s::cn_assoc_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"eps-BearerIdentity", "sdap-Config"};
-  return convert_enum_idx(names, 2, value, "drb_to_add_mod_s::cn_assoc_c_::types");
-}
+static const char* enum_names_drb_to_add_mod_s_cn_assoc_c__types_values[]    = {"eps-BearerIdentity", "sdap-Config"};
+const asn1::table::enum_desc drb_to_add_mod_s::cn_assoc_c_::types_opts::desc = {
+    enum_names_drb_to_add_mod_s_cn_assoc_c__types_values,
+    2,
+    "drb_to_add_mod_s::cn_assoc_c_::types"};
 
 // IntegrityProtAlgorithm ::= ENUMERATED
-const char* integrity_prot_algorithm_opts::to_string() const
-{
-  static const char* names[] = {"nia0", "nia1", "nia2", "nia3", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 8, value, "integrity_prot_algorithm_e");
-}
-uint8_t integrity_prot_algorithm_opts::to_number() const
+static const char* enum_names_integrity_prot_algorithm_e_values[] =
+    {"nia0", "nia1", "nia2", "nia3", "spare4", "spare3", "spare2", "spare1"};
+const asn1::table::enum_desc integrity_prot_algorithm_opts::desc = {enum_names_integrity_prot_algorithm_e_values,
+                                                                    8,
+                                                                    "integrity_prot_algorithm_e"};
+uint8_t                      integrity_prot_algorithm_opts::to_number() const
 {
   static const uint8_t numbers[] = {0, 1, 2, 3};
   return map_enum_number(numbers, 4, value, "integrity_prot_algorithm_e");
 }
 
 // SecurityAlgorithmConfig ::= SEQUENCE
-OCUDUASN_CODE security_algorithm_cfg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, integrity_prot_algorithm_present}));
-
-  HANDLE_CODE(ciphering_algorithm.pack(bref));
-  if (integrity_prot_algorithm_present) {
-    HANDLE_CODE(integrity_prot_algorithm.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE security_algorithm_cfg_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &integrity_prot_algorithm_present}));
-
-  HANDLE_CODE(ciphering_algorithm.unpack(bref));
-  if (integrity_prot_algorithm_present) {
-    HANDLE_CODE(integrity_prot_algorithm.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void security_algorithm_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("cipheringAlgorithm", ciphering_algorithm.to_string());
-  if (integrity_prot_algorithm_present) {
-    j.write_str("integrityProtAlgorithm", integrity_prot_algorithm.to_string());
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_security_algorithm_cfg_s_fields[] = {
+    {offsetof(security_algorithm_cfg_s, ciphering_algorithm),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(security_algorithm_cfg_s::ciphering_algorithm)>(),
+     decltype(security_algorithm_cfg_s::ciphering_algorithm)::has_ext,
+     false,
+     decltype(security_algorithm_cfg_s::ciphering_algorithm)::nof_types,
+     decltype(security_algorithm_cfg_s::ciphering_algorithm)::nof_exts,
+     nullptr,
+     &ciphering_algorithm_opts::desc},
+    {offsetof(security_algorithm_cfg_s, integrity_prot_algorithm),
+     (int32_t)offsetof(security_algorithm_cfg_s, integrity_prot_algorithm_present),
+     asn1::table::enum_op<decltype(security_algorithm_cfg_s::integrity_prot_algorithm)>(),
+     decltype(security_algorithm_cfg_s::integrity_prot_algorithm)::has_ext,
+     false,
+     decltype(security_algorithm_cfg_s::integrity_prot_algorithm)::nof_types,
+     decltype(security_algorithm_cfg_s::integrity_prot_algorithm)::nof_exts,
+     nullptr,
+     &integrity_prot_algorithm_opts::desc}};
+static const asn1::table::field_name seq_table_security_algorithm_cfg_s_names[] = {{"cipheringAlgorithm", nullptr},
+                                                                                   {"integrityProtAlgorithm", nullptr}};
+static const asn1::table::seq_opt    seq_table_security_algorithm_cfg_s_opts[]  = {
+    {1, (int32_t)offsetof(security_algorithm_cfg_s, integrity_prot_algorithm_present)}};
+const asn1::table::seq_desc security_algorithm_cfg_s::desc = {
+    {seq_table_security_algorithm_cfg_s_fields, 2, UINT64_C(0x1), seq_table_security_algorithm_cfg_s_opts, 1},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_security_algorithm_cfg_s_names};
 
 // SecurityConfig ::= SEQUENCE
-OCUDUASN_CODE security_cfg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, security_algorithm_cfg_present, key_to_use_present}));
+static const asn1::table::seq_field seq_table_security_cfg_s_fields[] = {
+    {offsetof(security_cfg_s, security_algorithm_cfg),
+     (int32_t)offsetof(security_cfg_s, security_algorithm_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &security_algorithm_cfg_s::desc},
+    {offsetof(security_cfg_s, key_to_use),
+     (int32_t)offsetof(security_cfg_s, key_to_use_present),
+     asn1::table::enum_op<decltype(security_cfg_s::key_to_use)>(),
+     decltype(security_cfg_s::key_to_use)::has_ext,
+     false,
+     decltype(security_cfg_s::key_to_use)::nof_types,
+     decltype(security_cfg_s::key_to_use)::nof_exts,
+     nullptr,
+     &security_cfg_s::key_to_use_opts::desc}};
+static const asn1::table::field_name seq_table_security_cfg_s_names[] = {{"securityAlgorithmConfig", nullptr},
+                                                                         {"keyToUse", nullptr}};
+static const asn1::table::seq_opt    seq_table_security_cfg_s_opts[]  = {
+    {0, (int32_t)offsetof(security_cfg_s, security_algorithm_cfg_present)},
+    {1, (int32_t)offsetof(security_cfg_s, key_to_use_present)}};
+const asn1::table::seq_desc security_cfg_s::desc = {
+    {seq_table_security_cfg_s_fields, 2, UINT64_C(0x0), seq_table_security_cfg_s_opts, 2},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_security_cfg_s_names};
 
-  if (security_algorithm_cfg_present) {
-    HANDLE_CODE(security_algorithm_cfg.pack(bref));
-  }
-  if (key_to_use_present) {
-    HANDLE_CODE(key_to_use.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE security_cfg_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &security_algorithm_cfg_present, &key_to_use_present}));
-
-  if (security_algorithm_cfg_present) {
-    HANDLE_CODE(security_algorithm_cfg.unpack(bref));
-  }
-  if (key_to_use_present) {
-    HANDLE_CODE(key_to_use.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void security_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (security_algorithm_cfg_present) {
-    j.write_fieldname("securityAlgorithmConfig");
-    security_algorithm_cfg.to_json(j);
-  }
-  if (key_to_use_present) {
-    j.write_str("keyToUse", key_to_use.to_string());
-  }
-  j.end_obj();
-}
-
-const char* security_cfg_s::key_to_use_opts::to_string() const
-{
-  static const char* names[] = {"master", "secondary"};
-  return convert_enum_idx(names, 2, value, "security_cfg_s::key_to_use_e_");
-}
+static const char*           enum_names_security_cfg_s_key_to_use_e__values[] = {"master", "secondary"};
+const asn1::table::enum_desc security_cfg_s::key_to_use_opts::desc = {enum_names_security_cfg_s_key_to_use_e__values,
+                                                                      2,
+                                                                      "security_cfg_s::key_to_use_e_"};
 
 // TMGI-r17 ::= SEQUENCE
-OCUDUASN_CODE tmgi_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(plmn_id_r17.pack(bref));
-  HANDLE_CODE(service_id_r17.pack(bref));
+static const asn1::table::seq_field seq_table_tmgi_r17_s_fields[] = {
+    {offsetof(tmgi_r17_s, plmn_id_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &tmgi_r17_s::plmn_id_r17_c_::desc},
+    {offsetof(tmgi_r17_s, service_id_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(tmgi_r17_s::service_id_r17), asn1::table::string_json>::value}};
+static const asn1::table::field_name seq_table_tmgi_r17_s_names[] = {{"plmn-Id-r17", nullptr},
+                                                                     {"serviceId-r17", nullptr}};
+const asn1::table::seq_desc          tmgi_r17_s::desc =
+    {{seq_table_tmgi_r17_s_fields, 2, UINT64_C(0x3), nullptr, 0}, false, false, nullptr, 0, seq_table_tmgi_r17_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE tmgi_r17_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(plmn_id_r17.unpack(bref));
-  HANDLE_CODE(service_id_r17.unpack(bref));
+static const asn1::table::storage_ops* const choice_storage_tmgi_r17_s_plmn_id_r17_c__alternatives[] = {
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<plmn_id_s, false>::value};
+const asn1::table::choice_storage_desc tmgi_r17_s::plmn_id_r17_c_::storage_desc = {
+    choice_storage_tmgi_r17_s_plmn_id_r17_c__alternatives,
+    2,
+    "tmgi_r17_s::plmn_id_r17_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-void tmgi_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("plmn-Id-r17");
-  plmn_id_r17.to_json(j);
-  j.write_str("serviceId-r17", service_id_r17.to_string());
-  j.end_obj();
-}
-
-void tmgi_r17_s::plmn_id_r17_c_::destroy_()
-{
-  switch (type_) {
-    case types::explicit_value:
-      c.destroy<plmn_id_s>();
-      break;
-    default:
-      break;
-  }
-}
-void tmgi_r17_s::plmn_id_r17_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::plmn_idx:
-      break;
-    case types::explicit_value:
-      c.init<plmn_id_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "tmgi_r17_s::plmn_id_r17_c_");
-  }
-}
-tmgi_r17_s::plmn_id_r17_c_::plmn_id_r17_c_(const tmgi_r17_s::plmn_id_r17_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::plmn_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::explicit_value:
-      c.init(other.c.get<plmn_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "tmgi_r17_s::plmn_id_r17_c_");
-  }
-}
-tmgi_r17_s::plmn_id_r17_c_& tmgi_r17_s::plmn_id_r17_c_::operator=(const tmgi_r17_s::plmn_id_r17_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::plmn_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::explicit_value:
-      c.set(other.c.get<plmn_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "tmgi_r17_s::plmn_id_r17_c_");
-  }
-
-  return *this;
-}
 uint8_t& tmgi_r17_s::plmn_id_r17_c_::set_plmn_idx()
 {
   set(types::plmn_idx);
@@ -1502,318 +1629,266 @@ plmn_id_s& tmgi_r17_s::plmn_id_r17_c_::set_explicit_value()
   set(types::explicit_value);
   return c.get<plmn_id_s>();
 }
-void tmgi_r17_s::plmn_id_r17_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::plmn_idx:
-      j.write_int("plmn-Index", c.get<uint8_t>());
-      break;
-    case types::explicit_value:
-      j.write_fieldname("explicitValue");
-      c.get<plmn_id_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "tmgi_r17_s::plmn_id_r17_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE tmgi_r17_s::plmn_id_r17_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::plmn_idx:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)12u));
-      break;
-    case types::explicit_value:
-      HANDLE_CODE(c.get<plmn_id_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "tmgi_r17_s::plmn_id_r17_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE tmgi_r17_s::plmn_id_r17_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::plmn_idx:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)1u, (uint8_t)12u));
-      break;
-    case types::explicit_value:
-      HANDLE_CODE(c.get<plmn_id_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "tmgi_r17_s::plmn_id_r17_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_tmgi_r17_s_plmn_id_r17_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(12),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &plmn_id_s::desc}};
+static const asn1::table::field_name choice_table_tmgi_r17_s_plmn_id_r17_c__names[] = {{"plmn-Index", nullptr},
+                                                                                       {"explicitValue", nullptr}};
+const asn1::table::choice_desc       tmgi_r17_s::plmn_id_r17_c_::desc               = {
+    asn1::table::enum_int_type<tmgi_r17_s::plmn_id_r17_c_::types>(),
+    tmgi_r17_s::plmn_id_r17_c_::types::nof_types,
+    tmgi_r17_s::plmn_id_r17_c_::types::nof_exts,
+    tmgi_r17_s::plmn_id_r17_c_::types::has_ext,
+    false,
+    choice_table_tmgi_r17_s_plmn_id_r17_c__alternatives,
+    nullptr,
+    choice_table_tmgi_r17_s_plmn_id_r17_c__names,
+    "tmgi_r17_s::plmn_id_r17_c_",
+    offsetof(tmgi_r17_s::plmn_id_r17_c_, c.type),
+    offsetof(tmgi_r17_s::plmn_id_r17_c_, c.value),
+    false,
+    &tmgi_r17_s::plmn_id_r17_c_::storage_desc};
 
-const char* tmgi_r17_s::plmn_id_r17_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"plmn-Index", "explicitValue"};
-  return convert_enum_idx(names, 2, value, "tmgi_r17_s::plmn_id_r17_c_::types");
-}
+static const char*           enum_names_tmgi_r17_s_plmn_id_r17_c__types_values[] = {"plmn-Index", "explicitValue"};
+const asn1::table::enum_desc tmgi_r17_s::plmn_id_r17_c_::types_opts::desc        = {
+    enum_names_tmgi_r17_s_plmn_id_r17_c__types_values,
+    2,
+    "tmgi_r17_s::plmn_id_r17_c_::types"};
 
 // MRB-ToAddMod-r17 ::= SEQUENCE
-OCUDUASN_CODE mrb_to_add_mod_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref,
-                        {false,
-                         mbs_session_id_r17_present,
-                         mrb_id_new_r17_present,
-                         reestablish_pdcp_r17_present,
-                         recover_pdcp_r17_present,
-                         pdcp_cfg_r17_present}));
-
-  if (mbs_session_id_r17_present) {
-    HANDLE_CODE(mbs_session_id_r17.pack(bref));
-  }
-  HANDLE_CODE(pack_integer(bref, mrb_id_r17, (uint16_t)1u, (uint16_t)512u));
-  if (mrb_id_new_r17_present) {
-    HANDLE_CODE(pack_integer(bref, mrb_id_new_r17, (uint16_t)1u, (uint16_t)512u));
-  }
-  if (pdcp_cfg_r17_present) {
-    HANDLE_CODE(pdcp_cfg_r17.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE mrb_to_add_mod_r17_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&ext,
-                           &mbs_session_id_r17_present,
-                           &mrb_id_new_r17_present,
-                           &reestablish_pdcp_r17_present,
-                           &recover_pdcp_r17_present,
-                           &pdcp_cfg_r17_present}));
-
-  if (mbs_session_id_r17_present) {
-    HANDLE_CODE(mbs_session_id_r17.unpack(bref));
-  }
-  HANDLE_CODE(unpack_integer(mrb_id_r17, bref, (uint16_t)1u, (uint16_t)512u));
-  if (mrb_id_new_r17_present) {
-    HANDLE_CODE(unpack_integer(mrb_id_new_r17, bref, (uint16_t)1u, (uint16_t)512u));
-  }
-  if (pdcp_cfg_r17_present) {
-    HANDLE_CODE(pdcp_cfg_r17.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void mrb_to_add_mod_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (mbs_session_id_r17_present) {
-    j.write_fieldname("mbs-SessionId-r17");
-    mbs_session_id_r17.to_json(j);
-  }
-  j.write_int("mrb-Identity-r17", mrb_id_r17);
-  if (mrb_id_new_r17_present) {
-    j.write_int("mrb-IdentityNew-r17", mrb_id_new_r17);
-  }
-  if (reestablish_pdcp_r17_present) {
-    j.write_str("reestablishPDCP-r17", "true");
-  }
-  if (recover_pdcp_r17_present) {
-    j.write_str("recoverPDCP-r17", "true");
-  }
-  if (pdcp_cfg_r17_present) {
-    j.write_fieldname("pdcp-Config-r17");
-    pdcp_cfg_r17.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_mrb_to_add_mod_r17_s_fields[] = {
+    {offsetof(mrb_to_add_mod_r17_s, mbs_session_id_r17),
+     (int32_t)offsetof(mrb_to_add_mod_r17_s, mbs_session_id_r17_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &tmgi_r17_s::desc},
+    {offsetof(mrb_to_add_mod_r17_s, mrb_id_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(512),
+     nullptr},
+    {offsetof(mrb_to_add_mod_r17_s, mrb_id_new_r17),
+     (int32_t)offsetof(mrb_to_add_mod_r17_s, mrb_id_new_r17_present),
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(512),
+     nullptr},
+    {0,
+     (int32_t)offsetof(mrb_to_add_mod_r17_s, reestablish_pdcp_r17_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {0,
+     (int32_t)offsetof(mrb_to_add_mod_r17_s, recover_pdcp_r17_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(mrb_to_add_mod_r17_s, pdcp_cfg_r17),
+     (int32_t)offsetof(mrb_to_add_mod_r17_s, pdcp_cfg_r17_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &pdcp_cfg_s::desc}};
+static const asn1::table::field_name seq_table_mrb_to_add_mod_r17_s_names[] = {{"mbs-SessionId-r17", nullptr},
+                                                                               {"mrb-Identity-r17", nullptr},
+                                                                               {"mrb-IdentityNew-r17", nullptr},
+                                                                               {"reestablishPDCP-r17", "true"},
+                                                                               {"recoverPDCP-r17", "true"},
+                                                                               {"pdcp-Config-r17", nullptr}};
+static const asn1::table::seq_opt    seq_table_mrb_to_add_mod_r17_s_opts[]  = {
+    {0, (int32_t)offsetof(mrb_to_add_mod_r17_s, mbs_session_id_r17_present)},
+    {2, (int32_t)offsetof(mrb_to_add_mod_r17_s, mrb_id_new_r17_present)},
+    {3, (int32_t)offsetof(mrb_to_add_mod_r17_s, reestablish_pdcp_r17_present)},
+    {4, (int32_t)offsetof(mrb_to_add_mod_r17_s, recover_pdcp_r17_present)},
+    {5, (int32_t)offsetof(mrb_to_add_mod_r17_s, pdcp_cfg_r17_present)}};
+const asn1::table::seq_desc mrb_to_add_mod_r17_s::desc = {
+    {seq_table_mrb_to_add_mod_r17_s_fields, 6, UINT64_C(0x2), seq_table_mrb_to_add_mod_r17_s_opts, 5},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_mrb_to_add_mod_r17_s_names};
 
 // RadioBearerConfig ::= SEQUENCE
-OCUDUASN_CODE radio_bearer_cfg_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(2);
-  group_flags[0] |= mrb_to_add_mod_list_r17.is_present();
-  group_flags[0] |= mrb_to_release_list_r17.is_present();
-  group_flags[0] |= srb4_to_add_mod_r17.is_present();
-  group_flags[0] |= srb4_to_release_r17_present;
-  group_flags[1] |= srb5_to_add_mod_r18.is_present();
-  group_flags[1] |= srb5_to_release_r18_present;
-  HANDLE_CODE(pack_bits(bref,
-                        {group_flags.any(),
-                         srb_to_add_mod_list.size() > 0,
-                         srb3_to_release_present,
-                         drb_to_add_mod_list.size() > 0,
-                         drb_to_release_list.size() > 0,
-                         security_cfg_present}));
-
-  if (srb_to_add_mod_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, srb_to_add_mod_list, 1, 2));
-  }
-  if (drb_to_add_mod_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, drb_to_add_mod_list, 1, 29));
-  }
-  if (drb_to_release_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, drb_to_release_list, 1, 29, integer_packer<uint8_t>(1, 32)));
-  }
-  if (security_cfg_present) {
-    HANDLE_CODE(security_cfg.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref,
-                            {mrb_to_add_mod_list_r17.is_present(),
-                             mrb_to_release_list_r17.is_present(),
-                             srb4_to_add_mod_r17.is_present(),
-                             srb4_to_release_r17_present}));
-      if (mrb_to_add_mod_list_r17.is_present()) {
-        HANDLE_CODE(pack_dyn_seq_of(bref, *mrb_to_add_mod_list_r17, 1, 32));
-      }
-      if (mrb_to_release_list_r17.is_present()) {
-        HANDLE_CODE(pack_dyn_seq_of(bref, *mrb_to_release_list_r17, 1, 32, integer_packer<uint16_t>(1, 512)));
-      }
-      if (srb4_to_add_mod_r17.is_present()) {
-        HANDLE_CODE(srb4_to_add_mod_r17->pack(bref));
-      }
-    }
-    if (group_flags[1]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref, {srb5_to_add_mod_r18.is_present(), srb5_to_release_r18_present}));
-      if (srb5_to_add_mod_r18.is_present()) {
-        HANDLE_CODE(srb5_to_add_mod_r18->pack(bref));
-      }
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE radio_bearer_cfg_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  bool srb_to_add_mod_list_present;
-  bool drb_to_add_mod_list_present;
-  bool drb_to_release_list_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&ext,
-                           &srb_to_add_mod_list_present,
-                           &srb3_to_release_present,
-                           &drb_to_add_mod_list_present,
-                           &drb_to_release_list_present,
-                           &security_cfg_present}));
-
-  if (srb_to_add_mod_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(srb_to_add_mod_list, bref, 1, 2));
-  }
-  if (drb_to_add_mod_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(drb_to_add_mod_list, bref, 1, 29));
-  }
-  if (drb_to_release_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(drb_to_release_list, bref, 1, 29, integer_packer<uint8_t>(1, 32)));
-  }
-  if (security_cfg_present) {
-    HANDLE_CODE(security_cfg.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      unpack_presence_flag(mrb_to_add_mod_list_r17, bref);
-      unpack_presence_flag(mrb_to_release_list_r17, bref);
-      unpack_presence_flag(srb4_to_add_mod_r17, bref);
-      HANDLE_CODE(bref.unpack(srb4_to_release_r17_present, 1));
-      if (mrb_to_add_mod_list_r17.is_present()) {
-        HANDLE_CODE(unpack_dyn_seq_of(*mrb_to_add_mod_list_r17, bref, 1, 32));
-      }
-      if (mrb_to_release_list_r17.is_present()) {
-        HANDLE_CODE(unpack_dyn_seq_of(*mrb_to_release_list_r17, bref, 1, 32, integer_packer<uint16_t>(1, 512)));
-      }
-      if (srb4_to_add_mod_r17.is_present()) {
-        HANDLE_CODE(srb4_to_add_mod_r17->unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      unpack_presence_flag(srb5_to_add_mod_r18, bref);
-      HANDLE_CODE(bref.unpack(srb5_to_release_r18_present, 1));
-      if (srb5_to_add_mod_r18.is_present()) {
-        HANDLE_CODE(srb5_to_add_mod_r18->unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void radio_bearer_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (srb_to_add_mod_list.size() > 0) {
-    j.start_array("srb-ToAddModList");
-    for (const auto& e1 : srb_to_add_mod_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (srb3_to_release_present) {
-    j.write_str("srb3-ToRelease", "true");
-  }
-  if (drb_to_add_mod_list.size() > 0) {
-    j.start_array("drb-ToAddModList");
-    for (const auto& e1 : drb_to_add_mod_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (drb_to_release_list.size() > 0) {
-    j.start_array("drb-ToReleaseList");
-    for (const auto& e1 : drb_to_release_list) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  if (security_cfg_present) {
-    j.write_fieldname("securityConfig");
-    security_cfg.to_json(j);
-  }
-  if (mrb_to_add_mod_list_r17.is_present()) {
-    j.start_array("mrb-ToAddModList-r17");
-    for (const auto& e1 : *mrb_to_add_mod_list_r17) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (mrb_to_release_list_r17.is_present()) {
-    j.start_array("mrb-ToReleaseList-r17");
-    for (const auto& e1 : *mrb_to_release_list_r17) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  if (srb4_to_add_mod_r17.is_present()) {
-    j.write_fieldname("srb4-ToAddMod-r17");
-    srb4_to_add_mod_r17->to_json(j);
-  }
-  if (srb4_to_release_r17_present) {
-    j.write_str("srb4-ToRelease-r17", "true");
-  }
-  if (srb5_to_add_mod_r18.is_present()) {
-    j.write_fieldname("srb5-ToAddMod-r18");
-    srb5_to_add_mod_r18->to_json(j);
-  }
-  if (srb5_to_release_r18_present) {
-    j.write_str("srb5-ToRelease-r18", "true");
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_radio_bearer_cfg_s_fields[] = {
+    {offsetof(radio_bearer_cfg_s, srb_to_add_mod_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     2,
+     &asn1::table::item_list_codec<decltype(radio_bearer_cfg_s::srb_to_add_mod_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &srb_to_add_mod_s::desc},
+    {0,
+     (int32_t)offsetof(radio_bearer_cfg_s, srb3_to_release_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(radio_bearer_cfg_s, drb_to_add_mod_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     29,
+     &asn1::table::item_list_codec<decltype(radio_bearer_cfg_s::drb_to_add_mod_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &drb_to_add_mod_s::desc},
+    {offsetof(radio_bearer_cfg_s, drb_to_release_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     29,
+     &asn1::table::list_codec<decltype(radio_bearer_cfg_s::drb_to_release_list),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(1), UINT64_C(32), false, false>>::value},
+    {offsetof(radio_bearer_cfg_s, security_cfg),
+     (int32_t)offsetof(radio_bearer_cfg_s, security_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &security_cfg_s::desc}};
+static const asn1::table::field_name seq_table_radio_bearer_cfg_s_names[] = {{"srb-ToAddModList", nullptr},
+                                                                             {"srb3-ToRelease", "true"},
+                                                                             {"drb-ToAddModList", nullptr},
+                                                                             {"drb-ToReleaseList", nullptr},
+                                                                             {"securityConfig", nullptr}};
+static const asn1::table::seq_opt    seq_table_radio_bearer_cfg_s_opts[]  = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, (int32_t)offsetof(radio_bearer_cfg_s, srb3_to_release_present)},
+    {2, asn1::table::seq_field::list_presence},
+    {3, asn1::table::seq_field::list_presence},
+    {4, (int32_t)offsetof(radio_bearer_cfg_s, security_cfg_present)}};
+static const asn1::table::seq_field seq_table_radio_bearer_cfg_s_g0_fields[] = {
+    {offsetof(radio_bearer_cfg_s, mrb_to_add_mod_list_r17),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::ptr_item_list_codec<decltype(radio_bearer_cfg_s::mrb_to_add_mod_list_r17),
+                                       asn1::table::sequence_item_ops,
+                                       false,
+                                       true>::value,
+     &mrb_to_add_mod_r17_s::desc},
+    {offsetof(radio_bearer_cfg_s, mrb_to_release_list_r17),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::ptr_list_codec<decltype(radio_bearer_cfg_s::mrb_to_release_list_r17),
+                                  asn1::table::int_json,
+                                  asn1::table::int_items<false, INT64_C(1), UINT64_C(512), false, false>>::value},
+    {offsetof(radio_bearer_cfg_s, srb4_to_add_mod_r17),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(radio_bearer_cfg_s::srb4_to_add_mod_r17)>::value,
+     &srb_to_add_mod_s::desc},
+    {0,
+     (int32_t)offsetof(radio_bearer_cfg_s, srb4_to_release_r17_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_radio_bearer_cfg_s_g0_names[] = {{"mrb-ToAddModList-r17", nullptr},
+                                                                                {"mrb-ToReleaseList-r17", nullptr},
+                                                                                {"srb4-ToAddMod-r17", nullptr},
+                                                                                {"srb4-ToRelease-r17", "true"}};
+static const asn1::table::seq_opt    seq_table_radio_bearer_cfg_s_g0_opts[]  = {
+    {0, asn1::table::seq_field::ptr_presence},
+    {1, asn1::table::seq_field::ptr_presence},
+    {2, asn1::table::seq_field::ptr_presence},
+    {3, (int32_t)offsetof(radio_bearer_cfg_s, srb4_to_release_r17_present)}};
+static const asn1::table::seq_field seq_table_radio_bearer_cfg_s_g1_fields[] = {
+    {offsetof(radio_bearer_cfg_s, srb5_to_add_mod_r18),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(radio_bearer_cfg_s::srb5_to_add_mod_r18)>::value,
+     &srb_to_add_mod_s::desc},
+    {0,
+     (int32_t)offsetof(radio_bearer_cfg_s, srb5_to_release_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_radio_bearer_cfg_s_g1_names[] = {{"srb5-ToAddMod-r18", nullptr},
+                                                                                {"srb5-ToRelease-r18", "true"}};
+static const asn1::table::seq_opt    seq_table_radio_bearer_cfg_s_g1_opts[]  = {
+    {0, asn1::table::seq_field::ptr_presence},
+    {1, (int32_t)offsetof(radio_bearer_cfg_s, srb5_to_release_r18_present)}};
+static const asn1::table::seq_group seq_table_radio_bearer_cfg_s_groups[] = {
+    {{seq_table_radio_bearer_cfg_s_g0_fields, 4, UINT64_C(0x0), seq_table_radio_bearer_cfg_s_g0_opts, 4},
+     false,
+     seq_table_radio_bearer_cfg_s_g0_names},
+    {{seq_table_radio_bearer_cfg_s_g1_fields, 2, UINT64_C(0x0), seq_table_radio_bearer_cfg_s_g1_opts, 2},
+     false,
+     seq_table_radio_bearer_cfg_s_g1_names}};
+const asn1::table::seq_desc radio_bearer_cfg_s::desc = {
+    {seq_table_radio_bearer_cfg_s_fields, 5, UINT64_C(0x0), seq_table_radio_bearer_cfg_s_opts, 5},
+    true,
+    false,
+    seq_table_radio_bearer_cfg_s_groups,
+    2,
+    seq_table_radio_bearer_cfg_s_names};

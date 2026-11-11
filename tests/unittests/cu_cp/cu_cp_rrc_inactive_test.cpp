@@ -736,7 +736,7 @@ TEST_F(cu_cp_rrc_inactive_test, when_amf_rejects_the_resume_cause_then_resume_is
   ASSERT_EQ(release_cmd->srb_id, 0);
   asn1::rrc_nr::dl_ccch_msg_s ccch;
   asn1::cbit_ref              bref{release_cmd->rrc_container};
-  ASSERT_EQ(ccch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ccch, bref), asn1::OCUDUASN_SUCCESS);
   ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
   ASSERT_TRUE(ccch.msg.c1().rrc_reject().crit_exts.rrc_reject().wait_time_present);
   get_du(du_idx).push_ul_pdu(test_helpers::generate_ue_context_release_complete(f1ap_pdu));
@@ -1570,7 +1570,7 @@ TEST_F(cu_cp_rrc_inactive_test, when_ue_resumes_during_location_measurements_the
   ASSERT_TRUE(req->cu_to_du_rrc_info.ie_exts.location_meas_info_present);
   byte_buffer   expected_info;
   asn1::bit_ref bref{expected_info};
-  ASSERT_EQ(test_helpers::create_nr_prs_location_meas_info().pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, test_helpers::create_nr_prs_location_meas_info()), asn1::OCUDUASN_SUCCESS);
   EXPECT_EQ(req->cu_to_du_rrc_info.ie_exts.location_meas_info, expected_info);
 }
 

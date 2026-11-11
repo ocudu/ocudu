@@ -47,10 +47,10 @@ TEST_F(f1ap_du_test, redcap_identity_is_encoded_in_initial_ul_rrc_transfer)
 
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, f1c_gw.last_tx_pdu().pdu), asn1::OCUDUASN_SUCCESS);
   asn1::cbit_ref reader{packed};
   f1ap_pdu_c     decoded;
-  ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(decoded, reader), asn1::OCUDUASN_SUCCESS);
   const auto& initial = decoded.init_msg().value.init_ul_rrc_msg_transfer();
   ASSERT_TRUE(initial->nr_red_cap_ue_ind_present);
   EXPECT_EQ(initial->nr_red_cap_ue_ind, nr_red_cap_ue_ind_opts::true_value);

@@ -4,7 +4,8 @@
 # Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 # ASN1 utils
-add_library(asn1_utils STATIC asn1_utils.cpp)
+add_library(asn1_utils STATIC asn1_ap_utils.cpp asn1_bit_ref.cpp asn1_codec.cpp asn1_containers.cpp asn1_json.cpp asn1_per.cpp
+        asn1_types.cpp)
 target_compile_options(asn1_utils PRIVATE -fno-exceptions)
 target_link_libraries(asn1_utils ocudulog ocudu_support)
 

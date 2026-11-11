@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_rrc_utils.h"
 
 namespace asn1 {
 namespace rrc_nr {
@@ -492,10 +492,9 @@ namespace rrc_nr {
 // SubcarrierSpacing ::= ENUMERATED
 struct subcarrier_spacing_opts {
   enum options { khz15, khz30, khz60, khz120, khz240, khz480_v1700, khz960_v1700, spare1, nulltype } value;
-  typedef uint16_t number_type;
 
-  const char* to_string() const;
-  uint16_t    to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint16_t                            to_number() const;
 };
 using subcarrier_spacing_e = enumerated<subcarrier_spacing_opts>;
 
@@ -504,10 +503,7 @@ struct serving_cell_and_bwp_id_r17_s {
   uint8_t servingcell_r17 = 0;
   uint8_t bwp_r17         = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MCC ::= SEQUENCE (SIZE (3)) OF INTEGER (0..9)
@@ -522,10 +518,7 @@ struct plmn_id_s {
   mcc_l mcc;
   mnc_l mnc;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-PeriodicityAndOffset ::= CHOICE
@@ -551,182 +544,174 @@ struct srs_periodicity_and_offset_c {
       sl2560,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  srs_periodicity_and_offset_c() = default;
-  srs_periodicity_and_offset_c(const srs_periodicity_and_offset_c& other);
-  srs_periodicity_and_offset_c& operator=(const srs_periodicity_and_offset_c& other);
-  ~srs_periodicity_and_offset_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  uint8_t& sl2()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  uint8_t&                                      sl2()
   {
-    assert_choice_type(types::sl2, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl2, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl4()
   {
-    assert_choice_type(types::sl4, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl4, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl5()
   {
-    assert_choice_type(types::sl5, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl5, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl8()
   {
-    assert_choice_type(types::sl8, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl8, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl10()
   {
-    assert_choice_type(types::sl10, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl10, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl16()
   {
-    assert_choice_type(types::sl16, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl16, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl20()
   {
-    assert_choice_type(types::sl20, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl20, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl32()
   {
-    assert_choice_type(types::sl32, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl32, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl40()
   {
-    assert_choice_type(types::sl40, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl40, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl64()
   {
-    assert_choice_type(types::sl64, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl64, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl80()
   {
-    assert_choice_type(types::sl80, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl80, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint8_t& sl160()
   {
-    assert_choice_type(types::sl160, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl160, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   uint16_t& sl320()
   {
-    assert_choice_type(types::sl320, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl320, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   uint16_t& sl640()
   {
-    assert_choice_type(types::sl640, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl640, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   uint16_t& sl1280()
   {
-    assert_choice_type(types::sl1280, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl1280, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   uint16_t& sl2560()
   {
-    assert_choice_type(types::sl2560, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl2560, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   const uint8_t& sl2() const
   {
-    assert_choice_type(types::sl2, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl2, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl4() const
   {
-    assert_choice_type(types::sl4, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl4, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl5() const
   {
-    assert_choice_type(types::sl5, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl5, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl8() const
   {
-    assert_choice_type(types::sl8, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl8, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl10() const
   {
-    assert_choice_type(types::sl10, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl10, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl16() const
   {
-    assert_choice_type(types::sl16, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl16, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl20() const
   {
-    assert_choice_type(types::sl20, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl20, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl32() const
   {
-    assert_choice_type(types::sl32, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl32, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl40() const
   {
-    assert_choice_type(types::sl40, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl40, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl64() const
   {
-    assert_choice_type(types::sl64, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl64, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl80() const
   {
-    assert_choice_type(types::sl80, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl80, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint8_t& sl160() const
   {
-    assert_choice_type(types::sl160, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl160, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint8_t>();
   }
   const uint16_t& sl320() const
   {
-    assert_choice_type(types::sl320, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl320, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   const uint16_t& sl640() const
   {
-    assert_choice_type(types::sl640, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl640, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   const uint16_t& sl1280() const
   {
-    assert_choice_type(types::sl1280, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl1280, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   const uint16_t& sl2560() const
   {
-    assert_choice_type(types::sl2560, type_, "SRS-PeriodicityAndOffset");
+    assert_choice_type(types::sl2560, c.type, "SRS-PeriodicityAndOffset");
     return c.get<uint16_t>();
   }
   void      set_sl1();
@@ -748,10 +733,7 @@ struct srs_periodicity_and_offset_c {
   uint16_t& set_sl2560();
 
 private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
+  asn1::table::choice_storage<srs_periodicity_and_offset_c, types, pod_choice_buffer_t> c;
 };
 
 // SRS-SpatialRelationInfo ::= SEQUENCE
@@ -764,49 +746,42 @@ struct srs_spatial_relation_info_s {
     struct types_opts {
       enum options { ssb_idx, csi_rs_idx, srs, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ref_sig_c_() = default;
-    ref_sig_c_(const ref_sig_c_& other);
-    ref_sig_c_& operator=(const ref_sig_c_& other);
-    ~ref_sig_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    uint8_t& ssb_idx()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    uint8_t&                                      ssb_idx()
     {
-      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
+      assert_choice_type(types::ssb_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     uint8_t& csi_rs_idx()
     {
-      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
+      assert_choice_type(types::csi_rs_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     srs_s_& srs()
     {
-      assert_choice_type(types::srs, type_, "referenceSignal");
+      assert_choice_type(types::srs, c.type, "referenceSignal");
       return c.get<srs_s_>();
     }
     const uint8_t& ssb_idx() const
     {
-      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
+      assert_choice_type(types::ssb_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     const uint8_t& csi_rs_idx() const
     {
-      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
+      assert_choice_type(types::csi_rs_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     const srs_s_& srs() const
     {
-      assert_choice_type(types::srs, type_, "referenceSignal");
+      assert_choice_type(types::srs, c.type, "referenceSignal");
       return c.get<srs_s_>();
     }
     uint8_t& set_ssb_idx();
@@ -814,10 +789,7 @@ struct srs_spatial_relation_info_s {
     srs_s_&  set_srs();
 
   private:
-    types                   type_;
-    choice_buffer_t<srs_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<srs_s_>> c;
   };
 
   // member variables
@@ -825,10 +797,7 @@ struct srs_spatial_relation_info_s {
   uint8_t    serving_cell_id         = 0;
   ref_sig_c_ ref_sig;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SpatialRelationInfo-PDC-r17 ::= SEQUENCE
@@ -841,59 +810,52 @@ struct spatial_relation_info_pdc_r17_s {
     struct types_opts {
       enum options { ssb_idx, csi_rs_idx, dl_prs_pdc, srs, /*...*/ nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts, true>;
 
-    // choice methods
-    ref_sig_c_() = default;
-    ref_sig_c_(const ref_sig_c_& other);
-    ref_sig_c_& operator=(const ref_sig_c_& other);
-    ~ref_sig_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    uint8_t& ssb_idx()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    uint8_t&                                      ssb_idx()
     {
-      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
+      assert_choice_type(types::ssb_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     uint8_t& csi_rs_idx()
     {
-      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
+      assert_choice_type(types::csi_rs_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     uint8_t& dl_prs_pdc()
     {
-      assert_choice_type(types::dl_prs_pdc, type_, "referenceSignal");
+      assert_choice_type(types::dl_prs_pdc, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     srs_s_& srs()
     {
-      assert_choice_type(types::srs, type_, "referenceSignal");
+      assert_choice_type(types::srs, c.type, "referenceSignal");
       return c.get<srs_s_>();
     }
     const uint8_t& ssb_idx() const
     {
-      assert_choice_type(types::ssb_idx, type_, "referenceSignal");
+      assert_choice_type(types::ssb_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     const uint8_t& csi_rs_idx() const
     {
-      assert_choice_type(types::csi_rs_idx, type_, "referenceSignal");
+      assert_choice_type(types::csi_rs_idx, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     const uint8_t& dl_prs_pdc() const
     {
-      assert_choice_type(types::dl_prs_pdc, type_, "referenceSignal");
+      assert_choice_type(types::dl_prs_pdc, c.type, "referenceSignal");
       return c.get<uint8_t>();
     }
     const srs_s_& srs() const
     {
-      assert_choice_type(types::srs, type_, "referenceSignal");
+      assert_choice_type(types::srs, c.type, "referenceSignal");
       return c.get<srs_s_>();
     }
     uint8_t& set_ssb_idx();
@@ -902,38 +864,30 @@ struct spatial_relation_info_pdc_r17_s {
     srs_s_&  set_srs();
 
   private:
-    types                   type_;
-    choice_buffer_t<srs_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<srs_s_>> c;
   };
 
   // member variables
   ref_sig_c_ ref_sig;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-Resource ::= SEQUENCE
 struct srs_res_s {
   struct nrof_srs_ports_opts {
     enum options { port1, ports2, ports4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using nrof_srs_ports_e_ = enumerated<nrof_srs_ports_opts>;
   struct ptrs_port_idx_opts {
     enum options { n0, n1, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ptrs_port_idx_e_ = enumerated<ptrs_port_idx_opts>;
   struct tx_comb_c_ {
@@ -947,68 +901,55 @@ struct srs_res_s {
     };
     struct types_opts {
       enum options { n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    tx_comb_c_() = default;
-    tx_comb_c_(const tx_comb_c_& other);
-    tx_comb_c_& operator=(const tx_comb_c_& other);
-    ~tx_comb_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    n2_s_& n2()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    n2_s_&                                        n2()
     {
-      assert_choice_type(types::n2, type_, "transmissionComb");
+      assert_choice_type(types::n2, c.type, "transmissionComb");
       return c.get<n2_s_>();
     }
     n4_s_& n4()
     {
-      assert_choice_type(types::n4, type_, "transmissionComb");
+      assert_choice_type(types::n4, c.type, "transmissionComb");
       return c.get<n4_s_>();
     }
     const n2_s_& n2() const
     {
-      assert_choice_type(types::n2, type_, "transmissionComb");
+      assert_choice_type(types::n2, c.type, "transmissionComb");
       return c.get<n2_s_>();
     }
     const n4_s_& n4() const
     {
-      assert_choice_type(types::n4, type_, "transmissionComb");
+      assert_choice_type(types::n4, c.type, "transmissionComb");
       return c.get<n4_s_>();
     }
     n2_s_& set_n2();
     n4_s_& set_n4();
 
   private:
-    types                         type_;
-    choice_buffer_t<n2_s_, n4_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<tx_comb_c_, types, choice_buffer_t<n2_s_, n4_s_>> c;
   };
   struct res_map_s_ {
     struct nrof_symbols_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using nrof_symbols_e_ = enumerated<nrof_symbols_opts>;
     struct repeat_factor_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using repeat_factor_e_ = enumerated<repeat_factor_opts>;
 
@@ -1025,7 +966,7 @@ struct srs_res_s {
   struct group_or_seq_hop_opts {
     enum options { neither, group_hop, seq_hop, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using group_or_seq_hop_e_ = enumerated<group_or_seq_hop_opts>;
   struct res_type_c_ {
@@ -1043,49 +984,42 @@ struct srs_res_s {
     struct types_opts {
       enum options { aperiodic, semi_persistent, periodic, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    res_type_c_() = default;
-    res_type_c_(const res_type_c_& other);
-    res_type_c_& operator=(const res_type_c_& other);
-    ~res_type_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    aperiodic_s_& aperiodic()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    aperiodic_s_&                                 aperiodic()
     {
-      assert_choice_type(types::aperiodic, type_, "resourceType");
+      assert_choice_type(types::aperiodic, c.type, "resourceType");
       return c.get<aperiodic_s_>();
     }
     semi_persistent_s_& semi_persistent()
     {
-      assert_choice_type(types::semi_persistent, type_, "resourceType");
+      assert_choice_type(types::semi_persistent, c.type, "resourceType");
       return c.get<semi_persistent_s_>();
     }
     periodic_s_& periodic()
     {
-      assert_choice_type(types::periodic, type_, "resourceType");
+      assert_choice_type(types::periodic, c.type, "resourceType");
       return c.get<periodic_s_>();
     }
     const aperiodic_s_& aperiodic() const
     {
-      assert_choice_type(types::aperiodic, type_, "resourceType");
+      assert_choice_type(types::aperiodic, c.type, "resourceType");
       return c.get<aperiodic_s_>();
     }
     const semi_persistent_s_& semi_persistent() const
     {
-      assert_choice_type(types::semi_persistent, type_, "resourceType");
+      assert_choice_type(types::semi_persistent, c.type, "resourceType");
       return c.get<semi_persistent_s_>();
     }
     const periodic_s_& periodic() const
     {
-      assert_choice_type(types::periodic, type_, "resourceType");
+      assert_choice_type(types::periodic, c.type, "resourceType");
       return c.get<periodic_s_>();
     }
     aperiodic_s_&       set_aperiodic();
@@ -1093,26 +1027,21 @@ struct srs_res_s {
     periodic_s_&        set_periodic();
 
   private:
-    types                                                          type_;
-    choice_buffer_t<aperiodic_s_, periodic_s_, semi_persistent_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<res_type_c_, types, choice_buffer_t<aperiodic_s_, periodic_s_, semi_persistent_s_>> c;
   };
   struct res_map_r16_s_ {
     struct nrof_symbols_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using nrof_symbols_r16_e_ = enumerated<nrof_symbols_r16_opts>;
     struct repeat_factor_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using repeat_factor_r16_e_ = enumerated<repeat_factor_r16_opts>;
 
@@ -1124,18 +1053,16 @@ struct srs_res_s {
   struct res_map_r17_s_ {
     struct nrof_symbols_r17_opts {
       enum options { n1, n2, n4, n8, n10, n12, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using nrof_symbols_r17_e_ = enumerated<nrof_symbols_r17_opts>;
     struct repeat_factor_r17_opts {
       enum options { n1, n2, n4, n5, n6, n7, n8, n10, n12, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using repeat_factor_r17_e_ = enumerated<repeat_factor_r17_opts>;
 
@@ -1152,52 +1079,41 @@ struct srs_res_s {
           start_rb_idx_and_freq_scaling_factor4_r17,
           nulltype
         } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      start_rb_idx_f_scaling_r17_c_() = default;
-      start_rb_idx_f_scaling_r17_c_(const start_rb_idx_f_scaling_r17_c_& other);
-      start_rb_idx_f_scaling_r17_c_& operator=(const start_rb_idx_f_scaling_r17_c_& other);
-      ~start_rb_idx_f_scaling_r17_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      uint8_t& start_rb_idx_and_freq_scaling_factor2_r17()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      uint8_t&                                      start_rb_idx_and_freq_scaling_factor2_r17()
       {
-        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor2_r17, type_, "startRBIndexFScaling-r17");
+        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor2_r17, c.type, "startRBIndexFScaling-r17");
         return c.get<uint8_t>();
       }
       uint8_t& start_rb_idx_and_freq_scaling_factor4_r17()
       {
-        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor4_r17, type_, "startRBIndexFScaling-r17");
+        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor4_r17, c.type, "startRBIndexFScaling-r17");
         return c.get<uint8_t>();
       }
       const uint8_t& start_rb_idx_and_freq_scaling_factor2_r17() const
       {
-        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor2_r17, type_, "startRBIndexFScaling-r17");
+        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor2_r17, c.type, "startRBIndexFScaling-r17");
         return c.get<uint8_t>();
       }
       const uint8_t& start_rb_idx_and_freq_scaling_factor4_r17() const
       {
-        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor4_r17, type_, "startRBIndexFScaling-r17");
+        assert_choice_type(types::start_rb_idx_and_freq_scaling_factor4_r17, c.type, "startRBIndexFScaling-r17");
         return c.get<uint8_t>();
       }
       uint8_t& set_start_rb_idx_and_freq_scaling_factor2_r17();
       uint8_t& set_start_rb_idx_and_freq_scaling_factor4_r17();
 
     private:
-      types               type_;
-      pod_choice_buffer_t c;
-
-      void destroy_();
+      asn1::table::choice_storage<start_rb_idx_f_scaling_r17_c_, types, pod_choice_buffer_t> c;
     };
 
     // member variables
@@ -1212,49 +1128,39 @@ struct srs_res_s {
     struct types_opts {
       enum options { srs_ul_tci_state, srs_dl_or_joint_tci_state, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    srs_tci_state_r17_c_() = default;
-    srs_tci_state_r17_c_(const srs_tci_state_r17_c_& other);
-    srs_tci_state_r17_c_& operator=(const srs_tci_state_r17_c_& other);
-    ~srs_tci_state_r17_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    uint8_t& srs_ul_tci_state()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    uint8_t&                                      srs_ul_tci_state()
     {
-      assert_choice_type(types::srs_ul_tci_state, type_, "srs-TCI-State-r17");
+      assert_choice_type(types::srs_ul_tci_state, c.type, "srs-TCI-State-r17");
       return c.get<uint8_t>();
     }
     uint8_t& srs_dl_or_joint_tci_state()
     {
-      assert_choice_type(types::srs_dl_or_joint_tci_state, type_, "srs-TCI-State-r17");
+      assert_choice_type(types::srs_dl_or_joint_tci_state, c.type, "srs-TCI-State-r17");
       return c.get<uint8_t>();
     }
     const uint8_t& srs_ul_tci_state() const
     {
-      assert_choice_type(types::srs_ul_tci_state, type_, "srs-TCI-State-r17");
+      assert_choice_type(types::srs_ul_tci_state, c.type, "srs-TCI-State-r17");
       return c.get<uint8_t>();
     }
     const uint8_t& srs_dl_or_joint_tci_state() const
     {
-      assert_choice_type(types::srs_dl_or_joint_tci_state, type_, "srs-TCI-State-r17");
+      assert_choice_type(types::srs_dl_or_joint_tci_state, c.type, "srs-TCI-State-r17");
       return c.get<uint8_t>();
     }
     uint8_t& set_srs_ul_tci_state();
     uint8_t& set_srs_dl_or_joint_tci_state();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<srs_tci_state_r17_c_, types, pod_choice_buffer_t> c;
   };
   struct srs_dl_or_joint_tci_state_v1730_s_ {
     serving_cell_and_bwp_id_r17_s cell_and_bwp_r17;
@@ -1262,64 +1168,53 @@ struct srs_res_s {
   struct nrof_srs_ports_n8_r18_opts {
     enum options { ports8, ports8tdm, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using nrof_srs_ports_n8_r18_e_ = enumerated<nrof_srs_ports_n8_r18_opts>;
   struct comb_offset_hop_r18_s_ {
     struct hop_subset_r18_c_ {
       struct types_opts {
         enum options { tx_comb_n4, tx_comb_n8, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      hop_subset_r18_c_() = default;
-      hop_subset_r18_c_(const hop_subset_r18_c_& other);
-      hop_subset_r18_c_& operator=(const hop_subset_r18_c_& other);
-      ~hop_subset_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fixed_bitstring<4>& tx_comb_n4()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fixed_bitstring<4>&                           tx_comb_n4()
       {
-        assert_choice_type(types::tx_comb_n4, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n4, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<4>>();
       }
       fixed_bitstring<8>& tx_comb_n8()
       {
-        assert_choice_type(types::tx_comb_n8, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n8, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<8>>();
       }
       const fixed_bitstring<4>& tx_comb_n4() const
       {
-        assert_choice_type(types::tx_comb_n4, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n4, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<4>>();
       }
       const fixed_bitstring<8>& tx_comb_n8() const
       {
-        assert_choice_type(types::tx_comb_n8, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n8, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<8>>();
       }
       fixed_bitstring<4>& set_tx_comb_n4();
       fixed_bitstring<8>& set_tx_comb_n8();
 
     private:
-      types                               type_;
-      choice_buffer_t<fixed_bitstring<8>> c;
-
-      void destroy_();
+      asn1::table::choice_storage<hop_subset_r18_c_, types, choice_buffer_t<fixed_bitstring<8>>> c;
     };
     struct hop_with_repeat_r18_opts {
       enum options { symbol, repeat, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using hop_with_repeat_r18_e_ = enumerated<hop_with_repeat_r18_opts>;
 
@@ -1335,52 +1230,44 @@ struct srs_res_s {
     struct hop_subset_r18_c_ {
       struct types_opts {
         enum options { tx_comb_n2, tx_comb_n4, tx_comb_n8, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      hop_subset_r18_c_() = default;
-      hop_subset_r18_c_(const hop_subset_r18_c_& other);
-      hop_subset_r18_c_& operator=(const hop_subset_r18_c_& other);
-      ~hop_subset_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fixed_bitstring<8>& tx_comb_n2()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fixed_bitstring<8>&                           tx_comb_n2()
       {
-        assert_choice_type(types::tx_comb_n2, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n2, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<8>>();
       }
       fixed_bitstring<12>& tx_comb_n4()
       {
-        assert_choice_type(types::tx_comb_n4, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n4, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<12>>();
       }
       fixed_bitstring<6>& tx_comb_n8()
       {
-        assert_choice_type(types::tx_comb_n8, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n8, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<6>>();
       }
       const fixed_bitstring<8>& tx_comb_n2() const
       {
-        assert_choice_type(types::tx_comb_n2, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n2, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<8>>();
       }
       const fixed_bitstring<12>& tx_comb_n4() const
       {
-        assert_choice_type(types::tx_comb_n4, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n4, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<12>>();
       }
       const fixed_bitstring<6>& tx_comb_n8() const
       {
-        assert_choice_type(types::tx_comb_n8, type_, "hoppingSubset-r18");
+        assert_choice_type(types::tx_comb_n8, c.type, "hoppingSubset-r18");
         return c.get<fixed_bitstring<6>>();
       }
       fixed_bitstring<8>&  set_tx_comb_n2();
@@ -1388,10 +1275,7 @@ struct srs_res_s {
       fixed_bitstring<6>&  set_tx_comb_n8();
 
     private:
-      types                                type_;
-      choice_buffer_t<fixed_bitstring<12>> c;
-
-      void destroy_();
+      asn1::table::choice_storage<hop_subset_r18_c_, types, choice_buffer_t<fixed_bitstring<12>>> c;
     };
 
     // member variables
@@ -1435,52 +1319,44 @@ struct srs_res_s {
   copy_ptr<comb_offset_hop_r18_s_>  comb_offset_hop_r18;
   copy_ptr<cyclic_shift_hop_r18_s_> cyclic_shift_hop_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-PosResources-r16 ::= SEQUENCE
 struct srs_pos_resources_r16_s {
   struct max_num_srs_pos_res_set_per_bwp_r16_opts {
     enum options { n1, n2, n4, n8, n12, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_srs_pos_res_set_per_bwp_r16_e_ = enumerated<max_num_srs_pos_res_set_per_bwp_r16_opts>;
   struct max_num_srs_pos_res_per_bwp_r16_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_srs_pos_res_per_bwp_r16_opts>;
   struct max_num_srs_res_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_srs_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_srs_res_per_bwp_per_slot_r16_opts>;
   struct max_num_periodic_srs_pos_res_per_bwp_r16_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_periodic_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_periodic_srs_pos_res_per_bwp_r16_opts>;
   struct max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e_ =
       enumerated<max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts>;
@@ -1492,28 +1368,23 @@ struct srs_pos_resources_r16_s {
   max_num_periodic_srs_pos_res_per_bwp_r16_e_          max_num_periodic_srs_pos_res_per_bwp_r16;
   max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e_ max_num_periodic_srs_pos_res_per_bwp_per_slot_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-PosResourceAP-r16 ::= SEQUENCE
 struct srs_pos_res_ap_r16_s {
   struct max_num_ap_srs_pos_res_per_bwp_r16_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_ap_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_ap_srs_pos_res_per_bwp_r16_opts>;
   struct max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts>;
 
@@ -1521,28 +1392,23 @@ struct srs_pos_res_ap_r16_s {
   max_num_ap_srs_pos_res_per_bwp_r16_e_          max_num_ap_srs_pos_res_per_bwp_r16;
   max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_ max_num_ap_srs_pos_res_per_bwp_per_slot_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-PosResourceSP-r16 ::= SEQUENCE
 struct srs_pos_res_sp_r16_s {
   struct max_num_sp_srs_pos_res_per_bwp_r16_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_sp_srs_pos_res_per_bwp_r16_e_ = enumerated<max_num_sp_srs_pos_res_per_bwp_r16_opts>;
   struct max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_ = enumerated<max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts>;
 
@@ -1550,10 +1416,7 @@ struct srs_pos_res_sp_r16_s {
   max_num_sp_srs_pos_res_per_bwp_r16_e_          max_num_sp_srs_pos_res_per_bwp_r16;
   max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_ max_num_sp_srs_pos_res_per_bwp_per_slot_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-AllPosResources-r16 ::= SEQUENCE
@@ -1564,10 +1427,7 @@ struct srs_all_pos_res_r16_s {
   srs_pos_res_ap_r16_s    srs_pos_res_ap_r16;
   srs_pos_res_sp_r16_s    srs_pos_res_sp_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 } // namespace rrc_nr

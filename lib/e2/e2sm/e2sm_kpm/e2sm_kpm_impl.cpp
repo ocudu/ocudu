@@ -5,7 +5,7 @@
 
 #include "e2sm_kpm_impl.h"
 #include "e2sm_kpm_report_service_impl.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm;

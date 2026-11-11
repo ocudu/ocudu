@@ -5,7 +5,7 @@
 
 #include "ng_setup_procedure.h"
 #include "../ngap_asn1_validators.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/ngap/common.h"
 #include "ocudu/ngap/ngap_setup.h"
 #include "ocudu/support/async/async_timer.h"
@@ -144,7 +144,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
   {
     byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(packed);
-    if (request.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, request.pdu) == asn1::OCUDUASN_SUCCESS) {
       response.packed_ng_setup_request = std::move(packed);
     } else {
       logger.debug("\"{}\": failed to pack NGSetupRequest", name());
@@ -158,7 +158,7 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
     resp_pdu.successful_outcome().value.ng_setup_resp() = transaction_sink.response();
     byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(packed);
-    if (resp_pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, resp_pdu) == asn1::OCUDUASN_SUCCESS) {
       response.packed_ng_setup_response = std::move(packed);
     } else {
       logger.debug("\"{}\": failed to pack NGSetupResponse", name());

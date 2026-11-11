@@ -163,11 +163,11 @@ TEST(ngap_ntn_tai_info_test, ntn_tai_information_survives_a_pack_unpack_round_tr
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  ASSERT_EQ(asn1_uli.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, asn1_uli), asn1::OCUDUASN_SUCCESS);
 
   asn1::cbit_ref                      bref2{buf};
   asn1::ngap::user_location_info_nr_s unpacked;
-  ASSERT_EQ(unpacked.unpack(bref2), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(unpacked, bref2), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_TRUE(unpacked.ie_exts.nr_ntn_tai_info_present) << "NR NTN TAI Information did not survive the round trip";
   ASSERT_EQ(unpacked.ie_exts.nr_ntn_tai_info.tac_list_in_nr_ntn.size(), 3);

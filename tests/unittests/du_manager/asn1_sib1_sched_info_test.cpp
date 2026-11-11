@@ -59,7 +59,7 @@ TEST(asn1_sib1_sched_info_test, si_message_carrying_a_warning_is_not_listed_in_t
 
   asn1::cbit_ref       bref{buf};
   asn1::rrc_nr::sib1_s sib1;
-  ASSERT_EQ(sib1.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(sib1, bref), asn1::OCUDUASN_SUCCESS);
 
   // The DU packs the SIB1 of the normal operation, and the MAC appends the warnings for as long as they are on air.
   EXPECT_FALSE(sib1.si_sched_info_present)
@@ -77,7 +77,7 @@ TEST(asn1_sib1_sched_info_test, si_message_with_content_is_packed_with_its_value
 
   asn1::cbit_ref       bref{buf};
   asn1::rrc_nr::sib1_s sib1;
-  ASSERT_EQ(sib1.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(sib1, bref), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_TRUE(sib1.si_sched_info_present);
   ASSERT_EQ(sib1.si_sched_info.sched_info_list.size(), 1);
@@ -143,7 +143,7 @@ static std::vector<sib_type> listed_sibs_of(const byte_buffer& packed_sib1)
 {
   asn1::cbit_ref       bref{packed_sib1};
   asn1::rrc_nr::sib1_s sib1;
-  report_fatal_error_if_not(sib1.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
+  report_fatal_error_if_not(asn1::unpack(sib1, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
 
   std::vector<sib_type> sibs;
   if (not sib1.si_sched_info_present) {
@@ -305,7 +305,7 @@ TEST(asn1_sib1_sched_info_test, redcap_broadcast_is_opt_in)
     byte_buffer          packed = asn1_packer::pack_sib1(cfg);
     asn1::cbit_ref       reader{packed};
     asn1::rrc_nr::sib1_s sib1;
-    ASSERT_EQ(sib1.unpack(reader), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(sib1, reader), asn1::OCUDUASN_SUCCESS);
     const auto& r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext;
     EXPECT_EQ(r17.intra_freq_resel_red_cap_r17_present, enabled);
     EXPECT_EQ(r17.red_cap_cfg_common_r17_present, enabled);
@@ -359,7 +359,7 @@ TEST(asn1_sib1_sched_info_test, redcap_barring_and_reselection_choices_are_encod
       byte_buffer          packed       = asn1_packer::pack_sib1(cfg);
       asn1::cbit_ref       reader{packed};
       asn1::rrc_nr::sib1_s sib1;
-      ASSERT_EQ(sib1.unpack(reader), asn1::OCUDUASN_SUCCESS);
+      ASSERT_EQ(asn1::unpack(sib1, reader), asn1::OCUDUASN_SUCCESS);
       const auto& r17 = sib1.non_crit_ext.non_crit_ext.non_crit_ext;
       ASSERT_TRUE(r17.intra_freq_resel_red_cap_r17_present);
       EXPECT_EQ(r17.intra_freq_resel_red_cap_r17, allowed ? reselection::allowed : reselection::not_allowed);

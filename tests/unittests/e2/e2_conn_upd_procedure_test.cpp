@@ -104,7 +104,7 @@ TEST_P(e2_agent_test_with_pcap, e2_connection_update_failure)
 
   asn1::cbit_ref bref(e2_conn_upd_buf);
   e2_message     e2_conn_upd_msg = {};
-  if (e2_conn_upd_msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(e2_conn_upd_msg.pdu, bref) != asn1::OCUDUASN_SUCCESS) {
     return;
   }
   if (g_enable_pcap) {

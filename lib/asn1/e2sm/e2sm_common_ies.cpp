@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/e2sm/e2sm_common_ies.h"
+#include "ocudu/asn1/asn1_ap_codec.h"
 
 using namespace asn1;
 using namespace asn1::e2sm;
@@ -13,170 +14,83 @@ using namespace asn1::e2sm;
  ******************************************************************************/
 
 // Beam-ID ::= CHOICE
-void beam_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("nR-Beam-ID", c);
-  j.end_obj();
-}
-OCUDUASN_CODE beam_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_enum(bref, type()));
-  HANDLE_CODE(pack_integer(bref, c, (uint8_t)0u, (uint8_t)63u, false, true));
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE beam_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(unpack_enum(e, bref));
-  if (e != type()) {
-    log_invalid_choice_id(e, "beam_id_c");
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  HANDLE_CODE(unpack_integer(c, bref, (uint8_t)0u, (uint8_t)63u, false, true));
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_beam_id_c_alternatives[] = {{0,
+                                                                               asn1::table::seq_field::mandatory,
+                                                                               asn1::table::field_op::int_u8,
+                                                                               false,
+                                                                               true,
+                                                                               INT64_C(0),
+                                                                               UINT64_C(63),
+                                                                               nullptr}};
+static const asn1::table::field_name choice_table_beam_id_c_names[]        = {{"nR-Beam-ID", nullptr}};
+const asn1::table::choice_desc       beam_id_c::desc = {asn1::table::enum_int_type<beam_id_c::types>(),
+                                                        beam_id_c::types::nof_types,
+                                                        beam_id_c::types::nof_exts,
+                                                        beam_id_c::types::has_ext,
+                                                        true,
+                                                        choice_table_beam_id_c_alternatives,
+                                                        nullptr,
+                                                        choice_table_beam_id_c_names,
+                                                        "beam_id_c",
+                                                        asn1::table::choice_desc::no_member,
+                                                        offsetof(beam_id_c, c),
+                                                        false};
 
-const char* beam_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"nR-Beam-ID"};
-  return convert_enum_idx(names, 1, value, "beam_id_c::types");
-}
+static const char*           enum_names_beam_id_c_types_values[] = {"nR-Beam-ID"};
+const asn1::table::enum_desc beam_id_c::types_opts::desc = {enum_names_beam_id_c_types_values, 1, "beam_id_c::types"};
 
 // NR-CGI ::= SEQUENCE
-OCUDUASN_CODE nr_cgi_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(nr_cell_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_cgi_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(nr_cell_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void nr_cgi_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_fieldname("nRCellIdentity");
-  nr_cell_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_nr_cgi_s_fields[] = {
+    {offsetof(nr_cgi_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(nr_cgi_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(nr_cgi_s, nr_cell_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(nr_cgi_s::nr_cell_id), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_nr_cgi_s_names[] = {{"pLMNIdentity", nullptr},
+                                                                   {"nRCellIdentity", nullptr}};
+const asn1::table::seq_desc          nr_cgi_s::desc =
+    {{seq_table_nr_cgi_s_fields, 2, UINT64_C(0x3), nullptr, 0}, true, true, nullptr, 0, seq_table_nr_cgi_s_names};
 
 // EUTRA-CGI ::= SEQUENCE
-OCUDUASN_CODE eutra_cgi_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(eutra_cell_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE eutra_cgi_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(eutra_cell_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void eutra_cgi_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_fieldname("eUTRACellIdentity");
-  eutra_cell_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_eutra_cgi_s_fields[] = {
+    {offsetof(eutra_cgi_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(eutra_cgi_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(eutra_cgi_s, eutra_cell_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(eutra_cgi_s::eutra_cell_id), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_eutra_cgi_s_names[] = {{"pLMNIdentity", nullptr},
+                                                                      {"eUTRACellIdentity", nullptr}};
+const asn1::table::seq_desc          eutra_cgi_s::desc =
+    {{seq_table_eutra_cgi_s_fields, 2, UINT64_C(0x3), nullptr, 0}, true, true, nullptr, 0, seq_table_eutra_cgi_s_names};
 
 // CGI ::= CHOICE
-void cgi_c::destroy_()
-{
-  switch (type_) {
-    case types::nr_cgi:
-      c.destroy<nr_cgi_s>();
-      break;
-    case types::eutra_cgi:
-      c.destroy<eutra_cgi_s>();
-      break;
-    default:
-      break;
-  }
-}
-void cgi_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::nr_cgi:
-      c.init<nr_cgi_s>();
-      break;
-    case types::eutra_cgi:
-      c.init<eutra_cgi_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
-}
-cgi_c::cgi_c(const cgi_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::nr_cgi:
-      c.init(other.c.get<nr_cgi_s>());
-      break;
-    case types::eutra_cgi:
-      c.init(other.c.get<eutra_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
-}
-cgi_c& cgi_c::operator=(const cgi_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::nr_cgi:
-      c.set(other.c.get<nr_cgi_s>());
-      break;
-    case types::eutra_cgi:
-      c.set(other.c.get<eutra_cgi_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_cgi_c_alternatives[] = {
+    &asn1::table::alternative_ops<nr_cgi_s, false>::value,
+    &asn1::table::alternative_ops<eutra_cgi_s, false>::value};
+const asn1::table::choice_storage_desc cgi_c::storage_desc = {choice_storage_cgi_c_alternatives, 2, "cgi_c"};
 
-  return *this;
-}
 nr_cgi_s& cgi_c::set_nr_cgi()
 {
   set(types::nr_cgi);
@@ -187,241 +101,145 @@ eutra_cgi_s& cgi_c::set_eutra_cgi()
   set(types::eutra_cgi);
   return c.get<eutra_cgi_s>();
 }
-void cgi_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::nr_cgi:
-      j.write_fieldname("nR-CGI");
-      c.get<nr_cgi_s>().to_json(j);
-      break;
-    case types::eutra_cgi:
-      j.write_fieldname("eUTRA-CGI");
-      c.get<eutra_cgi_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE cgi_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::nr_cgi:
-      HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
-      break;
-    case types::eutra_cgi:
-      HANDLE_CODE(c.get<eutra_cgi_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE cgi_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::nr_cgi:
-      HANDLE_CODE(c.get<nr_cgi_s>().unpack(bref));
-      break;
-    case types::eutra_cgi:
-      HANDLE_CODE(c.get<eutra_cgi_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cgi_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_cgi_c_alternatives[] = {{0,
+                                                                           asn1::table::seq_field::mandatory,
+                                                                           asn1::table::field_op::sequence,
+                                                                           false,
+                                                                           false,
+                                                                           0,
+                                                                           0,
+                                                                           nullptr,
+                                                                           &nr_cgi_s::desc},
+                                                                          {0,
+                                                                           asn1::table::seq_field::mandatory,
+                                                                           asn1::table::field_op::sequence,
+                                                                           false,
+                                                                           false,
+                                                                           0,
+                                                                           0,
+                                                                           nullptr,
+                                                                           &eutra_cgi_s::desc}};
+static const asn1::table::field_name choice_table_cgi_c_names[]        = {{"nR-CGI", nullptr}, {"eUTRA-CGI", nullptr}};
+const asn1::table::choice_desc       cgi_c::desc                       = {asn1::table::enum_int_type<cgi_c::types>(),
+                                                                          cgi_c::types::nof_types,
+                                                                          cgi_c::types::nof_exts,
+                                                                          cgi_c::types::has_ext,
+                                                                          true,
+                                                                          choice_table_cgi_c_alternatives,
+                                                                          nullptr,
+                                                                          choice_table_cgi_c_names,
+                                                                          "cgi_c",
+                                                                          offsetof(cgi_c, c.type),
+                                                                          offsetof(cgi_c, c.value),
+                                                                          false,
+                                                                          &cgi_c::storage_desc};
 
-const char* cgi_c::types_opts::to_string() const
-{
-  static const char* names[] = {"nR-CGI", "eUTRA-CGI"};
-  return convert_enum_idx(names, 2, value, "cgi_c::types");
-}
+static const char*           enum_names_cgi_c_types_values[] = {"nR-CGI", "eUTRA-CGI"};
+const asn1::table::enum_desc cgi_c::types_opts::desc         = {enum_names_cgi_c_types_values, 2, "cgi_c::types"};
 
 // Cell-RNTI ::= SEQUENCE
-OCUDUASN_CODE cell_rnti_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(pack_integer(bref, c_rnti, (uint32_t)0u, (uint32_t)65535u, false, true));
-  HANDLE_CODE(cell_global_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE cell_rnti_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(c_rnti, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
-  HANDLE_CODE(cell_global_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void cell_rnti_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("c-RNTI", c_rnti);
-  j.write_fieldname("cell-Global-ID");
-  cell_global_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field  seq_table_cell_rnti_s_fields[] = {{offsetof(cell_rnti_s, c_rnti),
+                                                                        asn1::table::seq_field::mandatory,
+                                                                        asn1::table::field_op::int_u32,
+                                                                        false,
+                                                                        true,
+                                                                        INT64_C(0),
+                                                                        UINT64_C(65535),
+                                                                        nullptr},
+                                                                       {offsetof(cell_rnti_s, cell_global_id),
+                                                                        asn1::table::seq_field::mandatory,
+                                                                        asn1::table::field_op::choice,
+                                                                        false,
+                                                                        false,
+                                                                        0,
+                                                                        0,
+                                                                        nullptr,
+                                                                        &cgi_c::desc}};
+static const asn1::table::field_name seq_table_cell_rnti_s_names[] = {{"c-RNTI", nullptr}, {"cell-Global-ID", nullptr}};
+const asn1::table::seq_desc          cell_rnti_s::desc =
+    {{seq_table_cell_rnti_s_fields, 2, UINT64_C(0x3), nullptr, 0}, true, true, nullptr, 0, seq_table_cell_rnti_s_names};
 
 // GUAMI ::= SEQUENCE
-OCUDUASN_CODE guami_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(amf_region_id.pack(bref));
-  HANDLE_CODE(amf_set_id.pack(bref));
-  HANDLE_CODE(amf_pointer.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE guami_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(amf_region_id.unpack(bref));
-  HANDLE_CODE(amf_set_id.unpack(bref));
-  HANDLE_CODE(amf_pointer.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void guami_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_fieldname("aMFRegionID");
-  amf_region_id.to_json(j);
-  j.write_fieldname("aMFSetID");
-  amf_set_id.to_json(j);
-  j.write_fieldname("aMFPointer");
-  amf_pointer.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_guami_s_fields[] = {
+    {offsetof(guami_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(guami_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(guami_s, amf_region_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(guami_s::amf_region_id), asn1::table::struct_json>::value},
+    {offsetof(guami_s, amf_set_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(guami_s::amf_set_id), asn1::table::struct_json>::value},
+    {offsetof(guami_s, amf_pointer),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(guami_s::amf_pointer), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_guami_s_names[] = {{"pLMNIdentity", nullptr},
+                                                                  {"aMFRegionID", nullptr},
+                                                                  {"aMFSetID", nullptr},
+                                                                  {"aMFPointer", nullptr}};
+const asn1::table::seq_desc          guami_s::desc =
+    {{seq_table_guami_s_fields, 4, UINT64_C(0xf), nullptr, 0}, true, true, nullptr, 0, seq_table_guami_s_names};
 
 // GUMMEI ::= SEQUENCE
-OCUDUASN_CODE gummei_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(mme_group_id.pack(bref));
-  HANDLE_CODE(mme_code.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE gummei_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(mme_group_id.unpack(bref));
-  HANDLE_CODE(mme_code.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void gummei_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMN-Identity", plmn_id.to_string());
-  j.write_str("mME-Group-ID", mme_group_id.to_string());
-  j.write_str("mME-Code", mme_code.to_string());
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_gummei_s_fields[] = {
+    {offsetof(gummei_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(gummei_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(gummei_s, mme_group_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(gummei_s::mme_group_id), asn1::table::string_json>::value},
+    {offsetof(gummei_s, mme_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(gummei_s::mme_code), asn1::table::string_json>::value}};
+static const asn1::table::field_name seq_table_gummei_s_names[] = {{"pLMN-Identity", nullptr},
+                                                                   {"mME-Group-ID", nullptr},
+                                                                   {"mME-Code", nullptr}};
+const asn1::table::seq_desc          gummei_s::desc =
+    {{seq_table_gummei_s_fields, 3, UINT64_C(0x7), nullptr, 0}, true, true, nullptr, 0, seq_table_gummei_s_names};
 
 // CoreCPID ::= CHOICE
-void core_cp_id_c::destroy_()
-{
-  switch (type_) {
-    case types::five_gc:
-      c.destroy<guami_s>();
-      break;
-    case types::epc:
-      c.destroy<gummei_s>();
-      break;
-    default:
-      break;
-  }
-}
-void core_cp_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::five_gc:
-      c.init<guami_s>();
-      break;
-    case types::epc:
-      c.init<gummei_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "core_cp_id_c");
-  }
-}
-core_cp_id_c::core_cp_id_c(const core_cp_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::five_gc:
-      c.init(other.c.get<guami_s>());
-      break;
-    case types::epc:
-      c.init(other.c.get<gummei_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "core_cp_id_c");
-  }
-}
-core_cp_id_c& core_cp_id_c::operator=(const core_cp_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::five_gc:
-      c.set(other.c.get<guami_s>());
-      break;
-    case types::epc:
-      c.set(other.c.get<gummei_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "core_cp_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_core_cp_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<guami_s, false>::value,
+    &asn1::table::alternative_ops<gummei_s, false>::value};
+const asn1::table::choice_storage_desc core_cp_id_c::storage_desc = {choice_storage_core_cp_id_c_alternatives,
+                                                                     2,
+                                                                     "core_cp_id_c"};
 
-  return *this;
-}
 guami_s& core_cp_id_c::set_five_gc()
 {
   set(types::five_gc);
@@ -432,193 +250,86 @@ gummei_s& core_cp_id_c::set_epc()
   set(types::epc);
   return c.get<gummei_s>();
 }
-void core_cp_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::five_gc:
-      j.write_fieldname("fiveGC");
-      c.get<guami_s>().to_json(j);
-      break;
-    case types::epc:
-      j.write_fieldname("ePC");
-      c.get<gummei_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "core_cp_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE core_cp_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::five_gc:
-      HANDLE_CODE(c.get<guami_s>().pack(bref));
-      break;
-    case types::epc:
-      HANDLE_CODE(c.get<gummei_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "core_cp_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE core_cp_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::five_gc:
-      HANDLE_CODE(c.get<guami_s>().unpack(bref));
-      break;
-    case types::epc:
-      HANDLE_CODE(c.get<gummei_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "core_cp_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_core_cp_id_c_alternatives[] = {{0,
+                                                                                  asn1::table::seq_field::mandatory,
+                                                                                  asn1::table::field_op::sequence,
+                                                                                  false,
+                                                                                  false,
+                                                                                  0,
+                                                                                  0,
+                                                                                  nullptr,
+                                                                                  &guami_s::desc},
+                                                                                 {0,
+                                                                                  asn1::table::seq_field::mandatory,
+                                                                                  asn1::table::field_op::sequence,
+                                                                                  false,
+                                                                                  false,
+                                                                                  0,
+                                                                                  0,
+                                                                                  nullptr,
+                                                                                  &gummei_s::desc}};
+static const asn1::table::field_name choice_table_core_cp_id_c_names[]        = {{"fiveGC", nullptr}, {"ePC", nullptr}};
+const asn1::table::choice_desc       core_cp_id_c::desc = {asn1::table::enum_int_type<core_cp_id_c::types>(),
+                                                           core_cp_id_c::types::nof_types,
+                                                           core_cp_id_c::types::nof_exts,
+                                                           core_cp_id_c::types::has_ext,
+                                                           true,
+                                                           choice_table_core_cp_id_c_alternatives,
+                                                           nullptr,
+                                                           choice_table_core_cp_id_c_names,
+                                                           "core_cp_id_c",
+                                                           offsetof(core_cp_id_c, c.type),
+                                                           offsetof(core_cp_id_c, c.value),
+                                                           false,
+                                                           &core_cp_id_c::storage_desc};
 
-const char* core_cp_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"fiveGC", "ePC"};
-  return convert_enum_idx(names, 2, value, "core_cp_id_c::types");
-}
-uint8_t core_cp_id_c::types_opts::to_number() const
+static const char*           enum_names_core_cp_id_c_types_values[] = {"fiveGC", "ePC"};
+const asn1::table::enum_desc core_cp_id_c::types_opts::desc         = {enum_names_core_cp_id_c_types_values,
+                                                                       2,
+                                                                       "core_cp_id_c::types"};
+uint8_t                      core_cp_id_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {5};
   return map_enum_number(numbers, 1, value, "core_cp_id_c::types");
 }
 
 // EN-GNB-ID ::= CHOICE
-void en_gnb_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("en-gNB-ID");
-  c.to_json(j);
-  j.end_obj();
-}
-OCUDUASN_CODE en_gnb_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_enum(bref, type()));
-  HANDLE_CODE(c.pack(bref));
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE en_gnb_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(unpack_enum(e, bref));
-  if (e != type()) {
-    log_invalid_choice_id(e, "en_gnb_id_c");
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  HANDLE_CODE(c.unpack(bref));
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_en_gnb_id_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<bounded_bitstring<22, 32, false, true>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_en_gnb_id_c_names[] = {{"en-gNB-ID", nullptr}};
+const asn1::table::choice_desc       en_gnb_id_c::desc = {asn1::table::enum_int_type<en_gnb_id_c::types>(),
+                                                          en_gnb_id_c::types::nof_types,
+                                                          en_gnb_id_c::types::nof_exts,
+                                                          en_gnb_id_c::types::has_ext,
+                                                          true,
+                                                          choice_table_en_gnb_id_c_alternatives,
+                                                          nullptr,
+                                                          choice_table_en_gnb_id_c_names,
+                                                          "en_gnb_id_c",
+                                                          asn1::table::choice_desc::no_member,
+                                                          offsetof(en_gnb_id_c, c),
+                                                          false};
 
-const char* en_gnb_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"en-gNB-ID"};
-  return convert_enum_idx(names, 1, value, "en_gnb_id_c::types");
-}
+static const char*           enum_names_en_gnb_id_c_types_values[] = {"en-gNB-ID"};
+const asn1::table::enum_desc en_gnb_id_c::types_opts::desc         = {enum_names_en_gnb_id_c_types_values,
+                                                                      1,
+                                                                      "en_gnb_id_c::types"};
 
 // ENB-ID ::= CHOICE
-void enb_id_c::destroy_()
-{
-  switch (type_) {
-    case types::macro_enb_id:
-      c.destroy<fixed_bitstring<20, false, true>>();
-      break;
-    case types::home_enb_id:
-      c.destroy<fixed_bitstring<28, false, true>>();
-      break;
-    case types::short_macro_enb_id:
-      c.destroy<fixed_bitstring<18, false, true>>();
-      break;
-    case types::long_macro_enb_id:
-      c.destroy<fixed_bitstring<21, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
-void enb_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::macro_enb_id:
-      c.init<fixed_bitstring<20, false, true>>();
-      break;
-    case types::home_enb_id:
-      c.init<fixed_bitstring<28, false, true>>();
-      break;
-    case types::short_macro_enb_id:
-      c.init<fixed_bitstring<18, false, true>>();
-      break;
-    case types::long_macro_enb_id:
-      c.init<fixed_bitstring<21, false, true>>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_c");
-  }
-}
-enb_id_c::enb_id_c(const enb_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::macro_enb_id:
-      c.init(other.c.get<fixed_bitstring<20, false, true>>());
-      break;
-    case types::home_enb_id:
-      c.init(other.c.get<fixed_bitstring<28, false, true>>());
-      break;
-    case types::short_macro_enb_id:
-      c.init(other.c.get<fixed_bitstring<18, false, true>>());
-      break;
-    case types::long_macro_enb_id:
-      c.init(other.c.get<fixed_bitstring<21, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_c");
-  }
-}
-enb_id_c& enb_id_c::operator=(const enb_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::macro_enb_id:
-      c.set(other.c.get<fixed_bitstring<20, false, true>>());
-      break;
-    case types::home_enb_id:
-      c.set(other.c.get<fixed_bitstring<28, false, true>>());
-      break;
-    case types::short_macro_enb_id:
-      c.set(other.c.get<fixed_bitstring<18, false, true>>());
-      break;
-    case types::long_macro_enb_id:
-      c.set(other.c.get<fixed_bitstring<21, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_enb_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<fixed_bitstring<20, false, true>, false>::value,
+    &asn1::table::alternative_ops<fixed_bitstring<28, false, true>, false>::value,
+    &asn1::table::alternative_ops<fixed_bitstring<18, false, true>, false>::value,
+    &asn1::table::alternative_ops<fixed_bitstring<21, false, true>, false>::value};
+const asn1::table::choice_storage_desc enb_id_c::storage_desc = {choice_storage_enb_id_c_alternatives, 4, "enb_id_c"};
 
-  return *this;
-}
 fixed_bitstring<20, false, true>& enb_id_c::set_macro_enb_id()
 {
   set(types::macro_enb_id);
@@ -639,295 +350,174 @@ fixed_bitstring<21, false, true>& enb_id_c::set_long_macro_enb_id()
   set(types::long_macro_enb_id);
   return c.get<fixed_bitstring<21, false, true>>();
 }
-void enb_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::macro_enb_id:
-      j.write_fieldname("macro-eNB-ID");
-      c.get<fixed_bitstring<20, false, true>>().to_json(j);
-      break;
-    case types::home_enb_id:
-      j.write_fieldname("home-eNB-ID");
-      c.get<fixed_bitstring<28, false, true>>().to_json(j);
-      break;
-    case types::short_macro_enb_id:
-      j.write_fieldname("short-Macro-eNB-ID");
-      c.get<fixed_bitstring<18, false, true>>().to_json(j);
-      break;
-    case types::long_macro_enb_id:
-      j.write_fieldname("long-Macro-eNB-ID");
-      c.get<fixed_bitstring<21, false, true>>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE enb_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::macro_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().pack(bref)));
-      break;
-    case types::home_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<28, false, true>>().pack(bref)));
-      break;
-    case types::short_macro_enb_id: {
-      varlength_field_pack_guard varlen_scope(bref, true);
-      HANDLE_CODE((c.get<fixed_bitstring<18, false, true>>().pack(bref)));
-    } break;
-    case types::long_macro_enb_id: {
-      varlength_field_pack_guard varlen_scope(bref, true);
-      HANDLE_CODE((c.get<fixed_bitstring<21, false, true>>().pack(bref)));
-    } break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE enb_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::macro_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().unpack(bref)));
-      break;
-    case types::home_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<28, false, true>>().unpack(bref)));
-      break;
-    case types::short_macro_enb_id: {
-      varlength_field_unpack_guard varlen_scope(bref, true);
-      HANDLE_CODE((c.get<fixed_bitstring<18, false, true>>().unpack(bref)));
-    } break;
-    case types::long_macro_enb_id: {
-      varlength_field_unpack_guard varlen_scope(bref, true);
-      HANDLE_CODE((c.get<fixed_bitstring<21, false, true>>().unpack(bref)));
-    } break;
-    default:
-      log_invalid_choice_id(type_, "enb_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_enb_id_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<20, false, true>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<28, false, true>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<18, false, true>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<21, false, true>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_enb_id_c_names[] = {{"macro-eNB-ID", nullptr},
+                                                                      {"home-eNB-ID", nullptr},
+                                                                      {"short-Macro-eNB-ID", nullptr},
+                                                                      {"long-Macro-eNB-ID", nullptr}};
+const asn1::table::choice_desc       enb_id_c::desc                = {asn1::table::enum_int_type<enb_id_c::types>(),
+                                                                      enb_id_c::types::nof_types,
+                                                                      enb_id_c::types::nof_exts,
+                                                                      enb_id_c::types::has_ext,
+                                                                      true,
+                                                                      choice_table_enb_id_c_alternatives,
+                                                                      nullptr,
+                                                                      choice_table_enb_id_c_names,
+                                                                      "enb_id_c",
+                                                                      offsetof(enb_id_c, c.type),
+                                                                      offsetof(enb_id_c, c.value),
+                                                                      false,
+                                                                      &enb_id_c::storage_desc};
 
-const char* enb_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"macro-eNB-ID", "home-eNB-ID", "short-Macro-eNB-ID", "long-Macro-eNB-ID"};
-  return convert_enum_idx(names, 4, value, "enb_id_c::types");
-}
+static const char*           enum_names_enb_id_c_types_values[] = {"macro-eNB-ID",
+                                                                   "home-eNB-ID",
+                                                                   "short-Macro-eNB-ID",
+                                                                   "long-Macro-eNB-ID"};
+const asn1::table::enum_desc enb_id_c::types_opts::desc = {enum_names_enb_id_c_types_values, 4, "enb_id_c::types"};
 
 // FreqBandNrItem ::= SEQUENCE
-OCUDUASN_CODE freq_band_nr_item_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(pack_integer(bref, freq_band_ind_nr, (uint16_t)1u, (uint16_t)1024u, true, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE freq_band_nr_item_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(freq_band_ind_nr, bref, (uint16_t)1u, (uint16_t)1024u, true, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void freq_band_nr_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("freqBandIndicatorNr", freq_band_ind_nr);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_freq_band_nr_item_s_fields[] = {
+    {offsetof(freq_band_nr_item_s, freq_band_ind_nr),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(1024),
+     nullptr}};
+static const asn1::table::field_name seq_table_freq_band_nr_item_s_names[] = {{"freqBandIndicatorNr", nullptr}};
+const asn1::table::seq_desc          freq_band_nr_item_s::desc             = {
+    {seq_table_freq_band_nr_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_freq_band_nr_item_s_names};
 
 // GNB-ID ::= CHOICE
-void gnb_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("gNB-ID");
-  c.to_json(j);
-  j.end_obj();
-}
-OCUDUASN_CODE gnb_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_enum(bref, type()));
-  HANDLE_CODE(c.pack(bref));
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE gnb_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(unpack_enum(e, bref));
-  if (e != type()) {
-    log_invalid_choice_id(e, "gnb_id_c");
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  HANDLE_CODE(c.unpack(bref));
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_gnb_id_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<bounded_bitstring<22, 32, false, true>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_gnb_id_c_names[] = {{"gNB-ID", nullptr}};
+const asn1::table::choice_desc       gnb_id_c::desc                = {asn1::table::enum_int_type<gnb_id_c::types>(),
+                                                                      gnb_id_c::types::nof_types,
+                                                                      gnb_id_c::types::nof_exts,
+                                                                      gnb_id_c::types::has_ext,
+                                                                      true,
+                                                                      choice_table_gnb_id_c_alternatives,
+                                                                      nullptr,
+                                                                      choice_table_gnb_id_c_names,
+                                                                      "gnb_id_c",
+                                                                      asn1::table::choice_desc::no_member,
+                                                                      offsetof(gnb_id_c, c),
+                                                                      false};
 
-const char* gnb_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"gNB-ID"};
-  return convert_enum_idx(names, 1, value, "gnb_id_c::types");
-}
+static const char*           enum_names_gnb_id_c_types_values[] = {"gNB-ID"};
+const asn1::table::enum_desc gnb_id_c::types_opts::desc = {enum_names_gnb_id_c_types_values, 1, "gnb_id_c::types"};
 
 // GlobalENB-ID ::= SEQUENCE
-OCUDUASN_CODE global_enb_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(enb_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE global_enb_id_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(enb_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void global_enb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_fieldname("eNB-ID");
-  enb_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_global_enb_id_s_fields[] = {
+    {offsetof(global_enb_id_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(global_enb_id_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(global_enb_id_s, enb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &enb_id_c::desc}};
+static const asn1::table::field_name seq_table_global_enb_id_s_names[] = {{"pLMNIdentity", nullptr},
+                                                                          {"eNB-ID", nullptr}};
+const asn1::table::seq_desc global_enb_id_s::desc = {{seq_table_global_enb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0,
+                                                     seq_table_global_enb_id_s_names};
 
 // GlobalGNB-ID ::= SEQUENCE
-OCUDUASN_CODE global_gnb_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(gnb_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE global_gnb_id_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(gnb_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void global_gnb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_fieldname("gNB-ID");
-  gnb_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_global_gnb_id_s_fields[] = {
+    {offsetof(global_gnb_id_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(global_gnb_id_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(global_gnb_id_s, gnb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &gnb_id_c::desc}};
+static const asn1::table::field_name seq_table_global_gnb_id_s_names[] = {{"pLMNIdentity", nullptr},
+                                                                          {"gNB-ID", nullptr}};
+const asn1::table::seq_desc global_gnb_id_s::desc = {{seq_table_global_gnb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0,
+                                                     seq_table_global_gnb_id_s_names};
 
 // NgENB-ID ::= CHOICE
-void ng_enb_id_c::destroy_()
-{
-  switch (type_) {
-    case types::macro_ng_enb_id:
-      c.destroy<fixed_bitstring<20, false, true>>();
-      break;
-    case types::short_macro_ng_enb_id:
-      c.destroy<fixed_bitstring<18, false, true>>();
-      break;
-    case types::long_macro_ng_enb_id:
-      c.destroy<fixed_bitstring<21, false, true>>();
-      break;
-    default:
-      break;
-  }
-}
-void ng_enb_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::macro_ng_enb_id:
-      c.init<fixed_bitstring<20, false, true>>();
-      break;
-    case types::short_macro_ng_enb_id:
-      c.init<fixed_bitstring<18, false, true>>();
-      break;
-    case types::long_macro_ng_enb_id:
-      c.init<fixed_bitstring<21, false, true>>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ng_enb_id_c");
-  }
-}
-ng_enb_id_c::ng_enb_id_c(const ng_enb_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::macro_ng_enb_id:
-      c.init(other.c.get<fixed_bitstring<20, false, true>>());
-      break;
-    case types::short_macro_ng_enb_id:
-      c.init(other.c.get<fixed_bitstring<18, false, true>>());
-      break;
-    case types::long_macro_ng_enb_id:
-      c.init(other.c.get<fixed_bitstring<21, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ng_enb_id_c");
-  }
-}
-ng_enb_id_c& ng_enb_id_c::operator=(const ng_enb_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::macro_ng_enb_id:
-      c.set(other.c.get<fixed_bitstring<20, false, true>>());
-      break;
-    case types::short_macro_ng_enb_id:
-      c.set(other.c.get<fixed_bitstring<18, false, true>>());
-      break;
-    case types::long_macro_ng_enb_id:
-      c.set(other.c.get<fixed_bitstring<21, false, true>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ng_enb_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_ng_enb_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<fixed_bitstring<20, false, true>, false>::value,
+    &asn1::table::alternative_ops<fixed_bitstring<18, false, true>, false>::value,
+    &asn1::table::alternative_ops<fixed_bitstring<21, false, true>, false>::value};
+const asn1::table::choice_storage_desc ng_enb_id_c::storage_desc = {choice_storage_ng_enb_id_c_alternatives,
+                                                                    3,
+                                                                    "ng_enb_id_c"};
 
-  return *this;
-}
 fixed_bitstring<20, false, true>& ng_enb_id_c::set_macro_ng_enb_id()
 {
   set(types::macro_ng_enb_id);
@@ -943,175 +533,91 @@ fixed_bitstring<21, false, true>& ng_enb_id_c::set_long_macro_ng_enb_id()
   set(types::long_macro_ng_enb_id);
   return c.get<fixed_bitstring<21, false, true>>();
 }
-void ng_enb_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::macro_ng_enb_id:
-      j.write_fieldname("macroNgENB-ID");
-      c.get<fixed_bitstring<20, false, true>>().to_json(j);
-      break;
-    case types::short_macro_ng_enb_id:
-      j.write_fieldname("shortMacroNgENB-ID");
-      c.get<fixed_bitstring<18, false, true>>().to_json(j);
-      break;
-    case types::long_macro_ng_enb_id:
-      j.write_fieldname("longMacroNgENB-ID");
-      c.get<fixed_bitstring<21, false, true>>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "ng_enb_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ng_enb_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::macro_ng_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().pack(bref)));
-      break;
-    case types::short_macro_ng_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<18, false, true>>().pack(bref)));
-      break;
-    case types::long_macro_ng_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<21, false, true>>().pack(bref)));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ng_enb_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ng_enb_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::macro_ng_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<20, false, true>>().unpack(bref)));
-      break;
-    case types::short_macro_ng_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<18, false, true>>().unpack(bref)));
-      break;
-    case types::long_macro_ng_enb_id:
-      HANDLE_CODE((c.get<fixed_bitstring<21, false, true>>().unpack(bref)));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ng_enb_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_ng_enb_id_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<20, false, true>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<18, false, true>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<21, false, true>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_ng_enb_id_c_names[] = {{"macroNgENB-ID", nullptr},
+                                                                         {"shortMacroNgENB-ID", nullptr},
+                                                                         {"longMacroNgENB-ID", nullptr}};
+const asn1::table::choice_desc       ng_enb_id_c::desc = {asn1::table::enum_int_type<ng_enb_id_c::types>(),
+                                                          ng_enb_id_c::types::nof_types,
+                                                          ng_enb_id_c::types::nof_exts,
+                                                          ng_enb_id_c::types::has_ext,
+                                                          true,
+                                                          choice_table_ng_enb_id_c_alternatives,
+                                                          nullptr,
+                                                          choice_table_ng_enb_id_c_names,
+                                                          "ng_enb_id_c",
+                                                          offsetof(ng_enb_id_c, c.type),
+                                                          offsetof(ng_enb_id_c, c.value),
+                                                          false,
+                                                          &ng_enb_id_c::storage_desc};
 
-const char* ng_enb_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"macroNgENB-ID", "shortMacroNgENB-ID", "longMacroNgENB-ID"};
-  return convert_enum_idx(names, 3, value, "ng_enb_id_c::types");
-}
+static const char* enum_names_ng_enb_id_c_types_values[] = {"macroNgENB-ID", "shortMacroNgENB-ID", "longMacroNgENB-ID"};
+const asn1::table::enum_desc ng_enb_id_c::types_opts::desc = {enum_names_ng_enb_id_c_types_values,
+                                                              3,
+                                                              "ng_enb_id_c::types"};
 
 // GlobalNgENB-ID ::= SEQUENCE
-OCUDUASN_CODE global_ng_enb_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(ng_enb_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE global_ng_enb_id_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(ng_enb_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void global_ng_enb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMNIdentity", plmn_id.to_string());
-  j.write_fieldname("ngENB-ID");
-  ng_enb_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_global_ng_enb_id_s_fields[] = {
+    {offsetof(global_ng_enb_id_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(global_ng_enb_id_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(global_ng_enb_id_s, ng_enb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &ng_enb_id_c::desc}};
+static const asn1::table::field_name seq_table_global_ng_enb_id_s_names[] = {{"pLMNIdentity", nullptr},
+                                                                             {"ngENB-ID", nullptr}};
+const asn1::table::seq_desc          global_ng_enb_id_s::desc             = {
+    {seq_table_global_ng_enb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_global_ng_enb_id_s_names};
 
 // GlobalNGRANNodeID ::= CHOICE
-void global_ngran_node_id_c::destroy_()
-{
-  switch (type_) {
-    case types::gnb:
-      c.destroy<global_gnb_id_s>();
-      break;
-    case types::ng_enb:
-      c.destroy<global_ng_enb_id_s>();
-      break;
-    default:
-      break;
-  }
-}
-void global_ngran_node_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::gnb:
-      c.init<global_gnb_id_s>();
-      break;
-    case types::ng_enb:
-      c.init<global_ng_enb_id_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_ngran_node_id_c");
-  }
-}
-global_ngran_node_id_c::global_ngran_node_id_c(const global_ngran_node_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb:
-      c.init(other.c.get<global_gnb_id_s>());
-      break;
-    case types::ng_enb:
-      c.init(other.c.get<global_ng_enb_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_ngran_node_id_c");
-  }
-}
-global_ngran_node_id_c& global_ngran_node_id_c::operator=(const global_ngran_node_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb:
-      c.set(other.c.get<global_gnb_id_s>());
-      break;
-    case types::ng_enb:
-      c.set(other.c.get<global_ng_enb_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_ngran_node_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_global_ngran_node_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<global_gnb_id_s, false>::value,
+    &asn1::table::alternative_ops<global_ng_enb_id_s, false>::value};
+const asn1::table::choice_storage_desc global_ngran_node_id_c::storage_desc = {
+    choice_storage_global_ngran_node_id_c_alternatives,
+    2,
+    "global_ngran_node_id_c"};
 
-  return *this;
-}
 global_gnb_id_s& global_ngran_node_id_c::set_gnb()
 {
   set(types::gnb);
@@ -1122,141 +628,84 @@ global_ng_enb_id_s& global_ngran_node_id_c::set_ng_enb()
   set(types::ng_enb);
   return c.get<global_ng_enb_id_s>();
 }
-void global_ngran_node_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::gnb:
-      j.write_fieldname("gNB");
-      c.get<global_gnb_id_s>().to_json(j);
-      break;
-    case types::ng_enb:
-      j.write_fieldname("ng-eNB");
-      c.get<global_ng_enb_id_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_ngran_node_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE global_ngran_node_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::gnb:
-      HANDLE_CODE(c.get<global_gnb_id_s>().pack(bref));
-      break;
-    case types::ng_enb:
-      HANDLE_CODE(c.get<global_ng_enb_id_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_ngran_node_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE global_ngran_node_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::gnb:
-      HANDLE_CODE(c.get<global_gnb_id_s>().unpack(bref));
-      break;
-    case types::ng_enb:
-      HANDLE_CODE(c.get<global_ng_enb_id_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "global_ngran_node_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_global_ngran_node_id_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_gnb_id_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_ng_enb_id_s::desc}};
+static const asn1::table::field_name choice_table_global_ngran_node_id_c_names[] = {{"gNB", nullptr},
+                                                                                    {"ng-eNB", nullptr}};
+const asn1::table::choice_desc       global_ngran_node_id_c::desc                = {
+    asn1::table::enum_int_type<global_ngran_node_id_c::types>(),
+    global_ngran_node_id_c::types::nof_types,
+    global_ngran_node_id_c::types::nof_exts,
+    global_ngran_node_id_c::types::has_ext,
+    true,
+    choice_table_global_ngran_node_id_c_alternatives,
+    nullptr,
+    choice_table_global_ngran_node_id_c_names,
+    "global_ngran_node_id_c",
+    offsetof(global_ngran_node_id_c, c.type),
+    offsetof(global_ngran_node_id_c, c.value),
+    false,
+    &global_ngran_node_id_c::storage_desc};
 
-const char* global_ngran_node_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"gNB", "ng-eNB"};
-  return convert_enum_idx(names, 2, value, "global_ngran_node_id_c::types");
-}
+static const char*           enum_names_global_ngran_node_id_c_types_values[] = {"gNB", "ng-eNB"};
+const asn1::table::enum_desc global_ngran_node_id_c::types_opts::desc = {enum_names_global_ngran_node_id_c_types_values,
+                                                                         2,
+                                                                         "global_ngran_node_id_c::types"};
 
 // GlobalenGNB-ID ::= SEQUENCE
-OCUDUASN_CODE globalen_gnb_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(plmn_id.pack(bref));
-  HANDLE_CODE(en_gnb_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE globalen_gnb_id_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(plmn_id.unpack(bref));
-  HANDLE_CODE(en_gnb_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void globalen_gnb_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("pLMN-Identity", plmn_id.to_string());
-  j.write_fieldname("en-gNB-ID");
-  en_gnb_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_globalen_gnb_id_s_fields[] = {
+    {offsetof(globalen_gnb_id_s, plmn_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(globalen_gnb_id_s::plmn_id), asn1::table::string_json>::value},
+    {offsetof(globalen_gnb_id_s, en_gnb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &en_gnb_id_c::desc}};
+static const asn1::table::field_name seq_table_globalen_gnb_id_s_names[] = {{"pLMN-Identity", nullptr},
+                                                                            {"en-gNB-ID", nullptr}};
+const asn1::table::seq_desc          globalen_gnb_id_s::desc             = {
+    {seq_table_globalen_gnb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_globalen_gnb_id_s_names};
 
 // GroupID ::= CHOICE
-void group_id_c::destroy_() {}
-void group_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-group_id_c::group_id_c(const group_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::five_gc:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::epc:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "group_id_c");
-  }
-}
-group_id_c& group_id_c::operator=(const group_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::five_gc:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::epc:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "group_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_group_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value};
+const asn1::table::choice_storage_desc group_id_c::storage_desc = {choice_storage_group_id_c_alternatives,
+                                                                   2,
+                                                                   "group_id_c"};
 
-  return *this;
-}
 uint16_t& group_id_c::set_five_gc()
 {
   set(types::five_gc);
@@ -1267,362 +716,234 @@ uint16_t& group_id_c::set_epc()
   set(types::epc);
   return c.get<uint16_t>();
 }
-void group_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::five_gc:
-      j.write_int("fiveGC", c.get<uint16_t>());
-      break;
-    case types::epc:
-      j.write_int("ePC", c.get<uint16_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "group_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE group_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::five_gc:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u, true, true));
-      break;
-    case types::epc:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u, false, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "group_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE group_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::five_gc:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u, true, true));
-      break;
-    case types::epc:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u, false, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "group_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_group_id_c_alternatives[] = {{0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::int_u16,
+                                                                                true,
+                                                                                true,
+                                                                                INT64_C(0),
+                                                                                UINT64_C(255),
+                                                                                nullptr},
+                                                                               {0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::int_u16,
+                                                                                false,
+                                                                                true,
+                                                                                INT64_C(0),
+                                                                                UINT64_C(255),
+                                                                                nullptr}};
+static const asn1::table::field_name choice_table_group_id_c_names[]        = {{"fiveGC", nullptr}, {"ePC", nullptr}};
+const asn1::table::choice_desc       group_id_c::desc = {asn1::table::enum_int_type<group_id_c::types>(),
+                                                         group_id_c::types::nof_types,
+                                                         group_id_c::types::nof_exts,
+                                                         group_id_c::types::has_ext,
+                                                         true,
+                                                         choice_table_group_id_c_alternatives,
+                                                         nullptr,
+                                                         choice_table_group_id_c_names,
+                                                         "group_id_c",
+                                                         offsetof(group_id_c, c.type),
+                                                         offsetof(group_id_c, c.value),
+                                                         false,
+                                                         &group_id_c::storage_desc};
 
-const char* group_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"fiveGC", "ePC"};
-  return convert_enum_idx(names, 2, value, "group_id_c::types");
-}
-uint8_t group_id_c::types_opts::to_number() const
+static const char*           enum_names_group_id_c_types_values[] = {"fiveGC", "ePC"};
+const asn1::table::enum_desc group_id_c::types_opts::desc         = {enum_names_group_id_c_types_values,
+                                                                     2,
+                                                                     "group_id_c::types"};
+uint8_t                      group_id_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {5};
   return map_enum_number(numbers, 1, value, "group_id_c::types");
 }
 
 // Interface-MessageID ::= SEQUENCE
-OCUDUASN_CODE interface_msg_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
+static const asn1::table::seq_field seq_table_interface_msg_id_s_fields[] = {
+    {offsetof(interface_msg_id_s, interface_proc_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_i64,
+     false,
+     true,
+     INT64_MIN,
+     UINT64_C(9223372036854775807),
+     nullptr},
+    {offsetof(interface_msg_id_s, msg_type),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(interface_msg_id_s::msg_type)>(),
+     decltype(interface_msg_id_s::msg_type)::has_ext,
+     false,
+     decltype(interface_msg_id_s::msg_type)::nof_types,
+     decltype(interface_msg_id_s::msg_type)::nof_exts,
+     nullptr,
+     &interface_msg_id_s::msg_type_opts::desc}};
+static const asn1::table::field_name seq_table_interface_msg_id_s_names[] = {{"interfaceProcedureID", nullptr},
+                                                                             {"messageType", nullptr}};
+const asn1::table::seq_desc          interface_msg_id_s::desc             = {
+    {seq_table_interface_msg_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_msg_id_s_names};
 
-  HANDLE_CODE(pack_unconstrained_integer(bref, interface_proc_id, false, true));
-  HANDLE_CODE(msg_type.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_msg_id_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_unconstrained_integer(interface_proc_id, bref, false, true));
-  HANDLE_CODE(msg_type.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_msg_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("interfaceProcedureID", interface_proc_id);
-  j.write_str("messageType", msg_type.to_string());
-  j.end_obj();
-}
-
-const char* interface_msg_id_s::msg_type_opts::to_string() const
-{
-  static const char* names[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome"};
-  return convert_enum_idx(names, 3, value, "interface_msg_id_s::msg_type_e_");
-}
+static const char*           enum_names_interface_msg_id_s_msg_type_e__values[] = {"initiatingMessage",
+                                                                                   "successfulOutcome",
+                                                                                   "unsuccessfulOutcome"};
+const asn1::table::enum_desc interface_msg_id_s::msg_type_opts::desc            = {
+    enum_names_interface_msg_id_s_msg_type_e__values,
+    3,
+    "interface_msg_id_s::msg_type_e_"};
 
 // InterfaceID-E1 ::= SEQUENCE
-OCUDUASN_CODE interface_id_e1_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(global_gnb_id.pack(bref));
-  HANDLE_CODE(pack_integer(bref, gnb_cu_up_id, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_e1_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(global_gnb_id.unpack(bref));
-  HANDLE_CODE(unpack_integer(gnb_cu_up_id, bref, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_id_e1_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("globalGNB-ID");
-  global_gnb_id.to_json(j);
-  j.write_uint("gNB-CU-UP-ID", gnb_cu_up_id);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_interface_id_e1_s_fields[] = {{offsetof(interface_id_e1_s, global_gnb_id),
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &global_gnb_id_s::desc},
+                                                                            {offsetof(interface_id_e1_s, gnb_cu_up_id),
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::int_u64,
+                                                                             false,
+                                                                             true,
+                                                                             INT64_C(0),
+                                                                             UINT64_C(68719476735),
+                                                                             nullptr}};
+static const asn1::table::field_name seq_table_interface_id_e1_s_names[] = {{"globalGNB-ID", nullptr},
+                                                                            {"gNB-CU-UP-ID", nullptr}};
+const asn1::table::seq_desc          interface_id_e1_s::desc             = {
+    {seq_table_interface_id_e1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_id_e1_s_names};
 
 // InterfaceID-F1 ::= SEQUENCE
-OCUDUASN_CODE interface_id_f1_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(global_gnb_id.pack(bref));
-  HANDLE_CODE(pack_integer(bref, gnb_du_id, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_f1_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(global_gnb_id.unpack(bref));
-  HANDLE_CODE(unpack_integer(gnb_du_id, bref, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_id_f1_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("globalGNB-ID");
-  global_gnb_id.to_json(j);
-  j.write_uint("gNB-DU-ID", gnb_du_id);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_interface_id_f1_s_fields[] = {{offsetof(interface_id_f1_s, global_gnb_id),
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &global_gnb_id_s::desc},
+                                                                            {offsetof(interface_id_f1_s, gnb_du_id),
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::int_u64,
+                                                                             false,
+                                                                             true,
+                                                                             INT64_C(0),
+                                                                             UINT64_C(68719476735),
+                                                                             nullptr}};
+static const asn1::table::field_name seq_table_interface_id_f1_s_names[] = {{"globalGNB-ID", nullptr},
+                                                                            {"gNB-DU-ID", nullptr}};
+const asn1::table::seq_desc          interface_id_f1_s::desc             = {
+    {seq_table_interface_id_f1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_id_f1_s_names};
 
 // InterfaceID-NG ::= SEQUENCE
-OCUDUASN_CODE interface_id_ng_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(guami.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_ng_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(guami.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_id_ng_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("guami");
-  guami.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field  seq_table_interface_id_ng_s_fields[] = {{offsetof(interface_id_ng_s, guami),
+                                                                              asn1::table::seq_field::mandatory,
+                                                                              asn1::table::field_op::sequence,
+                                                                              false,
+                                                                              false,
+                                                                              0,
+                                                                              0,
+                                                                              nullptr,
+                                                                              &guami_s::desc}};
+static const asn1::table::field_name seq_table_interface_id_ng_s_names[]  = {{"guami", nullptr}};
+const asn1::table::seq_desc          interface_id_ng_s::desc              = {
+    {seq_table_interface_id_ng_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_id_ng_s_names};
 
 // InterfaceID-S1 ::= SEQUENCE
-OCUDUASN_CODE interface_id_s1_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(gummei.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_s1_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(gummei.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_id_s1_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("gUMMEI");
-  gummei.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field  seq_table_interface_id_s1_s_fields[] = {{offsetof(interface_id_s1_s, gummei),
+                                                                              asn1::table::seq_field::mandatory,
+                                                                              asn1::table::field_op::sequence,
+                                                                              false,
+                                                                              false,
+                                                                              0,
+                                                                              0,
+                                                                              nullptr,
+                                                                              &gummei_s::desc}};
+static const asn1::table::field_name seq_table_interface_id_s1_s_names[]  = {{"gUMMEI", nullptr}};
+const asn1::table::seq_desc          interface_id_s1_s::desc              = {
+    {seq_table_interface_id_s1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_id_s1_s_names};
 
 // InterfaceID-W1 ::= SEQUENCE
-OCUDUASN_CODE interface_id_w1_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(global_ng_enb_id.pack(bref));
-  HANDLE_CODE(pack_integer(bref, ng_enb_du_id, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_w1_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(global_ng_enb_id.unpack(bref));
-  HANDLE_CODE(unpack_integer(ng_enb_du_id, bref, (uint64_t)0u, (uint64_t)68719476735u, false, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_id_w1_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("global-ng-eNB-ID");
-  global_ng_enb_id.to_json(j);
-  j.write_uint("ng-eNB-DU-ID", ng_enb_du_id);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_interface_id_w1_s_fields[] = {
+    {offsetof(interface_id_w1_s, global_ng_enb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_ng_enb_id_s::desc},
+    {offsetof(interface_id_w1_s, ng_enb_du_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(68719476735),
+     nullptr}};
+static const asn1::table::field_name seq_table_interface_id_w1_s_names[] = {{"global-ng-eNB-ID", nullptr},
+                                                                            {"ng-eNB-DU-ID", nullptr}};
+const asn1::table::seq_desc          interface_id_w1_s::desc             = {
+    {seq_table_interface_id_w1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_id_w1_s_names};
 
 // InterfaceID-X2 ::= SEQUENCE
-OCUDUASN_CODE interface_id_x2_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
+static const asn1::table::seq_field  seq_table_interface_id_x2_s_fields[] = {{offsetof(interface_id_x2_s, node_type),
+                                                                              asn1::table::seq_field::mandatory,
+                                                                              asn1::table::field_op::choice,
+                                                                              false,
+                                                                              false,
+                                                                              0,
+                                                                              0,
+                                                                              nullptr,
+                                                                              &interface_id_x2_s::node_type_c_::desc}};
+static const asn1::table::field_name seq_table_interface_id_x2_s_names[]  = {{"nodeType", nullptr}};
+const asn1::table::seq_desc          interface_id_x2_s::desc              = {
+    {seq_table_interface_id_x2_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_id_x2_s_names};
 
-  HANDLE_CODE(node_type.pack(bref));
+static const asn1::table::storage_ops* const choice_storage_interface_id_x2_s_node_type_c__alternatives[] = {
+    &asn1::table::alternative_ops<global_enb_id_s, false>::value,
+    &asn1::table::alternative_ops<globalen_gnb_id_s, false>::value};
+const asn1::table::choice_storage_desc interface_id_x2_s::node_type_c_::storage_desc = {
+    choice_storage_interface_id_x2_s_node_type_c__alternatives,
+    2,
+    "interface_id_x2_s::node_type_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_x2_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(node_type.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_id_x2_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("nodeType");
-  node_type.to_json(j);
-  j.end_obj();
-}
-
-void interface_id_x2_s::node_type_c_::destroy_()
-{
-  switch (type_) {
-    case types::global_enb_id:
-      c.destroy<global_enb_id_s>();
-      break;
-    case types::global_en_gnb_id:
-      c.destroy<globalen_gnb_id_s>();
-      break;
-    default:
-      break;
-  }
-}
-void interface_id_x2_s::node_type_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::global_enb_id:
-      c.init<global_enb_id_s>();
-      break;
-    case types::global_en_gnb_id:
-      c.init<globalen_gnb_id_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_x2_s::node_type_c_");
-  }
-}
-interface_id_x2_s::node_type_c_::node_type_c_(const interface_id_x2_s::node_type_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::global_enb_id:
-      c.init(other.c.get<global_enb_id_s>());
-      break;
-    case types::global_en_gnb_id:
-      c.init(other.c.get<globalen_gnb_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_x2_s::node_type_c_");
-  }
-}
-interface_id_x2_s::node_type_c_&
-interface_id_x2_s::node_type_c_::operator=(const interface_id_x2_s::node_type_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::global_enb_id:
-      c.set(other.c.get<global_enb_id_s>());
-      break;
-    case types::global_en_gnb_id:
-      c.set(other.c.get<globalen_gnb_id_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_x2_s::node_type_c_");
-  }
-
-  return *this;
-}
 global_enb_id_s& interface_id_x2_s::node_type_c_::set_global_enb_id()
 {
   set(types::global_enb_id);
@@ -1633,222 +954,82 @@ globalen_gnb_id_s& interface_id_x2_s::node_type_c_::set_global_en_gnb_id()
   set(types::global_en_gnb_id);
   return c.get<globalen_gnb_id_s>();
 }
-void interface_id_x2_s::node_type_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::global_enb_id:
-      j.write_fieldname("global-eNB-ID");
-      c.get<global_enb_id_s>().to_json(j);
-      break;
-    case types::global_en_gnb_id:
-      j.write_fieldname("global-en-gNB-ID");
-      c.get<globalen_gnb_id_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_x2_s::node_type_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE interface_id_x2_s::node_type_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::global_enb_id:
-      HANDLE_CODE(c.get<global_enb_id_s>().pack(bref));
-      break;
-    case types::global_en_gnb_id:
-      HANDLE_CODE(c.get<globalen_gnb_id_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_x2_s::node_type_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_x2_s::node_type_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::global_enb_id:
-      HANDLE_CODE(c.get<global_enb_id_s>().unpack(bref));
-      break;
-    case types::global_en_gnb_id:
-      HANDLE_CODE(c.get<globalen_gnb_id_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_x2_s::node_type_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_interface_id_x2_s_node_type_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_enb_id_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &globalen_gnb_id_s::desc}};
+static const asn1::table::field_name choice_table_interface_id_x2_s_node_type_c__names[] = {
+    {"global-eNB-ID", nullptr},
+    {"global-en-gNB-ID", nullptr}};
+const asn1::table::choice_desc interface_id_x2_s::node_type_c_::desc = {
+    asn1::table::enum_int_type<interface_id_x2_s::node_type_c_::types>(),
+    interface_id_x2_s::node_type_c_::types::nof_types,
+    interface_id_x2_s::node_type_c_::types::nof_exts,
+    interface_id_x2_s::node_type_c_::types::has_ext,
+    true,
+    choice_table_interface_id_x2_s_node_type_c__alternatives,
+    nullptr,
+    choice_table_interface_id_x2_s_node_type_c__names,
+    "interface_id_x2_s::node_type_c_",
+    offsetof(interface_id_x2_s::node_type_c_, c.type),
+    offsetof(interface_id_x2_s::node_type_c_, c.value),
+    false,
+    &interface_id_x2_s::node_type_c_::storage_desc};
 
-const char* interface_id_x2_s::node_type_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"global-eNB-ID", "global-en-gNB-ID"};
-  return convert_enum_idx(names, 2, value, "interface_id_x2_s::node_type_c_::types");
-}
+static const char* enum_names_interface_id_x2_s_node_type_c__types_values[]    = {"global-eNB-ID", "global-en-gNB-ID"};
+const asn1::table::enum_desc interface_id_x2_s::node_type_c_::types_opts::desc = {
+    enum_names_interface_id_x2_s_node_type_c__types_values,
+    2,
+    "interface_id_x2_s::node_type_c_::types"};
 
 // InterfaceID-Xn ::= SEQUENCE
-OCUDUASN_CODE interface_id_xn_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(global_ng_ran_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_xn_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(global_ng_ran_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void interface_id_xn_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("global-NG-RAN-ID");
-  global_ng_ran_id.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_interface_id_xn_s_fields[] = {
+    {offsetof(interface_id_xn_s, global_ng_ran_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_ngran_node_id_c::desc}};
+static const asn1::table::field_name seq_table_interface_id_xn_s_names[] = {{"global-NG-RAN-ID", nullptr}};
+const asn1::table::seq_desc          interface_id_xn_s::desc             = {
+    {seq_table_interface_id_xn_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_interface_id_xn_s_names};
 
 // InterfaceIdentifier ::= CHOICE
-void interface_id_c::destroy_()
-{
-  switch (type_) {
-    case types::ng:
-      c.destroy<interface_id_ng_s>();
-      break;
-    case types::xn:
-      c.destroy<interface_id_xn_s>();
-      break;
-    case types::f1:
-      c.destroy<interface_id_f1_s>();
-      break;
-    case types::e1:
-      c.destroy<interface_id_e1_s>();
-      break;
-    case types::s1:
-      c.destroy<interface_id_s1_s>();
-      break;
-    case types::x2:
-      c.destroy<interface_id_x2_s>();
-      break;
-    case types::w1:
-      c.destroy<interface_id_w1_s>();
-      break;
-    default:
-      break;
-  }
-}
-void interface_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::ng:
-      c.init<interface_id_ng_s>();
-      break;
-    case types::xn:
-      c.init<interface_id_xn_s>();
-      break;
-    case types::f1:
-      c.init<interface_id_f1_s>();
-      break;
-    case types::e1:
-      c.init<interface_id_e1_s>();
-      break;
-    case types::s1:
-      c.init<interface_id_s1_s>();
-      break;
-    case types::x2:
-      c.init<interface_id_x2_s>();
-      break;
-    case types::w1:
-      c.init<interface_id_w1_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_c");
-  }
-}
-interface_id_c::interface_id_c(const interface_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ng:
-      c.init(other.c.get<interface_id_ng_s>());
-      break;
-    case types::xn:
-      c.init(other.c.get<interface_id_xn_s>());
-      break;
-    case types::f1:
-      c.init(other.c.get<interface_id_f1_s>());
-      break;
-    case types::e1:
-      c.init(other.c.get<interface_id_e1_s>());
-      break;
-    case types::s1:
-      c.init(other.c.get<interface_id_s1_s>());
-      break;
-    case types::x2:
-      c.init(other.c.get<interface_id_x2_s>());
-      break;
-    case types::w1:
-      c.init(other.c.get<interface_id_w1_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_c");
-  }
-}
-interface_id_c& interface_id_c::operator=(const interface_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ng:
-      c.set(other.c.get<interface_id_ng_s>());
-      break;
-    case types::xn:
-      c.set(other.c.get<interface_id_xn_s>());
-      break;
-    case types::f1:
-      c.set(other.c.get<interface_id_f1_s>());
-      break;
-    case types::e1:
-      c.set(other.c.get<interface_id_e1_s>());
-      break;
-    case types::s1:
-      c.set(other.c.get<interface_id_s1_s>());
-      break;
-    case types::x2:
-      c.set(other.c.get<interface_id_x2_s>());
-      break;
-    case types::w1:
-      c.set(other.c.get<interface_id_w1_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_interface_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<interface_id_ng_s, false>::value,
+    &asn1::table::alternative_ops<interface_id_xn_s, false>::value,
+    &asn1::table::alternative_ops<interface_id_f1_s, false>::value,
+    &asn1::table::alternative_ops<interface_id_e1_s, false>::value,
+    &asn1::table::alternative_ops<interface_id_s1_s, false>::value,
+    &asn1::table::alternative_ops<interface_id_x2_s, false>::value,
+    &asn1::table::alternative_ops<interface_id_w1_s, false>::value};
+const asn1::table::choice_storage_desc interface_id_c::storage_desc = {choice_storage_interface_id_c_alternatives,
+                                                                       7,
+                                                                       "interface_id_c"};
 
-  return *this;
-}
 interface_id_ng_s& interface_id_c::set_ng()
 {
   set(types::ng);
@@ -1884,499 +1065,375 @@ interface_id_w1_s& interface_id_c::set_w1()
   set(types::w1);
   return c.get<interface_id_w1_s>();
 }
-void interface_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ng:
-      j.write_fieldname("nG");
-      c.get<interface_id_ng_s>().to_json(j);
-      break;
-    case types::xn:
-      j.write_fieldname("xN");
-      c.get<interface_id_xn_s>().to_json(j);
-      break;
-    case types::f1:
-      j.write_fieldname("f1");
-      c.get<interface_id_f1_s>().to_json(j);
-      break;
-    case types::e1:
-      j.write_fieldname("e1");
-      c.get<interface_id_e1_s>().to_json(j);
-      break;
-    case types::s1:
-      j.write_fieldname("s1");
-      c.get<interface_id_s1_s>().to_json(j);
-      break;
-    case types::x2:
-      j.write_fieldname("x2");
-      c.get<interface_id_x2_s>().to_json(j);
-      break;
-    case types::w1:
-      j.write_fieldname("w1");
-      c.get<interface_id_w1_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE interface_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::ng:
-      HANDLE_CODE(c.get<interface_id_ng_s>().pack(bref));
-      break;
-    case types::xn:
-      HANDLE_CODE(c.get<interface_id_xn_s>().pack(bref));
-      break;
-    case types::f1:
-      HANDLE_CODE(c.get<interface_id_f1_s>().pack(bref));
-      break;
-    case types::e1:
-      HANDLE_CODE(c.get<interface_id_e1_s>().pack(bref));
-      break;
-    case types::s1:
-      HANDLE_CODE(c.get<interface_id_s1_s>().pack(bref));
-      break;
-    case types::x2:
-      HANDLE_CODE(c.get<interface_id_x2_s>().pack(bref));
-      break;
-    case types::w1:
-      HANDLE_CODE(c.get<interface_id_w1_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE interface_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::ng:
-      HANDLE_CODE(c.get<interface_id_ng_s>().unpack(bref));
-      break;
-    case types::xn:
-      HANDLE_CODE(c.get<interface_id_xn_s>().unpack(bref));
-      break;
-    case types::f1:
-      HANDLE_CODE(c.get<interface_id_f1_s>().unpack(bref));
-      break;
-    case types::e1:
-      HANDLE_CODE(c.get<interface_id_e1_s>().unpack(bref));
-      break;
-    case types::s1:
-      HANDLE_CODE(c.get<interface_id_s1_s>().unpack(bref));
-      break;
-    case types::x2:
-      HANDLE_CODE(c.get<interface_id_x2_s>().unpack(bref));
-      break;
-    case types::w1:
-      HANDLE_CODE(c.get<interface_id_w1_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "interface_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_interface_id_c_alternatives[] = {{0,
+                                                                                    asn1::table::seq_field::mandatory,
+                                                                                    asn1::table::field_op::sequence,
+                                                                                    false,
+                                                                                    false,
+                                                                                    0,
+                                                                                    0,
+                                                                                    nullptr,
+                                                                                    &interface_id_ng_s::desc},
+                                                                                   {0,
+                                                                                    asn1::table::seq_field::mandatory,
+                                                                                    asn1::table::field_op::sequence,
+                                                                                    false,
+                                                                                    false,
+                                                                                    0,
+                                                                                    0,
+                                                                                    nullptr,
+                                                                                    &interface_id_xn_s::desc},
+                                                                                   {0,
+                                                                                    asn1::table::seq_field::mandatory,
+                                                                                    asn1::table::field_op::sequence,
+                                                                                    false,
+                                                                                    false,
+                                                                                    0,
+                                                                                    0,
+                                                                                    nullptr,
+                                                                                    &interface_id_f1_s::desc},
+                                                                                   {0,
+                                                                                    asn1::table::seq_field::mandatory,
+                                                                                    asn1::table::field_op::sequence,
+                                                                                    false,
+                                                                                    false,
+                                                                                    0,
+                                                                                    0,
+                                                                                    nullptr,
+                                                                                    &interface_id_e1_s::desc},
+                                                                                   {0,
+                                                                                    asn1::table::seq_field::mandatory,
+                                                                                    asn1::table::field_op::sequence,
+                                                                                    false,
+                                                                                    false,
+                                                                                    0,
+                                                                                    0,
+                                                                                    nullptr,
+                                                                                    &interface_id_s1_s::desc},
+                                                                                   {0,
+                                                                                    asn1::table::seq_field::mandatory,
+                                                                                    asn1::table::field_op::sequence,
+                                                                                    false,
+                                                                                    false,
+                                                                                    0,
+                                                                                    0,
+                                                                                    nullptr,
+                                                                                    &interface_id_x2_s::desc},
+                                                                                   {0,
+                                                                                    asn1::table::seq_field::mandatory,
+                                                                                    asn1::table::field_op::sequence,
+                                                                                    false,
+                                                                                    false,
+                                                                                    0,
+                                                                                    0,
+                                                                                    nullptr,
+                                                                                    &interface_id_w1_s::desc}};
+static const asn1::table::field_name choice_table_interface_id_c_names[]        = {{"nG", nullptr},
+                                                                                   {"xN", nullptr},
+                                                                                   {"f1", nullptr},
+                                                                                   {"e1", nullptr},
+                                                                                   {"s1", nullptr},
+                                                                                   {"x2", nullptr},
+                                                                                   {"w1", nullptr}};
+const asn1::table::choice_desc       interface_id_c::desc = {asn1::table::enum_int_type<interface_id_c::types>(),
+                                                             interface_id_c::types::nof_types,
+                                                             interface_id_c::types::nof_exts,
+                                                             interface_id_c::types::has_ext,
+                                                             true,
+                                                             choice_table_interface_id_c_alternatives,
+                                                             nullptr,
+                                                             choice_table_interface_id_c_names,
+                                                             "interface_id_c",
+                                                             offsetof(interface_id_c, c.type),
+                                                             offsetof(interface_id_c, c.value),
+                                                             false,
+                                                             &interface_id_c::storage_desc};
 
-const char* interface_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"nG", "xN", "f1", "e1", "s1", "x2", "w1"};
-  return convert_enum_idx(names, 7, value, "interface_id_c::types");
-}
+static const char*           enum_names_interface_id_c_types_values[] = {"nG", "xN", "f1", "e1", "s1", "x2", "w1"};
+const asn1::table::enum_desc interface_id_c::types_opts::desc         = {enum_names_interface_id_c_types_values,
+                                                                         7,
+                                                                         "interface_id_c::types"};
 
 // InterfaceType ::= ENUMERATED
-const char* interface_type_opts::to_string() const
-{
-  static const char* names[] = {"nG", "xn", "f1", "e1", "s1", "x2", "w1"};
-  return convert_enum_idx(names, 7, value, "interface_type_e");
-}
+static const char*           enum_names_interface_type_e_values[] = {"nG", "xn", "f1", "e1", "s1", "x2", "w1"};
+const asn1::table::enum_desc interface_type_opts::desc = {enum_names_interface_type_e_values, 7, "interface_type_e"};
 
 // NR-ARFCN ::= SEQUENCE
-OCUDUASN_CODE nr_arfcn_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(pack_integer(bref, nr_arfcn, (uint32_t)0u, (uint32_t)3279165u, false, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_arfcn_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(nr_arfcn, bref, (uint32_t)0u, (uint32_t)3279165u, false, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void nr_arfcn_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("nRARFCN", nr_arfcn);
-  j.end_obj();
-}
+static const asn1::table::seq_field  seq_table_nr_arfcn_s_fields[] = {{offsetof(nr_arfcn_s, nr_arfcn),
+                                                                       asn1::table::seq_field::mandatory,
+                                                                       asn1::table::field_op::int_u32,
+                                                                       false,
+                                                                       true,
+                                                                       INT64_C(0),
+                                                                       UINT64_C(3279165),
+                                                                       nullptr}};
+static const asn1::table::field_name seq_table_nr_arfcn_s_names[]  = {{"nRARFCN", nullptr}};
+const asn1::table::seq_desc          nr_arfcn_s::desc =
+    {{seq_table_nr_arfcn_s_fields, 1, UINT64_C(0x1), nullptr, 0}, true, true, nullptr, 0, seq_table_nr_arfcn_s_names};
 
 // SupportedSULFreqBandItem ::= SEQUENCE
-OCUDUASN_CODE supported_sul_freq_band_item_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(pack_integer(bref, freq_band_ind_nr, (uint16_t)1u, (uint16_t)1024u, true, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE supported_sul_freq_band_item_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(freq_band_ind_nr, bref, (uint16_t)1u, (uint16_t)1024u, true, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void supported_sul_freq_band_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("freqBandIndicatorNr", freq_band_ind_nr);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_supported_sul_freq_band_item_s_fields[] = {
+    {offsetof(supported_sul_freq_band_item_s, freq_band_ind_nr),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(1024),
+     nullptr}};
+static const asn1::table::field_name seq_table_supported_sul_freq_band_item_s_names[] = {
+    {"freqBandIndicatorNr", nullptr}};
+const asn1::table::seq_desc supported_sul_freq_band_item_s::desc = {
+    {seq_table_supported_sul_freq_band_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_supported_sul_freq_band_item_s_names};
 
 // NRFrequencyBandItem ::= SEQUENCE
-OCUDUASN_CODE nr_freq_band_item_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(pack_integer(bref, freq_band_ind_nr, (uint16_t)1u, (uint16_t)1024u, true, true));
-  HANDLE_CODE(pack_dyn_seq_of(bref, supported_sul_band_list, 0, 32, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_freq_band_item_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(freq_band_ind_nr, bref, (uint16_t)1u, (uint16_t)1024u, true, true));
-  HANDLE_CODE(unpack_dyn_seq_of(supported_sul_band_list, bref, 0, 32, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void nr_freq_band_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("freqBandIndicatorNr", freq_band_ind_nr);
-  j.start_array("supportedSULBandList");
-  for (const auto& e1 : supported_sul_band_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_nr_freq_band_item_s_fields[] = {
+    {offsetof(nr_freq_band_item_s, freq_band_ind_nr),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(1024),
+     nullptr},
+    {offsetof(nr_freq_band_item_s, supported_sul_band_list),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     0,
+     32,
+     &asn1::table::item_list_codec<decltype(nr_freq_band_item_s::supported_sul_band_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &supported_sul_freq_band_item_s::desc}};
+static const asn1::table::field_name seq_table_nr_freq_band_item_s_names[] = {{"freqBandIndicatorNr", nullptr},
+                                                                              {"supportedSULBandList", nullptr}};
+const asn1::table::seq_desc          nr_freq_band_item_s::desc             = {
+    {seq_table_nr_freq_band_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_nr_freq_band_item_s_names};
 
 // NRFrequencyShift7p5khz ::= ENUMERATED
-const char* nr_freq_shift7p5khz_opts::to_string() const
-{
-  static const char* names[] = {"false", "true"};
-  return convert_enum_idx(names, 2, value, "nr_freq_shift7p5khz_e");
-}
+static const char*           enum_names_nr_freq_shift7p5khz_e_values[] = {"false", "true"};
+const asn1::table::enum_desc nr_freq_shift7p5khz_opts::desc            = {enum_names_nr_freq_shift7p5khz_e_values,
+                                                                          2,
+                                                                          "nr_freq_shift7p5khz_e"};
 
 // NRFrequencyInfo ::= SEQUENCE
-OCUDUASN_CODE nr_freq_info_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, freq_shift7p5khz_present}));
-
-  HANDLE_CODE(nr_arfcn.pack(bref));
-  HANDLE_CODE(pack_dyn_seq_of(bref, freq_band_list, 1, 32, true));
-  if (freq_shift7p5khz_present) {
-    HANDLE_CODE(freq_shift7p5khz.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_freq_info_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &freq_shift7p5khz_present}));
-
-  HANDLE_CODE(nr_arfcn.unpack(bref));
-  HANDLE_CODE(unpack_dyn_seq_of(freq_band_list, bref, 1, 32, true));
-  if (freq_shift7p5khz_present) {
-    HANDLE_CODE(freq_shift7p5khz.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void nr_freq_info_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("nrARFCN");
-  nr_arfcn.to_json(j);
-  j.start_array("frequencyBand-List");
-  for (const auto& e1 : freq_band_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  if (freq_shift7p5khz_present) {
-    j.write_str("frequencyShift7p5khz", freq_shift7p5khz.to_string());
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_nr_freq_info_s_fields[] = {
+    {offsetof(nr_freq_info_s, nr_arfcn),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &nr_arfcn_s::desc},
+    {offsetof(nr_freq_info_s, freq_band_list),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     32,
+     &asn1::table::
+         item_list_codec<decltype(nr_freq_info_s::freq_band_list), asn1::table::sequence_item_ops, false, true>::value,
+     &nr_freq_band_item_s::desc},
+    {offsetof(nr_freq_info_s, freq_shift7p5khz),
+     (int32_t)offsetof(nr_freq_info_s, freq_shift7p5khz_present),
+     asn1::table::enum_op<decltype(nr_freq_info_s::freq_shift7p5khz)>(),
+     decltype(nr_freq_info_s::freq_shift7p5khz)::has_ext,
+     false,
+     decltype(nr_freq_info_s::freq_shift7p5khz)::nof_types,
+     decltype(nr_freq_info_s::freq_shift7p5khz)::nof_exts,
+     nullptr,
+     &nr_freq_shift7p5khz_opts::desc}};
+static const asn1::table::field_name seq_table_nr_freq_info_s_names[] = {{"nrARFCN", nullptr},
+                                                                         {"frequencyBand-List", nullptr},
+                                                                         {"frequencyShift7p5khz", nullptr}};
+static const asn1::table::seq_opt    seq_table_nr_freq_info_s_opts[]  = {
+    {2, (int32_t)offsetof(nr_freq_info_s, freq_shift7p5khz_present)}};
+const asn1::table::seq_desc nr_freq_info_s::desc = {
+    {seq_table_nr_freq_info_s_fields, 3, UINT64_C(0x3), seq_table_nr_freq_info_s_opts, 1},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_nr_freq_info_s_names};
 
 // PartialUEID ::= SEQUENCE
-OCUDUASN_CODE partial_ue_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref,
-                        {false,
-                         amf_ue_ngap_id_present,
-                         guami_present,
-                         gnb_cu_ue_f1ap_id_present,
-                         gnb_cu_cp_ue_e1ap_id_present,
-                         ran_ue_id_present,
-                         m_ng_ran_ue_xnap_id_present,
-                         global_ng_ran_node_id_present,
-                         cell_rnti_present,
-                         ng_enb_cu_ue_w1_ap_id_present,
-                         m_enb_ue_x2ap_id_present,
-                         m_enb_ue_x2ap_id_ext_present,
-                         global_enb_id_present,
-                         mme_ue_s1ap_id_present,
-                         gummei_present}));
-
-  if (amf_ue_ngap_id_present) {
-    HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  }
-  if (guami_present) {
-    HANDLE_CODE(guami.pack(bref));
-  }
-  if (gnb_cu_ue_f1ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gnb_cu_cp_ue_e1ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.pack(bref));
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xnap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_ng_ran_node_id_present) {
-    HANDLE_CODE(global_ng_ran_node_id.pack(bref));
-  }
-  if (cell_rnti_present) {
-    HANDLE_CODE(cell_rnti.pack(bref));
-  }
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  if (global_enb_id_present) {
-    HANDLE_CODE(global_enb_id.pack(bref));
-  }
-  if (mme_ue_s1ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, mme_ue_s1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gummei_present) {
-    HANDLE_CODE(gummei.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE partial_ue_id_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&ext,
-                           &amf_ue_ngap_id_present,
-                           &guami_present,
-                           &gnb_cu_ue_f1ap_id_present,
-                           &gnb_cu_cp_ue_e1ap_id_present,
-                           &ran_ue_id_present,
-                           &m_ng_ran_ue_xnap_id_present,
-                           &global_ng_ran_node_id_present,
-                           &cell_rnti_present,
-                           &ng_enb_cu_ue_w1_ap_id_present,
-                           &m_enb_ue_x2ap_id_present,
-                           &m_enb_ue_x2ap_id_ext_present,
-                           &global_enb_id_present,
-                           &mme_ue_s1ap_id_present,
-                           &gummei_present}));
-
-  if (amf_ue_ngap_id_present) {
-    HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  }
-  if (guami_present) {
-    HANDLE_CODE(guami.unpack(bref));
-  }
-  if (gnb_cu_ue_f1ap_id_present) {
-    HANDLE_CODE(unpack_integer(gnb_cu_ue_f1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gnb_cu_cp_ue_e1ap_id_present) {
-    HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.unpack(bref));
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xnap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_ng_ran_node_id_present) {
-    HANDLE_CODE(global_ng_ran_node_id.unpack(bref));
-  }
-  if (cell_rnti_present) {
-    HANDLE_CODE(cell_rnti.unpack(bref));
-  }
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  if (global_enb_id_present) {
-    HANDLE_CODE(global_enb_id.unpack(bref));
-  }
-  if (mme_ue_s1ap_id_present) {
-    HANDLE_CODE(unpack_integer(mme_ue_s1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gummei_present) {
-    HANDLE_CODE(gummei.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void partial_ue_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (amf_ue_ngap_id_present) {
-    j.write_uint("amf-UE-NGAP-ID", amf_ue_ngap_id);
-  }
-  if (guami_present) {
-    j.write_fieldname("guami");
-    guami.to_json(j);
-  }
-  if (gnb_cu_ue_f1ap_id_present) {
-    j.write_uint("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1ap_id);
-  }
-  if (gnb_cu_cp_ue_e1ap_id_present) {
-    j.write_uint("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1ap_id);
-  }
-  if (ran_ue_id_present) {
-    j.write_str("ran-UEID", ran_ue_id.to_string());
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    j.write_uint("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xnap_id);
-  }
-  if (global_ng_ran_node_id_present) {
-    j.write_fieldname("globalNG-RANNode-ID");
-    global_ng_ran_node_id.to_json(j);
-  }
-  if (cell_rnti_present) {
-    j.write_fieldname("cell-RNTI");
-    cell_rnti.to_json(j);
-  }
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    j.write_uint("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
-  }
-  if (m_enb_ue_x2ap_id_present) {
-    j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
-  }
-  if (global_enb_id_present) {
-    j.write_fieldname("globalENB-ID");
-    global_enb_id.to_json(j);
-  }
-  if (mme_ue_s1ap_id_present) {
-    j.write_uint("mME-UE-S1AP-ID", mme_ue_s1ap_id);
-  }
-  if (gummei_present) {
-    j.write_fieldname("gUMMEI");
-    gummei.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_partial_ue_id_s_fields[] = {
+    {offsetof(partial_ue_id_s, amf_ue_ngap_id),
+     (int32_t)offsetof(partial_ue_id_s, amf_ue_ngap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(1099511627775),
+     nullptr},
+    {offsetof(partial_ue_id_s, guami),
+     (int32_t)offsetof(partial_ue_id_s, guami_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &guami_s::desc},
+    {offsetof(partial_ue_id_s, gnb_cu_ue_f1ap_id),
+     (int32_t)offsetof(partial_ue_id_s, gnb_cu_ue_f1ap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(partial_ue_id_s, gnb_cu_cp_ue_e1ap_id),
+     (int32_t)offsetof(partial_ue_id_s, gnb_cu_cp_ue_e1ap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(partial_ue_id_s, ran_ue_id),
+     (int32_t)offsetof(partial_ue_id_s, ran_ue_id_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(partial_ue_id_s::ran_ue_id), asn1::table::string_json>::value},
+    {offsetof(partial_ue_id_s, m_ng_ran_ue_xnap_id),
+     (int32_t)offsetof(partial_ue_id_s, m_ng_ran_ue_xnap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(partial_ue_id_s, global_ng_ran_node_id),
+     (int32_t)offsetof(partial_ue_id_s, global_ng_ran_node_id_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_ngran_node_id_c::desc},
+    {offsetof(partial_ue_id_s, cell_rnti),
+     (int32_t)offsetof(partial_ue_id_s, cell_rnti_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cell_rnti_s::desc},
+    {offsetof(partial_ue_id_s, ng_enb_cu_ue_w1_ap_id),
+     (int32_t)offsetof(partial_ue_id_s, ng_enb_cu_ue_w1_ap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(partial_ue_id_s, m_enb_ue_x2ap_id),
+     (int32_t)offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_present),
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr},
+    {offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_ext),
+     (int32_t)offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_ext_present),
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr},
+    {offsetof(partial_ue_id_s, global_enb_id),
+     (int32_t)offsetof(partial_ue_id_s, global_enb_id_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_enb_id_s::desc},
+    {offsetof(partial_ue_id_s, mme_ue_s1ap_id),
+     (int32_t)offsetof(partial_ue_id_s, mme_ue_s1ap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(partial_ue_id_s, gummei),
+     (int32_t)offsetof(partial_ue_id_s, gummei_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &gummei_s::desc}};
+static const asn1::table::field_name seq_table_partial_ue_id_s_names[] = {{"amf-UE-NGAP-ID", nullptr},
+                                                                          {"guami", nullptr},
+                                                                          {"gNB-CU-UE-F1AP-ID", nullptr},
+                                                                          {"gNB-CU-CP-UE-E1AP-ID", nullptr},
+                                                                          {"ran-UEID", nullptr},
+                                                                          {"m-NG-RAN-UE-XnAP-ID", nullptr},
+                                                                          {"globalNG-RANNode-ID", nullptr},
+                                                                          {"cell-RNTI", nullptr},
+                                                                          {"ng-eNB-CU-UE-W1AP-ID", nullptr},
+                                                                          {"m-eNB-UE-X2AP-ID", nullptr},
+                                                                          {"m-eNB-UE-X2AP-ID-Extension", nullptr},
+                                                                          {"globalENB-ID", nullptr},
+                                                                          {"mME-UE-S1AP-ID", nullptr},
+                                                                          {"gUMMEI", nullptr}};
+static const asn1::table::seq_opt    seq_table_partial_ue_id_s_opts[]  = {
+    {0, (int32_t)offsetof(partial_ue_id_s, amf_ue_ngap_id_present)},
+    {1, (int32_t)offsetof(partial_ue_id_s, guami_present)},
+    {2, (int32_t)offsetof(partial_ue_id_s, gnb_cu_ue_f1ap_id_present)},
+    {3, (int32_t)offsetof(partial_ue_id_s, gnb_cu_cp_ue_e1ap_id_present)},
+    {4, (int32_t)offsetof(partial_ue_id_s, ran_ue_id_present)},
+    {5, (int32_t)offsetof(partial_ue_id_s, m_ng_ran_ue_xnap_id_present)},
+    {6, (int32_t)offsetof(partial_ue_id_s, global_ng_ran_node_id_present)},
+    {7, (int32_t)offsetof(partial_ue_id_s, cell_rnti_present)},
+    {8, (int32_t)offsetof(partial_ue_id_s, ng_enb_cu_ue_w1_ap_id_present)},
+    {9, (int32_t)offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_present)},
+    {10, (int32_t)offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_ext_present)},
+    {11, (int32_t)offsetof(partial_ue_id_s, global_enb_id_present)},
+    {12, (int32_t)offsetof(partial_ue_id_s, mme_ue_s1ap_id_present)},
+    {13, (int32_t)offsetof(partial_ue_id_s, gummei_present)}};
+const asn1::table::seq_desc partial_ue_id_s::desc = {
+    {seq_table_partial_ue_id_s_fields, 14, UINT64_C(0x0), seq_table_partial_ue_id_s_opts, 14},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_partial_ue_id_s_names};
 
 // QoSID ::= CHOICE
-void qos_id_c::destroy_() {}
-void qos_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-qos_id_c::qos_id_c(const qos_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::five_gc:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::epc:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "qos_id_c");
-  }
-}
-qos_id_c& qos_id_c::operator=(const qos_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::five_gc:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::epc:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "qos_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_qos_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value};
+const asn1::table::choice_storage_desc qos_id_c::storage_desc = {choice_storage_qos_id_c_alternatives, 2, "qos_id_c"};
 
-  return *this;
-}
 uint16_t& qos_id_c::set_five_gc()
 {
   set(types::five_gc);
@@ -2387,137 +1444,116 @@ uint16_t& qos_id_c::set_epc()
   set(types::epc);
   return c.get<uint16_t>();
 }
-void qos_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::five_gc:
-      j.write_int("fiveGC", c.get<uint16_t>());
-      break;
-    case types::epc:
-      j.write_int("ePC", c.get<uint16_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "qos_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE qos_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::five_gc:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u, true, true));
-      break;
-    case types::epc:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)255u, false, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "qos_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE qos_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::five_gc:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u, true, true));
-      break;
-    case types::epc:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)255u, false, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "qos_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_qos_id_c_alternatives[] = {{0,
+                                                                              asn1::table::seq_field::mandatory,
+                                                                              asn1::table::field_op::int_u16,
+                                                                              true,
+                                                                              true,
+                                                                              INT64_C(0),
+                                                                              UINT64_C(255),
+                                                                              nullptr},
+                                                                             {0,
+                                                                              asn1::table::seq_field::mandatory,
+                                                                              asn1::table::field_op::int_u16,
+                                                                              false,
+                                                                              true,
+                                                                              INT64_C(0),
+                                                                              UINT64_C(255),
+                                                                              nullptr}};
+static const asn1::table::field_name choice_table_qos_id_c_names[]        = {{"fiveGC", nullptr}, {"ePC", nullptr}};
+const asn1::table::choice_desc       qos_id_c::desc = {asn1::table::enum_int_type<qos_id_c::types>(),
+                                                       qos_id_c::types::nof_types,
+                                                       qos_id_c::types::nof_exts,
+                                                       qos_id_c::types::has_ext,
+                                                       true,
+                                                       choice_table_qos_id_c_alternatives,
+                                                       nullptr,
+                                                       choice_table_qos_id_c_names,
+                                                       "qos_id_c",
+                                                       offsetof(qos_id_c, c.type),
+                                                       offsetof(qos_id_c, c.value),
+                                                       false,
+                                                       &qos_id_c::storage_desc};
 
-const char* qos_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"fiveGC", "ePC"};
-  return convert_enum_idx(names, 2, value, "qos_id_c::types");
-}
-uint8_t qos_id_c::types_opts::to_number() const
+static const char*           enum_names_qos_id_c_types_values[] = {"fiveGC", "ePC"};
+const asn1::table::enum_desc qos_id_c::types_opts::desc = {enum_names_qos_id_c_types_values, 2, "qos_id_c::types"};
+uint8_t                      qos_id_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {5};
   return map_enum_number(numbers, 1, value, "qos_id_c::types");
 }
 
 // RANfunction-Name ::= SEQUENCE
-OCUDUASN_CODE ra_nfunction_name_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, ran_function_instance_present}));
-
-  HANDLE_CODE(ran_function_short_name.pack(bref));
-  HANDLE_CODE(ran_function_e2sm_o_id.pack(bref));
-  HANDLE_CODE(ran_function_description.pack(bref));
-  if (ran_function_instance_present) {
-    HANDLE_CODE(pack_unconstrained_integer(bref, ran_function_instance, false, true));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ra_nfunction_name_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &ran_function_instance_present}));
-
-  HANDLE_CODE(ran_function_short_name.unpack(bref));
-  HANDLE_CODE(ran_function_e2sm_o_id.unpack(bref));
-  HANDLE_CODE(ran_function_description.unpack(bref));
-  if (ran_function_instance_present) {
-    HANDLE_CODE(unpack_unconstrained_integer(ran_function_instance, bref, false, true));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ra_nfunction_name_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("ranFunction-ShortName", ran_function_short_name.to_string());
-  j.write_str("ranFunction-E2SM-OID", ran_function_e2sm_o_id.to_string());
-  j.write_str("ranFunction-Description", ran_function_description.to_string());
-  if (ran_function_instance_present) {
-    j.write_int("ranFunction-Instance", ran_function_instance);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ra_nfunction_name_s_fields[] = {
+    {offsetof(ra_nfunction_name_s, ran_function_short_name),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(ra_nfunction_name_s::ran_function_short_name),
+                                asn1::table::string_json>::value},
+    {offsetof(ra_nfunction_name_s, ran_function_e2sm_o_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(ra_nfunction_name_s::ran_function_e2sm_o_id),
+                                asn1::table::string_json>::value},
+    {offsetof(ra_nfunction_name_s, ran_function_description),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(ra_nfunction_name_s::ran_function_description),
+                                asn1::table::string_json>::value},
+    {offsetof(ra_nfunction_name_s, ran_function_instance),
+     (int32_t)offsetof(ra_nfunction_name_s, ran_function_instance_present),
+     asn1::table::field_op::int_i64,
+     false,
+     true,
+     INT64_MIN,
+     UINT64_C(9223372036854775807),
+     nullptr}};
+static const asn1::table::field_name seq_table_ra_nfunction_name_s_names[] = {{"ranFunction-ShortName", nullptr},
+                                                                              {"ranFunction-E2SM-OID", nullptr},
+                                                                              {"ranFunction-Description", nullptr},
+                                                                              {"ranFunction-Instance", nullptr}};
+static const asn1::table::seq_opt    seq_table_ra_nfunction_name_s_opts[]  = {
+    {3, (int32_t)offsetof(ra_nfunction_name_s, ran_function_instance_present)}};
+const asn1::table::seq_desc ra_nfunction_name_s::desc = {
+    {seq_table_ra_nfunction_name_s_fields, 4, UINT64_C(0x7), seq_table_ra_nfunction_name_s_opts, 1},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_ra_nfunction_name_s_names};
 
 // RRCclass-LTE ::= ENUMERATED
-const char* rrc_class_lte_opts::to_string() const
-{
-  static const char* names[] = {"bCCH-BCH",
-                                "bCCH-BCH-MBMS",
-                                "bCCH-DL-SCH",
-                                "bCCH-DL-SCH-BR",
-                                "bCCH-DL-SCH-MBMS",
-                                "mCCH",
-                                "pCCH",
-                                "dL-CCCH",
-                                "dL-DCCH",
-                                "uL-CCCH",
-                                "uL-DCCH",
-                                "sC-MCCH"};
-  return convert_enum_idx(names, 12, value, "rrc_class_lte_e");
-}
+static const char*           enum_names_rrc_class_lte_e_values[] = {"bCCH-BCH",
+                                                                    "bCCH-BCH-MBMS",
+                                                                    "bCCH-DL-SCH",
+                                                                    "bCCH-DL-SCH-BR",
+                                                                    "bCCH-DL-SCH-MBMS",
+                                                                    "mCCH",
+                                                                    "pCCH",
+                                                                    "dL-CCCH",
+                                                                    "dL-DCCH",
+                                                                    "uL-CCCH",
+                                                                    "uL-DCCH",
+                                                                    "sC-MCCH"};
+const asn1::table::enum_desc rrc_class_lte_opts::desc = {enum_names_rrc_class_lte_e_values, 12, "rrc_class_lte_e"};
 
 // RRCclass-NR ::= ENUMERATED
-const char* rrc_class_nr_opts::to_string() const
-{
-  static const char* names[] = {
-      "bCCH-BCH", "bCCH-DL-SCH", "dL-CCCH", "dL-DCCH", "pCCH", "uL-CCCH", "uL-CCCH1", "uL-DCCH"};
-  return convert_enum_idx(names, 8, value, "rrc_class_nr_e");
-}
-uint8_t rrc_class_nr_opts::to_number() const
+static const char* enum_names_rrc_class_nr_e_values[] =
+    {"bCCH-BCH", "bCCH-DL-SCH", "dL-CCCH", "dL-DCCH", "pCCH", "uL-CCCH", "uL-CCCH1", "uL-DCCH"};
+const asn1::table::enum_desc rrc_class_nr_opts::desc = {enum_names_rrc_class_nr_e_values, 8, "rrc_class_nr_e"};
+uint8_t                      rrc_class_nr_opts::to_number() const
 {
   if (value == ul_ccch1) {
     return 1;
@@ -2527,81 +1563,39 @@ uint8_t rrc_class_nr_opts::to_number() const
 }
 
 // RRC-MessageID ::= SEQUENCE
-OCUDUASN_CODE rrc_msg_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
+static const asn1::table::seq_field  seq_table_rrc_msg_id_s_fields[] = {{offsetof(rrc_msg_id_s, rrc_type),
+                                                                         asn1::table::seq_field::mandatory,
+                                                                         asn1::table::field_op::choice,
+                                                                         false,
+                                                                         false,
+                                                                         0,
+                                                                         0,
+                                                                         nullptr,
+                                                                         &rrc_msg_id_s::rrc_type_c_::desc},
+                                                                        {offsetof(rrc_msg_id_s, msg_id),
+                                                                         asn1::table::seq_field::mandatory,
+                                                                         asn1::table::field_op::int_i64,
+                                                                         false,
+                                                                         true,
+                                                                         INT64_MIN,
+                                                                         UINT64_C(9223372036854775807),
+                                                                         nullptr}};
+static const asn1::table::field_name seq_table_rrc_msg_id_s_names[]  = {{"rrcType", nullptr}, {"messageID", nullptr}};
+const asn1::table::seq_desc rrc_msg_id_s::desc = {{seq_table_rrc_msg_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+                                                  true,
+                                                  true,
+                                                  nullptr,
+                                                  0,
+                                                  seq_table_rrc_msg_id_s_names};
 
-  HANDLE_CODE(rrc_type.pack(bref));
-  HANDLE_CODE(pack_unconstrained_integer(bref, msg_id, false, true));
+static const asn1::table::storage_ops* const choice_storage_rrc_msg_id_s_rrc_type_c__alternatives[] = {
+    &asn1::table::alternative_ops<rrc_class_lte_e, true>::value,
+    &asn1::table::alternative_ops<rrc_class_nr_e, true>::value};
+const asn1::table::choice_storage_desc rrc_msg_id_s::rrc_type_c_::storage_desc = {
+    choice_storage_rrc_msg_id_s_rrc_type_c__alternatives,
+    2,
+    "rrc_msg_id_s::rrc_type_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE rrc_msg_id_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(rrc_type.unpack(bref));
-  HANDLE_CODE(unpack_unconstrained_integer(msg_id, bref, false, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void rrc_msg_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("rrcType");
-  rrc_type.to_json(j);
-  j.write_int("messageID", msg_id);
-  j.end_obj();
-}
-
-void rrc_msg_id_s::rrc_type_c_::destroy_() {}
-void rrc_msg_id_s::rrc_type_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-rrc_msg_id_s::rrc_type_c_::rrc_type_c_(const rrc_msg_id_s::rrc_type_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::lte:
-      c.init(other.c.get<rrc_class_lte_e>());
-      break;
-    case types::nr:
-      c.init(other.c.get<rrc_class_nr_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "rrc_msg_id_s::rrc_type_c_");
-  }
-}
-rrc_msg_id_s::rrc_type_c_& rrc_msg_id_s::rrc_type_c_::operator=(const rrc_msg_id_s::rrc_type_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::lte:
-      c.set(other.c.get<rrc_class_lte_e>());
-      break;
-    case types::nr:
-      c.set(other.c.get<rrc_class_nr_e>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "rrc_msg_id_s::rrc_type_c_");
-  }
-
-  return *this;
-}
 rrc_class_lte_e& rrc_msg_id_s::rrc_type_c_::set_lte()
 {
   set(types::lte);
@@ -2612,164 +1606,85 @@ rrc_class_nr_e& rrc_msg_id_s::rrc_type_c_::set_nr()
   set(types::nr);
   return c.get<rrc_class_nr_e>();
 }
-void rrc_msg_id_s::rrc_type_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::lte:
-      j.write_str("lTE", c.get<rrc_class_lte_e>().to_string());
-      break;
-    case types::nr:
-      j.write_str("nR", c.get<rrc_class_nr_e>().to_string());
-      break;
-    default:
-      log_invalid_choice_id(type_, "rrc_msg_id_s::rrc_type_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE rrc_msg_id_s::rrc_type_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::lte:
-      HANDLE_CODE(c.get<rrc_class_lte_e>().pack(bref));
-      break;
-    case types::nr:
-      HANDLE_CODE(c.get<rrc_class_nr_e>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "rrc_msg_id_s::rrc_type_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE rrc_msg_id_s::rrc_type_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::lte:
-      HANDLE_CODE(c.get<rrc_class_lte_e>().unpack(bref));
-      break;
-    case types::nr:
-      HANDLE_CODE(c.get<rrc_class_nr_e>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "rrc_msg_id_s::rrc_type_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_rrc_msg_id_s_rrc_type_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<rrc_class_lte_e>(),
+     rrc_class_lte_e::has_ext,
+     false,
+     rrc_class_lte_e::nof_types,
+     rrc_class_lte_e::nof_exts,
+     nullptr,
+     &rrc_class_lte_opts::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<rrc_class_nr_e>(),
+     rrc_class_nr_e::has_ext,
+     false,
+     rrc_class_nr_e::nof_types,
+     rrc_class_nr_e::nof_exts,
+     nullptr,
+     &rrc_class_nr_opts::desc}};
+static const asn1::table::field_name choice_table_rrc_msg_id_s_rrc_type_c__names[] = {{"lTE", nullptr},
+                                                                                      {"nR", nullptr}};
+const asn1::table::choice_desc       rrc_msg_id_s::rrc_type_c_::desc               = {
+    asn1::table::enum_int_type<rrc_msg_id_s::rrc_type_c_::types>(),
+    rrc_msg_id_s::rrc_type_c_::types::nof_types,
+    rrc_msg_id_s::rrc_type_c_::types::nof_exts,
+    rrc_msg_id_s::rrc_type_c_::types::has_ext,
+    true,
+    choice_table_rrc_msg_id_s_rrc_type_c__alternatives,
+    nullptr,
+    choice_table_rrc_msg_id_s_rrc_type_c__names,
+    "rrc_msg_id_s::rrc_type_c_",
+    offsetof(rrc_msg_id_s::rrc_type_c_, c.type),
+    offsetof(rrc_msg_id_s::rrc_type_c_, c.value),
+    false,
+    &rrc_msg_id_s::rrc_type_c_::storage_desc};
 
-const char* rrc_msg_id_s::rrc_type_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"lTE", "nR"};
-  return convert_enum_idx(names, 2, value, "rrc_msg_id_s::rrc_type_c_::types");
-}
+static const char*           enum_names_rrc_msg_id_s_rrc_type_c__types_values[] = {"lTE", "nR"};
+const asn1::table::enum_desc rrc_msg_id_s::rrc_type_c_::types_opts::desc        = {
+    enum_names_rrc_msg_id_s_rrc_type_c__types_values,
+    2,
+    "rrc_msg_id_s::rrc_type_c_::types"};
 
 // S-NSSAI ::= SEQUENCE
-OCUDUASN_CODE s_nssai_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, sd_present}));
-
-  HANDLE_CODE(sst.pack(bref));
-  if (sd_present) {
-    HANDLE_CODE(sd.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE s_nssai_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &sd_present}));
-
-  HANDLE_CODE(sst.unpack(bref));
-  if (sd_present) {
-    HANDLE_CODE(sd.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void s_nssai_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("sST", sst.to_string());
-  if (sd_present) {
-    j.write_str("sD", sd.to_string());
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_s_nssai_s_fields[] = {
+    {offsetof(s_nssai_s, sst),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(s_nssai_s::sst), asn1::table::string_json>::value},
+    {offsetof(s_nssai_s, sd),
+     (int32_t)offsetof(s_nssai_s, sd_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(s_nssai_s::sd), asn1::table::string_json>::value}};
+static const asn1::table::field_name seq_table_s_nssai_s_names[] = {{"sST", nullptr}, {"sD", nullptr}};
+static const asn1::table::seq_opt    seq_table_s_nssai_s_opts[]  = {{1, (int32_t)offsetof(s_nssai_s, sd_present)}};
+const asn1::table::seq_desc          s_nssai_s::desc             = {
+    {seq_table_s_nssai_s_fields, 2, UINT64_C(0x1), seq_table_s_nssai_s_opts, 1},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_s_nssai_s_names};
 
 // ServingCell-ARFCN ::= CHOICE
-void serving_cell_arfcn_c::destroy_()
-{
-  switch (type_) {
-    case types::nr:
-      c.destroy<nr_arfcn_s>();
-      break;
-    default:
-      break;
-  }
-}
-void serving_cell_arfcn_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::nr:
-      c.init<nr_arfcn_s>();
-      break;
-    case types::eutra:
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_arfcn_c");
-  }
-}
-serving_cell_arfcn_c::serving_cell_arfcn_c(const serving_cell_arfcn_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::nr:
-      c.init(other.c.get<nr_arfcn_s>());
-      break;
-    case types::eutra:
-      c.init(other.c.get<uint32_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_arfcn_c");
-  }
-}
-serving_cell_arfcn_c& serving_cell_arfcn_c::operator=(const serving_cell_arfcn_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::nr:
-      c.set(other.c.get<nr_arfcn_s>());
-      break;
-    case types::eutra:
-      c.set(other.c.get<uint32_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_arfcn_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_serving_cell_arfcn_c_alternatives[] = {
+    &asn1::table::alternative_ops<nr_arfcn_s, false>::value,
+    &asn1::table::alternative_ops<uint32_t, true>::value};
+const asn1::table::choice_storage_desc serving_cell_arfcn_c::storage_desc = {
+    choice_storage_serving_cell_arfcn_c_alternatives,
+    2,
+    "serving_cell_arfcn_c"};
 
-  return *this;
-}
 nr_arfcn_s& serving_cell_arfcn_c::set_nr()
 {
   set(types::nr);
@@ -2780,107 +1695,53 @@ uint32_t& serving_cell_arfcn_c::set_eutra()
   set(types::eutra);
   return c.get<uint32_t>();
 }
-void serving_cell_arfcn_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::nr:
-      j.write_fieldname("nR");
-      c.get<nr_arfcn_s>().to_json(j);
-      break;
-    case types::eutra:
-      j.write_int("eUTRA", c.get<uint32_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_arfcn_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE serving_cell_arfcn_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::nr:
-      HANDLE_CODE(c.get<nr_arfcn_s>().pack(bref));
-      break;
-    case types::eutra:
-      HANDLE_CODE(pack_integer(bref, c.get<uint32_t>(), (uint32_t)0u, (uint32_t)65535u, false, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_arfcn_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE serving_cell_arfcn_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::nr:
-      HANDLE_CODE(c.get<nr_arfcn_s>().unpack(bref));
-      break;
-    case types::eutra:
-      HANDLE_CODE(unpack_integer(c.get<uint32_t>(), bref, (uint32_t)0u, (uint32_t)65535u, false, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_arfcn_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_serving_cell_arfcn_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &nr_arfcn_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(65535),
+     nullptr}};
+static const asn1::table::field_name choice_table_serving_cell_arfcn_c_names[] = {{"nR", nullptr}, {"eUTRA", nullptr}};
+const asn1::table::choice_desc serving_cell_arfcn_c::desc = {asn1::table::enum_int_type<serving_cell_arfcn_c::types>(),
+                                                             serving_cell_arfcn_c::types::nof_types,
+                                                             serving_cell_arfcn_c::types::nof_exts,
+                                                             serving_cell_arfcn_c::types::has_ext,
+                                                             true,
+                                                             choice_table_serving_cell_arfcn_c_alternatives,
+                                                             nullptr,
+                                                             choice_table_serving_cell_arfcn_c_names,
+                                                             "serving_cell_arfcn_c",
+                                                             offsetof(serving_cell_arfcn_c, c.type),
+                                                             offsetof(serving_cell_arfcn_c, c.value),
+                                                             false,
+                                                             &serving_cell_arfcn_c::storage_desc};
 
-const char* serving_cell_arfcn_c::types_opts::to_string() const
-{
-  static const char* names[] = {"nR", "eUTRA"};
-  return convert_enum_idx(names, 2, value, "serving_cell_arfcn_c::types");
-}
+static const char*           enum_names_serving_cell_arfcn_c_types_values[] = {"nR", "eUTRA"};
+const asn1::table::enum_desc serving_cell_arfcn_c::types_opts::desc = {enum_names_serving_cell_arfcn_c_types_values,
+                                                                       2,
+                                                                       "serving_cell_arfcn_c::types"};
 
 // ServingCell-PCI ::= CHOICE
-void serving_cell_pci_c::destroy_() {}
-void serving_cell_pci_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-serving_cell_pci_c::serving_cell_pci_c(const serving_cell_pci_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::nr:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::eutra:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_pci_c");
-  }
-}
-serving_cell_pci_c& serving_cell_pci_c::operator=(const serving_cell_pci_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::nr:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::eutra:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_pci_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_serving_cell_pci_c_alternatives[] = {
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value};
+const asn1::table::choice_storage_desc serving_cell_pci_c::storage_desc = {
+    choice_storage_serving_cell_pci_c_alternatives,
+    2,
+    "serving_cell_pci_c"};
 
-  return *this;
-}
 uint16_t& serving_cell_pci_c::set_nr()
 {
   set(types::nr);
@@ -2891,820 +1752,584 @@ uint16_t& serving_cell_pci_c::set_eutra()
   set(types::eutra);
   return c.get<uint16_t>();
 }
-void serving_cell_pci_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::nr:
-      j.write_int("nR", c.get<uint16_t>());
-      break;
-    case types::eutra:
-      j.write_int("eUTRA", c.get<uint16_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_pci_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE serving_cell_pci_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::nr:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)1007u, false, true));
-      break;
-    case types::eutra:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)503u, true, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_pci_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE serving_cell_pci_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::nr:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)1007u, false, true));
-      break;
-    case types::eutra:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)503u, true, true));
-      break;
-    default:
-      log_invalid_choice_id(type_, "serving_cell_pci_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_serving_cell_pci_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(1007),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(0),
+     UINT64_C(503),
+     nullptr}};
+static const asn1::table::field_name choice_table_serving_cell_pci_c_names[] = {{"nR", nullptr}, {"eUTRA", nullptr}};
+const asn1::table::choice_desc serving_cell_pci_c::desc = {asn1::table::enum_int_type<serving_cell_pci_c::types>(),
+                                                           serving_cell_pci_c::types::nof_types,
+                                                           serving_cell_pci_c::types::nof_exts,
+                                                           serving_cell_pci_c::types::has_ext,
+                                                           true,
+                                                           choice_table_serving_cell_pci_c_alternatives,
+                                                           nullptr,
+                                                           choice_table_serving_cell_pci_c_names,
+                                                           "serving_cell_pci_c",
+                                                           offsetof(serving_cell_pci_c, c.type),
+                                                           offsetof(serving_cell_pci_c, c.value),
+                                                           false,
+                                                           &serving_cell_pci_c::storage_desc};
 
-const char* serving_cell_pci_c::types_opts::to_string() const
-{
-  static const char* names[] = {"nR", "eUTRA"};
-  return convert_enum_idx(names, 2, value, "serving_cell_pci_c::types");
-}
+static const char*           enum_names_serving_cell_pci_c_types_values[] = {"nR", "eUTRA"};
+const asn1::table::enum_desc serving_cell_pci_c::types_opts::desc         = {enum_names_serving_cell_pci_c_types_values,
+                                                                             2,
+                                                                             "serving_cell_pci_c::types"};
 
 // UEID-GNB-CU-CP-F1AP-ID-Item ::= SEQUENCE
-OCUDUASN_CODE ue_id_gnb_cu_cp_f1ap_id_item_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_gnb_cu_cp_f1ap_id_item_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(gnb_cu_ue_f1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_gnb_cu_cp_f1ap_id_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1ap_id);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_fields[] = {
+    {offsetof(ue_id_gnb_cu_cp_f1ap_id_item_s, gnb_cu_ue_f1ap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr}};
+static const asn1::table::field_name seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_names[] = {
+    {"gNB-CU-UE-F1AP-ID", nullptr}};
+const asn1::table::seq_desc ue_id_gnb_cu_cp_f1ap_id_item_s::desc = {
+    {seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_names};
 
 // UEID-GNB-CU-CP-E1AP-ID-Item ::= SEQUENCE
-OCUDUASN_CODE ue_id_gnb_cu_cp_e1ap_id_item_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
-
-  HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_gnb_cu_cp_e1ap_id_item_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_gnb_cu_cp_e1ap_id_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1ap_id);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_fields[] = {
+    {offsetof(ue_id_gnb_cu_cp_e1ap_id_item_s, gnb_cu_cp_ue_e1ap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr}};
+static const asn1::table::field_name seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_names[] = {
+    {"gNB-CU-CP-UE-E1AP-ID", nullptr}};
+const asn1::table::seq_desc ue_id_gnb_cu_cp_e1ap_id_item_s::desc = {
+    {seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_names};
 
 // UEID-GNB ::= SEQUENCE
-OCUDUASN_CODE ue_id_gnb_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(2);
-  group_flags[0] |= global_ng_ran_node_id.is_present();
-  group_flags[1] |= cell_rnti.is_present();
-  HANDLE_CODE(pack_bits(bref,
-                        {group_flags.any(),
-                         gnb_cu_ue_f1ap_id_list.size() > 0,
-                         gnb_cu_cp_ue_e1ap_id_list.size() > 0,
-                         ran_ue_id_present,
-                         m_ng_ran_ue_xnap_id_present,
-                         global_gnb_id_present}));
-
-  HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.pack(bref));
-  if (gnb_cu_ue_f1ap_id_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_ue_f1ap_id_list, 1, 4, true));
-  }
-  if (gnb_cu_cp_ue_e1ap_id_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_cp_ue_e1ap_id_list, 1, 65535, true));
-  }
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.pack(bref));
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xnap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_gnb_id_present) {
-    HANDLE_CODE(global_gnb_id.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(global_ng_ran_node_id->pack(bref));
-    }
-    if (group_flags[1]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(cell_rnti->pack(bref));
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_gnb_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  bool gnb_cu_ue_f1ap_id_list_present;
-  bool gnb_cu_cp_ue_e1ap_id_list_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&ext,
-                           &gnb_cu_ue_f1ap_id_list_present,
-                           &gnb_cu_cp_ue_e1ap_id_list_present,
-                           &ran_ue_id_present,
-                           &m_ng_ran_ue_xnap_id_present,
-                           &global_gnb_id_present}));
-
-  HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.unpack(bref));
-  if (gnb_cu_ue_f1ap_id_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_ue_f1ap_id_list, bref, 1, 4, true));
-  }
-  if (gnb_cu_cp_ue_e1ap_id_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_cp_ue_e1ap_id_list, bref, 1, 65535, true));
-  }
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.unpack(bref));
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xnap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_gnb_id_present) {
-    HANDLE_CODE(global_gnb_id.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref, true);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      global_ng_ran_node_id.set_present(true);
-      HANDLE_CODE(global_ng_ran_node_id->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      cell_rnti.set_present(true);
-      HANDLE_CODE(cell_rnti->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_gnb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("amf-UE-NGAP-ID", amf_ue_ngap_id);
-  j.write_fieldname("guami");
-  guami.to_json(j);
-  if (gnb_cu_ue_f1ap_id_list.size() > 0) {
-    j.start_array("gNB-CU-UE-F1AP-ID-List");
-    for (const auto& e1 : gnb_cu_ue_f1ap_id_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (gnb_cu_cp_ue_e1ap_id_list.size() > 0) {
-    j.start_array("gNB-CU-CP-UE-E1AP-ID-List");
-    for (const auto& e1 : gnb_cu_cp_ue_e1ap_id_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (ran_ue_id_present) {
-    j.write_str("ran-UEID", ran_ue_id.to_string());
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    j.write_uint("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xnap_id);
-  }
-  if (global_gnb_id_present) {
-    j.write_fieldname("globalGNB-ID");
-    global_gnb_id.to_json(j);
-  }
-  if (global_ng_ran_node_id.is_present()) {
-    j.write_fieldname("globalNG-RANNode-ID");
-    global_ng_ran_node_id->to_json(j);
-  }
-  if (cell_rnti.is_present()) {
-    j.write_fieldname("cell-RNTI");
-    cell_rnti->to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_gnb_s_fields[] = {
+    {offsetof(ue_id_gnb_s, amf_ue_ngap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(1099511627775),
+     nullptr},
+    {offsetof(ue_id_gnb_s, guami),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &guami_s::desc},
+    {offsetof(ue_id_gnb_s, gnb_cu_ue_f1ap_id_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     4,
+     &asn1::table::item_list_codec<decltype(ue_id_gnb_s::gnb_cu_ue_f1ap_id_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ue_id_gnb_cu_cp_f1ap_id_item_s::desc},
+    {offsetof(ue_id_gnb_s, gnb_cu_cp_ue_e1ap_id_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     65535,
+     &asn1::table::item_list_codec<decltype(ue_id_gnb_s::gnb_cu_cp_ue_e1ap_id_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ue_id_gnb_cu_cp_e1ap_id_item_s::desc},
+    {offsetof(ue_id_gnb_s, ran_ue_id),
+     (int32_t)offsetof(ue_id_gnb_s, ran_ue_id_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(ue_id_gnb_s::ran_ue_id), asn1::table::string_json>::value},
+    {offsetof(ue_id_gnb_s, m_ng_ran_ue_xnap_id),
+     (int32_t)offsetof(ue_id_gnb_s, m_ng_ran_ue_xnap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(ue_id_gnb_s, global_gnb_id),
+     (int32_t)offsetof(ue_id_gnb_s, global_gnb_id_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_gnb_id_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_gnb_s_names[] = {{"amf-UE-NGAP-ID", nullptr},
+                                                                      {"guami", nullptr},
+                                                                      {"gNB-CU-UE-F1AP-ID-List", nullptr},
+                                                                      {"gNB-CU-CP-UE-E1AP-ID-List", nullptr},
+                                                                      {"ran-UEID", nullptr},
+                                                                      {"m-NG-RAN-UE-XnAP-ID", nullptr},
+                                                                      {"globalGNB-ID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_gnb_s_opts[]  = {
+    {2, asn1::table::seq_field::list_presence},
+    {3, asn1::table::seq_field::list_presence},
+    {4, (int32_t)offsetof(ue_id_gnb_s, ran_ue_id_present)},
+    {5, (int32_t)offsetof(ue_id_gnb_s, m_ng_ran_ue_xnap_id_present)},
+    {6, (int32_t)offsetof(ue_id_gnb_s, global_gnb_id_present)}};
+static const asn1::table::seq_field seq_table_ue_id_gnb_s_g0_fields[] = {
+    {offsetof(ue_id_gnb_s, global_ng_ran_node_id),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(ue_id_gnb_s::global_ng_ran_node_id)>::value,
+     &global_ngran_node_id_c::desc}};
+static const asn1::table::field_name seq_table_ue_id_gnb_s_g0_names[]  = {{"globalNG-RANNode-ID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_gnb_s_g0_opts[]   = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_field  seq_table_ue_id_gnb_s_g1_fields[] = {
+    {offsetof(ue_id_gnb_s, cell_rnti),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::sequence,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(ue_id_gnb_s::cell_rnti)>::value,
+      &cell_rnti_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_gnb_s_g1_names[] = {{"cell-RNTI", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_gnb_s_g1_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_group  seq_table_ue_id_gnb_s_groups[]   = {
+    {{seq_table_ue_id_gnb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_gnb_s_g0_opts, 1},
+        true,
+        seq_table_ue_id_gnb_s_g0_names},
+    {{seq_table_ue_id_gnb_s_g1_fields, 1, UINT64_C(0x0), seq_table_ue_id_gnb_s_g1_opts, 1},
+        true,
+        seq_table_ue_id_gnb_s_g1_names}};
+const asn1::table::seq_desc ue_id_gnb_s::desc = {
+    {seq_table_ue_id_gnb_s_fields, 7, UINT64_C(0x3), seq_table_ue_id_gnb_s_opts, 5},
+    true,
+    true,
+    seq_table_ue_id_gnb_s_groups,
+    2,
+    seq_table_ue_id_gnb_s_names};
 
 // UEID-GNB-DU ::= SEQUENCE
-OCUDUASN_CODE ue_id_gnb_du_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(1);
-  group_flags[0] |= cell_rnti.is_present();
-  HANDLE_CODE(pack_bits(bref, {group_flags.any(), ran_ue_id_present}));
-
-  HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(cell_rnti->pack(bref));
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_gnb_du_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &ran_ue_id_present}));
-
-  HANDLE_CODE(unpack_integer(gnb_cu_ue_f1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref, true);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      cell_rnti.set_present(true);
-      HANDLE_CODE(cell_rnti->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_gnb_du_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1ap_id);
-  if (ran_ue_id_present) {
-    j.write_str("ran-UEID", ran_ue_id.to_string());
-  }
-  if (cell_rnti.is_present()) {
-    j.write_fieldname("cell-RNTI");
-    cell_rnti->to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_gnb_du_s_fields[] = {
+    {offsetof(ue_id_gnb_du_s, gnb_cu_ue_f1ap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(ue_id_gnb_du_s, ran_ue_id),
+     (int32_t)offsetof(ue_id_gnb_du_s, ran_ue_id_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(ue_id_gnb_du_s::ran_ue_id), asn1::table::string_json>::value}};
+static const asn1::table::field_name seq_table_ue_id_gnb_du_s_names[] = {{"gNB-CU-UE-F1AP-ID", nullptr},
+                                                                         {"ran-UEID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_gnb_du_s_opts[]  = {
+    {1, (int32_t)offsetof(ue_id_gnb_du_s, ran_ue_id_present)}};
+static const asn1::table::seq_field seq_table_ue_id_gnb_du_s_g0_fields[] = {
+    {offsetof(ue_id_gnb_du_s, cell_rnti),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(ue_id_gnb_du_s::cell_rnti)>::value,
+     &cell_rnti_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_gnb_du_s_g0_names[] = {{"cell-RNTI", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_gnb_du_s_g0_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_group  seq_table_ue_id_gnb_du_s_groups[]   = {
+    {{seq_table_ue_id_gnb_du_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_gnb_du_s_g0_opts, 1},
+        true,
+        seq_table_ue_id_gnb_du_s_g0_names}};
+const asn1::table::seq_desc ue_id_gnb_du_s::desc = {
+    {seq_table_ue_id_gnb_du_s_fields, 2, UINT64_C(0x1), seq_table_ue_id_gnb_du_s_opts, 1},
+    true,
+    true,
+    seq_table_ue_id_gnb_du_s_groups,
+    1,
+    seq_table_ue_id_gnb_du_s_names};
 
 // UEID-GNB-CU-UP ::= SEQUENCE
-OCUDUASN_CODE ue_id_gnb_cu_up_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, ran_ue_id_present}));
-
-  HANDLE_CODE(pack_integer(bref, gnb_cu_cp_ue_e1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_gnb_cu_up_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &ran_ue_id_present}));
-
-  HANDLE_CODE(unpack_integer(gnb_cu_cp_ue_e1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_gnb_cu_up_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("gNB-CU-CP-UE-E1AP-ID", gnb_cu_cp_ue_e1ap_id);
-  if (ran_ue_id_present) {
-    j.write_str("ran-UEID", ran_ue_id.to_string());
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_gnb_cu_up_s_fields[] = {
+    {offsetof(ue_id_gnb_cu_up_s, gnb_cu_cp_ue_e1ap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(ue_id_gnb_cu_up_s, ran_ue_id),
+     (int32_t)offsetof(ue_id_gnb_cu_up_s, ran_ue_id_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(ue_id_gnb_cu_up_s::ran_ue_id), asn1::table::string_json>::value}};
+static const asn1::table::field_name seq_table_ue_id_gnb_cu_up_s_names[] = {{"gNB-CU-CP-UE-E1AP-ID", nullptr},
+                                                                            {"ran-UEID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_gnb_cu_up_s_opts[]  = {
+    {1, (int32_t)offsetof(ue_id_gnb_cu_up_s, ran_ue_id_present)}};
+const asn1::table::seq_desc ue_id_gnb_cu_up_s::desc = {
+    {seq_table_ue_id_gnb_cu_up_s_fields, 2, UINT64_C(0x1), seq_table_ue_id_gnb_cu_up_s_opts, 1},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_ue_id_gnb_cu_up_s_names};
 
 // UEID-NG-ENB ::= SEQUENCE
-OCUDUASN_CODE ue_id_ng_enb_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(2);
-  group_flags[0] |= global_ng_ran_node_id.is_present();
-  group_flags[1] |= cell_rnti.is_present();
-  HANDLE_CODE(pack_bits(
-      bref, {group_flags.any(), ng_enb_cu_ue_w1_ap_id_present, m_ng_ran_ue_xnap_id_present, global_ng_enb_id_present}));
-
-  HANDLE_CODE(pack_integer(bref, amf_ue_ngap_id, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.pack(bref));
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_ng_ran_ue_xnap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_ng_enb_id_present) {
-    HANDLE_CODE(global_ng_enb_id.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(global_ng_ran_node_id->pack(bref));
-    }
-    if (group_flags[1]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(cell_rnti->pack(bref));
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_ng_enb_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(
-      bref, {&ext, &ng_enb_cu_ue_w1_ap_id_present, &m_ng_ran_ue_xnap_id_present, &global_ng_enb_id_present}));
-
-  HANDLE_CODE(unpack_integer(amf_ue_ngap_id, bref, (uint64_t)0u, (uint64_t)1099511627775u, false, true));
-  HANDLE_CODE(guami.unpack(bref));
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    HANDLE_CODE(unpack_integer(m_ng_ran_ue_xnap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (global_ng_enb_id_present) {
-    HANDLE_CODE(global_ng_enb_id.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref, true);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      global_ng_ran_node_id.set_present(true);
-      HANDLE_CODE(global_ng_ran_node_id->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      cell_rnti.set_present(true);
-      HANDLE_CODE(cell_rnti->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_ng_enb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("amf-UE-NGAP-ID", amf_ue_ngap_id);
-  j.write_fieldname("guami");
-  guami.to_json(j);
-  if (ng_enb_cu_ue_w1_ap_id_present) {
-    j.write_uint("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
-  }
-  if (m_ng_ran_ue_xnap_id_present) {
-    j.write_uint("m-NG-RAN-UE-XnAP-ID", m_ng_ran_ue_xnap_id);
-  }
-  if (global_ng_enb_id_present) {
-    j.write_fieldname("globalNgENB-ID");
-    global_ng_enb_id.to_json(j);
-  }
-  if (global_ng_ran_node_id.is_present()) {
-    j.write_fieldname("globalNG-RANNode-ID");
-    global_ng_ran_node_id->to_json(j);
-  }
-  if (cell_rnti.is_present()) {
-    j.write_fieldname("cell-RNTI");
-    cell_rnti->to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_ng_enb_s_fields[] = {
+    {offsetof(ue_id_ng_enb_s, amf_ue_ngap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(1099511627775),
+     nullptr},
+    {offsetof(ue_id_ng_enb_s, guami),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &guami_s::desc},
+    {offsetof(ue_id_ng_enb_s, ng_enb_cu_ue_w1_ap_id),
+     (int32_t)offsetof(ue_id_ng_enb_s, ng_enb_cu_ue_w1_ap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(ue_id_ng_enb_s, m_ng_ran_ue_xnap_id),
+     (int32_t)offsetof(ue_id_ng_enb_s, m_ng_ran_ue_xnap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(ue_id_ng_enb_s, global_ng_enb_id),
+     (int32_t)offsetof(ue_id_ng_enb_s, global_ng_enb_id_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_ng_enb_id_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_ng_enb_s_names[] = {{"amf-UE-NGAP-ID", nullptr},
+                                                                         {"guami", nullptr},
+                                                                         {"ng-eNB-CU-UE-W1AP-ID", nullptr},
+                                                                         {"m-NG-RAN-UE-XnAP-ID", nullptr},
+                                                                         {"globalNgENB-ID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_ng_enb_s_opts[]  = {
+    {2, (int32_t)offsetof(ue_id_ng_enb_s, ng_enb_cu_ue_w1_ap_id_present)},
+    {3, (int32_t)offsetof(ue_id_ng_enb_s, m_ng_ran_ue_xnap_id_present)},
+    {4, (int32_t)offsetof(ue_id_ng_enb_s, global_ng_enb_id_present)}};
+static const asn1::table::seq_field seq_table_ue_id_ng_enb_s_g0_fields[] = {
+    {offsetof(ue_id_ng_enb_s, global_ng_ran_node_id),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(ue_id_ng_enb_s::global_ng_ran_node_id)>::value,
+     &global_ngran_node_id_c::desc}};
+static const asn1::table::field_name seq_table_ue_id_ng_enb_s_g0_names[]  = {{"globalNG-RANNode-ID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_ng_enb_s_g0_opts[]   = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_field  seq_table_ue_id_ng_enb_s_g1_fields[] = {
+    {offsetof(ue_id_ng_enb_s, cell_rnti),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::sequence,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(ue_id_ng_enb_s::cell_rnti)>::value,
+      &cell_rnti_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_ng_enb_s_g1_names[] = {{"cell-RNTI", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_ng_enb_s_g1_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_group  seq_table_ue_id_ng_enb_s_groups[]   = {
+    {{seq_table_ue_id_ng_enb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_ng_enb_s_g0_opts, 1},
+        true,
+        seq_table_ue_id_ng_enb_s_g0_names},
+    {{seq_table_ue_id_ng_enb_s_g1_fields, 1, UINT64_C(0x0), seq_table_ue_id_ng_enb_s_g1_opts, 1},
+        true,
+        seq_table_ue_id_ng_enb_s_g1_names}};
+const asn1::table::seq_desc ue_id_ng_enb_s::desc = {
+    {seq_table_ue_id_ng_enb_s_fields, 5, UINT64_C(0x3), seq_table_ue_id_ng_enb_s_opts, 3},
+    true,
+    true,
+    seq_table_ue_id_ng_enb_s_groups,
+    2,
+    seq_table_ue_id_ng_enb_s_names};
 
 // UEID-NG-ENB-DU ::= SEQUENCE
-OCUDUASN_CODE ue_id_ng_enb_du_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(1);
-  group_flags[0] |= cell_rnti.is_present();
-  HANDLE_CODE(bref.pack(group_flags.any(), 1));
-
-  HANDLE_CODE(pack_integer(bref, ng_enb_cu_ue_w1_ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(cell_rnti->pack(bref));
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_ng_enb_du_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(unpack_integer(ng_enb_cu_ue_w1_ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref, true);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      cell_rnti.set_present(true);
-      HANDLE_CODE(cell_rnti->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_ng_enb_du_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("ng-eNB-CU-UE-W1AP-ID", ng_enb_cu_ue_w1_ap_id);
-  if (cell_rnti.is_present()) {
-    j.write_fieldname("cell-RNTI");
-    cell_rnti->to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_ng_enb_du_s_fields[] = {
+    {offsetof(ue_id_ng_enb_du_s, ng_enb_cu_ue_w1_ap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr}};
+static const asn1::table::field_name seq_table_ue_id_ng_enb_du_s_names[]     = {{"ng-eNB-CU-UE-W1AP-ID", nullptr}};
+static const asn1::table::seq_field  seq_table_ue_id_ng_enb_du_s_g0_fields[] = {
+    {offsetof(ue_id_ng_enb_du_s, cell_rnti),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::sequence,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(ue_id_ng_enb_du_s::cell_rnti)>::value,
+      &cell_rnti_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_ng_enb_du_s_g0_names[] = {{"cell-RNTI", nullptr}};
+static const asn1::table::seq_opt   seq_table_ue_id_ng_enb_du_s_g0_opts[] = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_group seq_table_ue_id_ng_enb_du_s_groups[]  = {
+    {{seq_table_ue_id_ng_enb_du_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_ng_enb_du_s_g0_opts, 1},
+      true,
+      seq_table_ue_id_ng_enb_du_s_g0_names}};
+const asn1::table::seq_desc ue_id_ng_enb_du_s::desc = {
+    {seq_table_ue_id_ng_enb_du_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    true,
+    seq_table_ue_id_ng_enb_du_s_groups,
+    1,
+    seq_table_ue_id_ng_enb_du_s_names};
 
 // UEID-EN-GNB ::= SEQUENCE
-OCUDUASN_CODE ue_id_en_gnb_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(1);
-  group_flags[0] |= cell_rnti.is_present();
-  HANDLE_CODE(pack_bits(bref,
-                        {group_flags.any(),
-                         m_enb_ue_x2ap_id_ext_present,
-                         gnb_cu_ue_f1ap_id_present,
-                         gnb_cu_cp_ue_e1ap_id_list.size() > 0,
-                         ran_ue_id_present}));
-
-  HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  HANDLE_CODE(global_enb_id.pack(bref));
-  if (gnb_cu_ue_f1ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, gnb_cu_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gnb_cu_cp_ue_e1ap_id_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, gnb_cu_cp_ue_e1ap_id_list, 1, 65535, true));
-  }
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(cell_rnti->pack(bref));
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_en_gnb_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  bool gnb_cu_cp_ue_e1ap_id_list_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&ext,
-                           &m_enb_ue_x2ap_id_ext_present,
-                           &gnb_cu_ue_f1ap_id_present,
-                           &gnb_cu_cp_ue_e1ap_id_list_present,
-                           &ran_ue_id_present}));
-
-  HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  HANDLE_CODE(global_enb_id.unpack(bref));
-  if (gnb_cu_ue_f1ap_id_present) {
-    HANDLE_CODE(unpack_integer(gnb_cu_ue_f1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  }
-  if (gnb_cu_cp_ue_e1ap_id_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(gnb_cu_cp_ue_e1ap_id_list, bref, 1, 65535, true));
-  }
-  if (ran_ue_id_present) {
-    HANDLE_CODE(ran_ue_id.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref, true);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      cell_rnti.set_present(true);
-      HANDLE_CODE(cell_rnti->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_en_gnb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
-  if (m_enb_ue_x2ap_id_ext_present) {
-    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
-  }
-  j.write_fieldname("globalENB-ID");
-  global_enb_id.to_json(j);
-  if (gnb_cu_ue_f1ap_id_present) {
-    j.write_uint("gNB-CU-UE-F1AP-ID", gnb_cu_ue_f1ap_id);
-  }
-  if (gnb_cu_cp_ue_e1ap_id_list.size() > 0) {
-    j.start_array("gNB-CU-CP-UE-E1AP-ID-List");
-    for (const auto& e1 : gnb_cu_cp_ue_e1ap_id_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (ran_ue_id_present) {
-    j.write_str("ran-UEID", ran_ue_id.to_string());
-  }
-  if (cell_rnti.is_present()) {
-    j.write_fieldname("cell-RNTI");
-    cell_rnti->to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_en_gnb_s_fields[] = {
+    {offsetof(ue_id_en_gnb_s, m_enb_ue_x2ap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr},
+    {offsetof(ue_id_en_gnb_s, m_enb_ue_x2ap_id_ext),
+     (int32_t)offsetof(ue_id_en_gnb_s, m_enb_ue_x2ap_id_ext_present),
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr},
+    {offsetof(ue_id_en_gnb_s, global_enb_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_enb_id_s::desc},
+    {offsetof(ue_id_en_gnb_s, gnb_cu_ue_f1ap_id),
+     (int32_t)offsetof(ue_id_en_gnb_s, gnb_cu_ue_f1ap_id_present),
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(ue_id_en_gnb_s, gnb_cu_cp_ue_e1ap_id_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     65535,
+     &asn1::table::item_list_codec<decltype(ue_id_en_gnb_s::gnb_cu_cp_ue_e1ap_id_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ue_id_gnb_cu_cp_e1ap_id_item_s::desc},
+    {offsetof(ue_id_en_gnb_s, ran_ue_id),
+     (int32_t)offsetof(ue_id_en_gnb_s, ran_ue_id_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(ue_id_en_gnb_s::ran_ue_id), asn1::table::string_json>::value}};
+static const asn1::table::field_name seq_table_ue_id_en_gnb_s_names[] = {{"m-eNB-UE-X2AP-ID", nullptr},
+                                                                         {"m-eNB-UE-X2AP-ID-Extension", nullptr},
+                                                                         {"globalENB-ID", nullptr},
+                                                                         {"gNB-CU-UE-F1AP-ID", nullptr},
+                                                                         {"gNB-CU-CP-UE-E1AP-ID-List", nullptr},
+                                                                         {"ran-UEID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_en_gnb_s_opts[]  = {
+    {1, (int32_t)offsetof(ue_id_en_gnb_s, m_enb_ue_x2ap_id_ext_present)},
+    {3, (int32_t)offsetof(ue_id_en_gnb_s, gnb_cu_ue_f1ap_id_present)},
+    {4, asn1::table::seq_field::list_presence},
+    {5, (int32_t)offsetof(ue_id_en_gnb_s, ran_ue_id_present)}};
+static const asn1::table::seq_field seq_table_ue_id_en_gnb_s_g0_fields[] = {
+    {offsetof(ue_id_en_gnb_s, cell_rnti),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(ue_id_en_gnb_s::cell_rnti)>::value,
+     &cell_rnti_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_en_gnb_s_g0_names[] = {{"cell-RNTI", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_en_gnb_s_g0_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_group  seq_table_ue_id_en_gnb_s_groups[]   = {
+    {{seq_table_ue_id_en_gnb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_en_gnb_s_g0_opts, 1},
+        true,
+        seq_table_ue_id_en_gnb_s_g0_names}};
+const asn1::table::seq_desc ue_id_en_gnb_s::desc = {
+    {seq_table_ue_id_en_gnb_s_fields, 6, UINT64_C(0x5), seq_table_ue_id_en_gnb_s_opts, 4},
+    true,
+    true,
+    seq_table_ue_id_en_gnb_s_groups,
+    1,
+    seq_table_ue_id_en_gnb_s_names};
 
 // UEID-ENB ::= SEQUENCE
-OCUDUASN_CODE ue_id_enb_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(1);
-  group_flags[0] |= cell_rnti.is_present();
-  HANDLE_CODE(pack_bits(
-      bref, {group_flags.any(), m_enb_ue_x2ap_id_present, m_enb_ue_x2ap_id_ext_present, global_enb_id_present}));
-
-  HANDLE_CODE(pack_integer(bref, mme_ue_s1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  HANDLE_CODE(gummei.pack(bref));
-  if (m_enb_ue_x2ap_id_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id, (uint16_t)0u, (uint16_t)4095u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(pack_integer(bref, m_enb_ue_x2ap_id_ext, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  if (global_enb_id_present) {
-    HANDLE_CODE(global_enb_id.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, true);
-
-      HANDLE_CODE(cell_rnti->pack(bref));
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_enb_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(
-      unpack_bits(bref, {&ext, &m_enb_ue_x2ap_id_present, &m_enb_ue_x2ap_id_ext_present, &global_enb_id_present}));
-
-  HANDLE_CODE(unpack_integer(mme_ue_s1ap_id, bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
-  HANDLE_CODE(gummei.unpack(bref));
-  if (m_enb_ue_x2ap_id_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id, bref, (uint16_t)0u, (uint16_t)4095u, false, true));
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    HANDLE_CODE(unpack_integer(m_enb_ue_x2ap_id_ext, bref, (uint16_t)0u, (uint16_t)4095u, true, true));
-  }
-  if (global_enb_id_present) {
-    HANDLE_CODE(global_enb_id.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref, true);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      cell_rnti.set_present(true);
-      HANDLE_CODE(cell_rnti->unpack(bref));
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void ue_id_enb_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_uint("mME-UE-S1AP-ID", mme_ue_s1ap_id);
-  j.write_fieldname("gUMMEI");
-  gummei.to_json(j);
-  if (m_enb_ue_x2ap_id_present) {
-    j.write_int("m-eNB-UE-X2AP-ID", m_enb_ue_x2ap_id);
-  }
-  if (m_enb_ue_x2ap_id_ext_present) {
-    j.write_int("m-eNB-UE-X2AP-ID-Extension", m_enb_ue_x2ap_id_ext);
-  }
-  if (global_enb_id_present) {
-    j.write_fieldname("globalENB-ID");
-    global_enb_id.to_json(j);
-  }
-  if (cell_rnti.is_present()) {
-    j.write_fieldname("cell-RNTI");
-    cell_rnti->to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_ue_id_enb_s_fields[] = {
+    {offsetof(ue_id_enb_s, mme_ue_s1ap_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u64,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4294967295),
+     nullptr},
+    {offsetof(ue_id_enb_s, gummei),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &gummei_s::desc},
+    {offsetof(ue_id_enb_s, m_enb_ue_x2ap_id),
+     (int32_t)offsetof(ue_id_enb_s, m_enb_ue_x2ap_id_present),
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr},
+    {offsetof(ue_id_enb_s, m_enb_ue_x2ap_id_ext),
+     (int32_t)offsetof(ue_id_enb_s, m_enb_ue_x2ap_id_ext_present),
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr},
+    {offsetof(ue_id_enb_s, global_enb_id),
+     (int32_t)offsetof(ue_id_enb_s, global_enb_id_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &global_enb_id_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_enb_s_names[] = {{"mME-UE-S1AP-ID", nullptr},
+                                                                      {"gUMMEI", nullptr},
+                                                                      {"m-eNB-UE-X2AP-ID", nullptr},
+                                                                      {"m-eNB-UE-X2AP-ID-Extension", nullptr},
+                                                                      {"globalENB-ID", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_enb_s_opts[]  = {
+    {2, (int32_t)offsetof(ue_id_enb_s, m_enb_ue_x2ap_id_present)},
+    {3, (int32_t)offsetof(ue_id_enb_s, m_enb_ue_x2ap_id_ext_present)},
+    {4, (int32_t)offsetof(ue_id_enb_s, global_enb_id_present)}};
+static const asn1::table::seq_field seq_table_ue_id_enb_s_g0_fields[] = {
+    {offsetof(ue_id_enb_s, cell_rnti),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(ue_id_enb_s::cell_rnti)>::value,
+     &cell_rnti_s::desc}};
+static const asn1::table::field_name seq_table_ue_id_enb_s_g0_names[] = {{"cell-RNTI", nullptr}};
+static const asn1::table::seq_opt    seq_table_ue_id_enb_s_g0_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_group  seq_table_ue_id_enb_s_groups[]   = {
+    {{seq_table_ue_id_enb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_enb_s_g0_opts, 1},
+        true,
+        seq_table_ue_id_enb_s_g0_names}};
+const asn1::table::seq_desc ue_id_enb_s::desc = {
+    {seq_table_ue_id_enb_s_fields, 5, UINT64_C(0x3), seq_table_ue_id_enb_s_opts, 3},
+    true,
+    true,
+    seq_table_ue_id_enb_s_groups,
+    1,
+    seq_table_ue_id_enb_s_names};
 
 // UEID ::= CHOICE
-void ue_id_c::destroy_()
-{
-  switch (type_) {
-    case types::gnb_ue_id:
-      c.destroy<ue_id_gnb_s>();
-      break;
-    case types::gnb_du_ue_id:
-      c.destroy<ue_id_gnb_du_s>();
-      break;
-    case types::gnb_cu_up_ue_id:
-      c.destroy<ue_id_gnb_cu_up_s>();
-      break;
-    case types::ng_enb_ue_id:
-      c.destroy<ue_id_ng_enb_s>();
-      break;
-    case types::ng_enb_du_ue_id:
-      c.destroy<ue_id_ng_enb_du_s>();
-      break;
-    case types::en_gnb_ue_id:
-      c.destroy<ue_id_en_gnb_s>();
-      break;
-    case types::enb_ue_id:
-      c.destroy<ue_id_enb_s>();
-      break;
-    default:
-      break;
-  }
-}
-void ue_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::gnb_ue_id:
-      c.init<ue_id_gnb_s>();
-      break;
-    case types::gnb_du_ue_id:
-      c.init<ue_id_gnb_du_s>();
-      break;
-    case types::gnb_cu_up_ue_id:
-      c.init<ue_id_gnb_cu_up_s>();
-      break;
-    case types::ng_enb_ue_id:
-      c.init<ue_id_ng_enb_s>();
-      break;
-    case types::ng_enb_du_ue_id:
-      c.init<ue_id_ng_enb_du_s>();
-      break;
-    case types::en_gnb_ue_id:
-      c.init<ue_id_en_gnb_s>();
-      break;
-    case types::enb_ue_id:
-      c.init<ue_id_enb_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_id_c");
-  }
-}
-ue_id_c::ue_id_c(const ue_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::gnb_ue_id:
-      c.init(other.c.get<ue_id_gnb_s>());
-      break;
-    case types::gnb_du_ue_id:
-      c.init(other.c.get<ue_id_gnb_du_s>());
-      break;
-    case types::gnb_cu_up_ue_id:
-      c.init(other.c.get<ue_id_gnb_cu_up_s>());
-      break;
-    case types::ng_enb_ue_id:
-      c.init(other.c.get<ue_id_ng_enb_s>());
-      break;
-    case types::ng_enb_du_ue_id:
-      c.init(other.c.get<ue_id_ng_enb_du_s>());
-      break;
-    case types::en_gnb_ue_id:
-      c.init(other.c.get<ue_id_en_gnb_s>());
-      break;
-    case types::enb_ue_id:
-      c.init(other.c.get<ue_id_enb_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_id_c");
-  }
-}
-ue_id_c& ue_id_c::operator=(const ue_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::gnb_ue_id:
-      c.set(other.c.get<ue_id_gnb_s>());
-      break;
-    case types::gnb_du_ue_id:
-      c.set(other.c.get<ue_id_gnb_du_s>());
-      break;
-    case types::gnb_cu_up_ue_id:
-      c.set(other.c.get<ue_id_gnb_cu_up_s>());
-      break;
-    case types::ng_enb_ue_id:
-      c.set(other.c.get<ue_id_ng_enb_s>());
-      break;
-    case types::ng_enb_du_ue_id:
-      c.set(other.c.get<ue_id_ng_enb_du_s>());
-      break;
-    case types::en_gnb_ue_id:
-      c.set(other.c.get<ue_id_en_gnb_s>());
-      break;
-    case types::enb_ue_id:
-      c.set(other.c.get<ue_id_enb_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_ue_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<ue_id_gnb_s, false>::value,
+    &asn1::table::alternative_ops<ue_id_gnb_du_s, false>::value,
+    &asn1::table::alternative_ops<ue_id_gnb_cu_up_s, false>::value,
+    &asn1::table::alternative_ops<ue_id_ng_enb_s, false>::value,
+    &asn1::table::alternative_ops<ue_id_ng_enb_du_s, false>::value,
+    &asn1::table::alternative_ops<ue_id_en_gnb_s, false>::value,
+    &asn1::table::alternative_ops<ue_id_enb_s, false>::value};
+const asn1::table::choice_storage_desc ue_id_c::storage_desc = {choice_storage_ue_id_c_alternatives, 7, "ue_id_c"};
 
-  return *this;
-}
 ue_id_gnb_s& ue_id_c::set_gnb_ue_id()
 {
   set(types::gnb_ue_id);
@@ -3740,111 +2365,90 @@ ue_id_enb_s& ue_id_c::set_enb_ue_id()
   set(types::enb_ue_id);
   return c.get<ue_id_enb_s>();
 }
-void ue_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::gnb_ue_id:
-      j.write_fieldname("gNB-UEID");
-      c.get<ue_id_gnb_s>().to_json(j);
-      break;
-    case types::gnb_du_ue_id:
-      j.write_fieldname("gNB-DU-UEID");
-      c.get<ue_id_gnb_du_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_ue_id:
-      j.write_fieldname("gNB-CU-UP-UEID");
-      c.get<ue_id_gnb_cu_up_s>().to_json(j);
-      break;
-    case types::ng_enb_ue_id:
-      j.write_fieldname("ng-eNB-UEID");
-      c.get<ue_id_ng_enb_s>().to_json(j);
-      break;
-    case types::ng_enb_du_ue_id:
-      j.write_fieldname("ng-eNB-DU-UEID");
-      c.get<ue_id_ng_enb_du_s>().to_json(j);
-      break;
-    case types::en_gnb_ue_id:
-      j.write_fieldname("en-gNB-UEID");
-      c.get<ue_id_en_gnb_s>().to_json(j);
-      break;
-    case types::enb_ue_id:
-      j.write_fieldname("eNB-UEID");
-      c.get<ue_id_enb_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ue_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::gnb_ue_id:
-      HANDLE_CODE(c.get<ue_id_gnb_s>().pack(bref));
-      break;
-    case types::gnb_du_ue_id:
-      HANDLE_CODE(c.get<ue_id_gnb_du_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_ue_id:
-      HANDLE_CODE(c.get<ue_id_gnb_cu_up_s>().pack(bref));
-      break;
-    case types::ng_enb_ue_id:
-      HANDLE_CODE(c.get<ue_id_ng_enb_s>().pack(bref));
-      break;
-    case types::ng_enb_du_ue_id:
-      HANDLE_CODE(c.get<ue_id_ng_enb_du_s>().pack(bref));
-      break;
-    case types::en_gnb_ue_id:
-      HANDLE_CODE(c.get<ue_id_en_gnb_s>().pack(bref));
-      break;
-    case types::enb_ue_id:
-      HANDLE_CODE(c.get<ue_id_enb_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ue_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::gnb_ue_id:
-      HANDLE_CODE(c.get<ue_id_gnb_s>().unpack(bref));
-      break;
-    case types::gnb_du_ue_id:
-      HANDLE_CODE(c.get<ue_id_gnb_du_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_ue_id:
-      HANDLE_CODE(c.get<ue_id_gnb_cu_up_s>().unpack(bref));
-      break;
-    case types::ng_enb_ue_id:
-      HANDLE_CODE(c.get<ue_id_ng_enb_s>().unpack(bref));
-      break;
-    case types::ng_enb_du_ue_id:
-      HANDLE_CODE(c.get<ue_id_ng_enb_du_s>().unpack(bref));
-      break;
-    case types::en_gnb_ue_id:
-      HANDLE_CODE(c.get<ue_id_en_gnb_s>().unpack(bref));
-      break;
-    case types::enb_ue_id:
-      HANDLE_CODE(c.get<ue_id_enb_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ue_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_ue_id_c_alternatives[] = {{0,
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &ue_id_gnb_s::desc},
+                                                                            {0,
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &ue_id_gnb_du_s::desc},
+                                                                            {0,
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &ue_id_gnb_cu_up_s::desc},
+                                                                            {0,
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &ue_id_ng_enb_s::desc},
+                                                                            {0,
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &ue_id_ng_enb_du_s::desc},
+                                                                            {0,
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &ue_id_en_gnb_s::desc},
+                                                                            {0,
+                                                                             asn1::table::seq_field::mandatory,
+                                                                             asn1::table::field_op::sequence,
+                                                                             false,
+                                                                             false,
+                                                                             0,
+                                                                             0,
+                                                                             nullptr,
+                                                                             &ue_id_enb_s::desc}};
+static const asn1::table::field_name choice_table_ue_id_c_names[]        = {{"gNB-UEID", nullptr},
+                                                                            {"gNB-DU-UEID", nullptr},
+                                                                            {"gNB-CU-UP-UEID", nullptr},
+                                                                            {"ng-eNB-UEID", nullptr},
+                                                                            {"ng-eNB-DU-UEID", nullptr},
+                                                                            {"en-gNB-UEID", nullptr},
+                                                                            {"eNB-UEID", nullptr}};
+const asn1::table::choice_desc       ue_id_c::desc = {asn1::table::enum_int_type<ue_id_c::types>(),
+                                                      ue_id_c::types::nof_types,
+                                                      ue_id_c::types::nof_exts,
+                                                      ue_id_c::types::has_ext,
+                                                      true,
+                                                      choice_table_ue_id_c_alternatives,
+                                                      nullptr,
+                                                      choice_table_ue_id_c_names,
+                                                      "ue_id_c",
+                                                      offsetof(ue_id_c, c.type),
+                                                      offsetof(ue_id_c, c.value),
+                                                      false,
+                                                      &ue_id_c::storage_desc};
 
-const char* ue_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {
-      "gNB-UEID", "gNB-DU-UEID", "gNB-CU-UP-UEID", "ng-eNB-UEID", "ng-eNB-DU-UEID", "en-gNB-UEID", "eNB-UEID"};
-  return convert_enum_idx(names, 7, value, "ue_id_c::types");
-}
+static const char* enum_names_ue_id_c_types_values[] =
+    {"gNB-UEID", "gNB-DU-UEID", "gNB-CU-UP-UEID", "ng-eNB-UEID", "ng-eNB-DU-UEID", "en-gNB-UEID", "eNB-UEID"};
+const asn1::table::enum_desc ue_id_c::types_opts::desc = {enum_names_ue_id_c_types_values, 7, "ue_id_c::types"};

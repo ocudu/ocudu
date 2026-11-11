@@ -36,7 +36,7 @@ TEST_F(rrc_ue_meas_report, when_dummy_meas_report_received_then_conversion_succe
   // Parse UL-CCCH
   asn1::rrc_nr::ul_dcch_msg_s ul_dcch_msg;
   asn1::cbit_ref              bref({meas_report_pdu.begin(), meas_report_pdu.end()});
-  ASSERT_EQ(ul_dcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ul_dcch_msg, bref), asn1::OCUDUASN_SUCCESS);
   ASSERT_EQ(ul_dcch_msg.msg.type().value, asn1::rrc_nr::ul_dcch_msg_type_c::types_opts::c1);
   ASSERT_EQ(ul_dcch_msg.msg.c1().type().value, asn1::rrc_nr::ul_dcch_msg_type_c::c1_c_::types_opts::meas_report);
 
@@ -60,7 +60,7 @@ TEST_F(rrc_ue_meas_report, when_invalid_meas_report_received_then_meas_results_a
   // Parse UL-CCCH
   asn1::rrc_nr::ul_dcch_msg_s ul_dcch_msg;
   asn1::cbit_ref              bref({meas_report_pdu.begin(), meas_report_pdu.end()});
-  ASSERT_EQ(ul_dcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ul_dcch_msg, bref), asn1::OCUDUASN_SUCCESS);
   ASSERT_EQ(ul_dcch_msg.msg.type().value, asn1::rrc_nr::ul_dcch_msg_type_c::types_opts::c1);
   ASSERT_EQ(ul_dcch_msg.msg.c1().type().value, asn1::rrc_nr::ul_dcch_msg_type_c::c1_c_::types_opts::meas_report);
 

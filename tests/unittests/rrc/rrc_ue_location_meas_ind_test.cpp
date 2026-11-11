@@ -33,7 +33,7 @@ protected:
   {
     byte_buffer   pdu;
     asn1::bit_ref bref{pdu};
-    EXPECT_EQ(test_helpers::create_nr_prs_location_meas_info().pack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::pack(bref, test_helpers::create_nr_prs_location_meas_info()), asn1::OCUDUASN_SUCCESS);
     return pdu;
   }
 

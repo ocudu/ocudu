@@ -26,7 +26,7 @@ void e2ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 
   asn1::cbit_ref bref(bytes);
   e2_message     msg = {};
-  if (msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(msg.pdu, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Couldn't unpack E2 PDU");
     return;
   }
@@ -40,7 +40,7 @@ void e2ap_asn1_packer::handle_message(const e2_message& msg)
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu;
   asn1::bit_ref bref(tx_pdu);
-  if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg.pdu) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack E2 PDU");
     return;
   }

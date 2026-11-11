@@ -29,11 +29,11 @@ inline byte_buffer make_redcap_nr_capability(bool long_sn_supported)
   auto                      captured = make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
   asn1::cbit_ref            reader{captured};
-  report_fatal_error_if_not(cap.unpack(reader) == asn1::OCUDUASN_SUCCESS, "Invalid capability fixture");
+  report_fatal_error_if_not(asn1::unpack(cap, reader) == asn1::OCUDUASN_SUCCESS, "Invalid capability fixture");
   cap.pdcp_params.long_sn_red_cap_r17_present = long_sn_supported;
   byte_buffer   packed_cap;
   asn1::bit_ref cap_writer{packed_cap};
-  report_fatal_error_if_not(cap.pack(cap_writer) == asn1::OCUDUASN_SUCCESS, "Invalid capability fixture");
+  report_fatal_error_if_not(asn1::pack(cap_writer, cap) == asn1::OCUDUASN_SUCCESS, "Invalid capability fixture");
 
   return packed_cap;
 }
@@ -64,7 +64,7 @@ inline byte_buffer make_redcap_handover_preparation(bool long_sn_supported, unsi
   sdap.mapped_qos_flows_to_add.push_back(1);
   byte_buffer   packed_recfg;
   asn1::bit_ref recfg_writer{packed_recfg};
-  report_fatal_error_if_not(reconfiguration.pack(recfg_writer) == asn1::OCUDUASN_SUCCESS,
+  report_fatal_error_if_not(asn1::pack(recfg_writer, reconfiguration) == asn1::OCUDUASN_SUCCESS,
                             "Invalid source configuration");
 
   asn1::rrc_nr::ho_prep_info_s info;
@@ -76,7 +76,7 @@ inline byte_buffer make_redcap_handover_preparation(bool long_sn_supported, unsi
   ies.source_cfg.rrc_recfg                    = std::move(packed_recfg);
   byte_buffer   result;
   asn1::bit_ref writer{result};
-  report_fatal_error_if_not(info.pack(writer) == asn1::OCUDUASN_SUCCESS, "Invalid handover fixture");
+  report_fatal_error_if_not(asn1::pack(writer, info) == asn1::OCUDUASN_SUCCESS, "Invalid handover fixture");
   return result;
 }
 

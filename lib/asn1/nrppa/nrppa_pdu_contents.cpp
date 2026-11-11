@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/nrppa/nrppa_pdu_contents.h"
+#include "ocudu/asn1/asn1_ap_codec.h"
 
 using namespace asn1;
 using namespace asn1::nrppa;
@@ -12,4270 +13,1680 @@ using namespace asn1::nrppa;
  *                                Struct Methods
  ******************************************************************************/
 
+static const uint32_t objset_id_aperiodic_srs_ext_ies_o[]   = {122};
+static const uint8_t  objset_crit_aperiodic_srs_ext_ies_o[] = {crit_e::ignore};
+
 // AperiodicSRS-ExtIEs ::= OBJECT SET OF NRPPA-PROTOCOL-EXTENSION
-uint32_t aperiodic_srs_ext_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {122};
-  return map_enum_number(names, 1, idx, "id");
-}
-bool aperiodic_srs_ext_ies_o::is_id_valid(const uint32_t& id)
-{
-  return 122 == id;
-}
-crit_e aperiodic_srs_ext_ies_o::get_crit(const uint32_t& id)
-{
-  if (id == 122) {
-    return crit_e::ignore;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
-presence_e aperiodic_srs_ext_ies_o::get_presence(const uint32_t& id)
-{
-  if (id == 122) {
-    return presence_e::optional;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
-
-OCUDUASN_CODE aperiodic_srs_ext_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += pos_srs_res_set_aggregation_list_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
-
-  if (pos_srs_res_set_aggregation_list_present) {
-    HANDLE_CODE(pack_ie(bref, 122, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, pos_srs_res_set_aggregation_list, 1, 32, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE aperiodic_srs_ext_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &aperiodic_srs_ext_ies_o::get_crit));
-
-    if (id == 122) {
-      {
-        pos_srs_res_set_aggregation_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(pos_srs_res_set_aggregation_list, bref, 1, 32, true); }));
-      }
-    } else {
-      HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void aperiodic_srs_ext_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (pos_srs_res_set_aggregation_list_present) {
-    j.start_obj();
-    j.write_int("id", 122);
-    j.write_str("criticality", "ignore");
-    j.start_array("extensionValue");
-    for (const auto& e1 : pos_srs_res_set_aggregation_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const asn1::table::seq_field ie_table_aperiodic_srs_ext_ies_container_values[] = {
+    {offsetof(aperiodic_srs_ext_ies_container, pos_srs_res_set_aggregation_list),
+     (int32_t)offsetof(aperiodic_srs_ext_ies_container, pos_srs_res_set_aggregation_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(aperiodic_srs_ext_ies_container::pos_srs_res_set_aggregation_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &pos_srs_res_set_aggregation_item_s::desc}};
+static const int32_t ie_table_aperiodic_srs_ext_ies_container_presences[] = {
+    (int32_t)offsetof(aperiodic_srs_ext_ies_container, pos_srs_res_set_aggregation_list_present)};
+const asn1::table::ie_container_desc aperiodic_srs_ext_ies_container::desc = {
+    objset_id_aperiodic_srs_ext_ies_o,
+    objset_crit_aperiodic_srs_ext_ies_o,
+    ie_table_aperiodic_srs_ext_ies_container_values,
+    ie_table_aperiodic_srs_ext_ies_container_presences,
+    1,
+    0,
+    1,
+    65535,
+    true,
+    "extensionValue"};
 
 // AperiodicSRS ::= SEQUENCE
-OCUDUASN_CODE aperiodic_srs_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, srs_res_trigger_present, ie_exts_present}));
+static const asn1::table::seq_field seq_table_aperiodic_srs_s_fields[] = {
+    {offsetof(aperiodic_srs_s, aperiodic),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(aperiodic_srs_s::aperiodic)>(),
+     decltype(aperiodic_srs_s::aperiodic)::has_ext,
+     false,
+     decltype(aperiodic_srs_s::aperiodic)::nof_types,
+     decltype(aperiodic_srs_s::aperiodic)::nof_exts,
+     nullptr,
+     &aperiodic_srs_s::aperiodic_opts::desc},
+    {offsetof(aperiodic_srs_s, srs_res_trigger),
+     (int32_t)offsetof(aperiodic_srs_s, srs_res_trigger_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_res_trigger_s::desc},
+    {offsetof(aperiodic_srs_s, ie_exts),
+     (int32_t)offsetof(aperiodic_srs_s, ie_exts_present),
+     asn1::table::field_op::ie_container,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &aperiodic_srs_ext_ies_container::desc}};
+static const asn1::table::field_name seq_table_aperiodic_srs_s_names[] = {{"aperiodic", nullptr},
+                                                                          {"sRSResourceTrigger", nullptr},
+                                                                          {"iE-Extensions", nullptr}};
+static const asn1::table::seq_opt    seq_table_aperiodic_srs_s_opts[]  = {
+    {1, (int32_t)offsetof(aperiodic_srs_s, srs_res_trigger_present)},
+    {2, (int32_t)offsetof(aperiodic_srs_s, ie_exts_present)}};
+const asn1::table::seq_desc aperiodic_srs_s::desc = {
+    {seq_table_aperiodic_srs_s_fields, 3, UINT64_C(0x1), seq_table_aperiodic_srs_s_opts, 2},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_aperiodic_srs_s_names};
 
-  HANDLE_CODE(aperiodic.pack(bref));
-  if (srs_res_trigger_present) {
-    HANDLE_CODE(srs_res_trigger.pack(bref));
-  }
-  if (ie_exts_present) {
-    HANDLE_CODE(ie_exts.pack(bref));
-  }
+static const char*           enum_names_aperiodic_srs_s_aperiodic_e__values[] = {"true"};
+const asn1::table::enum_desc aperiodic_srs_s::aperiodic_opts::desc = {enum_names_aperiodic_srs_s_aperiodic_e__values,
+                                                                      1,
+                                                                      "aperiodic_srs_s::aperiodic_e_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE aperiodic_srs_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &srs_res_trigger_present, &ie_exts_present}));
-
-  HANDLE_CODE(aperiodic.unpack(bref));
-  if (srs_res_trigger_present) {
-    HANDLE_CODE(srs_res_trigger.unpack(bref));
-  }
-  if (ie_exts_present) {
-    HANDLE_CODE(ie_exts.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void aperiodic_srs_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("aperiodic", "true");
-  if (srs_res_trigger_present) {
-    j.write_fieldname("sRSResourceTrigger");
-    srs_res_trigger.to_json(j);
-  }
-  if (ie_exts_present) {
-    j.write_fieldname("iE-Extensions");
-    ie_exts.to_json(j);
-  }
-  j.end_obj();
-}
-
-const char* aperiodic_srs_s::aperiodic_opts::to_string() const
-{
-  static const char* names[] = {"true"};
-  return convert_enum_idx(names, 1, value, "aperiodic_srs_s::aperiodic_e_");
-}
+static const uint32_t objset_id_assist_info_ctrl_ies_o[]   = {23, 24, 38};
+static const uint8_t  objset_crit_assist_info_ctrl_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::reject};
 
 // AssistanceInformationControl-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t assist_info_ctrl_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {23, 24, 38};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool assist_info_ctrl_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {23, 24, 38};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e assist_info_ctrl_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 23:
-      return crit_e::reject;
-    case 24:
-      return crit_e::reject;
-    case 38:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e assist_info_ctrl_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 23:
-      return presence_e::optional;
-    case 24:
-      return presence_e::optional;
-    case 38:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_assist_info_ctrl_ies_container_values[] = {
+    {offsetof(assist_info_ctrl_ies_container, assist_info),
+     (int32_t)offsetof(assist_info_ctrl_ies_container, assist_info_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &assist_info_s::desc},
+    {offsetof(assist_info_ctrl_ies_container, broadcast),
+     (int32_t)offsetof(assist_info_ctrl_ies_container, broadcast_present),
+     asn1::table::enum_op<decltype(assist_info_ctrl_ies_container::broadcast)>(),
+     decltype(assist_info_ctrl_ies_container::broadcast)::has_ext,
+     false,
+     decltype(assist_info_ctrl_ies_container::broadcast)::nof_types,
+     decltype(assist_info_ctrl_ies_container::broadcast)::nof_exts,
+     nullptr,
+     &broadcast_opts::desc},
+    {offsetof(assist_info_ctrl_ies_container, positioning_broadcast_cells),
+     (int32_t)offsetof(assist_info_ctrl_ies_container, positioning_broadcast_cells_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16384,
+     &asn1::table::item_list_codec<decltype(assist_info_ctrl_ies_container::positioning_broadcast_cells),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ng_ran_cgi_s::desc}};
+static const int32_t ie_table_assist_info_ctrl_ies_container_presences[] = {
+    (int32_t)offsetof(assist_info_ctrl_ies_container, assist_info_present),
+    (int32_t)offsetof(assist_info_ctrl_ies_container, broadcast_present),
+    (int32_t)offsetof(assist_info_ctrl_ies_container, positioning_broadcast_cells_present)};
+const asn1::table::ie_container_desc assist_info_ctrl_ies_container::desc = {
+    objset_id_assist_info_ctrl_ies_o,
+    objset_crit_assist_info_ctrl_ies_o,
+    ie_table_assist_info_ctrl_ies_container_values,
+    ie_table_assist_info_ctrl_ies_container_presences,
+    3,
+    0,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE assist_info_ctrl_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += assist_info_present ? 1 : 0;
-  nof_ies += broadcast_present ? 1 : 0;
-  nof_ies += positioning_broadcast_cells_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (assist_info_present) {
-    HANDLE_CODE(pack_ie(bref, 23, crit_e{crit_e::reject}, [this, &bref]() { return assist_info.pack(bref); }));
-  }
-  if (broadcast_present) {
-    HANDLE_CODE(pack_ie(bref, 24, crit_e{crit_e::reject}, [this, &bref]() { return broadcast.pack(bref); }));
-  }
-  if (positioning_broadcast_cells_present) {
-    HANDLE_CODE(pack_ie(bref, 38, crit_e{crit_e::reject}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, positioning_broadcast_cells, 1, 16384, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE assist_info_ctrl_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &assist_info_ctrl_ies_o::get_crit));
-
-    switch (id) {
-      case 23: {
-        assist_info_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return assist_info.unpack(bref); }));
-        break;
-      }
-      case 24: {
-        broadcast_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return broadcast.unpack(bref); }));
-        break;
-      }
-      case 38: {
-        positioning_broadcast_cells_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(positioning_broadcast_cells, bref, 1, 16384, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void assist_info_ctrl_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (assist_info_present) {
-    j.start_obj();
-    j.write_int("id", 23);
-    j.write_str("criticality", "reject");
-    j.write_fieldname("value");
-    assist_info.to_json(j);
-    j.end_obj();
-  }
-  if (broadcast_present) {
-    j.start_obj();
-    j.write_int("id", 24);
-    j.write_str("criticality", "reject");
-    j.write_str("value", broadcast.to_string());
-    j.end_obj();
-  }
-  if (positioning_broadcast_cells_present) {
-    j.start_obj();
-    j.write_int("id", 38);
-    j.write_str("criticality", "reject");
-    j.start_array("value");
-    for (const auto& e1 : positioning_broadcast_cells) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_assist_info_feedback_ies_o[]   = {25, 38, 1};
+static const uint8_t  objset_crit_assist_info_feedback_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::ignore};
 
 // AssistanceInformationFeedback-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t assist_info_feedback_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {25, 38, 1};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool assist_info_feedback_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {25, 38, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e assist_info_feedback_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 25:
-      return crit_e::reject;
-    case 38:
-      return crit_e::reject;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e assist_info_feedback_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 25:
-      return presence_e::optional;
-    case 38:
-      return presence_e::optional;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_assist_info_feedback_ies_container_values[] = {
+    {offsetof(assist_info_feedback_ies_container, assist_info_fail_list),
+     (int32_t)offsetof(assist_info_feedback_ies_container, assist_info_fail_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(assist_info_feedback_ies_container::assist_info_fail_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &assist_info_fail_list_item_s_::desc},
+    {offsetof(assist_info_feedback_ies_container, positioning_broadcast_cells),
+     (int32_t)offsetof(assist_info_feedback_ies_container, positioning_broadcast_cells_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16384,
+     &asn1::table::item_list_codec<decltype(assist_info_feedback_ies_container::positioning_broadcast_cells),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ng_ran_cgi_s::desc},
+    {offsetof(assist_info_feedback_ies_container, crit_diagnostics),
+     (int32_t)offsetof(assist_info_feedback_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_assist_info_feedback_ies_container_presences[] = {
+    (int32_t)offsetof(assist_info_feedback_ies_container, assist_info_fail_list_present),
+    (int32_t)offsetof(assist_info_feedback_ies_container, positioning_broadcast_cells_present),
+    (int32_t)offsetof(assist_info_feedback_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc assist_info_feedback_ies_container::desc = {
+    objset_id_assist_info_feedback_ies_o,
+    objset_crit_assist_info_feedback_ies_o,
+    ie_table_assist_info_feedback_ies_container_values,
+    ie_table_assist_info_feedback_ies_container_presences,
+    3,
+    0,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE assist_info_feedback_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += assist_info_fail_list_present ? 1 : 0;
-  nof_ies += positioning_broadcast_cells_present ? 1 : 0;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (assist_info_fail_list_present) {
-    HANDLE_CODE(pack_ie(bref, 25, crit_e{crit_e::reject}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, assist_info_fail_list, 1, 32, true);
-    }));
-  }
-  if (positioning_broadcast_cells_present) {
-    HANDLE_CODE(pack_ie(bref, 38, crit_e{crit_e::reject}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, positioning_broadcast_cells, 1, 16384, true);
-    }));
-  }
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE assist_info_feedback_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &assist_info_feedback_ies_o::get_crit));
-
-    switch (id) {
-      case 25: {
-        assist_info_fail_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(assist_info_fail_list, bref, 1, 32, true); }));
-        break;
-      }
-      case 38: {
-        positioning_broadcast_cells_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(positioning_broadcast_cells, bref, 1, 16384, true); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void assist_info_feedback_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (assist_info_fail_list_present) {
-    j.start_obj();
-    j.write_int("id", 25);
-    j.write_str("criticality", "reject");
-    j.start_array("value");
-    for (const auto& e1 : assist_info_fail_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (positioning_broadcast_cells_present) {
-    j.start_obj();
-    j.write_int("id", 38);
-    j.write_str("criticality", "reject");
-    j.start_array("value");
-    for (const auto& e1 : positioning_broadcast_cells) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_e_c_id_meas_fail_ind_ies_o[]   = {2, 6, 0};
+static const uint8_t  objset_crit_e_c_id_meas_fail_ind_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::ignore};
 
 // E-CIDMeasurementFailureIndication-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t e_c_id_meas_fail_ind_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {2, 6, 0};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool e_c_id_meas_fail_ind_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {2, 6, 0};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e e_c_id_meas_fail_ind_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    case 0:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e e_c_id_meas_fail_ind_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return presence_e::mandatory;
-    case 6:
-      return presence_e::mandatory;
-    case 0:
-      return presence_e::mandatory;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_e_c_id_meas_fail_ind_ies_container_values[] = {
+    {offsetof(e_c_id_meas_fail_ind_ies_container, lmf_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_fail_ind_ies_container, ran_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_fail_ind_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc}};
+static const int32_t ie_table_e_c_id_meas_fail_ind_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
+                                                                                 asn1::table::seq_field::mandatory,
+                                                                                 asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc e_c_id_meas_fail_ind_ies_container::desc = {
+    objset_id_e_c_id_meas_fail_ind_ies_o,
+    objset_crit_e_c_id_meas_fail_ind_ies_o,
+    ie_table_e_c_id_meas_fail_ind_ies_container_values,
+    ie_table_e_c_id_meas_fail_ind_ies_container_presences,
+    3,
+    3,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE e_c_id_meas_fail_ind_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 3;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 2, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 6, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e_c_id_meas_fail_ind_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 3;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &e_c_id_meas_fail_ind_ies_o::get_crit));
-
-    switch (id) {
-      case 2: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 6: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void e_c_id_meas_fail_ind_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 2);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 6);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_e_c_id_meas_initiation_fail_ies_o[]  = {2, 0, 1};
+static const uint8_t objset_crit_e_c_id_meas_initiation_fail_ies_o[] = {crit_e::reject, crit_e::ignore, crit_e::ignore};
 
 // E-CIDMeasurementInitiationFailure-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t e_c_id_meas_initiation_fail_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {2, 0, 1};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool e_c_id_meas_initiation_fail_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {2, 0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e e_c_id_meas_initiation_fail_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return crit_e::reject;
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e e_c_id_meas_initiation_fail_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return presence_e::mandatory;
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_e_c_id_meas_initiation_fail_ies_container_values[] = {
+    {offsetof(e_c_id_meas_initiation_fail_ies_container, lmf_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_initiation_fail_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(e_c_id_meas_initiation_fail_ies_container, crit_diagnostics),
+     (int32_t)offsetof(e_c_id_meas_initiation_fail_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_e_c_id_meas_initiation_fail_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(e_c_id_meas_initiation_fail_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc e_c_id_meas_initiation_fail_ies_container::desc = {
+    objset_id_e_c_id_meas_initiation_fail_ies_o,
+    objset_crit_e_c_id_meas_initiation_fail_ies_o,
+    ie_table_e_c_id_meas_initiation_fail_ies_container_values,
+    ie_table_e_c_id_meas_initiation_fail_ies_container_presences,
+    3,
+    2,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE e_c_id_meas_initiation_fail_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 2, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e_c_id_meas_initiation_fail_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &e_c_id_meas_initiation_fail_ies_o::get_crit));
-
-    switch (id) {
-      case 2: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void e_c_id_meas_initiation_fail_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 2);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_e_c_id_meas_initiation_request_ies_o[] = {2, 3, 4, 5, 15, 19, 105};
+static const uint8_t  objset_crit_e_c_id_meas_initiation_request_ies_o[] =
+    {crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::reject};
 
 // E-CIDMeasurementInitiationRequest-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t e_c_id_meas_initiation_request_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {2, 3, 4, 5, 15, 19, 105};
-  return map_enum_number(names, 7, idx, "id");
-}
-bool e_c_id_meas_initiation_request_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {2, 3, 4, 5, 15, 19, 105};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e e_c_id_meas_initiation_request_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return crit_e::reject;
-    case 3:
-      return crit_e::reject;
-    case 4:
-      return crit_e::reject;
-    case 5:
-      return crit_e::reject;
-    case 15:
-      return crit_e::ignore;
-    case 19:
-      return crit_e::ignore;
-    case 105:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e e_c_id_meas_initiation_request_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return presence_e::mandatory;
-    case 3:
-      return presence_e::mandatory;
-    case 4:
-      return presence_e::conditional;
-    case 5:
-      return presence_e::mandatory;
-    case 15:
-      return presence_e::optional;
-    case 19:
-      return presence_e::optional;
-    case 105:
-      return presence_e::conditional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_e_c_id_meas_initiation_request_ies_container_values[] = {
+    {offsetof(e_c_id_meas_initiation_request_ies_container, lmf_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_initiation_request_ies_container, report_characteristics),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(e_c_id_meas_initiation_request_ies_container::report_characteristics)>(),
+     decltype(e_c_id_meas_initiation_request_ies_container::report_characteristics)::has_ext,
+     false,
+     decltype(e_c_id_meas_initiation_request_ies_container::report_characteristics)::nof_types,
+     decltype(e_c_id_meas_initiation_request_ies_container::report_characteristics)::nof_exts,
+     nullptr,
+     &report_characteristics_opts::desc},
+    {offsetof(e_c_id_meas_initiation_request_ies_container, meas_periodicity),
+     (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, meas_periodicity_present),
+     asn1::table::enum_op<decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity)>(),
+     decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity)::has_ext,
+     false,
+     decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity)::nof_types,
+     decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity)::nof_exts,
+     nullptr,
+     &meas_periodicity_opts::desc},
+    {offsetof(e_c_id_meas_initiation_request_ies_container, meas_quantities),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::list_codec<decltype(e_c_id_meas_initiation_request_ies_container::meas_quantities),
+                              asn1::table::struct_json>::value},
+    {offsetof(e_c_id_meas_initiation_request_ies_container, other_rat_meas_quantities),
+     (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, other_rat_meas_quantities_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     0,
+     64,
+     &asn1::table::list_codec<decltype(e_c_id_meas_initiation_request_ies_container::other_rat_meas_quantities),
+                              asn1::table::struct_json>::value},
+    {offsetof(e_c_id_meas_initiation_request_ies_container, wlan_meas_quantities),
+     (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, wlan_meas_quantities_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     0,
+     64,
+     &asn1::table::list_codec<decltype(e_c_id_meas_initiation_request_ies_container::wlan_meas_quantities),
+                              asn1::table::struct_json>::value},
+    {offsetof(e_c_id_meas_initiation_request_ies_container, meas_periodicity_nr_ao_a),
+     (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, meas_periodicity_nr_ao_a_present),
+     asn1::table::enum_op<decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity_nr_ao_a)>(),
+     decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity_nr_ao_a)::has_ext,
+     false,
+     decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity_nr_ao_a)::nof_types,
+     decltype(e_c_id_meas_initiation_request_ies_container::meas_periodicity_nr_ao_a)::nof_exts,
+     nullptr,
+     &meas_periodicity_nr_ao_a_opts::desc}};
+static const int32_t ie_table_e_c_id_meas_initiation_request_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, meas_periodicity_present),
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, other_rat_meas_quantities_present),
+    (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, wlan_meas_quantities_present),
+    (int32_t)offsetof(e_c_id_meas_initiation_request_ies_container, meas_periodicity_nr_ao_a_present)};
+const asn1::table::ie_container_desc e_c_id_meas_initiation_request_ies_container::desc = {
+    objset_id_e_c_id_meas_initiation_request_ies_o,
+    objset_crit_e_c_id_meas_initiation_request_ies_o,
+    ie_table_e_c_id_meas_initiation_request_ies_container_values,
+    ie_table_e_c_id_meas_initiation_request_ies_container_presences,
+    7,
+    3,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE e_c_id_meas_initiation_request_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 3;
-  nof_ies += meas_periodicity_present ? 1 : 0;
-  nof_ies += other_rat_meas_quantities_present ? 1 : 0;
-  nof_ies += wlan_meas_quantities_present ? 1 : 0;
-  nof_ies += meas_periodicity_nr_ao_a_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 2, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 3, crit_e{crit_e::reject}, [this, &bref]() { return report_characteristics.pack(bref); }));
-  if (meas_periodicity_present) {
-    HANDLE_CODE(pack_ie(bref, 4, crit_e{crit_e::reject}, [this, &bref]() { return meas_periodicity.pack(bref); }));
-  }
-  HANDLE_CODE(pack_ie(bref, 5, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, meas_quantities, 1, 64, true);
-  }));
-  if (other_rat_meas_quantities_present) {
-    HANDLE_CODE(pack_ie(bref, 15, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, other_rat_meas_quantities, 0, 64, true);
-    }));
-  }
-  if (wlan_meas_quantities_present) {
-    HANDLE_CODE(pack_ie(bref, 19, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, wlan_meas_quantities, 0, 64, true);
-    }));
-  }
-  if (meas_periodicity_nr_ao_a_present) {
-    HANDLE_CODE(
-        pack_ie(bref, 105, crit_e{crit_e::reject}, [this, &bref]() { return meas_periodicity_nr_ao_a.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e_c_id_meas_initiation_request_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 3;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &e_c_id_meas_initiation_request_ies_o::get_crit));
-
-    switch (id) {
-      case 2: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 3: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return report_characteristics.unpack(bref); }));
-        break;
-      }
-      case 4: {
-        meas_periodicity_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_periodicity.unpack(bref); }));
-        break;
-      }
-      case 5: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(meas_quantities, bref, 1, 64, true); }));
-        break;
-      }
-      case 15: {
-        other_rat_meas_quantities_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(other_rat_meas_quantities, bref, 0, 64, true); }));
-        break;
-      }
-      case 19: {
-        wlan_meas_quantities_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(wlan_meas_quantities, bref, 0, 64, true); }));
-        break;
-      }
-      case 105: {
-        meas_periodicity_nr_ao_a_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_periodicity_nr_ao_a.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void e_c_id_meas_initiation_request_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 2);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 3);
-  j.write_str("criticality", "reject");
-  j.write_str("value", report_characteristics.to_string());
-  j.end_obj();
-  if (meas_periodicity_present) {
-    j.start_obj();
-    j.write_int("id", 4);
-    j.write_str("criticality", "reject");
-    j.write_str("value", meas_periodicity.to_string());
-    j.end_obj();
-  }
-  j.start_obj();
-  j.write_int("id", 5);
-  j.write_str("criticality", "reject");
-  j.start_array("value");
-  for (const auto& e1 : meas_quantities) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  if (other_rat_meas_quantities_present) {
-    j.start_obj();
-    j.write_int("id", 15);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : other_rat_meas_quantities) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (wlan_meas_quantities_present) {
-    j.start_obj();
-    j.write_int("id", 19);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : wlan_meas_quantities) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (meas_periodicity_nr_ao_a_present) {
-    j.start_obj();
-    j.write_int("id", 105);
-    j.write_str("criticality", "reject");
-    j.write_str("value", meas_periodicity_nr_ao_a.to_string());
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_e_c_id_meas_initiation_resp_ies_o[] = {2, 6, 7, 1, 14, 17, 21};
+static const uint8_t  objset_crit_e_c_id_meas_initiation_resp_ies_o[] =
+    {crit_e::reject, crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore};
 
 // E-CIDMeasurementInitiationResponse-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t e_c_id_meas_initiation_resp_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {2, 6, 7, 1, 14, 17, 21};
-  return map_enum_number(names, 7, idx, "id");
-}
-bool e_c_id_meas_initiation_resp_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {2, 6, 7, 1, 14, 17, 21};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e e_c_id_meas_initiation_resp_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    case 7:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    case 14:
-      return crit_e::ignore;
-    case 17:
-      return crit_e::ignore;
-    case 21:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e e_c_id_meas_initiation_resp_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return presence_e::mandatory;
-    case 6:
-      return presence_e::mandatory;
-    case 7:
-      return presence_e::optional;
-    case 1:
-      return presence_e::optional;
-    case 14:
-      return presence_e::optional;
-    case 17:
-      return presence_e::optional;
-    case 21:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_e_c_id_meas_initiation_resp_ies_container_values[] = {
+    {offsetof(e_c_id_meas_initiation_resp_ies_container, lmf_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_initiation_resp_ies_container, ran_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_initiation_resp_ies_container, e_c_id_meas_result),
+     (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, e_c_id_meas_result_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &e_c_id_meas_result_s::desc},
+    {offsetof(e_c_id_meas_initiation_resp_ies_container, crit_diagnostics),
+     (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc},
+    {offsetof(e_c_id_meas_initiation_resp_ies_container, cell_portion_id),
+     (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, cell_portion_id_present),
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr},
+    {offsetof(e_c_id_meas_initiation_resp_ies_container, other_rat_meas_result),
+     (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, other_rat_meas_result_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(e_c_id_meas_initiation_resp_ies_container::other_rat_meas_result),
+                                   asn1::table::choice_item_ops,
+                                   false,
+                                   true>::value,
+     &other_rat_measured_results_value_c::desc},
+    {offsetof(e_c_id_meas_initiation_resp_ies_container, wlan_meas_result),
+     (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, wlan_meas_result_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(e_c_id_meas_initiation_resp_ies_container::wlan_meas_result),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &wlan_meas_result_item_s::desc}};
+static const int32_t ie_table_e_c_id_meas_initiation_resp_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, e_c_id_meas_result_present),
+    (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, crit_diagnostics_present),
+    (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, cell_portion_id_present),
+    (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, other_rat_meas_result_present),
+    (int32_t)offsetof(e_c_id_meas_initiation_resp_ies_container, wlan_meas_result_present)};
+const asn1::table::ie_container_desc e_c_id_meas_initiation_resp_ies_container::desc = {
+    objset_id_e_c_id_meas_initiation_resp_ies_o,
+    objset_crit_e_c_id_meas_initiation_resp_ies_o,
+    ie_table_e_c_id_meas_initiation_resp_ies_container_values,
+    ie_table_e_c_id_meas_initiation_resp_ies_container_presences,
+    7,
+    2,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE e_c_id_meas_initiation_resp_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  nof_ies += e_c_id_meas_result_present ? 1 : 0;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  nof_ies += cell_portion_id_present ? 1 : 0;
-  nof_ies += other_rat_meas_result_present ? 1 : 0;
-  nof_ies += wlan_meas_result_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 2, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 6, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  if (e_c_id_meas_result_present) {
-    HANDLE_CODE(pack_ie(bref, 7, crit_e{crit_e::ignore}, [this, &bref]() { return e_c_id_meas_result.pack(bref); }));
-  }
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-  if (cell_portion_id_present) {
-    HANDLE_CODE(pack_ie(bref, 14, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_integer(bref, cell_portion_id, (uint16_t)0u, (uint16_t)4095u, true, true);
-    }));
-  }
-  if (other_rat_meas_result_present) {
-    HANDLE_CODE(pack_ie(bref, 17, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, other_rat_meas_result, 1, 64, true);
-    }));
-  }
-  if (wlan_meas_result_present) {
-    HANDLE_CODE(pack_ie(bref, 21, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, wlan_meas_result, 1, 64, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e_c_id_meas_initiation_resp_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &e_c_id_meas_initiation_resp_ies_o::get_crit));
-
-    switch (id) {
-      case 2: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 6: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 7: {
-        e_c_id_meas_result_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return e_c_id_meas_result.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      case 14: {
-        cell_portion_id_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(cell_portion_id, bref, (uint16_t)0u, (uint16_t)4095u, true, true);
-        }));
-        break;
-      }
-      case 17: {
-        other_rat_meas_result_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(other_rat_meas_result, bref, 1, 64, true); }));
-        break;
-      }
-      case 21: {
-        wlan_meas_result_present = true;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(wlan_meas_result, bref, 1, 64, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void e_c_id_meas_initiation_resp_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 2);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 6);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_ue_meas_id);
-  j.end_obj();
-  if (e_c_id_meas_result_present) {
-    j.start_obj();
-    j.write_int("id", 7);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    e_c_id_meas_result.to_json(j);
-    j.end_obj();
-  }
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  if (cell_portion_id_present) {
-    j.start_obj();
-    j.write_int("id", 14);
-    j.write_str("criticality", "ignore");
-    j.write_int("value", cell_portion_id);
-    j.end_obj();
-  }
-  if (other_rat_meas_result_present) {
-    j.start_obj();
-    j.write_int("id", 17);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : other_rat_meas_result) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (wlan_meas_result_present) {
-    j.start_obj();
-    j.write_int("id", 21);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : wlan_meas_result) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_e_c_id_meas_report_ies_o[]   = {2, 6, 7, 14};
+static const uint8_t  objset_crit_e_c_id_meas_report_ies_o[] = {crit_e::reject,
+                                                                crit_e::reject,
+                                                                crit_e::ignore,
+                                                                crit_e::ignore};
 
 // E-CIDMeasurementReport-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t e_c_id_meas_report_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {2, 6, 7, 14};
-  return map_enum_number(names, 4, idx, "id");
-}
-bool e_c_id_meas_report_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {2, 6, 7, 14};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e e_c_id_meas_report_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    case 7:
-      return crit_e::ignore;
-    case 14:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e e_c_id_meas_report_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return presence_e::mandatory;
-    case 6:
-      return presence_e::mandatory;
-    case 7:
-      return presence_e::mandatory;
-    case 14:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_e_c_id_meas_report_ies_container_values[] = {
+    {offsetof(e_c_id_meas_report_ies_container, lmf_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_report_ies_container, ran_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_report_ies_container, e_c_id_meas_result),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &e_c_id_meas_result_s::desc},
+    {offsetof(e_c_id_meas_report_ies_container, cell_portion_id),
+     (int32_t)offsetof(e_c_id_meas_report_ies_container, cell_portion_id_present),
+     asn1::table::field_op::int_u16,
+     true,
+     true,
+     INT64_C(0),
+     UINT64_C(4095),
+     nullptr}};
+static const int32_t ie_table_e_c_id_meas_report_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(e_c_id_meas_report_ies_container, cell_portion_id_present)};
+const asn1::table::ie_container_desc e_c_id_meas_report_ies_container::desc = {
+    objset_id_e_c_id_meas_report_ies_o,
+    objset_crit_e_c_id_meas_report_ies_o,
+    ie_table_e_c_id_meas_report_ies_container_values,
+    ie_table_e_c_id_meas_report_ies_container_presences,
+    4,
+    3,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE e_c_id_meas_report_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 3;
-  nof_ies += cell_portion_id_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 2, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 6, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 7, crit_e{crit_e::ignore}, [this, &bref]() { return e_c_id_meas_result.pack(bref); }));
-  if (cell_portion_id_present) {
-    HANDLE_CODE(pack_ie(bref, 14, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_integer(bref, cell_portion_id, (uint16_t)0u, (uint16_t)4095u, true, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e_c_id_meas_report_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 3;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &e_c_id_meas_report_ies_o::get_crit));
-
-    switch (id) {
-      case 2: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 6: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 7: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return e_c_id_meas_result.unpack(bref); }));
-        break;
-      }
-      case 14: {
-        cell_portion_id_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(cell_portion_id, bref, (uint16_t)0u, (uint16_t)4095u, true, true);
-        }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void e_c_id_meas_report_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 2);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 6);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 7);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  e_c_id_meas_result.to_json(j);
-  j.end_obj();
-  if (cell_portion_id_present) {
-    j.start_obj();
-    j.write_int("id", 14);
-    j.write_str("criticality", "ignore");
-    j.write_int("value", cell_portion_id);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_e_c_id_meas_termination_cmd_ies_o[]   = {2, 6};
+static const uint8_t  objset_crit_e_c_id_meas_termination_cmd_ies_o[] = {crit_e::reject, crit_e::reject};
 
 // E-CIDMeasurementTerminationCommand-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t e_c_id_meas_termination_cmd_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {2, 6};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool e_c_id_meas_termination_cmd_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {2, 6};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e e_c_id_meas_termination_cmd_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e e_c_id_meas_termination_cmd_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 2:
-      return presence_e::mandatory;
-    case 6:
-      return presence_e::mandatory;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_e_c_id_meas_termination_cmd_ies_container_values[] = {
+    {offsetof(e_c_id_meas_termination_cmd_ies_container, lmf_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(e_c_id_meas_termination_cmd_ies_container, ran_ue_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(15),
+     nullptr}};
+static const int32_t ie_table_e_c_id_meas_termination_cmd_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc e_c_id_meas_termination_cmd_ies_container::desc = {
+    objset_id_e_c_id_meas_termination_cmd_ies_o,
+    objset_crit_e_c_id_meas_termination_cmd_ies_o,
+    ie_table_e_c_id_meas_termination_cmd_ies_container_values,
+    ie_table_e_c_id_meas_termination_cmd_ies_container_presences,
+    2,
+    2,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE e_c_id_meas_termination_cmd_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 2, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 6, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_ue_meas_id, (uint8_t)1u, (uint8_t)15u, true, true);
-  }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e_c_id_meas_termination_cmd_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &e_c_id_meas_termination_cmd_ies_o::get_crit));
-
-    switch (id) {
-      case 2: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      case 6: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_ue_meas_id, bref, (uint8_t)1u, (uint8_t)15u, true, true);
-        }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void e_c_id_meas_termination_cmd_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 2);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_ue_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 6);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_ue_meas_id);
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_error_ind_ies_o[]   = {0, 1};
+static const uint8_t  objset_crit_error_ind_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // ErrorIndication-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t error_ind_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {0, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool error_ind_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e error_ind_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e error_ind_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return presence_e::optional;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_error_ind_ies_container_values[] = {
+    {offsetof(error_ind_ies_container, cause),
+     (int32_t)offsetof(error_ind_ies_container, cause_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(error_ind_ies_container, crit_diagnostics),
+     (int32_t)offsetof(error_ind_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_error_ind_ies_container_presences[] = {
+    (int32_t)offsetof(error_ind_ies_container, cause_present),
+    (int32_t)offsetof(error_ind_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc error_ind_ies_container::desc = {objset_id_error_ind_ies_o,
+                                                                      objset_crit_error_ind_ies_o,
+                                                                      ie_table_error_ind_ies_container_values,
+                                                                      ie_table_error_ind_ies_container_presences,
+                                                                      2,
+                                                                      0,
+                                                                      0,
+                                                                      65535,
+                                                                      true,
+                                                                      "value"};
 
-OCUDUASN_CODE error_ind_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += cause_present ? 1 : 0;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (cause_present) {
-    HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  }
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE error_ind_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &error_ind_ies_o::get_crit));
-
-    switch (id) {
-      case 0: {
-        cause_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void error_ind_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (cause_present) {
-    j.start_obj();
-    j.write_int("id", 0);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    cause.to_json(j);
-    j.end_obj();
-  }
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_meas_abort_ies_o[]   = {39, 40};
+static const uint8_t  objset_crit_meas_abort_ies_o[] = {crit_e::reject, crit_e::reject};
 
 // MeasurementAbort-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_abort_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {39, 40};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool meas_abort_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {39, 40};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_abort_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return crit_e::reject;
-    case 40:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_abort_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return presence_e::mandatory;
-    case 40:
-      return presence_e::mandatory;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_abort_ies_container_values[] = {
+    {offsetof(meas_abort_ies_container, lmf_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_abort_ies_container, ran_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr}};
+static const int32_t                 ie_table_meas_abort_ies_container_presences[] = {asn1::table::seq_field::mandatory,
+                                                                                      asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc meas_abort_ies_container::desc                = {objset_id_meas_abort_ies_o,
+                                                                                      objset_crit_meas_abort_ies_o,
+                                                                                      ie_table_meas_abort_ies_container_values,
+                                                                                      ie_table_meas_abort_ies_container_presences,
+                                                                                      2,
+                                                                                      2,
+                                                                                      0,
+                                                                                      65535,
+                                                                                      true,
+                                                                                      "value"};
 
-OCUDUASN_CODE meas_abort_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 39, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 40, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_abort_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_abort_ies_o::get_crit));
-
-    switch (id) {
-      case 39: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 40: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_abort_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 39);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 40);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_meas_id);
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_meas_activation_ies_o[]   = {98, 88};
+static const uint8_t  objset_crit_meas_activation_ies_o[] = {crit_e::reject, crit_e::ignore};
 
 // MeasurementActivation-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_activation_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {98, 88};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool meas_activation_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {98, 88};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_activation_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 98:
-      return crit_e::reject;
-    case 88:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_activation_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 98:
-      return presence_e::mandatory;
-    case 88:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_activation_ies_container_values[] = {
+    {offsetof(meas_activation_ies_container, request_type),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(meas_activation_ies_container::request_type)>(),
+     decltype(meas_activation_ies_container::request_type)::has_ext,
+     false,
+     decltype(meas_activation_ies_container::request_type)::nof_types,
+     decltype(meas_activation_ies_container::request_type)::nof_exts,
+     nullptr,
+     &request_type_opts::desc},
+    {offsetof(meas_activation_ies_container, prs_meass_info_list),
+     (int32_t)offsetof(meas_activation_ies_container, prs_meass_info_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     4,
+     &asn1::table::item_list_codec<decltype(meas_activation_ies_container::prs_meass_info_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &prs_meass_info_list_item_s::desc}};
+static const int32_t ie_table_meas_activation_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_activation_ies_container, prs_meass_info_list_present)};
+const asn1::table::ie_container_desc meas_activation_ies_container::desc = {
+    objset_id_meas_activation_ies_o,
+    objset_crit_meas_activation_ies_o,
+    ie_table_meas_activation_ies_container_values,
+    ie_table_meas_activation_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE meas_activation_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += prs_meass_info_list_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 98, crit_e{crit_e::reject}, [this, &bref]() { return request_type.pack(bref); }));
-  if (prs_meass_info_list_present) {
-    HANDLE_CODE(pack_ie(bref, 88, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, prs_meass_info_list, 1, 4, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_activation_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_activation_ies_o::get_crit));
-
-    switch (id) {
-      case 98: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return request_type.unpack(bref); }));
-        break;
-      }
-      case 88: {
-        prs_meass_info_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(prs_meass_info_list, bref, 1, 4, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_activation_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 98);
-  j.write_str("criticality", "reject");
-  j.write_str("value", request_type.to_string());
-  j.end_obj();
-  if (prs_meass_info_list_present) {
-    j.start_obj();
-    j.write_int("id", 88);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : prs_meass_info_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_meas_fail_ies_o[]   = {39, 0, 1};
+static const uint8_t  objset_crit_meas_fail_ies_o[] = {crit_e::reject, crit_e::ignore, crit_e::ignore};
 
 // MeasurementFailure-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_fail_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {39, 0, 1};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool meas_fail_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {39, 0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_fail_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return crit_e::reject;
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_fail_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return presence_e::mandatory;
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_fail_ies_container_values[] = {
+    {offsetof(meas_fail_ies_container, lmf_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_fail_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(meas_fail_ies_container, crit_diagnostics),
+     (int32_t)offsetof(meas_fail_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_meas_fail_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_fail_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc meas_fail_ies_container::desc = {objset_id_meas_fail_ies_o,
+                                                                      objset_crit_meas_fail_ies_o,
+                                                                      ie_table_meas_fail_ies_container_values,
+                                                                      ie_table_meas_fail_ies_container_presences,
+                                                                      3,
+                                                                      2,
+                                                                      0,
+                                                                      65535,
+                                                                      true,
+                                                                      "value"};
 
-OCUDUASN_CODE meas_fail_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 39, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_fail_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_fail_ies_o::get_crit));
-
-    switch (id) {
-      case 39: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_fail_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 39);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_meas_fail_ind_ies_o[]   = {39, 40, 0};
+static const uint8_t  objset_crit_meas_fail_ind_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::ignore};
 
 // MeasurementFailureIndication-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_fail_ind_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {39, 40, 0};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool meas_fail_ind_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {39, 40, 0};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_fail_ind_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return crit_e::reject;
-    case 40:
-      return crit_e::reject;
-    case 0:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_fail_ind_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return presence_e::mandatory;
-    case 40:
-      return presence_e::mandatory;
-    case 0:
-      return presence_e::mandatory;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_fail_ind_ies_container_values[] = {
+    {offsetof(meas_fail_ind_ies_container, lmf_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_fail_ind_ies_container, ran_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_fail_ind_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc}};
+static const int32_t ie_table_meas_fail_ind_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
+                                                                          asn1::table::seq_field::mandatory,
+                                                                          asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc meas_fail_ind_ies_container::desc = {
+    objset_id_meas_fail_ind_ies_o,
+    objset_crit_meas_fail_ind_ies_o,
+    ie_table_meas_fail_ind_ies_container_values,
+    ie_table_meas_fail_ind_ies_container_presences,
+    3,
+    3,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE meas_fail_ind_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 3;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 39, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 40, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_fail_ind_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 3;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_fail_ind_ies_o::get_crit));
-
-    switch (id) {
-      case 39: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 40: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_fail_ind_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 39);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 40);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_meas_precfg_confirm_ies_o[]   = {97, 1};
+static const uint8_t  objset_crit_meas_precfg_confirm_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // MeasurementPreconfigurationConfirm-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_precfg_confirm_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {97, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool meas_precfg_confirm_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {97, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_precfg_confirm_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 97:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_precfg_confirm_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 97:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_precfg_confirm_ies_container_values[] = {
+    {offsetof(meas_precfg_confirm_ies_container, precfg_result),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(meas_precfg_confirm_ies_container::precfg_result),
+                                asn1::table::struct_json>::value},
+    {offsetof(meas_precfg_confirm_ies_container, crit_diagnostics),
+     (int32_t)offsetof(meas_precfg_confirm_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_meas_precfg_confirm_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_precfg_confirm_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc meas_precfg_confirm_ies_container::desc = {
+    objset_id_meas_precfg_confirm_ies_o,
+    objset_crit_meas_precfg_confirm_ies_o,
+    ie_table_meas_precfg_confirm_ies_container_values,
+    ie_table_meas_precfg_confirm_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE meas_precfg_confirm_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 97, crit_e{crit_e::ignore}, [this, &bref]() { return precfg_result.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_precfg_confirm_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_precfg_confirm_ies_o::get_crit));
-
-    switch (id) {
-      case 97: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return precfg_result.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_precfg_confirm_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 97);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  precfg_result.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_meas_precfg_refuse_ies_o[]   = {0, 1};
+static const uint8_t  objset_crit_meas_precfg_refuse_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // MeasurementPreconfigurationRefuse-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_precfg_refuse_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {0, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool meas_precfg_refuse_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_precfg_refuse_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_precfg_refuse_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_precfg_refuse_ies_container_values[] = {
+    {offsetof(meas_precfg_refuse_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(meas_precfg_refuse_ies_container, crit_diagnostics),
+     (int32_t)offsetof(meas_precfg_refuse_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_meas_precfg_refuse_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_precfg_refuse_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc meas_precfg_refuse_ies_container::desc = {
+    objset_id_meas_precfg_refuse_ies_o,
+    objset_crit_meas_precfg_refuse_ies_o,
+    ie_table_meas_precfg_refuse_ies_container_values,
+    ie_table_meas_precfg_refuse_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE meas_precfg_refuse_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_precfg_refuse_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_precfg_refuse_ies_o::get_crit));
-
-    switch (id) {
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_precfg_refuse_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_meas_precfg_required_ies_o[]   = {87};
+static const uint8_t  objset_crit_meas_precfg_required_ies_o[] = {crit_e::ignore};
 
 // MeasurementPreconfigurationRequired-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_precfg_required_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {87};
-  return map_enum_number(names, 1, idx, "id");
-}
-bool meas_precfg_required_ies_o::is_id_valid(const uint32_t& id)
-{
-  return 87 == id;
-}
-crit_e meas_precfg_required_ies_o::get_crit(const uint32_t& id)
-{
-  if (id == 87) {
-    return crit_e::ignore;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
-presence_e meas_precfg_required_ies_o::get_presence(const uint32_t& id)
-{
-  if (id == 87) {
-    return presence_e::mandatory;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_precfg_required_ies_container_values[] = {
+    {offsetof(meas_precfg_required_ies_container, trp_prs_info_list),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     256,
+     &asn1::table::item_list_codec<decltype(meas_precfg_required_ies_container::trp_prs_info_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_prs_info_list_item_s::desc}};
+static const int32_t ie_table_meas_precfg_required_ies_container_presences[]  = {asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc meas_precfg_required_ies_container::desc = {
+    objset_id_meas_precfg_required_ies_o,
+    objset_crit_meas_precfg_required_ies_o,
+    ie_table_meas_precfg_required_ies_container_values,
+    ie_table_meas_precfg_required_ies_container_presences,
+    1,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE meas_precfg_required_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 87, crit_e{crit_e::ignore}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, trp_prs_info_list, 1, 256, true);
-  }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_precfg_required_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_precfg_required_ies_o::get_crit));
-
-    if (id == 87) {
-      {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(trp_prs_info_list, bref, 1, 256, true); }));
-      }
-    } else {
-      HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_precfg_required_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 87);
-  j.write_str("criticality", "ignore");
-  j.start_array("value");
-  for (const auto& e1 : trp_prs_info_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_meas_report_ies_o[]   = {39, 40, 43};
+static const uint8_t  objset_crit_meas_report_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::reject};
 
 // MeasurementReport-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_report_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {39, 40, 43};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool meas_report_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {39, 40, 43};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_report_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return crit_e::reject;
-    case 40:
-      return crit_e::reject;
-    case 43:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_report_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return presence_e::mandatory;
-    case 40:
-      return presence_e::mandatory;
-    case 43:
-      return presence_e::mandatory;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_report_ies_container_values[] = {
+    {offsetof(meas_report_ies_container, lmf_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_report_ies_container, ran_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_report_ies_container, trp_meas_report_list),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(meas_report_ies_container::trp_meas_report_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_meas_resp_item_s::desc}};
+static const int32_t ie_table_meas_report_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
+                                                                        asn1::table::seq_field::mandatory,
+                                                                        asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc meas_report_ies_container::desc = {objset_id_meas_report_ies_o,
+                                                                        objset_crit_meas_report_ies_o,
+                                                                        ie_table_meas_report_ies_container_values,
+                                                                        ie_table_meas_report_ies_container_presences,
+                                                                        3,
+                                                                        3,
+                                                                        0,
+                                                                        65535,
+                                                                        true,
+                                                                        "value"};
 
-OCUDUASN_CODE meas_report_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 3;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 39, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 40, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 43, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, trp_meas_report_list, 1, 64, true);
-  }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_report_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 3;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_report_ies_o::get_crit));
-
-    switch (id) {
-      case 39: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 40: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 43: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(trp_meas_report_list, bref, 1, 64, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_report_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 39);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 40);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 43);
-  j.write_str("criticality", "reject");
-  j.start_array("value");
-  for (const auto& e1 : trp_meas_report_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_meas_request_ies_o[] = {39, 41, 3, 4, 52, 54, 26, 31, 49, 50, 64, 72, 92, 91, 95, 125};
+static const uint8_t  objset_crit_meas_request_ies_o[] = {crit_e::reject,
+                                                          crit_e::reject,
+                                                          crit_e::reject,
+                                                          crit_e::reject,
+                                                          crit_e::reject,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore,
+                                                          crit_e::reject,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore,
+                                                          crit_e::ignore};
 
 // MeasurementRequest-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_request_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {39, 41, 3, 4, 52, 54, 26, 31, 49, 50, 64, 72, 92, 91, 95, 125};
-  return map_enum_number(names, 16, idx, "id");
-}
-bool meas_request_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {39, 41, 3, 4, 52, 54, 26, 31, 49, 50, 64, 72, 92, 91, 95, 125};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_request_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return crit_e::reject;
-    case 41:
-      return crit_e::reject;
-    case 3:
-      return crit_e::reject;
-    case 4:
-      return crit_e::reject;
-    case 52:
-      return crit_e::reject;
-    case 54:
-      return crit_e::ignore;
-    case 26:
-      return crit_e::ignore;
-    case 31:
-      return crit_e::ignore;
-    case 49:
-      return crit_e::ignore;
-    case 50:
-      return crit_e::ignore;
-    case 64:
-      return crit_e::reject;
-    case 72:
-      return crit_e::ignore;
-    case 92:
-      return crit_e::ignore;
-    case 91:
-      return crit_e::ignore;
-    case 95:
-      return crit_e::ignore;
-    case 125:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_request_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return presence_e::mandatory;
-    case 41:
-      return presence_e::mandatory;
-    case 3:
-      return presence_e::mandatory;
-    case 4:
-      return presence_e::conditional;
-    case 52:
-      return presence_e::mandatory;
-    case 54:
-      return presence_e::optional;
-    case 26:
-      return presence_e::optional;
-    case 31:
-      return presence_e::optional;
-    case 49:
-      return presence_e::optional;
-    case 50:
-      return presence_e::optional;
-    case 64:
-      return presence_e::conditional;
-    case 72:
-      return presence_e::optional;
-    case 92:
-      return presence_e::optional;
-    case 91:
-      return presence_e::optional;
-    case 95:
-      return presence_e::optional;
-    case 125:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_request_ies_container_values[] = {
+    {offsetof(meas_request_ies_container, lmf_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_request_ies_container, trp_meas_request_list),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(meas_request_ies_container::trp_meas_request_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_meas_request_item_s::desc},
+    {offsetof(meas_request_ies_container, report_characteristics),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(meas_request_ies_container::report_characteristics)>(),
+     decltype(meas_request_ies_container::report_characteristics)::has_ext,
+     false,
+     decltype(meas_request_ies_container::report_characteristics)::nof_types,
+     decltype(meas_request_ies_container::report_characteristics)::nof_exts,
+     nullptr,
+     &report_characteristics_opts::desc},
+    {offsetof(meas_request_ies_container, meas_periodicity),
+     (int32_t)offsetof(meas_request_ies_container, meas_periodicity_present),
+     asn1::table::enum_op<decltype(meas_request_ies_container::meas_periodicity)>(),
+     decltype(meas_request_ies_container::meas_periodicity)::has_ext,
+     false,
+     decltype(meas_request_ies_container::meas_periodicity)::nof_types,
+     decltype(meas_request_ies_container::meas_periodicity)::nof_exts,
+     nullptr,
+     &meas_periodicity_opts::desc},
+    {offsetof(meas_request_ies_container, trp_meas_quantities),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16384,
+     &asn1::table::item_list_codec<decltype(meas_request_ies_container::trp_meas_quantities),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_meas_quantities_list_item_s::desc},
+    {offsetof(meas_request_ies_container, sfn_initisation_time),
+     (int32_t)offsetof(meas_request_ies_container, sfn_initisation_time_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(meas_request_ies_container::sfn_initisation_time),
+                                asn1::table::struct_json>::value},
+    {offsetof(meas_request_ies_container, srs_cfg),
+     (int32_t)offsetof(meas_request_ies_container, srs_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_configuration_s::desc},
+    {offsetof(meas_request_ies_container, meas_beam_info_request),
+     (int32_t)offsetof(meas_request_ies_container, meas_beam_info_request_present),
+     asn1::table::enum_op<decltype(meas_request_ies_container::meas_beam_info_request)>(),
+     decltype(meas_request_ies_container::meas_beam_info_request)::has_ext,
+     false,
+     decltype(meas_request_ies_container::meas_beam_info_request)::nof_types,
+     decltype(meas_request_ies_container::meas_beam_info_request)::nof_exts,
+     nullptr,
+     &meas_beam_info_request_opts::desc},
+    {offsetof(meas_request_ies_container, sys_frame_num),
+     (int32_t)offsetof(meas_request_ies_container, sys_frame_num_present),
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(1023),
+     nullptr},
+    {offsetof(meas_request_ies_container, slot_num),
+     (int32_t)offsetof(meas_request_ies_container, slot_num_present),
+     asn1::table::field_op::int_u8,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(79),
+     nullptr},
+    {offsetof(meas_request_ies_container, meas_periodicity_extended),
+     (int32_t)offsetof(meas_request_ies_container, meas_periodicity_extended_present),
+     asn1::table::enum_op<decltype(meas_request_ies_container::meas_periodicity_extended)>(),
+     decltype(meas_request_ies_container::meas_periodicity_extended)::has_ext,
+     false,
+     decltype(meas_request_ies_container::meas_periodicity_extended)::nof_types,
+     decltype(meas_request_ies_container::meas_periodicity_extended)::nof_exts,
+     nullptr,
+     &meas_periodicity_extended_opts::desc},
+    {offsetof(meas_request_ies_container, resp_time),
+     (int32_t)offsetof(meas_request_ies_container, resp_time_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &resp_time_s::desc},
+    {offsetof(meas_request_ies_container, meas_characteristics_request_ind),
+     (int32_t)offsetof(meas_request_ies_container, meas_characteristics_request_ind_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(meas_request_ies_container::meas_characteristics_request_ind),
+                                asn1::table::struct_json>::value},
+    {offsetof(meas_request_ies_container, meas_time_occasion),
+     (int32_t)offsetof(meas_request_ies_container, meas_time_occasion_present),
+     asn1::table::enum_op<decltype(meas_request_ies_container::meas_time_occasion)>(),
+     decltype(meas_request_ies_container::meas_time_occasion)::has_ext,
+     false,
+     decltype(meas_request_ies_container::meas_time_occasion)::nof_types,
+     decltype(meas_request_ies_container::meas_time_occasion)::nof_exts,
+     nullptr,
+     &meas_time_occasion_opts::desc},
+    {offsetof(meas_request_ies_container, meas_amount),
+     (int32_t)offsetof(meas_request_ies_container, meas_amount_present),
+     asn1::table::enum_op<decltype(meas_request_ies_container::meas_amount)>(),
+     decltype(meas_request_ies_container::meas_amount)::has_ext,
+     false,
+     decltype(meas_request_ies_container::meas_amount)::nof_types,
+     decltype(meas_request_ies_container::meas_amount)::nof_exts,
+     nullptr,
+     &meas_amount_opts::desc},
+    {offsetof(meas_request_ies_container, time_win_info_meas_list),
+     (int32_t)offsetof(meas_request_ies_container, time_win_info_meas_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(meas_request_ies_container::time_win_info_meas_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &time_win_info_meas_item_s::desc}};
+static const int32_t ie_table_meas_request_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_request_ies_container, meas_periodicity_present),
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_request_ies_container, sfn_initisation_time_present),
+    (int32_t)offsetof(meas_request_ies_container, srs_cfg_present),
+    (int32_t)offsetof(meas_request_ies_container, meas_beam_info_request_present),
+    (int32_t)offsetof(meas_request_ies_container, sys_frame_num_present),
+    (int32_t)offsetof(meas_request_ies_container, slot_num_present),
+    (int32_t)offsetof(meas_request_ies_container, meas_periodicity_extended_present),
+    (int32_t)offsetof(meas_request_ies_container, resp_time_present),
+    (int32_t)offsetof(meas_request_ies_container, meas_characteristics_request_ind_present),
+    (int32_t)offsetof(meas_request_ies_container, meas_time_occasion_present),
+    (int32_t)offsetof(meas_request_ies_container, meas_amount_present),
+    (int32_t)offsetof(meas_request_ies_container, time_win_info_meas_list_present)};
+const asn1::table::ie_container_desc meas_request_ies_container::desc = {objset_id_meas_request_ies_o,
+                                                                         objset_crit_meas_request_ies_o,
+                                                                         ie_table_meas_request_ies_container_values,
+                                                                         ie_table_meas_request_ies_container_presences,
+                                                                         16,
+                                                                         4,
+                                                                         0,
+                                                                         65535,
+                                                                         true,
+                                                                         "value"};
 
-OCUDUASN_CODE meas_request_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 4;
-  nof_ies += meas_periodicity_present ? 1 : 0;
-  nof_ies += sfn_initisation_time_present ? 1 : 0;
-  nof_ies += srs_cfg_present ? 1 : 0;
-  nof_ies += meas_beam_info_request_present ? 1 : 0;
-  nof_ies += sys_frame_num_present ? 1 : 0;
-  nof_ies += slot_num_present ? 1 : 0;
-  nof_ies += meas_periodicity_extended_present ? 1 : 0;
-  nof_ies += resp_time_present ? 1 : 0;
-  nof_ies += meas_characteristics_request_ind_present ? 1 : 0;
-  nof_ies += meas_time_occasion_present ? 1 : 0;
-  nof_ies += meas_amount_present ? 1 : 0;
-  nof_ies += time_win_info_meas_list_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 39, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 41, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, trp_meas_request_list, 1, 64, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 3, crit_e{crit_e::reject}, [this, &bref]() { return report_characteristics.pack(bref); }));
-  if (meas_periodicity_present) {
-    HANDLE_CODE(pack_ie(bref, 4, crit_e{crit_e::reject}, [this, &bref]() { return meas_periodicity.pack(bref); }));
-  }
-  HANDLE_CODE(pack_ie(bref, 52, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, trp_meas_quantities, 1, 16384, true);
-  }));
-  if (sfn_initisation_time_present) {
-    HANDLE_CODE(pack_ie(bref, 54, crit_e{crit_e::ignore}, [this, &bref]() { return sfn_initisation_time.pack(bref); }));
-  }
-  if (srs_cfg_present) {
-    HANDLE_CODE(pack_ie(bref, 26, crit_e{crit_e::ignore}, [this, &bref]() { return srs_cfg.pack(bref); }));
-  }
-  if (meas_beam_info_request_present) {
-    HANDLE_CODE(
-        pack_ie(bref, 31, crit_e{crit_e::ignore}, [this, &bref]() { return meas_beam_info_request.pack(bref); }));
-  }
-  if (sys_frame_num_present) {
-    HANDLE_CODE(pack_ie(bref, 49, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_integer(bref, sys_frame_num, (uint16_t)0u, (uint16_t)1023u, false, true);
-    }));
-  }
-  if (slot_num_present) {
-    HANDLE_CODE(pack_ie(bref, 50, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_integer(bref, slot_num, (uint8_t)0u, (uint8_t)79u, false, true);
-    }));
-  }
-  if (meas_periodicity_extended_present) {
-    HANDLE_CODE(
-        pack_ie(bref, 64, crit_e{crit_e::reject}, [this, &bref]() { return meas_periodicity_extended.pack(bref); }));
-  }
-  if (resp_time_present) {
-    HANDLE_CODE(pack_ie(bref, 72, crit_e{crit_e::ignore}, [this, &bref]() { return resp_time.pack(bref); }));
-  }
-  if (meas_characteristics_request_ind_present) {
-    HANDLE_CODE(pack_ie(
-        bref, 92, crit_e{crit_e::ignore}, [this, &bref]() { return meas_characteristics_request_ind.pack(bref); }));
-  }
-  if (meas_time_occasion_present) {
-    HANDLE_CODE(pack_ie(bref, 91, crit_e{crit_e::ignore}, [this, &bref]() { return meas_time_occasion.pack(bref); }));
-  }
-  if (meas_amount_present) {
-    HANDLE_CODE(pack_ie(bref, 95, crit_e{crit_e::ignore}, [this, &bref]() { return meas_amount.pack(bref); }));
-  }
-  if (time_win_info_meas_list_present) {
-    HANDLE_CODE(pack_ie(bref, 125, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, time_win_info_meas_list, 1, 16, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_request_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 4;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_request_ies_o::get_crit));
-
-    switch (id) {
-      case 39: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 41: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(trp_meas_request_list, bref, 1, 64, true); }));
-        break;
-      }
-      case 3: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return report_characteristics.unpack(bref); }));
-        break;
-      }
-      case 4: {
-        meas_periodicity_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_periodicity.unpack(bref); }));
-        break;
-      }
-      case 52: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(trp_meas_quantities, bref, 1, 16384, true); }));
-        break;
-      }
-      case 54: {
-        sfn_initisation_time_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return sfn_initisation_time.unpack(bref); }));
-        break;
-      }
-      case 26: {
-        srs_cfg_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_cfg.unpack(bref); }));
-        break;
-      }
-      case 31: {
-        meas_beam_info_request_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_beam_info_request.unpack(bref); }));
-        break;
-      }
-      case 49: {
-        sys_frame_num_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(sys_frame_num, bref, (uint16_t)0u, (uint16_t)1023u, false, true);
-        }));
-        break;
-      }
-      case 50: {
-        slot_num_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_integer(slot_num, bref, (uint8_t)0u, (uint8_t)79u, false, true); }));
-        break;
-      }
-      case 64: {
-        meas_periodicity_extended_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_periodicity_extended.unpack(bref); }));
-        break;
-      }
-      case 72: {
-        resp_time_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return resp_time.unpack(bref); }));
-        break;
-      }
-      case 92: {
-        meas_characteristics_request_ind_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_characteristics_request_ind.unpack(bref); }));
-        break;
-      }
-      case 91: {
-        meas_time_occasion_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_time_occasion.unpack(bref); }));
-        break;
-      }
-      case 95: {
-        meas_amount_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_amount.unpack(bref); }));
-        break;
-      }
-      case 125: {
-        time_win_info_meas_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(time_win_info_meas_list, bref, 1, 16, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_request_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 39);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 41);
-  j.write_str("criticality", "reject");
-  j.start_array("value");
-  for (const auto& e1 : trp_meas_request_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 3);
-  j.write_str("criticality", "reject");
-  j.write_str("value", report_characteristics.to_string());
-  j.end_obj();
-  if (meas_periodicity_present) {
-    j.start_obj();
-    j.write_int("id", 4);
-    j.write_str("criticality", "reject");
-    j.write_str("value", meas_periodicity.to_string());
-    j.end_obj();
-  }
-  j.start_obj();
-  j.write_int("id", 52);
-  j.write_str("criticality", "reject");
-  j.start_array("value");
-  for (const auto& e1 : trp_meas_quantities) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  if (sfn_initisation_time_present) {
-    j.start_obj();
-    j.write_int("id", 54);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    sfn_initisation_time.to_json(j);
-    j.end_obj();
-  }
-  if (srs_cfg_present) {
-    j.start_obj();
-    j.write_int("id", 26);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    srs_cfg.to_json(j);
-    j.end_obj();
-  }
-  if (meas_beam_info_request_present) {
-    j.start_obj();
-    j.write_int("id", 31);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", "true");
-    j.end_obj();
-  }
-  if (sys_frame_num_present) {
-    j.start_obj();
-    j.write_int("id", 49);
-    j.write_str("criticality", "ignore");
-    j.write_int("value", sys_frame_num);
-    j.end_obj();
-  }
-  if (slot_num_present) {
-    j.start_obj();
-    j.write_int("id", 50);
-    j.write_str("criticality", "ignore");
-    j.write_int("value", slot_num);
-    j.end_obj();
-  }
-  if (meas_periodicity_extended_present) {
-    j.start_obj();
-    j.write_int("id", 64);
-    j.write_str("criticality", "reject");
-    j.write_str("value", meas_periodicity_extended.to_string());
-    j.end_obj();
-  }
-  if (resp_time_present) {
-    j.start_obj();
-    j.write_int("id", 72);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    resp_time.to_json(j);
-    j.end_obj();
-  }
-  if (meas_characteristics_request_ind_present) {
-    j.start_obj();
-    j.write_int("id", 92);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    meas_characteristics_request_ind.to_json(j);
-    j.end_obj();
-  }
-  if (meas_time_occasion_present) {
-    j.start_obj();
-    j.write_int("id", 91);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", meas_time_occasion.to_string());
-    j.end_obj();
-  }
-  if (meas_amount_present) {
-    j.start_obj();
-    j.write_int("id", 95);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", meas_amount.to_string());
-    j.end_obj();
-  }
-  if (time_win_info_meas_list_present) {
-    j.start_obj();
-    j.write_int("id", 125);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : time_win_info_meas_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_meas_resp_ies_o[]   = {39, 40, 42, 1};
+static const uint8_t  objset_crit_meas_resp_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::reject, crit_e::ignore};
 
 // MeasurementResponse-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_resp_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {39, 40, 42, 1};
-  return map_enum_number(names, 4, idx, "id");
-}
-bool meas_resp_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {39, 40, 42, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_resp_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return crit_e::reject;
-    case 40:
-      return crit_e::reject;
-    case 42:
-      return crit_e::reject;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_resp_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return presence_e::mandatory;
-    case 40:
-      return presence_e::mandatory;
-    case 42:
-      return presence_e::optional;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_meas_resp_ies_container_values[] = {
+    {offsetof(meas_resp_ies_container, lmf_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_resp_ies_container, ran_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_resp_ies_container, trp_meas_resp_list),
+     (int32_t)offsetof(meas_resp_ies_container, trp_meas_resp_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(meas_resp_ies_container::trp_meas_resp_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_meas_resp_item_s::desc},
+    {offsetof(meas_resp_ies_container, crit_diagnostics),
+     (int32_t)offsetof(meas_resp_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_meas_resp_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_resp_ies_container, trp_meas_resp_list_present),
+    (int32_t)offsetof(meas_resp_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc meas_resp_ies_container::desc = {objset_id_meas_resp_ies_o,
+                                                                      objset_crit_meas_resp_ies_o,
+                                                                      ie_table_meas_resp_ies_container_values,
+                                                                      ie_table_meas_resp_ies_container_presences,
+                                                                      4,
+                                                                      2,
+                                                                      0,
+                                                                      65535,
+                                                                      true,
+                                                                      "value"};
 
-OCUDUASN_CODE meas_resp_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  nof_ies += trp_meas_resp_list_present ? 1 : 0;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 39, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 40, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  if (trp_meas_resp_list_present) {
-    HANDLE_CODE(pack_ie(bref, 42, crit_e{crit_e::reject}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, trp_meas_resp_list, 1, 64, true);
-    }));
-  }
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_resp_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_resp_ies_o::get_crit));
-
-    switch (id) {
-      case 39: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 40: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 42: {
-        trp_meas_resp_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(trp_meas_resp_list, bref, 1, 64, true); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_resp_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 39);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 40);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_meas_id);
-  j.end_obj();
-  if (trp_meas_resp_list_present) {
-    j.start_obj();
-    j.write_int("id", 42);
-    j.write_str("criticality", "reject");
-    j.start_array("value");
-    for (const auto& e1 : trp_meas_resp_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_meas_upd_ies_o[] = {39, 40, 26, 70, 92, 91};
+static const uint8_t  objset_crit_meas_upd_ies_o[] =
+    {crit_e::reject, crit_e::reject, crit_e::ignore, crit_e::reject, crit_e::ignore, crit_e::ignore};
 
 // MeasurementUpdate-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t meas_upd_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {39, 40, 26, 70, 92, 91};
-  return map_enum_number(names, 6, idx, "id");
-}
-bool meas_upd_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {39, 40, 26, 70, 92, 91};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e meas_upd_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return crit_e::reject;
-    case 40:
-      return crit_e::reject;
-    case 26:
-      return crit_e::ignore;
-    case 70:
-      return crit_e::reject;
-    case 92:
-      return crit_e::ignore;
-    case 91:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e meas_upd_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 39:
-      return presence_e::mandatory;
-    case 40:
-      return presence_e::mandatory;
-    case 26:
-      return presence_e::optional;
-    case 70:
-      return presence_e::optional;
-    case 92:
-      return presence_e::optional;
-    case 91:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-
-OCUDUASN_CODE meas_upd_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  nof_ies += srs_cfg_present ? 1 : 0;
-  nof_ies += trp_meas_upd_list_present ? 1 : 0;
-  nof_ies += meas_characteristics_request_ind_present ? 1 : 0;
-  nof_ies += meas_time_occasion_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 39, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, lmf_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  HANDLE_CODE(pack_ie(bref, 40, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_integer(bref, ran_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true);
-  }));
-  if (srs_cfg_present) {
-    HANDLE_CODE(pack_ie(bref, 26, crit_e{crit_e::ignore}, [this, &bref]() { return srs_cfg.pack(bref); }));
-  }
-  if (trp_meas_upd_list_present) {
-    HANDLE_CODE(pack_ie(bref, 70, crit_e{crit_e::reject}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, trp_meas_upd_list, 1, 64, true);
-    }));
-  }
-  if (meas_characteristics_request_ind_present) {
-    HANDLE_CODE(pack_ie(
-        bref, 92, crit_e{crit_e::ignore}, [this, &bref]() { return meas_characteristics_request_ind.pack(bref); }));
-  }
-  if (meas_time_occasion_present) {
-    HANDLE_CODE(pack_ie(bref, 91, crit_e{crit_e::ignore}, [this, &bref]() { return meas_time_occasion.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE meas_upd_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &meas_upd_ies_o::get_crit));
-
-    switch (id) {
-      case 39: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(lmf_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 40: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(ran_meas_id, bref, (uint32_t)1u, (uint32_t)65536u, true, true);
-        }));
-        break;
-      }
-      case 26: {
-        srs_cfg_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_cfg.unpack(bref); }));
-        break;
-      }
-      case 70: {
-        trp_meas_upd_list_present = true;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(trp_meas_upd_list, bref, 1, 64, true); }));
-        break;
-      }
-      case 92: {
-        meas_characteristics_request_ind_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_characteristics_request_ind.unpack(bref); }));
-        break;
-      }
-      case 91: {
-        meas_time_occasion_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return meas_time_occasion.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void meas_upd_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 39);
-  j.write_str("criticality", "reject");
-  j.write_int("value", lmf_meas_id);
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 40);
-  j.write_str("criticality", "reject");
-  j.write_int("value", ran_meas_id);
-  j.end_obj();
-  if (srs_cfg_present) {
-    j.start_obj();
-    j.write_int("id", 26);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    srs_cfg.to_json(j);
-    j.end_obj();
-  }
-  if (trp_meas_upd_list_present) {
-    j.start_obj();
-    j.write_int("id", 70);
-    j.write_str("criticality", "reject");
-    j.start_array("value");
-    for (const auto& e1 : trp_meas_upd_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (meas_characteristics_request_ind_present) {
-    j.start_obj();
-    j.write_int("id", 92);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    meas_characteristics_request_ind.to_json(j);
-    j.end_obj();
-  }
-  if (meas_time_occasion_present) {
-    j.start_obj();
-    j.write_int("id", 91);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", meas_time_occasion.to_string());
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const asn1::table::seq_field ie_table_meas_upd_ies_container_values[] = {
+    {offsetof(meas_upd_ies_container, lmf_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_upd_ies_container, ran_meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     true,
+     true,
+     INT64_C(1),
+     UINT64_C(65536),
+     nullptr},
+    {offsetof(meas_upd_ies_container, srs_cfg),
+     (int32_t)offsetof(meas_upd_ies_container, srs_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_configuration_s::desc},
+    {offsetof(meas_upd_ies_container, trp_meas_upd_list),
+     (int32_t)offsetof(meas_upd_ies_container, trp_meas_upd_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(meas_upd_ies_container::trp_meas_upd_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_meas_upd_item_s::desc},
+    {offsetof(meas_upd_ies_container, meas_characteristics_request_ind),
+     (int32_t)offsetof(meas_upd_ies_container, meas_characteristics_request_ind_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(meas_upd_ies_container::meas_characteristics_request_ind),
+                                asn1::table::struct_json>::value},
+    {offsetof(meas_upd_ies_container, meas_time_occasion),
+     (int32_t)offsetof(meas_upd_ies_container, meas_time_occasion_present),
+     asn1::table::enum_op<decltype(meas_upd_ies_container::meas_time_occasion)>(),
+     decltype(meas_upd_ies_container::meas_time_occasion)::has_ext,
+     false,
+     decltype(meas_upd_ies_container::meas_time_occasion)::nof_types,
+     decltype(meas_upd_ies_container::meas_time_occasion)::nof_exts,
+     nullptr,
+     &meas_time_occasion_opts::desc}};
+static const int32_t ie_table_meas_upd_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(meas_upd_ies_container, srs_cfg_present),
+    (int32_t)offsetof(meas_upd_ies_container, trp_meas_upd_list_present),
+    (int32_t)offsetof(meas_upd_ies_container, meas_characteristics_request_ind_present),
+    (int32_t)offsetof(meas_upd_ies_container, meas_time_occasion_present)};
+const asn1::table::ie_container_desc meas_upd_ies_container::desc = {objset_id_meas_upd_ies_o,
+                                                                     objset_crit_meas_upd_ies_o,
+                                                                     ie_table_meas_upd_ies_container_values,
+                                                                     ie_table_meas_upd_ies_container_presences,
+                                                                     6,
+                                                                     2,
+                                                                     0,
+                                                                     65535,
+                                                                     true,
+                                                                     "value"};
 
 // OTDOA-Information-Type-Item ::= SEQUENCE
-OCUDUASN_CODE otdoa_info_type_item_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, ie_exts_present}));
-
-  HANDLE_CODE(otdoa_info_item.pack(bref));
-  if (ie_exts_present) {
-    HANDLE_CODE(ie_exts.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE otdoa_info_type_item_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &ie_exts_present}));
-
-  HANDLE_CODE(otdoa_info_item.unpack(bref));
-  if (ie_exts_present) {
-    HANDLE_CODE(ie_exts.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void otdoa_info_type_item_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("oTDOA-Information-Item", otdoa_info_item.to_string());
-  if (ie_exts_present) {
-    j.write_fieldname("iE-Extensions");
-    ie_exts.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_otdoa_info_type_item_s_fields[] = {
+    {offsetof(otdoa_info_type_item_s, otdoa_info_item),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(otdoa_info_type_item_s::otdoa_info_item)>(),
+     decltype(otdoa_info_type_item_s::otdoa_info_item)::has_ext,
+     false,
+     decltype(otdoa_info_type_item_s::otdoa_info_item)::nof_types,
+     decltype(otdoa_info_type_item_s::otdoa_info_item)::nof_exts,
+     nullptr,
+     &otdoa_info_item_opts::desc},
+    {offsetof(otdoa_info_type_item_s, ie_exts),
+     (int32_t)offsetof(otdoa_info_type_item_s, ie_exts_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(otdoa_info_type_item_s::ie_exts), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_otdoa_info_type_item_s_names[] = {{"oTDOA-Information-Item", nullptr},
+                                                                                 {"iE-Extensions", nullptr}};
+static const asn1::table::seq_opt    seq_table_otdoa_info_type_item_s_opts[]  = {
+    {1, (int32_t)offsetof(otdoa_info_type_item_s, ie_exts_present)}};
+const asn1::table::seq_desc otdoa_info_type_item_s::desc = {
+    {seq_table_otdoa_info_type_item_s_fields, 2, UINT64_C(0x1), seq_table_otdoa_info_type_item_s_opts, 1},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_otdoa_info_type_item_s_names};
 
 // OTDOA-Information-Type-ItemIEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t otdoa_info_type_item_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {10};
-  return map_enum_number(names, 1, idx, "id");
-}
-bool otdoa_info_type_item_ies_o::is_id_valid(const uint32_t& id)
-{
-  return 10 == id;
-}
-crit_e otdoa_info_type_item_ies_o::get_crit(const uint32_t& id)
-{
-  if (id == 10) {
-    return crit_e::reject;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
-otdoa_info_type_item_ies_o::value_c otdoa_info_type_item_ies_o::get_value(const uint32_t& id)
-{
-  value_c ret{};
-  if (id != 10) {
-    asn1::log_error("The id={} is not recognized", id);
-  }
-  return ret;
-}
-presence_e otdoa_info_type_item_ies_o::get_presence(const uint32_t& id)
-{
-  if (id == 10) {
-    return presence_e::mandatory;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
+static const uint32_t objset_id_otdoa_info_type_item_ies_o[]    = {10};
+static const uint8_t  objset_crit_otdoa_info_type_item_ies_o[]  = {crit_e::reject};
+static const uint8_t  objset_value_otdoa_info_type_item_ies_o[] = {
+    otdoa_info_type_item_ies_o::value_c::types::otdoa_info_type_item};
+static const uint8_t                    objset_presence_otdoa_info_type_item_ies_o[] = {presence_e::mandatory};
+static const asn1::table::objset_column objset_columns_otdoa_info_type_item_ies_o[]  = {
+    {objset_crit_otdoa_info_type_item_ies_o, crit_e::nulltype},
+    {objset_value_otdoa_info_type_item_ies_o, otdoa_info_type_item_ies_o::value_c::types::nulltype},
+    {objset_presence_otdoa_info_type_item_ies_o, presence_e::nulltype}};
+const asn1::table::objset_desc otdoa_info_type_item_ies_o::desc = {objset_id_otdoa_info_type_item_ies_o,
+                                                                   1,
+                                                                   "id",
+                                                                   objset_columns_otdoa_info_type_item_ies_o};
 
 // Value ::= OPEN TYPE
-void otdoa_info_type_item_ies_o::value_c::to_json(json_writer& j) const
-{
-  c.to_json(j);
-}
-OCUDUASN_CODE otdoa_info_type_item_ies_o::value_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  HANDLE_CODE(c.pack(bref));
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE otdoa_info_type_item_ies_o::value_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  HANDLE_CODE(c.unpack(bref));
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_otdoa_info_type_item_ies_o_value_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &otdoa_info_type_item_s::desc}};
+static const asn1::table::field_name choice_table_otdoa_info_type_item_ies_o_value_c_names[] = {
+    {"OTDOA-Information-Type-Item", nullptr}};
+const asn1::table::choice_desc otdoa_info_type_item_ies_o::value_c::desc = {
+    asn1::table::enum_int_type<otdoa_info_type_item_ies_o::value_c::types>(),
+    otdoa_info_type_item_ies_o::value_c::types::nof_types,
+    otdoa_info_type_item_ies_o::value_c::types::nof_exts,
+    otdoa_info_type_item_ies_o::value_c::types::has_ext,
+    true,
+    choice_table_otdoa_info_type_item_ies_o_value_c_alternatives,
+    nullptr,
+    choice_table_otdoa_info_type_item_ies_o_value_c_names,
+    "otdoa_info_type_item_ies_o::value_c",
+    asn1::table::choice_desc::no_member,
+    offsetof(otdoa_info_type_item_ies_o::value_c, c),
+    true,
+    nullptr,
+    true};
 
-const char* otdoa_info_type_item_ies_o::value_c::types_opts::to_string() const
-{
-  static const char* names[] = {"OTDOA-Information-Type-Item"};
-  return convert_enum_idx(names, 1, value, "otdoa_info_type_item_ies_o::value_c::types");
-}
+static const char* enum_names_otdoa_info_type_item_ies_o_value_c_types_values[]    = {"OTDOA-Information-Type-Item"};
+const asn1::table::enum_desc otdoa_info_type_item_ies_o::value_c::types_opts::desc = {
+    enum_names_otdoa_info_type_item_ies_o_value_c_types_values,
+    1,
+    "otdoa_info_type_item_ies_o::value_c::types"};
+
+static const uint32_t objset_id_otdoa_info_fail_ies_o[]   = {0, 1};
+static const uint8_t  objset_crit_otdoa_info_fail_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // OTDOAInformationFailure-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t otdoa_info_fail_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {0, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool otdoa_info_fail_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e otdoa_info_fail_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e otdoa_info_fail_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_otdoa_info_fail_ies_container_values[] = {
+    {offsetof(otdoa_info_fail_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(otdoa_info_fail_ies_container, crit_diagnostics),
+     (int32_t)offsetof(otdoa_info_fail_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_otdoa_info_fail_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(otdoa_info_fail_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc otdoa_info_fail_ies_container::desc = {
+    objset_id_otdoa_info_fail_ies_o,
+    objset_crit_otdoa_info_fail_ies_o,
+    ie_table_otdoa_info_fail_ies_container_values,
+    ie_table_otdoa_info_fail_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE otdoa_info_fail_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE otdoa_info_fail_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &otdoa_info_fail_ies_o::get_crit));
-
-    switch (id) {
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void otdoa_info_fail_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_otdoa_info_request_ies_o[]   = {9};
+static const uint8_t  objset_crit_otdoa_info_request_ies_o[] = {crit_e::reject};
 
 // OTDOAInformationRequest-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t otdoa_info_request_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {9};
-  return map_enum_number(names, 1, idx, "id");
-}
-bool otdoa_info_request_ies_o::is_id_valid(const uint32_t& id)
-{
-  return 9 == id;
-}
-crit_e otdoa_info_request_ies_o::get_crit(const uint32_t& id)
-{
-  if (id == 9) {
-    return crit_e::reject;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
-presence_e otdoa_info_request_ies_o::get_presence(const uint32_t& id)
-{
-  if (id == 9) {
-    return presence_e::mandatory;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
+static const asn1::table::seq_field ie_table_otdoa_info_request_ies_container_values[] = {
+    {offsetof(otdoa_info_request_ies_container, otdoa_info_type_group),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     63,
+     &asn1::table::list_codec<decltype(otdoa_info_request_ies_container::otdoa_info_type_group),
+                              asn1::table::struct_json>::value}};
+static const int32_t ie_table_otdoa_info_request_ies_container_presences[]  = {asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc otdoa_info_request_ies_container::desc = {
+    objset_id_otdoa_info_request_ies_o,
+    objset_crit_otdoa_info_request_ies_o,
+    ie_table_otdoa_info_request_ies_container_values,
+    ie_table_otdoa_info_request_ies_container_presences,
+    1,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE otdoa_info_request_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 9, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, otdoa_info_type_group, 1, 63, true);
-  }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE otdoa_info_request_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &otdoa_info_request_ies_o::get_crit));
-
-    if (id == 9) {
-      {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(otdoa_info_type_group, bref, 1, 63, true); }));
-      }
-    } else {
-      HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void otdoa_info_request_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 9);
-  j.write_str("criticality", "reject");
-  j.start_array("value");
-  for (const auto& e1 : otdoa_info_type_group) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_otdoa_info_resp_ies_o[]   = {8, 1};
+static const uint8_t  objset_crit_otdoa_info_resp_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // OTDOAInformationResponse-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t otdoa_info_resp_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {8, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool otdoa_info_resp_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {8, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e otdoa_info_resp_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 8:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e otdoa_info_resp_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 8:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_otdoa_info_resp_ies_container_values[] = {
+    {offsetof(otdoa_info_resp_ies_container, otdoa_cells),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     3840,
+     &asn1::table::item_list_codec<decltype(otdoa_info_resp_ies_container::otdoa_cells),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &otdoa_cells_item_s_::desc},
+    {offsetof(otdoa_info_resp_ies_container, crit_diagnostics),
+     (int32_t)offsetof(otdoa_info_resp_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_otdoa_info_resp_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(otdoa_info_resp_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc otdoa_info_resp_ies_container::desc = {
+    objset_id_otdoa_info_resp_ies_o,
+    objset_crit_otdoa_info_resp_ies_o,
+    ie_table_otdoa_info_resp_ies_container_values,
+    ie_table_otdoa_info_resp_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE otdoa_info_resp_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(
-      bref, 8, crit_e{crit_e::ignore}, [this, &bref]() { return pack_dyn_seq_of(bref, otdoa_cells, 1, 3840, true); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE otdoa_info_resp_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &otdoa_info_resp_ies_o::get_crit));
-
-    switch (id) {
-      case 8: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(otdoa_cells, bref, 1, 3840, true); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void otdoa_info_resp_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 8);
-  j.write_str("criticality", "ignore");
-  j.start_array("value");
-  for (const auto& e1 : otdoa_cells) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_prs_cfg_fail_ies_o[]   = {0, 1};
+static const uint8_t  objset_crit_prs_cfg_fail_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // PRSConfigurationFailure-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t prs_cfg_fail_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {0, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool prs_cfg_fail_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e prs_cfg_fail_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e prs_cfg_fail_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_prs_cfg_fail_ies_container_values[] = {
+    {offsetof(prs_cfg_fail_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(prs_cfg_fail_ies_container, crit_diagnostics),
+     (int32_t)offsetof(prs_cfg_fail_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_prs_cfg_fail_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(prs_cfg_fail_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc prs_cfg_fail_ies_container::desc = {objset_id_prs_cfg_fail_ies_o,
+                                                                         objset_crit_prs_cfg_fail_ies_o,
+                                                                         ie_table_prs_cfg_fail_ies_container_values,
+                                                                         ie_table_prs_cfg_fail_ies_container_presences,
+                                                                         2,
+                                                                         1,
+                                                                         0,
+                                                                         65535,
+                                                                         true,
+                                                                         "value"};
 
-OCUDUASN_CODE prs_cfg_fail_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE prs_cfg_fail_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &prs_cfg_fail_ies_o::get_crit));
-
-    switch (id) {
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void prs_cfg_fail_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_prs_cfg_request_ies_o[]   = {89, 66};
+static const uint8_t  objset_crit_prs_cfg_request_ies_o[] = {crit_e::reject, crit_e::ignore};
 
 // PRSConfigurationRequest-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t prs_cfg_request_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {89, 66};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool prs_cfg_request_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {89, 66};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e prs_cfg_request_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 89:
-      return crit_e::reject;
-    case 66:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e prs_cfg_request_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 89:
-      return presence_e::mandatory;
-    case 66:
-      return presence_e::mandatory;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_prs_cfg_request_ies_container_values[] = {
+    {offsetof(prs_cfg_request_ies_container, prs_cfg_request_type),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(prs_cfg_request_ies_container::prs_cfg_request_type)>(),
+     decltype(prs_cfg_request_ies_container::prs_cfg_request_type)::has_ext,
+     false,
+     decltype(prs_cfg_request_ies_container::prs_cfg_request_type)::nof_types,
+     decltype(prs_cfg_request_ies_container::prs_cfg_request_type)::nof_exts,
+     nullptr,
+     &prs_cfg_request_type_opts::desc},
+    {offsetof(prs_cfg_request_ies_container, prstrp_list),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     65535,
+     &asn1::table::item_list_codec<decltype(prs_cfg_request_ies_container::prstrp_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &prstrp_item_s::desc}};
+static const int32_t ie_table_prs_cfg_request_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
+                                                                            asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc prs_cfg_request_ies_container::desc = {
+    objset_id_prs_cfg_request_ies_o,
+    objset_crit_prs_cfg_request_ies_o,
+    ie_table_prs_cfg_request_ies_container_values,
+    ie_table_prs_cfg_request_ies_container_presences,
+    2,
+    2,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE prs_cfg_request_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 2;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 89, crit_e{crit_e::reject}, [this, &bref]() { return prs_cfg_request_type.pack(bref); }));
-  HANDLE_CODE(pack_ie(bref, 66, crit_e{crit_e::ignore}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, prstrp_list, 1, 65535, true);
-  }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE prs_cfg_request_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 2;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &prs_cfg_request_ies_o::get_crit));
-
-    switch (id) {
-      case 89: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return prs_cfg_request_type.unpack(bref); }));
-        break;
-      }
-      case 66: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(prstrp_list, bref, 1, 65535, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void prs_cfg_request_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 89);
-  j.write_str("criticality", "reject");
-  j.write_str("value", prs_cfg_request_type.to_string());
-  j.end_obj();
-  j.start_obj();
-  j.write_int("id", 66);
-  j.write_str("criticality", "ignore");
-  j.start_array("value");
-  for (const auto& e1 : prstrp_list) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_prs_cfg_resp_ies_o[]   = {67, 1};
+static const uint8_t  objset_crit_prs_cfg_resp_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // PRSConfigurationResponse-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t prs_cfg_resp_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {67, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool prs_cfg_resp_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {67, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e prs_cfg_resp_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 67:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e prs_cfg_resp_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 67:
-      return presence_e::optional;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_prs_cfg_resp_ies_container_values[] = {
+    {offsetof(prs_cfg_resp_ies_container, prs_tx_trp_list),
+     (int32_t)offsetof(prs_cfg_resp_ies_container, prs_tx_trp_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     65535,
+     &asn1::table::item_list_codec<decltype(prs_cfg_resp_ies_container::prs_tx_trp_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &prs_tx_trp_item_s::desc},
+    {offsetof(prs_cfg_resp_ies_container, crit_diagnostics),
+     (int32_t)offsetof(prs_cfg_resp_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_prs_cfg_resp_ies_container_presences[] = {
+    (int32_t)offsetof(prs_cfg_resp_ies_container, prs_tx_trp_list_present),
+    (int32_t)offsetof(prs_cfg_resp_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc prs_cfg_resp_ies_container::desc = {objset_id_prs_cfg_resp_ies_o,
+                                                                         objset_crit_prs_cfg_resp_ies_o,
+                                                                         ie_table_prs_cfg_resp_ies_container_values,
+                                                                         ie_table_prs_cfg_resp_ies_container_presences,
+                                                                         2,
+                                                                         0,
+                                                                         0,
+                                                                         65535,
+                                                                         true,
+                                                                         "value"};
 
-OCUDUASN_CODE prs_cfg_resp_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += prs_tx_trp_list_present ? 1 : 0;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (prs_tx_trp_list_present) {
-    HANDLE_CODE(pack_ie(bref, 67, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, prs_tx_trp_list, 1, 65535, true);
-    }));
-  }
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE prs_cfg_resp_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &prs_cfg_resp_ies_o::get_crit));
-
-    switch (id) {
-      case 67: {
-        prs_tx_trp_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(prs_tx_trp_list, bref, 1, 65535, true); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void prs_cfg_resp_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (prs_tx_trp_list_present) {
-    j.start_obj();
-    j.write_int("id", 67);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : prs_tx_trp_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_positioning_activation_fail_ies_o[]   = {0, 1};
+static const uint8_t  objset_crit_positioning_activation_fail_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // PositioningActivationFailureIEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_activation_fail_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {0, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool positioning_activation_fail_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e positioning_activation_fail_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e positioning_activation_fail_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_positioning_activation_fail_ies_container_values[] = {
+    {offsetof(positioning_activation_fail_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(positioning_activation_fail_ies_container, crit_diagnostics),
+     (int32_t)offsetof(positioning_activation_fail_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_positioning_activation_fail_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(positioning_activation_fail_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc positioning_activation_fail_ies_container::desc = {
+    objset_id_positioning_activation_fail_ies_o,
+    objset_crit_positioning_activation_fail_ies_o,
+    ie_table_positioning_activation_fail_ies_container_values,
+    ie_table_positioning_activation_fail_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE positioning_activation_fail_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_activation_fail_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_activation_fail_ies_o::get_crit));
-
-    switch (id) {
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void positioning_activation_fail_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_semipersistent_srs_ext_ies_o[]   = {48, 63, 122};
+static const uint8_t  objset_crit_semipersistent_srs_ext_ies_o[] = {crit_e::ignore, crit_e::ignore, crit_e::ignore};
 
 // SemipersistentSRS-ExtIEs ::= OBJECT SET OF NRPPA-PROTOCOL-EXTENSION
-uint32_t semipersistent_srs_ext_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {48, 63, 122};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool semipersistent_srs_ext_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {48, 63, 122};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e semipersistent_srs_ext_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 48:
-      return crit_e::ignore;
-    case 63:
-      return crit_e::ignore;
-    case 122:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e semipersistent_srs_ext_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 48:
-      return presence_e::optional;
-    case 63:
-      return presence_e::optional;
-    case 122:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-
-OCUDUASN_CODE semipersistent_srs_ext_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += srs_spatial_relation_present ? 1 : 0;
-  nof_ies += srs_spatial_relation_per_srs_res_present ? 1 : 0;
-  nof_ies += pos_srs_res_set_aggregation_list_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
-
-  if (srs_spatial_relation_present) {
-    HANDLE_CODE(pack_ie(bref, 48, crit_e{crit_e::ignore}, [this, &bref]() { return srs_spatial_relation.pack(bref); }));
-  }
-  if (srs_spatial_relation_per_srs_res_present) {
-    HANDLE_CODE(pack_ie(
-        bref, 63, crit_e{crit_e::ignore}, [this, &bref]() { return srs_spatial_relation_per_srs_res.pack(bref); }));
-  }
-  if (pos_srs_res_set_aggregation_list_present) {
-    HANDLE_CODE(pack_ie(bref, 122, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, pos_srs_res_set_aggregation_list, 1, 32, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE semipersistent_srs_ext_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &semipersistent_srs_ext_ies_o::get_crit));
-
-    switch (id) {
-      case 48: {
-        srs_spatial_relation_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_spatial_relation.unpack(bref); }));
-        break;
-      }
-      case 63: {
-        srs_spatial_relation_per_srs_res_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_spatial_relation_per_srs_res.unpack(bref); }));
-        break;
-      }
-      case 122: {
-        pos_srs_res_set_aggregation_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(pos_srs_res_set_aggregation_list, bref, 1, 32, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void semipersistent_srs_ext_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (srs_spatial_relation_present) {
-    j.start_obj();
-    j.write_int("id", 48);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("extensionValue");
-    srs_spatial_relation.to_json(j);
-    j.end_obj();
-  }
-  if (srs_spatial_relation_per_srs_res_present) {
-    j.start_obj();
-    j.write_int("id", 63);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("extensionValue");
-    srs_spatial_relation_per_srs_res.to_json(j);
-    j.end_obj();
-  }
-  if (pos_srs_res_set_aggregation_list_present) {
-    j.start_obj();
-    j.write_int("id", 122);
-    j.write_str("criticality", "ignore");
-    j.start_array("extensionValue");
-    for (const auto& e1 : pos_srs_res_set_aggregation_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const asn1::table::seq_field ie_table_semipersistent_srs_ext_ies_container_values[] = {
+    {offsetof(semipersistent_srs_ext_ies_container, srs_spatial_relation),
+     (int32_t)offsetof(semipersistent_srs_ext_ies_container, srs_spatial_relation_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &spatial_relation_info_s::desc},
+    {offsetof(semipersistent_srs_ext_ies_container, srs_spatial_relation_per_srs_res),
+     (int32_t)offsetof(semipersistent_srs_ext_ies_container, srs_spatial_relation_per_srs_res_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &spatial_relation_per_srs_res_s::desc},
+    {offsetof(semipersistent_srs_ext_ies_container, pos_srs_res_set_aggregation_list),
+     (int32_t)offsetof(semipersistent_srs_ext_ies_container, pos_srs_res_set_aggregation_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(semipersistent_srs_ext_ies_container::pos_srs_res_set_aggregation_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &pos_srs_res_set_aggregation_item_s::desc}};
+static const int32_t ie_table_semipersistent_srs_ext_ies_container_presences[] = {
+    (int32_t)offsetof(semipersistent_srs_ext_ies_container, srs_spatial_relation_present),
+    (int32_t)offsetof(semipersistent_srs_ext_ies_container, srs_spatial_relation_per_srs_res_present),
+    (int32_t)offsetof(semipersistent_srs_ext_ies_container, pos_srs_res_set_aggregation_list_present)};
+const asn1::table::ie_container_desc semipersistent_srs_ext_ies_container::desc = {
+    objset_id_semipersistent_srs_ext_ies_o,
+    objset_crit_semipersistent_srs_ext_ies_o,
+    ie_table_semipersistent_srs_ext_ies_container_values,
+    ie_table_semipersistent_srs_ext_ies_container_presences,
+    3,
+    0,
+    1,
+    65535,
+    true,
+    "extensionValue"};
 
 // SemipersistentSRS ::= SEQUENCE
-OCUDUASN_CODE semipersistent_srs_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, ie_exts_present}));
-
-  HANDLE_CODE(pack_integer(bref, srs_res_set_id, (uint8_t)0u, (uint8_t)15u, true, true));
-  if (ie_exts_present) {
-    HANDLE_CODE(ie_exts.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE semipersistent_srs_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &ie_exts_present}));
-
-  HANDLE_CODE(unpack_integer(srs_res_set_id, bref, (uint8_t)0u, (uint8_t)15u, true, true));
-  if (ie_exts_present) {
-    HANDLE_CODE(ie_exts.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void semipersistent_srs_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("sRSResourceSetID", srs_res_set_id);
-  if (ie_exts_present) {
-    j.write_fieldname("iE-Extensions");
-    ie_exts.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_semipersistent_srs_s_fields[] = {
+    {offsetof(semipersistent_srs_s, srs_res_set_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     true,
+     true,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(semipersistent_srs_s, ie_exts),
+     (int32_t)offsetof(semipersistent_srs_s, ie_exts_present),
+     asn1::table::field_op::ie_container,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &semipersistent_srs_ext_ies_container::desc}};
+static const asn1::table::field_name seq_table_semipersistent_srs_s_names[] = {{"sRSResourceSetID", nullptr},
+                                                                               {"iE-Extensions", nullptr}};
+static const asn1::table::seq_opt    seq_table_semipersistent_srs_s_opts[]  = {
+    {1, (int32_t)offsetof(semipersistent_srs_s, ie_exts_present)}};
+const asn1::table::seq_desc semipersistent_srs_s::desc = {
+    {seq_table_semipersistent_srs_s_fields, 2, UINT64_C(0x1), seq_table_semipersistent_srs_s_opts, 1},
+    true,
+    true,
+    nullptr,
+    0,
+    seq_table_semipersistent_srs_s_names};
 
 // SRSType ::= CHOICE
-void srs_type_c::destroy_()
-{
-  switch (type_) {
-    case types::semipersistent_srs:
-      c.destroy<semipersistent_srs_s>();
-      break;
-    case types::aperiodic_srs:
-      c.destroy<aperiodic_srs_s>();
-      break;
-    case types::choice_ext:
-      c.destroy<protocol_ie_single_container_s<srs_type_ext_ies_o>>();
-      break;
-    default:
-      break;
-  }
-}
-void srs_type_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::semipersistent_srs:
-      c.init<semipersistent_srs_s>();
-      break;
-    case types::aperiodic_srs:
-      c.init<aperiodic_srs_s>();
-      break;
-    case types::choice_ext:
-      c.init<protocol_ie_single_container_s<srs_type_ext_ies_o>>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_type_c");
-  }
-}
-srs_type_c::srs_type_c(const srs_type_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::semipersistent_srs:
-      c.init(other.c.get<semipersistent_srs_s>());
-      break;
-    case types::aperiodic_srs:
-      c.init(other.c.get<aperiodic_srs_s>());
-      break;
-    case types::choice_ext:
-      c.init(other.c.get<protocol_ie_single_container_s<srs_type_ext_ies_o>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_type_c");
-  }
-}
-srs_type_c& srs_type_c::operator=(const srs_type_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::semipersistent_srs:
-      c.set(other.c.get<semipersistent_srs_s>());
-      break;
-    case types::aperiodic_srs:
-      c.set(other.c.get<aperiodic_srs_s>());
-      break;
-    case types::choice_ext:
-      c.set(other.c.get<protocol_ie_single_container_s<srs_type_ext_ies_o>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_type_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_srs_type_c_alternatives[] = {
+    &asn1::table::alternative_ops<semipersistent_srs_s, false>::value,
+    &asn1::table::alternative_ops<aperiodic_srs_s, false>::value,
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<srs_type_ext_ies_o>, false>::value};
+const asn1::table::choice_storage_desc srs_type_c::storage_desc = {choice_storage_srs_type_c_alternatives,
+                                                                   3,
+                                                                   "srs_type_c"};
 
-  return *this;
-}
 semipersistent_srs_s& srs_type_c::set_semipersistent_srs()
 {
   set(types::semipersistent_srs);
@@ -4291,1733 +1702,706 @@ protocol_ie_single_container_s<srs_type_ext_ies_o>& srs_type_c::set_choice_ext()
   set(types::choice_ext);
   return c.get<protocol_ie_single_container_s<srs_type_ext_ies_o>>();
 }
-void srs_type_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::semipersistent_srs:
-      j.write_fieldname("semipersistentSRS");
-      c.get<semipersistent_srs_s>().to_json(j);
-      break;
-    case types::aperiodic_srs:
-      j.write_fieldname("aperiodicSRS");
-      c.get<aperiodic_srs_s>().to_json(j);
-      break;
-    case types::choice_ext:
-      j.write_fieldname("choice-Extension");
-      c.get<protocol_ie_single_container_s<srs_type_ext_ies_o>>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_type_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_type_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::semipersistent_srs:
-      HANDLE_CODE(c.get<semipersistent_srs_s>().pack(bref));
-      break;
-    case types::aperiodic_srs:
-      HANDLE_CODE(c.get<aperiodic_srs_s>().pack(bref));
-      break;
-    case types::choice_ext:
-      HANDLE_CODE(c.get<protocol_ie_single_container_s<srs_type_ext_ies_o>>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_type_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_type_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::semipersistent_srs:
-      HANDLE_CODE(c.get<semipersistent_srs_s>().unpack(bref));
-      break;
-    case types::aperiodic_srs:
-      HANDLE_CODE(c.get<aperiodic_srs_s>().unpack(bref));
-      break;
-    case types::choice_ext:
-      HANDLE_CODE(c.get<protocol_ie_single_container_s<srs_type_ext_ies_o>>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_type_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_srs_type_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &semipersistent_srs_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &aperiodic_srs_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<protocol_ie_single_container_s<srs_type_ext_ies_o>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_srs_type_c_names[] = {{"semipersistentSRS", nullptr},
+                                                                        {"aperiodicSRS", nullptr},
+                                                                        {"choice-Extension", nullptr}};
+const asn1::table::choice_desc       srs_type_c::desc                = {asn1::table::enum_int_type<srs_type_c::types>(),
+                                                                        srs_type_c::types::nof_types,
+                                                                        srs_type_c::types::nof_exts,
+                                                                        srs_type_c::types::has_ext,
+                                                                        true,
+                                                                        choice_table_srs_type_c_alternatives,
+                                                                        nullptr,
+                                                                        choice_table_srs_type_c_names,
+                                                                        "srs_type_c",
+                                                                        offsetof(srs_type_c, c.type),
+                                                                        offsetof(srs_type_c, c.value),
+                                                                        false,
+                                                                        &srs_type_c::storage_desc};
 
-const char* srs_type_c::types_opts::to_string() const
-{
-  static const char* names[] = {"semipersistentSRS", "aperiodicSRS", "choice-Extension"};
-  return convert_enum_idx(names, 3, value, "srs_type_c::types");
-}
+static const char* enum_names_srs_type_c_types_values[]   = {"semipersistentSRS", "aperiodicSRS", "choice-Extension"};
+const asn1::table::enum_desc srs_type_c::types_opts::desc = {enum_names_srs_type_c_types_values,
+                                                             3,
+                                                             "srs_type_c::types"};
+
+static const uint32_t objset_id_positioning_activation_request_ies_o[]   = {44, 45};
+static const uint8_t  objset_crit_positioning_activation_request_ies_o[] = {crit_e::reject, crit_e::ignore};
 
 // PositioningActivationRequestIEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_activation_request_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {44, 45};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool positioning_activation_request_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {44, 45};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e positioning_activation_request_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 44:
-      return crit_e::reject;
-    case 45:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e positioning_activation_request_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 44:
-      return presence_e::mandatory;
-    case 45:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_positioning_activation_request_ies_container_values[] = {
+    {offsetof(positioning_activation_request_ies_container, srs_type),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_type_c::desc},
+    {offsetof(positioning_activation_request_ies_container, activation_time),
+     (int32_t)offsetof(positioning_activation_request_ies_container, activation_time_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(positioning_activation_request_ies_container::activation_time),
+                                asn1::table::struct_json>::value}};
+static const int32_t ie_table_positioning_activation_request_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(positioning_activation_request_ies_container, activation_time_present)};
+const asn1::table::ie_container_desc positioning_activation_request_ies_container::desc = {
+    objset_id_positioning_activation_request_ies_o,
+    objset_crit_positioning_activation_request_ies_o,
+    ie_table_positioning_activation_request_ies_container_values,
+    ie_table_positioning_activation_request_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE positioning_activation_request_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += activation_time_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 44, crit_e{crit_e::reject}, [this, &bref]() { return srs_type.pack(bref); }));
-  if (activation_time_present) {
-    HANDLE_CODE(pack_ie(bref, 45, crit_e{crit_e::ignore}, [this, &bref]() { return activation_time.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_activation_request_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_activation_request_ies_o::get_crit));
-
-    switch (id) {
-      case 44: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_type.unpack(bref); }));
-        break;
-      }
-      case 45: {
-        activation_time_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return activation_time.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void positioning_activation_request_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 44);
-  j.write_str("criticality", "reject");
-  j.write_fieldname("value");
-  srs_type.to_json(j);
-  j.end_obj();
-  if (activation_time_present) {
-    j.start_obj();
-    j.write_int("id", 45);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    activation_time.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_positioning_activation_resp_ies_o[]  = {1, 49, 50};
+static const uint8_t objset_crit_positioning_activation_resp_ies_o[] = {crit_e::ignore, crit_e::ignore, crit_e::ignore};
 
 // PositioningActivationResponseIEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_activation_resp_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {1, 49, 50};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool positioning_activation_resp_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {1, 49, 50};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e positioning_activation_resp_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 1:
-      return crit_e::ignore;
-    case 49:
-      return crit_e::ignore;
-    case 50:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e positioning_activation_resp_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 1:
-      return presence_e::optional;
-    case 49:
-      return presence_e::optional;
-    case 50:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_positioning_activation_resp_ies_container_values[] = {
+    {offsetof(positioning_activation_resp_ies_container, crit_diagnostics),
+     (int32_t)offsetof(positioning_activation_resp_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc},
+    {offsetof(positioning_activation_resp_ies_container, sys_frame_num),
+     (int32_t)offsetof(positioning_activation_resp_ies_container, sys_frame_num_present),
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(1023),
+     nullptr},
+    {offsetof(positioning_activation_resp_ies_container, slot_num),
+     (int32_t)offsetof(positioning_activation_resp_ies_container, slot_num_present),
+     asn1::table::field_op::int_u8,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(79),
+     nullptr}};
+static const int32_t ie_table_positioning_activation_resp_ies_container_presences[] = {
+    (int32_t)offsetof(positioning_activation_resp_ies_container, crit_diagnostics_present),
+    (int32_t)offsetof(positioning_activation_resp_ies_container, sys_frame_num_present),
+    (int32_t)offsetof(positioning_activation_resp_ies_container, slot_num_present)};
+const asn1::table::ie_container_desc positioning_activation_resp_ies_container::desc = {
+    objset_id_positioning_activation_resp_ies_o,
+    objset_crit_positioning_activation_resp_ies_o,
+    ie_table_positioning_activation_resp_ies_container_values,
+    ie_table_positioning_activation_resp_ies_container_presences,
+    3,
+    0,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE positioning_activation_resp_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  nof_ies += sys_frame_num_present ? 1 : 0;
-  nof_ies += slot_num_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-  if (sys_frame_num_present) {
-    HANDLE_CODE(pack_ie(bref, 49, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_integer(bref, sys_frame_num, (uint16_t)0u, (uint16_t)1023u, false, true);
-    }));
-  }
-  if (slot_num_present) {
-    HANDLE_CODE(pack_ie(bref, 50, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_integer(bref, slot_num, (uint8_t)0u, (uint8_t)79u, false, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_activation_resp_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_activation_resp_ies_o::get_crit));
-
-    switch (id) {
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      case 49: {
-        sys_frame_num_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_integer(sys_frame_num, bref, (uint16_t)0u, (uint16_t)1023u, false, true);
-        }));
-        break;
-      }
-      case 50: {
-        slot_num_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_integer(slot_num, bref, (uint8_t)0u, (uint8_t)79u, false, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void positioning_activation_resp_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  if (sys_frame_num_present) {
-    j.start_obj();
-    j.write_int("id", 49);
-    j.write_str("criticality", "ignore");
-    j.write_int("value", sys_frame_num);
-    j.end_obj();
-  }
-  if (slot_num_present) {
-    j.start_obj();
-    j.write_int("id", 50);
-    j.write_str("criticality", "ignore");
-    j.write_int("value", slot_num);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_positioning_deactivation_ies_o[]   = {53};
+static const uint8_t  objset_crit_positioning_deactivation_ies_o[] = {crit_e::ignore};
 
 // PositioningDeactivationIEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_deactivation_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {53};
-  return map_enum_number(names, 1, idx, "id");
-}
-bool positioning_deactivation_ies_o::is_id_valid(const uint32_t& id)
-{
-  return 53 == id;
-}
-crit_e positioning_deactivation_ies_o::get_crit(const uint32_t& id)
-{
-  if (id == 53) {
-    return crit_e::ignore;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
-presence_e positioning_deactivation_ies_o::get_presence(const uint32_t& id)
-{
-  if (id == 53) {
-    return presence_e::mandatory;
-  }
-  asn1::log_error("The id={} is not recognized", id);
-  return {};
-}
+static const asn1::table::seq_field ie_table_positioning_deactivation_ies_container_values[] = {
+    {offsetof(positioning_deactivation_ies_container, abort_tx),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &abort_tx_c::desc}};
+static const int32_t ie_table_positioning_deactivation_ies_container_presences[]  = {asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc positioning_deactivation_ies_container::desc = {
+    objset_id_positioning_deactivation_ies_o,
+    objset_crit_positioning_deactivation_ies_o,
+    ie_table_positioning_deactivation_ies_container_values,
+    ie_table_positioning_deactivation_ies_container_presences,
+    1,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE positioning_deactivation_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 53, crit_e{crit_e::ignore}, [this, &bref]() { return abort_tx.pack(bref); }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_deactivation_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_deactivation_ies_o::get_crit));
-
-    if (id == 53) {
-      {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return abort_tx.unpack(bref); }));
-      }
-    } else {
-      HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void positioning_deactivation_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 53);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  abort_tx.to_json(j);
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_positioning_info_fail_ies_o[]   = {0, 1};
+static const uint8_t  objset_crit_positioning_info_fail_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // PositioningInformationFailure-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_info_fail_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {0, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool positioning_info_fail_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e positioning_info_fail_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e positioning_info_fail_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_positioning_info_fail_ies_container_values[] = {
+    {offsetof(positioning_info_fail_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(positioning_info_fail_ies_container, crit_diagnostics),
+     (int32_t)offsetof(positioning_info_fail_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_positioning_info_fail_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(positioning_info_fail_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc positioning_info_fail_ies_container::desc = {
+    objset_id_positioning_info_fail_ies_o,
+    objset_crit_positioning_info_fail_ies_o,
+    ie_table_positioning_info_fail_ies_container_values,
+    ie_table_positioning_info_fail_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE positioning_info_fail_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_info_fail_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_info_fail_ies_o::get_crit));
-
-    switch (id) {
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void positioning_info_fail_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_positioning_info_request_ies_o[] = {12, 73, 90, 99, 124, 136, 159};
+static const uint8_t  objset_crit_positioning_info_request_ies_o[] =
+    {crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::ignore};
 
 // PositioningInformationRequest-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_info_request_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {12, 73, 90, 99, 124, 136, 159};
-  return map_enum_number(names, 7, idx, "id");
-}
-bool positioning_info_request_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {12, 73, 90, 99, 124, 136, 159};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e positioning_info_request_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 12:
-      return crit_e::ignore;
-    case 73:
-      return crit_e::ignore;
-    case 90:
-      return crit_e::ignore;
-    case 99:
-      return crit_e::reject;
-    case 124:
-      return crit_e::ignore;
-    case 136:
-      return crit_e::ignore;
-    case 159:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e positioning_info_request_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 12:
-      return presence_e::optional;
-    case 73:
-      return presence_e::optional;
-    case 90:
-      return presence_e::optional;
-    case 99:
-      return presence_e::conditional;
-    case 124:
-      return presence_e::optional;
-    case 136:
-      return presence_e::optional;
-    case 159:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_positioning_info_request_ies_container_values[] = {
+    {offsetof(positioning_info_request_ies_container, requested_srs_tx_characteristics),
+     (int32_t)offsetof(positioning_info_request_ies_container, requested_srs_tx_characteristics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &requested_srs_tx_characteristics_s::desc},
+    {offsetof(positioning_info_request_ies_container, ue_report_info),
+     (int32_t)offsetof(positioning_info_request_ies_container, ue_report_info_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &ue_report_info_s::desc},
+    {offsetof(positioning_info_request_ies_container, ue_teg_info_request),
+     (int32_t)offsetof(positioning_info_request_ies_container, ue_teg_info_request_present),
+     asn1::table::enum_op<decltype(positioning_info_request_ies_container::ue_teg_info_request)>(),
+     decltype(positioning_info_request_ies_container::ue_teg_info_request)::has_ext,
+     false,
+     decltype(positioning_info_request_ies_container::ue_teg_info_request)::nof_types,
+     decltype(positioning_info_request_ies_container::ue_teg_info_request)::nof_exts,
+     nullptr,
+     &ue_teg_info_request_opts::desc},
+    {offsetof(positioning_info_request_ies_container, ue_teg_report_periodicity),
+     (int32_t)offsetof(positioning_info_request_ies_container, ue_teg_report_periodicity_present),
+     asn1::table::enum_op<decltype(positioning_info_request_ies_container::ue_teg_report_periodicity)>(),
+     decltype(positioning_info_request_ies_container::ue_teg_report_periodicity)::has_ext,
+     false,
+     decltype(positioning_info_request_ies_container::ue_teg_report_periodicity)::nof_types,
+     decltype(positioning_info_request_ies_container::ue_teg_report_periodicity)::nof_exts,
+     nullptr,
+     &ue_teg_report_periodicity_opts::desc},
+    {offsetof(positioning_info_request_ies_container, time_win_info_srs_list),
+     (int32_t)offsetof(positioning_info_request_ies_container, time_win_info_srs_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(positioning_info_request_ies_container::time_win_info_srs_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &time_win_info_srs_item_s::desc},
+    {offsetof(positioning_info_request_ies_container, requested_srs_precfg_characteristics_list),
+     (int32_t)offsetof(positioning_info_request_ies_container, requested_srs_precfg_characteristics_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16,
+     &asn1::table::item_list_codec<
+         decltype(positioning_info_request_ies_container::requested_srs_precfg_characteristics_list),
+         asn1::table::sequence_item_ops,
+         false,
+         true>::value,
+     &requested_srs_precfg_characteristics_item_s::desc},
+    {offsetof(positioning_info_request_ies_container, remote_ue_ind_request),
+     (int32_t)offsetof(positioning_info_request_ies_container, remote_ue_ind_request_present),
+     asn1::table::enum_op<decltype(positioning_info_request_ies_container::remote_ue_ind_request)>(),
+     decltype(positioning_info_request_ies_container::remote_ue_ind_request)::has_ext,
+     false,
+     decltype(positioning_info_request_ies_container::remote_ue_ind_request)::nof_types,
+     decltype(positioning_info_request_ies_container::remote_ue_ind_request)::nof_exts,
+     nullptr,
+     &remote_ue_ind_request_opts::desc}};
+static const int32_t ie_table_positioning_info_request_ies_container_presences[] = {
+    (int32_t)offsetof(positioning_info_request_ies_container, requested_srs_tx_characteristics_present),
+    (int32_t)offsetof(positioning_info_request_ies_container, ue_report_info_present),
+    (int32_t)offsetof(positioning_info_request_ies_container, ue_teg_info_request_present),
+    (int32_t)offsetof(positioning_info_request_ies_container, ue_teg_report_periodicity_present),
+    (int32_t)offsetof(positioning_info_request_ies_container, time_win_info_srs_list_present),
+    (int32_t)offsetof(positioning_info_request_ies_container, requested_srs_precfg_characteristics_list_present),
+    (int32_t)offsetof(positioning_info_request_ies_container, remote_ue_ind_request_present)};
+const asn1::table::ie_container_desc positioning_info_request_ies_container::desc = {
+    objset_id_positioning_info_request_ies_o,
+    objset_crit_positioning_info_request_ies_o,
+    ie_table_positioning_info_request_ies_container_values,
+    ie_table_positioning_info_request_ies_container_presences,
+    7,
+    0,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE positioning_info_request_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += requested_srs_tx_characteristics_present ? 1 : 0;
-  nof_ies += ue_report_info_present ? 1 : 0;
-  nof_ies += ue_teg_info_request_present ? 1 : 0;
-  nof_ies += ue_teg_report_periodicity_present ? 1 : 0;
-  nof_ies += time_win_info_srs_list_present ? 1 : 0;
-  nof_ies += requested_srs_precfg_characteristics_list_present ? 1 : 0;
-  nof_ies += remote_ue_ind_request_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (requested_srs_tx_characteristics_present) {
-    HANDLE_CODE(pack_ie(
-        bref, 12, crit_e{crit_e::ignore}, [this, &bref]() { return requested_srs_tx_characteristics.pack(bref); }));
-  }
-  if (ue_report_info_present) {
-    HANDLE_CODE(pack_ie(bref, 73, crit_e{crit_e::ignore}, [this, &bref]() { return ue_report_info.pack(bref); }));
-  }
-  if (ue_teg_info_request_present) {
-    HANDLE_CODE(pack_ie(bref, 90, crit_e{crit_e::ignore}, [this, &bref]() { return ue_teg_info_request.pack(bref); }));
-  }
-  if (ue_teg_report_periodicity_present) {
-    HANDLE_CODE(
-        pack_ie(bref, 99, crit_e{crit_e::reject}, [this, &bref]() { return ue_teg_report_periodicity.pack(bref); }));
-  }
-  if (time_win_info_srs_list_present) {
-    HANDLE_CODE(pack_ie(bref, 124, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, time_win_info_srs_list, 1, 16, true);
-    }));
-  }
-  if (requested_srs_precfg_characteristics_list_present) {
-    HANDLE_CODE(pack_ie(bref, 136, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, requested_srs_precfg_characteristics_list, 1, 16, true);
-    }));
-  }
-  if (remote_ue_ind_request_present) {
-    HANDLE_CODE(
-        pack_ie(bref, 159, crit_e{crit_e::ignore}, [this, &bref]() { return remote_ue_ind_request.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_info_request_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_info_request_ies_o::get_crit));
-
-    switch (id) {
-      case 12: {
-        requested_srs_tx_characteristics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return requested_srs_tx_characteristics.unpack(bref); }));
-        break;
-      }
-      case 73: {
-        ue_report_info_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return ue_report_info.unpack(bref); }));
-        break;
-      }
-      case 90: {
-        ue_teg_info_request_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return ue_teg_info_request.unpack(bref); }));
-        break;
-      }
-      case 99: {
-        ue_teg_report_periodicity_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return ue_teg_report_periodicity.unpack(bref); }));
-        break;
-      }
-      case 124: {
-        time_win_info_srs_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(time_win_info_srs_list, bref, 1, 16, true); }));
-        break;
-      }
-      case 136: {
-        requested_srs_precfg_characteristics_list_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() {
-          return unpack_dyn_seq_of(requested_srs_precfg_characteristics_list, bref, 1, 16, true);
-        }));
-        break;
-      }
-      case 159: {
-        remote_ue_ind_request_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return remote_ue_ind_request.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void positioning_info_request_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (requested_srs_tx_characteristics_present) {
-    j.start_obj();
-    j.write_int("id", 12);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    requested_srs_tx_characteristics.to_json(j);
-    j.end_obj();
-  }
-  if (ue_report_info_present) {
-    j.start_obj();
-    j.write_int("id", 73);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    ue_report_info.to_json(j);
-    j.end_obj();
-  }
-  if (ue_teg_info_request_present) {
-    j.start_obj();
-    j.write_int("id", 90);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", ue_teg_info_request.to_string());
-    j.end_obj();
-  }
-  if (ue_teg_report_periodicity_present) {
-    j.start_obj();
-    j.write_int("id", 99);
-    j.write_str("criticality", "reject");
-    j.write_str("value", ue_teg_report_periodicity.to_string());
-    j.end_obj();
-  }
-  if (time_win_info_srs_list_present) {
-    j.start_obj();
-    j.write_int("id", 124);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : time_win_info_srs_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (requested_srs_precfg_characteristics_list_present) {
-    j.start_obj();
-    j.write_int("id", 136);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : requested_srs_precfg_characteristics_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (remote_ue_ind_request_present) {
-    j.start_obj();
-    j.write_int("id", 159);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", "true");
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_positioning_info_resp_ies_o[]   = {26, 54, 1, 81, 113, 128, 137, 160};
+static const uint8_t  objset_crit_positioning_info_resp_ies_o[] = {crit_e::ignore,
+                                                                   crit_e::ignore,
+                                                                   crit_e::ignore,
+                                                                   crit_e::ignore,
+                                                                   crit_e::ignore,
+                                                                   crit_e::ignore,
+                                                                   crit_e::ignore,
+                                                                   crit_e::ignore};
 
 // PositioningInformationResponse-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_info_resp_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {26, 54, 1, 81, 113, 128, 137, 160};
-  return map_enum_number(names, 8, idx, "id");
-}
-bool positioning_info_resp_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {26, 54, 1, 81, 113, 128, 137, 160};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e positioning_info_resp_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 26:
-      return crit_e::ignore;
-    case 54:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    case 81:
-      return crit_e::ignore;
-    case 113:
-      return crit_e::ignore;
-    case 128:
-      return crit_e::ignore;
-    case 137:
-      return crit_e::ignore;
-    case 160:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e positioning_info_resp_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 26:
-      return presence_e::optional;
-    case 54:
-      return presence_e::optional;
-    case 1:
-      return presence_e::optional;
-    case 81:
-      return presence_e::optional;
-    case 113:
-      return presence_e::optional;
-    case 128:
-      return presence_e::optional;
-    case 137:
-      return presence_e::optional;
-    case 160:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_positioning_info_resp_ies_container_values[] = {
+    {offsetof(positioning_info_resp_ies_container, srs_cfg),
+     (int32_t)offsetof(positioning_info_resp_ies_container, srs_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_configuration_s::desc},
+    {offsetof(positioning_info_resp_ies_container, sfn_initisation_time),
+     (int32_t)offsetof(positioning_info_resp_ies_container, sfn_initisation_time_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(positioning_info_resp_ies_container::sfn_initisation_time),
+                                asn1::table::struct_json>::value},
+    {offsetof(positioning_info_resp_ies_container, crit_diagnostics),
+     (int32_t)offsetof(positioning_info_resp_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc},
+    {offsetof(positioning_info_resp_ies_container, ue_tx_teg_assoc_list),
+     (int32_t)offsetof(positioning_info_resp_ies_container, ue_tx_teg_assoc_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     256,
+     &asn1::table::item_list_codec<decltype(positioning_info_resp_ies_container::ue_tx_teg_assoc_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ue_tx_teg_assoc_item_s::desc},
+    {offsetof(positioning_info_resp_ies_container, new_nr_cgi),
+     (int32_t)offsetof(positioning_info_resp_ies_container, new_nr_cgi_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cgi_nr_s::desc},
+    {offsetof(positioning_info_resp_ies_container, pos_validity_area_cell_list),
+     (int32_t)offsetof(positioning_info_resp_ies_container, pos_validity_area_cell_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(positioning_info_resp_ies_container::pos_validity_area_cell_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &pos_validity_area_cell_item_s::desc},
+    {offsetof(positioning_info_resp_ies_container, srs_precfg_list),
+     (int32_t)offsetof(positioning_info_resp_ies_container, srs_precfg_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(positioning_info_resp_ies_container::srs_precfg_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &srs_precfg_item_s::desc},
+    {offsetof(positioning_info_resp_ies_container, remote_ue_ind),
+     (int32_t)offsetof(positioning_info_resp_ies_container, remote_ue_ind_present),
+     asn1::table::enum_op<decltype(positioning_info_resp_ies_container::remote_ue_ind)>(),
+     decltype(positioning_info_resp_ies_container::remote_ue_ind)::has_ext,
+     false,
+     decltype(positioning_info_resp_ies_container::remote_ue_ind)::nof_types,
+     decltype(positioning_info_resp_ies_container::remote_ue_ind)::nof_exts,
+     nullptr,
+     &remote_ue_ind_opts::desc}};
+static const int32_t ie_table_positioning_info_resp_ies_container_presences[] = {
+    (int32_t)offsetof(positioning_info_resp_ies_container, srs_cfg_present),
+    (int32_t)offsetof(positioning_info_resp_ies_container, sfn_initisation_time_present),
+    (int32_t)offsetof(positioning_info_resp_ies_container, crit_diagnostics_present),
+    (int32_t)offsetof(positioning_info_resp_ies_container, ue_tx_teg_assoc_list_present),
+    (int32_t)offsetof(positioning_info_resp_ies_container, new_nr_cgi_present),
+    (int32_t)offsetof(positioning_info_resp_ies_container, pos_validity_area_cell_list_present),
+    (int32_t)offsetof(positioning_info_resp_ies_container, srs_precfg_list_present),
+    (int32_t)offsetof(positioning_info_resp_ies_container, remote_ue_ind_present)};
+const asn1::table::ie_container_desc positioning_info_resp_ies_container::desc = {
+    objset_id_positioning_info_resp_ies_o,
+    objset_crit_positioning_info_resp_ies_o,
+    ie_table_positioning_info_resp_ies_container_values,
+    ie_table_positioning_info_resp_ies_container_presences,
+    8,
+    0,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE positioning_info_resp_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += srs_cfg_present ? 1 : 0;
-  nof_ies += sfn_initisation_time_present ? 1 : 0;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  nof_ies += ue_tx_teg_assoc_list_present ? 1 : 0;
-  nof_ies += new_nr_cgi_present ? 1 : 0;
-  nof_ies += pos_validity_area_cell_list_present ? 1 : 0;
-  nof_ies += srs_precfg_list_present ? 1 : 0;
-  nof_ies += remote_ue_ind_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (srs_cfg_present) {
-    HANDLE_CODE(pack_ie(bref, 26, crit_e{crit_e::ignore}, [this, &bref]() { return srs_cfg.pack(bref); }));
-  }
-  if (sfn_initisation_time_present) {
-    HANDLE_CODE(pack_ie(bref, 54, crit_e{crit_e::ignore}, [this, &bref]() { return sfn_initisation_time.pack(bref); }));
-  }
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-  if (ue_tx_teg_assoc_list_present) {
-    HANDLE_CODE(pack_ie(bref, 81, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, ue_tx_teg_assoc_list, 1, 256, true);
-    }));
-  }
-  if (new_nr_cgi_present) {
-    HANDLE_CODE(pack_ie(bref, 113, crit_e{crit_e::ignore}, [this, &bref]() { return new_nr_cgi.pack(bref); }));
-  }
-  if (pos_validity_area_cell_list_present) {
-    HANDLE_CODE(pack_ie(bref, 128, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, pos_validity_area_cell_list, 1, 32, true);
-    }));
-  }
-  if (srs_precfg_list_present) {
-    HANDLE_CODE(pack_ie(bref, 137, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, srs_precfg_list, 1, 16, true);
-    }));
-  }
-  if (remote_ue_ind_present) {
-    HANDLE_CODE(pack_ie(bref, 160, crit_e{crit_e::ignore}, [this, &bref]() { return remote_ue_ind.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_info_resp_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_info_resp_ies_o::get_crit));
-
-    switch (id) {
-      case 26: {
-        srs_cfg_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_cfg.unpack(bref); }));
-        break;
-      }
-      case 54: {
-        sfn_initisation_time_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return sfn_initisation_time.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      case 81: {
-        ue_tx_teg_assoc_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(ue_tx_teg_assoc_list, bref, 1, 256, true); }));
-        break;
-      }
-      case 113: {
-        new_nr_cgi_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return new_nr_cgi.unpack(bref); }));
-        break;
-      }
-      case 128: {
-        pos_validity_area_cell_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(pos_validity_area_cell_list, bref, 1, 32, true); }));
-        break;
-      }
-      case 137: {
-        srs_precfg_list_present = true;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(srs_precfg_list, bref, 1, 16, true); }));
-        break;
-      }
-      case 160: {
-        remote_ue_ind_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return remote_ue_ind.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void positioning_info_resp_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (srs_cfg_present) {
-    j.start_obj();
-    j.write_int("id", 26);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    srs_cfg.to_json(j);
-    j.end_obj();
-  }
-  if (sfn_initisation_time_present) {
-    j.start_obj();
-    j.write_int("id", 54);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    sfn_initisation_time.to_json(j);
-    j.end_obj();
-  }
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  if (ue_tx_teg_assoc_list_present) {
-    j.start_obj();
-    j.write_int("id", 81);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : ue_tx_teg_assoc_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (new_nr_cgi_present) {
-    j.start_obj();
-    j.write_int("id", 113);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    new_nr_cgi.to_json(j);
-    j.end_obj();
-  }
-  if (pos_validity_area_cell_list_present) {
-    j.start_obj();
-    j.write_int("id", 128);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : pos_validity_area_cell_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (srs_precfg_list_present) {
-    j.start_obj();
-    j.write_int("id", 137);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : srs_precfg_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (remote_ue_ind_present) {
-    j.start_obj();
-    j.write_int("id", 160);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", "l2-u2n-remote-ue");
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_positioning_info_upd_ies_o[] = {26, 54, 81, 106, 134, 161};
+static const uint8_t  objset_crit_positioning_info_upd_ies_o[] =
+    {crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore};
 
 // PositioningInformationUpdate-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t positioning_info_upd_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {26, 54, 81, 106, 134, 161};
-  return map_enum_number(names, 6, idx, "id");
-}
-bool positioning_info_upd_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {26, 54, 81, 106, 134, 161};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e positioning_info_upd_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 26:
-      return crit_e::ignore;
-    case 54:
-      return crit_e::ignore;
-    case 81:
-      return crit_e::ignore;
-    case 106:
-      return crit_e::ignore;
-    case 134:
-      return crit_e::ignore;
-    case 161:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e positioning_info_upd_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 26:
-      return presence_e::optional;
-    case 54:
-      return presence_e::optional;
-    case 81:
-      return presence_e::optional;
-    case 106:
-      return presence_e::optional;
-    case 134:
-      return presence_e::optional;
-    case 161:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-
-OCUDUASN_CODE positioning_info_upd_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  nof_ies += srs_cfg_present ? 1 : 0;
-  nof_ies += sfn_initisation_time_present ? 1 : 0;
-  nof_ies += ue_tx_teg_assoc_list_present ? 1 : 0;
-  nof_ies += srs_tx_status_present ? 1 : 0;
-  nof_ies += new_cell_id_present ? 1 : 0;
-  nof_ies += remote_ue_status_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (srs_cfg_present) {
-    HANDLE_CODE(pack_ie(bref, 26, crit_e{crit_e::ignore}, [this, &bref]() { return srs_cfg.pack(bref); }));
-  }
-  if (sfn_initisation_time_present) {
-    HANDLE_CODE(pack_ie(bref, 54, crit_e{crit_e::ignore}, [this, &bref]() { return sfn_initisation_time.pack(bref); }));
-  }
-  if (ue_tx_teg_assoc_list_present) {
-    HANDLE_CODE(pack_ie(bref, 81, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, ue_tx_teg_assoc_list, 1, 256, true);
-    }));
-  }
-  if (srs_tx_status_present) {
-    HANDLE_CODE(pack_ie(bref, 106, crit_e{crit_e::ignore}, [this, &bref]() { return srs_tx_status.pack(bref); }));
-  }
-  if (new_cell_id_present) {
-    HANDLE_CODE(pack_ie(bref, 134, crit_e{crit_e::ignore}, [this, &bref]() { return new_cell_id.pack(bref); }));
-  }
-  if (remote_ue_status_present) {
-    HANDLE_CODE(pack_ie(bref, 161, crit_e{crit_e::ignore}, [this, &bref]() { return remote_ue_status.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE positioning_info_upd_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &positioning_info_upd_ies_o::get_crit));
-
-    switch (id) {
-      case 26: {
-        srs_cfg_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_cfg.unpack(bref); }));
-        break;
-      }
-      case 54: {
-        sfn_initisation_time_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return sfn_initisation_time.unpack(bref); }));
-        break;
-      }
-      case 81: {
-        ue_tx_teg_assoc_list_present = true;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(ue_tx_teg_assoc_list, bref, 1, 256, true); }));
-        break;
-      }
-      case 106: {
-        srs_tx_status_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_tx_status.unpack(bref); }));
-        break;
-      }
-      case 134: {
-        new_cell_id_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return new_cell_id.unpack(bref); }));
-        break;
-      }
-      case 161: {
-        remote_ue_status_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return remote_ue_status.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void positioning_info_upd_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (srs_cfg_present) {
-    j.start_obj();
-    j.write_int("id", 26);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    srs_cfg.to_json(j);
-    j.end_obj();
-  }
-  if (sfn_initisation_time_present) {
-    j.start_obj();
-    j.write_int("id", 54);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    sfn_initisation_time.to_json(j);
-    j.end_obj();
-  }
-  if (ue_tx_teg_assoc_list_present) {
-    j.start_obj();
-    j.write_int("id", 81);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : ue_tx_teg_assoc_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  if (srs_tx_status_present) {
-    j.start_obj();
-    j.write_int("id", 106);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", srs_tx_status.to_string());
-    j.end_obj();
-  }
-  if (new_cell_id_present) {
-    j.start_obj();
-    j.write_int("id", 134);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    new_cell_id.to_json(j);
-    j.end_obj();
-  }
-  if (remote_ue_status_present) {
-    j.start_obj();
-    j.write_int("id", 161);
-    j.write_str("criticality", "ignore");
-    j.write_str("value", remote_ue_status.to_string());
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const asn1::table::seq_field ie_table_positioning_info_upd_ies_container_values[] = {
+    {offsetof(positioning_info_upd_ies_container, srs_cfg),
+     (int32_t)offsetof(positioning_info_upd_ies_container, srs_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_configuration_s::desc},
+    {offsetof(positioning_info_upd_ies_container, sfn_initisation_time),
+     (int32_t)offsetof(positioning_info_upd_ies_container, sfn_initisation_time_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(positioning_info_upd_ies_container::sfn_initisation_time),
+                                asn1::table::struct_json>::value},
+    {offsetof(positioning_info_upd_ies_container, ue_tx_teg_assoc_list),
+     (int32_t)offsetof(positioning_info_upd_ies_container, ue_tx_teg_assoc_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     256,
+     &asn1::table::item_list_codec<decltype(positioning_info_upd_ies_container::ue_tx_teg_assoc_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ue_tx_teg_assoc_item_s::desc},
+    {offsetof(positioning_info_upd_ies_container, srs_tx_status),
+     (int32_t)offsetof(positioning_info_upd_ies_container, srs_tx_status_present),
+     asn1::table::enum_op<decltype(positioning_info_upd_ies_container::srs_tx_status)>(),
+     decltype(positioning_info_upd_ies_container::srs_tx_status)::has_ext,
+     false,
+     decltype(positioning_info_upd_ies_container::srs_tx_status)::nof_types,
+     decltype(positioning_info_upd_ies_container::srs_tx_status)::nof_exts,
+     nullptr,
+     &srs_tx_status_opts::desc},
+    {offsetof(positioning_info_upd_ies_container, new_cell_id),
+     (int32_t)offsetof(positioning_info_upd_ies_container, new_cell_id_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cgi_nr_s::desc},
+    {offsetof(positioning_info_upd_ies_container, remote_ue_status),
+     (int32_t)offsetof(positioning_info_upd_ies_container, remote_ue_status_present),
+     asn1::table::enum_op<decltype(positioning_info_upd_ies_container::remote_ue_status)>(),
+     decltype(positioning_info_upd_ies_container::remote_ue_status)::has_ext,
+     false,
+     decltype(positioning_info_upd_ies_container::remote_ue_status)::nof_types,
+     decltype(positioning_info_upd_ies_container::remote_ue_status)::nof_exts,
+     nullptr,
+     &remote_ue_status_opts::desc}};
+static const int32_t ie_table_positioning_info_upd_ies_container_presences[] = {
+    (int32_t)offsetof(positioning_info_upd_ies_container, srs_cfg_present),
+    (int32_t)offsetof(positioning_info_upd_ies_container, sfn_initisation_time_present),
+    (int32_t)offsetof(positioning_info_upd_ies_container, ue_tx_teg_assoc_list_present),
+    (int32_t)offsetof(positioning_info_upd_ies_container, srs_tx_status_present),
+    (int32_t)offsetof(positioning_info_upd_ies_container, new_cell_id_present),
+    (int32_t)offsetof(positioning_info_upd_ies_container, remote_ue_status_present)};
+const asn1::table::ie_container_desc positioning_info_upd_ies_container::desc = {
+    objset_id_positioning_info_upd_ies_o,
+    objset_crit_positioning_info_upd_ies_o,
+    ie_table_positioning_info_upd_ies_container_values,
+    ie_table_positioning_info_upd_ies_container_presences,
+    6,
+    0,
+    0,
+    65535,
+    true,
+    "value"};
 
 // Value ::= OPEN TYPE
-void nr_ppa_private_ies_empty_o::value_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.end_obj();
-}
-OCUDUASN_CODE nr_ppa_private_ies_empty_o::value_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_ppa_private_ies_empty_o::value_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::field_name choice_table_nr_ppa_private_ies_empty_o_value_c_names[] = {};
+const asn1::table::choice_desc       nr_ppa_private_ies_empty_o::value_c::desc               = {
+    asn1::table::enum_int_type<nr_ppa_private_ies_empty_o::value_c::types>(),
+    nr_ppa_private_ies_empty_o::value_c::types::nof_types,
+    nr_ppa_private_ies_empty_o::value_c::types::nof_exts,
+    nr_ppa_private_ies_empty_o::value_c::types::has_ext,
+    true,
+    nullptr,
+    nullptr,
+    choice_table_nr_ppa_private_ies_empty_o_value_c_names,
+    "nr_ppa_private_ies_empty_o::value_c",
+    asn1::table::choice_desc::no_member,
+    asn1::table::choice_desc::no_member,
+    false,
+    nullptr,
+    true};
 
-const char* nr_ppa_private_ies_empty_o::value_c::types_opts::to_string() const
-{
-  static const char* names[] = {};
-  return convert_enum_idx(names, 0, value, "nr_ppa_private_ies_empty_o::value_c::types");
-}
-
-OCUDUASN_CODE private_ie_container_empty_l::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 1u, 65535u, true));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE private_ie_container_empty_l::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 1u, 65535u, true));
-  if (nof_ies > 0) {
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void private_ie_container_empty_l::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.end_array();
-}
+static const char*           enum_names_nr_ppa_private_ies_empty_o_value_c_types_values[] = {};
+const asn1::table::enum_desc nr_ppa_private_ies_empty_o::value_c::types_opts::desc        = {
+    enum_names_nr_ppa_private_ies_empty_o_value_c_types_values,
+    0,
+    "nr_ppa_private_ies_empty_o::value_c::types"};
 
 // PrivateMessage ::= SEQUENCE
-OCUDUASN_CODE private_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
+static const asn1::table::seq_field seq_table_private_msg_s_fields[] = {
+    {offsetof(private_msg_s, private_ies),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(private_msg_s::private_ies), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_private_msg_s_names[] = {{"privateIEs", nullptr}};
+const asn1::table::seq_desc private_msg_s::desc = {{seq_table_private_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+                                                   true,
+                                                   true,
+                                                   nullptr,
+                                                   0,
+                                                   seq_table_private_msg_s_names,
+                                                   "PrivateMessage"};
 
-  HANDLE_CODE(private_ies.pack(bref));
-
-  bref.align_bytes_zero();
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE private_msg_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(private_ies.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref, true);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  bref.align_bytes();
-
-  return OCUDUASN_SUCCESS;
-}
-void private_msg_s::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.start_obj("PrivateMessage");
-  j.write_fieldname("privateIEs");
-  private_ies.to_json(j);
-  j.end_obj();
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_srs_info_reserv_notif_ies_o[]   = {129, 138, 163};
+static const uint8_t  objset_crit_srs_info_reserv_notif_ies_o[] = {crit_e::reject, crit_e::ignore, crit_e::ignore};
 
 // SRSInformationReservationNotification-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t srs_info_reserv_notif_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {129, 138, 163};
-  return map_enum_number(names, 3, idx, "id");
-}
-bool srs_info_reserv_notif_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {129, 138, 163};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e srs_info_reserv_notif_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 129:
-      return crit_e::reject;
-    case 138:
-      return crit_e::ignore;
-    case 163:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e srs_info_reserv_notif_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 129:
-      return presence_e::mandatory;
-    case 138:
-      return presence_e::optional;
-    case 163:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_srs_info_reserv_notif_ies_container_values[] = {
+    {offsetof(srs_info_reserv_notif_ies_container, srs_reserv_type),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_info_reserv_notif_ies_container::srs_reserv_type)>(),
+     decltype(srs_info_reserv_notif_ies_container::srs_reserv_type)::has_ext,
+     false,
+     decltype(srs_info_reserv_notif_ies_container::srs_reserv_type)::nof_types,
+     decltype(srs_info_reserv_notif_ies_container::srs_reserv_type)::nof_exts,
+     nullptr,
+     &srs_reserv_type_opts::desc},
+    {offsetof(srs_info_reserv_notif_ies_container, srs_info),
+     (int32_t)offsetof(srs_info_reserv_notif_ies_container, srs_info_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &requested_srs_tx_characteristics_s::desc},
+    {offsetof(srs_info_reserv_notif_ies_container, precfg_srs_info),
+     (int32_t)offsetof(srs_info_reserv_notif_ies_container, precfg_srs_info_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(srs_info_reserv_notif_ies_container::precfg_srs_info),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &requested_srs_precfg_characteristics_item_s::desc}};
+static const int32_t ie_table_srs_info_reserv_notif_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(srs_info_reserv_notif_ies_container, srs_info_present),
+    (int32_t)offsetof(srs_info_reserv_notif_ies_container, precfg_srs_info_present)};
+const asn1::table::ie_container_desc srs_info_reserv_notif_ies_container::desc = {
+    objset_id_srs_info_reserv_notif_ies_o,
+    objset_crit_srs_info_reserv_notif_ies_o,
+    ie_table_srs_info_reserv_notif_ies_container_values,
+    ie_table_srs_info_reserv_notif_ies_container_presences,
+    3,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE srs_info_reserv_notif_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += srs_info_present ? 1 : 0;
-  nof_ies += precfg_srs_info_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 129, crit_e{crit_e::reject}, [this, &bref]() { return srs_reserv_type.pack(bref); }));
-  if (srs_info_present) {
-    HANDLE_CODE(pack_ie(bref, 138, crit_e{crit_e::ignore}, [this, &bref]() { return srs_info.pack(bref); }));
-  }
-  if (precfg_srs_info_present) {
-    HANDLE_CODE(pack_ie(bref, 163, crit_e{crit_e::ignore}, [this, &bref]() {
-      return pack_dyn_seq_of(bref, precfg_srs_info, 1, 16, true);
-    }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_info_reserv_notif_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &srs_info_reserv_notif_ies_o::get_crit));
-
-    switch (id) {
-      case 129: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_reserv_type.unpack(bref); }));
-        break;
-      }
-      case 138: {
-        srs_info_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return srs_info.unpack(bref); }));
-        break;
-      }
-      case 163: {
-        precfg_srs_info_present = true;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(precfg_srs_info, bref, 1, 16, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void srs_info_reserv_notif_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 129);
-  j.write_str("criticality", "reject");
-  j.write_str("value", srs_reserv_type.to_string());
-  j.end_obj();
-  if (srs_info_present) {
-    j.start_obj();
-    j.write_int("id", 138);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    srs_info.to_json(j);
-    j.end_obj();
-  }
-  if (precfg_srs_info_present) {
-    j.start_obj();
-    j.write_int("id", 163);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : precfg_srs_info) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_trp_info_fail_ies_o[]   = {0, 1};
+static const uint8_t  objset_crit_trp_info_fail_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // TRPInformationFailure-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t trp_info_fail_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {0, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool trp_info_fail_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {0, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e trp_info_fail_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e trp_info_fail_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 0:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_trp_info_fail_ies_container_values[] = {
+    {offsetof(trp_info_fail_ies_container, cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cause_c::desc},
+    {offsetof(trp_info_fail_ies_container, crit_diagnostics),
+     (int32_t)offsetof(trp_info_fail_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_trp_info_fail_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(trp_info_fail_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc trp_info_fail_ies_container::desc = {
+    objset_id_trp_info_fail_ies_o,
+    objset_crit_trp_info_fail_ies_o,
+    ie_table_trp_info_fail_ies_container_values,
+    ie_table_trp_info_fail_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE trp_info_fail_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 0, crit_e{crit_e::ignore}, [this, &bref]() { return cause.pack(bref); }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE trp_info_fail_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &trp_info_fail_ies_o::get_crit));
-
-    switch (id) {
-      case 0: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return cause.unpack(bref); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void trp_info_fail_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 0);
-  j.write_str("criticality", "ignore");
-  j.write_fieldname("value");
-  cause.to_json(j);
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const uint32_t objset_id_trp_info_request_ies_o[]   = {47, 29};
+static const uint8_t  objset_crit_trp_info_request_ies_o[] = {crit_e::ignore, crit_e::reject};
 
 // TRPInformationRequest-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t trp_info_request_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {47, 29};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool trp_info_request_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {47, 29};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e trp_info_request_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 47:
-      return crit_e::ignore;
-    case 29:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e trp_info_request_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 47:
-      return presence_e::optional;
-    case 29:
-      return presence_e::mandatory;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
+static const asn1::table::seq_field ie_table_trp_info_request_ies_container_values[] = {
+    {offsetof(trp_info_request_ies_container, trp_list),
+     (int32_t)offsetof(trp_info_request_ies_container, trp_list_present),
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     65535,
+     &asn1::table::item_list_codec<decltype(trp_info_request_ies_container::trp_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_item_s::desc},
+    {offsetof(trp_info_request_ies_container, trp_info_type_list_trp_req),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     64,
+     &asn1::table::list_codec<decltype(trp_info_request_ies_container::trp_info_type_list_trp_req),
+                              asn1::table::struct_json>::value}};
+static const int32_t ie_table_trp_info_request_ies_container_presences[] = {
+    (int32_t)offsetof(trp_info_request_ies_container, trp_list_present),
+    asn1::table::seq_field::mandatory};
+const asn1::table::ie_container_desc trp_info_request_ies_container::desc = {
+    objset_id_trp_info_request_ies_o,
+    objset_crit_trp_info_request_ies_o,
+    ie_table_trp_info_request_ies_container_values,
+    ie_table_trp_info_request_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};
 
-OCUDUASN_CODE trp_info_request_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += trp_list_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  if (trp_list_present) {
-    HANDLE_CODE(pack_ie(
-        bref, 47, crit_e{crit_e::ignore}, [this, &bref]() { return pack_dyn_seq_of(bref, trp_list, 1, 65535, true); }));
-  }
-  HANDLE_CODE(pack_ie(bref, 29, crit_e{crit_e::reject}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, trp_info_type_list_trp_req, 1, 64, true);
-  }));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE trp_info_request_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &trp_info_request_ies_o::get_crit));
-
-    switch (id) {
-      case 47: {
-        trp_list_present = true;
-        HANDLE_CODE(
-            unpack_ie_value(bref, [this, &bref]() { return unpack_dyn_seq_of(trp_list, bref, 1, 65535, true); }));
-        break;
-      }
-      case 29: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(trp_info_type_list_trp_req, bref, 1, 64, true); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void trp_info_request_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  if (trp_list_present) {
-    j.start_obj();
-    j.write_int("id", 47);
-    j.write_str("criticality", "ignore");
-    j.start_array("value");
-    for (const auto& e1 : trp_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-    j.end_obj();
-  }
-  j.start_obj();
-  j.write_int("id", 29);
-  j.write_str("criticality", "reject");
-  j.start_array("value");
-  for (const auto& e1 : trp_info_type_list_trp_req) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  j.end_array();
-}
+static const uint32_t objset_id_trp_info_resp_ies_o[]   = {30, 1};
+static const uint8_t  objset_crit_trp_info_resp_ies_o[] = {crit_e::ignore, crit_e::ignore};
 
 // TRPInformationResponse-IEs ::= OBJECT SET OF NRPPA-PROTOCOL-IES
-uint32_t trp_info_resp_ies_o::idx_to_id(uint32_t idx)
-{
-  static const uint32_t names[] = {30, 1};
-  return map_enum_number(names, 2, idx, "id");
-}
-bool trp_info_resp_ies_o::is_id_valid(const uint32_t& id)
-{
-  static const uint32_t names[] = {30, 1};
-  for (const auto& o : names) {
-    if (o == id) {
-      return true;
-    }
-  }
-  return false;
-}
-crit_e trp_info_resp_ies_o::get_crit(const uint32_t& id)
-{
-  switch (id) {
-    case 30:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-presence_e trp_info_resp_ies_o::get_presence(const uint32_t& id)
-{
-  switch (id) {
-    case 30:
-      return presence_e::mandatory;
-    case 1:
-      return presence_e::optional;
-    default:
-      asn1::log_error("The id={} is not recognized", id);
-  }
-  return {};
-}
-
-OCUDUASN_CODE trp_info_resp_ies_container::pack(bit_ref& bref) const
-{
-  uint32_t nof_ies = 1;
-  nof_ies += crit_diagnostics_present ? 1 : 0;
-  HANDLE_CODE(pack_length(bref, nof_ies, 0u, 65535u, true));
-
-  HANDLE_CODE(pack_ie(bref, 30, crit_e{crit_e::ignore}, [this, &bref]() {
-    return pack_dyn_seq_of(bref, trp_info_list_trp_resp, 1, 65535, true);
-  }));
-  if (crit_diagnostics_present) {
-    HANDLE_CODE(pack_ie(bref, 1, crit_e{crit_e::ignore}, [this, &bref]() { return crit_diagnostics.pack(bref); }));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE trp_info_resp_ies_container::unpack(cbit_ref& bref)
-{
-  uint32_t nof_ies = 0;
-  HANDLE_CODE(unpack_length(nof_ies, bref, 0u, 65535u, true));
-
-  uint32_t nof_mandatory_ies = 1;
-
-  for (; nof_ies > 0; --nof_ies) {
-    uint32_t id;
-    crit_e   crit;
-    HANDLE_CODE(unpack_ie_header(bref, id, crit, &trp_info_resp_ies_o::get_crit));
-
-    switch (id) {
-      case 30: {
-        nof_mandatory_ies--;
-        HANDLE_CODE(unpack_ie_value(
-            bref, [this, &bref]() { return unpack_dyn_seq_of(trp_info_list_trp_resp, bref, 1, 65535, true); }));
-        break;
-      }
-      case 1: {
-        crit_diagnostics_present = true;
-        HANDLE_CODE(unpack_ie_value(bref, [this, &bref]() { return crit_diagnostics.unpack(bref); }));
-        break;
-      }
-      default:
-        HANDLE_CODE(skip_ignored_ie(bref, crit, id));
-        break;
-    }
-  }
-  if (nof_mandatory_ies > 0) {
-    asn1::log_error("Mandatory fields are missing\n");
-
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-void trp_info_resp_ies_container::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.write_int("id", 30);
-  j.write_str("criticality", "ignore");
-  j.start_array("value");
-  for (const auto& e1 : trp_info_list_trp_resp) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-  if (crit_diagnostics_present) {
-    j.start_obj();
-    j.write_int("id", 1);
-    j.write_str("criticality", "ignore");
-    j.write_fieldname("value");
-    crit_diagnostics.to_json(j);
-    j.end_obj();
-  }
-  j.end_array();
-}
+static const asn1::table::seq_field ie_table_trp_info_resp_ies_container_values[] = {
+    {offsetof(trp_info_resp_ies_container, trp_info_list_trp_resp),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     true,
+     1,
+     65535,
+     &asn1::table::item_list_codec<decltype(trp_info_resp_ies_container::trp_info_list_trp_resp),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &trp_info_list_trp_resp_item_s_::desc},
+    {offsetof(trp_info_resp_ies_container, crit_diagnostics),
+     (int32_t)offsetof(trp_info_resp_ies_container, crit_diagnostics_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &crit_diagnostics_s::desc}};
+static const int32_t ie_table_trp_info_resp_ies_container_presences[] = {
+    asn1::table::seq_field::mandatory,
+    (int32_t)offsetof(trp_info_resp_ies_container, crit_diagnostics_present)};
+const asn1::table::ie_container_desc trp_info_resp_ies_container::desc = {
+    objset_id_trp_info_resp_ies_o,
+    objset_crit_trp_info_resp_ies_o,
+    ie_table_trp_info_resp_ies_container_values,
+    ie_table_trp_info_resp_ies_container_presences,
+    2,
+    1,
+    0,
+    65535,
+    true,
+    "value"};

@@ -52,7 +52,7 @@ protected:
     asn1::cbit_ref bref({asn1_request_item.pdu_session_res_setup_request_transfer.begin(),
                          asn1_request_item.pdu_session_res_setup_request_transfer.end()});
 
-    if (asn1_setup_req_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_setup_req_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
       test_logger.error("Couldn't unpack PDU Session Resource Setup Request Transfer PDU");
       return false;
     }

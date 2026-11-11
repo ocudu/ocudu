@@ -31,98 +31,84 @@ struct cli_triggered_list_r16_c {
   struct types_opts {
     enum options { srs_rsrp_triggered_list_r16, cli_rssi_triggered_list_r16, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  cli_triggered_list_r16_c() = default;
-  cli_triggered_list_r16_c(const cli_triggered_list_r16_c& other);
-  cli_triggered_list_r16_c& operator=(const cli_triggered_list_r16_c& other);
-  ~cli_triggered_list_r16_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  srs_rsrp_triggered_list_r16_l& srs_rsrp_triggered_list_r16()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  srs_rsrp_triggered_list_r16_l&                srs_rsrp_triggered_list_r16()
   {
-    assert_choice_type(types::srs_rsrp_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    assert_choice_type(types::srs_rsrp_triggered_list_r16, c.type, "CLI-TriggeredList-r16");
     return c.get<srs_rsrp_triggered_list_r16_l>();
   }
   cli_rssi_triggered_list_r16_l& cli_rssi_triggered_list_r16()
   {
-    assert_choice_type(types::cli_rssi_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    assert_choice_type(types::cli_rssi_triggered_list_r16, c.type, "CLI-TriggeredList-r16");
     return c.get<cli_rssi_triggered_list_r16_l>();
   }
   const srs_rsrp_triggered_list_r16_l& srs_rsrp_triggered_list_r16() const
   {
-    assert_choice_type(types::srs_rsrp_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    assert_choice_type(types::srs_rsrp_triggered_list_r16, c.type, "CLI-TriggeredList-r16");
     return c.get<srs_rsrp_triggered_list_r16_l>();
   }
   const cli_rssi_triggered_list_r16_l& cli_rssi_triggered_list_r16() const
   {
-    assert_choice_type(types::cli_rssi_triggered_list_r16, type_, "CLI-TriggeredList-r16");
+    assert_choice_type(types::cli_rssi_triggered_list_r16, c.type, "CLI-TriggeredList-r16");
     return c.get<cli_rssi_triggered_list_r16_l>();
   }
   srs_rsrp_triggered_list_r16_l& set_srs_rsrp_triggered_list_r16();
   cli_rssi_triggered_list_r16_l& set_cli_rssi_triggered_list_r16();
 
 private:
-  types                                                                         type_;
-  choice_buffer_t<cli_rssi_triggered_list_r16_l, srs_rsrp_triggered_list_r16_l> c;
-
-  void destroy_();
+  asn1::table::choice_storage<cli_triggered_list_r16_c,
+                              types,
+                              choice_buffer_t<cli_rssi_triggered_list_r16_l, srs_rsrp_triggered_list_r16_l>>
+      c;
 };
 
 struct cells_triggered_list_item_c_ {
   struct types_opts {
     enum options { pci, pci_eutra, pci_utra_fdd_r16, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  cells_triggered_list_item_c_() = default;
-  cells_triggered_list_item_c_(const cells_triggered_list_item_c_& other);
-  cells_triggered_list_item_c_& operator=(const cells_triggered_list_item_c_& other);
-  ~cells_triggered_list_item_c_() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  uint16_t& pci()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  uint16_t&                                     pci()
   {
-    assert_choice_type(types::pci, type_, "CellsTriggeredList-item");
+    assert_choice_type(types::pci, c.type, "CellsTriggeredList-item");
     return c.get<uint16_t>();
   }
   uint16_t& pci_eutra()
   {
-    assert_choice_type(types::pci_eutra, type_, "CellsTriggeredList-item");
+    assert_choice_type(types::pci_eutra, c.type, "CellsTriggeredList-item");
     return c.get<uint16_t>();
   }
   uint16_t& pci_utra_fdd_r16()
   {
-    assert_choice_type(types::pci_utra_fdd_r16, type_, "CellsTriggeredList-item");
+    assert_choice_type(types::pci_utra_fdd_r16, c.type, "CellsTriggeredList-item");
     return c.get<uint16_t>();
   }
   const uint16_t& pci() const
   {
-    assert_choice_type(types::pci, type_, "CellsTriggeredList-item");
+    assert_choice_type(types::pci, c.type, "CellsTriggeredList-item");
     return c.get<uint16_t>();
   }
   const uint16_t& pci_eutra() const
   {
-    assert_choice_type(types::pci_eutra, type_, "CellsTriggeredList-item");
+    assert_choice_type(types::pci_eutra, c.type, "CellsTriggeredList-item");
     return c.get<uint16_t>();
   }
   const uint16_t& pci_utra_fdd_r16() const
   {
-    assert_choice_type(types::pci_utra_fdd_r16, type_, "CellsTriggeredList-item");
+    assert_choice_type(types::pci_utra_fdd_r16, c.type, "CellsTriggeredList-item");
     return c.get<uint16_t>();
   }
   uint16_t& set_pci();
@@ -130,10 +116,7 @@ struct cells_triggered_list_item_c_ {
   uint16_t& set_pci_utra_fdd_r16();
 
 private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
+  asn1::table::choice_storage<cells_triggered_list_item_c_, types, pod_choice_buffer_t> c;
 };
 
 // CellsTriggeredList ::= SEQUENCE (SIZE (1..32)) OF CellsTriggeredList-item
@@ -147,10 +130,7 @@ struct sn_pn_id_r18_s {
   plmn_id_s           plmn_id_r18;
   fixed_bitstring<44> nid_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarAppLayerIdle-r18 ::= SEQUENCE
@@ -158,7 +138,7 @@ struct var_app_layer_idle_r18_s {
   struct service_type_r18_opts {
     enum options { streaming, mtsi, vr, spare5, spare4, spare3, spare2, spare1, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using service_type_r18_e_ = enumerated<service_type_r18_opts>;
 
@@ -169,10 +149,7 @@ struct var_app_layer_idle_r18_s {
   app_layer_idle_inactive_cfg_r18_s app_layer_idle_inactive_cfg_r18;
   uint8_t                           app_layer_meas_prio_r18 = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarAppLayerIdleConfig-r18 ::= SEQUENCE
@@ -182,10 +159,7 @@ struct var_app_layer_idle_cfg_r18_s {
   // member variables
   app_layer_idle_cfg_list_r18_l_ app_layer_idle_cfg_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarAppLayerPLMN-List-r18 ::= SEQUENCE
@@ -193,10 +167,7 @@ struct var_app_layer_plmn_list_r18_s {
   uint8_t             meas_cfg_app_layer_id_r18 = 0;
   plmn_id_list2_r16_l plmn_id_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarAppLayerPLMN-ListConfig-r18 ::= SEQUENCE
@@ -206,10 +177,7 @@ struct var_app_layer_plmn_list_cfg_r18_s {
   // member variables
   plmn_cfg_list_r18_l_ plmn_cfg_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarConditionalReconfig ::= SEQUENCE
@@ -221,10 +189,7 @@ struct var_conditional_recfg_s {
   dyn_octstring                    scpac_ref_cfg_r18;
   sk_counter_configuration_r18_l_  sk_counter_cfg_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarConnEstFailReport-r16 ::= SEQUENCE
@@ -233,59 +198,46 @@ struct var_conn_est_fail_report_r16_s {
     struct types_opts {
       enum options { plmn_id_r18, snpn_id_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    network_id_r18_c_() = default;
-    network_id_r18_c_(const network_id_r18_c_& other);
-    network_id_r18_c_& operator=(const network_id_r18_c_& other);
-    ~network_id_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    plmn_id_s& plmn_id_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    plmn_id_s&                                    plmn_id_r18()
     {
-      assert_choice_type(types::plmn_id_r18, type_, "networkIdentity-r18");
+      assert_choice_type(types::plmn_id_r18, c.type, "networkIdentity-r18");
       return c.get<plmn_id_s>();
     }
     sn_pn_id_r18_s& snpn_id_r18()
     {
-      assert_choice_type(types::snpn_id_r18, type_, "networkIdentity-r18");
+      assert_choice_type(types::snpn_id_r18, c.type, "networkIdentity-r18");
       return c.get<sn_pn_id_r18_s>();
     }
     const plmn_id_s& plmn_id_r18() const
     {
-      assert_choice_type(types::plmn_id_r18, type_, "networkIdentity-r18");
+      assert_choice_type(types::plmn_id_r18, c.type, "networkIdentity-r18");
       return c.get<plmn_id_s>();
     }
     const sn_pn_id_r18_s& snpn_id_r18() const
     {
-      assert_choice_type(types::snpn_id_r18, type_, "networkIdentity-r18");
+      assert_choice_type(types::snpn_id_r18, c.type, "networkIdentity-r18");
       return c.get<sn_pn_id_r18_s>();
     }
     plmn_id_s&      set_plmn_id_r18();
     sn_pn_id_r18_s& set_snpn_id_r18();
 
   private:
-    types                                      type_;
-    choice_buffer_t<plmn_id_s, sn_pn_id_r18_s> c;
-
-    void destroy_();
+    asn1::table::choice_storage<network_id_r18_c_, types, choice_buffer_t<plmn_id_s, sn_pn_id_r18_s>> c;
   };
 
   // member variables
   conn_est_fail_report_r16_s conn_est_fail_report_r16;
   network_id_r18_c_          network_id_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarConnEstFailReportList-r17 ::= SEQUENCE
@@ -295,10 +247,7 @@ struct var_conn_est_fail_report_list_r17_s {
   // member variables
   conn_est_fail_report_list_r17_l_ conn_est_fail_report_list_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarEnhMeasIdleConfig-r18 ::= SEQUENCE
@@ -306,10 +255,7 @@ struct var_enh_meas_idle_cfg_r18_s {
   bool                    meas_idle_validity_dur_r18_present = false;
   meas_validity_dur_r18_e meas_idle_validity_dur_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarLTM-ServingCellNoResetID-r18 ::= SEQUENCE
@@ -317,10 +263,7 @@ struct var_ltm_serving_cell_no_reset_id_r18_s {
   bool    ltm_serving_cell_no_reset_id_r18_present = false;
   uint8_t ltm_serving_cell_no_reset_id_r18         = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarLTM-ServingCellUE-MeasuredTA-ID-r18 ::= SEQUENCE
@@ -328,10 +271,7 @@ struct var_ltm_serving_cell_ue_measured_ta_id_r18_s {
   bool    ltm_serving_cell_ue_measured_ta_id_r18_present = false;
   uint8_t ltm_serving_cell_ue_measured_ta_id_r18         = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarLogMeasConfig-r16 ::= SEQUENCE
@@ -340,49 +280,42 @@ struct var_log_meas_cfg_r16_s {
     struct types_opts {
       enum options { periodical, event_triggered, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    report_type_c_() = default;
-    report_type_c_(const report_type_c_& other);
-    report_type_c_& operator=(const report_type_c_& other);
-    ~report_type_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    logged_periodical_report_cfg_r16_s& periodical()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    logged_periodical_report_cfg_r16_s&           periodical()
     {
-      assert_choice_type(types::periodical, type_, "reportType");
+      assert_choice_type(types::periodical, c.type, "reportType");
       return c.get<logged_periodical_report_cfg_r16_s>();
     }
     logged_event_trigger_cfg_r16_s& event_triggered()
     {
-      assert_choice_type(types::event_triggered, type_, "reportType");
+      assert_choice_type(types::event_triggered, c.type, "reportType");
       return c.get<logged_event_trigger_cfg_r16_s>();
     }
     const logged_periodical_report_cfg_r16_s& periodical() const
     {
-      assert_choice_type(types::periodical, type_, "reportType");
+      assert_choice_type(types::periodical, c.type, "reportType");
       return c.get<logged_periodical_report_cfg_r16_s>();
     }
     const logged_event_trigger_cfg_r16_s& event_triggered() const
     {
-      assert_choice_type(types::event_triggered, type_, "reportType");
+      assert_choice_type(types::event_triggered, c.type, "reportType");
       return c.get<logged_event_trigger_cfg_r16_s>();
     }
     logged_periodical_report_cfg_r16_s& set_periodical();
     logged_event_trigger_cfg_r16_s&     set_event_triggered();
 
   private:
-    types                                                                               type_;
-    choice_buffer_t<logged_event_trigger_cfg_r16_s, logged_periodical_report_cfg_r16_s> c;
-
-    void destroy_();
+    asn1::table::choice_storage<report_type_c_,
+                                types,
+                                choice_buffer_t<logged_event_trigger_cfg_r16_s, logged_periodical_report_cfg_r16_s>>
+        c;
   };
 
   // member variables
@@ -400,10 +333,7 @@ struct var_log_meas_cfg_r16_s {
   area_cfg_r17_s         area_cfg_r17;
   area_cfg_v1800_c       area_cfg_v1800;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarLogMeasReport-r16 ::= SEQUENCE
@@ -412,49 +342,39 @@ struct var_log_meas_report_r16_s {
     struct types_opts {
       enum options { plmn_id_list_r18, snpn_cfg_id_list_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    id_list_r18_c_() = default;
-    id_list_r18_c_(const id_list_r18_c_& other);
-    id_list_r18_c_& operator=(const id_list_r18_c_& other);
-    ~id_list_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    plmn_id_list2_r16_l& plmn_id_list_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    plmn_id_list2_r16_l&                          plmn_id_list_r18()
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     sn_pn_cfg_id_list_r18_l& snpn_cfg_id_list_r18()
     {
-      assert_choice_type(types::snpn_cfg_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_cfg_id_list_r18, c.type, "identityList-r18");
       return c.get<sn_pn_cfg_id_list_r18_l>();
     }
     const plmn_id_list2_r16_l& plmn_id_list_r18() const
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     const sn_pn_cfg_id_list_r18_l& snpn_cfg_id_list_r18() const
     {
-      assert_choice_type(types::snpn_cfg_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_cfg_id_list_r18, c.type, "identityList-r18");
       return c.get<sn_pn_cfg_id_list_r18_l>();
     }
     plmn_id_list2_r16_l&     set_plmn_id_list_r18();
     sn_pn_cfg_id_list_r18_l& set_snpn_cfg_id_list_r18();
 
   private:
-    types                                                         type_;
-    choice_buffer_t<plmn_id_list2_r16_l, sn_pn_cfg_id_list_r18_l> c;
-
-    void destroy_();
+    asn1::table::choice_storage<id_list_r18_c_, types, choice_buffer_t<plmn_id_list2_r16_l, sn_pn_cfg_id_list_r18_l>> c;
   };
 
   // member variables
@@ -465,10 +385,7 @@ struct var_log_meas_report_r16_s {
   log_meas_info_list_r16_l log_meas_info_list_r16;
   id_list_r18_c_           id_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMeasConfig ::= SEQUENCE
@@ -477,49 +394,39 @@ struct var_meas_cfg_s {
     struct types_opts {
       enum options { ssb_rsrp, csi_rsrp, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    s_measure_cfg_c_() = default;
-    s_measure_cfg_c_(const s_measure_cfg_c_& other);
-    s_measure_cfg_c_& operator=(const s_measure_cfg_c_& other);
-    ~s_measure_cfg_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    uint8_t& ssb_rsrp()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    uint8_t&                                      ssb_rsrp()
     {
-      assert_choice_type(types::ssb_rsrp, type_, "s-MeasureConfig");
+      assert_choice_type(types::ssb_rsrp, c.type, "s-MeasureConfig");
       return c.get<uint8_t>();
     }
     uint8_t& csi_rsrp()
     {
-      assert_choice_type(types::csi_rsrp, type_, "s-MeasureConfig");
+      assert_choice_type(types::csi_rsrp, c.type, "s-MeasureConfig");
       return c.get<uint8_t>();
     }
     const uint8_t& ssb_rsrp() const
     {
-      assert_choice_type(types::ssb_rsrp, type_, "s-MeasureConfig");
+      assert_choice_type(types::ssb_rsrp, c.type, "s-MeasureConfig");
       return c.get<uint8_t>();
     }
     const uint8_t& csi_rsrp() const
     {
-      assert_choice_type(types::csi_rsrp, type_, "s-MeasureConfig");
+      assert_choice_type(types::csi_rsrp, c.type, "s-MeasureConfig");
       return c.get<uint8_t>();
     }
     uint8_t& set_ssb_rsrp();
     uint8_t& set_csi_rsrp();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<s_measure_cfg_c_, types, pod_choice_buffer_t> c;
   };
 
   // member variables
@@ -531,10 +438,7 @@ struct var_meas_cfg_s {
   quant_cfg_s                  quant_cfg;
   s_measure_cfg_c_             s_measure_cfg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMeasConfigSL-r16 ::= SEQUENCE
@@ -545,10 +449,7 @@ struct var_meas_cfg_sl_r16_s {
   sl_report_cfg_list_r16_l sl_report_cfg_list_r16;
   sl_quant_cfg_r16_s       sl_quant_cfg_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMeasIdleConfig-r16 ::= SEQUENCE
@@ -557,10 +458,9 @@ struct var_meas_idle_cfg_r16_s {
   using meas_idle_carrier_list_eutra_r16_l_ = dyn_array<meas_idle_carrier_eutra_r16_s>;
   struct meas_idle_dur_r16_opts {
     enum options { sec10, sec30, sec60, sec120, sec180, sec240, sec300, spare, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using meas_idle_dur_r16_e_ = enumerated<meas_idle_dur_r16_opts>;
 
@@ -570,10 +470,7 @@ struct var_meas_idle_cfg_r16_s {
   meas_idle_dur_r16_e_                meas_idle_dur_r16;
   validity_area_list_r16_l            validity_area_list_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMeasIdleReport-r16 ::= SEQUENCE
@@ -583,10 +480,7 @@ struct var_meas_idle_report_r16_s {
   meas_result_idle_nr_r16_s    meas_report_idle_nr_r16;
   meas_result_idle_eutra_r16_s meas_report_idle_eutra_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMeasReport ::= SEQUENCE
@@ -605,10 +499,7 @@ struct var_meas_report_s {
   cells_met_leaving_cond_r18_l_       cells_met_leaving_cond_r18;
   reported_best_neighbour_cell_r18_l_ reported_best_neighbour_cell_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMeasReportList ::= SEQUENCE (SIZE (1..64)) OF VarMeasReport
@@ -623,10 +514,7 @@ struct var_meas_report_sl_r16_s {
   sl_freq_triggered_list_r16_l_ sl_freq_triggered_list_r16;
   int64_t                       sl_nof_reports_sent_r16 = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMeasReportListSL-r16 ::= SEQUENCE (SIZE (1..64)) OF VarMeasReportSL-r16
@@ -641,10 +529,7 @@ struct var_meas_resel_cfg_r18_s {
   meas_resel_carrier_list_nr_r18_l_ meas_resel_carrier_list_nr_r18;
   meas_validity_dur_r18_e           meas_resel_validity_dur_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarMobilityHistoryReport-r17 ::= SEQUENCE
@@ -652,10 +537,7 @@ struct var_mob_history_report_r17_s {
   visited_cell_info_list_r16_l   visited_cell_info_list_r16;
   visited_pscell_info_list_r17_l visited_pscell_info_list_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarPendingRNA-Update ::= SEQUENCE
@@ -663,10 +545,7 @@ struct var_pending_rna_upd_s {
   bool pending_rna_upd_present = false;
   bool pending_rna_upd         = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarRA-Report-r16 ::= SEQUENCE
@@ -676,59 +555,46 @@ struct var_ra_report_r16_s {
     struct types_opts {
       enum options { plmn_id_list_r18, snpn_id_list_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    id_list_r18_c_() = default;
-    id_list_r18_c_(const id_list_r18_c_& other);
-    id_list_r18_c_& operator=(const id_list_r18_c_& other);
-    ~id_list_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    plmn_id_list2_r16_l& plmn_id_list_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    plmn_id_list2_r16_l&                          plmn_id_list_r18()
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     snpn_id_list_r18_l_& snpn_id_list_r18()
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     const plmn_id_list2_r16_l& plmn_id_list_r18() const
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     const snpn_id_list_r18_l_& snpn_id_list_r18() const
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     plmn_id_list2_r16_l& set_plmn_id_list_r18();
     snpn_id_list_r18_l_& set_snpn_id_list_r18();
 
   private:
-    types                                                     type_;
-    choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<id_list_r18_c_, types, choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_>> c;
   };
 
   // member variables
   ra_report_list_r16_l ra_report_list_r16;
   id_list_r18_c_       id_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarRLF-Report-r16 ::= SEQUENCE
@@ -738,59 +604,46 @@ struct var_rlf_report_r16_s {
     struct types_opts {
       enum options { plmn_id_list_r18, snpn_id_list_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    id_list_r18_c_() = default;
-    id_list_r18_c_(const id_list_r18_c_& other);
-    id_list_r18_c_& operator=(const id_list_r18_c_& other);
-    ~id_list_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    plmn_id_list2_r16_l& plmn_id_list_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    plmn_id_list2_r16_l&                          plmn_id_list_r18()
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     snpn_id_list_r18_l_& snpn_id_list_r18()
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     const plmn_id_list2_r16_l& plmn_id_list_r18() const
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     const snpn_id_list_r18_l_& snpn_id_list_r18() const
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     plmn_id_list2_r16_l& set_plmn_id_list_r18();
     snpn_id_list_r18_l_& set_snpn_id_list_r18();
 
   private:
-    types                                                     type_;
-    choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<id_list_r18_c_, types, choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_>> c;
   };
 
   // member variables
   rlf_report_r16_c rlf_report_r16;
   id_list_r18_c_   id_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarResumeMAC-Input ::= SEQUENCE
@@ -799,20 +652,14 @@ struct var_resume_mac_input_s {
   fixed_bitstring<36> target_cell_id;
   uint32_t            source_c_rnti = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarServingSecurityCellSetID ::= SEQUENCE
 struct var_serving_security_cell_set_id_s {
   uint8_t serving_security_cell_set_id_r18 = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarShortMAC-Input ::= SEQUENCE
@@ -821,10 +668,7 @@ struct var_short_mac_input_s {
   fixed_bitstring<36> target_cell_id;
   uint32_t            source_c_rnti = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarSuccessHO-Report-r17 ::= SEQUENCE
@@ -834,59 +678,46 @@ struct var_success_ho_report_r17_s {
     struct types_opts {
       enum options { plmn_id_list_r18, snpn_id_list_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    id_list_r18_c_() = default;
-    id_list_r18_c_(const id_list_r18_c_& other);
-    id_list_r18_c_& operator=(const id_list_r18_c_& other);
-    ~id_list_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    plmn_id_list2_r16_l& plmn_id_list_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    plmn_id_list2_r16_l&                          plmn_id_list_r18()
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     snpn_id_list_r18_l_& snpn_id_list_r18()
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     const plmn_id_list2_r16_l& plmn_id_list_r18() const
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     const snpn_id_list_r18_l_& snpn_id_list_r18() const
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     plmn_id_list2_r16_l& set_plmn_id_list_r18();
     snpn_id_list_r18_l_& set_snpn_id_list_r18();
 
   private:
-    types                                                     type_;
-    choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<id_list_r18_c_, types, choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_>> c;
   };
 
   // member variables
   success_ho_report_r17_s success_ho_report_r17;
   id_list_r18_c_          id_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarSuccessPSCell-Report-r18 ::= SEQUENCE
@@ -896,59 +727,46 @@ struct var_success_pscell_report_r18_s {
     struct types_opts {
       enum options { plmn_id_list_r18, snpn_id_list_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    id_list_r18_c_() = default;
-    id_list_r18_c_(const id_list_r18_c_& other);
-    id_list_r18_c_& operator=(const id_list_r18_c_& other);
-    ~id_list_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    plmn_id_list2_r16_l& plmn_id_list_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    plmn_id_list2_r16_l&                          plmn_id_list_r18()
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     snpn_id_list_r18_l_& snpn_id_list_r18()
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     const plmn_id_list2_r16_l& plmn_id_list_r18() const
     {
-      assert_choice_type(types::plmn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::plmn_id_list_r18, c.type, "identityList-r18");
       return c.get<plmn_id_list2_r16_l>();
     }
     const snpn_id_list_r18_l_& snpn_id_list_r18() const
     {
-      assert_choice_type(types::snpn_id_list_r18, type_, "identityList-r18");
+      assert_choice_type(types::snpn_id_list_r18, c.type, "identityList-r18");
       return c.get<snpn_id_list_r18_l_>();
     }
     plmn_id_list2_r16_l& set_plmn_id_list_r18();
     snpn_id_list_r18_l_& set_snpn_id_list_r18();
 
   private:
-    types                                                     type_;
-    choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<id_list_r18_c_, types, choice_buffer_t<plmn_id_list2_r16_l, snpn_id_list_r18_l_>> c;
   };
 
   // member variables
   success_pscell_report_r18_s success_pscell_report_r18;
   id_list_r18_c_              id_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // VarTSS-Info-r18 ::= SEQUENCE
@@ -962,10 +780,7 @@ struct var_tss_info_r18_s {
   uint8_t                     stored_event_id_r18 = 0;
   stored_global_gnb_id_r18_s_ stored_global_gnb_id_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 } // namespace rrc_nr

@@ -26,7 +26,7 @@ bool ocudu::test_helpers::is_valid_rrc_setup(const byte_buffer& dl_ccch_msg)
 {
   asn1::cbit_ref              bref{dl_ccch_msg};
   asn1::rrc_nr::dl_ccch_msg_s ccch;
-  TRUE_OR_RETURN(ccch.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(ccch, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_setup(ccch);
 }
 
@@ -43,7 +43,7 @@ bool ocudu::test_helpers::is_valid_rrc_reestablishment(const byte_buffer& dl_dcc
 {
   asn1::cbit_ref              bref{dl_dcch_msg};
   asn1::rrc_nr::dl_dcch_msg_s dcch;
-  TRUE_OR_RETURN(dcch.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(dcch, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_reestablishment(dcch);
 }
 
@@ -60,7 +60,7 @@ bool ocudu::test_helpers::is_valid_rrc_security_mode_command(const byte_buffer& 
 {
   asn1::cbit_ref              bref{dl_dcch_msg};
   asn1::rrc_nr::dl_dcch_msg_s dcch;
-  TRUE_OR_RETURN(dcch.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(dcch, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_security_mode_command(dcch);
 }
 
@@ -77,7 +77,7 @@ bool ocudu::test_helpers::is_valid_rrc_ue_capability_enquiry(const byte_buffer& 
 {
   asn1::cbit_ref              bref{dl_dcch_msg};
   asn1::rrc_nr::dl_dcch_msg_s dcch;
-  TRUE_OR_RETURN(dcch.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(dcch, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_ue_capability_enquiry(dcch);
 }
 
@@ -146,7 +146,7 @@ bool ocudu::test_helpers::is_valid_rrc_reconfiguration(
         msg.msg.c1().rrc_recfg().crit_exts.rrc_recfg().non_crit_ext.master_cell_group.copy();
     asn1::cbit_ref                 bref{master_cell_group};
     asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
-    TRUE_OR_RETURN(cell_group_cfg.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+    TRUE_OR_RETURN(asn1::unpack(cell_group_cfg, bref) == asn1::OCUDUASN_SUCCESS);
 
     TRUE_OR_RETURN(cell_group_cfg.sp_cell_cfg_present);
     TRUE_OR_RETURN(cell_group_cfg.sp_cell_cfg.recfg_with_sync_present);
@@ -185,7 +185,7 @@ bool ocudu::test_helpers::is_valid_rrc_reconfiguration(
 {
   asn1::cbit_ref              bref{dl_dcch_msg};
   asn1::rrc_nr::dl_dcch_msg_s dcch;
-  TRUE_OR_RETURN(dcch.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(dcch, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_reconfiguration(dcch,
                                       contains_nas_pdu,
                                       expected_srbs_to_add_mod,
@@ -208,7 +208,7 @@ bool ocudu::test_helpers::is_valid_rrc_handover_preparation_info(const byte_buff
 {
   asn1::cbit_ref               bref{ho_prep_info};
   asn1::rrc_nr::ho_prep_info_s msg;
-  TRUE_OR_RETURN(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(msg, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_handover_preparation_info(msg);
 }
 
@@ -228,7 +228,7 @@ bool ocudu::test_helpers::is_valid_rrc_release_with_suspend(const byte_buffer& d
 {
   asn1::cbit_ref              bref{dl_dcch_msg};
   asn1::rrc_nr::dl_dcch_msg_s msg;
-  TRUE_OR_RETURN(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(msg, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_release_with_suspend(msg);
 }
 
@@ -244,7 +244,7 @@ bool ocudu::test_helpers::is_valid_rrc_resume(const byte_buffer& dl_dcch_msg)
 {
   asn1::cbit_ref              bref{dl_dcch_msg};
   asn1::rrc_nr::dl_dcch_msg_s msg;
-  TRUE_OR_RETURN(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(msg, bref) == asn1::OCUDUASN_SUCCESS);
   return is_valid_rrc_resume(msg);
 }
 
@@ -252,7 +252,7 @@ bool test_helpers::is_valid_sib1(const byte_buffer& packed_sib1)
 {
   asn1::cbit_ref       bref{packed_sib1};
   asn1::rrc_nr::sib1_s msg;
-  TRUE_OR_RETURN(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(msg, bref) == asn1::OCUDUASN_SUCCESS);
   return true;
 }
 
@@ -263,7 +263,7 @@ bool test_helpers::is_valid_pdcp_security(const byte_buffer& dl_dcch_msg,
 {
   asn1::cbit_ref              bref{dl_dcch_msg};
   asn1::rrc_nr::dl_dcch_msg_s msg;
-  TRUE_OR_RETURN(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+  TRUE_OR_RETURN(asn1::unpack(msg, bref) == asn1::OCUDUASN_SUCCESS);
 
   TRUE_OR_RETURN(msg.msg.type().value == asn1::rrc_nr::dl_dcch_msg_type_c::types_opts::c1);
   TRUE_OR_RETURN(msg.msg.c1().type().value == asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg);

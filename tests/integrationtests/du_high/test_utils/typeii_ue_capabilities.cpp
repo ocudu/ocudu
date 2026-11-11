@@ -44,7 +44,7 @@ ocudu::test_helpers::create_typeii_ue_capability_container(nr_band band, unsigne
   ue_nr_cap_s ue_cap;
   {
     asn1::cbit_ref bref{rat_list[0].ue_cap_rat_container};
-    report_fatal_error_if_not(ue_cap.unpack(bref) == asn1::OCUDUASN_SUCCESS,
+    report_fatal_error_if_not(asn1::unpack(ue_cap, bref) == asn1::OCUDUASN_SUCCESS,
                               "Failed to unpack the UE NR capabilities.");
   }
 
@@ -83,7 +83,8 @@ ocudu::test_helpers::create_typeii_ue_capability_container(nr_band band, unsigne
   byte_buffer packed_ue_cap;
   {
     asn1::bit_ref bref{packed_ue_cap};
-    report_fatal_error_if_not(ue_cap.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack the UE NR capabilities.");
+    report_fatal_error_if_not(asn1::pack(bref, ue_cap) == asn1::OCUDUASN_SUCCESS,
+                              "Failed to pack the UE NR capabilities.");
   }
   rat_list[0].ue_cap_rat_container = std::move(packed_ue_cap);
 

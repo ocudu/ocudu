@@ -69,7 +69,7 @@ inline void fill_asn1_rrc_ue_capability_enquiry(asn1::rrc_nr::ue_cap_enquiry_s& 
 
   byte_buffer   filter_packed;
   asn1::bit_ref bref(filter_packed);
-  filter.pack(bref); // possible packing error fill be shown in ASN1 logs
+  asn1::pack(bref, filter); // possible packing error fill be shown in ASN1 logs
   ue_cap_rat_request.cap_request_filt = std::move(filter_packed);
 
   ue_cap_ies.ue_cap_rat_request_list.push_back(ue_cap_rat_request);

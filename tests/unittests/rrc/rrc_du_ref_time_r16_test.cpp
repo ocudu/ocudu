@@ -25,7 +25,7 @@ byte_buffer pack_raw_ref_time_r16(uint32_t days, uint32_t secs, uint16_t ms, uin
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  EXPECT_EQ(rrc_ref_time.pack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::pack(bref, rrc_ref_time), asn1::OCUDUASN_SUCCESS);
   return buf;
 }
 

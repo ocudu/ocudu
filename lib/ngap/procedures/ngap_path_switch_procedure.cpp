@@ -236,7 +236,7 @@ bool ngap_path_switch_procedure::asn1_to_path_switch_request_ack(
     // Unpack path_switch_request_ack_transfer.
     asn1::cbit_ref                     bref{asn1_switched_item.path_switch_request_ack_transfer};
     path_switch_request_ack_transfer_s path_switch_request_ack_transfer;
-    if (path_switch_request_ack_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(path_switch_request_ack_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
       return false;
     }
 
@@ -263,7 +263,7 @@ bool ngap_path_switch_procedure::asn1_to_path_switch_request_ack(
       // Unpack path_switch_request_unsuccessful_transfer to get the cause of release.
       asn1::cbit_ref                              bref{asn1_release_item.path_switch_request_unsuccessful_transfer};
       path_switch_request_unsuccessful_transfer_s path_switch_request_unsuccessful_transfer;
-      if (path_switch_request_unsuccessful_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(path_switch_request_unsuccessful_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
         return false;
       }
 
@@ -320,7 +320,7 @@ cu_cp_path_switch_request_failure ngap_path_switch_procedure::asn1_to_path_switc
     // Unpack path_switch_request_unsuccessful_transfer to get the cause of release.
     asn1::cbit_ref                              bref{asn1_release_item.path_switch_request_unsuccessful_transfer};
     path_switch_request_unsuccessful_transfer_s path_switch_request_unsuccessful_transfer;
-    if (path_switch_request_unsuccessful_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(path_switch_request_unsuccessful_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
       return fail;
     }
 

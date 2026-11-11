@@ -130,18 +130,13 @@ struct nr_ppa_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    init_msg_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                    set(types::options e = types::nulltype);
+    types                                   type() const { return type_; }
+    static const asn1::table::choice_desc   desc;
     e_c_id_meas_initiation_request_s&       e_c_id_meas_initiation_request();
     otdoa_info_request_s&                   otdoa_info_request();
     positioning_info_request_s&             positioning_info_request();
@@ -208,34 +203,29 @@ struct nr_ppa_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    successful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e_c_id_meas_initiation_resp_s&       e_c_id_meas_initiation_resp();
-    otdoa_info_resp_s&                   otdoa_info_resp();
-    positioning_info_resp_s&             positioning_info_resp();
-    meas_resp_s&                         meas_resp();
-    trp_info_resp_s&                     trp_info_resp();
-    positioning_activation_resp_s&       positioning_activation_resp();
-    prs_cfg_resp_s&                      prs_cfg_resp();
-    meas_precfg_confirm_s&               meas_precfg_confirm();
-    const e_c_id_meas_initiation_resp_s& e_c_id_meas_initiation_resp() const;
-    const otdoa_info_resp_s&             otdoa_info_resp() const;
-    const positioning_info_resp_s&       positioning_info_resp() const;
-    const meas_resp_s&                   meas_resp() const;
-    const trp_info_resp_s&               trp_info_resp() const;
-    const positioning_activation_resp_s& positioning_activation_resp() const;
-    const prs_cfg_resp_s&                prs_cfg_resp() const;
-    const meas_precfg_confirm_s&         meas_precfg_confirm() const;
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    e_c_id_meas_initiation_resp_s&        e_c_id_meas_initiation_resp();
+    otdoa_info_resp_s&                    otdoa_info_resp();
+    positioning_info_resp_s&              positioning_info_resp();
+    meas_resp_s&                          meas_resp();
+    trp_info_resp_s&                      trp_info_resp();
+    positioning_activation_resp_s&        positioning_activation_resp();
+    prs_cfg_resp_s&                       prs_cfg_resp();
+    meas_precfg_confirm_s&                meas_precfg_confirm();
+    const e_c_id_meas_initiation_resp_s&  e_c_id_meas_initiation_resp() const;
+    const otdoa_info_resp_s&              otdoa_info_resp() const;
+    const positioning_info_resp_s&        positioning_info_resp() const;
+    const meas_resp_s&                    meas_resp() const;
+    const trp_info_resp_s&                trp_info_resp() const;
+    const positioning_activation_resp_s&  positioning_activation_resp() const;
+    const prs_cfg_resp_s&                 prs_cfg_resp() const;
+    const meas_precfg_confirm_s&          meas_precfg_confirm() const;
 
   private:
     types             type_;
@@ -256,47 +246,36 @@ struct nr_ppa_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    unsuccessful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e_c_id_meas_initiation_fail_s&       e_c_id_meas_initiation_fail();
-    otdoa_info_fail_s&                   otdoa_info_fail();
-    positioning_info_fail_s&             positioning_info_fail();
-    meas_fail_s&                         meas_fail();
-    trp_info_fail_s&                     trp_info_fail();
-    positioning_activation_fail_s&       positioning_activation_fail();
-    prs_cfg_fail_s&                      prs_cfg_fail();
-    meas_precfg_refuse_s&                meas_precfg_refuse();
-    const e_c_id_meas_initiation_fail_s& e_c_id_meas_initiation_fail() const;
-    const otdoa_info_fail_s&             otdoa_info_fail() const;
-    const positioning_info_fail_s&       positioning_info_fail() const;
-    const meas_fail_s&                   meas_fail() const;
-    const trp_info_fail_s&               trp_info_fail() const;
-    const positioning_activation_fail_s& positioning_activation_fail() const;
-    const prs_cfg_fail_s&                prs_cfg_fail() const;
-    const meas_precfg_refuse_s&          meas_precfg_refuse() const;
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    e_c_id_meas_initiation_fail_s&        e_c_id_meas_initiation_fail();
+    otdoa_info_fail_s&                    otdoa_info_fail();
+    positioning_info_fail_s&              positioning_info_fail();
+    meas_fail_s&                          meas_fail();
+    trp_info_fail_s&                      trp_info_fail();
+    positioning_activation_fail_s&        positioning_activation_fail();
+    prs_cfg_fail_s&                       prs_cfg_fail();
+    meas_precfg_refuse_s&                 meas_precfg_refuse();
+    const e_c_id_meas_initiation_fail_s&  e_c_id_meas_initiation_fail() const;
+    const otdoa_info_fail_s&              otdoa_info_fail() const;
+    const positioning_info_fail_s&        positioning_info_fail() const;
+    const meas_fail_s&                    meas_fail() const;
+    const trp_info_fail_s&                trp_info_fail() const;
+    const positioning_activation_fail_s&  positioning_activation_fail() const;
+    const prs_cfg_fail_s&                 prs_cfg_fail() const;
+    const meas_precfg_refuse_s&           meas_precfg_refuse() const;
 
   private:
     types             type_;
     choice_buffer_ptr c;
   };
 
-  // members lookup methods
-  static uint16_t               idx_to_proc_code(uint32_t idx);
-  static bool                   is_proc_code_valid(const uint16_t& proc_code);
-  static init_msg_c             get_init_msg(const uint16_t& proc_code);
-  static successful_outcome_c   get_successful_outcome(const uint16_t& proc_code);
-  static unsuccessful_outcome_c get_unsuccessful_outcome(const uint16_t& proc_code);
-  static crit_e                 get_crit(const uint16_t& proc_code);
+  static const asn1::table::objset_desc desc;
 };
 
 // InitiatingMessage ::= SEQUENCE{{NRPPA-ELEMENTARY-PROCEDURE}}
@@ -306,10 +285,8 @@ struct init_msg_s {
   uint16_t                        nrppatransaction_id = 0;
   nr_ppa_elem_procs_o::init_msg_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // SuccessfulOutcome ::= SEQUENCE{{NRPPA-ELEMENTARY-PROCEDURE}}
@@ -319,10 +296,8 @@ struct successful_outcome_s {
   uint16_t                                  nrppatransaction_id = 0;
   nr_ppa_elem_procs_o::successful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // UnsuccessfulOutcome ::= SEQUENCE{{NRPPA-ELEMENTARY-PROCEDURE}}
@@ -332,10 +307,8 @@ struct unsuccessful_outcome_s {
   uint16_t                                    nrppatransaction_id = 0;
   nr_ppa_elem_procs_o::unsuccessful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // NRPPA-PDU ::= CHOICE
@@ -343,49 +316,42 @@ struct nr_ppa_pdu_c {
   struct types_opts {
     enum options { init_msg, successful_outcome, unsuccessful_outcome, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true>;
 
-  // choice methods
-  nr_ppa_pdu_c() = default;
-  nr_ppa_pdu_c(const nr_ppa_pdu_c& other);
-  nr_ppa_pdu_c& operator=(const nr_ppa_pdu_c& other);
-  ~nr_ppa_pdu_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  init_msg_s& init_msg()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  init_msg_s&                                   init_msg()
   {
-    assert_choice_type(types::init_msg, type_, "NRPPA-PDU");
+    assert_choice_type(types::init_msg, c.type, "NRPPA-PDU");
     return c.get<init_msg_s>();
   }
   successful_outcome_s& successful_outcome()
   {
-    assert_choice_type(types::successful_outcome, type_, "NRPPA-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "NRPPA-PDU");
     return c.get<successful_outcome_s>();
   }
   unsuccessful_outcome_s& unsuccessful_outcome()
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "NRPPA-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "NRPPA-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   const init_msg_s& init_msg() const
   {
-    assert_choice_type(types::init_msg, type_, "NRPPA-PDU");
+    assert_choice_type(types::init_msg, c.type, "NRPPA-PDU");
     return c.get<init_msg_s>();
   }
   const successful_outcome_s& successful_outcome() const
   {
-    assert_choice_type(types::successful_outcome, type_, "NRPPA-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "NRPPA-PDU");
     return c.get<successful_outcome_s>();
   }
   const unsuccessful_outcome_s& unsuccessful_outcome() const
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "NRPPA-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "NRPPA-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   init_msg_s&             set_init_msg();
@@ -393,10 +359,9 @@ struct nr_ppa_pdu_c {
   unsuccessful_outcome_s& set_unsuccessful_outcome();
 
 private:
-  types                                                                     type_;
-  choice_buffer_t<init_msg_s, successful_outcome_s, unsuccessful_outcome_s> c;
-
-  void destroy_();
+  asn1::table::
+      choice_storage<nr_ppa_pdu_c, types, choice_buffer_t<init_msg_s, successful_outcome_s, unsuccessful_outcome_s>>
+          c;
 };
 
 } // namespace nrppa

@@ -27,20 +27,14 @@ struct rrc_resume_request1_ies_s {
   resume_cause_e      resume_cause;
   fixed_bitstring<1>  spare;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCResumeRequest1 ::= SEQUENCE
 struct rrc_resume_request1_s {
   rrc_resume_request1_ies_s rrc_resume_request1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UL-CCCH1-MessageType ::= CHOICE
@@ -48,22 +42,16 @@ struct ul_ccch1_msg_type_c {
   struct c1_c_ {
     struct types_opts {
       enum options { rrc_resume_request1, spare3, spare2, spare1, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    c1_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    rrc_resume_request1_s& rrc_resume_request1()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    rrc_resume_request1_s&                rrc_resume_request1()
     {
       assert_choice_type(types::rrc_resume_request1, type_, "c1");
       return c;
@@ -84,22 +72,16 @@ struct ul_ccch1_msg_type_c {
   };
   struct types_opts {
     enum options { c1, msg_class_ext, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  ul_ccch1_msg_type_c() = default;
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  c1_c_& c1()
+  void                                  set(types::options e = types::nulltype);
+  types                                 type() const { return type_; }
+  static const asn1::table::choice_desc desc;
+  c1_c_&                                c1()
   {
     assert_choice_type(types::c1, type_, "UL-CCCH1-MessageType");
     return c;
@@ -121,10 +103,7 @@ private:
 struct ul_ccch1_msg_s {
   ul_ccch1_msg_type_c msg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 } // namespace rrc_nr

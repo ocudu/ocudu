@@ -21,14 +21,6 @@ namespace f1ap {
  ******************************************************************************/
 
 // DLRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct dl_rrc_msg_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct dl_rrc_msg_transfer_ies_container {
   bool                                         old_gnb_du_ue_f1ap_id_present                      = false;
   bool                                         execute_dupl_present                               = false;
@@ -59,24 +51,13 @@ struct dl_rrc_msg_transfer_ies_container {
   uint8_t                                      plmn_idx_nr_assist_info_for_net_shar;
   area_specific_semi_persistent_srs_pos_info_s area_specific_semi_persistent_srs_pos_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // DLRRCMessageTransfer ::= SEQUENCE
 using dl_rrc_msg_transfer_s = elementary_procedure_option<dl_rrc_msg_transfer_ies_container>;
 
 // InitialULRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct init_ul_rrc_msg_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct init_ul_rrc_msg_transfer_ies_container {
   bool                      du_to_cu_rrc_container_present           = false;
   bool                      sul_access_ind_present                   = false;
@@ -100,24 +81,13 @@ struct init_ul_rrc_msg_transfer_ies_container {
   sidelink_relay_cfg_s      sidelink_relay_cfg;
   nr_e_red_cap_ue_ind_e     nr_e_red_cap_ue_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // InitialULRRCMessageTransfer ::= SEQUENCE
 using init_ul_rrc_msg_transfer_s = elementary_procedure_option<init_ul_rrc_msg_transfer_ies_container>;
 
 // UEContextModificationConfirmIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_mod_confirm_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_mod_confirm_ies_container {
   bool                                               res_coordination_transfer_container_present              = false;
   bool                                               drbs_modified_conf_list_present                          = false;
@@ -142,24 +112,13 @@ struct ue_context_mod_confirm_ies_container {
   pc5_rlc_ch_modified_list_l                         pc5_rlc_ch_modified_list;
   ue_multicast_m_rbs_confirmed_to_be_modified_list_l ue_multicast_m_rbs_confirmed_to_be_modified_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextModificationConfirm ::= SEQUENCE
 using ue_context_mod_confirm_s = elementary_procedure_option<ue_context_mod_confirm_ies_container>;
 
 // UEContextModificationFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_mod_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_mod_fail_ies_container {
   bool               crit_diagnostics_present                = false;
   bool               requested_target_cell_global_id_present = false;
@@ -169,24 +128,13 @@ struct ue_context_mod_fail_ies_container {
   crit_diagnostics_s crit_diagnostics;
   nr_cgi_s           requested_target_cell_global_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextModificationFailure ::= SEQUENCE
 using ue_context_mod_fail_s = elementary_procedure_option<ue_context_mod_fail_ies_container>;
 
 // UEContextModificationRefuseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_mod_refuse_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_mod_refuse_ies_container {
   bool               crit_diagnostics_present = false;
   uint64_t           gnb_cu_ue_f1ap_id;
@@ -194,24 +142,13 @@ struct ue_context_mod_refuse_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextModificationRefuse ::= SEQUENCE
 using ue_context_mod_refuse_s = elementary_procedure_option<ue_context_mod_refuse_ies_container>;
 
 // UEContextModificationRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_mod_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_mod_request_ies_container {
   bool                                            sp_cell_id_present                                    = false;
   bool                                            serv_cell_idx_present                                 = false;
@@ -402,24 +339,13 @@ struct ue_context_mod_request_ies_container {
   ltm_reset_info_s                                ltm_reset_info;
   ltmtci_states_cfgs_list_l                       ltmtci_states_cfgs_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextModificationRequest ::= SEQUENCE
 using ue_context_mod_request_s = elementary_procedure_option<ue_context_mod_request_ies_container>;
 
 // UEContextModificationRequiredIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_mod_required_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_mod_required_ies_container {
   bool                                              res_coordination_transfer_container_present             = false;
   bool                                              du_to_cu_rrc_info_present                               = false;
@@ -457,24 +383,13 @@ struct ue_context_mod_required_ies_container {
   ue_multicast_m_rbs_required_to_be_released_list_l ue_multicast_m_rbs_required_to_be_released_list;
   ltm_cells_to_be_released_list_l                   ltm_cells_to_be_released_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextModificationRequired ::= SEQUENCE
 using ue_context_mod_required_s = elementary_procedure_option<ue_context_mod_required_ies_container>;
 
 // UEContextModificationResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_mod_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_mod_resp_ies_container {
   bool                                    res_coordination_transfer_container_present   = false;
   bool                                    du_to_cu_rrc_info_present                     = false;
@@ -561,24 +476,13 @@ struct ue_context_mod_resp_ies_container {
   ltm_cfg_s                               ltm_cfg;
   s_cp_ac_cfg_s                           s_cp_ac_cfg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextModificationResponse ::= SEQUENCE
 using ue_context_mod_resp_s = elementary_procedure_option<ue_context_mod_resp_ies_container>;
 
 // UEContextReleaseCommandIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_release_cmd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_release_cmd_ies_container {
   bool                            rrc_container_present                 = false;
   bool                            srb_id_present                        = false;
@@ -604,24 +508,13 @@ struct ue_context_release_cmd_ies_container {
   ltm_cells_to_be_released_list_l ltm_cells_to_be_released_list;
   dl_lbt_fail_info_request_e      dl_lbt_fail_info_request;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextReleaseCommand ::= SEQUENCE
 using ue_context_release_cmd_s = elementary_procedure_option<ue_context_release_cmd_ies_container>;
 
 // UEContextReleaseCompleteIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_release_complete_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_release_complete_ies_container {
   bool                                crit_diagnostics_present                  = false;
   bool                                recommended_ss_bs_for_paging_list_present = false;
@@ -630,24 +523,13 @@ struct ue_context_release_complete_ies_container {
   crit_diagnostics_s                  crit_diagnostics;
   recommended_ss_bs_for_paging_list_l recommended_ss_bs_for_paging_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextReleaseComplete ::= SEQUENCE
 using ue_context_release_complete_s = elementary_procedure_option<ue_context_release_complete_ies_container>;
 
 // UEContextReleaseRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_release_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_release_request_ies_container {
   bool                            target_cells_to_cancel_present        = false;
   bool                            ltm_cells_to_be_released_list_present = false;
@@ -657,24 +539,13 @@ struct ue_context_release_request_ies_container {
   target_cell_list_l              target_cells_to_cancel;
   ltm_cells_to_be_released_list_l ltm_cells_to_be_released_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextReleaseRequest ::= SEQUENCE
 using ue_context_release_request_s = elementary_procedure_option<ue_context_release_request_ies_container>;
 
 // UEContextSetupFailureIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_setup_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_setup_fail_ies_container {
   bool                     gnb_du_ue_f1ap_id_present               = false;
   bool                     crit_diagnostics_present                = false;
@@ -687,24 +558,13 @@ struct ue_context_setup_fail_ies_container {
   potential_sp_cell_list_l potential_sp_cell_list;
   nr_cgi_s                 requested_target_cell_global_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextSetupFailure ::= SEQUENCE
 using ue_context_setup_fail_s = elementary_procedure_option<ue_context_setup_fail_ies_container>;
 
 // UEContextSetupRequestIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_setup_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_setup_request_ies_container {
   bool                                  gnb_du_ue_f1ap_id_present                         = false;
   bool                                  sp_cell_ul_cfg_present                            = false;
@@ -831,24 +691,13 @@ struct ue_context_setup_request_ies_container {
   sl_positioning_ranging_service_info_s sl_positioning_ranging_service_info;
   non_integer_drx_cycle_s               non_integer_drx_cycle;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextSetupRequest ::= SEQUENCE
 using ue_context_setup_request_s = elementary_procedure_option<ue_context_setup_request_ies_container>;
 
 // UEContextSetupResponseIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_context_setup_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_setup_resp_ies_container {
   bool                                  c_rnti_present                              = false;
   bool                                  res_coordination_transfer_container_present = false;
@@ -908,24 +757,13 @@ struct ue_context_setup_resp_ies_container {
   ltm_cfg_s                             ltm_cfg;
   s_cp_ac_cfg_s                         s_cp_ac_cfg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextSetupResponse ::= SEQUENCE
 using ue_context_setup_resp_s = elementary_procedure_option<ue_context_setup_resp_ies_container>;
 
 // UEInactivityNotificationIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ue_inactivity_notif_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_inactivity_notif_ies_container {
   bool                      sdt_termination_request_present = false;
   uint64_t                  gnb_cu_ue_f1ap_id;
@@ -933,24 +771,13 @@ struct ue_inactivity_notif_ies_container {
   drb_activity_list_l       drb_activity_list;
   sdt_termination_request_e sdt_termination_request;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEInactivityNotification ::= SEQUENCE
 using ue_inactivity_notif_s = elementary_procedure_option<ue_inactivity_notif_ies_container>;
 
 // ULRRCMessageTransferIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
-struct ul_rrc_msg_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ul_rrc_msg_transfer_ies_container {
   bool                      sel_plmn_id_present           = false;
   bool                      new_gnb_du_ue_f1ap_id_present = false;
@@ -961,10 +788,7 @@ struct ul_rrc_msg_transfer_ies_container {
   fixed_octstring<3, true>  sel_plmn_id;
   uint64_t                  new_gnb_du_ue_f1ap_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ULRRCMessageTransfer ::= SEQUENCE

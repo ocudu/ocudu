@@ -252,7 +252,7 @@ TEST_P(du_high_pos_req_tester, when_positioning_measurement_request_is_received_
       "STATUS: POSITIONING MEASUREMENT REQUEST received by DU. Waiting for POSITIONING MEASUREMENT RESPONSE...");
   {
     asn1::json_writer js;
-    pos_meas_req.pdu.to_json(js);
+    asn1::to_json(js, pos_meas_req.pdu);
     du_logger.info("Containerized Positioning Measurement Request MSG: {}", js.to_string());
   }
 
@@ -261,7 +261,7 @@ TEST_P(du_high_pos_req_tester, when_positioning_measurement_request_is_received_
   const auto pos_meas_resp = cu_notifier.f1ap_ul_msgs.rbegin()->second;
   {
     asn1::json_writer js;
-    pos_meas_resp.pdu.to_json(js);
+    asn1::to_json(js, pos_meas_resp.pdu);
     du_logger.info("Containerized Positioning Measurement Response MSG: {}", js.to_string());
   }
   ASSERT_TRUE(test_helpers::is_valid_f1ap_positioning_measurement_response(pos_meas_resp));
@@ -351,7 +351,7 @@ TEST_P(du_high_pos_multi_cells_tester,
   this->test_logger.info("STATUS: TRP INFORMATION REQUEST received by DU. Waiting for TRP INFORMATION RESPONSE ACK...");
   {
     asn1::json_writer js;
-    trp_info_req.pdu.to_json(js);
+    asn1::to_json(js, trp_info_req.pdu);
     du_logger.info("Containerized TRP INFORMATION REQUEST MSG: {}", js.to_string());
   }
 
@@ -361,7 +361,7 @@ TEST_P(du_high_pos_multi_cells_tester,
   ASSERT_TRUE(test_helpers::is_valid_f1ap_trp_information_response(trp_info_resp));
   {
     asn1::json_writer js;
-    trp_info_resp.pdu.to_json(js);
+    asn1::to_json(js, trp_info_resp.pdu);
     du_logger.info("Containerized TRP INFORMATION RESPONSE MSG: {}", js.to_string());
   }
 
@@ -406,7 +406,7 @@ TEST_P(du_high_pos_multi_cells_tester,
       "STATUS: POSITIONING MEASUREMENT REQUEST received by DU. Waiting for POSITIONING MEASUREMENT RESPONSE...");
   {
     asn1::json_writer js;
-    pos_meas_req.pdu.to_json(js);
+    asn1::to_json(js, pos_meas_req.pdu);
     du_logger.info("Containerized Positioning Measurement Request MSG: {}", js.to_string());
   }
 
@@ -416,7 +416,7 @@ TEST_P(du_high_pos_multi_cells_tester,
   const auto& pos_meas_resp = cu_notifier.f1ap_ul_msgs.rbegin()->second;
   {
     asn1::json_writer js;
-    pos_meas_resp.pdu.to_json(js);
+    asn1::to_json(js, pos_meas_resp.pdu);
     du_logger.info("Containerized Positioning Measurement Response MSG: {}", js.to_string());
   }
 

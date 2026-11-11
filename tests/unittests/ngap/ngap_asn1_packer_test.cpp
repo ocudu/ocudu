@@ -133,7 +133,7 @@ TEST_F(ngap_asn1_packer_test, when_unpack_init_ctx_extract_sec_params_correctly)
 
   asn1::cbit_ref      bref(buf);
   ocucp::ngap_message msg = {};
-  ASSERT_EQ(msg.pdu.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(msg.pdu, bref), asn1::OCUDUASN_SUCCESS);
 
   const asn1::ngap::ngap_pdu_c&                   pdu     = msg.pdu;
   const asn1::ngap::init_context_setup_request_s& request = pdu.init_msg().value.init_context_setup_request();

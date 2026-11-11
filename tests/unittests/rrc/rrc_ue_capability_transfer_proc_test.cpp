@@ -99,7 +99,7 @@ protected:
 
     byte_buffer   pdu;
     asn1::bit_ref bref{pdu};
-    report_fatal_error_if_not(ue_radio_access_cap_info.pack(bref) == asn1::OCUDUASN_SUCCESS,
+    report_fatal_error_if_not(asn1::pack(bref, ue_radio_access_cap_info) == asn1::OCUDUASN_SUCCESS,
                               "Failed to pack UERadioAccessCapabilityInformation");
     return pdu;
   }
@@ -155,7 +155,8 @@ static byte_buffer wrap_radio_access_capabilities(byte_buffer nr_capability)
   info.crit_exts.set_c1().set_ue_radio_access_cap_info().ue_radio_access_cap_info = std::move(packed_list);
   byte_buffer   packed;
   asn1::bit_ref info_writer{packed};
-  report_fatal_error_if_not(info.pack(info_writer) == asn1::OCUDUASN_SUCCESS, "Invalid test capability information");
+  report_fatal_error_if_not(asn1::pack(info_writer, info) == asn1::OCUDUASN_SUCCESS,
+                            "Invalid test capability information");
   return packed;
 }
 
@@ -164,12 +165,12 @@ TEST_F(rrc_ue_capability_transfer_proc_test, cached_capabilities_update_the_deco
   auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
   asn1::cbit_ref            reader{encoded};
-  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cap, reader), asn1::OCUDUASN_SUCCESS);
   cap.non_crit_ext_present                = true;
   cap.non_crit_ext.inactive_state_present = true;
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, cap), asn1::OCUDUASN_SUCCESS);
   ASSERT_TRUE(rrc_ue->store_ue_capabilities(wrap_radio_access_capabilities(std::move(packed))));
   EXPECT_TRUE(rrc_ue->is_rrc_inactive_supported());
   ASSERT_TRUE(rrc_ue->get_capabilities().redcap.has_value());
@@ -181,7 +182,7 @@ TEST_F(rrc_ue_capability_transfer_proc_test, cached_capabilities_update_the_deco
   cap.non_crit_ext.inactive_state_present = false;
   byte_buffer   replacement;
   asn1::bit_ref replacement_writer{replacement};
-  ASSERT_EQ(cap.pack(replacement_writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(replacement_writer, cap), asn1::OCUDUASN_SUCCESS);
   ASSERT_TRUE(rrc_ue->store_ue_capabilities(wrap_radio_access_capabilities(std::move(replacement))));
   EXPECT_FALSE(rrc_ue->is_rrc_inactive_supported());
 }
@@ -198,7 +199,7 @@ TEST_F(rrc_ue_capability_transfer_proc_test, unsupported_cached_capability_messa
   info.crit_exts.set_crit_exts_future();
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(info.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, info), asn1::OCUDUASN_SUCCESS);
   EXPECT_FALSE(rrc_ue->store_ue_capabilities(std::move(packed)));
   EXPECT_TRUE(rrc_ue->get_packed_ue_capability_rat_container_list().empty());
 }
@@ -220,7 +221,7 @@ TEST_F(rrc_ue_capability_transfer_proc_test, when_initial_nr_capabilities_are_ma
   ies.ue_cap_rat_container_list[0].ue_cap_rat_container = byte_buffer::create({0xff}).value();
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(msg.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, msg), asn1::OCUDUASN_SUCCESS);
   rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(packed), true);
 
   ASSERT_TRUE(task.ready());
@@ -236,7 +237,7 @@ TEST_F(rrc_ue_capability_transfer_proc_test, when_initial_nr_capabilities_are_ma
   ies.ue_cap_rat_container_list[0].ue_cap_rat_container = test_helpers::make_redcap_nr_capability(false);
   byte_buffer   replacement;
   asn1::bit_ref replacement_writer{replacement};
-  ASSERT_EQ(msg.pack(replacement_writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(replacement_writer, msg), asn1::OCUDUASN_SUCCESS);
   rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(replacement), true);
   ASSERT_TRUE(retry.ready());
   EXPECT_TRUE(retry.get());
@@ -260,7 +261,7 @@ TEST_F(rrc_ue_capability_transfer_proc_test, when_initial_redcap_capabilities_ar
   ies.ue_cap_rat_container_list[0].ue_cap_rat_container = test_helpers::make_redcap_nr_capability(false);
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(msg.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, msg), asn1::OCUDUASN_SUCCESS);
   rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(packed), true);
 
   ASSERT_TRUE(task.ready());

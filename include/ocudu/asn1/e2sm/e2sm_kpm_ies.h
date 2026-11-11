@@ -24,7 +24,7 @@ namespace e2sm {
 struct aggregation_function_type_opts {
   enum options { min, max, avg, sum, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using aggregation_function_type_e = enumerated<aggregation_function_type_opts, true>;
 
@@ -33,49 +33,39 @@ struct bin_range_value_c {
   struct types_opts {
     enum options { value_int, value_real, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true>;
 
-  // choice methods
-  bin_range_value_c() = default;
-  bin_range_value_c(const bin_range_value_c& other);
-  bin_range_value_c& operator=(const bin_range_value_c& other);
-  ~bin_range_value_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  int64_t& value_int()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  int64_t&                                      value_int()
   {
-    assert_choice_type(types::value_int, type_, "BinRangeValue");
+    assert_choice_type(types::value_int, c.type, "BinRangeValue");
     return c.get<int64_t>();
   }
   real_s& value_real()
   {
-    assert_choice_type(types::value_real, type_, "BinRangeValue");
+    assert_choice_type(types::value_real, c.type, "BinRangeValue");
     return c.get<real_s>();
   }
   const int64_t& value_int() const
   {
-    assert_choice_type(types::value_int, type_, "BinRangeValue");
+    assert_choice_type(types::value_int, c.type, "BinRangeValue");
     return c.get<int64_t>();
   }
   const real_s& value_real() const
   {
-    assert_choice_type(types::value_real, type_, "BinRangeValue");
+    assert_choice_type(types::value_real, c.type, "BinRangeValue");
     return c.get<real_s>();
   }
   int64_t& set_value_int();
   real_s&  set_value_real();
 
 private:
-  types                   type_;
-  choice_buffer_t<real_s> c;
-
-  void destroy_();
+  asn1::table::choice_storage<bin_range_value_c, types, choice_buffer_t<real_s>> c;
 };
 
 // BinRangeItem ::= SEQUENCE
@@ -85,10 +75,7 @@ struct bin_range_item_s {
   bin_range_value_c end_value;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BinRangeList ::= SEQUENCE (SIZE (1..65535)) OF BinRangeItem
@@ -101,10 +88,7 @@ struct bin_range_definition_s {
   bin_range_list_l bin_range_list_z;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementType ::= CHOICE
@@ -112,49 +96,39 @@ struct meas_type_c {
   struct types_opts {
     enum options { meas_name, meas_id, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true>;
 
-  // choice methods
-  meas_type_c() = default;
-  meas_type_c(const meas_type_c& other);
-  meas_type_c& operator=(const meas_type_c& other);
-  ~meas_type_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  printable_string<1, 150, true, true>& meas_name()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  printable_string<1, 150, true, true>&         meas_name()
   {
-    assert_choice_type(types::meas_name, type_, "MeasurementType");
+    assert_choice_type(types::meas_name, c.type, "MeasurementType");
     return c.get<printable_string<1, 150, true, true>>();
   }
   uint32_t& meas_id()
   {
-    assert_choice_type(types::meas_id, type_, "MeasurementType");
+    assert_choice_type(types::meas_id, c.type, "MeasurementType");
     return c.get<uint32_t>();
   }
   const printable_string<1, 150, true, true>& meas_name() const
   {
-    assert_choice_type(types::meas_name, type_, "MeasurementType");
+    assert_choice_type(types::meas_name, c.type, "MeasurementType");
     return c.get<printable_string<1, 150, true, true>>();
   }
   const uint32_t& meas_id() const
   {
-    assert_choice_type(types::meas_id, type_, "MeasurementType");
+    assert_choice_type(types::meas_id, c.type, "MeasurementType");
     return c.get<uint32_t>();
   }
   printable_string<1, 150, true, true>& set_meas_name();
   uint32_t&                             set_meas_id();
 
 private:
-  types                                                 type_;
-  choice_buffer_t<printable_string<1, 150, true, true>> c;
-
-  void destroy_();
+  asn1::table::choice_storage<meas_type_c, types, choice_buffer_t<printable_string<1, 150, true, true>>> c;
 };
 
 // DistMeasurementBinRangeItem ::= SEQUENCE
@@ -163,10 +137,7 @@ struct dist_meas_bin_range_item_s {
   bin_range_definition_s bin_range_def;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DistMeasurementBinRangeList ::= SEQUENCE (SIZE (1..65535)) OF DistMeasurementBinRangeItem
@@ -177,43 +148,43 @@ struct meas_label_s {
   struct no_label_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using no_label_e_ = enumerated<no_label_opts, true>;
   struct sum_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using sum_e_ = enumerated<sum_opts, true>;
   struct pre_label_override_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using pre_label_override_e_ = enumerated<pre_label_override_opts, true>;
   struct start_end_ind_opts {
     enum options { start, end, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using start_end_ind_e_ = enumerated<start_end_ind_opts, true>;
   struct min_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using min_e_ = enumerated<min_opts, true>;
   struct max_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using max_e_ = enumerated<max_opts, true>;
   struct avg_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using avg_e_ = enumerated<avg_opts, true>;
 
@@ -270,10 +241,7 @@ struct meas_label_s {
   copy_ptr<cgi_c>     cell_global_id;
   copy_ptr<beam_id_c> beam_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // LabelInfoItem ::= SEQUENCE
@@ -281,10 +249,7 @@ struct label_info_item_s {
   meas_label_s meas_label;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // LabelInfoList ::= SEQUENCE (SIZE (1..2147483647)) OF LabelInfoItem
@@ -294,7 +259,7 @@ using label_info_list_l = dyn_array<label_info_item_s>;
 struct meas_value_test_cond_expression_opts {
   enum options { equal, greaterthan, lessthan, contains, present, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using meas_value_test_cond_expression_e = enumerated<meas_value_test_cond_expression_opts, true>;
 
@@ -312,89 +277,82 @@ struct test_cond_value_c {
       nulltype
     } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true, 1>;
 
-  // choice methods
-  test_cond_value_c() = default;
-  test_cond_value_c(const test_cond_value_c& other);
-  test_cond_value_c& operator=(const test_cond_value_c& other);
-  ~test_cond_value_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  int64_t& value_int()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  int64_t&                                      value_int()
   {
-    assert_choice_type(types::value_int, type_, "TestCond-Value");
+    assert_choice_type(types::value_int, c.type, "TestCond-Value");
     return c.get<int64_t>();
   }
   int64_t& value_enum()
   {
-    assert_choice_type(types::value_enum, type_, "TestCond-Value");
+    assert_choice_type(types::value_enum, c.type, "TestCond-Value");
     return c.get<int64_t>();
   }
   bool& value_bool()
   {
-    assert_choice_type(types::value_bool, type_, "TestCond-Value");
+    assert_choice_type(types::value_bool, c.type, "TestCond-Value");
     return c.get<bool>();
   }
   unbounded_bitstring<false, true>& value_bit_s()
   {
-    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
+    assert_choice_type(types::value_bit_s, c.type, "TestCond-Value");
     return c.get<unbounded_bitstring<false, true>>();
   }
   unbounded_octstring<true>& value_oct_s()
   {
-    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
+    assert_choice_type(types::value_oct_s, c.type, "TestCond-Value");
     return c.get<unbounded_octstring<true>>();
   }
   printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& value_prt_s()
   {
-    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
+    assert_choice_type(types::value_prt_s, c.type, "TestCond-Value");
     return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
   }
   real_s& value_real()
   {
-    assert_choice_type(types::value_real, type_, "TestCond-Value");
+    assert_choice_type(types::value_real, c.type, "TestCond-Value");
     return c.get<real_s>();
   }
   const int64_t& value_int() const
   {
-    assert_choice_type(types::value_int, type_, "TestCond-Value");
+    assert_choice_type(types::value_int, c.type, "TestCond-Value");
     return c.get<int64_t>();
   }
   const int64_t& value_enum() const
   {
-    assert_choice_type(types::value_enum, type_, "TestCond-Value");
+    assert_choice_type(types::value_enum, c.type, "TestCond-Value");
     return c.get<int64_t>();
   }
   const bool& value_bool() const
   {
-    assert_choice_type(types::value_bool, type_, "TestCond-Value");
+    assert_choice_type(types::value_bool, c.type, "TestCond-Value");
     return c.get<bool>();
   }
   const unbounded_bitstring<false, true>& value_bit_s() const
   {
-    assert_choice_type(types::value_bit_s, type_, "TestCond-Value");
+    assert_choice_type(types::value_bit_s, c.type, "TestCond-Value");
     return c.get<unbounded_bitstring<false, true>>();
   }
   const unbounded_octstring<true>& value_oct_s() const
   {
-    assert_choice_type(types::value_oct_s, type_, "TestCond-Value");
+    assert_choice_type(types::value_oct_s, c.type, "TestCond-Value");
     return c.get<unbounded_octstring<true>>();
   }
   const printable_string<0, MAX_ASN_STRING_LENGTH, false, true>& value_prt_s() const
   {
-    assert_choice_type(types::value_prt_s, type_, "TestCond-Value");
+    assert_choice_type(types::value_prt_s, c.type, "TestCond-Value");
     return c.get<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>>();
   }
   const real_s& value_real() const
   {
-    assert_choice_type(types::value_real, type_, "TestCond-Value");
+    assert_choice_type(types::value_real, c.type, "TestCond-Value");
     return c.get<real_s>();
   }
   int64_t&                                                 set_value_int();
@@ -406,15 +364,14 @@ struct test_cond_value_c {
   real_s&                                                  set_value_real();
 
 private:
-  types type_;
-  choice_buffer_t<bool,
-                  printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
-                  real_s,
-                  unbounded_bitstring<false, true>,
-                  unbounded_octstring<true>>
+  asn1::table::choice_storage<test_cond_value_c,
+                              types,
+                              choice_buffer_t<bool,
+                                              printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
+                                              real_s,
+                                              unbounded_bitstring<false, true>,
+                                              unbounded_octstring<true>>>
       c;
-
-  void destroy_();
 };
 
 // MeasValueReportCond ::= SEQUENCE
@@ -423,17 +380,14 @@ struct meas_value_report_cond_s {
   test_cond_value_c                 test_value;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // LogicalOR ::= ENUMERATED
 struct lc_or_opts {
   enum options { true_value, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using lc_or_e = enumerated<lc_or_opts, true>;
 
@@ -444,10 +398,7 @@ struct match_cond_report_item_s {
   lc_or_e                  lc_or;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchCondReportList ::= SEQUENCE (SIZE (1..32768)) OF MatchCondReportItem
@@ -460,10 +411,7 @@ struct meas_info_item_s {
   // ...
   copy_ptr<match_cond_report_list_l> match_cond_report_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementInfoList ::= SEQUENCE (SIZE (1..65535)) OF MeasurementInfoItem
@@ -478,10 +426,7 @@ struct e2sm_kpm_action_definition_format1_s {
   // ...
   copy_ptr<dist_meas_bin_range_list_l> dist_meas_bin_range_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-ActionDefinition-Format2 ::= SEQUENCE
@@ -490,10 +435,7 @@ struct e2sm_kpm_action_definition_format2_s {
   e2sm_kpm_action_definition_format1_s subscript_info;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TestCond-Type ::= CHOICE
@@ -501,67 +443,67 @@ struct test_cond_type_c {
   struct gbr_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using gbr_e_ = enumerated<gbr_opts, true>;
   struct ambr_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ambr_e_ = enumerated<ambr_opts, true>;
   struct is_stat_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using is_stat_e_ = enumerated<is_stat_opts, true>;
   struct is_cat_m_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using is_cat_m_e_ = enumerated<is_cat_m_opts, true>;
   struct rsrp_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using rsrp_e_ = enumerated<rsrp_opts, true>;
   struct rsrq_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using rsrq_e_ = enumerated<rsrq_opts, true>;
   struct ul_r_srp_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_r_srp_e_ = enumerated<ul_r_srp_opts, true>;
   struct cqi_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using cqi_e_ = enumerated<cqi_opts, true>;
   struct five_qi_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using five_qi_e_ = enumerated<five_qi_opts, true>;
   struct qci_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using qci_e_ = enumerated<qci_opts, true>;
   struct snssai_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using snssai_e_ = enumerated<snssai_opts, true>;
   struct types_opts {
@@ -579,132 +521,124 @@ struct test_cond_type_c {
       snssai,
       nulltype
     } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts, true, 5>;
 
-  // choice methods
-  test_cond_type_c() = default;
-  test_cond_type_c(const test_cond_type_c& other);
-  test_cond_type_c& operator=(const test_cond_type_c& other);
-  ~test_cond_type_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  gbr_e_& gbr()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  gbr_e_&                                       gbr()
   {
-    assert_choice_type(types::gbr, type_, "TestCond-Type");
+    assert_choice_type(types::gbr, c.type, "TestCond-Type");
     return c.get<gbr_e_>();
   }
   ambr_e_& ambr()
   {
-    assert_choice_type(types::ambr, type_, "TestCond-Type");
+    assert_choice_type(types::ambr, c.type, "TestCond-Type");
     return c.get<ambr_e_>();
   }
   is_stat_e_& is_stat()
   {
-    assert_choice_type(types::is_stat, type_, "TestCond-Type");
+    assert_choice_type(types::is_stat, c.type, "TestCond-Type");
     return c.get<is_stat_e_>();
   }
   is_cat_m_e_& is_cat_m()
   {
-    assert_choice_type(types::is_cat_m, type_, "TestCond-Type");
+    assert_choice_type(types::is_cat_m, c.type, "TestCond-Type");
     return c.get<is_cat_m_e_>();
   }
   rsrp_e_& rsrp()
   {
-    assert_choice_type(types::rsrp, type_, "TestCond-Type");
+    assert_choice_type(types::rsrp, c.type, "TestCond-Type");
     return c.get<rsrp_e_>();
   }
   rsrq_e_& rsrq()
   {
-    assert_choice_type(types::rsrq, type_, "TestCond-Type");
+    assert_choice_type(types::rsrq, c.type, "TestCond-Type");
     return c.get<rsrq_e_>();
   }
   ul_r_srp_e_& ul_r_srp()
   {
-    assert_choice_type(types::ul_r_srp, type_, "TestCond-Type");
+    assert_choice_type(types::ul_r_srp, c.type, "TestCond-Type");
     return c.get<ul_r_srp_e_>();
   }
   cqi_e_& cqi()
   {
-    assert_choice_type(types::cqi, type_, "TestCond-Type");
+    assert_choice_type(types::cqi, c.type, "TestCond-Type");
     return c.get<cqi_e_>();
   }
   five_qi_e_& five_qi()
   {
-    assert_choice_type(types::five_qi, type_, "TestCond-Type");
+    assert_choice_type(types::five_qi, c.type, "TestCond-Type");
     return c.get<five_qi_e_>();
   }
   qci_e_& qci()
   {
-    assert_choice_type(types::qci, type_, "TestCond-Type");
+    assert_choice_type(types::qci, c.type, "TestCond-Type");
     return c.get<qci_e_>();
   }
   snssai_e_& snssai()
   {
-    assert_choice_type(types::snssai, type_, "TestCond-Type");
+    assert_choice_type(types::snssai, c.type, "TestCond-Type");
     return c.get<snssai_e_>();
   }
   const gbr_e_& gbr() const
   {
-    assert_choice_type(types::gbr, type_, "TestCond-Type");
+    assert_choice_type(types::gbr, c.type, "TestCond-Type");
     return c.get<gbr_e_>();
   }
   const ambr_e_& ambr() const
   {
-    assert_choice_type(types::ambr, type_, "TestCond-Type");
+    assert_choice_type(types::ambr, c.type, "TestCond-Type");
     return c.get<ambr_e_>();
   }
   const is_stat_e_& is_stat() const
   {
-    assert_choice_type(types::is_stat, type_, "TestCond-Type");
+    assert_choice_type(types::is_stat, c.type, "TestCond-Type");
     return c.get<is_stat_e_>();
   }
   const is_cat_m_e_& is_cat_m() const
   {
-    assert_choice_type(types::is_cat_m, type_, "TestCond-Type");
+    assert_choice_type(types::is_cat_m, c.type, "TestCond-Type");
     return c.get<is_cat_m_e_>();
   }
   const rsrp_e_& rsrp() const
   {
-    assert_choice_type(types::rsrp, type_, "TestCond-Type");
+    assert_choice_type(types::rsrp, c.type, "TestCond-Type");
     return c.get<rsrp_e_>();
   }
   const rsrq_e_& rsrq() const
   {
-    assert_choice_type(types::rsrq, type_, "TestCond-Type");
+    assert_choice_type(types::rsrq, c.type, "TestCond-Type");
     return c.get<rsrq_e_>();
   }
   const ul_r_srp_e_& ul_r_srp() const
   {
-    assert_choice_type(types::ul_r_srp, type_, "TestCond-Type");
+    assert_choice_type(types::ul_r_srp, c.type, "TestCond-Type");
     return c.get<ul_r_srp_e_>();
   }
   const cqi_e_& cqi() const
   {
-    assert_choice_type(types::cqi, type_, "TestCond-Type");
+    assert_choice_type(types::cqi, c.type, "TestCond-Type");
     return c.get<cqi_e_>();
   }
   const five_qi_e_& five_qi() const
   {
-    assert_choice_type(types::five_qi, type_, "TestCond-Type");
+    assert_choice_type(types::five_qi, c.type, "TestCond-Type");
     return c.get<five_qi_e_>();
   }
   const qci_e_& qci() const
   {
-    assert_choice_type(types::qci, type_, "TestCond-Type");
+    assert_choice_type(types::qci, c.type, "TestCond-Type");
     return c.get<qci_e_>();
   }
   const snssai_e_& snssai() const
   {
-    assert_choice_type(types::snssai, type_, "TestCond-Type");
+    assert_choice_type(types::snssai, c.type, "TestCond-Type");
     return c.get<snssai_e_>();
   }
   gbr_e_&      set_gbr();
@@ -720,17 +654,14 @@ struct test_cond_type_c {
   snssai_e_&   set_snssai();
 
 private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
+  asn1::table::choice_storage<test_cond_type_c, types, pod_choice_buffer_t> c;
 };
 
 // TestCond-Expression ::= ENUMERATED
 struct test_cond_expression_opts {
   enum options { equal, greaterthan, lessthan, contains, present, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using test_cond_expression_e = enumerated<test_cond_expression_opts, true>;
 
@@ -743,10 +674,7 @@ struct test_cond_info_s {
   test_cond_value_c      test_value;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingCondItem-Choice ::= CHOICE
@@ -754,49 +682,39 @@ struct matching_cond_item_choice_c {
   struct types_opts {
     enum options { meas_label, test_cond_info, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true>;
 
-  // choice methods
-  matching_cond_item_choice_c() = default;
-  matching_cond_item_choice_c(const matching_cond_item_choice_c& other);
-  matching_cond_item_choice_c& operator=(const matching_cond_item_choice_c& other);
-  ~matching_cond_item_choice_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  meas_label_s& meas_label()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  meas_label_s&                                 meas_label()
   {
-    assert_choice_type(types::meas_label, type_, "MatchingCondItem-Choice");
+    assert_choice_type(types::meas_label, c.type, "MatchingCondItem-Choice");
     return c.get<meas_label_s>();
   }
   test_cond_info_s& test_cond_info()
   {
-    assert_choice_type(types::test_cond_info, type_, "MatchingCondItem-Choice");
+    assert_choice_type(types::test_cond_info, c.type, "MatchingCondItem-Choice");
     return c.get<test_cond_info_s>();
   }
   const meas_label_s& meas_label() const
   {
-    assert_choice_type(types::meas_label, type_, "MatchingCondItem-Choice");
+    assert_choice_type(types::meas_label, c.type, "MatchingCondItem-Choice");
     return c.get<meas_label_s>();
   }
   const test_cond_info_s& test_cond_info() const
   {
-    assert_choice_type(types::test_cond_info, type_, "MatchingCondItem-Choice");
+    assert_choice_type(types::test_cond_info, c.type, "MatchingCondItem-Choice");
     return c.get<test_cond_info_s>();
   }
   meas_label_s&     set_meas_label();
   test_cond_info_s& set_test_cond_info();
 
 private:
-  types                                           type_;
-  choice_buffer_t<meas_label_s, test_cond_info_s> c;
-
-  void destroy_();
+  asn1::table::choice_storage<matching_cond_item_choice_c, types, choice_buffer_t<meas_label_s, test_cond_info_s>> c;
 };
 
 // MatchingCondItem ::= SEQUENCE
@@ -806,10 +724,7 @@ struct matching_cond_item_s {
   lc_or_e                     lc_or;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingCondList ::= SEQUENCE (SIZE (1..32768)) OF MatchingCondItem
@@ -822,10 +737,7 @@ struct meas_cond_item_s {
   // ...
   copy_ptr<bin_range_definition_s> bin_range_def;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementCondList ::= SEQUENCE (SIZE (1..65535)) OF MeasurementCondItem
@@ -839,10 +751,7 @@ struct e2sm_kpm_action_definition_format3_s {
   cgi_c            cell_global_id;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUeCondPerSubItem ::= SEQUENCE
@@ -852,10 +761,7 @@ struct matching_ue_cond_per_sub_item_s {
   bool    lc_or_present = false;
   lc_or_e lc_or;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUeCondPerSubList ::= SEQUENCE (SIZE (1..32768)) OF MatchingUeCondPerSubItem
@@ -867,10 +773,7 @@ struct e2sm_kpm_action_definition_format4_s {
   e2sm_kpm_action_definition_format1_s sub_info;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUEidPerSubItem ::= SEQUENCE
@@ -878,10 +781,7 @@ struct matching_ue_id_per_sub_item_s {
   ue_id_c ue_id;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUEidPerSubList ::= SEQUENCE (SIZE (2..65535)) OF MatchingUEidPerSubItem
@@ -893,10 +793,7 @@ struct e2sm_kpm_action_definition_format5_s {
   e2sm_kpm_action_definition_format1_s sub_info;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-ActionDefinition-Fundamental ::= SEQUENCE
@@ -912,72 +809,64 @@ struct e2sm_kpm_action_definition_fundamental_s {
         // ...
         nulltype
       } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts, true>;
 
-    // choice methods
-    action_definition_fundamental_formats_c_() = default;
-    action_definition_fundamental_formats_c_(const action_definition_fundamental_formats_c_& other);
-    action_definition_fundamental_formats_c_& operator=(const action_definition_fundamental_formats_c_& other);
-    ~action_definition_fundamental_formats_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2sm_kpm_action_definition_format1_s& action_definition_format1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    e2sm_kpm_action_definition_format1_s&         action_definition_format1()
     {
-      assert_choice_type(types::action_definition_format1, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format1, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format1_s>();
     }
     e2sm_kpm_action_definition_format2_s& action_definition_format2()
     {
-      assert_choice_type(types::action_definition_format2, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format2, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format2_s>();
     }
     e2sm_kpm_action_definition_format3_s& action_definition_format3()
     {
-      assert_choice_type(types::action_definition_format3, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format3, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format3_s>();
     }
     e2sm_kpm_action_definition_format4_s& action_definition_format4()
     {
-      assert_choice_type(types::action_definition_format4, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format4, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format4_s>();
     }
     e2sm_kpm_action_definition_format5_s& action_definition_format5()
     {
-      assert_choice_type(types::action_definition_format5, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format5, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format5_s>();
     }
     const e2sm_kpm_action_definition_format1_s& action_definition_format1() const
     {
-      assert_choice_type(types::action_definition_format1, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format1, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format1_s>();
     }
     const e2sm_kpm_action_definition_format2_s& action_definition_format2() const
     {
-      assert_choice_type(types::action_definition_format2, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format2, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format2_s>();
     }
     const e2sm_kpm_action_definition_format3_s& action_definition_format3() const
     {
-      assert_choice_type(types::action_definition_format3, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format3, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format3_s>();
     }
     const e2sm_kpm_action_definition_format4_s& action_definition_format4() const
     {
-      assert_choice_type(types::action_definition_format4, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format4, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format4_s>();
     }
     const e2sm_kpm_action_definition_format5_s& action_definition_format5() const
     {
-      assert_choice_type(types::action_definition_format5, type_, "actionDefinitionFundamental-formats");
+      assert_choice_type(types::action_definition_format5, c.type, "actionDefinitionFundamental-formats");
       return c.get<e2sm_kpm_action_definition_format5_s>();
     }
     e2sm_kpm_action_definition_format1_s& set_action_definition_format1();
@@ -987,25 +876,21 @@ struct e2sm_kpm_action_definition_fundamental_s {
     e2sm_kpm_action_definition_format5_s& set_action_definition_format5();
 
   private:
-    types type_;
-    choice_buffer_t<e2sm_kpm_action_definition_format1_s,
-                    e2sm_kpm_action_definition_format2_s,
-                    e2sm_kpm_action_definition_format3_s,
-                    e2sm_kpm_action_definition_format4_s,
-                    e2sm_kpm_action_definition_format5_s>
+    asn1::table::choice_storage<action_definition_fundamental_formats_c_,
+                                types,
+                                choice_buffer_t<e2sm_kpm_action_definition_format1_s,
+                                                e2sm_kpm_action_definition_format2_s,
+                                                e2sm_kpm_action_definition_format3_s,
+                                                e2sm_kpm_action_definition_format4_s,
+                                                e2sm_kpm_action_definition_format5_s>>
         c;
-
-    void destroy_();
   };
 
   // member variables
   action_definition_fundamental_formats_c_ action_definition_fundamental_formats;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MultiReportActionDefinitionItem ::= SEQUENCE
@@ -1020,10 +905,7 @@ struct multi_report_action_definition_item_s {
   matching_ue_id_per_sub_list_l            job_matching_ue_id_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MultiReportActionDefinitionList ::= SEQUENCE (SIZE (1..65535)) OF MultiReportActionDefinitionItem
@@ -1033,7 +915,7 @@ using multi_report_action_definition_list_l = dyn_array<multi_report_action_defi
 struct multi_report_approach_opts {
   enum options { single, multiple, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using multi_report_approach_e = enumerated<multi_report_approach_opts, true>;
 
@@ -1045,10 +927,7 @@ struct e2sm_kpm_action_definition_format255_s {
   e2sm_kpm_action_definition_fundamental_s common_action_definition;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-ActionDefinition ::= SEQUENCE
@@ -1065,82 +944,74 @@ struct e2sm_kpm_action_definition_s {
         action_definition_format255,
         nulltype
       } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using types = enumerated<types_opts, true, 3>;
 
-    // choice methods
-    action_definition_formats_c_() = default;
-    action_definition_formats_c_(const action_definition_formats_c_& other);
-    action_definition_formats_c_& operator=(const action_definition_formats_c_& other);
-    ~action_definition_formats_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2sm_kpm_action_definition_format1_s& action_definition_format1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    e2sm_kpm_action_definition_format1_s&         action_definition_format1()
     {
-      assert_choice_type(types::action_definition_format1, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format1, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format1_s>();
     }
     e2sm_kpm_action_definition_format2_s& action_definition_format2()
     {
-      assert_choice_type(types::action_definition_format2, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format2, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format2_s>();
     }
     e2sm_kpm_action_definition_format3_s& action_definition_format3()
     {
-      assert_choice_type(types::action_definition_format3, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format3, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format3_s>();
     }
     e2sm_kpm_action_definition_format4_s& action_definition_format4()
     {
-      assert_choice_type(types::action_definition_format4, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format4, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format4_s>();
     }
     e2sm_kpm_action_definition_format5_s& action_definition_format5()
     {
-      assert_choice_type(types::action_definition_format5, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format5, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format5_s>();
     }
     e2sm_kpm_action_definition_format255_s& action_definition_format255()
     {
-      assert_choice_type(types::action_definition_format255, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format255, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format255_s>();
     }
     const e2sm_kpm_action_definition_format1_s& action_definition_format1() const
     {
-      assert_choice_type(types::action_definition_format1, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format1, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format1_s>();
     }
     const e2sm_kpm_action_definition_format2_s& action_definition_format2() const
     {
-      assert_choice_type(types::action_definition_format2, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format2, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format2_s>();
     }
     const e2sm_kpm_action_definition_format3_s& action_definition_format3() const
     {
-      assert_choice_type(types::action_definition_format3, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format3, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format3_s>();
     }
     const e2sm_kpm_action_definition_format4_s& action_definition_format4() const
     {
-      assert_choice_type(types::action_definition_format4, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format4, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format4_s>();
     }
     const e2sm_kpm_action_definition_format5_s& action_definition_format5() const
     {
-      assert_choice_type(types::action_definition_format5, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format5, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format5_s>();
     }
     const e2sm_kpm_action_definition_format255_s& action_definition_format255() const
     {
-      assert_choice_type(types::action_definition_format255, type_, "actionDefinition-formats");
+      assert_choice_type(types::action_definition_format255, c.type, "actionDefinition-formats");
       return c.get<e2sm_kpm_action_definition_format255_s>();
     }
     e2sm_kpm_action_definition_format1_s&   set_action_definition_format1();
@@ -1151,16 +1022,15 @@ struct e2sm_kpm_action_definition_s {
     e2sm_kpm_action_definition_format255_s& set_action_definition_format255();
 
   private:
-    types type_;
-    choice_buffer_t<e2sm_kpm_action_definition_format1_s,
-                    e2sm_kpm_action_definition_format255_s,
-                    e2sm_kpm_action_definition_format2_s,
-                    e2sm_kpm_action_definition_format3_s,
-                    e2sm_kpm_action_definition_format4_s,
-                    e2sm_kpm_action_definition_format5_s>
+    asn1::table::choice_storage<action_definition_formats_c_,
+                                types,
+                                choice_buffer_t<e2sm_kpm_action_definition_format1_s,
+                                                e2sm_kpm_action_definition_format255_s,
+                                                e2sm_kpm_action_definition_format2_s,
+                                                e2sm_kpm_action_definition_format3_s,
+                                                e2sm_kpm_action_definition_format4_s,
+                                                e2sm_kpm_action_definition_format5_s>>
         c;
-
-    void destroy_();
   };
 
   // member variables
@@ -1168,10 +1038,7 @@ struct e2sm_kpm_action_definition_s {
   action_definition_formats_c_ action_definition_formats;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-EventTriggerDefinition-Format1 ::= SEQUENCE
@@ -1179,10 +1046,7 @@ struct e2sm_kpm_event_trigger_definition_format1_s {
   uint64_t report_period = 1;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventMeasurementDefinition ::= SEQUENCE
@@ -1193,10 +1057,7 @@ struct event_meas_definition_s {
   cgi_c             cell_global_id;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventWindowDefinition ::= SEQUENCE
@@ -1205,10 +1066,7 @@ struct event_win_definition_s {
   aggregation_function_type_e aggre_func;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventParameterMeasurement ::= SEQUENCE
@@ -1218,10 +1076,7 @@ struct event_param_meas_s {
   event_win_definition_s  win_func;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventParameterValue ::= SEQUENCE
@@ -1230,17 +1085,14 @@ struct event_param_value_s {
   test_cond_value_c value;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NextMathOperator ::= ENUMERATED
 struct next_math_operator_opts {
   enum options { plus, minus, product, divide_by, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using next_math_operator_e = enumerated<next_math_operator_opts, true>;
 
@@ -1250,49 +1102,39 @@ struct event_param_item_s {
     struct types_opts {
       enum options { meas, val, /*...*/ nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts, true>;
 
-    // choice methods
-    param_type_c_() = default;
-    param_type_c_(const param_type_c_& other);
-    param_type_c_& operator=(const param_type_c_& other);
-    ~param_type_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    event_param_meas_s& meas()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    event_param_meas_s&                           meas()
     {
-      assert_choice_type(types::meas, type_, "paramType");
+      assert_choice_type(types::meas, c.type, "paramType");
       return c.get<event_param_meas_s>();
     }
     event_param_value_s& value()
     {
-      assert_choice_type(types::val, type_, "paramType");
+      assert_choice_type(types::val, c.type, "paramType");
       return c.get<event_param_value_s>();
     }
     const event_param_meas_s& meas() const
     {
-      assert_choice_type(types::meas, type_, "paramType");
+      assert_choice_type(types::meas, c.type, "paramType");
       return c.get<event_param_meas_s>();
     }
     const event_param_value_s& value() const
     {
-      assert_choice_type(types::val, type_, "paramType");
+      assert_choice_type(types::val, c.type, "paramType");
       return c.get<event_param_value_s>();
     }
     event_param_meas_s&  set_meas();
     event_param_value_s& set_value();
 
   private:
-    types                                                    type_;
-    choice_buffer_t<event_param_meas_s, event_param_value_s> c;
-
-    void destroy_();
+    asn1::table::choice_storage<param_type_c_, types, choice_buffer_t<event_param_meas_s, event_param_value_s>> c;
   };
 
   // member variables
@@ -1301,10 +1143,7 @@ struct event_param_item_s {
   next_math_operator_e next_math_op;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventParameterList ::= SEQUENCE (SIZE (1..65535)) OF EventParameterItem
@@ -1317,17 +1156,14 @@ struct event_expression_s {
   aggregation_function_type_e aggre_func;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventLogicalOperator ::= ENUMERATED
 struct event_lc_operator_opts {
   enum options { equal, greaterthan, lessthan, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using event_lc_operator_e = enumerated<event_lc_operator_opts, true>;
 
@@ -1338,10 +1174,7 @@ struct event_formula_s {
   event_expression_s  right_expr;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventTriggerItem ::= SEQUENCE
@@ -1353,10 +1186,7 @@ struct event_trigger_item_s {
   lc_or_e         lc_or;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EventTrigerList ::= SEQUENCE (SIZE (1..65535)) OF EventTriggerItem
@@ -1367,10 +1197,7 @@ struct e2sm_kpm_event_trigger_definition_format2_s {
   event_triger_list_l event_trigger_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-EventTriggerDefinition ::= SEQUENCE
@@ -1378,62 +1205,52 @@ struct e2sm_kpm_event_trigger_definition_s {
   struct event_definition_formats_c_ {
     struct types_opts {
       enum options { event_definition_format1, /*...*/ event_definition_format2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts, true, 1>;
 
-    // choice methods
-    event_definition_formats_c_() = default;
-    event_definition_formats_c_(const event_definition_formats_c_& other);
-    event_definition_formats_c_& operator=(const event_definition_formats_c_& other);
-    ~event_definition_formats_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2sm_kpm_event_trigger_definition_format1_s& event_definition_format1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    e2sm_kpm_event_trigger_definition_format1_s&  event_definition_format1()
     {
-      assert_choice_type(types::event_definition_format1, type_, "eventDefinition-formats");
+      assert_choice_type(types::event_definition_format1, c.type, "eventDefinition-formats");
       return c.get<e2sm_kpm_event_trigger_definition_format1_s>();
     }
     e2sm_kpm_event_trigger_definition_format2_s& event_definition_format2()
     {
-      assert_choice_type(types::event_definition_format2, type_, "eventDefinition-formats");
+      assert_choice_type(types::event_definition_format2, c.type, "eventDefinition-formats");
       return c.get<e2sm_kpm_event_trigger_definition_format2_s>();
     }
     const e2sm_kpm_event_trigger_definition_format1_s& event_definition_format1() const
     {
-      assert_choice_type(types::event_definition_format1, type_, "eventDefinition-formats");
+      assert_choice_type(types::event_definition_format1, c.type, "eventDefinition-formats");
       return c.get<e2sm_kpm_event_trigger_definition_format1_s>();
     }
     const e2sm_kpm_event_trigger_definition_format2_s& event_definition_format2() const
     {
-      assert_choice_type(types::event_definition_format2, type_, "eventDefinition-formats");
+      assert_choice_type(types::event_definition_format2, c.type, "eventDefinition-formats");
       return c.get<e2sm_kpm_event_trigger_definition_format2_s>();
     }
     e2sm_kpm_event_trigger_definition_format1_s& set_event_definition_format1();
     e2sm_kpm_event_trigger_definition_format2_s& set_event_definition_format2();
 
   private:
-    types                                                                                                     type_;
-    choice_buffer_t<e2sm_kpm_event_trigger_definition_format1_s, e2sm_kpm_event_trigger_definition_format2_s> c;
-
-    void destroy_();
+    asn1::table::choice_storage<
+        event_definition_formats_c_,
+        types,
+        choice_buffer_t<e2sm_kpm_event_trigger_definition_format1_s, e2sm_kpm_event_trigger_definition_format2_s>>
+        c;
   };
 
   // member variables
   event_definition_formats_c_ event_definition_formats;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-IndicationHeader-Format1 ::= SEQUENCE
@@ -1451,10 +1268,7 @@ struct e2sm_kpm_ind_hdr_format1_s {
   bool     job_id_present = false;
   uint32_t job_id         = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-IndicationHeader ::= SEQUENCE
@@ -1462,21 +1276,16 @@ struct e2sm_kpm_ind_hdr_s {
   struct ind_hdr_formats_c_ {
     struct types_opts {
       enum options { ind_hdr_format1, /*...*/ nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts, true>;
 
-    // choice methods
-    types         type() const { return types::ind_hdr_format1; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2sm_kpm_ind_hdr_format1_s&       ind_hdr_format1() { return c; }
-    const e2sm_kpm_ind_hdr_format1_s& ind_hdr_format1() const { return c; }
+    types                                 type() const { return types::ind_hdr_format1; }
+    static const asn1::table::choice_desc desc;
+    e2sm_kpm_ind_hdr_format1_s&           ind_hdr_format1() { return c; }
+    const e2sm_kpm_ind_hdr_format1_s&     ind_hdr_format1() const { return c; }
 
   private:
     e2sm_kpm_ind_hdr_format1_s c;
@@ -1486,10 +1295,7 @@ struct e2sm_kpm_ind_hdr_s {
   ind_hdr_formats_c_ ind_hdr_formats;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementRecordItem ::= CHOICE
@@ -1497,39 +1303,32 @@ struct meas_record_item_c {
   struct types_opts {
     enum options { integer, real, no_value, /*...*/ not_satisfied, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true, 1>;
 
-  // choice methods
-  meas_record_item_c() = default;
-  meas_record_item_c(const meas_record_item_c& other);
-  meas_record_item_c& operator=(const meas_record_item_c& other);
-  ~meas_record_item_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  uint64_t& integer()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  uint64_t&                                     integer()
   {
-    assert_choice_type(types::integer, type_, "MeasurementRecordItem");
+    assert_choice_type(types::integer, c.type, "MeasurementRecordItem");
     return c.get<uint64_t>();
   }
   real_s& real()
   {
-    assert_choice_type(types::real, type_, "MeasurementRecordItem");
+    assert_choice_type(types::real, c.type, "MeasurementRecordItem");
     return c.get<real_s>();
   }
   const uint64_t& integer() const
   {
-    assert_choice_type(types::integer, type_, "MeasurementRecordItem");
+    assert_choice_type(types::integer, c.type, "MeasurementRecordItem");
     return c.get<uint64_t>();
   }
   const real_s& real() const
   {
-    assert_choice_type(types::real, type_, "MeasurementRecordItem");
+    assert_choice_type(types::real, c.type, "MeasurementRecordItem");
     return c.get<real_s>();
   }
   uint64_t& set_integer();
@@ -1538,10 +1337,7 @@ struct meas_record_item_c {
   void      set_not_satisfied();
 
 private:
-  types                   type_;
-  choice_buffer_t<real_s> c;
-
-  void destroy_();
+  asn1::table::choice_storage<meas_record_item_c, types, choice_buffer_t<real_s>> c;
 };
 
 // MeasurementRecord ::= SEQUENCE (SIZE (1..2147483647)) OF MeasurementRecordItem
@@ -1552,7 +1348,7 @@ struct meas_data_item_s {
   struct incomplete_flag_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using incomplete_flag_e_ = enumerated<incomplete_flag_opts, true>;
 
@@ -1562,10 +1358,7 @@ struct meas_data_item_s {
   incomplete_flag_e_ incomplete_flag;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementData ::= SEQUENCE (SIZE (1..65535)) OF MeasurementDataItem
@@ -1579,10 +1372,7 @@ struct e2sm_kpm_ind_msg_format1_s {
   uint64_t         granul_period = 1;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUEidItem ::= SEQUENCE
@@ -1590,10 +1380,7 @@ struct matching_ue_id_item_s {
   ue_id_c ue_id;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUEidList ::= SEQUENCE (SIZE (1..65535)) OF MatchingUEidItem
@@ -1604,10 +1391,7 @@ struct matching_ue_id_item_per_gp_s {
   ue_id_c ue_id;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUEidList-PerGP ::= SEQUENCE (SIZE (1..65535)) OF MatchingUEidItem-PerGP
@@ -1619,67 +1403,53 @@ struct matching_ue_id_per_gp_item_s {
     struct no_ue_matched_opts {
       enum options { true_value, /*...*/ nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using no_ue_matched_e_ = enumerated<no_ue_matched_opts, true>;
     struct types_opts {
       enum options { no_ue_matched, one_or_more_ue_matched, /*...*/ nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts, true>;
 
-    // choice methods
-    matched_per_gp_c_() = default;
-    matched_per_gp_c_(const matched_per_gp_c_& other);
-    matched_per_gp_c_& operator=(const matched_per_gp_c_& other);
-    ~matched_per_gp_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    no_ue_matched_e_& no_ue_matched()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    no_ue_matched_e_&                             no_ue_matched()
     {
-      assert_choice_type(types::no_ue_matched, type_, "matchedPerGP");
+      assert_choice_type(types::no_ue_matched, c.type, "matchedPerGP");
       return c.get<no_ue_matched_e_>();
     }
     matching_ue_id_list_per_gp_l& one_or_more_ue_matched()
     {
-      assert_choice_type(types::one_or_more_ue_matched, type_, "matchedPerGP");
+      assert_choice_type(types::one_or_more_ue_matched, c.type, "matchedPerGP");
       return c.get<matching_ue_id_list_per_gp_l>();
     }
     const no_ue_matched_e_& no_ue_matched() const
     {
-      assert_choice_type(types::no_ue_matched, type_, "matchedPerGP");
+      assert_choice_type(types::no_ue_matched, c.type, "matchedPerGP");
       return c.get<no_ue_matched_e_>();
     }
     const matching_ue_id_list_per_gp_l& one_or_more_ue_matched() const
     {
-      assert_choice_type(types::one_or_more_ue_matched, type_, "matchedPerGP");
+      assert_choice_type(types::one_or_more_ue_matched, c.type, "matchedPerGP");
       return c.get<matching_ue_id_list_per_gp_l>();
     }
     no_ue_matched_e_&             set_no_ue_matched();
     matching_ue_id_list_per_gp_l& set_one_or_more_ue_matched();
 
   private:
-    types                                         type_;
-    choice_buffer_t<matching_ue_id_list_per_gp_l> c;
-
-    void destroy_();
+    asn1::table::choice_storage<matched_per_gp_c_, types, choice_buffer_t<matching_ue_id_list_per_gp_l>> c;
   };
 
   // member variables
   matched_per_gp_c_ matched_per_gp;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MatchingUEidPerGP ::= SEQUENCE (SIZE (1..65535)) OF MatchingUEidPerGP-Item
@@ -1693,10 +1463,7 @@ struct meas_cond_ue_id_item_s {
   // ...
   copy_ptr<matching_ue_id_per_gp_l> matching_ue_id_per_gp;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementCondUEidList ::= SEQUENCE (SIZE (1..65535)) OF MeasurementCondUEidItem
@@ -1710,10 +1477,7 @@ struct e2sm_kpm_ind_msg_format2_s {
   uint64_t               granul_period = 1;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEMeasurementReportItem ::= SEQUENCE
@@ -1722,10 +1486,7 @@ struct ue_meas_report_item_s {
   e2sm_kpm_ind_msg_format1_s meas_report;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEMeasurementReportList ::= SEQUENCE (SIZE (1..65535)) OF UEMeasurementReportItem
@@ -1736,10 +1497,7 @@ struct e2sm_kpm_ind_msg_format3_s {
   ue_meas_report_list_l ue_meas_report_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-IndicationMessage-Fundamental ::= SEQUENCE
@@ -1747,52 +1505,44 @@ struct e2sm_kpm_ind_msg_fundamental_s {
   struct ind_msg_fundamental_formats_c_ {
     struct types_opts {
       enum options { ind_msg_format1, ind_msg_format2, ind_msg_format3, /*...*/ nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts, true>;
 
-    // choice methods
-    ind_msg_fundamental_formats_c_() = default;
-    ind_msg_fundamental_formats_c_(const ind_msg_fundamental_formats_c_& other);
-    ind_msg_fundamental_formats_c_& operator=(const ind_msg_fundamental_formats_c_& other);
-    ~ind_msg_fundamental_formats_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2sm_kpm_ind_msg_format1_s& ind_msg_format1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    e2sm_kpm_ind_msg_format1_s&                   ind_msg_format1()
     {
-      assert_choice_type(types::ind_msg_format1, type_, "indicationMessageFundamental-formats");
+      assert_choice_type(types::ind_msg_format1, c.type, "indicationMessageFundamental-formats");
       return c.get<e2sm_kpm_ind_msg_format1_s>();
     }
     e2sm_kpm_ind_msg_format2_s& ind_msg_format2()
     {
-      assert_choice_type(types::ind_msg_format2, type_, "indicationMessageFundamental-formats");
+      assert_choice_type(types::ind_msg_format2, c.type, "indicationMessageFundamental-formats");
       return c.get<e2sm_kpm_ind_msg_format2_s>();
     }
     e2sm_kpm_ind_msg_format3_s& ind_msg_format3()
     {
-      assert_choice_type(types::ind_msg_format3, type_, "indicationMessageFundamental-formats");
+      assert_choice_type(types::ind_msg_format3, c.type, "indicationMessageFundamental-formats");
       return c.get<e2sm_kpm_ind_msg_format3_s>();
     }
     const e2sm_kpm_ind_msg_format1_s& ind_msg_format1() const
     {
-      assert_choice_type(types::ind_msg_format1, type_, "indicationMessageFundamental-formats");
+      assert_choice_type(types::ind_msg_format1, c.type, "indicationMessageFundamental-formats");
       return c.get<e2sm_kpm_ind_msg_format1_s>();
     }
     const e2sm_kpm_ind_msg_format2_s& ind_msg_format2() const
     {
-      assert_choice_type(types::ind_msg_format2, type_, "indicationMessageFundamental-formats");
+      assert_choice_type(types::ind_msg_format2, c.type, "indicationMessageFundamental-formats");
       return c.get<e2sm_kpm_ind_msg_format2_s>();
     }
     const e2sm_kpm_ind_msg_format3_s& ind_msg_format3() const
     {
-      assert_choice_type(types::ind_msg_format3, type_, "indicationMessageFundamental-formats");
+      assert_choice_type(types::ind_msg_format3, c.type, "indicationMessageFundamental-formats");
       return c.get<e2sm_kpm_ind_msg_format3_s>();
     }
     e2sm_kpm_ind_msg_format1_s& set_ind_msg_format1();
@@ -1800,20 +1550,18 @@ struct e2sm_kpm_ind_msg_fundamental_s {
     e2sm_kpm_ind_msg_format3_s& set_ind_msg_format3();
 
   private:
-    types                                                                                               type_;
-    choice_buffer_t<e2sm_kpm_ind_msg_format1_s, e2sm_kpm_ind_msg_format2_s, e2sm_kpm_ind_msg_format3_s> c;
-
-    void destroy_();
+    asn1::table::choice_storage<
+        ind_msg_fundamental_formats_c_,
+        types,
+        choice_buffer_t<e2sm_kpm_ind_msg_format1_s, e2sm_kpm_ind_msg_format2_s, e2sm_kpm_ind_msg_format3_s>>
+        c;
   };
 
   // member variables
   ind_msg_fundamental_formats_c_ ind_msg_fundamental_formats;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MultiReportIndicationMessageItem ::= SEQUENCE
@@ -1822,10 +1570,7 @@ struct multi_report_ind_msg_item_s {
   e2sm_kpm_ind_msg_fundamental_s ind_msg;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MultiReportIndicationMessageList ::= SEQUENCE (SIZE (1..65535)) OF MultiReportIndicationMessageItem
@@ -1836,10 +1581,7 @@ struct e2sm_kpm_ind_msg_format255_s {
   multi_report_ind_msg_list_l multi_report_ind_msg_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-IndicationMessage ::= SEQUENCE
@@ -1847,62 +1589,54 @@ struct e2sm_kpm_ind_msg_s {
   struct ind_msg_formats_c_ {
     struct types_opts {
       enum options { ind_msg_format1, ind_msg_format2, /*...*/ ind_msg_format3, ind_msg_format255, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using types = enumerated<types_opts, true, 2>;
 
-    // choice methods
-    ind_msg_formats_c_() = default;
-    ind_msg_formats_c_(const ind_msg_formats_c_& other);
-    ind_msg_formats_c_& operator=(const ind_msg_formats_c_& other);
-    ~ind_msg_formats_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2sm_kpm_ind_msg_format1_s& ind_msg_format1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    e2sm_kpm_ind_msg_format1_s&                   ind_msg_format1()
     {
-      assert_choice_type(types::ind_msg_format1, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format1, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format1_s>();
     }
     e2sm_kpm_ind_msg_format2_s& ind_msg_format2()
     {
-      assert_choice_type(types::ind_msg_format2, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format2, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format2_s>();
     }
     e2sm_kpm_ind_msg_format3_s& ind_msg_format3()
     {
-      assert_choice_type(types::ind_msg_format3, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format3, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format3_s>();
     }
     e2sm_kpm_ind_msg_format255_s& ind_msg_format255()
     {
-      assert_choice_type(types::ind_msg_format255, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format255, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format255_s>();
     }
     const e2sm_kpm_ind_msg_format1_s& ind_msg_format1() const
     {
-      assert_choice_type(types::ind_msg_format1, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format1, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format1_s>();
     }
     const e2sm_kpm_ind_msg_format2_s& ind_msg_format2() const
     {
-      assert_choice_type(types::ind_msg_format2, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format2, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format2_s>();
     }
     const e2sm_kpm_ind_msg_format3_s& ind_msg_format3() const
     {
-      assert_choice_type(types::ind_msg_format3, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format3, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format3_s>();
     }
     const e2sm_kpm_ind_msg_format255_s& ind_msg_format255() const
     {
-      assert_choice_type(types::ind_msg_format255, type_, "indicationMessage-formats");
+      assert_choice_type(types::ind_msg_format255, c.type, "indicationMessage-formats");
       return c.get<e2sm_kpm_ind_msg_format255_s>();
     }
     e2sm_kpm_ind_msg_format1_s&   set_ind_msg_format1();
@@ -1911,24 +1645,20 @@ struct e2sm_kpm_ind_msg_s {
     e2sm_kpm_ind_msg_format255_s& set_ind_msg_format255();
 
   private:
-    types type_;
-    choice_buffer_t<e2sm_kpm_ind_msg_format1_s,
-                    e2sm_kpm_ind_msg_format255_s,
-                    e2sm_kpm_ind_msg_format2_s,
-                    e2sm_kpm_ind_msg_format3_s>
+    asn1::table::choice_storage<ind_msg_formats_c_,
+                                types,
+                                choice_buffer_t<e2sm_kpm_ind_msg_format1_s,
+                                                e2sm_kpm_ind_msg_format255_s,
+                                                e2sm_kpm_ind_msg_format2_s,
+                                                e2sm_kpm_ind_msg_format3_s>>
         c;
-
-    void destroy_();
   };
 
   // member variables
   ind_msg_formats_c_ ind_msg_formats;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RIC-EventTriggerStyle-Item ::= SEQUENCE
@@ -1938,10 +1668,7 @@ struct ric_event_trigger_style_item_s {
   int64_t                              ric_event_trigger_format_type = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementInfo-Action-Item ::= SEQUENCE
@@ -1952,10 +1679,7 @@ struct meas_info_action_item_s {
   // ...
   copy_ptr<bin_range_definition_s> bin_range_def;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementInfo-Action-List ::= SEQUENCE (SIZE (1..65535)) OF MeasurementInfo-Action-Item
@@ -1971,10 +1695,7 @@ struct ric_report_style_item_s {
   int64_t                              ric_ind_msg_format_type = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RIC-FundamentalLevelReportStyle-Item ::= SEQUENCE
@@ -1982,10 +1703,7 @@ struct ric_fundamental_level_report_style_item_s {
   int64_t ric_report_style_type = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RIC-IntegratedReportStyle-Item ::= SEQUENCE
@@ -1994,7 +1712,7 @@ struct ric_integrated_report_style_item_s {
   struct ric_multiple_individual_report_support_opts {
     enum options { true_value, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ric_multiple_individual_report_support_e_ = enumerated<ric_multiple_individual_report_support_opts, true>;
 
@@ -2009,10 +1727,7 @@ struct ric_integrated_report_style_item_s {
   ric_multiple_individual_report_support_e_  ric_multiple_individual_report_support;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2SM-KPM-RANfunction-Description ::= SEQUENCE
@@ -2028,10 +1743,7 @@ struct e2sm_kpm_ra_nfunction_description_s {
   // ...
   copy_ptr<ric_integrated_report_style_list_l_> ric_integrated_report_style_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 } // namespace e2sm

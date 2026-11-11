@@ -7,7 +7,7 @@
 #include "converters/asn1_ntn_config_helpers.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include "ocudu/du/du_high/du_manager/du_configurator.h"
@@ -35,7 +35,7 @@ void du_high_ntn_sib19_update_handler_impl::handle_sib19_msg_update(const ocudu_
 
   si_ies.sib_type_and_info.push_back(sib_item);
 
-  asn1::OCUDUASN_CODE ret = msg.pack(bref);
+  asn1::OCUDUASN_CODE ret = asn1::pack(bref, msg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack SIB19");
 
   std::vector<byte_buffer> msgs;

@@ -21,82 +21,41 @@ namespace e2ap {
  ******************************************************************************/
 
 // E2RemovalFailureIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2_removal_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2_removal_fail_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2RemovalFailure ::= SEQUENCE
 using e2_removal_fail_s = elementary_procedure_option<e2_removal_fail_ies_container>;
 
 // E2RemovalRequestIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2_removal_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2_removal_request_ies_container {
   uint16_t transaction_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2RemovalRequest ::= SEQUENCE
 using e2_removal_request_s = elementary_procedure_option<e2_removal_request_ies_container>;
 
 // E2RemovalResponseIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2_removal_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2_removal_resp_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2RemovalResponse ::= SEQUENCE
 using e2_removal_resp_s = elementary_procedure_option<e2_removal_resp_ies_container>;
 
 // E2ResourceStatusFailureIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2_res_status_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2_res_status_fail_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -105,24 +64,13 @@ struct e2_res_status_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2ResourceStatusFailure ::= SEQUENCE
 using e2_res_status_fail_s = elementary_procedure_option<e2_res_status_fail_ies_container>;
 
 // E2ResourceStatusRequestIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2_res_status_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2_res_status_request_ies_container {
   bool                            e2node_load_meas_id_present    = false;
   bool                            report_characteristics_present = false;
@@ -134,24 +82,13 @@ struct e2_res_status_request_ies_container {
   fixed_bitstring<8, false, true> report_characteristics;
   report_periodicity_e2_e         report_periodicity_e2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2ResourceStatusRequest ::= SEQUENCE
 using e2_res_status_request_s = elementary_procedure_option<e2_res_status_request_ies_container>;
 
 // E2ResourceStatusResponseIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2_res_status_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2_res_status_resp_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
@@ -159,24 +96,13 @@ struct e2_res_status_resp_ies_container {
   uint16_t           e2node_load_meas_id;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2ResourceStatusResponse ::= SEQUENCE
 using e2_res_status_resp_s = elementary_procedure_option<e2_res_status_resp_ies_container>;
 
 // E2ResourceStatusUpdateIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2_res_status_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2_res_status_upd_ies_container {
   bool        tnl_capacity_ind_present  = false;
   bool        hardware_load_ind_present = false;
@@ -186,10 +112,7 @@ struct e2_res_status_upd_ies_container {
   asn1_null_t tnl_capacity_ind;
   asn1_null_t hardware_load_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2ResourceStatusUpdate ::= SEQUENCE
@@ -201,10 +124,7 @@ struct e2conn_setup_failed_item_s {
   cause_c    cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2connectionSetupFailed-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -213,32 +133,22 @@ struct e2conn_setup_failed_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2conn_setup_failed_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2conn_setup_failed_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2conn_setup_failed_item_s&       e2conn_setup_failed_item() { return c; }
-    const e2conn_setup_failed_item_s& e2conn_setup_failed_item() const { return c; }
+    types                                 type() const { return types::e2conn_setup_failed_item; }
+    static const asn1::table::choice_desc desc;
+    e2conn_setup_failed_item_s&           e2conn_setup_failed_item() { return c; }
+    const e2conn_setup_failed_item_s&     e2conn_setup_failed_item() const { return c; }
 
   private:
     e2conn_setup_failed_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2connectionSetupFailed-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -250,10 +160,7 @@ struct e2conn_upd_item_s {
   tnl_usage_e tnl_usage;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2connectionUpdate-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -262,32 +169,22 @@ struct e2conn_upd_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2conn_upd_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2conn_upd_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2conn_upd_item_s&       e2conn_upd_item() { return c; }
-    const e2conn_upd_item_s& e2conn_upd_item() const { return c; }
+    types                                 type() const { return types::e2conn_upd_item; }
+    static const asn1::table::choice_desc desc;
+    e2conn_upd_item_s&                    e2conn_upd_item() { return c; }
+    const e2conn_upd_item_s&              e2conn_upd_item() const { return c; }
 
   private:
     e2conn_upd_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2connectionUpdate-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -298,10 +195,7 @@ struct e2conn_upd_rem_item_s {
   tnl_info_s tnl_info;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2connectionUpdateRemove-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -310,46 +204,28 @@ struct e2conn_upd_rem_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2conn_upd_rem_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2conn_upd_rem_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2conn_upd_rem_item_s&       e2conn_upd_rem_item() { return c; }
-    const e2conn_upd_rem_item_s& e2conn_upd_rem_item() const { return c; }
+    types                                 type() const { return types::e2conn_upd_rem_item; }
+    static const asn1::table::choice_desc desc;
+    e2conn_upd_rem_item_s&                e2conn_upd_rem_item() { return c; }
+    const e2conn_upd_rem_item_s&          e2conn_upd_rem_item() const { return c; }
 
   private:
     e2conn_upd_rem_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2connectionUpdateRemove-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
 using e2conn_upd_rem_list_l = bounded_array<protocol_ie_single_container_s<e2conn_upd_rem_item_ies_o>, 32>;
 
 // E2connectionUpdate-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2conn_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2conn_upd_ies_container {
   bool                  e2conn_upd_add_present    = false;
   bool                  e2conn_upd_rem_present    = false;
@@ -359,24 +235,13 @@ struct e2conn_upd_ies_container {
   e2conn_upd_rem_list_l e2conn_upd_rem;
   e2conn_upd_list_l     e2conn_upd_modify;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2connectionUpdate ::= SEQUENCE
 using e2conn_upd_s = elementary_procedure_option<e2conn_upd_ies_container>;
 
 // E2connectionUpdateAck-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2conn_upd_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2conn_upd_ack_ies_container {
   bool                       e2conn_setup_present        = false;
   bool                       e2conn_setup_failed_present = false;
@@ -384,24 +249,13 @@ struct e2conn_upd_ack_ies_container {
   e2conn_upd_list_l          e2conn_setup;
   e2conn_setup_failed_list_l e2conn_setup_failed;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2connectionUpdateAcknowledge ::= SEQUENCE
 using e2conn_upd_ack_s = elementary_procedure_option<e2conn_upd_ack_ies_container>;
 
 // E2connectionUpdateFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2conn_upd_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2conn_upd_fail_ies_container {
   bool               cause_present            = false;
   bool               time_to_wait_present     = false;
@@ -411,10 +265,7 @@ struct e2conn_upd_fail_ies_container {
   time_to_wait_e     time_to_wait;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2connectionUpdateFailure ::= SEQUENCE
@@ -427,10 +278,7 @@ struct e2node_component_cfg_addition_item_s {
   e2node_component_cfg_s            e2node_component_cfg;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2nodeComponentConfigAddition-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -439,19 +287,14 @@ struct e2node_component_cfg_addition_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2node_component_cfg_addition_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2node_component_cfg_addition_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::e2node_component_cfg_addition_item; }
+    static const asn1::table::choice_desc       desc;
     e2node_component_cfg_addition_item_s&       e2node_component_cfg_addition_item() { return c; }
     const e2node_component_cfg_addition_item_s& e2node_component_cfg_addition_item() const { return c; }
 
@@ -459,12 +302,7 @@ struct e2node_component_cfg_addition_item_ies_o {
     e2node_component_cfg_addition_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2nodeComponentConfigAddition-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -478,10 +316,7 @@ struct e2node_component_cfg_addition_ack_item_s {
   e2node_component_cfg_ack_s        e2node_component_cfg_ack;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2nodeComponentConfigAdditionAck-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -490,32 +325,22 @@ struct e2node_component_cfg_addition_ack_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2node_component_cfg_addition_ack_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2node_component_cfg_addition_ack_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    e2node_component_cfg_addition_ack_item_s&       e2node_component_cfg_addition_ack_item() { return c; }
+    types                                     type() const { return types::e2node_component_cfg_addition_ack_item; }
+    static const asn1::table::choice_desc     desc;
+    e2node_component_cfg_addition_ack_item_s& e2node_component_cfg_addition_ack_item() { return c; }
     const e2node_component_cfg_addition_ack_item_s& e2node_component_cfg_addition_ack_item() const { return c; }
 
   private:
     e2node_component_cfg_addition_ack_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2nodeComponentConfigAdditionAck-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES :
@@ -529,10 +354,7 @@ struct e2node_component_cfg_removal_item_s {
   e2node_component_id_c             e2node_component_id;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2nodeComponentConfigRemoval-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -541,19 +363,14 @@ struct e2node_component_cfg_removal_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2node_component_cfg_removal_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2node_component_cfg_removal_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::e2node_component_cfg_removal_item; }
+    static const asn1::table::choice_desc      desc;
     e2node_component_cfg_removal_item_s&       e2node_component_cfg_removal_item() { return c; }
     const e2node_component_cfg_removal_item_s& e2node_component_cfg_removal_item() const { return c; }
 
@@ -561,12 +378,7 @@ struct e2node_component_cfg_removal_item_ies_o {
     e2node_component_cfg_removal_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2nodeComponentConfigRemoval-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -580,10 +392,7 @@ struct e2node_component_cfg_removal_ack_item_s {
   e2node_component_cfg_ack_s        e2node_component_cfg_ack;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2nodeComponentConfigRemovalAck-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -592,19 +401,14 @@ struct e2node_component_cfg_removal_ack_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2node_component_cfg_removal_ack_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2node_component_cfg_removal_ack_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                          type() const { return types::e2node_component_cfg_removal_ack_item; }
+    static const asn1::table::choice_desc          desc;
     e2node_component_cfg_removal_ack_item_s&       e2node_component_cfg_removal_ack_item() { return c; }
     const e2node_component_cfg_removal_ack_item_s& e2node_component_cfg_removal_ack_item() const { return c; }
 
@@ -612,12 +416,7 @@ struct e2node_component_cfg_removal_ack_item_ies_o {
     e2node_component_cfg_removal_ack_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2nodeComponentConfigRemovalAck-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES :
@@ -632,10 +431,7 @@ struct e2node_component_cfg_upd_item_s {
   e2node_component_cfg_s            e2node_component_cfg;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2nodeComponentConfigUpdate-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -644,19 +440,14 @@ struct e2node_component_cfg_upd_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2node_component_cfg_upd_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2node_component_cfg_upd_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::e2node_component_cfg_upd_item; }
+    static const asn1::table::choice_desc  desc;
     e2node_component_cfg_upd_item_s&       e2node_component_cfg_upd_item() { return c; }
     const e2node_component_cfg_upd_item_s& e2node_component_cfg_upd_item() const { return c; }
 
@@ -664,12 +455,7 @@ struct e2node_component_cfg_upd_item_ies_o {
     e2node_component_cfg_upd_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2nodeComponentConfigUpdate-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -682,10 +468,7 @@ struct e2node_component_cfg_upd_ack_item_s {
   e2node_component_cfg_ack_s        e2node_component_cfg_ack;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2nodeComponentConfigUpdateAck-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -694,19 +477,14 @@ struct e2node_component_cfg_upd_ack_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2node_component_cfg_upd_ack_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2node_component_cfg_upd_ack_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::e2node_component_cfg_upd_ack_item; }
+    static const asn1::table::choice_desc      desc;
     e2node_component_cfg_upd_ack_item_s&       e2node_component_cfg_upd_ack_item() { return c; }
     const e2node_component_cfg_upd_ack_item_s& e2node_component_cfg_upd_ack_item() const { return c; }
 
@@ -714,12 +492,7 @@ struct e2node_component_cfg_upd_ack_item_ies_o {
     e2node_component_cfg_upd_ack_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2nodeComponentConfigUpdateAck-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES :
@@ -733,10 +506,7 @@ struct e2node_tnl_assoc_removal_item_s {
   tnl_info_s tnl_info_ric;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // E2nodeTNLassociationRemoval-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -745,19 +515,14 @@ struct e2node_tnl_assoc_removal_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { e2node_tnl_assoc_removal_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::e2node_tnl_assoc_removal_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::e2node_tnl_assoc_removal_item; }
+    static const asn1::table::choice_desc  desc;
     e2node_tnl_assoc_removal_item_s&       e2node_tnl_assoc_removal_item() { return c; }
     const e2node_tnl_assoc_removal_item_s& e2node_tnl_assoc_removal_item() const { return c; }
 
@@ -765,12 +530,7 @@ struct e2node_tnl_assoc_removal_item_ies_o {
     e2node_tnl_assoc_removal_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // E2nodeTNLassociationRemoval-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -778,14 +538,6 @@ using e2node_tnl_assoc_removal_list_l =
     bounded_array<protocol_ie_single_container_s<e2node_tnl_assoc_removal_item_ies_o>, 32>;
 
 // E2nodeConfigurationUpdate-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2node_cfg_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2node_cfg_upd_ies_container {
   bool                                 global_e2node_id_present              = false;
   bool                                 e2node_component_cfg_addition_present = false;
@@ -799,24 +551,13 @@ struct e2node_cfg_upd_ies_container {
   e2node_component_cfg_removal_list_l  e2node_component_cfg_removal;
   e2node_tnl_assoc_removal_list_l      e2node_tnl_assoc_removal;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2nodeConfigurationUpdate ::= SEQUENCE
 using e2node_cfg_upd_s = elementary_procedure_option<e2node_cfg_upd_ies_container>;
 
 // E2nodeConfigurationUpdateAcknowledge-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2node_cfg_upd_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2node_cfg_upd_ack_ies_container {
   bool                                     e2node_component_cfg_addition_ack_present = false;
   bool                                     e2node_component_cfg_upd_ack_present      = false;
@@ -826,24 +567,13 @@ struct e2node_cfg_upd_ack_ies_container {
   e2node_component_cfg_upd_ack_list_l      e2node_component_cfg_upd_ack;
   e2node_component_cfg_removal_ack_list_l  e2node_component_cfg_removal_ack;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2nodeConfigurationUpdateAcknowledge ::= SEQUENCE
 using e2node_cfg_upd_ack_s = elementary_procedure_option<e2node_cfg_upd_ack_ies_container>;
 
 // E2nodeConfigurationUpdateFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2node_cfg_upd_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2node_cfg_upd_fail_ies_container {
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
@@ -852,24 +582,13 @@ struct e2node_cfg_upd_fail_ies_container {
   time_to_wait_e     time_to_wait;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2nodeConfigurationUpdateFailure ::= SEQUENCE
 using e2node_cfg_upd_fail_s = elementary_procedure_option<e2node_cfg_upd_fail_ies_container>;
 
 // E2setupFailureIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2setup_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2setup_fail_ies_container {
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
@@ -880,10 +599,7 @@ struct e2setup_fail_ies_container {
   crit_diagnostics_s crit_diagnostics;
   tnl_info_s         tnl_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2setupFailure ::= SEQUENCE
@@ -897,10 +613,7 @@ struct ran_function_item_s {
   printable_string<1, 1000, true, true> ran_function_o_id;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunction-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -910,53 +623,33 @@ struct ran_function_item_ies_o {
     struct types_opts {
       enum options { ran_function_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ran_function_item_s&       ran_function_item() { return c; }
-    const ran_function_item_s& ran_function_item() const { return c; }
+    types                                 type() const { return types::ran_function_item; }
+    static const asn1::table::choice_desc desc;
+    ran_function_item_s&                  ran_function_item() { return c; }
+    const ran_function_item_s&            ran_function_item() const { return c; }
 
   private:
     ran_function_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctions-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
 using ran_functions_list_l = dyn_array<protocol_ie_single_container_s<ran_function_item_ies_o>>;
 
 // E2setupRequestIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2setup_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2setup_request_ies_container {
   uint16_t                             transaction_id;
   global_e2node_id_c                   global_e2node_id;
   ran_functions_list_l                 ran_functions_added;
   e2node_component_cfg_addition_list_l e2node_component_cfg_addition;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2setupRequest ::= SEQUENCE
@@ -968,10 +661,7 @@ struct ran_function_id_item_s {
   uint16_t ran_function_revision = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunctionID-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -981,29 +671,20 @@ struct ran_function_id_item_ies_o {
     struct types_opts {
       enum options { ran_function_id_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_id_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ran_function_id_item_s&       ran_function_id_item() { return c; }
-    const ran_function_id_item_s& ran_function_id_item() const { return c; }
+    types                                 type() const { return types::ran_function_id_item; }
+    static const asn1::table::choice_desc desc;
+    ran_function_id_item_s&               ran_function_id_item() { return c; }
+    const ran_function_id_item_s&         ran_function_id_item() const { return c; }
 
   private:
     ran_function_id_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctionsID-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1015,10 +696,7 @@ struct ran_function_id_cause_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunctionIDcause-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1028,29 +706,20 @@ struct ran_function_id_cause_item_ies_o {
     struct types_opts {
       enum options { ran_function_i_ecause_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_i_ecause_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ran_function_id_cause_item_s&       ran_function_i_ecause_item() { return c; }
-    const ran_function_id_cause_item_s& ran_function_i_ecause_item() const { return c; }
+    types                                 type() const { return types::ran_function_i_ecause_item; }
+    static const asn1::table::choice_desc desc;
+    ran_function_id_cause_item_s&         ran_function_i_ecause_item() { return c; }
+    const ran_function_id_cause_item_s&   ran_function_i_ecause_item() const { return c; }
 
   private:
     ran_function_id_cause_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctionsIDcause-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1063,10 +732,7 @@ struct ran_function_accept_modified_item_s {
   uint16_t                  ran_function_revision = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunction-AcceptModified-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1076,16 +742,12 @@ struct ran_function_accept_modified_item_ies_o {
     struct types_opts {
       enum options { ran_function_accept_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_accept_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::ran_function_accept_modified_item; }
+    static const asn1::table::choice_desc      desc;
     ran_function_accept_modified_item_s&       ran_function_accept_modified_item() { return c; }
     const ran_function_accept_modified_item_s& ran_function_accept_modified_item() const { return c; }
 
@@ -1093,12 +755,7 @@ struct ran_function_accept_modified_item_ies_o {
     ran_function_accept_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctions-AcceptModified-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1106,14 +763,6 @@ using ran_functions_accept_modified_list_l =
     dyn_array<protocol_ie_single_container_s<ran_function_accept_modified_item_ies_o>>;
 
 // E2setupResponseIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct e2setup_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e2setup_resp_ies_container {
   bool                                     ran_functions_accepted_present             = false;
   bool                                     ran_functions_rejected_present             = false;
@@ -1125,24 +774,13 @@ struct e2setup_resp_ies_container {
   e2node_component_cfg_addition_ack_list_l e2node_component_cfg_addition_ack;
   ran_functions_accept_modified_list_l     ran_functions_accept_modified_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E2setupResponse ::= SEQUENCE
 using e2setup_resp_s = elementary_procedure_option<e2setup_resp_ies_container>;
 
 // ErrorIndication-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct error_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct error_ind_ies_container {
   bool               transaction_id_present   = false;
   bool               ric_request_id_present   = false;
@@ -1155,10 +793,7 @@ struct error_ind_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ErrorIndication ::= SEQUENCE
@@ -1170,10 +805,7 @@ struct ric_action_load_item_s {
   ric_load_info_s ric_action_load_info;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICactionLoad-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1183,29 +815,20 @@ struct ric_action_load_item_ies_o {
     struct types_opts {
       enum options { ric_action_load_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_load_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_action_load_item_s&       ric_action_load_item() { return c; }
-    const ric_action_load_item_s& ric_action_load_item() const { return c; }
+    types                                 type() const { return types::ric_action_load_item; }
+    static const asn1::table::choice_desc desc;
+    ric_action_load_item_s&               ric_action_load_item() { return c; }
+    const ric_action_load_item_s&         ric_action_load_item() const { return c; }
 
   private:
     ric_action_load_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICactionLoad-List ::= SEQUENCE (SIZE (1..16)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1219,10 +842,7 @@ struct ric_sub_load_item_ie_s {
   ric_action_load_list_l ric_action_load_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscriptionLoad-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1232,29 +852,20 @@ struct ric_sub_load_item_ies_o {
     struct types_opts {
       enum options { ric_sub_load_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_sub_load_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_sub_load_item_ie_s&       ric_sub_load_item() { return c; }
-    const ric_sub_load_item_ie_s& ric_sub_load_item() const { return c; }
+    types                                 type() const { return types::ric_sub_load_item; }
+    static const asn1::table::choice_desc desc;
+    ric_sub_load_item_ie_s&               ric_sub_load_item() { return c; }
+    const ric_sub_load_item_ie_s&         ric_sub_load_item() const { return c; }
 
   private:
     ric_sub_load_item_ie_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICsubscriptionLoad-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1270,10 +881,7 @@ struct ran_function_load_item_s {
   ric_sub_load_list_l     ric_sub_load_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunctionLoad-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1283,29 +891,20 @@ struct ran_function_load_item_ies_o {
     struct types_opts {
       enum options { ran_function_load_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_load_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ran_function_load_item_s&       ran_function_load_item() { return c; }
-    const ran_function_load_item_s& ran_function_load_item() const { return c; }
+    types                                 type() const { return types::ran_function_load_item; }
+    static const asn1::table::choice_desc desc;
+    ran_function_load_item_s&             ran_function_load_item() { return c; }
+    const ran_function_load_item_s&       ran_function_load_item() const { return c; }
 
   private:
     ran_function_load_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctionLoad-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1317,10 +916,7 @@ struct ric_action_load_confirm_item_s {
   ric_load_confirm_e ric_action_load_confirm;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICactionLoadConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1330,16 +926,12 @@ struct ric_action_load_confirm_item_ies_o {
     struct types_opts {
       enum options { ric_action_load_confirm_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_load_confirm_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_action_load_confirm_item; }
+    static const asn1::table::choice_desc desc;
     ric_action_load_confirm_item_s&       ric_action_load_confirm_item() { return c; }
     const ric_action_load_confirm_item_s& ric_action_load_confirm_item() const { return c; }
 
@@ -1347,12 +939,7 @@ struct ric_action_load_confirm_item_ies_o {
     ric_action_load_confirm_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICactionLoadConfirm-List ::= SEQUENCE (SIZE (1..16)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1367,10 +954,7 @@ struct ric_sub_load_confirm_item_ie_s {
   ric_action_load_confirm_list_l ric_action_load_confirm_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscriptionLoadConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1380,16 +964,12 @@ struct ric_sub_load_confirm_item_ies_o {
     struct types_opts {
       enum options { ric_sub_load_confirm_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_sub_load_confirm_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_sub_load_confirm_item; }
+    static const asn1::table::choice_desc desc;
     ric_sub_load_confirm_item_ie_s&       ric_sub_load_confirm_item() { return c; }
     const ric_sub_load_confirm_item_ie_s& ric_sub_load_confirm_item() const { return c; }
 
@@ -1397,12 +977,7 @@ struct ric_sub_load_confirm_item_ies_o {
     ric_sub_load_confirm_item_ie_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICsubscriptionLoadConfirm-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1418,10 +993,7 @@ struct ran_function_load_confirm_item_s {
   ric_sub_load_confirm_list_l ric_sub_load_confirm_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunctionLoadConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1431,16 +1003,12 @@ struct ran_function_load_confirm_item_ies_o {
     struct types_opts {
       enum options { ran_function_load_confirm_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_load_confirm_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::ran_function_load_confirm_item; }
+    static const asn1::table::choice_desc   desc;
     ran_function_load_confirm_item_s&       ran_function_load_confirm_item() { return c; }
     const ran_function_load_confirm_item_s& ran_function_load_confirm_item() const { return c; }
 
@@ -1448,12 +1016,7 @@ struct ran_function_load_confirm_item_ies_o {
     ran_function_load_confirm_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctionLoadConfirm-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1466,10 +1029,7 @@ struct ric_action_load_request_item_s {
   ric_load_request_e ric_action_load_request;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICactionLoadRequest-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1479,16 +1039,12 @@ struct ric_action_load_request_item_ies_o {
     struct types_opts {
       enum options { ric_action_load_request_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_load_request_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_action_load_request_item; }
+    static const asn1::table::choice_desc desc;
     ric_action_load_request_item_s&       ric_action_load_request_item() { return c; }
     const ric_action_load_request_item_s& ric_action_load_request_item() const { return c; }
 
@@ -1496,12 +1052,7 @@ struct ric_action_load_request_item_ies_o {
     ric_action_load_request_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICactionLoadRequest-List ::= SEQUENCE (SIZE (1..16)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1516,10 +1067,7 @@ struct ric_sub_load_request_item_ie_s {
   ric_action_load_request_list_l ric_action_load_request_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscriptionLoadRequest-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1529,16 +1077,12 @@ struct ric_sub_load_request_item_ies_o {
     struct types_opts {
       enum options { ric_sub_load_request_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_sub_load_request_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_sub_load_request_item; }
+    static const asn1::table::choice_desc desc;
     ric_sub_load_request_item_ie_s&       ric_sub_load_request_item() { return c; }
     const ric_sub_load_request_item_ie_s& ric_sub_load_request_item() const { return c; }
 
@@ -1546,12 +1090,7 @@ struct ric_sub_load_request_item_ies_o {
     ric_sub_load_request_item_ie_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICsubscriptionLoadRequest-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1567,10 +1106,7 @@ struct ran_function_load_request_item_s {
   ric_sub_load_request_list_l ric_sub_load_request_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunctionLoadRequest-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1580,16 +1116,12 @@ struct ran_function_load_request_item_ies_o {
     struct types_opts {
       enum options { ran_function_load_request_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_load_request_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::ran_function_load_request_item; }
+    static const asn1::table::choice_desc   desc;
     ran_function_load_request_item_s&       ran_function_load_request_item() { return c; }
     const ran_function_load_request_item_s& ran_function_load_request_item() const { return c; }
 
@@ -1597,12 +1129,7 @@ struct ran_function_load_request_item_ies_o {
     ran_function_load_request_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctionLoadRequest-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1614,10 +1141,7 @@ struct ric_action_list_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1627,29 +1151,20 @@ struct ric_action_item_ies_o {
     struct types_opts {
       enum options { ric_action_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_action_list_item_s&       ric_action_list_item() { return c; }
-    const ric_action_list_item_s& ric_action_list_item() const { return c; }
+    types                                 type() const { return types::ric_action_list_item; }
+    static const asn1::table::choice_desc desc;
+    ric_action_list_item_s&               ric_action_list_item() { return c; }
+    const ric_action_list_item_s&         ric_action_list_item() const { return c; }
 
   private:
     ric_action_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-List ::= SEQUENCE (SIZE (1..16)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1661,10 +1176,7 @@ struct ric_sub_list_item_s {
   ric_action_list_l ric_action_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscriptionList-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1674,29 +1186,20 @@ struct ric_sub_list_item_ies_o {
     struct types_opts {
       enum options { ric_sub_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_sub_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_sub_list_item_s&       ric_sub_list_item() { return c; }
-    const ric_sub_list_item_s& ric_sub_list_item() const { return c; }
+    types                                 type() const { return types::ric_sub_list_item; }
+    static const asn1::table::choice_desc desc;
+    ric_sub_list_item_s&                  ric_sub_list_item() { return c; }
+    const ric_sub_list_item_s&            ric_sub_list_item() const { return c; }
 
   private:
     ric_sub_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICsubscriptionSuspended-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1712,10 +1215,7 @@ struct ran_function_state_confirm_item_s {
   ric_sub_resumed_list_l   ric_sub_resumed_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunctionStateConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1725,16 +1225,12 @@ struct ran_function_state_confirm_item_ies_o {
     struct types_opts {
       enum options { ran_function_state_confirm_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_state_confirm_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                    type() const { return types::ran_function_state_confirm_item; }
+    static const asn1::table::choice_desc    desc;
     ran_function_state_confirm_item_s&       ran_function_state_confirm_item() { return c; }
     const ran_function_state_confirm_item_s& ran_function_state_confirm_item() const { return c; }
 
@@ -1742,12 +1238,7 @@ struct ran_function_state_confirm_item_ies_o {
     ran_function_state_confirm_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctionStateConfirm-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1767,10 +1258,7 @@ struct ran_function_state_ctrl_item_s {
   ric_sub_to_be_resumed_list_l   ric_sub_to_be_resumed_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANfunctionStateControl-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1780,16 +1268,12 @@ struct ran_function_state_ctrl_item_ies_o {
     struct types_opts {
       enum options { ran_function_state_ctrl_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ran_function_state_ctrl_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ran_function_state_ctrl_item; }
+    static const asn1::table::choice_desc desc;
     ran_function_state_ctrl_item_s&       ran_function_state_ctrl_item() { return c; }
     const ran_function_state_ctrl_item_s& ran_function_state_ctrl_item() const { return c; }
 
@@ -1797,12 +1281,7 @@ struct ran_function_state_ctrl_item_ies_o {
     ran_function_state_ctrl_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RANfunctionStateControl-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1813,10 +1292,7 @@ struct ric_action_added_for_mod_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-AddedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1826,16 +1302,12 @@ struct ric_action_added_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_added_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_added_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::ric_action_added_for_mod_item; }
+    static const asn1::table::choice_desc  desc;
     ric_action_added_for_mod_item_s&       ric_action_added_for_mod_item() { return c; }
     const ric_action_added_for_mod_item_s& ric_action_added_for_mod_item() const { return c; }
 
@@ -1843,12 +1315,7 @@ struct ric_action_added_for_mod_item_ies_o {
     ric_action_added_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-Admitted-Item ::= SEQUENCE
@@ -1856,10 +1323,7 @@ struct ric_action_admitted_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-Admitted-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1869,29 +1333,20 @@ struct ric_action_admitted_item_ies_o {
     struct types_opts {
       enum options { ric_action_admitted_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_admitted_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_action_admitted_item_s&       ric_action_admitted_item() { return c; }
-    const ric_action_admitted_item_s& ric_action_admitted_item() const { return c; }
+    types                                 type() const { return types::ric_action_admitted_item; }
+    static const asn1::table::choice_desc desc;
+    ric_action_admitted_item_s&           ric_action_admitted_item() { return c; }
+    const ric_action_admitted_item_s&     ric_action_admitted_item() const { return c; }
 
   private:
     ric_action_admitted_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-Admitted-List ::= SEQUENCE (SIZE (1..16)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -1902,10 +1357,7 @@ struct ric_action_confirmed_for_mod_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ConfirmedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1915,16 +1367,12 @@ struct ric_action_confirmed_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_confirmed_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_confirmed_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::ric_action_confirmed_for_mod_item; }
+    static const asn1::table::choice_desc      desc;
     ric_action_confirmed_for_mod_item_s&       ric_action_confirmed_for_mod_item() { return c; }
     const ric_action_confirmed_for_mod_item_s& ric_action_confirmed_for_mod_item() const { return c; }
 
@@ -1932,12 +1380,7 @@ struct ric_action_confirmed_for_mod_item_ies_o {
     ric_action_confirmed_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-ConfirmedForRemoval-Item ::= SEQUENCE
@@ -1945,10 +1388,7 @@ struct ric_action_confirmed_for_removal_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ConfirmedForRemoval-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -1958,16 +1398,12 @@ struct ric_action_confirmed_for_removal_item_ies_o {
     struct types_opts {
       enum options { ric_action_confirmed_for_removal_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_confirmed_for_removal_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                          type() const { return types::ric_action_confirmed_for_removal_item; }
+    static const asn1::table::choice_desc          desc;
     ric_action_confirmed_for_removal_item_s&       ric_action_confirmed_for_removal_item() { return c; }
     const ric_action_confirmed_for_removal_item_s& ric_action_confirmed_for_removal_item() const { return c; }
 
@@ -1975,12 +1411,7 @@ struct ric_action_confirmed_for_removal_item_ies_o {
     ric_action_confirmed_for_removal_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-FailedToBeAddedForModification-Item ::= SEQUENCE
@@ -1989,10 +1420,7 @@ struct ric_action_failed_to_be_added_for_mod_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-FailedToBeAddedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2002,16 +1430,12 @@ struct ric_action_failed_to_be_added_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_failed_to_be_added_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_failed_to_be_added_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_action_failed_to_be_added_for_mod_item; }
+    static const asn1::table::choice_desc desc;
     ric_action_failed_to_be_added_for_mod_item_s&       ric_action_failed_to_be_added_for_mod_item() { return c; }
     const ric_action_failed_to_be_added_for_mod_item_s& ric_action_failed_to_be_added_for_mod_item() const { return c; }
 
@@ -2019,12 +1443,7 @@ struct ric_action_failed_to_be_added_for_mod_item_ies_o {
     ric_action_failed_to_be_added_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-FailedToBeModifiedForModification-Item ::= SEQUENCE
@@ -2033,10 +1452,7 @@ struct ric_action_failed_to_be_modified_for_mod_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-FailedToBeModifiedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2046,16 +1462,12 @@ struct ric_action_failed_to_be_modified_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_failed_to_be_modified_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_failed_to_be_modified_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_action_failed_to_be_modified_for_mod_item; }
+    static const asn1::table::choice_desc desc;
     ric_action_failed_to_be_modified_for_mod_item_s&       ric_action_failed_to_be_modified_for_mod_item() { return c; }
     const ric_action_failed_to_be_modified_for_mod_item_s& ric_action_failed_to_be_modified_for_mod_item() const
     {
@@ -2066,12 +1478,7 @@ struct ric_action_failed_to_be_modified_for_mod_item_ies_o {
     ric_action_failed_to_be_modified_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-FailedToBeRemovedForModification-Item ::= SEQUENCE
@@ -2080,10 +1487,7 @@ struct ric_action_failed_to_be_remd_for_mod_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-FailedToBeRemovedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2093,16 +1497,12 @@ struct ric_action_failed_to_be_remd_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_failed_to_be_remd_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_failed_to_be_remd_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_action_failed_to_be_remd_for_mod_item; }
+    static const asn1::table::choice_desc desc;
     ric_action_failed_to_be_remd_for_mod_item_s&       ric_action_failed_to_be_remd_for_mod_item() { return c; }
     const ric_action_failed_to_be_remd_for_mod_item_s& ric_action_failed_to_be_remd_for_mod_item() const { return c; }
 
@@ -2110,12 +1510,7 @@ struct ric_action_failed_to_be_remd_for_mod_item_ies_o {
     ric_action_failed_to_be_remd_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-ModifiedForModification-Item ::= SEQUENCE
@@ -2123,10 +1518,7 @@ struct ric_action_modified_for_mod_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ModifiedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2136,16 +1528,12 @@ struct ric_action_modified_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_modified_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_modified_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                     type() const { return types::ric_action_modified_for_mod_item; }
+    static const asn1::table::choice_desc     desc;
     ric_action_modified_for_mod_item_s&       ric_action_modified_for_mod_item() { return c; }
     const ric_action_modified_for_mod_item_s& ric_action_modified_for_mod_item() const { return c; }
 
@@ -2153,12 +1541,7 @@ struct ric_action_modified_for_mod_item_ies_o {
     ric_action_modified_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-NotAdmitted-Item ::= SEQUENCE
@@ -2167,10 +1550,7 @@ struct ric_action_not_admitted_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-NotAdmitted-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2180,16 +1560,12 @@ struct ric_action_not_admitted_item_ies_o {
     struct types_opts {
       enum options { ric_action_not_admitted_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_not_admitted_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_action_not_admitted_item; }
+    static const asn1::table::choice_desc desc;
     ric_action_not_admitted_item_s&       ric_action_not_admitted_item() { return c; }
     const ric_action_not_admitted_item_s& ric_action_not_admitted_item() const { return c; }
 
@@ -2197,12 +1573,7 @@ struct ric_action_not_admitted_item_ies_o {
     ric_action_not_admitted_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-NotAdmitted-List ::= SEQUENCE (SIZE (0..16)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -2215,10 +1586,7 @@ struct ric_action_refused_to_be_modified_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-RefusedToBeModified-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2228,29 +1596,20 @@ struct ric_action_refused_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { ric_action_refused_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_refused_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_action_refused_to_be_modified_item_s&       ric_action_refused_to_be_modified_item() { return c; }
+    types                                     type() const { return types::ric_action_refused_to_be_modified_item; }
+    static const asn1::table::choice_desc     desc;
+    ric_action_refused_to_be_modified_item_s& ric_action_refused_to_be_modified_item() { return c; }
     const ric_action_refused_to_be_modified_item_s& ric_action_refused_to_be_modified_item() const { return c; }
 
   private:
     ric_action_refused_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-RefusedToBeRemoved-Item ::= SEQUENCE
@@ -2259,10 +1618,7 @@ struct ric_action_refused_to_be_remd_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-RefusedToBeRemoved-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2272,16 +1628,12 @@ struct ric_action_refused_to_be_remd_item_ies_o {
     struct types_opts {
       enum options { ric_action_refused_to_be_remd_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_refused_to_be_remd_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::ric_action_refused_to_be_remd_item; }
+    static const asn1::table::choice_desc       desc;
     ric_action_refused_to_be_remd_item_s&       ric_action_refused_to_be_remd_item() { return c; }
     const ric_action_refused_to_be_remd_item_s& ric_action_refused_to_be_remd_item() const { return c; }
 
@@ -2289,12 +1641,7 @@ struct ric_action_refused_to_be_remd_item_ies_o {
     ric_action_refused_to_be_remd_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-RemovedForModification-Item ::= SEQUENCE
@@ -2302,10 +1649,7 @@ struct ric_action_remd_for_mod_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-RemovedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2315,16 +1659,12 @@ struct ric_action_remd_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_remd_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_remd_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ric_action_remd_for_mod_item; }
+    static const asn1::table::choice_desc desc;
     ric_action_remd_for_mod_item_s&       ric_action_remd_for_mod_item() { return c; }
     const ric_action_remd_for_mod_item_s& ric_action_remd_for_mod_item() const { return c; }
 
@@ -2332,12 +1672,7 @@ struct ric_action_remd_for_mod_item_ies_o {
     ric_action_remd_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-RequiredToBeModified-Item ::= SEQUENCE
@@ -2346,10 +1681,7 @@ struct ric_action_required_to_be_modified_item_s {
   ric_time_to_wait_e ric_time_to_wait;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-RequiredToBeModified-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2359,29 +1691,20 @@ struct ric_action_required_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { ric_action_required_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_required_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_action_required_to_be_modified_item_s&       ric_action_required_to_be_modified_item() { return c; }
+    types                                      type() const { return types::ric_action_required_to_be_modified_item; }
+    static const asn1::table::choice_desc      desc;
+    ric_action_required_to_be_modified_item_s& ric_action_required_to_be_modified_item() { return c; }
     const ric_action_required_to_be_modified_item_s& ric_action_required_to_be_modified_item() const { return c; }
 
   private:
     ric_action_required_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-RequiredToBeRemoved-Item ::= SEQUENCE
@@ -2390,10 +1713,7 @@ struct ric_action_required_to_be_remd_item_s {
   cause_c  cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-RequiredToBeRemoved-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2403,16 +1723,12 @@ struct ric_action_required_to_be_remd_item_ies_o {
     struct types_opts {
       enum options { ric_action_required_to_be_remd_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_required_to_be_remd_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::ric_action_required_to_be_remd_item; }
+    static const asn1::table::choice_desc        desc;
     ric_action_required_to_be_remd_item_s&       ric_action_required_to_be_remd_item() { return c; }
     const ric_action_required_to_be_remd_item_s& ric_action_required_to_be_remd_item() const { return c; }
 
@@ -2420,12 +1736,7 @@ struct ric_action_required_to_be_remd_item_ies_o {
     ric_action_required_to_be_remd_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-ToBeAddedForModification-Item ::= SEQUENCE
@@ -2438,10 +1749,7 @@ struct ric_action_to_be_added_for_mod_item_s {
   ric_subsequent_action_s   ric_subsequent_action;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ToBeAddedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2451,16 +1759,12 @@ struct ric_action_to_be_added_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_to_be_added_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_to_be_added_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::ric_action_to_be_added_for_mod_item; }
+    static const asn1::table::choice_desc        desc;
     ric_action_to_be_added_for_mod_item_s&       ric_action_to_be_added_for_mod_item() { return c; }
     const ric_action_to_be_added_for_mod_item_s& ric_action_to_be_added_for_mod_item() const { return c; }
 
@@ -2468,12 +1772,7 @@ struct ric_action_to_be_added_for_mod_item_ies_o {
     ric_action_to_be_added_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-ToBeModifiedForModification-Item ::= SEQUENCE
@@ -2486,10 +1785,7 @@ struct ric_action_to_be_modified_for_mod_item_s {
   ric_subsequent_action_s   ric_subsequent_action;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ToBeModifiedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2499,29 +1795,20 @@ struct ric_action_to_be_modified_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_to_be_modified_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_to_be_modified_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_action_to_be_modified_for_mod_item_s&       ric_action_to_be_modified_for_mod_item() { return c; }
+    types                                     type() const { return types::ric_action_to_be_modified_for_mod_item; }
+    static const asn1::table::choice_desc     desc;
+    ric_action_to_be_modified_for_mod_item_s& ric_action_to_be_modified_for_mod_item() { return c; }
     const ric_action_to_be_modified_for_mod_item_s& ric_action_to_be_modified_for_mod_item() const { return c; }
 
   private:
     ric_action_to_be_modified_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-ToBeRemovedForModification-Item ::= SEQUENCE
@@ -2529,10 +1816,7 @@ struct ric_action_to_be_remd_for_mod_item_s {
   uint16_t ric_action_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ToBeRemovedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2542,16 +1826,12 @@ struct ric_action_to_be_remd_for_mod_item_ies_o {
     struct types_opts {
       enum options { ric_action_to_be_remd_for_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_to_be_remd_for_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::ric_action_to_be_remd_for_mod_item; }
+    static const asn1::table::choice_desc       desc;
     ric_action_to_be_remd_for_mod_item_s&       ric_action_to_be_remd_for_mod_item() { return c; }
     const ric_action_to_be_remd_for_mod_item_s& ric_action_to_be_remd_for_mod_item() const { return c; }
 
@@ -2559,12 +1839,7 @@ struct ric_action_to_be_remd_for_mod_item_ies_o {
     ric_action_to_be_remd_for_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICaction-ToBeSetup-Item ::= SEQUENCE
@@ -2578,10 +1853,7 @@ struct ric_action_to_be_setup_item_s {
   bool     ric_action_execution_order_present = false;
   uint16_t ric_action_execution_order         = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICaction-ToBeSetup-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -2591,29 +1863,20 @@ struct ric_action_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { ric_action_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_action_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_action_to_be_setup_item_s&       ric_action_to_be_setup_item() { return c; }
-    const ric_action_to_be_setup_item_s& ric_action_to_be_setup_item() const { return c; }
+    types                                 type() const { return types::ric_action_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
+    ric_action_to_be_setup_item_s&        ric_action_to_be_setup_item() { return c; }
+    const ric_action_to_be_setup_item_s&  ric_action_to_be_setup_item() const { return c; }
 
   private:
     ric_action_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICactions-AddedForModification-List ::= SEQUENCE (SIZE (0..16)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -2690,83 +1953,42 @@ using ric_actions_to_be_setup_list_l =
     bounded_array<protocol_ie_single_container_s<ric_action_to_be_setup_item_ies_o>, 16>;
 
 // RICassistanceFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_assist_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_assist_fail_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICassistanceFailure ::= SEQUENCE
 using ric_assist_fail_s = elementary_procedure_option<ric_assist_fail_ies_container>;
 
 // RICassistanceHalt-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_assist_halt_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_assist_halt_ies_container {
   ric_request_id_s ric_request_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICassistanceHalt ::= SEQUENCE
 using ric_assist_halt_s = elementary_procedure_option<ric_assist_halt_ies_container>;
 
 // RICassistanceIndication-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_assist_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_assist_ind_ies_container {
   ric_request_id_s          ric_request_id;
   uint32_t                  ric_assist_sn;
   unbounded_octstring<true> ric_assist_hdr;
   unbounded_octstring<true> ric_assist_outcome;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICassistanceIndication ::= SEQUENCE
 using ric_assist_ind_s = elementary_procedure_option<ric_assist_ind_ies_container>;
 
 // RICassistanceRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_assist_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_assist_request_ies_container {
   bool                      ric_assist_upd_present     = false;
   bool                      ric_assist_upd_num_present = false;
@@ -2776,47 +1998,25 @@ struct ric_assist_request_ies_container {
   ric_assist_upd_e          ric_assist_upd;
   uint32_t                  ric_assist_upd_num;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICassistanceRequest ::= SEQUENCE
 using ric_assist_request_s = elementary_procedure_option<ric_assist_request_ies_container>;
 
 // RICassistanceResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_assist_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_assist_resp_ies_container {
   ric_request_id_s          ric_request_id;
   unbounded_octstring<true> ric_assist_hdr;
   unbounded_octstring<true> ric_assist_outcome;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICassistanceResponse ::= SEQUENCE
 using ric_assist_resp_s = elementary_procedure_option<ric_assist_resp_ies_container>;
 
 // RICcontrolAcknowledge-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_ctrl_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_ctrl_ack_ies_container {
   bool                      ric_call_process_id_present = false;
   bool                      ric_ctrl_outcome_present    = false;
@@ -2825,24 +2025,13 @@ struct ric_ctrl_ack_ies_container {
   unbounded_octstring<true> ric_call_process_id;
   unbounded_octstring<true> ric_ctrl_outcome;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICcontrolAcknowledge ::= SEQUENCE
 using ric_ctrl_ack_s = elementary_procedure_option<ric_ctrl_ack_ies_container>;
 
 // RICcontrolFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_ctrl_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_ctrl_fail_ies_container {
   bool                      ric_call_process_id_present = false;
   bool                      ric_ctrl_outcome_present    = false;
@@ -2854,24 +2043,13 @@ struct ric_ctrl_fail_ies_container {
   unbounded_octstring<true> ric_ctrl_outcome;
   crit_diagnostics_s        crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICcontrolFailure ::= SEQUENCE
 using ric_ctrl_fail_s = elementary_procedure_option<ric_ctrl_fail_ies_container>;
 
 // RICcontrolRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_ctrl_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_ctrl_request_ies_container {
   bool                      ric_call_process_id_present  = false;
   bool                      ric_ctrl_ack_request_present = false;
@@ -2882,24 +2060,13 @@ struct ric_ctrl_request_ies_container {
   unbounded_octstring<true> ric_ctrl_msg;
   ric_ctrl_ack_request_e    ric_ctrl_ack_request;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICcontrolRequest ::= SEQUENCE
 using ric_ctrl_request_s = elementary_procedure_option<ric_ctrl_request_ies_container>;
 
 // RICindication-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_ind_ies_container {
   bool                      ric_ind_sn_present          = false;
   bool                      ric_call_process_id_present = false;
@@ -2912,24 +2079,13 @@ struct ric_ind_ies_container {
   unbounded_octstring<true> ric_ind_msg;
   unbounded_octstring<true> ric_call_process_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICindication ::= SEQUENCE
 using ric_ind_s = elementary_procedure_option<ric_ind_ies_container>;
 
 // RICqueryFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_query_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_query_fail_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
@@ -2937,71 +2093,38 @@ struct ric_query_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICqueryFailure ::= SEQUENCE
 using ric_query_fail_s = elementary_procedure_option<ric_query_fail_ies_container>;
 
 // RICqueryRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_query_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_query_request_ies_container {
   ric_request_id_s          ric_request_id;
   uint16_t                  ran_function_id;
   unbounded_octstring<true> ric_query_hdr;
   unbounded_octstring<true> ric_query_definition;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICqueryRequest ::= SEQUENCE
 using ric_query_request_s = elementary_procedure_option<ric_query_request_ies_container>;
 
 // RICqueryResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_query_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_query_resp_ies_container {
   ric_request_id_s          ric_request_id;
   uint16_t                  ran_function_id;
   unbounded_octstring<true> ric_query_outcome;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICqueryResponse ::= SEQUENCE
 using ric_query_resp_s = elementary_procedure_option<ric_query_resp_ies_container>;
 
 // RICserviceLoadStatusFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_load_status_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_load_status_fail_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           ric_load_meas_id;
@@ -3009,24 +2132,13 @@ struct ric_service_load_status_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceLoadStatusFailure ::= SEQUENCE
 using ric_service_load_status_fail_s = elementary_procedure_option<ric_service_load_status_fail_ies_container>;
 
 // RICserviceLoadStatusRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_load_status_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_load_status_request_ies_container {
   bool                             e2node_load_meas_id_present            = false;
   bool                             ran_function_load_request_list_present = false;
@@ -3037,94 +2149,50 @@ struct ric_service_load_status_request_ies_container {
   ran_function_load_request_list_l ran_function_load_request_list;
   report_periodicity_e             report_periodicity;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceLoadStatusRequest ::= SEQUENCE
 using ric_service_load_status_request_s = elementary_procedure_option<ric_service_load_status_request_ies_container>;
 
 // RICserviceLoadStatusResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_load_status_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_load_status_resp_ies_container {
   bool                             ran_function_load_confirm_list_present = false;
   uint16_t                         ric_load_meas_id;
   uint16_t                         e2node_load_meas_id;
   ran_function_load_confirm_list_l ran_function_load_confirm_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceLoadStatusResponse ::= SEQUENCE
 using ric_service_load_status_resp_s = elementary_procedure_option<ric_service_load_status_resp_ies_container>;
 
 // RICserviceLoadUpdate-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_load_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_load_upd_ies_container {
   uint16_t                 ric_load_meas_id;
   uint16_t                 e2node_load_meas_id;
   ran_function_load_list_l ran_function_load_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceLoadUpdate ::= SEQUENCE
 using ric_service_load_upd_s = elementary_procedure_option<ric_service_load_upd_ies_container>;
 
 // RICserviceQuery-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_query_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_query_ies_container {
   bool                    ran_functions_accepted_present = false;
   uint16_t                transaction_id;
   ran_functions_id_list_l ran_functions_accepted;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceQuery ::= SEQUENCE
 using ric_service_query_s = elementary_procedure_option<ric_service_query_ies_container>;
 
 // RICserviceUpdate-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_upd_ies_container {
   bool                    ran_functions_added_present    = false;
   bool                    ran_functions_modified_present = false;
@@ -3134,24 +2202,13 @@ struct ric_service_upd_ies_container {
   ran_functions_list_l    ran_functions_modified;
   ran_functions_id_list_l ran_functions_deleted;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceUpdate ::= SEQUENCE
 using ric_service_upd_s = elementary_procedure_option<ric_service_upd_ies_container>;
 
 // RICserviceUpdateAcknowledge-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_upd_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_upd_ack_ies_container {
   bool                                 ran_functions_accepted_present             = false;
   bool                                 ran_functions_rejected_present             = false;
@@ -3161,24 +2218,13 @@ struct ric_service_upd_ack_ies_container {
   ran_functions_id_cause_list_l        ran_functions_rejected;
   ran_functions_accept_modified_list_l ran_functions_accept_modified_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceUpdateAcknowledge ::= SEQUENCE
 using ric_service_upd_ack_s = elementary_procedure_option<ric_service_upd_ack_ies_container>;
 
 // RICserviceUpdateFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_service_upd_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_service_upd_fail_ies_container {
   bool               time_to_wait_present     = false;
   bool               crit_diagnostics_present = false;
@@ -3187,10 +2233,7 @@ struct ric_service_upd_fail_ies_container {
   time_to_wait_e     time_to_wait;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICserviceUpdateFailure ::= SEQUENCE
@@ -3203,10 +2246,7 @@ struct ric_sub_with_cause_item_s {
   cause_c          cause;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscription-withCause-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -3216,29 +2256,20 @@ struct ric_sub_with_cause_item_ies_o {
     struct types_opts {
       enum options { ric_sub_with_cause_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_sub_with_cause_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_sub_with_cause_item_s&       ric_sub_with_cause_item() { return c; }
-    const ric_sub_with_cause_item_s& ric_sub_with_cause_item() const { return c; }
+    types                                 type() const { return types::ric_sub_with_cause_item; }
+    static const asn1::table::choice_desc desc;
+    ric_sub_with_cause_item_s&            ric_sub_with_cause_item() { return c; }
+    const ric_sub_with_cause_item_s&      ric_sub_with_cause_item() const { return c; }
 
   private:
     ric_sub_with_cause_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICsubscription-List-withCause ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES : IEsSetParam}
@@ -3250,10 +2281,7 @@ struct ric_sub_audit_item_s {
   uint16_t         ran_function_id = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscriptionAudit-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -3263,29 +2291,20 @@ struct ric_sub_audit_item_ies_o {
     struct types_opts {
       enum options { ric_sub_audit_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_sub_audit_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_sub_audit_item_s&       ric_sub_audit_item() { return c; }
-    const ric_sub_audit_item_s& ric_sub_audit_item() const { return c; }
+    types                                 type() const { return types::ric_sub_audit_item; }
+    static const asn1::table::choice_desc desc;
+    ric_sub_audit_item_s&                 ric_sub_audit_item() { return c; }
+    const ric_sub_audit_item_s&           ric_sub_audit_item() const { return c; }
 
   private:
     ric_sub_audit_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICsubscriptionAuditAction-Item ::= SEQUENCE
@@ -3295,10 +2314,7 @@ struct ric_sub_audit_action_item_s {
   ric_action_admitted_list_l ric_action_admitted_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscriptionAuditAction-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
@@ -3308,29 +2324,20 @@ struct ric_sub_audit_action_item_ies_o {
     struct types_opts {
       enum options { ric_sub_audit_action_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ric_sub_audit_action_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ric_sub_audit_action_item_s&       ric_sub_audit_action_item() { return c; }
-    const ric_sub_audit_action_item_s& ric_sub_audit_action_item() const { return c; }
+    types                                 type() const { return types::ric_sub_audit_action_item; }
+    static const asn1::table::choice_desc desc;
+    ric_sub_audit_action_item_s&          ric_sub_audit_action_item() { return c; }
+    const ric_sub_audit_action_item_s&    ric_sub_audit_action_item() const { return c; }
 
   private:
     ric_sub_audit_action_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // RICsubscriptionAuditActionList ::= SEQUENCE (SIZE (1..2147483648)) OF ProtocolIE-Field{E2AP-PROTOCOL-IES :
@@ -3338,24 +2345,13 @@ struct ric_sub_audit_action_item_ies_o {
 using ric_sub_audit_action_list_l = dyn_array<protocol_ie_single_container_s<ric_sub_audit_action_item_ies_o>>;
 
 // RICsubscriptionAuditFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_audit_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_audit_fail_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionAuditFailure ::= SEQUENCE
@@ -3365,14 +2361,6 @@ using ric_sub_audit_fail_s = elementary_procedure_option<ric_sub_audit_fail_ies_
 using ric_sub_audit_list_l = dyn_array<protocol_ie_single_container_s<ric_sub_audit_item_ies_o>>;
 
 // RICsubscriptionAuditRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_audit_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_audit_request_ies_container {
   bool                 ric_sub_audit_flag_present = false;
   bool                 ric_sub_audit_list_present = false;
@@ -3380,24 +2368,13 @@ struct ric_sub_audit_request_ies_container {
   ric_sub_audit_flag_s ric_sub_audit_flag;
   ric_sub_audit_list_l ric_sub_audit_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionAuditRequest ::= SEQUENCE
 using ric_sub_audit_request_s = elementary_procedure_option<ric_sub_audit_request_ies_container>;
 
 // RICsubscriptionAuditResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_audit_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_audit_resp_ies_container {
   bool                        ric_sub_audit_unkown_list_present  = false;
   bool                        ric_sub_audit_missing_list_present = false;
@@ -3406,24 +2383,13 @@ struct ric_sub_audit_resp_ies_container {
   ric_sub_audit_list_l        ric_sub_audit_unkown_list;
   ric_sub_audit_action_list_l ric_sub_audit_missing_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionAuditResponse ::= SEQUENCE
 using ric_sub_audit_resp_s = elementary_procedure_option<ric_sub_audit_resp_ies_container>;
 
 // RICsubscriptionDeleteFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_delete_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_delete_fail_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
@@ -3431,75 +2397,39 @@ struct ric_sub_delete_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionDeleteFailure ::= SEQUENCE
 using ric_sub_delete_fail_s = elementary_procedure_option<ric_sub_delete_fail_ies_container>;
 
 // RICsubscriptionDeleteRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_delete_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_delete_request_ies_container {
   ric_request_id_s ric_request_id;
   uint16_t         ran_function_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionDeleteRequest ::= SEQUENCE
 using ric_sub_delete_request_s = elementary_procedure_option<ric_sub_delete_request_ies_container>;
 
 // RICsubscriptionDeleteRequired-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_delete_required_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_delete_required_ies_container {
   ric_sub_list_with_cause_l ric_sub_to_be_remd;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionDeleteRequired ::= SEQUENCE
 using ric_sub_delete_required_s = elementary_procedure_option<ric_sub_delete_required_ies_container>;
 
 // RICsubscriptionDeleteResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_delete_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_delete_resp_ies_container {
   ric_request_id_s ric_request_id;
   uint16_t         ran_function_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionDeleteResponse ::= SEQUENCE
@@ -3511,21 +2441,10 @@ struct ric_sub_details_s {
   ric_actions_to_be_setup_list_l ric_action_to_be_setup_list;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RICsubscriptionFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_fail_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
@@ -3533,24 +2452,13 @@ struct ric_sub_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionFailure ::= SEQUENCE
 using ric_sub_fail_s = elementary_procedure_option<ric_sub_fail_ies_container>;
 
 // RICsubscriptionModificationConfirm-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_mod_confirm_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_mod_confirm_ies_container {
   bool                                      ric_actions_confirmed_for_mod_list_present      = false;
   bool                                      ric_actions_refused_to_be_modified_list_present = false;
@@ -3563,24 +2471,13 @@ struct ric_sub_mod_confirm_ies_container {
   ric_actions_confirmed_for_removal_list_l  ric_actions_confirmed_for_removal_list;
   ric_actions_refused_to_be_remd_list_l     ric_actions_refused_to_be_remd_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionModificationConfirm ::= SEQUENCE
 using ric_sub_mod_confirm_s = elementary_procedure_option<ric_sub_mod_confirm_ies_container>;
 
 // RICsubscriptionModificationFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_mod_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_mod_fail_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
@@ -3588,24 +2485,13 @@ struct ric_sub_mod_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionModificationFailure ::= SEQUENCE
 using ric_sub_mod_fail_s = elementary_procedure_option<ric_sub_mod_fail_ies_container>;
 
 // RICsubscriptionModificationRefuse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_mod_refuse_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_mod_refuse_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
@@ -3613,24 +2499,13 @@ struct ric_sub_mod_refuse_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionModificationRefuse ::= SEQUENCE
 using ric_sub_mod_refuse_s = elementary_procedure_option<ric_sub_mod_refuse_ies_container>;
 
 // RICsubscriptionModificationRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_mod_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_mod_request_ies_container {
   bool                                      ric_event_trigger_definition_to_be_modified_present = false;
   bool                                      ric_actions_to_be_remd_for_mod_list_present         = false;
@@ -3643,24 +2518,13 @@ struct ric_sub_mod_request_ies_container {
   ric_actions_to_be_modified_for_mod_list_l ric_actions_to_be_modified_for_mod_list;
   ric_actions_to_be_added_for_mod_list_l    ric_actions_to_be_added_for_mod_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionModificationRequest ::= SEQUENCE
 using ric_sub_mod_request_s = elementary_procedure_option<ric_sub_mod_request_ies_container>;
 
 // RICsubscriptionModificationRequired-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_mod_required_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_mod_required_ies_container {
   bool                                       ric_actions_required_to_be_modified_list_present = false;
   bool                                       ric_actions_required_to_be_remd_list_present     = false;
@@ -3669,24 +2533,13 @@ struct ric_sub_mod_required_ies_container {
   ric_actions_required_to_be_modified_list_l ric_actions_required_to_be_modified_list;
   ric_actions_required_to_be_remd_list_l     ric_actions_required_to_be_remd_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionModificationRequired ::= SEQUENCE
 using ric_sub_mod_required_s = elementary_procedure_option<ric_sub_mod_required_ies_container>;
 
 // RICsubscriptionModificationResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_mod_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_mod_resp_ies_container {
   bool                                             ric_actions_remd_for_mod_list_present                  = false;
   bool                                             ric_actions_failed_to_be_remd_for_mod_list_present     = false;
@@ -3703,24 +2556,13 @@ struct ric_sub_mod_resp_ies_container {
   ric_actions_added_for_mod_list_l                 ric_actions_added_for_mod_list;
   ric_actions_failed_to_be_added_for_mod_list_l    ric_actions_failed_to_be_added_for_mod_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionModificationResponse ::= SEQUENCE
 using ric_sub_mod_resp_s = elementary_procedure_option<ric_sub_mod_resp_ies_container>;
 
 // RICsubscriptionRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_request_ies_container {
   bool                     ric_sub_start_time_present = false;
   bool                     ric_sub_end_time_present   = false;
@@ -3730,24 +2572,13 @@ struct ric_sub_request_ies_container {
   fixed_octstring<8, true> ric_sub_start_time;
   fixed_octstring<8, true> ric_sub_end_time;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionRequest ::= SEQUENCE
 using ric_sub_request_s = elementary_procedure_option<ric_sub_request_ies_container>;
 
 // RICsubscriptionResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_resp_ies_container {
   bool                           ric_actions_not_admitted_present = false;
   ric_request_id_s               ric_request_id;
@@ -3755,123 +2586,65 @@ struct ric_sub_resp_ies_container {
   ric_action_admitted_list_l     ric_actions_admitted;
   ric_action_not_admitted_list_l ric_actions_not_admitted;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionResponse ::= SEQUENCE
 using ric_sub_resp_s = elementary_procedure_option<ric_sub_resp_ies_container>;
 
 // RICsubscriptionStateControlFailure-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_state_ctrl_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_state_ctrl_fail_ies_container {
   bool               crit_diagnostics_present = false;
   ric_request_id_s   ric_request_id;
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionStateControlFailure ::= SEQUENCE
 using ric_sub_state_ctrl_fail_s = elementary_procedure_option<ric_sub_state_ctrl_fail_ies_container>;
 
 // RICsubscriptionStateControlRequest-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_state_ctrl_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_state_ctrl_request_ies_container {
   ric_request_id_s               ric_request_id;
   ran_function_state_ctrl_list_l ran_function_state_ctrl_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionStateControlRequest ::= SEQUENCE
 using ric_sub_state_ctrl_request_s = elementary_procedure_option<ric_sub_state_ctrl_request_ies_container>;
 
 // RICsubscriptionStateControlResponse-IEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct ric_sub_state_ctrl_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ric_sub_state_ctrl_resp_ies_container {
   ric_request_id_s                  ric_request_id;
   ran_function_state_confirm_list_l ran_function_state_confirm_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RICsubscriptionStateControlResponse ::= SEQUENCE
 using ric_sub_state_ctrl_resp_s = elementary_procedure_option<ric_sub_state_ctrl_resp_ies_container>;
 
 // ResetRequestIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct reset_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct reset_request_ies_container {
   uint16_t transaction_id;
   cause_c  cause;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResetRequest ::= SEQUENCE
 using reset_request_s = elementary_procedure_option<reset_request_ies_container>;
 
 // ResetResponseIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
-struct reset_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct reset_resp_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           transaction_id;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResetResponse ::= SEQUENCE

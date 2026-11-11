@@ -31,7 +31,7 @@ void ocudu::ocucp::log_nrppa_message(ocudulog::basic_logger&          logger,
     }
 
     asn1::json_writer js;
-    nrppa_pdu.to_json(js);
+    asn1::to_json(js, nrppa_pdu);
     logger.debug(pdu.begin(), pdu.end(), "{} {} ({} B)", (dir == Rx) ? "Rx" : "Tx", type_str, pdu.length());
     logger.debug("Containerized {}: {}", type_str, js.to_string());
   } else if (logger.info.enabled()) {

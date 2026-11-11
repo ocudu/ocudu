@@ -105,7 +105,7 @@ public:
     asn1::rrc_nr::dl_ccch_msg_s ccch;
     {
       asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
-      report_fatal_error_if_not(ccch.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
+      report_fatal_error_if_not(asn1::unpack(ccch, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
     }
     report_fatal_error_if_not(ccch.msg.c1().type().value ==
                                   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject,
@@ -137,7 +137,7 @@ public:
     asn1::rrc_nr::dl_ccch_msg_s ccch;
     {
       asn1::cbit_ref bref{ue_rel->rrc_container};
-      report_fatal_error_if_not(ccch.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
+      report_fatal_error_if_not(asn1::unpack(ccch, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
     }
     report_fatal_error_if_not(ccch.msg.c1().type().value ==
                                   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject,
@@ -173,7 +173,7 @@ public:
     asn1::rrc_nr::dl_ccch_msg_s ccch;
     {
       asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
-      report_fatal_error_if_not(ccch.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
+      report_fatal_error_if_not(asn1::unpack(ccch, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
     }
     report_fatal_error_if_not(ccch.msg.c1().type().value ==
                                   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject,
@@ -231,7 +231,7 @@ public:
     asn1::rrc_nr::dl_ccch_msg_s ccch;
     {
       asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
-      report_fatal_error_if_not(ccch.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
+      report_fatal_error_if_not(asn1::unpack(ccch, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
     }
     report_fatal_error_if_not(ccch.msg.c1().type().value ==
                                   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject,
@@ -292,7 +292,7 @@ public:
     asn1::rrc_nr::dl_ccch_msg_s ccch;
     {
       asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
-      report_fatal_error_if_not(ccch.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
+      report_fatal_error_if_not(asn1::unpack(ccch, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack RRC container");
     }
     report_fatal_error_if_not(ccch.msg.c1().type().value ==
                                   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject,

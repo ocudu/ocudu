@@ -10,7 +10,7 @@
  *****************************************************************************/
 
 #include "security.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include <cstdint>
 
 namespace ocudu::security {

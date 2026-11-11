@@ -285,7 +285,7 @@ TEST_F(cu_cp_inter_cu_ue_context_retrieval_test, when_context_is_retrieved_then_
   const byte_buffer packed_dl_dcch = test_helpers::extract_dl_dcch_msg(test_helpers::get_rrc_container(f1ap_pdu));
   asn1::cbit_ref    bref{packed_dl_dcch};
   asn1::rrc_nr::dl_dcch_msg_s dl_dcch_msg;
-  ASSERT_EQ(dl_dcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(dl_dcch_msg, bref), asn1::OCUDUASN_SUCCESS);
 
   // The UE releases the configuration it holds from the peer before applying this one (TS 38.331 section 5.3.5.11),
   // so the bearers carry the configuration to set them up anew.
@@ -529,7 +529,7 @@ TEST_F(cu_cp_inter_cu_ue_context_retrieval_resume_test, when_context_is_retrieve
   const byte_buffer packed_dl_dcch = test_helpers::extract_dl_dcch_msg(test_helpers::get_rrc_container(f1ap_pdu));
   asn1::cbit_ref    bref{packed_dl_dcch};
   asn1::rrc_nr::dl_dcch_msg_s dl_dcch_msg;
-  ASSERT_EQ(dl_dcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(dl_dcch_msg, bref), asn1::OCUDUASN_SUCCESS);
   ASSERT_TRUE(test_helpers::is_valid_rrc_resume(dl_dcch_msg));
 
   // The configuration the UE stored while suspended is the one of the peer, which this node cannot signal a delta on

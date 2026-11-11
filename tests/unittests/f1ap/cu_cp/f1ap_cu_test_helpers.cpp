@@ -106,7 +106,7 @@ bool f1ap_cu_test::was_rrc_reject_sent()
   asn1::rrc_nr::dl_ccch_msg_s ccch;
   {
     asn1::cbit_ref bref{f1ap_pdu_notifier.last_f1ap_msg.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
-    if (ccch.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(ccch, bref) != asn1::OCUDUASN_SUCCESS) {
       return false;
     }
   }

@@ -23,10 +23,9 @@ namespace rrc_nr {
 // AccessStratumReleaseSidelink-r16 ::= ENUMERATED
 struct access_stratum_release_sidelink_r16_opts {
   enum options { rel16, rel17, rel18, spare5, spare4, spare3, spare2, spare1, /*...*/ nulltype } value;
-  typedef uint8_t number_type;
 
-  const char* to_string() const;
-  uint8_t     to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint8_t                             to_number() const;
 };
 using access_stratum_release_sidelink_r16_e = enumerated<access_stratum_release_sidelink_r16_opts, true>;
 
@@ -40,10 +39,9 @@ using band_combination_list_sidelink_nr_r16_l = dyn_array<band_combination_param
 struct band_params_sidelink_v1710_s {
   struct tx_iuc_scheme2_mode2_sidelink_r17_opts {
     enum options { n4, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using tx_iuc_scheme2_mode2_sidelink_r17_e_ = enumerated<tx_iuc_scheme2_mode2_sidelink_r17_opts>;
 
@@ -52,10 +50,7 @@ struct band_params_sidelink_v1710_s {
   bool                                 tx_iuc_scheme2_mode2_sidelink_r17_present = false;
   tx_iuc_scheme2_mode2_sidelink_r17_e_ tx_iuc_scheme2_mode2_sidelink_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombinationParametersSidelinkNR-v1710 ::= SEQUENCE (SIZE (1..32)) OF BandParametersSidelink-v1710
@@ -69,18 +64,16 @@ struct band_sidelink_pc5_r16_s {
   struct sl_reception_r16_s_ {
     struct harq_rx_process_sidelink_r16_opts {
       enum options { n16, n24, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using harq_rx_process_sidelink_r16_e_ = enumerated<harq_rx_process_sidelink_r16_opts>;
     struct pscch_rx_sidelink_r16_opts {
       enum options { value1, value2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pscch_rx_sidelink_r16_e_ = enumerated<pscch_rx_sidelink_r16_opts>;
     struct scs_cp_pattern_rx_sidelink_r16_c_ {
@@ -100,52 +93,41 @@ struct band_sidelink_pc5_r16_s {
       };
       struct types_opts {
         enum options { fr1_r16, fr2_r16, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      scs_cp_pattern_rx_sidelink_r16_c_() = default;
-      scs_cp_pattern_rx_sidelink_r16_c_(const scs_cp_pattern_rx_sidelink_r16_c_& other);
-      scs_cp_pattern_rx_sidelink_r16_c_& operator=(const scs_cp_pattern_rx_sidelink_r16_c_& other);
-      ~scs_cp_pattern_rx_sidelink_r16_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r16_s_& fr1_r16()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r16_s_&                                   fr1_r16()
       {
-        assert_choice_type(types::fr1_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr1_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr1_r16_s_>();
       }
       fr2_r16_s_& fr2_r16()
       {
-        assert_choice_type(types::fr2_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr2_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr2_r16_s_>();
       }
       const fr1_r16_s_& fr1_r16() const
       {
-        assert_choice_type(types::fr1_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr1_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr1_r16_s_>();
       }
       const fr2_r16_s_& fr2_r16() const
       {
-        assert_choice_type(types::fr2_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr2_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr2_r16_s_>();
       }
       fr1_r16_s_& set_fr1_r16();
       fr2_r16_s_& set_fr2_r16();
 
     private:
-      types                                   type_;
-      choice_buffer_t<fr1_r16_s_, fr2_r16_s_> c;
-
-      void destroy_();
+      asn1::table::choice_storage<scs_cp_pattern_rx_sidelink_r16_c_, types, choice_buffer_t<fr1_r16_s_, fr2_r16_s_>> c;
     };
 
     // member variables
@@ -158,10 +140,9 @@ struct band_sidelink_pc5_r16_s {
   struct csi_report_sidelink_r16_s_ {
     struct csi_rs_ports_sidelink_r16_opts {
       enum options { p1, p2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using csi_rs_ports_sidelink_r16_e_ = enumerated<csi_rs_ports_sidelink_r16_opts>;
 
@@ -170,19 +151,17 @@ struct band_sidelink_pc5_r16_s {
   };
   struct rx_iuc_scheme2_mode2_sidelink_r17_opts {
     enum options { n5, n15, n25, n32, n35, n45, n50, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rx_iuc_scheme2_mode2_sidelink_r17_e_ = enumerated<rx_iuc_scheme2_mode2_sidelink_r17_opts>;
   struct sl_ca_communication_r18_s_ {
     struct total_bw_r18_opts {
       enum options { mhz20, mhz30, mhz40, mhz50, mhz60, mhz70, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using total_bw_r18_e_ = enumerated<total_bw_r18_opts>;
 
@@ -193,10 +172,9 @@ struct band_sidelink_pc5_r16_s {
   };
   struct sl_pwr_class_unlicensed_r18_opts {
     enum options { pc5, spare7, spare6, spare5, spare4, spare3, spare2, spare1, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using sl_pwr_class_unlicensed_r18_e_ = enumerated<sl_pwr_class_unlicensed_r18_opts>;
 
@@ -230,10 +208,7 @@ struct band_sidelink_pc5_r16_s {
   copy_ptr<sl_ca_communication_r18_s_> sl_ca_communication_r18;
   sl_pwr_class_unlicensed_r18_e_       sl_pwr_class_unlicensed_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersSidelink-r17 ::= SEQUENCE
@@ -241,10 +216,7 @@ struct mac_params_sidelink_r17_s {
   bool drx_on_sidelink_r17_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MasterInformationBlockSidelink ::= SEQUENCE
@@ -255,10 +227,7 @@ struct mib_sidelink_s {
   fixed_bitstring<7>  slot_idx_r16;
   fixed_bitstring<2>  reserved_bits_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-MeasQuantityResult-r16 ::= SEQUENCE
@@ -270,10 +239,7 @@ struct sl_meas_quant_result_r16_s {
   bool    sl_rsrp_ded_sl_prs_rp_r18_present = false;
   uint8_t sl_rsrp_ded_sl_prs_rp_r18         = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-MeasResult-r16 ::= SEQUENCE
@@ -284,10 +250,7 @@ struct sl_meas_result_r16_s {
   // group 0
   copy_ptr<sl_meas_quant_result_r16_s> sl_result_sl_prs_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-MeasResults-r16 ::= SEQUENCE
@@ -296,10 +259,7 @@ struct sl_meas_results_r16_s {
   sl_meas_result_r16_s sl_meas_result_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementReportSidelink-r16-IEs ::= SEQUENCE
@@ -308,10 +268,7 @@ struct meas_report_sidelink_r16_ies_s {
   sl_meas_results_r16_s sl_meas_results_r16;
   dyn_octstring         late_non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasurementReportSidelink ::= SEQUENCE
@@ -320,19 +277,14 @@ struct meas_report_sidelink_s {
     struct types_opts {
       enum options { meas_report_sidelink_r16, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    meas_report_sidelink_r16_ies_s& meas_report_sidelink_r16()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    meas_report_sidelink_r16_ies_s&       meas_report_sidelink_r16()
     {
       assert_choice_type(types::meas_report_sidelink_r16, type_, "criticalExtensions");
       return c;
@@ -353,20 +305,16 @@ struct meas_report_sidelink_s {
   // member variables
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NotificationMessageSidelink-v1800-IEs ::= SEQUENCE
 struct notif_msg_sidelink_v1800_ies_s {
   struct sl_ind_type_r18_opts {
     enum options { relay_ue_pc5_rlf, spare1, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using sl_ind_type_r18_e_ = enumerated<sl_ind_type_r18_opts>;
 
@@ -377,10 +325,7 @@ struct notif_msg_sidelink_v1800_ies_s {
   sl_ind_type_r18_e_  sl_ind_type_r18;
   fixed_bitstring<24> sl_dest_id_remote_ue_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NotificationMessageSidelink-r17-IEs ::= SEQUENCE
@@ -388,7 +333,7 @@ struct notif_msg_sidelink_r17_ies_s {
   struct ind_type_r17_opts {
     enum options { relay_ue_uu_rlf, relay_ue_ho, relay_ue_cell_resel, relay_ue_uu_rrc_fail, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ind_type_r17_e_ = enumerated<ind_type_r17_opts>;
 
@@ -399,10 +344,7 @@ struct notif_msg_sidelink_r17_ies_s {
   dyn_octstring                  late_non_crit_ext;
   notif_msg_sidelink_v1800_ies_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NotificationMessageSidelink-r17 ::= SEQUENCE
@@ -411,19 +353,14 @@ struct notif_msg_sidelink_r17_s {
     struct types_opts {
       enum options { notif_msg_sidelink_r17, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    notif_msg_sidelink_r17_ies_s& notif_msg_sidelink_r17()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    notif_msg_sidelink_r17_ies_s&         notif_msg_sidelink_r17()
     {
       assert_choice_type(types::notif_msg_sidelink_r17, type_, "criticalExtensions");
       return c;
@@ -444,10 +381,7 @@ struct notif_msg_sidelink_r17_s {
   // member variables
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCP-ParametersSidelink-r16 ::= SEQUENCE
@@ -458,10 +392,7 @@ struct pdcp_params_sidelink_r16_s {
   bool pdcp_dupl_srb_sidelink_r18_present = false;
   bool pdcp_dupl_drb_sidelink_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationCompleteSidelink-v1720-IEs ::= SEQUENCE
@@ -469,10 +400,7 @@ struct rrc_recfg_complete_sidelink_v1720_ies_s {
   bool sl_drx_cfg_reject_v1720_present = false;
   bool non_crit_ext_present            = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationCompleteSidelink-v1710-IEs ::= SEQUENCE
@@ -480,10 +408,7 @@ struct rrc_recfg_complete_sidelink_v1710_ies_s {
   bool                                    non_crit_ext_present = false;
   rrc_recfg_complete_sidelink_v1720_ies_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationCompleteSidelink-r16-IEs ::= SEQUENCE
@@ -492,10 +417,7 @@ struct rrc_recfg_complete_sidelink_r16_ies_s {
   dyn_octstring                           late_non_crit_ext;
   rrc_recfg_complete_sidelink_v1710_ies_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationCompleteSidelink ::= SEQUENCE
@@ -504,18 +426,13 @@ struct rrc_recfg_complete_sidelink_s {
     struct types_opts {
       enum options { rrc_recfg_complete_sidelink_r16, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                   set(types::options e = types::nulltype);
+    types                                  type() const { return type_; }
+    static const asn1::table::choice_desc  desc;
     rrc_recfg_complete_sidelink_r16_ies_s& rrc_recfg_complete_sidelink_r16()
     {
       assert_choice_type(types::rrc_recfg_complete_sidelink_r16, type_, "criticalExtensions");
@@ -538,10 +455,7 @@ struct rrc_recfg_complete_sidelink_s {
   uint8_t      rrc_transaction_id_r16 = 0;
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationFailureSidelink-r16-IEs ::= SEQUENCE
@@ -549,10 +463,7 @@ struct rrc_recfg_fail_sidelink_r16_ies_s {
   bool          non_crit_ext_present = false;
   dyn_octstring late_non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationFailureSidelink ::= SEQUENCE
@@ -561,19 +472,14 @@ struct rrc_recfg_fail_sidelink_s {
     struct types_opts {
       enum options { rrc_recfg_fail_sidelink_r16, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    rrc_recfg_fail_sidelink_r16_ies_s& rrc_recfg_fail_sidelink_r16()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    rrc_recfg_fail_sidelink_r16_ies_s&    rrc_recfg_fail_sidelink_r16()
     {
       assert_choice_type(types::rrc_recfg_fail_sidelink_r16, type_, "criticalExtensions");
       return c;
@@ -595,10 +501,7 @@ struct rrc_recfg_fail_sidelink_s {
   uint8_t      rrc_transaction_id_r16 = 0;
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-SDAP-ConfigPC5-r16 ::= SEQUENCE
@@ -608,7 +511,7 @@ struct sl_sdap_cfg_pc5_r16_s {
   struct sl_sdap_hdr_r16_opts {
     enum options { present, absent, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using sl_sdap_hdr_r16_e_ = enumerated<sl_sdap_hdr_r16_opts>;
 
@@ -618,20 +521,16 @@ struct sl_sdap_cfg_pc5_r16_s {
   sl_sdap_hdr_r16_e_                         sl_sdap_hdr_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-PDCP-ConfigPC5-r16 ::= SEQUENCE
 struct sl_pdcp_cfg_pc5_r16_s {
   struct sl_pdcp_sn_size_r16_opts {
     enum options { len12bits, len18bits, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using sl_pdcp_sn_size_r16_e_ = enumerated<sl_pdcp_sn_size_r16_opts>;
 
@@ -641,10 +540,7 @@ struct sl_pdcp_cfg_pc5_r16_s {
   sl_pdcp_sn_size_r16_e_ sl_pdcp_sn_size_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-RLC-ConfigPC5-r16 ::= CHOICE
@@ -667,49 +563,42 @@ struct sl_rlc_cfg_pc5_r16_c {
   struct types_opts {
     enum options { sl_am_rlc_r16, sl_um_bi_dir_rlc_r16, sl_um_uni_dir_rlc_r16, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  sl_rlc_cfg_pc5_r16_c() = default;
-  sl_rlc_cfg_pc5_r16_c(const sl_rlc_cfg_pc5_r16_c& other);
-  sl_rlc_cfg_pc5_r16_c& operator=(const sl_rlc_cfg_pc5_r16_c& other);
-  ~sl_rlc_cfg_pc5_r16_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  sl_am_rlc_r16_s_& sl_am_rlc_r16()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  sl_am_rlc_r16_s_&                             sl_am_rlc_r16()
   {
-    assert_choice_type(types::sl_am_rlc_r16, type_, "SL-RLC-ConfigPC5-r16");
+    assert_choice_type(types::sl_am_rlc_r16, c.type, "SL-RLC-ConfigPC5-r16");
     return c.get<sl_am_rlc_r16_s_>();
   }
   sl_um_bi_dir_rlc_r16_s_& sl_um_bi_dir_rlc_r16()
   {
-    assert_choice_type(types::sl_um_bi_dir_rlc_r16, type_, "SL-RLC-ConfigPC5-r16");
+    assert_choice_type(types::sl_um_bi_dir_rlc_r16, c.type, "SL-RLC-ConfigPC5-r16");
     return c.get<sl_um_bi_dir_rlc_r16_s_>();
   }
   sl_um_uni_dir_rlc_r16_s_& sl_um_uni_dir_rlc_r16()
   {
-    assert_choice_type(types::sl_um_uni_dir_rlc_r16, type_, "SL-RLC-ConfigPC5-r16");
+    assert_choice_type(types::sl_um_uni_dir_rlc_r16, c.type, "SL-RLC-ConfigPC5-r16");
     return c.get<sl_um_uni_dir_rlc_r16_s_>();
   }
   const sl_am_rlc_r16_s_& sl_am_rlc_r16() const
   {
-    assert_choice_type(types::sl_am_rlc_r16, type_, "SL-RLC-ConfigPC5-r16");
+    assert_choice_type(types::sl_am_rlc_r16, c.type, "SL-RLC-ConfigPC5-r16");
     return c.get<sl_am_rlc_r16_s_>();
   }
   const sl_um_bi_dir_rlc_r16_s_& sl_um_bi_dir_rlc_r16() const
   {
-    assert_choice_type(types::sl_um_bi_dir_rlc_r16, type_, "SL-RLC-ConfigPC5-r16");
+    assert_choice_type(types::sl_um_bi_dir_rlc_r16, c.type, "SL-RLC-ConfigPC5-r16");
     return c.get<sl_um_bi_dir_rlc_r16_s_>();
   }
   const sl_um_uni_dir_rlc_r16_s_& sl_um_uni_dir_rlc_r16() const
   {
-    assert_choice_type(types::sl_um_uni_dir_rlc_r16, type_, "SL-RLC-ConfigPC5-r16");
+    assert_choice_type(types::sl_um_uni_dir_rlc_r16, c.type, "SL-RLC-ConfigPC5-r16");
     return c.get<sl_um_uni_dir_rlc_r16_s_>();
   }
   sl_am_rlc_r16_s_&         set_sl_am_rlc_r16();
@@ -717,10 +606,10 @@ struct sl_rlc_cfg_pc5_r16_c {
   sl_um_uni_dir_rlc_r16_s_& set_sl_um_uni_dir_rlc_r16();
 
 private:
-  types                                                                                type_;
-  choice_buffer_t<sl_am_rlc_r16_s_, sl_um_bi_dir_rlc_r16_s_, sl_um_uni_dir_rlc_r16_s_> c;
-
-  void destroy_();
+  asn1::table::choice_storage<sl_rlc_cfg_pc5_r16_c,
+                              types,
+                              choice_buffer_t<sl_am_rlc_r16_s_, sl_um_bi_dir_rlc_r16_s_, sl_um_uni_dir_rlc_r16_s_>>
+      c;
 };
 
 // SL-LogicalChannelConfigPC5-r16 ::= SEQUENCE
@@ -731,10 +620,7 @@ struct sl_lc_ch_cfg_pc5_r16_s {
   bool    sl_lc_ch_id_v1800_present = false;
   uint8_t sl_lc_ch_id_v1800         = 33;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SLRB-Config-r16 ::= SEQUENCE
@@ -750,10 +636,7 @@ struct slrb_cfg_r16_s {
   sl_lc_ch_cfg_pc5_r16_s sl_mac_lc_ch_cfg_pc5_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-CSI-RS-Config-r16 ::= SEQUENCE
@@ -762,49 +645,39 @@ struct sl_csi_rs_cfg_r16_s {
     struct types_opts {
       enum options { sl_one_ant_port_r16, sl_two_ant_port_r16, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    sl_csi_rs_freq_alloc_r16_c_() = default;
-    sl_csi_rs_freq_alloc_r16_c_(const sl_csi_rs_freq_alloc_r16_c_& other);
-    sl_csi_rs_freq_alloc_r16_c_& operator=(const sl_csi_rs_freq_alloc_r16_c_& other);
-    ~sl_csi_rs_freq_alloc_r16_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fixed_bitstring<12>& sl_one_ant_port_r16()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fixed_bitstring<12>&                          sl_one_ant_port_r16()
     {
-      assert_choice_type(types::sl_one_ant_port_r16, type_, "sl-CSI-RS-FreqAllocation-r16");
+      assert_choice_type(types::sl_one_ant_port_r16, c.type, "sl-CSI-RS-FreqAllocation-r16");
       return c.get<fixed_bitstring<12>>();
     }
     fixed_bitstring<6>& sl_two_ant_port_r16()
     {
-      assert_choice_type(types::sl_two_ant_port_r16, type_, "sl-CSI-RS-FreqAllocation-r16");
+      assert_choice_type(types::sl_two_ant_port_r16, c.type, "sl-CSI-RS-FreqAllocation-r16");
       return c.get<fixed_bitstring<6>>();
     }
     const fixed_bitstring<12>& sl_one_ant_port_r16() const
     {
-      assert_choice_type(types::sl_one_ant_port_r16, type_, "sl-CSI-RS-FreqAllocation-r16");
+      assert_choice_type(types::sl_one_ant_port_r16, c.type, "sl-CSI-RS-FreqAllocation-r16");
       return c.get<fixed_bitstring<12>>();
     }
     const fixed_bitstring<6>& sl_two_ant_port_r16() const
     {
-      assert_choice_type(types::sl_two_ant_port_r16, type_, "sl-CSI-RS-FreqAllocation-r16");
+      assert_choice_type(types::sl_two_ant_port_r16, c.type, "sl-CSI-RS-FreqAllocation-r16");
       return c.get<fixed_bitstring<6>>();
     }
     fixed_bitstring<12>& set_sl_one_ant_port_r16();
     fixed_bitstring<6>&  set_sl_two_ant_port_r16();
 
   private:
-    types                                type_;
-    choice_buffer_t<fixed_bitstring<12>> c;
-
-    void destroy_();
+    asn1::table::choice_storage<sl_csi_rs_freq_alloc_r16_c_, types, choice_buffer_t<fixed_bitstring<12>>> c;
   };
 
   // member variables
@@ -814,10 +687,7 @@ struct sl_csi_rs_cfg_r16_s {
   uint8_t                     sl_csi_rs_first_symbol_r16 = 3;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-RLC-ChannelConfigPC5-r17 ::= SEQUENCE
@@ -829,10 +699,7 @@ struct sl_rlc_ch_cfg_pc5_r17_s {
   sl_lc_ch_cfg_pc5_r16_s sl_mac_lc_ch_cfg_pc5_r17;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-SFN-DFN-Offset-r18 ::= SEQUENCE
@@ -841,10 +708,7 @@ struct sl_sfn_dfn_offset_r18_s {
   uint8_t  sl_sf_offset_r18    = 0;
   uint8_t  sl_slot_offset_r18  = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-CarrierConfig-r18 ::= SEQUENCE
@@ -855,10 +719,7 @@ struct sl_carrier_cfg_r18_s {
   uint16_t             carrier_bw_r18               = 1;
   uint32_t             sl_absolute_freq_point_a_r18 = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-RLC-BearerConfig-r18 ::= CHOICE
@@ -880,49 +741,39 @@ struct sl_rlc_bearer_cfg_r18_c {
   struct types_opts {
     enum options { srb, drb, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  sl_rlc_bearer_cfg_r18_c() = default;
-  sl_rlc_bearer_cfg_r18_c(const sl_rlc_bearer_cfg_r18_c& other);
-  sl_rlc_bearer_cfg_r18_c& operator=(const sl_rlc_bearer_cfg_r18_c& other);
-  ~sl_rlc_bearer_cfg_r18_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  srb_s_& srb()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  srb_s_&                                       srb()
   {
-    assert_choice_type(types::srb, type_, "SL-RLC-BearerConfig-r18");
+    assert_choice_type(types::srb, c.type, "SL-RLC-BearerConfig-r18");
     return c.get<srb_s_>();
   }
   drb_s_& drb()
   {
-    assert_choice_type(types::drb, type_, "SL-RLC-BearerConfig-r18");
+    assert_choice_type(types::drb, c.type, "SL-RLC-BearerConfig-r18");
     return c.get<drb_s_>();
   }
   const srb_s_& srb() const
   {
-    assert_choice_type(types::srb, type_, "SL-RLC-BearerConfig-r18");
+    assert_choice_type(types::srb, c.type, "SL-RLC-BearerConfig-r18");
     return c.get<srb_s_>();
   }
   const drb_s_& drb() const
   {
-    assert_choice_type(types::drb, type_, "SL-RLC-BearerConfig-r18");
+    assert_choice_type(types::drb, c.type, "SL-RLC-BearerConfig-r18");
     return c.get<drb_s_>();
   }
   srb_s_& set_srb();
   drb_s_& set_drb();
 
 private:
-  types                           type_;
-  choice_buffer_t<drb_s_, srb_s_> c;
-
-  void destroy_();
+  asn1::table::choice_storage<sl_rlc_bearer_cfg_r18_c, types, choice_buffer_t<drb_s_, srb_s_>> c;
 };
 
 // SL-SRAP-ConfigPC5-r18 ::= SEQUENCE
@@ -937,10 +788,7 @@ struct sl_srap_cfg_pc5_r18_s {
   uint16_t            sl_remote_ue_local_id_r18 = 0;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationSidelink-v1800-IEs ::= SEQUENCE
@@ -961,10 +809,7 @@ struct rrc_recfg_sidelink_v1800_ies_s {
   sl_rlc_bearer_to_release_list_r18_l_     sl_rlc_bearer_to_release_list_r18;
   sl_local_id_pair_list_r18_l_             sl_local_id_pair_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationSidelink-v1700-IEs ::= SEQUENCE
@@ -982,10 +827,7 @@ struct rrc_recfg_sidelink_v1700_ies_s {
   sl_rlc_ch_to_add_mod_list_pc5_r17_l_      sl_rlc_ch_to_add_mod_list_pc5_r17;
   rrc_recfg_sidelink_v1800_ies_s            non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationSidelink-r16-IEs ::= SEQUENCE
@@ -1007,10 +849,7 @@ struct rrc_recfg_sidelink_r16_ies_s {
   dyn_octstring                        late_non_crit_ext;
   rrc_recfg_sidelink_v1700_ies_s       non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCReconfigurationSidelink ::= SEQUENCE
@@ -1019,19 +858,14 @@ struct rrc_recfg_sidelink_s {
     struct types_opts {
       enum options { rrc_recfg_sidelink_r16, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    rrc_recfg_sidelink_r16_ies_s& rrc_recfg_sidelink_r16()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    rrc_recfg_sidelink_r16_ies_s&         rrc_recfg_sidelink_r16()
     {
       assert_choice_type(types::rrc_recfg_sidelink_r16, type_, "criticalExtensions");
       return c;
@@ -1053,10 +887,7 @@ struct rrc_recfg_sidelink_s {
   uint8_t      rrc_transaction_id_r16 = 0;
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-SIB-ReqInfo-r17 ::= ENUMERATED
@@ -1099,7 +930,7 @@ struct sl_sib_req_info_r17_opts {
     nulltype
   } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using sl_sib_req_info_r17_e = enumerated<sl_sib_req_info_r17_opts, true, 1>;
 
@@ -1112,10 +943,7 @@ struct sl_paging_info_remote_ue_r17_s {
   sl_paging_id_remote_ue_r17_s sl_paging_id_remote_ue_r17;
   paging_cycle_e               sl_paging_cycle_remote_ue_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-PosSIB-ReqInfo-r18 ::= SEQUENCE
@@ -1191,7 +1019,7 @@ struct sl_pos_sib_req_info_r18_s {
       nulltype
     } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using pos_sib_type_r18_e_ = enumerated<pos_sib_type_r18_opts, true>;
 
@@ -1202,10 +1030,7 @@ struct sl_pos_sib_req_info_r18_s {
   sbas_id_r16_s       sbas_id_r18;
   pos_sib_type_r18_e_ pos_sib_type_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-RequestedPosSIB-List-r18 ::= SEQUENCE (SIZE (1..32)) OF SL-PosSIB-ReqInfo-r18
@@ -1221,10 +1046,7 @@ struct remote_ue_info_sidelink_v1800_ies_s {
   setup_release_c<dyn_seq_of<sl_pos_sib_req_info_r18_s, 1, 32>> sl_requested_pos_sib_list_r18;
   fixed_bitstring<24>                                           sl_dest_id_remote_ue_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RemoteUEInformationSidelink-r17-IEs ::= SEQUENCE
@@ -1237,10 +1059,7 @@ struct remote_ue_info_sidelink_r17_ies_s {
   dyn_octstring                                   late_non_crit_ext;
   remote_ue_info_sidelink_v1800_ies_s             non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RemoteUEInformationSidelink-r17 ::= SEQUENCE
@@ -1249,19 +1068,14 @@ struct remote_ue_info_sidelink_r17_s {
     struct types_opts {
       enum options { remote_ue_info_sidelink_r17, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    remote_ue_info_sidelink_r17_ies_s& remote_ue_info_sidelink_r17()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    remote_ue_info_sidelink_r17_ies_s&    remote_ue_info_sidelink_r17()
     {
       assert_choice_type(types::remote_ue_info_sidelink_r17, type_, "criticalExtensions");
       return c;
@@ -1282,10 +1096,7 @@ struct remote_ue_info_sidelink_r17_s {
   // member variables
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SBCCH-SL-BCH-MessageType ::= CHOICE
@@ -1294,19 +1105,14 @@ struct sbcch_sl_bch_msg_type_c {
     struct types_opts {
       enum options { mib_sidelink, spare1, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    c1_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    mib_sidelink_s& mib_sidelink()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    mib_sidelink_s&                       mib_sidelink()
     {
       assert_choice_type(types::mib_sidelink, type_, "c1");
       return c;
@@ -1325,22 +1131,16 @@ struct sbcch_sl_bch_msg_type_c {
   };
   struct types_opts {
     enum options { c1, msg_class_ext, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  sbcch_sl_bch_msg_type_c() = default;
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  c1_c_& c1()
+  void                                  set(types::options e = types::nulltype);
+  types                                 type() const { return type_; }
+  static const asn1::table::choice_desc desc;
+  c1_c_&                                c1()
   {
     assert_choice_type(types::c1, type_, "SBCCH-SL-BCH-MessageType");
     return c;
@@ -1362,10 +1162,7 @@ private:
 struct sbcch_sl_bch_msg_s {
   sbcch_sl_bch_msg_type_c msg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UECapabilityEnquirySidelink-r16-IEs ::= SEQUENCE
@@ -1375,10 +1172,7 @@ struct ue_cap_enquiry_sidelink_r16_ies_s {
   dyn_octstring    ue_cap_info_sidelink_r16;
   dyn_octstring    late_non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UECapabilityEnquirySidelink ::= SEQUENCE
@@ -1387,19 +1181,14 @@ struct ue_cap_enquiry_sidelink_s {
     struct types_opts {
       enum options { ue_cap_enquiry_sidelink_r16, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ue_cap_enquiry_sidelink_r16_ies_s& ue_cap_enquiry_sidelink_r16()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    ue_cap_enquiry_sidelink_r16_ies_s&    ue_cap_enquiry_sidelink_r16()
     {
       assert_choice_type(types::ue_cap_enquiry_sidelink_r16, type_, "criticalExtensions");
       return c;
@@ -1421,10 +1210,7 @@ struct ue_cap_enquiry_sidelink_s {
   uint8_t      rrc_transaction_id_r16 = 0;
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UECapabilityInformationSidelink-v1800-IEs ::= SEQUENCE
@@ -1433,10 +1219,7 @@ struct ue_cap_info_sidelink_v1800_ies_s {
   bool pos_sib_forwarding_supported_r18_present = false;
   bool non_crit_ext_present                     = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UECapabilityInformationSidelink-v1700-IEs ::= SEQUENCE
@@ -1447,10 +1230,7 @@ struct ue_cap_info_sidelink_v1700_ies_s {
   band_combination_list_sidelink_nr_v1710_l supported_band_combination_list_sidelink_nr_v1710;
   ue_cap_info_sidelink_v1800_ies_s          non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UECapabilityInformationSidelink-r16-IEs ::= SEQUENCE
@@ -1470,10 +1250,7 @@ struct ue_cap_info_sidelink_r16_ies_s {
   dyn_octstring                           late_non_crit_ext;
   ue_cap_info_sidelink_v1700_ies_s        non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UECapabilityInformationSidelink ::= SEQUENCE
@@ -1482,19 +1259,14 @@ struct ue_cap_info_sidelink_s {
     struct types_opts {
       enum options { ue_cap_info_sidelink_r16, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ue_cap_info_sidelink_r16_ies_s& ue_cap_info_sidelink_r16()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    ue_cap_info_sidelink_r16_ies_s&       ue_cap_info_sidelink_r16()
     {
       assert_choice_type(types::ue_cap_info_sidelink_r16, type_, "criticalExtensions");
       return c;
@@ -1516,10 +1288,7 @@ struct ue_cap_info_sidelink_s {
   uint8_t      rrc_transaction_id_r16 = 0;
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UuMessageTransferSidelink-v1800-IEs ::= SEQUENCE
@@ -1527,10 +1296,7 @@ struct uu_msg_transfer_sidelink_v1800_ies_s {
   bool          non_crit_ext_present = false;
   dyn_octstring sl_paging_delivery_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UuMessageTransferSidelink-r17-IEs ::= SEQUENCE
@@ -1542,10 +1308,7 @@ struct uu_msg_transfer_sidelink_r17_ies_s {
   dyn_octstring                        late_non_crit_ext;
   uu_msg_transfer_sidelink_v1800_ies_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UuMessageTransferSidelink-r17 ::= SEQUENCE
@@ -1554,19 +1317,14 @@ struct uu_msg_transfer_sidelink_r17_s {
     struct types_opts {
       enum options { uu_msg_transfer_sidelink_r17, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    uu_msg_transfer_sidelink_r17_ies_s& uu_msg_transfer_sidelink_r17()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    uu_msg_transfer_sidelink_r17_ies_s&   uu_msg_transfer_sidelink_r17()
     {
       assert_choice_type(types::uu_msg_transfer_sidelink_r17, type_, "criticalExtensions");
       return c;
@@ -1587,10 +1345,7 @@ struct uu_msg_transfer_sidelink_r17_s {
   // member variables
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEAssistanceInformationSidelink-r17-IEs ::= SEQUENCE
@@ -1602,10 +1357,7 @@ struct ue_assist_info_sidelink_r17_ies_s {
   sl_preferred_drx_cfg_list_r17_l_ sl_preferred_drx_cfg_list_r17;
   dyn_octstring                    late_non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEAssistanceInformationSidelink-r17 ::= SEQUENCE
@@ -1614,19 +1366,14 @@ struct ue_assist_info_sidelink_r17_s {
     struct types_opts {
       enum options { ue_assist_info_sidelink_r17, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ue_assist_info_sidelink_r17_ies_s& ue_assist_info_sidelink_r17()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    ue_assist_info_sidelink_r17_ies_s&    ue_assist_info_sidelink_r17()
     {
       assert_choice_type(types::ue_assist_info_sidelink_r17, type_, "criticalExtensions");
       return c;
@@ -1647,10 +1394,7 @@ struct ue_assist_info_sidelink_r17_s {
   // member variables
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-E2E-QoS-InfoPC5-r18 ::= SEQUENCE
@@ -1662,10 +1406,7 @@ struct sl_e2_e_qos_info_pc5_r18_s {
   uint16_t                sl_e2_e_slrb_idx_r18 = 1;
   sl_qos_info_list_r18_l_ sl_qos_info_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEInformationRequestSidelink-r18-IEs ::= SEQUENCE
@@ -1677,10 +1418,7 @@ struct ue_info_request_sidelink_r18_ies_s {
   sl_e2_e_qos_info_list_pc5_r18_l_ sl_e2_e_qos_info_list_pc5_r18;
   dyn_octstring                    late_non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEInformationRequestSidelink-r18 ::= SEQUENCE
@@ -1689,19 +1427,14 @@ struct ue_info_request_sidelink_r18_s {
     struct types_opts {
       enum options { ue_info_request_sidelink_r18, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ue_info_request_sidelink_r18_ies_s& ue_info_request_sidelink_r18()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    ue_info_request_sidelink_r18_ies_s&   ue_info_request_sidelink_r18()
     {
       assert_choice_type(types::ue_info_request_sidelink_r18, type_, "criticalExtensions");
       return c;
@@ -1723,10 +1456,7 @@ struct ue_info_request_sidelink_r18_s {
   uint8_t      rrc_transaction_id_r18 = 0;
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-SplitQoS-InfoPC5-r18 ::= SEQUENCE
@@ -1734,10 +1464,7 @@ struct sl_split_qos_info_pc5_r18_s {
   uint16_t sl_qos_flow_id_r18               = 1;
   uint16_t sl_split_packet_delay_budget_r18 = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEInformationResponseSidelink-r18-IEs ::= SEQUENCE
@@ -1749,10 +1476,7 @@ struct ue_info_resp_sidelink_r18_ies_s {
   sl_split_qos_info_list_pc5_r18_l_ sl_split_qos_info_list_pc5_r18;
   dyn_octstring                     late_non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEInformationResponseSidelink-r18 ::= SEQUENCE
@@ -1761,19 +1485,14 @@ struct ue_info_resp_sidelink_r18_s {
     struct types_opts {
       enum options { ue_info_resp_sidelink_r18, crit_exts_future, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    crit_exts_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ue_info_resp_sidelink_r18_ies_s& ue_info_resp_sidelink_r18()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    ue_info_resp_sidelink_r18_ies_s&      ue_info_resp_sidelink_r18()
     {
       assert_choice_type(types::ue_info_resp_sidelink_r18, type_, "criticalExtensions");
       return c;
@@ -1795,10 +1514,7 @@ struct ue_info_resp_sidelink_r18_s {
   uint8_t      rrc_transaction_id_r18 = 0;
   crit_exts_c_ crit_exts;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SCCH-MessageType ::= CHOICE
@@ -1817,99 +1533,92 @@ struct s_cch_msg_type_c {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    c1_c_() = default;
-    c1_c_(const c1_c_& other);
-    c1_c_& operator=(const c1_c_& other);
-    ~c1_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    meas_report_sidelink_s& meas_report_sidelink()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    meas_report_sidelink_s&                       meas_report_sidelink()
     {
-      assert_choice_type(types::meas_report_sidelink, type_, "c1");
+      assert_choice_type(types::meas_report_sidelink, c.type, "c1");
       return c.get<meas_report_sidelink_s>();
     }
     rrc_recfg_sidelink_s& rrc_recfg_sidelink()
     {
-      assert_choice_type(types::rrc_recfg_sidelink, type_, "c1");
+      assert_choice_type(types::rrc_recfg_sidelink, c.type, "c1");
       return c.get<rrc_recfg_sidelink_s>();
     }
     rrc_recfg_complete_sidelink_s& rrc_recfg_complete_sidelink()
     {
-      assert_choice_type(types::rrc_recfg_complete_sidelink, type_, "c1");
+      assert_choice_type(types::rrc_recfg_complete_sidelink, c.type, "c1");
       return c.get<rrc_recfg_complete_sidelink_s>();
     }
     rrc_recfg_fail_sidelink_s& rrc_recfg_fail_sidelink()
     {
-      assert_choice_type(types::rrc_recfg_fail_sidelink, type_, "c1");
+      assert_choice_type(types::rrc_recfg_fail_sidelink, c.type, "c1");
       return c.get<rrc_recfg_fail_sidelink_s>();
     }
     ue_cap_enquiry_sidelink_s& ue_cap_enquiry_sidelink()
     {
-      assert_choice_type(types::ue_cap_enquiry_sidelink, type_, "c1");
+      assert_choice_type(types::ue_cap_enquiry_sidelink, c.type, "c1");
       return c.get<ue_cap_enquiry_sidelink_s>();
     }
     ue_cap_info_sidelink_s& ue_cap_info_sidelink()
     {
-      assert_choice_type(types::ue_cap_info_sidelink, type_, "c1");
+      assert_choice_type(types::ue_cap_info_sidelink, c.type, "c1");
       return c.get<ue_cap_info_sidelink_s>();
     }
     uu_msg_transfer_sidelink_r17_s& uu_msg_transfer_sidelink_r17()
     {
-      assert_choice_type(types::uu_msg_transfer_sidelink_r17, type_, "c1");
+      assert_choice_type(types::uu_msg_transfer_sidelink_r17, c.type, "c1");
       return c.get<uu_msg_transfer_sidelink_r17_s>();
     }
     remote_ue_info_sidelink_r17_s& remote_ue_info_sidelink_r17()
     {
-      assert_choice_type(types::remote_ue_info_sidelink_r17, type_, "c1");
+      assert_choice_type(types::remote_ue_info_sidelink_r17, c.type, "c1");
       return c.get<remote_ue_info_sidelink_r17_s>();
     }
     const meas_report_sidelink_s& meas_report_sidelink() const
     {
-      assert_choice_type(types::meas_report_sidelink, type_, "c1");
+      assert_choice_type(types::meas_report_sidelink, c.type, "c1");
       return c.get<meas_report_sidelink_s>();
     }
     const rrc_recfg_sidelink_s& rrc_recfg_sidelink() const
     {
-      assert_choice_type(types::rrc_recfg_sidelink, type_, "c1");
+      assert_choice_type(types::rrc_recfg_sidelink, c.type, "c1");
       return c.get<rrc_recfg_sidelink_s>();
     }
     const rrc_recfg_complete_sidelink_s& rrc_recfg_complete_sidelink() const
     {
-      assert_choice_type(types::rrc_recfg_complete_sidelink, type_, "c1");
+      assert_choice_type(types::rrc_recfg_complete_sidelink, c.type, "c1");
       return c.get<rrc_recfg_complete_sidelink_s>();
     }
     const rrc_recfg_fail_sidelink_s& rrc_recfg_fail_sidelink() const
     {
-      assert_choice_type(types::rrc_recfg_fail_sidelink, type_, "c1");
+      assert_choice_type(types::rrc_recfg_fail_sidelink, c.type, "c1");
       return c.get<rrc_recfg_fail_sidelink_s>();
     }
     const ue_cap_enquiry_sidelink_s& ue_cap_enquiry_sidelink() const
     {
-      assert_choice_type(types::ue_cap_enquiry_sidelink, type_, "c1");
+      assert_choice_type(types::ue_cap_enquiry_sidelink, c.type, "c1");
       return c.get<ue_cap_enquiry_sidelink_s>();
     }
     const ue_cap_info_sidelink_s& ue_cap_info_sidelink() const
     {
-      assert_choice_type(types::ue_cap_info_sidelink, type_, "c1");
+      assert_choice_type(types::ue_cap_info_sidelink, c.type, "c1");
       return c.get<ue_cap_info_sidelink_s>();
     }
     const uu_msg_transfer_sidelink_r17_s& uu_msg_transfer_sidelink_r17() const
     {
-      assert_choice_type(types::uu_msg_transfer_sidelink_r17, type_, "c1");
+      assert_choice_type(types::uu_msg_transfer_sidelink_r17, c.type, "c1");
       return c.get<uu_msg_transfer_sidelink_r17_s>();
     }
     const remote_ue_info_sidelink_r17_s& remote_ue_info_sidelink_r17() const
     {
-      assert_choice_type(types::remote_ue_info_sidelink_r17, type_, "c1");
+      assert_choice_type(types::remote_ue_info_sidelink_r17, c.type, "c1");
       return c.get<remote_ue_info_sidelink_r17_s>();
     }
     meas_report_sidelink_s&         set_meas_report_sidelink();
@@ -1922,18 +1631,17 @@ struct s_cch_msg_type_c {
     remote_ue_info_sidelink_r17_s&  set_remote_ue_info_sidelink_r17();
 
   private:
-    types type_;
-    choice_buffer_t<meas_report_sidelink_s,
-                    remote_ue_info_sidelink_r17_s,
-                    rrc_recfg_complete_sidelink_s,
-                    rrc_recfg_fail_sidelink_s,
-                    rrc_recfg_sidelink_s,
-                    ue_cap_enquiry_sidelink_s,
-                    ue_cap_info_sidelink_s,
-                    uu_msg_transfer_sidelink_r17_s>
+    asn1::table::choice_storage<c1_c_,
+                                types,
+                                choice_buffer_t<meas_report_sidelink_s,
+                                                remote_ue_info_sidelink_r17_s,
+                                                rrc_recfg_complete_sidelink_s,
+                                                rrc_recfg_fail_sidelink_s,
+                                                rrc_recfg_sidelink_s,
+                                                ue_cap_enquiry_sidelink_s,
+                                                ue_cap_info_sidelink_s,
+                                                uu_msg_transfer_sidelink_r17_s>>
         c;
-
-    void destroy_();
   };
   struct msg_class_ext_c_ {
     struct c2_c_ {
@@ -1950,59 +1658,52 @@ struct s_cch_msg_type_c {
           nulltype
         } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      c2_c_() = default;
-      c2_c_(const c2_c_& other);
-      c2_c_& operator=(const c2_c_& other);
-      ~c2_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      notif_msg_sidelink_r17_s& notif_msg_sidelink_r17()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      notif_msg_sidelink_r17_s&                     notif_msg_sidelink_r17()
       {
-        assert_choice_type(types::notif_msg_sidelink_r17, type_, "c2");
+        assert_choice_type(types::notif_msg_sidelink_r17, c.type, "c2");
         return c.get<notif_msg_sidelink_r17_s>();
       }
       ue_assist_info_sidelink_r17_s& ue_assist_info_sidelink_r17()
       {
-        assert_choice_type(types::ue_assist_info_sidelink_r17, type_, "c2");
+        assert_choice_type(types::ue_assist_info_sidelink_r17, c.type, "c2");
         return c.get<ue_assist_info_sidelink_r17_s>();
       }
       ue_info_request_sidelink_r18_s& ue_info_request_sidelink_r18()
       {
-        assert_choice_type(types::ue_info_request_sidelink_r18, type_, "c2");
+        assert_choice_type(types::ue_info_request_sidelink_r18, c.type, "c2");
         return c.get<ue_info_request_sidelink_r18_s>();
       }
       ue_info_resp_sidelink_r18_s& ue_info_resp_sidelink_r18()
       {
-        assert_choice_type(types::ue_info_resp_sidelink_r18, type_, "c2");
+        assert_choice_type(types::ue_info_resp_sidelink_r18, c.type, "c2");
         return c.get<ue_info_resp_sidelink_r18_s>();
       }
       const notif_msg_sidelink_r17_s& notif_msg_sidelink_r17() const
       {
-        assert_choice_type(types::notif_msg_sidelink_r17, type_, "c2");
+        assert_choice_type(types::notif_msg_sidelink_r17, c.type, "c2");
         return c.get<notif_msg_sidelink_r17_s>();
       }
       const ue_assist_info_sidelink_r17_s& ue_assist_info_sidelink_r17() const
       {
-        assert_choice_type(types::ue_assist_info_sidelink_r17, type_, "c2");
+        assert_choice_type(types::ue_assist_info_sidelink_r17, c.type, "c2");
         return c.get<ue_assist_info_sidelink_r17_s>();
       }
       const ue_info_request_sidelink_r18_s& ue_info_request_sidelink_r18() const
       {
-        assert_choice_type(types::ue_info_request_sidelink_r18, type_, "c2");
+        assert_choice_type(types::ue_info_request_sidelink_r18, c.type, "c2");
         return c.get<ue_info_request_sidelink_r18_s>();
       }
       const ue_info_resp_sidelink_r18_s& ue_info_resp_sidelink_r18() const
       {
-        assert_choice_type(types::ue_info_resp_sidelink_r18, type_, "c2");
+        assert_choice_type(types::ue_info_resp_sidelink_r18, c.type, "c2");
         return c.get<ue_info_resp_sidelink_r18_s>();
       }
       notif_msg_sidelink_r17_s&       set_notif_msg_sidelink_r17();
@@ -2015,33 +1716,26 @@ struct s_cch_msg_type_c {
       void                            set_spare1();
 
     private:
-      types type_;
-      choice_buffer_t<notif_msg_sidelink_r17_s,
-                      ue_assist_info_sidelink_r17_s,
-                      ue_info_request_sidelink_r18_s,
-                      ue_info_resp_sidelink_r18_s>
+      asn1::table::choice_storage<c2_c_,
+                                  types,
+                                  choice_buffer_t<notif_msg_sidelink_r17_s,
+                                                  ue_assist_info_sidelink_r17_s,
+                                                  ue_info_request_sidelink_r18_s,
+                                                  ue_info_resp_sidelink_r18_s>>
           c;
-
-      void destroy_();
     };
     struct types_opts {
       enum options { c2, msg_class_ext_future_r17, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    msg_class_ext_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    c2_c_& c2()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    c2_c_&                                c2()
     {
       assert_choice_type(types::c2, type_, "messageClassExtension");
       return c;
@@ -2060,62 +1754,48 @@ struct s_cch_msg_type_c {
   };
   struct types_opts {
     enum options { c1, msg_class_ext, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  s_cch_msg_type_c() = default;
-  s_cch_msg_type_c(const s_cch_msg_type_c& other);
-  s_cch_msg_type_c& operator=(const s_cch_msg_type_c& other);
-  ~s_cch_msg_type_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  c1_c_& c1()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  c1_c_&                                        c1()
   {
-    assert_choice_type(types::c1, type_, "SCCH-MessageType");
+    assert_choice_type(types::c1, c.type, "SCCH-MessageType");
     return c.get<c1_c_>();
   }
   msg_class_ext_c_& msg_class_ext()
   {
-    assert_choice_type(types::msg_class_ext, type_, "SCCH-MessageType");
+    assert_choice_type(types::msg_class_ext, c.type, "SCCH-MessageType");
     return c.get<msg_class_ext_c_>();
   }
   const c1_c_& c1() const
   {
-    assert_choice_type(types::c1, type_, "SCCH-MessageType");
+    assert_choice_type(types::c1, c.type, "SCCH-MessageType");
     return c.get<c1_c_>();
   }
   const msg_class_ext_c_& msg_class_ext() const
   {
-    assert_choice_type(types::msg_class_ext, type_, "SCCH-MessageType");
+    assert_choice_type(types::msg_class_ext, c.type, "SCCH-MessageType");
     return c.get<msg_class_ext_c_>();
   }
   c1_c_&            set_c1();
   msg_class_ext_c_& set_msg_class_ext();
 
 private:
-  types                                    type_;
-  choice_buffer_t<c1_c_, msg_class_ext_c_> c;
-
-  void destroy_();
+  asn1::table::choice_storage<s_cch_msg_type_c, types, choice_buffer_t<c1_c_, msg_class_ext_c_>> c;
 };
 
 // SCCH-Message ::= SEQUENCE
 struct s_cch_msg_s {
   s_cch_msg_type_c msg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-MeasResultRelay-r17 ::= SEQUENCE
@@ -2123,7 +1803,7 @@ struct sl_meas_result_relay_r17_s {
   struct sl_meas_quant_r18_opts {
     enum options { sl_rsrp, sd_rsrp, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using sl_meas_quant_r18_e_ = enumerated<sl_meas_quant_r18_opts>;
 
@@ -2137,10 +1817,7 @@ struct sl_meas_result_relay_r17_s {
   bool                 sl_relay_ind_mp_r18_present = false;
   sl_meas_quant_r18_e_ sl_meas_quant_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SL-MeasResultListRelay-r17 ::= SEQUENCE (SIZE (1..32)) OF SL-MeasResultRelay-r17

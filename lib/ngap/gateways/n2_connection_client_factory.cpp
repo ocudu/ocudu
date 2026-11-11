@@ -34,7 +34,7 @@ public:
     // Unpack NGAP PDU.
     asn1::cbit_ref bref(sdu);
     ngap_message   msg;
-    if (msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(msg.pdu, bref) != asn1::OCUDUASN_SUCCESS) {
       logger.error("Couldn't unpack NGAP PDU");
       return false;
     }
@@ -72,7 +72,7 @@ public:
     // pack NGAP PDU into SCTP SDU.
     byte_buffer   tx_sdu{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(tx_sdu);
-    if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, msg.pdu) != asn1::OCUDUASN_SUCCESS) {
       logger.error("Failed to pack NGAP PDU");
       return false;
     }
@@ -137,7 +137,7 @@ private:
     if (pcap_writer.is_write_enabled()) {
       byte_buffer   packed_pdu;
       asn1::bit_ref bref{packed_pdu};
-      if (msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+      if (asn1::pack(bref, msg.pdu) == asn1::OCUDUASN_SUCCESS) {
         pcap_writer.push_pdu(std::move(packed_pdu));
       } else {
         logger.warning("Failed to encode NGAP Tx PDU.");
@@ -199,7 +199,7 @@ private:
       // PCAP writer is enabled. Encode ASN.1 message and send to PCAP.
       byte_buffer         bytes;
       asn1::bit_ref       bref{bytes};
-      asn1::OCUDUASN_CODE code = msg.pdu.pack(bref);
+      asn1::OCUDUASN_CODE code = asn1::pack(bref, msg.pdu);
       if (code != asn1::OCUDUASN_SUCCESS) {
         logger.warning("Failed to encode NGAP Rx PDU. NGAP PCAP will miss some messages.");
       } else {

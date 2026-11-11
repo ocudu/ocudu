@@ -245,7 +245,7 @@ TEST_F(ngap_test, when_target_plmn_differs_from_serving_plmn_then_handover_requi
   // Source-to-Target Transparent Container's Target Cell ID must carry the target PLMN as well.
   asn1::cbit_ref bref(ho_required->source_to_target_transparent_container);
   asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
-  ASSERT_EQ(transparent_container.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(transparent_container, bref), asn1::OCUDUASN_SUCCESS);
   EXPECT_EQ(transparent_container.target_cell_id.nr_cgi().plmn_id.to_bytes(), target_plmn.to_bytes());
 }
 
@@ -285,7 +285,7 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_drb_to_qos
 
   asn1::cbit_ref bref(ho_required->source_to_target_transparent_container);
   asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
-  ASSERT_EQ(transparent_container.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(transparent_container, bref), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_EQ(transparent_container.pdu_session_res_info_list.size(), 1U);
   const auto& pdu_session_res_info_item = transparent_container.pdu_session_res_info_list[0];
@@ -333,7 +333,7 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_dl_data_fo
   // Every QoS flow of the PDU session is proposed for DL forwarding.
   asn1::cbit_ref bref(ho_required->source_to_target_transparent_container);
   asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s transparent_container;
-  ASSERT_EQ(transparent_container.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(transparent_container, bref), asn1::OCUDUASN_SUCCESS);
   ASSERT_EQ(transparent_container.pdu_session_res_info_list.size(), 1U);
   const auto& qos_flow_info_list = transparent_container.pdu_session_res_info_list[0].qos_flow_info_list;
   ASSERT_EQ(qos_flow_info_list.size(), 1U);
@@ -344,6 +344,6 @@ TEST_F(ngap_test, when_source_gnb_handover_preparation_triggered_then_dl_data_fo
   ASSERT_EQ(ho_required->pdu_session_res_list_ho_rqd.size(), 1U);
   asn1::cbit_ref                     transfer_bref(ho_required->pdu_session_res_list_ho_rqd[0].ho_required_transfer);
   asn1::ngap::ho_required_transfer_s ho_required_transfer;
-  ASSERT_EQ(ho_required_transfer.unpack(transfer_bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ho_required_transfer, transfer_bref), asn1::OCUDUASN_SUCCESS);
   EXPECT_FALSE(ho_required_transfer.direct_forwarding_path_availability_present);
 }

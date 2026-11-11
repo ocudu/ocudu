@@ -29,7 +29,7 @@ using namespace asn1::rrc_nr;
 static bool unpack_meas_cfg(meas_cfg_s& meas_cfg, const byte_buffer& container)
 {
   asn1::cbit_ref bref{container};
-  return meas_cfg.unpack(bref) == asn1::OCUDUASN_SUCCESS;
+  return asn1::unpack(meas_cfg, bref) == asn1::OCUDUASN_SUCCESS;
 }
 
 namespace {
@@ -444,7 +444,7 @@ bool du_meas_config_manager::update_location_meas(du_ue_resource_config&        
 {
   location_meas_info_c location_meas_info;
   asn1::cbit_ref       bref{packed_location_meas_info};
-  if (location_meas_info.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(location_meas_info, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to unpack LocationMeasurementInfo");
     return false;
   }

@@ -27,29 +27,20 @@ struct activ_cells_map_list_item_ies_o {
     struct types_opts {
       enum options { activ_cells_map_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::activ_cells_map_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    activ_cells_map_list_item_s&       activ_cells_map_list_item() { return c; }
-    const activ_cells_map_list_item_s& activ_cells_map_list_item() const { return c; }
+    types                                 type() const { return types::activ_cells_map_list_item; }
+    static const asn1::table::choice_desc desc;
+    activ_cells_map_list_item_s&          activ_cells_map_list_item() { return c; }
+    const activ_cells_map_list_item_s&    activ_cells_map_list_item() const { return c; }
 
   private:
     activ_cells_map_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Activated-Cells-Mapping-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -62,29 +53,20 @@ struct associated_scell_item_ies_o {
     struct types_opts {
       enum options { associated_scell_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::associated_scell_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    associated_scell_item_s&       associated_scell_item() { return c; }
-    const associated_scell_item_s& associated_scell_item() const { return c; }
+    types                                 type() const { return types::associated_scell_item; }
+    static const asn1::table::choice_desc desc;
+    associated_scell_item_s&              associated_scell_item() { return c; }
+    const associated_scell_item_s&        associated_scell_item() const { return c; }
 
   private:
     associated_scell_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Associated-SCell-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -97,16 +79,12 @@ struct bap_hdr_rewriting_added_list_item_ies_o {
     struct types_opts {
       enum options { bap_hdr_rewriting_added_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bap_hdr_rewriting_added_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::bap_hdr_rewriting_added_list_item; }
+    static const asn1::table::choice_desc      desc;
     bap_hdr_rewriting_added_list_item_s&       bap_hdr_rewriting_added_list_item() { return c; }
     const bap_hdr_rewriting_added_list_item_s& bap_hdr_rewriting_added_list_item() const { return c; }
 
@@ -114,12 +92,7 @@ struct bap_hdr_rewriting_added_list_item_ies_o {
     bap_hdr_rewriting_added_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BAP-Header-Rewriting-Added-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -133,16 +106,12 @@ struct bap_hdr_rewriting_remd_list_item_ies_o {
     struct types_opts {
       enum options { bap_hdr_rewriting_remd_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bap_hdr_rewriting_remd_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                     type() const { return types::bap_hdr_rewriting_remd_list_item; }
+    static const asn1::table::choice_desc     desc;
     bap_hdr_rewriting_remd_list_item_s&       bap_hdr_rewriting_remd_list_item() { return c; }
     const bap_hdr_rewriting_remd_list_item_s& bap_hdr_rewriting_remd_list_item() const { return c; }
 
@@ -150,12 +119,7 @@ struct bap_hdr_rewriting_remd_list_item_ies_o {
     bap_hdr_rewriting_remd_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BAP-Header-Rewriting-Removed-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -168,16 +132,12 @@ struct bh_routing_info_added_list_item_ies_o {
     struct types_opts {
       enum options { bh_routing_info_added_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_routing_info_added_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                    type() const { return types::bh_routing_info_added_list_item; }
+    static const asn1::table::choice_desc    desc;
     bh_routing_info_added_list_item_s&       bh_routing_info_added_list_item() { return c; }
     const bh_routing_info_added_list_item_s& bh_routing_info_added_list_item() const { return c; }
 
@@ -185,12 +145,7 @@ struct bh_routing_info_added_list_item_ies_o {
     bh_routing_info_added_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BH-Routing-Information-Added-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -203,16 +158,12 @@ struct bh_routing_info_remd_list_item_ies_o {
     struct types_opts {
       enum options { bh_routing_info_remd_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_routing_info_remd_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::bh_routing_info_remd_list_item; }
+    static const asn1::table::choice_desc   desc;
     bh_routing_info_remd_list_item_s&       bh_routing_info_remd_list_item() { return c; }
     const bh_routing_info_remd_list_item_s& bh_routing_info_remd_list_item() const { return c; }
 
@@ -220,12 +171,7 @@ struct bh_routing_info_remd_list_item_ies_o {
     bh_routing_info_remd_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BH-Routing-Information-Removed-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -239,16 +185,12 @@ struct bh_chs_failed_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { bh_chs_failed_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_failed_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::bh_chs_failed_to_be_modified_item; }
+    static const asn1::table::choice_desc      desc;
     bh_chs_failed_to_be_modified_item_s&       bh_chs_failed_to_be_modified_item() { return c; }
     const bh_chs_failed_to_be_modified_item_s& bh_chs_failed_to_be_modified_item() const { return c; }
 
@@ -256,12 +198,7 @@ struct bh_chs_failed_to_be_modified_item_ies_o {
     bh_chs_failed_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-FailedToBeModified-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -276,16 +213,12 @@ struct bh_chs_failed_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { bh_chs_failed_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_failed_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::bh_chs_failed_to_be_setup_item; }
+    static const asn1::table::choice_desc   desc;
     bh_chs_failed_to_be_setup_item_s&       bh_chs_failed_to_be_setup_item() { return c; }
     const bh_chs_failed_to_be_setup_item_s& bh_chs_failed_to_be_setup_item() const { return c; }
 
@@ -293,12 +226,7 @@ struct bh_chs_failed_to_be_setup_item_ies_o {
     bh_chs_failed_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -312,16 +240,12 @@ struct bh_chs_failed_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { bh_chs_failed_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_failed_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::bh_chs_failed_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc       desc;
     bh_chs_failed_to_be_setup_mod_item_s&       bh_chs_failed_to_be_setup_mod_item() { return c; }
     const bh_chs_failed_to_be_setup_mod_item_s& bh_chs_failed_to_be_setup_mod_item() const { return c; }
 
@@ -329,12 +253,7 @@ struct bh_chs_failed_to_be_setup_mod_item_ies_o {
     bh_chs_failed_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-FailedToBeSetupMod-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -349,29 +268,20 @@ struct bh_chs_modified_item_ies_o {
     struct types_opts {
       enum options { bh_chs_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    bh_chs_modified_item_s&       bh_chs_modified_item() { return c; }
-    const bh_chs_modified_item_s& bh_chs_modified_item() const { return c; }
+    types                                 type() const { return types::bh_chs_modified_item; }
+    static const asn1::table::choice_desc desc;
+    bh_chs_modified_item_s&               bh_chs_modified_item() { return c; }
+    const bh_chs_modified_item_s&         bh_chs_modified_item() const { return c; }
 
   private:
     bh_chs_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-Modified-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -384,16 +294,12 @@ struct bh_chs_required_to_be_released_item_ies_o {
     struct types_opts {
       enum options { bh_chs_required_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_required_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::bh_chs_required_to_be_released_item; }
+    static const asn1::table::choice_desc        desc;
     bh_chs_required_to_be_released_item_s&       bh_chs_required_to_be_released_item() { return c; }
     const bh_chs_required_to_be_released_item_s& bh_chs_required_to_be_released_item() const { return c; }
 
@@ -401,12 +307,7 @@ struct bh_chs_required_to_be_released_item_ies_o {
     bh_chs_required_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-Required-ToBeReleased-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -421,29 +322,20 @@ struct bh_chs_setup_item_ies_o {
     struct types_opts {
       enum options { bh_chs_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    bh_chs_setup_item_s&       bh_chs_setup_item() { return c; }
-    const bh_chs_setup_item_s& bh_chs_setup_item() const { return c; }
+    types                                 type() const { return types::bh_chs_setup_item; }
+    static const asn1::table::choice_desc desc;
+    bh_chs_setup_item_s&                  bh_chs_setup_item() { return c; }
+    const bh_chs_setup_item_s&            bh_chs_setup_item() const { return c; }
 
   private:
     bh_chs_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-Setup-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -456,29 +348,20 @@ struct bh_chs_setup_mod_item_ies_o {
     struct types_opts {
       enum options { bh_chs_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    bh_chs_setup_mod_item_s&       bh_chs_setup_mod_item() { return c; }
-    const bh_chs_setup_mod_item_s& bh_chs_setup_mod_item() const { return c; }
+    types                                 type() const { return types::bh_chs_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    bh_chs_setup_mod_item_s&              bh_chs_setup_mod_item() { return c; }
+    const bh_chs_setup_mod_item_s&        bh_chs_setup_mod_item() const { return c; }
 
   private:
     bh_chs_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-SetupMod-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -491,29 +374,20 @@ struct bh_chs_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { bh_chs_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    bh_chs_to_be_modified_item_s&       bh_chs_to_be_modified_item() { return c; }
-    const bh_chs_to_be_modified_item_s& bh_chs_to_be_modified_item() const { return c; }
+    types                                 type() const { return types::bh_chs_to_be_modified_item; }
+    static const asn1::table::choice_desc desc;
+    bh_chs_to_be_modified_item_s&         bh_chs_to_be_modified_item() { return c; }
+    const bh_chs_to_be_modified_item_s&   bh_chs_to_be_modified_item() const { return c; }
 
   private:
     bh_chs_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-ToBeModified-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -526,29 +400,20 @@ struct bh_chs_to_be_released_item_ies_o {
     struct types_opts {
       enum options { bh_chs_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    bh_chs_to_be_released_item_s&       bh_chs_to_be_released_item() { return c; }
-    const bh_chs_to_be_released_item_s& bh_chs_to_be_released_item() const { return c; }
+    types                                 type() const { return types::bh_chs_to_be_released_item; }
+    static const asn1::table::choice_desc desc;
+    bh_chs_to_be_released_item_s&         bh_chs_to_be_released_item() { return c; }
+    const bh_chs_to_be_released_item_s&   bh_chs_to_be_released_item() const { return c; }
 
   private:
     bh_chs_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-ToBeReleased-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -561,29 +426,20 @@ struct bh_chs_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { bh_chs_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    bh_chs_to_be_setup_item_s&       bh_chs_to_be_setup_item() { return c; }
-    const bh_chs_to_be_setup_item_s& bh_chs_to_be_setup_item() const { return c; }
+    types                                 type() const { return types::bh_chs_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
+    bh_chs_to_be_setup_item_s&            bh_chs_to_be_setup_item() { return c; }
+    const bh_chs_to_be_setup_item_s&      bh_chs_to_be_setup_item() const { return c; }
 
   private:
     bh_chs_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-ToBeSetup-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -596,29 +452,20 @@ struct bh_chs_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { bh_chs_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::bh_chs_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    bh_chs_to_be_setup_mod_item_s&       bh_chs_to_be_setup_mod_item() { return c; }
-    const bh_chs_to_be_setup_mod_item_s& bh_chs_to_be_setup_mod_item() const { return c; }
+    types                                 type() const { return types::bh_chs_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    bh_chs_to_be_setup_mod_item_s&        bh_chs_to_be_setup_mod_item() { return c; }
+    const bh_chs_to_be_setup_mod_item_s&  bh_chs_to_be_setup_mod_item() const { return c; }
 
   private:
     bh_chs_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BHChannels-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -631,29 +478,20 @@ struct broadcast_m_rbs_transport_request_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_transport_request_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_transport_request_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    broadcast_m_rbs_transport_request_item_s&       broadcast_m_rbs_transport_request_item() { return c; }
+    types                                     type() const { return types::broadcast_m_rbs_transport_request_item; }
+    static const asn1::table::choice_desc     desc;
+    broadcast_m_rbs_transport_request_item_s& broadcast_m_rbs_transport_request_item() { return c; }
     const broadcast_m_rbs_transport_request_item_s& broadcast_m_rbs_transport_request_item() const { return c; }
 
   private:
     broadcast_m_rbs_transport_request_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Broadcast-MRBs-Transport-Request-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -668,16 +506,12 @@ struct broadcast_to_be_cancelled_list_item_ies_o {
     struct types_opts {
       enum options { broadcast_to_be_cancelled_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_to_be_cancelled_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::broadcast_to_be_cancelled_item; }
+    static const asn1::table::choice_desc   desc;
     broadcast_to_be_cancelled_item_s&       broadcast_to_be_cancelled_item() { return c; }
     const broadcast_to_be_cancelled_item_s& broadcast_to_be_cancelled_item() const { return c; }
 
@@ -685,12 +519,7 @@ struct broadcast_to_be_cancelled_list_item_ies_o {
     broadcast_to_be_cancelled_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Broadcast-To-Be-Cancelled-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -704,16 +533,12 @@ struct broadcast_m_rbs_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                         type() const { return types::broadcast_m_rbs_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc         desc;
     broadcast_m_rbs_to_be_setup_mod_item_s&       broadcast_m_rbs_to_be_setup_mod_item() { return c; }
     const broadcast_m_rbs_to_be_setup_mod_item_s& broadcast_m_rbs_to_be_setup_mod_item() const { return c; }
 
@@ -721,12 +546,7 @@ struct broadcast_m_rbs_to_be_setup_mod_item_ies_o {
     broadcast_m_rbs_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -740,16 +560,12 @@ struct broadcast_m_rbs_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::broadcast_m_rbs_to_be_modified_item; }
+    static const asn1::table::choice_desc        desc;
     broadcast_m_rbs_to_be_modified_item_s&       broadcast_m_rbs_to_be_modified_item() { return c; }
     const broadcast_m_rbs_to_be_modified_item_s& broadcast_m_rbs_to_be_modified_item() const { return c; }
 
@@ -757,12 +573,7 @@ struct broadcast_m_rbs_to_be_modified_item_ies_o {
     broadcast_m_rbs_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-ToBeModified-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -776,16 +587,12 @@ struct broadcast_m_rbs_to_be_released_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::broadcast_m_rbs_to_be_released_item; }
+    static const asn1::table::choice_desc        desc;
     broadcast_m_rbs_to_be_released_item_s&       broadcast_m_rbs_to_be_released_item() { return c; }
     const broadcast_m_rbs_to_be_released_item_s& broadcast_m_rbs_to_be_released_item() const { return c; }
 
@@ -793,12 +600,7 @@ struct broadcast_m_rbs_to_be_released_item_ies_o {
     broadcast_m_rbs_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-ToBeReleased-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -812,16 +614,12 @@ struct broadcast_m_rbs_setup_mod_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::broadcast_m_rbs_setup_mod_item; }
+    static const asn1::table::choice_desc   desc;
     broadcast_m_rbs_setup_mod_item_s&       broadcast_m_rbs_setup_mod_item() { return c; }
     const broadcast_m_rbs_setup_mod_item_s& broadcast_m_rbs_setup_mod_item() const { return c; }
 
@@ -829,12 +627,7 @@ struct broadcast_m_rbs_setup_mod_item_ies_o {
     broadcast_m_rbs_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-SetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -848,16 +641,12 @@ struct broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_failed_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_failed_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::broadcast_m_rbs_failed_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
     broadcast_m_rbs_failed_to_be_setup_mod_item_s&       broadcast_m_rbs_failed_to_be_setup_mod_item() { return c; }
     const broadcast_m_rbs_failed_to_be_setup_mod_item_s& broadcast_m_rbs_failed_to_be_setup_mod_item() const
     {
@@ -868,12 +657,7 @@ struct broadcast_m_rbs_failed_to_be_setup_mod_item_ies_o {
     broadcast_m_rbs_failed_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-FailedToBeSetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -888,16 +672,12 @@ struct broadcast_m_rbs_modified_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::broadcast_m_rbs_modified_item; }
+    static const asn1::table::choice_desc  desc;
     broadcast_m_rbs_modified_item_s&       broadcast_m_rbs_modified_item() { return c; }
     const broadcast_m_rbs_modified_item_s& broadcast_m_rbs_modified_item() const { return c; }
 
@@ -905,12 +685,7 @@ struct broadcast_m_rbs_modified_item_ies_o {
     broadcast_m_rbs_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-Modified-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -924,16 +699,12 @@ struct broadcast_m_rbs_failed_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_failed_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_failed_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::broadcast_m_rbs_failed_to_be_modified_item; }
+    static const asn1::table::choice_desc desc;
     broadcast_m_rbs_failed_to_be_modified_item_s&       broadcast_m_rbs_failed_to_be_modified_item() { return c; }
     const broadcast_m_rbs_failed_to_be_modified_item_s& broadcast_m_rbs_failed_to_be_modified_item() const { return c; }
 
@@ -941,12 +712,7 @@ struct broadcast_m_rbs_failed_to_be_modified_item_ies_o {
     broadcast_m_rbs_failed_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-FailedToBeModified-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -961,16 +727,12 @@ struct broadcast_m_rbs_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                     type() const { return types::broadcast_m_rbs_to_be_setup_item; }
+    static const asn1::table::choice_desc     desc;
     broadcast_m_rbs_to_be_setup_item_s&       broadcast_m_rbs_to_be_setup_item() { return c; }
     const broadcast_m_rbs_to_be_setup_item_s& broadcast_m_rbs_to_be_setup_item() const { return c; }
 
@@ -978,12 +740,7 @@ struct broadcast_m_rbs_to_be_setup_item_ies_o {
     broadcast_m_rbs_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-ToBeSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -997,29 +754,20 @@ struct broadcast_m_rbs_setup_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    broadcast_m_rbs_setup_item_s&       broadcast_m_rbs_setup_item() { return c; }
-    const broadcast_m_rbs_setup_item_s& broadcast_m_rbs_setup_item() const { return c; }
+    types                                 type() const { return types::broadcast_m_rbs_setup_item; }
+    static const asn1::table::choice_desc desc;
+    broadcast_m_rbs_setup_item_s&         broadcast_m_rbs_setup_item() { return c; }
+    const broadcast_m_rbs_setup_item_s&   broadcast_m_rbs_setup_item() const { return c; }
 
   private:
     broadcast_m_rbs_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-Setup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1033,29 +781,20 @@ struct broadcast_m_rbs_failed_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { broadcast_m_rbs_failed_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::broadcast_m_rbs_failed_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    broadcast_m_rbs_failed_to_be_setup_item_s&       broadcast_m_rbs_failed_to_be_setup_item() { return c; }
+    types                                      type() const { return types::broadcast_m_rbs_failed_to_be_setup_item; }
+    static const asn1::table::choice_desc      desc;
+    broadcast_m_rbs_failed_to_be_setup_item_s& broadcast_m_rbs_failed_to_be_setup_item() { return c; }
     const broadcast_m_rbs_failed_to_be_setup_item_s& broadcast_m_rbs_failed_to_be_setup_item() const { return c; }
 
   private:
     broadcast_m_rbs_failed_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // BroadcastMRBs-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1069,29 +808,20 @@ struct candidate_sp_cell_item_ies_o {
     struct types_opts {
       enum options { candidate_sp_cell_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::candidate_sp_cell_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    candidate_sp_cell_item_s&       candidate_sp_cell_item() { return c; }
-    const candidate_sp_cell_item_s& candidate_sp_cell_item() const { return c; }
+    types                                 type() const { return types::candidate_sp_cell_item; }
+    static const asn1::table::choice_desc desc;
+    candidate_sp_cell_item_s&             candidate_sp_cell_item() { return c; }
+    const candidate_sp_cell_item_s&       candidate_sp_cell_item() const { return c; }
 
   private:
     candidate_sp_cell_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Candidate-SpCell-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1104,16 +834,12 @@ struct cells_allowed_to_be_deactiv_list_item_ies_o {
     struct types_opts {
       enum options { cells_allowed_to_be_deactiv_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_allowed_to_be_deactiv_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                          type() const { return types::cells_allowed_to_be_deactiv_list_item; }
+    static const asn1::table::choice_desc          desc;
     cells_allowed_to_be_deactiv_list_item_s&       cells_allowed_to_be_deactiv_list_item() { return c; }
     const cells_allowed_to_be_deactiv_list_item_s& cells_allowed_to_be_deactiv_list_item() const { return c; }
 
@@ -1121,12 +847,7 @@ struct cells_allowed_to_be_deactiv_list_item_ies_o {
     cells_allowed_to_be_deactiv_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-Allowed-to-be-Deactivated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -1141,16 +862,12 @@ struct cells_broadcast_cancelled_list_item_ies_o {
     struct types_opts {
       enum options { cells_broadcast_cancelled_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_broadcast_cancelled_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::cells_broadcast_cancelled_item; }
+    static const asn1::table::choice_desc   desc;
     cells_broadcast_cancelled_item_s&       cells_broadcast_cancelled_item() { return c; }
     const cells_broadcast_cancelled_item_s& cells_broadcast_cancelled_item() const { return c; }
 
@@ -1158,12 +875,7 @@ struct cells_broadcast_cancelled_list_item_ies_o {
     cells_broadcast_cancelled_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-Broadcast-Cancelled-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1177,16 +889,12 @@ struct cells_broadcast_completed_list_item_ies_o {
     struct types_opts {
       enum options { cells_broadcast_completed_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_broadcast_completed_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::cells_broadcast_completed_item; }
+    static const asn1::table::choice_desc   desc;
     cells_broadcast_completed_item_s&       cells_broadcast_completed_item() { return c; }
     const cells_broadcast_completed_item_s& cells_broadcast_completed_item() const { return c; }
 
@@ -1194,12 +902,7 @@ struct cells_broadcast_completed_list_item_ies_o {
     cells_broadcast_completed_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-Broadcast-Completed-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1213,16 +916,12 @@ struct cells_failed_to_be_activ_list_item_ies_o {
     struct types_opts {
       enum options { cells_failed_to_be_activ_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_failed_to_be_activ_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::cells_failed_to_be_activ_list_item; }
+    static const asn1::table::choice_desc       desc;
     cells_failed_to_be_activ_list_item_s&       cells_failed_to_be_activ_list_item() { return c; }
     const cells_failed_to_be_activ_list_item_s& cells_failed_to_be_activ_list_item() const { return c; }
 
@@ -1230,12 +929,7 @@ struct cells_failed_to_be_activ_list_item_ies_o {
     cells_failed_to_be_activ_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-Failed-to-be-Activated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1249,29 +943,20 @@ struct cells_status_item_ies_o {
     struct types_opts {
       enum options { cells_status_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_status_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    cells_status_item_s&       cells_status_item() { return c; }
-    const cells_status_item_s& cells_status_item() const { return c; }
+    types                                 type() const { return types::cells_status_item; }
+    static const asn1::table::choice_desc desc;
+    cells_status_item_s&                  cells_status_item() { return c; }
+    const cells_status_item_s&            cells_status_item() const { return c; }
 
   private:
     cells_status_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-Status-List ::= SEQUENCE (SIZE (0..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1284,29 +969,20 @@ struct cells_to_be_broadcast_list_item_ies_o {
     struct types_opts {
       enum options { cells_to_be_broadcast_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_to_be_broadcast_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    cells_to_be_broadcast_item_s&       cells_to_be_broadcast_item() { return c; }
-    const cells_to_be_broadcast_item_s& cells_to_be_broadcast_item() const { return c; }
+    types                                 type() const { return types::cells_to_be_broadcast_item; }
+    static const asn1::table::choice_desc desc;
+    cells_to_be_broadcast_item_s&         cells_to_be_broadcast_item() { return c; }
+    const cells_to_be_broadcast_item_s&   cells_to_be_broadcast_item() const { return c; }
 
   private:
     cells_to_be_broadcast_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-To-Be-Broadcast-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1319,29 +995,20 @@ struct cells_to_be_activ_list_item_ies_o {
     struct types_opts {
       enum options { cells_to_be_activ_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_to_be_activ_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    cells_to_be_activ_list_item_s&       cells_to_be_activ_list_item() { return c; }
-    const cells_to_be_activ_list_item_s& cells_to_be_activ_list_item() const { return c; }
+    types                                 type() const { return types::cells_to_be_activ_list_item; }
+    static const asn1::table::choice_desc desc;
+    cells_to_be_activ_list_item_s&        cells_to_be_activ_list_item() { return c; }
+    const cells_to_be_activ_list_item_s&  cells_to_be_activ_list_item() const { return c; }
 
   private:
     cells_to_be_activ_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-to-be-Activated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1354,29 +1021,20 @@ struct cells_to_be_barred_item_ies_o {
     struct types_opts {
       enum options { cells_to_be_barred_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_to_be_barred_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    cells_to_be_barred_item_s&       cells_to_be_barred_item() { return c; }
-    const cells_to_be_barred_item_s& cells_to_be_barred_item() const { return c; }
+    types                                 type() const { return types::cells_to_be_barred_item; }
+    static const asn1::table::choice_desc desc;
+    cells_to_be_barred_item_s&            cells_to_be_barred_item() { return c; }
+    const cells_to_be_barred_item_s&      cells_to_be_barred_item() const { return c; }
 
   private:
     cells_to_be_barred_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-to-be-Barred-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1389,16 +1047,12 @@ struct cells_to_be_deactiv_list_item_ies_o {
     struct types_opts {
       enum options { cells_to_be_deactiv_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::cells_to_be_deactiv_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::cells_to_be_deactiv_list_item; }
+    static const asn1::table::choice_desc  desc;
     cells_to_be_deactiv_list_item_s&       cells_to_be_deactiv_list_item() { return c; }
     const cells_to_be_deactiv_list_item_s& cells_to_be_deactiv_list_item() const { return c; }
 
@@ -1406,12 +1060,7 @@ struct cells_to_be_deactiv_list_item_ies_o {
     cells_to_be_deactiv_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Cells-to-be-Deactivated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1424,16 +1073,12 @@ struct dl_up_tnl_address_to_upd_list_item_ies_o {
     struct types_opts {
       enum options { dl_up_tnl_address_to_upd_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::dl_up_tnl_address_to_upd_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::dl_up_tnl_address_to_upd_list_item; }
+    static const asn1::table::choice_desc       desc;
     dl_up_tnl_address_to_upd_list_item_s&       dl_up_tnl_address_to_upd_list_item() { return c; }
     const dl_up_tnl_address_to_upd_list_item_s& dl_up_tnl_address_to_upd_list_item() const { return c; }
 
@@ -1441,12 +1086,7 @@ struct dl_up_tnl_address_to_upd_list_item_ies_o {
     dl_up_tnl_address_to_upd_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DL-UP-TNL-Address-to-Update-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1460,29 +1100,20 @@ struct drb_activity_item_ies_o {
     struct types_opts {
       enum options { drb_activity_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drb_activity_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drb_activity_item_s&       drb_activity_item() { return c; }
-    const drb_activity_item_s& drb_activity_item() const { return c; }
+    types                                 type() const { return types::drb_activity_item; }
+    static const asn1::table::choice_desc desc;
+    drb_activity_item_s&                  drb_activity_item() { return c; }
+    const drb_activity_item_s&            drb_activity_item() const { return c; }
 
   private:
     drb_activity_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRB-Activity-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1495,29 +1126,20 @@ struct drb_notify_item_ies_o {
     struct types_opts {
       enum options { drb_notify_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drb_notify_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drb_notify_item_s&       drb_notify_item() { return c; }
-    const drb_notify_item_s& drb_notify_item() const { return c; }
+    types                                 type() const { return types::drb_notify_item; }
+    static const asn1::table::choice_desc desc;
+    drb_notify_item_s&                    drb_notify_item() { return c; }
+    const drb_notify_item_s&              drb_notify_item() const { return c; }
 
   private:
     drb_notify_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRB-Notify-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1530,16 +1152,12 @@ struct drbs_failed_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { drbs_failed_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_failed_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                    type() const { return types::drbs_failed_to_be_modified_item; }
+    static const asn1::table::choice_desc    desc;
     drbs_failed_to_be_modified_item_s&       drbs_failed_to_be_modified_item() { return c; }
     const drbs_failed_to_be_modified_item_s& drbs_failed_to_be_modified_item() const { return c; }
 
@@ -1547,12 +1165,7 @@ struct drbs_failed_to_be_modified_item_ies_o {
     drbs_failed_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-FailedToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1566,16 +1179,12 @@ struct drbs_failed_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { drbs_failed_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_failed_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::drbs_failed_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
     drbs_failed_to_be_setup_item_s&       drbs_failed_to_be_setup_item() { return c; }
     const drbs_failed_to_be_setup_item_s& drbs_failed_to_be_setup_item() const { return c; }
 
@@ -1583,12 +1192,7 @@ struct drbs_failed_to_be_setup_item_ies_o {
     drbs_failed_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1601,16 +1205,12 @@ struct drbs_failed_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { drbs_failed_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_failed_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                     type() const { return types::drbs_failed_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc     desc;
     drbs_failed_to_be_setup_mod_item_s&       drbs_failed_to_be_setup_mod_item() { return c; }
     const drbs_failed_to_be_setup_mod_item_s& drbs_failed_to_be_setup_mod_item() const { return c; }
 
@@ -1618,12 +1218,7 @@ struct drbs_failed_to_be_setup_mod_item_ies_o {
     drbs_failed_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-FailedToBeSetupMod-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1637,29 +1232,20 @@ struct drbs_modified_item_ies_o {
     struct types_opts {
       enum options { drbs_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_modified_item_s&       drbs_modified_item() { return c; }
-    const drbs_modified_item_s& drbs_modified_item() const { return c; }
+    types                                 type() const { return types::drbs_modified_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_modified_item_s&                 drbs_modified_item() { return c; }
+    const drbs_modified_item_s&           drbs_modified_item() const { return c; }
 
   private:
     drbs_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-Modified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1672,29 +1258,20 @@ struct drbs_modified_conf_item_ies_o {
     struct types_opts {
       enum options { drbs_modified_conf_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_modified_conf_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_modified_conf_item_s&       drbs_modified_conf_item() { return c; }
-    const drbs_modified_conf_item_s& drbs_modified_conf_item() const { return c; }
+    types                                 type() const { return types::drbs_modified_conf_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_modified_conf_item_s&            drbs_modified_conf_item() { return c; }
+    const drbs_modified_conf_item_s&      drbs_modified_conf_item() const { return c; }
 
   private:
     drbs_modified_conf_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-ModifiedConf-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1707,16 +1284,12 @@ struct drbs_required_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { drbs_required_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_required_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::drbs_required_to_be_modified_item; }
+    static const asn1::table::choice_desc      desc;
     drbs_required_to_be_modified_item_s&       drbs_required_to_be_modified_item() { return c; }
     const drbs_required_to_be_modified_item_s& drbs_required_to_be_modified_item() const { return c; }
 
@@ -1724,12 +1297,7 @@ struct drbs_required_to_be_modified_item_ies_o {
     drbs_required_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-Required-ToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1743,16 +1311,12 @@ struct drbs_required_to_be_released_item_ies_o {
     struct types_opts {
       enum options { drbs_required_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_required_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::drbs_required_to_be_released_item; }
+    static const asn1::table::choice_desc      desc;
     drbs_required_to_be_released_item_s&       drbs_required_to_be_released_item() { return c; }
     const drbs_required_to_be_released_item_s& drbs_required_to_be_released_item() const { return c; }
 
@@ -1760,12 +1324,7 @@ struct drbs_required_to_be_released_item_ies_o {
     drbs_required_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-Required-ToBeReleased-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1779,29 +1338,20 @@ struct drbs_setup_item_ies_o {
     struct types_opts {
       enum options { drbs_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_setup_item_s&       drbs_setup_item() { return c; }
-    const drbs_setup_item_s& drbs_setup_item() const { return c; }
+    types                                 type() const { return types::drbs_setup_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_setup_item_s&                    drbs_setup_item() { return c; }
+    const drbs_setup_item_s&              drbs_setup_item() const { return c; }
 
   private:
     drbs_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-Setup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1814,29 +1364,20 @@ struct drbs_setup_mod_item_ies_o {
     struct types_opts {
       enum options { drbs_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_setup_mod_item_s&       drbs_setup_mod_item() { return c; }
-    const drbs_setup_mod_item_s& drbs_setup_mod_item() const { return c; }
+    types                                 type() const { return types::drbs_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_setup_mod_item_s&                drbs_setup_mod_item() { return c; }
+    const drbs_setup_mod_item_s&          drbs_setup_mod_item() const { return c; }
 
   private:
     drbs_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-SetupMod-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1849,29 +1390,20 @@ struct drbs_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { drbs_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_to_be_modified_item_s&       drbs_to_be_modified_item() { return c; }
-    const drbs_to_be_modified_item_s& drbs_to_be_modified_item() const { return c; }
+    types                                 type() const { return types::drbs_to_be_modified_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_to_be_modified_item_s&           drbs_to_be_modified_item() { return c; }
+    const drbs_to_be_modified_item_s&     drbs_to_be_modified_item() const { return c; }
 
   private:
     drbs_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-ToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1884,29 +1416,20 @@ struct drbs_to_be_released_item_ies_o {
     struct types_opts {
       enum options { drbs_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_to_be_released_item_s&       drbs_to_be_released_item() { return c; }
-    const drbs_to_be_released_item_s& drbs_to_be_released_item() const { return c; }
+    types                                 type() const { return types::drbs_to_be_released_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_to_be_released_item_s&           drbs_to_be_released_item() { return c; }
+    const drbs_to_be_released_item_s&     drbs_to_be_released_item() const { return c; }
 
   private:
     drbs_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-ToBeReleased-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1919,29 +1442,20 @@ struct drbs_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { drbs_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_to_be_setup_item_s&       drbs_to_be_setup_item() { return c; }
-    const drbs_to_be_setup_item_s& drbs_to_be_setup_item() const { return c; }
+    types                                 type() const { return types::drbs_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_to_be_setup_item_s&              drbs_to_be_setup_item() { return c; }
+    const drbs_to_be_setup_item_s&        drbs_to_be_setup_item() const { return c; }
 
   private:
     drbs_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-ToBeSetup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1954,29 +1468,20 @@ struct drbs_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { drbs_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::drbs_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    drbs_to_be_setup_mod_item_s&       drbs_to_be_setup_mod_item() { return c; }
-    const drbs_to_be_setup_mod_item_s& drbs_to_be_setup_mod_item() const { return c; }
+    types                                 type() const { return types::drbs_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    drbs_to_be_setup_mod_item_s&          drbs_to_be_setup_mod_item() { return c; }
+    const drbs_to_be_setup_mod_item_s&    drbs_to_be_setup_mod_item() const { return c; }
 
   private:
     drbs_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // DRBs-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -1989,16 +1494,12 @@ struct ded_si_delivery_needed_ue_item_ies_o {
     struct types_opts {
       enum options { ded_si_delivery_needed_ue_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ded_si_delivery_needed_ue_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::ded_si_delivery_needed_ue_item; }
+    static const asn1::table::choice_desc   desc;
     ded_si_delivery_needed_ue_item_s&       ded_si_delivery_needed_ue_item() { return c; }
     const ded_si_delivery_needed_ue_item_s& ded_si_delivery_needed_ue_item() const { return c; }
 
@@ -2006,12 +1507,7 @@ struct ded_si_delivery_needed_ue_item_ies_o {
     ded_si_delivery_needed_ue_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Dedicated-SIDelivery-NeededUE-List ::= SEQUENCE (SIZE (1..65536)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2026,29 +1522,20 @@ struct gnb_du_served_cells_item_ies_o {
     struct types_opts {
       enum options { gnb_du_served_cells_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::gnb_du_served_cells_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    gnb_du_served_cells_item_s&       gnb_du_served_cells_item() { return c; }
-    const gnb_du_served_cells_item_s& gnb_du_served_cells_item() const { return c; }
+    types                                 type() const { return types::gnb_du_served_cells_item; }
+    static const asn1::table::choice_desc desc;
+    gnb_du_served_cells_item_s&           gnb_du_served_cells_item() { return c; }
+    const gnb_du_served_cells_item_s&     gnb_du_served_cells_item() const { return c; }
 
   private:
     gnb_du_served_cells_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // GNB-DU-Served-Cells-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2061,29 +1548,20 @@ struct ncgi_to_be_upd_list_item_ies_o {
     struct types_opts {
       enum options { ncgi_to_be_upd_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ncgi_to_be_upd_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ncgi_to_be_upd_list_item_s&       ncgi_to_be_upd_list_item() { return c; }
-    const ncgi_to_be_upd_list_item_s& ncgi_to_be_upd_list_item() const { return c; }
+    types                                 type() const { return types::ncgi_to_be_upd_list_item; }
+    static const asn1::table::choice_desc desc;
+    ncgi_to_be_upd_list_item_s&           ncgi_to_be_upd_list_item() { return c; }
+    const ncgi_to_be_upd_list_item_s&     ncgi_to_be_upd_list_item() const { return c; }
 
   private:
     ncgi_to_be_upd_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // NCGI-to-be-Updated-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2096,16 +1574,12 @@ struct gnb_cu_tnl_assoc_failed_to_setup_item_ies_o {
     struct types_opts {
       enum options { gnb_cu_tnl_assoc_failed_to_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::gnb_cu_tnl_assoc_failed_to_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                          type() const { return types::gnb_cu_tnl_assoc_failed_to_setup_item; }
+    static const asn1::table::choice_desc          desc;
     gnb_cu_tnl_assoc_failed_to_setup_item_s&       gnb_cu_tnl_assoc_failed_to_setup_item() { return c; }
     const gnb_cu_tnl_assoc_failed_to_setup_item_s& gnb_cu_tnl_assoc_failed_to_setup_item() const { return c; }
 
@@ -2113,12 +1587,7 @@ struct gnb_cu_tnl_assoc_failed_to_setup_item_ies_o {
     gnb_cu_tnl_assoc_failed_to_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // GNB-CU-TNL-Association-Failed-To-Setup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2133,29 +1602,20 @@ struct gnb_cu_tnl_assoc_setup_item_ies_o {
     struct types_opts {
       enum options { gnb_cu_tnl_assoc_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::gnb_cu_tnl_assoc_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    gnb_cu_tnl_assoc_setup_item_s&       gnb_cu_tnl_assoc_setup_item() { return c; }
-    const gnb_cu_tnl_assoc_setup_item_s& gnb_cu_tnl_assoc_setup_item() const { return c; }
+    types                                 type() const { return types::gnb_cu_tnl_assoc_setup_item; }
+    static const asn1::table::choice_desc desc;
+    gnb_cu_tnl_assoc_setup_item_s&        gnb_cu_tnl_assoc_setup_item() { return c; }
+    const gnb_cu_tnl_assoc_setup_item_s&  gnb_cu_tnl_assoc_setup_item() const { return c; }
 
   private:
     gnb_cu_tnl_assoc_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // GNB-CU-TNL-Association-Setup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2169,16 +1629,12 @@ struct gnb_cu_tnl_assoc_to_add_item_ies_o {
     struct types_opts {
       enum options { gnb_cu_tnl_assoc_to_add_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::gnb_cu_tnl_assoc_to_add_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::gnb_cu_tnl_assoc_to_add_item; }
+    static const asn1::table::choice_desc desc;
     gnb_cu_tnl_assoc_to_add_item_s&       gnb_cu_tnl_assoc_to_add_item() { return c; }
     const gnb_cu_tnl_assoc_to_add_item_s& gnb_cu_tnl_assoc_to_add_item() const { return c; }
 
@@ -2186,12 +1642,7 @@ struct gnb_cu_tnl_assoc_to_add_item_ies_o {
     gnb_cu_tnl_assoc_to_add_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // GNB-CU-TNL-Association-To-Add-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2205,16 +1656,12 @@ struct gnb_cu_tnl_assoc_to_rem_item_ies_o {
     struct types_opts {
       enum options { gnb_cu_tnl_assoc_to_rem_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::gnb_cu_tnl_assoc_to_rem_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::gnb_cu_tnl_assoc_to_rem_item; }
+    static const asn1::table::choice_desc desc;
     gnb_cu_tnl_assoc_to_rem_item_s&       gnb_cu_tnl_assoc_to_rem_item() { return c; }
     const gnb_cu_tnl_assoc_to_rem_item_s& gnb_cu_tnl_assoc_to_rem_item() const { return c; }
 
@@ -2222,12 +1669,7 @@ struct gnb_cu_tnl_assoc_to_rem_item_ies_o {
     gnb_cu_tnl_assoc_to_rem_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // GNB-CU-TNL-Association-To-Remove-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2242,16 +1684,12 @@ struct gnb_cu_tnl_assoc_to_upd_item_ies_o {
     struct types_opts {
       enum options { gnb_cu_tnl_assoc_to_upd_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::gnb_cu_tnl_assoc_to_upd_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::gnb_cu_tnl_assoc_to_upd_item; }
+    static const asn1::table::choice_desc desc;
     gnb_cu_tnl_assoc_to_upd_item_s&       gnb_cu_tnl_assoc_to_upd_item() { return c; }
     const gnb_cu_tnl_assoc_to_upd_item_s& gnb_cu_tnl_assoc_to_upd_item() const { return c; }
 
@@ -2259,12 +1697,7 @@ struct gnb_cu_tnl_assoc_to_upd_item_ies_o {
     gnb_cu_tnl_assoc_to_upd_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // GNB-CU-TNL-Association-To-Update-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2279,16 +1712,12 @@ struct gnb_du_tnl_assoc_to_rem_item_ies_o {
     struct types_opts {
       enum options { gnb_du_tnl_assoc_to_rem_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::gnb_du_tnl_assoc_to_rem_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::gnb_du_tnl_assoc_to_rem_item; }
+    static const asn1::table::choice_desc desc;
     gnb_du_tnl_assoc_to_rem_item_s&       gnb_du_tnl_assoc_to_rem_item() { return c; }
     const gnb_du_tnl_assoc_to_rem_item_s& gnb_du_tnl_assoc_to_rem_item() const { return c; }
 
@@ -2296,12 +1725,7 @@ struct gnb_du_tnl_assoc_to_rem_item_ies_o {
     gnb_du_tnl_assoc_to_rem_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // GNB-DU-TNL-Association-To-Remove-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2316,29 +1740,20 @@ struct protected_eutra_res_item_ies_o {
     struct types_opts {
       enum options { protected_eutra_res_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::protected_eutra_res_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    protected_eutra_res_item_s&       protected_eutra_res_item() { return c; }
-    const protected_eutra_res_item_s& protected_eutra_res_item() const { return c; }
+    types                                 type() const { return types::protected_eutra_res_item; }
+    static const asn1::table::choice_desc desc;
+    protected_eutra_res_item_s&           protected_eutra_res_item() { return c; }
+    const protected_eutra_res_item_s&     protected_eutra_res_item() const { return c; }
 
   private:
     protected_eutra_res_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Protected-EUTRA-Resources-List ::= SEQUENCE (SIZE (1..256)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2351,29 +1766,20 @@ struct neighbour_cell_info_item_ies_o {
     struct types_opts {
       enum options { neighbour_cell_info_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::neighbour_cell_info_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    neighbour_cell_info_item_s&       neighbour_cell_info_item() { return c; }
-    const neighbour_cell_info_item_s& neighbour_cell_info_item() const { return c; }
+    types                                 type() const { return types::neighbour_cell_info_item; }
+    static const asn1::table::choice_desc desc;
+    neighbour_cell_info_item_s&           neighbour_cell_info_item() { return c; }
+    const neighbour_cell_info_item_s&     neighbour_cell_info_item() const { return c; }
 
   private:
     neighbour_cell_info_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Neighbour-Cell-Information-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2386,29 +1792,20 @@ struct served_cells_to_add_item_ies_o {
     struct types_opts {
       enum options { served_cells_to_add_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::served_cells_to_add_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    served_cells_to_add_item_s&       served_cells_to_add_item() { return c; }
-    const served_cells_to_add_item_s& served_cells_to_add_item() const { return c; }
+    types                                 type() const { return types::served_cells_to_add_item; }
+    static const asn1::table::choice_desc desc;
+    served_cells_to_add_item_s&           served_cells_to_add_item() { return c; }
+    const served_cells_to_add_item_s&     served_cells_to_add_item() const { return c; }
 
   private:
     served_cells_to_add_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Served-Cells-To-Add-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2421,29 +1818,20 @@ struct served_cells_to_modify_item_ies_o {
     struct types_opts {
       enum options { served_cells_to_modify_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::served_cells_to_modify_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    served_cells_to_modify_item_s&       served_cells_to_modify_item() { return c; }
-    const served_cells_to_modify_item_s& served_cells_to_modify_item() const { return c; }
+    types                                 type() const { return types::served_cells_to_modify_item; }
+    static const asn1::table::choice_desc desc;
+    served_cells_to_modify_item_s&        served_cells_to_modify_item() { return c; }
+    const served_cells_to_modify_item_s&  served_cells_to_modify_item() const { return c; }
 
   private:
     served_cells_to_modify_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Served-Cells-To-Modify-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2456,29 +1844,20 @@ struct served_cells_to_delete_item_ies_o {
     struct types_opts {
       enum options { served_cells_to_delete_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::served_cells_to_delete_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    served_cells_to_delete_item_s&       served_cells_to_delete_item() { return c; }
-    const served_cells_to_delete_item_s& served_cells_to_delete_item() const { return c; }
+    types                                 type() const { return types::served_cells_to_delete_item; }
+    static const asn1::table::choice_desc desc;
+    served_cells_to_delete_item_s&        served_cells_to_delete_item() { return c; }
+    const served_cells_to_delete_item_s&  served_cells_to_delete_item() const { return c; }
 
   private:
     served_cells_to_delete_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Served-Cells-To-Delete-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2491,16 +1870,12 @@ struct iab_allocated_tnl_address_list_item_ies_o {
     struct types_opts {
       enum options { iab_allocated_tnl_address_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::iab_allocated_tnl_address_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::iab_allocated_tnl_address_item; }
+    static const asn1::table::choice_desc   desc;
     iab_allocated_tnl_address_item_s&       iab_allocated_tnl_address_item() { return c; }
     const iab_allocated_tnl_address_item_s& iab_allocated_tnl_address_item() const { return c; }
 
@@ -2508,12 +1883,7 @@ struct iab_allocated_tnl_address_list_item_ies_o {
     iab_allocated_tnl_address_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // IAB-Allocated-TNL-Address-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2527,16 +1897,12 @@ struct iab_tnl_addresses_to_rem_item_ies_o {
     struct types_opts {
       enum options { iab_tnl_addresses_to_rem_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::iab_tnl_addresses_to_rem_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::iab_tnl_addresses_to_rem_item; }
+    static const asn1::table::choice_desc  desc;
     iab_tnl_addresses_to_rem_item_s&       iab_tnl_addresses_to_rem_item() { return c; }
     const iab_tnl_addresses_to_rem_item_s& iab_tnl_addresses_to_rem_item() const { return c; }
 
@@ -2544,12 +1910,7 @@ struct iab_tnl_addresses_to_rem_item_ies_o {
     iab_tnl_addresses_to_rem_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // IAB-TNL-Addresses-To-Remove-List ::= SEQUENCE (SIZE (1..1024)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2562,16 +1923,12 @@ struct ul_up_tnl_info_to_upd_list_item_ies_o {
     struct types_opts {
       enum options { ul_up_tnl_info_to_upd_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ul_up_tnl_info_to_upd_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                    type() const { return types::ul_up_tnl_info_to_upd_list_item; }
+    static const asn1::table::choice_desc    desc;
     ul_up_tnl_info_to_upd_list_item_s&       ul_up_tnl_info_to_upd_list_item() { return c; }
     const ul_up_tnl_info_to_upd_list_item_s& ul_up_tnl_info_to_upd_list_item() const { return c; }
 
@@ -2579,12 +1936,7 @@ struct ul_up_tnl_info_to_upd_list_item_ies_o {
     ul_up_tnl_info_to_upd_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UL-UP-TNL-Information-to-Update-List ::= SEQUENCE (SIZE (1..32678)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2598,16 +1950,12 @@ struct ul_up_tnl_address_to_upd_list_item_ies_o {
     struct types_opts {
       enum options { ul_up_tnl_address_to_upd_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ul_up_tnl_address_to_upd_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::ul_up_tnl_address_to_upd_list_item; }
+    static const asn1::table::choice_desc       desc;
     ul_up_tnl_address_to_upd_list_item_s&       ul_up_tnl_address_to_upd_list_item() { return c; }
     const ul_up_tnl_address_to_upd_list_item_s& ul_up_tnl_address_to_upd_list_item() const { return c; }
 
@@ -2615,12 +1963,7 @@ struct ul_up_tnl_address_to_upd_list_item_ies_o {
     ul_up_tnl_address_to_upd_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UL-UP-TNL-Address-to-Update-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2634,29 +1977,20 @@ struct mc_paging_cell_item_ies_o {
     struct types_opts {
       enum options { mc_paging_cell_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::mc_paging_cell_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    mc_paging_cell_item_s&       mc_paging_cell_item() { return c; }
-    const mc_paging_cell_item_s& mc_paging_cell_item() const { return c; }
+    types                                 type() const { return types::mc_paging_cell_item; }
+    static const asn1::table::choice_desc desc;
+    mc_paging_cell_item_s&                mc_paging_cell_item() { return c; }
+    const mc_paging_cell_item_s&          mc_paging_cell_item() const { return c; }
 
   private:
     mc_paging_cell_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-ToBeSetupMod-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -2666,16 +2000,12 @@ struct multicast_m_rbs_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                         type() const { return types::multicast_m_rbs_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc         desc;
     multicast_m_rbs_to_be_setup_mod_item_s&       multicast_m_rbs_to_be_setup_mod_item() { return c; }
     const multicast_m_rbs_to_be_setup_mod_item_s& multicast_m_rbs_to_be_setup_mod_item() const { return c; }
 
@@ -2683,12 +2013,7 @@ struct multicast_m_rbs_to_be_setup_mod_item_ies_o {
     multicast_m_rbs_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2702,16 +2027,12 @@ struct multicast_m_rbs_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::multicast_m_rbs_to_be_modified_item; }
+    static const asn1::table::choice_desc        desc;
     multicast_m_rbs_to_be_modified_item_s&       multicast_m_rbs_to_be_modified_item() { return c; }
     const multicast_m_rbs_to_be_modified_item_s& multicast_m_rbs_to_be_modified_item() const { return c; }
 
@@ -2719,12 +2040,7 @@ struct multicast_m_rbs_to_be_modified_item_ies_o {
     multicast_m_rbs_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-ToBeModified-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2738,16 +2054,12 @@ struct multicast_m_rbs_to_be_released_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::multicast_m_rbs_to_be_released_item; }
+    static const asn1::table::choice_desc        desc;
     multicast_m_rbs_to_be_released_item_s&       multicast_m_rbs_to_be_released_item() { return c; }
     const multicast_m_rbs_to_be_released_item_s& multicast_m_rbs_to_be_released_item() const { return c; }
 
@@ -2755,12 +2067,7 @@ struct multicast_m_rbs_to_be_released_item_ies_o {
     multicast_m_rbs_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-ToBeReleased-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2774,16 +2081,12 @@ struct multicast_m_rbs_setup_mod_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                   type() const { return types::multicast_m_rbs_setup_mod_item; }
+    static const asn1::table::choice_desc   desc;
     multicast_m_rbs_setup_mod_item_s&       multicast_m_rbs_setup_mod_item() { return c; }
     const multicast_m_rbs_setup_mod_item_s& multicast_m_rbs_setup_mod_item() const { return c; }
 
@@ -2791,12 +2094,7 @@ struct multicast_m_rbs_setup_mod_item_ies_o {
     multicast_m_rbs_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-SetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2810,16 +2108,12 @@ struct multicast_m_rbs_failed_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_failed_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_failed_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::multicast_m_rbs_failed_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
     multicast_m_rbs_failed_to_be_setup_mod_item_s&       multicast_m_rbs_failed_to_be_setup_mod_item() { return c; }
     const multicast_m_rbs_failed_to_be_setup_mod_item_s& multicast_m_rbs_failed_to_be_setup_mod_item() const
     {
@@ -2830,12 +2124,7 @@ struct multicast_m_rbs_failed_to_be_setup_mod_item_ies_o {
     multicast_m_rbs_failed_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-FailedToBeSetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2850,16 +2139,12 @@ struct multicast_m_rbs_modified_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::multicast_m_rbs_modified_item; }
+    static const asn1::table::choice_desc  desc;
     multicast_m_rbs_modified_item_s&       multicast_m_rbs_modified_item() { return c; }
     const multicast_m_rbs_modified_item_s& multicast_m_rbs_modified_item() const { return c; }
 
@@ -2867,12 +2152,7 @@ struct multicast_m_rbs_modified_item_ies_o {
     multicast_m_rbs_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-Modified-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2886,16 +2166,12 @@ struct multicast_m_rbs_failed_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_failed_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_failed_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::multicast_m_rbs_failed_to_be_modified_item; }
+    static const asn1::table::choice_desc desc;
     multicast_m_rbs_failed_to_be_modified_item_s&       multicast_m_rbs_failed_to_be_modified_item() { return c; }
     const multicast_m_rbs_failed_to_be_modified_item_s& multicast_m_rbs_failed_to_be_modified_item() const { return c; }
 
@@ -2903,12 +2179,7 @@ struct multicast_m_rbs_failed_to_be_modified_item_ies_o {
     multicast_m_rbs_failed_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-FailedToBeModified-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -2923,16 +2194,12 @@ struct multicast_m_rbs_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                     type() const { return types::multicast_m_rbs_to_be_setup_item; }
+    static const asn1::table::choice_desc     desc;
     multicast_m_rbs_to_be_setup_item_s&       multicast_m_rbs_to_be_setup_item() { return c; }
     const multicast_m_rbs_to_be_setup_item_s& multicast_m_rbs_to_be_setup_item() const { return c; }
 
@@ -2940,12 +2207,7 @@ struct multicast_m_rbs_to_be_setup_item_ies_o {
     multicast_m_rbs_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-ToBeSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2959,29 +2221,20 @@ struct multicast_m_rbs_setup_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    multicast_m_rbs_setup_item_s&       multicast_m_rbs_setup_item() { return c; }
-    const multicast_m_rbs_setup_item_s& multicast_m_rbs_setup_item() const { return c; }
+    types                                 type() const { return types::multicast_m_rbs_setup_item; }
+    static const asn1::table::choice_desc desc;
+    multicast_m_rbs_setup_item_s&         multicast_m_rbs_setup_item() { return c; }
+    const multicast_m_rbs_setup_item_s&   multicast_m_rbs_setup_item() const { return c; }
 
   private:
     multicast_m_rbs_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-Setup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -2995,29 +2248,20 @@ struct multicast_m_rbs_failed_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { multicast_m_rbs_failed_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_m_rbs_failed_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    multicast_m_rbs_failed_to_be_setup_item_s&       multicast_m_rbs_failed_to_be_setup_item() { return c; }
+    types                                      type() const { return types::multicast_m_rbs_failed_to_be_setup_item; }
+    static const asn1::table::choice_desc      desc;
+    multicast_m_rbs_failed_to_be_setup_item_s& multicast_m_rbs_failed_to_be_setup_item() { return c; }
     const multicast_m_rbs_failed_to_be_setup_item_s& multicast_m_rbs_failed_to_be_setup_item() const { return c; }
 
   private:
     multicast_m_rbs_failed_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastMRBs-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3030,32 +2274,22 @@ struct multicast_f1_u_context_to_be_setup_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { multicast_f1_u_context_to_be_setup_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_f1_u_context_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    multicast_f1_u_context_to_be_setup_item_s&       multicast_f1_u_context_to_be_setup_item() { return c; }
+    types                                      type() const { return types::multicast_f1_u_context_to_be_setup_item; }
+    static const asn1::table::choice_desc      desc;
+    multicast_f1_u_context_to_be_setup_item_s& multicast_f1_u_context_to_be_setup_item() { return c; }
     const multicast_f1_u_context_to_be_setup_item_s& multicast_f1_u_context_to_be_setup_item() const { return c; }
 
   private:
     multicast_f1_u_context_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastF1UContext-ToBeSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3068,19 +2302,14 @@ struct multicast_f1_u_context_setup_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { multicast_f1_u_context_setup_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_f1_u_context_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::multicast_f1_u_context_setup_item; }
+    static const asn1::table::choice_desc      desc;
     multicast_f1_u_context_setup_item_s&       multicast_f1_u_context_setup_item() { return c; }
     const multicast_f1_u_context_setup_item_s& multicast_f1_u_context_setup_item() const { return c; }
 
@@ -3088,12 +2317,7 @@ struct multicast_f1_u_context_setup_item_ies_o {
     multicast_f1_u_context_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastF1UContext-Setup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3106,19 +2330,14 @@ struct multicast_f1_u_context_failed_to_be_setup_item_ies_o {
   struct value_c {
     struct types_opts {
       enum options { multicast_f1_u_context_failed_to_be_setup_item, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::multicast_f1_u_context_failed_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::multicast_f1_u_context_failed_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
     multicast_f1_u_context_failed_to_be_setup_item_s& multicast_f1_u_context_failed_to_be_setup_item() { return c; }
     const multicast_f1_u_context_failed_to_be_setup_item_s& multicast_f1_u_context_failed_to_be_setup_item() const
     {
@@ -3129,12 +2348,7 @@ struct multicast_f1_u_context_failed_to_be_setup_item_ies_o {
     multicast_f1_u_context_failed_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // MulticastF1UContext-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -3149,29 +2363,20 @@ struct ue_id_list_for_paging_item_ies_o {
     struct types_opts {
       enum options { ue_id_list_for_paging_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_id_list_for_paging_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ue_id_list_for_paging_item_s&       ue_id_list_for_paging_item() { return c; }
-    const ue_id_list_for_paging_item_s& ue_id_list_for_paging_item() const { return c; }
+    types                                 type() const { return types::ue_id_list_for_paging_item; }
+    static const asn1::table::choice_desc desc;
+    ue_id_list_for_paging_item_s&         ue_id_list_for_paging_item() { return c; }
+    const ue_id_list_for_paging_item_s&   ue_id_list_for_paging_item() const { return c; }
 
   private:
     ue_id_list_for_paging_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UEIdentity-List-For-Paging-List ::= SEQUENCE (SIZE (1..4096)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3184,16 +2389,12 @@ struct nr_cgi_list_for_restart_list_item_ies_o {
     struct types_opts {
       enum options { nr_cgi_list_for_restart_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::nr_cgi_list_for_restart_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::nr_cgi_list_for_restart_item; }
+    static const asn1::table::choice_desc desc;
     nr_cgi_list_for_restart_item_s&       nr_cgi_list_for_restart_item() { return c; }
     const nr_cgi_list_for_restart_item_s& nr_cgi_list_for_restart_item() const { return c; }
 
@@ -3201,12 +2402,7 @@ struct nr_cgi_list_for_restart_list_item_ies_o {
     nr_cgi_list_for_restart_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // NR-CGI-List-For-Restart-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3220,29 +2416,20 @@ struct pws_failed_nr_cgi_list_item_ies_o {
     struct types_opts {
       enum options { pws_failed_nr_cgi_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::pws_failed_nr_cgi_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    pws_failed_nr_cgi_item_s&       pws_failed_nr_cgi_item() { return c; }
-    const pws_failed_nr_cgi_item_s& pws_failed_nr_cgi_item() const { return c; }
+    types                                 type() const { return types::pws_failed_nr_cgi_item; }
+    static const asn1::table::choice_desc desc;
+    pws_failed_nr_cgi_item_s&             pws_failed_nr_cgi_item() { return c; }
+    const pws_failed_nr_cgi_item_s&       pws_failed_nr_cgi_item() const { return c; }
 
   private:
     pws_failed_nr_cgi_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // PWS-Failed-NR-CGI-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3255,29 +2442,20 @@ struct paging_cell_item_ies_o {
     struct types_opts {
       enum options { paging_cell_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::paging_cell_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    paging_cell_item_s&       paging_cell_item() { return c; }
-    const paging_cell_item_s& paging_cell_item() const { return c; }
+    types                                 type() const { return types::paging_cell_item; }
+    static const asn1::table::choice_desc desc;
+    paging_cell_item_s&                   paging_cell_item() { return c; }
+    const paging_cell_item_s&             paging_cell_item() const { return c; }
 
   private:
     paging_cell_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Potential-SpCell-ItemIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -3287,29 +2465,20 @@ struct potential_sp_cell_item_ies_o {
     struct types_opts {
       enum options { potential_sp_cell_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::potential_sp_cell_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    potential_sp_cell_item_s&       potential_sp_cell_item() { return c; }
-    const potential_sp_cell_item_s& potential_sp_cell_item() const { return c; }
+    types                                 type() const { return types::potential_sp_cell_item; }
+    static const asn1::table::choice_desc desc;
+    potential_sp_cell_item_s&             potential_sp_cell_item() { return c; }
+    const potential_sp_cell_item_s&       potential_sp_cell_item() const { return c; }
 
   private:
     potential_sp_cell_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // Potential-SpCell-List ::= SEQUENCE (SIZE (0..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3322,29 +2491,20 @@ struct scell_failedto_setup_item_ies_o {
     struct types_opts {
       enum options { scell_failedto_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::scell_failedto_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    scell_failedto_setup_item_s&       scell_failedto_setup_item() { return c; }
-    const scell_failedto_setup_item_s& scell_failedto_setup_item() const { return c; }
+    types                                 type() const { return types::scell_failedto_setup_item; }
+    static const asn1::table::choice_desc desc;
+    scell_failedto_setup_item_s&          scell_failedto_setup_item() { return c; }
+    const scell_failedto_setup_item_s&    scell_failedto_setup_item() const { return c; }
 
   private:
     scell_failedto_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SCell-FailedtoSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3357,16 +2517,12 @@ struct scell_failedto_setup_mod_item_ies_o {
     struct types_opts {
       enum options { scell_failedto_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::scell_failedto_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::scell_failedto_setup_mod_item; }
+    static const asn1::table::choice_desc  desc;
     scell_failedto_setup_mod_item_s&       scell_failedto_setup_mod_item() { return c; }
     const scell_failedto_setup_mod_item_s& scell_failedto_setup_mod_item() const { return c; }
 
@@ -3374,12 +2530,7 @@ struct scell_failedto_setup_mod_item_ies_o {
     scell_failedto_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SCell-FailedtoSetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3393,29 +2544,20 @@ struct scell_to_be_remd_item_ies_o {
     struct types_opts {
       enum options { scell_to_be_remd_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::scell_to_be_remd_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    scell_to_be_remd_item_s&       scell_to_be_remd_item() { return c; }
-    const scell_to_be_remd_item_s& scell_to_be_remd_item() const { return c; }
+    types                                 type() const { return types::scell_to_be_remd_item; }
+    static const asn1::table::choice_desc desc;
+    scell_to_be_remd_item_s&              scell_to_be_remd_item() { return c; }
+    const scell_to_be_remd_item_s&        scell_to_be_remd_item() const { return c; }
 
   private:
     scell_to_be_remd_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SCell-ToBeRemoved-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3428,29 +2570,20 @@ struct scell_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { scell_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::scell_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    scell_to_be_setup_item_s&       scell_to_be_setup_item() { return c; }
-    const scell_to_be_setup_item_s& scell_to_be_setup_item() const { return c; }
+    types                                 type() const { return types::scell_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
+    scell_to_be_setup_item_s&             scell_to_be_setup_item() { return c; }
+    const scell_to_be_setup_item_s&       scell_to_be_setup_item() const { return c; }
 
   private:
     scell_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SCell-ToBeSetup-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3463,29 +2596,20 @@ struct scell_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { scell_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::scell_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    scell_to_be_setup_mod_item_s&       scell_to_be_setup_mod_item() { return c; }
-    const scell_to_be_setup_mod_item_s& scell_to_be_setup_mod_item() const { return c; }
+    types                                 type() const { return types::scell_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    scell_to_be_setup_mod_item_s&         scell_to_be_setup_mod_item() { return c; }
+    const scell_to_be_setup_mod_item_s&   scell_to_be_setup_mod_item() const { return c; }
 
   private:
     scell_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SCell-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..32)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3499,16 +2623,12 @@ struct sl_drbs_failed_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_failed_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_failed_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                       type() const { return types::sl_drbs_failed_to_be_modified_item; }
+    static const asn1::table::choice_desc       desc;
     sl_drbs_failed_to_be_modified_item_s&       sl_drbs_failed_to_be_modified_item() { return c; }
     const sl_drbs_failed_to_be_modified_item_s& sl_drbs_failed_to_be_modified_item() const { return c; }
 
@@ -3516,12 +2636,7 @@ struct sl_drbs_failed_to_be_modified_item_ies_o {
     sl_drbs_failed_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-FailedToBeModified-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3535,16 +2650,12 @@ struct sl_drbs_failed_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_failed_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_failed_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                    type() const { return types::sl_drbs_failed_to_be_setup_item; }
+    static const asn1::table::choice_desc    desc;
     sl_drbs_failed_to_be_setup_item_s&       sl_drbs_failed_to_be_setup_item() { return c; }
     const sl_drbs_failed_to_be_setup_item_s& sl_drbs_failed_to_be_setup_item() const { return c; }
 
@@ -3552,12 +2663,7 @@ struct sl_drbs_failed_to_be_setup_item_ies_o {
     sl_drbs_failed_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3571,16 +2677,12 @@ struct sl_drbs_failed_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_failed_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_failed_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::sl_drbs_failed_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc        desc;
     sl_drbs_failed_to_be_setup_mod_item_s&       sl_drbs_failed_to_be_setup_mod_item() { return c; }
     const sl_drbs_failed_to_be_setup_mod_item_s& sl_drbs_failed_to_be_setup_mod_item() const { return c; }
 
@@ -3588,12 +2690,7 @@ struct sl_drbs_failed_to_be_setup_mod_item_ies_o {
     sl_drbs_failed_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-FailedToBeSetupMod-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3607,29 +2704,20 @@ struct sl_drbs_modified_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    sl_drbs_modified_item_s&       sl_drbs_modified_item() { return c; }
-    const sl_drbs_modified_item_s& sl_drbs_modified_item() const { return c; }
+    types                                 type() const { return types::sl_drbs_modified_item; }
+    static const asn1::table::choice_desc desc;
+    sl_drbs_modified_item_s&              sl_drbs_modified_item() { return c; }
+    const sl_drbs_modified_item_s&        sl_drbs_modified_item() const { return c; }
 
   private:
     sl_drbs_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-Modified-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3642,29 +2730,20 @@ struct sl_drbs_modified_conf_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_modified_conf_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_modified_conf_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    sl_drbs_modified_conf_item_s&       sl_drbs_modified_conf_item() { return c; }
-    const sl_drbs_modified_conf_item_s& sl_drbs_modified_conf_item() const { return c; }
+    types                                 type() const { return types::sl_drbs_modified_conf_item; }
+    static const asn1::table::choice_desc desc;
+    sl_drbs_modified_conf_item_s&         sl_drbs_modified_conf_item() { return c; }
+    const sl_drbs_modified_conf_item_s&   sl_drbs_modified_conf_item() const { return c; }
 
   private:
     sl_drbs_modified_conf_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-ModifiedConf-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3677,16 +2756,12 @@ struct sl_drbs_required_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_required_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_required_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                         type() const { return types::sl_drbs_required_to_be_modified_item; }
+    static const asn1::table::choice_desc         desc;
     sl_drbs_required_to_be_modified_item_s&       sl_drbs_required_to_be_modified_item() { return c; }
     const sl_drbs_required_to_be_modified_item_s& sl_drbs_required_to_be_modified_item() const { return c; }
 
@@ -3694,12 +2769,7 @@ struct sl_drbs_required_to_be_modified_item_ies_o {
     sl_drbs_required_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-Required-ToBeModified-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3713,16 +2783,12 @@ struct sl_drbs_required_to_be_released_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_required_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_required_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                         type() const { return types::sl_drbs_required_to_be_released_item; }
+    static const asn1::table::choice_desc         desc;
     sl_drbs_required_to_be_released_item_s&       sl_drbs_required_to_be_released_item() { return c; }
     const sl_drbs_required_to_be_released_item_s& sl_drbs_required_to_be_released_item() const { return c; }
 
@@ -3730,12 +2796,7 @@ struct sl_drbs_required_to_be_released_item_ies_o {
     sl_drbs_required_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-Required-ToBeReleased-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3749,29 +2810,20 @@ struct sl_drbs_setup_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    sl_drbs_setup_item_s&       sl_drbs_setup_item() { return c; }
-    const sl_drbs_setup_item_s& sl_drbs_setup_item() const { return c; }
+    types                                 type() const { return types::sl_drbs_setup_item; }
+    static const asn1::table::choice_desc desc;
+    sl_drbs_setup_item_s&                 sl_drbs_setup_item() { return c; }
+    const sl_drbs_setup_item_s&           sl_drbs_setup_item() const { return c; }
 
   private:
     sl_drbs_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-Setup-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3784,29 +2836,20 @@ struct sl_drbs_setup_mod_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    sl_drbs_setup_mod_item_s&       sl_drbs_setup_mod_item() { return c; }
-    const sl_drbs_setup_mod_item_s& sl_drbs_setup_mod_item() const { return c; }
+    types                                 type() const { return types::sl_drbs_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    sl_drbs_setup_mod_item_s&             sl_drbs_setup_mod_item() { return c; }
+    const sl_drbs_setup_mod_item_s&       sl_drbs_setup_mod_item() const { return c; }
 
   private:
     sl_drbs_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-SetupMod-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3819,29 +2862,20 @@ struct sl_drbs_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    sl_drbs_to_be_modified_item_s&       sl_drbs_to_be_modified_item() { return c; }
-    const sl_drbs_to_be_modified_item_s& sl_drbs_to_be_modified_item() const { return c; }
+    types                                 type() const { return types::sl_drbs_to_be_modified_item; }
+    static const asn1::table::choice_desc desc;
+    sl_drbs_to_be_modified_item_s&        sl_drbs_to_be_modified_item() { return c; }
+    const sl_drbs_to_be_modified_item_s&  sl_drbs_to_be_modified_item() const { return c; }
 
   private:
     sl_drbs_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-ToBeModified-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3854,29 +2888,20 @@ struct sl_drbs_to_be_released_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    sl_drbs_to_be_released_item_s&       sl_drbs_to_be_released_item() { return c; }
-    const sl_drbs_to_be_released_item_s& sl_drbs_to_be_released_item() const { return c; }
+    types                                 type() const { return types::sl_drbs_to_be_released_item; }
+    static const asn1::table::choice_desc desc;
+    sl_drbs_to_be_released_item_s&        sl_drbs_to_be_released_item() { return c; }
+    const sl_drbs_to_be_released_item_s&  sl_drbs_to_be_released_item() const { return c; }
 
   private:
     sl_drbs_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-ToBeReleased-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3889,29 +2914,20 @@ struct sl_drbs_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    sl_drbs_to_be_setup_item_s&       sl_drbs_to_be_setup_item() { return c; }
-    const sl_drbs_to_be_setup_item_s& sl_drbs_to_be_setup_item() const { return c; }
+    types                                 type() const { return types::sl_drbs_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
+    sl_drbs_to_be_setup_item_s&           sl_drbs_to_be_setup_item() { return c; }
+    const sl_drbs_to_be_setup_item_s&     sl_drbs_to_be_setup_item() const { return c; }
 
   private:
     sl_drbs_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-ToBeSetup-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3924,16 +2940,12 @@ struct sl_drbs_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { sl_drbs_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::sl_drbs_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::sl_drbs_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
     sl_drbs_to_be_setup_mod_item_s&       sl_drbs_to_be_setup_mod_item() { return c; }
     const sl_drbs_to_be_setup_mod_item_s& sl_drbs_to_be_setup_mod_item() const { return c; }
 
@@ -3941,12 +2953,7 @@ struct sl_drbs_to_be_setup_mod_item_ies_o {
     sl_drbs_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SLDRBs-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..512)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3959,16 +2966,12 @@ struct srbs_failed_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { srbs_failed_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_failed_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::srbs_failed_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
     srbs_failed_to_be_setup_item_s&       srbs_failed_to_be_setup_item() { return c; }
     const srbs_failed_to_be_setup_item_s& srbs_failed_to_be_setup_item() const { return c; }
 
@@ -3976,12 +2979,7 @@ struct srbs_failed_to_be_setup_item_ies_o {
     srbs_failed_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-FailedToBeSetup-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -3995,16 +2993,12 @@ struct srbs_failed_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { srbs_failed_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_failed_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                     type() const { return types::srbs_failed_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc     desc;
     srbs_failed_to_be_setup_mod_item_s&       srbs_failed_to_be_setup_mod_item() { return c; }
     const srbs_failed_to_be_setup_mod_item_s& srbs_failed_to_be_setup_mod_item() const { return c; }
 
@@ -4012,12 +3006,7 @@ struct srbs_failed_to_be_setup_mod_item_ies_o {
     srbs_failed_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-FailedToBeSetupMod-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4031,29 +3020,20 @@ struct srbs_modified_item_ies_o {
     struct types_opts {
       enum options { srbs_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    srbs_modified_item_s&       srbs_modified_item() { return c; }
-    const srbs_modified_item_s& srbs_modified_item() const { return c; }
+    types                                 type() const { return types::srbs_modified_item; }
+    static const asn1::table::choice_desc desc;
+    srbs_modified_item_s&                 srbs_modified_item() { return c; }
+    const srbs_modified_item_s&           srbs_modified_item() const { return c; }
 
   private:
     srbs_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-Modified-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4066,16 +3046,12 @@ struct srbs_required_to_be_released_item_ies_o {
     struct types_opts {
       enum options { srbs_required_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_required_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                      type() const { return types::srbs_required_to_be_released_item; }
+    static const asn1::table::choice_desc      desc;
     srbs_required_to_be_released_item_s&       srbs_required_to_be_released_item() { return c; }
     const srbs_required_to_be_released_item_s& srbs_required_to_be_released_item() const { return c; }
 
@@ -4083,12 +3059,7 @@ struct srbs_required_to_be_released_item_ies_o {
     srbs_required_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-Required-ToBeReleased-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4102,29 +3073,20 @@ struct srbs_setup_item_ies_o {
     struct types_opts {
       enum options { srbs_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    srbs_setup_item_s&       srbs_setup_item() { return c; }
-    const srbs_setup_item_s& srbs_setup_item() const { return c; }
+    types                                 type() const { return types::srbs_setup_item; }
+    static const asn1::table::choice_desc desc;
+    srbs_setup_item_s&                    srbs_setup_item() { return c; }
+    const srbs_setup_item_s&              srbs_setup_item() const { return c; }
 
   private:
     srbs_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-Setup-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4137,29 +3099,20 @@ struct srbs_setup_mod_item_ies_o {
     struct types_opts {
       enum options { srbs_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    srbs_setup_mod_item_s&       srbs_setup_mod_item() { return c; }
-    const srbs_setup_mod_item_s& srbs_setup_mod_item() const { return c; }
+    types                                 type() const { return types::srbs_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    srbs_setup_mod_item_s&                srbs_setup_mod_item() { return c; }
+    const srbs_setup_mod_item_s&          srbs_setup_mod_item() const { return c; }
 
   private:
     srbs_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-SetupMod-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4172,29 +3125,20 @@ struct srbs_to_be_released_item_ies_o {
     struct types_opts {
       enum options { srbs_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    srbs_to_be_released_item_s&       srbs_to_be_released_item() { return c; }
-    const srbs_to_be_released_item_s& srbs_to_be_released_item() const { return c; }
+    types                                 type() const { return types::srbs_to_be_released_item; }
+    static const asn1::table::choice_desc desc;
+    srbs_to_be_released_item_s&           srbs_to_be_released_item() { return c; }
+    const srbs_to_be_released_item_s&     srbs_to_be_released_item() const { return c; }
 
   private:
     srbs_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-ToBeReleased-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4207,29 +3151,20 @@ struct srbs_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { srbs_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    srbs_to_be_setup_item_s&       srbs_to_be_setup_item() { return c; }
-    const srbs_to_be_setup_item_s& srbs_to_be_setup_item() const { return c; }
+    types                                 type() const { return types::srbs_to_be_setup_item; }
+    static const asn1::table::choice_desc desc;
+    srbs_to_be_setup_item_s&              srbs_to_be_setup_item() { return c; }
+    const srbs_to_be_setup_item_s&        srbs_to_be_setup_item() const { return c; }
 
   private:
     srbs_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-ToBeSetup-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4242,29 +3177,20 @@ struct srbs_to_be_setup_mod_item_ies_o {
     struct types_opts {
       enum options { srbs_to_be_setup_mod_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::srbs_to_be_setup_mod_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    srbs_to_be_setup_mod_item_s&       srbs_to_be_setup_mod_item() { return c; }
-    const srbs_to_be_setup_mod_item_s& srbs_to_be_setup_mod_item() const { return c; }
+    types                                 type() const { return types::srbs_to_be_setup_mod_item; }
+    static const asn1::table::choice_desc desc;
+    srbs_to_be_setup_mod_item_s&          srbs_to_be_setup_mod_item() { return c; }
+    const srbs_to_be_setup_mod_item_s&    srbs_to_be_setup_mod_item() const { return c; }
 
   private:
     srbs_to_be_setup_mod_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // SRBs-ToBeSetupMod-List ::= SEQUENCE (SIZE (1..8)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4277,29 +3203,20 @@ struct serving_cell_mo_list_item_ies_o {
     struct types_opts {
       enum options { serving_cell_mo_list_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::serving_cell_mo_list_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    serving_cell_mo_list_item_s&       serving_cell_mo_list_item() { return c; }
-    const serving_cell_mo_list_item_s& serving_cell_mo_list_item() const { return c; }
+    types                                 type() const { return types::serving_cell_mo_list_item; }
+    static const asn1::table::choice_desc desc;
+    serving_cell_mo_list_item_s&          serving_cell_mo_list_item() { return c; }
+    const serving_cell_mo_list_item_s&    serving_cell_mo_list_item() const { return c; }
 
   private:
     serving_cell_mo_list_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // ServingCellMO-List ::= SEQUENCE (SIZE (1..16)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4312,16 +3229,12 @@ struct ue_multicast_m_rbs_confirmed_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_confirmed_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_confirmed_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types type() const { return types::ue_multicast_m_rbs_confirmed_to_be_modified_item; }
+    static const asn1::table::choice_desc               desc;
     ue_multicast_m_rbs_confirmed_to_be_modified_item_s& ue_multicast_m_rbs_confirmed_to_be_modified_item() { return c; }
     const ue_multicast_m_rbs_confirmed_to_be_modified_item_s& ue_multicast_m_rbs_confirmed_to_be_modified_item() const
     {
@@ -4332,12 +3245,7 @@ struct ue_multicast_m_rbs_confirmed_to_be_modified_item_ies_o {
     ue_multicast_m_rbs_confirmed_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-ConfirmedToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -4352,16 +3260,12 @@ struct ue_multicast_m_rbs_required_to_be_modified_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_required_to_be_modified_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_required_to_be_modified_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types type() const { return types::ue_multicast_m_rbs_required_to_be_modified_item; }
+    static const asn1::table::choice_desc              desc;
     ue_multicast_m_rbs_required_to_be_modified_item_s& ue_multicast_m_rbs_required_to_be_modified_item() { return c; }
     const ue_multicast_m_rbs_required_to_be_modified_item_s& ue_multicast_m_rbs_required_to_be_modified_item() const
     {
@@ -4372,12 +3276,7 @@ struct ue_multicast_m_rbs_required_to_be_modified_item_ies_o {
     ue_multicast_m_rbs_required_to_be_modified_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-RequiredToBeModified-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -4392,16 +3291,12 @@ struct ue_multicast_m_rbs_required_to_be_released_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_required_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_required_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types type() const { return types::ue_multicast_m_rbs_required_to_be_released_item; }
+    static const asn1::table::choice_desc              desc;
     ue_multicast_m_rbs_required_to_be_released_item_s& ue_multicast_m_rbs_required_to_be_released_item() { return c; }
     const ue_multicast_m_rbs_required_to_be_released_item_s& ue_multicast_m_rbs_required_to_be_released_item() const
     {
@@ -4412,12 +3307,7 @@ struct ue_multicast_m_rbs_required_to_be_released_item_ies_o {
     ue_multicast_m_rbs_required_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-RequiredToBeReleased-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :
@@ -4432,16 +3322,12 @@ struct ue_multicast_m_rbs_setup_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::ue_multicast_m_rbs_setup_item; }
+    static const asn1::table::choice_desc  desc;
     ue_multicast_m_rbs_setup_item_s&       ue_multicast_m_rbs_setup_item() { return c; }
     const ue_multicast_m_rbs_setup_item_s& ue_multicast_m_rbs_setup_item() const { return c; }
 
@@ -4449,12 +3335,7 @@ struct ue_multicast_m_rbs_setup_item_ies_o {
     ue_multicast_m_rbs_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-Setup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4467,16 +3348,12 @@ struct ue_multicast_m_rbs_setupnew_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_setupnew_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_setupnew_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                     type() const { return types::ue_multicast_m_rbs_setupnew_item; }
+    static const asn1::table::choice_desc     desc;
     ue_multicast_m_rbs_setupnew_item_s&       ue_multicast_m_rbs_setupnew_item() { return c; }
     const ue_multicast_m_rbs_setupnew_item_s& ue_multicast_m_rbs_setupnew_item() const { return c; }
 
@@ -4484,12 +3361,7 @@ struct ue_multicast_m_rbs_setupnew_item_ies_o {
     ue_multicast_m_rbs_setupnew_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-Setupnew-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4503,29 +3375,20 @@ struct ue_multicast_m_rbs_to_be_released_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_to_be_released_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_to_be_released_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ue_multicast_m_rbs_to_be_released_item_s&       ue_multicast_m_rbs_to_be_released_item() { return c; }
+    types                                     type() const { return types::ue_multicast_m_rbs_to_be_released_item; }
+    static const asn1::table::choice_desc     desc;
+    ue_multicast_m_rbs_to_be_released_item_s& ue_multicast_m_rbs_to_be_released_item() { return c; }
     const ue_multicast_m_rbs_to_be_released_item_s& ue_multicast_m_rbs_to_be_released_item() const { return c; }
 
   private:
     ue_multicast_m_rbs_to_be_released_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-ToBeReleased-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4539,16 +3402,12 @@ struct ue_multicast_m_rbs_to_be_setup_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_to_be_setup_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_to_be_setup_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::ue_multicast_m_rbs_to_be_setup_item; }
+    static const asn1::table::choice_desc        desc;
     ue_multicast_m_rbs_to_be_setup_item_s&       ue_multicast_m_rbs_to_be_setup_item() { return c; }
     const ue_multicast_m_rbs_to_be_setup_item_s& ue_multicast_m_rbs_to_be_setup_item() const { return c; }
 
@@ -4556,12 +3415,7 @@ struct ue_multicast_m_rbs_to_be_setup_item_ies_o {
     ue_multicast_m_rbs_to_be_setup_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-ToBeSetup-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES : IEsSetParam}
@@ -4575,16 +3429,12 @@ struct ue_multicast_m_rbs_to_be_setup_at_modify_item_ies_o {
     struct types_opts {
       enum options { ue_multicast_m_rbs_to_be_setup_at_modify_item, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::ue_multicast_m_rbs_to_be_setup_at_modify_item; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                 type() const { return types::ue_multicast_m_rbs_to_be_setup_at_modify_item; }
+    static const asn1::table::choice_desc desc;
     ue_multicast_m_rbs_to_be_setup_at_modify_item_s&       ue_multicast_m_rbs_to_be_setup_at_modify_item() { return c; }
     const ue_multicast_m_rbs_to_be_setup_at_modify_item_s& ue_multicast_m_rbs_to_be_setup_at_modify_item() const
     {
@@ -4595,12 +3445,7 @@ struct ue_multicast_m_rbs_to_be_setup_at_modify_item_ies_o {
     ue_multicast_m_rbs_to_be_setup_at_modify_item_s c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // UE-MulticastMRBs-ToBeSetup-atModify-List ::= SEQUENCE (SIZE (1..64)) OF ProtocolIE-Field{F1AP-PROTOCOL-IES :

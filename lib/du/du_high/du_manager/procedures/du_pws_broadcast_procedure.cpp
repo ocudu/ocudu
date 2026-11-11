@@ -46,17 +46,17 @@ expected<byte_buffer> pack_warning_bcch_dl_sch_msg(sib_type sib_id, const byte_b
   sys_info_ies_s::sib_type_and_info_l_item_c_ sib_item;
   switch (sib_id) {
     case sib_type::sib6:
-      if (sib_item.set_sib6().unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(sib_item.set_sib6(), bref) != asn1::OCUDUASN_SUCCESS) {
         return make_unexpected(default_error_t{});
       }
       break;
     case sib_type::sib7:
-      if (sib_item.set_sib7().unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(sib_item.set_sib7(), bref) != asn1::OCUDUASN_SUCCESS) {
         return make_unexpected(default_error_t{});
       }
       break;
     case sib_type::sib8:
-      if (sib_item.set_sib8().unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(sib_item.set_sib8(), bref) != asn1::OCUDUASN_SUCCESS) {
         return make_unexpected(default_error_t{});
       }
       break;
@@ -69,7 +69,7 @@ expected<byte_buffer> pack_warning_bcch_dl_sch_msg(sib_type sib_id, const byte_b
 
   byte_buffer   buf;
   asn1::bit_ref bref_out{buf};
-  if (msg.pack(bref_out) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_out, msg) != asn1::OCUDUASN_SUCCESS) {
     return make_unexpected(default_error_t{});
   }
   return buf;

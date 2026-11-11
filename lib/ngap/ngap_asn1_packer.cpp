@@ -26,7 +26,7 @@ void ngap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
   }
   asn1::cbit_ref      bref(bytes);
   ocucp::ngap_message msg = {};
-  if (msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(msg.pdu, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Sending ErrorIndication. Cause: Could not unpack Rx PDU");
     send_error_indication(amf_notifier, logger);
     return;
@@ -42,7 +42,7 @@ void ngap_asn1_packer::handle_message(const ocucp::ngap_message& msg)
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu{byte_buffer::fallback_allocation_tag{}};
   asn1::bit_ref bref(tx_pdu);
-  if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg.pdu) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack PDU");
     return;
   }

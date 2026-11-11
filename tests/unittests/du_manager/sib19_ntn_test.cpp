@@ -120,7 +120,7 @@ TEST(srs_sib19_ntn_test, orbital_ephemeris_retrograde_inclination_packs)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  ASSERT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_TRUE(sib19_decoded.ntn_cfg_r17_present);
   ASSERT_EQ(sib19_decoded.ntn_cfg_r17.ephemeris_info_r17.type(),
@@ -146,7 +146,7 @@ TEST(srs_sib19_ntn_test, distance_thresh_encoding)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   EXPECT_TRUE(sib19_decoded.distance_thresh_r17_present);
   EXPECT_EQ(sib19_decoded.distance_thresh_r17, 100);
@@ -166,7 +166,7 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_moving_ref_location)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   // Verify moving_ref_location_r18 is present and contains data
   EXPECT_FALSE(sib19_decoded.moving_ref_location_r18.empty());
@@ -193,7 +193,7 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_ref_location_positive_longitud
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   EXPECT_FALSE(sib19_decoded.ref_location_r17.empty());
   EXPECT_EQ(sib19_decoded.ref_location_r17.size(), 6u);
@@ -217,7 +217,7 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_coverage_enhancements)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   // Verify coverage enhancements fields
   EXPECT_TRUE(sib19_decoded.ntn_cov_enh_r18.is_present());
@@ -242,7 +242,7 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_sat_switch)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   // Verify satellite switch fields
   EXPECT_TRUE(sib19_decoded.sat_switch_with_re_sync_r18.is_present());
@@ -278,7 +278,7 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_neighbor_cells)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   // Verify neighbor cells
   EXPECT_EQ(sib19_decoded.ntn_neigh_cell_cfg_list_r17.size(), 2);
@@ -311,7 +311,7 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_neighbor_cells_extended)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   // Verify first 4 neighbors in base list
   EXPECT_EQ(sib19_decoded.ntn_neigh_cell_cfg_list_r17.size(), 4);
@@ -356,7 +356,7 @@ TEST(srs_sib19_ntn_test, make_asn1_rrc_cell_sib19_all_r18_fields)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   // Verify all R18 fields are present
   EXPECT_FALSE(sib19_decoded.moving_ref_location_r18.empty());
@@ -385,7 +385,7 @@ TEST(srs_sib19_ntn_test, max_ncells_supported)
 
   asn1::cbit_ref            bref(buf);
   asn1::rrc_nr::sib19_r17_s sib19_decoded;
-  EXPECT_EQ(sib19_decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(sib19_decoded, bref), asn1::OCUDUASN_SUCCESS);
 
   // Verify all 8 neighbors are encoded (4 in base, 4 in extension)
   EXPECT_EQ(sib19_decoded.ntn_neigh_cell_cfg_list_r17.size(), 4);
@@ -469,7 +469,7 @@ TEST(srs_sib19_ntn_test, complete_sib19_all_fields_with_pcap)
   // Pack to byte buffer
   byte_buffer         bcch_buf;
   asn1::bit_ref       bref(bcch_buf);
-  asn1::OCUDUASN_CODE ret = si_msg.pack(bref);
+  asn1::OCUDUASN_CODE ret = asn1::pack(bref, si_msg);
   EXPECT_EQ(ret, asn1::OCUDUASN_SUCCESS);
 
   // Generate JSON representation for debugging
@@ -480,7 +480,7 @@ TEST(srs_sib19_ntn_test, complete_sib19_all_fields_with_pcap)
   // Verify decoding
   asn1::cbit_ref                  bref_decode(bcch_buf);
   asn1::rrc_nr::bcch_dl_sch_msg_s si_msg_decoded;
-  EXPECT_EQ(si_msg_decoded.unpack(bref_decode), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(si_msg_decoded, bref_decode), asn1::OCUDUASN_SUCCESS);
   EXPECT_TRUE(si_msg_decoded.msg.c1().type() == asn1::rrc_nr::bcch_dl_sch_msg_type_c::c1_c_::types::sys_info);
 
   // Write to PCAP if enabled

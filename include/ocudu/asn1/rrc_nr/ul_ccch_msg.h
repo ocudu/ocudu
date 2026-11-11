@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_rrc_utils.h"
 
 namespace asn1 {
 namespace rrc_nr {
@@ -31,19 +31,14 @@ struct ul_ccch_msg_type_c {
     struct types_opts {
       enum options { rrc_setup_request, rrc_resume_request, rrc_reest_request, rrc_sys_info_request, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    c1_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    rrc_setup_request_s& rrc_setup_request()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    rrc_setup_request_s&                  rrc_setup_request()
     {
       assert_choice_type(types::rrc_setup_request, type_, "c1");
       return c.get<rrc_setup_request_s>();
@@ -94,22 +89,16 @@ struct ul_ccch_msg_type_c {
   };
   struct types_opts {
     enum options { c1, msg_class_ext, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  ul_ccch_msg_type_c() = default;
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  c1_c_& c1()
+  void                                  set(types::options e = types::nulltype);
+  types                                 type() const { return type_; }
+  static const asn1::table::choice_desc desc;
+  c1_c_&                                c1()
   {
     assert_choice_type(types::c1, type_, "UL-CCCH-MessageType");
     return c;
@@ -131,10 +120,7 @@ private:
 struct ul_ccch_msg_s {
   ul_ccch_msg_type_c msg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 } // namespace rrc_nr

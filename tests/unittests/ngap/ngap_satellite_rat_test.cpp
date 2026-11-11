@@ -31,12 +31,12 @@ asn1::ngap::ng_setup_request_s pack_and_unpack_ng_setup_request(std::vector<supp
   byte_buffer buf;
   {
     asn1::bit_ref bref{buf};
-    EXPECT_EQ(pdu.pack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::pack(bref, pdu), asn1::OCUDUASN_SUCCESS);
   }
   asn1::ngap::ngap_pdu_c decoded;
   {
     asn1::cbit_ref bref{buf};
-    EXPECT_EQ(decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::unpack(decoded, bref), asn1::OCUDUASN_SUCCESS);
   }
   return decoded.init_msg().value.ng_setup_request();
 }

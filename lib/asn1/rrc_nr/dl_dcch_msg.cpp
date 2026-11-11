@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg.h"
+#include "ocudu/asn1/asn1_codec.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg_ies.h"
 
 using namespace asn1;
@@ -27,111 +28,195 @@ void dl_dcch_msg_type_c::set_msg_class_ext()
 {
   set(types::msg_class_ext);
 }
-void dl_dcch_msg_type_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::c1:
-      j.write_fieldname("c1");
-      c.to_json(j);
-      break;
-    case types::msg_class_ext:
-      j.write_fieldname("messageClassExtension");
-      j.start_obj();
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_dcch_msg_type_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE dl_dcch_msg_type_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.pack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_dcch_msg_type_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE dl_dcch_msg_type_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.unpack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_dcch_msg_type_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_dl_dcch_msg_type_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<dl_dcch_msg_type_c::c1_c_, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &asn1::table::empty_sequence}};
+static const asn1::table::field_name choice_table_dl_dcch_msg_type_c_names[] = {{"c1", nullptr},
+                                                                                {"messageClassExtension", nullptr}};
+const asn1::table::choice_desc dl_dcch_msg_type_c::desc = {asn1::table::enum_int_type<dl_dcch_msg_type_c::types>(),
+                                                           dl_dcch_msg_type_c::types::nof_types,
+                                                           dl_dcch_msg_type_c::types::nof_exts,
+                                                           dl_dcch_msg_type_c::types::has_ext,
+                                                           false,
+                                                           choice_table_dl_dcch_msg_type_c_alternatives,
+                                                           &asn1::table::choice_set<dl_dcch_msg_type_c>,
+                                                           choice_table_dl_dcch_msg_type_c_names,
+                                                           "dl_dcch_msg_type_c",
+                                                           offsetof(dl_dcch_msg_type_c, type_),
+                                                           offsetof(dl_dcch_msg_type_c, c),
+                                                           false};
+
+static const asn1::table::seq_field choice_table_dl_dcch_msg_type_c_c1_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_recfg_s>::value,
+     &rrc_recfg_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_resume_s>::value,
+     &rrc_resume_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_release_s>::value,
+     &rrc_release_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_reest_s>::value,
+     &rrc_reest_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<security_mode_cmd_s>::value,
+     &security_mode_cmd_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<dl_info_transfer_s>::value,
+     &dl_info_transfer_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ue_cap_enquiry_s>::value,
+     &ue_cap_enquiry_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<counter_check_s>::value,
+     &counter_check_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<mob_from_nr_cmd_s>::value,
+     &mob_from_nr_cmd_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<dl_ded_msg_segment_r16_s>::value,
+     &dl_ded_msg_segment_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ue_info_request_r16_s>::value,
+     &ue_info_request_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<dl_info_transfer_mrdc_r16_s>::value,
+     &dl_info_transfer_mrdc_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<logged_meas_cfg_r16_s>::value,
+     &logged_meas_cfg_r16_s::desc},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr}};
+static const asn1::table::field_name choice_table_dl_dcch_msg_type_c_c1_c__names[] = {
+    {"rrcReconfiguration", nullptr},
+    {"rrcResume", nullptr},
+    {"rrcRelease", nullptr},
+    {"rrcReestablishment", nullptr},
+    {"securityModeCommand", nullptr},
+    {"dlInformationTransfer", nullptr},
+    {"ueCapabilityEnquiry", nullptr},
+    {"counterCheck", nullptr},
+    {"mobilityFromNRCommand", nullptr},
+    {"dlDedicatedMessageSegment-r16", nullptr},
+    {"ueInformationRequest-r16", nullptr},
+    {"dlInformationTransferMRDC-r16", nullptr},
+    {"loggedMeasurementConfiguration-r16", nullptr},
+    {"spare3", nullptr},
+    {"spare2", nullptr},
+    {"spare1", nullptr}};
+const asn1::table::choice_desc dl_dcch_msg_type_c::c1_c_::desc = {
+    asn1::table::enum_int_type<dl_dcch_msg_type_c::c1_c_::types>(),
+    dl_dcch_msg_type_c::c1_c_::types::nof_types,
+    dl_dcch_msg_type_c::c1_c_::types::nof_exts,
+    dl_dcch_msg_type_c::c1_c_::types::has_ext,
+    false,
+    choice_table_dl_dcch_msg_type_c_c1_c__alternatives,
+    &asn1::table::choice_set<dl_dcch_msg_type_c::c1_c_>,
+    choice_table_dl_dcch_msg_type_c_c1_c__names,
+    "dl_dcch_msg_type_c::c1_c_",
+    offsetof(dl_dcch_msg_type_c::c1_c_, type_),
+    offsetof(dl_dcch_msg_type_c::c1_c_, c),
+    false};
 
 void dl_dcch_msg_type_c::c1_c_::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::rrc_recfg:
-      c = rrc_recfg_s{};
-      break;
-    case types::rrc_resume:
-      c = rrc_resume_s{};
-      break;
-    case types::rrc_release:
-      c = rrc_release_s{};
-      break;
-    case types::rrc_reest:
-      c = rrc_reest_s{};
-      break;
-    case types::security_mode_cmd:
-      c = security_mode_cmd_s{};
-      break;
-    case types::dl_info_transfer:
-      c = dl_info_transfer_s{};
-      break;
-    case types::ue_cap_enquiry:
-      c = ue_cap_enquiry_s{};
-      break;
-    case types::counter_check:
-      c = counter_check_s{};
-      break;
-    case types::mob_from_nr_cmd:
-      c = mob_from_nr_cmd_s{};
-      break;
-    case types::dl_ded_msg_segment_r16:
-      c = dl_ded_msg_segment_r16_s{};
-      break;
-    case types::ue_info_request_r16:
-      c = ue_info_request_r16_s{};
-      break;
-    case types::dl_info_transfer_mrdc_r16:
-      c = dl_info_transfer_mrdc_r16_s{};
-      break;
-    case types::logged_meas_cfg_r16:
-      c = logged_meas_cfg_r16_s{};
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_dcch_msg_type_c::c1_c_");
-  }
+  asn1::table::set_any_choice(&c, e, dl_dcch_msg_type_c::c1_c_::desc);
 }
 rrc_recfg_s& dl_dcch_msg_type_c::c1_c_::set_rrc_recfg()
 {
@@ -210,246 +295,53 @@ void dl_dcch_msg_type_c::c1_c_::set_spare1()
 {
   set(types::spare1);
 }
-void dl_dcch_msg_type_c::c1_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::rrc_recfg:
-      j.write_fieldname("rrcReconfiguration");
-      c.get<rrc_recfg_s>().to_json(j);
-      break;
-    case types::rrc_resume:
-      j.write_fieldname("rrcResume");
-      c.get<rrc_resume_s>().to_json(j);
-      break;
-    case types::rrc_release:
-      j.write_fieldname("rrcRelease");
-      c.get<rrc_release_s>().to_json(j);
-      break;
-    case types::rrc_reest:
-      j.write_fieldname("rrcReestablishment");
-      c.get<rrc_reest_s>().to_json(j);
-      break;
-    case types::security_mode_cmd:
-      j.write_fieldname("securityModeCommand");
-      c.get<security_mode_cmd_s>().to_json(j);
-      break;
-    case types::dl_info_transfer:
-      j.write_fieldname("dlInformationTransfer");
-      c.get<dl_info_transfer_s>().to_json(j);
-      break;
-    case types::ue_cap_enquiry:
-      j.write_fieldname("ueCapabilityEnquiry");
-      c.get<ue_cap_enquiry_s>().to_json(j);
-      break;
-    case types::counter_check:
-      j.write_fieldname("counterCheck");
-      c.get<counter_check_s>().to_json(j);
-      break;
-    case types::mob_from_nr_cmd:
-      j.write_fieldname("mobilityFromNRCommand");
-      c.get<mob_from_nr_cmd_s>().to_json(j);
-      break;
-    case types::dl_ded_msg_segment_r16:
-      j.write_fieldname("dlDedicatedMessageSegment-r16");
-      c.get<dl_ded_msg_segment_r16_s>().to_json(j);
-      break;
-    case types::ue_info_request_r16:
-      j.write_fieldname("ueInformationRequest-r16");
-      c.get<ue_info_request_r16_s>().to_json(j);
-      break;
-    case types::dl_info_transfer_mrdc_r16:
-      j.write_fieldname("dlInformationTransferMRDC-r16");
-      c.get<dl_info_transfer_mrdc_r16_s>().to_json(j);
-      break;
-    case types::logged_meas_cfg_r16:
-      j.write_fieldname("loggedMeasurementConfiguration-r16");
-      c.get<logged_meas_cfg_r16_s>().to_json(j);
-      break;
-    case types::spare3:
-      j.write_null("spare3");
-      break;
-    case types::spare2:
-      j.write_null("spare2");
-      break;
-    case types::spare1:
-      j.write_null("spare1");
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_dcch_msg_type_c::c1_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE dl_dcch_msg_type_c::c1_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::rrc_recfg:
-      HANDLE_CODE(c.get<rrc_recfg_s>().pack(bref));
-      break;
-    case types::rrc_resume:
-      HANDLE_CODE(c.get<rrc_resume_s>().pack(bref));
-      break;
-    case types::rrc_release:
-      HANDLE_CODE(c.get<rrc_release_s>().pack(bref));
-      break;
-    case types::rrc_reest:
-      HANDLE_CODE(c.get<rrc_reest_s>().pack(bref));
-      break;
-    case types::security_mode_cmd:
-      HANDLE_CODE(c.get<security_mode_cmd_s>().pack(bref));
-      break;
-    case types::dl_info_transfer:
-      HANDLE_CODE(c.get<dl_info_transfer_s>().pack(bref));
-      break;
-    case types::ue_cap_enquiry:
-      HANDLE_CODE(c.get<ue_cap_enquiry_s>().pack(bref));
-      break;
-    case types::counter_check:
-      HANDLE_CODE(c.get<counter_check_s>().pack(bref));
-      break;
-    case types::mob_from_nr_cmd:
-      HANDLE_CODE(c.get<mob_from_nr_cmd_s>().pack(bref));
-      break;
-    case types::dl_ded_msg_segment_r16:
-      HANDLE_CODE(c.get<dl_ded_msg_segment_r16_s>().pack(bref));
-      break;
-    case types::ue_info_request_r16:
-      HANDLE_CODE(c.get<ue_info_request_r16_s>().pack(bref));
-      break;
-    case types::dl_info_transfer_mrdc_r16:
-      HANDLE_CODE(c.get<dl_info_transfer_mrdc_r16_s>().pack(bref));
-      break;
-    case types::logged_meas_cfg_r16:
-      HANDLE_CODE(c.get<logged_meas_cfg_r16_s>().pack(bref));
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_dcch_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE dl_dcch_msg_type_c::c1_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::rrc_recfg:
-      HANDLE_CODE(c.get<rrc_recfg_s>().unpack(bref));
-      break;
-    case types::rrc_resume:
-      HANDLE_CODE(c.get<rrc_resume_s>().unpack(bref));
-      break;
-    case types::rrc_release:
-      HANDLE_CODE(c.get<rrc_release_s>().unpack(bref));
-      break;
-    case types::rrc_reest:
-      HANDLE_CODE(c.get<rrc_reest_s>().unpack(bref));
-      break;
-    case types::security_mode_cmd:
-      HANDLE_CODE(c.get<security_mode_cmd_s>().unpack(bref));
-      break;
-    case types::dl_info_transfer:
-      HANDLE_CODE(c.get<dl_info_transfer_s>().unpack(bref));
-      break;
-    case types::ue_cap_enquiry:
-      HANDLE_CODE(c.get<ue_cap_enquiry_s>().unpack(bref));
-      break;
-    case types::counter_check:
-      HANDLE_CODE(c.get<counter_check_s>().unpack(bref));
-      break;
-    case types::mob_from_nr_cmd:
-      HANDLE_CODE(c.get<mob_from_nr_cmd_s>().unpack(bref));
-      break;
-    case types::dl_ded_msg_segment_r16:
-      HANDLE_CODE(c.get<dl_ded_msg_segment_r16_s>().unpack(bref));
-      break;
-    case types::ue_info_request_r16:
-      HANDLE_CODE(c.get<ue_info_request_r16_s>().unpack(bref));
-      break;
-    case types::dl_info_transfer_mrdc_r16:
-      HANDLE_CODE(c.get<dl_info_transfer_mrdc_r16_s>().unpack(bref));
-      break;
-    case types::logged_meas_cfg_r16:
-      HANDLE_CODE(c.get<logged_meas_cfg_r16_s>().unpack(bref));
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    default:
-      log_invalid_choice_id(type_, "dl_dcch_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* dl_dcch_msg_type_c::c1_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"rrcReconfiguration",
-                                "rrcResume",
-                                "rrcRelease",
-                                "rrcReestablishment",
-                                "securityModeCommand",
-                                "dlInformationTransfer",
-                                "ueCapabilityEnquiry",
-                                "counterCheck",
-                                "mobilityFromNRCommand",
-                                "dlDedicatedMessageSegment-r16",
-                                "ueInformationRequest-r16",
-                                "dlInformationTransferMRDC-r16",
-                                "loggedMeasurementConfiguration-r16",
-                                "spare3",
-                                "spare2",
-                                "spare1"};
-  return convert_enum_idx(names, 16, value, "dl_dcch_msg_type_c::c1_c_::types");
-}
+static const char*           enum_names_dl_dcch_msg_type_c_c1_c__types_values[] = {"rrcReconfiguration",
+                                                                                   "rrcResume",
+                                                                                   "rrcRelease",
+                                                                                   "rrcReestablishment",
+                                                                                   "securityModeCommand",
+                                                                                   "dlInformationTransfer",
+                                                                                   "ueCapabilityEnquiry",
+                                                                                   "counterCheck",
+                                                                                   "mobilityFromNRCommand",
+                                                                                   "dlDedicatedMessageSegment-r16",
+                                                                                   "ueInformationRequest-r16",
+                                                                                   "dlInformationTransferMRDC-r16",
+                                                                                   "loggedMeasurementConfiguration-r16",
+                                                                                   "spare3",
+                                                                                   "spare2",
+                                                                                   "spare1"};
+const asn1::table::enum_desc dl_dcch_msg_type_c::c1_c_::types_opts::desc        = {
+    enum_names_dl_dcch_msg_type_c_c1_c__types_values,
+    16,
+    "dl_dcch_msg_type_c::c1_c_::types"};
 
-const char* dl_dcch_msg_type_c::types_opts::to_string() const
-{
-  static const char* names[] = {"c1", "messageClassExtension"};
-  return convert_enum_idx(names, 2, value, "dl_dcch_msg_type_c::types");
-}
-uint8_t dl_dcch_msg_type_c::types_opts::to_number() const
+static const char*           enum_names_dl_dcch_msg_type_c_types_values[] = {"c1", "messageClassExtension"};
+const asn1::table::enum_desc dl_dcch_msg_type_c::types_opts::desc         = {enum_names_dl_dcch_msg_type_c_types_values,
+                                                                             2,
+                                                                             "dl_dcch_msg_type_c::types"};
+uint8_t                      dl_dcch_msg_type_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {1};
   return map_enum_number(numbers, 1, value, "dl_dcch_msg_type_c::types");
 }
 
 // DL-DCCH-Message ::= SEQUENCE
-OCUDUASN_CODE dl_dcch_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(msg.pack(bref));
-
-  bref.align_bytes_zero();
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE dl_dcch_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(msg.unpack(bref));
-
-  bref.align_bytes();
-
-  return OCUDUASN_SUCCESS;
-}
-void dl_dcch_msg_s::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.start_obj("DL-DCCH-Message");
-  j.write_fieldname("message");
-  msg.to_json(j);
-  j.end_obj();
-  j.end_obj();
-  j.end_array();
-}
+static const asn1::table::seq_field  seq_table_dl_dcch_msg_s_fields[] = {{offsetof(dl_dcch_msg_s, msg),
+                                                                          asn1::table::seq_field::mandatory,
+                                                                          asn1::table::field_op::choice,
+                                                                          false,
+                                                                          false,
+                                                                          0,
+                                                                          0,
+                                                                          nullptr,
+                                                                          &dl_dcch_msg_type_c::desc}};
+static const asn1::table::field_name seq_table_dl_dcch_msg_s_names[]  = {{"message", nullptr}};
+const asn1::table::seq_desc dl_dcch_msg_s::desc = {{seq_table_dl_dcch_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+                                                   false,
+                                                   false,
+                                                   nullptr,
+                                                   0,
+                                                   seq_table_dl_dcch_msg_s_names,
+                                                   "DL-DCCH-Message"};

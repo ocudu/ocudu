@@ -79,11 +79,11 @@ TEST(allowed_harq_mode_converter_test, a_packed_mode_survives_an_encode_decode_r
 
   byte_buffer   packed;
   asn1::bit_ref bref{packed};
-  ASSERT_EQ(cell_group.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, cell_group), asn1::OCUDUASN_SUCCESS);
 
   cell_group_cfg_s decoded;
   asn1::cbit_ref   dec_bref{packed};
-  ASSERT_EQ(decoded.unpack(dec_bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(decoded, dec_bref), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_EQ(decoded.rlc_bearer_to_add_mod_list.size(), 1);
   const ul_specific_params& ul_params = decoded.rlc_bearer_to_add_mod_list[0].mac_lc_ch_cfg.ul_specific_params;

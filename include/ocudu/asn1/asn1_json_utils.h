@@ -6,7 +6,7 @@
 #pragma once
 
 #include "nlohmann/json.hpp"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 
 namespace asn1 {
 

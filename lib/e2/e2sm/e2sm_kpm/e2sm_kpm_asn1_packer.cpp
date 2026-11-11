@@ -25,7 +25,8 @@ e2sm_kpm_asn1_packer::handle_packed_e2sm_action_definition(const ocudu::byte_buf
   e2sm_action_definition action_def;
   asn1::cbit_ref         bref(action_definition);
   action_def.service_model = e2sm_service_model_t::KPM;
-  if (std::get<e2sm_kpm_action_definition_s>(action_def.action_definition).unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(std::get<e2sm_kpm_action_definition_s>(action_def.action_definition), bref) !=
+      asn1::OCUDUASN_SUCCESS) {
     fmt::println("Failed to unpack E2SM KPM Action Definition");
     action_def.service_model = e2sm_service_model_t::UNKNOWN_SM;
   }
@@ -53,7 +54,7 @@ e2sm_kpm_asn1_packer::handle_packed_event_trigger_definition(const ocudu::byte_b
   e2sm_event_trigger_definition       e2sm_event_trigger_def;
   e2sm_kpm_event_trigger_definition_s e2sm_kpm_event_trigger_def;
   asn1::cbit_ref                      bref(event_trigger_definition);
-  if (e2sm_kpm_event_trigger_def.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(e2sm_kpm_event_trigger_def, bref) != asn1::OCUDUASN_SUCCESS) {
     fmt::println("Failed to unpack E2SM KPM Event Trigger Definition");
   }
 
@@ -169,7 +170,7 @@ asn1::unbounded_octstring<true> e2sm_kpm_asn1_packer::pack_ran_function_descript
 
   ocudu::byte_buffer buf;
   asn1::bit_ref      bref(buf);
-  if (ran_function_desc.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, ran_function_desc) != asn1::OCUDUASN_SUCCESS) {
     fmt::println("Failed to pack E2SM KPM RAN Function Description");
     asn1::unbounded_octstring<true> err_buf;
     return err_buf;

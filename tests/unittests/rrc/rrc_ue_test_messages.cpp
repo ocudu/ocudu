@@ -175,7 +175,7 @@ byte_buffer ocudu::ocucp::generate_invalid_rrc_reestablishment_request_pdu(pci_t
   rrc_reest_req.rrc_reest_request.reest_cause = asn1::rrc_nr::reest_cause_opts::options::other_fail;
   rrc_reest_req.rrc_reest_request.spare.from_number(0);
 
-  const asn1::OCUDUASN_CODE ret = ul_ccch_msg.pack(bref);
+  const asn1::OCUDUASN_CODE ret = asn1::pack(bref, ul_ccch_msg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack RRC PDU.");
 
   return pdu;
@@ -198,7 +198,7 @@ byte_buffer ocudu::ocucp::generate_valid_rrc_reestablishment_request_pdu(pci_t  
   rrc_reest_req.rrc_reest_request.reest_cause = cause;
   rrc_reest_req.rrc_reest_request.spare.from_number(0);
 
-  const asn1::OCUDUASN_CODE ret = ul_ccch_msg.pack(bref);
+  const asn1::OCUDUASN_CODE ret = asn1::pack(bref, ul_ccch_msg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack RRC PDU.");
 
   return pdu;
@@ -219,7 +219,7 @@ byte_buffer ocudu::ocucp::generate_rrc_resume_request_pdu(std::string           
   rrc_resume_req.rrc_resume_request.resume_cause = cause;
   rrc_resume_req.rrc_resume_request.spare.from_number(0);
 
-  const asn1::OCUDUASN_CODE ret = ul_ccch_msg.pack(bref);
+  const asn1::OCUDUASN_CODE ret = asn1::pack(bref, ul_ccch_msg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack RRC PDU.");
 
   return pdu;
@@ -234,7 +234,7 @@ byte_buffer ocudu::ocucp::generate_rrc_reestablishment_complete_pdu()
   ul_dcch_msg.msg.set_c1().set_rrc_reest_complete();
   ul_dcch_msg.msg.c1().rrc_reest_complete().crit_exts.set_rrc_reest_complete();
 
-  const asn1::OCUDUASN_CODE ret = ul_dcch_msg.pack(bref);
+  const asn1::OCUDUASN_CODE ret = asn1::pack(bref, ul_dcch_msg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack RRC PDU.");
 
   return pdu;
@@ -281,7 +281,7 @@ byte_buffer ocudu::ocucp::generate_measurement_report_pdu()
 
   meas_results.meas_result_serving_mo_list.push_back(meas_result_serv_mo);
 
-  const asn1::OCUDUASN_CODE ret = ul_dcch_msg.pack(bref);
+  const asn1::OCUDUASN_CODE ret = asn1::pack(bref, ul_dcch_msg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack RRC PDU.");
 
   return pdu;

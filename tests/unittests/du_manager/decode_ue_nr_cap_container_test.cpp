@@ -336,7 +336,7 @@ static byte_buffer pack_ue_cap_with_repetition_caps(const repetition_caps_builde
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  report_fatal_error_if_not(ue_cap.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
+  report_fatal_error_if_not(asn1::pack(bref, ue_cap) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
   return buf;
 }
 
@@ -438,7 +438,7 @@ static byte_buffer pack_ue_cap_with_type2_codebook_caps(const type2_codebook_cap
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  report_fatal_error_if_not(ue_cap.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
+  report_fatal_error_if_not(asn1::pack(bref, ue_cap) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
   return buf;
 }
 
@@ -558,7 +558,7 @@ static byte_buffer pack_ue_cap_with_ntn_caps(const ntn_caps_builder_params& para
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  report_fatal_error_if_not(ue_cap.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
+  report_fatal_error_if_not(asn1::pack(bref, ue_cap) == asn1::OCUDUASN_SUCCESS, "Failed to pack UE NR capabilities");
   return buf;
 }
 
@@ -742,7 +742,7 @@ TEST(decode_ue_nr_cap_container_redcap_test, rlc_long_sn_support_is_independent_
   auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
   asn1::cbit_ref            reader{encoded};
-  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cap, reader), asn1::OCUDUASN_SUCCESS);
   for (bool pdcp_long_sn : {false, true}) {
     for (bool rlc_long_sn : {false, true}) {
       SCOPED_TRACE(fmt::format("pdcp_long_sn={} rlc_long_sn={}", pdcp_long_sn, rlc_long_sn));
@@ -750,7 +750,7 @@ TEST(decode_ue_nr_cap_container_redcap_test, rlc_long_sn_support_is_independent_
       cap.rlc_params.am_with_long_sn_red_cap_r17_present = rlc_long_sn;
       byte_buffer   packed;
       asn1::bit_ref writer{packed};
-      ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+      ASSERT_EQ(asn1::pack(writer, cap), asn1::OCUDUASN_SUCCESS);
       auto summary = decode_ue_nr_cap_container(packed);
       ASSERT_TRUE(summary.has_value());
       EXPECT_TRUE(summary->is_redcap);
@@ -768,7 +768,7 @@ TEST(decode_ue_nr_cap_container_redcap_test, forwarded_handover_capabilities_ret
   list[0].ue_cap_rat_container = test_helpers::make_captured_redcap_nr_capability();
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(ho.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, ho), asn1::OCUDUASN_SUCCESS);
   ue_capability_manager manager({}, ocudulog::fetch_basic_logger("DU-MNG"));
   ASSERT_TRUE(manager.update_from_ho_prep_info(packed));
   ASSERT_TRUE(manager.summary().has_value());
@@ -784,11 +784,11 @@ TEST(decode_ue_nr_cap_container_redcap_test, absent_rlc_parameters_keep_the_mand
   auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
   asn1::cbit_ref            reader{encoded};
-  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cap, reader), asn1::OCUDUASN_SUCCESS);
   cap.rlc_params_present = false;
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, cap), asn1::OCUDUASN_SUCCESS);
   auto summary = decode_ue_nr_cap_container(packed);
   ASSERT_TRUE(summary.has_value());
   EXPECT_TRUE(summary->is_redcap);
@@ -800,11 +800,11 @@ TEST(decode_ue_nr_cap_container_redcap_test, ordinary_capabilities_do_not_inheri
   auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
   asn1::cbit_ref            reader{encoded};
-  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cap, reader), asn1::OCUDUASN_SUCCESS);
   cap.non_crit_ext_present = false;
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(cap.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, cap), asn1::OCUDUASN_SUCCESS);
   auto summary = decode_ue_nr_cap_container(packed);
   ASSERT_TRUE(summary.has_value());
   EXPECT_FALSE(summary->is_redcap);

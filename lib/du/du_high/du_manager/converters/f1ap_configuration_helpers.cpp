@@ -59,7 +59,7 @@ byte_buffer ocudu::odu::make_asn1_meas_time_cfg_buffer(const du_cell_config& du_
   meas_item.pci_present = true;
   meas_item.pci         = du_cfg.ran.pci;
 
-  asn1::OCUDUASN_CODE ret = cfg.pack(bref);
+  asn1::OCUDUASN_CODE ret = asn1::pack(bref, cfg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack meas_time_cfg");
   return buf;
 }

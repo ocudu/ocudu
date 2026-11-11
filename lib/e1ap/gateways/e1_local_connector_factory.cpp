@@ -30,7 +30,7 @@ public:
   {
     byte_buffer   buf;
     asn1::bit_ref bref(buf);
-    if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, msg.pdu) != asn1::OCUDUASN_SUCCESS) {
       logger.error("Failed to pack PDU");
     } else {
       pcap_writer.push_pdu(std::move(buf));

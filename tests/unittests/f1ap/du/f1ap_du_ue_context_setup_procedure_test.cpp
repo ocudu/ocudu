@@ -7,7 +7,7 @@
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
@@ -540,7 +540,7 @@ TEST_F(f1ap_du_ue_context_setup_test, when_ue_caps_arrive_in_ho_prep_info_then_u
     cap.ue_cap_rat_container.from_bytes(dummy_cap); // dummy capability bytes
     ho_prep.crit_exts.c1().ho_prep_info().ue_cap_rat_list.push_back(cap);
     asn1::bit_ref bref{ho_prep_bytes};
-    ASSERT_EQ(ho_prep.pack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(bref, ho_prep), asn1::OCUDUASN_SUCCESS);
   }
 
   // Inject the HandoverPreparationInformation into the F1AP message.
@@ -571,7 +571,7 @@ TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)
 
     byte_buffer    buf = byte_buffer::create(msg).value();
     asn1::cbit_ref bref(buf);
-    ASSERT_EQ(ue_ctxt_setup_req.pdu.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(ue_ctxt_setup_req.pdu, bref), asn1::OCUDUASN_SUCCESS);
   }
 
   // Test Preamble.

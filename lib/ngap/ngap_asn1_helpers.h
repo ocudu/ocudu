@@ -7,7 +7,7 @@
 
 #include "ngap_asn1_converters.h"
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/ngap/ngap_ies.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
 #include "ocudu/ngap/ngap_context.h"
@@ -240,7 +240,7 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
   asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_setup_req_transfer;
   asn1::cbit_ref bref({asn1_request_transfer.begin(), asn1_request_transfer.end()});
 
-  if (asn1_setup_req_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(asn1_setup_req_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
     ocudulog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Setup Request Transfer PDU");
     return false;
   }
@@ -568,7 +568,7 @@ inline bool fill_ngap_pdu_session_resource_modify_item_base(
 
   asn1::ngap::pdu_session_res_modify_request_transfer_s asn1_modify_req_transfer;
   asn1::cbit_ref                                        bref(asn1_session_item.pdu_session_res_modify_request_transfer);
-  if (asn1_modify_req_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(asn1_modify_req_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
     ocudulog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Modify Request Transfer PDU.");
     return false;
   }
@@ -709,7 +709,7 @@ inline void fill_ngap_pdu_session_resource_release_command(
     asn1::ngap::pdu_session_res_release_cmd_transfer_s asn1_pdu_session_res_release_cmd_transfer;
     asn1::cbit_ref bref(pdu_session_res_to_release_item.pdu_session_res_release_cmd_transfer);
 
-    if (asn1_pdu_session_res_release_cmd_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_pdu_session_res_release_cmd_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
       ocudulog::fetch_basic_logger("NGAP").error("Couldn't unpack PDU Session Resource Release Command Transfer PDU.");
       return;
     }
@@ -999,7 +999,7 @@ inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn
   // Fill source to target transparent container.
   asn1::cbit_ref bref(asn1_request->source_to_target_transparent_container);
   asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s asn1_transparent_container;
-  if (asn1_transparent_container.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(asn1_transparent_container, bref) != asn1::OCUDUASN_SUCCESS) {
     ocudulog::fetch_basic_logger("NGAP").error("Couldn't unpack Source to Target Transparent Container.");
     return false;
   }

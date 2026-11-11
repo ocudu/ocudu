@@ -46,7 +46,7 @@ public:
         // Verify correct packing of outbound PDU.
         byte_buffer   pack_buffer;
         asn1::bit_ref bref(pack_buffer);
-        if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+        if (asn1::pack(bref, msg.pdu) != asn1::OCUDUASN_SUCCESS) {
           parent.logger.error("Failed to pack message");
           ++parent.nof_unpackable_ngap_msgs;
           return false;

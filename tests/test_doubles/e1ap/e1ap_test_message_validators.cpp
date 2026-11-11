@@ -20,7 +20,7 @@ static bool is_packable(const e1ap_message& msg)
 {
   byte_buffer   temp_pdu;
   asn1::bit_ref bref{temp_pdu};
-  return msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS;
+  return asn1::pack(bref, msg.pdu) == asn1::OCUDUASN_SUCCESS;
 }
 
 bool ocudu::test_helpers::is_valid_bearer_context_setup_request(const e1ap_message& msg)

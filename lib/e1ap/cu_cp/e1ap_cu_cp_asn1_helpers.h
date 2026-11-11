@@ -6,7 +6,7 @@
 #pragma once
 
 #include "../common/e1ap_asn1_converters.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/e1ap/e1ap_ies.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
 #include "ocudu/e1ap/cu_cp/e1ap_cu_cp_bearer_context_update.h"

@@ -59,14 +59,14 @@ bool ocudu::ocucp::verify_and_log_cell_group_config(const byte_buffer&          
   // Unpack DU to CU container.
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
   asn1::cbit_ref                 bref_cell({packed_cell_group_cfg.begin(), packed_cell_group_cfg.end()});
-  if (cell_group_cfg.unpack(bref_cell) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(cell_group_cfg, bref_cell) != asn1::OCUDUASN_SUCCESS) {
     logger.warning("Failed to unpack cellGroupConfig");
     return false;
   }
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    cell_group_cfg.to_json(js);
+    asn1::to_json(js, cell_group_cfg);
     logger.debug("Containerized cellGroupCfg: {}", js.to_string());
   }
 

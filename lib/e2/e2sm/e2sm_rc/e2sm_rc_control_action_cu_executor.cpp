@@ -225,7 +225,7 @@ bool e2sm_rc_control_action_3_1_cu_executor::parse_action_ran_parameter_value(
   std::copy(value_oct.begin(), value_oct.end(), cgi_bytes.begin());
   byte_buffer    cgi_buf = byte_buffer::create(cgi_bytes.begin(), cgi_bytes.end()).value();
   asn1::cbit_ref bref(cgi_buf);
-  if (nr_cgi_asn.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(nr_cgi_asn, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to unpack NR CGI");
     return false;
   }

@@ -20,7 +20,7 @@ void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 
   asn1::cbit_ref bref(bytes);
   f1ap_message   msg = {};
-  if (msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(msg.pdu, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Couldn't unpack PDU");
     return;
   }
@@ -35,7 +35,7 @@ void f1ap_asn1_packer::handle_message(const f1ap_message& msg)
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu;
   asn1::bit_ref bref(tx_pdu);
-  if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg.pdu) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack PDU");
     return;
   }

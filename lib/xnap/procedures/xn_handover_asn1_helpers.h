@@ -6,7 +6,7 @@
 #pragma once
 
 #include "../xnap_asn1_converters.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/xnap/xnap_pdu_contents.h"
 #include "ocudu/cu_cp/cu_cp_cho_types.h"
 #include "ocudu/support/io/transport_layer_address.h"

@@ -80,7 +80,7 @@ ocudu::byte_buffer e2sm_kpm_report_service_base::get_indication_message()
 {
   byte_buffer   ind_msg_bytes;
   asn1::bit_ref bref_ind_msg(ind_msg_bytes);
-  if (ric_ind_message_generic.pack(bref_ind_msg) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_ind_msg, ric_ind_message_generic) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack RIC Indication Message");
   };
 
@@ -93,7 +93,7 @@ ocudu::byte_buffer e2sm_kpm_report_service_base::get_indication_header()
 {
   byte_buffer   ind_hdr_bytes;
   asn1::bit_ref bref_ind_hdr(ind_hdr_bytes);
-  if (ric_ind_header_generic.pack(bref_ind_hdr) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_ind_hdr, ric_ind_header_generic) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack RIC Indication header");
   };
 
@@ -575,7 +575,7 @@ ocudu::byte_buffer e2sm_kpm_report_service_style5::get_indication_message()
 
   byte_buffer   ind_msg_bytes;
   asn1::bit_ref bref_ind_msg(ind_msg_bytes);
-  if (ric_ind_message_copy.pack(bref_ind_msg) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_ind_msg, ric_ind_message_copy) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack RIC Indication Message");
   };
 

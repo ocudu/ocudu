@@ -5,7 +5,7 @@
 
 #include "e2sm_rc_impl.h"
 #include "e2sm_rc_control_service_impl.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/e2sm/e2sm.h"
 #include "ocudu/e2/e2sm/e2sm.h"
 

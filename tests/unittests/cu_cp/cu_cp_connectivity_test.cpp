@@ -192,7 +192,7 @@ TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_then_connected_ues_a
     asn1::rrc_nr::dl_ccch_msg_s ccch;
     {
       asn1::cbit_ref bref{ue_rel->rrc_container};
-      ASSERT_EQ(ccch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+      ASSERT_EQ(asn1::unpack(ccch, bref), asn1::OCUDUASN_SUCCESS);
     }
     ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
 
@@ -234,7 +234,7 @@ TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_then_connected_ues_a
     asn1::rrc_nr::dl_ccch_msg_s ccch;
     {
       asn1::cbit_ref bref{ue_rel->rrc_container};
-      ASSERT_EQ(ccch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+      ASSERT_EQ(asn1::unpack(ccch, bref), asn1::OCUDUASN_SUCCESS);
     }
     ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
 
@@ -1075,7 +1075,7 @@ TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
   asn1::rrc_nr::dl_ccch_msg_s ccch;
   {
     asn1::cbit_ref bref{ue_rel->rrc_container};
-    ASSERT_EQ(ccch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(ccch, bref), asn1::OCUDUASN_SUCCESS);
   }
   ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
   ASSERT_TRUE(ccch.msg.c1().rrc_reject().crit_exts.rrc_reject().wait_time_present);

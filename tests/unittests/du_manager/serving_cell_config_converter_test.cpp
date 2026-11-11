@@ -7,7 +7,7 @@
 #include "lib/du/du_high/du_manager/converters/asn1_rrc_config_helpers.h"
 #include "tests/ocudu_test_requirements.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/du/du_cell_config_helpers.h"
@@ -291,7 +291,7 @@ TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_convers
   // The generated cell group config must be packable.
   byte_buffer   packed;
   asn1::bit_ref bref{packed};
-  ASSERT_EQ(rrc_cell_grp_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
 }
 
 TEST(serving_cell_config_converter_test, test_ue_pdsch_td_alloc_list_r16_release_conversion)
@@ -351,7 +351,7 @@ TEST(serving_cell_config_converter_test, test_ue_pusch_td_alloc_list_dci_0_1_r16
   // The generated cell group config must be packable.
   byte_buffer   packed;
   asn1::bit_ref bref{packed};
-  ASSERT_EQ(rrc_cell_grp_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
 }
 
 TEST(serving_cell_config_converter_test, test_default_initial_ue_uplink_cfg_conversion)
@@ -621,10 +621,10 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_conver
   // extension bit of their parent set.
   byte_buffer   packed;
   asn1::bit_ref bref{packed};
-  ASSERT_EQ(rrc_cell_grp_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
   asn1::rrc_nr::cell_group_cfg_s unpacked;
   asn1::cbit_ref                 cbref{packed};
-  ASSERT_EQ(unpacked.unpack(cbref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(unpacked, cbref), asn1::OCUDUASN_SUCCESS);
 
   // resourceToAddModListExt-v1610 has the same number of entries, listed in the same order, as resourceToAddModList
   // (TS 38.331, PUCCH-Config).
@@ -662,10 +662,10 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_update
 
   byte_buffer   packed;
   asn1::bit_ref bref{packed};
-  ASSERT_EQ(rrc_cell_grp_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
   asn1::rrc_nr::cell_group_cfg_s unpacked;
   asn1::cbit_ref                 cbref{packed};
-  ASSERT_EQ(unpacked.unpack(cbref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(unpacked, cbref), asn1::OCUDUASN_SUCCESS);
 
   // The modified PUCCH resource is signalled again, with its repetition factor.
   const auto& pucch_cfg = unpacked.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
@@ -697,10 +697,10 @@ TEST(serving_cell_config_converter_test, test_pucch_res_repetition_factor_releas
 
   byte_buffer   packed;
   asn1::bit_ref bref{packed};
-  ASSERT_EQ(rrc_cell_grp_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
   asn1::rrc_nr::cell_group_cfg_s unpacked;
   asn1::cbit_ref                 cbref{packed};
-  ASSERT_EQ(unpacked.unpack(cbref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(unpacked, cbref), asn1::OCUDUASN_SUCCESS);
 
   // resourceToAddModListExt-v1610 is Need N, so it must be present for pucch-RepetitionNrofSlots-r17 to be released.
   const auto& pucch_cfg = unpacked.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
@@ -1591,7 +1591,7 @@ template <typename T>
 static std::string to_json_string(const T& obj)
 {
   asn1::json_writer js;
-  obj.to_json(js);
+  asn1::to_json(js, obj);
   return js.to_string();
 }
 

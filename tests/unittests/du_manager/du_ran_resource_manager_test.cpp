@@ -1383,7 +1383,7 @@ TEST_P(du_ran_resource_manager_tester, redcap_handover_resources_use_capabilitie
     } else {
       asn1::rrc_nr::ho_prep_info_s info;
       asn1::cbit_ref               reader{packed_info};
-      ASSERT_EQ(info.unpack(reader), asn1::OCUDUASN_SUCCESS);
+      ASSERT_EQ(asn1::unpack(info, reader), asn1::OCUDUASN_SUCCESS);
       asn1::bit_ref writer{request.ue_cap_rat_list};
       ASSERT_EQ(asn1::pack_dyn_seq_of(writer, info.crit_exts.c1().ho_prep_info().ue_cap_rat_list, 0, 8),
                 asn1::OCUDUASN_SUCCESS);
@@ -1440,7 +1440,7 @@ TEST_P(du_ran_resource_manager_tester, ordinary_handover_without_nr_capabilities
   info.crit_exts.set_c1().set_ho_prep_info();
   auto          request = srb1_creation_req(index);
   asn1::bit_ref writer{request.ho_prep_info};
-  ASSERT_EQ(info.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, info), asn1::OCUDUASN_SUCCESS);
   EXPECT_FALSE(ue->update(to_du_cell_index(0), request).failed());
   EXPECT_FALSE(ue->get_ue_capabilities().has_value());
   request.ho_prep_info = byte_buffer::create({0xff}).value();

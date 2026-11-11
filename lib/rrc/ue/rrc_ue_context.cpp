@@ -35,7 +35,7 @@ rrc_ue_context_t::rrc_ue_context_t(const cu_cp_ue_index_t                 ue_ind
       asn1::cbit_ref               bref({transfer_context.value().handover_preparation_info.begin(),
                                          transfer_context.value().handover_preparation_info.end()});
 
-      if (ho_prep.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(ho_prep, bref) != asn1::OCUDUASN_SUCCESS) {
         logger.log_error("Couldn't unpack Handover Preparation Info");
         return;
       }

@@ -403,7 +403,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     asn1::rrc_nr::ho_prep_info_s ho_prep_info;
     {
       asn1::cbit_ref      bref{request.ho_prep_info};
-      asn1::OCUDUASN_CODE code = ho_prep_info.unpack(bref);
+      asn1::OCUDUASN_CODE code = asn1::unpack(ho_prep_info, bref);
       if (code != asn1::OCUDUASN_SUCCESS) {
         proc_logger.log_proc_failure("Failed to unpack HandoverPreparation IE");
         return make_ue_config_failure();
@@ -462,7 +462,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   // Pack cellGroupConfig.
   {
     asn1::bit_ref       bref{resp.cell_group_cfg};
-    asn1::OCUDUASN_CODE code = asn1_cell_group.pack(bref);
+    asn1::OCUDUASN_CODE code = asn1::pack(bref, asn1_cell_group);
     ocudu_assert(code == asn1::OCUDUASN_SUCCESS, "Invalid cellGroupConfig");
   }
 
@@ -474,7 +474,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
     // Pack measGapConfig.
     {
       asn1::bit_ref       bref{resp.meas_gap_cfg};
-      asn1::OCUDUASN_CODE code = meas_gap.pack(bref);
+      asn1::OCUDUASN_CODE code = asn1::pack(bref, meas_gap);
       ocudu_assert(code == asn1::OCUDUASN_SUCCESS, "Invalid measGapConfig");
     }
   }

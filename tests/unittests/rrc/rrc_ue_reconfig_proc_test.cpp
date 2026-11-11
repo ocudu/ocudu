@@ -150,7 +150,7 @@ TEST_F(rrc_ue_reconfig, when_meas_gap_cfg_in_request_then_outer_cho_rrc_message_
   byte_buffer packed_gap;
   {
     asn1::bit_ref bref(packed_gap);
-    ASSERT_EQ(asn1_gap.pack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(bref, asn1_gap), asn1::OCUDUASN_SUCCESS);
   }
 
   // Build a CHO RRC Reconfiguration request with the packed gap.
@@ -167,7 +167,7 @@ TEST_F(rrc_ue_reconfig, when_meas_gap_cfg_in_request_then_outer_cho_rrc_message_
   asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
   {
     asn1::cbit_ref bref(raw_pdu);
-    ASSERT_EQ(dl_dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(dl_dcch, bref), asn1::OCUDUASN_SUCCESS);
   }
   const auto& recfg = dl_dcch.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
 
@@ -194,7 +194,7 @@ TEST_F(rrc_ue_reconfig, when_no_meas_gap_cfg_in_request_then_outer_cho_rrc_messa
   asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
   {
     asn1::cbit_ref bref(raw_pdu);
-    ASSERT_EQ(dl_dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(dl_dcch, bref), asn1::OCUDUASN_SUCCESS);
   }
   const auto& recfg = dl_dcch.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
 
@@ -217,7 +217,7 @@ TEST_F(rrc_ue_reconfig, when_meas_gap_cfg_in_request_without_meas_cfg_then_rrc_m
   byte_buffer packed_gap;
   {
     asn1::bit_ref bref(packed_gap);
-    ASSERT_EQ(asn1_gap.pack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(bref, asn1_gap), asn1::OCUDUASN_SUCCESS);
   }
 
   // Trigger an RRC Reconfiguration with only the packed gap.
@@ -232,7 +232,7 @@ TEST_F(rrc_ue_reconfig, when_meas_gap_cfg_in_request_without_meas_cfg_then_rrc_m
   asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
   {
     asn1::cbit_ref bref(raw_pdu);
-    ASSERT_EQ(dl_dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(dl_dcch, bref), asn1::OCUDUASN_SUCCESS);
   }
   const auto& recfg = dl_dcch.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
 

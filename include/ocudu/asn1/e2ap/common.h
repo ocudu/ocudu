@@ -199,7 +199,7 @@ namespace e2ap {
 struct trigger_msg_opts {
   enum options { init_msg, successful_outcome, unsuccessfull_outcome, nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using trigger_msg_e = enumerated<trigger_msg_opts>;
 

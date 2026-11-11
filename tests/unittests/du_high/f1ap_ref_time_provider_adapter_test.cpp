@@ -34,7 +34,7 @@ asn1::rrc_nr::ref_time_r16_s decode(const byte_buffer& encoded)
 {
   asn1::rrc_nr::ref_time_r16_s decoded;
   asn1::cbit_ref               bref{encoded};
-  EXPECT_EQ(decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::unpack(decoded, bref), asn1::OCUDUASN_SUCCESS);
   return decoded;
 }
 

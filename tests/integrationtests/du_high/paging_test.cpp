@@ -49,7 +49,7 @@ static bool is_edrx_enabled(const byte_buffer& packed_sib1)
   asn1::rrc_nr::sib1_s sib1;
   {
     asn1::cbit_ref bref{packed_sib1};
-    auto           unpack_result = sib1.unpack(bref);
+    auto           unpack_result = asn1::unpack(sib1, bref);
     ocudu_assert(unpack_result == asn1::OCUDUASN_SUCCESS, "Failed to decode SIB1");
   }
   return is_edrx_enabled(sib1);
@@ -61,7 +61,7 @@ static std::optional<uint16_t> extract_bcch_dl_sch_msg_hyper_sfn(span<const uint
   {
     auto           buf = byte_buffer::create(pdu).value();
     asn1::cbit_ref bref{buf};
-    auto           unpack_result = msg.unpack(bref);
+    auto           unpack_result = asn1::unpack(msg, bref);
     ocudu_assert(unpack_result == asn1::OCUDUASN_SUCCESS, "Failed to decode SIB1");
   }
   ocudu_assert(msg.msg.type().value == asn1::rrc_nr::bcch_dl_sch_msg_type_c::types_opts::c1,

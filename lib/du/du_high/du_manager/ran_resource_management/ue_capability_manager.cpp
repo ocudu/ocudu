@@ -261,7 +261,7 @@ expected<ue_capability_summary, std::string> odu::decode_ue_nr_cap_container(con
   asn1::rrc_nr::ue_nr_cap_s ue_cap;
   {
     asn1::cbit_ref bref{ue_cap_container};
-    if (ue_cap.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(ue_cap, bref) != asn1::OCUDUASN_SUCCESS) {
       return make_unexpected(std::string("Couldn't unpack UE NR Capability RRC container"));
     }
   }
@@ -389,7 +389,7 @@ bool ue_capability_manager::update_from_ho_prep_info(const byte_buffer& ho_prep_
 
   ho_prep_info_s ho_prep;
   asn1::cbit_ref bref{ho_prep_info};
-  if (ho_prep.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+  if (asn1::unpack(ho_prep, bref) != asn1::OCUDUASN_SUCCESS or
       ho_prep.crit_exts.type() != ho_prep_info_s::crit_exts_c_::types::c1 or
       ho_prep.crit_exts.c1().type() != ho_prep_info_s::crit_exts_c_::c1_c_::types::ho_prep_info) {
     logger.warning("Couldn't unpack HandoverPreparationInformation for UE capability extraction");

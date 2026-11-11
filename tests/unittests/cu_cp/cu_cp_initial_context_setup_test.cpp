@@ -490,7 +490,7 @@ TEST_F(cu_cp_initial_context_setup_with_cho_trigger_test,
   const byte_buffer rrc_container = test_helpers::extract_dl_dcch_msg(test_helpers::get_rrc_container(f1ap_pdu));
   asn1::cbit_ref    bref{rrc_container};
   asn1::rrc_nr::dl_dcch_msg_s dl_dcch_msg;
-  ASSERT_EQ(dl_dcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(dl_dcch_msg, bref), asn1::OCUDUASN_SUCCESS);
 
   const auto& recfg = dl_dcch_msg.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
   ASSERT_TRUE(recfg.meas_cfg_present) << "RRC Reconfiguration is expected to carry a measConfig";

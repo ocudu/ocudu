@@ -69,7 +69,7 @@ void expect_decodes_as_sib19(const byte_buffer& packed)
   ASSERT_FALSE(packed.empty());
   asn1::cbit_ref                  bref{packed};
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
-  ASSERT_EQ(msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(msg, bref), asn1::OCUDUASN_SUCCESS);
   ASSERT_EQ(msg.msg.type().value, asn1::rrc_nr::bcch_dl_sch_msg_type_c::types::c1);
   ASSERT_EQ(msg.msg.c1().type().value, asn1::rrc_nr::bcch_dl_sch_msg_type_c::c1_c_::types::sys_info);
   const asn1::rrc_nr::sys_info_ies_s& si = msg.msg.c1().sys_info().crit_exts.sys_info();

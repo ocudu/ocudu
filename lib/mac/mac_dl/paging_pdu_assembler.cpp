@@ -69,7 +69,7 @@ span<const uint8_t> paging_pdu_assembler::encode_paging_pdu(const dl_paging_allo
   {
     asn1::bit_ref                   bref{payload};
     const asn1::rrc_nr::pcch_msg_s& pcch_msg = buffer->to_asn1(pg);
-    const asn1::OCUDUASN_CODE       ret      = pcch_msg.pack(bref);
+    const asn1::OCUDUASN_CODE       ret      = asn1::pack(bref, pcch_msg);
     ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack PCCH-PCH Paging message");
   }
   ocudu_assert(pg.pdsch_cfg.codewords[0].tb_size_bytes.value() >= payload.length(),

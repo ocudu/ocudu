@@ -150,11 +150,11 @@ TEST(mac_cell_group_config_converter_test, test_extended_sr_prohibit_timer_survi
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  ASSERT_EQ(rrc_cell_grp_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, rrc_cell_grp_cfg), asn1::OCUDUASN_SUCCESS);
 
   asn1::rrc_nr::cell_group_cfg_s decoded;
   asn1::cbit_ref                 cbref{buf};
-  ASSERT_EQ(decoded.unpack(cbref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(decoded, cbref), asn1::OCUDUASN_SUCCESS);
 
   const auto& rrc_mcg_cfg = decoded.mac_cell_group_cfg;
   ASSERT_TRUE(rrc_mcg_cfg.sched_request_cfg_v1700.is_present());

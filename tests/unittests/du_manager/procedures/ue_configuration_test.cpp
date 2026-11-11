@@ -78,10 +78,10 @@ protected:
     asn1::rrc_nr::cell_group_cfg_s cell_group;
     {
       asn1::cbit_ref bref(container);
-      ASSERT_TRUE(cell_group.unpack(bref) == asn1::OCUDUASN_SUCCESS);
+      ASSERT_TRUE(asn1::unpack(cell_group, bref) == asn1::OCUDUASN_SUCCESS);
       if (verbose) {
         asn1::json_writer js;
-        cell_group.to_json(js);
+        asn1::to_json(js, cell_group);
         fmt::print("UE Configuration produced CellGroup: {}\n", js.to_string());
       }
     }

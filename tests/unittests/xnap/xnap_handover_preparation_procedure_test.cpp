@@ -331,7 +331,7 @@ TEST_F(xnap_handover_preparation_procedure_test, when_handover_request_sent_then
   // The Handover Request must encode, so that every mandatory IE of the proposal carries a packable value.
   byte_buffer   packed_pdu;
   asn1::bit_ref bref(packed_pdu);
-  ASSERT_EQ(sent_msg.pdu.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, sent_msg.pdu), asn1::OCUDUASN_SUCCESS);
 
   const auto& ho_request = sent_msg.pdu.init_msg().value.ho_request();
 

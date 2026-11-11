@@ -36,7 +36,7 @@ bool verify_mac_i(const char*                       mac_i_type,
 
   byte_buffer   var_mac_input_packed = {};
   asn1::bit_ref bref(var_mac_input_packed);
-  if (var_mac_input.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, var_mac_input) != asn1::OCUDUASN_SUCCESS) {
     logger.log_warning("Cannot verify {}. Cause: failed to pack the MAC-I input variable", mac_i_type);
     return false;
   }
@@ -89,7 +89,7 @@ std::optional<security::sec_selected_algos> ocudu::ocucp::get_as_security_algori
 
   asn1::rrc_nr::ho_prep_info_s ho_prep_info;
   asn1::cbit_ref               bref({rrc_context.begin(), rrc_context.end()});
-  if (ho_prep_info.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(ho_prep_info, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.log_warning("Couldn't unpack the HandoverPreparationInformation to read the AS security algorithms");
     return std::nullopt;
   }
@@ -107,7 +107,7 @@ std::optional<security::sec_selected_algos> ocudu::ocucp::get_as_security_algori
 
   asn1::rrc_nr::rrc_recfg_s recfg;
   asn1::cbit_ref            recfg_bref({ies.source_cfg.rrc_recfg.begin(), ies.source_cfg.rrc_recfg.end()});
-  if (recfg.unpack(recfg_bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(recfg, recfg_bref) != asn1::OCUDUASN_SUCCESS) {
     logger.log_warning("Couldn't unpack the RRCReconfiguration in the AS-Config");
     return std::nullopt;
   }

@@ -36,7 +36,7 @@ public:
     // Pack XNAP PDU into SCTP SDU.
     byte_buffer   tx_sdu{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(tx_sdu);
-    if (msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, msg.pdu) != asn1::OCUDUASN_SUCCESS) {
       logger.error("Failed to pack XNAP PDU");
       return false;
     }
@@ -73,7 +73,7 @@ public:
     // Unpack SCTP SDU into XNAP PDU.
     asn1::cbit_ref bref(sdu);
     xnap_message   msg;
-    if (msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(msg.pdu, bref) != asn1::OCUDUASN_SUCCESS) {
       logger.error("Couldn't unpack XNAP PDU");
       return false;
     }

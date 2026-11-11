@@ -15,7 +15,7 @@
 #include "ue/rrc_asn1_converters.h"
 #include "ue/rrc_measurement_types_asn1_converters.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/rrc_nr/dl_ccch_msg.h"
 #include "ocudu/asn1/rrc_nr/dl_dcch_msg_ies.h"
 #include "ocudu/asn1/rrc_nr/ul_ccch_msg.h"
@@ -34,7 +34,7 @@ void rrc_ue_impl::handle_ul_ccch_pdu(byte_buffer pdu, rnti_t c_rnti)
   ul_ccch_msg_s ul_ccch_msg;
   {
     asn1::cbit_ref bref(pdu);
-    if (ul_ccch_msg.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+    if (asn1::unpack(ul_ccch_msg, bref) != asn1::OCUDUASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
       logger.log_error(pdu.begin(), pdu.end(), "Failed to unpack CCCH UL PDU");
       on_ue_release_required(ngap_cause_radio_network_t::unspecified);
@@ -238,7 +238,7 @@ void rrc_ue_impl::handle_pdu(const srb_id_t srb_id, byte_buffer rrc_pdu, bool in
   ul_dcch_msg_s ul_dcch_msg;
   {
     asn1::cbit_ref bref(rrc_pdu);
-    if (ul_dcch_msg.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+    if (asn1::unpack(ul_dcch_msg, bref) != asn1::OCUDUASN_SUCCESS or
         (ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::c1 and
          ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::msg_class_ext)) {
       logger.log_error(rrc_pdu.begin(), rrc_pdu.end(), "Failed to unpack DCCH UL PDU");
@@ -635,7 +635,7 @@ bool rrc_ue_impl::handle_rrc_handover_preparation_info(byte_buffer pdu)
   asn1::rrc_nr::ho_prep_info_s ho_prep_info;
   asn1::cbit_ref               bref({pdu.begin(), pdu.end()});
 
-  if (ho_prep_info.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+  if (asn1::unpack(ho_prep_info, bref) != asn1::OCUDUASN_SUCCESS or
       ho_prep_info.crit_exts.type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::types::c1 or
       ho_prep_info.crit_exts.c1().type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::c1_c_::types::ho_prep_info) {
     logger.log_error("Couldn't unpack HandoverPreparationInfo RRC container");
@@ -656,7 +656,7 @@ bool rrc_ue_impl::handle_rrc_handover_preparation_info(byte_buffer pdu)
     logger.log_debug("UE Capabilities:");
     asn1::json_writer json_writer;
     for (const auto& rat_container : ue_capabilities_list) {
-      rat_container.to_json(json_writer);
+      asn1::to_json(json_writer, rat_container);
       logger.log_debug("{}", json_writer.to_string().c_str());
     }
   }
@@ -692,7 +692,7 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
     if (request.non_crit_ext.has_value() && !request.non_crit_ext->master_cell_group.empty()) {
       asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
       asn1::cbit_ref                 bref(request.non_crit_ext->master_cell_group);
-      if (cell_group_cfg.unpack(bref) == asn1::OCUDUASN_SUCCESS && cell_group_cfg.sp_cell_cfg_present &&
+      if (asn1::unpack(cell_group_cfg, bref) == asn1::OCUDUASN_SUCCESS && cell_group_cfg.sp_cell_cfg_present &&
           cell_group_cfg.sp_cell_cfg.recfg_with_sync_present) {
         context.cell.timers.t304 =
             std::chrono::milliseconds{cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number()};
@@ -760,7 +760,7 @@ rrc_ue_impl::get_rrc_ue_cond_reconfiguration_context(const rrc_reconfiguration_p
     if (!request.meas_gap_cfg.empty()) {
       recfg_ies.meas_cfg.meas_gap_cfg_present = true;
       asn1::cbit_ref bref(request.meas_gap_cfg);
-      if (recfg_ies.meas_cfg.meas_gap_cfg.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(recfg_ies.meas_cfg.meas_gap_cfg, bref) != asn1::OCUDUASN_SUCCESS) {
         logger.log_warning("ue={}: Failed to decode measGapConfig for outer CHO RRCReconfiguration", context.ue_index);
         recfg_ies.meas_cfg.meas_gap_cfg_present = false;
       }
@@ -947,7 +947,7 @@ bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
   asn1::rrc_nr::ue_radio_access_cap_info_s ue_radio_access_cap_info;
   asn1::cbit_ref                           bref({ue_capabilities.begin(), ue_capabilities.end()});
 
-  if (ue_radio_access_cap_info.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+  if (asn1::unpack(ue_radio_access_cap_info, bref) != asn1::OCUDUASN_SUCCESS or
       ue_radio_access_cap_info.crit_exts.type() != asn1::rrc_nr::ue_radio_access_cap_info_s::crit_exts_c_::types::c1 or
       ue_radio_access_cap_info.crit_exts.c1().type() !=
           asn1::rrc_nr::ue_radio_access_cap_info_s::crit_exts_c_::c1_c_::types::ue_radio_access_cap_info) {
@@ -976,7 +976,7 @@ bool rrc_ue_impl::store_ue_capabilities(byte_buffer ue_capabilities)
     logger.log_debug("UE Capabilities:\n");
     asn1::json_writer json_writer;
     for (const auto& rat_container : ue_cap_rat_container_list) {
-      rat_container.to_json(json_writer);
+      asn1::to_json(json_writer, rat_container);
       logger.log_debug("{}\n", json_writer.to_string().c_str());
     }
   }
@@ -1208,7 +1208,7 @@ byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_proc
   // Unpack MasterCellGroup to extract T304.
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
   asn1::cbit_ref                 bref2(request.non_crit_ext->master_cell_group);
-  if (cell_group_cfg.unpack(bref2) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(cell_group_cfg, bref2) != asn1::OCUDUASN_SUCCESS) {
     report_fatal_error("Failed to unpack MasterCellGroupCfg");
   }
   context.cell.timers.t304 = std::chrono::milliseconds{cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number()};
@@ -1228,7 +1228,7 @@ byte_buffer rrc_ue_impl::get_rrc_handover_command(const rrc_reconfiguration_proc
   logger.log_debug(ho_cmd_pdu.begin(), ho_cmd_pdu.end(), "RRCHandoverCommand ({} B)", ho_cmd_pdu.length());
   if (logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
-    ho_cmd.to_json(js);
+    asn1::to_json(js, ho_cmd);
     logger.log_debug("Containerized RRCHandoverCommand: {}", js.to_string());
   }
 
@@ -1243,7 +1243,7 @@ byte_buffer rrc_ue_impl::handle_rrc_handover_command(byte_buffer cmd)
   asn1::rrc_nr::ho_cmd_s handover_command;
   asn1::cbit_ref         bref({cmd.begin(), cmd.end()});
 
-  if (handover_command.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(handover_command, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.log_error("Couldn't unpack Handover Command RRC container");
     return ho_reconf_pdu;
   }
@@ -1255,7 +1255,7 @@ byte_buffer rrc_ue_impl::handle_rrc_handover_command(byte_buffer cmd)
   dl_dcch_msg_s dl_dcch_msg;
   auto&         rrc_recfg = dl_dcch_msg.msg.set_c1().set_rrc_recfg();
 
-  if (rrc_recfg.unpack(bref2) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(rrc_recfg, bref2) != asn1::OCUDUASN_SUCCESS) {
     logger.log_error("Couldn't unpack RRC Reconfiguration container");
     return ho_reconf_pdu;
   }

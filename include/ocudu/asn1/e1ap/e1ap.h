@@ -217,18 +217,13 @@ struct e1ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    init_msg_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                       set(types::options e = types::nulltype);
+    types                                      type() const { return type_; }
+    static const asn1::table::choice_desc      desc;
     reset_s&                                   reset();
     gnb_cu_up_e1_setup_request_s&              gnb_cu_up_e1_setup_request();
     gnb_cu_cp_e1_setup_request_s&              gnb_cu_cp_e1_setup_request();
@@ -341,18 +336,13 @@ struct e1ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    successful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                        set(types::options e = types::nulltype);
+    types                                       type() const { return type_; }
+    static const asn1::table::choice_desc       desc;
     reset_ack_s&                                reset_ack();
     gnb_cu_up_e1_setup_resp_s&                  gnb_cu_up_e1_setup_resp();
     gnb_cu_cp_e1_setup_resp_s&                  gnb_cu_cp_e1_setup_resp();
@@ -417,18 +407,13 @@ struct e1ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    unsuccessful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
     gnb_cu_up_e1_setup_fail_s&            gnb_cu_up_e1_setup_fail();
     gnb_cu_cp_e1_setup_fail_s&            gnb_cu_cp_e1_setup_fail();
     gnb_cu_up_cfg_upd_fail_s&             gnb_cu_up_cfg_upd_fail();
@@ -459,13 +444,7 @@ struct e1ap_elem_procs_o {
     choice_buffer_ptr c;
   };
 
-  // members lookup methods
-  static uint16_t               idx_to_proc_code(uint32_t idx);
-  static bool                   is_proc_code_valid(const uint16_t& proc_code);
-  static init_msg_c             get_init_msg(const uint16_t& proc_code);
-  static successful_outcome_c   get_successful_outcome(const uint16_t& proc_code);
-  static unsuccessful_outcome_c get_unsuccessful_outcome(const uint16_t& proc_code);
-  static crit_e                 get_crit(const uint16_t& proc_code);
+  static const asn1::table::objset_desc desc;
 };
 
 // InitiatingMessage ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}
@@ -474,10 +453,8 @@ struct init_msg_s {
   crit_e                        crit;
   e1ap_elem_procs_o::init_msg_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // SuccessfulOutcome ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}
@@ -486,10 +463,8 @@ struct successful_outcome_s {
   crit_e                                  crit;
   e1ap_elem_procs_o::successful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // UnsuccessfulOutcome ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}
@@ -498,10 +473,8 @@ struct unsuccessful_outcome_s {
   crit_e                                    crit;
   e1ap_elem_procs_o::unsuccessful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // E1AP-PDU ::= CHOICE
@@ -509,49 +482,42 @@ struct e1ap_pdu_c {
   struct types_opts {
     enum options { init_msg, successful_outcome, unsuccessful_outcome, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true>;
 
-  // choice methods
-  e1ap_pdu_c() = default;
-  e1ap_pdu_c(const e1ap_pdu_c& other);
-  e1ap_pdu_c& operator=(const e1ap_pdu_c& other);
-  ~e1ap_pdu_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  init_msg_s& init_msg()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  init_msg_s&                                   init_msg()
   {
-    assert_choice_type(types::init_msg, type_, "E1AP-PDU");
+    assert_choice_type(types::init_msg, c.type, "E1AP-PDU");
     return c.get<init_msg_s>();
   }
   successful_outcome_s& successful_outcome()
   {
-    assert_choice_type(types::successful_outcome, type_, "E1AP-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "E1AP-PDU");
     return c.get<successful_outcome_s>();
   }
   unsuccessful_outcome_s& unsuccessful_outcome()
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "E1AP-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "E1AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   const init_msg_s& init_msg() const
   {
-    assert_choice_type(types::init_msg, type_, "E1AP-PDU");
+    assert_choice_type(types::init_msg, c.type, "E1AP-PDU");
     return c.get<init_msg_s>();
   }
   const successful_outcome_s& successful_outcome() const
   {
-    assert_choice_type(types::successful_outcome, type_, "E1AP-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "E1AP-PDU");
     return c.get<successful_outcome_s>();
   }
   const unsuccessful_outcome_s& unsuccessful_outcome() const
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "E1AP-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "E1AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   init_msg_s&             set_init_msg();
@@ -559,10 +525,9 @@ struct e1ap_pdu_c {
   unsuccessful_outcome_s& set_unsuccessful_outcome();
 
 private:
-  types                                                                     type_;
-  choice_buffer_t<init_msg_s, successful_outcome_s, unsuccessful_outcome_s> c;
-
-  void destroy_();
+  asn1::table::
+      choice_storage<e1ap_pdu_c, types, choice_buffer_t<init_msg_s, successful_outcome_s, unsuccessful_outcome_s>>
+          c;
 };
 
 } // namespace e1ap

@@ -622,7 +622,7 @@ byte_buffer pack_sib19_bcch_dl_sch(const sib19_info& sib19)
 
   byte_buffer         buf;
   asn1::bit_ref       bref{buf};
-  asn1::OCUDUASN_CODE ret = si_msg.pack(bref);
+  asn1::OCUDUASN_CODE ret = asn1::pack(bref, si_msg);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack BCCH-DL-SCH SIB19");
   return buf;
 }
@@ -681,7 +681,7 @@ TEST(sib19_pcap_test, generate_full_sib19_pcap_with_edge_case_locations)
     // Each message must round-trip through the ASN.1 decoder, i.e. be a valid BCCH-DL-SCH SystemInformation PDU.
     asn1::cbit_ref                  bref(bcch_buf);
     asn1::rrc_nr::bcch_dl_sch_msg_s decoded;
-    ASSERT_EQ(decoded.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(decoded, bref), asn1::OCUDUASN_SUCCESS);
     ASSERT_TRUE(decoded.msg.c1().type() == asn1::rrc_nr::bcch_dl_sch_msg_type_c::c1_c_::types::sys_info);
 
     write_sib19_to_pcap(bcch_buf, sfn, /*subframe=*/5);

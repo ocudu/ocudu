@@ -385,7 +385,7 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   // Decode RIC Indication and check the content.
   asn1::e2sm::e2sm_kpm_ind_msg_s ric_ind_msg;
   asn1::cbit_ref                 ric_ind_bref(ind_msg_bytes);
-  if (ric_ind_msg.unpack(ric_ind_bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(ric_ind_msg, ric_ind_bref) != asn1::OCUDUASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
   }
@@ -492,7 +492,7 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_e2_level_rlc_metrics)
   // Decode RIC Indication and check the content.
   asn1::e2sm::e2sm_kpm_ind_msg_s ric_ind_msg;
   asn1::cbit_ref                 ric_ind_bref(ind_msg_bytes);
-  if (ric_ind_msg.unpack(ric_ind_bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(ric_ind_msg, ric_ind_bref) != asn1::OCUDUASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
   }
@@ -596,7 +596,7 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_e2_level_prb_metrics)
   // Decode RIC Indication and check the content.
   asn1::e2sm::e2sm_kpm_ind_msg_s ric_ind_msg;
   asn1::cbit_ref                 ric_ind_bref(ind_msg_bytes);
-  if (ric_ind_msg.unpack(ric_ind_bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(ric_ind_msg, ric_ind_bref) != asn1::OCUDUASN_SUCCESS) {
     test_logger.debug("e2sm_kpm: RIC indication msg could not be unpacked");
     return;
   }

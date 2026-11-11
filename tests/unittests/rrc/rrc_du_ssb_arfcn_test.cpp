@@ -35,7 +35,7 @@ byte_buffer pack_meas_timing_cfg(const std::vector<std::optional<uint32_t>>& car
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  EXPECT_EQ(meas_timing_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::pack(bref, meas_timing_cfg), asn1::OCUDUASN_SUCCESS);
   return buf;
 }
 

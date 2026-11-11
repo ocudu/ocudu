@@ -653,7 +653,7 @@ TEST_F(cu_cp_ue_context_release_test,
 
   asn1::cbit_ref              bref{dl_dcch_bytes};
   asn1::rrc_nr::dl_dcch_msg_s dl_dcch;
-  ASSERT_EQ(dl_dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(dl_dcch, bref), asn1::OCUDUASN_SUCCESS);
 
   const auto& rrc_release = dl_dcch.msg.c1().rrc_release().crit_exts.rrc_release();
   ASSERT_TRUE(rrc_release.redirected_carrier_info_present);

@@ -25,7 +25,7 @@ static bool is_packable(const f1ap_message& msg)
 {
   byte_buffer   temp_pdu;
   asn1::bit_ref bref{temp_pdu};
-  return msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS;
+  return asn1::pack(bref, msg.pdu) == asn1::OCUDUASN_SUCCESS;
 }
 
 bool test_helpers::is_f1_setup_request_valid(const f1ap_message& msg)

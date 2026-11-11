@@ -17,7 +17,7 @@ const char* ellipsoid_point_s::latitude_sign_opts::to_string() const
 // Ellipsoid-Point ::= SEQUENCE
 OCUDUASN_CODE ellipsoid_point_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(latitude_sign.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, latitude_sign));
   HANDLE_CODE(pack_integer(bref, degrees_latitude, (uint32_t)0u, (uint32_t)8388607u, false, false));
   HANDLE_CODE(pack_integer(bref, degrees_longitude, (int32_t)-8388608, (int32_t)8388607, false, false));
 
@@ -26,7 +26,7 @@ OCUDUASN_CODE ellipsoid_point_s::pack(bit_ref& bref) const
 
 OCUDUASN_CODE ellipsoid_point_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(latitude_sign.unpack(bref));
+  HANDLE_CODE(asn1::unpack(latitude_sign, bref));
   HANDLE_CODE(unpack_integer(degrees_latitude, bref, (uint32_t)0u, (uint32_t)8388607u, false, false));
   HANDLE_CODE(unpack_integer(degrees_longitude, bref, (int32_t)-8388608, (int32_t)8388607, false, false));
 

@@ -87,7 +87,7 @@ inline byte_buffer make_sib1_with_si_sched_info(span<const sib_type> si_msg_sibs
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  report_fatal_error_if_not(msg.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack the test SIB1");
+  report_fatal_error_if_not(asn1::pack(bref, msg) == asn1::OCUDUASN_SUCCESS, "Failed to pack the test SIB1");
   return buf;
 }
 
@@ -98,7 +98,7 @@ inline std::optional<unsigned> get_si_window_len(span<const uint8_t> sib1_pdu)
   byte_buffer                     sib1_buf = byte_buffer::create(sib1_pdu).value();
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
   asn1::cbit_ref                  bref{sib1_buf};
-  report_fatal_error_if_not(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
+  report_fatal_error_if_not(asn1::unpack(msg, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
 
   const asn1::rrc_nr::sib1_s& sib1 = msg.msg.c1().sib_type1();
   if (not sib1.si_sched_info_present) {
@@ -113,7 +113,7 @@ inline std::vector<sib_type> get_listed_sibs(span<const uint8_t> sib1_pdu)
   byte_buffer                     sib1_buf = byte_buffer::create(sib1_pdu).value();
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
   asn1::cbit_ref                  bref{sib1_buf};
-  report_fatal_error_if_not(msg.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
+  report_fatal_error_if_not(asn1::unpack(msg, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack the SIB1");
 
   const asn1::rrc_nr::sib1_s& sib1 = msg.msg.c1().sib_type1();
   std::vector<sib_type>       listed;

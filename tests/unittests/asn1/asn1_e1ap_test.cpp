@@ -73,7 +73,7 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};
@@ -86,7 +86,7 @@ TEST_F(asn1_e1ap_test, when_gnb_cu_up_e1_setup_correct_then_packing_successful)
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       bytes.data(), unpacked_len, "E1AP unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
@@ -110,7 +110,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;
 
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::e1ap::e1ap_elem_procs_o::init_msg_c::types_opts::bearer_context_setup_request);
@@ -140,12 +140,12 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_request_correct_then_unpacking_
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       rx_msg, unpacked_len, "E1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 
   asn1::json_writer json_writer2;
-  session_item1.to_json(json_writer2);
+  asn1::to_json(json_writer2, session_item1);
   test_logger.info("PDU session item unpacked: \n {}", json_writer2.to_string().c_str());
 #endif
 }
@@ -165,7 +165,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
   asn1::cbit_ref         bref{rx_pdu};
   asn1::e1ap::e1ap_pdu_c pdu;
 
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_E1AP_ID_BEARER_CONTEXT_SETUP);
   ASSERT_EQ(pdu.init_msg().value.type(),
             asn1::e1ap::e1ap_elem_procs_o::successful_outcome_c::types_opts::bearer_context_setup_resp);
@@ -197,7 +197,7 @@ TEST_F(asn1_e1ap_test, when_bearer_context_setup_response_correct_then_unpacking
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       rx_msg, unpacked_len, "E1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif

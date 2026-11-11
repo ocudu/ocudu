@@ -11,7 +11,6 @@
 
 #pragma once
 
-#include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap_ies.h"
 
 namespace asn1 {
@@ -22,14 +21,6 @@ namespace xnap {
  ******************************************************************************/
 
 // AccessAndMobilityIndication-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct access_and_mob_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct access_and_mob_ind_ies_container {
   bool                                   ra_report_present                            = false;
   bool                                   successful_ho_report_info_present            = false;
@@ -40,10 +31,7 @@ struct access_and_mob_ind_ies_container {
   successful_pscell_change_report_info_l successful_pscell_change_report_info;
   dl_lbt_fail_info_list_l                dl_lbt_fail_info_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // AccessAndMobilityIndication ::= SEQUENCE
@@ -61,10 +49,7 @@ struct ss_bs_activ_item_s {
   ss_bs_activ_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ActivatedNRCellsAndSSBs-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -83,10 +68,7 @@ struct activ_nr_cells_and_ss_bs_item_s {
   activ_nr_cells_and_ss_bs_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ActivatedNRCellsAndSSBsList ::= SEQUENCE (SIZE (1..16384)) OF ActivatedNRCellsAndSSBs-Item
@@ -99,16 +81,12 @@ struct activ_served_cells_ext_ies_o {
     struct types_opts {
       enum options { activ_nr_cells_and_ss_bs_list, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::activ_nr_cells_and_ss_bs_list; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                  type() const { return types::activ_nr_cells_and_ss_bs_list; }
+    static const asn1::table::choice_desc  desc;
     activ_nr_cells_and_ss_bs_list_l&       activ_nr_cells_and_ss_bs_list() { return c; }
     const activ_nr_cells_and_ss_bs_list_l& activ_nr_cells_and_ss_bs_list() const { return c; }
 
@@ -116,12 +94,7 @@ struct activ_served_cells_ext_ies_o {
     activ_nr_cells_and_ss_bs_list_l c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // ActivatedServedCells ::= CHOICE
@@ -131,49 +104,42 @@ struct activ_served_cells_c {
   struct types_opts {
     enum options { nr_cells, e_utra_cells, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  activ_served_cells_c() = default;
-  activ_served_cells_c(const activ_served_cells_c& other);
-  activ_served_cells_c& operator=(const activ_served_cells_c& other);
-  ~activ_served_cells_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  nr_cells_l_& nr_cells()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  nr_cells_l_&                                  nr_cells()
   {
-    assert_choice_type(types::nr_cells, type_, "ActivatedServedCells");
+    assert_choice_type(types::nr_cells, c.type, "ActivatedServedCells");
     return c.get<nr_cells_l_>();
   }
   e_utra_cells_l_& e_utra_cells()
   {
-    assert_choice_type(types::e_utra_cells, type_, "ActivatedServedCells");
+    assert_choice_type(types::e_utra_cells, c.type, "ActivatedServedCells");
     return c.get<e_utra_cells_l_>();
   }
   protocol_ie_single_container_s<activ_served_cells_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "ActivatedServedCells");
+    assert_choice_type(types::choice_ext, c.type, "ActivatedServedCells");
     return c.get<protocol_ie_single_container_s<activ_served_cells_ext_ies_o>>();
   }
   const nr_cells_l_& nr_cells() const
   {
-    assert_choice_type(types::nr_cells, type_, "ActivatedServedCells");
+    assert_choice_type(types::nr_cells, c.type, "ActivatedServedCells");
     return c.get<nr_cells_l_>();
   }
   const e_utra_cells_l_& e_utra_cells() const
   {
-    assert_choice_type(types::e_utra_cells, type_, "ActivatedServedCells");
+    assert_choice_type(types::e_utra_cells, c.type, "ActivatedServedCells");
     return c.get<e_utra_cells_l_>();
   }
   const protocol_ie_single_container_s<activ_served_cells_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "ActivatedServedCells");
+    assert_choice_type(types::choice_ext, c.type, "ActivatedServedCells");
     return c.get<protocol_ie_single_container_s<activ_served_cells_ext_ies_o>>();
   }
   nr_cells_l_&                                                  set_nr_cells();
@@ -181,10 +147,11 @@ struct activ_served_cells_c {
   protocol_ie_single_container_s<activ_served_cells_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                       type_;
-  choice_buffer_t<e_utra_cells_l_, nr_cells_l_, protocol_ie_single_container_s<activ_served_cells_ext_ies_o>> c;
-
-  void destroy_();
+  asn1::table::choice_storage<
+      activ_served_cells_c,
+      types,
+      choice_buffer_t<e_utra_cells_l_, nr_cells_l_, protocol_ie_single_container_s<activ_served_cells_ext_ies_o>>>
+      c;
 };
 
 // QoSFlowsActivityNotifyItem-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -200,10 +167,7 @@ struct qos_flows_activity_notify_item_s {
   qos_flows_activity_notify_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // QoSFlowsActivityNotifyList ::= SEQUENCE (SIZE (1..64)) OF QoSFlowsActivityNotifyItem
@@ -224,24 +188,13 @@ struct pdu_session_res_activity_notify_item_s {
   pdu_session_res_activity_notify_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionResourcesActivityNotifyList ::= SEQUENCE (SIZE (1..256)) OF PDUSessionResourcesActivityNotify-Item
 using pdu_session_res_activity_notify_list_l = dyn_array<pdu_session_res_activity_notify_item_s>;
 
 // ActivityNotification-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct activity_notif_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct activity_notif_ies_container {
   bool                                   user_plane_traffic_activity_report_present   = false;
   bool                                   pdu_session_res_activity_notify_list_present = false;
@@ -252,10 +205,7 @@ struct activity_notif_ies_container {
   pdu_session_res_activity_notify_list_l pdu_session_res_activity_notify_list;
   ran_paging_fail_e                      ran_paging_fail;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ActivityNotification ::= SEQUENCE
@@ -265,7 +215,7 @@ using activity_notif_s = elementary_procedure_option<activity_notif_ies_containe
 struct available_fast_mcg_recovery_via_srb3_opts {
   enum options { true_value, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using available_fast_mcg_recovery_via_srb3_e = enumerated<available_fast_mcg_recovery_via_srb3_opts, true>;
 
@@ -283,10 +233,7 @@ struct bearers_subject_to_counter_check_item_s {
   bearers_subject_to_counter_check_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BearersSubjectToCounterCheck-List ::= SEQUENCE (SIZE (1..32)) OF BearersSubjectToCounterCheck-Item
@@ -304,24 +251,13 @@ struct boundary_node_cells_list_item_s {
   boundary_node_cells_list_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BoundaryNodeCellsList ::= SEQUENCE (SIZE (1..512)) OF BoundaryNodeCellsList-Item
 using boundary_node_cells_list_l = dyn_array<boundary_node_cells_list_item_s>;
 
 // CPCCancel-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct cp_c_cancel_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct cp_c_cancel_ies_container {
   bool                    cause_present = false;
   uint64_t                m_ng_ran_node_ue_xnap_id;
@@ -329,24 +265,13 @@ struct cp_c_cancel_ies_container {
   cause_c                 cause;
   global_ng_ran_node_id_c target_s_ng_ran_node_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // CPCCancel ::= SEQUENCE
 using cp_c_cancel_s = elementary_procedure_option<cp_c_cancel_ies_container>;
 
 // CellActivationFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct cell_activation_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct cell_activation_fail_ies_container {
   bool               crit_diagnostics_present       = false;
   bool               interface_instance_ind_present = false;
@@ -355,10 +280,7 @@ struct cell_activation_fail_ies_container {
   crit_diagnostics_s crit_diagnostics;
   uint16_t           interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // CellActivationFailure ::= SEQUENCE
@@ -376,10 +298,7 @@ struct ss_bs_to_be_activ_item_s {
   ss_bs_to_be_activ_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ToBeActivatedNRCellsAndSSBs-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -398,10 +317,7 @@ struct to_be_activ_nr_cells_and_ss_bs_item_s {
   to_be_activ_nr_cells_and_ss_bs_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ToBeActivatedNRCellsAndSSBsList ::= SEQUENCE (SIZE (1..16384)) OF ToBeActivatedNRCellsAndSSBs-Item
@@ -414,16 +330,12 @@ struct served_cells_to_activ_ext_ies_o {
     struct types_opts {
       enum options { nr_cells_and_ss_bs_list, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::nr_cells_and_ss_bs_list; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    types                                        type() const { return types::nr_cells_and_ss_bs_list; }
+    static const asn1::table::choice_desc        desc;
     to_be_activ_nr_cells_and_ss_bs_list_l&       nr_cells_and_ss_bs_list() { return c; }
     const to_be_activ_nr_cells_and_ss_bs_list_l& nr_cells_and_ss_bs_list() const { return c; }
 
@@ -431,12 +343,7 @@ struct served_cells_to_activ_ext_ies_o {
     to_be_activ_nr_cells_and_ss_bs_list_l c;
   };
 
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static value_c    get_value(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
+  static const asn1::table::objset_desc desc;
 };
 
 // ServedCellsToActivate ::= CHOICE
@@ -446,49 +353,42 @@ struct served_cells_to_activ_c {
   struct types_opts {
     enum options { nr_cells, e_utra_cells, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  served_cells_to_activ_c() = default;
-  served_cells_to_activ_c(const served_cells_to_activ_c& other);
-  served_cells_to_activ_c& operator=(const served_cells_to_activ_c& other);
-  ~served_cells_to_activ_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  nr_cells_l_& nr_cells()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  nr_cells_l_&                                  nr_cells()
   {
-    assert_choice_type(types::nr_cells, type_, "ServedCellsToActivate");
+    assert_choice_type(types::nr_cells, c.type, "ServedCellsToActivate");
     return c.get<nr_cells_l_>();
   }
   e_utra_cells_l_& e_utra_cells()
   {
-    assert_choice_type(types::e_utra_cells, type_, "ServedCellsToActivate");
+    assert_choice_type(types::e_utra_cells, c.type, "ServedCellsToActivate");
     return c.get<e_utra_cells_l_>();
   }
   protocol_ie_single_container_s<served_cells_to_activ_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "ServedCellsToActivate");
+    assert_choice_type(types::choice_ext, c.type, "ServedCellsToActivate");
     return c.get<protocol_ie_single_container_s<served_cells_to_activ_ext_ies_o>>();
   }
   const nr_cells_l_& nr_cells() const
   {
-    assert_choice_type(types::nr_cells, type_, "ServedCellsToActivate");
+    assert_choice_type(types::nr_cells, c.type, "ServedCellsToActivate");
     return c.get<nr_cells_l_>();
   }
   const e_utra_cells_l_& e_utra_cells() const
   {
-    assert_choice_type(types::e_utra_cells, type_, "ServedCellsToActivate");
+    assert_choice_type(types::e_utra_cells, c.type, "ServedCellsToActivate");
     return c.get<e_utra_cells_l_>();
   }
   const protocol_ie_single_container_s<served_cells_to_activ_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "ServedCellsToActivate");
+    assert_choice_type(types::choice_ext, c.type, "ServedCellsToActivate");
     return c.get<protocol_ie_single_container_s<served_cells_to_activ_ext_ies_o>>();
   }
   nr_cells_l_&                                                     set_nr_cells();
@@ -496,45 +396,27 @@ struct served_cells_to_activ_c {
   protocol_ie_single_container_s<served_cells_to_activ_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                          type_;
-  choice_buffer_t<e_utra_cells_l_, nr_cells_l_, protocol_ie_single_container_s<served_cells_to_activ_ext_ies_o>> c;
-
-  void destroy_();
+  asn1::table::choice_storage<
+      served_cells_to_activ_c,
+      types,
+      choice_buffer_t<e_utra_cells_l_, nr_cells_l_, protocol_ie_single_container_s<served_cells_to_activ_ext_ies_o>>>
+      c;
 };
 
 // CellActivationRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct cell_activation_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct cell_activation_request_ies_container {
   bool                    interface_instance_ind_present = false;
   served_cells_to_activ_c served_cells_to_activ;
   uint16_t                activation_id_for_cell_activation;
   uint16_t                interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // CellActivationRequest ::= SEQUENCE
 using cell_activation_request_s = elementary_procedure_option<cell_activation_request_ies_container>;
 
 // CellActivationResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct cell_activation_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct cell_activation_resp_ies_container {
   bool                 crit_diagnostics_present       = false;
   bool                 interface_instance_ind_present = false;
@@ -543,24 +425,13 @@ struct cell_activation_resp_ies_container {
   crit_diagnostics_s   crit_diagnostics;
   uint16_t             interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // CellActivationResponse ::= SEQUENCE
 using cell_activation_resp_s = elementary_procedure_option<cell_activation_resp_ies_container>;
 
 // CellTrafficTraceIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct cell_traffic_trace_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct cell_traffic_trace_ies_container {
   bool                                                  privacy_ind_present                 = false;
   bool                                                  trace_collection_entity_uri_present = false;
@@ -571,24 +442,13 @@ struct cell_traffic_trace_ies_container {
   privacy_ind_e                                         privacy_ind;
   visible_string<0, MAX_ASN_STRING_LENGTH, false, true> trace_collection_entity_uri;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // CellTrafficTrace ::= SEQUENCE
 using cell_traffic_trace_s = elementary_procedure_option<cell_traffic_trace_ies_container>;
 
 // ConditionalHandoverCancel-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct conditional_ho_cancel_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct conditional_ho_cancel_ies_container {
   bool                     target_cells_to_cancel_present           = false;
   bool                     conditional_recfg_to_cancel_list_present = false;
@@ -598,10 +458,7 @@ struct conditional_ho_cancel_ies_container {
   target_cell_list_l       target_cells_to_cancel;
   conditional_recfg_list_l conditional_recfg_to_cancel_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ConditionalHandoverCancel ::= SEQUENCE
@@ -620,29 +477,15 @@ struct cfg_rejected_by_m_ng_ran_node_s {
   cfg_rejected_by_m_ng_ran_node_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Configuration-successfully-applied-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct cfg_successfully_applied_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct cfg_successfully_applied_ext_ies_container {
   bool     sk_counter_present = false;
   uint32_t sk_counter;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // Configuration-successfully-applied ::= SEQUENCE
@@ -652,30 +495,10 @@ struct cfg_successfully_applied_s {
   cfg_successfully_applied_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ConfigurationUpdate-gNB ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct cfg_upd_gnb_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
-// ConfigurationUpdate-ng-eNB ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct cfg_upd_ng_enb_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct cfg_upd_gnb_container {
   bool                               served_cells_to_upd_nr_present           = false;
   bool                               cell_assist_info_nr_present              = false;
@@ -686,12 +509,10 @@ struct cfg_upd_gnb_container {
   cell_assist_info_eutra_c           cell_assist_info_eutra;
   served_cell_specific_info_req_nr_l served_cell_specific_info_req_nr;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
+// ConfigurationUpdate-ng-eNB ::= OBJECT SET OF XNAP-PROTOCOL-IES
 struct cfg_upd_ng_enb_container {
   bool                         served_cells_to_upd_e_utra_present = false;
   bool                         cell_assist_info_nr_present        = false;
@@ -700,10 +521,7 @@ struct cfg_upd_ng_enb_container {
   cell_assist_info_nr_c        cell_assist_info_nr;
   cell_assist_info_eutra_c     cell_assist_info_eutra;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ServedCellsToUpdateInitiatingNodeChoice-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
@@ -714,49 +532,42 @@ struct cfg_upd_init_node_choice_c {
   struct types_opts {
     enum options { gnb, ng_enb, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  cfg_upd_init_node_choice_c() = default;
-  cfg_upd_init_node_choice_c(const cfg_upd_init_node_choice_c& other);
-  cfg_upd_init_node_choice_c& operator=(const cfg_upd_init_node_choice_c& other);
-  ~cfg_upd_init_node_choice_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  cfg_upd_gnb_container& gnb()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  cfg_upd_gnb_container&                        gnb()
   {
-    assert_choice_type(types::gnb, type_, "ConfigurationUpdateInitiatingNodeChoice");
+    assert_choice_type(types::gnb, c.type, "ConfigurationUpdateInitiatingNodeChoice");
     return c.get<cfg_upd_gnb_container>();
   }
   cfg_upd_ng_enb_container& ng_enb()
   {
-    assert_choice_type(types::ng_enb, type_, "ConfigurationUpdateInitiatingNodeChoice");
+    assert_choice_type(types::ng_enb, c.type, "ConfigurationUpdateInitiatingNodeChoice");
     return c.get<cfg_upd_ng_enb_container>();
   }
   protocol_ie_single_container_s<served_cells_to_upd_init_node_choice_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "ConfigurationUpdateInitiatingNodeChoice");
+    assert_choice_type(types::choice_ext, c.type, "ConfigurationUpdateInitiatingNodeChoice");
     return c.get<protocol_ie_single_container_s<served_cells_to_upd_init_node_choice_ext_ies_o>>();
   }
   const cfg_upd_gnb_container& gnb() const
   {
-    assert_choice_type(types::gnb, type_, "ConfigurationUpdateInitiatingNodeChoice");
+    assert_choice_type(types::gnb, c.type, "ConfigurationUpdateInitiatingNodeChoice");
     return c.get<cfg_upd_gnb_container>();
   }
   const cfg_upd_ng_enb_container& ng_enb() const
   {
-    assert_choice_type(types::ng_enb, type_, "ConfigurationUpdateInitiatingNodeChoice");
+    assert_choice_type(types::ng_enb, c.type, "ConfigurationUpdateInitiatingNodeChoice");
     return c.get<cfg_upd_ng_enb_container>();
   }
   const protocol_ie_single_container_s<served_cells_to_upd_init_node_choice_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "ConfigurationUpdateInitiatingNodeChoice");
+    assert_choice_type(types::choice_ext, c.type, "ConfigurationUpdateInitiatingNodeChoice");
     return c.get<protocol_ie_single_container_s<served_cells_to_upd_init_node_choice_ext_ies_o>>();
   }
   cfg_upd_gnb_container&                                                          set_gnb();
@@ -764,13 +575,13 @@ struct cfg_upd_init_node_choice_c {
   protocol_ie_single_container_s<served_cells_to_upd_init_node_choice_ext_ies_o>& set_choice_ext();
 
 private:
-  types type_;
-  choice_buffer_t<cfg_upd_gnb_container,
-                  cfg_upd_ng_enb_container,
-                  protocol_ie_single_container_s<served_cells_to_upd_init_node_choice_ext_ies_o>>
+  asn1::table::choice_storage<
+      cfg_upd_init_node_choice_c,
+      types,
+      choice_buffer_t<cfg_upd_gnb_container,
+                      cfg_upd_ng_enb_container,
+                      protocol_ie_single_container_s<served_cells_to_upd_init_node_choice_ext_ies_o>>>
       c;
-
-  void destroy_();
 };
 
 // DLDiscarding-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -785,21 +596,10 @@ struct dl_discarding_s {
   dl_discarding_ext_ies_container      ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DataCollectionFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct data_collection_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct data_collection_fail_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           ngran_node1_meas_id;
@@ -807,24 +607,13 @@ struct data_collection_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // DataCollectionFailure ::= SEQUENCE
 using data_collection_fail_s = elementary_procedure_option<data_collection_fail_ies_container>;
 
 // DataCollectionRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct data_collection_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct data_collection_request_ies_container {
   bool                                      ngran_node2_meas_id_present                        = false;
   bool                                      report_characteristics_for_data_collection_present = false;
@@ -843,24 +632,13 @@ struct data_collection_request_ies_container {
   ue_trajectory_collection_cfg_s            ue_trajectory_collection_cfg;
   ue_performance_collection_cfg_s           ue_performance_collection_cfg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // DataCollectionRequest ::= SEQUENCE
 using data_collection_request_s = elementary_procedure_option<data_collection_request_ies_container>;
 
 // DataCollectionResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct data_collection_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct data_collection_resp_ies_container {
   bool                               node_meas_initiation_result_list_present = false;
   bool                               cell_meas_initiation_result_list_present = false;
@@ -871,24 +649,13 @@ struct data_collection_resp_ies_container {
   cell_meas_initiation_result_list_l cell_meas_initiation_result_list;
   crit_diagnostics_s                 crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // DataCollectionResponse ::= SEQUENCE
 using data_collection_resp_s = elementary_procedure_option<data_collection_resp_ies_container>;
 
 // DataCollectionUpdate-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct data_collection_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct data_collection_upd_ies_container {
   bool                                        cell_meas_result_for_data_collection_list_present = false;
   bool                                        ue_associated_info_result_list_present            = false;
@@ -899,33 +666,19 @@ struct data_collection_upd_ies_container {
   ue_associated_info_result_list_l            ue_associated_info_result_list;
   node_associated_info_result_s               node_associated_info_result;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // DataCollectionUpdate ::= SEQUENCE
 using data_collection_upd_s = elementary_procedure_option<data_collection_upd_ies_container>;
 
 // DeactivateTraceIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct deactiv_trace_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct deactiv_trace_ies_container {
   uint64_t                 m_ng_ran_node_ue_xnap_id;
   uint64_t                 s_ng_ran_node_ue_xnap_id;
   fixed_octstring<8, true> ng_ran_trace_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // DeactivateTrace ::= SEQUENCE
@@ -948,10 +701,7 @@ struct res_coord_request_ng_enb_initiated_s {
   res_coord_request_ng_enb_initiated_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ResourceCoordRequest-gNB-initiated-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -973,10 +723,7 @@ struct res_coord_request_gnb_initiated_s {
   res_coord_request_gnb_initiated_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // InitiatingNodeType-ResourceCoordRequest-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
@@ -987,49 +734,42 @@ struct init_node_type_res_coord_request_c {
   struct types_opts {
     enum options { ng_enb, gnb, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  init_node_type_res_coord_request_c() = default;
-  init_node_type_res_coord_request_c(const init_node_type_res_coord_request_c& other);
-  init_node_type_res_coord_request_c& operator=(const init_node_type_res_coord_request_c& other);
-  ~init_node_type_res_coord_request_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  res_coord_request_ng_enb_initiated_s& ng_enb()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  res_coord_request_ng_enb_initiated_s&         ng_enb()
   {
-    assert_choice_type(types::ng_enb, type_, "InitiatingNodeType-ResourceCoordRequest");
+    assert_choice_type(types::ng_enb, c.type, "InitiatingNodeType-ResourceCoordRequest");
     return c.get<res_coord_request_ng_enb_initiated_s>();
   }
   res_coord_request_gnb_initiated_s& gnb()
   {
-    assert_choice_type(types::gnb, type_, "InitiatingNodeType-ResourceCoordRequest");
+    assert_choice_type(types::gnb, c.type, "InitiatingNodeType-ResourceCoordRequest");
     return c.get<res_coord_request_gnb_initiated_s>();
   }
   protocol_ie_single_container_s<init_node_type_res_coord_request_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "InitiatingNodeType-ResourceCoordRequest");
+    assert_choice_type(types::choice_ext, c.type, "InitiatingNodeType-ResourceCoordRequest");
     return c.get<protocol_ie_single_container_s<init_node_type_res_coord_request_ext_ies_o>>();
   }
   const res_coord_request_ng_enb_initiated_s& ng_enb() const
   {
-    assert_choice_type(types::ng_enb, type_, "InitiatingNodeType-ResourceCoordRequest");
+    assert_choice_type(types::ng_enb, c.type, "InitiatingNodeType-ResourceCoordRequest");
     return c.get<res_coord_request_ng_enb_initiated_s>();
   }
   const res_coord_request_gnb_initiated_s& gnb() const
   {
-    assert_choice_type(types::gnb, type_, "InitiatingNodeType-ResourceCoordRequest");
+    assert_choice_type(types::gnb, c.type, "InitiatingNodeType-ResourceCoordRequest");
     return c.get<res_coord_request_gnb_initiated_s>();
   }
   const protocol_ie_single_container_s<init_node_type_res_coord_request_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "InitiatingNodeType-ResourceCoordRequest");
+    assert_choice_type(types::choice_ext, c.type, "InitiatingNodeType-ResourceCoordRequest");
     return c.get<protocol_ie_single_container_s<init_node_type_res_coord_request_ext_ies_o>>();
   }
   res_coord_request_ng_enb_initiated_s&                                       set_ng_enb();
@@ -1037,33 +777,22 @@ struct init_node_type_res_coord_request_c {
   protocol_ie_single_container_s<init_node_type_res_coord_request_ext_ies_o>& set_choice_ext();
 
 private:
-  types type_;
-  choice_buffer_t<protocol_ie_single_container_s<init_node_type_res_coord_request_ext_ies_o>,
-                  res_coord_request_gnb_initiated_s,
-                  res_coord_request_ng_enb_initiated_s>
+  asn1::table::choice_storage<
+      init_node_type_res_coord_request_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<init_node_type_res_coord_request_ext_ies_o>,
+                      res_coord_request_gnb_initiated_s,
+                      res_coord_request_ng_enb_initiated_s>>
       c;
-
-  void destroy_();
 };
 
 // E-UTRA-NR-CellResourceCoordinationRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct e_utra_nr_cell_res_coordination_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e_utra_nr_cell_res_coordination_request_ies_container {
   bool                               interface_instance_ind_present = false;
   init_node_type_res_coord_request_c init_node_type_res_coord_request;
   uint16_t                           interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E-UTRA-NR-CellResourceCoordinationRequest ::= SEQUENCE
@@ -1087,10 +816,7 @@ struct res_coord_resp_ng_enb_initiated_s {
   res_coord_resp_ng_enb_initiated_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ResourceCoordResponse-gNB-initiated-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -1110,10 +836,7 @@ struct res_coord_resp_gnb_initiated_s {
   res_coord_resp_gnb_initiated_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RespondingNodeType-ResourceCoordResponse-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
@@ -1124,49 +847,42 @@ struct responding_node_type_res_coord_resp_c {
   struct types_opts {
     enum options { ng_enb, gnb, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  responding_node_type_res_coord_resp_c() = default;
-  responding_node_type_res_coord_resp_c(const responding_node_type_res_coord_resp_c& other);
-  responding_node_type_res_coord_resp_c& operator=(const responding_node_type_res_coord_resp_c& other);
-  ~responding_node_type_res_coord_resp_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  res_coord_resp_ng_enb_initiated_s& ng_enb()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  res_coord_resp_ng_enb_initiated_s&            ng_enb()
   {
-    assert_choice_type(types::ng_enb, type_, "RespondingNodeType-ResourceCoordResponse");
+    assert_choice_type(types::ng_enb, c.type, "RespondingNodeType-ResourceCoordResponse");
     return c.get<res_coord_resp_ng_enb_initiated_s>();
   }
   res_coord_resp_gnb_initiated_s& gnb()
   {
-    assert_choice_type(types::gnb, type_, "RespondingNodeType-ResourceCoordResponse");
+    assert_choice_type(types::gnb, c.type, "RespondingNodeType-ResourceCoordResponse");
     return c.get<res_coord_resp_gnb_initiated_s>();
   }
   protocol_ie_single_container_s<responding_node_type_res_coord_resp_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "RespondingNodeType-ResourceCoordResponse");
+    assert_choice_type(types::choice_ext, c.type, "RespondingNodeType-ResourceCoordResponse");
     return c.get<protocol_ie_single_container_s<responding_node_type_res_coord_resp_ext_ies_o>>();
   }
   const res_coord_resp_ng_enb_initiated_s& ng_enb() const
   {
-    assert_choice_type(types::ng_enb, type_, "RespondingNodeType-ResourceCoordResponse");
+    assert_choice_type(types::ng_enb, c.type, "RespondingNodeType-ResourceCoordResponse");
     return c.get<res_coord_resp_ng_enb_initiated_s>();
   }
   const res_coord_resp_gnb_initiated_s& gnb() const
   {
-    assert_choice_type(types::gnb, type_, "RespondingNodeType-ResourceCoordResponse");
+    assert_choice_type(types::gnb, c.type, "RespondingNodeType-ResourceCoordResponse");
     return c.get<res_coord_resp_gnb_initiated_s>();
   }
   const protocol_ie_single_container_s<responding_node_type_res_coord_resp_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "RespondingNodeType-ResourceCoordResponse");
+    assert_choice_type(types::choice_ext, c.type, "RespondingNodeType-ResourceCoordResponse");
     return c.get<protocol_ie_single_container_s<responding_node_type_res_coord_resp_ext_ies_o>>();
   }
   res_coord_resp_ng_enb_initiated_s&                                             set_ng_enb();
@@ -1174,33 +890,22 @@ struct responding_node_type_res_coord_resp_c {
   protocol_ie_single_container_s<responding_node_type_res_coord_resp_ext_ies_o>& set_choice_ext();
 
 private:
-  types type_;
-  choice_buffer_t<protocol_ie_single_container_s<responding_node_type_res_coord_resp_ext_ies_o>,
-                  res_coord_resp_gnb_initiated_s,
-                  res_coord_resp_ng_enb_initiated_s>
+  asn1::table::choice_storage<
+      responding_node_type_res_coord_resp_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<responding_node_type_res_coord_resp_ext_ies_o>,
+                      res_coord_resp_gnb_initiated_s,
+                      res_coord_resp_ng_enb_initiated_s>>
       c;
-
-  void destroy_();
 };
 
 // E-UTRA-NR-CellResourceCoordinationResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct e_utra_nr_cell_res_coordination_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct e_utra_nr_cell_res_coordination_resp_ies_container {
   bool                                  interface_instance_ind_present = false;
   responding_node_type_res_coord_resp_c responding_node_type_res_coord_resp;
   uint16_t                              interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // E-UTRA-NR-CellResourceCoordinationResponse ::= SEQUENCE
@@ -1219,10 +924,7 @@ struct first_dl_count_s {
   first_dl_count_ext_ies_container             ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ProcedureStageChoice-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
@@ -1233,49 +935,42 @@ struct proc_stage_choice_c {
   struct types_opts {
     enum options { first_dl_count, dl_discarding, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  proc_stage_choice_c() = default;
-  proc_stage_choice_c(const proc_stage_choice_c& other);
-  proc_stage_choice_c& operator=(const proc_stage_choice_c& other);
-  ~proc_stage_choice_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  first_dl_count_s& first_dl_count()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  first_dl_count_s&                             first_dl_count()
   {
-    assert_choice_type(types::first_dl_count, type_, "ProcedureStageChoice");
+    assert_choice_type(types::first_dl_count, c.type, "ProcedureStageChoice");
     return c.get<first_dl_count_s>();
   }
   dl_discarding_s& dl_discarding()
   {
-    assert_choice_type(types::dl_discarding, type_, "ProcedureStageChoice");
+    assert_choice_type(types::dl_discarding, c.type, "ProcedureStageChoice");
     return c.get<dl_discarding_s>();
   }
   protocol_ie_single_container_s<proc_stage_choice_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "ProcedureStageChoice");
+    assert_choice_type(types::choice_ext, c.type, "ProcedureStageChoice");
     return c.get<protocol_ie_single_container_s<proc_stage_choice_ext_ies_o>>();
   }
   const first_dl_count_s& first_dl_count() const
   {
-    assert_choice_type(types::first_dl_count, type_, "ProcedureStageChoice");
+    assert_choice_type(types::first_dl_count, c.type, "ProcedureStageChoice");
     return c.get<first_dl_count_s>();
   }
   const dl_discarding_s& dl_discarding() const
   {
-    assert_choice_type(types::dl_discarding, type_, "ProcedureStageChoice");
+    assert_choice_type(types::dl_discarding, c.type, "ProcedureStageChoice");
     return c.get<dl_discarding_s>();
   }
   const protocol_ie_single_container_s<proc_stage_choice_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "ProcedureStageChoice");
+    assert_choice_type(types::choice_ext, c.type, "ProcedureStageChoice");
     return c.get<protocol_ie_single_container_s<proc_stage_choice_ext_ies_o>>();
   }
   first_dl_count_s&                                            set_first_dl_count();
@@ -1283,44 +978,26 @@ struct proc_stage_choice_c {
   protocol_ie_single_container_s<proc_stage_choice_ext_ies_o>& set_choice_ext();
 
 private:
-  types                                                                                                           type_;
-  choice_buffer_t<dl_discarding_s, first_dl_count_s, protocol_ie_single_container_s<proc_stage_choice_ext_ies_o>> c;
-
-  void destroy_();
+  asn1::table::choice_storage<
+      proc_stage_choice_c,
+      types,
+      choice_buffer_t<dl_discarding_s, first_dl_count_s, protocol_ie_single_container_s<proc_stage_choice_ext_ies_o>>>
+      c;
 };
 
 // EarlyStatusTransfer-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct early_status_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct early_status_transfer_ies_container {
   uint64_t            source_ng_ran_node_ue_xnap_id;
   uint64_t            target_ng_ran_node_ue_xnap_id;
   proc_stage_choice_c proc_stage;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // EarlyStatusTransfer ::= SEQUENCE
 using early_status_transfer_s = elementary_procedure_option<early_status_transfer_ies_container>;
 
 // ErrorIndication-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct error_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct error_ind_ies_container {
   bool               old_ng_ran_node_ue_xnap_id_present = false;
   bool               new_ng_ran_node_ue_xnap_id_present = false;
@@ -1333,54 +1010,29 @@ struct error_ind_ies_container {
   crit_diagnostics_s crit_diagnostics;
   uint16_t           interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ErrorIndication ::= SEQUENCE
 using error_ind_s = elementary_procedure_option<error_ind_ies_container>;
 
 // F1CTrafficTransfer-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct f1_c_traffic_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct f1_c_traffic_transfer_ies_container {
   uint64_t                  m_ng_ran_node_ue_xnap_id;
   uint64_t                  s_ng_ran_node_ue_xnap_id;
   unbounded_octstring<true> f1_c_traffic_container;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // F1CTrafficTransfer ::= SEQUENCE
 using f1_c_traffic_transfer_s = elementary_procedure_option<f1_c_traffic_transfer_ies_container>;
 
 // FailureIndication-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct fail_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct fail_ind_ies_container {
   init_condition_fail_ind_c init_condition_fail_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // FailureIndication ::= SEQUENCE
@@ -1398,21 +1050,10 @@ struct fast_mcg_recovery_rrc_transfer_s {
   fast_mcg_recovery_rrc_transfer_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // HandoverCancel-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ho_cancel_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ho_cancel_ies_container {
   bool               target_ng_ran_node_ue_xnap_id_present = false;
   bool               target_cells_to_cancel_present        = false;
@@ -1421,24 +1062,13 @@ struct ho_cancel_ies_container {
   cause_c            cause;
   target_cell_list_l target_cells_to_cancel;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // HandoverCancel ::= SEQUENCE
 using ho_cancel_s = elementary_procedure_option<ho_cancel_ies_container>;
 
 // HandoverPreparationFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ho_prep_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ho_prep_fail_ies_container {
   bool               crit_diagnostics_present                = false;
   bool               requested_target_cell_global_id_present = false;
@@ -1447,24 +1077,13 @@ struct ho_prep_fail_ies_container {
   crit_diagnostics_s crit_diagnostics;
   target_cgi_c       requested_target_cell_global_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // HandoverPreparationFailure ::= SEQUENCE
 using ho_prep_fail_s = elementary_procedure_option<ho_prep_fail_ies_container>;
 
 // HandoverReport-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ho_report_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ho_report_ies_container {
   bool                             re_establishment_cell_cgi_present = false;
   bool                             target_cellin_eutran_present      = false;
@@ -1487,24 +1106,13 @@ struct ho_report_ies_container {
   fixed_bitstring<16, false, true> target_cell_c_rnti;
   uint32_t                         time_since_fail;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // HandoverReport ::= SEQUENCE
 using ho_report_s = elementary_procedure_option<ho_report_ies_container>;
 
 // UEContextInfoHORequest-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct ue_context_info_ho_request_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_info_ho_request_ext_ies_container {
   bool                                five_gc_mob_restrict_list_container_present    = false;
   bool                                nr_ue_sidelink_aggr_max_bit_rate_present       = false;
@@ -1527,10 +1135,7 @@ struct ue_context_info_ho_request_ext_ies_container {
   nr_ue_sidelink_aggr_max_bit_rate_s  nr_a2_x_ue_pc5_aggr_max_bit_rate;
   lte_ue_sidelink_aggr_max_bit_rate_s ltea2_x_ue_pc5_aggr_max_bit_rate;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextInfoHORequest ::= SEQUENCE
@@ -1552,10 +1157,7 @@ struct ue_context_info_ho_request_s {
   ue_context_info_ho_request_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEContextRefAtSN-HORequest-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -1571,21 +1173,10 @@ struct ue_context_ref_at_sn_ho_request_s {
   ue_context_ref_at_sn_ho_request_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // HandoverRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ho_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ho_request_ies_container {
   bool                                   trace_activation_present                     = false;
   bool                                   masked_imeisv_present                        = false;
@@ -1648,24 +1239,13 @@ struct ho_request_ies_container {
   mobile_iab_authorization_status_e      mobile_iab_authorization_status;
   sl_positioning_ranging_services_info_s sl_positioning_ranging_services_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // HandoverRequest ::= SEQUENCE
 using ho_request_s = elementary_procedure_option<ho_request_ies_container>;
 
 // HandoverRequestAcknowledge-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ho_request_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ho_request_ack_ies_container {
   bool                                pdu_session_res_not_admitted_list_present = false;
   bool                                ue_context_kept_ind_present               = false;
@@ -1690,24 +1270,13 @@ struct ho_request_ack_ies_container {
   rrc_cfg_ind_e                       rrc_cfg_ind;
   pdu_setbased_handling_ind_e         pdu_setbased_handling_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // HandoverRequestAcknowledge ::= SEQUENCE
 using ho_request_ack_s = elementary_procedure_option<ho_request_ack_ies_container>;
 
 // HandoverSuccess-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ho_success_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ho_success_ies_container {
   bool         accessed_pscell_id_present = false;
   uint64_t     source_ng_ran_node_ue_xnap_id;
@@ -1715,10 +1284,7 @@ struct ho_success_ies_container {
   target_cgi_c requested_target_cell_global_id;
   nr_cgi_s     accessed_pscell_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // HandoverSuccess ::= SEQUENCE
@@ -1736,24 +1302,13 @@ struct parent_node_cells_list_item_s {
   parent_node_cells_list_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ParentNodeCellsList ::= SEQUENCE (SIZE (1..32)) OF ParentNodeCellsList-Item
 using parent_node_cells_list_l = dyn_array<parent_node_cells_list_item_s>;
 
 // IABResourceCoordinationRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct iab_res_coordination_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct iab_res_coordination_request_ies_container {
   bool                       boundary_node_cells_list_present = false;
   bool                       parent_node_cells_list_present   = false;
@@ -1762,24 +1317,13 @@ struct iab_res_coordination_request_ies_container {
   boundary_node_cells_list_l boundary_node_cells_list;
   parent_node_cells_list_l   parent_node_cells_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // IABResourceCoordinationRequest ::= SEQUENCE
 using iab_res_coordination_request_s = elementary_procedure_option<iab_res_coordination_request_ies_container>;
 
 // IABResourceCoordinationResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct iab_res_coordination_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct iab_res_coordination_resp_ies_container {
   bool                       boundary_node_cells_list_present = false;
   bool                       parent_node_cells_list_present   = false;
@@ -1788,10 +1332,7 @@ struct iab_res_coordination_resp_ies_container {
   boundary_node_cells_list_l boundary_node_cells_list;
   parent_node_cells_list_l   parent_node_cells_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // IABResourceCoordinationResponse ::= SEQUENCE
@@ -1809,24 +1350,13 @@ struct iab_tnl_address_to_be_released_item_s {
   iab_tnl_address_to_be_released_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // IABTNLAddressToBeReleasedList ::= SEQUENCE (SIZE (1..1024)) OF IABTNLAddressToBeReleased-Item
 using iab_tnl_address_to_be_released_list_l = dyn_array<iab_tnl_address_to_be_released_item_s>;
 
 // IABTransportMigrationManagementReject-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct iab_transport_migration_management_reject_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct iab_transport_migration_management_reject_ies_container {
   bool               crit_diagnostics_present = false;
   uint64_t           f1_terminating_iab_donor_ue_xnap_id;
@@ -1834,10 +1364,7 @@ struct iab_transport_migration_management_reject_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // IABTransportMigrationManagementReject ::= SEQUENCE
@@ -1859,10 +1386,7 @@ struct traffic_to_be_added_item_s {
   traffic_to_be_added_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficToBeAddedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficToBeAdded-Item
@@ -1884,24 +1408,13 @@ struct traffic_to_be_modified_item_s {
   traffic_to_be_modified_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficToBeModifiedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficToBeModified-Item
 using traffic_to_be_modified_list_l = dyn_array<traffic_to_be_modified_item_s>;
 
 // IABTransportMigrationManagementRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct iab_transport_migration_management_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct iab_transport_migration_management_request_ies_container {
   bool                             traffic_to_be_added_list_present    = false;
   bool                             traffic_to_be_modified_list_present = false;
@@ -1918,10 +1431,7 @@ struct iab_transport_migration_management_request_ies_container {
   iab_tnl_address_exception_l      iab_tnl_address_exception;
   fixed_bitstring<10, false, true> miab_mt_bap_address;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // IABTransportMigrationManagementRequest ::= SEQUENCE
@@ -1941,10 +1451,7 @@ struct traffic_added_item_s {
   traffic_added_item_ext_ies_container  ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficAddedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficAdded-Item
@@ -1963,10 +1470,7 @@ struct traffic_modified_item_s {
   traffic_modified_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficModifiedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficModified-Item
@@ -1986,10 +1490,7 @@ struct traffic_not_added_item_s {
   traffic_not_added_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficNotAddedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficNotAdded-Item
@@ -2009,10 +1510,7 @@ struct traffic_not_modified_item_s {
   traffic_not_modified_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficNotModifiedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficNotModified-Item
@@ -2031,24 +1529,13 @@ struct traffic_released_item_s {
   traffic_released_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficReleasedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficReleased-Item
 using traffic_released_list_l = dyn_array<traffic_released_item_s>;
 
 // IABTransportMigrationManagementResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct iab_transport_migration_management_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct iab_transport_migration_management_resp_ies_container {
   bool                        traffic_added_list_present        = false;
   bool                        traffic_modified_list_present     = false;
@@ -2065,10 +1552,7 @@ struct iab_transport_migration_management_resp_ies_container {
   iab_tnl_address_resp_s      iab_tnl_address_resp;
   traffic_released_list_l     traffic_released_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // IABTransportMigrationManagementResponse ::= SEQUENCE
@@ -2088,24 +1572,13 @@ struct traffic_required_to_be_modified_item_s {
   traffic_required_to_be_modified_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficRequiredToBeModifiedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficRequiredToBeModified-Item
 using traffic_required_to_be_modified_list_l = dyn_array<traffic_required_to_be_modified_item_s>;
 
 // IABTransportMigrationModificationRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct iab_transport_migration_mod_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct iab_transport_migration_mod_request_ies_container {
   bool                                   traffic_required_to_be_modified_list_present = false;
   bool                                   traffic_to_be_release_info_present           = false;
@@ -2122,10 +1595,7 @@ struct iab_transport_migration_mod_request_ies_container {
   iab_authorization_status_e             iab_authorization_status;
   mobile_iab_authorization_status_e      mobile_iab_authorization_status;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // IABTransportMigrationModificationRequest ::= SEQUENCE
@@ -2144,24 +1614,13 @@ struct traffic_required_modified_item_s {
   traffic_required_modified_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TrafficRequiredModifiedList ::= SEQUENCE (SIZE (1..1024)) OF TrafficRequiredModified-Item
 using traffic_required_modified_list_l = dyn_array<traffic_required_modified_item_s>;
 
 // IABTransportMigrationModificationResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct iab_transport_migration_mod_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct iab_transport_migration_mod_resp_ies_container {
   bool                             traffic_required_modified_list_present = false;
   bool                             traffic_released_list_present          = false;
@@ -2170,48 +1629,26 @@ struct iab_transport_migration_mod_resp_ies_container {
   traffic_required_modified_list_l traffic_required_modified_list;
   traffic_released_list_l          traffic_released_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // IABTransportMigrationModificationResponse ::= SEQUENCE
 using iab_transport_migration_mod_resp_s = elementary_procedure_option<iab_transport_migration_mod_resp_ies_container>;
 
 // MobilityChangeAcknowledge-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct mob_change_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct mob_change_ack_ies_container {
   bool                    crit_diagnostics_present = false;
   global_ng_ran_cell_id_s ng_ran_node1_cell_id;
   global_ng_ran_cell_id_s ng_ran_node2_cell_id;
   crit_diagnostics_s      crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // MobilityChangeAcknowledge ::= SEQUENCE
 using mob_change_ack_s = elementary_procedure_option<mob_change_ack_ies_container>;
 
 // MobilityChangeFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct mob_change_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct mob_change_fail_ies_container {
   bool                                 mob_params_mod_range_present               = false;
   bool                                 crit_diagnostics_present                   = false;
@@ -2223,24 +1660,13 @@ struct mob_change_fail_ies_container {
   crit_diagnostics_s                   crit_diagnostics;
   ng_ran_node2_ssb_offsets_mod_range_l ng_ran_node2_ssb_offsets_mod_range;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // MobilityChangeFailure ::= SEQUENCE
 using mob_change_fail_s = elementary_procedure_option<mob_change_fail_ies_container>;
 
 // MobilityChangeRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct mob_change_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct mob_change_request_ies_container {
   bool                    ng_ran_node1_mob_params_present = false;
   bool                    ssb_offsets_list_present        = false;
@@ -2251,24 +1677,13 @@ struct mob_change_request_ies_container {
   cause_c                 cause;
   ssb_offsets_list_l      ssb_offsets_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // MobilityChangeRequest ::= SEQUENCE
 using mob_change_request_s = elementary_procedure_option<mob_change_request_ies_container>;
 
 // NGRANNodeConfigurationUpdate-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ngran_node_cfg_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ngran_node_cfg_upd_ies_container {
   bool                         tai_support_list_present             = false;
   bool                         tnl_a_to_add_list_present            = false;
@@ -2298,24 +1713,13 @@ struct ngran_node_cfg_upd_ies_container {
   neighbour_ng_ran_node_list_l neighbour_ng_ran_node_list;
   local_ng_ran_node_id_c       local_ng_ran_node_id_removal;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // NGRANNodeConfigurationUpdate ::= SEQUENCE
 using ngran_node_cfg_upd_s = elementary_procedure_option<ngran_node_cfg_upd_ies_container>;
 
 // RespondingNodeTypeConfigUpdateAck-ng-eNB-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct responding_node_type_cfg_upd_ack_ng_enb_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct responding_node_type_cfg_upd_ack_ng_enb_ext_ies_container {
   bool                                  list_of_served_cells_e_utra_present         = false;
   bool                                  partial_list_ind_eutra_present              = false;
@@ -2324,10 +1728,7 @@ struct responding_node_type_cfg_upd_ack_ng_enb_ext_ies_container {
   partial_list_ind_e                    partial_list_ind_eutra;
   cell_and_capacity_assist_info_eutra_s cell_and_capacity_assist_info_eutra;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RespondingNodeTypeConfigUpdateAck-ng-eNB ::= SEQUENCE
@@ -2336,31 +1737,17 @@ struct responding_node_type_cfg_upd_ack_ng_enb_s {
   responding_node_type_cfg_upd_ack_ng_enb_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RespondingNodeTypeConfigUpdateAck-gNB-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct responding_node_type_cfg_upd_ack_gnb_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct responding_node_type_cfg_upd_ack_gnb_ext_ies_container {
   bool                               partial_list_ind_nr_present              = false;
   bool                               cell_and_capacity_assist_info_nr_present = false;
   partial_list_ind_e                 partial_list_ind_nr;
   cell_and_capacity_assist_info_nr_s cell_and_capacity_assist_info_nr;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RespondingNodeTypeConfigUpdateAck-gNB ::= SEQUENCE
@@ -2370,10 +1757,7 @@ struct responding_node_type_cfg_upd_ack_gnb_s {
   responding_node_type_cfg_upd_ack_gnb_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RespondingNodeTypeConfigUpdateAck-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
@@ -2384,49 +1768,42 @@ struct responding_node_type_cfg_upd_ack_c {
   struct types_opts {
     enum options { ng_enb, gnb, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  responding_node_type_cfg_upd_ack_c() = default;
-  responding_node_type_cfg_upd_ack_c(const responding_node_type_cfg_upd_ack_c& other);
-  responding_node_type_cfg_upd_ack_c& operator=(const responding_node_type_cfg_upd_ack_c& other);
-  ~responding_node_type_cfg_upd_ack_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  responding_node_type_cfg_upd_ack_ng_enb_s& ng_enb()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  responding_node_type_cfg_upd_ack_ng_enb_s&    ng_enb()
   {
-    assert_choice_type(types::ng_enb, type_, "RespondingNodeTypeConfigUpdateAck");
+    assert_choice_type(types::ng_enb, c.type, "RespondingNodeTypeConfigUpdateAck");
     return c.get<responding_node_type_cfg_upd_ack_ng_enb_s>();
   }
   responding_node_type_cfg_upd_ack_gnb_s& gnb()
   {
-    assert_choice_type(types::gnb, type_, "RespondingNodeTypeConfigUpdateAck");
+    assert_choice_type(types::gnb, c.type, "RespondingNodeTypeConfigUpdateAck");
     return c.get<responding_node_type_cfg_upd_ack_gnb_s>();
   }
   protocol_ie_single_container_s<responding_node_type_cfg_upd_ack_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "RespondingNodeTypeConfigUpdateAck");
+    assert_choice_type(types::choice_ext, c.type, "RespondingNodeTypeConfigUpdateAck");
     return c.get<protocol_ie_single_container_s<responding_node_type_cfg_upd_ack_ext_ies_o>>();
   }
   const responding_node_type_cfg_upd_ack_ng_enb_s& ng_enb() const
   {
-    assert_choice_type(types::ng_enb, type_, "RespondingNodeTypeConfigUpdateAck");
+    assert_choice_type(types::ng_enb, c.type, "RespondingNodeTypeConfigUpdateAck");
     return c.get<responding_node_type_cfg_upd_ack_ng_enb_s>();
   }
   const responding_node_type_cfg_upd_ack_gnb_s& gnb() const
   {
-    assert_choice_type(types::gnb, type_, "RespondingNodeTypeConfigUpdateAck");
+    assert_choice_type(types::gnb, c.type, "RespondingNodeTypeConfigUpdateAck");
     return c.get<responding_node_type_cfg_upd_ack_gnb_s>();
   }
   const protocol_ie_single_container_s<responding_node_type_cfg_upd_ack_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "RespondingNodeTypeConfigUpdateAck");
+    assert_choice_type(types::choice_ext, c.type, "RespondingNodeTypeConfigUpdateAck");
     return c.get<protocol_ie_single_container_s<responding_node_type_cfg_upd_ack_ext_ies_o>>();
   }
   responding_node_type_cfg_upd_ack_ng_enb_s&                                  set_ng_enb();
@@ -2434,24 +1811,16 @@ struct responding_node_type_cfg_upd_ack_c {
   protocol_ie_single_container_s<responding_node_type_cfg_upd_ack_ext_ies_o>& set_choice_ext();
 
 private:
-  types type_;
-  choice_buffer_t<protocol_ie_single_container_s<responding_node_type_cfg_upd_ack_ext_ies_o>,
-                  responding_node_type_cfg_upd_ack_gnb_s,
-                  responding_node_type_cfg_upd_ack_ng_enb_s>
+  asn1::table::choice_storage<
+      responding_node_type_cfg_upd_ack_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<responding_node_type_cfg_upd_ack_ext_ies_o>,
+                      responding_node_type_cfg_upd_ack_gnb_s,
+                      responding_node_type_cfg_upd_ack_ng_enb_s>>
       c;
-
-  void destroy_();
 };
 
 // NGRANNodeConfigurationUpdateAcknowledge-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ngran_node_cfg_upd_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ngran_node_cfg_upd_ack_ies_container {
   bool                               tnl_a_setup_list_present             = false;
   bool                               tnl_a_failed_to_setup_list_present   = false;
@@ -2471,24 +1840,13 @@ struct ngran_node_cfg_upd_ack_ies_container {
   neighbour_ng_ran_node_list_l       neighbour_ng_ran_node_list;
   local_ng_ran_node_id_c             local_ng_ran_node_id_removal;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // NGRANNodeConfigurationUpdateAcknowledge ::= SEQUENCE
 using ngran_node_cfg_upd_ack_s = elementary_procedure_option<ngran_node_cfg_upd_ack_ies_container>;
 
 // NGRANNodeConfigurationUpdateFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ngran_node_cfg_upd_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ngran_node_cfg_upd_fail_ies_container {
   bool               time_to_wait_present           = false;
   bool               crit_diagnostics_present       = false;
@@ -2498,10 +1856,7 @@ struct ngran_node_cfg_upd_fail_ies_container {
   crit_diagnostics_s crit_diagnostics;
   uint16_t           interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // NGRANNodeConfigurationUpdateFailure ::= SEQUENCE
@@ -2520,57 +1875,32 @@ struct pdu_session_res_notify_item_s {
   pdu_session_res_notify_item_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionResourcesNotifyList ::= SEQUENCE (SIZE (1..256)) OF PDUSessionResourcesNotify-Item
 using pdu_session_res_notify_list_l = dyn_array<pdu_session_res_notify_item_s>;
 
 // NotificationControlIndication-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct notif_ctrl_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct notif_ctrl_ind_ies_container {
   bool                          pdu_session_res_notify_list_present = false;
   uint64_t                      m_ng_ran_node_ue_xnap_id;
   uint64_t                      s_ng_ran_node_ue_xnap_id;
   pdu_session_res_notify_list_l pdu_session_res_notify_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // NotificationControlIndication ::= SEQUENCE
 using notif_ctrl_ind_s = elementary_procedure_option<notif_ctrl_ind_ies_container>;
 
 // PDUSession-SNChangeConfirm-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct pdu_session_sn_change_confirm_item_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct pdu_session_sn_change_confirm_item_ext_ies_container {
   bool add_listof_pdu_session_res_change_confirm_info_sn_terminated_present = false;
   add_listof_pdu_session_res_change_confirm_info_sn_terminated_l
       add_listof_pdu_session_res_change_confirm_info_sn_terminated;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // PDUSession-SNChangeConfirm-Item ::= SEQUENCE
@@ -2584,10 +1914,7 @@ struct pdu_session_sn_change_confirm_item_s {
   pdu_session_sn_change_confirm_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSession-SNChangeConfirm-List ::= SEQUENCE (SIZE (1..256)) OF PDUSession-SNChangeConfirm-Item
@@ -2609,10 +1936,7 @@ struct pdu_session_sn_change_required_item_s {
   pdu_session_sn_change_required_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSession-SNChangeRequired-List ::= SEQUENCE (SIZE (1..256)) OF PDUSession-SNChangeRequired-Item
@@ -2634,10 +1958,7 @@ struct pdu_session_admitted_to_be_added_sn_mod_resp_item_s {
   pdu_session_admitted_to_be_added_sn_mod_resp_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionAdmittedToBeAddedSNModResponse ::= SEQUENCE (SIZE (1..256)) OF
@@ -2660,10 +1981,7 @@ struct pdu_session_admitted_to_be_modified_sn_mod_resp_item_s {
   pdu_session_admitted_to_be_modified_sn_mod_resp_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionAdmittedToBeModifiedSNModResponse ::= SEQUENCE (SIZE (1..256)) OF
@@ -2684,10 +2002,7 @@ struct pdu_session_admitted_to_be_released_sn_mod_resp_s {
   pdu_session_admitted_to_be_released_sn_mod_resp_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionAdmitted-SNModResponse-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -2705,10 +2020,7 @@ struct pdu_session_admitted_sn_mod_resp_s {
   pdu_session_admitted_sn_mod_resp_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionAdmittedAddedAddReqAck-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -2727,10 +2039,7 @@ struct pdu_session_admitted_added_add_req_ack_item_s {
   pdu_session_admitted_added_add_req_ack_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionAdmittedAddedAddReqAck ::= SEQUENCE (SIZE (1..256)) OF PDUSessionAdmittedAddedAddReqAck-Item
@@ -2752,10 +2061,7 @@ struct pdu_session_admitted_mod_sn_mod_confirm_item_s {
   pdu_session_admitted_mod_sn_mod_confirm_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionAdmittedModSNModConfirm ::= SEQUENCE (SIZE (1..256)) OF PDUSessionAdmittedModSNModConfirm-Item
@@ -2776,29 +2082,15 @@ struct pdu_session_data_forwarding_sn_mod_resp_s {
   pdu_session_data_forwarding_sn_mod_resp_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionNotAdmitted-SNModResponse-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct pdu_session_not_admitted_sn_mod_resp_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct pdu_session_not_admitted_sn_mod_resp_ext_ies_container {
   bool                                pdu_session_res_not_admitted_list_present = false;
   pdu_session_res_not_admitted_list_l pdu_session_res_not_admitted_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // PDUSessionNotAdmitted-SNModResponse ::= SEQUENCE
@@ -2808,10 +2100,7 @@ struct pdu_session_not_admitted_sn_mod_resp_s {
   pdu_session_not_admitted_sn_mod_resp_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionNotAdmittedAddReqAck-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -2827,10 +2116,7 @@ struct pdu_session_not_admitted_add_req_ack_s {
   pdu_session_not_admitted_add_req_ack_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionReleasedList-RelConf-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -2845,10 +2131,7 @@ struct pdu_session_released_list_rel_conf_s {
   pdu_session_released_list_rel_conf_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 using pdu_session_admitted_to_be_released_sn_mod_confirm_ext_ies_container = protocol_ext_container_empty_l;
@@ -2861,10 +2144,7 @@ struct pdu_session_released_sn_mod_confirm_s {
   pdu_session_admitted_to_be_released_sn_mod_confirm_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionToBeAddedAddReq-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -2886,10 +2166,7 @@ struct pdu_session_to_be_added_add_req_item_s {
   pdu_session_to_be_added_add_req_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionToBeAddedAddReq ::= SEQUENCE (SIZE (1..256)) OF PDUSessionToBeAddedAddReq-Item
@@ -2911,10 +2188,7 @@ struct pdu_session_to_be_modified_sn_mod_required_item_s {
   pdu_session_to_be_modified_sn_mod_required_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionToBeModifiedSNModRequired ::= SEQUENCE (SIZE (1..256)) OF PDUSessionToBeModifiedSNModRequired-Item
@@ -2932,10 +2206,7 @@ struct pdu_session_to_be_released_list_rel_req_ack_s {
   pdu_session_to_be_released_list_rel_req_ack_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionToBeReleasedList-RelRqd-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -2950,10 +2221,7 @@ struct pdu_session_to_be_released_list_rel_rqd_s {
   pdu_session_to_be_released_list_rel_rqd_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionToBeReleasedSNModRequired-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -2969,29 +2237,15 @@ struct pdu_session_to_be_released_sn_mod_required_s {
   pdu_session_to_be_released_sn_mod_required_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionsToBeAdded-SNModRequest-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct pdu_sessions_to_be_added_sn_mod_request_item_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct pdu_sessions_to_be_added_sn_mod_request_item_ext_ies_container {
   bool                             pdu_session_expected_ue_activity_behaviour_present = false;
   expected_ue_activity_behaviour_s pdu_session_expected_ue_activity_behaviour;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // PDUSessionsToBeAdded-SNModRequest-Item ::= SEQUENCE
@@ -3008,24 +2262,13 @@ struct pdu_sessions_to_be_added_sn_mod_request_item_s {
   pdu_sessions_to_be_added_sn_mod_request_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionsToBeAdded-SNModRequest-List ::= SEQUENCE (SIZE (1..256)) OF PDUSessionsToBeAdded-SNModRequest-Item
 using pdu_sessions_to_be_added_sn_mod_request_list_l = dyn_array<pdu_sessions_to_be_added_sn_mod_request_item_s>;
 
 // PDUSessionsToBeModified-SNModRequest-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
-struct pdu_sessions_to_be_modified_sn_mod_request_item_ext_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct pdu_sessions_to_be_modified_sn_mod_request_item_ext_ies_container {
   bool                             s_nssai_present                                    = false;
   bool                             pdu_session_expected_ue_activity_behaviour_present = false;
@@ -3034,10 +2277,7 @@ struct pdu_sessions_to_be_modified_sn_mod_request_item_ext_ies_container {
   expected_ue_activity_behaviour_s pdu_session_expected_ue_activity_behaviour;
   user_plane_fail_ind_s            user_plane_fail_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // PDUSessionsToBeModified-SNModRequest-Item ::= SEQUENCE
@@ -3053,10 +2293,7 @@ struct pdu_sessions_to_be_modified_sn_mod_request_item_s {
   pdu_sessions_to_be_modified_sn_mod_request_item_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDUSessionsToBeModified-SNModRequest-List ::= SEQUENCE (SIZE (1..256)) OF PDUSessionsToBeModified-SNModRequest-Item
@@ -3074,21 +2311,10 @@ struct pdu_sessions_to_be_released_sn_mod_request_list_s {
   pdu_sessions_to_be_released_sn_mod_request_list_ext_ies_container ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PartialUEContextTransfer-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct partial_ue_context_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct partial_ue_context_transfer_ies_container {
   bool                          pos_partial_ue_context_info_present = false;
   uint64_t                      new_ng_ran_node_ue_xnap_id;
@@ -3096,24 +2322,13 @@ struct partial_ue_context_transfer_ies_container {
   sdt_partial_ue_context_info_s sdt_partial_ue_context_info;
   pos_partial_ue_context_info_s pos_partial_ue_context_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // PartialUEContextTransfer ::= SEQUENCE
 using partial_ue_context_transfer_s = elementary_procedure_option<partial_ue_context_transfer_ies_container>;
 
 // PartialUEContextTransferAcknowledge-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct partial_ue_context_transfer_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct partial_ue_context_transfer_ack_ies_container {
   bool                           sdt_data_forwarding_drb_list_present = false;
   bool                           crit_diagnostics_present             = false;
@@ -3124,24 +2339,13 @@ struct partial_ue_context_transfer_ack_ies_container {
   crit_diagnostics_s             crit_diagnostics;
   unbounded_octstring<true>      srs_cfg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // PartialUEContextTransferAcknowledge ::= SEQUENCE
 using partial_ue_context_transfer_ack_s = elementary_procedure_option<partial_ue_context_transfer_ack_ies_container>;
 
 // PartialUEContextTransferFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct partial_ue_context_transfer_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct partial_ue_context_transfer_fail_ies_container {
   bool               crit_diagnostics_present = false;
   uint64_t           new_ng_ran_node_ue_xnap_id;
@@ -3149,10 +2353,7 @@ struct partial_ue_context_transfer_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // PartialUEContextTransferFailure ::= SEQUENCE
@@ -3164,26 +2365,17 @@ struct xnap_private_ies_empty_o {
     struct types_opts {
       enum options { nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    types         type() const { return types::nulltype; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
+    types                                 type() const { return types::nulltype; }
+    static const asn1::table::choice_desc desc;
   };
 };
 // PrivateMessage-IEs ::= OBJECT SET OF XNAP-PRIVATE-IES
 using private_msg_ies_o = xnap_private_ies_empty_o;
 
-struct private_ie_container_empty_l {
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-};
 using private_msg_ies_container = private_ie_container_empty_l;
 
 // PrivateMessage ::= SEQUENCE
@@ -3191,10 +2383,7 @@ struct private_msg_s {
   private_msg_ies_container private_ies;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // QoE-Measurement-Results-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -3207,7 +2396,7 @@ struct qo_e_meas_results_s {
   struct app_layer_session_status_opts {
     enum options { started, stopped, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using app_layer_session_status_e_ = enumerated<app_layer_session_status_opts, true>;
 
@@ -3221,44 +2410,22 @@ struct qo_e_meas_results_s {
   qo_e_meas_results_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RANMulticastGroupPaging-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ran_multicast_group_paging_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ran_multicast_group_paging_ies_container {
   mbs_session_id_s                  mbs_session_id;
   ue_id_idx_list_mbs_group_paging_l ue_id_idx_list_mbs_group_paging;
   ran_paging_area_s                 multicast_ran_paging_area;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RANMulticastGroupPaging ::= SEQUENCE
 using ran_multicast_group_paging_s = elementary_procedure_option<ran_multicast_group_paging_ies_container>;
 
 // RANPaging-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ran_paging_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ran_paging_ies_container {
   bool                                       paging_prio_present                              = false;
   bool                                       assist_data_for_ran_paging_present               = false;
@@ -3291,10 +2458,7 @@ struct ran_paging_ies_container {
   mt_sdt_info_s                              mt_sdt_info;
   nr_paging_longe_drx_infofor_rrc_inactive_s nr_paging_longe_drx_infofor_rrc_inactive;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RANPaging ::= SEQUENCE
@@ -3309,10 +2473,9 @@ using split_srb_rrc_transfer_ext_ies_container = protocol_ext_container_empty_l;
 struct split_srb_rrc_transfer_s {
   struct srb_type_opts {
     enum options { srb1, srb2, /*...*/ nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using srb_type_e_ = enumerated<srb_type_opts, true>;
 
@@ -3325,10 +2488,7 @@ struct split_srb_rrc_transfer_s {
   split_srb_rrc_transfer_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UEReportRRCTransfer-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -3343,10 +2503,7 @@ struct ue_report_rrc_transfer_s {
   ue_report_rrc_transfer_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SDT-SRB-between-NewNode-OldNode-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -3362,21 +2519,10 @@ struct sdt_srb_between_new_node_old_node_s {
   sdt_srb_between_new_node_old_node_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RRCTransfer-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct rrc_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct rrc_transfer_ies_container {
   bool                                split_srb_rrc_transfer_present                  = false;
   bool                                ue_report_rrc_transfer_present                  = false;
@@ -3393,31 +2539,17 @@ struct rrc_transfer_ies_container {
   sdt_srb_between_new_node_old_node_s sdt_srb_between_new_node_old_node;
   qo_e_meas_results_s                 qo_e_meas_results;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RRCTransfer ::= SEQUENCE
 using rrc_transfer_s = elementary_procedure_option<rrc_transfer_ies_container>;
 
 // RachIndication-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct rach_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct rach_ind_ies_container {
   ra_report_ind_list_l ra_report_ind_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RachIndication ::= SEQUENCE
@@ -3427,7 +2559,7 @@ using rach_ind_s = elementary_procedure_option<rach_ind_ies_container>;
 struct release_fast_mcg_recovery_via_srb3_opts {
   enum options { true_value, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using release_fast_mcg_recovery_via_srb3_e = enumerated<release_fast_mcg_recovery_via_srb3_opts, true>;
 
@@ -3435,7 +2567,7 @@ using release_fast_mcg_recovery_via_srb3_e = enumerated<release_fast_mcg_recover
 struct requested_fast_mcg_recovery_via_srb3_opts {
   enum options { true_value, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using requested_fast_mcg_recovery_via_srb3_e = enumerated<requested_fast_mcg_recovery_via_srb3_opts, true>;
 
@@ -3443,44 +2575,25 @@ using requested_fast_mcg_recovery_via_srb3_e = enumerated<requested_fast_mcg_rec
 struct requested_fast_mcg_recovery_via_srb3_release_opts {
   enum options { true_value, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using requested_fast_mcg_recovery_via_srb3_release_e =
     enumerated<requested_fast_mcg_recovery_via_srb3_release_opts, true>;
 
 // ResetRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct reset_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct reset_request_ies_container {
   bool                      interface_instance_ind_present = false;
   reset_request_type_info_c reset_request_type_info;
   cause_c                   cause;
   uint16_t                  interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResetRequest ::= SEQUENCE
 using reset_request_s = elementary_procedure_option<reset_request_ies_container>;
 
 // ResetResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct reset_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct reset_resp_ies_container {
   bool                   crit_diagnostics_present       = false;
   bool                   interface_instance_ind_present = false;
@@ -3488,24 +2601,13 @@ struct reset_resp_ies_container {
   crit_diagnostics_s     crit_diagnostics;
   uint16_t               interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResetResponse ::= SEQUENCE
 using reset_resp_s = elementary_procedure_option<reset_resp_ies_container>;
 
 // ResourceStatusFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct res_status_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct res_status_fail_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           ngran_node1_meas_id;
@@ -3513,24 +2615,13 @@ struct res_status_fail_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResourceStatusFailure ::= SEQUENCE
 using res_status_fail_s = elementary_procedure_option<res_status_fail_ies_container>;
 
 // ResourceStatusRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct res_status_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct res_status_request_ies_container {
   bool                             ngran_node2_meas_id_present    = false;
   bool                             report_characteristics_present = false;
@@ -3543,57 +2634,32 @@ struct res_status_request_ies_container {
   cell_to_report_l                 cell_to_report;
   report_periodicity_e             report_periodicity;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResourceStatusRequest ::= SEQUENCE
 using res_status_request_s = elementary_procedure_option<res_status_request_ies_container>;
 
 // ResourceStatusResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct res_status_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct res_status_resp_ies_container {
   bool               crit_diagnostics_present = false;
   uint16_t           ngran_node1_meas_id;
   uint16_t           ngran_node2_meas_id;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResourceStatusResponse ::= SEQUENCE
 using res_status_resp_s = elementary_procedure_option<res_status_resp_ies_container>;
 
 // ResourceStatusUpdate-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct res_status_upd_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct res_status_upd_ies_container {
   uint16_t           ngran_node1_meas_id;
   uint16_t           ngran_node2_meas_id;
   cell_meas_result_l cell_meas_result;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ResourceStatusUpdate ::= SEQUENCE
@@ -3607,49 +2673,42 @@ struct resp_type_reconf_complete_c {
   struct types_opts {
     enum options { cfg_successfully_applied, cfg_rejected_by_m_ng_ran_node, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  resp_type_reconf_complete_c() = default;
-  resp_type_reconf_complete_c(const resp_type_reconf_complete_c& other);
-  resp_type_reconf_complete_c& operator=(const resp_type_reconf_complete_c& other);
-  ~resp_type_reconf_complete_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  cfg_successfully_applied_s& cfg_successfully_applied()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  cfg_successfully_applied_s&                   cfg_successfully_applied()
   {
-    assert_choice_type(types::cfg_successfully_applied, type_, "ResponseType-ReconfComplete");
+    assert_choice_type(types::cfg_successfully_applied, c.type, "ResponseType-ReconfComplete");
     return c.get<cfg_successfully_applied_s>();
   }
   cfg_rejected_by_m_ng_ran_node_s& cfg_rejected_by_m_ng_ran_node()
   {
-    assert_choice_type(types::cfg_rejected_by_m_ng_ran_node, type_, "ResponseType-ReconfComplete");
+    assert_choice_type(types::cfg_rejected_by_m_ng_ran_node, c.type, "ResponseType-ReconfComplete");
     return c.get<cfg_rejected_by_m_ng_ran_node_s>();
   }
   protocol_ie_single_container_s<resp_type_reconf_complete_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "ResponseType-ReconfComplete");
+    assert_choice_type(types::choice_ext, c.type, "ResponseType-ReconfComplete");
     return c.get<protocol_ie_single_container_s<resp_type_reconf_complete_ext_ies_o>>();
   }
   const cfg_successfully_applied_s& cfg_successfully_applied() const
   {
-    assert_choice_type(types::cfg_successfully_applied, type_, "ResponseType-ReconfComplete");
+    assert_choice_type(types::cfg_successfully_applied, c.type, "ResponseType-ReconfComplete");
     return c.get<cfg_successfully_applied_s>();
   }
   const cfg_rejected_by_m_ng_ran_node_s& cfg_rejected_by_m_ng_ran_node() const
   {
-    assert_choice_type(types::cfg_rejected_by_m_ng_ran_node, type_, "ResponseType-ReconfComplete");
+    assert_choice_type(types::cfg_rejected_by_m_ng_ran_node, c.type, "ResponseType-ReconfComplete");
     return c.get<cfg_rejected_by_m_ng_ran_node_s>();
   }
   const protocol_ie_single_container_s<resp_type_reconf_complete_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "ResponseType-ReconfComplete");
+    assert_choice_type(types::choice_ext, c.type, "ResponseType-ReconfComplete");
     return c.get<protocol_ie_single_container_s<resp_type_reconf_complete_ext_ies_o>>();
   }
   cfg_successfully_applied_s&                                          set_cfg_successfully_applied();
@@ -3657,13 +2716,12 @@ struct resp_type_reconf_complete_c {
   protocol_ie_single_container_s<resp_type_reconf_complete_ext_ies_o>& set_choice_ext();
 
 private:
-  types type_;
-  choice_buffer_t<cfg_rejected_by_m_ng_ran_node_s,
-                  cfg_successfully_applied_s,
-                  protocol_ie_single_container_s<resp_type_reconf_complete_ext_ies_o>>
+  asn1::table::choice_storage<resp_type_reconf_complete_c,
+                              types,
+                              choice_buffer_t<cfg_rejected_by_m_ng_ran_node_s,
+                                              cfg_successfully_applied_s,
+                                              protocol_ie_single_container_s<resp_type_reconf_complete_ext_ies_o>>>
       c;
-
-  void destroy_();
 };
 
 // ResponseInfo-ReconfCompl-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -3678,21 +2736,10 @@ struct resp_info_reconf_compl_s {
   resp_info_reconf_compl_ext_ies_container ie_exts;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RetrieveUEContextConfirm-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct retrieve_ue_context_confirm_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct retrieve_ue_context_confirm_ies_container {
   bool                      ue_context_kept_ind_present     = false;
   bool                      sdt_termination_request_present = false;
@@ -3701,24 +2748,13 @@ struct retrieve_ue_context_confirm_ies_container {
   ue_context_kept_ind_e     ue_context_kept_ind;
   sdt_termination_request_e sdt_termination_request;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RetrieveUEContextConfirm ::= SEQUENCE
 using retrieve_ue_context_confirm_s = elementary_procedure_option<retrieve_ue_context_confirm_ies_container>;
 
 // RetrieveUEContextFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct retrieve_ue_context_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct retrieve_ue_context_fail_ies_container {
   bool                              oldto_new_ng_ran_node_resume_container_present = false;
   bool                              crit_diagnostics_present                       = false;
@@ -3729,24 +2765,13 @@ struct retrieve_ue_context_fail_ies_container {
   crit_diagnostics_s                crit_diagnostics;
   semipersistent_positioning_info_s semipersistent_positioning_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RetrieveUEContextFailure ::= SEQUENCE
 using retrieve_ue_context_fail_s = elementary_procedure_option<retrieve_ue_context_fail_ies_container>;
 
 // RetrieveUEContextRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct retrieve_ue_context_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct retrieve_ue_context_request_ies_container {
   bool                                        rrc_resume_cause_present                          = false;
   bool                                        sdt_support_request_present                       = false;
@@ -3759,24 +2784,13 @@ struct retrieve_ue_context_request_ies_container {
   sdt_support_request_s                       sdt_support_request;
   srs_positioning_cfg_or_activation_request_e srs_positioning_cfg_or_activation_request;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RetrieveUEContextRequest ::= SEQUENCE
 using retrieve_ue_context_request_s = elementary_procedure_option<retrieve_ue_context_request_ies_container>;
 
 // RetrieveUEContextResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct retrieve_ue_context_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct retrieve_ue_context_resp_ies_container {
   bool                                   trace_activation_present                     = false;
   bool                                   masked_imeisv_present                        = false;
@@ -3827,24 +2841,13 @@ struct retrieve_ue_context_resp_ies_container {
   mobile_iab_authorization_status_e      mobile_iab_authorization_status;
   sl_positioning_ranging_services_info_s sl_positioning_ranging_services_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // RetrieveUEContextResponse ::= SEQUENCE
 using retrieve_ue_context_resp_s = elementary_procedure_option<retrieve_ue_context_resp_ies_container>;
 
 // SNStatusTransfer-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_status_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_status_transfer_ies_container {
   bool                                   cho_cfg_present  = false;
   bool                                   mob_info_present = false;
@@ -3854,24 +2857,13 @@ struct sn_status_transfer_ies_container {
   cho_cfg_s                              cho_cfg;
   fixed_bitstring<32, false, true>       mob_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNStatusTransfer ::= SEQUENCE
 using sn_status_transfer_s = elementary_procedure_option<sn_status_transfer_ies_container>;
 
 // SNodeAdditionRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_addition_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_addition_request_ies_container {
   bool                                   sel_plmn_present                             = false;
   bool                                   mob_restrict_list_present                    = false;
@@ -3952,24 +2944,13 @@ struct sn_ode_addition_request_ies_container {
   iab_authorization_status_e             iab_authorization_status;
   global_ng_ran_node_id_c                source_m_ng_ran_node_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeAdditionRequest ::= SEQUENCE
 using sn_ode_addition_request_s = elementary_procedure_option<sn_ode_addition_request_ies_container>;
 
 // SNodeAdditionRequestAcknowledge-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_addition_request_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_addition_request_ack_ies_container {
   bool                                     pdu_session_not_admitted_add_req_ack_present               = false;
   bool                                     admitted_split_srb_present                                 = false;
@@ -4004,24 +2985,13 @@ struct sn_ode_addition_request_ack_ies_container {
   ch_oinfo_add_req_ack_s                   ch_oinfo_add_req_ack;
   direct_forwarding_path_availability_with_source_mn_e direct_forwarding_path_availability_with_source_mn;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeAdditionRequestAcknowledge ::= SEQUENCE
 using sn_ode_addition_request_ack_s = elementary_procedure_option<sn_ode_addition_request_ack_ies_container>;
 
 // SNodeAdditionRequestReject-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_addition_request_reject_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_addition_request_reject_ies_container {
   bool                    crit_diagnostics_present = false;
   bool                    pcell_id_present         = false;
@@ -4031,24 +3001,13 @@ struct sn_ode_addition_request_reject_ies_container {
   crit_diagnostics_s      crit_diagnostics;
   global_ng_ran_cell_id_s pcell_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeAdditionRequestReject ::= SEQUENCE
 using sn_ode_addition_request_reject_s = elementary_procedure_option<sn_ode_addition_request_reject_ies_container>;
 
 // SNodeChangeConfirm-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_change_confirm_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_change_confirm_ies_container {
   bool                                 pdu_session_sn_change_confirm_list_present = false;
   bool                                 crit_diagnostics_present                   = false;
@@ -4061,24 +3020,13 @@ struct sn_ode_change_confirm_ies_container {
   c_pci_nformation_confirm_s           c_pci_nformation_confirm;
   unbounded_octstring<true>            mn_to_sn_container;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeChangeConfirm ::= SEQUENCE
 using sn_ode_change_confirm_s = elementary_procedure_option<sn_ode_change_confirm_ies_container>;
 
 // SNodeChangeRefuse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_change_refuse_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_change_refuse_ies_container {
   bool               crit_diagnostics_present = false;
   uint64_t           m_ng_ran_node_ue_xnap_id;
@@ -4086,24 +3034,13 @@ struct sn_ode_change_refuse_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeChangeRefuse ::= SEQUENCE
 using sn_ode_change_refuse_s = elementary_procedure_option<sn_ode_change_refuse_ies_container>;
 
 // SNodeChangeRequired-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_change_required_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_change_required_ies_container {
   bool                                  pdu_session_sn_change_required_list_present = false;
   bool                                  scg_ue_history_info_present                 = false;
@@ -4123,47 +3060,25 @@ struct sn_ode_change_required_ies_container {
   c_pci_nformation_required_s           c_pci_nformation_required;
   q_mcc_onfig_info_s                    source_sn_to_target_sn_qmc_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeChangeRequired ::= SEQUENCE
 using sn_ode_change_required_s = elementary_procedure_option<sn_ode_change_required_ies_container>;
 
 // SNodeCounterCheckRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_counter_check_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_counter_check_request_ies_container {
   uint64_t                                m_ng_ran_node_ue_xnap_id;
   uint64_t                                s_ng_ran_node_ue_xnap_id;
   bearers_subject_to_counter_check_list_l bearers_subject_to_counter_check;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeCounterCheckRequest ::= SEQUENCE
 using sn_ode_counter_check_request_s = elementary_procedure_option<sn_ode_counter_check_request_ies_container>;
 
 // SNodeModificationConfirm-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_mod_confirm_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_mod_confirm_ies_container {
   bool                                      pdu_session_admitted_mod_sn_mod_confirm_present = false;
   bool                                      pdu_session_released_sn_mod_confirm_present     = false;
@@ -4182,24 +3097,13 @@ struct sn_ode_mod_confirm_ies_container {
   mr_dc_res_coordination_info_s             mr_dc_res_coordination_info;
   q_mcc_oordination_resp_s                  q_mcc_oordination_resp;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeModificationConfirm ::= SEQUENCE
 using sn_ode_mod_confirm_s = elementary_procedure_option<sn_ode_mod_confirm_ies_container>;
 
 // SNodeModificationRefuse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_mod_refuse_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_mod_refuse_ies_container {
   bool                      mn_to_sn_container_present = false;
   bool                      crit_diagnostics_present   = false;
@@ -4209,10 +3113,7 @@ struct sn_ode_mod_refuse_ies_container {
   unbounded_octstring<true> mn_to_sn_container;
   crit_diagnostics_s        crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeModificationRefuse ::= SEQUENCE
@@ -4243,29 +3144,18 @@ struct ue_context_info_sn_mod_request_s {
   ue_context_info_sn_mod_request_ext_ies_container  ie_ext;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Src-SN-to-Tgt-SNQMCInfoInquiry ::= ENUMERATED
 struct src_sn_to_tgt_sn_qmc_info_inquiry_opts {
   enum options { true_value, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using src_sn_to_tgt_sn_qmc_info_inquiry_e = enumerated<src_sn_to_tgt_sn_qmc_info_inquiry_opts, true>;
 
 // SNodeModificationRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_mod_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_mod_request_ies_container {
   bool                                           pdcp_change_ind_present                              = false;
   bool                                           sel_plmn_present                                     = false;
@@ -4335,24 +3225,13 @@ struct sn_ode_mod_request_ies_container {
   src_sn_to_tgt_sn_qmc_info_inquiry_e            src_sn_to_tgt_sn_qmc_info_inquiry;
   iab_authorization_status_e                     iab_authorization_status;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeModificationRequest ::= SEQUENCE
 using sn_ode_mod_request_s = elementary_procedure_option<sn_ode_mod_request_ies_container>;
 
 // SNodeModificationRequestAcknowledge-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_mod_request_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_mod_request_ack_ies_container {
   bool                                      pdu_session_admitted_sn_mod_resp_present        = false;
   bool                                      pdu_session_not_admitted_sn_mod_resp_present    = false;
@@ -4393,24 +3272,13 @@ struct sn_ode_mod_request_ack_ies_container {
   q_mcc_oordination_resp_s                  q_mcc_oordination_resp;
   q_mcc_onfig_info_s                        source_sn_to_target_sn_qmc_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeModificationRequestAcknowledge ::= SEQUENCE
 using sn_ode_mod_request_ack_s = elementary_procedure_option<sn_ode_mod_request_ack_ies_container>;
 
 // SNodeModificationRequestReject-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_mod_request_reject_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_mod_request_reject_ies_container {
   bool               crit_diagnostics_present = false;
   uint64_t           m_ng_ran_node_ue_xnap_id;
@@ -4418,24 +3286,13 @@ struct sn_ode_mod_request_reject_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeModificationRequestReject ::= SEQUENCE
 using sn_ode_mod_request_reject_s = elementary_procedure_option<sn_ode_mod_request_reject_ies_container>;
 
 // SNodeModificationRequired-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_mod_required_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_mod_required_ies_container {
   bool                                         pdcp_change_ind_present                            = false;
   bool                                         pdu_session_to_be_modified_sn_mod_required_present = false;
@@ -4481,47 +3338,25 @@ struct sn_ode_mod_required_ies_container {
   s_cp_ac_request_e                            s_cp_ac_request;
   pdu_sessions_list_to_be_released_up_error_l  pdu_sessions_list_to_be_released_up_error;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeModificationRequired ::= SEQUENCE
 using sn_ode_mod_required_s = elementary_procedure_option<sn_ode_mod_required_ies_container>;
 
 // SNodeReconfigurationComplete-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_recfg_complete_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_recfg_complete_ies_container {
   uint64_t                 m_ng_ran_node_ue_xnap_id;
   uint64_t                 s_ng_ran_node_ue_xnap_id;
   resp_info_reconf_compl_s resp_info_reconf_compl;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeReconfigurationComplete ::= SEQUENCE
 using sn_ode_recfg_complete_s = elementary_procedure_option<sn_ode_recfg_complete_ies_container>;
 
 // SNodeReleaseConfirm-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_release_confirm_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_release_confirm_ies_container {
   bool                                 pdu_session_released_list_rel_conf_present = false;
   bool                                 crit_diagnostics_present                   = false;
@@ -4530,24 +3365,13 @@ struct sn_ode_release_confirm_ies_container {
   pdu_session_released_list_rel_conf_s pdu_session_released_list_rel_conf;
   crit_diagnostics_s                   crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeReleaseConfirm ::= SEQUENCE
 using sn_ode_release_confirm_s = elementary_procedure_option<sn_ode_release_confirm_ies_container>;
 
 // SNodeReleaseReject-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_release_reject_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_release_reject_ies_container {
   bool               s_ng_ran_node_ue_xnap_id_present = false;
   bool               crit_diagnostics_present         = false;
@@ -4556,24 +3380,13 @@ struct sn_ode_release_reject_ies_container {
   cause_c            cause;
   crit_diagnostics_s crit_diagnostics;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeReleaseReject ::= SEQUENCE
 using sn_ode_release_reject_s = elementary_procedure_option<sn_ode_release_reject_ies_container>;
 
 // SNodeReleaseRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_release_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_release_request_ies_container {
   bool                          s_ng_ran_node_ue_xnap_id_present           = false;
   bool                          pdu_session_to_be_released_rel_req_present = false;
@@ -4588,24 +3401,13 @@ struct sn_ode_release_request_ies_container {
   unbounded_octstring<true>     mn_to_sn_container;
   drb_list_l                    drbs_transferred_to_mn;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeReleaseRequest ::= SEQUENCE
 using sn_ode_release_request_s = elementary_procedure_option<sn_ode_release_request_ies_container>;
 
 // SNodeReleaseRequestAcknowledge-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_release_request_ack_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_release_request_ack_ies_container {
   bool                                          s_ng_ran_node_ue_xnap_id_present               = false;
   bool                                          pdu_session_to_be_released_rel_req_ack_present = false;
@@ -4619,24 +3421,13 @@ struct sn_ode_release_request_ack_ies_container {
   scg_ue_history_info_s                         scg_ue_history_info;
   fixed_bitstring<32, false, true>              sn_mob_info;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeReleaseRequestAcknowledge ::= SEQUENCE
 using sn_ode_release_request_ack_s = elementary_procedure_option<sn_ode_release_request_ack_ies_container>;
 
 // SNodeReleaseRequired-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct sn_ode_release_required_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct sn_ode_release_required_ies_container {
   bool                                        pdu_session_to_be_released_list_rel_rqd_present   = false;
   bool                                        sn_to_mn_container_present                        = false;
@@ -4650,24 +3441,13 @@ struct sn_ode_release_required_ies_container {
   scg_ue_history_info_s                       scg_ue_history_info;
   pdu_sessions_list_to_be_released_up_error_l pdu_sessions_list_to_be_released_up_error;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SNodeReleaseRequired ::= SEQUENCE
 using sn_ode_release_required_s = elementary_procedure_option<sn_ode_release_required_ies_container>;
 
 // ScgFailureInformationReport-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct scg_fail_info_report_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct scg_fail_info_report_ies_container {
   bool                             source_pscell_cgi_present = false;
   bool                             failed_pscell_cgi_present = false;
@@ -4681,115 +3461,60 @@ struct scg_fail_info_report_ies_container {
   fixed_bitstring<32, false, true> sn_mob_info;
   cp_ac_cfg_s                      cp_ac_cfg;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ScgFailureInformationReport ::= SEQUENCE
 using scg_fail_info_report_s = elementary_procedure_option<scg_fail_info_report_ies_container>;
 
 // ScgFailureTransfer-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct scg_fail_transfer_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct scg_fail_transfer_ies_container {
   uint64_t m_ng_ran_node_ue_xnap_id;
   uint64_t s_ng_ran_node_ue_xnap_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // ScgFailureTransfer ::= SEQUENCE
 using scg_fail_transfer_s = elementary_procedure_option<scg_fail_transfer_ies_container>;
 
 // SecondaryRATDataUsageReport-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct secondary_rat_data_usage_report_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct secondary_rat_data_usage_report_ies_container {
   uint64_t                                   m_ng_ran_node_ue_xnap_id;
   uint64_t                                   s_ng_ran_node_ue_xnap_id;
   pdu_session_res_secondary_rat_usage_list_l pdu_session_res_secondary_rat_usage_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // SecondaryRATDataUsageReport ::= SEQUENCE
 using secondary_rat_data_usage_report_s = elementary_procedure_option<secondary_rat_data_usage_report_ies_container>;
 
 // TraceStartIEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct trace_start_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct trace_start_ies_container {
   bool               trace_activation_present = false;
   uint64_t           m_ng_ran_node_ue_xnap_id;
   uint64_t           s_ng_ran_node_ue_xnap_id;
   trace_activation_s trace_activation;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // TraceStart ::= SEQUENCE
 using trace_start_s = elementary_procedure_option<trace_start_ies_container>;
 
 // UEContextRelease-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct ue_context_release_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct ue_context_release_ies_container {
   uint64_t source_ng_ran_node_ue_xnap_id;
   uint64_t target_ng_ran_node_ue_xnap_id;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // UEContextRelease ::= SEQUENCE
 using ue_context_release_s = elementary_procedure_option<ue_context_release_ies_container>;
 
 // XnRemovalFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct xn_removal_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct xn_removal_fail_ies_container {
   bool               crit_diagnostics_present       = false;
   bool               interface_instance_ind_present = false;
@@ -4797,24 +3522,13 @@ struct xn_removal_fail_ies_container {
   crit_diagnostics_s crit_diagnostics;
   uint16_t           interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // XnRemovalFailure ::= SEQUENCE
 using xn_removal_fail_s = elementary_procedure_option<xn_removal_fail_ies_container>;
 
 // XnRemovalRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct xn_removal_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct xn_removal_request_ies_container {
   bool                    xn_removal_thres_present       = false;
   bool                    interface_instance_ind_present = false;
@@ -4822,24 +3536,13 @@ struct xn_removal_request_ies_container {
   uint8_t                 xn_removal_thres;
   uint16_t                interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // XnRemovalRequest ::= SEQUENCE
 using xn_removal_request_s = elementary_procedure_option<xn_removal_request_ies_container>;
 
 // XnRemovalResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct xn_removal_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct xn_removal_resp_ies_container {
   bool                    crit_diagnostics_present       = false;
   bool                    interface_instance_ind_present = false;
@@ -4847,24 +3550,13 @@ struct xn_removal_resp_ies_container {
   crit_diagnostics_s      crit_diagnostics;
   uint16_t                interface_instance_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // XnRemovalResponse ::= SEQUENCE
 using xn_removal_resp_s = elementary_procedure_option<xn_removal_resp_ies_container>;
 
 // XnSetupFailure-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct xn_setup_fail_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct xn_setup_fail_ies_container {
   bool                 time_to_wait_present           = false;
   bool                 crit_diagnostics_present       = false;
@@ -4876,24 +3568,13 @@ struct xn_setup_fail_ies_container {
   uint16_t             interface_instance_ind;
   msg_oversize_notif_s msg_oversize_notif;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // XnSetupFailure ::= SEQUENCE
 using xn_setup_fail_s = elementary_procedure_option<xn_setup_fail_ies_container>;
 
 // XnSetupRequest-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct xn_setup_request_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct xn_setup_request_ies_container {
   bool                                  list_of_served_cells_nr_present             = false;
   bool                                  list_of_served_cells_e_utra_present         = false;
@@ -4919,24 +3600,13 @@ struct xn_setup_request_ies_container {
   local_ng_ran_node_id_c                local_ng_ran_node_id;
   neighbour_ng_ran_node_list_l          neighbour_ng_ran_node_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // XnSetupRequest ::= SEQUENCE
 using xn_setup_request_s = elementary_procedure_option<xn_setup_request_ies_container>;
 
 // XnSetupResponse-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct xn_setup_resp_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct xn_setup_resp_ies_container {
   bool                                  list_of_served_cells_nr_present             = false;
   bool                                  list_of_served_cells_e_utra_present         = false;
@@ -4965,24 +3635,13 @@ struct xn_setup_resp_ies_container {
   local_ng_ran_node_id_c                local_ng_ran_node_id;
   neighbour_ng_ran_node_list_l          neighbour_ng_ran_node_list;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // XnSetupResponse ::= SEQUENCE
 using xn_setup_resp_s = elementary_procedure_option<xn_setup_resp_ies_container>;
 
 // XnUAddressIndication-IEs ::= OBJECT SET OF XNAP-PROTOCOL-IES
-struct xn_u_address_ind_ies_o {
-  // members lookup methods
-  static uint32_t   idx_to_id(uint32_t idx);
-  static bool       is_id_valid(const uint32_t& id);
-  static crit_e     get_crit(const uint32_t& id);
-  static presence_e get_presence(const uint32_t& id);
-};
-
 struct xn_u_address_ind_ies_container {
   bool                                    cho_mrdc_ind_present                   = false;
   bool                                    cho_mrdc_early_data_forwarding_present = false;
@@ -5000,10 +3659,7 @@ struct xn_u_address_ind_ies_container {
   mbs_session_info_resp_list_l            mbs_session_info_resp_list;
   pdu_setbased_handling_ind_e             pdu_setbased_handling_ind;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::ie_container_desc desc;
 };
 
 // XnUAddressIndication ::= SEQUENCE

@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/ul_ccch1_msg.h"
+#include "ocudu/asn1/asn1_codec.h"
 
 using namespace asn1;
 using namespace asn1::rrc_nr;
@@ -13,57 +14,71 @@ using namespace asn1::rrc_nr;
  ******************************************************************************/
 
 // RRCResumeRequest1-IEs ::= SEQUENCE
-OCUDUASN_CODE rrc_resume_request1_ies_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(resume_id.pack(bref));
-  HANDLE_CODE(resume_mac_i.pack(bref));
-  HANDLE_CODE(resume_cause.pack(bref));
-  HANDLE_CODE(spare.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE rrc_resume_request1_ies_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(resume_id.unpack(bref));
-  HANDLE_CODE(resume_mac_i.unpack(bref));
-  HANDLE_CODE(resume_cause.unpack(bref));
-  HANDLE_CODE(spare.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void rrc_resume_request1_ies_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("resumeIdentity");
-  resume_id.to_json(j);
-  j.write_fieldname("resumeMAC-I");
-  resume_mac_i.to_json(j);
-  j.write_str("resumeCause", resume_cause.to_string());
-  j.write_fieldname("spare");
-  spare.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_rrc_resume_request1_ies_s_fields[] = {
+    {offsetof(rrc_resume_request1_ies_s, resume_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(rrc_resume_request1_ies_s::resume_id), asn1::table::struct_json>::value},
+    {offsetof(rrc_resume_request1_ies_s, resume_mac_i),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(rrc_resume_request1_ies_s::resume_mac_i), asn1::table::struct_json>::value},
+    {offsetof(rrc_resume_request1_ies_s, resume_cause),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(rrc_resume_request1_ies_s::resume_cause)>(),
+     decltype(rrc_resume_request1_ies_s::resume_cause)::has_ext,
+     false,
+     decltype(rrc_resume_request1_ies_s::resume_cause)::nof_types,
+     decltype(rrc_resume_request1_ies_s::resume_cause)::nof_exts,
+     nullptr,
+     &resume_cause_opts::desc},
+    {offsetof(rrc_resume_request1_ies_s, spare),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(rrc_resume_request1_ies_s::spare), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_rrc_resume_request1_ies_s_names[] = {{"resumeIdentity", nullptr},
+                                                                                    {"resumeMAC-I", nullptr},
+                                                                                    {"resumeCause", nullptr},
+                                                                                    {"spare", nullptr}};
+const asn1::table::seq_desc          rrc_resume_request1_ies_s::desc             = {
+    {seq_table_rrc_resume_request1_ies_s_fields, 4, UINT64_C(0xf), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_rrc_resume_request1_ies_s_names};
 
 // RRCResumeRequest1 ::= SEQUENCE
-OCUDUASN_CODE rrc_resume_request1_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(rrc_resume_request1.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE rrc_resume_request1_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(rrc_resume_request1.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void rrc_resume_request1_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("rrcResumeRequest1");
-  rrc_resume_request1.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_rrc_resume_request1_s_fields[] = {
+    {offsetof(rrc_resume_request1_s, rrc_resume_request1),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &rrc_resume_request1_ies_s::desc}};
+static const asn1::table::field_name seq_table_rrc_resume_request1_s_names[] = {{"rrcResumeRequest1", nullptr}};
+const asn1::table::seq_desc          rrc_resume_request1_s::desc             = {
+    {seq_table_rrc_resume_request1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_rrc_resume_request1_s_names};
 
 // UL-CCCH1-MessageType ::= CHOICE
 void ul_ccch1_msg_type_c::set(types::options e)
@@ -79,56 +94,39 @@ void ul_ccch1_msg_type_c::set_msg_class_ext()
 {
   set(types::msg_class_ext);
 }
-void ul_ccch1_msg_type_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::c1:
-      j.write_fieldname("c1");
-      c.to_json(j);
-      break;
-    case types::msg_class_ext:
-      j.write_fieldname("messageClassExtension");
-      j.start_obj();
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_ccch1_msg_type_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ul_ccch1_msg_type_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.pack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_ccch1_msg_type_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_ccch1_msg_type_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.unpack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_ccch1_msg_type_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_ul_ccch1_msg_type_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &ul_ccch1_msg_type_c::c1_c_::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &asn1::table::empty_sequence}};
+static const asn1::table::field_name choice_table_ul_ccch1_msg_type_c_names[] = {{"c1", nullptr},
+                                                                                 {"messageClassExtension", nullptr}};
+const asn1::table::choice_desc ul_ccch1_msg_type_c::desc = {asn1::table::enum_int_type<ul_ccch1_msg_type_c::types>(),
+                                                            ul_ccch1_msg_type_c::types::nof_types,
+                                                            ul_ccch1_msg_type_c::types::nof_exts,
+                                                            ul_ccch1_msg_type_c::types::has_ext,
+                                                            false,
+                                                            choice_table_ul_ccch1_msg_type_c_alternatives,
+                                                            &asn1::table::choice_set<ul_ccch1_msg_type_c>,
+                                                            choice_table_ul_ccch1_msg_type_c_names,
+                                                            "ul_ccch1_msg_type_c",
+                                                            offsetof(ul_ccch1_msg_type_c, type_),
+                                                            offsetof(ul_ccch1_msg_type_c, c),
+                                                            false};
 
 void ul_ccch1_msg_type_c::c1_c_::set(types::options e)
 {
@@ -151,116 +149,76 @@ void ul_ccch1_msg_type_c::c1_c_::set_spare1()
 {
   set(types::spare1);
 }
-void ul_ccch1_msg_type_c::c1_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::rrc_resume_request1:
-      j.write_fieldname("rrcResumeRequest1");
-      c.to_json(j);
-      break;
-    case types::spare3:
-      j.write_null("spare3");
-      break;
-    case types::spare2:
-      j.write_null("spare2");
-      break;
-    case types::spare1:
-      j.write_null("spare1");
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_ccch1_msg_type_c::c1_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ul_ccch1_msg_type_c::c1_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::rrc_resume_request1:
-      HANDLE_CODE(c.pack(bref));
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_ccch1_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_ccch1_msg_type_c::c1_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::rrc_resume_request1:
-      HANDLE_CODE(c.unpack(bref));
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_ccch1_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_ul_ccch1_msg_type_c_c1_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &rrc_resume_request1_s::desc},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr}};
+static const asn1::table::field_name choice_table_ul_ccch1_msg_type_c_c1_c__names[] = {{"rrcResumeRequest1", nullptr},
+                                                                                       {"spare3", nullptr},
+                                                                                       {"spare2", nullptr},
+                                                                                       {"spare1", nullptr}};
+const asn1::table::choice_desc       ul_ccch1_msg_type_c::c1_c_::desc               = {
+    asn1::table::enum_int_type<ul_ccch1_msg_type_c::c1_c_::types>(),
+    ul_ccch1_msg_type_c::c1_c_::types::nof_types,
+    ul_ccch1_msg_type_c::c1_c_::types::nof_exts,
+    ul_ccch1_msg_type_c::c1_c_::types::has_ext,
+    false,
+    choice_table_ul_ccch1_msg_type_c_c1_c__alternatives,
+    &asn1::table::choice_set<ul_ccch1_msg_type_c::c1_c_>,
+    choice_table_ul_ccch1_msg_type_c_c1_c__names,
+    "ul_ccch1_msg_type_c::c1_c_",
+    offsetof(ul_ccch1_msg_type_c::c1_c_, type_),
+    offsetof(ul_ccch1_msg_type_c::c1_c_, c),
+    false};
 
-const char* ul_ccch1_msg_type_c::c1_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"rrcResumeRequest1", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 4, value, "ul_ccch1_msg_type_c::c1_c_::types");
-}
+static const char*           enum_names_ul_ccch1_msg_type_c_c1_c__types_values[] = {"rrcResumeRequest1",
+                                                                                    "spare3",
+                                                                                    "spare2",
+                                                                                    "spare1"};
+const asn1::table::enum_desc ul_ccch1_msg_type_c::c1_c_::types_opts::desc        = {
+    enum_names_ul_ccch1_msg_type_c_c1_c__types_values,
+    4,
+    "ul_ccch1_msg_type_c::c1_c_::types"};
 uint8_t ul_ccch1_msg_type_c::c1_c_::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {1};
   return map_enum_number(numbers, 1, value, "ul_ccch1_msg_type_c::c1_c_::types");
 }
 
-const char* ul_ccch1_msg_type_c::types_opts::to_string() const
-{
-  static const char* names[] = {"c1", "messageClassExtension"};
-  return convert_enum_idx(names, 2, value, "ul_ccch1_msg_type_c::types");
-}
-uint8_t ul_ccch1_msg_type_c::types_opts::to_number() const
+static const char*           enum_names_ul_ccch1_msg_type_c_types_values[] = {"c1", "messageClassExtension"};
+const asn1::table::enum_desc ul_ccch1_msg_type_c::types_opts::desc = {enum_names_ul_ccch1_msg_type_c_types_values,
+                                                                      2,
+                                                                      "ul_ccch1_msg_type_c::types"};
+uint8_t                      ul_ccch1_msg_type_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {1};
   return map_enum_number(numbers, 1, value, "ul_ccch1_msg_type_c::types");
 }
 
 // UL-CCCH1-Message ::= SEQUENCE
-OCUDUASN_CODE ul_ccch1_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(msg.pack(bref));
-
-  bref.align_bytes_zero();
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_ccch1_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(msg.unpack(bref));
-
-  bref.align_bytes();
-
-  return OCUDUASN_SUCCESS;
-}
-void ul_ccch1_msg_s::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.start_obj("UL-CCCH1-Message");
-  j.write_fieldname("message");
-  msg.to_json(j);
-  j.end_obj();
-  j.end_obj();
-  j.end_array();
-}
+static const asn1::table::seq_field  seq_table_ul_ccch1_msg_s_fields[] = {{offsetof(ul_ccch1_msg_s, msg),
+                                                                           asn1::table::seq_field::mandatory,
+                                                                           asn1::table::field_op::choice,
+                                                                           false,
+                                                                           false,
+                                                                           0,
+                                                                           0,
+                                                                           nullptr,
+                                                                           &ul_ccch1_msg_type_c::desc}};
+static const asn1::table::field_name seq_table_ul_ccch1_msg_s_names[]  = {{"message", nullptr}};
+const asn1::table::seq_desc ul_ccch1_msg_s::desc = {{seq_table_ul_ccch1_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+                                                    false,
+                                                    false,
+                                                    nullptr,
+                                                    0,
+                                                    seq_table_ul_ccch1_msg_s_names,
+                                                    "UL-CCCH1-Message"};

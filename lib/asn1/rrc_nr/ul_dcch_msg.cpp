@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg.h"
+#include "ocudu/asn1/asn1_codec.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 
 using namespace asn1;
@@ -14,73 +15,14 @@ using namespace asn1::rrc_nr;
  ******************************************************************************/
 
 // UL-DCCH-MessageType ::= CHOICE
-void ul_dcch_msg_type_c::destroy_()
-{
-  switch (type_) {
-    case types::c1:
-      c.destroy<c1_c_>();
-      break;
-    case types::msg_class_ext:
-      c.destroy<msg_class_ext_c_>();
-      break;
-    default:
-      break;
-  }
-}
-void ul_dcch_msg_type_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::c1:
-      c.init<c1_c_>();
-      break;
-    case types::msg_class_ext:
-      c.init<msg_class_ext_c_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c");
-  }
-}
-ul_dcch_msg_type_c::ul_dcch_msg_type_c(const ul_dcch_msg_type_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::c1:
-      c.init(other.c.get<c1_c_>());
-      break;
-    case types::msg_class_ext:
-      c.init(other.c.get<msg_class_ext_c_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c");
-  }
-}
-ul_dcch_msg_type_c& ul_dcch_msg_type_c::operator=(const ul_dcch_msg_type_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::c1:
-      c.set(other.c.get<c1_c_>());
-      break;
-    case types::msg_class_ext:
-      c.set(other.c.get<msg_class_ext_c_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_ul_dcch_msg_type_c_alternatives[] = {
+    &asn1::table::alternative_ops<ul_dcch_msg_type_c::c1_c_, false>::value,
+    &asn1::table::alternative_ops<ul_dcch_msg_type_c::msg_class_ext_c_, false>::value};
+const asn1::table::choice_storage_desc ul_dcch_msg_type_c::storage_desc = {
+    choice_storage_ul_dcch_msg_type_c_alternatives,
+    2,
+    "ul_dcch_msg_type_c"};
 
-  return *this;
-}
 ul_dcch_msg_type_c::c1_c_& ul_dcch_msg_type_c::set_c1()
 {
   set(types::c1);
@@ -91,115 +33,220 @@ ul_dcch_msg_type_c::msg_class_ext_c_& ul_dcch_msg_type_c::set_msg_class_ext()
   set(types::msg_class_ext);
   return c.get<msg_class_ext_c_>();
 }
-void ul_dcch_msg_type_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::c1:
-      j.write_fieldname("c1");
-      c.get<c1_c_>().to_json(j);
-      break;
-    case types::msg_class_ext:
-      j.write_fieldname("messageClassExtension");
-      c.get<msg_class_ext_c_>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.get<c1_c_>().pack(bref));
-      break;
-    case types::msg_class_ext:
-      HANDLE_CODE(c.get<msg_class_ext_c_>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.get<c1_c_>().unpack(bref));
-      break;
-    case types::msg_class_ext:
-      HANDLE_CODE(c.get<msg_class_ext_c_>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_ul_dcch_msg_type_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<ul_dcch_msg_type_c::c1_c_, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &ul_dcch_msg_type_c::msg_class_ext_c_::desc}};
+static const asn1::table::field_name choice_table_ul_dcch_msg_type_c_names[] = {{"c1", nullptr},
+                                                                                {"messageClassExtension", nullptr}};
+const asn1::table::choice_desc ul_dcch_msg_type_c::desc = {asn1::table::enum_int_type<ul_dcch_msg_type_c::types>(),
+                                                           ul_dcch_msg_type_c::types::nof_types,
+                                                           ul_dcch_msg_type_c::types::nof_exts,
+                                                           ul_dcch_msg_type_c::types::has_ext,
+                                                           false,
+                                                           choice_table_ul_dcch_msg_type_c_alternatives,
+                                                           nullptr,
+                                                           choice_table_ul_dcch_msg_type_c_names,
+                                                           "ul_dcch_msg_type_c",
+                                                           offsetof(ul_dcch_msg_type_c, c.type),
+                                                           offsetof(ul_dcch_msg_type_c, c.value),
+                                                           false,
+                                                           &ul_dcch_msg_type_c::storage_desc};
+
+static const asn1::table::seq_field choice_table_ul_dcch_msg_type_c_c1_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<meas_report_s>::value,
+     &meas_report_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_recfg_complete_s>::value,
+     &rrc_recfg_complete_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_setup_complete_s>::value,
+     &rrc_setup_complete_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_reest_complete_s>::value,
+     &rrc_reest_complete_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<rrc_resume_complete_s>::value,
+     &rrc_resume_complete_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<security_mode_complete_s>::value,
+     &security_mode_complete_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<security_mode_fail_s>::value,
+     &security_mode_fail_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ul_info_transfer_s>::value,
+     &ul_info_transfer_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<location_meas_ind_s>::value,
+     &location_meas_ind_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ue_cap_info_s>::value,
+     &ue_cap_info_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<counter_check_resp_s>::value,
+     &counter_check_resp_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ue_assist_info_s>::value,
+     &ue_assist_info_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<fail_info_s>::value,
+     &fail_info_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ul_info_transfer_mrdc_s>::value,
+     &ul_info_transfer_mrdc_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<scg_fail_info_s>::value,
+     &scg_fail_info_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<scg_fail_info_eutra_s>::value,
+     &scg_fail_info_eutra_s::desc}};
+static const asn1::table::field_name choice_table_ul_dcch_msg_type_c_c1_c__names[] = {
+    {"measurementReport", nullptr},
+    {"rrcReconfigurationComplete", nullptr},
+    {"rrcSetupComplete", nullptr},
+    {"rrcReestablishmentComplete", nullptr},
+    {"rrcResumeComplete", nullptr},
+    {"securityModeComplete", nullptr},
+    {"securityModeFailure", nullptr},
+    {"ulInformationTransfer", nullptr},
+    {"locationMeasurementIndication", nullptr},
+    {"ueCapabilityInformation", nullptr},
+    {"counterCheckResponse", nullptr},
+    {"ueAssistanceInformation", nullptr},
+    {"failureInformation", nullptr},
+    {"ulInformationTransferMRDC", nullptr},
+    {"scgFailureInformation", nullptr},
+    {"scgFailureInformationEUTRA", nullptr}};
+const asn1::table::choice_desc ul_dcch_msg_type_c::c1_c_::desc = {
+    asn1::table::enum_int_type<ul_dcch_msg_type_c::c1_c_::types>(),
+    ul_dcch_msg_type_c::c1_c_::types::nof_types,
+    ul_dcch_msg_type_c::c1_c_::types::nof_exts,
+    ul_dcch_msg_type_c::c1_c_::types::has_ext,
+    false,
+    choice_table_ul_dcch_msg_type_c_c1_c__alternatives,
+    &asn1::table::choice_set<ul_dcch_msg_type_c::c1_c_>,
+    choice_table_ul_dcch_msg_type_c_c1_c__names,
+    "ul_dcch_msg_type_c::c1_c_",
+    offsetof(ul_dcch_msg_type_c::c1_c_, type_),
+    offsetof(ul_dcch_msg_type_c::c1_c_, c),
+    false};
 
 void ul_dcch_msg_type_c::c1_c_::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::meas_report:
-      c = meas_report_s{};
-      break;
-    case types::rrc_recfg_complete:
-      c = rrc_recfg_complete_s{};
-      break;
-    case types::rrc_setup_complete:
-      c = rrc_setup_complete_s{};
-      break;
-    case types::rrc_reest_complete:
-      c = rrc_reest_complete_s{};
-      break;
-    case types::rrc_resume_complete:
-      c = rrc_resume_complete_s{};
-      break;
-    case types::security_mode_complete:
-      c = security_mode_complete_s{};
-      break;
-    case types::security_mode_fail:
-      c = security_mode_fail_s{};
-      break;
-    case types::ul_info_transfer:
-      c = ul_info_transfer_s{};
-      break;
-    case types::location_meas_ind:
-      c = location_meas_ind_s{};
-      break;
-    case types::ue_cap_info:
-      c = ue_cap_info_s{};
-      break;
-    case types::counter_check_resp:
-      c = counter_check_resp_s{};
-      break;
-    case types::ue_assist_info:
-      c = ue_assist_info_s{};
-      break;
-    case types::fail_info:
-      c = fail_info_s{};
-      break;
-    case types::ul_info_transfer_mrdc:
-      c = ul_info_transfer_mrdc_s{};
-      break;
-    case types::scg_fail_info:
-      c = scg_fail_info_s{};
-      break;
-    case types::scg_fail_info_eutra:
-      c = scg_fail_info_eutra_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::c1_c_");
-  }
+  asn1::table::set_any_choice(&c, e, ul_dcch_msg_type_c::c1_c_::desc);
 }
 meas_report_s& ul_dcch_msg_type_c::c1_c_::set_meas_report()
 {
@@ -281,218 +328,27 @@ scg_fail_info_eutra_s& ul_dcch_msg_type_c::c1_c_::set_scg_fail_info_eutra()
   set(types::scg_fail_info_eutra);
   return c.get<scg_fail_info_eutra_s>();
 }
-void ul_dcch_msg_type_c::c1_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::meas_report:
-      j.write_fieldname("measurementReport");
-      c.get<meas_report_s>().to_json(j);
-      break;
-    case types::rrc_recfg_complete:
-      j.write_fieldname("rrcReconfigurationComplete");
-      c.get<rrc_recfg_complete_s>().to_json(j);
-      break;
-    case types::rrc_setup_complete:
-      j.write_fieldname("rrcSetupComplete");
-      c.get<rrc_setup_complete_s>().to_json(j);
-      break;
-    case types::rrc_reest_complete:
-      j.write_fieldname("rrcReestablishmentComplete");
-      c.get<rrc_reest_complete_s>().to_json(j);
-      break;
-    case types::rrc_resume_complete:
-      j.write_fieldname("rrcResumeComplete");
-      c.get<rrc_resume_complete_s>().to_json(j);
-      break;
-    case types::security_mode_complete:
-      j.write_fieldname("securityModeComplete");
-      c.get<security_mode_complete_s>().to_json(j);
-      break;
-    case types::security_mode_fail:
-      j.write_fieldname("securityModeFailure");
-      c.get<security_mode_fail_s>().to_json(j);
-      break;
-    case types::ul_info_transfer:
-      j.write_fieldname("ulInformationTransfer");
-      c.get<ul_info_transfer_s>().to_json(j);
-      break;
-    case types::location_meas_ind:
-      j.write_fieldname("locationMeasurementIndication");
-      c.get<location_meas_ind_s>().to_json(j);
-      break;
-    case types::ue_cap_info:
-      j.write_fieldname("ueCapabilityInformation");
-      c.get<ue_cap_info_s>().to_json(j);
-      break;
-    case types::counter_check_resp:
-      j.write_fieldname("counterCheckResponse");
-      c.get<counter_check_resp_s>().to_json(j);
-      break;
-    case types::ue_assist_info:
-      j.write_fieldname("ueAssistanceInformation");
-      c.get<ue_assist_info_s>().to_json(j);
-      break;
-    case types::fail_info:
-      j.write_fieldname("failureInformation");
-      c.get<fail_info_s>().to_json(j);
-      break;
-    case types::ul_info_transfer_mrdc:
-      j.write_fieldname("ulInformationTransferMRDC");
-      c.get<ul_info_transfer_mrdc_s>().to_json(j);
-      break;
-    case types::scg_fail_info:
-      j.write_fieldname("scgFailureInformation");
-      c.get<scg_fail_info_s>().to_json(j);
-      break;
-    case types::scg_fail_info_eutra:
-      j.write_fieldname("scgFailureInformationEUTRA");
-      c.get<scg_fail_info_eutra_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::c1_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::c1_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::meas_report:
-      HANDLE_CODE(c.get<meas_report_s>().pack(bref));
-      break;
-    case types::rrc_recfg_complete:
-      HANDLE_CODE(c.get<rrc_recfg_complete_s>().pack(bref));
-      break;
-    case types::rrc_setup_complete:
-      HANDLE_CODE(c.get<rrc_setup_complete_s>().pack(bref));
-      break;
-    case types::rrc_reest_complete:
-      HANDLE_CODE(c.get<rrc_reest_complete_s>().pack(bref));
-      break;
-    case types::rrc_resume_complete:
-      HANDLE_CODE(c.get<rrc_resume_complete_s>().pack(bref));
-      break;
-    case types::security_mode_complete:
-      HANDLE_CODE(c.get<security_mode_complete_s>().pack(bref));
-      break;
-    case types::security_mode_fail:
-      HANDLE_CODE(c.get<security_mode_fail_s>().pack(bref));
-      break;
-    case types::ul_info_transfer:
-      HANDLE_CODE(c.get<ul_info_transfer_s>().pack(bref));
-      break;
-    case types::location_meas_ind:
-      HANDLE_CODE(c.get<location_meas_ind_s>().pack(bref));
-      break;
-    case types::ue_cap_info:
-      HANDLE_CODE(c.get<ue_cap_info_s>().pack(bref));
-      break;
-    case types::counter_check_resp:
-      HANDLE_CODE(c.get<counter_check_resp_s>().pack(bref));
-      break;
-    case types::ue_assist_info:
-      HANDLE_CODE(c.get<ue_assist_info_s>().pack(bref));
-      break;
-    case types::fail_info:
-      HANDLE_CODE(c.get<fail_info_s>().pack(bref));
-      break;
-    case types::ul_info_transfer_mrdc:
-      HANDLE_CODE(c.get<ul_info_transfer_mrdc_s>().pack(bref));
-      break;
-    case types::scg_fail_info:
-      HANDLE_CODE(c.get<scg_fail_info_s>().pack(bref));
-      break;
-    case types::scg_fail_info_eutra:
-      HANDLE_CODE(c.get<scg_fail_info_eutra_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::c1_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::meas_report:
-      HANDLE_CODE(c.get<meas_report_s>().unpack(bref));
-      break;
-    case types::rrc_recfg_complete:
-      HANDLE_CODE(c.get<rrc_recfg_complete_s>().unpack(bref));
-      break;
-    case types::rrc_setup_complete:
-      HANDLE_CODE(c.get<rrc_setup_complete_s>().unpack(bref));
-      break;
-    case types::rrc_reest_complete:
-      HANDLE_CODE(c.get<rrc_reest_complete_s>().unpack(bref));
-      break;
-    case types::rrc_resume_complete:
-      HANDLE_CODE(c.get<rrc_resume_complete_s>().unpack(bref));
-      break;
-    case types::security_mode_complete:
-      HANDLE_CODE(c.get<security_mode_complete_s>().unpack(bref));
-      break;
-    case types::security_mode_fail:
-      HANDLE_CODE(c.get<security_mode_fail_s>().unpack(bref));
-      break;
-    case types::ul_info_transfer:
-      HANDLE_CODE(c.get<ul_info_transfer_s>().unpack(bref));
-      break;
-    case types::location_meas_ind:
-      HANDLE_CODE(c.get<location_meas_ind_s>().unpack(bref));
-      break;
-    case types::ue_cap_info:
-      HANDLE_CODE(c.get<ue_cap_info_s>().unpack(bref));
-      break;
-    case types::counter_check_resp:
-      HANDLE_CODE(c.get<counter_check_resp_s>().unpack(bref));
-      break;
-    case types::ue_assist_info:
-      HANDLE_CODE(c.get<ue_assist_info_s>().unpack(bref));
-      break;
-    case types::fail_info:
-      HANDLE_CODE(c.get<fail_info_s>().unpack(bref));
-      break;
-    case types::ul_info_transfer_mrdc:
-      HANDLE_CODE(c.get<ul_info_transfer_mrdc_s>().unpack(bref));
-      break;
-    case types::scg_fail_info:
-      HANDLE_CODE(c.get<scg_fail_info_s>().unpack(bref));
-      break;
-    case types::scg_fail_info_eutra:
-      HANDLE_CODE(c.get<scg_fail_info_eutra_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* ul_dcch_msg_type_c::c1_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"measurementReport",
-                                "rrcReconfigurationComplete",
-                                "rrcSetupComplete",
-                                "rrcReestablishmentComplete",
-                                "rrcResumeComplete",
-                                "securityModeComplete",
-                                "securityModeFailure",
-                                "ulInformationTransfer",
-                                "locationMeasurementIndication",
-                                "ueCapabilityInformation",
-                                "counterCheckResponse",
-                                "ueAssistanceInformation",
-                                "failureInformation",
-                                "ulInformationTransferMRDC",
-                                "scgFailureInformation",
-                                "scgFailureInformationEUTRA"};
-  return convert_enum_idx(names, 16, value, "ul_dcch_msg_type_c::c1_c_::types");
-}
+static const char*           enum_names_ul_dcch_msg_type_c_c1_c__types_values[] = {"measurementReport",
+                                                                                   "rrcReconfigurationComplete",
+                                                                                   "rrcSetupComplete",
+                                                                                   "rrcReestablishmentComplete",
+                                                                                   "rrcResumeComplete",
+                                                                                   "securityModeComplete",
+                                                                                   "securityModeFailure",
+                                                                                   "ulInformationTransfer",
+                                                                                   "locationMeasurementIndication",
+                                                                                   "ueCapabilityInformation",
+                                                                                   "counterCheckResponse",
+                                                                                   "ueAssistanceInformation",
+                                                                                   "failureInformation",
+                                                                                   "ulInformationTransferMRDC",
+                                                                                   "scgFailureInformation",
+                                                                                   "scgFailureInformationEUTRA"};
+const asn1::table::enum_desc ul_dcch_msg_type_c::c1_c_::types_opts::desc        = {
+    enum_names_ul_dcch_msg_type_c_c1_c__types_values,
+    16,
+    "ul_dcch_msg_type_c::c1_c_::types"};
 
 void ul_dcch_msg_type_c::msg_class_ext_c_::set(types::options e)
 {
@@ -507,109 +363,181 @@ void ul_dcch_msg_type_c::msg_class_ext_c_::set_msg_class_ext_future_r16()
 {
   set(types::msg_class_ext_future_r16);
 }
-void ul_dcch_msg_type_c::msg_class_ext_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::c2:
-      j.write_fieldname("c2");
-      c.to_json(j);
-      break;
-    case types::msg_class_ext_future_r16:
-      j.write_fieldname("messageClassExtensionFuture-r16");
-      j.start_obj();
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::msg_class_ext_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::c2:
-      HANDLE_CODE(c.pack(bref));
-      break;
-    case types::msg_class_ext_future_r16:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::msg_class_ext_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::c2:
-      HANDLE_CODE(c.unpack(bref));
-      break;
-    case types::msg_class_ext_future_r16:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::msg_class_ext_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_ul_dcch_msg_type_c_msg_class_ext_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &asn1::table::empty_sequence}};
+static const asn1::table::field_name choice_table_ul_dcch_msg_type_c_msg_class_ext_c__names[] = {
+    {"c2", nullptr},
+    {"messageClassExtensionFuture-r16", nullptr}};
+const asn1::table::choice_desc ul_dcch_msg_type_c::msg_class_ext_c_::desc = {
+    asn1::table::enum_int_type<ul_dcch_msg_type_c::msg_class_ext_c_::types>(),
+    ul_dcch_msg_type_c::msg_class_ext_c_::types::nof_types,
+    ul_dcch_msg_type_c::msg_class_ext_c_::types::nof_exts,
+    ul_dcch_msg_type_c::msg_class_ext_c_::types::has_ext,
+    false,
+    choice_table_ul_dcch_msg_type_c_msg_class_ext_c__alternatives,
+    &asn1::table::choice_set<ul_dcch_msg_type_c::msg_class_ext_c_>,
+    choice_table_ul_dcch_msg_type_c_msg_class_ext_c__names,
+    "ul_dcch_msg_type_c::msg_class_ext_c_",
+    offsetof(ul_dcch_msg_type_c::msg_class_ext_c_, type_),
+    offsetof(ul_dcch_msg_type_c::msg_class_ext_c_, c),
+    false};
+
+static const asn1::table::seq_field choice_table_ul_dcch_msg_type_c_msg_class_ext_c__c2_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ul_ded_msg_segment_r16_s>::value,
+     &ul_ded_msg_segment_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ded_sib_request_r16_s>::value,
+     &ded_sib_request_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<mcg_fail_info_r16_s>::value,
+     &mcg_fail_info_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ue_info_resp_r16_s>::value,
+     &ue_info_resp_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<sidelink_ue_info_nr_r16_s>::value,
+     &sidelink_ue_info_nr_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ul_info_transfer_irat_r16_s>::value,
+     &ul_info_transfer_irat_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<iab_other_info_r16_s>::value,
+     &iab_other_info_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<mb_si_nterest_ind_r17_s>::value,
+     &mb_si_nterest_ind_r17_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<ue_positioning_assist_info_r17_s>::value,
+     &ue_positioning_assist_info_r17_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<measurement_report_app_layer_r17_s>::value,
+     &measurement_report_app_layer_r17_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<indirect_path_fail_info_r18_s>::value,
+     &indirect_path_fail_info_r18_s::desc},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr}};
+static const asn1::table::field_name choice_table_ul_dcch_msg_type_c_msg_class_ext_c__c2_c__names[] = {
+    {"ulDedicatedMessageSegment-r16", nullptr},
+    {"dedicatedSIBRequest-r16", nullptr},
+    {"mcgFailureInformation-r16", nullptr},
+    {"ueInformationResponse-r16", nullptr},
+    {"sidelinkUEInformationNR-r16", nullptr},
+    {"ulInformationTransferIRAT-r16", nullptr},
+    {"iabOtherInformation-r16", nullptr},
+    {"mbsInterestIndication-r17", nullptr},
+    {"uePositioningAssistanceInfo-r17", nullptr},
+    {"measurementReportAppLayer-r17", nullptr},
+    {"indirectPathFailureInformation-r18", nullptr},
+    {"spare5", nullptr},
+    {"spare4", nullptr},
+    {"spare3", nullptr},
+    {"spare2", nullptr},
+    {"spare1", nullptr}};
+const asn1::table::choice_desc ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::desc = {
+    asn1::table::enum_int_type<ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types>(),
+    ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types::nof_types,
+    ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types::nof_exts,
+    ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types::has_ext,
+    false,
+    choice_table_ul_dcch_msg_type_c_msg_class_ext_c__c2_c__alternatives,
+    &asn1::table::choice_set<ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_>,
+    choice_table_ul_dcch_msg_type_c_msg_class_ext_c__c2_c__names,
+    "ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_",
+    offsetof(ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_, type_),
+    offsetof(ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_, c),
+    false};
 
 void ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ul_ded_msg_segment_r16:
-      c = ul_ded_msg_segment_r16_s{};
-      break;
-    case types::ded_sib_request_r16:
-      c = ded_sib_request_r16_s{};
-      break;
-    case types::mcg_fail_info_r16:
-      c = mcg_fail_info_r16_s{};
-      break;
-    case types::ue_info_resp_r16:
-      c = ue_info_resp_r16_s{};
-      break;
-    case types::sidelink_ue_info_nr_r16:
-      c = sidelink_ue_info_nr_r16_s{};
-      break;
-    case types::ul_info_transfer_irat_r16:
-      c = ul_info_transfer_irat_r16_s{};
-      break;
-    case types::iab_other_info_r16:
-      c = iab_other_info_r16_s{};
-      break;
-    case types::mbs_interest_ind_r17:
-      c = mb_si_nterest_ind_r17_s{};
-      break;
-    case types::ue_positioning_assist_info_r17:
-      c = ue_positioning_assist_info_r17_s{};
-      break;
-    case types::meas_report_app_layer_r17:
-      c = measurement_report_app_layer_r17_s{};
-      break;
-    case types::indirect_path_fail_info_r18:
-      c = indirect_path_fail_info_r18_s{};
-      break;
-    case types::spare5:
-      break;
-    case types::spare4:
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_");
-  }
+  asn1::table::set_any_choice(&c, e, ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::desc);
 }
 ul_ded_msg_segment_r16_s& ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::set_ul_ded_msg_segment_r16()
 {
@@ -686,251 +614,66 @@ void ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::set_spare1()
 {
   set(types::spare1);
 }
-void ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ul_ded_msg_segment_r16:
-      j.write_fieldname("ulDedicatedMessageSegment-r16");
-      c.get<ul_ded_msg_segment_r16_s>().to_json(j);
-      break;
-    case types::ded_sib_request_r16:
-      j.write_fieldname("dedicatedSIBRequest-r16");
-      c.get<ded_sib_request_r16_s>().to_json(j);
-      break;
-    case types::mcg_fail_info_r16:
-      j.write_fieldname("mcgFailureInformation-r16");
-      c.get<mcg_fail_info_r16_s>().to_json(j);
-      break;
-    case types::ue_info_resp_r16:
-      j.write_fieldname("ueInformationResponse-r16");
-      c.get<ue_info_resp_r16_s>().to_json(j);
-      break;
-    case types::sidelink_ue_info_nr_r16:
-      j.write_fieldname("sidelinkUEInformationNR-r16");
-      c.get<sidelink_ue_info_nr_r16_s>().to_json(j);
-      break;
-    case types::ul_info_transfer_irat_r16:
-      j.write_fieldname("ulInformationTransferIRAT-r16");
-      c.get<ul_info_transfer_irat_r16_s>().to_json(j);
-      break;
-    case types::iab_other_info_r16:
-      j.write_fieldname("iabOtherInformation-r16");
-      c.get<iab_other_info_r16_s>().to_json(j);
-      break;
-    case types::mbs_interest_ind_r17:
-      j.write_fieldname("mbsInterestIndication-r17");
-      c.get<mb_si_nterest_ind_r17_s>().to_json(j);
-      break;
-    case types::ue_positioning_assist_info_r17:
-      j.write_fieldname("uePositioningAssistanceInfo-r17");
-      c.get<ue_positioning_assist_info_r17_s>().to_json(j);
-      break;
-    case types::meas_report_app_layer_r17:
-      j.write_fieldname("measurementReportAppLayer-r17");
-      c.get<measurement_report_app_layer_r17_s>().to_json(j);
-      break;
-    case types::indirect_path_fail_info_r18:
-      j.write_fieldname("indirectPathFailureInformation-r18");
-      c.get<indirect_path_fail_info_r18_s>().to_json(j);
-      break;
-    case types::spare5:
-      j.write_null("spare5");
-      break;
-    case types::spare4:
-      j.write_null("spare4");
-      break;
-    case types::spare3:
-      j.write_null("spare3");
-      break;
-    case types::spare2:
-      j.write_null("spare2");
-      break;
-    case types::spare1:
-      j.write_null("spare1");
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::ul_ded_msg_segment_r16:
-      HANDLE_CODE(c.get<ul_ded_msg_segment_r16_s>().pack(bref));
-      break;
-    case types::ded_sib_request_r16:
-      HANDLE_CODE(c.get<ded_sib_request_r16_s>().pack(bref));
-      break;
-    case types::mcg_fail_info_r16:
-      HANDLE_CODE(c.get<mcg_fail_info_r16_s>().pack(bref));
-      break;
-    case types::ue_info_resp_r16:
-      HANDLE_CODE(c.get<ue_info_resp_r16_s>().pack(bref));
-      break;
-    case types::sidelink_ue_info_nr_r16:
-      HANDLE_CODE(c.get<sidelink_ue_info_nr_r16_s>().pack(bref));
-      break;
-    case types::ul_info_transfer_irat_r16:
-      HANDLE_CODE(c.get<ul_info_transfer_irat_r16_s>().pack(bref));
-      break;
-    case types::iab_other_info_r16:
-      HANDLE_CODE(c.get<iab_other_info_r16_s>().pack(bref));
-      break;
-    case types::mbs_interest_ind_r17:
-      HANDLE_CODE(c.get<mb_si_nterest_ind_r17_s>().pack(bref));
-      break;
-    case types::ue_positioning_assist_info_r17:
-      HANDLE_CODE(c.get<ue_positioning_assist_info_r17_s>().pack(bref));
-      break;
-    case types::meas_report_app_layer_r17:
-      HANDLE_CODE(c.get<measurement_report_app_layer_r17_s>().pack(bref));
-      break;
-    case types::indirect_path_fail_info_r18:
-      HANDLE_CODE(c.get<indirect_path_fail_info_r18_s>().pack(bref));
-      break;
-    case types::spare5:
-      break;
-    case types::spare4:
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::ul_ded_msg_segment_r16:
-      HANDLE_CODE(c.get<ul_ded_msg_segment_r16_s>().unpack(bref));
-      break;
-    case types::ded_sib_request_r16:
-      HANDLE_CODE(c.get<ded_sib_request_r16_s>().unpack(bref));
-      break;
-    case types::mcg_fail_info_r16:
-      HANDLE_CODE(c.get<mcg_fail_info_r16_s>().unpack(bref));
-      break;
-    case types::ue_info_resp_r16:
-      HANDLE_CODE(c.get<ue_info_resp_r16_s>().unpack(bref));
-      break;
-    case types::sidelink_ue_info_nr_r16:
-      HANDLE_CODE(c.get<sidelink_ue_info_nr_r16_s>().unpack(bref));
-      break;
-    case types::ul_info_transfer_irat_r16:
-      HANDLE_CODE(c.get<ul_info_transfer_irat_r16_s>().unpack(bref));
-      break;
-    case types::iab_other_info_r16:
-      HANDLE_CODE(c.get<iab_other_info_r16_s>().unpack(bref));
-      break;
-    case types::mbs_interest_ind_r17:
-      HANDLE_CODE(c.get<mb_si_nterest_ind_r17_s>().unpack(bref));
-      break;
-    case types::ue_positioning_assist_info_r17:
-      HANDLE_CODE(c.get<ue_positioning_assist_info_r17_s>().unpack(bref));
-      break;
-    case types::meas_report_app_layer_r17:
-      HANDLE_CODE(c.get<measurement_report_app_layer_r17_s>().unpack(bref));
-      break;
-    case types::indirect_path_fail_info_r18:
-      HANDLE_CODE(c.get<indirect_path_fail_info_r18_s>().unpack(bref));
-      break;
-    case types::spare5:
-      break;
-    case types::spare4:
-      break;
-    case types::spare3:
-      break;
-    case types::spare2:
-      break;
-    case types::spare1:
-      break;
-    default:
-      log_invalid_choice_id(type_, "ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"ulDedicatedMessageSegment-r16",
-                                "dedicatedSIBRequest-r16",
-                                "mcgFailureInformation-r16",
-                                "ueInformationResponse-r16",
-                                "sidelinkUEInformationNR-r16",
-                                "ulInformationTransferIRAT-r16",
-                                "iabOtherInformation-r16",
-                                "mbsInterestIndication-r17",
-                                "uePositioningAssistanceInfo-r17",
-                                "measurementReportAppLayer-r17",
-                                "indirectPathFailureInformation-r18",
-                                "spare5",
-                                "spare4",
-                                "spare3",
-                                "spare2",
-                                "spare1"};
-  return convert_enum_idx(names, 16, value, "ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types");
-}
+static const char* enum_names_ul_dcch_msg_type_c_msg_class_ext_c__c2_c__types_values[] = {
+    "ulDedicatedMessageSegment-r16",
+    "dedicatedSIBRequest-r16",
+    "mcgFailureInformation-r16",
+    "ueInformationResponse-r16",
+    "sidelinkUEInformationNR-r16",
+    "ulInformationTransferIRAT-r16",
+    "iabOtherInformation-r16",
+    "mbsInterestIndication-r17",
+    "uePositioningAssistanceInfo-r17",
+    "measurementReportAppLayer-r17",
+    "indirectPathFailureInformation-r18",
+    "spare5",
+    "spare4",
+    "spare3",
+    "spare2",
+    "spare1"};
+const asn1::table::enum_desc ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types_opts::desc = {
+    enum_names_ul_dcch_msg_type_c_msg_class_ext_c__c2_c__types_values,
+    16,
+    "ul_dcch_msg_type_c::msg_class_ext_c_::c2_c_::types"};
 
-const char* ul_dcch_msg_type_c::msg_class_ext_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"c2", "messageClassExtensionFuture-r16"};
-  return convert_enum_idx(names, 2, value, "ul_dcch_msg_type_c::msg_class_ext_c_::types");
-}
+static const char*           enum_names_ul_dcch_msg_type_c_msg_class_ext_c__types_values[] = {"c2",
+                                                                                              "messageClassExtensionFuture-r16"};
+const asn1::table::enum_desc ul_dcch_msg_type_c::msg_class_ext_c_::types_opts::desc        = {
+    enum_names_ul_dcch_msg_type_c_msg_class_ext_c__types_values,
+    2,
+    "ul_dcch_msg_type_c::msg_class_ext_c_::types"};
 uint8_t ul_dcch_msg_type_c::msg_class_ext_c_::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {2};
   return map_enum_number(numbers, 1, value, "ul_dcch_msg_type_c::msg_class_ext_c_::types");
 }
 
-const char* ul_dcch_msg_type_c::types_opts::to_string() const
-{
-  static const char* names[] = {"c1", "messageClassExtension"};
-  return convert_enum_idx(names, 2, value, "ul_dcch_msg_type_c::types");
-}
-uint8_t ul_dcch_msg_type_c::types_opts::to_number() const
+static const char*           enum_names_ul_dcch_msg_type_c_types_values[] = {"c1", "messageClassExtension"};
+const asn1::table::enum_desc ul_dcch_msg_type_c::types_opts::desc         = {enum_names_ul_dcch_msg_type_c_types_values,
+                                                                             2,
+                                                                             "ul_dcch_msg_type_c::types"};
+uint8_t                      ul_dcch_msg_type_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {1};
   return map_enum_number(numbers, 1, value, "ul_dcch_msg_type_c::types");
 }
 
 // UL-DCCH-Message ::= SEQUENCE
-OCUDUASN_CODE ul_dcch_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(msg.pack(bref));
-
-  bref.align_bytes_zero();
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE ul_dcch_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(msg.unpack(bref));
-
-  bref.align_bytes();
-
-  return OCUDUASN_SUCCESS;
-}
-void ul_dcch_msg_s::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.start_obj("UL-DCCH-Message");
-  j.write_fieldname("message");
-  msg.to_json(j);
-  j.end_obj();
-  j.end_obj();
-  j.end_array();
-}
+static const asn1::table::seq_field  seq_table_ul_dcch_msg_s_fields[] = {{offsetof(ul_dcch_msg_s, msg),
+                                                                          asn1::table::seq_field::mandatory,
+                                                                          asn1::table::field_op::choice,
+                                                                          false,
+                                                                          false,
+                                                                          0,
+                                                                          0,
+                                                                          nullptr,
+                                                                          &ul_dcch_msg_type_c::desc}};
+static const asn1::table::field_name seq_table_ul_dcch_msg_s_names[]  = {{"message", nullptr}};
+const asn1::table::seq_desc ul_dcch_msg_s::desc = {{seq_table_ul_dcch_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+                                                   false,
+                                                   false,
+                                                   nullptr,
+                                                   0,
+                                                   seq_table_ul_dcch_msg_s_names,
+                                                   "UL-DCCH-Message"};

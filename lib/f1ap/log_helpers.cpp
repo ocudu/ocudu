@@ -18,7 +18,7 @@ struct formatter<asn1::f1ap::f1ap_pdu_c> : public basic_parser {
   auto format(const asn1::f1ap::f1ap_pdu_c& p, FormatContext& ctx) const
   {
     asn1::json_writer js;
-    p.to_json(js);
+    asn1::to_json(js, p);
     return fmt::format_to(ctx.out(), "{}", js.to_string());
   }
 };

@@ -25,7 +25,7 @@
 
 #include "tests/fuzz/cu_cp/cu_cp_fuzz_env.h"
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/ngap/ngap_message.h"
 #include "ocudu/ocudulog/ocudulog.h"
 #include <cstddef>

@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/common.h"
+#include "ocudu/asn1/asn1_codec.h"
 
 using namespace asn1;
 using namespace asn1::rrc_nr;
@@ -13,214 +14,101 @@ using namespace asn1::rrc_nr;
  ******************************************************************************/
 
 // SubcarrierSpacing ::= ENUMERATED
-const char* subcarrier_spacing_opts::to_string() const
-{
-  static const char* names[] = {
-      "kHz15", "kHz30", "kHz60", "kHz120", "kHz240", "kHz480-v1700", "kHz960-v1700", "spare1"};
-  return convert_enum_idx(names, 8, value, "subcarrier_spacing_e");
-}
-uint16_t subcarrier_spacing_opts::to_number() const
+static const char* enum_names_subcarrier_spacing_e_values[] =
+    {"kHz15", "kHz30", "kHz60", "kHz120", "kHz240", "kHz480-v1700", "kHz960-v1700", "spare1"};
+const asn1::table::enum_desc subcarrier_spacing_opts::desc = {enum_names_subcarrier_spacing_e_values,
+                                                              8,
+                                                              "subcarrier_spacing_e"};
+uint16_t                     subcarrier_spacing_opts::to_number() const
 {
   static const uint16_t numbers[] = {15, 30, 60, 120, 240, 480, 960};
   return map_enum_number(numbers, 7, value, "subcarrier_spacing_e");
 }
 
 // ServingCellAndBWP-Id-r17 ::= SEQUENCE
-OCUDUASN_CODE serving_cell_and_bwp_id_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, servingcell_r17, (uint8_t)0u, (uint8_t)31u));
-  HANDLE_CODE(pack_integer(bref, bwp_r17, (uint8_t)0u, (uint8_t)4u));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE serving_cell_and_bwp_id_r17_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(servingcell_r17, bref, (uint8_t)0u, (uint8_t)31u));
-  HANDLE_CODE(unpack_integer(bwp_r17, bref, (uint8_t)0u, (uint8_t)4u));
-
-  return OCUDUASN_SUCCESS;
-}
-void serving_cell_and_bwp_id_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("servingcell-r17", servingcell_r17);
-  j.write_int("bwp-r17", bwp_r17);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_serving_cell_and_bwp_id_r17_s_fields[] = {
+    {offsetof(serving_cell_and_bwp_id_r17_s, servingcell_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(31),
+     nullptr},
+    {offsetof(serving_cell_and_bwp_id_r17_s, bwp_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(4),
+     nullptr}};
+static const asn1::table::field_name seq_table_serving_cell_and_bwp_id_r17_s_names[] = {{"servingcell-r17", nullptr},
+                                                                                        {"bwp-r17", nullptr}};
+const asn1::table::seq_desc          serving_cell_and_bwp_id_r17_s::desc             = {
+    {seq_table_serving_cell_and_bwp_id_r17_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_serving_cell_and_bwp_id_r17_s_names};
 
 // PLMN-Identity ::= SEQUENCE
-OCUDUASN_CODE plmn_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(mcc_present, 1));
-
-  if (mcc_present) {
-    HANDLE_CODE(pack_fixed_seq_of(bref, mcc, mcc.size(), integer_packer<uint8_t>(0, 9)));
-  }
-  HANDLE_CODE(pack_dyn_seq_of(bref, mnc, 2, 3, integer_packer<uint8_t>(0, 9)));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE plmn_id_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(mcc_present, 1));
-
-  if (mcc_present) {
-    HANDLE_CODE(unpack_fixed_seq_of(mcc, bref, mcc.size(), integer_packer<uint8_t>(0, 9)));
-  }
-  HANDLE_CODE(unpack_dyn_seq_of(mnc, bref, 2, 3, integer_packer<uint8_t>(0, 9)));
-
-  return OCUDUASN_SUCCESS;
-}
-void plmn_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (mcc_present) {
-    j.start_array("mcc");
-    for (const auto& e1 : mcc) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  j.start_array("mnc");
-  for (const auto& e1 : mnc) {
-    j.write_int(e1);
-  }
-  j.end_array();
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_plmn_id_s_fields[] = {
+    {offsetof(plmn_id_s, mcc),
+     (int32_t)offsetof(plmn_id_s, mcc_present),
+     asn1::table::field_op::codec,
+     false,
+     false,
+     3,
+     3,
+     &asn1::table::list_codec<decltype(plmn_id_s::mcc),
+                              asn1::table::int_json,
+                              asn1::table::int_items<true, INT64_C(0), UINT64_C(9), false, false>>::value},
+    {offsetof(plmn_id_s, mnc),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     2,
+     3,
+     &asn1::table::list_codec<decltype(plmn_id_s::mnc),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(9), false, false>>::value}};
+static const asn1::table::field_name seq_table_plmn_id_s_names[] = {{"mcc", nullptr}, {"mnc", nullptr}};
+static const asn1::table::seq_opt    seq_table_plmn_id_s_opts[]  = {{0, (int32_t)offsetof(plmn_id_s, mcc_present)}};
+const asn1::table::seq_desc          plmn_id_s::desc             = {
+    {seq_table_plmn_id_s_fields, 2, UINT64_C(0x2), seq_table_plmn_id_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_plmn_id_s_names};
 
 // SRS-PeriodicityAndOffset ::= CHOICE
-void srs_periodicity_and_offset_c::destroy_() {}
-void srs_periodicity_and_offset_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-srs_periodicity_and_offset_c::srs_periodicity_and_offset_c(const srs_periodicity_and_offset_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::sl1:
-      break;
-    case types::sl2:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl4:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl5:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl8:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl10:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl16:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl20:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl32:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl40:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl64:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl80:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl160:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::sl320:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::sl640:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::sl1280:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::sl2560:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_periodicity_and_offset_c");
-  }
-}
-srs_periodicity_and_offset_c& srs_periodicity_and_offset_c::operator=(const srs_periodicity_and_offset_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::sl1:
-      break;
-    case types::sl2:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl4:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl5:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl8:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl10:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl16:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl20:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl32:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl40:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl64:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl80:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl160:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::sl320:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::sl640:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::sl1280:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::sl2560:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_periodicity_and_offset_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_srs_periodicity_and_offset_c_alternatives[] = {
+    nullptr,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value};
+const asn1::table::choice_storage_desc srs_periodicity_and_offset_c::storage_desc = {
+    choice_storage_srs_periodicity_and_offset_c_alternatives,
+    17,
+    "srs_periodicity_and_offset_c"};
 
-  return *this;
-}
 void srs_periodicity_and_offset_c::set_sl1()
 {
   set(types::sl1);
@@ -305,210 +193,189 @@ uint16_t& srs_periodicity_and_offset_c::set_sl2560()
   set(types::sl2560);
   return c.get<uint16_t>();
 }
-void srs_periodicity_and_offset_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::sl1:
-      j.write_null("sl1");
-      break;
-    case types::sl2:
-      j.write_int("sl2", c.get<uint8_t>());
-      break;
-    case types::sl4:
-      j.write_int("sl4", c.get<uint8_t>());
-      break;
-    case types::sl5:
-      j.write_int("sl5", c.get<uint8_t>());
-      break;
-    case types::sl8:
-      j.write_int("sl8", c.get<uint8_t>());
-      break;
-    case types::sl10:
-      j.write_int("sl10", c.get<uint8_t>());
-      break;
-    case types::sl16:
-      j.write_int("sl16", c.get<uint8_t>());
-      break;
-    case types::sl20:
-      j.write_int("sl20", c.get<uint8_t>());
-      break;
-    case types::sl32:
-      j.write_int("sl32", c.get<uint8_t>());
-      break;
-    case types::sl40:
-      j.write_int("sl40", c.get<uint8_t>());
-      break;
-    case types::sl64:
-      j.write_int("sl64", c.get<uint8_t>());
-      break;
-    case types::sl80:
-      j.write_int("sl80", c.get<uint8_t>());
-      break;
-    case types::sl160:
-      j.write_int("sl160", c.get<uint8_t>());
-      break;
-    case types::sl320:
-      j.write_int("sl320", c.get<uint16_t>());
-      break;
-    case types::sl640:
-      j.write_int("sl640", c.get<uint16_t>());
-      break;
-    case types::sl1280:
-      j.write_int("sl1280", c.get<uint16_t>());
-      break;
-    case types::sl2560:
-      j.write_int("sl2560", c.get<uint16_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_periodicity_and_offset_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_periodicity_and_offset_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::sl1:
-      break;
-    case types::sl2:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)1u));
-      break;
-    case types::sl4:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)3u));
-      break;
-    case types::sl5:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)4u));
-      break;
-    case types::sl8:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)7u));
-      break;
-    case types::sl10:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)9u));
-      break;
-    case types::sl16:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)15u));
-      break;
-    case types::sl20:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)19u));
-      break;
-    case types::sl32:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)31u));
-      break;
-    case types::sl40:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)39u));
-      break;
-    case types::sl64:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::sl80:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)79u));
-      break;
-    case types::sl160:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)159u));
-      break;
-    case types::sl320:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)319u));
-      break;
-    case types::sl640:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)639u));
-      break;
-    case types::sl1280:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)1279u));
-      break;
-    case types::sl2560:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)2559u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_periodicity_and_offset_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_periodicity_and_offset_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::sl1:
-      break;
-    case types::sl2:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)1u));
-      break;
-    case types::sl4:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)3u));
-      break;
-    case types::sl5:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)4u));
-      break;
-    case types::sl8:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)7u));
-      break;
-    case types::sl10:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)9u));
-      break;
-    case types::sl16:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)15u));
-      break;
-    case types::sl20:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)19u));
-      break;
-    case types::sl32:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)31u));
-      break;
-    case types::sl40:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)39u));
-      break;
-    case types::sl64:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::sl80:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)79u));
-      break;
-    case types::sl160:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)159u));
-      break;
-    case types::sl320:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)319u));
-      break;
-    case types::sl640:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)639u));
-      break;
-    case types::sl1280:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)1279u));
-      break;
-    case types::sl2560:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)2559u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_periodicity_and_offset_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_srs_periodicity_and_offset_c_alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(3),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(4),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(7),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(9),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(19),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(31),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(39),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(79),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(159),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(319),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(639),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1279),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(2559),
+     nullptr}};
+static const asn1::table::field_name choice_table_srs_periodicity_and_offset_c_names[] = {{"sl1", nullptr},
+                                                                                          {"sl2", nullptr},
+                                                                                          {"sl4", nullptr},
+                                                                                          {"sl5", nullptr},
+                                                                                          {"sl8", nullptr},
+                                                                                          {"sl10", nullptr},
+                                                                                          {"sl16", nullptr},
+                                                                                          {"sl20", nullptr},
+                                                                                          {"sl32", nullptr},
+                                                                                          {"sl40", nullptr},
+                                                                                          {"sl64", nullptr},
+                                                                                          {"sl80", nullptr},
+                                                                                          {"sl160", nullptr},
+                                                                                          {"sl320", nullptr},
+                                                                                          {"sl640", nullptr},
+                                                                                          {"sl1280", nullptr},
+                                                                                          {"sl2560", nullptr}};
+const asn1::table::choice_desc       srs_periodicity_and_offset_c::desc                = {
+    asn1::table::enum_int_type<srs_periodicity_and_offset_c::types>(),
+    srs_periodicity_and_offset_c::types::nof_types,
+    srs_periodicity_and_offset_c::types::nof_exts,
+    srs_periodicity_and_offset_c::types::has_ext,
+    false,
+    choice_table_srs_periodicity_and_offset_c_alternatives,
+    nullptr,
+    choice_table_srs_periodicity_and_offset_c_names,
+    "srs_periodicity_and_offset_c",
+    offsetof(srs_periodicity_and_offset_c, c.type),
+    offsetof(srs_periodicity_and_offset_c, c.value),
+    false,
+    &srs_periodicity_and_offset_c::storage_desc};
 
-const char* srs_periodicity_and_offset_c::types_opts::to_string() const
-{
-  static const char* names[] = {"sl1",
-                                "sl2",
-                                "sl4",
-                                "sl5",
-                                "sl8",
-                                "sl10",
-                                "sl16",
-                                "sl20",
-                                "sl32",
-                                "sl40",
-                                "sl64",
-                                "sl80",
-                                "sl160",
-                                "sl320",
-                                "sl640",
-                                "sl1280",
-                                "sl2560"};
-  return convert_enum_idx(names, 17, value, "srs_periodicity_and_offset_c::types");
-}
+static const char*           enum_names_srs_periodicity_and_offset_c_types_values[] = {"sl1",
+                                                                                       "sl2",
+                                                                                       "sl4",
+                                                                                       "sl5",
+                                                                                       "sl8",
+                                                                                       "sl10",
+                                                                                       "sl16",
+                                                                                       "sl20",
+                                                                                       "sl32",
+                                                                                       "sl40",
+                                                                                       "sl64",
+                                                                                       "sl80",
+                                                                                       "sl160",
+                                                                                       "sl320",
+                                                                                       "sl640",
+                                                                                       "sl1280",
+                                                                                       "sl2560"};
+const asn1::table::enum_desc srs_periodicity_and_offset_c::types_opts::desc         = {
+    enum_names_srs_periodicity_and_offset_c_types_values,
+    17,
+    "srs_periodicity_and_offset_c::types"};
 uint16_t srs_periodicity_and_offset_c::types_opts::to_number() const
 {
   static const uint16_t numbers[] = {1, 2, 4, 5, 8, 10, 16, 20, 32, 40, 64, 80, 160, 320, 640, 1280, 2560};
@@ -516,111 +383,45 @@ uint16_t srs_periodicity_and_offset_c::types_opts::to_number() const
 }
 
 // SRS-SpatialRelationInfo ::= SEQUENCE
-OCUDUASN_CODE srs_spatial_relation_info_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(serving_cell_id_present, 1));
+static const asn1::table::seq_field seq_table_srs_spatial_relation_info_s_fields[] = {
+    {offsetof(srs_spatial_relation_info_s, serving_cell_id),
+     (int32_t)offsetof(srs_spatial_relation_info_s, serving_cell_id_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(31),
+     nullptr},
+    {offsetof(srs_spatial_relation_info_s, ref_sig),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_spatial_relation_info_s::ref_sig_c_::desc}};
+static const asn1::table::field_name seq_table_srs_spatial_relation_info_s_names[] = {{"servingCellId", nullptr},
+                                                                                      {"referenceSignal", nullptr}};
+static const asn1::table::seq_opt    seq_table_srs_spatial_relation_info_s_opts[]  = {
+    {0, (int32_t)offsetof(srs_spatial_relation_info_s, serving_cell_id_present)}};
+const asn1::table::seq_desc srs_spatial_relation_info_s::desc = {
+    {seq_table_srs_spatial_relation_info_s_fields, 2, UINT64_C(0x2), seq_table_srs_spatial_relation_info_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_spatial_relation_info_s_names};
 
-  if (serving_cell_id_present) {
-    HANDLE_CODE(pack_integer(bref, serving_cell_id, (uint8_t)0u, (uint8_t)31u));
-  }
-  HANDLE_CODE(ref_sig.pack(bref));
+static const asn1::table::storage_ops* const choice_storage_srs_spatial_relation_info_s_ref_sig_c__alternatives[] = {
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<srs_spatial_relation_info_s::ref_sig_c_::srs_s_, false>::value};
+const asn1::table::choice_storage_desc srs_spatial_relation_info_s::ref_sig_c_::storage_desc = {
+    choice_storage_srs_spatial_relation_info_s_ref_sig_c__alternatives,
+    3,
+    "srs_spatial_relation_info_s::ref_sig_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_spatial_relation_info_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(serving_cell_id_present, 1));
-
-  if (serving_cell_id_present) {
-    HANDLE_CODE(unpack_integer(serving_cell_id, bref, (uint8_t)0u, (uint8_t)31u));
-  }
-  HANDLE_CODE(ref_sig.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void srs_spatial_relation_info_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (serving_cell_id_present) {
-    j.write_int("servingCellId", serving_cell_id);
-  }
-  j.write_fieldname("referenceSignal");
-  ref_sig.to_json(j);
-  j.end_obj();
-}
-
-void srs_spatial_relation_info_s::ref_sig_c_::destroy_()
-{
-  switch (type_) {
-    case types::srs:
-      c.destroy<srs_s_>();
-      break;
-    default:
-      break;
-  }
-}
-void srs_spatial_relation_info_s::ref_sig_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::ssb_idx:
-      break;
-    case types::csi_rs_idx:
-      break;
-    case types::srs:
-      c.init<srs_s_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_spatial_relation_info_s::ref_sig_c_");
-  }
-}
-srs_spatial_relation_info_s::ref_sig_c_::ref_sig_c_(const srs_spatial_relation_info_s::ref_sig_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ssb_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::srs:
-      c.init(other.c.get<srs_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_spatial_relation_info_s::ref_sig_c_");
-  }
-}
-srs_spatial_relation_info_s::ref_sig_c_&
-srs_spatial_relation_info_s::ref_sig_c_::operator=(const srs_spatial_relation_info_s::ref_sig_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ssb_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::srs:
-      c.set(other.c.get<srs_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_spatial_relation_info_s::ref_sig_c_");
-  }
-
-  return *this;
-}
 uint8_t& srs_spatial_relation_info_s::ref_sig_c_::set_ssb_idx()
 {
   set(types::ssb_idx);
@@ -636,187 +437,116 @@ srs_spatial_relation_info_s::ref_sig_c_::srs_s_& srs_spatial_relation_info_s::re
   set(types::srs);
   return c.get<srs_s_>();
 }
-void srs_spatial_relation_info_s::ref_sig_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ssb_idx:
-      j.write_int("ssb-Index", c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      j.write_int("csi-RS-Index", c.get<uint8_t>());
-      break;
-    case types::srs:
-      j.write_fieldname("srs");
-      j.start_obj();
-      j.write_int("resourceId", c.get<srs_s_>().res_id);
-      j.write_int("uplinkBWP", c.get<srs_s_>().ul_bwp);
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_spatial_relation_info_s::ref_sig_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_spatial_relation_info_s::ref_sig_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::ssb_idx:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::csi_rs_idx:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)191u));
-      break;
-    case types::srs:
-      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().res_id, (uint8_t)0u, (uint8_t)63u));
-      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().ul_bwp, (uint8_t)0u, (uint8_t)4u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_spatial_relation_info_s::ref_sig_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_spatial_relation_info_s::ref_sig_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::ssb_idx:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::csi_rs_idx:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)191u));
-      break;
-    case types::srs:
-      HANDLE_CODE(unpack_integer(c.get<srs_s_>().res_id, bref, (uint8_t)0u, (uint8_t)63u));
-      HANDLE_CODE(unpack_integer(c.get<srs_s_>().ul_bwp, bref, (uint8_t)0u, (uint8_t)4u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_spatial_relation_info_s::ref_sig_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field seq_table_srs_spatial_relation_info_s_ref_sig_c__srs_s__fields[] = {
+    {offsetof(srs_spatial_relation_info_s::ref_sig_c_::srs_s_, res_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {offsetof(srs_spatial_relation_info_s::ref_sig_c_::srs_s_, ul_bwp),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(4),
+     nullptr}};
+static const asn1::table::field_name seq_table_srs_spatial_relation_info_s_ref_sig_c__srs_s__names[] = {
+    {"resourceId", nullptr},
+    {"uplinkBWP", nullptr}};
+static const asn1::table::seq_desc seq_table_srs_spatial_relation_info_s_ref_sig_c__srs_s_ = {
+    {seq_table_srs_spatial_relation_info_s_ref_sig_c__srs_s__fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_spatial_relation_info_s_ref_sig_c__srs_s__names};
+static const asn1::table::seq_field choice_table_srs_spatial_relation_info_s_ref_sig_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(191),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_spatial_relation_info_s_ref_sig_c__srs_s_}};
+static const asn1::table::field_name choice_table_srs_spatial_relation_info_s_ref_sig_c__names[] = {
+    {"ssb-Index", nullptr},
+    {"csi-RS-Index", nullptr},
+    {"srs", nullptr}};
+const asn1::table::choice_desc srs_spatial_relation_info_s::ref_sig_c_::desc = {
+    asn1::table::enum_int_type<srs_spatial_relation_info_s::ref_sig_c_::types>(),
+    srs_spatial_relation_info_s::ref_sig_c_::types::nof_types,
+    srs_spatial_relation_info_s::ref_sig_c_::types::nof_exts,
+    srs_spatial_relation_info_s::ref_sig_c_::types::has_ext,
+    false,
+    choice_table_srs_spatial_relation_info_s_ref_sig_c__alternatives,
+    nullptr,
+    choice_table_srs_spatial_relation_info_s_ref_sig_c__names,
+    "srs_spatial_relation_info_s::ref_sig_c_",
+    offsetof(srs_spatial_relation_info_s::ref_sig_c_, c.type),
+    offsetof(srs_spatial_relation_info_s::ref_sig_c_, c.value),
+    false,
+    &srs_spatial_relation_info_s::ref_sig_c_::storage_desc};
 
-const char* srs_spatial_relation_info_s::ref_sig_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"ssb-Index", "csi-RS-Index", "srs"};
-  return convert_enum_idx(names, 3, value, "srs_spatial_relation_info_s::ref_sig_c_::types");
-}
+static const char*           enum_names_srs_spatial_relation_info_s_ref_sig_c__types_values[] = {"ssb-Index",
+                                                                                                 "csi-RS-Index",
+                                                                                                 "srs"};
+const asn1::table::enum_desc srs_spatial_relation_info_s::ref_sig_c_::types_opts::desc        = {
+    enum_names_srs_spatial_relation_info_s_ref_sig_c__types_values,
+    3,
+    "srs_spatial_relation_info_s::ref_sig_c_::types"};
 
 // SpatialRelationInfo-PDC-r17 ::= SEQUENCE
-OCUDUASN_CODE spatial_relation_info_pdc_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(false, 1));
+static const asn1::table::seq_field seq_table_spatial_relation_info_pdc_r17_s_fields[] = {
+    {offsetof(spatial_relation_info_pdc_r17_s, ref_sig),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &spatial_relation_info_pdc_r17_s::ref_sig_c_::desc}};
+static const asn1::table::field_name seq_table_spatial_relation_info_pdc_r17_s_names[] = {{"referenceSignal", nullptr}};
+const asn1::table::seq_desc          spatial_relation_info_pdc_r17_s::desc             = {
+    {seq_table_spatial_relation_info_pdc_r17_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_spatial_relation_info_pdc_r17_s_names};
 
-  HANDLE_CODE(ref_sig.pack(bref));
+static const asn1::table::storage_ops* const choice_storage_spatial_relation_info_pdc_r17_s_ref_sig_c__alternatives[] =
+    {&asn1::table::alternative_ops<uint8_t, true>::value,
+     &asn1::table::alternative_ops<uint8_t, true>::value,
+     &asn1::table::alternative_ops<uint8_t, true>::value,
+     &asn1::table::alternative_ops<spatial_relation_info_pdc_r17_s::ref_sig_c_::srs_s_, false>::value};
+const asn1::table::choice_storage_desc spatial_relation_info_pdc_r17_s::ref_sig_c_::storage_desc = {
+    choice_storage_spatial_relation_info_pdc_r17_s_ref_sig_c__alternatives,
+    4,
+    "spatial_relation_info_pdc_r17_s::ref_sig_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE spatial_relation_info_pdc_r17_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(bref.unpack(ext, 1));
-
-  HANDLE_CODE(ref_sig.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void spatial_relation_info_pdc_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("referenceSignal");
-  ref_sig.to_json(j);
-  j.end_obj();
-}
-
-void spatial_relation_info_pdc_r17_s::ref_sig_c_::destroy_()
-{
-  switch (type_) {
-    case types::srs:
-      c.destroy<srs_s_>();
-      break;
-    default:
-      break;
-  }
-}
-void spatial_relation_info_pdc_r17_s::ref_sig_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::ssb_idx:
-      break;
-    case types::csi_rs_idx:
-      break;
-    case types::dl_prs_pdc:
-      break;
-    case types::srs:
-      c.init<srs_s_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-}
-spatial_relation_info_pdc_r17_s::ref_sig_c_::ref_sig_c_(const spatial_relation_info_pdc_r17_s::ref_sig_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ssb_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::dl_prs_pdc:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::srs:
-      c.init(other.c.get<srs_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-}
-spatial_relation_info_pdc_r17_s::ref_sig_c_&
-spatial_relation_info_pdc_r17_s::ref_sig_c_::operator=(const spatial_relation_info_pdc_r17_s::ref_sig_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ssb_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::dl_prs_pdc:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::srs:
-      c.set(other.c.get<srs_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-
-  return *this;
-}
 uint8_t& spatial_relation_info_pdc_r17_s::ref_sig_c_::set_ssb_idx()
 {
   set(types::ssb_idx);
@@ -837,534 +567,731 @@ spatial_relation_info_pdc_r17_s::ref_sig_c_::srs_s_& spatial_relation_info_pdc_r
   set(types::srs);
   return c.get<srs_s_>();
 }
-void spatial_relation_info_pdc_r17_s::ref_sig_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ssb_idx:
-      j.write_int("ssb-Index", c.get<uint8_t>());
-      break;
-    case types::csi_rs_idx:
-      j.write_int("csi-RS-Index", c.get<uint8_t>());
-      break;
-    case types::dl_prs_pdc:
-      j.write_int("dl-PRS-PDC", c.get<uint8_t>());
-      break;
-    case types::srs:
-      j.write_fieldname("srs");
-      j.start_obj();
-      j.write_int("resourceId", c.get<srs_s_>().res_id);
-      j.write_int("uplinkBWP", c.get<srs_s_>().ul_bwp);
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::ssb_idx:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::csi_rs_idx:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)191u));
-      break;
-    case types::dl_prs_pdc:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::srs:
-      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().res_id, (uint8_t)0u, (uint8_t)63u));
-      HANDLE_CODE(pack_integer(bref, c.get<srs_s_>().ul_bwp, (uint8_t)0u, (uint8_t)4u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE spatial_relation_info_pdc_r17_s::ref_sig_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::ssb_idx:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::csi_rs_idx:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)191u));
-      break;
-    case types::dl_prs_pdc:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::srs:
-      HANDLE_CODE(unpack_integer(c.get<srs_s_>().res_id, bref, (uint8_t)0u, (uint8_t)63u));
-      HANDLE_CODE(unpack_integer(c.get<srs_s_>().ul_bwp, bref, (uint8_t)0u, (uint8_t)4u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "spatial_relation_info_pdc_r17_s::ref_sig_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field seq_table_spatial_relation_info_pdc_r17_s_ref_sig_c__srs_s__fields[] = {
+    {offsetof(spatial_relation_info_pdc_r17_s::ref_sig_c_::srs_s_, res_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {offsetof(spatial_relation_info_pdc_r17_s::ref_sig_c_::srs_s_, ul_bwp),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(4),
+     nullptr}};
+static const asn1::table::field_name seq_table_spatial_relation_info_pdc_r17_s_ref_sig_c__srs_s__names[] = {
+    {"resourceId", nullptr},
+    {"uplinkBWP", nullptr}};
+static const asn1::table::seq_desc seq_table_spatial_relation_info_pdc_r17_s_ref_sig_c__srs_s_ = {
+    {seq_table_spatial_relation_info_pdc_r17_s_ref_sig_c__srs_s__fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_spatial_relation_info_pdc_r17_s_ref_sig_c__srs_s__names};
+static const asn1::table::seq_field choice_table_spatial_relation_info_pdc_r17_s_ref_sig_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(191),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_spatial_relation_info_pdc_r17_s_ref_sig_c__srs_s_}};
+static const asn1::table::field_name choice_table_spatial_relation_info_pdc_r17_s_ref_sig_c__names[] =
+    {{"ssb-Index", nullptr}, {"csi-RS-Index", nullptr}, {"dl-PRS-PDC", nullptr}, {"srs", nullptr}};
+const asn1::table::choice_desc spatial_relation_info_pdc_r17_s::ref_sig_c_::desc = {
+    asn1::table::enum_int_type<spatial_relation_info_pdc_r17_s::ref_sig_c_::types>(),
+    spatial_relation_info_pdc_r17_s::ref_sig_c_::types::nof_types,
+    spatial_relation_info_pdc_r17_s::ref_sig_c_::types::nof_exts,
+    spatial_relation_info_pdc_r17_s::ref_sig_c_::types::has_ext,
+    false,
+    choice_table_spatial_relation_info_pdc_r17_s_ref_sig_c__alternatives,
+    nullptr,
+    choice_table_spatial_relation_info_pdc_r17_s_ref_sig_c__names,
+    "spatial_relation_info_pdc_r17_s::ref_sig_c_",
+    offsetof(spatial_relation_info_pdc_r17_s::ref_sig_c_, c.type),
+    offsetof(spatial_relation_info_pdc_r17_s::ref_sig_c_, c.value),
+    false,
+    &spatial_relation_info_pdc_r17_s::ref_sig_c_::storage_desc};
 
-const char* spatial_relation_info_pdc_r17_s::ref_sig_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"ssb-Index", "csi-RS-Index", "dl-PRS-PDC", "srs"};
-  return convert_enum_idx(names, 4, value, "spatial_relation_info_pdc_r17_s::ref_sig_c_::types");
-}
+static const char*           enum_names_spatial_relation_info_pdc_r17_s_ref_sig_c__types_values[] = {"ssb-Index",
+                                                                                                     "csi-RS-Index",
+                                                                                                     "dl-PRS-PDC",
+                                                                                                     "srs"};
+const asn1::table::enum_desc spatial_relation_info_pdc_r17_s::ref_sig_c_::types_opts::desc        = {
+    enum_names_spatial_relation_info_pdc_r17_s_ref_sig_c__types_values,
+    4,
+    "spatial_relation_info_pdc_r17_s::ref_sig_c_::types"};
 
 // SRS-Resource ::= SEQUENCE
-OCUDUASN_CODE srs_res_s::pack(bit_ref& bref) const
-{
-  ext_groups_packer_guard group_flags(4);
-  group_flags[0] |= res_map_r16.is_present();
-  group_flags[1] |= spatial_relation_info_pdc_r17.is_present();
-  group_flags[1] |= res_map_r17.is_present();
-  group_flags[1] |= partial_freq_sr17.is_present();
-  group_flags[1] |= tx_comb_n8_r17.is_present();
-  group_flags[1] |= srs_tci_state_r17.is_present();
-  group_flags[2] |= repeat_factor_v1730_present;
-  group_flags[2] |= srs_dl_or_joint_tci_state_v1730.is_present();
-  group_flags[3] |= nrof_srs_ports_n8_r18_present;
-  group_flags[3] |= comb_offset_hop_r18.is_present();
-  group_flags[3] |= cyclic_shift_hop_r18.is_present();
-  HANDLE_CODE(pack_bits(bref, {group_flags.any(), ptrs_port_idx_present, spatial_relation_info_present}));
+static const asn1::table::seq_field seq_table_srs_res_s_res_map_s__fields[] = {
+    {offsetof(srs_res_s::res_map_s_, start_position),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(5),
+     nullptr},
+    {offsetof(srs_res_s::res_map_s_, nrof_symbols),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::res_map_s_::nrof_symbols)>(),
+     decltype(srs_res_s::res_map_s_::nrof_symbols)::has_ext,
+     false,
+     decltype(srs_res_s::res_map_s_::nrof_symbols)::nof_types,
+     decltype(srs_res_s::res_map_s_::nrof_symbols)::nof_exts,
+     nullptr,
+     &srs_res_s::res_map_s_::nrof_symbols_opts::desc},
+    {offsetof(srs_res_s::res_map_s_, repeat_factor),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::res_map_s_::repeat_factor)>(),
+     decltype(srs_res_s::res_map_s_::repeat_factor)::has_ext,
+     false,
+     decltype(srs_res_s::res_map_s_::repeat_factor)::nof_types,
+     decltype(srs_res_s::res_map_s_::repeat_factor)::nof_exts,
+     nullptr,
+     &srs_res_s::res_map_s_::repeat_factor_opts::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_res_map_s__names[] = {{"startPosition", nullptr},
+                                                                               {"nrofSymbols", nullptr},
+                                                                               {"repetitionFactor", nullptr}};
+static const asn1::table::seq_desc   seq_table_srs_res_s_res_map_s_         = {
+    {seq_table_srs_res_s_res_map_s__fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_res_map_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_freq_hop_s__fields[] = {
+    {offsetof(srs_res_s::freq_hop_s_, c_srs),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {offsetof(srs_res_s::freq_hop_s_, b_srs),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(3),
+     nullptr},
+    {offsetof(srs_res_s::freq_hop_s_, b_hop),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(3),
+     nullptr}};
+static const asn1::table::field_name seq_table_srs_res_s_freq_hop_s__names[] = {{"c-SRS", nullptr},
+                                                                                {"b-SRS", nullptr},
+                                                                                {"b-hop", nullptr}};
+static const asn1::table::seq_desc   seq_table_srs_res_s_freq_hop_s_         = {
+    {seq_table_srs_res_s_freq_hop_s__fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_freq_hop_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_res_map_r16_s__fields[] = {
+    {offsetof(srs_res_s::res_map_r16_s_, start_position_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(13),
+     nullptr},
+    {offsetof(srs_res_s::res_map_r16_s_, nrof_symbols_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::res_map_r16_s_::nrof_symbols_r16)>(),
+     decltype(srs_res_s::res_map_r16_s_::nrof_symbols_r16)::has_ext,
+     false,
+     decltype(srs_res_s::res_map_r16_s_::nrof_symbols_r16)::nof_types,
+     decltype(srs_res_s::res_map_r16_s_::nrof_symbols_r16)::nof_exts,
+     nullptr,
+     &srs_res_s::res_map_r16_s_::nrof_symbols_r16_opts::desc},
+    {offsetof(srs_res_s::res_map_r16_s_, repeat_factor_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::res_map_r16_s_::repeat_factor_r16)>(),
+     decltype(srs_res_s::res_map_r16_s_::repeat_factor_r16)::has_ext,
+     false,
+     decltype(srs_res_s::res_map_r16_s_::repeat_factor_r16)::nof_types,
+     decltype(srs_res_s::res_map_r16_s_::repeat_factor_r16)::nof_exts,
+     nullptr,
+     &srs_res_s::res_map_r16_s_::repeat_factor_r16_opts::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_res_map_r16_s__names[] = {{"startPosition-r16", nullptr},
+                                                                                   {"nrofSymbols-r16", nullptr},
+                                                                                   {"repetitionFactor-r16", nullptr}};
+static const asn1::table::seq_desc   seq_table_srs_res_s_res_map_r16_s_         = {
+    {seq_table_srs_res_s_res_map_r16_s__fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_res_map_r16_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_res_map_r17_s__fields[] = {
+    {offsetof(srs_res_s::res_map_r17_s_, start_position_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(13),
+     nullptr},
+    {offsetof(srs_res_s::res_map_r17_s_, nrof_symbols_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::res_map_r17_s_::nrof_symbols_r17)>(),
+     decltype(srs_res_s::res_map_r17_s_::nrof_symbols_r17)::has_ext,
+     false,
+     decltype(srs_res_s::res_map_r17_s_::nrof_symbols_r17)::nof_types,
+     decltype(srs_res_s::res_map_r17_s_::nrof_symbols_r17)::nof_exts,
+     nullptr,
+     &srs_res_s::res_map_r17_s_::nrof_symbols_r17_opts::desc},
+    {offsetof(srs_res_s::res_map_r17_s_, repeat_factor_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::res_map_r17_s_::repeat_factor_r17)>(),
+     decltype(srs_res_s::res_map_r17_s_::repeat_factor_r17)::has_ext,
+     false,
+     decltype(srs_res_s::res_map_r17_s_::repeat_factor_r17)::nof_types,
+     decltype(srs_res_s::res_map_r17_s_::repeat_factor_r17)::nof_exts,
+     nullptr,
+     &srs_res_s::res_map_r17_s_::repeat_factor_r17_opts::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_res_map_r17_s__names[] = {{"startPosition-r17", nullptr},
+                                                                                   {"nrofSymbols-r17", nullptr},
+                                                                                   {"repetitionFactor-r17", nullptr}};
+static const asn1::table::seq_desc   seq_table_srs_res_s_res_map_r17_s_         = {
+    {seq_table_srs_res_s_res_map_r17_s__fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_res_map_r17_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_partial_freq_sr17_s__fields[] = {
+    {offsetof(srs_res_s::partial_freq_sr17_s_, start_rb_idx_f_scaling_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::desc},
+    {0,
+     (int32_t)offsetof(srs_res_s::partial_freq_sr17_s_, enable_start_rb_hop_r17_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_srs_res_s_partial_freq_sr17_s__names[] = {
+    {"startRBIndexFScaling-r17", nullptr},
+    {"enableStartRBHopping-r17", "enable"}};
+static const asn1::table::seq_opt seq_table_srs_res_s_partial_freq_sr17_s__opts[] = {
+    {1, (int32_t)offsetof(srs_res_s::partial_freq_sr17_s_, enable_start_rb_hop_r17_present)}};
+static const asn1::table::seq_desc seq_table_srs_res_s_partial_freq_sr17_s_ = {
+    {seq_table_srs_res_s_partial_freq_sr17_s__fields,
+     2,
+     UINT64_C(0x1),
+     seq_table_srs_res_s_partial_freq_sr17_s__opts,
+     1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_partial_freq_sr17_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_tx_comb_n8_r17_s__fields[] = {
+    {offsetof(srs_res_s::tx_comb_n8_r17_s_, comb_offset_n8_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(7),
+     nullptr},
+    {offsetof(srs_res_s::tx_comb_n8_r17_s_, cyclic_shift_n8_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(5),
+     nullptr}};
+static const asn1::table::field_name seq_table_srs_res_s_tx_comb_n8_r17_s__names[] = {{"combOffset-n8-r17", nullptr},
+                                                                                      {"cyclicShift-n8-r17", nullptr}};
+static const asn1::table::seq_desc   seq_table_srs_res_s_tx_comb_n8_r17_s_         = {
+    {seq_table_srs_res_s_tx_comb_n8_r17_s__fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_tx_comb_n8_r17_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_srs_dl_or_joint_tci_state_v1730_s__fields[] = {
+    {offsetof(srs_res_s::srs_dl_or_joint_tci_state_v1730_s_, cell_and_bwp_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &serving_cell_and_bwp_id_r17_s::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_srs_dl_or_joint_tci_state_v1730_s__names[] = {
+    {"cellAndBWP-r17", nullptr}};
+static const asn1::table::seq_desc seq_table_srs_res_s_srs_dl_or_joint_tci_state_v1730_s_ = {
+    {seq_table_srs_res_s_srs_dl_or_joint_tci_state_v1730_s__fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_srs_dl_or_joint_tci_state_v1730_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_comb_offset_hop_r18_s__fields[] = {
+    {offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_id_r18),
+     (int32_t)offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_id_r18_present),
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1023),
+     nullptr},
+    {offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_subset_r18),
+     (int32_t)offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_subset_r18_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::desc},
+    {offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_with_repeat_r18),
+     (int32_t)offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_with_repeat_r18_present),
+     asn1::table::enum_op<decltype(srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18)>(),
+     decltype(srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18)::has_ext,
+     false,
+     decltype(srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18)::nof_types,
+     decltype(srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18)::nof_exts,
+     nullptr,
+     &srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18_opts::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_comb_offset_hop_r18_s__names[] = {
+    {"hoppingId-r18", nullptr},
+    {"hoppingSubset-r18", nullptr},
+    {"hoppingWithRepetition-r18", nullptr}};
+static const asn1::table::seq_opt seq_table_srs_res_s_comb_offset_hop_r18_s__opts[] = {
+    {0, (int32_t)offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_id_r18_present)},
+    {1, (int32_t)offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_subset_r18_present)},
+    {2, (int32_t)offsetof(srs_res_s::comb_offset_hop_r18_s_, hop_with_repeat_r18_present)}};
+static const asn1::table::seq_desc seq_table_srs_res_s_comb_offset_hop_r18_s_ = {
+    {seq_table_srs_res_s_comb_offset_hop_r18_s__fields,
+     3,
+     UINT64_C(0x0),
+     seq_table_srs_res_s_comb_offset_hop_r18_s__opts,
+     3},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_comb_offset_hop_r18_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_cyclic_shift_hop_r18_s__fields[] = {
+    {offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_id_r18),
+     (int32_t)offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_id_r18_present),
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1023),
+     nullptr},
+    {offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_subset_r18),
+     (int32_t)offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_subset_r18_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::desc},
+    {0,
+     (int32_t)offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_finer_granularity_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_srs_res_s_cyclic_shift_hop_r18_s__names[] = {
+    {"hoppingId-r18", nullptr},
+    {"hoppingSubset-r18", nullptr},
+    {"hoppingFinerGranularity-r18", "enable"}};
+static const asn1::table::seq_opt seq_table_srs_res_s_cyclic_shift_hop_r18_s__opts[] = {
+    {0, (int32_t)offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_id_r18_present)},
+    {1, (int32_t)offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_subset_r18_present)},
+    {2, (int32_t)offsetof(srs_res_s::cyclic_shift_hop_r18_s_, hop_finer_granularity_r18_present)}};
+static const asn1::table::seq_desc seq_table_srs_res_s_cyclic_shift_hop_r18_s_ = {
+    {seq_table_srs_res_s_cyclic_shift_hop_r18_s__fields,
+     3,
+     UINT64_C(0x0),
+     seq_table_srs_res_s_cyclic_shift_hop_r18_s__opts,
+     3},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_cyclic_shift_hop_r18_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_spatial_relation_info_pdc_r17_setup_release_alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &spatial_relation_info_pdc_r17_s::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_spatial_relation_info_pdc_r17_setup_release_names[] = {
+    {"release", nullptr},
+    {"setup", nullptr}};
+static const asn1::table::choice_desc seq_table_srs_res_s_spatial_relation_info_pdc_r17_setup_release = {
+    asn1::table::enum_int_type<asn1::setup_release_e>(),
+    2,
+    0,
+    false,
+    false,
+    seq_table_srs_res_s_spatial_relation_info_pdc_r17_setup_release_alternatives,
+    nullptr,
+    seq_table_srs_res_s_spatial_relation_info_pdc_r17_setup_release_names,
+    "setup_release_c",
+    setup_release_c<spatial_relation_info_pdc_r17_s>::type_offset(),
+    setup_release_c<spatial_relation_info_pdc_r17_s>::value_offset()};
+static const asn1::table::seq_field seq_table_srs_res_s_fields[] = {
+    {offsetof(srs_res_s, srs_res_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {offsetof(srs_res_s, nrof_srs_ports),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::nrof_srs_ports)>(),
+     decltype(srs_res_s::nrof_srs_ports)::has_ext,
+     false,
+     decltype(srs_res_s::nrof_srs_ports)::nof_types,
+     decltype(srs_res_s::nrof_srs_ports)::nof_exts,
+     nullptr,
+     &srs_res_s::nrof_srs_ports_opts::desc},
+    {offsetof(srs_res_s, ptrs_port_idx),
+     (int32_t)offsetof(srs_res_s, ptrs_port_idx_present),
+     asn1::table::enum_op<decltype(srs_res_s::ptrs_port_idx)>(),
+     decltype(srs_res_s::ptrs_port_idx)::has_ext,
+     false,
+     decltype(srs_res_s::ptrs_port_idx)::nof_types,
+     decltype(srs_res_s::ptrs_port_idx)::nof_exts,
+     nullptr,
+     &srs_res_s::ptrs_port_idx_opts::desc},
+    {offsetof(srs_res_s, tx_comb),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_res_s::tx_comb_c_::desc},
+    {offsetof(srs_res_s, res_map),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_res_s_res_map_s_},
+    {offsetof(srs_res_s, freq_domain_position),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(67),
+     nullptr},
+    {offsetof(srs_res_s, freq_domain_shift),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(268),
+     nullptr},
+    {offsetof(srs_res_s, freq_hop),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_res_s_freq_hop_s_},
+    {offsetof(srs_res_s, group_or_seq_hop),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_res_s::group_or_seq_hop)>(),
+     decltype(srs_res_s::group_or_seq_hop)::has_ext,
+     false,
+     decltype(srs_res_s::group_or_seq_hop)::nof_types,
+     decltype(srs_res_s::group_or_seq_hop)::nof_exts,
+     nullptr,
+     &srs_res_s::group_or_seq_hop_opts::desc},
+    {offsetof(srs_res_s, res_type),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_res_s::res_type_c_::desc},
+    {offsetof(srs_res_s, seq_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1023),
+     nullptr},
+    {offsetof(srs_res_s, spatial_relation_info),
+     (int32_t)offsetof(srs_res_s, spatial_relation_info_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_spatial_relation_info_s::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_names[] = {{"srs-ResourceId", nullptr},
+                                                                    {"nrofSRS-Ports", nullptr},
+                                                                    {"ptrs-PortIndex", nullptr},
+                                                                    {"transmissionComb", nullptr},
+                                                                    {"resourceMapping", nullptr},
+                                                                    {"freqDomainPosition", nullptr},
+                                                                    {"freqDomainShift", nullptr},
+                                                                    {"freqHopping", nullptr},
+                                                                    {"groupOrSequenceHopping", nullptr},
+                                                                    {"resourceType", nullptr},
+                                                                    {"sequenceId", nullptr},
+                                                                    {"spatialRelationInfo", nullptr}};
+static const asn1::table::seq_opt    seq_table_srs_res_s_opts[]  = {
+    {2, (int32_t)offsetof(srs_res_s, ptrs_port_idx_present)},
+    {11, (int32_t)offsetof(srs_res_s, spatial_relation_info_present)}};
+static const asn1::table::seq_field seq_table_srs_res_s_g0_fields[] = {
+    {offsetof(srs_res_s, res_map_r16),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(srs_res_s::res_map_r16)>::value,
+     &seq_table_srs_res_s_res_map_r16_s_}};
+static const asn1::table::field_name seq_table_srs_res_s_g0_names[]  = {{"resourceMapping-r16", nullptr}};
+static const asn1::table::seq_opt    seq_table_srs_res_s_g0_opts[]   = {{0, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_field  seq_table_srs_res_s_g1_fields[] = {
+    {offsetof(srs_res_s, spatial_relation_info_pdc_r17),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::choice,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(srs_res_s::spatial_relation_info_pdc_r17)>::value,
+      &seq_table_srs_res_s_spatial_relation_info_pdc_r17_setup_release},
+    {offsetof(srs_res_s, res_map_r17),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::sequence,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(srs_res_s::res_map_r17)>::value,
+      &seq_table_srs_res_s_res_map_r17_s_},
+    {offsetof(srs_res_s, partial_freq_sr17),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::sequence,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(srs_res_s::partial_freq_sr17)>::value,
+      &seq_table_srs_res_s_partial_freq_sr17_s_},
+    {offsetof(srs_res_s, tx_comb_n8_r17),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::sequence,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(srs_res_s::tx_comb_n8_r17)>::value,
+      &seq_table_srs_res_s_tx_comb_n8_r17_s_},
+    {offsetof(srs_res_s, srs_tci_state_r17),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::choice,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(srs_res_s::srs_tci_state_r17)>::value,
+      &srs_res_s::srs_tci_state_r17_c_::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_g1_names[]  = {{"spatialRelationInfo-PDC-r17", nullptr},
+                                                                        {"resourceMapping-r17", nullptr},
+                                                                        {"partialFreqSounding-r17", nullptr},
+                                                                        {"transmissionComb-n8-r17", nullptr},
+                                                                        {"srs-TCI-State-r17", nullptr}};
+static const asn1::table::seq_opt    seq_table_srs_res_s_g1_opts[]   = {{0, asn1::table::seq_field::ptr_presence},
+                                                                        {1, asn1::table::seq_field::ptr_presence},
+                                                                        {2, asn1::table::seq_field::ptr_presence},
+                                                                        {3, asn1::table::seq_field::ptr_presence},
+                                                                        {4, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_field  seq_table_srs_res_s_g2_fields[] = {
+    {0,
+      (int32_t)offsetof(srs_res_s, repeat_factor_v1730_present),
+      asn1::table::field_op::none,
+      false,
+      false,
+      0,
+      0,
+      nullptr},
+    {offsetof(srs_res_s, srs_dl_or_joint_tci_state_v1730),
+      asn1::table::seq_field::ptr_presence,
+      asn1::table::field_op::sequence,
+      false,
+      false,
+      0,
+      0,
+      &asn1::table::ptr_nested_codec<decltype(srs_res_s::srs_dl_or_joint_tci_state_v1730)>::value,
+      &seq_table_srs_res_s_srs_dl_or_joint_tci_state_v1730_s_}};
+static const asn1::table::field_name seq_table_srs_res_s_g2_names[] = {{"repetitionFactor-v1730", "n3"},
+                                                                       {"srs-DLorJointTCI-State-v1730", nullptr}};
+static const asn1::table::seq_opt    seq_table_srs_res_s_g2_opts[]  = {
+    {0, (int32_t)offsetof(srs_res_s, repeat_factor_v1730_present)},
+    {1, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_field seq_table_srs_res_s_g3_fields[] = {
+    {offsetof(srs_res_s, nrof_srs_ports_n8_r18),
+     (int32_t)offsetof(srs_res_s, nrof_srs_ports_n8_r18_present),
+     asn1::table::enum_op<decltype(srs_res_s::nrof_srs_ports_n8_r18)>(),
+     decltype(srs_res_s::nrof_srs_ports_n8_r18)::has_ext,
+     false,
+     decltype(srs_res_s::nrof_srs_ports_n8_r18)::nof_types,
+     decltype(srs_res_s::nrof_srs_ports_n8_r18)::nof_exts,
+     nullptr,
+     &srs_res_s::nrof_srs_ports_n8_r18_opts::desc},
+    {offsetof(srs_res_s, comb_offset_hop_r18),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(srs_res_s::comb_offset_hop_r18)>::value,
+     &seq_table_srs_res_s_comb_offset_hop_r18_s_},
+    {offsetof(srs_res_s, cyclic_shift_hop_r18),
+     asn1::table::seq_field::ptr_presence,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::ptr_nested_codec<decltype(srs_res_s::cyclic_shift_hop_r18)>::value,
+     &seq_table_srs_res_s_cyclic_shift_hop_r18_s_}};
+static const asn1::table::field_name seq_table_srs_res_s_g3_names[] = {{"nrofSRS-Ports-n8-r18", nullptr},
+                                                                       {"combOffsetHopping-r18", nullptr},
+                                                                       {"cyclicShiftHopping-r18", nullptr}};
+static const asn1::table::seq_opt    seq_table_srs_res_s_g3_opts[]  = {
+    {0, (int32_t)offsetof(srs_res_s, nrof_srs_ports_n8_r18_present)},
+    {1, asn1::table::seq_field::ptr_presence},
+    {2, asn1::table::seq_field::ptr_presence}};
+static const asn1::table::seq_group seq_table_srs_res_s_groups[] = {
+    {{seq_table_srs_res_s_g0_fields, 1, UINT64_C(0x0), seq_table_srs_res_s_g0_opts, 1},
+     false,
+     seq_table_srs_res_s_g0_names},
+    {{seq_table_srs_res_s_g1_fields, 5, UINT64_C(0x0), seq_table_srs_res_s_g1_opts, 5},
+     false,
+     seq_table_srs_res_s_g1_names},
+    {{seq_table_srs_res_s_g2_fields, 2, UINT64_C(0x0), seq_table_srs_res_s_g2_opts, 2},
+     false,
+     seq_table_srs_res_s_g2_names},
+    {{seq_table_srs_res_s_g3_fields, 3, UINT64_C(0x0), seq_table_srs_res_s_g3_opts, 3},
+     false,
+     seq_table_srs_res_s_g3_names}};
+const asn1::table::seq_desc srs_res_s::desc = {
+    {seq_table_srs_res_s_fields, 12, UINT64_C(0x7fb), seq_table_srs_res_s_opts, 2},
+    true,
+    false,
+    seq_table_srs_res_s_groups,
+    4,
+    seq_table_srs_res_s_names};
 
-  HANDLE_CODE(pack_integer(bref, srs_res_id, (uint8_t)0u, (uint8_t)63u));
-  HANDLE_CODE(nrof_srs_ports.pack(bref));
-  if (ptrs_port_idx_present) {
-    HANDLE_CODE(ptrs_port_idx.pack(bref));
-  }
-  HANDLE_CODE(tx_comb.pack(bref));
-  HANDLE_CODE(pack_integer(bref, res_map.start_position, (uint8_t)0u, (uint8_t)5u));
-  HANDLE_CODE(res_map.nrof_symbols.pack(bref));
-  HANDLE_CODE(res_map.repeat_factor.pack(bref));
-  HANDLE_CODE(pack_integer(bref, freq_domain_position, (uint8_t)0u, (uint8_t)67u));
-  HANDLE_CODE(pack_integer(bref, freq_domain_shift, (uint16_t)0u, (uint16_t)268u));
-  HANDLE_CODE(pack_integer(bref, freq_hop.c_srs, (uint8_t)0u, (uint8_t)63u));
-  HANDLE_CODE(pack_integer(bref, freq_hop.b_srs, (uint8_t)0u, (uint8_t)3u));
-  HANDLE_CODE(pack_integer(bref, freq_hop.b_hop, (uint8_t)0u, (uint8_t)3u));
-  HANDLE_CODE(group_or_seq_hop.pack(bref));
-  HANDLE_CODE(res_type.pack(bref));
-  HANDLE_CODE(pack_integer(bref, seq_id, (uint16_t)0u, (uint16_t)1023u));
-  if (spatial_relation_info_present) {
-    HANDLE_CODE(spatial_relation_info.pack(bref));
-  }
-
-  if (group_flags.any()) {
-    HANDLE_CODE(group_flags.pack(bref));
-
-    if (group_flags[0]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(bref.pack(res_map_r16.is_present(), 1));
-      if (res_map_r16.is_present()) {
-        HANDLE_CODE(pack_integer(bref, res_map_r16->start_position_r16, (uint8_t)0u, (uint8_t)13u));
-        HANDLE_CODE(res_map_r16->nrof_symbols_r16.pack(bref));
-        HANDLE_CODE(res_map_r16->repeat_factor_r16.pack(bref));
-      }
-    }
-    if (group_flags[1]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref,
-                            {spatial_relation_info_pdc_r17.is_present(),
-                             res_map_r17.is_present(),
-                             partial_freq_sr17.is_present(),
-                             tx_comb_n8_r17.is_present(),
-                             srs_tci_state_r17.is_present()}));
-      if (spatial_relation_info_pdc_r17.is_present()) {
-        HANDLE_CODE(spatial_relation_info_pdc_r17->pack(bref));
-      }
-      if (res_map_r17.is_present()) {
-        HANDLE_CODE(pack_integer(bref, res_map_r17->start_position_r17, (uint8_t)0u, (uint8_t)13u));
-        HANDLE_CODE(res_map_r17->nrof_symbols_r17.pack(bref));
-        HANDLE_CODE(res_map_r17->repeat_factor_r17.pack(bref));
-      }
-      if (partial_freq_sr17.is_present()) {
-        HANDLE_CODE(bref.pack(partial_freq_sr17->enable_start_rb_hop_r17_present, 1));
-        HANDLE_CODE(partial_freq_sr17->start_rb_idx_f_scaling_r17.pack(bref));
-      }
-      if (tx_comb_n8_r17.is_present()) {
-        HANDLE_CODE(pack_integer(bref, tx_comb_n8_r17->comb_offset_n8_r17, (uint8_t)0u, (uint8_t)7u));
-        HANDLE_CODE(pack_integer(bref, tx_comb_n8_r17->cyclic_shift_n8_r17, (uint8_t)0u, (uint8_t)5u));
-      }
-      if (srs_tci_state_r17.is_present()) {
-        HANDLE_CODE(srs_tci_state_r17->pack(bref));
-      }
-    }
-    if (group_flags[2]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(bref, {repeat_factor_v1730_present, srs_dl_or_joint_tci_state_v1730.is_present()}));
-      if (srs_dl_or_joint_tci_state_v1730.is_present()) {
-        HANDLE_CODE(srs_dl_or_joint_tci_state_v1730->cell_and_bwp_r17.pack(bref));
-      }
-    }
-    if (group_flags[3]) {
-      varlength_field_pack_guard varlen_scope(bref, false);
-
-      HANDLE_CODE(pack_bits(
-          bref, {nrof_srs_ports_n8_r18_present, comb_offset_hop_r18.is_present(), cyclic_shift_hop_r18.is_present()}));
-      if (nrof_srs_ports_n8_r18_present) {
-        HANDLE_CODE(nrof_srs_ports_n8_r18.pack(bref));
-      }
-      if (comb_offset_hop_r18.is_present()) {
-        HANDLE_CODE(pack_bits(bref,
-                              {comb_offset_hop_r18->hop_id_r18_present,
-                               comb_offset_hop_r18->hop_subset_r18_present,
-                               comb_offset_hop_r18->hop_with_repeat_r18_present}));
-        if (comb_offset_hop_r18->hop_id_r18_present) {
-          HANDLE_CODE(pack_integer(bref, comb_offset_hop_r18->hop_id_r18, (uint16_t)0u, (uint16_t)1023u));
-        }
-        if (comb_offset_hop_r18->hop_subset_r18_present) {
-          HANDLE_CODE(comb_offset_hop_r18->hop_subset_r18.pack(bref));
-        }
-        if (comb_offset_hop_r18->hop_with_repeat_r18_present) {
-          HANDLE_CODE(comb_offset_hop_r18->hop_with_repeat_r18.pack(bref));
-        }
-      }
-      if (cyclic_shift_hop_r18.is_present()) {
-        HANDLE_CODE(pack_bits(bref,
-                              {cyclic_shift_hop_r18->hop_id_r18_present,
-                               cyclic_shift_hop_r18->hop_subset_r18_present,
-                               cyclic_shift_hop_r18->hop_finer_granularity_r18_present}));
-        if (cyclic_shift_hop_r18->hop_id_r18_present) {
-          HANDLE_CODE(pack_integer(bref, cyclic_shift_hop_r18->hop_id_r18, (uint16_t)0u, (uint16_t)1023u));
-        }
-        if (cyclic_shift_hop_r18->hop_subset_r18_present) {
-          HANDLE_CODE(cyclic_shift_hop_r18->hop_subset_r18.pack(bref));
-        }
-      }
-    }
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_res_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &ptrs_port_idx_present, &spatial_relation_info_present}));
-
-  HANDLE_CODE(unpack_integer(srs_res_id, bref, (uint8_t)0u, (uint8_t)63u));
-  HANDLE_CODE(nrof_srs_ports.unpack(bref));
-  if (ptrs_port_idx_present) {
-    HANDLE_CODE(ptrs_port_idx.unpack(bref));
-  }
-  HANDLE_CODE(tx_comb.unpack(bref));
-  HANDLE_CODE(unpack_integer(res_map.start_position, bref, (uint8_t)0u, (uint8_t)5u));
-  HANDLE_CODE(res_map.nrof_symbols.unpack(bref));
-  HANDLE_CODE(res_map.repeat_factor.unpack(bref));
-  HANDLE_CODE(unpack_integer(freq_domain_position, bref, (uint8_t)0u, (uint8_t)67u));
-  HANDLE_CODE(unpack_integer(freq_domain_shift, bref, (uint16_t)0u, (uint16_t)268u));
-  HANDLE_CODE(unpack_integer(freq_hop.c_srs, bref, (uint8_t)0u, (uint8_t)63u));
-  HANDLE_CODE(unpack_integer(freq_hop.b_srs, bref, (uint8_t)0u, (uint8_t)3u));
-  HANDLE_CODE(unpack_integer(freq_hop.b_hop, bref, (uint8_t)0u, (uint8_t)3u));
-  HANDLE_CODE(group_or_seq_hop.unpack(bref));
-  HANDLE_CODE(res_type.unpack(bref));
-  HANDLE_CODE(unpack_integer(seq_id, bref, (uint16_t)0u, (uint16_t)1023u));
-  if (spatial_relation_info_present) {
-    HANDLE_CODE(spatial_relation_info.unpack(bref));
-  }
-
-  if (ext) {
-    ext_groups_unpacker group_unpacker(bref);
-
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      unpack_presence_flag(res_map_r16, bref);
-      if (res_map_r16.is_present()) {
-        HANDLE_CODE(unpack_integer(res_map_r16->start_position_r16, bref, (uint8_t)0u, (uint8_t)13u));
-        HANDLE_CODE(res_map_r16->nrof_symbols_r16.unpack(bref));
-        HANDLE_CODE(res_map_r16->repeat_factor_r16.unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      unpack_presence_flag(spatial_relation_info_pdc_r17, bref);
-      unpack_presence_flag(res_map_r17, bref);
-      unpack_presence_flag(partial_freq_sr17, bref);
-      unpack_presence_flag(tx_comb_n8_r17, bref);
-      unpack_presence_flag(srs_tci_state_r17, bref);
-      if (spatial_relation_info_pdc_r17.is_present()) {
-        HANDLE_CODE(spatial_relation_info_pdc_r17->unpack(bref));
-      }
-      if (res_map_r17.is_present()) {
-        HANDLE_CODE(unpack_integer(res_map_r17->start_position_r17, bref, (uint8_t)0u, (uint8_t)13u));
-        HANDLE_CODE(res_map_r17->nrof_symbols_r17.unpack(bref));
-        HANDLE_CODE(res_map_r17->repeat_factor_r17.unpack(bref));
-      }
-      if (partial_freq_sr17.is_present()) {
-        HANDLE_CODE(bref.unpack(partial_freq_sr17->enable_start_rb_hop_r17_present, 1));
-        HANDLE_CODE(partial_freq_sr17->start_rb_idx_f_scaling_r17.unpack(bref));
-      }
-      if (tx_comb_n8_r17.is_present()) {
-        HANDLE_CODE(unpack_integer(tx_comb_n8_r17->comb_offset_n8_r17, bref, (uint8_t)0u, (uint8_t)7u));
-        HANDLE_CODE(unpack_integer(tx_comb_n8_r17->cyclic_shift_n8_r17, bref, (uint8_t)0u, (uint8_t)5u));
-      }
-      if (srs_tci_state_r17.is_present()) {
-        HANDLE_CODE(srs_tci_state_r17->unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(repeat_factor_v1730_present, 1));
-      unpack_presence_flag(srs_dl_or_joint_tci_state_v1730, bref);
-      if (srs_dl_or_joint_tci_state_v1730.is_present()) {
-        HANDLE_CODE(srs_dl_or_joint_tci_state_v1730->cell_and_bwp_r17.unpack(bref));
-      }
-    }
-    HANDLE_CODE(group_unpacker.unpack_next_group());
-    if (group_unpacker.get_last_group_range(bref)) {
-      HANDLE_CODE(bref.unpack(nrof_srs_ports_n8_r18_present, 1));
-      unpack_presence_flag(comb_offset_hop_r18, bref);
-      unpack_presence_flag(cyclic_shift_hop_r18, bref);
-      if (nrof_srs_ports_n8_r18_present) {
-        HANDLE_CODE(nrof_srs_ports_n8_r18.unpack(bref));
-      }
-      if (comb_offset_hop_r18.is_present()) {
-        HANDLE_CODE(unpack_bits(bref,
-                                {&comb_offset_hop_r18->hop_id_r18_present,
-                                 &comb_offset_hop_r18->hop_subset_r18_present,
-                                 &comb_offset_hop_r18->hop_with_repeat_r18_present}));
-        if (comb_offset_hop_r18->hop_id_r18_present) {
-          HANDLE_CODE(unpack_integer(comb_offset_hop_r18->hop_id_r18, bref, (uint16_t)0u, (uint16_t)1023u));
-        }
-        if (comb_offset_hop_r18->hop_subset_r18_present) {
-          HANDLE_CODE(comb_offset_hop_r18->hop_subset_r18.unpack(bref));
-        }
-        if (comb_offset_hop_r18->hop_with_repeat_r18_present) {
-          HANDLE_CODE(comb_offset_hop_r18->hop_with_repeat_r18.unpack(bref));
-        }
-      }
-      if (cyclic_shift_hop_r18.is_present()) {
-        HANDLE_CODE(unpack_bits(bref,
-                                {&cyclic_shift_hop_r18->hop_id_r18_present,
-                                 &cyclic_shift_hop_r18->hop_subset_r18_present,
-                                 &cyclic_shift_hop_r18->hop_finer_granularity_r18_present}));
-        if (cyclic_shift_hop_r18->hop_id_r18_present) {
-          HANDLE_CODE(unpack_integer(cyclic_shift_hop_r18->hop_id_r18, bref, (uint16_t)0u, (uint16_t)1023u));
-        }
-        if (cyclic_shift_hop_r18->hop_subset_r18_present) {
-          HANDLE_CODE(cyclic_shift_hop_r18->hop_subset_r18.unpack(bref));
-        }
-      }
-    }
-    HANDLE_CODE(group_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void srs_res_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("srs-ResourceId", srs_res_id);
-  j.write_str("nrofSRS-Ports", nrof_srs_ports.to_string());
-  if (ptrs_port_idx_present) {
-    j.write_str("ptrs-PortIndex", ptrs_port_idx.to_string());
-  }
-  j.write_fieldname("transmissionComb");
-  tx_comb.to_json(j);
-  j.write_fieldname("resourceMapping");
-  j.start_obj();
-  j.write_int("startPosition", res_map.start_position);
-  j.write_str("nrofSymbols", res_map.nrof_symbols.to_string());
-  j.write_str("repetitionFactor", res_map.repeat_factor.to_string());
-  j.end_obj();
-  j.write_int("freqDomainPosition", freq_domain_position);
-  j.write_int("freqDomainShift", freq_domain_shift);
-  j.write_fieldname("freqHopping");
-  j.start_obj();
-  j.write_int("c-SRS", freq_hop.c_srs);
-  j.write_int("b-SRS", freq_hop.b_srs);
-  j.write_int("b-hop", freq_hop.b_hop);
-  j.end_obj();
-  j.write_str("groupOrSequenceHopping", group_or_seq_hop.to_string());
-  j.write_fieldname("resourceType");
-  res_type.to_json(j);
-  j.write_int("sequenceId", seq_id);
-  if (spatial_relation_info_present) {
-    j.write_fieldname("spatialRelationInfo");
-    spatial_relation_info.to_json(j);
-  }
-  if (res_map_r16.is_present()) {
-    j.write_fieldname("resourceMapping-r16");
-    j.start_obj();
-    j.write_int("startPosition-r16", res_map_r16->start_position_r16);
-    j.write_str("nrofSymbols-r16", res_map_r16->nrof_symbols_r16.to_string());
-    j.write_str("repetitionFactor-r16", res_map_r16->repeat_factor_r16.to_string());
-    j.end_obj();
-  }
-  if (spatial_relation_info_pdc_r17.is_present()) {
-    j.write_fieldname("spatialRelationInfo-PDC-r17");
-    spatial_relation_info_pdc_r17->to_json(j);
-  }
-  if (res_map_r17.is_present()) {
-    j.write_fieldname("resourceMapping-r17");
-    j.start_obj();
-    j.write_int("startPosition-r17", res_map_r17->start_position_r17);
-    j.write_str("nrofSymbols-r17", res_map_r17->nrof_symbols_r17.to_string());
-    j.write_str("repetitionFactor-r17", res_map_r17->repeat_factor_r17.to_string());
-    j.end_obj();
-  }
-  if (partial_freq_sr17.is_present()) {
-    j.write_fieldname("partialFreqSounding-r17");
-    j.start_obj();
-    j.write_fieldname("startRBIndexFScaling-r17");
-    partial_freq_sr17->start_rb_idx_f_scaling_r17.to_json(j);
-    if (partial_freq_sr17->enable_start_rb_hop_r17_present) {
-      j.write_str("enableStartRBHopping-r17", "enable");
-    }
-    j.end_obj();
-  }
-  if (tx_comb_n8_r17.is_present()) {
-    j.write_fieldname("transmissionComb-n8-r17");
-    j.start_obj();
-    j.write_int("combOffset-n8-r17", tx_comb_n8_r17->comb_offset_n8_r17);
-    j.write_int("cyclicShift-n8-r17", tx_comb_n8_r17->cyclic_shift_n8_r17);
-    j.end_obj();
-  }
-  if (srs_tci_state_r17.is_present()) {
-    j.write_fieldname("srs-TCI-State-r17");
-    srs_tci_state_r17->to_json(j);
-  }
-  if (repeat_factor_v1730_present) {
-    j.write_str("repetitionFactor-v1730", "n3");
-  }
-  if (srs_dl_or_joint_tci_state_v1730.is_present()) {
-    j.write_fieldname("srs-DLorJointTCI-State-v1730");
-    j.start_obj();
-    j.write_fieldname("cellAndBWP-r17");
-    srs_dl_or_joint_tci_state_v1730->cell_and_bwp_r17.to_json(j);
-    j.end_obj();
-  }
-  if (nrof_srs_ports_n8_r18_present) {
-    j.write_str("nrofSRS-Ports-n8-r18", nrof_srs_ports_n8_r18.to_string());
-  }
-  if (comb_offset_hop_r18.is_present()) {
-    j.write_fieldname("combOffsetHopping-r18");
-    j.start_obj();
-    if (comb_offset_hop_r18->hop_id_r18_present) {
-      j.write_int("hoppingId-r18", comb_offset_hop_r18->hop_id_r18);
-    }
-    if (comb_offset_hop_r18->hop_subset_r18_present) {
-      j.write_fieldname("hoppingSubset-r18");
-      comb_offset_hop_r18->hop_subset_r18.to_json(j);
-    }
-    if (comb_offset_hop_r18->hop_with_repeat_r18_present) {
-      j.write_str("hoppingWithRepetition-r18", comb_offset_hop_r18->hop_with_repeat_r18.to_string());
-    }
-    j.end_obj();
-  }
-  if (cyclic_shift_hop_r18.is_present()) {
-    j.write_fieldname("cyclicShiftHopping-r18");
-    j.start_obj();
-    if (cyclic_shift_hop_r18->hop_id_r18_present) {
-      j.write_int("hoppingId-r18", cyclic_shift_hop_r18->hop_id_r18);
-    }
-    if (cyclic_shift_hop_r18->hop_subset_r18_present) {
-      j.write_fieldname("hoppingSubset-r18");
-      cyclic_shift_hop_r18->hop_subset_r18.to_json(j);
-    }
-    if (cyclic_shift_hop_r18->hop_finer_granularity_r18_present) {
-      j.write_str("hoppingFinerGranularity-r18", "enable");
-    }
-    j.end_obj();
-  }
-  j.end_obj();
-}
-
-const char* srs_res_s::nrof_srs_ports_opts::to_string() const
-{
-  static const char* names[] = {"port1", "ports2", "ports4"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::nrof_srs_ports_e_");
-}
-uint8_t srs_res_s::nrof_srs_ports_opts::to_number() const
+static const char*           enum_names_srs_res_s_nrof_srs_ports_e__values[] = {"port1", "ports2", "ports4"};
+const asn1::table::enum_desc srs_res_s::nrof_srs_ports_opts::desc = {enum_names_srs_res_s_nrof_srs_ports_e__values,
+                                                                     3,
+                                                                     "srs_res_s::nrof_srs_ports_e_"};
+uint8_t                      srs_res_s::nrof_srs_ports_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4};
   return map_enum_number(numbers, 3, value, "srs_res_s::nrof_srs_ports_e_");
 }
 
-const char* srs_res_s::ptrs_port_idx_opts::to_string() const
-{
-  static const char* names[] = {"n0", "n1"};
-  return convert_enum_idx(names, 2, value, "srs_res_s::ptrs_port_idx_e_");
-}
-uint8_t srs_res_s::ptrs_port_idx_opts::to_number() const
+static const char*           enum_names_srs_res_s_ptrs_port_idx_e__values[] = {"n0", "n1"};
+const asn1::table::enum_desc srs_res_s::ptrs_port_idx_opts::desc = {enum_names_srs_res_s_ptrs_port_idx_e__values,
+                                                                    2,
+                                                                    "srs_res_s::ptrs_port_idx_e_"};
+uint8_t                      srs_res_s::ptrs_port_idx_opts::to_number() const
 {
   static const uint8_t numbers[] = {0, 1};
   return map_enum_number(numbers, 2, value, "srs_res_s::ptrs_port_idx_e_");
 }
 
-void srs_res_s::tx_comb_c_::destroy_()
-{
-  switch (type_) {
-    case types::n2:
-      c.destroy<n2_s_>();
-      break;
-    case types::n4:
-      c.destroy<n4_s_>();
-      break;
-    default:
-      break;
-  }
-}
-void srs_res_s::tx_comb_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::n2:
-      c.init<n2_s_>();
-      break;
-    case types::n4:
-      c.init<n4_s_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::tx_comb_c_");
-  }
-}
-srs_res_s::tx_comb_c_::tx_comb_c_(const srs_res_s::tx_comb_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::n2:
-      c.init(other.c.get<n2_s_>());
-      break;
-    case types::n4:
-      c.init(other.c.get<n4_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::tx_comb_c_");
-  }
-}
-srs_res_s::tx_comb_c_& srs_res_s::tx_comb_c_::operator=(const srs_res_s::tx_comb_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::n2:
-      c.set(other.c.get<n2_s_>());
-      break;
-    case types::n4:
-      c.set(other.c.get<n4_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::tx_comb_c_");
-  }
+static const asn1::table::storage_ops* const choice_storage_srs_res_s_tx_comb_c__alternatives[] = {
+    &asn1::table::alternative_ops<srs_res_s::tx_comb_c_::n2_s_, false>::value,
+    &asn1::table::alternative_ops<srs_res_s::tx_comb_c_::n4_s_, false>::value};
+const asn1::table::choice_storage_desc srs_res_s::tx_comb_c_::storage_desc = {
+    choice_storage_srs_res_s_tx_comb_c__alternatives,
+    2,
+    "srs_res_s::tx_comb_c_"};
 
-  return *this;
-}
 srs_res_s::tx_comb_c_::n2_s_& srs_res_s::tx_comb_c_::set_n2()
 {
   set(types::n2);
@@ -1375,186 +1302,139 @@ srs_res_s::tx_comb_c_::n4_s_& srs_res_s::tx_comb_c_::set_n4()
   set(types::n4);
   return c.get<n4_s_>();
 }
-void srs_res_s::tx_comb_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::n2:
-      j.write_fieldname("n2");
-      j.start_obj();
-      j.write_int("combOffset-n2", c.get<n2_s_>().comb_offset_n2);
-      j.write_int("cyclicShift-n2", c.get<n2_s_>().cyclic_shift_n2);
-      j.end_obj();
-      break;
-    case types::n4:
-      j.write_fieldname("n4");
-      j.start_obj();
-      j.write_int("combOffset-n4", c.get<n4_s_>().comb_offset_n4);
-      j.write_int("cyclicShift-n4", c.get<n4_s_>().cyclic_shift_n4);
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::tx_comb_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_res_s::tx_comb_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::n2:
-      HANDLE_CODE(pack_integer(bref, c.get<n2_s_>().comb_offset_n2, (uint8_t)0u, (uint8_t)1u));
-      HANDLE_CODE(pack_integer(bref, c.get<n2_s_>().cyclic_shift_n2, (uint8_t)0u, (uint8_t)7u));
-      break;
-    case types::n4:
-      HANDLE_CODE(pack_integer(bref, c.get<n4_s_>().comb_offset_n4, (uint8_t)0u, (uint8_t)3u));
-      HANDLE_CODE(pack_integer(bref, c.get<n4_s_>().cyclic_shift_n4, (uint8_t)0u, (uint8_t)11u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::tx_comb_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_res_s::tx_comb_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::n2:
-      HANDLE_CODE(unpack_integer(c.get<n2_s_>().comb_offset_n2, bref, (uint8_t)0u, (uint8_t)1u));
-      HANDLE_CODE(unpack_integer(c.get<n2_s_>().cyclic_shift_n2, bref, (uint8_t)0u, (uint8_t)7u));
-      break;
-    case types::n4:
-      HANDLE_CODE(unpack_integer(c.get<n4_s_>().comb_offset_n4, bref, (uint8_t)0u, (uint8_t)3u));
-      HANDLE_CODE(unpack_integer(c.get<n4_s_>().cyclic_shift_n4, bref, (uint8_t)0u, (uint8_t)11u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::tx_comb_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field seq_table_srs_res_s_tx_comb_c__n2_s__fields[] = {
+    {offsetof(srs_res_s::tx_comb_c_::n2_s_, comb_offset_n2),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1),
+     nullptr},
+    {offsetof(srs_res_s::tx_comb_c_::n2_s_, cyclic_shift_n2),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(7),
+     nullptr}};
+static const asn1::table::field_name seq_table_srs_res_s_tx_comb_c__n2_s__names[] = {{"combOffset-n2", nullptr},
+                                                                                     {"cyclicShift-n2", nullptr}};
+static const asn1::table::seq_desc   seq_table_srs_res_s_tx_comb_c__n2_s_         = {
+    {seq_table_srs_res_s_tx_comb_c__n2_s__fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_tx_comb_c__n2_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_tx_comb_c__n4_s__fields[] = {
+    {offsetof(srs_res_s::tx_comb_c_::n4_s_, comb_offset_n4),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(3),
+     nullptr},
+    {offsetof(srs_res_s::tx_comb_c_::n4_s_, cyclic_shift_n4),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(11),
+     nullptr}};
+static const asn1::table::field_name seq_table_srs_res_s_tx_comb_c__n4_s__names[] = {{"combOffset-n4", nullptr},
+                                                                                     {"cyclicShift-n4", nullptr}};
+static const asn1::table::seq_desc   seq_table_srs_res_s_tx_comb_c__n4_s_         = {
+    {seq_table_srs_res_s_tx_comb_c__n4_s__fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_tx_comb_c__n4_s__names};
+static const asn1::table::seq_field choice_table_srs_res_s_tx_comb_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_res_s_tx_comb_c__n2_s_},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_res_s_tx_comb_c__n4_s_}};
+static const asn1::table::field_name choice_table_srs_res_s_tx_comb_c__names[] = {{"n2", nullptr}, {"n4", nullptr}};
+const asn1::table::choice_desc       srs_res_s::tx_comb_c_::desc               = {
+    asn1::table::enum_int_type<srs_res_s::tx_comb_c_::types>(),
+    srs_res_s::tx_comb_c_::types::nof_types,
+    srs_res_s::tx_comb_c_::types::nof_exts,
+    srs_res_s::tx_comb_c_::types::has_ext,
+    false,
+    choice_table_srs_res_s_tx_comb_c__alternatives,
+    nullptr,
+    choice_table_srs_res_s_tx_comb_c__names,
+    "srs_res_s::tx_comb_c_",
+    offsetof(srs_res_s::tx_comb_c_, c.type),
+    offsetof(srs_res_s::tx_comb_c_, c.value),
+    false,
+    &srs_res_s::tx_comb_c_::storage_desc};
 
-const char* srs_res_s::tx_comb_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"n2", "n4"};
-  return convert_enum_idx(names, 2, value, "srs_res_s::tx_comb_c_::types");
-}
-uint8_t srs_res_s::tx_comb_c_::types_opts::to_number() const
+static const char*           enum_names_srs_res_s_tx_comb_c__types_values[] = {"n2", "n4"};
+const asn1::table::enum_desc srs_res_s::tx_comb_c_::types_opts::desc = {enum_names_srs_res_s_tx_comb_c__types_values,
+                                                                        2,
+                                                                        "srs_res_s::tx_comb_c_::types"};
+uint8_t                      srs_res_s::tx_comb_c_::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4};
   return map_enum_number(numbers, 2, value, "srs_res_s::tx_comb_c_::types");
 }
 
-const char* srs_res_s::res_map_s_::nrof_symbols_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::res_map_s_::nrof_symbols_e_");
-}
+static const char*           enum_names_srs_res_s_res_map_s__nrof_symbols_e__values[] = {"n1", "n2", "n4"};
+const asn1::table::enum_desc srs_res_s::res_map_s_::nrof_symbols_opts::desc           = {
+    enum_names_srs_res_s_res_map_s__nrof_symbols_e__values,
+    3,
+    "srs_res_s::res_map_s_::nrof_symbols_e_"};
 uint8_t srs_res_s::res_map_s_::nrof_symbols_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4};
   return map_enum_number(numbers, 3, value, "srs_res_s::res_map_s_::nrof_symbols_e_");
 }
 
-const char* srs_res_s::res_map_s_::repeat_factor_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::res_map_s_::repeat_factor_e_");
-}
+static const char*           enum_names_srs_res_s_res_map_s__repeat_factor_e__values[] = {"n1", "n2", "n4"};
+const asn1::table::enum_desc srs_res_s::res_map_s_::repeat_factor_opts::desc           = {
+    enum_names_srs_res_s_res_map_s__repeat_factor_e__values,
+    3,
+    "srs_res_s::res_map_s_::repeat_factor_e_"};
 uint8_t srs_res_s::res_map_s_::repeat_factor_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4};
   return map_enum_number(numbers, 3, value, "srs_res_s::res_map_s_::repeat_factor_e_");
 }
 
-const char* srs_res_s::group_or_seq_hop_opts::to_string() const
-{
-  static const char* names[] = {"neither", "groupHopping", "sequenceHopping"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::group_or_seq_hop_e_");
-}
+static const char* enum_names_srs_res_s_group_or_seq_hop_e__values[] = {"neither", "groupHopping", "sequenceHopping"};
+const asn1::table::enum_desc srs_res_s::group_or_seq_hop_opts::desc  = {enum_names_srs_res_s_group_or_seq_hop_e__values,
+                                                                        3,
+                                                                        "srs_res_s::group_or_seq_hop_e_"};
 
-void srs_res_s::res_type_c_::destroy_()
-{
-  switch (type_) {
-    case types::aperiodic:
-      c.destroy<aperiodic_s_>();
-      break;
-    case types::semi_persistent:
-      c.destroy<semi_persistent_s_>();
-      break;
-    case types::periodic:
-      c.destroy<periodic_s_>();
-      break;
-    default:
-      break;
-  }
-}
-void srs_res_s::res_type_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::aperiodic:
-      c.init<aperiodic_s_>();
-      break;
-    case types::semi_persistent:
-      c.init<semi_persistent_s_>();
-      break;
-    case types::periodic:
-      c.init<periodic_s_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::res_type_c_");
-  }
-}
-srs_res_s::res_type_c_::res_type_c_(const srs_res_s::res_type_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::aperiodic:
-      c.init(other.c.get<aperiodic_s_>());
-      break;
-    case types::semi_persistent:
-      c.init(other.c.get<semi_persistent_s_>());
-      break;
-    case types::periodic:
-      c.init(other.c.get<periodic_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::res_type_c_");
-  }
-}
-srs_res_s::res_type_c_& srs_res_s::res_type_c_::operator=(const srs_res_s::res_type_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::aperiodic:
-      c.set(other.c.get<aperiodic_s_>());
-      break;
-    case types::semi_persistent:
-      c.set(other.c.get<semi_persistent_s_>());
-      break;
-    case types::periodic:
-      c.set(other.c.get<periodic_s_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::res_type_c_");
-  }
+static const asn1::table::storage_ops* const choice_storage_srs_res_s_res_type_c__alternatives[] = {
+    &asn1::table::alternative_ops<srs_res_s::res_type_c_::aperiodic_s_, false>::value,
+    &asn1::table::alternative_ops<srs_res_s::res_type_c_::semi_persistent_s_, false>::value,
+    &asn1::table::alternative_ops<srs_res_s::res_type_c_::periodic_s_, false>::value};
+const asn1::table::choice_storage_desc srs_res_s::res_type_c_::storage_desc = {
+    choice_storage_srs_res_s_res_type_c__alternatives,
+    3,
+    "srs_res_s::res_type_c_"};
 
-  return *this;
-}
 srs_res_s::res_type_c_::aperiodic_s_& srs_res_s::res_type_c_::set_aperiodic()
 {
   set(types::aperiodic);
@@ -1570,190 +1450,152 @@ srs_res_s::res_type_c_::periodic_s_& srs_res_s::res_type_c_::set_periodic()
   set(types::periodic);
   return c.get<periodic_s_>();
 }
-void srs_res_s::res_type_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::aperiodic:
-      j.write_fieldname("aperiodic");
-      j.start_obj();
-      j.end_obj();
-      break;
-    case types::semi_persistent:
-      j.write_fieldname("semi-persistent");
-      j.start_obj();
-      j.write_fieldname("periodicityAndOffset-sp");
-      c.get<semi_persistent_s_>().periodicity_and_offset_sp.to_json(j);
-      j.end_obj();
-      break;
-    case types::periodic:
-      j.write_fieldname("periodic");
-      j.start_obj();
-      j.write_fieldname("periodicityAndOffset-p");
-      c.get<periodic_s_>().periodicity_and_offset_p.to_json(j);
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::res_type_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_res_s::res_type_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::aperiodic:
-      HANDLE_CODE(bref.pack(false, 1));
-      break;
-    case types::semi_persistent:
-      HANDLE_CODE(bref.pack(false, 1));
-      HANDLE_CODE(c.get<semi_persistent_s_>().periodicity_and_offset_sp.pack(bref));
-      break;
-    case types::periodic:
-      HANDLE_CODE(bref.pack(false, 1));
-      HANDLE_CODE(c.get<periodic_s_>().periodicity_and_offset_p.pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::res_type_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_res_s::res_type_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::aperiodic:
-      bool aperiodic_ext;
-      HANDLE_CODE(bref.unpack(aperiodic_ext, 1));
-      if (aperiodic_ext) {
-        ext_groups_unpacker unknown_ext_unpacker(bref);
-        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-      }
-      break;
-    case types::semi_persistent:
-      bool semi_persistent_ext;
-      HANDLE_CODE(bref.unpack(semi_persistent_ext, 1));
-      HANDLE_CODE(c.get<semi_persistent_s_>().periodicity_and_offset_sp.unpack(bref));
-      if (semi_persistent_ext) {
-        ext_groups_unpacker unknown_ext_unpacker(bref);
-        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-      }
-      break;
-    case types::periodic:
-      bool periodic_ext;
-      HANDLE_CODE(bref.unpack(periodic_ext, 1));
-      HANDLE_CODE(c.get<periodic_s_>().periodicity_and_offset_p.unpack(bref));
-      if (periodic_ext) {
-        ext_groups_unpacker unknown_ext_unpacker(bref);
-        HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-      }
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::res_type_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_desc seq_table_srs_res_s_res_type_c__aperiodic_s_ =
+    {{nullptr, 0, UINT64_C(0x0), nullptr, 0}, true, false, nullptr, 0, nullptr};
+static const asn1::table::seq_field seq_table_srs_res_s_res_type_c__semi_persistent_s__fields[] = {
+    {offsetof(srs_res_s::res_type_c_::semi_persistent_s_, periodicity_and_offset_sp),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_periodicity_and_offset_c::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_res_type_c__semi_persistent_s__names[] = {
+    {"periodicityAndOffset-sp", nullptr}};
+static const asn1::table::seq_desc seq_table_srs_res_s_res_type_c__semi_persistent_s_ = {
+    {seq_table_srs_res_s_res_type_c__semi_persistent_s__fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_res_type_c__semi_persistent_s__names};
+static const asn1::table::seq_field seq_table_srs_res_s_res_type_c__periodic_s__fields[] = {
+    {offsetof(srs_res_s::res_type_c_::periodic_s_, periodicity_and_offset_p),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_periodicity_and_offset_c::desc}};
+static const asn1::table::field_name seq_table_srs_res_s_res_type_c__periodic_s__names[] = {
+    {"periodicityAndOffset-p", nullptr}};
+static const asn1::table::seq_desc seq_table_srs_res_s_res_type_c__periodic_s_ = {
+    {seq_table_srs_res_s_res_type_c__periodic_s__fields, 1, UINT64_C(0x1), nullptr, 0},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_res_s_res_type_c__periodic_s__names};
+static const asn1::table::seq_field choice_table_srs_res_s_res_type_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_res_s_res_type_c__aperiodic_s_},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_res_s_res_type_c__semi_persistent_s_},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_srs_res_s_res_type_c__periodic_s_}};
+static const asn1::table::field_name choice_table_srs_res_s_res_type_c__names[] = {{"aperiodic", nullptr},
+                                                                                   {"semi-persistent", nullptr},
+                                                                                   {"periodic", nullptr}};
+const asn1::table::choice_desc       srs_res_s::res_type_c_::desc               = {
+    asn1::table::enum_int_type<srs_res_s::res_type_c_::types>(),
+    srs_res_s::res_type_c_::types::nof_types,
+    srs_res_s::res_type_c_::types::nof_exts,
+    srs_res_s::res_type_c_::types::has_ext,
+    false,
+    choice_table_srs_res_s_res_type_c__alternatives,
+    nullptr,
+    choice_table_srs_res_s_res_type_c__names,
+    "srs_res_s::res_type_c_",
+    offsetof(srs_res_s::res_type_c_, c.type),
+    offsetof(srs_res_s::res_type_c_, c.value),
+    false,
+    &srs_res_s::res_type_c_::storage_desc};
 
-const char* srs_res_s::res_type_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"aperiodic", "semi-persistent", "periodic"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::res_type_c_::types");
-}
+static const char* enum_names_srs_res_s_res_type_c__types_values[]    = {"aperiodic", "semi-persistent", "periodic"};
+const asn1::table::enum_desc srs_res_s::res_type_c_::types_opts::desc = {enum_names_srs_res_s_res_type_c__types_values,
+                                                                         3,
+                                                                         "srs_res_s::res_type_c_::types"};
 
-const char* srs_res_s::res_map_r16_s_::nrof_symbols_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::res_map_r16_s_::nrof_symbols_r16_e_");
-}
+static const char*           enum_names_srs_res_s_res_map_r16_s__nrof_symbols_r16_e__values[] = {"n1", "n2", "n4"};
+const asn1::table::enum_desc srs_res_s::res_map_r16_s_::nrof_symbols_r16_opts::desc           = {
+    enum_names_srs_res_s_res_map_r16_s__nrof_symbols_r16_e__values,
+    3,
+    "srs_res_s::res_map_r16_s_::nrof_symbols_r16_e_"};
 uint8_t srs_res_s::res_map_r16_s_::nrof_symbols_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4};
   return map_enum_number(numbers, 3, value, "srs_res_s::res_map_r16_s_::nrof_symbols_r16_e_");
 }
 
-const char* srs_res_s::res_map_r16_s_::repeat_factor_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::res_map_r16_s_::repeat_factor_r16_e_");
-}
+static const char*           enum_names_srs_res_s_res_map_r16_s__repeat_factor_r16_e__values[] = {"n1", "n2", "n4"};
+const asn1::table::enum_desc srs_res_s::res_map_r16_s_::repeat_factor_r16_opts::desc           = {
+    enum_names_srs_res_s_res_map_r16_s__repeat_factor_r16_e__values,
+    3,
+    "srs_res_s::res_map_r16_s_::repeat_factor_r16_e_"};
 uint8_t srs_res_s::res_map_r16_s_::repeat_factor_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4};
   return map_enum_number(numbers, 3, value, "srs_res_s::res_map_r16_s_::repeat_factor_r16_e_");
 }
 
-const char* srs_res_s::res_map_r17_s_::nrof_symbols_r17_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(names, 7, value, "srs_res_s::res_map_r17_s_::nrof_symbols_r17_e_");
-}
+static const char* enum_names_srs_res_s_res_map_r17_s__nrof_symbols_r17_e__values[] =
+    {"n1", "n2", "n4", "n8", "n10", "n12", "n14"};
+const asn1::table::enum_desc srs_res_s::res_map_r17_s_::nrof_symbols_r17_opts::desc = {
+    enum_names_srs_res_s_res_map_r17_s__nrof_symbols_r17_e__values,
+    7,
+    "srs_res_s::res_map_r17_s_::nrof_symbols_r17_e_"};
 uint8_t srs_res_s::res_map_r17_s_::nrof_symbols_r17_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 10, 12, 14};
   return map_enum_number(numbers, 7, value, "srs_res_s::res_map_r17_s_::nrof_symbols_r17_e_");
 }
 
-const char* srs_res_s::res_map_r17_s_::repeat_factor_r17_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n5", "n6", "n7", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(names, 10, value, "srs_res_s::res_map_r17_s_::repeat_factor_r17_e_");
-}
+static const char* enum_names_srs_res_s_res_map_r17_s__repeat_factor_r17_e__values[] =
+    {"n1", "n2", "n4", "n5", "n6", "n7", "n8", "n10", "n12", "n14"};
+const asn1::table::enum_desc srs_res_s::res_map_r17_s_::repeat_factor_r17_opts::desc = {
+    enum_names_srs_res_s_res_map_r17_s__repeat_factor_r17_e__values,
+    10,
+    "srs_res_s::res_map_r17_s_::repeat_factor_r17_e_"};
 uint8_t srs_res_s::res_map_r17_s_::repeat_factor_r17_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 5, 6, 7, 8, 10, 12, 14};
   return map_enum_number(numbers, 10, value, "srs_res_s::res_map_r17_s_::repeat_factor_r17_e_");
 }
 
-void srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::destroy_() {}
-void srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::start_rb_idx_f_scaling_r17_c_(
-    const srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::start_rb_idx_and_freq_scaling_factor2_r17:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::start_rb_idx_and_freq_scaling_factor4_r17:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_");
-  }
-}
-srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_&
-srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::operator=(
-    const srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::start_rb_idx_and_freq_scaling_factor2_r17:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::start_rb_idx_and_freq_scaling_factor4_r17:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_");
-  }
+static const asn1::table::storage_ops* const
+    choice_storage_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__alternatives[] = {
+        &asn1::table::alternative_ops<uint8_t, true>::value,
+        &asn1::table::alternative_ops<uint8_t, true>::value};
+const asn1::table::choice_storage_desc srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::storage_desc = {
+    choice_storage_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__alternatives,
+    2,
+    "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_"};
 
-  return *this;
-}
 uint8_t& srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::set_start_rb_idx_and_freq_scaling_factor2_r17()
 {
   set(types::start_rb_idx_and_freq_scaling_factor2_r17);
@@ -1764,111 +1606,62 @@ uint8_t& srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::set_sta
   set(types::start_rb_idx_and_freq_scaling_factor4_r17);
   return c.get<uint8_t>();
 }
-void srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::start_rb_idx_and_freq_scaling_factor2_r17:
-      j.write_int("startRBIndexAndFreqScalingFactor2-r17", c.get<uint8_t>());
-      break;
-    case types::start_rb_idx_and_freq_scaling_factor4_r17:
-      j.write_int("startRBIndexAndFreqScalingFactor4-r17", c.get<uint8_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::start_rb_idx_and_freq_scaling_factor2_r17:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)1u));
-      break;
-    case types::start_rb_idx_and_freq_scaling_factor4_r17:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)3u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::start_rb_idx_and_freq_scaling_factor2_r17:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)1u));
-      break;
-    case types::start_rb_idx_and_freq_scaling_factor4_r17:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)3u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field
+    choice_table_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__alternatives[] = {
+        {0,
+         asn1::table::seq_field::mandatory,
+         asn1::table::field_op::int_u8,
+         false,
+         false,
+         INT64_C(0),
+         UINT64_C(1),
+         nullptr},
+        {0,
+         asn1::table::seq_field::mandatory,
+         asn1::table::field_op::int_u8,
+         false,
+         false,
+         INT64_C(0),
+         UINT64_C(3),
+         nullptr}};
+static const asn1::table::field_name choice_table_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__names[] =
+    {{"startRBIndexAndFreqScalingFactor2-r17", nullptr}, {"startRBIndexAndFreqScalingFactor4-r17", nullptr}};
+const asn1::table::choice_desc srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::desc = {
+    asn1::table::enum_int_type<srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types>(),
+    srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types::nof_types,
+    srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types::nof_exts,
+    srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types::has_ext,
+    false,
+    choice_table_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__alternatives,
+    nullptr,
+    choice_table_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__names,
+    "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_",
+    offsetof(srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_, c.type),
+    offsetof(srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_, c.value),
+    false,
+    &srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::storage_desc};
 
-const char* srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"startRBIndexAndFreqScalingFactor2-r17", "startRBIndexAndFreqScalingFactor4-r17"};
-  return convert_enum_idx(names, 2, value, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types");
-}
+static const char* enum_names_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__types_values[] = {
+    "startRBIndexAndFreqScalingFactor2-r17",
+    "startRBIndexAndFreqScalingFactor4-r17"};
+const asn1::table::enum_desc srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types_opts::desc = {
+    enum_names_srs_res_s_partial_freq_sr17_s__start_rb_idx_f_scaling_r17_c__types_values,
+    2,
+    "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types"};
 uint8_t srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4};
   return map_enum_number(numbers, 2, value, "srs_res_s::partial_freq_sr17_s_::start_rb_idx_f_scaling_r17_c_::types");
 }
 
-void srs_res_s::srs_tci_state_r17_c_::destroy_() {}
-void srs_res_s::srs_tci_state_r17_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-srs_res_s::srs_tci_state_r17_c_::srs_tci_state_r17_c_(const srs_res_s::srs_tci_state_r17_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::srs_ul_tci_state:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::srs_dl_or_joint_tci_state:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::srs_tci_state_r17_c_");
-  }
-}
-srs_res_s::srs_tci_state_r17_c_&
-srs_res_s::srs_tci_state_r17_c_::operator=(const srs_res_s::srs_tci_state_r17_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::srs_ul_tci_state:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::srs_dl_or_joint_tci_state:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::srs_tci_state_r17_c_");
-  }
+static const asn1::table::storage_ops* const choice_storage_srs_res_s_srs_tci_state_r17_c__alternatives[] = {
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value};
+const asn1::table::choice_storage_desc srs_res_s::srs_tci_state_r17_c_::storage_desc = {
+    choice_storage_srs_res_s_srs_tci_state_r17_c__alternatives,
+    2,
+    "srs_res_s::srs_tci_state_r17_c_"};
 
-  return *this;
-}
 uint8_t& srs_res_s::srs_tci_state_r17_c_::set_srs_ul_tci_state()
 {
   set(types::srs_ul_tci_state);
@@ -1879,137 +1672,63 @@ uint8_t& srs_res_s::srs_tci_state_r17_c_::set_srs_dl_or_joint_tci_state()
   set(types::srs_dl_or_joint_tci_state);
   return c.get<uint8_t>();
 }
-void srs_res_s::srs_tci_state_r17_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::srs_ul_tci_state:
-      j.write_int("srs-UL-TCI-State", c.get<uint8_t>());
-      break;
-    case types::srs_dl_or_joint_tci_state:
-      j.write_int("srs-DLorJointTCI-State", c.get<uint8_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::srs_tci_state_r17_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_res_s::srs_tci_state_r17_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::srs_ul_tci_state:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::srs_dl_or_joint_tci_state:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)127u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::srs_tci_state_r17_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_res_s::srs_tci_state_r17_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::srs_ul_tci_state:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)63u));
-      break;
-    case types::srs_dl_or_joint_tci_state:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)127u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::srs_tci_state_r17_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_srs_res_s_srs_tci_state_r17_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(127),
+     nullptr}};
+static const asn1::table::field_name choice_table_srs_res_s_srs_tci_state_r17_c__names[] = {
+    {"srs-UL-TCI-State", nullptr},
+    {"srs-DLorJointTCI-State", nullptr}};
+const asn1::table::choice_desc srs_res_s::srs_tci_state_r17_c_::desc = {
+    asn1::table::enum_int_type<srs_res_s::srs_tci_state_r17_c_::types>(),
+    srs_res_s::srs_tci_state_r17_c_::types::nof_types,
+    srs_res_s::srs_tci_state_r17_c_::types::nof_exts,
+    srs_res_s::srs_tci_state_r17_c_::types::has_ext,
+    false,
+    choice_table_srs_res_s_srs_tci_state_r17_c__alternatives,
+    nullptr,
+    choice_table_srs_res_s_srs_tci_state_r17_c__names,
+    "srs_res_s::srs_tci_state_r17_c_",
+    offsetof(srs_res_s::srs_tci_state_r17_c_, c.type),
+    offsetof(srs_res_s::srs_tci_state_r17_c_, c.value),
+    false,
+    &srs_res_s::srs_tci_state_r17_c_::storage_desc};
 
-const char* srs_res_s::srs_tci_state_r17_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"srs-UL-TCI-State", "srs-DLorJointTCI-State"};
-  return convert_enum_idx(names, 2, value, "srs_res_s::srs_tci_state_r17_c_::types");
-}
+static const char*           enum_names_srs_res_s_srs_tci_state_r17_c__types_values[] = {"srs-UL-TCI-State",
+                                                                                         "srs-DLorJointTCI-State"};
+const asn1::table::enum_desc srs_res_s::srs_tci_state_r17_c_::types_opts::desc        = {
+    enum_names_srs_res_s_srs_tci_state_r17_c__types_values,
+    2,
+    "srs_res_s::srs_tci_state_r17_c_::types"};
 
-const char* srs_res_s::nrof_srs_ports_n8_r18_opts::to_string() const
-{
-  static const char* names[] = {"ports8", "ports8tdm"};
-  return convert_enum_idx(names, 2, value, "srs_res_s::nrof_srs_ports_n8_r18_e_");
-}
+static const char*           enum_names_srs_res_s_nrof_srs_ports_n8_r18_e__values[] = {"ports8", "ports8tdm"};
+const asn1::table::enum_desc srs_res_s::nrof_srs_ports_n8_r18_opts::desc            = {
+    enum_names_srs_res_s_nrof_srs_ports_n8_r18_e__values,
+    2,
+    "srs_res_s::nrof_srs_ports_n8_r18_e_"};
 
-void srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::tx_comb_n4:
-      c.destroy<fixed_bitstring<4>>();
-      break;
-    case types::tx_comb_n8:
-      c.destroy<fixed_bitstring<8>>();
-      break;
-    default:
-      break;
-  }
-}
-void srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::tx_comb_n4:
-      c.init<fixed_bitstring<4>>();
-      break;
-    case types::tx_comb_n8:
-      c.init<fixed_bitstring<8>>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_");
-  }
-}
-srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::hop_subset_r18_c_(
-    const srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::tx_comb_n4:
-      c.init(other.c.get<fixed_bitstring<4>>());
-      break;
-    case types::tx_comb_n8:
-      c.init(other.c.get<fixed_bitstring<8>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_");
-  }
-}
-srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_& srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::operator=(
-    const srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::tx_comb_n4:
-      c.set(other.c.get<fixed_bitstring<4>>());
-      break;
-    case types::tx_comb_n8:
-      c.set(other.c.get<fixed_bitstring<8>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_");
-  }
+static const asn1::table::storage_ops* const
+    choice_storage_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__alternatives[] = {
+        &asn1::table::alternative_ops<fixed_bitstring<4>, false>::value,
+        &asn1::table::alternative_ops<fixed_bitstring<8>, false>::value};
+const asn1::table::choice_storage_desc srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::storage_desc = {
+    choice_storage_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__alternatives,
+    2,
+    "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_"};
 
-  return *this;
-}
 fixed_bitstring<4>& srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::set_tx_comb_n4()
 {
   set(types::tx_comb_n4);
@@ -2020,156 +1739,71 @@ fixed_bitstring<8>& srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::set_tx
   set(types::tx_comb_n8);
   return c.get<fixed_bitstring<8>>();
 }
-void srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::tx_comb_n4:
-      j.write_fieldname("transmissionComb-n4");
-      c.get<fixed_bitstring<4>>().to_json(j);
-      break;
-    case types::tx_comb_n8:
-      j.write_fieldname("transmissionComb-n8");
-      c.get<fixed_bitstring<8>>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::tx_comb_n4:
-      HANDLE_CODE(c.get<fixed_bitstring<4>>().pack(bref));
-      break;
-    case types::tx_comb_n8:
-      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::tx_comb_n4:
-      HANDLE_CODE(c.get<fixed_bitstring<4>>().unpack(bref));
-      break;
-    case types::tx_comb_n8:
-      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<4>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<8>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__names[] = {
+    {"transmissionComb-n4", nullptr},
+    {"transmissionComb-n8", nullptr}};
+const asn1::table::choice_desc srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::desc = {
+    asn1::table::enum_int_type<srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types>(),
+    srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types::nof_types,
+    srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types::nof_exts,
+    srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types::has_ext,
+    false,
+    choice_table_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__alternatives,
+    nullptr,
+    choice_table_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__names,
+    "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_",
+    offsetof(srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_, c.type),
+    offsetof(srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_, c.value),
+    false,
+    &srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::storage_desc};
 
-const char* srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"transmissionComb-n4", "transmissionComb-n8"};
-  return convert_enum_idx(names, 2, value, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types");
-}
+static const char* enum_names_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__types_values[] = {
+    "transmissionComb-n4",
+    "transmissionComb-n8"};
+const asn1::table::enum_desc srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types_opts::desc = {
+    enum_names_srs_res_s_comb_offset_hop_r18_s__hop_subset_r18_c__types_values,
+    2,
+    "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types"};
 uint8_t srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {4, 8};
   return map_enum_number(numbers, 2, value, "srs_res_s::comb_offset_hop_r18_s_::hop_subset_r18_c_::types");
 }
 
-const char* srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18_opts::to_string() const
-{
-  static const char* names[] = {"symbol", "repetition"};
-  return convert_enum_idx(names, 2, value, "srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18_e_");
-}
+static const char*           enum_names_srs_res_s_comb_offset_hop_r18_s__hop_with_repeat_r18_e__values[] = {"symbol",
+                                                                                                            "repetition"};
+const asn1::table::enum_desc srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18_opts::desc           = {
+    enum_names_srs_res_s_comb_offset_hop_r18_s__hop_with_repeat_r18_e__values,
+    2,
+    "srs_res_s::comb_offset_hop_r18_s_::hop_with_repeat_r18_e_"};
 
-void srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::tx_comb_n2:
-      c.destroy<fixed_bitstring<8>>();
-      break;
-    case types::tx_comb_n4:
-      c.destroy<fixed_bitstring<12>>();
-      break;
-    case types::tx_comb_n8:
-      c.destroy<fixed_bitstring<6>>();
-      break;
-    default:
-      break;
-  }
-}
-void srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::tx_comb_n2:
-      c.init<fixed_bitstring<8>>();
-      break;
-    case types::tx_comb_n4:
-      c.init<fixed_bitstring<12>>();
-      break;
-    case types::tx_comb_n8:
-      c.init<fixed_bitstring<6>>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_");
-  }
-}
-srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::hop_subset_r18_c_(
-    const srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::tx_comb_n2:
-      c.init(other.c.get<fixed_bitstring<8>>());
-      break;
-    case types::tx_comb_n4:
-      c.init(other.c.get<fixed_bitstring<12>>());
-      break;
-    case types::tx_comb_n8:
-      c.init(other.c.get<fixed_bitstring<6>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_");
-  }
-}
-srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_& srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::operator=(
-    const srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::tx_comb_n2:
-      c.set(other.c.get<fixed_bitstring<8>>());
-      break;
-    case types::tx_comb_n4:
-      c.set(other.c.get<fixed_bitstring<12>>());
-      break;
-    case types::tx_comb_n8:
-      c.set(other.c.get<fixed_bitstring<6>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_");
-  }
+static const asn1::table::storage_ops* const
+    choice_storage_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__alternatives[] = {
+        &asn1::table::alternative_ops<fixed_bitstring<8>, false>::value,
+        &asn1::table::alternative_ops<fixed_bitstring<12>, false>::value,
+        &asn1::table::alternative_ops<fixed_bitstring<6>, false>::value};
+const asn1::table::choice_storage_desc srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::storage_desc = {
+    choice_storage_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__alternatives,
+    3,
+    "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_"};
 
-  return *this;
-}
 fixed_bitstring<8>& srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::set_tx_comb_n2()
 {
   set(types::tx_comb_n2);
@@ -2185,73 +1819,58 @@ fixed_bitstring<6>& srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::set_t
   set(types::tx_comb_n8);
   return c.get<fixed_bitstring<6>>();
 }
-void srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::tx_comb_n2:
-      j.write_fieldname("transmissionComb-n2");
-      c.get<fixed_bitstring<8>>().to_json(j);
-      break;
-    case types::tx_comb_n4:
-      j.write_fieldname("transmissionComb-n4");
-      c.get<fixed_bitstring<12>>().to_json(j);
-      break;
-    case types::tx_comb_n8:
-      j.write_fieldname("transmissionComb-n8");
-      c.get<fixed_bitstring<6>>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::tx_comb_n2:
-      HANDLE_CODE(c.get<fixed_bitstring<8>>().pack(bref));
-      break;
-    case types::tx_comb_n4:
-      HANDLE_CODE(c.get<fixed_bitstring<12>>().pack(bref));
-      break;
-    case types::tx_comb_n8:
-      HANDLE_CODE(c.get<fixed_bitstring<6>>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::tx_comb_n2:
-      HANDLE_CODE(c.get<fixed_bitstring<8>>().unpack(bref));
-      break;
-    case types::tx_comb_n4:
-      HANDLE_CODE(c.get<fixed_bitstring<12>>().unpack(bref));
-      break;
-    case types::tx_comb_n8:
-      HANDLE_CODE(c.get<fixed_bitstring<6>>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<8>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<12>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<6>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__names[] = {
+    {"transmissionComb-n2", nullptr},
+    {"transmissionComb-n4", nullptr},
+    {"transmissionComb-n8", nullptr}};
+const asn1::table::choice_desc srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::desc = {
+    asn1::table::enum_int_type<srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types>(),
+    srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types::nof_types,
+    srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types::nof_exts,
+    srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types::has_ext,
+    false,
+    choice_table_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__alternatives,
+    nullptr,
+    choice_table_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__names,
+    "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_",
+    offsetof(srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_, c.type),
+    offsetof(srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_, c.value),
+    false,
+    &srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::storage_desc};
 
-const char* srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"transmissionComb-n2", "transmissionComb-n4", "transmissionComb-n8"};
-  return convert_enum_idx(names, 3, value, "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types");
-}
+static const char* enum_names_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__types_values[] = {
+    "transmissionComb-n2",
+    "transmissionComb-n4",
+    "transmissionComb-n8"};
+const asn1::table::enum_desc srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types_opts::desc = {
+    enum_names_srs_res_s_cyclic_shift_hop_r18_s__hop_subset_r18_c__types_values,
+    3,
+    "srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types"};
 uint8_t srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 4, 8};
@@ -2259,88 +1878,120 @@ uint8_t srs_res_s::cyclic_shift_hop_r18_s_::hop_subset_r18_c_::types_opts::to_nu
 }
 
 // SRS-PosResources-r16 ::= SEQUENCE
-OCUDUASN_CODE srs_pos_resources_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(max_num_srs_pos_res_set_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_srs_pos_res_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_srs_res_per_bwp_per_slot_r16.pack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_per_slot_r16.pack(bref));
+static const asn1::table::seq_field seq_table_srs_pos_resources_r16_s_fields[] = {
+    {offsetof(srs_pos_resources_r16_s, max_num_srs_pos_res_set_per_bwp_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16)>(),
+     decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16)::has_ext,
+     false,
+     decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16)::nof_types,
+     decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16)::nof_exts,
+     nullptr,
+     &srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::desc},
+    {offsetof(srs_pos_resources_r16_s, max_num_srs_pos_res_per_bwp_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16)>(),
+     decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16)::has_ext,
+     false,
+     decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16)::nof_types,
+     decltype(srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16)::nof_exts,
+     nullptr,
+     &srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_opts::desc},
+    {offsetof(srs_pos_resources_r16_s, max_num_srs_res_per_bwp_per_slot_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16)>(),
+     decltype(srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16)::has_ext,
+     false,
+     decltype(srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16)::nof_types,
+     decltype(srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16)::nof_exts,
+     nullptr,
+     &srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::desc},
+    {offsetof(srs_pos_resources_r16_s, max_num_periodic_srs_pos_res_per_bwp_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16)>(),
+     decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16)::has_ext,
+     false,
+     decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16)::nof_types,
+     decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16)::nof_exts,
+     nullptr,
+     &srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_opts::desc},
+    {offsetof(srs_pos_resources_r16_s, max_num_periodic_srs_pos_res_per_bwp_per_slot_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16)>(),
+     decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16)::has_ext,
+     false,
+     decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16)::nof_types,
+     decltype(srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16)::nof_exts,
+     nullptr,
+     &srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts::desc}};
+static const asn1::table::field_name seq_table_srs_pos_resources_r16_s_names[] = {
+    {"maxNumberSRS-PosResourceSetPerBWP-r16", nullptr},
+    {"maxNumberSRS-PosResourcesPerBWP-r16", nullptr},
+    {"maxNumberSRS-ResourcesPerBWP-PerSlot-r16", nullptr},
+    {"maxNumberPeriodicSRS-PosResourcesPerBWP-r16", nullptr},
+    {"maxNumberPeriodicSRS-PosResourcesPerBWP-PerSlot-r16", nullptr}};
+const asn1::table::seq_desc srs_pos_resources_r16_s::desc = {
+    {seq_table_srs_pos_resources_r16_s_fields, 5, UINT64_C(0x1f), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_pos_resources_r16_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_pos_resources_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(max_num_srs_pos_res_set_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_srs_pos_res_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_srs_res_per_bwp_per_slot_r16.unpack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_periodic_srs_pos_res_per_bwp_per_slot_r16.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void srs_pos_resources_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("maxNumberSRS-PosResourceSetPerBWP-r16", max_num_srs_pos_res_set_per_bwp_r16.to_string());
-  j.write_str("maxNumberSRS-PosResourcesPerBWP-r16", max_num_srs_pos_res_per_bwp_r16.to_string());
-  j.write_str("maxNumberSRS-ResourcesPerBWP-PerSlot-r16", max_num_srs_res_per_bwp_per_slot_r16.to_string());
-  j.write_str("maxNumberPeriodicSRS-PosResourcesPerBWP-r16", max_num_periodic_srs_pos_res_per_bwp_r16.to_string());
-  j.write_str("maxNumberPeriodicSRS-PosResourcesPerBWP-PerSlot-r16",
-              max_num_periodic_srs_pos_res_per_bwp_per_slot_r16.to_string());
-  j.end_obj();
-}
-
-const char* srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n12", "n16"};
-  return convert_enum_idx(names, 6, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_e_");
-}
+static const char* enum_names_srs_pos_resources_r16_s_max_num_srs_pos_res_set_per_bwp_r16_e__values[] =
+    {"n1", "n2", "n4", "n8", "n12", "n16"};
+const asn1::table::enum_desc srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::desc = {
+    enum_names_srs_pos_resources_r16_s_max_num_srs_pos_res_set_per_bwp_r16_e__values,
+    6,
+    "srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_e_"};
 uint8_t srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 12, 16};
   return map_enum_number(numbers, 6, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_set_per_bwp_r16_e_");
 }
 
-const char* srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_e_");
-}
+static const char* enum_names_srs_pos_resources_r16_s_max_num_srs_pos_res_per_bwp_r16_e__values[] =
+    {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
+const asn1::table::enum_desc srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_opts::desc = {
+    enum_names_srs_pos_resources_r16_s_max_num_srs_pos_res_per_bwp_r16_e__values,
+    7,
+    "srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_e_"};
 uint8_t srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
   return map_enum_number(numbers, 7, value, "srs_pos_resources_r16_s::max_num_srs_pos_res_per_bwp_r16_e_");
 }
 
-const char* srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(names, 10, value, "srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_e_");
-}
+static const char* enum_names_srs_pos_resources_r16_s_max_num_srs_res_per_bwp_per_slot_r16_e__values[] =
+    {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
+const asn1::table::enum_desc srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::desc = {
+    enum_names_srs_pos_resources_r16_s_max_num_srs_res_per_bwp_per_slot_r16_e__values,
+    10,
+    "srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_e_"};
 uint8_t srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
   return map_enum_number(numbers, 10, value, "srs_pos_resources_r16_s::max_num_srs_res_per_bwp_per_slot_r16_e_");
 }
 
-const char* srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_e_");
-}
+static const char* enum_names_srs_pos_resources_r16_s_max_num_periodic_srs_pos_res_per_bwp_r16_e__values[] =
+    {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
+const asn1::table::enum_desc srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_opts::desc = {
+    enum_names_srs_pos_resources_r16_s_max_num_periodic_srs_pos_res_per_bwp_r16_e__values,
+    7,
+    "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_e_"};
 uint8_t srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
   return map_enum_number(numbers, 7, value, "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_r16_e_");
 }
 
-const char* srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(
-      names, 10, value, "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e_");
-}
+static const char* enum_names_srs_pos_resources_r16_s_max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e__values[] =
+    {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
+const asn1::table::enum_desc srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts::desc = {
+    enum_names_srs_pos_resources_r16_s_max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e__values,
+    10,
+    "srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_e_"};
 uint8_t srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
@@ -2349,45 +2000,54 @@ uint8_t srs_pos_resources_r16_s::max_num_periodic_srs_pos_res_per_bwp_per_slot_r
 }
 
 // SRS-PosResourceAP-r16 ::= SEQUENCE
-OCUDUASN_CODE srs_pos_res_ap_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_per_slot_r16.pack(bref));
+static const asn1::table::seq_field seq_table_srs_pos_res_ap_r16_s_fields[] = {
+    {offsetof(srs_pos_res_ap_r16_s, max_num_ap_srs_pos_res_per_bwp_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16)>(),
+     decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16)::has_ext,
+     false,
+     decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16)::nof_types,
+     decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16)::nof_exts,
+     nullptr,
+     &srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_opts::desc},
+    {offsetof(srs_pos_res_ap_r16_s, max_num_ap_srs_pos_res_per_bwp_per_slot_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16)>(),
+     decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16)::has_ext,
+     false,
+     decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16)::nof_types,
+     decltype(srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16)::nof_exts,
+     nullptr,
+     &srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts::desc}};
+static const asn1::table::field_name seq_table_srs_pos_res_ap_r16_s_names[] = {
+    {"maxNumberAP-SRS-PosResourcesPerBWP-r16", nullptr},
+    {"maxNumberAP-SRS-PosResourcesPerBWP-PerSlot-r16", nullptr}};
+const asn1::table::seq_desc srs_pos_res_ap_r16_s::desc = {
+    {seq_table_srs_pos_res_ap_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_pos_res_ap_r16_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_pos_res_ap_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_ap_srs_pos_res_per_bwp_per_slot_r16.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void srs_pos_res_ap_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("maxNumberAP-SRS-PosResourcesPerBWP-r16", max_num_ap_srs_pos_res_per_bwp_r16.to_string());
-  j.write_str("maxNumberAP-SRS-PosResourcesPerBWP-PerSlot-r16",
-              max_num_ap_srs_pos_res_per_bwp_per_slot_r16.to_string());
-  j.end_obj();
-}
-
-const char* srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_e_");
-}
+static const char* enum_names_srs_pos_res_ap_r16_s_max_num_ap_srs_pos_res_per_bwp_r16_e__values[] =
+    {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
+const asn1::table::enum_desc srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_opts::desc = {
+    enum_names_srs_pos_res_ap_r16_s_max_num_ap_srs_pos_res_per_bwp_r16_e__values,
+    7,
+    "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_e_"};
 uint8_t srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
   return map_enum_number(numbers, 7, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_r16_e_");
 }
 
-const char* srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(names, 10, value, "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_");
-}
+static const char* enum_names_srs_pos_res_ap_r16_s_max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e__values[] =
+    {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
+const asn1::table::enum_desc srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts::desc = {
+    enum_names_srs_pos_res_ap_r16_s_max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e__values,
+    10,
+    "srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_e_"};
 uint8_t srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
@@ -2395,45 +2055,54 @@ uint8_t srs_pos_res_ap_r16_s::max_num_ap_srs_pos_res_per_bwp_per_slot_r16_opts::
 }
 
 // SRS-PosResourceSP-r16 ::= SEQUENCE
-OCUDUASN_CODE srs_pos_res_sp_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_r16.pack(bref));
-  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_per_slot_r16.pack(bref));
+static const asn1::table::seq_field seq_table_srs_pos_res_sp_r16_s_fields[] = {
+    {offsetof(srs_pos_res_sp_r16_s, max_num_sp_srs_pos_res_per_bwp_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16)>(),
+     decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16)::has_ext,
+     false,
+     decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16)::nof_types,
+     decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16)::nof_exts,
+     nullptr,
+     &srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_opts::desc},
+    {offsetof(srs_pos_res_sp_r16_s, max_num_sp_srs_pos_res_per_bwp_per_slot_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16)>(),
+     decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16)::has_ext,
+     false,
+     decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16)::nof_types,
+     decltype(srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16)::nof_exts,
+     nullptr,
+     &srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts::desc}};
+static const asn1::table::field_name seq_table_srs_pos_res_sp_r16_s_names[] = {
+    {"maxNumberSP-SRS-PosResourcesPerBWP-r16", nullptr},
+    {"maxNumberSP-SRS-PosResourcesPerBWP-PerSlot-r16", nullptr}};
+const asn1::table::seq_desc srs_pos_res_sp_r16_s::desc = {
+    {seq_table_srs_pos_res_sp_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_pos_res_sp_r16_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_pos_res_sp_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_r16.unpack(bref));
-  HANDLE_CODE(max_num_sp_srs_pos_res_per_bwp_per_slot_r16.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void srs_pos_res_sp_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_str("maxNumberSP-SRS-PosResourcesPerBWP-r16", max_num_sp_srs_pos_res_per_bwp_r16.to_string());
-  j.write_str("maxNumberSP-SRS-PosResourcesPerBWP-PerSlot-r16",
-              max_num_sp_srs_pos_res_per_bwp_per_slot_r16.to_string());
-  j.end_obj();
-}
-
-const char* srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
-  return convert_enum_idx(names, 7, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_e_");
-}
+static const char* enum_names_srs_pos_res_sp_r16_s_max_num_sp_srs_pos_res_per_bwp_r16_e__values[] =
+    {"n1", "n2", "n4", "n8", "n16", "n32", "n64"};
+const asn1::table::enum_desc srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_opts::desc = {
+    enum_names_srs_pos_res_sp_r16_s_max_num_sp_srs_pos_res_per_bwp_r16_e__values,
+    7,
+    "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_e_"};
 uint8_t srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 4, 8, 16, 32, 64};
   return map_enum_number(numbers, 7, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_r16_e_");
 }
 
-const char* srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts::to_string() const
-{
-  static const char* names[] = {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
-  return convert_enum_idx(names, 10, value, "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_");
-}
+static const char* enum_names_srs_pos_res_sp_r16_s_max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e__values[] =
+    {"n1", "n2", "n3", "n4", "n5", "n6", "n8", "n10", "n12", "n14"};
+const asn1::table::enum_desc srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts::desc = {
+    enum_names_srs_pos_res_sp_r16_s_max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e__values,
+    10,
+    "srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_e_"};
 uint8_t srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts::to_number() const
 {
   static const uint8_t numbers[] = {1, 2, 3, 4, 5, 6, 8, 10, 12, 14};
@@ -2441,46 +2110,44 @@ uint8_t srs_pos_res_sp_r16_s::max_num_sp_srs_pos_res_per_bwp_per_slot_r16_opts::
 }
 
 // SRS-AllPosResources-r16 ::= SEQUENCE
-OCUDUASN_CODE srs_all_pos_res_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {srs_pos_res_ap_r16_present, srs_pos_res_sp_r16_present}));
-
-  HANDLE_CODE(srs_pos_res_r16.pack(bref));
-  if (srs_pos_res_ap_r16_present) {
-    HANDLE_CODE(srs_pos_res_ap_r16.pack(bref));
-  }
-  if (srs_pos_res_sp_r16_present) {
-    HANDLE_CODE(srs_pos_res_sp_r16.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE srs_all_pos_res_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_bits(bref, {&srs_pos_res_ap_r16_present, &srs_pos_res_sp_r16_present}));
-
-  HANDLE_CODE(srs_pos_res_r16.unpack(bref));
-  if (srs_pos_res_ap_r16_present) {
-    HANDLE_CODE(srs_pos_res_ap_r16.unpack(bref));
-  }
-  if (srs_pos_res_sp_r16_present) {
-    HANDLE_CODE(srs_pos_res_sp_r16.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void srs_all_pos_res_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("srs-PosResources-r16");
-  srs_pos_res_r16.to_json(j);
-  if (srs_pos_res_ap_r16_present) {
-    j.write_fieldname("srs-PosResourceAP-r16");
-    srs_pos_res_ap_r16.to_json(j);
-  }
-  if (srs_pos_res_sp_r16_present) {
-    j.write_fieldname("srs-PosResourceSP-r16");
-    srs_pos_res_sp_r16.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_srs_all_pos_res_r16_s_fields[] = {
+    {offsetof(srs_all_pos_res_r16_s, srs_pos_res_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_pos_resources_r16_s::desc},
+    {offsetof(srs_all_pos_res_r16_s, srs_pos_res_ap_r16),
+     (int32_t)offsetof(srs_all_pos_res_r16_s, srs_pos_res_ap_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_pos_res_ap_r16_s::desc},
+    {offsetof(srs_all_pos_res_r16_s, srs_pos_res_sp_r16),
+     (int32_t)offsetof(srs_all_pos_res_r16_s, srs_pos_res_sp_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &srs_pos_res_sp_r16_s::desc}};
+static const asn1::table::field_name seq_table_srs_all_pos_res_r16_s_names[] = {{"srs-PosResources-r16", nullptr},
+                                                                                {"srs-PosResourceAP-r16", nullptr},
+                                                                                {"srs-PosResourceSP-r16", nullptr}};
+static const asn1::table::seq_opt    seq_table_srs_all_pos_res_r16_s_opts[]  = {
+    {1, (int32_t)offsetof(srs_all_pos_res_r16_s, srs_pos_res_ap_r16_present)},
+    {2, (int32_t)offsetof(srs_all_pos_res_r16_s, srs_pos_res_sp_r16_present)}};
+const asn1::table::seq_desc srs_all_pos_res_r16_s::desc = {
+    {seq_table_srs_all_pos_res_r16_s_fields, 3, UINT64_C(0x1), seq_table_srs_all_pos_res_r16_s_opts, 2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_srs_all_pos_res_r16_s_names};

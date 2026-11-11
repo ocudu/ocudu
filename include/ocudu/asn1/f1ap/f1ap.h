@@ -349,26 +349,6 @@ using multicast_common_cfg_refuse_s = elementary_procedure_option<multicast_comm
  *                              Struct Definitions
  ******************************************************************************/
 
-// ProtocolIE-FieldPair{F1AP-PROTOCOL-IES-PAIR : IEsSetParam} ::= SEQUENCE{{F1AP-PROTOCOL-IES-PAIR}}
-template <class ies_set_paramT_>
-struct protocol_ie_field_pair_s {
-  uint32_t                                 id = 0;
-  crit_e                                   first_crit;
-  typename ies_set_paramT_::first_value_c  first_value;
-  crit_e                                   second_crit;
-  typename ies_set_paramT_::second_value_c second_value;
-
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint32_t& id_);
-};
-
-// ProtocolIE-ContainerPair{F1AP-PROTOCOL-IES-PAIR : IEsSetParam} ::= SEQUENCE (SIZE (0..65535)) OF
-// ProtocolIE-FieldPair{F1AP-PROTOCOL-IES-PAIR : IEsSetParam}
-template <class ies_set_paramT_>
-using protocol_ie_container_pair_l = dyn_seq_of<protocol_ie_field_pair_s<ies_set_paramT_>, 0, 65535, true>;
-
 // F1AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF F1AP-ELEMENTARY-PROCEDURE
 struct f1ap_elem_procs_o {
   // InitiatingMessage ::= OPEN TYPE
@@ -472,18 +452,13 @@ struct f1ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    init_msg_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                           set(types::options e = types::nulltype);
+    types                                          type() const { return type_; }
+    static const asn1::table::choice_desc          desc;
     reset_s&                                       reset();
     f1_setup_request_s&                            f1_setup_request();
     gnb_du_cfg_upd_s&                              gnb_du_cfg_upd();
@@ -720,18 +695,13 @@ struct f1ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    successful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                             set(types::options e = types::nulltype);
+    types                                            type() const { return type_; }
+    static const asn1::table::choice_desc            desc;
     reset_ack_s&                                     reset_ack();
     f1_setup_resp_s&                                 f1_setup_resp();
     gnb_du_cfg_upd_ack_s&                            gnb_du_cfg_upd_ack();
@@ -844,18 +814,13 @@ struct f1ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    unsuccessful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                        set(types::options e = types::nulltype);
+    types                                       type() const { return type_; }
+    static const asn1::table::choice_desc       desc;
     f1_setup_fail_s&                            f1_setup_fail();
     gnb_du_cfg_upd_fail_s&                      gnb_du_cfg_upd_fail();
     gnb_cu_cfg_upd_fail_s&                      gnb_cu_cfg_upd_fail();
@@ -918,13 +883,7 @@ struct f1ap_elem_procs_o {
     choice_buffer_ptr c;
   };
 
-  // members lookup methods
-  static uint16_t               idx_to_proc_code(uint32_t idx);
-  static bool                   is_proc_code_valid(const uint16_t& proc_code);
-  static init_msg_c             get_init_msg(const uint16_t& proc_code);
-  static successful_outcome_c   get_successful_outcome(const uint16_t& proc_code);
-  static unsuccessful_outcome_c get_unsuccessful_outcome(const uint16_t& proc_code);
-  static crit_e                 get_crit(const uint16_t& proc_code);
+  static const asn1::table::objset_desc desc;
 };
 
 // InitiatingMessage ::= SEQUENCE{{F1AP-ELEMENTARY-PROCEDURE}}
@@ -933,10 +892,8 @@ struct init_msg_s {
   crit_e                        crit;
   f1ap_elem_procs_o::init_msg_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // SuccessfulOutcome ::= SEQUENCE{{F1AP-ELEMENTARY-PROCEDURE}}
@@ -945,10 +902,8 @@ struct successful_outcome_s {
   crit_e                                  crit;
   f1ap_elem_procs_o::successful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // UnsuccessfulOutcome ::= SEQUENCE{{F1AP-ELEMENTARY-PROCEDURE}}
@@ -957,10 +912,8 @@ struct unsuccessful_outcome_s {
   crit_e                                    crit;
   f1ap_elem_procs_o::unsuccessful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // F1AP-PDU-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-IES
@@ -971,59 +924,52 @@ struct f1ap_pdu_c {
   struct types_opts {
     enum options { init_msg, successful_outcome, unsuccessful_outcome, choice_ext, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  f1ap_pdu_c() = default;
-  f1ap_pdu_c(const f1ap_pdu_c& other);
-  f1ap_pdu_c& operator=(const f1ap_pdu_c& other);
-  ~f1ap_pdu_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  init_msg_s& init_msg()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  init_msg_s&                                   init_msg()
   {
-    assert_choice_type(types::init_msg, type_, "F1AP-PDU");
+    assert_choice_type(types::init_msg, c.type, "F1AP-PDU");
     return c.get<init_msg_s>();
   }
   successful_outcome_s& successful_outcome()
   {
-    assert_choice_type(types::successful_outcome, type_, "F1AP-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "F1AP-PDU");
     return c.get<successful_outcome_s>();
   }
   unsuccessful_outcome_s& unsuccessful_outcome()
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "F1AP-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "F1AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>& choice_ext()
   {
-    assert_choice_type(types::choice_ext, type_, "F1AP-PDU");
+    assert_choice_type(types::choice_ext, c.type, "F1AP-PDU");
     return c.get<protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>>();
   }
   const init_msg_s& init_msg() const
   {
-    assert_choice_type(types::init_msg, type_, "F1AP-PDU");
+    assert_choice_type(types::init_msg, c.type, "F1AP-PDU");
     return c.get<init_msg_s>();
   }
   const successful_outcome_s& successful_outcome() const
   {
-    assert_choice_type(types::successful_outcome, type_, "F1AP-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "F1AP-PDU");
     return c.get<successful_outcome_s>();
   }
   const unsuccessful_outcome_s& unsuccessful_outcome() const
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "F1AP-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "F1AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   const protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>& choice_ext() const
   {
-    assert_choice_type(types::choice_ext, type_, "F1AP-PDU");
+    assert_choice_type(types::choice_ext, c.type, "F1AP-PDU");
     return c.get<protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>>();
   }
   init_msg_s&                                         set_init_msg();
@@ -1032,14 +978,13 @@ struct f1ap_pdu_c {
   protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>& set_choice_ext();
 
 private:
-  types type_;
-  choice_buffer_t<init_msg_s,
-                  protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>,
-                  successful_outcome_s,
-                  unsuccessful_outcome_s>
+  asn1::table::choice_storage<f1ap_pdu_c,
+                              types,
+                              choice_buffer_t<init_msg_s,
+                                              protocol_ie_single_container_s<f1ap_pdu_ext_ies_o>,
+                                              successful_outcome_s,
+                                              unsuccessful_outcome_s>>
       c;
-
-  void destroy_();
 };
 
 } // namespace f1ap

@@ -71,14 +71,14 @@ TEST_F(asn1_ngap_test, when_setup_message_correct_then_packing_successful)
 
   ocudu::byte_buffer tx_buffer;
   asn1::bit_ref      bref(tx_buffer);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
 #if JSON_OUTPUT
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       bytes.data(), bytes.size(), "NGAP PDU unpacked ({} B): \n {}", bytes.size(), json_writer1.to_string().c_str());
 #endif
@@ -115,14 +115,14 @@ TEST_F(asn1_ngap_test, when_setup_response_correct_then_packing_successful)
 
   ocudu::byte_buffer tx_pdu;
   asn1::bit_ref      bref(tx_pdu);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(tx_buffer.data(),
                    tx_buffer.size(),
                    "NGAP PDU unpacked ({} B): \n {}",
@@ -148,14 +148,14 @@ TEST_F(asn1_ngap_test, when_setup_failure_correct_then_packing_successful)
 
   ocudu::byte_buffer tx_pdu;
   asn1::bit_ref      bref(tx_pdu);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(tx_buffer.data(),
                    tx_buffer.size(),
                    "NGAP PDU unpacked ({} B): \n {}",
@@ -175,7 +175,7 @@ TEST_F(asn1_ngap_test, ng_setup_request_pack_and_unpack)
   cbit_ref                 bref(byte_pdu);
 
   ngap_pdu_c pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(pdu.init_msg().proc_code, 21);
@@ -205,7 +205,7 @@ TEST_F(asn1_ngap_test, ng_setup_request_pack_and_unpack)
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   json_writer js;
-  pdu.to_json(js);
+  asn1::to_json(js, pdu);
   printf("PDU json: %s\n", js.to_string().c_str());
 }
 
@@ -223,7 +223,7 @@ TEST_F(asn1_ngap_test, ng_setup_response_pack_and_unpack)
   cbit_ref                 bref(byte_pdu);
 
   ngap_pdu_c pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   // Check Fields
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::successful_outcome);
@@ -257,7 +257,7 @@ TEST_F(asn1_ngap_test, amf_config_update)
   cbit_ref                 bref(byte_pdu);
 
   ngap_pdu_c pdu;
-  ASSERT_EQ(OCUDUASN_SUCCESS, pdu.unpack(bref));
+  ASSERT_EQ(OCUDUASN_SUCCESS, asn1::unpack(pdu, bref));
 
   ASSERT_EQ(ngap_pdu_c::types_opts::init_msg, pdu.type().value);
   ASSERT_EQ(0, pdu.init_msg().proc_code);
@@ -273,7 +273,7 @@ TEST_F(asn1_ngap_test, amf_config_update)
   ASSERT_EQ(OCUDUASN_SUCCESS, test_pack_roundtrip(pdu));
 
   json_writer js;
-  pdu.to_json(js);
+  asn1::to_json(js, pdu);
   printf("PDU json: %s\n", js.to_string().c_str());
 }
 
@@ -294,7 +294,7 @@ TEST_F(asn1_ngap_test, init_ue_msg_pack_and_unpack)
   const ocudu::byte_buffer byte_pdu = ocudu::byte_buffer::create(ngap_msg).value();
   cbit_ref                 bref(byte_pdu);
   ngap_pdu_c               pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   // Check Fields
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::init_msg);
@@ -326,7 +326,7 @@ TEST_F(asn1_ngap_test, dl_nas_transport_pack_and_unpack)
   const ocudu::byte_buffer byte_pdu = ocudu::byte_buffer::create(ngap_msg).value();
   cbit_ref                 bref(byte_pdu);
   ngap_pdu_c               pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   // Check Fields
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::init_msg);
@@ -355,7 +355,7 @@ TEST_F(asn1_ngap_test, ul_ran_status_transfer_pack_and_unpack)
   const ocudu::byte_buffer byte_pdu = ocudu::byte_buffer::create(ngap_msg).value();
   cbit_ref                 bref(byte_pdu);
   ngap_pdu_c               pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   // Check Fields
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::init_msg);
@@ -379,7 +379,7 @@ TEST_F(asn1_ngap_test, ue_context_release_pack_and_unpack)
   const ocudu::byte_buffer byte_pdu = ocudu::byte_buffer::create(ngap_msg).value();
   cbit_ref                 bref(byte_pdu);
   ngap_pdu_c               pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   // Check Fields
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::init_msg);
@@ -400,7 +400,7 @@ TEST_F(asn1_ngap_test, ue_context_release_complete_pack_and_unpack)
   const ocudu::byte_buffer byte_pdu = ocudu::byte_buffer::create(ngap_msg).value();
   cbit_ref                 bref(byte_pdu);
   ngap_pdu_c               pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   // Check Fields
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::successful_outcome);
@@ -427,7 +427,7 @@ TEST_F(asn1_ngap_test, session_res_setup_request_pack_and_unpack)
   const ocudu::byte_buffer byte_pdu = ocudu::byte_buffer::create(ngap_msg).value();
   cbit_ref                 bref(byte_pdu);
   ngap_pdu_c               pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   // Check Fields
   ASSERT_EQ(pdu.type().value, ngap_pdu_c::types_opts::init_msg);
@@ -445,7 +445,7 @@ TEST_F(asn1_ngap_test, session_res_setup_request_pack_and_unpack)
 
   cbit_ref                                 bref2(item.pdu_session_res_setup_request_transfer);
   pdu_session_res_setup_request_transfer_s req;
-  ASSERT_EQ(req.unpack(bref2), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(req, bref2), OCUDUASN_SUCCESS);
   ASSERT_EQ(req->ul_ngu_up_tnl_info.type().value, up_transport_layer_info_c::types_opts::gtp_tunnel);
   ASSERT_EQ(req->ul_ngu_up_tnl_info.gtp_tunnel().transport_layer_address.to_string(),
             "11000000101010000001000111010010");
@@ -464,7 +464,7 @@ TEST_F(asn1_ngap_test, overload_stop_has_an_empty_ie_container)
 
   ocudu::byte_buffer buf;
   bit_ref            bref(buf);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
   ASSERT_EQ(buf, ocudu::make_byte_buffer("00170003000000").value());
   ASSERT_EQ(test_unpack_roundtrip<ngap_pdu_c>(buf), OCUDUASN_SUCCESS);
 }
@@ -483,7 +483,7 @@ TEST_F(asn1_ngap_test, value_range_union_is_one_root_range)
 
     ocudu::byte_buffer buf;
     bit_ref            bref(buf);
-    ASSERT_EQ(behaviour.pack(bref), OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(bref, behaviour), OCUDUASN_SUCCESS);
     ASSERT_EQ(buf, ocudu::make_byte_buffer(hex).value()) << (unsigned)period;
     ASSERT_EQ(test_unpack_roundtrip<expected_ue_activity_behaviour_s>(buf), OCUDUASN_SUCCESS);
   }

@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/bcch_dl_sch_msg.h"
+#include "ocudu/asn1/asn1_codec.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 
 using namespace asn1;
@@ -27,72 +28,80 @@ void bcch_dl_sch_msg_type_c::set_msg_class_ext()
 {
   set(types::msg_class_ext);
 }
-void bcch_dl_sch_msg_type_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::c1:
-      j.write_fieldname("c1");
-      c.to_json(j);
-      break;
-    case types::msg_class_ext:
-      j.write_fieldname("messageClassExtension");
-      j.start_obj();
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_dl_sch_msg_type_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE bcch_dl_sch_msg_type_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.pack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_dl_sch_msg_type_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE bcch_dl_sch_msg_type_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::c1:
-      HANDLE_CODE(c.unpack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_dl_sch_msg_type_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_bcch_dl_sch_msg_type_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<bcch_dl_sch_msg_type_c::c1_c_, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &asn1::table::empty_sequence}};
+static const asn1::table::field_name choice_table_bcch_dl_sch_msg_type_c_names[] = {{"c1", nullptr},
+                                                                                    {"messageClassExtension", nullptr}};
+const asn1::table::choice_desc       bcch_dl_sch_msg_type_c::desc                = {
+    asn1::table::enum_int_type<bcch_dl_sch_msg_type_c::types>(),
+    bcch_dl_sch_msg_type_c::types::nof_types,
+    bcch_dl_sch_msg_type_c::types::nof_exts,
+    bcch_dl_sch_msg_type_c::types::has_ext,
+    false,
+    choice_table_bcch_dl_sch_msg_type_c_alternatives,
+    &asn1::table::choice_set<bcch_dl_sch_msg_type_c>,
+    choice_table_bcch_dl_sch_msg_type_c_names,
+    "bcch_dl_sch_msg_type_c",
+    offsetof(bcch_dl_sch_msg_type_c, type_),
+    offsetof(bcch_dl_sch_msg_type_c, c),
+    false};
+
+static const asn1::table::seq_field choice_table_bcch_dl_sch_msg_type_c_c1_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<sys_info_s>::value,
+     &sys_info_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_value_codec<sib1_s>::value,
+     &sib1_s::desc}};
+static const asn1::table::field_name choice_table_bcch_dl_sch_msg_type_c_c1_c__names[] = {
+    {"systemInformation", nullptr},
+    {"systemInformationBlockType1", nullptr}};
+const asn1::table::choice_desc bcch_dl_sch_msg_type_c::c1_c_::desc = {
+    asn1::table::enum_int_type<bcch_dl_sch_msg_type_c::c1_c_::types>(),
+    bcch_dl_sch_msg_type_c::c1_c_::types::nof_types,
+    bcch_dl_sch_msg_type_c::c1_c_::types::nof_exts,
+    bcch_dl_sch_msg_type_c::c1_c_::types::has_ext,
+    false,
+    choice_table_bcch_dl_sch_msg_type_c_c1_c__alternatives,
+    &asn1::table::choice_set<bcch_dl_sch_msg_type_c::c1_c_>,
+    choice_table_bcch_dl_sch_msg_type_c_c1_c__names,
+    "bcch_dl_sch_msg_type_c::c1_c_",
+    offsetof(bcch_dl_sch_msg_type_c::c1_c_, type_),
+    offsetof(bcch_dl_sch_msg_type_c::c1_c_, c),
+    false};
 
 void bcch_dl_sch_msg_type_c::c1_c_::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::sys_info:
-      c = sys_info_s{};
-      break;
-    case types::sib_type1:
-      c = sib1_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_dl_sch_msg_type_c::c1_c_");
-  }
+  asn1::table::set_any_choice(&c, e, bcch_dl_sch_msg_type_c::c1_c_::desc);
 }
 sys_info_s& bcch_dl_sch_msg_type_c::c1_c_::set_sys_info()
 {
@@ -104,63 +113,13 @@ sib1_s& bcch_dl_sch_msg_type_c::c1_c_::set_sib_type1()
   set(types::sib_type1);
   return c.get<sib1_s>();
 }
-void bcch_dl_sch_msg_type_c::c1_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::sys_info:
-      j.write_fieldname("systemInformation");
-      c.get<sys_info_s>().to_json(j);
-      break;
-    case types::sib_type1:
-      j.write_fieldname("systemInformationBlockType1");
-      c.get<sib1_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_dl_sch_msg_type_c::c1_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE bcch_dl_sch_msg_type_c::c1_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::sys_info:
-      HANDLE_CODE(c.get<sys_info_s>().pack(bref));
-      break;
-    case types::sib_type1:
-      HANDLE_CODE(c.get<sib1_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_dl_sch_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE bcch_dl_sch_msg_type_c::c1_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::sys_info:
-      HANDLE_CODE(c.get<sys_info_s>().unpack(bref));
-      break;
-    case types::sib_type1:
-      HANDLE_CODE(c.get<sib1_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_dl_sch_msg_type_c::c1_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* bcch_dl_sch_msg_type_c::c1_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"systemInformation", "systemInformationBlockType1"};
-  return convert_enum_idx(names, 2, value, "bcch_dl_sch_msg_type_c::c1_c_::types");
-}
+static const char*           enum_names_bcch_dl_sch_msg_type_c_c1_c__types_values[] = {"systemInformation",
+                                                                                       "systemInformationBlockType1"};
+const asn1::table::enum_desc bcch_dl_sch_msg_type_c::c1_c_::types_opts::desc        = {
+    enum_names_bcch_dl_sch_msg_type_c_c1_c__types_values,
+    2,
+    "bcch_dl_sch_msg_type_c::c1_c_::types"};
 uint8_t bcch_dl_sch_msg_type_c::c1_c_::types_opts::to_number() const
 {
   if (value == sib_type1) {
@@ -170,42 +129,32 @@ uint8_t bcch_dl_sch_msg_type_c::c1_c_::types_opts::to_number() const
   return 0;
 }
 
-const char* bcch_dl_sch_msg_type_c::types_opts::to_string() const
-{
-  static const char* names[] = {"c1", "messageClassExtension"};
-  return convert_enum_idx(names, 2, value, "bcch_dl_sch_msg_type_c::types");
-}
-uint8_t bcch_dl_sch_msg_type_c::types_opts::to_number() const
+static const char*           enum_names_bcch_dl_sch_msg_type_c_types_values[] = {"c1", "messageClassExtension"};
+const asn1::table::enum_desc bcch_dl_sch_msg_type_c::types_opts::desc = {enum_names_bcch_dl_sch_msg_type_c_types_values,
+                                                                         2,
+                                                                         "bcch_dl_sch_msg_type_c::types"};
+uint8_t                      bcch_dl_sch_msg_type_c::types_opts::to_number() const
 {
   static const uint8_t numbers[] = {1};
   return map_enum_number(numbers, 1, value, "bcch_dl_sch_msg_type_c::types");
 }
 
 // BCCH-DL-SCH-Message ::= SEQUENCE
-OCUDUASN_CODE bcch_dl_sch_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(msg.pack(bref));
-
-  bref.align_bytes_zero();
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE bcch_dl_sch_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(msg.unpack(bref));
-
-  bref.align_bytes();
-
-  return OCUDUASN_SUCCESS;
-}
-void bcch_dl_sch_msg_s::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.start_obj("BCCH-DL-SCH-Message");
-  j.write_fieldname("message");
-  msg.to_json(j);
-  j.end_obj();
-  j.end_obj();
-  j.end_array();
-}
+static const asn1::table::seq_field  seq_table_bcch_dl_sch_msg_s_fields[] = {{offsetof(bcch_dl_sch_msg_s, msg),
+                                                                              asn1::table::seq_field::mandatory,
+                                                                              asn1::table::field_op::choice,
+                                                                              false,
+                                                                              false,
+                                                                              0,
+                                                                              0,
+                                                                              nullptr,
+                                                                              &bcch_dl_sch_msg_type_c::desc}};
+static const asn1::table::field_name seq_table_bcch_dl_sch_msg_s_names[]  = {{"message", nullptr}};
+const asn1::table::seq_desc          bcch_dl_sch_msg_s::desc              = {
+    {seq_table_bcch_dl_sch_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_bcch_dl_sch_msg_s_names,
+    "BCCH-DL-SCH-Message"};

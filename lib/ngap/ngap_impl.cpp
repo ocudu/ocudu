@@ -289,7 +289,7 @@ bool ngap_impl::handle_rerouted_initial_ue_message(const ngap_reroute_nas_reques
   ngap_message reroute_msg;
   {
     asn1::cbit_ref bref(request.packed_reroute_nas_request);
-    if (reroute_msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+    if (asn1::unpack(reroute_msg.pdu, bref) != asn1::OCUDUASN_SUCCESS or
         reroute_msg.pdu.type().value != ngap_pdu_c::types_opts::init_msg or
         reroute_msg.pdu.init_msg().value.type().value !=
             ngap_elem_procs_o::init_msg_c::types_opts::reroute_nas_request) {
@@ -303,7 +303,7 @@ bool ngap_impl::handle_rerouted_initial_ue_message(const ngap_reroute_nas_reques
   ngap_message ngap_msg;
   {
     asn1::cbit_ref bref(reroute->ngap_msg);
-    if (ngap_msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+    if (asn1::unpack(ngap_msg.pdu, bref) != asn1::OCUDUASN_SUCCESS or
         ngap_msg.pdu.type().value != ngap_pdu_c::types_opts::init_msg or
         ngap_msg.pdu.init_msg().value.type().value != ngap_elem_procs_o::init_msg_c::types_opts::init_ue_msg) {
       logger.warning("ue={}: Dropping rerouted InitialUEMessage. The NGAP Message IE holds no InitialUEMessage",
@@ -529,7 +529,7 @@ void ngap_impl::handle_reroute_nas_request(const asn1::ngap::reroute_nas_request
     reroute_msg.pdu.init_msg().value.reroute_nas_request() = msg;
     request.packed_reroute_nas_request                     = byte_buffer{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(request.packed_reroute_nas_request);
-    if (reroute_msg.pdu.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, reroute_msg.pdu) != asn1::OCUDUASN_SUCCESS) {
       ue_ctxt->logger.log_warning("Dropping RerouteNASRequest. Cannot pack it");
       return;
     }

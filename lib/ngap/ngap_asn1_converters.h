@@ -32,7 +32,7 @@ byte_buffer pack_into_pdu(const T& msg, const char* context_name = nullptr)
   context_name = context_name == nullptr ? __FUNCTION__ : context_name;
   byte_buffer   pdu{};
   asn1::bit_ref bref{pdu};
-  if (msg.pack(bref) == asn1::OCUDUASN_ERROR_ENCODE_FAIL) {
+  if (asn1::pack(bref, msg) == asn1::OCUDUASN_ERROR_ENCODE_FAIL) {
     ocudulog::fetch_basic_logger("NGAP").error("Failed to pack message in {} - discarding it", context_name);
     pdu.clear();
   }

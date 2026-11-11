@@ -70,7 +70,7 @@ protected:
     byte_buffer                 pdu = test_helpers::extract_dl_dcch_msg(get_srb1_pdu());
     asn1::cbit_ref              bref{pdu};
     asn1::rrc_nr::dl_dcch_msg_s dl_dcch_msg;
-    EXPECT_EQ(dl_dcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::unpack(dl_dcch_msg, bref), asn1::OCUDUASN_SUCCESS);
     EXPECT_EQ(dl_dcch_msg.msg.c1().type().value, asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types::ue_info_request_r16);
 
     return dl_dcch_msg.msg.c1().ue_info_request_r16();
@@ -105,7 +105,7 @@ protected:
 
     byte_buffer   pdu;
     asn1::bit_ref bref{pdu};
-    ASSERT_EQ(ul_dcch_msg.pack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(bref, ul_dcch_msg), asn1::OCUDUASN_SUCCESS);
 
     rrc_ue->handle_ul_dcch_pdu(srb_id_t::srb1, std::move(pdu), /* integrity_verified */ true);
   }

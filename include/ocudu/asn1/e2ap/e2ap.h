@@ -137,26 +137,6 @@ using e2_res_status_fail_s = elementary_procedure_option<e2_res_status_fail_ies_
  *                              Struct Definitions
  ******************************************************************************/
 
-// ProtocolIE-FieldPair{E2AP-PROTOCOL-IES-PAIR : IEsSetParam} ::= SEQUENCE{{E2AP-PROTOCOL-IES-PAIR}}
-template <class ies_set_paramT_>
-struct protocol_ie_field_pair_s {
-  uint32_t                                 id = 0;
-  crit_e                                   first_crit;
-  typename ies_set_paramT_::first_value_c  first_value;
-  crit_e                                   second_crit;
-  typename ies_set_paramT_::second_value_c second_value;
-
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint32_t& id_);
-};
-
-// ProtocolIE-ContainerPair{E2AP-PROTOCOL-IES-PAIR : IEsSetParam} ::= SEQUENCE (SIZE (0..65535)) OF
-// ProtocolIE-FieldPair{E2AP-PROTOCOL-IES-PAIR : IEsSetParam}
-template <class ies_set_paramT_>
-using protocol_ie_container_pair_l = dyn_seq_of<protocol_ie_field_pair_s<ies_set_paramT_>, 0, 65535, true>;
-
 // E2AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF E2AP-ELEMENTARY-PROCEDURE
 struct e2ap_elem_procs_o {
   // InitiatingMessage ::= OPEN TYPE
@@ -191,18 +171,13 @@ struct e2ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    init_msg_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                     set(types::options e = types::nulltype);
+    types                                    type() const { return type_; }
+    static const asn1::table::choice_desc    desc;
     ric_sub_request_s&                       ric_sub_request();
     ric_sub_audit_request_s&                 ric_sub_audit_request();
     ric_sub_delete_request_s&                ric_sub_delete_request();
@@ -282,18 +257,13 @@ struct e2ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    successful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
     ric_sub_resp_s&                       ric_sub_resp();
     ric_sub_audit_resp_s&                 ric_sub_audit_resp();
     ric_sub_delete_resp_s&                ric_sub_delete_resp();
@@ -356,18 +326,13 @@ struct e2ap_elem_procs_o {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    unsuccessful_outcome_c() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
     ric_sub_fail_s&                       ric_sub_fail();
     ric_sub_audit_fail_s&                 ric_sub_audit_fail();
     ric_sub_delete_fail_s&                ric_sub_delete_fail();
@@ -406,13 +371,7 @@ struct e2ap_elem_procs_o {
     choice_buffer_ptr c;
   };
 
-  // members lookup methods
-  static uint16_t               idx_to_proc_code(uint32_t idx);
-  static bool                   is_proc_code_valid(const uint16_t& proc_code);
-  static init_msg_c             get_init_msg(const uint16_t& proc_code);
-  static successful_outcome_c   get_successful_outcome(const uint16_t& proc_code);
-  static unsuccessful_outcome_c get_unsuccessful_outcome(const uint16_t& proc_code);
-  static crit_e                 get_crit(const uint16_t& proc_code);
+  static const asn1::table::objset_desc desc;
 };
 
 // InitiatingMessage ::= SEQUENCE{{E2AP-ELEMENTARY-PROCEDURE}}
@@ -421,10 +380,8 @@ struct init_msg_s {
   crit_e                        crit;
   e2ap_elem_procs_o::init_msg_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // SuccessfulOutcome ::= SEQUENCE{{E2AP-ELEMENTARY-PROCEDURE}}
@@ -433,10 +390,8 @@ struct successful_outcome_s {
   crit_e                                  crit;
   e2ap_elem_procs_o::successful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // UnsuccessfulOutcome ::= SEQUENCE{{E2AP-ELEMENTARY-PROCEDURE}}
@@ -445,10 +400,8 @@ struct unsuccessful_outcome_s {
   crit_e                                    crit;
   e2ap_elem_procs_o::unsuccessful_outcome_c value;
 
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  bool          load_info_obj(const uint16_t& proc_code_);
+  static const asn1::table::seq_desc desc;
+  bool                               load_info_obj(const uint16_t& proc_code_);
 };
 
 // E2AP-PDU ::= CHOICE
@@ -456,49 +409,42 @@ struct e2ap_pdu_c {
   struct types_opts {
     enum options { init_msg, successful_outcome, unsuccessful_outcome, /*...*/ nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts, true>;
 
-  // choice methods
-  e2ap_pdu_c() = default;
-  e2ap_pdu_c(const e2ap_pdu_c& other);
-  e2ap_pdu_c& operator=(const e2ap_pdu_c& other);
-  ~e2ap_pdu_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  init_msg_s& init_msg()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  init_msg_s&                                   init_msg()
   {
-    assert_choice_type(types::init_msg, type_, "E2AP-PDU");
+    assert_choice_type(types::init_msg, c.type, "E2AP-PDU");
     return c.get<init_msg_s>();
   }
   successful_outcome_s& successful_outcome()
   {
-    assert_choice_type(types::successful_outcome, type_, "E2AP-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "E2AP-PDU");
     return c.get<successful_outcome_s>();
   }
   unsuccessful_outcome_s& unsuccessful_outcome()
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "E2AP-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "E2AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   const init_msg_s& init_msg() const
   {
-    assert_choice_type(types::init_msg, type_, "E2AP-PDU");
+    assert_choice_type(types::init_msg, c.type, "E2AP-PDU");
     return c.get<init_msg_s>();
   }
   const successful_outcome_s& successful_outcome() const
   {
-    assert_choice_type(types::successful_outcome, type_, "E2AP-PDU");
+    assert_choice_type(types::successful_outcome, c.type, "E2AP-PDU");
     return c.get<successful_outcome_s>();
   }
   const unsuccessful_outcome_s& unsuccessful_outcome() const
   {
-    assert_choice_type(types::unsuccessful_outcome, type_, "E2AP-PDU");
+    assert_choice_type(types::unsuccessful_outcome, c.type, "E2AP-PDU");
     return c.get<unsuccessful_outcome_s>();
   }
   init_msg_s&             set_init_msg();
@@ -506,10 +452,9 @@ struct e2ap_pdu_c {
   unsuccessful_outcome_s& set_unsuccessful_outcome();
 
 private:
-  types                                                                     type_;
-  choice_buffer_t<init_msg_s, successful_outcome_s, unsuccessful_outcome_s> c;
-
-  void destroy_();
+  asn1::table::
+      choice_storage<e2ap_pdu_c, types, choice_buffer_t<init_msg_s, successful_outcome_s, unsuccessful_outcome_s>>
+          c;
 };
 
 } // namespace e2ap

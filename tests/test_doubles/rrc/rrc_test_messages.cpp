@@ -472,7 +472,7 @@ byte_buffer ocudu::test_helpers::pack_ul_ccch_msg(const ul_ccch_msg_s& msg)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
-  if (msg.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg) == asn1::OCUDUASN_SUCCESS) {
     return pdu;
   }
   return byte_buffer{};
@@ -482,7 +482,7 @@ byte_buffer ocudu::test_helpers::pack_ul_ccch1_msg(const ul_ccch1_msg_s& msg)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
-  if (msg.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg) == asn1::OCUDUASN_SUCCESS) {
     return pdu;
   }
   return byte_buffer{};
@@ -492,7 +492,7 @@ byte_buffer ocudu::test_helpers::pack_ul_dcch_msg(const ul_dcch_msg_s& msg)
 {
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
-  if (msg.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg) == asn1::OCUDUASN_SUCCESS) {
     return pdu;
   }
   return byte_buffer{};

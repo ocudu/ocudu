@@ -297,7 +297,7 @@ f1ap_ue_creation_response ue_creation_procedure::create_f1ap_ue()
     calculate_cell_group_config_diff(cell_group, {}, ue_ctx->resources.value());
 
     asn1::bit_ref       bref{f1ap_msg.du_cu_rrc_container};
-    asn1::OCUDUASN_CODE result = cell_group.pack(bref);
+    asn1::OCUDUASN_CODE result = asn1::pack(bref, cell_group);
     ocudu_assert(result == asn1::OCUDUASN_SUCCESS, "Failed to generate CellConfigGroup");
   }
 

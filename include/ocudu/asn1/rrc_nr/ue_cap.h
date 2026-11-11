@@ -23,20 +23,18 @@ namespace rrc_nr {
 // MIMO-LayersDL ::= ENUMERATED
 struct mimo_layers_dl_opts {
   enum options { two_layers, four_layers, eight_layers, nulltype } value;
-  typedef uint8_t number_type;
 
-  const char* to_string() const;
-  uint8_t     to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint8_t                             to_number() const;
 };
 using mimo_layers_dl_e = enumerated<mimo_layers_dl_opts>;
 
 // MIMO-LayersUL ::= ENUMERATED
 struct mimo_layers_ul_opts {
   enum options { one_layer, two_layers, four_layers, nulltype } value;
-  typedef uint8_t number_type;
 
-  const char* to_string() const;
-  uint8_t     to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint8_t                             to_number() const;
 };
 using mimo_layers_ul_e = enumerated<mimo_layers_ul_opts>;
 
@@ -78,10 +76,9 @@ struct supported_agg_bw_r17_c {
       spare1,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using fr1_r17_e_ = enumerated<fr1_r17_opts>;
   struct fr2_r17_opts {
@@ -120,60 +117,48 @@ struct supported_agg_bw_r17_c {
       spare1,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using fr2_r17_e_ = enumerated<fr2_r17_opts>;
   struct types_opts {
     enum options { fr1_r17, fr2_r17, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  supported_agg_bw_r17_c() = default;
-  supported_agg_bw_r17_c(const supported_agg_bw_r17_c& other);
-  supported_agg_bw_r17_c& operator=(const supported_agg_bw_r17_c& other);
-  ~supported_agg_bw_r17_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  fr1_r17_e_& fr1_r17()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  fr1_r17_e_&                                   fr1_r17()
   {
-    assert_choice_type(types::fr1_r17, type_, "SupportedAggBandwidth-r17");
+    assert_choice_type(types::fr1_r17, c.type, "SupportedAggBandwidth-r17");
     return c.get<fr1_r17_e_>();
   }
   fr2_r17_e_& fr2_r17()
   {
-    assert_choice_type(types::fr2_r17, type_, "SupportedAggBandwidth-r17");
+    assert_choice_type(types::fr2_r17, c.type, "SupportedAggBandwidth-r17");
     return c.get<fr2_r17_e_>();
   }
   const fr1_r17_e_& fr1_r17() const
   {
-    assert_choice_type(types::fr1_r17, type_, "SupportedAggBandwidth-r17");
+    assert_choice_type(types::fr1_r17, c.type, "SupportedAggBandwidth-r17");
     return c.get<fr1_r17_e_>();
   }
   const fr2_r17_e_& fr2_r17() const
   {
-    assert_choice_type(types::fr2_r17, type_, "SupportedAggBandwidth-r17");
+    assert_choice_type(types::fr2_r17, c.type, "SupportedAggBandwidth-r17");
     return c.get<fr2_r17_e_>();
   }
   fr1_r17_e_& set_fr1_r17();
   fr2_r17_e_& set_fr2_r17();
 
 private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
+  asn1::table::choice_storage<supported_agg_bw_r17_c, types, pod_choice_buffer_t> c;
 };
 
 // SupportedBandwidth-v1700 ::= CHOICE
@@ -197,77 +182,63 @@ struct supported_bw_v1700_c {
       mhz100,
       nulltype
     } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using fr1_r17_e_ = enumerated<fr1_r17_opts>;
   struct fr2_r17_opts {
     enum options { mhz50, mhz100, mhz200, mhz400, mhz800, mhz1600, mhz2000, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using fr2_r17_e_ = enumerated<fr2_r17_opts>;
   struct types_opts {
     enum options { fr1_r17, fr2_r17, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  supported_bw_v1700_c() = default;
-  supported_bw_v1700_c(const supported_bw_v1700_c& other);
-  supported_bw_v1700_c& operator=(const supported_bw_v1700_c& other);
-  ~supported_bw_v1700_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  fr1_r17_e_& fr1_r17()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  fr1_r17_e_&                                   fr1_r17()
   {
-    assert_choice_type(types::fr1_r17, type_, "SupportedBandwidth-v1700");
+    assert_choice_type(types::fr1_r17, c.type, "SupportedBandwidth-v1700");
     return c.get<fr1_r17_e_>();
   }
   fr2_r17_e_& fr2_r17()
   {
-    assert_choice_type(types::fr2_r17, type_, "SupportedBandwidth-v1700");
+    assert_choice_type(types::fr2_r17, c.type, "SupportedBandwidth-v1700");
     return c.get<fr2_r17_e_>();
   }
   const fr1_r17_e_& fr1_r17() const
   {
-    assert_choice_type(types::fr1_r17, type_, "SupportedBandwidth-v1700");
+    assert_choice_type(types::fr1_r17, c.type, "SupportedBandwidth-v1700");
     return c.get<fr1_r17_e_>();
   }
   const fr2_r17_e_& fr2_r17() const
   {
-    assert_choice_type(types::fr2_r17, type_, "SupportedBandwidth-v1700");
+    assert_choice_type(types::fr2_r17, c.type, "SupportedBandwidth-v1700");
     return c.get<fr2_r17_e_>();
   }
   fr1_r17_e_& set_fr1_r17();
   fr2_r17_e_& set_fr2_r17();
 
 private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
+  asn1::table::choice_storage<supported_bw_v1700_c, types, pod_choice_buffer_t> c;
 };
 
 // AccessStratumRelease ::= ENUMERATED
 struct access_stratum_release_opts {
   enum options { rel15, rel16, rel17, rel18, spare4, spare3, spare2, spare1, /*...*/ nulltype } value;
-  typedef uint8_t number_type;
 
-  const char* to_string() const;
-  uint8_t     to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint8_t                             to_number() const;
 };
 using access_stratum_release_e = enumerated<access_stratum_release_opts, true>;
 
@@ -276,7 +247,7 @@ struct aerial_params_r18_s {
   struct sl_a2_x_service_r18_opts {
     enum options { brid, daa, brid_and_daa, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using sl_a2_x_service_r18_e_ = enumerated<sl_a2_x_service_r18_opts>;
 
@@ -294,10 +265,7 @@ struct aerial_params_r18_s {
   sl_a2_x_service_r18_e_ sl_a2_x_service_r18;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // AggregatedBandwidth ::= ENUMERATED
@@ -321,10 +289,9 @@ struct aggr_bw_opts {
     mhz800,
     nulltype
   } value;
-  typedef uint16_t number_type;
 
-  const char* to_string() const;
-  uint16_t    to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint16_t                            to_number() const;
 };
 using aggr_bw_e = enumerated<aggr_bw_opts>;
 
@@ -332,10 +299,9 @@ using aggr_bw_e = enumerated<aggr_bw_opts>;
 struct app_layer_meas_params_r17_s {
   struct qoe_add_memory_meas_report_r18_opts {
     enum options { kb128, kb256, kb512, kb1024, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using qoe_add_memory_meas_report_r18_e_ = enumerated<qoe_add_memory_meas_report_r18_opts>;
 
@@ -355,10 +321,7 @@ struct app_layer_meas_params_r17_s {
   bool                              srb5_r18_present                          = false;
   qoe_add_memory_meas_report_r18_e_ qoe_add_memory_meas_report_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BAP-Parameters-r16 ::= SEQUENCE
@@ -366,10 +329,7 @@ struct bap_params_r16_s {
   bool flow_ctrl_bh_rlc_ch_based_r16_present  = false;
   bool flow_ctrl_routing_id_based_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BAP-Parameters-v1700 ::= SEQUENCE
@@ -377,17 +337,14 @@ struct bap_params_v1700_s {
   bool bap_hdr_rewriting_rerouting_r17_present = false;
   bool bap_hdr_rewriting_routing_r17_present   = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-BandwidthClassEUTRA ::= ENUMERATED
 struct ca_bw_class_eutra_opts {
   enum options { a, b, c, d, e, f, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using ca_bw_class_eutra_e = enumerated<ca_bw_class_eutra_opts, true>;
 
@@ -427,10 +384,9 @@ struct ca_bw_class_nr_opts {
     w_v1770,
     nulltype
   } value;
-  typedef uint8_t number_type;
 
-  const char* to_string() const;
-  uint8_t     to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint8_t                             to_number() const;
 };
 using ca_bw_class_nr_e = enumerated<ca_bw_class_nr_opts, true, 13>;
 
@@ -453,49 +409,39 @@ struct band_params_c {
   struct types_opts {
     enum options { eutra, nr, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  band_params_c() = default;
-  band_params_c(const band_params_c& other);
-  band_params_c& operator=(const band_params_c& other);
-  ~band_params_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  eutra_s_& eutra()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  eutra_s_&                                     eutra()
   {
-    assert_choice_type(types::eutra, type_, "BandParameters");
+    assert_choice_type(types::eutra, c.type, "BandParameters");
     return c.get<eutra_s_>();
   }
   nr_s_& nr()
   {
-    assert_choice_type(types::nr, type_, "BandParameters");
+    assert_choice_type(types::nr, c.type, "BandParameters");
     return c.get<nr_s_>();
   }
   const eutra_s_& eutra() const
   {
-    assert_choice_type(types::eutra, type_, "BandParameters");
+    assert_choice_type(types::eutra, c.type, "BandParameters");
     return c.get<eutra_s_>();
   }
   const nr_s_& nr() const
   {
-    assert_choice_type(types::nr, type_, "BandParameters");
+    assert_choice_type(types::nr, c.type, "BandParameters");
     return c.get<nr_s_>();
   }
   eutra_s_& set_eutra();
   nr_s_&    set_nr();
 
 private:
-  types                            type_;
-  choice_buffer_t<eutra_s_, nr_s_> c;
-
-  void destroy_();
+  asn1::table::choice_storage<band_params_c, types, choice_buffer_t<eutra_s_, nr_s_>> c;
 };
 
 // CA-ParametersEUTRA ::= SEQUENCE
@@ -510,20 +456,16 @@ struct ca_params_eutra_s {
   bounded_bitstring<1, 32> supported_bw_combination_set_eutra_v1530;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR ::= SEQUENCE
 struct ca_params_nr_s {
   struct supported_num_tag_opts {
     enum options { n2, n3, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using supported_num_tag_e_ = enumerated<supported_num_tag_opts>;
 
@@ -539,10 +481,7 @@ struct ca_params_nr_s {
   supported_num_tag_e_ supported_num_tag;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters ::= SEQUENCE
@@ -550,21 +489,20 @@ struct mrdc_params_s {
   struct ul_sharing_eutra_nr_opts {
     enum options { tdm, fdm, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_sharing_eutra_nr_e_ = enumerated<ul_sharing_eutra_nr_opts>;
   struct ul_switching_time_eutra_nr_opts {
     enum options { type1, type2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ul_switching_time_eutra_nr_e_ = enumerated<ul_switching_time_eutra_nr_opts>;
   struct intra_band_endc_support_opts {
     enum options { non_contiguous, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using intra_band_endc_support_e_ = enumerated<intra_band_endc_support_opts>;
 
@@ -585,10 +523,7 @@ struct mrdc_params_s {
   bool                       ul_timing_align_eutra_nr_present = false;
   intra_band_endc_support_e_ intra_band_endc_support;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination ::= SEQUENCE
@@ -608,28 +543,23 @@ struct band_combination_s {
   mrdc_params_s            mrdc_params;
   bounded_bitstring<1, 32> supported_bw_combination_set;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-SwitchingTimeNR ::= SEQUENCE
 struct srs_switching_time_nr_s {
   struct switching_time_dl_opts {
     enum options { n0us, n30us, n100us, n140us, n200us, n300us, n500us, n900us, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using switching_time_dl_e_ = enumerated<switching_time_dl_opts>;
   struct switching_time_ul_opts {
     enum options { n0us, n30us, n100us, n140us, n200us, n300us, n500us, n900us, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using switching_time_ul_e_ = enumerated<switching_time_ul_opts>;
 
@@ -639,10 +569,7 @@ struct srs_switching_time_nr_s {
   switching_time_dl_e_ switching_time_dl;
   switching_time_ul_e_ switching_time_ul;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-SwitchingTimeEUTRA ::= SEQUENCE
@@ -666,11 +593,10 @@ struct srs_switching_time_eutra_s {
       n7,
       nulltype
     } value;
-    typedef float number_type;
 
-    const char* to_string() const;
-    float       to_number() const;
-    const char* to_number_string() const;
+    static const asn1::table::enum_desc desc;
+    float                               to_number() const;
+    const char*                         to_number_string() const;
   };
   using switching_time_dl_e_ = enumerated<switching_time_dl_opts>;
   struct switching_time_ul_opts {
@@ -692,11 +618,10 @@ struct srs_switching_time_eutra_s {
       n7,
       nulltype
     } value;
-    typedef float number_type;
 
-    const char* to_string() const;
-    float       to_number() const;
-    const char* to_number_string() const;
+    static const asn1::table::enum_desc desc;
+    float                               to_number() const;
+    const char*                         to_number_string() const;
   };
   using switching_time_ul_e_ = enumerated<switching_time_ul_opts>;
 
@@ -706,10 +631,7 @@ struct srs_switching_time_eutra_s {
   switching_time_dl_e_ switching_time_dl;
   switching_time_ul_e_ switching_time_ul;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandParameters-v1540 ::= SEQUENCE
@@ -730,55 +652,45 @@ struct band_params_v1540_s {
     struct types_opts {
       enum options { nr, eutra, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    srs_carrier_switch_c_() = default;
-    srs_carrier_switch_c_(const srs_carrier_switch_c_& other);
-    srs_carrier_switch_c_& operator=(const srs_carrier_switch_c_& other);
-    ~srs_carrier_switch_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    nr_s_& nr()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    nr_s_&                                        nr()
     {
-      assert_choice_type(types::nr, type_, "srs-CarrierSwitch");
+      assert_choice_type(types::nr, c.type, "srs-CarrierSwitch");
       return c.get<nr_s_>();
     }
     eutra_s_& eutra()
     {
-      assert_choice_type(types::eutra, type_, "srs-CarrierSwitch");
+      assert_choice_type(types::eutra, c.type, "srs-CarrierSwitch");
       return c.get<eutra_s_>();
     }
     const nr_s_& nr() const
     {
-      assert_choice_type(types::nr, type_, "srs-CarrierSwitch");
+      assert_choice_type(types::nr, c.type, "srs-CarrierSwitch");
       return c.get<nr_s_>();
     }
     const eutra_s_& eutra() const
     {
-      assert_choice_type(types::eutra, type_, "srs-CarrierSwitch");
+      assert_choice_type(types::eutra, c.type, "srs-CarrierSwitch");
       return c.get<eutra_s_>();
     }
     nr_s_&    set_nr();
     eutra_s_& set_eutra();
 
   private:
-    types                            type_;
-    choice_buffer_t<eutra_s_, nr_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<srs_carrier_switch_c_, types, choice_buffer_t<eutra_s_, nr_s_>> c;
   };
   struct srs_tx_switch_s_ {
     struct supported_srs_tx_port_switch_opts {
       enum options { t1r2, t1r4, t2r4, t1r4_t2r4, t1r1, t2r2, t4r4, not_supported, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using supported_srs_tx_port_switch_e_ = enumerated<supported_srs_tx_port_switch_opts>;
 
@@ -796,10 +708,7 @@ struct band_params_v1540_s {
   srs_carrier_switch_c_ srs_carrier_switch;
   srs_tx_switch_s_      srs_tx_switch;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1540 ::= SEQUENCE
@@ -820,10 +729,7 @@ struct ca_params_nr_v1540_s {
   csi_rs_im_reception_for_feedback_per_band_comb_s_ csi_rs_im_reception_for_feedback_per_band_comb;
   uint8_t                                           simul_csi_reports_all_cc = 5;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1540 ::= SEQUENCE
@@ -835,30 +741,21 @@ struct band_combination_v1540_s {
   band_list_v1540_l_   band_list_v1540;
   ca_params_nr_v1540_s ca_params_nr_v1540;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1550 ::= SEQUENCE
 struct ca_params_nr_v1550_s {
   bool dummy_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1560 ::= SEQUENCE
 struct ca_params_nr_v1560_s {
   bool diff_numerology_within_pucch_group_larger_scs_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC ::= SEQUENCE
@@ -874,10 +771,7 @@ struct ca_params_nrdc_s {
   ca_params_nr_v1560_s ca_params_nr_for_dc_v1560;
   uint16_t             feature_set_combination_dc = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersEUTRA-v1560 ::= SEQUENCE
@@ -885,10 +779,7 @@ struct ca_params_eutra_v1560_s {
   bool    fd_mimo_total_weighted_layers_present = false;
   uint8_t fd_mimo_total_weighted_layers         = 2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1560 ::= SEQUENCE
@@ -901,10 +792,7 @@ struct band_combination_v1560_s {
   ca_params_eutra_v1560_s ca_params_eutra_v1560;
   ca_params_nr_v1560_s    ca_params_nr_v1560;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersEUTRA-v1570 ::= SEQUENCE
@@ -912,50 +800,35 @@ struct ca_params_eutra_v1570_s {
   bool    dl_1024_qam_total_weighted_layers_present = false;
   uint8_t dl_1024_qam_total_weighted_layers         = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1570 ::= SEQUENCE
 struct band_combination_v1570_s {
   ca_params_eutra_v1570_s ca_params_eutra_v1570;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1580 ::= SEQUENCE
 struct mrdc_params_v1580_s {
   bool dyn_pwr_sharing_nedc_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1580 ::= SEQUENCE
 struct band_combination_v1580_s {
   mrdc_params_v1580_s mrdc_params_v1580;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1590 ::= SEQUENCE
 struct mrdc_params_v1590_s {
   bool inter_band_contiguous_mrdc_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1590 ::= SEQUENCE
@@ -964,10 +837,7 @@ struct band_combination_v1590_s {
   bounded_bitstring<1, 32> supported_bw_combination_set_intra_endc;
   mrdc_params_v1590_s      mrdc_params_v1590;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandParameters-v1610 ::= SEQUENCE
@@ -984,7 +854,7 @@ struct band_params_v1610_s {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using supported_srs_tx_port_switch_v1610_e_ = enumerated<supported_srs_tx_port_switch_v1610_opts>;
 
@@ -996,10 +866,7 @@ struct band_params_v1610_s {
   bool                   srs_tx_switch_v1610_present = false;
   srs_tx_switch_v1610_s_ srs_tx_switch_v1610;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParameters-v1610 ::= SEQUENCE
@@ -1021,10 +888,7 @@ struct codebook_params_v1610_s {
   bool                                 supported_csi_rs_res_list_alt_r16_present = false;
   supported_csi_rs_res_list_alt_r16_s_ supported_csi_rs_res_list_alt_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersAdditionPerBC-r16 ::= SEQUENCE
@@ -1040,10 +904,7 @@ struct codebook_params_addition_per_bc_r16_s {
   etype2_r1_port_sel_r16_l_ etype2_r1_port_sel_r16;
   etype2_r2_port_sel_r16_l_ etype2_r2_port_sel_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookComboParametersAdditionPerBC-r16 ::= SEQUENCE
@@ -1079,10 +940,7 @@ struct codebook_combo_params_addition_per_bc_r16_s {
   type1_mp_e_type2_r2_ps_null_r16_l_ type1_mp_e_type2_r2_ps_null_r16;
   type1_mp_type2_type2_ps_r16_l_     type1_mp_type2_type2_ps_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1610 ::= SEQUENCE
@@ -1090,20 +948,20 @@ struct ca_params_nr_v1610_s {
   struct cross_carrier_a_csi_trig_diff_scs_r16_opts {
     enum options { higher_a_csi_scs, lower_a_csi_scs, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using cross_carrier_a_csi_trig_diff_scs_r16_e_ = enumerated<cross_carrier_a_csi_trig_diff_scs_r16_opts>;
   struct default_qcl_cross_carrier_a_csi_trig_r16_opts {
     enum options { diff_only, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using default_qcl_cross_carrier_a_csi_trig_r16_e_ = enumerated<default_qcl_cross_carrier_a_csi_trig_r16_opts>;
   struct inter_freq_daps_r16_s_ {
     struct inter_freq_dyn_pwr_sharing_daps_r16_opts {
       enum options { short_value, long_value, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using inter_freq_dyn_pwr_sharing_daps_r16_e_ = enumerated<inter_freq_dyn_pwr_sharing_daps_r16_opts>;
 
@@ -1121,7 +979,7 @@ struct ca_params_nr_v1610_s {
     struct supported_span_arrangement_r16_opts {
       enum options { aligned_only, aligned_and_non_aligned, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using supported_span_arrangement_r16_e_ = enumerated<supported_span_arrangement_r16_opts>;
 
@@ -1133,7 +991,7 @@ struct ca_params_nr_v1610_s {
     struct supported_span_arrangement_r16_opts {
       enum options { aligned_only, aligned_and_non_aligned, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using supported_span_arrangement_r16_e_ = enumerated<supported_span_arrangement_r16_opts>;
 
@@ -1153,19 +1011,19 @@ struct ca_params_nr_v1610_s {
   struct cross_carrier_sched_dl_diff_scs_r16_opts {
     enum options { low_to_high, high_to_low, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using cross_carrier_sched_dl_diff_scs_r16_e_ = enumerated<cross_carrier_sched_dl_diff_scs_r16_opts>;
   struct cross_carrier_sched_default_qcl_r16_opts {
     enum options { diff_only, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using cross_carrier_sched_default_qcl_r16_e_ = enumerated<cross_carrier_sched_default_qcl_r16_opts>;
   struct cross_carrier_sched_ul_diff_scs_r16_opts {
     enum options { low_to_high, high_to_low, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using cross_carrier_sched_ul_diff_scs_r16_e_ = enumerated<cross_carrier_sched_ul_diff_scs_r16_opts>;
 
@@ -1212,10 +1070,7 @@ struct ca_params_nr_v1610_s {
   codebook_params_addition_per_bc_r16_s       codebook_params_addition_per_bc_r16;
   codebook_combo_params_addition_per_bc_r16_s codebook_combo_params_addition_per_bc_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1610 ::= SEQUENCE
@@ -1223,7 +1078,7 @@ struct ca_params_nrdc_v1610_s {
   struct intra_fr_nr_dc_dyn_pwr_sharing_r16_opts {
     enum options { short_value, long_value, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using intra_fr_nr_dc_dyn_pwr_sharing_r16_e_ = enumerated<intra_fr_nr_dc_dyn_pwr_sharing_r16_opts>;
 
@@ -1234,10 +1089,7 @@ struct ca_params_nrdc_v1610_s {
   bool                                  async_nrdc_r16_present                       = false;
   intra_fr_nr_dc_dyn_pwr_sharing_r16_e_ intra_fr_nr_dc_dyn_pwr_sharing_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1620 ::= SEQUENCE
@@ -1245,58 +1097,51 @@ struct mrdc_params_v1620_s {
   struct max_ul_duty_cycle_inter_band_endc_tdd_pc2_r16_s_ {
     struct eutra_tdd_cfg0_r16_opts {
       enum options { n20, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using eutra_tdd_cfg0_r16_e_ = enumerated<eutra_tdd_cfg0_r16_opts>;
     struct eutra_tdd_cfg1_r16_opts {
       enum options { n20, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using eutra_tdd_cfg1_r16_e_ = enumerated<eutra_tdd_cfg1_r16_opts>;
     struct eutra_tdd_cfg2_r16_opts {
       enum options { n20, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using eutra_tdd_cfg2_r16_e_ = enumerated<eutra_tdd_cfg2_r16_opts>;
     struct eutra_tdd_cfg3_r16_opts {
       enum options { n20, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using eutra_tdd_cfg3_r16_e_ = enumerated<eutra_tdd_cfg3_r16_opts>;
     struct eutra_tdd_cfg4_r16_opts {
       enum options { n20, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using eutra_tdd_cfg4_r16_e_ = enumerated<eutra_tdd_cfg4_r16_opts>;
     struct eutra_tdd_cfg5_r16_opts {
       enum options { n20, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using eutra_tdd_cfg5_r16_e_ = enumerated<eutra_tdd_cfg5_r16_opts>;
     struct eutra_tdd_cfg6_r16_opts {
       enum options { n20, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using eutra_tdd_cfg6_r16_e_ = enumerated<eutra_tdd_cfg6_r16_opts>;
 
@@ -1325,10 +1170,7 @@ struct mrdc_params_v1620_s {
   bool                                             tdm_restrict_dual_tx_fdd_endc_r16_present             = false;
   max_ul_duty_cycle_inter_band_endc_tdd_pc2_r16_s_ max_ul_duty_cycle_inter_band_endc_tdd_pc2_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1610 ::= SEQUENCE
@@ -1336,10 +1178,9 @@ struct band_combination_v1610_s {
   using band_list_v1610_l_ = dyn_array<band_params_v1610_s>;
   struct pwr_class_nr_part_r16_opts {
     enum options { pc1, pc2, pc3, pc5, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pwr_class_nr_part_r16_e_ = enumerated<pwr_class_nr_part_r16_opts>;
 
@@ -1357,20 +1198,16 @@ struct band_combination_v1610_s {
   uint16_t                 feature_set_combination_daps_r16 = 0;
   mrdc_params_v1620_s      mrdc_params_v1620;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ULTxSwitchingBandPair-r16 ::= SEQUENCE
 struct ul_tx_switching_band_pair_r16_s {
   struct ul_tx_switching_period_r16_opts {
     enum options { n35us, n140us, n210us, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ul_tx_switching_period_r16_e_ = enumerated<ul_tx_switching_period_r16_opts>;
 
@@ -1381,10 +1218,7 @@ struct ul_tx_switching_band_pair_r16_s {
   ul_tx_switching_period_r16_e_ ul_tx_switching_period_r16;
   bounded_bitstring<1, 32>      ul_tx_switching_dl_interruption_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-r16 ::= SEQUENCE
@@ -1393,13 +1227,13 @@ struct band_combination_ul_tx_switch_r16_s {
   struct ul_tx_switching_option_support_r16_opts {
     enum options { switched_ul, dual_ul, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_tx_switching_option_support_r16_e_ = enumerated<ul_tx_switching_option_support_r16_opts>;
   struct ul_tx_switching_pusch_trans_coherence_r16_opts {
     enum options { non_coherent, full_coherent, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_tx_switching_pusch_trans_coherence_r16_e_ = enumerated<ul_tx_switching_pusch_trans_coherence_r16_opts>;
 
@@ -1426,10 +1260,7 @@ struct band_combination_ul_tx_switch_r16_s {
   bool                                         ul_tx_switching_pusch_trans_coherence_r16_present = false;
   ul_tx_switching_pusch_trans_coherence_r16_e_ ul_tx_switching_pusch_trans_coherence_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SimulSRS-ForAntennaSwitching-r16 ::= SEQUENCE
@@ -1438,10 +1269,7 @@ struct simul_srs_for_ant_switching_r16_s {
   bool support_srs_x_ty_r_x_equal_to_y_r16_present  = false;
   bool support_srs_ant_switching_r16_present        = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1630 ::= SEQUENCE
@@ -1449,13 +1277,13 @@ struct ca_params_nr_v1630_s {
   struct beam_management_type_r16_opts {
     enum options { ibm, dummy, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using beam_management_type_r16_e_ = enumerated<beam_management_type_r16_opts>;
   struct intra_band_freq_separation_ul_agg_bw_gap_bw_r16_opts {
     enum options { class_i, class_ii, class_iii, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using intra_band_freq_separation_ul_agg_bw_gap_bw_r16_e_ =
       enumerated<intra_band_freq_separation_ul_agg_bw_gap_bw_r16_opts>;
@@ -1469,10 +1297,7 @@ struct ca_params_nr_v1630_s {
   beam_management_type_r16_e_                        beam_management_type_r16;
   intra_band_freq_separation_ul_agg_bw_gap_bw_r16_e_ intra_band_freq_separation_ul_agg_bw_gap_bw_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1630 ::= SEQUENCE
@@ -1482,10 +1307,7 @@ struct ca_params_nrdc_v1630_s {
   ca_params_nr_v1610_s ca_params_nr_for_dc_v1610;
   ca_params_nr_v1630_s ca_params_nr_for_dc_v1630;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1630 ::= SEQUENCE
@@ -1493,18 +1315,16 @@ struct mrdc_params_v1630_s {
   struct max_ul_duty_cycle_inter_band_endc_fdd_tdd_pc2_r16_s_ {
     struct max_ul_duty_cycle_fdd_tdd_en_dc1_r16_opts {
       enum options { n30, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_ul_duty_cycle_fdd_tdd_en_dc1_r16_e_ = enumerated<max_ul_duty_cycle_fdd_tdd_en_dc1_r16_opts>;
     struct max_ul_duty_cycle_fdd_tdd_en_dc2_r16_opts {
       enum options { n30, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_ul_duty_cycle_fdd_tdd_en_dc2_r16_e_ = enumerated<max_ul_duty_cycle_fdd_tdd_en_dc2_r16_opts>;
 
@@ -1520,17 +1340,14 @@ struct mrdc_params_v1630_s {
   bool inter_band_mrdc_with_overlap_dl_bands_r16_present         = false;
   max_ul_duty_cycle_inter_band_endc_fdd_tdd_pc2_r16_s_ max_ul_duty_cycle_inter_band_endc_fdd_tdd_pc2_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ScalingFactorSidelink-r16 ::= ENUMERATED
 struct scaling_factor_sidelink_r16_opts {
   enum options { f0p4, f0p75, f0p8, f1, nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using scaling_factor_sidelink_r16_e = enumerated<scaling_factor_sidelink_r16_opts>;
 
@@ -1553,10 +1370,7 @@ struct band_combination_v1630_s {
   scaling_factor_tx_sidelink_r16_l_ scaling_factor_tx_sidelink_r16;
   scaling_factor_rx_sidelink_r16_l_ scaling_factor_rx_sidelink_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1630 ::= SEQUENCE
@@ -1564,10 +1378,7 @@ struct band_combination_ul_tx_switch_v1630_s {
   bool                     band_combination_v1630_present = false;
   band_combination_v1630_s band_combination_v1630;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PUCCH-Grp-CarrierTypes-r16 ::= SEQUENCE
@@ -1577,10 +1388,7 @@ struct pucch_grp_carrier_types_r16_s {
   bool fr1_non_shared_fdd_r16_present = false;
   bool fr2_r16_present                = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TwoPUCCH-Grp-ConfigParams-r16 ::= SEQUENCE
@@ -1588,10 +1396,7 @@ struct two_pucch_grp_cfg_params_r16_s {
   pucch_grp_carrier_types_r16_s pucch_group_map_r16;
   pucch_grp_carrier_types_r16_s pucch_tx_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TwoPUCCH-Grp-Configurations-r16 ::= SEQUENCE
@@ -1599,10 +1404,7 @@ struct two_pucch_grp_cfgs_r16_s {
   two_pucch_grp_cfg_params_r16_s pucch_primary_group_map_r16;
   two_pucch_grp_cfg_params_r16_s pucch_secondary_group_map_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1640 ::= SEQUENCE
@@ -1628,10 +1430,7 @@ struct ca_params_nr_v1640_s {
   uint8_t                        pdcch_monitoring_ca_non_aligned_span_r16 = 2;
   pdcch_blind_detection_ca_mixed_non_aligned_span_r16_s_ pdcch_blind_detection_ca_mixed_non_aligned_span_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1640 ::= SEQUENCE
@@ -1639,10 +1438,7 @@ struct ca_params_nrdc_v1640_s {
   bool                 ca_params_nr_for_dc_v1640_present = false;
   ca_params_nr_v1640_s ca_params_nr_for_dc_v1640;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1640 ::= SEQUENCE
@@ -1652,10 +1448,7 @@ struct band_combination_v1640_s {
   ca_params_nr_v1640_s   ca_params_nr_v1640;
   ca_params_nrdc_v1640_s ca_params_nrdc_v1640;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1640 ::= SEQUENCE
@@ -1663,10 +1456,7 @@ struct band_combination_ul_tx_switch_v1640_s {
   bool                     band_combination_v1640_present = false;
   band_combination_v1640_s band_combination_v1640;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1650 ::= SEQUENCE
@@ -1674,10 +1464,7 @@ struct ca_params_nrdc_v1650_s {
   bool                     supported_cell_grouping_r16_present = false;
   bounded_bitstring<1, 32> supported_cell_grouping_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1650 ::= SEQUENCE
@@ -1685,10 +1472,7 @@ struct band_combination_v1650_s {
   bool                   ca_params_nrdc_v1650_present = false;
   ca_params_nrdc_v1650_s ca_params_nrdc_v1650;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1650 ::= SEQUENCE
@@ -1696,10 +1480,7 @@ struct band_combination_ul_tx_switch_v1650_s {
   bool                     band_combination_v1650_present = false;
   band_combination_v1650_s band_combination_v1650;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v15g0 ::= SEQUENCE
@@ -1709,10 +1490,7 @@ struct ca_params_nr_v15g0_s {
   bounded_bitstring<3, 496> simul_rx_tx_inter_band_ca_per_band_pair;
   bounded_bitstring<3, 496> simul_rx_tx_sul_per_band_pair;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v15g0 ::= SEQUENCE
@@ -1720,10 +1498,7 @@ struct ca_params_nrdc_v15g0_s {
   bool                 ca_params_nr_for_dc_v15g0_present = false;
   ca_params_nr_v15g0_s ca_params_nr_for_dc_v15g0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v15g0 ::= SEQUENCE
@@ -1731,10 +1506,7 @@ struct mrdc_params_v15g0_s {
   bool                      simul_rx_tx_inter_band_end_cp_er_band_pair_present = false;
   bounded_bitstring<3, 496> simul_rx_tx_inter_band_end_cp_er_band_pair;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v15g0 ::= SEQUENCE
@@ -1746,10 +1518,7 @@ struct band_combination_v15g0_s {
   ca_params_nrdc_v15g0_s ca_params_nrdc_v15g0;
   mrdc_params_v15g0_s    mrdc_params_v15g0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1670 ::= SEQUENCE
@@ -1757,10 +1526,7 @@ struct band_combination_ul_tx_switch_v1670_s {
   bool                     band_combination_v15g0_present = false;
   band_combination_v15g0_s band_combination_v15g0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CarrierTypePair-r16 ::= SEQUENCE
@@ -1768,10 +1534,7 @@ struct carrier_type_pair_r16_s {
   pucch_grp_carrier_types_r16_s carrier_for_csi_meas_r16;
   pucch_grp_carrier_types_r16_s carrier_for_csi_report_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1690 ::= SEQUENCE
@@ -1780,40 +1543,36 @@ struct ca_params_nr_v1690_s {
     struct computation_time_for_a_csi_r16_opts {
       enum options { same_as_no_cross, relaxed, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using computation_time_for_a_csi_r16_e_ = enumerated<computation_time_for_a_csi_r16_opts>;
     struct add_symbols_r16_s_ {
       struct scs_15k_hz_add_symbols_r16_opts {
         enum options { s14, s28, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_15k_hz_add_symbols_r16_e_ = enumerated<scs_15k_hz_add_symbols_r16_opts>;
       struct scs_30k_hz_add_symbols_r16_opts {
         enum options { s14, s28, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_30k_hz_add_symbols_r16_e_ = enumerated<scs_30k_hz_add_symbols_r16_opts>;
       struct scs_60k_hz_add_symbols_r16_opts {
         enum options { s14, s28, s56, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_add_symbols_r16_e_ = enumerated<scs_60k_hz_add_symbols_r16_opts>;
       struct scs_120k_hz_add_symbols_r16_opts {
         enum options { s14, s28, s56, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_120k_hz_add_symbols_r16_e_ = enumerated<scs_120k_hz_add_symbols_r16_opts>;
 
@@ -1842,10 +1601,7 @@ struct ca_params_nr_v1690_s {
   bool                              csi_report_cross_pucch_grp_r16_present = false;
   csi_report_cross_pucch_grp_r16_s_ csi_report_cross_pucch_grp_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1690 ::= SEQUENCE
@@ -1853,10 +1609,7 @@ struct band_combination_v1690_s {
   bool                 dummy_present = false;
   ca_params_nr_v1690_s dummy;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1690 ::= SEQUENCE
@@ -1864,10 +1617,7 @@ struct band_combination_ul_tx_switch_v1690_s {
   bool                     band_combination_v1690_present = false;
   band_combination_v1690_s band_combination_v1690;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionCA-MixedExt-r16 ::= SEQUENCE
@@ -1875,10 +1625,7 @@ struct pdcch_blind_detection_ca_mixed_ext_r16_s {
   uint8_t pdcch_blind_detection_ca1_r16 = 1;
   uint8_t pdcch_blind_detection_ca2_r16 = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionCG-UE-MixedExt-r16 ::= SEQUENCE
@@ -1886,10 +1633,7 @@ struct pdcch_blind_detection_cg_ue_mixed_ext_r16_s {
   uint8_t pdcch_blind_detection_cg_ue1_r16 = 0;
   uint8_t pdcch_blind_detection_cg_ue2_r16 = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v15n0 ::= SEQUENCE
@@ -1897,7 +1641,7 @@ struct mrdc_params_v15n0_s {
   struct intra_band_endc_support_ul_opts {
     enum options { non_contiguous, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using intra_band_endc_support_ul_e_ = enumerated<intra_band_endc_support_ul_opts>;
 
@@ -1905,20 +1649,14 @@ struct mrdc_params_v15n0_s {
   bool                          intra_band_endc_support_ul_present = false;
   intra_band_endc_support_ul_e_ intra_band_endc_support_ul;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v15n0 ::= SEQUENCE
 struct band_combination_v15n0_s {
   mrdc_params_v15n0_s mrdc_params_v15n0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v16e0 ::= SEQUENCE
@@ -1926,10 +1664,7 @@ struct band_combination_ul_tx_switch_v16e0_s {
   bool                     band_combination_v15n0_present = false;
   band_combination_v15n0_s band_combination_v15n0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersfetype2PerBC-r17 ::= SEQUENCE
@@ -1943,10 +1678,7 @@ struct codebook_paramsfetype2_per_bc_r17_s {
   fetype2_r1_r17_l_   fetype2_r1_r17;
   fetype2_r2_r17_l_   fetype2_r2_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookComboParameterMixedTypePerBC-r17 ::= SEQUENCE
@@ -1982,20 +1714,16 @@ struct codebook_combo_param_mixed_type_per_bc_r17_s {
   type1_mp_e_type2_r1_fe_type2_ps_m1_r17_l_    type1_mp_e_type2_r1_fe_type2_ps_m1_r17;
   type1_mp_e_type2_r1_fe_type2_ps_m2_r1_r17_l_ type1_mp_e_type2_r1_fe_type2_ps_m2_r1_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CSI-MultiTRP-SupportedCombinations-r17 ::= SEQUENCE
 struct csi_multi_trp_supported_combinations_r17_s {
   struct max_num_tx_ports_r17_opts {
     enum options { n2, n4, n8, n12, n16, n24, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_tx_ports_r17_e_ = enumerated<max_num_tx_ports_r17_opts>;
 
@@ -2004,10 +1732,7 @@ struct csi_multi_trp_supported_combinations_r17_s {
   uint8_t                 max_total_num_cmr_r17                 = 2;
   uint16_t                max_total_num_tx_ports_nzp_csi_rs_r17 = 2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookComboParameterMultiTRP-PerBC-r17 ::= SEQUENCE
@@ -2075,10 +1800,7 @@ struct codebook_combo_param_multi_trp_per_bc_r17_s {
   ncjt1_sp_e_type2_r1_fe_type2_ps_m1_r17_l_    ncjt1_sp_e_type2_r1_fe_type2_ps_m1_r17;
   ncjt1_sp_e_type2_r1_fe_type2_ps_m2_r1_r17_l_ ncjt1_sp_e_type2_r1_fe_type2_ps_m2_r1_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CrossCarrierSchedulingSCell-SpCell-r17 ::= SEQUENCE
@@ -2096,10 +1818,9 @@ struct cross_carrier_sched_scell_sp_cell_r17_s {
   };
   struct pdcch_monitoring_occasion_r17_opts {
     enum options { val1, val2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pdcch_monitoring_occasion_r17_e_ = enumerated<pdcch_monitoring_occasion_r17_opts>;
 
@@ -2107,44 +1828,38 @@ struct cross_carrier_sched_scell_sp_cell_r17_s {
   supported_scs_combinations_r17_s_ supported_scs_combinations_r17;
   pdcch_monitoring_occasion_r17_e_  pdcch_monitoring_occasion_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1700 ::= SEQUENCE
 struct ca_params_nr_v1700_s {
   struct max_ul_duty_cycle_inter_band_ca_pc2_r17_opts {
     enum options { n50, n60, n70, n80, n90, n100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_ul_duty_cycle_inter_band_ca_pc2_r17_e_ = enumerated<max_ul_duty_cycle_inter_band_ca_pc2_r17_opts>;
   struct max_ul_duty_cycle_sul_combination_pc2_r17_opts {
     enum options { n50, n60, n70, n80, n90, n100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_ul_duty_cycle_sul_combination_pc2_r17_e_ = enumerated<max_ul_duty_cycle_sul_combination_pc2_r17_opts>;
   struct mtrp_csi_enhancement_per_bc_r17_s_ {
     struct csi_report_mode_r17_opts {
       enum options { mode1, mode2, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using csi_report_mode_r17_e_            = enumerated<csi_report_mode_r17_opts>;
     using supported_combo_across_ccs_r17_l_ = dyn_array<csi_multi_trp_supported_combinations_r17_s>;
     struct codebook_mode_ncjt_r17_opts {
       enum options { mode1, mode1_and2, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using codebook_mode_ncjt_r17_e_ = enumerated<codebook_mode_ncjt_r17_opts>;
 
@@ -2156,18 +1871,16 @@ struct ca_params_nr_v1700_s {
   };
   struct max_cc_32_dl_harq_process_fr2_2_r17_opts {
     enum options { n1, n2, n3, n4, n6, n8, n16, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_cc_32_dl_harq_process_fr2_2_r17_e_ = enumerated<max_cc_32_dl_harq_process_fr2_2_r17_opts>;
   struct max_cc_32_ul_harq_process_fr2_2_r17_opts {
     enum options { n1, n2, n3, n4, n5, n8, n16, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_cc_32_ul_harq_process_fr2_2_r17_e_ = enumerated<max_cc_32_ul_harq_process_fr2_2_r17_opts>;
   struct non_aligned_frame_boundaries_r17_s_ {
@@ -2215,10 +1928,7 @@ struct ca_params_nr_v1700_s {
   cross_carrier_sched_scell_sp_cell_r17_s      cross_carrier_sched_scell_sp_cell_type_a_r17;
   non_aligned_frame_boundaries_r17_s_          non_aligned_frame_boundaries_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1700 ::= SEQUENCE
@@ -2229,10 +1939,7 @@ struct ca_params_nrdc_v1700_s {
   bool scg_activation_deactivation_resume_nrdc_r17_present = false;
   bool beam_management_type_cbm_r17_present                = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1700 ::= SEQUENCE
@@ -2241,10 +1948,7 @@ struct mrdc_params_v1700_s {
   bool scg_activation_deactivation_endc_r17_present        = false;
   bool scg_activation_deactivation_resume_endc_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandParameters-v1710 ::= SEQUENCE
@@ -2261,10 +1965,7 @@ struct band_params_v1710_s {
   bool                                srs_ant_switching_beyond4_rx_r17_present = false;
   srs_ant_switching_beyond4_rx_r17_s_ srs_ant_switching_beyond4_rx_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1700 ::= SEQUENCE
@@ -2284,20 +1985,16 @@ struct band_combination_v1700_s {
   bounded_bitstring<1, 65536> supported_band_comb_list_per_bc_sl_relay_discovery_r17;
   bounded_bitstring<1, 65536> supported_band_comb_list_per_bc_sl_non_relay_discovery_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ULTxSwitchingBandPair-v1700 ::= SEQUENCE
 struct ul_tx_switching_band_pair_v1700_s {
   struct ul_tx_switching_period2_t2_t_r17_opts {
     enum options { n35us, n140us, n210us, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ul_tx_switching_period2_t2_t_r17_e_ = enumerated<ul_tx_switching_period2_t2_t_r17_opts>;
 
@@ -2305,10 +2002,7 @@ struct ul_tx_switching_band_pair_v1700_s {
   bool                                ul_tx_switching_period2_t2_t_r17_present = false;
   ul_tx_switching_period2_t2_t_r17_e_ ul_tx_switching_period2_t2_t_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UplinkTxSwitchingBandParameters-v1700 ::= SEQUENCE
@@ -2316,7 +2010,7 @@ struct ul_tx_switching_band_params_v1700_s {
   struct ul_tx_switching2_t2_t_pusch_trans_coherence_r17_opts {
     enum options { non_coherent, full_coherent, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_tx_switching2_t2_t_pusch_trans_coherence_r17_e_ =
       enumerated<ul_tx_switching2_t2_t_pusch_trans_coherence_r17_opts>;
@@ -2326,10 +2020,7 @@ struct ul_tx_switching_band_params_v1700_s {
   uint8_t                                            band_idx_r17                                            = 1;
   ul_tx_switching2_t2_t_pusch_trans_coherence_r17_e_ ul_tx_switching2_t2_t_pusch_trans_coherence_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1700 ::= SEQUENCE
@@ -2343,10 +2034,7 @@ struct band_combination_ul_tx_switch_v1700_s {
   supported_band_pair_list_nr_v1700_l_      supported_band_pair_list_nr_v1700;
   ul_tx_switching_band_params_list_v1700_l_ ul_tx_switching_band_params_list_v1700;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PUCCH-Group-Config-r17 ::= SEQUENCE
@@ -2355,10 +2043,7 @@ struct pucch_group_cfg_r17_s {
   bool fr2_fr2_non_shared_tdd_r17_present = false;
   bool fr1_fr2_non_shared_tdd_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // TwoPUCCH-Grp-Configurations-r17 ::= SEQUENCE
@@ -2366,10 +2051,7 @@ struct two_pucch_grp_cfgs_r17_s {
   pucch_group_cfg_r17_s primary_pucch_group_cfg_r17;
   pucch_group_cfg_r17_s secondary_pucch_group_cfg_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionMCG-SCG-r17 ::= SEQUENCE
@@ -2377,10 +2059,7 @@ struct pdcch_blind_detection_mcg_scg_r17_s {
   uint8_t pdcch_blind_detection_mcg_ue_r17 = 1;
   uint8_t pdcch_blind_detection_scg_ue_r17 = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionCA-Mixed-r17 ::= SEQUENCE
@@ -2390,10 +2069,7 @@ struct pdcch_blind_detection_ca_mixed_r17_s {
   uint8_t pdcch_blind_detection_ca1_r17         = 1;
   uint8_t pdcch_blind_detection_ca2_r17         = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionCG-UE-Mixed-r17 ::= SEQUENCE
@@ -2401,10 +2077,7 @@ struct pdcch_blind_detection_cg_ue_mixed_r17_s {
   uint8_t pdcch_blind_detection_cg_ue1_r17 = 0;
   uint8_t pdcch_blind_detection_cg_ue2_r17 = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionMixed-r17 ::= SEQUENCE
@@ -2420,10 +2093,7 @@ struct pdcch_blind_detection_mixed_r17_s {
   pdcch_blind_detection_ca_mixed_r17_s     pdcch_blind_detection_ca_mixed_r17;
   pdcch_blind_detection_cg_ue_mixed_r17_s_ pdcch_blind_detection_cg_ue_mixed_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionCA-Mixed1-r17 ::= SEQUENCE
@@ -2435,10 +2105,7 @@ struct pdcch_blind_detection_ca_mixed1_r17_s {
   uint8_t pdcch_blind_detection_ca2_r17         = 1;
   uint8_t pdcch_blind_detection_ca3_r17         = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionCG-UE-Mixed1-r17 ::= SEQUENCE
@@ -2447,10 +2114,7 @@ struct pdcch_blind_detection_cg_ue_mixed1_r17_s {
   uint8_t pdcch_blind_detection_cg_ue2_r17 = 0;
   uint8_t pdcch_blind_detection_cg_ue3_r17 = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionMixed1-r17 ::= SEQUENCE
@@ -2466,10 +2130,7 @@ struct pdcch_blind_detection_mixed1_r17_s {
   pdcch_blind_detection_ca_mixed1_r17_s     pdcch_blind_detection_ca_mixed1_r17;
   pdcch_blind_detection_cg_ue_mixed1_r17_s_ pdcch_blind_detection_cg_ue_mixed1_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1720 ::= SEQUENCE
@@ -2478,7 +2139,7 @@ struct ca_params_nr_v1720_s {
     struct pucch_group_r17_opts {
       enum options { primary_group_only, secondary_group_only, either_primary_or_secondary_group, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using pucch_group_r17_e_ = enumerated<pucch_group_r17_opts>;
 
@@ -2491,7 +2152,7 @@ struct ca_params_nr_v1720_s {
     struct pucch_group_r17_opts {
       enum options { primary_group_only, secondary_group_only, either_primary_or_secondary_group, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using pucch_group_r17_e_ = enumerated<pucch_group_r17_opts>;
 
@@ -2503,7 +2164,7 @@ struct ca_params_nr_v1720_s {
     struct pucch_group_r17_opts {
       enum options { primary_group_only, secondary_group_only, either_primary_or_secondary_group, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using pucch_group_r17_e_ = enumerated<pucch_group_r17_opts>;
 
@@ -2545,10 +2206,7 @@ struct ca_params_nr_v1720_s {
   pdcch_blind_detection_mixed_list2_r17_l_           pdcch_blind_detection_mixed_list2_r17;
   pdcch_blind_detection_mixed_list3_r17_l_           pdcch_blind_detection_mixed_list3_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1720 ::= SEQUENCE
@@ -2558,10 +2216,7 @@ struct ca_params_nrdc_v1720_s {
   ca_params_nr_v1700_s ca_params_nr_for_dc_v1700;
   ca_params_nr_v1720_s ca_params_nr_for_dc_v1720;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1720 ::= SEQUENCE
@@ -2571,10 +2226,7 @@ struct band_combination_v1720_s {
   ca_params_nr_v1720_s   ca_params_nr_v1720;
   ca_params_nrdc_v1720_s ca_params_nrdc_v1720;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1720 ::= SEQUENCE
@@ -2582,7 +2234,7 @@ struct band_combination_ul_tx_switch_v1720_s {
   struct ul_tx_switching_option_support2_t2_t_r17_opts {
     enum options { switched_ul, dual_ul, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_tx_switching_option_support2_t2_t_r17_e_ = enumerated<ul_tx_switching_option_support2_t2_t_r17_opts>;
 
@@ -2592,10 +2244,7 @@ struct band_combination_ul_tx_switch_v1720_s {
   band_combination_v1720_s                    band_combination_v1720;
   ul_tx_switching_option_support2_t2_t_r17_e_ ul_tx_switching_option_support2_t2_t_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1730 ::= SEQUENCE
@@ -2617,10 +2266,7 @@ struct ca_params_nr_v1730_s {
   bool    mux_harq_ack_unicast_multicast_r17_present                        = false;
   uint8_t max_num_g_rnti_harq_ack_codebook_r17                              = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1730 ::= SEQUENCE
@@ -2628,10 +2274,7 @@ struct ca_params_nrdc_v1730_s {
   bool                 ca_params_nr_for_dc_v1730_present = false;
   ca_params_nr_v1730_s ca_params_nr_for_dc_v1730;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandParameters-v1730 ::= SEQUENCE
@@ -2641,10 +2284,7 @@ struct band_params_v1730_s {
   // member variables
   srs_switching_affected_bands_list_nr_r17_l_ srs_switching_affected_bands_list_nr_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1730 ::= SEQUENCE
@@ -2658,10 +2298,7 @@ struct band_combination_v1730_s {
   ca_params_nrdc_v1730_s ca_params_nrdc_v1730;
   band_list_v1730_l_     band_list_v1730;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1730 ::= SEQUENCE
@@ -2669,10 +2306,7 @@ struct band_combination_ul_tx_switch_v1730_s {
   bool                     band_combination_v1730_present = false;
   band_combination_v1730_s band_combination_v1730;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1740 ::= SEQUENCE
@@ -2680,10 +2314,7 @@ struct ca_params_nr_v1740_s {
   bool nack_only_feedback_for_sps_multicast_r17_present = false;
   bool single_pucch_cfg_for_multicast_r17_present       = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1740 ::= SEQUENCE
@@ -2691,10 +2322,7 @@ struct band_combination_v1740_s {
   bool                 dummy_present = false;
   ca_params_nr_v1740_s dummy;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1740 ::= SEQUENCE
@@ -2702,30 +2330,21 @@ struct band_combination_ul_tx_switch_v1740_s {
   bool                     band_combination_v1740_present = false;
   band_combination_v1740_s band_combination_v1740;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1760 ::= SEQUENCE
 struct ca_params_nr_v1760_s {
   bool prio_scell_prach_over_sp_periodic_srs_support_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1760 ::= SEQUENCE
 struct ca_params_nrdc_v1760_s {
   ca_params_nr_v1760_s ca_params_nr_for_dc_v1760;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1760 ::= SEQUENCE
@@ -2733,10 +2352,7 @@ struct band_combination_v1760_s {
   ca_params_nr_v1760_s   ca_params_nr_v1760;
   ca_params_nrdc_v1760_s ca_params_nrdc_v1760;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1760 ::= SEQUENCE
@@ -2744,17 +2360,14 @@ struct band_combination_ul_tx_switch_v1760_s {
   bool                     band_combination_v1760_present = false;
   band_combination_v1760_s band_combination_v1760;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-BandwidthClassNR-r17 ::= ENUMERATED
 struct ca_bw_class_nr_r17_opts {
   enum options { r, s, t, u, /*...*/ nulltype } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using ca_bw_class_nr_r17_e = enumerated<ca_bw_class_nr_r17_opts, true>;
 
@@ -2765,30 +2378,21 @@ struct band_params_v1770_s {
   ca_bw_class_nr_r17_e ca_bw_class_dl_nr_r17;
   ca_bw_class_nr_r17_e ca_bw_class_ul_nr_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1770 ::= SEQUENCE
 struct mrdc_params_v1770_s {
   bool higher_pwr_limit_mrdc_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1770 ::= SEQUENCE
 struct ca_params_nr_v1770_s {
   bool parallel_tx_pucch_pusch_same_prio_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1770 ::= SEQUENCE
@@ -2802,10 +2406,7 @@ struct band_combination_v1770_s {
   mrdc_params_v1770_s  mrdc_params_v1770;
   ca_params_nr_v1770_s ca_params_nr_v1770;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1770 ::= SEQUENCE
@@ -2813,10 +2414,7 @@ struct band_combination_ul_tx_switch_v1770_s {
   bool                     band_combination_v1770_present = false;
   band_combination_v1770_s band_combination_v1770;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1780 ::= SEQUENCE
@@ -2842,10 +2440,7 @@ struct ca_params_nr_v1780_s {
   bool                        supported_agg_bw_fr1_r17_present              = false;
   supported_agg_bw_fr1_r17_s_ supported_agg_bw_fr1_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1780 ::= SEQUENCE
@@ -2853,10 +2448,7 @@ struct ca_params_nrdc_v1780_s {
   bool                 ca_params_nr_for_dc_v1780_present = false;
   ca_params_nr_v1780_s ca_params_nr_for_dc_v1780;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandParameters-v1780 ::= SEQUENCE
@@ -2876,10 +2468,7 @@ struct band_params_v1780_s {
   ca_bw_class_nr_r17_e        ca_bw_class_ul_nr_r17;
   supported_agg_bw_fr2_r17_s_ supported_agg_bw_fr2_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1780 ::= SEQUENCE
@@ -2895,10 +2484,7 @@ struct band_combination_v1780_s {
   band_list_v1780_l_     band_list_v1780;
   mrdc_params_v1770_s    mrdc_params_v1780;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1780 ::= SEQUENCE
@@ -2906,10 +2492,7 @@ struct band_combination_ul_tx_switch_v1780_s {
   bool                     band_combination_v1780_present = false;
   band_combination_v1780_s band_combination_v1780;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1790 ::= SEQUENCE
@@ -2917,13 +2500,13 @@ struct mrdc_params_v1790_s {
   struct intra_band_endc_support_v1790_opts {
     enum options { non_contiguous, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using intra_band_endc_support_v1790_e_ = enumerated<intra_band_endc_support_v1790_opts>;
   struct intra_band_endc_support_ul_v1790_opts {
     enum options { non_contiguous, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using intra_band_endc_support_ul_v1790_e_ = enumerated<intra_band_endc_support_ul_v1790_opts>;
 
@@ -2933,10 +2516,7 @@ struct mrdc_params_v1790_s {
   intra_band_endc_support_v1790_e_    intra_band_endc_support_v1790;
   intra_band_endc_support_ul_v1790_e_ intra_band_endc_support_ul_v1790;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SupportedIntraENDC-BandCombination-r17 ::= SEQUENCE
@@ -2946,10 +2526,7 @@ struct supported_intra_endc_band_combination_r17_s {
   bounded_bitstring<1, 32> supported_bw_combination_set_intra_endc_v1790;
   mrdc_params_v1790_s      mrdc_params_v1790;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1790 ::= SEQUENCE
@@ -2959,10 +2536,7 @@ struct band_combination_v1790_s {
   // member variables
   supported_intra_endc_band_combination_list_r17_l_ supported_intra_endc_band_combination_list_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1790 ::= SEQUENCE
@@ -2970,28 +2544,23 @@ struct band_combination_ul_tx_switch_v1790_s {
   bool                     band_combination_v1790_present = false;
   band_combination_v1790_s band_combination_v1790;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SupportedCSI-RS-ReportSetting-r18 ::= SEQUENCE
 struct supported_csi_rs_report_setting_r18_s {
   struct max_n4_r18_opts {
     enum options { n1, n2, n4, n8, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_n4_r18_e_ = enumerated<max_n4_r18_opts>;
   struct max_num_tx_ports_per_res_r18_opts {
     enum options { p2, p4, p8, p12, p16, p24, p32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_tx_ports_per_res_r18_e_ = enumerated<max_num_tx_ports_per_res_r18_opts>;
 
@@ -3001,10 +2570,7 @@ struct supported_csi_rs_report_setting_r18_s {
   uint8_t                         max_num_res_per_band_r18        = 1;
   uint16_t                        total_num_tx_ports_per_band_r18 = 2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersetype2DopplerCSI-r18 ::= SEQUENCE
@@ -3013,10 +2579,9 @@ struct codebook_paramsetype2_doppler_csi_r18_s {
     using supported_csi_rs_res_list_r18_l_ = bounded_array<uint16_t, 16>;
     struct scalingfactor_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scalingfactor_r18_e_ = enumerated<scalingfactor_r18_opts>;
 
@@ -3036,10 +2601,9 @@ struct codebook_paramsetype2_doppler_csi_r18_s {
   };
   struct max_num_aperiodic_csi_rs_res_r18_opts {
     enum options { n4, n8, n12, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_aperiodic_csi_rs_res_r18_e_ = enumerated<max_num_aperiodic_csi_rs_res_r18_opts>;
   using etype2_doppler_r2_r18_l_            = bounded_array<uint16_t, 16>;
@@ -3058,10 +2622,7 @@ struct codebook_paramsetype2_doppler_csi_r18_s {
   max_num_aperiodic_csi_rs_res_r18_e_ max_num_aperiodic_csi_rs_res_r18;
   etype2_doppler_r2_r18_l_            etype2_doppler_r2_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersfetype2DopplerCSI-r18 ::= SEQUENCE
@@ -3070,10 +2631,9 @@ struct codebook_paramsfetype2_doppler_csi_r18_s {
     using supported_csi_rs_res_list_r18_l_ = bounded_array<uint16_t, 16>;
     struct scalingfactor_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scalingfactor_r18_e_ = enumerated<scalingfactor_r18_opts>;
 
@@ -3084,10 +2644,9 @@ struct codebook_paramsfetype2_doppler_csi_r18_s {
   };
   struct max_num_aperiodic_csi_rs_res_r18_opts {
     enum options { n4, n8, n12, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_aperiodic_csi_rs_res_r18_e_ = enumerated<max_num_aperiodic_csi_rs_res_r18_opts>;
   using fe_type2_doppler_m2_r1_r18_l_       = bounded_array<uint16_t, 16>;
@@ -3102,10 +2661,7 @@ struct codebook_paramsfetype2_doppler_csi_r18_s {
   fe_type2_doppler_m2_r1_r18_l_       fe_type2_doppler_m2_r1_r18;
   fe_type2_doppler_r2_r18_l_          fe_type2_doppler_r2_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersetype2CJT-r18 ::= SEQUENCE
@@ -3114,11 +2670,10 @@ struct codebook_paramsetype2_cjt_r18_s {
     using supported_csi_rs_res_list_r18_l_ = bounded_array<uint16_t, 16>;
     struct scalingfactor_r18_opts {
       enum options { n1, n1dot5, n2, nulltype } value;
-      typedef float number_type;
 
-      const char* to_string() const;
-      float       to_number() const;
-      const char* to_number_string() const;
+      static const asn1::table::enum_desc desc;
+      float                               to_number() const;
+      const char*                         to_number_string() const;
     };
     using scalingfactor_r18_e_ = enumerated<scalingfactor_r18_opts>;
 
@@ -3131,18 +2686,16 @@ struct codebook_paramsetype2_cjt_r18_s {
   using etype2_cjt_r2_r18_l_    = bounded_array<uint16_t, 16>;
   struct etype2_cjt_2_nn1_n2_r18_opts {
     enum options { n64, n96, n128, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using etype2_cjt_2_nn1_n2_r18_e_ = enumerated<etype2_cjt_2_nn1_n2_r18_opts>;
   struct etype2_cjt_nl_sd_r18_opts {
     enum options { n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using etype2_cjt_nl_sd_r18_e_ = enumerated<etype2_cjt_nl_sd_r18_opts>;
 
@@ -3161,10 +2714,7 @@ struct codebook_paramsetype2_cjt_r18_s {
   etype2_cjt_2_nn1_n2_r18_e_ etype2_cjt_2_nn1_n2_r18;
   etype2_cjt_nl_sd_r18_e_    etype2_cjt_nl_sd_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersfetype2CJT-r18 ::= SEQUENCE
@@ -3173,11 +2723,10 @@ struct codebook_paramsfetype2_cjt_r18_s {
     using supported_csi_rs_res_list_r18_l_ = bounded_array<uint16_t, 16>;
     struct scalingfactor_r18_opts {
       enum options { n1, n1dot5, n2, nulltype } value;
-      typedef float number_type;
 
-      const char* to_string() const;
-      float       to_number() const;
-      const char* to_number_string() const;
+      static const asn1::table::enum_desc desc;
+      float                               to_number() const;
+      const char*                         to_number_string() const;
     };
     using scalingfactor_r18_e_ = enumerated<scalingfactor_r18_opts>;
 
@@ -3191,18 +2740,16 @@ struct codebook_paramsfetype2_cjt_r18_s {
   using fe_type2_cjt_r2_r18_l_    = bounded_array<uint16_t, 16>;
   struct fe_type2_cjt_2_nn1_n2_r18_opts {
     enum options { n64, n96, n128, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using fe_type2_cjt_2_nn1_n2_r18_e_ = enumerated<fe_type2_cjt_2_nn1_n2_r18_opts>;
   struct fe_type2_cjt_nl_r18_opts {
     enum options { n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using fe_type2_cjt_nl_r18_e_ = enumerated<fe_type2_cjt_nl_r18_opts>;
 
@@ -3220,10 +2767,7 @@ struct codebook_paramsfetype2_cjt_r18_s {
   fe_type2_cjt_2_nn1_n2_r18_e_ fe_type2_cjt_2_nn1_n2_r18;
   fe_type2_cjt_nl_r18_e_       fe_type2_cjt_nl_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookComboParametersCJT-r18 ::= SEQUENCE
@@ -3251,10 +2795,7 @@ struct codebook_combo_params_cjt_r18_s {
   cjt_type1_mp_fe_type2_r1_m2_null_l_ cjt_type1_mp_fe_type2_r1_m2_null;
   cjt_type1_mp_fe_type2_r2_m2_null_l_ cjt_type1_mp_fe_type2_r2_m2_null;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersHARQ-ACK-PUSCH-r18 ::= SEQUENCE
@@ -3265,20 +2806,16 @@ struct codebook_params_harq_ack_pusch_r18_s {
   bool pucch_diff_res_pdsch_r18_present = false;
   bool diff_cb_size_pdsch_r18_present   = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SupportedCSI-RS-Resource ::= SEQUENCE
 struct supported_csi_rs_res_s {
   struct max_num_tx_ports_per_res_opts {
     enum options { p2, p4, p8, p12, p16, p24, p32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_tx_ports_per_res_e_ = enumerated<max_num_tx_ports_per_res_opts>;
 
@@ -3287,10 +2824,7 @@ struct supported_csi_rs_res_s {
   uint8_t                     max_num_res_per_band        = 1;
   uint16_t                    total_num_tx_ports_per_band = 2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CombinationCarrierType-r18 ::= SEQUENCE
@@ -3298,13 +2832,13 @@ struct combination_carrier_type_r18_s {
   struct scheduling_cell_carrier_type_r18_opts {
     enum options { licensed_fdd_fr1, licensed_tdd_fr1, unlicensed_tdd_fr1, fr2_neg1, fr2_neg2, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using scheduling_cell_carrier_type_r18_e_ = enumerated<scheduling_cell_carrier_type_r18_opts>;
   struct sched_cell_carrier_type_r18_opts {
     enum options { licensed_fdd_fr1, licensed_tdd_fr1, unlicensed_tdd_fr1, fr2_neg1, fr2_neg2, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using sched_cell_carrier_type_r18_e_ = enumerated<sched_cell_carrier_type_r18_opts>;
 
@@ -3312,10 +2846,7 @@ struct combination_carrier_type_r18_s {
   scheduling_cell_carrier_type_r18_e_ scheduling_cell_carrier_type_r18;
   sched_cell_carrier_type_r18_e_      scheduled_cell_carrier_type_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionMixed2-r18 ::= SEQUENCE
@@ -3323,10 +2854,7 @@ struct pdcch_blind_detection_mixed2_r18_s {
   pdcch_blind_detection_cg_ue_mixed_ext_r16_s pdcch_blind_detection_mcg_ue_mixed_r18;
   pdcch_blind_detection_cg_ue_mixed_ext_r16_s pdcch_blind_detection_scg_ue_mixed_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1800 ::= SEQUENCE
@@ -3338,18 +2866,16 @@ struct ca_params_nr_v1800_s {
   struct tdcp_res_per_bc_r18_s_ {
     struct max_num_cfg_per_cc_r18_opts {
       enum options { n2, n4, n6, n8, n10, n12, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_per_cc_r18_e_ = enumerated<max_num_cfg_per_cc_r18_opts>;
     struct max_num_simul_per_cc_r18_opts {
       enum options { n2, n4, n6, n8, n12, n16, n20, n24, n28, n32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_simul_per_cc_r18_e_ = enumerated<max_num_simul_per_cc_r18_opts>;
 
@@ -3360,10 +2886,9 @@ struct ca_params_nr_v1800_s {
   };
   struct timeline_relax_cjt_csi_ca_r18_opts {
     enum options { n0, n2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using timeline_relax_cjt_csi_ca_r18_e_ = enumerated<timeline_relax_cjt_csi_ca_r18_opts>;
   struct spatial_adaptation_csi_feedback_per_bc_r18_s_ {
@@ -3405,10 +2930,9 @@ struct ca_params_nr_v1800_s {
           n64,
           nulltype
         } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type1_res_r18_e_ = enumerated<sd_type1_res_r18_opts>;
       struct sd_type2_res_r18_opts {
@@ -3448,10 +2972,9 @@ struct ca_params_nr_v1800_s {
           n64,
           nulltype
         } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type2_res_r18_e_ = enumerated<sd_type2_res_r18_opts>;
 
@@ -3507,10 +3030,9 @@ struct ca_params_nr_v1800_s {
         n64,
         nulltype
       } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_res_across_cc_r18_e_ = enumerated<max_num_csi_res_across_cc_r18_opts>;
 
@@ -3557,10 +3079,9 @@ struct ca_params_nr_v1800_s {
           n64,
           nulltype
         } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type1_res_r18_e_ = enumerated<sd_type1_res_r18_opts>;
       struct sd_type2_res_r18_opts {
@@ -3600,10 +3121,9 @@ struct ca_params_nr_v1800_s {
           n64,
           nulltype
         } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type2_res_r18_e_ = enumerated<sd_type2_res_r18_opts>;
 
@@ -3658,10 +3178,9 @@ struct ca_params_nr_v1800_s {
         n64,
         nulltype
       } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_res_across_cc_r18_e_ = enumerated<max_num_csi_res_across_cc_r18_opts>;
 
@@ -3707,10 +3226,9 @@ struct ca_params_nr_v1800_s {
         n64,
         nulltype
       } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_res_across_cc_r18_e_ = enumerated<max_num_csi_res_across_cc_r18_opts>;
 
@@ -3756,10 +3274,9 @@ struct ca_params_nr_v1800_s {
         n64,
         nulltype
       } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_res_across_cc_r18_e_ = enumerated<max_num_csi_res_across_cc_r18_opts>;
 
@@ -3805,10 +3322,9 @@ struct ca_params_nr_v1800_s {
         n64,
         nulltype
       } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_res_across_cc_r18_e_ = enumerated<max_num_csi_res_across_cc_r18_opts>;
 
@@ -3854,10 +3370,9 @@ struct ca_params_nr_v1800_s {
         n64,
         nulltype
       } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_res_across_cc_r18_e_ = enumerated<max_num_csi_res_across_cc_r18_opts>;
 
@@ -3877,13 +3392,13 @@ struct ca_params_nr_v1800_s {
     struct harq_feedback_type_r18_opts {
       enum options { type1, type2, type1_and2, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using harq_feedback_type_r18_e_ = enumerated<harq_feedback_type_r18_opts>;
     struct co_sched_cell_ind_scheme_r18_opts {
       enum options { fdra, cell_ind, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using co_sched_cell_ind_scheme_r18_e_ = enumerated<co_sched_cell_ind_scheme_r18_opts>;
 
@@ -3901,20 +3416,20 @@ struct ca_params_nr_v1800_s {
     struct co_sched_cell_scs_r18_opts {
       enum options { low_sched_high_sched, high_sched_low_sched, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using co_sched_cell_scs_r18_e_        = enumerated<co_sched_cell_scs_r18_opts>;
     using combination_carrier_type_r18_l_ = dyn_array<combination_carrier_type_r18_s>;
     struct harq_feedback_type_r18_opts {
       enum options { type1, type2, type1_and2, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using harq_feedback_type_r18_e_ = enumerated<harq_feedback_type_r18_opts>;
     struct co_sched_cell_ind_scheme_r18_opts {
       enum options { fdra, cell_ind, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using co_sched_cell_ind_scheme_r18_e_ = enumerated<co_sched_cell_ind_scheme_r18_opts>;
 
@@ -3938,7 +3453,7 @@ struct ca_params_nr_v1800_s {
     struct co_sched_cell_ind_scheme_r18_opts {
       enum options { fdra, cell_ind, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using co_sched_cell_ind_scheme_r18_e_ = enumerated<co_sched_cell_ind_scheme_r18_opts>;
 
@@ -3955,14 +3470,14 @@ struct ca_params_nr_v1800_s {
     struct co_sched_cell_scs_r18_opts {
       enum options { low_sched_high_sched, high_sched_low_sched, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using co_sched_cell_scs_r18_e_        = enumerated<co_sched_cell_scs_r18_opts>;
     using combination_carrier_type_r18_l_ = dyn_array<combination_carrier_type_r18_s>;
     struct co_sched_cell_ind_scheme_r18_opts {
       enum options { fdra, cell_ind, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using co_sched_cell_ind_scheme_r18_e_ = enumerated<co_sched_cell_ind_scheme_r18_opts>;
 
@@ -3977,26 +3492,23 @@ struct ca_params_nr_v1800_s {
   struct adv_unicast_dci_dl_r18_s_ {
     struct scs_15k_hz_120k_hz_r18_opts {
       enum options { n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_120k_hz_r18_e_ = enumerated<scs_15k_hz_120k_hz_r18_opts>;
     struct scs_15k_hz_60k_hz_r18_opts {
       enum options { n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_60k_hz_r18_e_ = enumerated<scs_15k_hz_60k_hz_r18_opts>;
     struct scs_30k_hz_120k_hz_r18_opts {
       enum options { n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_120k_hz_r18_e_ = enumerated<scs_30k_hz_120k_hz_r18_opts>;
 
@@ -4014,26 +3526,23 @@ struct ca_params_nr_v1800_s {
   struct adv_unicast_dci_ul_r18_s_ {
     struct scs_15k_hz_120k_hz_r18_opts {
       enum options { n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_120k_hz_r18_e_ = enumerated<scs_15k_hz_120k_hz_r18_opts>;
     struct scs_15k_hz_60k_hz_r18_opts {
       enum options { n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_60k_hz_r18_e_ = enumerated<scs_15k_hz_60k_hz_r18_opts>;
     struct scs_30k_hz_120k_hz_r18_opts {
       enum options { n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_120k_hz_r18_e_ = enumerated<scs_30k_hz_120k_hz_r18_opts>;
 
@@ -4051,10 +3560,9 @@ struct ca_params_nr_v1800_s {
   struct type3_enh_harq_cb_dci_1_3_r18_s_ {
     struct nof_codebook_r18_opts {
       enum options { n1, n2, n4, n8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using nof_codebook_r18_e_ = enumerated<nof_codebook_r18_opts>;
 
@@ -4067,7 +3575,7 @@ struct ca_params_nr_v1800_s {
       struct supported_span_arrangement_r18_opts {
         enum options { aligned_only, aligned_and_non_aligned, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using supported_span_arrangement_r18_e_ = enumerated<supported_span_arrangement_r18_opts>;
 
@@ -4078,49 +3586,39 @@ struct ca_params_nr_v1800_s {
     struct types_opts {
       enum options { pdcch_monitoring_ca_r18, pdcch_monitoring_ca_non_aligned_span_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    pdcch_monitoring_ca_ext_r18_c_() = default;
-    pdcch_monitoring_ca_ext_r18_c_(const pdcch_monitoring_ca_ext_r18_c_& other);
-    pdcch_monitoring_ca_ext_r18_c_& operator=(const pdcch_monitoring_ca_ext_r18_c_& other);
-    ~pdcch_monitoring_ca_ext_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    pdcch_monitoring_ca_r18_s_& pdcch_monitoring_ca_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    pdcch_monitoring_ca_r18_s_&                   pdcch_monitoring_ca_r18()
     {
-      assert_choice_type(types::pdcch_monitoring_ca_r18, type_, "pdcch-MonitoringCA-Ext-r18");
+      assert_choice_type(types::pdcch_monitoring_ca_r18, c.type, "pdcch-MonitoringCA-Ext-r18");
       return c.get<pdcch_monitoring_ca_r18_s_>();
     }
     uint8_t& pdcch_monitoring_ca_non_aligned_span_r18()
     {
-      assert_choice_type(types::pdcch_monitoring_ca_non_aligned_span_r18, type_, "pdcch-MonitoringCA-Ext-r18");
+      assert_choice_type(types::pdcch_monitoring_ca_non_aligned_span_r18, c.type, "pdcch-MonitoringCA-Ext-r18");
       return c.get<uint8_t>();
     }
     const pdcch_monitoring_ca_r18_s_& pdcch_monitoring_ca_r18() const
     {
-      assert_choice_type(types::pdcch_monitoring_ca_r18, type_, "pdcch-MonitoringCA-Ext-r18");
+      assert_choice_type(types::pdcch_monitoring_ca_r18, c.type, "pdcch-MonitoringCA-Ext-r18");
       return c.get<pdcch_monitoring_ca_r18_s_>();
     }
     const uint8_t& pdcch_monitoring_ca_non_aligned_span_r18() const
     {
-      assert_choice_type(types::pdcch_monitoring_ca_non_aligned_span_r18, type_, "pdcch-MonitoringCA-Ext-r18");
+      assert_choice_type(types::pdcch_monitoring_ca_non_aligned_span_r18, c.type, "pdcch-MonitoringCA-Ext-r18");
       return c.get<uint8_t>();
     }
     pdcch_monitoring_ca_r18_s_& set_pdcch_monitoring_ca_r18();
     uint8_t&                    set_pdcch_monitoring_ca_non_aligned_span_r18();
 
   private:
-    types                                       type_;
-    choice_buffer_t<pdcch_monitoring_ca_r18_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<pdcch_monitoring_ca_ext_r18_c_, types, choice_buffer_t<pdcch_monitoring_ca_r18_s_>> c;
   };
   struct pdcch_blind_detection_ca_mixed_ext_r18_c_ {
     struct pdcch_blind_detection_ca_mixed_r18_s_ {
@@ -4128,7 +3626,7 @@ struct ca_params_nr_v1800_s {
       struct supported_span_arrangement_r18_opts {
         enum options { aligned_only, aligned_and_non_aligned, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using supported_span_arrangement_r18_e_ = enumerated<supported_span_arrangement_r18_opts>;
 
@@ -4144,52 +3642,46 @@ struct ca_params_nr_v1800_s {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    pdcch_blind_detection_ca_mixed_ext_r18_c_() = default;
-    pdcch_blind_detection_ca_mixed_ext_r18_c_(const pdcch_blind_detection_ca_mixed_ext_r18_c_& other);
-    pdcch_blind_detection_ca_mixed_ext_r18_c_& operator=(const pdcch_blind_detection_ca_mixed_ext_r18_c_& other);
-    ~pdcch_blind_detection_ca_mixed_ext_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    pdcch_blind_detection_ca_mixed_r18_s_& pdcch_blind_detection_ca_mixed_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    pdcch_blind_detection_ca_mixed_r18_s_&        pdcch_blind_detection_ca_mixed_r18()
     {
-      assert_choice_type(types::pdcch_blind_detection_ca_mixed_r18, type_, "pdcch-BlindDetectionCA-MixedExt-r18");
+      assert_choice_type(types::pdcch_blind_detection_ca_mixed_r18, c.type, "pdcch-BlindDetectionCA-MixedExt-r18");
       return c.get<pdcch_blind_detection_ca_mixed_r18_s_>();
     }
     pdcch_blind_detection_ca_mixed_non_aligned_span_r18_l_& pdcch_blind_detection_ca_mixed_non_aligned_span_r18()
     {
       assert_choice_type(
-          types::pdcch_blind_detection_ca_mixed_non_aligned_span_r18, type_, "pdcch-BlindDetectionCA-MixedExt-r18");
+          types::pdcch_blind_detection_ca_mixed_non_aligned_span_r18, c.type, "pdcch-BlindDetectionCA-MixedExt-r18");
       return c.get<pdcch_blind_detection_ca_mixed_non_aligned_span_r18_l_>();
     }
     const pdcch_blind_detection_ca_mixed_r18_s_& pdcch_blind_detection_ca_mixed_r18() const
     {
-      assert_choice_type(types::pdcch_blind_detection_ca_mixed_r18, type_, "pdcch-BlindDetectionCA-MixedExt-r18");
+      assert_choice_type(types::pdcch_blind_detection_ca_mixed_r18, c.type, "pdcch-BlindDetectionCA-MixedExt-r18");
       return c.get<pdcch_blind_detection_ca_mixed_r18_s_>();
     }
     const pdcch_blind_detection_ca_mixed_non_aligned_span_r18_l_&
     pdcch_blind_detection_ca_mixed_non_aligned_span_r18() const
     {
       assert_choice_type(
-          types::pdcch_blind_detection_ca_mixed_non_aligned_span_r18, type_, "pdcch-BlindDetectionCA-MixedExt-r18");
+          types::pdcch_blind_detection_ca_mixed_non_aligned_span_r18, c.type, "pdcch-BlindDetectionCA-MixedExt-r18");
       return c.get<pdcch_blind_detection_ca_mixed_non_aligned_span_r18_l_>();
     }
     pdcch_blind_detection_ca_mixed_r18_s_&                  set_pdcch_blind_detection_ca_mixed_r18();
     pdcch_blind_detection_ca_mixed_non_aligned_span_r18_l_& set_pdcch_blind_detection_ca_mixed_non_aligned_span_r18();
 
   private:
-    types type_;
-    choice_buffer_t<pdcch_blind_detection_ca_mixed_non_aligned_span_r18_l_, pdcch_blind_detection_ca_mixed_r18_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<
+        pdcch_blind_detection_ca_mixed_ext_r18_c_,
+        types,
+        choice_buffer_t<pdcch_blind_detection_ca_mixed_non_aligned_span_r18_l_, pdcch_blind_detection_ca_mixed_r18_s_>>
+        c;
   };
   using pdcch_blind_detection_mcg_scg_list_r18_l_ = dyn_array<pdcch_blind_detection_mixed2_r18_s>;
 
@@ -4257,10 +3749,7 @@ struct ca_params_nr_v1800_s {
   pdcch_blind_detection_ca_mixed_ext_r18_c_               pdcch_blind_detection_ca_mixed_ext_r18;
   pdcch_blind_detection_mcg_scg_list_r18_l_               pdcch_blind_detection_mcg_scg_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-BlindDetectionMixed1-r18 ::= SEQUENCE
@@ -4273,10 +3762,7 @@ struct pdcch_blind_detection_mixed1_r18_s {
   // member variables
   pdcch_blind_detection_cg_ue_mixed_r18_s_ pdcch_blind_detection_cg_ue_mixed_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1800 ::= SEQUENCE
@@ -4288,10 +3774,7 @@ struct ca_params_nrdc_v1800_s {
   ca_params_nr_v1800_s              ca_params_nr_for_dc_v1800;
   pdcch_blind_detection_nrdc_r18_l_ pdcch_blind_detection_nrdc_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandParameters-v1810 ::= SEQUENCE
@@ -4300,26 +3783,21 @@ struct band_params_v1810_s {
     struct ant_switch8_t8_r_r18_opts {
       enum options { no_tdm, tdm_and_no_tdm, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using ant_switch8_t8_r_r18_e_ = enumerated<ant_switch8_t8_r_r18_opts>;
     struct downgrade_cfg_r18_c_ {
       struct types_opts {
         enum options { empty_r18, downgrade_r18, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      downgrade_cfg_r18_c_() = default;
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fixed_bitstring<11>& downgrade_r18()
+      void                                  set(types::options e = types::nulltype);
+      types                                 type() const { return type_; }
+      static const asn1::table::choice_desc desc;
+      fixed_bitstring<11>&                  downgrade_r18()
       {
         assert_choice_type(types::downgrade_r18, type_, "downgradeConfig-r18");
         return c;
@@ -4352,10 +3830,7 @@ struct band_params_v1810_s {
   bool                           srs_ant_switching8_t8_r_r18_present = false;
   srs_ant_switching8_t8_r_r18_s_ srs_ant_switching8_t8_r_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1800 ::= SEQUENCE
@@ -4371,10 +3846,7 @@ struct band_combination_v1800_s {
   bounded_bitstring<1, 65536> supported_band_comb_list_per_bc_sl_u2_u_relay_discovery_r18;
   band_list_v1810_l_          band_list_v1810;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SwitchingPeriodUnaffectedBandDualUL-r18 ::= SEQUENCE
@@ -4382,28 +3854,22 @@ struct switching_period_unaffected_band_dual_ul_r18_s {
   struct period_unaffected_band_dual_ul_r18_c_ {
     struct period_on_ul_bands_r18_opts {
       enum options { n35us, n140us, n210us, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using period_on_ul_bands_r18_e_ = enumerated<period_on_ul_bands_r18_opts>;
     struct types_opts {
       enum options { maintained_ul_trans_r18, period_on_ul_bands_r18, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    period_unaffected_band_dual_ul_r18_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    period_on_ul_bands_r18_e_& period_on_ul_bands_r18()
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    period_on_ul_bands_r18_e_&            period_on_ul_bands_r18()
     {
       assert_choice_type(types::period_on_ul_bands_r18, type_, "periodUnaffectedBandDualUL-r18");
       return c;
@@ -4425,10 +3891,7 @@ struct switching_period_unaffected_band_dual_ul_r18_s {
   uint8_t                               band_idx_unaffected_r18 = 1;
   period_unaffected_band_dual_ul_r18_c_ period_unaffected_band_dual_ul_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ULTxSwitchingBandPair-r18 ::= SEQUENCE
@@ -4436,24 +3899,22 @@ struct ul_tx_switching_band_pair_r18_s {
   struct ul_tx_switching_option_for_band_pair_r18_opts {
     enum options { switched_ul, dual_ul, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_tx_switching_option_for_band_pair_r18_e_ = enumerated<ul_tx_switching_option_for_band_pair_r18_opts>;
   struct ul_tx_switching_period_for_band_pair_r18_s_ {
     struct switching_period_for2_t_r18_opts {
       enum options { n35us, n140us, n210us, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using switching_period_for2_t_r18_e_ = enumerated<switching_period_for2_t_r18_opts>;
     struct switching_period_for1_t_r18_opts {
       enum options { n35us, n140us, n210us, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using switching_period_for1_t_r18_e_ = enumerated<switching_period_for1_t_r18_opts>;
 
@@ -4474,10 +3935,7 @@ struct ul_tx_switching_band_pair_r18_s {
   bounded_bitstring<1, 32>                                   ul_tx_switching_dl_interruption_r18;
   ul_tx_switching_period_unaffected_band_dual_ul_list_r18_l_ ul_tx_switching_period_unaffected_band_dual_ul_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UplinkTxSwitchingAdditionalPeriodDualUL-r18 ::= SEQUENCE
@@ -4486,52 +3944,41 @@ struct ul_tx_switching_add_period_dual_ul_r18_s {
     struct another_band_pair_or_band_r18_c_ {
       struct types_opts {
         enum options { band_pair_idx2_r18, band_idx_r18, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      another_band_pair_or_band_r18_c_() = default;
-      another_band_pair_or_band_r18_c_(const another_band_pair_or_band_r18_c_& other);
-      another_band_pair_or_band_r18_c_& operator=(const another_band_pair_or_band_r18_c_& other);
-      ~another_band_pair_or_band_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      uint8_t& band_pair_idx2_r18()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      uint8_t&                                      band_pair_idx2_r18()
       {
-        assert_choice_type(types::band_pair_idx2_r18, type_, "anotherBandPairOrBand-r18");
+        assert_choice_type(types::band_pair_idx2_r18, c.type, "anotherBandPairOrBand-r18");
         return c.get<uint8_t>();
       }
       uint8_t& band_idx_r18()
       {
-        assert_choice_type(types::band_idx_r18, type_, "anotherBandPairOrBand-r18");
+        assert_choice_type(types::band_idx_r18, c.type, "anotherBandPairOrBand-r18");
         return c.get<uint8_t>();
       }
       const uint8_t& band_pair_idx2_r18() const
       {
-        assert_choice_type(types::band_pair_idx2_r18, type_, "anotherBandPairOrBand-r18");
+        assert_choice_type(types::band_pair_idx2_r18, c.type, "anotherBandPairOrBand-r18");
         return c.get<uint8_t>();
       }
       const uint8_t& band_idx_r18() const
       {
-        assert_choice_type(types::band_idx_r18, type_, "anotherBandPairOrBand-r18");
+        assert_choice_type(types::band_idx_r18, c.type, "anotherBandPairOrBand-r18");
         return c.get<uint8_t>();
       }
       uint8_t& set_band_pair_idx2_r18();
       uint8_t& set_band_idx_r18();
 
     private:
-      types               type_;
-      pod_choice_buffer_t c;
-
-      void destroy_();
+      asn1::table::choice_storage<another_band_pair_or_band_r18_c_, types, pod_choice_buffer_t> c;
     };
 
     // member variables
@@ -4540,10 +3987,9 @@ struct ul_tx_switching_add_period_dual_ul_r18_s {
   };
   struct switching_add_period_dual_ul_r18_opts {
     enum options { n35us, n140us, n210us, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using switching_add_period_dual_ul_r18_e_ = enumerated<switching_add_period_dual_ul_r18_opts>;
 
@@ -4551,10 +3997,7 @@ struct ul_tx_switching_add_period_dual_ul_r18_s {
   ul_tx_switching_between_band_pairs_r18_s_ ul_tx_switching_between_band_pairs_r18;
   switching_add_period_dual_ul_r18_e_       switching_add_period_dual_ul_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1800 ::= SEQUENCE
@@ -4562,10 +4005,9 @@ struct band_combination_ul_tx_switch_v1800_s {
   using supported_band_pair_list_nr_r18_l_ = dyn_array<ul_tx_switching_band_pair_r18_s>;
   struct ul_tx_switching_minimum_separation_time_r18_opts {
     enum options { n0us, n500us, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using ul_tx_switching_minimum_separation_time_r18_e_ = enumerated<ul_tx_switching_minimum_separation_time_r18_opts>;
   using ul_tx_switching_add_period_dual_ul_list_r18_l_ = dyn_array<ul_tx_switching_add_period_dual_ul_r18_s>;
@@ -4579,10 +4021,7 @@ struct band_combination_ul_tx_switch_v1800_s {
   ul_tx_switching_minimum_separation_time_r18_e_ ul_tx_switching_minimum_separation_time_r18;
   ul_tx_switching_add_period_dual_ul_list_r18_l_ ul_tx_switching_add_period_dual_ul_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1830 ::= SEQUENCE
@@ -4590,10 +4029,9 @@ struct ca_params_nr_v1830_s {
   struct intra_freq_l1_meas_cfg_r18_s_ {
     struct supported_max_report_beams_reports_r18_opts {
       enum options { n1, n2, n3, n4, n6, n8, n9, n12, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using supported_max_report_beams_reports_r18_e_ = enumerated<supported_max_report_beams_reports_r18_opts>;
 
@@ -4609,10 +4047,9 @@ struct ca_params_nr_v1830_s {
   struct inter_freq_l1_meas_cfg_r18_s_ {
     struct supported_max_intra_inter_freq_beams_reports_r18_opts {
       enum options { n1, n2, n3, n4, n6, n8, n9, n12, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using supported_max_intra_inter_freq_beams_reports_r18_e_ =
         enumerated<supported_max_intra_inter_freq_beams_reports_r18_opts>;
@@ -4637,10 +4074,9 @@ struct ca_params_nr_v1830_s {
   };
   struct supported_max_ssb_within_slot_l1_meas_r18_opts {
     enum options { n1, n2, n3, n4, n5, n6, n7, n8, n16, n32, n48, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using supported_max_ssb_within_slot_l1_meas_r18_e_ = enumerated<supported_max_ssb_within_slot_l1_meas_r18_opts>;
   struct dummy_s_ {
@@ -4651,16 +4087,15 @@ struct ca_params_nr_v1830_s {
   };
   struct supported_max_ssb_l1_meas_r18_opts {
     enum options { n2, n4, n8, n12, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using supported_max_ssb_l1_meas_r18_e_ = enumerated<supported_max_ssb_l1_meas_r18_opts>;
   struct qcl_multi_cell_dci_1_3_r18_opts {
     enum options { diff, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using qcl_multi_cell_dci_1_3_r18_e_ = enumerated<qcl_multi_cell_dci_1_3_r18_opts>;
 
@@ -4688,10 +4123,7 @@ struct ca_params_nr_v1830_s {
   supported_max_ssb_l1_meas_r18_e_              supported_max_ssb_l1_meas_r18;
   qcl_multi_cell_dci_1_3_r18_e_                 qcl_multi_cell_dci_1_3_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNRDC-v1830 ::= SEQUENCE
@@ -4699,10 +4131,7 @@ struct ca_params_nrdc_v1830_s {
   bool                 ca_params_nr_for_dc_v1830_present = false;
   ca_params_nr_v1830_s ca_params_nr_for_dc_v1830;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1830 ::= SEQUENCE
@@ -4712,10 +4141,7 @@ struct band_combination_v1830_s {
   ca_params_nr_v1830_s   ca_params_nr_v1830;
   ca_params_nrdc_v1830_s ca_params_nrdc_v1830;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1830 ::= SEQUENCE
@@ -4723,20 +4149,14 @@ struct band_combination_ul_tx_switch_v1830_s {
   bool                     band_combination_v1830_present = false;
   band_combination_v1830_s band_combination_v1830;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MRDC-Parameters-v1840 ::= SEQUENCE
 struct mrdc_params_v1840_s {
   bool intra_band_endc_nominal_spacing_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1840 ::= SEQUENCE
@@ -4744,20 +4164,14 @@ struct band_combination_v1840_s {
   bool                mrdc_params_v1840_present = false;
   mrdc_params_v1840_s mrdc_params_v1840;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ULTxSwitchingBandPair-v1840 ::= SEQUENCE
 struct ul_tx_switching_band_pair_v1840_s {
   bool cfg1_t1_t_on_two_bands_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1840 ::= SEQUENCE
@@ -4769,10 +4183,7 @@ struct band_combination_ul_tx_switch_v1840_s {
   band_combination_v1840_s             band_combination_v1840;
   supported_band_pair_list_nr_v1840_l_ supported_band_pair_list_nr_v1840;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CA-ParametersNR-v1860 ::= SEQUENCE
@@ -4780,10 +4191,9 @@ struct ca_params_nr_v1860_s {
   struct max_ssb_per_freq_layer_l1_meas_r18_s_ {
     struct supported_max_ssb_per_freq_layer_without_gaps_r18_opts {
       enum options { n1, n2, n3, n4, n5, n6, n7, n8, n12, n16, n20, n24, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using supported_max_ssb_per_freq_layer_without_gaps_r18_e_ =
         enumerated<supported_max_ssb_per_freq_layer_without_gaps_r18_opts>;
@@ -4799,10 +4209,7 @@ struct ca_params_nr_v1860_s {
   bool                                  max_ssb_per_freq_layer_l1_meas_r18_present = false;
   max_ssb_per_freq_layer_l1_meas_r18_s_ max_ssb_per_freq_layer_l1_meas_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1860 ::= SEQUENCE
@@ -4810,10 +4217,7 @@ struct band_combination_v1860_s {
   bool                 ca_params_nr_v1860_present = false;
   ca_params_nr_v1860_s ca_params_nr_v1860;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-UplinkTxSwitch-v1860 ::= SEQUENCE
@@ -4821,29 +4225,22 @@ struct band_combination_ul_tx_switch_v1860_s {
   bool                     band_combination_v1860_present = false;
   band_combination_v1860_s band_combination_v1860;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombination-v1550 ::= SEQUENCE
 struct band_combination_v1550_s {
   ca_params_nr_v1550_s ca_params_nr_v1550;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // IntraBandPowerClass-r16 ::= ENUMERATED
 struct intra_band_pwr_class_r16_opts {
   enum options { pc2, pc3, spare6, spare5, spare4, spare3, spare2, spare1, nulltype } value;
-  typedef uint8_t number_type;
 
-  const char* to_string() const;
-  uint8_t     to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint8_t                             to_number() const;
 };
 using intra_band_pwr_class_r16_e = enumerated<intra_band_pwr_class_r16_opts>;
 
@@ -4854,10 +4251,7 @@ struct band_combination_v1680_s {
   // member variables
   intraband_concurrent_operation_pwr_class_r16_l_ intraband_concurrent_operation_pwr_class_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombinationList ::= SEQUENCE (SIZE (1..65536)) OF BandCombination
@@ -5003,10 +4397,9 @@ struct band_params_sidelink_discovery_r17_s {
   struct sl_tx_mode2_partial_sensing_r17_s_ {
     struct harq_tx_process_mode_two_sidelink_r17_opts {
       enum options { n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using harq_tx_process_mode_two_sidelink_r17_e_ = enumerated<harq_tx_process_mode_two_sidelink_r17_opts>;
     struct scs_cp_pattern_tx_sidelink_mode_two_r17_c_ {
@@ -5026,52 +4419,43 @@ struct band_params_sidelink_discovery_r17_s {
       };
       struct types_opts {
         enum options { fr1_r17, fr2_r17, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      scs_cp_pattern_tx_sidelink_mode_two_r17_c_() = default;
-      scs_cp_pattern_tx_sidelink_mode_two_r17_c_(const scs_cp_pattern_tx_sidelink_mode_two_r17_c_& other);
-      scs_cp_pattern_tx_sidelink_mode_two_r17_c_& operator=(const scs_cp_pattern_tx_sidelink_mode_two_r17_c_& other);
-      ~scs_cp_pattern_tx_sidelink_mode_two_r17_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r17_s_& fr1_r17()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r17_s_&                                   fr1_r17()
       {
-        assert_choice_type(types::fr1_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr1_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr1_r17_s_>();
       }
       fr2_r17_s_& fr2_r17()
       {
-        assert_choice_type(types::fr2_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr2_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr2_r17_s_>();
       }
       const fr1_r17_s_& fr1_r17() const
       {
-        assert_choice_type(types::fr1_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr1_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr1_r17_s_>();
       }
       const fr2_r17_s_& fr2_r17() const
       {
-        assert_choice_type(types::fr2_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr2_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr2_r17_s_>();
       }
       fr1_r17_s_& set_fr1_r17();
       fr2_r17_s_& set_fr2_r17();
 
     private:
-      types                                   type_;
-      choice_buffer_t<fr1_r17_s_, fr2_r17_s_> c;
-
-      void destroy_();
+      asn1::table::
+          choice_storage<scs_cp_pattern_tx_sidelink_mode_two_r17_c_, types, choice_buffer_t<fr1_r17_s_, fr2_r17_s_>>
+              c;
     };
 
     // member variables
@@ -5088,10 +4472,7 @@ struct band_params_sidelink_discovery_r17_s {
   bool                               tx_iuc_scheme1_mode2_sidelink_r17_present = false;
   sl_tx_mode2_partial_sensing_r17_s_ sl_tx_mode2_partial_sensing_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandCombinationListSL-Discovery-r17 ::= SEQUENCE (SIZE (1..32)) OF BandParametersSidelinkDiscovery-r17
@@ -5101,10 +4482,7 @@ using band_combination_list_sl_discovery_r17_l = dyn_array<band_params_sidelink_
 struct band_params_sidelink_r16_s {
   uint16_t freq_band_sidelink_r16 = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandParametersSidelinkEUTRA-NR-r16 ::= CHOICE
@@ -5119,49 +4497,39 @@ struct band_params_sidelink_eutra_nr_r16_c {
   struct types_opts {
     enum options { eutra, nr, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  band_params_sidelink_eutra_nr_r16_c() = default;
-  band_params_sidelink_eutra_nr_r16_c(const band_params_sidelink_eutra_nr_r16_c& other);
-  band_params_sidelink_eutra_nr_r16_c& operator=(const band_params_sidelink_eutra_nr_r16_c& other);
-  ~band_params_sidelink_eutra_nr_r16_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  eutra_s_& eutra()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  eutra_s_&                                     eutra()
   {
-    assert_choice_type(types::eutra, type_, "BandParametersSidelinkEUTRA-NR-r16");
+    assert_choice_type(types::eutra, c.type, "BandParametersSidelinkEUTRA-NR-r16");
     return c.get<eutra_s_>();
   }
   nr_s_& nr()
   {
-    assert_choice_type(types::nr, type_, "BandParametersSidelinkEUTRA-NR-r16");
+    assert_choice_type(types::nr, c.type, "BandParametersSidelinkEUTRA-NR-r16");
     return c.get<nr_s_>();
   }
   const eutra_s_& eutra() const
   {
-    assert_choice_type(types::eutra, type_, "BandParametersSidelinkEUTRA-NR-r16");
+    assert_choice_type(types::eutra, c.type, "BandParametersSidelinkEUTRA-NR-r16");
     return c.get<eutra_s_>();
   }
   const nr_s_& nr() const
   {
-    assert_choice_type(types::nr, type_, "BandParametersSidelinkEUTRA-NR-r16");
+    assert_choice_type(types::nr, c.type, "BandParametersSidelinkEUTRA-NR-r16");
     return c.get<nr_s_>();
   }
   eutra_s_& set_eutra();
   nr_s_&    set_nr();
 
 private:
-  types                            type_;
-  choice_buffer_t<eutra_s_, nr_s_> c;
-
-  void destroy_();
+  asn1::table::choice_storage<band_params_sidelink_eutra_nr_r16_c, types, choice_buffer_t<eutra_s_, nr_s_>> c;
 };
 
 // BandCombinationParametersSidelinkEUTRA-NR-r16 ::= SEQUENCE (SIZE (1..32)) OF BandParametersSidelinkEUTRA-NR-r16
@@ -5181,19 +4549,14 @@ struct band_params_sidelink_eutra_nr_v1630_c {
   struct types_opts {
     enum options { eutra, nr, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  band_params_sidelink_eutra_nr_v1630_c() = default;
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  nr_s_& nr()
+  void                                  set(types::options e = types::nulltype);
+  types                                 type() const { return type_; }
+  static const asn1::table::choice_desc desc;
+  nr_s_&                                nr()
   {
     assert_choice_type(types::nr, type_, "BandParametersSidelinkEUTRA-NR-v1630");
     return c;
@@ -5224,10 +4587,9 @@ struct band_params_sidelink_eutra_nr_v1710_c {
     struct sl_tx_mode2_partial_sensing_r17_s_ {
       struct harq_tx_process_mode_two_sidelink_r17_opts {
         enum options { n8, n16, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using harq_tx_process_mode_two_sidelink_r17_e_ = enumerated<harq_tx_process_mode_two_sidelink_r17_opts>;
       struct scs_cp_pattern_tx_sidelink_mode_two_r17_c_ {
@@ -5247,52 +4609,43 @@ struct band_params_sidelink_eutra_nr_v1710_c {
         };
         struct types_opts {
           enum options { fr1_r17, fr2_r17, nulltype } value;
-          typedef uint8_t number_type;
 
-          const char* to_string() const;
-          uint8_t     to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint8_t                             to_number() const;
         };
         using types = enumerated<types_opts>;
 
-        // choice methods
-        scs_cp_pattern_tx_sidelink_mode_two_r17_c_() = default;
-        scs_cp_pattern_tx_sidelink_mode_two_r17_c_(const scs_cp_pattern_tx_sidelink_mode_two_r17_c_& other);
-        scs_cp_pattern_tx_sidelink_mode_two_r17_c_& operator=(const scs_cp_pattern_tx_sidelink_mode_two_r17_c_& other);
-        ~scs_cp_pattern_tx_sidelink_mode_two_r17_c_() { destroy_(); }
-        void          set(types::options e = types::nulltype);
-        types         type() const { return type_; }
-        OCUDUASN_CODE pack(bit_ref& bref) const;
-        OCUDUASN_CODE unpack(cbit_ref& bref);
-        void          to_json(json_writer& j) const;
-        // getters
-        fr1_r17_s_& fr1_r17()
+        static const asn1::table::choice_storage_desc storage_desc;
+        void                                          set(types::options e = types::nulltype) { c.set(e); }
+        types                                         type() const { return c.type; }
+        static const asn1::table::choice_desc         desc;
+        fr1_r17_s_&                                   fr1_r17()
         {
-          assert_choice_type(types::fr1_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+          assert_choice_type(types::fr1_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
           return c.get<fr1_r17_s_>();
         }
         fr2_r17_s_& fr2_r17()
         {
-          assert_choice_type(types::fr2_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+          assert_choice_type(types::fr2_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
           return c.get<fr2_r17_s_>();
         }
         const fr1_r17_s_& fr1_r17() const
         {
-          assert_choice_type(types::fr1_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+          assert_choice_type(types::fr1_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
           return c.get<fr1_r17_s_>();
         }
         const fr2_r17_s_& fr2_r17() const
         {
-          assert_choice_type(types::fr2_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+          assert_choice_type(types::fr2_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
           return c.get<fr2_r17_s_>();
         }
         fr1_r17_s_& set_fr1_r17();
         fr2_r17_s_& set_fr2_r17();
 
       private:
-        types                                   type_;
-        choice_buffer_t<fr1_r17_s_, fr2_r17_s_> c;
-
-        void destroy_();
+        asn1::table::
+            choice_storage<scs_cp_pattern_tx_sidelink_mode_two_r17_c_, types, choice_buffer_t<fr1_r17_s_, fr2_r17_s_>>
+                c;
       };
 
       // member variables
@@ -5304,18 +4657,16 @@ struct band_params_sidelink_eutra_nr_v1710_c {
     };
     struct rx_sidelink_psfch_r17_opts {
       enum options { n5, n15, n25, n32, n35, n45, n50, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using rx_sidelink_psfch_r17_e_ = enumerated<rx_sidelink_psfch_r17_opts>;
     struct tx_iuc_scheme2_mode2_sidelink_r17_opts {
       enum options { n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using tx_iuc_scheme2_mode2_sidelink_r17_e_ = enumerated<tx_iuc_scheme2_mode2_sidelink_r17_opts>;
 
@@ -5331,19 +4682,14 @@ struct band_params_sidelink_eutra_nr_v1710_c {
   struct types_opts {
     enum options { eutra, nr, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  band_params_sidelink_eutra_nr_v1710_c() = default;
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  nr_s_& nr()
+  void                                  set(types::options e = types::nulltype);
+  types                                 type() const { return type_; }
+  static const asn1::table::choice_desc desc;
+  nr_s_&                                nr()
   {
     assert_choice_type(types::nr, type_, "BandParametersSidelinkEUTRA-NR-v1710");
     return c;
@@ -5372,24 +4718,22 @@ using band_combination_list_sidelink_eutra_nr_v1710_l = dyn_array<band_combinati
 struct dummy_g_s {
   struct max_num_ssb_csi_rs_res_one_tx_opts {
     enum options { n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_ssb_csi_rs_res_one_tx_e_ = enumerated<max_num_ssb_csi_rs_res_one_tx_opts>;
   struct max_num_ssb_csi_rs_res_two_tx_opts {
     enum options { n0, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_ssb_csi_rs_res_two_tx_e_ = enumerated<max_num_ssb_csi_rs_res_two_tx_opts>;
   struct supported_csi_rs_density_opts {
     enum options { one, three, one_and_three, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using supported_csi_rs_density_e_ = enumerated<supported_csi_rs_density_opts>;
 
@@ -5398,44 +4742,37 @@ struct dummy_g_s {
   max_num_ssb_csi_rs_res_two_tx_e_ max_num_ssb_csi_rs_res_two_tx;
   supported_csi_rs_density_e_      supported_csi_rs_density;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-Resources ::= SEQUENCE
 struct srs_resources_s {
   struct max_num_aperiodic_srs_per_bwp_opts {
     enum options { n1, n2, n4, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_aperiodic_srs_per_bwp_e_ = enumerated<max_num_aperiodic_srs_per_bwp_opts>;
   struct max_num_periodic_srs_per_bwp_opts {
     enum options { n1, n2, n4, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_periodic_srs_per_bwp_e_ = enumerated<max_num_periodic_srs_per_bwp_opts>;
   struct max_num_semi_persistent_srs_per_bwp_opts {
     enum options { n1, n2, n4, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_semi_persistent_srs_per_bwp_e_ = enumerated<max_num_semi_persistent_srs_per_bwp_opts>;
   struct max_num_srs_ports_per_res_opts {
     enum options { n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_srs_ports_per_res_e_ = enumerated<max_num_srs_ports_per_res_opts>;
 
@@ -5448,10 +4785,7 @@ struct srs_resources_s {
   uint8_t                                max_num_semi_persistent_srs_per_bwp_per_slot = 1;
   max_num_srs_ports_per_res_e_           max_num_srs_ports_per_res;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PTRS-DensityRecommendationDL ::= SEQUENCE
@@ -5462,10 +4796,7 @@ struct ptrs_density_recommendation_dl_s {
   uint8_t  time_density2 = 0;
   uint8_t  time_density3 = 0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PTRS-DensityRecommendationUL ::= SEQUENCE
@@ -5481,10 +4812,7 @@ struct ptrs_density_recommendation_ul_s {
   uint16_t sample_density4 = 1;
   uint16_t sample_density5 = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DummyH ::= SEQUENCE
@@ -5494,50 +4822,43 @@ struct dummy_h_s {
   uint8_t max_cfg_res_sets_per_cc   = 1;
   uint8_t max_cfg_res_sets_all_cc   = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BeamManagementSSB-CSI-RS ::= SEQUENCE
 struct beam_management_ssb_csi_rs_s {
   struct max_num_ssb_csi_rs_res_one_tx_opts {
     enum options { n0, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_ssb_csi_rs_res_one_tx_e_ = enumerated<max_num_ssb_csi_rs_res_one_tx_opts>;
   struct max_num_csi_rs_res_opts {
     enum options { n0, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_csi_rs_res_e_ = enumerated<max_num_csi_rs_res_opts>;
   struct max_num_csi_rs_res_two_tx_opts {
     enum options { n0, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_csi_rs_res_two_tx_e_ = enumerated<max_num_csi_rs_res_two_tx_opts>;
   struct supported_csi_rs_density_opts {
     enum options { one, three, one_and_three, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using supported_csi_rs_density_e_ = enumerated<supported_csi_rs_density_opts>;
   struct max_num_aperiodic_csi_rs_res_opts {
     enum options { n0, n1, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_aperiodic_csi_rs_res_e_ = enumerated<max_num_aperiodic_csi_rs_res_opts>;
 
@@ -5549,10 +4870,7 @@ struct beam_management_ssb_csi_rs_s {
   supported_csi_rs_density_e_      supported_csi_rs_density;
   max_num_aperiodic_csi_rs_res_e_  max_num_aperiodic_csi_rs_res;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParameters ::= SEQUENCE
@@ -5563,7 +4881,7 @@ struct codebook_params_s {
       struct modes_opts {
         enum options { mode1, mode1and_mode2, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using modes_e_ = enumerated<modes_opts>;
 
@@ -5576,18 +4894,16 @@ struct codebook_params_s {
       using supported_csi_rs_res_list_l_ = dyn_array<supported_csi_rs_res_s>;
       struct modes_opts {
         enum options { mode1, mode2, both, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using modes_e_ = enumerated<modes_opts>;
       struct nrof_panels_opts {
         enum options { n2, n4, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using nrof_panels_e_ = enumerated<nrof_panels_opts>;
 
@@ -5608,7 +4924,7 @@ struct codebook_params_s {
     struct amplitude_scaling_type_opts {
       enum options { wideband, wideband_and_subband, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using amplitude_scaling_type_e_ = enumerated<amplitude_scaling_type_opts>;
 
@@ -5623,7 +4939,7 @@ struct codebook_params_s {
     struct amplitude_scaling_type_opts {
       enum options { wideband, wideband_and_subband, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using amplitude_scaling_type_e_ = enumerated<amplitude_scaling_type_opts>;
 
@@ -5640,20 +4956,16 @@ struct codebook_params_s {
   type2_s_          type2;
   type2_port_sel_s_ type2_port_sel;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CSI-RS-IM-ReceptionForFeedback ::= SEQUENCE
 struct csi_rs_im_reception_for_feedback_s {
   struct max_cfg_num_csi_im_per_cc_opts {
     enum options { n1, n2, n4, n8, n16, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_cfg_num_csi_im_per_cc_e_ = enumerated<max_cfg_num_csi_im_per_cc_opts>;
 
@@ -5664,10 +4976,7 @@ struct csi_rs_im_reception_for_feedback_s {
   uint8_t                      max_num_simul_nzp_csi_rs_per_cc         = 1;
   uint16_t                     total_num_ports_simul_nzp_csi_rs_per_cc = 2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CSI-RS-ProcFrameworkForSRS ::= SEQUENCE
@@ -5677,20 +4986,16 @@ struct csi_rs_proc_framework_for_srs_s {
   uint8_t max_num_sp_srs_assoc_csi_rs_per_bwp        = 0;
   uint8_t simul_srs_assoc_csi_rs_per_cc              = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CSI-ReportFramework ::= SEQUENCE
 struct csi_report_framework_s {
   struct max_num_aperiodic_csi_trigger_state_per_cc_opts {
     enum options { n3, n7, n15, n31, n63, n128, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_aperiodic_csi_trigger_state_per_cc_e_ = enumerated<max_num_aperiodic_csi_trigger_state_per_cc_opts>;
 
@@ -5704,10 +5009,7 @@ struct csi_report_framework_s {
   uint8_t                                       max_num_semi_persistent_csi_per_bwp_for_beam_report = 0;
   uint8_t                                       simul_csi_reports_per_cc                            = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CSI-RS-ForTracking ::= SEQUENCE
@@ -5717,36 +5019,30 @@ struct csi_rs_for_tracking_s {
   uint8_t  max_cfg_res_sets_per_cc   = 1;
   uint16_t max_cfg_res_sets_all_cc   = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SpatialRelations ::= SEQUENCE
 struct spatial_relations_s {
   struct max_num_cfg_spatial_relations_opts {
     enum options { n4, n8, n16, n32, n64, n96, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_cfg_spatial_relations_e_ = enumerated<max_num_cfg_spatial_relations_opts>;
   struct max_num_active_spatial_relations_opts {
     enum options { n1, n2, n4, n8, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_active_spatial_relations_e_ = enumerated<max_num_active_spatial_relations_opts>;
   struct max_num_dl_rs_qcl_type_d_opts {
     enum options { n1, n2, n4, n8, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_dl_rs_qcl_type_d_e_ = enumerated<max_num_dl_rs_qcl_type_d_opts>;
 
@@ -5756,20 +5052,14 @@ struct spatial_relations_s {
   max_num_active_spatial_relations_e_ max_num_active_spatial_relations;
   max_num_dl_rs_qcl_type_d_e_         max_num_dl_rs_qcl_type_d;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CSI-ReportFrameworkExt-r16 ::= SEQUENCE
 struct csi_report_framework_ext_r16_s {
   uint8_t max_num_aperiodic_csi_per_bwp_for_csi_report_ext_r16 = 5;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersAddition-r16 ::= SEQUENCE
@@ -5823,10 +5113,7 @@ struct codebook_params_addition_r16_s {
   etype2_r16_s_    etype2_r16;
   etype2_ps_r16_s_ etype2_ps_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookComboParametersAddition-r16 ::= SEQUENCE
@@ -5946,10 +5233,7 @@ struct codebook_combo_params_addition_r16_s {
   type1_mp_e_type2_r2_ps_null_r16_s_ type1_mp_e_type2_r2_ps_null_r16;
   type1_mp_type2_type2_ps_r16_s_     type1_mp_type2_type2_ps_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookParametersfetype2-r17 ::= SEQUENCE
@@ -5964,10 +5248,7 @@ struct codebook_paramsfetype2_r17_s {
   fetype2_r1_r17_l_   fetype2_r1_r17;
   fetype2_r2_r17_l_   fetype2_r2_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookComboParameterMixedType-r17 ::= SEQUENCE
@@ -6003,10 +5284,7 @@ struct codebook_combo_param_mixed_type_r17_s {
   type1_mp_e_type2_r1_fe_type2_ps_m1_r17_l_    type1_mp_e_type2_r1_fe_type2_ps_m1_r17;
   type1_mp_e_type2_r1_fe_type2_ps_m2_r1_r17_l_ type1_mp_e_type2_r1_fe_type2_ps_m2_r1_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookComboParameterMultiTRP-r17 ::= SEQUENCE
@@ -6074,10 +5352,7 @@ struct codebook_combo_param_multi_trp_r17_s {
   ncjt1_sp_e_type2_r1_fe_type2_ps_m1_r17_l_    ncjt1_sp_e_type2_r1_fe_type2_ps_m1_r17;
   ncjt1_sp_e_type2_r1_fe_type2_ps_m2_r1_r17_l_ ncjt1_sp_e_type2_r1_fe_type2_ps_m2_r1_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MIMO-ParametersPerBand ::= SEQUENCE
@@ -6085,18 +5360,16 @@ struct mimo_params_per_band_s {
   struct tci_state_pdsch_s_ {
     struct max_num_cfg_tci_states_per_cc_opts {
       enum options { n4, n8, n16, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_tci_states_per_cc_e_ = enumerated<max_num_cfg_tci_states_per_cc_opts>;
     struct max_num_active_tci_per_bwp_opts {
       enum options { n1, n2, n4, n8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_tci_per_bwp_e_ = enumerated<max_num_active_tci_per_bwp_opts>;
 
@@ -6109,48 +5382,43 @@ struct mimo_params_per_band_s {
   struct pusch_trans_coherence_opts {
     enum options { non_coherent, partial_coherent, full_coherent, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using pusch_trans_coherence_e_ = enumerated<pusch_trans_coherence_opts>;
   struct max_num_rx_tx_beam_switch_dl_s_ {
     struct scs_15k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_e_ = enumerated<scs_15k_hz_opts>;
     struct scs_30k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_e_ = enumerated<scs_30k_hz_opts>;
     struct scs_60k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
     struct scs_120k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
     struct scs_240k_hz_opts {
       enum options { n4, n7, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_240k_hz_e_ = enumerated<scs_240k_hz_opts>;
 
@@ -6168,19 +5436,17 @@ struct mimo_params_per_band_s {
   };
   struct max_num_non_group_beam_report_opts {
     enum options { n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_non_group_beam_report_e_ = enumerated<max_num_non_group_beam_report_opts>;
   struct ul_beam_management_s_ {
     struct max_num_srs_res_per_set_bm_opts {
       enum options { n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_res_per_set_bm_e_ = enumerated<max_num_srs_res_per_set_bm_opts>;
 
@@ -6191,34 +5457,30 @@ struct mimo_params_per_band_s {
   struct beam_report_timing_s_ {
     struct scs_15k_hz_opts {
       enum options { sym2, sym4, sym8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_e_ = enumerated<scs_15k_hz_opts>;
     struct scs_30k_hz_opts {
       enum options { sym4, sym8, sym14, sym28, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_e_ = enumerated<scs_30k_hz_opts>;
     struct scs_60k_hz_opts {
       enum options { sym8, sym14, sym28, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
     struct scs_120k_hz_opts {
       enum options { sym14, sym28, sym56, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
 
@@ -6255,18 +5517,16 @@ struct mimo_params_per_band_s {
   struct beam_switch_timing_s_ {
     struct scs_60k_hz_opts {
       enum options { sym14, sym28, sym48, sym224, sym336, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
     struct scs_120k_hz_opts {
       enum options { sym14, sym28, sym48, sym224, sym336, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
 
@@ -6279,71 +5539,64 @@ struct mimo_params_per_band_s {
   using srs_assoc_csi_rs_l_ = dyn_array<supported_csi_rs_res_s>;
   struct max_num_scell_bfr_r16_opts {
     enum options { n1, n2, n4, n8, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_scell_bfr_r16_e_ = enumerated<max_num_scell_bfr_r16_opts>;
   struct ssb_csirs_sinr_meas_r16_s_ {
     struct max_num_ssb_csi_rs_one_tx_cmr_r16_opts {
       enum options { n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_ssb_csi_rs_one_tx_cmr_r16_e_ = enumerated<max_num_ssb_csi_rs_one_tx_cmr_r16_opts>;
     struct max_num_csi_im_nzp_imr_res_r16_opts {
       enum options { n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_im_nzp_imr_res_r16_e_ = enumerated<max_num_csi_im_nzp_imr_res_r16_opts>;
     struct max_num_csi_rs_2_tx_res_r16_opts {
       enum options { n0, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_rs_2_tx_res_r16_e_ = enumerated<max_num_csi_rs_2_tx_res_r16_opts>;
     struct max_num_ssb_csi_rs_res_r16_opts {
       enum options { n8, n16, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_ssb_csi_rs_res_r16_e_ = enumerated<max_num_ssb_csi_rs_res_r16_opts>;
     struct max_num_csi_im_nzp_imr_res_mem_r16_opts {
       enum options { n8, n16, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_csi_im_nzp_imr_res_mem_r16_e_ = enumerated<max_num_csi_im_nzp_imr_res_mem_r16_opts>;
     struct supported_csi_rs_density_cmr_r16_opts {
       enum options { one, three, one_and_three, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using supported_csi_rs_density_cmr_r16_e_ = enumerated<supported_csi_rs_density_cmr_r16_opts>;
     struct max_num_aperiodic_csi_rs_res_r16_opts {
       enum options { n2, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_aperiodic_csi_rs_res_r16_e_ = enumerated<max_num_aperiodic_csi_rs_res_r16_opts>;
     struct supported_sinr_meas_r16_opts {
       enum options { ssb_with_csi_im, ssb_with_nzp_imr, csirs_with_nzp_imr, csi_rs_without_imr, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using supported_sinr_meas_r16_e_ = enumerated<supported_sinr_meas_r16_opts>;
 
@@ -6360,10 +5613,9 @@ struct mimo_params_per_band_s {
   };
   struct non_group_sinr_report_r16_opts {
     enum options { n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using non_group_sinr_report_r16_e_ = enumerated<non_group_sinr_report_r16_opts>;
   struct multi_dci_multi_trp_params_r16_s_ {
@@ -6374,18 +5626,16 @@ struct mimo_params_per_band_s {
     struct max_num_activ_tci_states_r16_s_ {
       struct max_num_per_coreset_pool_r16_opts {
         enum options { n1, n2, n4, n8, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using max_num_per_coreset_pool_r16_e_ = enumerated<max_num_per_coreset_pool_r16_opts>;
       struct max_total_num_across_coreset_pool_r16_opts {
         enum options { n2, n4, n8, n16, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using max_total_num_across_coreset_pool_r16_e_ = enumerated<max_total_num_across_coreset_pool_r16_opts>;
 
@@ -6409,10 +5659,9 @@ struct mimo_params_per_band_s {
   struct single_dci_sdm_scheme_params_r16_s_ {
     struct support_new_dmrs_port_r16_opts {
       enum options { supported1, supported2, supported3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using support_new_dmrs_port_r16_e_ = enumerated<support_new_dmrs_port_r16_opts>;
 
@@ -6423,27 +5672,24 @@ struct mimo_params_per_band_s {
   };
   struct support_tdm_scheme_a_r16_opts {
     enum options { kb3, kb5, kb10, kb20, no_restrict, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using support_tdm_scheme_a_r16_e_ = enumerated<support_tdm_scheme_a_r16_opts>;
   struct support_inter_slot_tdm_r16_s_ {
     struct support_rep_num_pdsch_tdra_r16_opts {
       enum options { n2, n3, n4, n5, n6, n7, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using support_rep_num_pdsch_tdra_r16_e_ = enumerated<support_rep_num_pdsch_tdra_r16_opts>;
     struct max_tbs_size_r16_opts {
       enum options { kb3, kb5, kb10, kb20, no_restrict, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_tbs_size_r16_e_ = enumerated<max_tbs_size_r16_opts>;
 
@@ -6455,18 +5701,16 @@ struct mimo_params_per_band_s {
   struct beam_switch_timing_r16_s_ {
     struct scs_60k_hz_r16_opts {
       enum options { sym224, sym336, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_60k_hz_r16_e_ = enumerated<scs_60k_hz_r16_opts>;
     struct scs_120k_hz_r16_opts {
       enum options { sym224, sym336, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_120k_hz_r16_e_ = enumerated<scs_120k_hz_r16_opts>;
 
@@ -6483,10 +5727,9 @@ struct mimo_params_per_band_s {
   struct spatial_relations_v1640_s_ {
     struct max_num_cfg_spatial_relations_v1640_opts {
       enum options { n96, n128, n160, n192, n224, n256, n288, n320, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using max_num_cfg_spatial_relations_v1640_e_ = enumerated<max_num_cfg_spatial_relations_v1640_opts>;
 
@@ -6496,24 +5739,22 @@ struct mimo_params_per_band_s {
   struct mtrp_pucch_inter_slot_r17_opts {
     enum options { pf0_neg2, pf1_neg3_neg4, pf0_neg4, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using mtrp_pucch_inter_slot_r17_e_ = enumerated<mtrp_pucch_inter_slot_r17_opts>;
   struct mtrp_bfr_two_bfd_rs_set_r17_s_ {
     struct max_bfd_rs_res_per_set_per_bwp_r17_opts {
       enum options { n1, n2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_bfd_rs_res_per_set_per_bwp_r17_e_ = enumerated<max_bfd_rs_res_per_set_per_bwp_r17_opts>;
     struct max_bfd_rs_res_across_sets_per_bwp_r17_opts {
       enum options { n2, n3, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_bfd_rs_res_across_sets_per_bwp_r17_e_ = enumerated<max_bfd_rs_res_across_sets_per_bwp_r17_opts>;
 
@@ -6524,35 +5765,31 @@ struct mimo_params_per_band_s {
   };
   struct mtrp_bfr_pucch_sr_per_cg_r17_opts {
     enum options { n1, n2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_bfr_pucch_sr_per_cg_r17_e_ = enumerated<mtrp_bfr_pucch_sr_per_cg_r17_opts>;
   struct srs_trigger_offset_r17_opts {
     enum options { n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using srs_trigger_offset_r17_e_ = enumerated<srs_trigger_offset_r17_opts>;
   struct unified_joint_tci_r17_s_ {
     struct max_cfg_joint_tci_r17_opts {
       enum options { n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_cfg_joint_tci_r17_e_ = enumerated<max_cfg_joint_tci_r17_opts>;
     struct max_activ_tci_across_cc_r17_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_activ_tci_across_cc_r17_e_ = enumerated<max_activ_tci_across_cc_r17_opts>;
 
@@ -6563,18 +5800,16 @@ struct mimo_params_per_band_s {
   struct unified_joint_tci_multi_mac_ce_r17_s_ {
     struct min_beam_application_time_r17_opts {
       enum options { n1, n2, n4, n7, n14, n28, n42, n56, n70, n84, n98, n112, n224, n336, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using min_beam_application_time_r17_e_ = enumerated<min_beam_application_time_r17_opts>;
     struct max_num_mac_ce_per_cc_opts {
       enum options { n2, n3, n4, n5, n6, n7, n8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_mac_ce_per_cc_e_ = enumerated<max_num_mac_ce_per_cc_opts>;
 
@@ -6585,27 +5820,24 @@ struct mimo_params_per_band_s {
   };
   struct unified_joint_tci_list_sharing_ca_r17_opts {
     enum options { n1, n2, n4, n8, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using unified_joint_tci_list_sharing_ca_r17_e_ = enumerated<unified_joint_tci_list_sharing_ca_r17_opts>;
   struct unified_joint_tci_inter_cell_r17_s_ {
     struct add_mac_ce_per_cc_r17_opts {
       enum options { n0, n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using add_mac_ce_per_cc_r17_e_ = enumerated<add_mac_ce_per_cc_r17_opts>;
     struct add_mac_ce_across_cc_r17_opts {
       enum options { n0, n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using add_mac_ce_across_cc_r17_e_ = enumerated<add_mac_ce_across_cc_r17_opts>;
 
@@ -6616,34 +5848,30 @@ struct mimo_params_per_band_s {
   struct unified_separate_tci_r17_s_ {
     struct max_cfg_dl_tci_r17_opts {
       enum options { n4, n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_cfg_dl_tci_r17_e_ = enumerated<max_cfg_dl_tci_r17_opts>;
     struct max_cfg_ul_tci_r17_opts {
       enum options { n4, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_cfg_ul_tci_r17_e_ = enumerated<max_cfg_ul_tci_r17_opts>;
     struct max_activ_dl_tci_across_cc_r17_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_activ_dl_tci_across_cc_r17_e_ = enumerated<max_activ_dl_tci_across_cc_r17_opts>;
     struct max_activ_ul_tci_across_cc_r17_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_activ_ul_tci_across_cc_r17_e_ = enumerated<max_activ_ul_tci_across_cc_r17_opts>;
 
@@ -6656,10 +5884,9 @@ struct mimo_params_per_band_s {
   struct unified_separate_tci_multi_mac_ce_r17_s_ {
     struct min_beam_application_time_r17_opts {
       enum options { n1, n2, n4, n7, n14, n28, n42, n56, n70, n84, n98, n112, n224, n336, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using min_beam_application_time_r17_e_ = enumerated<min_beam_application_time_r17_opts>;
 
@@ -6671,18 +5898,16 @@ struct mimo_params_per_band_s {
   struct unified_separate_tci_list_sharing_ca_r17_s_ {
     struct max_num_list_dl_tci_r17_opts {
       enum options { n1, n2, n4, n8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_list_dl_tci_r17_e_ = enumerated<max_num_list_dl_tci_r17_opts>;
     struct max_num_list_ul_tci_r17_opts {
       enum options { n1, n2, n4, n8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_list_ul_tci_r17_e_ = enumerated<max_num_list_ul_tci_r17_opts>;
 
@@ -6695,34 +5920,30 @@ struct mimo_params_per_band_s {
   struct unified_separate_tci_inter_cell_r17_s_ {
     struct k_dl_per_cc_r17_opts {
       enum options { n0, n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using k_dl_per_cc_r17_e_ = enumerated<k_dl_per_cc_r17_opts>;
     struct k_ul_per_cc_r17_opts {
       enum options { n0, n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using k_ul_per_cc_r17_e_ = enumerated<k_ul_per_cc_r17_opts>;
     struct k_dl_across_cc_r17_opts {
       enum options { n0, n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using k_dl_across_cc_r17_e_ = enumerated<k_dl_across_cc_r17_opts>;
     struct k_ul_across_cc_r17_opts {
       enum options { n0, n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using k_ul_across_cc_r17_e_ = enumerated<k_ul_across_cc_r17_opts>;
 
@@ -6735,10 +5956,9 @@ struct mimo_params_per_band_s {
   struct unified_joint_tci_m_trp_inter_cell_bm_r17_s_ {
     struct max_num_ssb_res_l1_rsrp_across_cc_r17_opts {
       enum options { n1, n2, n4, n8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_ssb_res_l1_rsrp_across_cc_r17_e_ = enumerated<max_num_ssb_res_l1_rsrp_across_cc_r17_opts>;
 
@@ -6749,10 +5969,9 @@ struct mimo_params_per_band_s {
   struct mpe_mitigation_r17_s_ {
     struct max_num_conf_rs_r17_opts {
       enum options { n1, n2, n4, n8, n12, n16, n28, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_conf_rs_r17_e_ = enumerated<max_num_conf_rs_r17_opts>;
 
@@ -6763,34 +5982,30 @@ struct mimo_params_per_band_s {
   struct srs_port_report_r17_s_ {
     struct cap_val1_r17_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using cap_val1_r17_e_ = enumerated<cap_val1_r17_opts>;
     struct cap_val2_r17_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using cap_val2_r17_e_ = enumerated<cap_val2_r17_opts>;
     struct cap_val3_r17_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using cap_val3_r17_e_ = enumerated<cap_val3_r17_opts>;
     struct cap_val4_r17_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using cap_val4_r17_e_ = enumerated<cap_val4_r17_opts>;
 
@@ -6814,7 +6029,7 @@ struct mimo_params_per_band_s {
   struct mtrp_pusch_cyclic_map_r17_opts {
     enum options { type_a, type_b, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using mtrp_pusch_cyclic_map_r17_e_ = enumerated<mtrp_pusch_cyclic_map_r17_opts>;
   struct mtrp_inter_cell_r17_s_ {
@@ -6824,18 +6039,16 @@ struct mimo_params_per_band_s {
   struct mtrp_group_based_l1_rsrp_r17_s_ {
     struct max_num_rs_within_slot_r17_opts {
       enum options { n2, n3, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_rs_within_slot_r17_e_ = enumerated<max_num_rs_within_slot_r17_opts>;
     struct max_num_rs_across_slot_r17_opts {
       enum options { n8, n16, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_rs_across_slot_r17_e_ = enumerated<max_num_rs_across_slot_r17_opts>;
 
@@ -6846,26 +6059,24 @@ struct mimo_params_per_band_s {
   };
   struct mtrp_bfd_rs_mac_ce_r17_opts {
     enum options { n4, n8, n12, n16, n32, n48, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_bfd_rs_mac_ce_r17_e_ = enumerated<mtrp_bfd_rs_mac_ce_r17_opts>;
   struct mtrp_csi_enhancement_per_band_r17_s_ {
     struct csi_report_mode_r17_opts {
       enum options { mode1, mode2, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using csi_report_mode_r17_e_            = enumerated<csi_report_mode_r17_opts>;
     using supported_combo_across_ccs_r17_l_ = dyn_array<csi_multi_trp_supported_combinations_r17_s>;
     struct codebook_mode_ncjt_r17_opts {
       enum options { mode1, mode1_and2, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using codebook_mode_ncjt_r17_e_ = enumerated<codebook_mode_ncjt_r17_opts>;
 
@@ -6877,27 +6088,24 @@ struct mimo_params_per_band_s {
   };
   struct mtrp_csi_add_csi_r17_opts {
     enum options { x1, x2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_csi_add_csi_r17_e_ = enumerated<mtrp_csi_add_csi_r17_opts>;
   struct beam_switch_timing_v1710_s_ {
     struct scs_480k_hz_opts {
       enum options { sym56, sym112, sym192, sym896, sym1344, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_480k_hz_e_ = enumerated<scs_480k_hz_opts>;
     struct scs_960k_hz_opts {
       enum options { sym112, sym224, sym384, sym1792, sym2688, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_960k_hz_e_ = enumerated<scs_960k_hz_opts>;
 
@@ -6910,18 +6118,16 @@ struct mimo_params_per_band_s {
   struct beam_switch_timing_r17_s_ {
     struct scs_480k_hz_r17_opts {
       enum options { sym896, sym1344, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_480k_hz_r17_e_ = enumerated<scs_480k_hz_r17_opts>;
     struct scs_960k_hz_r17_opts {
       enum options { sym1792, sym2688, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_960k_hz_r17_e_ = enumerated<scs_960k_hz_r17_opts>;
 
@@ -6934,18 +6140,16 @@ struct mimo_params_per_band_s {
   struct beam_report_timing_v1710_s_ {
     struct scs_480k_hz_r17_opts {
       enum options { sym56, sym112, sym224, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_480k_hz_r17_e_ = enumerated<scs_480k_hz_r17_opts>;
     struct scs_960k_hz_r17_opts {
       enum options { sym112, sym224, sym448, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_960k_hz_r17_e_ = enumerated<scs_960k_hz_r17_opts>;
 
@@ -6958,18 +6162,16 @@ struct mimo_params_per_band_s {
   struct max_num_rx_tx_beam_switch_dl_v1710_s_ {
     struct scs_480k_hz_r17_opts {
       enum options { n2, n4, n7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_480k_hz_r17_e_ = enumerated<scs_480k_hz_r17_opts>;
     struct scs_960k_hz_r17_opts {
       enum options { n1, n2, n4, n7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_960k_hz_r17_e_ = enumerated<scs_960k_hz_r17_opts>;
 
@@ -6981,35 +6183,31 @@ struct mimo_params_per_band_s {
   };
   struct mtrp_csi_num_cp_u_r17_opts {
     enum options { n2, n3, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_csi_num_cp_u_r17_e_ = enumerated<mtrp_csi_num_cp_u_r17_opts>;
   struct support_rep_num_pdsch_tdra_dci_1_2_r17_opts {
     enum options { n2, n3, n4, n5, n6, n7, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using support_rep_num_pdsch_tdra_dci_1_2_r17_e_ = enumerated<support_rep_num_pdsch_tdra_dci_1_2_r17_opts>;
   struct tci_joint_tci_upd_single_active_tci_per_cc_r18_s_ {
     struct max_num_cfg_joint_tci_per_cc_per_bwp_r18_opts {
       enum options { n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_joint_tci_per_cc_per_bwp_r18_e_ = enumerated<max_num_cfg_joint_tci_per_cc_per_bwp_r18_opts>;
     struct max_num_active_joint_tci_across_cc_r18_opts {
       enum options { n2, n4, n6, n8, n16, n32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_joint_tci_across_cc_r18_e_ = enumerated<max_num_active_joint_tci_across_cc_r18_opts>;
 
@@ -7021,7 +6219,7 @@ struct mimo_params_per_band_s {
     struct tci_state_ind_r18_opts {
       enum options { with_assign, without_assign, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using tci_state_ind_r18_e_ = enumerated<tci_state_ind_r18_opts>;
 
@@ -7032,34 +6230,30 @@ struct mimo_params_per_band_s {
   struct tci_separate_tci_upd_single_active_tci_per_cc_r18_s_ {
     struct max_num_cfg_dl_tci_per_cc_per_bwp_r18_opts {
       enum options { n4, n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_dl_tci_per_cc_per_bwp_r18_e_ = enumerated<max_num_cfg_dl_tci_per_cc_per_bwp_r18_opts>;
     struct max_num_cfg_ul_tci_per_cc_per_bwp_r18_opts {
       enum options { n4, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_ul_tci_per_cc_per_bwp_r18_e_ = enumerated<max_num_cfg_ul_tci_per_cc_per_bwp_r18_opts>;
     struct max_num_active_dl_tci_across_cc_r18_opts {
       enum options { n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_dl_tci_across_cc_r18_e_ = enumerated<max_num_active_dl_tci_across_cc_r18_opts>;
     struct max_num_active_ul_tci_across_cc_r18_opts {
       enum options { n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_ul_tci_across_cc_r18_e_ = enumerated<max_num_active_ul_tci_across_cc_r18_opts>;
 
@@ -7072,18 +6266,16 @@ struct mimo_params_per_band_s {
   struct tci_separate_tci_upd_multi_active_tci_per_cc_r18_s_ {
     struct max_num_active_dl_tci_across_cc_r18_opts {
       enum options { n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_dl_tci_across_cc_r18_e_ = enumerated<max_num_active_dl_tci_across_cc_r18_opts>;
     struct max_num_active_ul_tci_across_cc_r18_opts {
       enum options { n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_ul_tci_across_cc_r18_e_ = enumerated<max_num_active_ul_tci_across_cc_r18_opts>;
 
@@ -7094,42 +6286,40 @@ struct mimo_params_per_band_s {
   struct tci_sel_aperiodic_csi_rs_r18_opts {
     enum options { per_res, per_res_set, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using tci_sel_aperiodic_csi_rs_r18_e_ = enumerated<tci_sel_aperiodic_csi_rs_r18_opts>;
   struct tci_sel_aperiodic_csi_rs_m_dci_r18_opts {
     enum options { per_res, per_res_set, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using tci_sel_aperiodic_csi_rs_m_dci_r18_e_ = enumerated<tci_sel_aperiodic_csi_rs_m_dci_r18_opts>;
   struct two_tci_state_pdsch_cjt_tx_scheme_r18_opts {
     enum options { cjt_scheme_a, cjt_scheme_b, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using two_tci_state_pdsch_cjt_tx_scheme_r18_e_ = enumerated<two_tci_state_pdsch_cjt_tx_scheme_r18_opts>;
   struct tci_joint_tci_upd_single_active_tci_per_cc_per_coreset_r18_s_ {
     struct mtrp_operation_r18_opts {
       enum options { intra_cell, intra_cell_and_inter_cell, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using mtrp_operation_r18_e_ = enumerated<mtrp_operation_r18_opts>;
     struct max_num_cfg_joint_tci_per_cc_per_bwp_r18_opts {
       enum options { n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_joint_tci_per_cc_per_bwp_r18_e_ = enumerated<max_num_cfg_joint_tci_per_cc_per_bwp_r18_opts>;
     struct max_num_active_joint_tci_across_cc_per_coreset_r18_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_joint_tci_across_cc_per_coreset_r18_e_ =
         enumerated<max_num_active_joint_tci_across_cc_per_coreset_r18_opts>;
@@ -7143,39 +6333,35 @@ struct mimo_params_per_band_s {
     struct mtrp_operation_r18_opts {
       enum options { intra_cell, intra_cell_and_inter_cell, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using mtrp_operation_r18_e_ = enumerated<mtrp_operation_r18_opts>;
     struct max_num_cfg_dl_tci_per_cc_per_bwp_r18_opts {
       enum options { n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_dl_tci_per_cc_per_bwp_r18_e_ = enumerated<max_num_cfg_dl_tci_per_cc_per_bwp_r18_opts>;
     struct max_num_cfg_ul_tci_per_cc_per_bwp_r18_opts {
       enum options { n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_ul_tci_per_cc_per_bwp_r18_e_ = enumerated<max_num_cfg_ul_tci_per_cc_per_bwp_r18_opts>;
     struct max_num_active_dl_tci_across_cc_r18_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_dl_tci_across_cc_r18_e_ = enumerated<max_num_active_dl_tci_across_cc_r18_opts>;
     struct max_num_active_ul_tci_across_cc_r18_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_active_ul_tci_across_cc_r18_e_ = enumerated<max_num_active_ul_tci_across_cc_r18_opts>;
 
@@ -7192,10 +6378,9 @@ struct mimo_params_per_band_s {
   };
   struct max_periodicity_cmr_r18_opts {
     enum options { sl4, sl5, sl8, sl10, sl20, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_periodicity_cmr_r18_e_ = enumerated<max_periodicity_cmr_r18_opts>;
   struct tdcp_report_r18_s_ {
@@ -7205,18 +6390,16 @@ struct mimo_params_per_band_s {
   struct tdcp_res_r18_s_ {
     struct max_num_cfg_per_cc_r18_opts {
       enum options { n2, n4, n6, n8, n10, n12, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfg_per_cc_r18_e_ = enumerated<max_num_cfg_per_cc_r18_opts>;
     struct max_num_simul_per_cc_r18_opts {
       enum options { n2, n4, n6, n8, n12, n16, n20, n24, n28, n32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_simul_per_cc_r18_e_ = enumerated<max_num_simul_per_cc_r18_opts>;
 
@@ -7227,16 +6410,15 @@ struct mimo_params_per_band_s {
   };
   struct timeline_relax_cjt_csi_r18_opts {
     enum options { n0, n2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using timeline_relax_cjt_csi_r18_e_ = enumerated<timeline_relax_cjt_csi_r18_opts>;
   struct srs_comb_offset_in_time_r18_opts {
     enum options { srs, rsrs, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using srs_comb_offset_in_time_r18_e_ = enumerated<srs_comb_offset_in_time_r18_opts>;
   struct pusch_non_cb_single_dci_s_tx2_p_sdm_csi_rs_srs_r18_s_ {
@@ -7264,23 +6446,21 @@ struct mimo_params_per_band_s {
     struct group_l1_rsrp_report_r18_opts {
       enum options { joint_ul_and_dl, ul_only, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using group_l1_rsrp_report_r18_e_ = enumerated<group_l1_rsrp_report_r18_opts>;
     struct max_num_res_within_slot_across_cc_r18_opts {
       enum options { n2, n3, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_res_within_slot_across_cc_r18_e_ = enumerated<max_num_res_within_slot_across_cc_r18_opts>;
     struct max_num_res_across_cc_r18_opts {
       enum options { n8, n16, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_res_across_cc_r18_e_ = enumerated<max_num_res_across_cc_r18_opts>;
 
@@ -7549,10 +6729,7 @@ struct mimo_params_per_band_s {
   // group 10
   bool simul_cfg_dmrs_dci_1_3_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SharedSpectrumChAccessParamsPerBand-r16 ::= SEQUENCE
@@ -7601,20 +6778,16 @@ struct shared_spec_ch_access_params_per_band_r16_s {
   bool    cg_res_cfg_r16_present                          = false;
   uint8_t search_space_freq_monitor_location_r16          = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // OLPC-SRS-Pos-r16 ::= SEQUENCE
 struct olpc_srs_pos_r16_s {
   struct max_num_path_loss_estimate_per_serving_r16_opts {
     enum options { n1, n4, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_path_loss_estimate_per_serving_r16_e_ = enumerated<max_num_path_loss_estimate_per_serving_r16_opts>;
 
@@ -7625,10 +6798,7 @@ struct olpc_srs_pos_r16_s {
   bool                                          max_num_path_loss_estimate_per_serving_r16_present = false;
   max_num_path_loss_estimate_per_serving_r16_e_ max_num_path_loss_estimate_per_serving_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SpatialRelationsSRS-Pos-r16 ::= SEQUENCE
@@ -7640,10 +6810,7 @@ struct spatial_relations_srs_pos_r16_s {
   bool spatial_relation_srs_pos_based_on_ssb_neigh_r16_present      = false;
   bool spatial_relation_srs_pos_based_on_prs_neigh_r16_present      = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SharedSpectrumChAccessParamsPerBand-v1630 ::= SEQUENCE
@@ -7651,10 +6818,7 @@ struct shared_spec_ch_access_params_per_band_v1630_s {
   bool dl_reception_intra_cell_guardband_r16_present = false;
   bool dl_reception_lbt_subset_rb_r16_present        = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SharedSpectrumChAccessParamsPerBand-v1640 ::= SEQUENCE
@@ -7665,20 +6829,14 @@ struct shared_spec_ch_access_params_per_band_v1640_s {
   bool ssb_and_csi_rs_rlm_r16_present                 = false;
   bool csi_rs_cfra_for_ho_r16_present                 = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SharedSpectrumChAccessParamsPerBand-v1650 ::= SEQUENCE
 struct shared_spec_ch_access_params_per_band_v1650_s {
   bool extended_search_space_switch_with_dci_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FR2-2-AccessParamsPerBand-r17 ::= SEQUENCE
@@ -7729,10 +6887,7 @@ struct fr2_2_access_params_per_band_r17_s {
   // group 0
   bool mod64_qam_pusch_fr2_2_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SRS-AllPosResourcesRRC-Inactive-r17 ::= SEQUENCE
@@ -7740,59 +6895,52 @@ struct srs_all_pos_res_rrc_inactive_r17_s {
   struct srs_pos_res_rrc_inactive_r17_s_ {
     struct max_num_srs_pos_res_set_per_bwp_r17_opts {
       enum options { n1, n2, n4, n8, n12, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_pos_res_set_per_bwp_r17_e_ = enumerated<max_num_srs_pos_res_set_per_bwp_r17_opts>;
     struct max_num_srs_pos_res_per_bwp_r17_opts {
       enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_pos_res_per_bwp_r17_e_ = enumerated<max_num_srs_pos_res_per_bwp_r17_opts>;
     struct max_num_srs_res_per_bwp_per_slot_r17_opts {
       enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_res_per_bwp_per_slot_r17_e_ = enumerated<max_num_srs_res_per_bwp_per_slot_r17_opts>;
     struct max_num_periodic_srs_pos_res_per_bwp_r17_opts {
       enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_periodic_srs_pos_res_per_bwp_r17_e_ = enumerated<max_num_periodic_srs_pos_res_per_bwp_r17_opts>;
     struct max_num_periodic_srs_pos_res_per_bwp_per_slot_r17_opts {
       enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_periodic_srs_pos_res_per_bwp_per_slot_r17_e_ =
         enumerated<max_num_periodic_srs_pos_res_per_bwp_per_slot_r17_opts>;
     struct dummy1_opts {
       enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using dummy1_e_ = enumerated<dummy1_opts>;
     struct dummy2_opts {
       enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using dummy2_e_ = enumerated<dummy2_opts>;
 
@@ -7809,10 +6957,7 @@ struct srs_all_pos_res_rrc_inactive_r17_s {
   // member variables
   srs_pos_res_rrc_inactive_r17_s_ srs_pos_res_rrc_inactive_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SharedSpectrumChAccessParamsPerBand-v1710 ::= SEQUENCE
@@ -7820,10 +6965,7 @@ struct shared_spec_ch_access_params_per_band_v1710_s {
   bool ul_semi_static_ch_access_dependent_cfg_r17_present   = false;
   bool ul_semi_static_ch_access_independent_cfg_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PosSRS-RRC-Inactive-OutsideInitialUL-BWP-r17 ::= SEQUENCE
@@ -7847,86 +6989,76 @@ struct pos_srs_rrc_inactive_outside_init_ul_bwp_r17_s {
       mhz100,
       nulltype
     } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_pos_bw_for_each_scs_within_cc_fr1_r17_e_ =
       enumerated<max_srs_pos_bw_for_each_scs_within_cc_fr1_r17_opts>;
   struct max_srs_pos_bw_for_each_scs_within_cc_fr2_r17_opts {
     enum options { mhz50, mhz100, mhz200, mhz400, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_srs_pos_bw_for_each_scs_within_cc_fr2_r17_e_ =
       enumerated<max_srs_pos_bw_for_each_scs_within_cc_fr2_r17_opts>;
   struct max_num_of_srs_pos_res_sets_r17_opts {
     enum options { n1, n2, n4, n8, n12, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_of_srs_pos_res_sets_r17_e_ = enumerated<max_num_of_srs_pos_res_sets_r17_opts>;
   struct max_num_of_periodic_srs_pos_res_r17_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_of_periodic_srs_pos_res_r17_e_ = enumerated<max_num_of_periodic_srs_pos_res_r17_opts>;
   struct max_num_of_periodic_srs_pos_res_per_slot_r17_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_of_periodic_srs_pos_res_per_slot_r17_e_ = enumerated<max_num_of_periodic_srs_pos_res_per_slot_r17_opts>;
   struct max_num_of_periodic_and_semipersistent_srs_pos_res_r17_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_of_periodic_and_semipersistent_srs_pos_res_r17_e_ =
       enumerated<max_num_of_periodic_and_semipersistent_srs_pos_res_r17_opts>;
   struct max_num_of_periodic_and_semipersistent_srs_pos_res_per_slot_r17_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_of_periodic_and_semipersistent_srs_pos_res_per_slot_r17_e_ =
       enumerated<max_num_of_periodic_and_semipersistent_srs_pos_res_per_slot_r17_opts>;
   struct switching_time_srs_tx_other_tx_r17_opts {
     enum options { us100, us140, us200, us300, us500, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using switching_time_srs_tx_other_tx_r17_e_ = enumerated<switching_time_srs_tx_other_tx_r17_opts>;
   struct max_num_of_semi_persistent_srs_pos_res_r17_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_of_semi_persistent_srs_pos_res_r17_e_ = enumerated<max_num_of_semi_persistent_srs_pos_res_r17_opts>;
   struct max_num_of_semi_persistent_srs_pos_res_per_slot_r17_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_of_semi_persistent_srs_pos_res_per_slot_r17_e_ =
       enumerated<max_num_of_semi_persistent_srs_pos_res_per_slot_r17_opts>;
@@ -7958,10 +7090,7 @@ struct pos_srs_rrc_inactive_outside_init_ul_bwp_r17_s {
   max_num_of_semi_persistent_srs_pos_res_per_slot_r17_e_ max_num_of_semi_persistent_srs_pos_res_per_slot_r17;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PRS-ProcessingCapabilityOutsideMGinPPWperType-r17 ::= SEQUENCE
@@ -7969,15 +7098,14 @@ struct prs_processing_cap_outside_m_gin_ppw_per_type_r17_s {
   struct prs_processing_type_r17_opts {
     enum options { type1_a, type1_b, type2, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using prs_processing_type_r17_e_ = enumerated<prs_processing_type_r17_opts>;
   struct ppw_dl_prs_buffer_type_r17_opts {
     enum options { type1, type2, /*...*/ nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ppw_dl_prs_buffer_type_r17_e_ = enumerated<ppw_dl_prs_buffer_type_r17_opts, true>;
   struct ppw_dur_of_prs_processing_r17_c_ {
@@ -8005,15 +7133,14 @@ struct prs_processing_cap_outside_m_gin_ppw_per_type_r17_s {
           nulltype
         } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using ppw_dur_of_prs_processing_symbols_n_r17_e_ = enumerated<ppw_dur_of_prs_processing_symbols_n_r17_opts>;
       struct ppw_dur_of_prs_processing_symbols_t_r17_opts {
         enum options { ms1, ms2, ms4, ms8, ms16, ms20, ms30, ms40, ms80, ms160, ms320, ms640, ms1280, nulltype } value;
-        typedef uint16_t number_type;
 
-        const char* to_string() const;
-        uint16_t    to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint16_t                            to_number() const;
       };
       using ppw_dur_of_prs_processing_symbols_t_r17_e_ = enumerated<ppw_dur_of_prs_processing_symbols_t_r17_opts>;
 
@@ -8025,15 +7152,14 @@ struct prs_processing_cap_outside_m_gin_ppw_per_type_r17_s {
       struct ppw_dur_of_prs_processing_symbols_n2_r17_opts {
         enum options { ms_dot125, ms_dot25, ms_dot5, ms1, ms2, ms3, ms4, ms5, ms6, ms8, ms12, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using ppw_dur_of_prs_processing_symbols_n2_r17_e_ = enumerated<ppw_dur_of_prs_processing_symbols_n2_r17_opts>;
       struct ppw_dur_of_prs_processing_symbols_t2_r17_opts {
         enum options { ms4, ms5, ms6, ms8, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using ppw_dur_of_prs_processing_symbols_t2_r17_e_ = enumerated<ppw_dur_of_prs_processing_symbols_t2_r17_opts>;
 
@@ -8043,84 +7169,72 @@ struct prs_processing_cap_outside_m_gin_ppw_per_type_r17_s {
     };
     struct types_opts {
       enum options { ppw_dur_of_prs_processing1_r17, ppw_dur_of_prs_processing2_r17, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ppw_dur_of_prs_processing_r17_c_() = default;
-    ppw_dur_of_prs_processing_r17_c_(const ppw_dur_of_prs_processing_r17_c_& other);
-    ppw_dur_of_prs_processing_r17_c_& operator=(const ppw_dur_of_prs_processing_r17_c_& other);
-    ~ppw_dur_of_prs_processing_r17_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    ppw_dur_of_prs_processing1_r17_s_& ppw_dur_of_prs_processing1_r17()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    ppw_dur_of_prs_processing1_r17_s_&            ppw_dur_of_prs_processing1_r17()
     {
-      assert_choice_type(types::ppw_dur_of_prs_processing1_r17, type_, "ppw-durationOfPRS-Processing-r17");
+      assert_choice_type(types::ppw_dur_of_prs_processing1_r17, c.type, "ppw-durationOfPRS-Processing-r17");
       return c.get<ppw_dur_of_prs_processing1_r17_s_>();
     }
     ppw_dur_of_prs_processing2_r17_s_& ppw_dur_of_prs_processing2_r17()
     {
-      assert_choice_type(types::ppw_dur_of_prs_processing2_r17, type_, "ppw-durationOfPRS-Processing-r17");
+      assert_choice_type(types::ppw_dur_of_prs_processing2_r17, c.type, "ppw-durationOfPRS-Processing-r17");
       return c.get<ppw_dur_of_prs_processing2_r17_s_>();
     }
     const ppw_dur_of_prs_processing1_r17_s_& ppw_dur_of_prs_processing1_r17() const
     {
-      assert_choice_type(types::ppw_dur_of_prs_processing1_r17, type_, "ppw-durationOfPRS-Processing-r17");
+      assert_choice_type(types::ppw_dur_of_prs_processing1_r17, c.type, "ppw-durationOfPRS-Processing-r17");
       return c.get<ppw_dur_of_prs_processing1_r17_s_>();
     }
     const ppw_dur_of_prs_processing2_r17_s_& ppw_dur_of_prs_processing2_r17() const
     {
-      assert_choice_type(types::ppw_dur_of_prs_processing2_r17, type_, "ppw-durationOfPRS-Processing-r17");
+      assert_choice_type(types::ppw_dur_of_prs_processing2_r17, c.type, "ppw-durationOfPRS-Processing-r17");
       return c.get<ppw_dur_of_prs_processing2_r17_s_>();
     }
     ppw_dur_of_prs_processing1_r17_s_& set_ppw_dur_of_prs_processing1_r17();
     ppw_dur_of_prs_processing2_r17_s_& set_ppw_dur_of_prs_processing2_r17();
 
   private:
-    types                                                                                 type_;
-    choice_buffer_t<ppw_dur_of_prs_processing1_r17_s_, ppw_dur_of_prs_processing2_r17_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ppw_dur_of_prs_processing_r17_c_,
+                                types,
+                                choice_buffer_t<ppw_dur_of_prs_processing1_r17_s_, ppw_dur_of_prs_processing2_r17_s_>>
+        c;
   };
   struct ppw_max_num_of_dl_prs_res_processed_per_slot_r17_s_ {
     struct scs15_r17_opts {
       enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs15_r17_e_ = enumerated<scs15_r17_opts>;
     struct scs30_r17_opts {
       enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs30_r17_e_ = enumerated<scs30_r17_opts>;
     struct scs60_r17_opts {
       enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs60_r17_e_ = enumerated<scs60_r17_opts>;
     struct scs120_r17_opts {
       enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs120_r17_e_ = enumerated<scs120_r17_opts>;
 
@@ -8138,68 +7252,55 @@ struct prs_processing_cap_outside_m_gin_ppw_per_type_r17_s {
   struct ppw_max_num_of_dl_bw_r17_c_ {
     struct fr1_r17_opts {
       enum options { mhz5, mhz10, mhz20, mhz40, mhz50, mhz80, mhz100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fr1_r17_e_ = enumerated<fr1_r17_opts>;
     struct fr2_r17_opts {
       enum options { mhz50, mhz100, mhz200, mhz400, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using fr2_r17_e_ = enumerated<fr2_r17_opts>;
     struct types_opts {
       enum options { fr1_r17, fr2_r17, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ppw_max_num_of_dl_bw_r17_c_() = default;
-    ppw_max_num_of_dl_bw_r17_c_(const ppw_max_num_of_dl_bw_r17_c_& other);
-    ppw_max_num_of_dl_bw_r17_c_& operator=(const ppw_max_num_of_dl_bw_r17_c_& other);
-    ~ppw_max_num_of_dl_bw_r17_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_r17_e_& fr1_r17()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_r17_e_&                                   fr1_r17()
     {
-      assert_choice_type(types::fr1_r17, type_, "ppw-maxNumOfDL-Bandwidth-r17");
+      assert_choice_type(types::fr1_r17, c.type, "ppw-maxNumOfDL-Bandwidth-r17");
       return c.get<fr1_r17_e_>();
     }
     fr2_r17_e_& fr2_r17()
     {
-      assert_choice_type(types::fr2_r17, type_, "ppw-maxNumOfDL-Bandwidth-r17");
+      assert_choice_type(types::fr2_r17, c.type, "ppw-maxNumOfDL-Bandwidth-r17");
       return c.get<fr2_r17_e_>();
     }
     const fr1_r17_e_& fr1_r17() const
     {
-      assert_choice_type(types::fr1_r17, type_, "ppw-maxNumOfDL-Bandwidth-r17");
+      assert_choice_type(types::fr1_r17, c.type, "ppw-maxNumOfDL-Bandwidth-r17");
       return c.get<fr1_r17_e_>();
     }
     const fr2_r17_e_& fr2_r17() const
     {
-      assert_choice_type(types::fr2_r17, type_, "ppw-maxNumOfDL-Bandwidth-r17");
+      assert_choice_type(types::fr2_r17, c.type, "ppw-maxNumOfDL-Bandwidth-r17");
       return c.get<fr2_r17_e_>();
     }
     fr1_r17_e_& set_fr1_r17();
     fr2_r17_e_& set_fr2_r17();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<ppw_max_num_of_dl_bw_r17_c_, types, pod_choice_buffer_t> c;
   };
 
   // member variables
@@ -8211,36 +7312,30 @@ struct prs_processing_cap_outside_m_gin_ppw_per_type_r17_s {
   ppw_max_num_of_dl_prs_res_processed_per_slot_r17_s_ ppw_max_num_of_dl_prs_res_processed_per_slot_r17;
   ppw_max_num_of_dl_bw_r17_c_                         ppw_max_num_of_dl_bw_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DL-PRS-MeasurementWithRxFH-RRC-Connected-r18 ::= SEQUENCE
 struct dl_prs_meas_with_rx_fh_rrc_connected_r18_s {
   struct max_prs_bw_across_all_hops_fr1_r18_opts {
     enum options { mhz40, mhz50, mhz80, mhz100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_prs_bw_across_all_hops_fr1_r18_e_ = enumerated<max_prs_bw_across_all_hops_fr1_r18_opts>;
   struct max_prs_bw_across_all_hops_fr2_r18_opts {
     enum options { mhz100, mhz200, mhz400, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_prs_bw_across_all_hops_fr2_r18_e_ = enumerated<max_prs_bw_across_all_hops_fr2_r18_opts>;
   struct max_fh_hops_r18_opts {
     enum options { n2, n3, n4, n5, n6, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_fh_hops_r18_e_ = enumerated<max_fh_hops_r18_opts>;
   struct processing_dur_r18_s_ {
@@ -8267,15 +7362,14 @@ struct dl_prs_meas_with_rx_fh_rrc_connected_r18_s {
         nulltype
       } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using processing_prs_symbols_dur_n3_r18_e_ = enumerated<processing_prs_symbols_dur_n3_r18_opts>;
     struct processing_dur_t3_r18_opts {
       enum options { ms8, ms16, ms20, ms30, ms40, ms80, ms160, ms320, ms640, ms1280, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using processing_dur_t3_r18_e_ = enumerated<processing_dur_t3_r18_opts>;
 
@@ -8285,26 +7379,23 @@ struct dl_prs_meas_with_rx_fh_rrc_connected_r18_s {
   };
   struct rf_rx_retune_time_fr1_r18_opts {
     enum options { n70, n140, n210, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rf_rx_retune_time_fr1_r18_e_ = enumerated<rf_rx_retune_time_fr1_r18_opts>;
   struct rf_rx_retune_time_fr2_r18_opts {
     enum options { n35, n70, n140, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rf_rx_retune_time_fr2_r18_e_ = enumerated<rf_rx_retune_time_fr2_r18_opts>;
   struct num_of_overlapping_prb_r18_opts {
     enum options { n0, n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using num_of_overlapping_prb_r18_e_ = enumerated<num_of_overlapping_prb_r18_opts>;
 
@@ -8325,92 +7416,79 @@ struct dl_prs_meas_with_rx_fh_rrc_connected_r18_s {
   num_of_overlapping_prb_r18_e_         num_of_overlapping_prb_r18;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PosSRS-TxFrequencyHoppingRRC-Connected-r18 ::= SEQUENCE
 struct pos_srs_tx_freq_hop_rrc_connected_r18_s {
   struct max_srs_bw_across_all_hops_fr1_r18_opts {
     enum options { mhz40, mhz50, mhz80, mhz100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_bw_across_all_hops_fr1_r18_e_ = enumerated<max_srs_bw_across_all_hops_fr1_r18_opts>;
   struct max_srs_bw_across_all_hops_fr2_r18_opts {
     enum options { mhz100, mhz200, mhz400, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_srs_bw_across_all_hops_fr2_r18_e_ = enumerated<max_srs_bw_across_all_hops_fr2_r18_opts>;
   struct max_tx_fh_hops_r18_opts {
     enum options { n2, n3, n4, n5, n6, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_tx_fh_hops_r18_e_ = enumerated<max_tx_fh_hops_r18_opts>;
   struct rf_tx_retune_time_fr1_r18_opts {
     enum options { n70, n140, n210, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rf_tx_retune_time_fr1_r18_e_ = enumerated<rf_tx_retune_time_fr1_r18_opts>;
   struct rf_tx_retune_time_fr2_r18_opts {
     enum options { n35, n70, n140, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rf_tx_retune_time_fr2_r18_e_ = enumerated<rf_tx_retune_time_fr2_r18_opts>;
   struct switch_time_between_active_bwp_freq_hop_r18_opts {
     enum options { n100, n140, n200, n300, n500, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using switch_time_between_active_bwp_freq_hop_r18_e_ = enumerated<switch_time_between_active_bwp_freq_hop_r18_opts>;
   struct num_of_overlapping_prb_r18_opts {
     enum options { n0, n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using num_of_overlapping_prb_r18_e_ = enumerated<num_of_overlapping_prb_r18_opts>;
   struct max_srs_res_periodic_r18_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_res_periodic_r18_e_ = enumerated<max_srs_res_periodic_r18_opts>;
   struct max_srs_res_aperiodic_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_res_aperiodic_r18_e_ = enumerated<max_srs_res_aperiodic_r18_opts>;
   struct max_srs_res_semipersistent_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_res_semipersistent_r18_e_ = enumerated<max_srs_res_semipersistent_r18_opts>;
 
@@ -8437,84 +7515,72 @@ struct pos_srs_tx_freq_hop_rrc_connected_r18_s {
   max_srs_res_semipersistent_r18_e_              max_srs_res_semipersistent_r18;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PosSRS-TxFrequencyHoppingRRC-Inactive-r18 ::= SEQUENCE
 struct pos_srs_tx_freq_hop_rrc_inactive_r18_s {
   struct max_srs_bw_across_all_hops_fr1_r18_opts {
     enum options { mhz40, mhz50, mhz80, mhz100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_bw_across_all_hops_fr1_r18_e_ = enumerated<max_srs_bw_across_all_hops_fr1_r18_opts>;
   struct max_srs_bw_across_all_hops_fr2_r18_opts {
     enum options { mhz100, mhz200, mhz400, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_srs_bw_across_all_hops_fr2_r18_e_ = enumerated<max_srs_bw_across_all_hops_fr2_r18_opts>;
   struct max_tx_fh_hops_r18_opts {
     enum options { n2, n3, n4, n5, n6, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_tx_fh_hops_r18_e_ = enumerated<max_tx_fh_hops_r18_opts>;
   struct rf_tx_retune_time_fr1_r18_opts {
     enum options { n70, n140, n210, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rf_tx_retune_time_fr1_r18_e_ = enumerated<rf_tx_retune_time_fr1_r18_opts>;
   struct rf_tx_retune_time_fr2_r18_opts {
     enum options { n35, n70, n140, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rf_tx_retune_time_fr2_r18_e_ = enumerated<rf_tx_retune_time_fr2_r18_opts>;
   struct switch_time_between_active_bwp_freq_hop_r18_opts {
     enum options { n100, n140, n200, n300, n500, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using switch_time_between_active_bwp_freq_hop_r18_e_ = enumerated<switch_time_between_active_bwp_freq_hop_r18_opts>;
   struct num_of_overlapping_prb_r18_opts {
     enum options { n0, n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using num_of_overlapping_prb_r18_e_ = enumerated<num_of_overlapping_prb_r18_opts>;
   struct max_srs_res_periodic_r18_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_res_periodic_r18_e_ = enumerated<max_srs_res_periodic_r18_opts>;
   struct max_srs_res_semipersistent_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_srs_res_semipersistent_r18_e_ = enumerated<max_srs_res_semipersistent_r18_opts>;
 
@@ -8539,10 +7605,7 @@ struct pos_srs_tx_freq_hop_rrc_inactive_r18_s {
   max_srs_res_semipersistent_r18_e_              max_srs_res_semipersistent_r18;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PosSRS-BWA-RRC-Inactive-r18 ::= SEQUENCE
@@ -8550,103 +7613,91 @@ struct pos_srs_bwa_rrc_inactive_r18_s {
   struct num_of_carriers_intra_band_contiguous_r18_opts {
     enum options { two, three, twoandthree, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using num_of_carriers_intra_band_contiguous_r18_e_ = enumerated<num_of_carriers_intra_band_contiguous_r18_opts>;
   struct max_aggr_bw_two_carriers_fr1_r18_opts {
     enum options { mhz20, mhz40, mhz50, mhz80, mhz100, mhz160, mhz180, mhz190, mhz200, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_bw_two_carriers_fr1_r18_e_ = enumerated<max_aggr_bw_two_carriers_fr1_r18_opts>;
   struct max_aggr_bw_two_carriers_fr2_r18_opts {
     enum options { mhz50, mhz100, mhz200, mhz400, mhz600, mhz800, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_two_carriers_fr2_r18_e_ = enumerated<max_aggr_bw_two_carriers_fr2_r18_opts>;
   struct max_aggr_bw_three_carriers_fr1_r18_opts {
     enum options { mhz80, mhz100, mhz160, mhz200, mhz240, mhz300, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_three_carriers_fr1_r18_e_ = enumerated<max_aggr_bw_three_carriers_fr1_r18_opts>;
   struct max_aggr_bw_three_carriers_fr2_r18_opts {
     enum options { mhz50, mhz100, mhz200, mhz300, mhz400, mhz600, mhz800, mhz1000, mhz1200, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_three_carriers_fr2_r18_e_ = enumerated<max_aggr_bw_three_carriers_fr2_r18_opts>;
   struct max_aggr_res_set_r18_opts {
     enum options { n1, n2, n4, n8, n12, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_set_r18_e_ = enumerated<max_aggr_res_set_r18_opts>;
   struct max_aggr_res_periodic_r18_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_periodic_r18_e_ = enumerated<max_aggr_res_periodic_r18_opts>;
   struct max_aggr_res_semi_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_semi_r18_e_ = enumerated<max_aggr_res_semi_r18_opts>;
   struct max_aggr_res_periodic_per_slot_r18_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_periodic_per_slot_r18_e_ = enumerated<max_aggr_res_periodic_per_slot_r18_opts>;
   struct max_aggr_res_semi_per_slot_r18_opts {
     enum options { n0, n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_semi_per_slot_r18_e_ = enumerated<max_aggr_res_semi_per_slot_r18_opts>;
   struct guard_period_r18_opts {
     enum options { n0, n30, n100, n140, n200, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using guard_period_r18_e_ = enumerated<guard_period_r18_opts>;
   struct pwr_class_for_two_aggr_carriers_r18_opts {
     enum options { pc2, pc3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pwr_class_for_two_aggr_carriers_r18_e_ = enumerated<pwr_class_for_two_aggr_carriers_r18_opts>;
   struct pwr_class_for_three_aggr_carriers_r18_opts {
     enum options { pc2, pc3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pwr_class_for_three_aggr_carriers_r18_e_ = enumerated<pwr_class_for_three_aggr_carriers_r18_opts>;
 
@@ -8672,10 +7723,7 @@ struct pos_srs_bwa_rrc_inactive_r18_s {
   pwr_class_for_three_aggr_carriers_r18_e_     pwr_class_for_three_aggr_carriers_r18;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MSD-Information-r18 ::= SEQUENCE
@@ -8700,25 +7748,23 @@ struct msd_info_r18_s {
       spare1,
       nulltype
     } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using msd_type_r18_e_ = enumerated<msd_type_r18_opts>;
   struct msd_pwr_class_r18_opts {
     enum options { pc1dot5, pc2, pc3, nulltype } value;
-    typedef float number_type;
 
-    const char* to_string() const;
-    float       to_number() const;
-    const char* to_number_string() const;
+    static const asn1::table::enum_desc desc;
+    float                               to_number() const;
+    const char*                         to_number_string() const;
   };
   using msd_pwr_class_r18_e_ = enumerated<msd_pwr_class_r18_opts>;
   struct msd_class_r18_opts {
     enum options { class_i, class_ii, class_iii, class_iv, class_v, class_vi, class_vii, class_viii, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using msd_class_r18_e_ = enumerated<msd_class_r18_opts>;
 
@@ -8727,10 +7773,7 @@ struct msd_info_r18_s {
   msd_pwr_class_r18_e_ msd_pwr_class_r18;
   msd_class_r18_e_     msd_class_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // LowerMSD-r18 ::= SEQUENCE
@@ -8739,49 +7782,39 @@ struct lower_msd_r18_s {
     struct types_opts {
       enum options { nr, eutra, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    aggressorband1_r18_c_() = default;
-    aggressorband1_r18_c_(const aggressorband1_r18_c_& other);
-    aggressorband1_r18_c_& operator=(const aggressorband1_r18_c_& other);
-    ~aggressorband1_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    uint16_t& nr()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    uint16_t&                                     nr()
     {
-      assert_choice_type(types::nr, type_, "aggressorband1-r18");
+      assert_choice_type(types::nr, c.type, "aggressorband1-r18");
       return c.get<uint16_t>();
     }
     uint16_t& eutra()
     {
-      assert_choice_type(types::eutra, type_, "aggressorband1-r18");
+      assert_choice_type(types::eutra, c.type, "aggressorband1-r18");
       return c.get<uint16_t>();
     }
     const uint16_t& nr() const
     {
-      assert_choice_type(types::nr, type_, "aggressorband1-r18");
+      assert_choice_type(types::nr, c.type, "aggressorband1-r18");
       return c.get<uint16_t>();
     }
     const uint16_t& eutra() const
     {
-      assert_choice_type(types::eutra, type_, "aggressorband1-r18");
+      assert_choice_type(types::eutra, c.type, "aggressorband1-r18");
       return c.get<uint16_t>();
     }
     uint16_t& set_nr();
     uint16_t& set_eutra();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<aggressorband1_r18_c_, types, pod_choice_buffer_t> c;
   };
   using msd_info_r18_l_ = dyn_array<msd_info_r18_s>;
 
@@ -8791,10 +7824,7 @@ struct lower_msd_r18_s {
   uint16_t              aggressorband2_r18 = 1;
   msd_info_r18_l_       msd_info_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersPerBand-r18 ::= SEQUENCE
@@ -8803,28 +7833,23 @@ struct mac_params_per_band_r18_s {
   bool ptm_retx_inactive_r18_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandNR ::= SEQUENCE
 struct band_nr_s {
   struct bwp_same_numerology_opts {
     enum options { upto2, upto4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using bwp_same_numerology_e_ = enumerated<bwp_same_numerology_opts>;
   struct ue_pwr_class_opts {
     enum options { pc1, pc2, pc3, pc4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ue_pwr_class_e_ = enumerated<ue_pwr_class_opts>;
   struct ch_bws_dl_c_ {
@@ -8844,52 +7869,41 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bws_dl_c_() = default;
-    ch_bws_dl_c_(const ch_bws_dl_c_& other);
-    ch_bws_dl_c_& operator=(const ch_bws_dl_c_& other);
-    ~ch_bws_dl_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_s_& fr1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_s_&                                       fr1()
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-DL");
+      assert_choice_type(types::fr1, c.type, "channelBWs-DL");
       return c.get<fr1_s_>();
     }
     fr2_s_& fr2()
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-DL");
+      assert_choice_type(types::fr2, c.type, "channelBWs-DL");
       return c.get<fr2_s_>();
     }
     const fr1_s_& fr1() const
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-DL");
+      assert_choice_type(types::fr1, c.type, "channelBWs-DL");
       return c.get<fr1_s_>();
     }
     const fr2_s_& fr2() const
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-DL");
+      assert_choice_type(types::fr2, c.type, "channelBWs-DL");
       return c.get<fr2_s_>();
     }
     fr1_s_& set_fr1();
     fr2_s_& set_fr2();
 
   private:
-    types                           type_;
-    choice_buffer_t<fr1_s_, fr2_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bws_dl_c_, types, choice_buffer_t<fr1_s_, fr2_s_>> c;
   };
   struct ch_bws_ul_c_ {
     struct fr1_s_ {
@@ -8908,67 +7922,54 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bws_ul_c_() = default;
-    ch_bws_ul_c_(const ch_bws_ul_c_& other);
-    ch_bws_ul_c_& operator=(const ch_bws_ul_c_& other);
-    ~ch_bws_ul_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_s_& fr1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_s_&                                       fr1()
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-UL");
+      assert_choice_type(types::fr1, c.type, "channelBWs-UL");
       return c.get<fr1_s_>();
     }
     fr2_s_& fr2()
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-UL");
+      assert_choice_type(types::fr2, c.type, "channelBWs-UL");
       return c.get<fr2_s_>();
     }
     const fr1_s_& fr1() const
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-UL");
+      assert_choice_type(types::fr1, c.type, "channelBWs-UL");
       return c.get<fr1_s_>();
     }
     const fr2_s_& fr2() const
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-UL");
+      assert_choice_type(types::fr2, c.type, "channelBWs-UL");
       return c.get<fr2_s_>();
     }
     fr1_s_& set_fr1();
     fr2_s_& set_fr2();
 
   private:
-    types                           type_;
-    choice_buffer_t<fr1_s_, fr2_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bws_ul_c_, types, choice_buffer_t<fr1_s_, fr2_s_>> c;
   };
   struct max_ul_duty_cycle_pc2_fr1_opts {
     enum options { n60, n70, n80, n90, n100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_ul_duty_cycle_pc2_fr1_e_ = enumerated<max_ul_duty_cycle_pc2_fr1_opts>;
   struct max_ul_duty_cycle_fr2_opts {
     enum options { n15, n20, n25, n30, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_ul_duty_cycle_fr2_e_ = enumerated<max_ul_duty_cycle_fr2_opts>;
   struct ch_bws_dl_v1590_c_ {
@@ -8988,52 +7989,41 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bws_dl_v1590_c_() = default;
-    ch_bws_dl_v1590_c_(const ch_bws_dl_v1590_c_& other);
-    ch_bws_dl_v1590_c_& operator=(const ch_bws_dl_v1590_c_& other);
-    ~ch_bws_dl_v1590_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_s_& fr1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_s_&                                       fr1()
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-DL-v1590");
+      assert_choice_type(types::fr1, c.type, "channelBWs-DL-v1590");
       return c.get<fr1_s_>();
     }
     fr2_s_& fr2()
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-DL-v1590");
+      assert_choice_type(types::fr2, c.type, "channelBWs-DL-v1590");
       return c.get<fr2_s_>();
     }
     const fr1_s_& fr1() const
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-DL-v1590");
+      assert_choice_type(types::fr1, c.type, "channelBWs-DL-v1590");
       return c.get<fr1_s_>();
     }
     const fr2_s_& fr2() const
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-DL-v1590");
+      assert_choice_type(types::fr2, c.type, "channelBWs-DL-v1590");
       return c.get<fr2_s_>();
     }
     fr1_s_& set_fr1();
     fr2_s_& set_fr2();
 
   private:
-    types                           type_;
-    choice_buffer_t<fr1_s_, fr2_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bws_dl_v1590_c_, types, choice_buffer_t<fr1_s_, fr2_s_>> c;
   };
   struct ch_bws_ul_v1590_c_ {
     struct fr1_s_ {
@@ -9052,52 +8042,41 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1, fr2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bws_ul_v1590_c_() = default;
-    ch_bws_ul_v1590_c_(const ch_bws_ul_v1590_c_& other);
-    ch_bws_ul_v1590_c_& operator=(const ch_bws_ul_v1590_c_& other);
-    ~ch_bws_ul_v1590_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_s_& fr1()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_s_&                                       fr1()
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-UL-v1590");
+      assert_choice_type(types::fr1, c.type, "channelBWs-UL-v1590");
       return c.get<fr1_s_>();
     }
     fr2_s_& fr2()
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-UL-v1590");
+      assert_choice_type(types::fr2, c.type, "channelBWs-UL-v1590");
       return c.get<fr2_s_>();
     }
     const fr1_s_& fr1() const
     {
-      assert_choice_type(types::fr1, type_, "channelBWs-UL-v1590");
+      assert_choice_type(types::fr1, c.type, "channelBWs-UL-v1590");
       return c.get<fr1_s_>();
     }
     const fr2_s_& fr2() const
     {
-      assert_choice_type(types::fr2, type_, "channelBWs-UL-v1590");
+      assert_choice_type(types::fr2, c.type, "channelBWs-UL-v1590");
       return c.get<fr2_s_>();
     }
     fr1_s_& set_fr1();
     fr2_s_& set_fr2();
 
   private:
-    types                           type_;
-    choice_buffer_t<fr1_s_, fr2_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bws_ul_v1590_c_, types, choice_buffer_t<fr1_s_, fr2_s_>> c;
   };
   struct multiple_rate_matching_eutra_crs_r16_s_ {
     uint8_t max_num_patterns_r16             = 2;
@@ -9115,52 +8094,41 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1_100mhz, fr2_200mhz, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bw_dl_iab_r16_c_() = default;
-    ch_bw_dl_iab_r16_c_(const ch_bw_dl_iab_r16_c_& other);
-    ch_bw_dl_iab_r16_c_& operator=(const ch_bw_dl_iab_r16_c_& other);
-    ~ch_bw_dl_iab_r16_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_100mhz_s_& fr1_100mhz()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_100mhz_s_&                                fr1_100mhz()
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-DL-IAB-r16");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-DL-IAB-r16");
       return c.get<fr1_100mhz_s_>();
     }
     fr2_200mhz_s_& fr2_200mhz()
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-DL-IAB-r16");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-DL-IAB-r16");
       return c.get<fr2_200mhz_s_>();
     }
     const fr1_100mhz_s_& fr1_100mhz() const
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-DL-IAB-r16");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-DL-IAB-r16");
       return c.get<fr1_100mhz_s_>();
     }
     const fr2_200mhz_s_& fr2_200mhz() const
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-DL-IAB-r16");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-DL-IAB-r16");
       return c.get<fr2_200mhz_s_>();
     }
     fr1_100mhz_s_& set_fr1_100mhz();
     fr2_200mhz_s_& set_fr2_200mhz();
 
   private:
-    types                                         type_;
-    choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bw_dl_iab_r16_c_, types, choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_>> c;
   };
   struct ch_bw_ul_iab_r16_c_ {
     struct fr1_100mhz_s_ {
@@ -9174,60 +8142,48 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1_100mhz, fr2_200mhz, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bw_ul_iab_r16_c_() = default;
-    ch_bw_ul_iab_r16_c_(const ch_bw_ul_iab_r16_c_& other);
-    ch_bw_ul_iab_r16_c_& operator=(const ch_bw_ul_iab_r16_c_& other);
-    ~ch_bw_ul_iab_r16_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_100mhz_s_& fr1_100mhz()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_100mhz_s_&                                fr1_100mhz()
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-UL-IAB-r16");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-UL-IAB-r16");
       return c.get<fr1_100mhz_s_>();
     }
     fr2_200mhz_s_& fr2_200mhz()
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-UL-IAB-r16");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-UL-IAB-r16");
       return c.get<fr2_200mhz_s_>();
     }
     const fr1_100mhz_s_& fr1_100mhz() const
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-UL-IAB-r16");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-UL-IAB-r16");
       return c.get<fr1_100mhz_s_>();
     }
     const fr2_200mhz_s_& fr2_200mhz() const
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-UL-IAB-r16");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-UL-IAB-r16");
       return c.get<fr2_200mhz_s_>();
     }
     fr1_100mhz_s_& set_fr1_100mhz();
     fr2_200mhz_s_& set_fr2_200mhz();
 
   private:
-    types                                         type_;
-    choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bw_ul_iab_r16_c_, types, choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_>> c;
   };
   struct active_cfg_grant_r16_s_ {
     struct max_num_cfgs_per_bwp_r16_opts {
       enum options { n1, n2, n4, n8, n12, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfgs_per_bwp_r16_e_ = enumerated<max_num_cfgs_per_bwp_r16_opts>;
 
@@ -9241,89 +8197,79 @@ struct band_nr_s {
   };
   struct trs_add_bw_r16_opts {
     enum options { trs_add_bw_set1, trs_add_bw_set2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using trs_add_bw_r16_e_ = enumerated<trs_add_bw_r16_opts>;
   struct enhanced_ul_transient_period_r16_opts {
     enum options { us2, us4, us7, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using enhanced_ul_transient_period_r16_e_ = enumerated<enhanced_ul_transient_period_r16_opts>;
   struct max_ul_duty_cycle_pc1dot5_mpe_fr1_r16_opts {
     enum options { n10, n15, n20, n25, n30, n40, n50, n60, n70, n80, n90, n100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_ul_duty_cycle_pc1dot5_mpe_fr1_r16_e_ = enumerated<max_ul_duty_cycle_pc1dot5_mpe_fr1_r16_opts>;
   struct ue_pwr_class_v1700_opts {
     enum options { pc5, pc6, pc7, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ue_pwr_class_v1700_e_ = enumerated<ue_pwr_class_v1700_opts>;
   struct max_harq_process_num_r17_opts {
     enum options { u16d32, u32d16, u32d32, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using max_harq_process_num_r17_e_ = enumerated<max_harq_process_num_r17_opts>;
   struct nr_ue_tx_teg_id_max_support_r17_opts {
     enum options { n1, n2, n3, n4, n6, n8, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using nr_ue_tx_teg_id_max_support_r17_e_ = enumerated<nr_ue_tx_teg_id_max_support_r17_opts>;
   struct prs_processing_win_type1_a_r17_opts {
     enum options { option1, option2, option3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using prs_processing_win_type1_a_r17_e_ = enumerated<prs_processing_win_type1_a_r17_opts>;
   struct prs_processing_win_type1_b_r17_opts {
     enum options { option1, option2, option3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using prs_processing_win_type1_b_r17_e_ = enumerated<prs_processing_win_type1_b_r17_opts>;
   struct prs_processing_win_type2_r17_opts {
     enum options { option1, option2, option3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using prs_processing_win_type2_r17_e_ = enumerated<prs_processing_win_type2_r17_opts>;
   struct max_dur_dmrs_bundling_r17_s_ {
     struct fdd_r17_opts {
       enum options { n4, n8, n16, n32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fdd_r17_e_ = enumerated<fdd_r17_opts>;
     struct tdd_r17_opts {
       enum options { n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using tdd_r17_e_ = enumerated<tdd_r17_opts>;
 
@@ -9335,27 +8281,24 @@ struct band_nr_s {
   };
   struct max_num_ngso_satellites_within_one_smtc_r17_opts {
     enum options { n1, n2, n3, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_ngso_satellites_within_one_smtc_r17_e_ = enumerated<max_num_ngso_satellites_within_one_smtc_r17_opts>;
   struct aperiodic_csi_rs_fast_scell_activation_r17_s_ {
     struct max_num_aperiodic_csi_rs_per_cc_r17_opts {
       enum options { n8, n16, n32, n48, n64, n128, n255, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using max_num_aperiodic_csi_rs_per_cc_r17_e_ = enumerated<max_num_aperiodic_csi_rs_per_cc_r17_opts>;
     struct max_num_aperiodic_csi_rs_across_ccs_r17_opts {
       enum options { n8, n16, n32, n64, n128, n256, n512, n1024, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using max_num_aperiodic_csi_rs_across_ccs_r17_e_ = enumerated<max_num_aperiodic_csi_rs_across_ccs_r17_opts>;
 
@@ -9365,27 +8308,24 @@ struct band_nr_s {
   };
   struct aperiodic_csi_rs_add_bw_r17_opts {
     enum options { add_bw_set1, add_bw_set2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using aperiodic_csi_rs_add_bw_r17_e_ = enumerated<aperiodic_csi_rs_add_bw_r17_opts>;
   struct enhanced_type3_harq_codebook_feedback_r17_s_ {
     struct enhanced_type3_harq_codebooks_r17_opts {
       enum options { n1, n2, n4, n8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using enhanced_type3_harq_codebooks_r17_e_ = enumerated<enhanced_type3_harq_codebooks_r17_opts>;
     struct max_num_pucch_txs_r17_opts {
       enum options { n1, n2, n3, n4, n5, n6, n7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_pucch_txs_r17_e_ = enumerated<max_num_pucch_txs_r17_opts>;
 
@@ -9396,18 +8336,16 @@ struct band_nr_s {
   struct triggered_harq_codebook_retx_r17_s_ {
     struct min_harq_retx_offset_r17_opts {
       enum options { n_neg7, n_neg5, n_neg3, n_neg1, n1, nulltype } value;
-      typedef int8_t number_type;
 
-      const char* to_string() const;
-      int8_t      to_number() const;
+      static const asn1::table::enum_desc desc;
+      int8_t                              to_number() const;
     };
     using min_harq_retx_offset_r17_e_ = enumerated<min_harq_retx_offset_r17_opts>;
     struct max_harq_retx_offset_r17_opts {
       enum options { n4, n6, n8, n10, n12, n14, n16, n18, n20, n22, n24, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_harq_retx_offset_r17_e_ = enumerated<max_harq_retx_offset_r17_opts>;
 
@@ -9418,109 +8356,92 @@ struct band_nr_s {
   struct max_mod_order_for_multicast_r17_c_ {
     struct fr1_r17_opts {
       enum options { qam256, qam1024, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using fr1_r17_e_ = enumerated<fr1_r17_opts>;
     struct fr2_r17_opts {
       enum options { qam64, qam256, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using fr2_r17_e_ = enumerated<fr2_r17_opts>;
     struct types_opts {
       enum options { fr1_r17, fr2_r17, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    max_mod_order_for_multicast_r17_c_() = default;
-    max_mod_order_for_multicast_r17_c_(const max_mod_order_for_multicast_r17_c_& other);
-    max_mod_order_for_multicast_r17_c_& operator=(const max_mod_order_for_multicast_r17_c_& other);
-    ~max_mod_order_for_multicast_r17_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_r17_e_& fr1_r17()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_r17_e_&                                   fr1_r17()
     {
-      assert_choice_type(types::fr1_r17, type_, "maxModulationOrderForMulticast-r17");
+      assert_choice_type(types::fr1_r17, c.type, "maxModulationOrderForMulticast-r17");
       return c.get<fr1_r17_e_>();
     }
     fr2_r17_e_& fr2_r17()
     {
-      assert_choice_type(types::fr2_r17, type_, "maxModulationOrderForMulticast-r17");
+      assert_choice_type(types::fr2_r17, c.type, "maxModulationOrderForMulticast-r17");
       return c.get<fr2_r17_e_>();
     }
     const fr1_r17_e_& fr1_r17() const
     {
-      assert_choice_type(types::fr1_r17, type_, "maxModulationOrderForMulticast-r17");
+      assert_choice_type(types::fr1_r17, c.type, "maxModulationOrderForMulticast-r17");
       return c.get<fr1_r17_e_>();
     }
     const fr2_r17_e_& fr2_r17() const
     {
-      assert_choice_type(types::fr2_r17, type_, "maxModulationOrderForMulticast-r17");
+      assert_choice_type(types::fr2_r17, c.type, "maxModulationOrderForMulticast-r17");
       return c.get<fr2_r17_e_>();
     }
     fr1_r17_e_& set_fr1_r17();
     fr2_r17_e_& set_fr2_r17();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<max_mod_order_for_multicast_r17_c_, types, pod_choice_buffer_t> c;
   };
   struct dyn_slot_repeat_multicast_tn_non_shared_spec_ch_access_r17_opts {
     enum options { n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using dyn_slot_repeat_multicast_tn_non_shared_spec_ch_access_r17_e_ =
       enumerated<dyn_slot_repeat_multicast_tn_non_shared_spec_ch_access_r17_opts>;
   struct dyn_slot_repeat_multicast_ntn_shared_spec_ch_access_r17_opts {
     enum options { n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using dyn_slot_repeat_multicast_ntn_shared_spec_ch_access_r17_e_ =
       enumerated<dyn_slot_repeat_multicast_ntn_shared_spec_ch_access_r17_opts>;
   struct prs_meas_without_mg_r17_opts {
     enum options { cp_len, quarter_symbol, half_symbol, half_slot, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using prs_meas_without_mg_r17_e_                  = enumerated<prs_meas_without_mg_r17_opts>;
   using prs_processing_cap_outside_m_gin_ppw_r17_l_ = dyn_array<prs_processing_cap_outside_m_gin_ppw_per_type_r17_s>;
   struct srs_semi_persistent_pos_res_rrc_inactive_r17_s_ {
     struct max_num_of_semi_persistent_srs_pos_res_r17_opts {
       enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_of_semi_persistent_srs_pos_res_r17_e_ = enumerated<max_num_of_semi_persistent_srs_pos_res_r17_opts>;
     struct max_num_of_semi_persistent_srs_pos_res_per_slot_r17_opts {
       enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_of_semi_persistent_srs_pos_res_per_slot_r17_e_ =
         enumerated<max_num_of_semi_persistent_srs_pos_res_per_slot_r17_opts>;
@@ -9531,19 +8452,17 @@ struct band_nr_s {
   };
   struct max_dyn_slot_repeat_for_sps_multicast_r17_opts {
     enum options { n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_dyn_slot_repeat_for_sps_multicast_r17_e_ = enumerated<max_dyn_slot_repeat_for_sps_multicast_r17_opts>;
   struct spatial_adaptation_csi_feedback_r18_s_ {
     struct csi_feedback_type_r18_opts {
       enum options { sd_type1, sd_type2, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using csi_feedback_type_r18_e_ = enumerated<csi_feedback_type_r18_opts>;
     struct max_num_csi_res_per_cc_r18_s_ {
@@ -9553,18 +8472,16 @@ struct band_nr_s {
     struct max_num_total_csi_res_per_cc_r18_s_ {
       struct sd_type1_res_r18_opts {
         enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type1_res_r18_e_ = enumerated<sd_type1_res_r18_opts>;
       struct sd_type2_res_r18_opts {
         enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type2_res_r18_e_ = enumerated<sd_type2_res_r18_opts>;
 
@@ -9583,18 +8500,16 @@ struct band_nr_s {
   struct spatial_adaptation_csi_feedback_pusch_r18_s_ {
     struct csi_feedback_type_r18_opts {
       enum options { sd_type1, sd_type2, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using csi_feedback_type_r18_e_ = enumerated<csi_feedback_type_r18_opts>;
     struct max_num_total_csi_res_per_cc_r18_opts {
       enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_total_csi_res_per_cc_r18_e_ = enumerated<max_num_total_csi_res_per_cc_r18_opts>;
 
@@ -9609,10 +8524,9 @@ struct band_nr_s {
   struct spatial_adaptation_csi_feedback_aperiodic_r18_s_ {
     struct csi_feedback_type_r18_opts {
       enum options { sd_type1, sd_type2, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using csi_feedback_type_r18_e_ = enumerated<csi_feedback_type_r18_opts>;
     struct max_num_csi_res_per_cc_r18_s_ {
@@ -9622,18 +8536,16 @@ struct band_nr_s {
     struct max_num_total_csi_res_per_cc_r18_s_ {
       struct sd_type1_res_r18_opts {
         enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type1_res_r18_e_ = enumerated<sd_type1_res_r18_opts>;
       struct sd_type2_res_r18_opts {
         enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using sd_type2_res_r18_e_ = enumerated<sd_type2_res_r18_opts>;
 
@@ -9653,18 +8565,16 @@ struct band_nr_s {
   struct spatial_adaptation_csi_feedback_pucch_r18_s_ {
     struct csi_feedback_type_r18_opts {
       enum options { sd_type1, sd_type2, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using csi_feedback_type_r18_e_ = enumerated<csi_feedback_type_r18_opts>;
     struct max_num_total_csi_res_per_cc_r18_opts {
       enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_total_csi_res_per_cc_r18_e_ = enumerated<max_num_total_csi_res_per_cc_r18_opts>;
 
@@ -9679,10 +8589,9 @@ struct band_nr_s {
   struct pwr_adaptation_csi_feedback_r18_s_ {
     struct max_num_total_csi_res_per_cc_r18_opts {
       enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_total_csi_res_per_cc_r18_e_ = enumerated<max_num_total_csi_res_per_cc_r18_opts>;
 
@@ -9695,10 +8604,9 @@ struct band_nr_s {
   struct pwr_adaptation_csi_feedback_pusch_r18_s_ {
     struct max_num_total_csi_res_per_cc_r18_opts {
       enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_total_csi_res_per_cc_r18_e_ = enumerated<max_num_total_csi_res_per_cc_r18_opts>;
 
@@ -9712,10 +8620,9 @@ struct band_nr_s {
   struct pwr_adaptation_csi_feedback_aperiodic_r18_s_ {
     struct max_num_total_csi_res_per_cc_r18_opts {
       enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_total_csi_res_per_cc_r18_e_ = enumerated<max_num_total_csi_res_per_cc_r18_opts>;
 
@@ -9729,10 +8636,9 @@ struct band_nr_s {
   struct pwr_adaptation_csi_feedback_pucch_r18_s_ {
     struct max_num_total_csi_res_per_cc_r18_opts {
       enum options { n8, n16, n24, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_total_csi_res_per_cc_r18_e_ = enumerated<max_num_total_csi_res_per_cc_r18_opts>;
 
@@ -9746,30 +8652,28 @@ struct band_nr_s {
   struct nes_cell_dtx_drx_r18_opts {
     enum options { cell_dt_xonly, cell_dr_xonly, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using nes_cell_dtx_drx_r18_e_ = enumerated<nes_cell_dtx_drx_r18_opts>;
   struct ntn_dmrs_bundling_ngso_r18_opts {
     enum options { n4, n8, n16, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ntn_dmrs_bundling_ngso_r18_e_ = enumerated<ntn_dmrs_bundling_ngso_r18_opts>;
   struct ltm_beam_ind_joint_tci_r18_s_ {
     struct max_num_joint_tci_per_cell_r18_opts {
       enum options { n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_joint_tci_per_cell_r18_e_ = enumerated<max_num_joint_tci_per_cell_r18_opts>;
     struct qcl_res_r18_opts {
       enum options { ssb, trs, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using qcl_res_r18_e_ = enumerated<qcl_res_r18_opts>;
 
@@ -9783,15 +8687,14 @@ struct band_nr_s {
     struct qcl_res_r18_opts {
       enum options { ssb, trs, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using qcl_res_r18_e_ = enumerated<qcl_res_r18_opts>;
     struct max_num_joint_tci_across_cells_r18_opts {
       enum options { n1, n2, n3, n4, n8, n16, n32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_joint_tci_across_cells_r18_e_ = enumerated<max_num_joint_tci_across_cells_r18_opts>;
 
@@ -9803,24 +8706,22 @@ struct band_nr_s {
   struct ltm_beam_ind_separate_tci_r18_s_ {
     struct max_num_dl_tci_per_cell_r18_opts {
       enum options { n4, n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_dl_tci_per_cell_r18_e_ = enumerated<max_num_dl_tci_per_cell_r18_opts>;
     struct max_num_ul_tci_per_cell_r18_opts {
       enum options { n4, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_ul_tci_per_cell_r18_e_ = enumerated<max_num_ul_tci_per_cell_r18_opts>;
     struct qcl_res_r18_opts {
       enum options { ssb, trs, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using qcl_res_r18_e_ = enumerated<qcl_res_r18_opts>;
 
@@ -9836,23 +8737,21 @@ struct band_nr_s {
     struct qcl_res_r18_opts {
       enum options { ssb, trs, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using qcl_res_r18_e_ = enumerated<qcl_res_r18_opts>;
     struct max_num_dl_tci_across_cells_r18_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_dl_tci_across_cells_r18_e_ = enumerated<max_num_dl_tci_across_cells_r18_opts>;
     struct max_num_ul_tci_across_cells_r18_opts {
       enum options { n1, n2, n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_ul_tci_across_cells_r18_e_ = enumerated<max_num_ul_tci_across_cells_r18_opts>;
 
@@ -9866,18 +8765,16 @@ struct band_nr_s {
   struct triggered_harq_codebook_retx_dci_1_3_r18_s_ {
     struct min_harq_retx_offset_r18_opts {
       enum options { n_neg7, n_neg5, n_neg3, n_neg1, n1, nulltype } value;
-      typedef int8_t number_type;
 
-      const char* to_string() const;
-      int8_t      to_number() const;
+      static const asn1::table::enum_desc desc;
+      int8_t                              to_number() const;
     };
     using min_harq_retx_offset_r18_e_ = enumerated<min_harq_retx_offset_r18_opts>;
     struct max_harq_retx_offset_r18_opts {
       enum options { n4, n6, n8, n10, n12, n14, n16, n18, n20, n22, n24, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_harq_retx_offset_r18_e_ = enumerated<max_harq_retx_offset_r18_opts>;
 
@@ -9890,26 +8787,23 @@ struct band_nr_s {
       struct fr1_r18_s_ {
         struct scs_15k_hz_r18_opts {
           enum options { sym1, sym2, sym4, sym7, sym14, sym28, sym42, sym56, sym70, nulltype } value;
-          typedef uint8_t number_type;
 
-          const char* to_string() const;
-          uint8_t     to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint8_t                             to_number() const;
         };
         using scs_15k_hz_r18_e_ = enumerated<scs_15k_hz_r18_opts>;
         struct scs_30k_hz_r18_opts {
           enum options { sym1, sym2, sym4, sym7, sym14, sym28, sym42, sym56, sym70, nulltype } value;
-          typedef uint8_t number_type;
 
-          const char* to_string() const;
-          uint8_t     to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint8_t                             to_number() const;
         };
         using scs_30k_hz_r18_e_ = enumerated<scs_30k_hz_r18_opts>;
         struct scs_60k_hz_r18_opts {
           enum options { sym1, sym2, sym4, sym7, sym14, sym28, sym42, sym56, sym70, nulltype } value;
-          typedef uint8_t number_type;
 
-          const char* to_string() const;
-          uint8_t     to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint8_t                             to_number() const;
         };
         using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
 
@@ -9940,10 +8834,9 @@ struct band_nr_s {
             sym336,
             nulltype
           } value;
-          typedef uint16_t number_type;
 
-          const char* to_string() const;
-          uint16_t    to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint16_t                            to_number() const;
         };
         using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
         struct scs_120k_hz_r18_opts {
@@ -9964,10 +8857,9 @@ struct band_nr_s {
             sym336,
             nulltype
           } value;
-          typedef uint16_t number_type;
 
-          const char* to_string() const;
-          uint16_t    to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint16_t                            to_number() const;
         };
         using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
 
@@ -9979,52 +8871,41 @@ struct band_nr_s {
       };
       struct types_opts {
         enum options { fr1_r18, fr2_r18, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      min_beam_application_time_r18_c_() = default;
-      min_beam_application_time_r18_c_(const min_beam_application_time_r18_c_& other);
-      min_beam_application_time_r18_c_& operator=(const min_beam_application_time_r18_c_& other);
-      ~min_beam_application_time_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r18_s_& fr1_r18()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r18_s_&                                   fr1_r18()
       {
-        assert_choice_type(types::fr1_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr1_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr1_r18_s_>();
       }
       fr2_r18_s_& fr2_r18()
       {
-        assert_choice_type(types::fr2_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr2_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr2_r18_s_>();
       }
       const fr1_r18_s_& fr1_r18() const
       {
-        assert_choice_type(types::fr1_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr1_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr1_r18_s_>();
       }
       const fr2_r18_s_& fr2_r18() const
       {
-        assert_choice_type(types::fr2_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr2_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr2_r18_s_>();
       }
       fr1_r18_s_& set_fr1_r18();
       fr2_r18_s_& set_fr2_r18();
 
     private:
-      types                                   type_;
-      choice_buffer_t<fr1_r18_s_, fr2_r18_s_> c;
-
-      void destroy_();
+      asn1::table::choice_storage<min_beam_application_time_r18_c_, types, choice_buffer_t<fr1_r18_s_, fr2_r18_s_>> c;
     };
 
     // member variables
@@ -10053,10 +8934,9 @@ struct band_nr_s {
             sym336,
             nulltype
           } value;
-          typedef uint16_t number_type;
 
-          const char* to_string() const;
-          uint16_t    to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint16_t                            to_number() const;
         };
         using scs_15k_hz_r18_e_ = enumerated<scs_15k_hz_r18_opts>;
         struct scs_30k_hz_r18_opts {
@@ -10077,10 +8957,9 @@ struct band_nr_s {
             sym336,
             nulltype
           } value;
-          typedef uint16_t number_type;
 
-          const char* to_string() const;
-          uint16_t    to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint16_t                            to_number() const;
         };
         using scs_30k_hz_r18_e_ = enumerated<scs_30k_hz_r18_opts>;
         struct scs_60k_hz_r18_opts {
@@ -10101,10 +8980,9 @@ struct band_nr_s {
             sym336,
             nulltype
           } value;
-          typedef uint16_t number_type;
 
-          const char* to_string() const;
-          uint16_t    to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint16_t                            to_number() const;
         };
         using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
 
@@ -10135,10 +9013,9 @@ struct band_nr_s {
             sym336,
             nulltype
           } value;
-          typedef uint16_t number_type;
 
-          const char* to_string() const;
-          uint16_t    to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint16_t                            to_number() const;
         };
         using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
         struct scs_120k_hz_r18_opts {
@@ -10159,10 +9036,9 @@ struct band_nr_s {
             sym336,
             nulltype
           } value;
-          typedef uint16_t number_type;
 
-          const char* to_string() const;
-          uint16_t    to_number() const;
+          static const asn1::table::enum_desc desc;
+          uint16_t                            to_number() const;
         };
         using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
 
@@ -10174,52 +9050,41 @@ struct band_nr_s {
       };
       struct types_opts {
         enum options { fr1_r18, fr2_r18, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      min_beam_application_time_r18_c_() = default;
-      min_beam_application_time_r18_c_(const min_beam_application_time_r18_c_& other);
-      min_beam_application_time_r18_c_& operator=(const min_beam_application_time_r18_c_& other);
-      ~min_beam_application_time_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r18_s_& fr1_r18()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r18_s_&                                   fr1_r18()
       {
-        assert_choice_type(types::fr1_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr1_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr1_r18_s_>();
       }
       fr2_r18_s_& fr2_r18()
       {
-        assert_choice_type(types::fr2_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr2_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr2_r18_s_>();
       }
       const fr1_r18_s_& fr1_r18() const
       {
-        assert_choice_type(types::fr1_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr1_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr1_r18_s_>();
       }
       const fr2_r18_s_& fr2_r18() const
       {
-        assert_choice_type(types::fr2_r18, type_, "minBeamApplicationTime-r18");
+        assert_choice_type(types::fr2_r18, c.type, "minBeamApplicationTime-r18");
         return c.get<fr2_r18_s_>();
       }
       fr1_r18_s_& set_fr1_r18();
       fr2_r18_s_& set_fr2_r18();
 
     private:
-      types                                   type_;
-      choice_buffer_t<fr1_r18_s_, fr2_r18_s_> c;
-
-      void destroy_();
+      asn1::table::choice_storage<min_beam_application_time_r18_c_, types, choice_buffer_t<fr1_r18_s_, fr2_r18_s_>> c;
     };
 
     // member variables
@@ -10231,19 +9096,17 @@ struct band_nr_s {
   };
   struct multi_pusch_cg_r18_opts {
     enum options { n16, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using multi_pusch_cg_r18_e_ = enumerated<multi_pusch_cg_r18_opts>;
   struct multi_pusch_active_cfg_grant_r18_s_ {
     struct max_num_cfgs_per_bwp_opts {
       enum options { n1, n2, n4, n8, n12, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_cfgs_per_bwp_e_ = enumerated<max_num_cfgs_per_bwp_opts>;
 
@@ -10255,18 +9118,16 @@ struct band_nr_s {
   struct nr_pdcch_overlap_lte_crs_re_r18_s_ {
     struct overlap_in_re_r18_opts {
       enum options { one_symbol_no_overlap, some_or_all_sym_overlap, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using overlap_in_re_r18_e_ = enumerated<overlap_in_re_r18_opts>;
     struct overlap_in_symbol_r18_opts {
       enum options { symbol2, symbol1_and2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using overlap_in_symbol_r18_e_ = enumerated<overlap_in_symbol_r18_opts>;
 
@@ -10282,26 +9143,23 @@ struct band_nr_s {
     struct fr1_r18_s_ {
       struct scs_15k_hz_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_15k_hz_r18_e_ = enumerated<scs_15k_hz_r18_opts>;
       struct scs_30k_hz_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_30k_hz_r18_e_ = enumerated<scs_30k_hz_r18_opts>;
       struct scs_60k_hz_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
 
@@ -10316,18 +9174,16 @@ struct band_nr_s {
     struct fr2_r18_s_ {
       struct scs_60k_hz_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
       struct scs_120k_hz_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
 
@@ -10346,19 +9202,17 @@ struct band_nr_s {
   using lower_msd_endc_r18_l_ = dyn_array<lower_msd_r18_s>;
   struct fast_beam_sweeping_multi_rx_r18_opts {
     enum options { n2, n4, n6, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using fast_beam_sweeping_multi_rx_r18_e_ = enumerated<fast_beam_sweeping_multi_rx_r18_opts>;
   struct beam_sweeping_factor_reduction_r18_s_ {
     struct reduce_for_cell_detection_opts {
       enum options { n1, n2, n4, n6, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using reduce_for_cell_detection_e_ = enumerated<reduce_for_cell_detection_opts>;
 
@@ -10369,10 +9223,9 @@ struct band_nr_s {
   struct ltm_fast_processing_cfg_r18_s_ {
     struct max_num_stored_cfg_cells_r18_opts {
       enum options { n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_stored_cfg_cells_r18_e_ = enumerated<max_num_stored_cfg_cells_r18_opts>;
 
@@ -10392,52 +9245,41 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1_100mhz, fr2_200mhz, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bw_dl_ncr_r18_c_() = default;
-    ch_bw_dl_ncr_r18_c_(const ch_bw_dl_ncr_r18_c_& other);
-    ch_bw_dl_ncr_r18_c_& operator=(const ch_bw_dl_ncr_r18_c_& other);
-    ~ch_bw_dl_ncr_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_100mhz_s_& fr1_100mhz()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_100mhz_s_&                                fr1_100mhz()
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-DL-NCR-r18");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-DL-NCR-r18");
       return c.get<fr1_100mhz_s_>();
     }
     fr2_200mhz_s_& fr2_200mhz()
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-DL-NCR-r18");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-DL-NCR-r18");
       return c.get<fr2_200mhz_s_>();
     }
     const fr1_100mhz_s_& fr1_100mhz() const
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-DL-NCR-r18");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-DL-NCR-r18");
       return c.get<fr1_100mhz_s_>();
     }
     const fr2_200mhz_s_& fr2_200mhz() const
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-DL-NCR-r18");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-DL-NCR-r18");
       return c.get<fr2_200mhz_s_>();
     }
     fr1_100mhz_s_& set_fr1_100mhz();
     fr2_200mhz_s_& set_fr2_200mhz();
 
   private:
-    types                                         type_;
-    choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bw_dl_ncr_r18_c_, types, choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_>> c;
   };
   struct ch_bw_ul_ncr_r18_c_ {
     struct fr1_100mhz_s_ {
@@ -10451,58 +9293,47 @@ struct band_nr_s {
     };
     struct types_opts {
       enum options { fr1_100mhz, fr2_200mhz, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    ch_bw_ul_ncr_r18_c_() = default;
-    ch_bw_ul_ncr_r18_c_(const ch_bw_ul_ncr_r18_c_& other);
-    ch_bw_ul_ncr_r18_c_& operator=(const ch_bw_ul_ncr_r18_c_& other);
-    ~ch_bw_ul_ncr_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    fr1_100mhz_s_& fr1_100mhz()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    fr1_100mhz_s_&                                fr1_100mhz()
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-UL-NCR-r18");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-UL-NCR-r18");
       return c.get<fr1_100mhz_s_>();
     }
     fr2_200mhz_s_& fr2_200mhz()
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-UL-NCR-r18");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-UL-NCR-r18");
       return c.get<fr2_200mhz_s_>();
     }
     const fr1_100mhz_s_& fr1_100mhz() const
     {
-      assert_choice_type(types::fr1_100mhz, type_, "channelBW-UL-NCR-r18");
+      assert_choice_type(types::fr1_100mhz, c.type, "channelBW-UL-NCR-r18");
       return c.get<fr1_100mhz_s_>();
     }
     const fr2_200mhz_s_& fr2_200mhz() const
     {
-      assert_choice_type(types::fr2_200mhz, type_, "channelBW-UL-NCR-r18");
+      assert_choice_type(types::fr2_200mhz, c.type, "channelBW-UL-NCR-r18");
       return c.get<fr2_200mhz_s_>();
     }
     fr1_100mhz_s_& set_fr1_100mhz();
     fr2_200mhz_s_& set_fr2_200mhz();
 
   private:
-    types                                         type_;
-    choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_> c;
-
-    void destroy_();
+    asn1::table::choice_storage<ch_bw_ul_ncr_r18_c_, types, choice_buffer_t<fr1_100mhz_s_, fr2_200mhz_s_>> c;
   };
   struct ltm_mac_ce_joint_tci_r18_s_ {
     struct qcl_res_r18_opts {
       enum options { ssb, trs, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using qcl_res_r18_e_ = enumerated<qcl_res_r18_opts>;
 
@@ -10515,7 +9346,7 @@ struct band_nr_s {
     struct qcl_res_r18_opts {
       enum options { ssb, trs, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using qcl_res_r18_e_ = enumerated<qcl_res_r18_opts>;
 
@@ -10848,10 +9679,7 @@ struct band_nr_s {
   // group 19
   bool pos_srs_tx_fh_with_time_win_for_red_cap_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SharedSpectrumChAccessParamsSidelinkPerBand-r18 ::= SEQUENCE
@@ -10859,18 +9687,16 @@ struct shared_spec_ch_access_params_sidelink_per_band_r18_s {
   struct sl_multiple_prb_common_interlace_psfch_r18_s_ {
     struct tx_total_prb_psfch_r18_opts {
       enum options { n4, n5, n8, n15, n16, n20, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using tx_total_prb_psfch_r18_e_ = enumerated<tx_total_prb_psfch_r18_opts>;
     struct rx_total_prb_psfch_r18_opts {
       enum options { n5, n6, n15, n16, n25, n26, n32, n35, n45, n46, n50, n64, n65, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using rx_total_prb_psfch_r18_e_ = enumerated<rx_total_prb_psfch_r18_opts>;
 
@@ -10901,10 +9727,7 @@ struct shared_spec_ch_access_params_sidelink_per_band_r18_s {
   sl_multiple_prb_common_interlace_psfch_r18_s_ sl_multiple_prb_common_interlace_psfch_r18;
   sl_multiple_prb_ded_interlace_psfch_r18_s_    sl_multiple_prb_ded_interlace_psfch_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandSidelink-r16 ::= SEQUENCE
@@ -10912,18 +9735,16 @@ struct band_sidelink_r16_s {
   struct sl_reception_r16_s_ {
     struct harq_rx_process_sidelink_r16_opts {
       enum options { n16, n24, n32, n48, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using harq_rx_process_sidelink_r16_e_ = enumerated<harq_rx_process_sidelink_r16_opts>;
     struct pscch_rx_sidelink_r16_opts {
       enum options { value1, value2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pscch_rx_sidelink_r16_e_ = enumerated<pscch_rx_sidelink_r16_opts>;
     struct scs_cp_pattern_rx_sidelink_r16_c_ {
@@ -10943,52 +9764,41 @@ struct band_sidelink_r16_s {
       };
       struct types_opts {
         enum options { fr1_r16, fr2_r16, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      scs_cp_pattern_rx_sidelink_r16_c_() = default;
-      scs_cp_pattern_rx_sidelink_r16_c_(const scs_cp_pattern_rx_sidelink_r16_c_& other);
-      scs_cp_pattern_rx_sidelink_r16_c_& operator=(const scs_cp_pattern_rx_sidelink_r16_c_& other);
-      ~scs_cp_pattern_rx_sidelink_r16_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r16_s_& fr1_r16()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r16_s_&                                   fr1_r16()
       {
-        assert_choice_type(types::fr1_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr1_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr1_r16_s_>();
       }
       fr2_r16_s_& fr2_r16()
       {
-        assert_choice_type(types::fr2_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr2_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr2_r16_s_>();
       }
       const fr1_r16_s_& fr1_r16() const
       {
-        assert_choice_type(types::fr1_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr1_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr1_r16_s_>();
       }
       const fr2_r16_s_& fr2_r16() const
       {
-        assert_choice_type(types::fr2_r16, type_, "scs-CP-PatternRxSidelink-r16");
+        assert_choice_type(types::fr2_r16, c.type, "scs-CP-PatternRxSidelink-r16");
         return c.get<fr2_r16_s_>();
       }
       fr1_r16_s_& set_fr1_r16();
       fr2_r16_s_& set_fr2_r16();
 
     private:
-      types                                   type_;
-      choice_buffer_t<fr1_r16_s_, fr2_r16_s_> c;
-
-      void destroy_();
+      asn1::table::choice_storage<scs_cp_pattern_rx_sidelink_r16_c_, types, choice_buffer_t<fr1_r16_s_, fr2_r16_s_>> c;
     };
 
     // member variables
@@ -11001,10 +9811,9 @@ struct band_sidelink_r16_s {
   struct sl_tx_mode1_r16_s_ {
     struct harq_tx_process_mode_one_sidelink_r16_opts {
       enum options { n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using harq_tx_process_mode_one_sidelink_r16_e_ = enumerated<harq_tx_process_mode_one_sidelink_r16_opts>;
     struct scs_cp_pattern_tx_sidelink_mode_one_r16_c_ {
@@ -11024,52 +9833,43 @@ struct band_sidelink_r16_s {
       };
       struct types_opts {
         enum options { fr1_r16, fr2_r16, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      scs_cp_pattern_tx_sidelink_mode_one_r16_c_() = default;
-      scs_cp_pattern_tx_sidelink_mode_one_r16_c_(const scs_cp_pattern_tx_sidelink_mode_one_r16_c_& other);
-      scs_cp_pattern_tx_sidelink_mode_one_r16_c_& operator=(const scs_cp_pattern_tx_sidelink_mode_one_r16_c_& other);
-      ~scs_cp_pattern_tx_sidelink_mode_one_r16_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r16_s_& fr1_r16()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r16_s_&                                   fr1_r16()
       {
-        assert_choice_type(types::fr1_r16, type_, "scs-CP-PatternTxSidelinkModeOne-r16");
+        assert_choice_type(types::fr1_r16, c.type, "scs-CP-PatternTxSidelinkModeOne-r16");
         return c.get<fr1_r16_s_>();
       }
       fr2_r16_s_& fr2_r16()
       {
-        assert_choice_type(types::fr2_r16, type_, "scs-CP-PatternTxSidelinkModeOne-r16");
+        assert_choice_type(types::fr2_r16, c.type, "scs-CP-PatternTxSidelinkModeOne-r16");
         return c.get<fr2_r16_s_>();
       }
       const fr1_r16_s_& fr1_r16() const
       {
-        assert_choice_type(types::fr1_r16, type_, "scs-CP-PatternTxSidelinkModeOne-r16");
+        assert_choice_type(types::fr1_r16, c.type, "scs-CP-PatternTxSidelinkModeOne-r16");
         return c.get<fr1_r16_s_>();
       }
       const fr2_r16_s_& fr2_r16() const
       {
-        assert_choice_type(types::fr2_r16, type_, "scs-CP-PatternTxSidelinkModeOne-r16");
+        assert_choice_type(types::fr2_r16, c.type, "scs-CP-PatternTxSidelinkModeOne-r16");
         return c.get<fr2_r16_s_>();
       }
       fr1_r16_s_& set_fr1_r16();
       fr2_r16_s_& set_fr2_r16();
 
     private:
-      types                                   type_;
-      choice_buffer_t<fr1_r16_s_, fr2_r16_s_> c;
-
-      void destroy_();
+      asn1::table::
+          choice_storage<scs_cp_pattern_tx_sidelink_mode_one_r16_c_, types, choice_buffer_t<fr1_r16_s_, fr2_r16_s_>>
+              c;
     };
 
     // member variables
@@ -11086,18 +9886,16 @@ struct band_sidelink_r16_s {
   struct psfch_format_zero_sidelink_r16_s_ {
     struct psfch_rx_num_opts {
       enum options { n5, n15, n25, n32, n35, n45, n50, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using psfch_rx_num_e_ = enumerated<psfch_rx_num_opts>;
     struct psfch_tx_num_opts {
       enum options { n4, n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using psfch_tx_num_e_ = enumerated<psfch_tx_num_opts>;
 
@@ -11108,10 +9906,9 @@ struct band_sidelink_r16_s {
   struct sl_tx_mode2_r16_s_ {
     struct harq_tx_process_mode_two_sidelink_r16_opts {
       enum options { n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using harq_tx_process_mode_two_sidelink_r16_e_ = enumerated<harq_tx_process_mode_two_sidelink_r16_opts>;
 
@@ -11123,10 +9920,9 @@ struct band_sidelink_r16_s {
   struct congestion_ctrl_sidelink_r16_s_ {
     struct cbr_cr_time_limit_sidelink_r16_opts {
       enum options { time1, time2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using cbr_cr_time_limit_sidelink_r16_e_ = enumerated<cbr_cr_time_limit_sidelink_r16_opts>;
 
@@ -11136,19 +9932,17 @@ struct band_sidelink_r16_s {
   };
   struct ue_pwr_class_sidelink_r16_opts {
     enum options { pc2, pc3, pc5_v1820, spare5, spare4, spare3, spare2, spare1, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ue_pwr_class_sidelink_r16_e_ = enumerated<ue_pwr_class_sidelink_r16_opts>;
   struct sl_tx_mode2_random_res_sel_r17_s_ {
     struct harq_tx_process_mode_two_sidelink_r17_opts {
       enum options { n8, n16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using harq_tx_process_mode_two_sidelink_r17_e_ = enumerated<harq_tx_process_mode_two_sidelink_r17_opts>;
     struct scs_cp_pattern_tx_sidelink_mode_two_r17_c_ {
@@ -11168,52 +9962,43 @@ struct band_sidelink_r16_s {
       };
       struct types_opts {
         enum options { fr1_r17, fr2_r17, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      scs_cp_pattern_tx_sidelink_mode_two_r17_c_() = default;
-      scs_cp_pattern_tx_sidelink_mode_two_r17_c_(const scs_cp_pattern_tx_sidelink_mode_two_r17_c_& other);
-      scs_cp_pattern_tx_sidelink_mode_two_r17_c_& operator=(const scs_cp_pattern_tx_sidelink_mode_two_r17_c_& other);
-      ~scs_cp_pattern_tx_sidelink_mode_two_r17_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r17_s_& fr1_r17()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r17_s_&                                   fr1_r17()
       {
-        assert_choice_type(types::fr1_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr1_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr1_r17_s_>();
       }
       fr2_r17_s_& fr2_r17()
       {
-        assert_choice_type(types::fr2_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr2_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr2_r17_s_>();
       }
       const fr1_r17_s_& fr1_r17() const
       {
-        assert_choice_type(types::fr1_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr1_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr1_r17_s_>();
       }
       const fr2_r17_s_& fr2_r17() const
       {
-        assert_choice_type(types::fr2_r17, type_, "scs-CP-PatternTxSidelinkModeTwo-r17");
+        assert_choice_type(types::fr2_r17, c.type, "scs-CP-PatternTxSidelinkModeTwo-r17");
         return c.get<fr2_r17_s_>();
       }
       fr1_r17_s_& set_fr1_r17();
       fr2_r17_s_& set_fr2_r17();
 
     private:
-      types                                   type_;
-      choice_buffer_t<fr1_r17_s_, fr2_r17_s_> c;
-
-      void destroy_();
+      asn1::table::
+          choice_storage<scs_cp_pattern_tx_sidelink_mode_two_r17_c_, types, choice_buffer_t<fr1_r17_s_, fr2_r17_s_>>
+              c;
     };
 
     // member variables
@@ -11231,219 +10016,176 @@ struct band_sidelink_r16_s {
   };
   struct rx_iuc_scheme2_mode2_sidelink_r17_opts {
     enum options { n5, n15, n25, n32, n35, n45, n50, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using rx_iuc_scheme2_mode2_sidelink_r17_e_ = enumerated<rx_iuc_scheme2_mode2_sidelink_r17_opts>;
   struct sl_prs_common_proc_cap_per_band_r18_s_ {
     struct max_sl_prs_bw_r18_c_ {
       struct fr1_r18_opts {
         enum options { mhz5, mhz10, mhz20, mhz40, mhz50, mhz80, mhz100, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr1_r18_e_ = enumerated<fr1_r18_opts>;
       struct fr2_r18_opts {
         enum options { mhz50, mhz100, mhz200, mhz400, nulltype } value;
-        typedef uint16_t number_type;
 
-        const char* to_string() const;
-        uint16_t    to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint16_t                            to_number() const;
       };
       using fr2_r18_e_ = enumerated<fr2_r18_opts>;
       struct types_opts {
         enum options { fr1_r18, fr2_r18, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      max_sl_prs_bw_r18_c_() = default;
-      max_sl_prs_bw_r18_c_(const max_sl_prs_bw_r18_c_& other);
-      max_sl_prs_bw_r18_c_& operator=(const max_sl_prs_bw_r18_c_& other);
-      ~max_sl_prs_bw_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r18_e_& fr1_r18()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r18_e_&                                   fr1_r18()
       {
-        assert_choice_type(types::fr1_r18, type_, "maxSL-PRS-Bandwidth-r18");
+        assert_choice_type(types::fr1_r18, c.type, "maxSL-PRS-Bandwidth-r18");
         return c.get<fr1_r18_e_>();
       }
       fr2_r18_e_& fr2_r18()
       {
-        assert_choice_type(types::fr2_r18, type_, "maxSL-PRS-Bandwidth-r18");
+        assert_choice_type(types::fr2_r18, c.type, "maxSL-PRS-Bandwidth-r18");
         return c.get<fr2_r18_e_>();
       }
       const fr1_r18_e_& fr1_r18() const
       {
-        assert_choice_type(types::fr1_r18, type_, "maxSL-PRS-Bandwidth-r18");
+        assert_choice_type(types::fr1_r18, c.type, "maxSL-PRS-Bandwidth-r18");
         return c.get<fr1_r18_e_>();
       }
       const fr2_r18_e_& fr2_r18() const
       {
-        assert_choice_type(types::fr2_r18, type_, "maxSL-PRS-Bandwidth-r18");
+        assert_choice_type(types::fr2_r18, c.type, "maxSL-PRS-Bandwidth-r18");
         return c.get<fr2_r18_e_>();
       }
       fr1_r18_e_& set_fr1_r18();
       fr2_r18_e_& set_fr2_r18();
 
     private:
-      types               type_;
-      pod_choice_buffer_t c;
-
-      void destroy_();
+      asn1::table::choice_storage<max_sl_prs_bw_r18_c_, types, pod_choice_buffer_t> c;
     };
     struct max_num_of_active_sl_prs_res_in_one_slot_r18_c_ {
       struct fr1_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr1_r18_e_ = enumerated<fr1_r18_opts>;
       struct fr2_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr2_r18_e_ = enumerated<fr2_r18_opts>;
       struct types_opts {
         enum options { fr1_r18, fr2_r18, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      max_num_of_active_sl_prs_res_in_one_slot_r18_c_() = default;
-      max_num_of_active_sl_prs_res_in_one_slot_r18_c_(const max_num_of_active_sl_prs_res_in_one_slot_r18_c_& other);
-      max_num_of_active_sl_prs_res_in_one_slot_r18_c_&
-      operator=(const max_num_of_active_sl_prs_res_in_one_slot_r18_c_& other);
-      ~max_num_of_active_sl_prs_res_in_one_slot_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r18_e_& fr1_r18()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r18_e_&                                   fr1_r18()
       {
-        assert_choice_type(types::fr1_r18, type_, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
+        assert_choice_type(types::fr1_r18, c.type, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
         return c.get<fr1_r18_e_>();
       }
       fr2_r18_e_& fr2_r18()
       {
-        assert_choice_type(types::fr2_r18, type_, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
+        assert_choice_type(types::fr2_r18, c.type, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
         return c.get<fr2_r18_e_>();
       }
       const fr1_r18_e_& fr1_r18() const
       {
-        assert_choice_type(types::fr1_r18, type_, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
+        assert_choice_type(types::fr1_r18, c.type, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
         return c.get<fr1_r18_e_>();
       }
       const fr2_r18_e_& fr2_r18() const
       {
-        assert_choice_type(types::fr2_r18, type_, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
+        assert_choice_type(types::fr2_r18, c.type, "maxNumOfActiveSL-PRS-ResourcesInOneSlot-r18");
         return c.get<fr2_r18_e_>();
       }
       fr1_r18_e_& set_fr1_r18();
       fr2_r18_e_& set_fr2_r18();
 
     private:
-      types               type_;
-      pod_choice_buffer_t c;
-
-      void destroy_();
+      asn1::table::choice_storage<max_num_of_active_sl_prs_res_in_one_slot_r18_c_, types, pod_choice_buffer_t> c;
     };
     struct max_num_of_slots_with_active_sl_prs_res_r18_c_ {
       struct fr1_r18_opts {
         enum options { n1, n2, n3, n4, n6, n8, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr1_r18_e_ = enumerated<fr1_r18_opts>;
       struct fr2_r18_opts {
         enum options { n1, n2, n4, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr2_r18_e_ = enumerated<fr2_r18_opts>;
       struct types_opts {
         enum options { fr1_r18, fr2_r18, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using types = enumerated<types_opts>;
 
-      // choice methods
-      max_num_of_slots_with_active_sl_prs_res_r18_c_() = default;
-      max_num_of_slots_with_active_sl_prs_res_r18_c_(const max_num_of_slots_with_active_sl_prs_res_r18_c_& other);
-      max_num_of_slots_with_active_sl_prs_res_r18_c_&
-      operator=(const max_num_of_slots_with_active_sl_prs_res_r18_c_& other);
-      ~max_num_of_slots_with_active_sl_prs_res_r18_c_() { destroy_(); }
-      void          set(types::options e = types::nulltype);
-      types         type() const { return type_; }
-      OCUDUASN_CODE pack(bit_ref& bref) const;
-      OCUDUASN_CODE unpack(cbit_ref& bref);
-      void          to_json(json_writer& j) const;
-      // getters
-      fr1_r18_e_& fr1_r18()
+      static const asn1::table::choice_storage_desc storage_desc;
+      void                                          set(types::options e = types::nulltype) { c.set(e); }
+      types                                         type() const { return c.type; }
+      static const asn1::table::choice_desc         desc;
+      fr1_r18_e_&                                   fr1_r18()
       {
-        assert_choice_type(types::fr1_r18, type_, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
+        assert_choice_type(types::fr1_r18, c.type, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
         return c.get<fr1_r18_e_>();
       }
       fr2_r18_e_& fr2_r18()
       {
-        assert_choice_type(types::fr2_r18, type_, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
+        assert_choice_type(types::fr2_r18, c.type, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
         return c.get<fr2_r18_e_>();
       }
       const fr1_r18_e_& fr1_r18() const
       {
-        assert_choice_type(types::fr1_r18, type_, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
+        assert_choice_type(types::fr1_r18, c.type, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
         return c.get<fr1_r18_e_>();
       }
       const fr2_r18_e_& fr2_r18() const
       {
-        assert_choice_type(types::fr2_r18, type_, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
+        assert_choice_type(types::fr2_r18, c.type, "maxNumOfSlotsWithActiveSL-PRS-Resources-r18");
         return c.get<fr2_r18_e_>();
       }
       fr1_r18_e_& set_fr1_r18();
       fr2_r18_e_& set_fr2_r18();
 
     private:
-      types               type_;
-      pod_choice_buffer_t c;
-
-      void destroy_();
+      asn1::table::choice_storage<max_num_of_slots_with_active_sl_prs_res_r18_c_, types, pod_choice_buffer_t> c;
     };
     struct min_time_after_endof_slot_carry_active_sl_prs_res_r18_opts {
       enum options { ms20, ms30, ms40, ms50, ms80, ms100, ms160, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using min_time_after_endof_slot_carry_active_sl_prs_res_r18_e_ =
         enumerated<min_time_after_endof_slot_carry_active_sl_prs_res_r18_opts>;
@@ -11457,16 +10199,15 @@ struct band_sidelink_r16_s {
   struct sl_prs_rx_in_ded_res_pool_r18_s_ {
     struct num_of_supported_rx_pscch_per_slot_r18_opts {
       enum options { value1, value2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using num_of_supported_rx_pscch_per_slot_r18_e_ = enumerated<num_of_supported_rx_pscch_per_slot_r18_opts>;
     struct supported_cp_type_for60k_hz_scs_r18_opts {
       enum options { ncp, ncp_and_e_cp, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using supported_cp_type_for60k_hz_scs_r18_e_ = enumerated<supported_cp_type_for60k_hz_scs_r18_opts>;
 
@@ -11476,27 +10217,24 @@ struct band_sidelink_r16_s {
   };
   struct sl_prs_congestion_ctrl_r18_opts {
     enum options { cpt1, cpt2, cpt3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using sl_prs_congestion_ctrl_r18_e_ = enumerated<sl_prs_congestion_ctrl_r18_opts>;
   struct sl_prs_tx_using_full_sensing_r18_opts {
     enum options { value1, value2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using sl_prs_tx_using_full_sensing_r18_e_ = enumerated<sl_prs_tx_using_full_sensing_r18_opts>;
   struct sl_ca_communication_r18_s_ {
     struct total_bw_r18_opts {
       enum options { mhz20, mhz30, mhz40, mhz50, mhz60, mhz70, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using total_bw_r18_e_ = enumerated<total_bw_r18_opts>;
 
@@ -11508,18 +10246,16 @@ struct band_sidelink_r16_s {
   struct sl_ca_psfch_r18_s_ {
     struct rx_psfch_res_r18_opts {
       enum options { n5, n15, n25, n32, n35, n45, n50, n64, n100, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using rx_psfch_res_r18_e_ = enumerated<rx_psfch_res_r18_opts>;
     struct tx_psfch_res_r18_opts {
       enum options { n4, n8, n16, n24, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using tx_psfch_res_r18_e_ = enumerated<tx_psfch_res_r18_opts>;
 
@@ -11584,10 +10320,7 @@ struct band_sidelink_r16_s {
   // group 4
   bool sl_pathloss_based_olpc_sl_rsrp_report_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // BandSidelinkEUTRA-r16 ::= SEQUENCE
@@ -11615,11 +10348,10 @@ struct band_sidelink_eutra_r16_s {
         ms20,
         nulltype
       } value;
-      typedef float number_type;
 
-      const char* to_string() const;
-      float       to_number() const;
-      const char* to_number_string() const;
+      static const asn1::table::enum_desc desc;
+      float                               to_number() const;
+      const char*                         to_number_string() const;
     };
     using gnb_sched_mode3_delay_sidelink_eutra_r16_e_ = enumerated<gnb_sched_mode3_delay_sidelink_eutra_r16_opts>;
 
@@ -11633,10 +10365,7 @@ struct band_sidelink_eutra_r16_s {
   uint16_t                              freq_band_sidelink_eutra_r16               = 1;
   gnb_sched_mode3_sidelink_eutra_r16_s_ gnb_sched_mode3_sidelink_eutra_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CRS-InterfMitigation-r17 ::= SEQUENCE
@@ -11647,10 +10376,7 @@ struct crs_interf_mitigation_r17_s {
   bool crs_im_non_dss_30k_hz_scs_r17_present     = false;
   bool crs_im_non_dss_nwa_30k_hz_scs_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CarrierAggregationVariant ::= SEQUENCE
@@ -11665,10 +10391,7 @@ struct carrier_aggregation_variant_s {
   bool fr1fdd_fr1_tdd_fr2_tdd_ca_sp_cell_on_fr1_tdd_present = false;
   bool fr1fdd_fr1_tdd_fr2_tdd_ca_sp_cell_on_fr2_tdd_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // CodebookVariantsList-r16 ::= SEQUENCE (SIZE (1..512)) OF SupportedCSI-RS-Resource
@@ -11680,24 +10403,22 @@ struct dummy_pdcch_rach_dl_info_r18_c {
     struct pdcch_rach_affected_bands_r18_opts {
       enum options { no_intrruption, interruption, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using pdcch_rach_affected_bands_r18_e_ = enumerated<pdcch_rach_affected_bands_r18_opts>;
     struct pdcch_rach_switching_time_list_r18_opts {
       enum options { ms0, ms0dot25, ms0dot5, ms1, ms2, nulltype } value;
-      typedef float number_type;
 
-      const char* to_string() const;
-      float       to_number() const;
-      const char* to_number_string() const;
+      static const asn1::table::enum_desc desc;
+      float                               to_number() const;
+      const char*                         to_number_string() const;
     };
     using pdcch_rach_switching_time_list_r18_e_ = enumerated<pdcch_rach_switching_time_list_r18_opts>;
     struct pdcch_rach_prep_time_r18_opts {
       enum options { ms1, ms3, ms5, ms10, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pdcch_rach_prep_time_r18_e_ = enumerated<pdcch_rach_prep_time_r18_opts>;
 
@@ -11711,19 +10432,14 @@ struct dummy_pdcch_rach_dl_info_r18_c {
   struct types_opts {
     enum options { not_supported, supported, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  dummy_pdcch_rach_dl_info_r18_c() = default;
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  supported_s_& supported()
+  void                                  set(types::options e = types::nulltype);
+  types                                 type() const { return type_; }
+  static const asn1::table::choice_desc desc;
+  supported_s_&                         supported()
   {
     assert_choice_type(types::supported, type_, "Dummy-PDCCH-RACH-DL-Info-r18");
     return c;
@@ -11782,18 +10498,16 @@ struct dummy_a_s {
       p256,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_num_ports_across_nzp_csi_rs_per_cc_e_ = enumerated<max_num_ports_across_nzp_csi_rs_per_cc_opts>;
   struct max_num_cs_im_per_cc_opts {
     enum options { n1, n2, n4, n8, n16, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_cs_im_per_cc_e_ = enumerated<max_num_cs_im_per_cc_opts>;
   struct max_num_simul_csi_rs_act_bwp_all_cc_opts {
@@ -11833,10 +10547,9 @@ struct dummy_a_s {
       n64,
       nulltype
     } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_simul_csi_rs_act_bwp_all_cc_e_ = enumerated<max_num_simul_csi_rs_act_bwp_all_cc_opts>;
   struct total_num_ports_simul_csi_rs_act_bwp_all_cc_opts {
@@ -11876,10 +10589,9 @@ struct dummy_a_s {
       p256,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using total_num_ports_simul_csi_rs_act_bwp_all_cc_e_ = enumerated<total_num_ports_simul_csi_rs_act_bwp_all_cc_opts>;
 
@@ -11890,26 +10602,22 @@ struct dummy_a_s {
   max_num_simul_csi_rs_act_bwp_all_cc_e_         max_num_simul_csi_rs_act_bwp_all_cc;
   total_num_ports_simul_csi_rs_act_bwp_all_cc_e_ total_num_ports_simul_csi_rs_act_bwp_all_cc;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DummyB ::= SEQUENCE
 struct dummy_b_s {
   struct max_num_tx_ports_per_res_opts {
     enum options { p2, p4, p8, p12, p16, p24, p32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_tx_ports_per_res_e_ = enumerated<max_num_tx_ports_per_res_opts>;
   struct supported_codebook_mode_opts {
     enum options { mode1, mode1_and_mode2, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using supported_codebook_mode_e_ = enumerated<supported_codebook_mode_opts>;
 
@@ -11920,36 +10628,30 @@ struct dummy_b_s {
   supported_codebook_mode_e_  supported_codebook_mode;
   uint8_t                     max_num_csi_rs_per_res_set = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DummyC ::= SEQUENCE
 struct dummy_c_s {
   struct max_num_tx_ports_per_res_opts {
     enum options { p8, p16, p32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_tx_ports_per_res_e_ = enumerated<max_num_tx_ports_per_res_opts>;
   struct supported_codebook_mode_opts {
     enum options { mode1, mode2, both, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using supported_codebook_mode_e_ = enumerated<supported_codebook_mode_opts>;
   struct supported_num_panels_opts {
     enum options { n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using supported_num_panels_e_ = enumerated<supported_num_panels_opts>;
 
@@ -11961,26 +10663,22 @@ struct dummy_c_s {
   supported_num_panels_e_     supported_num_panels;
   uint8_t                     max_num_csi_rs_per_res_set = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DummyD ::= SEQUENCE
 struct dummy_d_s {
   struct max_num_tx_ports_per_res_opts {
     enum options { p4, p8, p12, p16, p24, p32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_tx_ports_per_res_e_ = enumerated<max_num_tx_ports_per_res_opts>;
   struct amplitude_scaling_type_opts {
     enum options { wideband, wideband_and_subband, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using amplitude_scaling_type_e_ = enumerated<amplitude_scaling_type_opts>;
 
@@ -11993,26 +10691,22 @@ struct dummy_d_s {
   amplitude_scaling_type_e_   amplitude_scaling_type;
   uint8_t                     max_num_csi_rs_per_res_set = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DummyE ::= SEQUENCE
 struct dummy_e_s {
   struct max_num_tx_ports_per_res_opts {
     enum options { p4, p8, p12, p16, p24, p32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_tx_ports_per_res_e_ = enumerated<max_num_tx_ports_per_res_opts>;
   struct amplitude_scaling_type_opts {
     enum options { wideband, wideband_and_subband, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using amplitude_scaling_type_e_ = enumerated<amplitude_scaling_type_opts>;
 
@@ -12024,10 +10718,7 @@ struct dummy_e_s {
   amplitude_scaling_type_e_   amplitude_scaling_type;
   uint8_t                     max_num_csi_rs_per_res_set = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DummyF ::= SEQUENCE
@@ -12037,10 +10728,7 @@ struct dummy_f_s {
   uint8_t max_num_semi_persistent_csi_report_per_bwp = 0;
   uint8_t simul_csi_reports_all_cc                   = 5;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // DummyI ::= SEQUENCE
@@ -12048,7 +10736,7 @@ struct dummy_i_s {
   struct supported_srs_tx_port_switch_opts {
     enum options { t1r2, t1r4, t2r4, t1r4_t2r4, tr_equal, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using supported_srs_tx_port_switch_e_ = enumerated<supported_srs_tx_port_switch_opts>;
 
@@ -12056,10 +10744,7 @@ struct dummy_i_s {
   bool                            tx_switch_impact_to_rx_present = false;
   supported_srs_tx_port_switch_e_ supported_srs_tx_port_switch;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ERedCapParameters-r18 ::= SEQUENCE
@@ -12067,10 +10752,7 @@ struct e_red_cap_params_r18_s {
   bool ered_cap_not_reduced_bb_bw_r18_present  = false;
   bool ered_cap_ignore_cap_filting_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EUTRA-ParametersCommon ::= SEQUENCE
@@ -12086,10 +10768,7 @@ struct eutra_params_common_s {
   // group 1
   bool nr_ho_to_en_dc_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EUTRA-ParametersXDD-Diff ::= SEQUENCE
@@ -12097,10 +10776,7 @@ struct eutra_params_xdd_diff_s {
   bool rsrq_meas_wideband_eutra_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // EUTRA-Parameters ::= SEQUENCE
@@ -12115,10 +10791,7 @@ struct eutra_params_s {
   eutra_params_xdd_diff_s      eutra_params_xdd_diff;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSet ::= CHOICE
@@ -12134,49 +10807,39 @@ struct feature_set_c {
   struct types_opts {
     enum options { eutra, nr, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  feature_set_c() = default;
-  feature_set_c(const feature_set_c& other);
-  feature_set_c& operator=(const feature_set_c& other);
-  ~feature_set_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  eutra_s_& eutra()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  eutra_s_&                                     eutra()
   {
-    assert_choice_type(types::eutra, type_, "FeatureSet");
+    assert_choice_type(types::eutra, c.type, "FeatureSet");
     return c.get<eutra_s_>();
   }
   nr_s_& nr()
   {
-    assert_choice_type(types::nr, type_, "FeatureSet");
+    assert_choice_type(types::nr, c.type, "FeatureSet");
     return c.get<nr_s_>();
   }
   const eutra_s_& eutra() const
   {
-    assert_choice_type(types::eutra, type_, "FeatureSet");
+    assert_choice_type(types::eutra, c.type, "FeatureSet");
     return c.get<eutra_s_>();
   }
   const nr_s_& nr() const
   {
-    assert_choice_type(types::nr, type_, "FeatureSet");
+    assert_choice_type(types::nr, c.type, "FeatureSet");
     return c.get<nr_s_>();
   }
   eutra_s_& set_eutra();
   nr_s_&    set_nr();
 
 private:
-  types                            type_;
-  choice_buffer_t<eutra_s_, nr_s_> c;
-
-  void destroy_();
+  asn1::table::choice_storage<feature_set_c, types, choice_buffer_t<eutra_s_, nr_s_>> c;
 };
 
 // FeatureSetsPerBand ::= SEQUENCE (SIZE (1..128)) OF FeatureSet
@@ -12188,10 +10851,9 @@ using feature_set_combination_l = dyn_array<feature_sets_per_band_l>;
 // FreqSeparationClass ::= ENUMERATED
 struct freq_separation_class_opts {
   enum options { mhz800, mhz1200, mhz1400, /*...*/ mhz400_v1650, mhz600_v1650, nulltype } value;
-  typedef uint16_t number_type;
 
-  const char* to_string() const;
-  uint16_t    to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint16_t                            to_number() const;
 };
 using freq_separation_class_e = enumerated<freq_separation_class_opts, true, 2>;
 
@@ -12201,30 +10863,28 @@ struct feature_set_dl_s {
   struct scaling_factor_opts {
     enum options { f0p4, f0p75, f0p8, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using scaling_factor_e_ = enumerated<scaling_factor_opts>;
   struct pdcch_monitoring_any_occasions_opts {
     enum options { without_dci_gap, with_dci_gap, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using pdcch_monitoring_any_occasions_e_ = enumerated<pdcch_monitoring_any_occasions_opts>;
   struct time_dur_for_qcl_s_ {
     struct scs_60k_hz_opts {
       enum options { s7, s14, s28, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
     struct scs_120k_hz_opts {
       enum options { s14, s28, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
 
@@ -12237,34 +10897,30 @@ struct feature_set_dl_s {
   struct pdsch_processing_type1_different_tb_per_slot_s_ {
     struct scs_15k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_e_ = enumerated<scs_15k_hz_opts>;
     struct scs_30k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_e_ = enumerated<scs_30k_hz_opts>;
     struct scs_60k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
     struct scs_120k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
 
@@ -12310,20 +10966,16 @@ struct feature_set_dl_s {
   dummy6_l_                                       dummy6;
   dummy7_l_                                       dummy7;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // ProcessingParameters ::= SEQUENCE
 struct processing_params_s {
   struct fallback_opts {
     enum options { sc, cap1_only, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using fallback_e_ = enumerated<fallback_opts>;
   struct different_tb_per_slot_s_ {
@@ -12342,10 +10994,7 @@ struct processing_params_s {
   fallback_e_              fallback;
   different_tb_per_slot_s_ different_tb_per_slot;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1540 ::= SEQUENCE
@@ -12353,34 +11002,30 @@ struct feature_set_dl_v1540_s {
   struct pdcch_monitoring_any_occasions_with_span_gap_s_ {
     struct scs_15k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_e_ = enumerated<scs_15k_hz_opts>;
     struct scs_30k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_e_ = enumerated<scs_30k_hz_opts>;
     struct scs_60k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
     struct scs_120k_hz_opts {
       enum options { set1, set2, set3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
 
@@ -12405,10 +11050,9 @@ struct feature_set_dl_v1540_s {
   struct pdsch_processing_type2_limited_s_ {
     struct different_tb_per_slot_scs_30k_hz_opts {
       enum options { upto1, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using different_tb_per_slot_scs_30k_hz_e_ = enumerated<different_tb_per_slot_scs_30k_hz_opts>;
 
@@ -12430,10 +11074,7 @@ struct feature_set_dl_v1540_s {
   pdsch_processing_type2_s_                       pdsch_processing_type2;
   pdsch_processing_type2_limited_s_               pdsch_processing_type2_limited;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v15a0 ::= SEQUENCE
@@ -12441,29 +11082,24 @@ struct feature_set_dl_v15a0_s {
   bool            supported_srs_res_features_present = false;
   srs_resources_s supported_srs_res_features;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FreqSeparationClassDL-v1620 ::= ENUMERATED
 struct freq_separation_class_dl_v1620_opts {
   enum options { mhz1000, mhz1600, mhz1800, mhz2000, mhz2200, mhz2400, nulltype } value;
-  typedef uint16_t number_type;
 
-  const char* to_string() const;
-  uint16_t    to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint16_t                            to_number() const;
 };
 using freq_separation_class_dl_v1620_e = enumerated<freq_separation_class_dl_v1620_opts>;
 
 // FreqSeparationClassDL-Only-r16 ::= ENUMERATED
 struct freq_separation_class_dl_only_r16_opts {
   enum options { mhz200, mhz400, mhz600, mhz800, mhz1000, mhz1200, nulltype } value;
-  typedef uint16_t number_type;
 
-  const char* to_string() const;
-  uint16_t    to_number() const;
+  static const asn1::table::enum_desc desc;
+  uint16_t                            to_number() const;
 };
 using freq_separation_class_dl_only_r16_e = enumerated<freq_separation_class_dl_only_r16_opts>;
 
@@ -12473,10 +11109,7 @@ struct pdcch_monitoring_occasions_r16_s {
   bool period4span3_r16_present = false;
   bool period2span2_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1610 ::= SEQUENCE
@@ -12484,34 +11117,30 @@ struct feature_set_dl_v1610_s {
   struct cbg_pdsch_processing_type1_different_tb_per_slot_r16_s_ {
     struct scs_15k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_r16_e_ = enumerated<scs_15k_hz_r16_opts>;
     struct scs_30k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_r16_e_ = enumerated<scs_30k_hz_r16_opts>;
     struct scs_60k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r16_e_ = enumerated<scs_60k_hz_r16_opts>;
     struct scs_120k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r16_e_ = enumerated<scs_120k_hz_r16_opts>;
 
@@ -12528,34 +11157,30 @@ struct feature_set_dl_v1610_s {
   struct cbg_pdsch_processing_type2_different_tb_per_slot_r16_s_ {
     struct scs_15k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_r16_e_ = enumerated<scs_15k_hz_r16_opts>;
     struct scs_30k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_r16_e_ = enumerated<scs_30k_hz_r16_opts>;
     struct scs_60k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r16_e_ = enumerated<scs_60k_hz_r16_opts>;
     struct scs_120k_hz_r16_opts {
       enum options { one, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r16_e_ = enumerated<scs_120k_hz_r16_opts>;
 
@@ -12596,26 +11221,23 @@ struct feature_set_dl_v1610_s {
   struct cross_carrier_sched_processing_diff_scs_r16_s_ {
     struct scs_15k_hz_120k_hz_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_120k_hz_r16_e_ = enumerated<scs_15k_hz_120k_hz_r16_opts>;
     struct scs_15k_hz_60k_hz_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_60k_hz_r16_e_ = enumerated<scs_15k_hz_60k_hz_r16_opts>;
     struct scs_30k_hz_120k_hz_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_120k_hz_r16_e_ = enumerated<scs_30k_hz_120k_hz_r16_opts>;
 
@@ -12649,10 +11271,7 @@ struct feature_set_dl_v1610_s {
   pdcch_monitoring_r16_s_                                 pdcch_monitoring_r16;
   cross_carrier_sched_processing_diff_scs_r16_s_          cross_carrier_sched_processing_diff_scs_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCCH-RepetitionParameters-r17 ::= SEQUENCE
@@ -12660,23 +11279,21 @@ struct pdcch_repeat_params_r17_s {
   struct supported_mode_r17_opts {
     enum options { intra_span, inter_span, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using supported_mode_r17_e_ = enumerated<supported_mode_r17_opts>;
   struct limit_x_per_cc_r17_opts {
     enum options { n4, n8, n16, n32, n44, n64, nolimit, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using limit_x_per_cc_r17_e_ = enumerated<limit_x_per_cc_r17_opts>;
   struct limit_x_across_cc_r17_opts {
     enum options { n4, n8, n16, n32, n44, n64, n128, n256, n512, nolimit, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using limit_x_across_cc_r17_e_ = enumerated<limit_x_across_cc_r17_opts>;
 
@@ -12687,10 +11304,7 @@ struct pdcch_repeat_params_r17_s {
   limit_x_per_cc_r17_e_    limit_x_per_cc_r17;
   limit_x_across_cc_r17_e_ limit_x_across_cc_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1700 ::= SEQUENCE
@@ -12698,24 +11312,22 @@ struct feature_set_dl_v1700_s {
   struct scaling_factor_1024_qam_fr1_r17_opts {
     enum options { f0p4, f0p75, f0p8, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using scaling_factor_1024_qam_fr1_r17_e_ = enumerated<scaling_factor_1024_qam_fr1_r17_opts>;
   struct time_dur_for_qcl_v1710_s_ {
     struct scs_480k_hz_opts {
       enum options { s56, s112, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_480k_hz_e_ = enumerated<scs_480k_hz_opts>;
     struct scs_960k_hz_opts {
       enum options { s112, s224, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_960k_hz_e_ = enumerated<scs_960k_hz_opts>;
 
@@ -12744,10 +11356,9 @@ struct feature_set_dl_v1700_s {
   struct mtrp_pdcch_repeat_r17_s_ {
     struct max_num_overlaps_r17_opts {
       enum options { n1, n2, n3, n5, n10, n20, n40, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_overlaps_r17_e_ = enumerated<max_num_overlaps_r17_opts>;
 
@@ -12777,10 +11388,7 @@ struct feature_set_dl_v1700_s {
   mtrp_pdcch_legacy_monitoring_r17_s_ mtrp_pdcch_legacy_monitoring_r17;
   mtrp_pdcch_repeat_r17_s_            mtrp_pdcch_repeat_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1720 ::= SEQUENCE
@@ -12788,43 +11396,38 @@ struct feature_set_dl_v1720_s {
   struct rtt_based_pdc_prs_r17_s_ {
     struct max_num_prs_res_r17_opts {
       enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_prs_res_r17_e_ = enumerated<max_num_prs_res_r17_opts>;
     struct max_num_prs_res_processed_per_slot_r17_s_ {
       struct scs_15k_hz_r17_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_15k_hz_r17_e_ = enumerated<scs_15k_hz_r17_opts>;
       struct scs_30k_hz_r17_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_30k_hz_r17_e_ = enumerated<scs_30k_hz_r17_opts>;
       struct scs_60k_hz_r17_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_r17_e_ = enumerated<scs_60k_hz_r17_opts>;
       struct scs_120k_hz_r17_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_120k_hz_r17_e_ = enumerated<scs_120k_hz_r17_opts>;
 
@@ -12850,20 +11453,14 @@ struct feature_set_dl_v1720_s {
   bool                     sps_multicast_r17_present                     = false;
   rtt_based_pdc_prs_r17_s_ rtt_based_pdc_prs_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1730 ::= SEQUENCE
 struct feature_set_dl_v1730_s {
   bool prs_as_spatial_relation_rs_for_srs_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1800 ::= SEQUENCE
@@ -12872,34 +11469,30 @@ struct feature_set_dl_v1800_s {
     struct value_w_r18_s_ {
       struct scs_15k_hz_opts {
         enum options { value1, value2, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_15k_hz_e_ = enumerated<scs_15k_hz_opts>;
       struct scs_30k_hz_opts {
         enum options { value1, value2, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_30k_hz_e_ = enumerated<scs_30k_hz_opts>;
       struct scs_60k_hz_opts {
         enum options { value1, value2, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
       struct scs_120k_hz_opts {
         enum options { value1, value2, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
 
@@ -12915,10 +11508,9 @@ struct feature_set_dl_v1800_s {
     };
     struct time_relaxation_r18_opts {
       enum options { cap1, cap2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using time_relaxation_r18_e_ = enumerated<time_relaxation_r18_opts>;
 
@@ -12929,7 +11521,7 @@ struct feature_set_dl_v1800_s {
   struct pdsch_dmrs_type_r18_opts {
     enum options { etype1, etype1_and2, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using pdsch_dmrs_type_r18_e_ = enumerated<pdsch_dmrs_type_r18_opts>;
   struct simul_dmrs_pdsch_r18_s_ {
@@ -12964,61 +11556,51 @@ struct feature_set_dl_v1800_s {
     struct support_of_single_group_opts {
       enum options { ref_band, scell_without_ssb, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using support_of_single_group_e_ = enumerated<support_of_single_group_opts>;
     struct support_of_multiple_groups_opts {
       enum options { ref_band1, scell_without_ssb1, ref_band2, scell_without_ssb2, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using support_of_multiple_groups_e_ = enumerated<support_of_multiple_groups_opts>;
     struct types_opts {
       enum options { support_of_single_group, support_of_multiple_groups, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    scell_without_ssb_inter_band_ca_r18_c_() = default;
-    scell_without_ssb_inter_band_ca_r18_c_(const scell_without_ssb_inter_band_ca_r18_c_& other);
-    scell_without_ssb_inter_band_ca_r18_c_& operator=(const scell_without_ssb_inter_band_ca_r18_c_& other);
-    ~scell_without_ssb_inter_band_ca_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    support_of_single_group_e_& support_of_single_group()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    support_of_single_group_e_&                   support_of_single_group()
     {
-      assert_choice_type(types::support_of_single_group, type_, "scellWithoutSSB-InterBandCA-r18");
+      assert_choice_type(types::support_of_single_group, c.type, "scellWithoutSSB-InterBandCA-r18");
       return c.get<support_of_single_group_e_>();
     }
     support_of_multiple_groups_e_& support_of_multiple_groups()
     {
-      assert_choice_type(types::support_of_multiple_groups, type_, "scellWithoutSSB-InterBandCA-r18");
+      assert_choice_type(types::support_of_multiple_groups, c.type, "scellWithoutSSB-InterBandCA-r18");
       return c.get<support_of_multiple_groups_e_>();
     }
     const support_of_single_group_e_& support_of_single_group() const
     {
-      assert_choice_type(types::support_of_single_group, type_, "scellWithoutSSB-InterBandCA-r18");
+      assert_choice_type(types::support_of_single_group, c.type, "scellWithoutSSB-InterBandCA-r18");
       return c.get<support_of_single_group_e_>();
     }
     const support_of_multiple_groups_e_& support_of_multiple_groups() const
     {
-      assert_choice_type(types::support_of_multiple_groups, type_, "scellWithoutSSB-InterBandCA-r18");
+      assert_choice_type(types::support_of_multiple_groups, c.type, "scellWithoutSSB-InterBandCA-r18");
       return c.get<support_of_multiple_groups_e_>();
     }
     support_of_single_group_e_&    set_support_of_single_group();
     support_of_multiple_groups_e_& set_support_of_multiple_groups();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<scell_without_ssb_inter_band_ca_r18_c_, types, pod_choice_buffer_t> c;
   };
   using dummy_l_ = dyn_array<dummy_pdcch_rach_dl_info_r18_c>;
 
@@ -13059,10 +11641,7 @@ struct feature_set_dl_v1800_s {
   scell_without_ssb_inter_band_ca_r18_c_ scell_without_ssb_inter_band_ca_r18;
   dummy_l_                               dummy;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1830 ::= SEQUENCE
@@ -13070,7 +11649,7 @@ struct feature_set_dl_v1830_s {
   struct pdcch_rach_affected_bands_target_band_list_r18_l_item_opts {
     enum options { no_interruption, interruption, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using pdcch_rach_affected_bands_target_band_list_r18_l_item_e_ =
       enumerated<pdcch_rach_affected_bands_target_band_list_r18_l_item_opts>;
@@ -13078,11 +11657,10 @@ struct feature_set_dl_v1830_s {
       dyn_array<pdcch_rach_affected_bands_target_band_list_r18_l_item_e_>;
   struct pdcch_rach_switching_time_target_band_list_r18_l_item_opts {
     enum options { ms0, ms0dot25, ms0dot5, ms1, ms2, not_supported, nulltype } value;
-    typedef float number_type;
 
-    const char* to_string() const;
-    float       to_number() const;
-    const char* to_number_string() const;
+    static const asn1::table::enum_desc desc;
+    float                               to_number() const;
+    const char*                         to_number_string() const;
   };
   using pdcch_rach_switching_time_target_band_list_r18_l_item_e_ =
       enumerated<pdcch_rach_switching_time_target_band_list_r18_l_item_opts>;
@@ -13090,10 +11668,9 @@ struct feature_set_dl_v1830_s {
       dyn_array<pdcch_rach_switching_time_target_band_list_r18_l_item_e_>;
   struct pdcch_rach_prep_time_target_band_list_r18_l_item_opts {
     enum options { ms1, ms3, ms5, ms10, not_supported, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pdcch_rach_prep_time_target_band_list_r18_l_item_e_ =
       enumerated<pdcch_rach_prep_time_target_band_list_r18_l_item_opts>;
@@ -13104,98 +11681,78 @@ struct feature_set_dl_v1830_s {
   pdcch_rach_switching_time_target_band_list_r18_l_ pdcch_rach_switching_time_target_band_list_r18;
   pdcch_rach_prep_time_target_band_list_r18_l_      pdcch_rach_prep_time_target_band_list_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlink-v1860 ::= SEQUENCE
 struct feature_set_dl_v1860_s {
   bool srs_ant_switching8_t8_r2_sp_1_periodic_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SupportedBandwidth ::= CHOICE
 struct supported_bw_c {
   struct fr1_opts {
     enum options { mhz5, mhz10, mhz15, mhz20, mhz25, mhz30, mhz40, mhz50, mhz60, mhz80, mhz100, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using fr1_e_ = enumerated<fr1_opts>;
   struct fr2_opts {
     enum options { mhz50, mhz100, mhz200, mhz400, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using fr2_e_ = enumerated<fr2_opts>;
   struct types_opts {
     enum options { fr1, fr2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  supported_bw_c() = default;
-  supported_bw_c(const supported_bw_c& other);
-  supported_bw_c& operator=(const supported_bw_c& other);
-  ~supported_bw_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  fr1_e_& fr1()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  fr1_e_&                                       fr1()
   {
-    assert_choice_type(types::fr1, type_, "SupportedBandwidth");
+    assert_choice_type(types::fr1, c.type, "SupportedBandwidth");
     return c.get<fr1_e_>();
   }
   fr2_e_& fr2()
   {
-    assert_choice_type(types::fr2, type_, "SupportedBandwidth");
+    assert_choice_type(types::fr2, c.type, "SupportedBandwidth");
     return c.get<fr2_e_>();
   }
   const fr1_e_& fr1() const
   {
-    assert_choice_type(types::fr1, type_, "SupportedBandwidth");
+    assert_choice_type(types::fr1, c.type, "SupportedBandwidth");
     return c.get<fr1_e_>();
   }
   const fr2_e_& fr2() const
   {
-    assert_choice_type(types::fr2, type_, "SupportedBandwidth");
+    assert_choice_type(types::fr2, c.type, "SupportedBandwidth");
     return c.get<fr2_e_>();
   }
   fr1_e_& set_fr1();
   fr2_e_& set_fr2();
 
 private:
-  types               type_;
-  pod_choice_buffer_t c;
-
-  void destroy_();
+  asn1::table::choice_storage<supported_bw_c, types, pod_choice_buffer_t> c;
 };
 
 // ModulationOrder ::= ENUMERATED
 struct mod_order_opts {
   enum options { bpsk_halfpi, bpsk, qpsk, qam16, qam64, qam256, nulltype } value;
-  typedef float number_type;
 
-  const char* to_string() const;
-  float       to_number() const;
-  const char* to_number_string() const;
+  static const asn1::table::enum_desc desc;
+  float                               to_number() const;
+  const char*                         to_number_string() const;
 };
 using mod_order_e = enumerated<mod_order_opts>;
 
@@ -13209,28 +11766,23 @@ struct feature_set_dl_per_cc_s {
   mimo_layers_dl_e     max_num_mimo_layers_pdsch;
   mod_order_e          supported_mod_order_dl;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MultiDCI-MultiTRP-r16 ::= SEQUENCE
 struct multi_dci_multi_trp_r16_s {
   struct max_num_coreset_r16_opts {
     enum options { n2, n3, n4, n5, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_coreset_r16_e_ = enumerated<max_num_coreset_r16_opts>;
   struct max_num_unicast_pdsch_per_pool_r16_opts {
     enum options { n1, n2, n3, n4, n7, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_unicast_pdsch_per_pool_r16_e_ = enumerated<max_num_unicast_pdsch_per_pool_r16_opts>;
 
@@ -13239,10 +11791,7 @@ struct multi_dci_multi_trp_r16_s {
   uint8_t                               max_num_coreset_per_pool_idx_r16 = 1;
   max_num_unicast_pdsch_per_pool_r16_e_ max_num_unicast_pdsch_per_pool_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlinkPerCC-v1620 ::= SEQUENCE
@@ -13251,20 +11800,16 @@ struct feature_set_dl_per_cc_v1620_s {
   bool                      support_fdm_scheme_b_r16_present = false;
   multi_dci_multi_trp_r16_s multi_dci_multi_trp_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlinkPerCC-v1700 ::= SEQUENCE
 struct feature_set_dl_per_cc_v1700_s {
   struct max_num_mimo_layers_multicast_pdsch_r17_opts {
     enum options { n2, n4, n8, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_mimo_layers_multicast_pdsch_r17_e_ = enumerated<max_num_mimo_layers_multicast_pdsch_r17_opts>;
 
@@ -13280,20 +11825,16 @@ struct feature_set_dl_per_cc_v1700_s {
   supported_bw_v1700_c                       supported_bw_dl_v1710;
   crs_interf_mitigation_r17_s                supported_crs_interf_mitigation_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlinkPerCC-v1720 ::= SEQUENCE
 struct feature_set_dl_per_cc_v1720_s {
   struct max_mod_order_for_multicast_data_rate_calculation_r17_opts {
     enum options { qam64, qam256, qam1024, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_mod_order_for_multicast_data_rate_calculation_r17_e_ =
       enumerated<max_mod_order_for_multicast_data_rate_calculation_r17_opts>;
@@ -13304,10 +11845,7 @@ struct feature_set_dl_per_cc_v1720_s {
   bool fdm_multicast_unicast_r17_present                             = false;
   max_mod_order_for_multicast_data_rate_calculation_r17_e_ max_mod_order_for_multicast_data_rate_calculation_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlinkPerCC-v1730 ::= SEQUENCE
@@ -13315,7 +11853,7 @@ struct feature_set_dl_per_cc_v1730_s {
   struct intra_slot_tdm_unicast_group_common_pdsch_r17_opts {
     enum options { yes, no, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using intra_slot_tdm_unicast_group_common_pdsch_r17_e_ =
       enumerated<intra_slot_tdm_unicast_group_common_pdsch_r17_opts>;
@@ -13328,10 +11866,7 @@ struct feature_set_dl_per_cc_v1730_s {
   intra_slot_tdm_unicast_group_common_pdsch_r17_e_ intra_slot_tdm_unicast_group_common_pdsch_r17;
   uint8_t                                          sps_multicast_scell_multi_cfg_r17 = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlinkPerCC-v1780 ::= SEQUENCE
@@ -13339,10 +11874,7 @@ struct feature_set_dl_per_cc_v1780_s {
   bool                 supported_bw_dl_v1780_present = false;
   supported_bw_v1700_c supported_bw_dl_v1780;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlinkPerCC-v1800 ::= SEQUENCE
@@ -13355,10 +11887,7 @@ struct feature_set_dl_per_cc_v1800_s {
   bool    sched_meas_relaxation_r18_present                  = false;
   uint8_t multi_dci_inter_cell_multi_trp_two_ta_r18          = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetDownlinkPerCC-v1840 ::= SEQUENCE
@@ -13366,10 +11895,7 @@ struct feature_set_dl_per_cc_v1840_s {
   bool supported_bw_dl_v1840_present     = false;
   bool supported_min_bw_dl_v1840_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink ::= SEQUENCE
@@ -13378,40 +11904,36 @@ struct feature_set_ul_s {
   struct scaling_factor_opts {
     enum options { f0p4, f0p75, f0p8, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using scaling_factor_e_ = enumerated<scaling_factor_opts>;
   struct pusch_processing_type1_different_tb_per_slot_s_ {
     struct scs_15k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_e_ = enumerated<scs_15k_hz_opts>;
     struct scs_30k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_e_ = enumerated<scs_30k_hz_opts>;
     struct scs_60k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_e_ = enumerated<scs_60k_hz_opts>;
     struct scs_120k_hz_opts {
       enum options { upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_e_ = enumerated<scs_120k_hz_opts>;
 
@@ -13446,10 +11968,7 @@ struct feature_set_ul_s {
   pusch_processing_type1_different_tb_per_slot_s_ pusch_processing_type1_different_tb_per_slot;
   dummy_f_s                                       dummy2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1540 ::= SEQUENCE
@@ -13471,10 +11990,7 @@ struct feature_set_ul_v1540_s {
   bool                      ul_mcs_table_alt_dyn_ind_present       = false;
   pusch_processing_type2_s_ pusch_processing_type2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1610 ::= SEQUENCE
@@ -13482,16 +11998,15 @@ struct feature_set_ul_v1610_s {
   struct pusch_repeat_type_b_r16_s_ {
     struct max_num_pusch_tx_r16_opts {
       enum options { n2, n3, n4, n7, n8, n12, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_pusch_tx_r16_e_ = enumerated<max_num_pusch_tx_r16_opts>;
     struct hop_scheme_r16_opts {
       enum options { inter_slot_hop, inter_repeat_hop, both, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using hop_scheme_r16_e_ = enumerated<hop_scheme_r16_opts>;
 
@@ -13501,43 +12016,38 @@ struct feature_set_ul_v1610_s {
   };
   struct ul_full_pwr_mode2_max_srs_res_in_set_r16_opts {
     enum options { n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using ul_full_pwr_mode2_max_srs_res_in_set_r16_e_ = enumerated<ul_full_pwr_mode2_max_srs_res_in_set_r16_opts>;
   struct cbg_pusch_processing_type1_different_tb_per_slot_r16_s_ {
     struct scs_15k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_r16_e_ = enumerated<scs_15k_hz_r16_opts>;
     struct scs_30k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_r16_e_ = enumerated<scs_30k_hz_r16_opts>;
     struct scs_60k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r16_e_ = enumerated<scs_60k_hz_r16_opts>;
     struct scs_120k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r16_e_ = enumerated<scs_120k_hz_r16_opts>;
 
@@ -13554,34 +12064,30 @@ struct feature_set_ul_v1610_s {
   struct cbg_pusch_processing_type2_different_tb_per_slot_r16_s_ {
     struct scs_15k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_r16_e_ = enumerated<scs_15k_hz_r16_opts>;
     struct scs_30k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_r16_e_ = enumerated<scs_30k_hz_r16_opts>;
     struct scs_60k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r16_e_ = enumerated<scs_60k_hz_r16_opts>;
     struct scs_120k_hz_r16_opts {
       enum options { one_pusch, upto2, upto4, upto7, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r16_e_ = enumerated<scs_120k_hz_r16_opts>;
 
@@ -13599,7 +12105,7 @@ struct feature_set_ul_v1610_s {
     struct dummy3_opts {
       enum options { short_value, long_value, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using dummy3_e_ = enumerated<dummy3_opts>;
 
@@ -13614,18 +12120,16 @@ struct feature_set_ul_v1610_s {
   struct multi_pucch_r16_s_ {
     struct sub_slot_cfg_n_cp_r16_opts {
       enum options { set1, set2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using sub_slot_cfg_n_cp_r16_e_ = enumerated<sub_slot_cfg_n_cp_r16_opts>;
     struct sub_slot_cfg_e_cp_r16_opts {
       enum options { set1, set2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using sub_slot_cfg_e_cp_r16_e_ = enumerated<sub_slot_cfg_e_cp_r16_opts>;
 
@@ -13638,18 +12142,16 @@ struct feature_set_ul_v1610_s {
   struct ul_intra_ue_mux_r16_s_ {
     struct pusch_prep_low_prio_r16_opts {
       enum options { sym0, sym1, sym2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pusch_prep_low_prio_r16_e_ = enumerated<pusch_prep_low_prio_r16_opts>;
     struct pusch_prep_high_prio_r16_opts {
       enum options { sym0, sym1, sym2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pusch_prep_high_prio_r16_e_ = enumerated<pusch_prep_high_prio_r16_opts>;
 
@@ -13660,26 +12162,23 @@ struct feature_set_ul_v1610_s {
   struct cross_carrier_sched_processing_diff_scs_r16_s_ {
     struct scs_15k_hz_120k_hz_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_120k_hz_r16_e_ = enumerated<scs_15k_hz_120k_hz_r16_opts>;
     struct scs_15k_hz_60k_hz_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_60k_hz_r16_e_ = enumerated<scs_15k_hz_60k_hz_r16_opts>;
     struct scs_30k_hz_120k_hz_r16_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_120k_hz_r16_e_ = enumerated<scs_30k_hz_120k_hz_r16_opts>;
 
@@ -13697,25 +12196,23 @@ struct feature_set_ul_v1610_s {
   struct ul_full_pwr_mode2_srs_cfg_diff_num_srs_ports_r16_opts {
     enum options { p1_neg2, p1_neg4, p1_neg2_neg4, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ul_full_pwr_mode2_srs_cfg_diff_num_srs_ports_r16_e_ =
       enumerated<ul_full_pwr_mode2_srs_cfg_diff_num_srs_ports_r16_opts>;
   struct ul_full_pwr_mode2_tpmi_group_r16_s_ {
     struct four_ports_non_coherent_r16_opts {
       enum options { g0, g1, g2, g3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using four_ports_non_coherent_r16_e_ = enumerated<four_ports_non_coherent_r16_opts>;
     struct four_ports_partial_coherent_r16_opts {
       enum options { g0, g1, g2, g3, g4, g5, g6, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using four_ports_partial_coherent_r16_e_ = enumerated<four_ports_partial_coherent_r16_opts>;
 
@@ -13771,10 +12268,7 @@ struct feature_set_ul_v1610_s {
   ul_full_pwr_mode2_srs_cfg_diff_num_srs_ports_r16_e_     ul_full_pwr_mode2_srs_cfg_diff_num_srs_ports_r16;
   ul_full_pwr_mode2_tpmi_group_r16_s_                     ul_full_pwr_mode2_tpmi_group_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1630 ::= SEQUENCE
@@ -13786,28 +12280,23 @@ struct feature_set_ul_v1630_s {
   bool dummy_present                                                         = false;
   bool partial_cancellation_pucch_pusch_prach_tx_r16_present                 = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SubSlot-Config-r16 ::= SEQUENCE
 struct sub_slot_cfg_r16_s {
   struct sub_slot_cfg_n_cp_r16_opts {
     enum options { n4, n5, n6, n7, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using sub_slot_cfg_n_cp_r16_e_ = enumerated<sub_slot_cfg_n_cp_r16_opts>;
   struct sub_slot_cfg_e_cp_r16_opts {
     enum options { n4, n5, n6, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using sub_slot_cfg_e_cp_r16_e_ = enumerated<sub_slot_cfg_e_cp_r16_opts>;
 
@@ -13817,10 +12306,7 @@ struct sub_slot_cfg_r16_s {
   sub_slot_cfg_n_cp_r16_e_ sub_slot_cfg_n_cp_r16;
   sub_slot_cfg_e_cp_r16_e_ sub_slot_cfg_e_cp_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1640 ::= SEQUENCE
@@ -13828,26 +12314,23 @@ struct feature_set_ul_v1640_s {
   struct offset_srs_cb_pusch_pdcch_monitor_any_occ_with_span_gap_fr1_r16_s_ {
     struct scs_15k_hz_r16_opts {
       enum options { set1, set2, set3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_r16_e_ = enumerated<scs_15k_hz_r16_opts>;
     struct scs_30k_hz_r16_opts {
       enum options { set1, set2, set3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_r16_e_ = enumerated<scs_30k_hz_r16_opts>;
     struct scs_60k_hz_r16_opts {
       enum options { set1, set2, set3, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r16_e_ = enumerated<scs_60k_hz_r16_opts>;
 
@@ -13869,43 +12352,37 @@ struct feature_set_ul_v1640_s {
   offset_srs_cb_pusch_pdcch_monitor_any_occ_with_span_gap_fr1_r16_s_
       offset_srs_cb_pusch_pdcch_monitor_any_occ_with_span_gap_fr1_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1710 ::= SEQUENCE
 struct feature_set_ul_v1710_s {
   struct mtrp_pusch_type_a_cb_r17_opts {
     enum options { n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_pusch_type_a_cb_r17_e_ = enumerated<mtrp_pusch_type_a_cb_r17_opts>;
   struct mtrp_pusch_repeat_type_a_r17_opts {
     enum options { n1, n2, n3, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_pusch_repeat_type_a_r17_e_ = enumerated<mtrp_pusch_repeat_type_a_r17_opts>;
   struct mtrp_pucch_intra_slot_r17_opts {
     enum options { pf0_neg2, pf1_neg3_neg4, pf0_neg4, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using mtrp_pucch_intra_slot_r17_e_ = enumerated<mtrp_pucch_intra_slot_r17_opts>;
   struct ue_pwr_class_per_band_per_bc_r17_opts {
     enum options { pc1dot5, pc2, pc3, nulltype } value;
-    typedef float number_type;
 
-    const char* to_string() const;
-    float       to_number() const;
-    const char* to_number_string() const;
+    static const asn1::table::enum_desc desc;
+    float                               to_number() const;
+    const char*                         to_number_string() const;
   };
   using ue_pwr_class_per_band_per_bc_r17_e_ = enumerated<ue_pwr_class_per_band_per_bc_r17_opts>;
 
@@ -13923,10 +12400,7 @@ struct feature_set_ul_v1710_s {
   mtrp_pucch_intra_slot_r17_e_        mtrp_pucch_intra_slot_r17;
   ue_pwr_class_per_band_per_bc_r17_e_ ue_pwr_class_per_band_per_bc_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1720 ::= SEQUENCE
@@ -13934,35 +12408,31 @@ struct feature_set_ul_v1720_s {
   struct phy_prioritization_high_prio_dg_low_prio_cg_r17_s_ {
     struct pusch_prep_low_prio_r17_opts {
       enum options { sym0, sym1, sym2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pusch_prep_low_prio_r17_e_ = enumerated<pusch_prep_low_prio_r17_opts>;
     struct add_cancellation_time_r17_s_ {
       struct scs_15k_hz_r17_opts {
         enum options { sym0, sym1, sym2, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_15k_hz_r17_e_ = enumerated<scs_15k_hz_r17_opts>;
       struct scs_30k_hz_r17_opts {
         enum options { sym0, sym1, sym2, sym3, sym4, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_30k_hz_r17_e_ = enumerated<scs_30k_hz_r17_opts>;
       struct scs_60k_hz_r17_opts {
         enum options { sym0, sym1, sym2, sym3, sym4, sym5, sym6, sym7, sym8, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_r17_e_ = enumerated<scs_60k_hz_r17_opts>;
       struct scs_120k_hz_r17_opts {
@@ -13986,10 +12456,9 @@ struct feature_set_ul_v1720_s {
           sym16,
           nulltype
         } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_120k_hz_r17_e_ = enumerated<scs_120k_hz_r17_opts>;
 
@@ -14021,10 +12490,7 @@ struct feature_set_ul_v1720_s {
   uint8_t                                            phy_prioritization_low_prio_dg_high_prio_cg_r17          = 1;
   phy_prioritization_high_prio_dg_low_prio_cg_r17_s_ phy_prioritization_high_prio_dg_low_prio_cg_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PosSRS-BWA-RRC-Connected-r18 ::= SEQUENCE
@@ -14032,95 +12498,84 @@ struct pos_srs_bwa_rrc_connected_r18_s {
   struct num_of_carriers_intra_band_contiguous_r18_opts {
     enum options { two, three, twoandthree, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using num_of_carriers_intra_band_contiguous_r18_e_ = enumerated<num_of_carriers_intra_band_contiguous_r18_opts>;
   struct max_aggr_bw_two_carriers_fr1_r18_opts {
     enum options { mhz20, mhz40, mhz50, mhz80, mhz100, mhz160, mhz180, mhz190, mhz200, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_bw_two_carriers_fr1_r18_e_ = enumerated<max_aggr_bw_two_carriers_fr1_r18_opts>;
   struct max_aggr_bw_two_carriers_fr2_r18_opts {
     enum options { mhz50, mhz100, mhz200, mhz400, mhz600, mhz800, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_two_carriers_fr2_r18_e_ = enumerated<max_aggr_bw_two_carriers_fr2_r18_opts>;
   struct max_aggr_bw_three_carriers_fr1_r18_opts {
     enum options { mhz80, mhz100, mhz160, mhz200, mhz240, mhz300, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_three_carriers_fr1_r18_e_ = enumerated<max_aggr_bw_three_carriers_fr1_r18_opts>;
   struct max_aggr_bw_three_carriers_fr2_r18_opts {
     enum options { mhz50, mhz100, mhz200, mhz300, mhz400, mhz600, mhz800, mhz1000, mhz1200, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_three_carriers_fr2_r18_e_ = enumerated<max_aggr_bw_three_carriers_fr2_r18_opts>;
   struct max_aggr_res_set_r18_opts {
     enum options { n1, n2, n4, n8, n12, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_set_r18_e_ = enumerated<max_aggr_res_set_r18_opts>;
   struct max_aggr_res_periodic_r18_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_periodic_r18_e_ = enumerated<max_aggr_res_periodic_r18_opts>;
   struct max_aggr_res_aperiodic_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_aperiodic_r18_e_ = enumerated<max_aggr_res_aperiodic_r18_opts>;
   struct max_aggr_res_semi_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_semi_r18_e_ = enumerated<max_aggr_res_semi_r18_opts>;
   struct max_aggr_res_periodic_per_slot_r18_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_periodic_per_slot_r18_e_ = enumerated<max_aggr_res_periodic_per_slot_r18_opts>;
   struct max_aggr_res_aperiodic_per_slot_r18_opts {
     enum options { n0, n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_aperiodic_per_slot_r18_e_ = enumerated<max_aggr_res_aperiodic_per_slot_r18_opts>;
   struct max_aggr_res_semi_per_slot_r18_opts {
     enum options { n0, n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_semi_per_slot_r18_e_ = enumerated<max_aggr_res_semi_per_slot_r18_opts>;
 
@@ -14143,10 +12598,7 @@ struct pos_srs_bwa_rrc_connected_r18_s {
   max_aggr_res_semi_per_slot_r18_e_            max_aggr_res_semi_per_slot_r18;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PosSRS-BWA-IndependentCA-RRC-Connected-r18 ::= SEQUENCE
@@ -14154,119 +12606,105 @@ struct pos_srs_bwa_independent_ca_rrc_connected_r18_s {
   struct num_of_carriers_intra_band_contiguous_r18_opts {
     enum options { two, three, twoandthree, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using num_of_carriers_intra_band_contiguous_r18_e_ = enumerated<num_of_carriers_intra_band_contiguous_r18_opts>;
   struct max_aggr_bw_two_carriers_fr1_r18_opts {
     enum options { mhz20, mhz40, mhz50, mhz80, mhz100, mhz160, mhz180, mhz190, mhz200, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_bw_two_carriers_fr1_r18_e_ = enumerated<max_aggr_bw_two_carriers_fr1_r18_opts>;
   struct max_aggr_bw_two_carriers_fr2_r18_opts {
     enum options { mhz50, mhz100, mhz200, mhz400, mhz600, mhz800, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_two_carriers_fr2_r18_e_ = enumerated<max_aggr_bw_two_carriers_fr2_r18_opts>;
   struct max_aggr_bw_three_carriers_fr1_r18_opts {
     enum options { mhz80, mhz100, mhz160, mhz200, mhz240, mhz300, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_three_carriers_fr1_r18_e_ = enumerated<max_aggr_bw_three_carriers_fr1_r18_opts>;
   struct max_aggr_bw_three_carriers_fr2_r18_opts {
     enum options { mhz50, mhz100, mhz200, mhz300, mhz400, mhz600, mhz800, mhz1000, mhz1200, nulltype } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_aggr_bw_three_carriers_fr2_r18_e_ = enumerated<max_aggr_bw_three_carriers_fr2_r18_opts>;
   struct max_aggr_res_set_r18_opts {
     enum options { n1, n2, n4, n8, n12, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_set_r18_e_ = enumerated<max_aggr_res_set_r18_opts>;
   struct max_aggr_res_periodic_r18_opts {
     enum options { n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_periodic_r18_e_ = enumerated<max_aggr_res_periodic_r18_opts>;
   struct max_aggr_res_aperiodic_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_aperiodic_r18_e_ = enumerated<max_aggr_res_aperiodic_r18_opts>;
   struct max_aggr_res_semi_r18_opts {
     enum options { n0, n1, n2, n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_semi_r18_e_ = enumerated<max_aggr_res_semi_r18_opts>;
   struct max_aggr_res_periodic_per_slot_r18_opts {
     enum options { n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_periodic_per_slot_r18_e_ = enumerated<max_aggr_res_periodic_per_slot_r18_opts>;
   struct max_aggr_res_aperiodic_per_slot_r18_opts {
     enum options { n0, n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_aperiodic_per_slot_r18_e_ = enumerated<max_aggr_res_aperiodic_per_slot_r18_opts>;
   struct max_aggr_res_semi_per_slot_r18_opts {
     enum options { n0, n1, n2, n3, n4, n5, n6, n8, n10, n12, n14, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_aggr_res_semi_per_slot_r18_e_ = enumerated<max_aggr_res_semi_per_slot_r18_opts>;
   struct guard_period_r18_opts {
     enum options { n0, n30, n100, n140, n200, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using guard_period_r18_e_ = enumerated<guard_period_r18_opts>;
   struct pwr_class_for_two_aggr_carriers_r18_opts {
     enum options { pc2, pc3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pwr_class_for_two_aggr_carriers_r18_e_ = enumerated<pwr_class_for_two_aggr_carriers_r18_opts>;
   struct pwr_class_for_three_aggr_carriers_r18_opts {
     enum options { pc2, pc3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pwr_class_for_three_aggr_carriers_r18_e_ = enumerated<pwr_class_for_three_aggr_carriers_r18_opts>;
 
@@ -14294,29 +12732,24 @@ struct pos_srs_bwa_independent_ca_rrc_connected_r18_s {
   pwr_class_for_three_aggr_carriers_r18_e_     pwr_class_for_three_aggr_carriers_r18;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1800 ::= SEQUENCE
 struct feature_set_ul_v1800_s {
   struct max_delay_value_beyond_dbasic_r18_opts {
     enum options { sl2, sl3, sl4, sl5, sl6, sl10, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_delay_value_beyond_dbasic_r18_e_ = enumerated<max_delay_value_beyond_dbasic_r18_opts>;
   struct pusch_dmrs_type_enh_r18_s_ {
     struct dmrs_type_r18_opts {
       enum options { etype1, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using dmrs_type_r18_e_ = enumerated<dmrs_type_r18_opts>;
     struct pusch_type_a_dmrs_r18_s_ {
@@ -14327,10 +12760,9 @@ struct feature_set_ul_v1800_s {
     };
     struct dummy_opts {
       enum options { rel15, both, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using dummy_e_ = enumerated<dummy_opts>;
 
@@ -14349,7 +12781,7 @@ struct feature_set_ul_v1800_s {
   struct pucch_single_dci_s_tx2_p_sfn_r18_opts {
     enum options { pf0_neg2, pf1_neg3_neg4, pf0_neg4, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using pucch_single_dci_s_tx2_p_sfn_r18_e_   = enumerated<pucch_single_dci_s_tx2_p_sfn_r18_opts>;
   using pos_srs_bwa_affected_band_list_r18_l_ = dyn_array<uint16_t>;
@@ -14357,18 +12789,16 @@ struct feature_set_ul_v1800_s {
   struct ul_intra_ue_mux_enh_r18_s_ {
     struct pusch_prep_low_prio_r18_opts {
       enum options { sym0, sym1, sym2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pusch_prep_low_prio_r18_e_ = enumerated<pusch_prep_low_prio_r18_opts>;
     struct pusch_prep_high_prio_r18_opts {
       enum options { sym0, sym1, sym2, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using pusch_prep_high_prio_r18_e_ = enumerated<pusch_prep_high_prio_r18_opts>;
 
@@ -14412,69 +12842,59 @@ struct feature_set_ul_v1800_s {
   sub_slot_cfg_r16_s                             simul_2_2_harq_ack_cb_r18;
   ul_intra_ue_mux_enh_r18_s_                     ul_intra_ue_mux_enh_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplink-v1850 ::= SEQUENCE
 struct feature_set_ul_v1850_s {
   struct pusch_dmrs8_tx_r18_opts {
     enum options { rel15, both, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pusch_dmrs8_tx_r18_e_ = enumerated<pusch_dmrs8_tx_r18_opts>;
   struct add_time_cb_8_tx_pusch_r18_s_ {
     struct scs_15k_hz_r18_opts {
       enum options { sym1, sym2, sym4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_r18_e_ = enumerated<scs_15k_hz_r18_opts>;
     struct scs_30k_hz_r18_opts {
       enum options { sym1, sym2, sym4, sym8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_r18_e_ = enumerated<scs_30k_hz_r18_opts>;
     struct scs_60k_hz_r18_opts {
       enum options { sym2, sym4, sym8, sym16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
     struct scs_120k_hz_r18_opts {
       enum options { sym4, sym8, sym16, sym32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
     struct scs_480k_hz_r18_opts {
       enum options { sym16, sym32, sym64, sym128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_480k_hz_r18_e_ = enumerated<scs_480k_hz_r18_opts>;
     struct scs_960k_hz_r18_opts {
       enum options { sym32, sym64, sym128, sym256, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_960k_hz_r18_e_ = enumerated<scs_960k_hz_r18_opts>;
 
@@ -14495,50 +12915,44 @@ struct feature_set_ul_v1850_s {
   struct add_time_non_cb_8_tx_pusch_r18_s_ {
     struct scs_15k_hz_r18_opts {
       enum options { sym1, sym2, sym4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_15k_hz_r18_e_ = enumerated<scs_15k_hz_r18_opts>;
     struct scs_30k_hz_r18_opts {
       enum options { sym1, sym2, sym4, sym8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_30k_hz_r18_e_ = enumerated<scs_30k_hz_r18_opts>;
     struct scs_60k_hz_r18_opts {
       enum options { sym2, sym4, sym8, sym16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
     struct scs_120k_hz_r18_opts {
       enum options { sym4, sym8, sym16, sym32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
     struct scs_480k_hz_r18_opts {
       enum options { sym16, sym32, sym64, sym128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_480k_hz_r18_e_ = enumerated<scs_480k_hz_r18_opts>;
     struct scs_960k_hz_r18_opts {
       enum options { sym32, sym64, sym128, sym256, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_960k_hz_r18_e_ = enumerated<scs_960k_hz_r18_opts>;
 
@@ -14565,10 +12979,7 @@ struct feature_set_ul_v1850_s {
   add_time_cb_8_tx_pusch_r18_s_     add_time_cb_8_tx_pusch_r18;
   add_time_non_cb_8_tx_pusch_r18_s_ add_time_non_cb_8_tx_pusch_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplinkPerCC ::= SEQUENCE
@@ -14590,10 +13001,7 @@ struct feature_set_ul_per_cc_s {
   mimo_layers_ul_e     max_num_mimo_layers_non_cb_pusch;
   mod_order_e          supported_mod_order_ul;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplinkPerCC-v1540 ::= SEQUENCE
@@ -14607,28 +13015,23 @@ struct feature_set_ul_per_cc_v1540_s {
   bool                 mimo_non_cb_pusch_present = false;
   mimo_non_cb_pusch_s_ mimo_non_cb_pusch;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplinkPerCC-v1700 ::= SEQUENCE
 struct feature_set_ul_per_cc_v1700_s {
   struct mtrp_pusch_repeat_type_b_r17_opts {
     enum options { n1, n2, n3, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_pusch_repeat_type_b_r17_e_ = enumerated<mtrp_pusch_repeat_type_b_r17_opts>;
   struct mtrp_pusch_type_b_cb_r17_opts {
     enum options { n1, n2, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using mtrp_pusch_type_b_cb_r17_e_ = enumerated<mtrp_pusch_type_b_cb_r17_opts>;
 
@@ -14642,10 +13045,7 @@ struct feature_set_ul_per_cc_v1700_s {
   mtrp_pusch_type_b_cb_r17_e_     mtrp_pusch_type_b_cb_r17;
   supported_bw_v1700_c            supported_bw_ul_v1710;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplinkPerCC-v1780 ::= SEQUENCE
@@ -14653,10 +13053,7 @@ struct feature_set_ul_per_cc_v1780_s {
   bool                 supported_bw_ul_v1780_present = false;
   supported_bw_v1700_c supported_bw_ul_v1780;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplinkPerCC-v1800 ::= SEQUENCE
@@ -14664,26 +13061,23 @@ struct feature_set_ul_per_cc_v1800_s {
   struct pusch_cb_single_dci_s_tx2_p_sdm_r18_s_ {
     struct max_num_srs_res_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_res_per_set_r18_e_ = enumerated<max_num_srs_res_per_set_r18_opts>;
     struct max_num_nzp_pusch_ports_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_nzp_pusch_ports_per_set_r18_e_ = enumerated<max_num_nzp_pusch_ports_per_set_r18_opts>;
     struct max_num_srs_ant_ports_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_ant_ports_per_set_r18_e_ = enumerated<max_num_srs_ant_ports_per_set_r18_opts>;
 
@@ -14702,26 +13096,23 @@ struct feature_set_ul_per_cc_v1800_s {
   struct pusch_cb_single_dci_s_tx2_p_sfn_r18_s_ {
     struct max_num_srs_res_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_res_per_set_r18_e_ = enumerated<max_num_srs_res_per_set_r18_opts>;
     struct max_num_srs_ant_ports_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_ant_ports_per_set_r18_e_ = enumerated<max_num_srs_ant_ports_per_set_r18_opts>;
     struct max_num_nzp_pusch_ports_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_nzp_pusch_ports_per_set_r18_e_ = enumerated<max_num_nzp_pusch_ports_per_set_r18_opts>;
 
@@ -14740,35 +13131,31 @@ struct feature_set_ul_per_cc_v1800_s {
   struct two_pusch_cb_multi_dci_s_tx2_p_dg_dg_r18_s_ {
     struct max_num_srs_res_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_res_per_set_r18_e_ = enumerated<max_num_srs_res_per_set_r18_opts>;
     struct max_num_nzp_pusch_overlapping_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_nzp_pusch_overlapping_r18_e_ = enumerated<max_num_nzp_pusch_overlapping_r18_opts>;
     struct max_num_pusch_per_coreset_per_slot_r18_s_ {
       struct scs_60k_hz_r18_opts {
         enum options { n1, n2, n3, n4, n7, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
       struct scs_120k_hz_r18_opts {
         enum options { n1, n2, n3, n4, n7, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
 
@@ -14780,10 +13167,9 @@ struct feature_set_ul_per_cc_v1800_s {
     };
     struct max_num_srs_ant_ports_per_set_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_srs_ant_ports_per_set_r18_e_ = enumerated<max_num_srs_ant_ports_per_set_r18_opts>;
 
@@ -14800,18 +13186,16 @@ struct feature_set_ul_per_cc_v1800_s {
     struct max_num_pusch_per_coreset_per_slot_r18_s_ {
       struct scs_60k_hz_r18_opts {
         enum options { n1, n2, n3, n4, n7, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
       struct scs_120k_hz_r18_opts {
         enum options { n1, n2, n3, n4, n7, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
 
@@ -14835,7 +13219,7 @@ struct feature_set_ul_per_cc_v1800_s {
       struct srs_8_tx_ports_r18_opts {
         enum options { no_tdm, both, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using srs_8_tx_ports_r18_e_ = enumerated<srs_8_tx_ports_r18_opts>;
 
@@ -14848,13 +13232,13 @@ struct feature_set_ul_per_cc_v1800_s {
       struct codebook_n1_n4_r18_opts {
         enum options { ng1n4n1, ng1n2n2, both, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using codebook_n1_n4_r18_e_ = enumerated<codebook_n1_n4_r18_opts>;
       struct srs_8_tx_ports_r18_opts {
         enum options { no_tdm, both, nulltype } value;
 
-        const char* to_string() const;
+        static const asn1::table::enum_desc desc;
       };
       using srs_8_tx_ports_r18_e_ = enumerated<srs_8_tx_ports_r18_opts>;
 
@@ -14865,16 +13249,15 @@ struct feature_set_ul_per_cc_v1800_s {
     };
     struct ul_full_pwr_trans_mode2_r18_opts {
       enum options { n1, n2, n4, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using ul_full_pwr_trans_mode2_r18_e_ = enumerated<ul_full_pwr_trans_mode2_r18_opts>;
     struct tpmi_full_pwr_codebook2_r18_opts {
       enum options { first, second, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using tpmi_full_pwr_codebook2_r18_e_ = enumerated<tpmi_full_pwr_codebook2_r18_opts>;
 
@@ -14921,10 +13304,7 @@ struct feature_set_ul_per_cc_v1800_s {
   codebook_param8_tx_pusch_r18_s_                 codebook_param8_tx_pusch_r18;
   non_codebook_8_tx_pusch_r18_s_                  non_codebook_8_tx_pusch_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplinkPerCC-v1840 ::= SEQUENCE
@@ -14932,10 +13312,7 @@ struct feature_set_ul_per_cc_v1840_s {
   bool supported_bw_ul_v1840_present     = false;
   bool supported_min_bw_ul_v1840_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSetUplinkPerCC-v1850 ::= SEQUENCE
@@ -14943,95 +13320,82 @@ struct feature_set_ul_per_cc_v1850_s {
   struct two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_ {
     struct scs_60k_hz_r18_opts {
       enum options { sym1, sym4, sym8, sym16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
     struct scs_120k_hz_r18_opts {
       enum options { sym4, sym8, sym16, sym32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
     struct scs_480k_hz_r18_opts {
       enum options { sym16, sym32, sym64, sym128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_480k_hz_r18_e_ = enumerated<scs_480k_hz_r18_opts>;
     struct scs_960k_hz_r18_opts {
       enum options { sym32, sym64, sym128, sym256, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_960k_hz_r18_e_ = enumerated<scs_960k_hz_r18_opts>;
     struct types_opts {
       enum options { scs_60k_hz_r18, scs_120k_hz_r18, scs_480k_hz_r18, scs_960k_hz_r18, nulltype } value;
-      typedef int16_t number_type;
 
-      const char* to_string() const;
-      int16_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      int16_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_() = default;
-    two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_(const two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_& other);
-    two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_&
-    operator=(const two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_& other);
-    ~two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    scs_60k_hz_r18_e_& scs_60k_hz_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    scs_60k_hz_r18_e_&                            scs_60k_hz_r18()
     {
-      assert_choice_type(types::scs_60k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_60k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_60k_hz_r18_e_>();
     }
     scs_120k_hz_r18_e_& scs_120k_hz_r18()
     {
-      assert_choice_type(types::scs_120k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_120k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_120k_hz_r18_e_>();
     }
     scs_480k_hz_r18_e_& scs_480k_hz_r18()
     {
-      assert_choice_type(types::scs_480k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_480k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_480k_hz_r18_e_>();
     }
     scs_960k_hz_r18_e_& scs_960k_hz_r18()
     {
-      assert_choice_type(types::scs_960k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_960k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_960k_hz_r18_e_>();
     }
     const scs_60k_hz_r18_e_& scs_60k_hz_r18() const
     {
-      assert_choice_type(types::scs_60k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_60k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_60k_hz_r18_e_>();
     }
     const scs_120k_hz_r18_e_& scs_120k_hz_r18() const
     {
-      assert_choice_type(types::scs_120k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_120k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_120k_hz_r18_e_>();
     }
     const scs_480k_hz_r18_e_& scs_480k_hz_r18() const
     {
-      assert_choice_type(types::scs_480k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_480k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_480k_hz_r18_e_>();
     }
     const scs_960k_hz_r18_e_& scs_960k_hz_r18() const
     {
-      assert_choice_type(types::scs_960k_hz_r18, type_, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_960k_hz_r18, c.type, "twoPUSCH-CB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_960k_hz_r18_e_>();
     }
     scs_60k_hz_r18_e_&  set_scs_60k_hz_r18();
@@ -15040,103 +13404,87 @@ struct feature_set_ul_per_cc_v1850_s {
     scs_960k_hz_r18_e_& set_scs_960k_hz_r18();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_, types, pod_choice_buffer_t> c;
   };
   struct two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_ {
     struct scs_60k_hz_r18_opts {
       enum options { sym1, sym4, sym8, sym16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_60k_hz_r18_e_ = enumerated<scs_60k_hz_r18_opts>;
     struct scs_120k_hz_r18_opts {
       enum options { sym4, sym8, sym16, sym32, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_120k_hz_r18_e_ = enumerated<scs_120k_hz_r18_opts>;
     struct scs_480k_hz_r18_opts {
       enum options { sym16, sym32, sym64, sym128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using scs_480k_hz_r18_e_ = enumerated<scs_480k_hz_r18_opts>;
     struct scs_960k_hz_r18_opts {
       enum options { sym32, sym64, sym128, sym256, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using scs_960k_hz_r18_e_ = enumerated<scs_960k_hz_r18_opts>;
     struct types_opts {
       enum options { scs_60k_hz_r18, scs_120k_hz_r18, scs_480k_hz_r18, scs_960k_hz_r18, nulltype } value;
-      typedef int16_t number_type;
 
-      const char* to_string() const;
-      int16_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      int16_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_() = default;
-    two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_(const two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_& other);
-    two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_&
-    operator=(const two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_& other);
-    ~two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    scs_60k_hz_r18_e_& scs_60k_hz_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    scs_60k_hz_r18_e_&                            scs_60k_hz_r18()
     {
-      assert_choice_type(types::scs_60k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_60k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_60k_hz_r18_e_>();
     }
     scs_120k_hz_r18_e_& scs_120k_hz_r18()
     {
-      assert_choice_type(types::scs_120k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_120k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_120k_hz_r18_e_>();
     }
     scs_480k_hz_r18_e_& scs_480k_hz_r18()
     {
-      assert_choice_type(types::scs_480k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_480k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_480k_hz_r18_e_>();
     }
     scs_960k_hz_r18_e_& scs_960k_hz_r18()
     {
-      assert_choice_type(types::scs_960k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_960k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_960k_hz_r18_e_>();
     }
     const scs_60k_hz_r18_e_& scs_60k_hz_r18() const
     {
-      assert_choice_type(types::scs_60k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_60k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_60k_hz_r18_e_>();
     }
     const scs_120k_hz_r18_e_& scs_120k_hz_r18() const
     {
-      assert_choice_type(types::scs_120k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_120k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_120k_hz_r18_e_>();
     }
     const scs_480k_hz_r18_e_& scs_480k_hz_r18() const
     {
-      assert_choice_type(types::scs_480k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_480k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_480k_hz_r18_e_>();
     }
     const scs_960k_hz_r18_e_& scs_960k_hz_r18() const
     {
-      assert_choice_type(types::scs_960k_hz_r18, type_, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
+      assert_choice_type(types::scs_960k_hz_r18, c.type, "twoPUSCH-NonCB-MultiDCI-STx2P-AdditionalTime-r18");
       return c.get<scs_960k_hz_r18_e_>();
     }
     scs_60k_hz_r18_e_&  set_scs_60k_hz_r18();
@@ -15145,10 +13493,7 @@ struct feature_set_ul_per_cc_v1850_s {
     scs_960k_hz_r18_e_& set_scs_960k_hz_r18();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_, types, pod_choice_buffer_t> c;
   };
 
   // member variables
@@ -15157,10 +13502,7 @@ struct feature_set_ul_per_cc_v1850_s {
   two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_     two_pusch_cb_multi_dci_s_tx2_p_add_time_r18;
   two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_ two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FeatureSets ::= SEQUENCE
@@ -15251,10 +13593,7 @@ struct feature_sets_s {
   // group 13
   copy_ptr<feature_sets_dl_v1860_l_> feature_sets_dl_v1860;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FreqBandInformationEUTRA ::= SEQUENCE
@@ -15265,10 +13604,7 @@ struct freq_band_info_eutra_s {
   ca_bw_class_eutra_e ca_bw_class_dl_eutra;
   ca_bw_class_eutra_e ca_bw_class_ul_eutra;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FreqBandInformationNR ::= SEQUENCE
@@ -15283,10 +13619,7 @@ struct freq_band_info_nr_s {
   uint8_t   max_carriers_requested_dl = 1;
   uint8_t   max_carriers_requested_ul = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // FreqBandInformation ::= CHOICE
@@ -15294,49 +13627,39 @@ struct freq_band_info_c {
   struct types_opts {
     enum options { band_info_eutra, band_info_nr, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  freq_band_info_c() = default;
-  freq_band_info_c(const freq_band_info_c& other);
-  freq_band_info_c& operator=(const freq_band_info_c& other);
-  ~freq_band_info_c() { destroy_(); }
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  freq_band_info_eutra_s& band_info_eutra()
+  static const asn1::table::choice_storage_desc storage_desc;
+  void                                          set(types::options e = types::nulltype) { c.set(e); }
+  types                                         type() const { return c.type; }
+  static const asn1::table::choice_desc         desc;
+  freq_band_info_eutra_s&                       band_info_eutra()
   {
-    assert_choice_type(types::band_info_eutra, type_, "FreqBandInformation");
+    assert_choice_type(types::band_info_eutra, c.type, "FreqBandInformation");
     return c.get<freq_band_info_eutra_s>();
   }
   freq_band_info_nr_s& band_info_nr()
   {
-    assert_choice_type(types::band_info_nr, type_, "FreqBandInformation");
+    assert_choice_type(types::band_info_nr, c.type, "FreqBandInformation");
     return c.get<freq_band_info_nr_s>();
   }
   const freq_band_info_eutra_s& band_info_eutra() const
   {
-    assert_choice_type(types::band_info_eutra, type_, "FreqBandInformation");
+    assert_choice_type(types::band_info_eutra, c.type, "FreqBandInformation");
     return c.get<freq_band_info_eutra_s>();
   }
   const freq_band_info_nr_s& band_info_nr() const
   {
-    assert_choice_type(types::band_info_nr, type_, "FreqBandInformation");
+    assert_choice_type(types::band_info_nr, c.type, "FreqBandInformation");
     return c.get<freq_band_info_nr_s>();
   }
   freq_band_info_eutra_s& set_band_info_eutra();
   freq_band_info_nr_s&    set_band_info_nr();
 
 private:
-  types                                                        type_;
-  choice_buffer_t<freq_band_info_eutra_s, freq_band_info_nr_s> c;
-
-  void destroy_();
+  asn1::table::choice_storage<freq_band_info_c, types, choice_buffer_t<freq_band_info_eutra_s, freq_band_info_nr_s>> c;
 };
 
 // FreqBandList ::= SEQUENCE (SIZE (1..1280)) OF FreqBandInformation
@@ -15350,20 +13673,14 @@ struct general_params_mrdc_xdd_diff_s {
   bool dummy_present                          = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // GeneralParametersMRDC-v1610 ::= SEQUENCE
 struct general_params_mrdc_v1610_s {
   bool f1c_over_eutra_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // HighSpeedParameters-r16 ::= SEQUENCE
@@ -15371,10 +13688,7 @@ struct high_speed_params_r16_s {
   bool meas_enhancement_r16_present  = false;
   bool demod_enhancement_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // HighSpeedParameters-v1650 ::= CHOICE
@@ -15382,20 +13696,15 @@ struct high_speed_params_v1650_c {
   struct types_opts {
     enum options { intra_nr_meas_enhancement_r16, inter_rat_meas_enhancement_r16, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using types = enumerated<types_opts>;
 
-  // choice methods
-  high_speed_params_v1650_c() = default;
-  void          set(types::options e = types::nulltype);
-  types         type() const { return type_; }
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
-  // getters
-  void set_intra_nr_meas_enhancement_r16();
-  void set_inter_rat_meas_enhancement_r16();
+  void                                  set(types::options e = types::nulltype);
+  types                                 type() const { return type_; }
+  static const asn1::table::choice_desc desc;
+  void                                  set_intra_nr_meas_enhancement_r16();
+  void                                  set_inter_rat_meas_enhancement_r16();
 
 private:
   types type_;
@@ -15406,10 +13715,7 @@ struct high_speed_params_v1700_s {
   bool meas_enhancement_ca_r17_present         = false;
   bool meas_enhancement_inter_freq_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // IMS-ParametersCommon ::= SEQUENCE
@@ -15421,10 +13727,7 @@ struct ims_params_common_s {
   // group 1
   bool voice_fallback_ind_eps_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // IMS-ParametersFRX-Diff ::= SEQUENCE
@@ -15432,10 +13735,7 @@ struct ims_params_frx_diff_s {
   bool voice_over_nr_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // IMS-Parameters ::= SEQUENCE
@@ -15446,10 +13746,7 @@ struct ims_params_s {
   ims_params_frx_diff_s ims_params_frx_diff;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // IMS-ParametersFR2-2-r17 ::= SEQUENCE
@@ -15457,10 +13754,7 @@ struct ims_params_fr2_2_r17_s {
   bool voice_over_nr_r17_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // IMS-Parameters-v1700 ::= SEQUENCE
@@ -15468,10 +13762,7 @@ struct ims_params_v1700_s {
   bool                   ims_params_fr2_2_r17_present = false;
   ims_params_fr2_2_r17_s ims_params_fr2_2_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SupportedBandUTRA-FDD-r16 ::= ENUMERATED
@@ -15512,7 +13803,7 @@ struct supported_band_utra_fdd_r16_opts {
     nulltype
   } value;
 
-  const char* to_string() const;
+  static const asn1::table::enum_desc desc;
 };
 using supported_band_utra_fdd_r16_e = enumerated<supported_band_utra_fdd_r16_opts>;
 
@@ -15524,10 +13815,7 @@ struct utra_fdd_params_r16_s {
   supported_band_list_utra_fdd_r16_l_ supported_band_list_utra_fdd_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // InterRAT-Parameters ::= SEQUENCE
@@ -15538,10 +13826,7 @@ struct inter_rat_params_s {
   // group 0
   copy_ptr<utra_fdd_params_r16_s> utra_fdd_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersCommon ::= SEQUENCE
@@ -15592,10 +13877,7 @@ struct mac_params_common_s {
   bool cg_retx_monitoring_disabling_r18_present  = false;
   bool non_integer_drx_r18_present               = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersXDD-Diff ::= SEQUENCE
@@ -15616,10 +13898,7 @@ struct mac_params_xdd_diff_s {
   bool dummy1_present = false;
   bool dummy2_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-Parameters ::= SEQUENCE
@@ -15629,44 +13908,37 @@ struct mac_params_s {
   mac_params_common_s   mac_params_common;
   mac_params_xdd_diff_s mac_params_xdd_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MinTimeGap-r16 ::= SEQUENCE
 struct min_time_gap_r16_s {
   struct scs_15k_hz_r16_opts {
     enum options { sl1, sl3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using scs_15k_hz_r16_e_ = enumerated<scs_15k_hz_r16_opts>;
   struct scs_30k_hz_r16_opts {
     enum options { sl1, sl6, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using scs_30k_hz_r16_e_ = enumerated<scs_30k_hz_r16_opts>;
   struct scs_60k_hz_r16_opts {
     enum options { sl1, sl12, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using scs_60k_hz_r16_e_ = enumerated<scs_60k_hz_r16_opts>;
   struct scs_120k_hz_r16_opts {
     enum options { sl2, sl24, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using scs_120k_hz_r16_e_ = enumerated<scs_120k_hz_r16_opts>;
 
@@ -15680,10 +13952,7 @@ struct min_time_gap_r16_s {
   scs_60k_hz_r16_e_  scs_60k_hz_r16;
   scs_120k_hz_r16_e_ scs_120k_hz_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersFRX-Diff-r16 ::= SEQUENCE
@@ -15704,10 +13973,7 @@ struct mac_params_frx_diff_r16_s {
   drx_adaptation_r16_s_ drx_adaptation_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-Parameters-v1610 ::= SEQUENCE
@@ -15715,36 +13981,30 @@ struct mac_params_v1610_s {
   bool                      mac_params_frx_diff_r16_present = false;
   mac_params_frx_diff_r16_s mac_params_frx_diff_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MinTimeGapFR2-2-r17 ::= SEQUENCE
 struct min_time_gap_fr2_2_r17_s {
   struct scs_120k_hz_r17_opts {
     enum options { sl2, sl24, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using scs_120k_hz_r17_e_ = enumerated<scs_120k_hz_r17_opts>;
   struct scs_480k_hz_r17_opts {
     enum options { sl8, sl96, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using scs_480k_hz_r17_e_ = enumerated<scs_480k_hz_r17_opts>;
   struct scs_960k_hz_r17_opts {
     enum options { sl16, sl192, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using scs_960k_hz_r17_e_ = enumerated<scs_960k_hz_r17_opts>;
 
@@ -15756,10 +14016,7 @@ struct min_time_gap_fr2_2_r17_s {
   scs_480k_hz_r17_e_ scs_480k_hz_r17;
   scs_960k_hz_r17_e_ scs_960k_hz_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersFR2-2-r17 ::= SEQUENCE
@@ -15780,10 +14037,7 @@ struct mac_params_fr2_2_r17_s {
   drx_adaptation_r17_s_ drx_adaptation_r17;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-Parameters-v1700 ::= SEQUENCE
@@ -15791,10 +14045,7 @@ struct mac_params_v1700_s {
   bool                   mac_params_fr2_2_r17_present = false;
   mac_params_fr2_2_r17_s mac_params_fr2_2_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersSidelinkCommon-r16 ::= SEQUENCE
@@ -15807,10 +14058,7 @@ struct mac_params_sidelink_common_r16_s {
   // group 1
   bool sl_lbt_fail_dectection_recovery_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersSidelinkXDD-Diff-r16 ::= SEQUENCE
@@ -15819,10 +14067,7 @@ struct mac_params_sidelink_xdd_diff_r16_s {
   bool lc_ch_sr_delay_timer_sidelink_r16_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MAC-ParametersSidelink-r16 ::= SEQUENCE
@@ -15833,10 +14078,7 @@ struct mac_params_sidelink_r16_s {
   mac_params_sidelink_xdd_diff_r16_s mac_params_sidelink_xdd_diff_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MBS-Parameters-r17 ::= SEQUENCE
@@ -15844,20 +14086,16 @@ struct mbs_params_r17_s {
   bool    max_mrb_add_r17_present = false;
   uint8_t max_mrb_add_r17         = 1;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersCommon ::= SEQUENCE
 struct meas_and_mob_params_common_s {
   struct max_num_csi_rs_rrm_rs_sinr_opts {
     enum options { n4, n8, n16, n32, n64, n96, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_csi_rs_rrm_rs_sinr_e_ = enumerated<max_num_csi_rs_rrm_rs_sinr_opts>;
   struct cond_ho_params_common_r16_s_ {
@@ -15866,46 +14104,38 @@ struct meas_and_mob_params_common_s {
   };
   struct max_num_cli_rssi_r16_opts {
     enum options { n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_cli_rssi_r16_e_ = enumerated<max_num_cli_rssi_r16_opts>;
   struct max_num_cli_srs_rsrp_r16_opts {
     enum options { n4, n8, n16, n32, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_cli_srs_rsrp_r16_e_ = enumerated<max_num_cli_srs_rsrp_r16_opts>;
   struct max_num_per_slot_cli_srs_rsrp_r16_opts {
     enum options { n2, n4, n8, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_per_slot_cli_srs_rsrp_r16_e_ = enumerated<max_num_per_slot_cli_srs_rsrp_r16_opts>;
   struct concurrent_meas_gap_r17_c_ {
     struct types_opts {
       enum options { concurrent_per_ue_only_meas_gap_r17, concurrent_per_ue_per_fr_comb_meas_gap_r17, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    concurrent_meas_gap_r17_c_() = default;
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    void set_concurrent_per_ue_only_meas_gap_r17();
-    void set_concurrent_per_ue_per_fr_comb_meas_gap_r17();
+    void                                  set(types::options e = types::nulltype);
+    types                                 type() const { return type_; }
+    static const asn1::table::choice_desc desc;
+    void                                  set_concurrent_per_ue_only_meas_gap_r17();
+    void                                  set_concurrent_per_ue_per_fr_comb_meas_gap_r17();
 
   private:
     types type_;
@@ -15921,26 +14151,23 @@ struct meas_and_mob_params_common_s {
   struct dummy_ltm_fast_ue_processing_r18_s_ {
     struct fr1_r18_opts {
       enum options { ms10, ms15, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fr1_r18_e_ = enumerated<fr1_r18_opts>;
     struct fr2_r18_opts {
       enum options { ms10, ms15, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fr2_r18_e_ = enumerated<fr2_r18_opts>;
     struct fr1_and_fr2_r18_opts {
       enum options { ms20, ms30, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fr1_and_fr2_r18_e_ = enumerated<fr1_and_fr2_r18_opts>;
 
@@ -15952,26 +14179,23 @@ struct meas_and_mob_params_common_s {
   struct ltm_fast_ue_processing_r18_s_ {
     struct fr1_r18_opts {
       enum options { ms10, ms15, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fr1_r18_e_ = enumerated<fr1_r18_opts>;
     struct fr2_r18_opts {
       enum options { ms10, ms15, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fr2_r18_e_ = enumerated<fr2_r18_opts>;
     struct fr1_and_fr2_r18_opts {
       enum options { ms20, ms30, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using fr1_and_fr2_r18_e_ = enumerated<fr1_and_fr2_r18_opts>;
 
@@ -16099,10 +14323,7 @@ struct meas_and_mob_params_common_s {
   // group 11
   bool ltm_inter_freq_l1_only_in_bc_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersXDD-Diff ::= SEQUENCE
@@ -16120,20 +14341,16 @@ struct meas_and_mob_params_xdd_diff_s {
   // group 2
   bool dummy_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersFRX-Diff ::= SEQUENCE
 struct meas_and_mob_params_frx_diff_s {
   struct max_num_res_csi_rs_rlm_opts {
     enum options { n2, n4, n6, n8, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_res_csi_rs_rlm_e_ = enumerated<max_num_res_csi_rs_rlm_opts>;
 
@@ -16168,10 +14385,7 @@ struct meas_and_mob_params_frx_diff_s {
   // group 4
   bool increased_numof_csi_rs_per_mo_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParameters ::= SEQUENCE
@@ -16183,10 +14397,7 @@ struct meas_and_mob_params_s {
   meas_and_mob_params_xdd_diff_s meas_and_mob_params_xdd_diff;
   meas_and_mob_params_frx_diff_s meas_and_mob_params_frx_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersFR2-2-r17 ::= SEQUENCE
@@ -16197,10 +14408,7 @@ struct meas_and_mob_params_fr2_2_r17_s {
   bool idle_inactive_nr_meas_report_r17_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParameters-v1700 ::= SEQUENCE
@@ -16208,20 +14416,14 @@ struct meas_and_mob_params_v1700_s {
   bool                            meas_and_mob_params_fr2_2_r17_present = false;
   meas_and_mob_params_fr2_2_r17_s meas_and_mob_params_fr2_2_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-Common ::= SEQUENCE
 struct meas_and_mob_params_mrdc_common_s {
   bool independent_gap_cfg_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-XDD-Diff ::= SEQUENCE
@@ -16229,20 +14431,14 @@ struct meas_and_mob_params_mrdc_xdd_diff_s {
   bool sftd_meas_pscell_present  = false;
   bool sftd_meas_nr_cell_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-FRX-Diff ::= SEQUENCE
 struct meas_and_mob_params_mrdc_frx_diff_s {
   bool simul_rx_data_ssb_diff_numerology_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC ::= SEQUENCE
@@ -16254,10 +14450,7 @@ struct meas_and_mob_params_mrdc_s {
   meas_and_mob_params_mrdc_xdd_diff_s meas_and_mob_params_mrdc_xdd_diff;
   meas_and_mob_params_mrdc_frx_diff_s meas_and_mob_params_mrdc_frx_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-Common-v1610 ::= SEQUENCE
@@ -16272,10 +14465,7 @@ struct meas_and_mob_params_mrdc_common_v1610_s {
   bool                                    pscell_t312_r16_present                      = false;
   cond_pscell_change_params_common_r16_s_ cond_pscell_change_params_common_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-Common-v1700 ::= SEQUENCE
@@ -16299,10 +14489,7 @@ struct meas_and_mob_params_mrdc_common_v1700_s {
   bool                             cond_ho_with_scg_nedc_r17_present     = false;
   cond_pscell_change_params_r17_s_ cond_pscell_change_params_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-Common-v1730 ::= SEQUENCE
@@ -16319,10 +14506,7 @@ struct meas_and_mob_params_mrdc_common_v1730_s {
   // member variables
   independent_gap_cfg_max_cc_r17_s_ independent_gap_cfg_max_cc_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-Common-v1810 ::= SEQUENCE
@@ -16337,20 +14521,14 @@ struct meas_and_mob_params_mrdc_common_v1810_s {
   bool cond_ho_with_cand_scg_fr1_fr2_change_r18_present        = false;
   bool cond_ho_with_cand_scg_fdd_tdd_change_r18_present        = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-XDD-Diff-v1560 ::= SEQUENCE
 struct meas_and_mob_params_mrdc_xdd_diff_v1560_s {
   bool sftd_meas_pscell_nedc_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-v1560 ::= SEQUENCE
@@ -16358,10 +14536,7 @@ struct meas_and_mob_params_mrdc_v1560_s {
   bool                                      meas_and_mob_params_mrdc_xdd_diff_v1560_present = false;
   meas_and_mob_params_mrdc_xdd_diff_v1560_s meas_and_mob_params_mrdc_xdd_diff_v1560;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-v1610 ::= SEQUENCE
@@ -16370,10 +14545,7 @@ struct meas_and_mob_params_mrdc_v1610_s {
   bool                                    inter_nr_meas_eutra_iab_r16_present           = false;
   meas_and_mob_params_mrdc_common_v1610_s meas_and_mob_params_mrdc_common_v1610;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-v1700 ::= SEQUENCE
@@ -16381,10 +14553,7 @@ struct meas_and_mob_params_mrdc_v1700_s {
   bool                                    meas_and_mob_params_mrdc_common_v1700_present = false;
   meas_and_mob_params_mrdc_common_v1700_s meas_and_mob_params_mrdc_common_v1700;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-v1730 ::= SEQUENCE
@@ -16392,10 +14561,7 @@ struct meas_and_mob_params_mrdc_v1730_s {
   bool                                    meas_and_mob_params_mrdc_common_v1730_present = false;
   meas_and_mob_params_mrdc_common_v1730_s meas_and_mob_params_mrdc_common_v1730;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // MeasAndMobParametersMRDC-v1810 ::= SEQUENCE
@@ -16403,10 +14569,7 @@ struct meas_and_mob_params_mrdc_v1810_s {
   bool                                    meas_and_mob_params_mrdc_common_v1810_present = false;
   meas_and_mob_params_mrdc_common_v1810_s meas_and_mob_params_mrdc_common_v1810;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NAICS-Capability-Entry ::= SEQUENCE
@@ -16431,10 +14594,9 @@ struct naics_cap_entry_s {
       spare,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using nof_aggr_prb_e_ = enumerated<nof_aggr_prb_opts>;
 
@@ -16443,20 +14605,16 @@ struct naics_cap_entry_s {
   nof_aggr_prb_e_ nof_aggr_prb;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NCR-Parameters-r18 ::= SEQUENCE
 struct ncr_params_r18_s {
   struct supported_nof_drbs_ncr_r18_opts {
     enum options { n1, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using supported_nof_drbs_ncr_r18_e_ = enumerated<supported_nof_drbs_ncr_r18_opts>;
 
@@ -16466,10 +14624,7 @@ struct ncr_params_r18_s {
   bool                          dummy_present                      = false;
   supported_nof_drbs_ncr_r18_e_ supported_nof_drbs_ncr_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-CapabilityAddXDD-Mode ::= SEQUENCE
@@ -16479,20 +14634,14 @@ struct ue_mrdc_cap_add_xdd_mode_s {
   meas_and_mob_params_mrdc_xdd_diff_s meas_and_mob_params_mrdc_xdd_diff;
   general_params_mrdc_xdd_diff_s      general_params_mrdc_xdd_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-CapabilityAddFRX-Mode ::= SEQUENCE
 struct ue_mrdc_cap_add_frx_mode_s {
   meas_and_mob_params_mrdc_frx_diff_s meas_and_mob_params_mrdc_frx_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NRDC-Parameters ::= SEQUENCE
@@ -16512,20 +14661,14 @@ struct nrdc_params_s {
   ue_mrdc_cap_add_frx_mode_s     fr2_add_ue_nrdc_cap;
   dyn_octstring                  dummy2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NRDC-Parameters-v1570 ::= SEQUENCE
 struct nrdc_params_v1570_s {
   bool sfn_sync_nrdc_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NRDC-Parameters-v1610 ::= SEQUENCE
@@ -16533,10 +14676,7 @@ struct nrdc_params_v1610_s {
   bool                             meas_and_mob_params_nrdc_v1610_present = false;
   meas_and_mob_params_mrdc_v1610_s meas_and_mob_params_nrdc_v1610;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NRDC-Parameters-v1700 ::= SEQUENCE
@@ -16544,20 +14684,16 @@ struct nrdc_params_v1700_s {
   bool                             f1c_over_nr_rrc_r17_present = false;
   meas_and_mob_params_mrdc_v1700_s meas_and_mob_params_nrdc_v1700;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-ParametersCommon ::= SEQUENCE
 struct phy_params_common_s {
   struct bwp_switching_delay_opts {
     enum options { type1, type2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using bwp_switching_delay_e_ = enumerated<bwp_switching_delay_opts>;
   struct cross_slot_sched_r16_s_ {
@@ -16566,10 +14702,9 @@ struct phy_params_common_s {
   };
   struct max_num_srs_pos_path_loss_estimate_all_serving_cells_r16_opts {
     enum options { n1, n4, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_srs_pos_path_loss_estimate_all_serving_cells_r16_e_ =
       enumerated<max_num_srs_pos_path_loss_estimate_all_serving_cells_r16_opts>;
@@ -16579,28 +14714,25 @@ struct phy_params_common_s {
   };
   struct max_num_pathloss_rs_upd_r16_opts {
     enum options { n4, n8, n16, n32, n64, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_pathloss_rs_upd_r16_e_ = enumerated<max_num_pathloss_rs_upd_r16_opts>;
   struct max_total_res_for_across_freq_ranges_r16_s_ {
     struct max_num_res_within_slot_across_cc_across_fr_r16_opts {
       enum options { n2, n4, n8, n12, n16, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_res_within_slot_across_cc_across_fr_r16_e_ =
         enumerated<max_num_res_within_slot_across_cc_across_fr_r16_opts>;
     struct max_num_res_across_cc_across_fr_r16_opts {
       enum options { n2, n4, n8, n12, n16, n32, n40, n48, n64, n72, n80, n96, n128, n256, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using max_num_res_across_cc_across_fr_r16_e_ = enumerated<max_num_res_across_cc_across_fr_r16_opts>;
 
@@ -16614,7 +14746,7 @@ struct phy_params_common_s {
     struct max_num_long_pucch_s_r16_opts {
       enum options { long_and_long, long_and_short, short_and_short, nulltype } value;
 
-      const char* to_string() const;
+      static const asn1::table::enum_desc desc;
     };
     using max_num_long_pucch_s_r16_e_ = enumerated<max_num_long_pucch_s_r16_opts>;
 
@@ -16625,141 +14757,114 @@ struct phy_params_common_s {
   struct bwp_switching_multi_ccs_r16_c_ {
     struct type1_r16_opts {
       enum options { us100, us200, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using type1_r16_e_ = enumerated<type1_r16_opts>;
     struct type2_r16_opts {
       enum options { us200, us400, us800, us1000, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using type2_r16_e_ = enumerated<type2_r16_opts>;
     struct types_opts {
       enum options { type1_r16, type2_r16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    bwp_switching_multi_ccs_r16_c_() = default;
-    bwp_switching_multi_ccs_r16_c_(const bwp_switching_multi_ccs_r16_c_& other);
-    bwp_switching_multi_ccs_r16_c_& operator=(const bwp_switching_multi_ccs_r16_c_& other);
-    ~bwp_switching_multi_ccs_r16_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    type1_r16_e_& type1_r16()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    type1_r16_e_&                                 type1_r16()
     {
-      assert_choice_type(types::type1_r16, type_, "bwp-SwitchingMultiCCs-r16");
+      assert_choice_type(types::type1_r16, c.type, "bwp-SwitchingMultiCCs-r16");
       return c.get<type1_r16_e_>();
     }
     type2_r16_e_& type2_r16()
     {
-      assert_choice_type(types::type2_r16, type_, "bwp-SwitchingMultiCCs-r16");
+      assert_choice_type(types::type2_r16, c.type, "bwp-SwitchingMultiCCs-r16");
       return c.get<type2_r16_e_>();
     }
     const type1_r16_e_& type1_r16() const
     {
-      assert_choice_type(types::type1_r16, type_, "bwp-SwitchingMultiCCs-r16");
+      assert_choice_type(types::type1_r16, c.type, "bwp-SwitchingMultiCCs-r16");
       return c.get<type1_r16_e_>();
     }
     const type2_r16_e_& type2_r16() const
     {
-      assert_choice_type(types::type2_r16, type_, "bwp-SwitchingMultiCCs-r16");
+      assert_choice_type(types::type2_r16, c.type, "bwp-SwitchingMultiCCs-r16");
       return c.get<type2_r16_e_>();
     }
     type1_r16_e_& set_type1_r16();
     type2_r16_e_& set_type2_r16();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<bwp_switching_multi_ccs_r16_c_, types, pod_choice_buffer_t> c;
   };
   struct bwp_switching_multi_dormancy_ccs_r16_c_ {
     struct type1_r16_opts {
       enum options { us100, us200, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using type1_r16_e_ = enumerated<type1_r16_opts>;
     struct type2_r16_opts {
       enum options { us200, us400, us800, us1000, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using type2_r16_e_ = enumerated<type2_r16_opts>;
     struct types_opts {
       enum options { type1_r16, type2_r16, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    bwp_switching_multi_dormancy_ccs_r16_c_() = default;
-    bwp_switching_multi_dormancy_ccs_r16_c_(const bwp_switching_multi_dormancy_ccs_r16_c_& other);
-    bwp_switching_multi_dormancy_ccs_r16_c_& operator=(const bwp_switching_multi_dormancy_ccs_r16_c_& other);
-    ~bwp_switching_multi_dormancy_ccs_r16_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    type1_r16_e_& type1_r16()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    type1_r16_e_&                                 type1_r16()
     {
-      assert_choice_type(types::type1_r16, type_, "bwp-SwitchingMultiDormancyCCs-r16");
+      assert_choice_type(types::type1_r16, c.type, "bwp-SwitchingMultiDormancyCCs-r16");
       return c.get<type1_r16_e_>();
     }
     type2_r16_e_& type2_r16()
     {
-      assert_choice_type(types::type2_r16, type_, "bwp-SwitchingMultiDormancyCCs-r16");
+      assert_choice_type(types::type2_r16, c.type, "bwp-SwitchingMultiDormancyCCs-r16");
       return c.get<type2_r16_e_>();
     }
     const type1_r16_e_& type1_r16() const
     {
-      assert_choice_type(types::type1_r16, type_, "bwp-SwitchingMultiDormancyCCs-r16");
+      assert_choice_type(types::type1_r16, c.type, "bwp-SwitchingMultiDormancyCCs-r16");
       return c.get<type1_r16_e_>();
     }
     const type2_r16_e_& type2_r16() const
     {
-      assert_choice_type(types::type2_r16, type_, "bwp-SwitchingMultiDormancyCCs-r16");
+      assert_choice_type(types::type2_r16, c.type, "bwp-SwitchingMultiDormancyCCs-r16");
       return c.get<type2_r16_e_>();
     }
     type1_r16_e_& set_type1_r16();
     type2_r16_e_& set_type2_r16();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<bwp_switching_multi_dormancy_ccs_r16_c_, types, pod_choice_buffer_t> c;
   };
   struct pdcch_monitoring_any_occasions_with_span_gap_cross_carrier_sch_r16_opts {
     enum options { mode2, mode3, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pdcch_monitoring_any_occasions_with_span_gap_cross_carrier_sch_r16_e_ =
       enumerated<pdcch_monitoring_any_occasions_with_span_gap_cross_carrier_sch_r16_opts>;
@@ -16769,10 +14874,9 @@ struct phy_params_common_s {
   };
   struct supported_activ_prs_processing_win_r17_opts {
     enum options { n2, n3, n4, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using supported_activ_prs_processing_win_r17_e_ = enumerated<supported_activ_prs_processing_win_r17_opts>;
   struct ncr_aperiodic_beam_ind_access_link_r18_s_ {
@@ -16788,13 +14892,13 @@ struct phy_params_common_s {
   struct ncr_backhaul_beam_ind_r18_opts {
     enum options { non_unified_tci, unified_tci, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ncr_backhaul_beam_ind_r18_e_ = enumerated<ncr_backhaul_beam_ind_r18_opts>;
   struct ncr_adaptive_beam_backhaul_and_c_link_r18_opts {
     enum options { non_unified_tci, unified_tci, both, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ncr_adaptive_beam_backhaul_and_c_link_r18_e_ = enumerated<ncr_adaptive_beam_backhaul_and_c_link_r18_opts>;
   struct add_sr_periodicities_r18_s_ {
@@ -16804,70 +14908,55 @@ struct phy_params_common_s {
   struct bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_ {
     struct type1_r18_opts {
       enum options { us100, us200, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using type1_r18_e_ = enumerated<type1_r18_opts>;
     struct type2_r18_opts {
       enum options { us200, us400, us800, us1000, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using type2_r18_e_ = enumerated<type2_r18_opts>;
     struct types_opts {
       enum options { type1_r18, type2_r18, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using types = enumerated<types_opts>;
 
-    // choice methods
-    bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_() = default;
-    bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_(
-        const bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_& other);
-    bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_&
-    operator=(const bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_& other);
-    ~bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_() { destroy_(); }
-    void          set(types::options e = types::nulltype);
-    types         type() const { return type_; }
-    OCUDUASN_CODE pack(bit_ref& bref) const;
-    OCUDUASN_CODE unpack(cbit_ref& bref);
-    void          to_json(json_writer& j) const;
-    // getters
-    type1_r18_e_& type1_r18()
+    static const asn1::table::choice_storage_desc storage_desc;
+    void                                          set(types::options e = types::nulltype) { c.set(e); }
+    types                                         type() const { return c.type; }
+    static const asn1::table::choice_desc         desc;
+    type1_r18_e_&                                 type1_r18()
     {
-      assert_choice_type(types::type1_r18, type_, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
+      assert_choice_type(types::type1_r18, c.type, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
       return c.get<type1_r18_e_>();
     }
     type2_r18_e_& type2_r18()
     {
-      assert_choice_type(types::type2_r18, type_, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
+      assert_choice_type(types::type2_r18, c.type, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
       return c.get<type2_r18_e_>();
     }
     const type1_r18_e_& type1_r18() const
     {
-      assert_choice_type(types::type1_r18, type_, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
+      assert_choice_type(types::type1_r18, c.type, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
       return c.get<type1_r18_e_>();
     }
     const type2_r18_e_& type2_r18() const
     {
-      assert_choice_type(types::type2_r18, type_, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
+      assert_choice_type(types::type2_r18, c.type, "bwp-SwitchingMultiDormancyCC-DCI-0-3-And-1-3-r18");
       return c.get<type2_r18_e_>();
     }
     type1_r18_e_& set_type1_r18();
     type2_r18_e_& set_type2_r18();
 
   private:
-    types               type_;
-    pod_choice_buffer_t c;
-
-    void destroy_();
+    asn1::table::choice_storage<bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_, types, pod_choice_buffer_t> c;
   };
 
   // member variables
@@ -17019,10 +15108,7 @@ struct phy_params_common_s {
   // group 13
   bool ncr_dft_s_ofdm_waveform_ul_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-ParametersXDD-Diff ::= SEQUENCE
@@ -17037,10 +15123,7 @@ struct phy_params_xdd_diff_s {
   bool dl_sched_offset_pdsch_type_b_present = false;
   bool ul_sched_offset_present              = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-ParametersFRX-Diff ::= SEQUENCE
@@ -17048,13 +15131,13 @@ struct phy_params_frx_diff_s {
   struct supported_dmrs_type_dl_opts {
     enum options { type1, type1_and2, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using supported_dmrs_type_dl_e_ = enumerated<supported_dmrs_type_dl_opts>;
   struct supported_dmrs_type_ul_opts {
     enum options { type1, type1_and2, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using supported_dmrs_type_ul_e_ = enumerated<supported_dmrs_type_ul_opts>;
   struct mux_sr_harq_ack_csi_pucch_once_per_slot_s_ {
@@ -17068,19 +15151,17 @@ struct phy_params_frx_diff_s {
   struct max_total_res_for_one_freq_range_r16_s_ {
     struct max_num_res_within_slot_across_cc_one_fr_r16_opts {
       enum options { n2, n4, n8, n12, n16, n32, n64, n128, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using max_num_res_within_slot_across_cc_one_fr_r16_e_ =
         enumerated<max_num_res_within_slot_across_cc_one_fr_r16_opts>;
     struct max_num_res_across_cc_one_fr_r16_opts {
       enum options { n2, n4, n8, n12, n16, n32, n40, n48, n64, n72, n80, n96, n128, n256, nulltype } value;
-      typedef uint16_t number_type;
 
-      const char* to_string() const;
-      uint16_t    to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint16_t                            to_number() const;
     };
     using max_num_res_across_cc_one_fr_r16_e_ = enumerated<max_num_res_across_cc_one_fr_r16_opts>;
 
@@ -17177,20 +15258,16 @@ struct phy_params_frx_diff_s {
   // group 6
   bool multiple_coreset_red_cap_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-ParametersFR1 ::= SEQUENCE
 struct phy_params_fr1_s {
   struct pdsch_re_map_fr1_per_symbol_opts {
     enum options { n10, n20, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pdsch_re_map_fr1_per_symbol_e_ = enumerated<pdsch_re_map_fr1_per_symbol_opts>;
   struct pdsch_re_map_fr1_per_slot_opts {
@@ -17213,24 +15290,22 @@ struct phy_params_fr1_s {
       n256,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using pdsch_re_map_fr1_per_slot_e_ = enumerated<pdsch_re_map_fr1_per_slot_opts>;
   struct max_harq_process_num_atg_r18_opts {
     enum options { u16d32, u32d16, u32d32, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using max_harq_process_num_atg_r18_e_ = enumerated<max_harq_process_num_atg_r18_opts>;
   struct delta_pwr_class_report_r18_opts {
     enum options { type1, type2, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using delta_pwr_class_report_r18_e_ = enumerated<delta_pwr_class_report_r18_opts>;
 
@@ -17258,20 +15333,16 @@ struct phy_params_fr1_s {
   max_harq_process_num_atg_r18_e_ max_harq_process_num_atg_r18;
   delta_pwr_class_report_r18_e_   delta_pwr_class_report_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-ParametersFR2 ::= SEQUENCE
 struct phy_params_fr2_s {
   struct pdsch_re_map_fr2_per_symbol_opts {
     enum options { n6, n20, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using pdsch_re_map_fr2_per_symbol_e_ = enumerated<pdsch_re_map_fr2_per_symbol_opts>;
   struct pdsch_re_map_fr2_per_slot_opts {
@@ -17294,18 +15365,16 @@ struct phy_params_fr2_s {
       n256,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using pdsch_re_map_fr2_per_slot_e_ = enumerated<pdsch_re_map_fr2_per_slot_opts>;
   struct max_num_srs_pos_spatial_relations_all_serving_cells_r16_opts {
     enum options { n0, n1, n2, n4, n8, n16, nulltype } value;
-    typedef uint8_t number_type;
 
-    const char* to_string() const;
-    uint8_t     to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint8_t                             to_number() const;
   };
   using max_num_srs_pos_spatial_relations_all_serving_cells_r16_e_ =
       enumerated<max_num_srs_pos_spatial_relations_all_serving_cells_r16_opts>;
@@ -17327,10 +15396,7 @@ struct phy_params_fr2_s {
   // group 2
   bool multi_rx_pref_ind_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-Parameters ::= SEQUENCE
@@ -17346,10 +15412,7 @@ struct phy_params_s {
   phy_params_fr1_s      phy_params_fr1;
   phy_params_fr2_s      phy_params_fr2;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-CapabilityAddXDD-Mode ::= SEQUENCE
@@ -17361,10 +15424,7 @@ struct ue_nr_cap_add_xdd_mode_s {
   mac_params_xdd_diff_s          mac_params_xdd_diff;
   meas_and_mob_params_xdd_diff_s meas_and_mob_params_xdd_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-CapabilityAddFRX-Mode ::= SEQUENCE
@@ -17374,10 +15434,7 @@ struct ue_nr_cap_add_frx_mode_s {
   phy_params_frx_diff_s          phy_params_frx_diff;
   meas_and_mob_params_frx_diff_s meas_and_mob_params_frx_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-BasedPerfMeas-Parameters-r16 ::= SEQUENCE
@@ -17402,10 +15459,7 @@ struct ue_based_perf_meas_params_r16_s {
   bool logged_mdt_pni_npn_r18_present = false;
   bool logged_mdt_sn_pn_r18_present   = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SON-Parameters-r16 ::= SEQUENCE
@@ -17426,10 +15480,7 @@ struct son_params_r16_s {
   bool spr_report_r18_present             = false;
   bool success_irat_ho_report_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NTN-Parameters-r17 ::= SEQUENCE
@@ -17452,10 +15503,7 @@ struct ntn_params_r17_s {
   ue_based_perf_meas_params_r16_s ue_based_perf_meas_params_ntn_r17;
   son_params_r16_s                son_params_ntn_r17;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // NTN-Parameters-v1820 ::= SEQUENCE
@@ -17463,10 +15511,7 @@ struct ntn_params_v1820_s {
   bool                     fr2_add_ue_nr_cap_ntn_r18_present = false;
   ue_nr_cap_add_frx_mode_s fr2_add_ue_nr_cap_ntn_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCP-Parameters ::= SEQUENCE
@@ -17503,10 +15548,9 @@ struct pdcp_params_s {
       spare1,
       nulltype
     } value;
-    typedef uint16_t number_type;
 
-    const char* to_string() const;
-    uint16_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint16_t                            to_number() const;
   };
   using max_num_rohc_context_sessions_e_ = enumerated<max_num_rohc_context_sessions_opts>;
   struct max_num_ehc_contexts_r16_opts {
@@ -17529,10 +15573,9 @@ struct pdcp_params_s {
       cs65536,
       nulltype
     } value;
-    typedef uint32_t number_type;
 
-    const char* to_string() const;
-    uint32_t    to_number() const;
+    static const asn1::table::enum_desc desc;
+    uint32_t                            to_number() const;
   };
   using max_num_ehc_contexts_r16_e_ = enumerated<max_num_ehc_contexts_r16_opts>;
   struct udc_r17_s_ {
@@ -17542,10 +15585,9 @@ struct pdcp_params_s {
     };
     struct support_of_buffer_size_r17_opts {
       enum options { kbyte4, kbyte8, nulltype } value;
-      typedef uint8_t number_type;
 
-      const char* to_string() const;
-      uint8_t     to_number() const;
+      static const asn1::table::enum_desc desc;
+      uint8_t                             to_number() const;
     };
     using support_of_buffer_size_r17_e_ = enumerated<support_of_buffer_size_r17_opts>;
 
@@ -17587,10 +15629,7 @@ struct pdcp_params_s {
   bool psi_based_discard_r18_present          = false;
   bool support_of_sn_gap_report_r18_present   = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCP-ParametersMRDC ::= SEQUENCE
@@ -17598,20 +15637,14 @@ struct pdcp_params_mrdc_s {
   bool pdcp_dupl_split_srb_present = false;
   bool pdcp_dupl_split_drb_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCP-ParametersMRDC-v1610 ::= SEQUENCE
 struct pdcp_params_mrdc_v1610_s {
   bool scg_drb_nr_iab_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PDCP-ParametersSidelink-r18 ::= SEQUENCE
@@ -17620,10 +15653,7 @@ struct pdcp_params_sidelink_r18_s {
   bool pdcp_dupl_drb_sidelink_r18_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-ParametersMRDC ::= SEQUENCE
@@ -17639,10 +15669,7 @@ struct phy_params_mrdc_s {
   bool tdd_pcell_ul_tx_all_ul_sf_r16_present = false;
   bool fdd_pcell_ul_tx_all_ul_sf_r16_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // Phy-ParametersSharedSpectrumChAccess-r16 ::= SEQUENCE
@@ -17673,10 +15700,7 @@ struct phy_params_shared_spec_ch_access_r16_s {
   mux_sr_harq_ack_csi_pucch_once_per_slot_r16_s_ mux_sr_harq_ack_csi_pucch_once_per_slot_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PowSav-ParametersCommon-r16 ::= SEQUENCE
@@ -17687,10 +15711,7 @@ struct pow_sav_params_common_r16_s {
   bool min_sched_offset_pref_r16_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PowSav-ParametersFRX-Diff-r16 ::= SEQUENCE
@@ -17699,10 +15720,7 @@ struct pow_sav_params_frx_diff_r16_s {
   bool max_mimo_layer_pref_r16_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PowSav-Parameters-r16 ::= SEQUENCE
@@ -17713,10 +15731,7 @@ struct pow_sav_params_r16_s {
   pow_sav_params_frx_diff_r16_s pow_sav_params_frx_diff_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PowSav-ParametersFR2-2-r17 ::= SEQUENCE
@@ -17725,10 +15740,7 @@ struct pow_sav_params_fr2_2_r17_s {
   bool max_mimo_layer_pref_r17_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // PowSav-Parameters-v1700 ::= SEQUENCE
@@ -17737,10 +15749,7 @@ struct pow_sav_params_v1700_s {
   pow_sav_params_fr2_2_r17_s pow_sav_params_fr2_2_r17;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RF-Parameters ::= SEQUENCE
@@ -17828,10 +15837,7 @@ struct rf_params_s {
   copy_ptr<band_combination_list_v1860_l>              supported_band_combination_list_v1860;
   copy_ptr<band_combination_list_ul_tx_switch_v1860_l> supported_band_combination_list_ul_tx_switch_v1860;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RF-ParametersMRDC ::= SEQUENCE
@@ -17920,10 +15926,7 @@ struct rf_params_mrdc_s {
   copy_ptr<band_combination_list_v1860_l>              supported_band_combination_list_v1860;
   copy_ptr<band_combination_list_ul_tx_switch_v1860_l> supported_band_combination_list_ul_tx_switch_v1860;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RF-ParametersMRDC-v15g0 ::= SEQUENCE
@@ -17931,30 +15934,21 @@ struct rf_params_mrdc_v15g0_s {
   band_combination_list_v15g0_l supported_band_combination_list_v15g0;
   band_combination_list_v15g0_l supported_band_combination_list_nedc_only_v15g0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RF-ParametersMRDC-v15n0 ::= SEQUENCE
 struct rf_params_mrdc_v15n0_s {
   band_combination_list_v15n0_l supported_band_combination_list_v15n0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RF-ParametersMRDC-v16e0 ::= SEQUENCE
 struct rf_params_mrdc_v16e0_s {
   band_combination_list_ul_tx_switch_v16e0_l supported_band_combination_list_ul_tx_switch_v16e0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RLC-Parameters ::= SEQUENCE
@@ -17971,10 +15965,7 @@ struct rlc_params_s {
   // group 2
   bool am_with_long_sn_ncr_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RLC-ParametersSidelink-r16 ::= SEQUENCE
@@ -17983,10 +15974,7 @@ struct rlc_params_sidelink_r16_s {
   bool um_with_long_sn_sidelink_r16_present = false;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RedCapParameters-r17 ::= SEQUENCE
@@ -17994,20 +15982,14 @@ struct red_cap_params_r17_s {
   bool support_of_red_cap_r17_present       = false;
   bool support_of16_drb_red_cap_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RedCapParameters-v1740 ::= SEQUENCE
 struct red_cap_params_v1740_s {
   bool ncd_ssb_for_red_cap_init_bwp_sdt_r17_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // RelayParameters-r17 ::= SEQUENCE
@@ -18032,10 +16014,7 @@ struct relay_params_r17_s {
   bool directpath_rlf_recovery_via_srb1_r18_present                          = false;
   bool split_drb_with_ul_both_direct_indirect_r18_present                    = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SDAP-Parameters ::= SEQUENCE
@@ -18049,10 +16028,7 @@ struct sdap_params_s {
   bool sdap_qos_ncr_r18_present = false;
   bool sdap_hdr_ncr_r18_present = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-SidelinkCapabilityAddXDD-Mode-r16 ::= SEQUENCE
@@ -18060,10 +16036,7 @@ struct ue_sidelink_cap_add_xdd_mode_r16_s {
   bool                               mac_params_sidelink_xdd_diff_r16_present = false;
   mac_params_sidelink_xdd_diff_r16_s mac_params_sidelink_xdd_diff_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SidelinkParametersNR-r16 ::= SEQUENCE
@@ -18073,18 +16046,16 @@ struct sidelink_params_nr_r16_s {
     struct max_num_of_active_sl_prs_res_r18_s_ {
       struct fr1_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr1_r18_e_ = enumerated<fr1_r18_opts>;
       struct fr2_r18_opts {
         enum options { n1, n2, n4, n6, n8, n12, n16, n24, n32, n48, n64, n128, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr2_r18_e_ = enumerated<fr2_r18_opts>;
 
@@ -18097,18 +16068,16 @@ struct sidelink_params_nr_r16_s {
     struct max_num_of_slotswith_active_sl_prs_res_r18_s_ {
       struct fr1_r18_opts {
         enum options { n1, n2, n3, n4, n6, n8, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr1_r18_e_ = enumerated<fr1_r18_opts>;
       struct fr2_r18_opts {
         enum options { n1, n2, n4, n8, n12, n16, n24, n32, n48, n64, nulltype } value;
-        typedef uint8_t number_type;
 
-        const char* to_string() const;
-        uint8_t     to_number() const;
+        static const asn1::table::enum_desc desc;
+        uint8_t                             to_number() const;
       };
       using fr2_r18_e_ = enumerated<fr2_r18_opts>;
 
@@ -18143,10 +16112,7 @@ struct sidelink_params_nr_r16_s {
   copy_ptr<pdcp_params_sidelink_r18_s>           pdcp_params_sidelink_r18;
   copy_ptr<sl_prs_common_proc_cap_per_ue_r18_s_> sl_prs_common_proc_cap_per_ue_r18;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SidelinkParametersEUTRA-r16 ::= SEQUENCE
@@ -18160,10 +16126,7 @@ struct sidelink_params_eutra_r16_s {
   supported_band_list_sidelink_eutra_r16_l_ supported_band_list_sidelink_eutra_r16;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // SidelinkParameters-r16 ::= SEQUENCE
@@ -18173,10 +16136,7 @@ struct sidelink_params_r16_s {
   sidelink_params_nr_r16_s    sidelink_params_nr_r16;
   sidelink_params_eutra_r16_s sidelink_params_eutra_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-CapabilityAddXDD-Mode-v1560 ::= SEQUENCE
@@ -18184,10 +16144,7 @@ struct ue_mrdc_cap_add_xdd_mode_v1560_s {
   bool                                      meas_and_mob_params_mrdc_xdd_diff_v1560_present = false;
   meas_and_mob_params_mrdc_xdd_diff_v1560_s meas_and_mob_params_mrdc_xdd_diff_v1560;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v1800 ::= SEQUENCE
@@ -18197,10 +16154,7 @@ struct ue_mrdc_cap_v1800_s {
   bool                             non_crit_ext_present                   = false;
   meas_and_mob_params_mrdc_v1810_s meas_and_mob_params_mrdc_v1810;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v1730 ::= SEQUENCE
@@ -18210,10 +16164,7 @@ struct ue_mrdc_cap_v1730_s {
   meas_and_mob_params_mrdc_v1730_s meas_and_mob_params_mrdc_v1730;
   ue_mrdc_cap_v1800_s              non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v1700 ::= SEQUENCE
@@ -18222,10 +16173,7 @@ struct ue_mrdc_cap_v1700_s {
   meas_and_mob_params_mrdc_v1700_s meas_and_mob_params_mrdc_v1700;
   ue_mrdc_cap_v1730_s              non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v1610 ::= SEQUENCE
@@ -18239,10 +16187,7 @@ struct ue_mrdc_cap_v1610_s {
   pdcp_params_mrdc_v1610_s         pdcp_params_mrdc_v1610;
   ue_mrdc_cap_v1700_s              non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v1560 ::= SEQUENCE
@@ -18257,10 +16202,7 @@ struct ue_mrdc_cap_v1560_s {
   ue_mrdc_cap_add_xdd_mode_v1560_s tdd_add_ue_mrdc_cap_v1560;
   ue_mrdc_cap_v1610_s              non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability ::= SEQUENCE
@@ -18290,10 +16232,7 @@ struct ue_mrdc_cap_s {
   dyn_octstring                  late_non_crit_ext;
   ue_mrdc_cap_v1560_s            non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v16e0 ::= SEQUENCE
@@ -18302,10 +16241,7 @@ struct ue_mrdc_cap_v16e0_s {
   bool                   non_crit_ext_present         = false;
   rf_params_mrdc_v16e0_s rf_params_mrdc_v16e0;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v15n0 ::= SEQUENCE
@@ -18316,10 +16252,7 @@ struct ue_mrdc_cap_v15n0_s {
   dyn_octstring          late_non_crit_ext;
   ue_mrdc_cap_v16e0_s    non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-MRDC-Capability-v15g0 ::= SEQUENCE
@@ -18329,20 +16262,14 @@ struct ue_mrdc_cap_v15g0_s {
   rf_params_mrdc_v15g0_s rf_params_mrdc_v15g0;
   ue_mrdc_cap_v15n0_s    non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-CapabilityAddXDD-Mode-v1530 ::= SEQUENCE
 struct ue_nr_cap_add_xdd_mode_v1530_s {
   eutra_params_xdd_diff_s eutra_params_xdd_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-CapabilityAddFRX-Mode-v1540 ::= SEQUENCE
@@ -18350,10 +16277,7 @@ struct ue_nr_cap_add_frx_mode_v1540_s {
   bool                  ims_params_frx_diff_present = false;
   ims_params_frx_diff_s ims_params_frx_diff;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-CapabilityAddFRX-Mode-v1610 ::= SEQUENCE
@@ -18363,10 +16287,7 @@ struct ue_nr_cap_add_frx_mode_v1610_s {
   pow_sav_params_frx_diff_r16_s pow_sav_params_frx_diff_r16;
   mac_params_frx_diff_r16_s     mac_params_frx_diff_r16;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-RadioPagingInfo-r17 ::= SEQUENCE
@@ -18377,10 +16298,7 @@ struct ue_radio_paging_info_r17_s {
   pei_subgrouping_support_band_list_r17_l_ pei_subgrouping_support_band_list_r17;
   // ...
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1860 ::= SEQUENCE
@@ -18388,10 +16306,7 @@ struct ue_nr_cap_v1860_s {
   bool ntn_cho_only_location_time_trigger_r18_present = false;
   bool non_crit_ext_present                           = false;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1830 ::= SEQUENCE
@@ -18400,10 +16315,7 @@ struct ue_nr_cap_v1830_s {
   bool              non_crit_ext_present      = false;
   ue_nr_cap_v1860_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1800 ::= SEQUENCE
@@ -18411,13 +16323,13 @@ struct ue_nr_cap_v1800_s {
   struct ntn_vsat_ant_type_r18_opts {
     enum options { electronic, mechanical, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ntn_vsat_ant_type_r18_e_ = enumerated<ntn_vsat_ant_type_r18_opts>;
   struct ntn_vsat_mob_type_r18_opts {
     enum options { fixed, mobile, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ntn_vsat_mob_type_r18_e_ = enumerated<ntn_vsat_mob_type_r18_opts>;
 
@@ -18451,10 +16363,7 @@ struct ue_nr_cap_v1800_s {
   ntn_params_v1820_s       ntn_params_v1820;
   ue_nr_cap_v1830_s        non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1750 ::= SEQUENCE
@@ -18463,10 +16372,7 @@ struct ue_nr_cap_v1750_s {
   bool              non_crit_ext_present                        = false;
   ue_nr_cap_v1800_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1740 ::= SEQUENCE
@@ -18475,10 +16381,7 @@ struct ue_nr_cap_v1740_s {
   red_cap_params_v1740_s red_cap_params_v1740;
   ue_nr_cap_v1750_s      non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1700 ::= SEQUENCE
@@ -18486,7 +16389,7 @@ struct ue_nr_cap_v1700_s {
   struct ntn_scenario_support_r17_opts {
     enum options { gso, ngso, nulltype } value;
 
-    const char* to_string() const;
+    static const asn1::table::enum_desc desc;
   };
   using ntn_scenario_support_r17_e_ = enumerated<ntn_scenario_support_r17_opts>;
 
@@ -18529,10 +16432,7 @@ struct ue_nr_cap_v1700_s {
   ntn_params_r17_s            ntn_params_r17;
   ue_nr_cap_v1740_s           non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1690 ::= SEQUENCE
@@ -18541,10 +16441,7 @@ struct ue_nr_cap_v1690_s {
   bool              non_crit_ext_present            = false;
   ue_nr_cap_v1700_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1650 ::= SEQUENCE
@@ -18555,10 +16452,7 @@ struct ue_nr_cap_v1650_s {
   high_speed_params_v1650_c high_speed_params_v1650;
   ue_nr_cap_v1690_s         non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1640 ::= SEQUENCE
@@ -18569,10 +16463,7 @@ struct ue_nr_cap_v1640_s {
   phy_params_shared_spec_ch_access_r16_s phy_params_shared_spec_ch_access_r16;
   ue_nr_cap_v1650_s                      non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1610 ::= SEQUENCE
@@ -18610,10 +16501,7 @@ struct ue_nr_cap_v1610_s {
   son_params_r16_s                son_params_r16;
   ue_nr_cap_v1640_s               non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1570 ::= SEQUENCE
@@ -18623,10 +16511,7 @@ struct ue_nr_cap_v1570_s {
   nrdc_params_v1570_s nrdc_params_v1570;
   ue_nr_cap_v1610_s   non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1560 ::= SEQUENCE
@@ -18637,10 +16522,7 @@ struct ue_nr_cap_v1560_s {
   dyn_octstring     rx_filts;
   ue_nr_cap_v1570_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1550 ::= SEQUENCE
@@ -18649,10 +16531,7 @@ struct ue_nr_cap_v1550_s {
   bool              non_crit_ext_present       = false;
   ue_nr_cap_v1560_s non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1540 ::= SEQUENCE
@@ -18671,10 +16550,7 @@ struct ue_nr_cap_v1540_s {
   ue_nr_cap_add_frx_mode_s       fr1_fr2_add_ue_nr_cap;
   ue_nr_cap_v1550_s              non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability-v1530 ::= SEQUENCE
@@ -18691,10 +16567,7 @@ struct ue_nr_cap_v1530_s {
   inter_rat_params_s             inter_rat_params;
   ue_nr_cap_v1540_s              non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 // UE-NR-Capability ::= SEQUENCE
@@ -18727,10 +16600,7 @@ struct ue_nr_cap_s {
   dyn_octstring               late_non_crit_ext;
   ue_nr_cap_v1530_s           non_crit_ext;
 
-  // sequence methods
-  OCUDUASN_CODE pack(bit_ref& bref) const;
-  OCUDUASN_CODE unpack(cbit_ref& bref);
-  void          to_json(json_writer& j) const;
+  static const asn1::table::seq_desc desc;
 };
 
 } // namespace rrc_nr

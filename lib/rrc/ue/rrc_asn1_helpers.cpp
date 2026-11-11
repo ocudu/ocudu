@@ -225,7 +225,7 @@ void ocudu::ocucp::fill_asn1_rrc_reconfiguration_msg(asn1::rrc_nr::rrc_recfg_s& 
 
     // Unpack measurement gap config PDU.
     asn1::cbit_ref bref(rrc_reconf.meas_gap_cfg);
-    if (asn1_reconfig_ies.meas_cfg.meas_gap_cfg.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_reconfig_ies.meas_cfg.meas_gap_cfg, bref) != asn1::OCUDUASN_SUCCESS) {
       report_fatal_error("Couldn't unpack MeasGapConfig RRC container");
     }
   }
@@ -340,7 +340,7 @@ void ocudu::ocucp::fill_asn1_rrc_resume_msg(asn1::rrc_nr::rrc_resume_s&        a
       asn1::rrc_nr::meas_gap_cfg_s asn1_meas_gap_cfg;
       asn1::cbit_ref               bref(rrc_resume.meas_gap_cfg);
 
-      if (asn1_resume_ies.meas_cfg.meas_gap_cfg.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(asn1_resume_ies.meas_cfg.meas_gap_cfg, bref) != asn1::OCUDUASN_SUCCESS) {
         report_fatal_error("Couldn't unpack MeasGapConfig RRC container");
       }
     }

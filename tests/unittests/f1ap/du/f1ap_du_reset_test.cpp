@@ -83,10 +83,10 @@ TEST_F(f1_reset_test, invalid_reset_type_returns_error_indication_without_reset)
               asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::error_ind);
     byte_buffer   encoded;
     asn1::bit_ref writer(encoded);
-    ASSERT_EQ(f1c_gw.last_tx_pdu().pdu.pack(writer), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(writer, f1c_gw.last_tx_pdu().pdu), asn1::OCUDUASN_SUCCESS);
     asn1::cbit_ref         reader(encoded);
     asn1::f1ap::f1ap_pdu_c decoded;
-    ASSERT_EQ(decoded.unpack(reader), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(decoded, reader), asn1::OCUDUASN_SUCCESS);
     const auto& error = *decoded.init_msg().value.error_ind();
     EXPECT_EQ(error.transaction_id, req.pdu.init_msg().value.reset()->transaction_id);
     ASSERT_TRUE(error.cause_present);

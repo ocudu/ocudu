@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/e1ap/e1ap.h"
+#include "ocudu/asn1/asn1_ap_codec.h"
 #include "ocudu/asn1/e1ap/e1ap_pdu_contents.h"
 
 using namespace asn1;
@@ -14,485 +15,532 @@ using namespace asn1::e1ap;
  ******************************************************************************/
 
 // E1AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF E1AP-ELEMENTARY-PROCEDURE
-uint16_t e1ap_elem_procs_o::idx_to_proc_code(uint32_t idx)
-{
-  static const uint16_t names[] = {0, 3,  4,  5,  6,  7,  8,  9,  10, 11, 22, 24, 29, 30, 31, 32, 34, 35, 36, 37,
-                                   1, 12, 13, 14, 18, 15, 16, 17, 19, 21, 20, 2,  25, 23, 26, 27, 28, 33, 38, 39};
-  return map_enum_number(names, 40, idx, "proc_code");
-}
-bool e1ap_elem_procs_o::is_proc_code_valid(const uint16_t& proc_code)
-{
-  static const uint16_t names[] = {0, 3,  4,  5,  6,  7,  8,  9,  10, 11, 22, 24, 29, 30, 31, 32, 34, 35, 36, 37,
-                                   1, 12, 13, 14, 18, 15, 16, 17, 19, 21, 20, 2,  25, 23, 26, 27, 28, 33, 38, 39};
-  for (const auto& o : names) {
-    if (o == proc_code) {
-      return true;
-    }
-  }
-  return false;
-}
-e1ap_elem_procs_o::init_msg_c e1ap_elem_procs_o::get_init_msg(const uint16_t& proc_code)
-{
-  init_msg_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(init_msg_c::types::reset);
-      break;
-    case 3:
-      ret.set(init_msg_c::types::gnb_cu_up_e1_setup_request);
-      break;
-    case 4:
-      ret.set(init_msg_c::types::gnb_cu_cp_e1_setup_request);
-      break;
-    case 5:
-      ret.set(init_msg_c::types::gnb_cu_up_cfg_upd);
-      break;
-    case 6:
-      ret.set(init_msg_c::types::gnb_cu_cp_cfg_upd);
-      break;
-    case 7:
-      ret.set(init_msg_c::types::e1_release_request);
-      break;
-    case 8:
-      ret.set(init_msg_c::types::bearer_context_setup_request);
-      break;
-    case 9:
-      ret.set(init_msg_c::types::bearer_context_mod_request);
-      break;
-    case 10:
-      ret.set(init_msg_c::types::bearer_context_mod_required);
-      break;
-    case 11:
-      ret.set(init_msg_c::types::bearer_context_release_cmd);
-      break;
-    case 22:
-      ret.set(init_msg_c::types::res_status_request);
-      break;
-    case 24:
-      ret.set(init_msg_c::types::iab_up_tnl_address_upd);
-      break;
-    case 29:
-      ret.set(init_msg_c::types::bc_bearer_context_setup_request);
-      break;
-    case 30:
-      ret.set(init_msg_c::types::bc_bearer_context_mod_request);
-      break;
-    case 31:
-      ret.set(init_msg_c::types::bc_bearer_context_mod_required);
-      break;
-    case 32:
-      ret.set(init_msg_c::types::bc_bearer_context_release_cmd);
-      break;
-    case 34:
-      ret.set(init_msg_c::types::mc_bearer_context_setup_request);
-      break;
-    case 35:
-      ret.set(init_msg_c::types::mc_bearer_context_mod_request);
-      break;
-    case 36:
-      ret.set(init_msg_c::types::mc_bearer_context_mod_required);
-      break;
-    case 37:
-      ret.set(init_msg_c::types::mc_bearer_context_release_cmd);
-      break;
-    case 1:
-      ret.set(init_msg_c::types::error_ind);
-      break;
-    case 12:
-      ret.set(init_msg_c::types::bearer_context_release_request);
-      break;
-    case 13:
-      ret.set(init_msg_c::types::bearer_context_inactivity_notif);
-      break;
-    case 14:
-      ret.set(init_msg_c::types::dl_data_notif);
-      break;
-    case 18:
-      ret.set(init_msg_c::types::ul_data_notif);
-      break;
-    case 15:
-      ret.set(init_msg_c::types::data_usage_report);
-      break;
-    case 16:
-      ret.set(init_msg_c::types::gnb_cu_up_counter_check_request);
-      break;
-    case 17:
-      ret.set(init_msg_c::types::gnb_cu_up_status_ind);
-      break;
-    case 19:
-      ret.set(init_msg_c::types::mrdc_data_usage_report);
-      break;
-    case 21:
-      ret.set(init_msg_c::types::deactiv_trace);
-      break;
-    case 20:
-      ret.set(init_msg_c::types::trace_start);
-      break;
-    case 2:
-      ret.set(init_msg_c::types::private_msg);
-      break;
-    case 25:
-      ret.set(init_msg_c::types::cell_traffic_trace);
-      break;
-    case 23:
-      ret.set(init_msg_c::types::res_status_upd);
-      break;
-    case 26:
-      ret.set(init_msg_c::types::early_forwarding_sn_transfer);
-      break;
-    case 27:
-      ret.set(init_msg_c::types::gnb_cu_cp_meas_results_info);
-      break;
-    case 28:
-      ret.set(init_msg_c::types::iabpsk_notif);
-      break;
-    case 33:
-      ret.set(init_msg_c::types::bc_bearer_context_release_request);
-      break;
-    case 38:
-      ret.set(init_msg_c::types::mc_bearer_context_release_request);
-      break;
-    case 39:
-      ret.set(init_msg_c::types::mc_bearer_notif);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-e1ap_elem_procs_o::successful_outcome_c e1ap_elem_procs_o::get_successful_outcome(const uint16_t& proc_code)
-{
-  successful_outcome_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(successful_outcome_c::types::reset_ack);
-      break;
-    case 3:
-      ret.set(successful_outcome_c::types::gnb_cu_up_e1_setup_resp);
-      break;
-    case 4:
-      ret.set(successful_outcome_c::types::gnb_cu_cp_e1_setup_resp);
-      break;
-    case 5:
-      ret.set(successful_outcome_c::types::gnb_cu_up_cfg_upd_ack);
-      break;
-    case 6:
-      ret.set(successful_outcome_c::types::gnb_cu_cp_cfg_upd_ack);
-      break;
-    case 7:
-      ret.set(successful_outcome_c::types::e1_release_resp);
-      break;
-    case 8:
-      ret.set(successful_outcome_c::types::bearer_context_setup_resp);
-      break;
-    case 9:
-      ret.set(successful_outcome_c::types::bearer_context_mod_resp);
-      break;
-    case 10:
-      ret.set(successful_outcome_c::types::bearer_context_mod_confirm);
-      break;
-    case 11:
-      ret.set(successful_outcome_c::types::bearer_context_release_complete);
-      break;
-    case 22:
-      ret.set(successful_outcome_c::types::res_status_resp);
-      break;
-    case 24:
-      ret.set(successful_outcome_c::types::iab_up_tnl_address_upd_ack);
-      break;
-    case 29:
-      ret.set(successful_outcome_c::types::bc_bearer_context_setup_resp);
-      break;
-    case 30:
-      ret.set(successful_outcome_c::types::bc_bearer_context_mod_resp);
-      break;
-    case 31:
-      ret.set(successful_outcome_c::types::bc_bearer_context_mod_confirm);
-      break;
-    case 32:
-      ret.set(successful_outcome_c::types::bc_bearer_context_release_complete);
-      break;
-    case 34:
-      ret.set(successful_outcome_c::types::mc_bearer_context_setup_resp);
-      break;
-    case 35:
-      ret.set(successful_outcome_c::types::mc_bearer_context_mod_resp);
-      break;
-    case 36:
-      ret.set(successful_outcome_c::types::mc_bearer_context_mod_confirm);
-      break;
-    case 37:
-      ret.set(successful_outcome_c::types::mc_bearer_context_release_complete);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-e1ap_elem_procs_o::unsuccessful_outcome_c e1ap_elem_procs_o::get_unsuccessful_outcome(const uint16_t& proc_code)
-{
-  unsuccessful_outcome_c ret{};
-  switch (proc_code) {
-    case 3:
-      ret.set(unsuccessful_outcome_c::types::gnb_cu_up_e1_setup_fail);
-      break;
-    case 4:
-      ret.set(unsuccessful_outcome_c::types::gnb_cu_cp_e1_setup_fail);
-      break;
-    case 5:
-      ret.set(unsuccessful_outcome_c::types::gnb_cu_up_cfg_upd_fail);
-      break;
-    case 6:
-      ret.set(unsuccessful_outcome_c::types::gnb_cu_cp_cfg_upd_fail);
-      break;
-    case 8:
-      ret.set(unsuccessful_outcome_c::types::bearer_context_setup_fail);
-      break;
-    case 9:
-      ret.set(unsuccessful_outcome_c::types::bearer_context_mod_fail);
-      break;
-    case 22:
-      ret.set(unsuccessful_outcome_c::types::res_status_fail);
-      break;
-    case 24:
-      ret.set(unsuccessful_outcome_c::types::iab_up_tnl_address_upd_fail);
-      break;
-    case 29:
-      ret.set(unsuccessful_outcome_c::types::bc_bearer_context_setup_fail);
-      break;
-    case 30:
-      ret.set(unsuccessful_outcome_c::types::bc_bearer_context_mod_fail);
-      break;
-    case 34:
-      ret.set(unsuccessful_outcome_c::types::mc_bearer_context_setup_fail);
-      break;
-    case 35:
-      ret.set(unsuccessful_outcome_c::types::mc_bearer_context_mod_fail);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-crit_e e1ap_elem_procs_o::get_crit(const uint16_t& proc_code)
-{
-  switch (proc_code) {
-    case 0:
-      return crit_e::reject;
-    case 3:
-      return crit_e::reject;
-    case 4:
-      return crit_e::reject;
-    case 5:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    case 7:
-      return crit_e::reject;
-    case 8:
-      return crit_e::reject;
-    case 9:
-      return crit_e::reject;
-    case 10:
-      return crit_e::reject;
-    case 11:
-      return crit_e::reject;
-    case 22:
-      return crit_e::reject;
-    case 24:
-      return crit_e::reject;
-    case 29:
-      return crit_e::reject;
-    case 30:
-      return crit_e::reject;
-    case 31:
-      return crit_e::reject;
-    case 32:
-      return crit_e::reject;
-    case 34:
-      return crit_e::reject;
-    case 35:
-      return crit_e::reject;
-    case 36:
-      return crit_e::reject;
-    case 37:
-      return crit_e::reject;
-    case 1:
-      return crit_e::ignore;
-    case 12:
-      return crit_e::ignore;
-    case 13:
-      return crit_e::ignore;
-    case 14:
-      return crit_e::ignore;
-    case 18:
-      return crit_e::ignore;
-    case 15:
-      return crit_e::ignore;
-    case 16:
-      return crit_e::ignore;
-    case 17:
-      return crit_e::ignore;
-    case 19:
-      return crit_e::ignore;
-    case 21:
-      return crit_e::ignore;
-    case 20:
-      return crit_e::ignore;
-    case 2:
-      return crit_e::ignore;
-    case 25:
-      return crit_e::ignore;
-    case 23:
-      return crit_e::ignore;
-    case 26:
-      return crit_e::ignore;
-    case 27:
-      return crit_e::ignore;
-    case 28:
-      return crit_e::reject;
-    case 33:
-      return crit_e::reject;
-    case 38:
-      return crit_e::reject;
-    case 39:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return {};
-}
+static const uint32_t objset_proc_code_e1ap_elem_procs_o[] = {0,  3,  4,  5,  6,  7,  8,  9,  10, 11, 22, 24, 29, 30,
+                                                              31, 32, 34, 35, 36, 37, 1,  12, 13, 14, 18, 15, 16, 17,
+                                                              19, 21, 20, 2,  25, 23, 26, 27, 28, 33, 38, 39};
+static const uint8_t  objset_init_msg_e1ap_elem_procs_o[]  = {
+    e1ap_elem_procs_o::init_msg_c::types::reset,
+    e1ap_elem_procs_o::init_msg_c::types::gnb_cu_up_e1_setup_request,
+    e1ap_elem_procs_o::init_msg_c::types::gnb_cu_cp_e1_setup_request,
+    e1ap_elem_procs_o::init_msg_c::types::gnb_cu_up_cfg_upd,
+    e1ap_elem_procs_o::init_msg_c::types::gnb_cu_cp_cfg_upd,
+    e1ap_elem_procs_o::init_msg_c::types::e1_release_request,
+    e1ap_elem_procs_o::init_msg_c::types::bearer_context_setup_request,
+    e1ap_elem_procs_o::init_msg_c::types::bearer_context_mod_request,
+    e1ap_elem_procs_o::init_msg_c::types::bearer_context_mod_required,
+    e1ap_elem_procs_o::init_msg_c::types::bearer_context_release_cmd,
+    e1ap_elem_procs_o::init_msg_c::types::res_status_request,
+    e1ap_elem_procs_o::init_msg_c::types::iab_up_tnl_address_upd,
+    e1ap_elem_procs_o::init_msg_c::types::bc_bearer_context_setup_request,
+    e1ap_elem_procs_o::init_msg_c::types::bc_bearer_context_mod_request,
+    e1ap_elem_procs_o::init_msg_c::types::bc_bearer_context_mod_required,
+    e1ap_elem_procs_o::init_msg_c::types::bc_bearer_context_release_cmd,
+    e1ap_elem_procs_o::init_msg_c::types::mc_bearer_context_setup_request,
+    e1ap_elem_procs_o::init_msg_c::types::mc_bearer_context_mod_request,
+    e1ap_elem_procs_o::init_msg_c::types::mc_bearer_context_mod_required,
+    e1ap_elem_procs_o::init_msg_c::types::mc_bearer_context_release_cmd,
+    e1ap_elem_procs_o::init_msg_c::types::error_ind,
+    e1ap_elem_procs_o::init_msg_c::types::bearer_context_release_request,
+    e1ap_elem_procs_o::init_msg_c::types::bearer_context_inactivity_notif,
+    e1ap_elem_procs_o::init_msg_c::types::dl_data_notif,
+    e1ap_elem_procs_o::init_msg_c::types::ul_data_notif,
+    e1ap_elem_procs_o::init_msg_c::types::data_usage_report,
+    e1ap_elem_procs_o::init_msg_c::types::gnb_cu_up_counter_check_request,
+    e1ap_elem_procs_o::init_msg_c::types::gnb_cu_up_status_ind,
+    e1ap_elem_procs_o::init_msg_c::types::mrdc_data_usage_report,
+    e1ap_elem_procs_o::init_msg_c::types::deactiv_trace,
+    e1ap_elem_procs_o::init_msg_c::types::trace_start,
+    e1ap_elem_procs_o::init_msg_c::types::private_msg,
+    e1ap_elem_procs_o::init_msg_c::types::cell_traffic_trace,
+    e1ap_elem_procs_o::init_msg_c::types::res_status_upd,
+    e1ap_elem_procs_o::init_msg_c::types::early_forwarding_sn_transfer,
+    e1ap_elem_procs_o::init_msg_c::types::gnb_cu_cp_meas_results_info,
+    e1ap_elem_procs_o::init_msg_c::types::iabpsk_notif,
+    e1ap_elem_procs_o::init_msg_c::types::bc_bearer_context_release_request,
+    e1ap_elem_procs_o::init_msg_c::types::mc_bearer_context_release_request,
+    e1ap_elem_procs_o::init_msg_c::types::mc_bearer_notif};
+static const uint8_t objset_successful_outcome_e1ap_elem_procs_o[] = {
+    e1ap_elem_procs_o::successful_outcome_c::types::reset_ack,
+    e1ap_elem_procs_o::successful_outcome_c::types::gnb_cu_up_e1_setup_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::gnb_cu_cp_e1_setup_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::gnb_cu_up_cfg_upd_ack,
+    e1ap_elem_procs_o::successful_outcome_c::types::gnb_cu_cp_cfg_upd_ack,
+    e1ap_elem_procs_o::successful_outcome_c::types::e1_release_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::bearer_context_setup_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::bearer_context_mod_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::bearer_context_mod_confirm,
+    e1ap_elem_procs_o::successful_outcome_c::types::bearer_context_release_complete,
+    e1ap_elem_procs_o::successful_outcome_c::types::res_status_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::iab_up_tnl_address_upd_ack,
+    e1ap_elem_procs_o::successful_outcome_c::types::bc_bearer_context_setup_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::bc_bearer_context_mod_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::bc_bearer_context_mod_confirm,
+    e1ap_elem_procs_o::successful_outcome_c::types::bc_bearer_context_release_complete,
+    e1ap_elem_procs_o::successful_outcome_c::types::mc_bearer_context_setup_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::mc_bearer_context_mod_resp,
+    e1ap_elem_procs_o::successful_outcome_c::types::mc_bearer_context_mod_confirm,
+    e1ap_elem_procs_o::successful_outcome_c::types::mc_bearer_context_release_complete,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::successful_outcome_c::types::nulltype};
+static const uint8_t objset_unsuccessful_outcome_e1ap_elem_procs_o[] = {
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::gnb_cu_up_e1_setup_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::gnb_cu_cp_e1_setup_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::gnb_cu_up_cfg_upd_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::gnb_cu_cp_cfg_upd_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::bearer_context_setup_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::bearer_context_mod_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::res_status_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::iab_up_tnl_address_upd_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::bc_bearer_context_setup_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::bc_bearer_context_mod_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::mc_bearer_context_setup_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::mc_bearer_context_mod_fail,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype};
+static const uint8_t objset_crit_e1ap_elem_procs_o[] = {
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore,
+    crit_e::ignore, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject};
+static const asn1::table::objset_column objset_columns_e1ap_elem_procs_o[] = {
+    {objset_init_msg_e1ap_elem_procs_o, e1ap_elem_procs_o::init_msg_c::types::nulltype},
+    {objset_successful_outcome_e1ap_elem_procs_o, e1ap_elem_procs_o::successful_outcome_c::types::nulltype},
+    {objset_unsuccessful_outcome_e1ap_elem_procs_o, e1ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype},
+    {objset_crit_e1ap_elem_procs_o, crit_e::nulltype}};
+const asn1::table::objset_desc e1ap_elem_procs_o::desc = {objset_proc_code_e1ap_elem_procs_o,
+                                                          40,
+                                                          "proc_code",
+                                                          objset_columns_e1ap_elem_procs_o};
 
 // InitiatingMessage ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_e1ap_elem_procs_o_init_msg_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_e1_setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_cp_e1_setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_cfg_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_cp_cfg_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e1_release_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_mod_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_release_cmd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_up_tnl_address_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_mod_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_release_cmd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_mod_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_release_cmd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<error_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_release_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_inactivity_notif_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<dl_data_notif_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ul_data_notif_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_usage_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_counter_check_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_status_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mrdc_data_usage_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<deactiv_trace_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<trace_start_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<private_msg_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_traffic_trace_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<early_forwarding_sn_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_cp_meas_results_info_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iabpsk_notif_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_release_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_release_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_notif_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_e1ap_elem_procs_o_init_msg_c_names[] = {
+    {"Reset", nullptr},
+    {"GNB-CU-UP-E1SetupRequest", nullptr},
+    {"GNB-CU-CP-E1SetupRequest", nullptr},
+    {"GNB-CU-UP-ConfigurationUpdate", nullptr},
+    {"GNB-CU-CP-ConfigurationUpdate", nullptr},
+    {"E1ReleaseRequest", nullptr},
+    {"BearerContextSetupRequest", nullptr},
+    {"BearerContextModificationRequest", nullptr},
+    {"BearerContextModificationRequired", nullptr},
+    {"BearerContextReleaseCommand", nullptr},
+    {"ResourceStatusRequest", nullptr},
+    {"IAB-UPTNLAddressUpdate", nullptr},
+    {"BCBearerContextSetupRequest", nullptr},
+    {"BCBearerContextModificationRequest", nullptr},
+    {"BCBearerContextModificationRequired", nullptr},
+    {"BCBearerContextReleaseCommand", nullptr},
+    {"MCBearerContextSetupRequest", nullptr},
+    {"MCBearerContextModificationRequest", nullptr},
+    {"MCBearerContextModificationRequired", nullptr},
+    {"MCBearerContextReleaseCommand", nullptr},
+    {"ErrorIndication", nullptr},
+    {"BearerContextReleaseRequest", nullptr},
+    {"BearerContextInactivityNotification", nullptr},
+    {"DLDataNotification", nullptr},
+    {"ULDataNotification", nullptr},
+    {"DataUsageReport", nullptr},
+    {"GNB-CU-UP-CounterCheckRequest", nullptr},
+    {"GNB-CU-UP-StatusIndication", nullptr},
+    {"MRDC-DataUsageReport", nullptr},
+    {"DeactivateTrace", nullptr},
+    {"TraceStart", nullptr},
+    {"PrivateMessage", nullptr},
+    {"CellTrafficTrace", nullptr},
+    {"ResourceStatusUpdate", nullptr},
+    {"EarlyForwardingSNTransfer", nullptr},
+    {"GNB-CU-CPMeasurementResultsInformation", nullptr},
+    {"IABPSKNotification", nullptr},
+    {"BCBearerContextReleaseRequest", nullptr},
+    {"MCBearerContextReleaseRequest", nullptr},
+    {"MCBearerNotification", nullptr}};
+const asn1::table::choice_desc e1ap_elem_procs_o::init_msg_c::desc = {
+    asn1::table::enum_int_type<e1ap_elem_procs_o::init_msg_c::types>(),
+    e1ap_elem_procs_o::init_msg_c::types::nof_types,
+    e1ap_elem_procs_o::init_msg_c::types::nof_exts,
+    e1ap_elem_procs_o::init_msg_c::types::has_ext,
+    true,
+    choice_table_e1ap_elem_procs_o_init_msg_c_alternatives,
+    &asn1::table::choice_set<e1ap_elem_procs_o::init_msg_c>,
+    choice_table_e1ap_elem_procs_o_init_msg_c_names,
+    "e1ap_elem_procs_o::init_msg_c",
+    offsetof(e1ap_elem_procs_o::init_msg_c, type_),
+    offsetof(e1ap_elem_procs_o::init_msg_c, c),
+    false,
+    nullptr,
+    true};
+
 void e1ap_elem_procs_o::init_msg_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::reset:
-      c = reset_s{};
-      break;
-    case types::gnb_cu_up_e1_setup_request:
-      c = gnb_cu_up_e1_setup_request_s{};
-      break;
-    case types::gnb_cu_cp_e1_setup_request:
-      c = gnb_cu_cp_e1_setup_request_s{};
-      break;
-    case types::gnb_cu_up_cfg_upd:
-      c = gnb_cu_up_cfg_upd_s{};
-      break;
-    case types::gnb_cu_cp_cfg_upd:
-      c = gnb_cu_cp_cfg_upd_s{};
-      break;
-    case types::e1_release_request:
-      c = e1_release_request_s{};
-      break;
-    case types::bearer_context_setup_request:
-      c = bearer_context_setup_request_s{};
-      break;
-    case types::bearer_context_mod_request:
-      c = bearer_context_mod_request_s{};
-      break;
-    case types::bearer_context_mod_required:
-      c = bearer_context_mod_required_s{};
-      break;
-    case types::bearer_context_release_cmd:
-      c = bearer_context_release_cmd_s{};
-      break;
-    case types::res_status_request:
-      c = res_status_request_s{};
-      break;
-    case types::iab_up_tnl_address_upd:
-      c = iab_up_tnl_address_upd_s{};
-      break;
-    case types::bc_bearer_context_setup_request:
-      c = bc_bearer_context_setup_request_s{};
-      break;
-    case types::bc_bearer_context_mod_request:
-      c = bc_bearer_context_mod_request_s{};
-      break;
-    case types::bc_bearer_context_mod_required:
-      c = bc_bearer_context_mod_required_s{};
-      break;
-    case types::bc_bearer_context_release_cmd:
-      c = bc_bearer_context_release_cmd_s{};
-      break;
-    case types::mc_bearer_context_setup_request:
-      c = mc_bearer_context_setup_request_s{};
-      break;
-    case types::mc_bearer_context_mod_request:
-      c = mc_bearer_context_mod_request_s{};
-      break;
-    case types::mc_bearer_context_mod_required:
-      c = mc_bearer_context_mod_required_s{};
-      break;
-    case types::mc_bearer_context_release_cmd:
-      c = mc_bearer_context_release_cmd_s{};
-      break;
-    case types::error_ind:
-      c = error_ind_s{};
-      break;
-    case types::bearer_context_release_request:
-      c = bearer_context_release_request_s{};
-      break;
-    case types::bearer_context_inactivity_notif:
-      c = bearer_context_inactivity_notif_s{};
-      break;
-    case types::dl_data_notif:
-      c = dl_data_notif_s{};
-      break;
-    case types::ul_data_notif:
-      c = ul_data_notif_s{};
-      break;
-    case types::data_usage_report:
-      c = data_usage_report_s{};
-      break;
-    case types::gnb_cu_up_counter_check_request:
-      c = gnb_cu_up_counter_check_request_s{};
-      break;
-    case types::gnb_cu_up_status_ind:
-      c = gnb_cu_up_status_ind_s{};
-      break;
-    case types::mrdc_data_usage_report:
-      c = mrdc_data_usage_report_s{};
-      break;
-    case types::deactiv_trace:
-      c = deactiv_trace_s{};
-      break;
-    case types::trace_start:
-      c = trace_start_s{};
-      break;
-    case types::private_msg:
-      c = private_msg_s{};
-      break;
-    case types::cell_traffic_trace:
-      c = cell_traffic_trace_s{};
-      break;
-    case types::res_status_upd:
-      c = res_status_upd_s{};
-      break;
-    case types::early_forwarding_sn_transfer:
-      c = early_forwarding_sn_transfer_s{};
-      break;
-    case types::gnb_cu_cp_meas_results_info:
-      c = gnb_cu_cp_meas_results_info_s{};
-      break;
-    case types::iabpsk_notif:
-      c = iabpsk_notif_s{};
-      break;
-    case types::bc_bearer_context_release_request:
-      c = bc_bearer_context_release_request_s{};
-      break;
-    case types::mc_bearer_context_release_request:
-      c = mc_bearer_context_release_request_s{};
-      break;
-    case types::mc_bearer_notif:
-      c = mc_bearer_notif_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::init_msg_c");
-  }
+  asn1::table::set_any_choice(&c, e, e1ap_elem_procs_o::init_msg_c::desc);
 }
 reset_s& e1ap_elem_procs_o::init_msg_c::reset()
 {
@@ -894,551 +942,255 @@ const mc_bearer_notif_s& e1ap_elem_procs_o::init_msg_c::mc_bearer_notif() const
   assert_choice_type(types::mc_bearer_notif, type_, "InitiatingMessage");
   return c.get<mc_bearer_notif_s>();
 }
-void e1ap_elem_procs_o::init_msg_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::reset:
-      j.write_fieldname("Reset");
-      c.get<reset_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_e1_setup_request:
-      j.write_fieldname("GNB-CU-UP-E1SetupRequest");
-      c.get<gnb_cu_up_e1_setup_request_s>().to_json(j);
-      break;
-    case types::gnb_cu_cp_e1_setup_request:
-      j.write_fieldname("GNB-CU-CP-E1SetupRequest");
-      c.get<gnb_cu_cp_e1_setup_request_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_cfg_upd:
-      j.write_fieldname("GNB-CU-UP-ConfigurationUpdate");
-      c.get<gnb_cu_up_cfg_upd_s>().to_json(j);
-      break;
-    case types::gnb_cu_cp_cfg_upd:
-      j.write_fieldname("GNB-CU-CP-ConfigurationUpdate");
-      c.get<gnb_cu_cp_cfg_upd_s>().to_json(j);
-      break;
-    case types::e1_release_request:
-      j.write_fieldname("E1ReleaseRequest");
-      c.get<e1_release_request_s>().to_json(j);
-      break;
-    case types::bearer_context_setup_request:
-      j.write_fieldname("BearerContextSetupRequest");
-      c.get<bearer_context_setup_request_s>().to_json(j);
-      break;
-    case types::bearer_context_mod_request:
-      j.write_fieldname("BearerContextModificationRequest");
-      c.get<bearer_context_mod_request_s>().to_json(j);
-      break;
-    case types::bearer_context_mod_required:
-      j.write_fieldname("BearerContextModificationRequired");
-      c.get<bearer_context_mod_required_s>().to_json(j);
-      break;
-    case types::bearer_context_release_cmd:
-      j.write_fieldname("BearerContextReleaseCommand");
-      c.get<bearer_context_release_cmd_s>().to_json(j);
-      break;
-    case types::res_status_request:
-      j.write_fieldname("ResourceStatusRequest");
-      c.get<res_status_request_s>().to_json(j);
-      break;
-    case types::iab_up_tnl_address_upd:
-      j.write_fieldname("IAB-UPTNLAddressUpdate");
-      c.get<iab_up_tnl_address_upd_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_setup_request:
-      j.write_fieldname("BCBearerContextSetupRequest");
-      c.get<bc_bearer_context_setup_request_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_mod_request:
-      j.write_fieldname("BCBearerContextModificationRequest");
-      c.get<bc_bearer_context_mod_request_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_mod_required:
-      j.write_fieldname("BCBearerContextModificationRequired");
-      c.get<bc_bearer_context_mod_required_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_release_cmd:
-      j.write_fieldname("BCBearerContextReleaseCommand");
-      c.get<bc_bearer_context_release_cmd_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_setup_request:
-      j.write_fieldname("MCBearerContextSetupRequest");
-      c.get<mc_bearer_context_setup_request_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_mod_request:
-      j.write_fieldname("MCBearerContextModificationRequest");
-      c.get<mc_bearer_context_mod_request_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_mod_required:
-      j.write_fieldname("MCBearerContextModificationRequired");
-      c.get<mc_bearer_context_mod_required_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_release_cmd:
-      j.write_fieldname("MCBearerContextReleaseCommand");
-      c.get<mc_bearer_context_release_cmd_s>().to_json(j);
-      break;
-    case types::error_ind:
-      j.write_fieldname("ErrorIndication");
-      c.get<error_ind_s>().to_json(j);
-      break;
-    case types::bearer_context_release_request:
-      j.write_fieldname("BearerContextReleaseRequest");
-      c.get<bearer_context_release_request_s>().to_json(j);
-      break;
-    case types::bearer_context_inactivity_notif:
-      j.write_fieldname("BearerContextInactivityNotification");
-      c.get<bearer_context_inactivity_notif_s>().to_json(j);
-      break;
-    case types::dl_data_notif:
-      j.write_fieldname("DLDataNotification");
-      c.get<dl_data_notif_s>().to_json(j);
-      break;
-    case types::ul_data_notif:
-      j.write_fieldname("ULDataNotification");
-      c.get<ul_data_notif_s>().to_json(j);
-      break;
-    case types::data_usage_report:
-      j.write_fieldname("DataUsageReport");
-      c.get<data_usage_report_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_counter_check_request:
-      j.write_fieldname("GNB-CU-UP-CounterCheckRequest");
-      c.get<gnb_cu_up_counter_check_request_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_status_ind:
-      j.write_fieldname("GNB-CU-UP-StatusIndication");
-      c.get<gnb_cu_up_status_ind_s>().to_json(j);
-      break;
-    case types::mrdc_data_usage_report:
-      j.write_fieldname("MRDC-DataUsageReport");
-      c.get<mrdc_data_usage_report_s>().to_json(j);
-      break;
-    case types::deactiv_trace:
-      j.write_fieldname("DeactivateTrace");
-      c.get<deactiv_trace_s>().to_json(j);
-      break;
-    case types::trace_start:
-      j.write_fieldname("TraceStart");
-      c.get<trace_start_s>().to_json(j);
-      break;
-    case types::private_msg:
-      j.write_fieldname("PrivateMessage");
-      c.get<private_msg_s>().to_json(j);
-      break;
-    case types::cell_traffic_trace:
-      j.write_fieldname("CellTrafficTrace");
-      c.get<cell_traffic_trace_s>().to_json(j);
-      break;
-    case types::res_status_upd:
-      j.write_fieldname("ResourceStatusUpdate");
-      c.get<res_status_upd_s>().to_json(j);
-      break;
-    case types::early_forwarding_sn_transfer:
-      j.write_fieldname("EarlyForwardingSNTransfer");
-      c.get<early_forwarding_sn_transfer_s>().to_json(j);
-      break;
-    case types::gnb_cu_cp_meas_results_info:
-      j.write_fieldname("GNB-CU-CPMeasurementResultsInformation");
-      c.get<gnb_cu_cp_meas_results_info_s>().to_json(j);
-      break;
-    case types::iabpsk_notif:
-      j.write_fieldname("IABPSKNotification");
-      c.get<iabpsk_notif_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_release_request:
-      j.write_fieldname("BCBearerContextReleaseRequest");
-      c.get<bc_bearer_context_release_request_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_release_request:
-      j.write_fieldname("MCBearerContextReleaseRequest");
-      c.get<mc_bearer_context_release_request_s>().to_json(j);
-      break;
-    case types::mc_bearer_notif:
-      j.write_fieldname("MCBearerNotification");
-      c.get<mc_bearer_notif_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::init_msg_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e1ap_elem_procs_o::init_msg_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::reset:
-      HANDLE_CODE(c.get<reset_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_e1_setup_request:
-      HANDLE_CODE(c.get<gnb_cu_up_e1_setup_request_s>().pack(bref));
-      break;
-    case types::gnb_cu_cp_e1_setup_request:
-      HANDLE_CODE(c.get<gnb_cu_cp_e1_setup_request_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_cfg_upd:
-      HANDLE_CODE(c.get<gnb_cu_up_cfg_upd_s>().pack(bref));
-      break;
-    case types::gnb_cu_cp_cfg_upd:
-      HANDLE_CODE(c.get<gnb_cu_cp_cfg_upd_s>().pack(bref));
-      break;
-    case types::e1_release_request:
-      HANDLE_CODE(c.get<e1_release_request_s>().pack(bref));
-      break;
-    case types::bearer_context_setup_request:
-      HANDLE_CODE(c.get<bearer_context_setup_request_s>().pack(bref));
-      break;
-    case types::bearer_context_mod_request:
-      HANDLE_CODE(c.get<bearer_context_mod_request_s>().pack(bref));
-      break;
-    case types::bearer_context_mod_required:
-      HANDLE_CODE(c.get<bearer_context_mod_required_s>().pack(bref));
-      break;
-    case types::bearer_context_release_cmd:
-      HANDLE_CODE(c.get<bearer_context_release_cmd_s>().pack(bref));
-      break;
-    case types::res_status_request:
-      HANDLE_CODE(c.get<res_status_request_s>().pack(bref));
-      break;
-    case types::iab_up_tnl_address_upd:
-      HANDLE_CODE(c.get<iab_up_tnl_address_upd_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_setup_request:
-      HANDLE_CODE(c.get<bc_bearer_context_setup_request_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_mod_request:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_request_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_mod_required:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_required_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_release_cmd:
-      HANDLE_CODE(c.get<bc_bearer_context_release_cmd_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_setup_request:
-      HANDLE_CODE(c.get<mc_bearer_context_setup_request_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_mod_request:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_request_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_mod_required:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_required_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_release_cmd:
-      HANDLE_CODE(c.get<mc_bearer_context_release_cmd_s>().pack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().pack(bref));
-      break;
-    case types::bearer_context_release_request:
-      HANDLE_CODE(c.get<bearer_context_release_request_s>().pack(bref));
-      break;
-    case types::bearer_context_inactivity_notif:
-      HANDLE_CODE(c.get<bearer_context_inactivity_notif_s>().pack(bref));
-      break;
-    case types::dl_data_notif:
-      HANDLE_CODE(c.get<dl_data_notif_s>().pack(bref));
-      break;
-    case types::ul_data_notif:
-      HANDLE_CODE(c.get<ul_data_notif_s>().pack(bref));
-      break;
-    case types::data_usage_report:
-      HANDLE_CODE(c.get<data_usage_report_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_counter_check_request:
-      HANDLE_CODE(c.get<gnb_cu_up_counter_check_request_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_status_ind:
-      HANDLE_CODE(c.get<gnb_cu_up_status_ind_s>().pack(bref));
-      break;
-    case types::mrdc_data_usage_report:
-      HANDLE_CODE(c.get<mrdc_data_usage_report_s>().pack(bref));
-      break;
-    case types::deactiv_trace:
-      HANDLE_CODE(c.get<deactiv_trace_s>().pack(bref));
-      break;
-    case types::trace_start:
-      HANDLE_CODE(c.get<trace_start_s>().pack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().pack(bref));
-      break;
-    case types::cell_traffic_trace:
-      HANDLE_CODE(c.get<cell_traffic_trace_s>().pack(bref));
-      break;
-    case types::res_status_upd:
-      HANDLE_CODE(c.get<res_status_upd_s>().pack(bref));
-      break;
-    case types::early_forwarding_sn_transfer:
-      HANDLE_CODE(c.get<early_forwarding_sn_transfer_s>().pack(bref));
-      break;
-    case types::gnb_cu_cp_meas_results_info:
-      HANDLE_CODE(c.get<gnb_cu_cp_meas_results_info_s>().pack(bref));
-      break;
-    case types::iabpsk_notif:
-      HANDLE_CODE(c.get<iabpsk_notif_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_release_request:
-      HANDLE_CODE(c.get<bc_bearer_context_release_request_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_release_request:
-      HANDLE_CODE(c.get<mc_bearer_context_release_request_s>().pack(bref));
-      break;
-    case types::mc_bearer_notif:
-      HANDLE_CODE(c.get<mc_bearer_notif_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e1ap_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::reset:
-      HANDLE_CODE(c.get<reset_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_e1_setup_request:
-      HANDLE_CODE(c.get<gnb_cu_up_e1_setup_request_s>().unpack(bref));
-      break;
-    case types::gnb_cu_cp_e1_setup_request:
-      HANDLE_CODE(c.get<gnb_cu_cp_e1_setup_request_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_cfg_upd:
-      HANDLE_CODE(c.get<gnb_cu_up_cfg_upd_s>().unpack(bref));
-      break;
-    case types::gnb_cu_cp_cfg_upd:
-      HANDLE_CODE(c.get<gnb_cu_cp_cfg_upd_s>().unpack(bref));
-      break;
-    case types::e1_release_request:
-      HANDLE_CODE(c.get<e1_release_request_s>().unpack(bref));
-      break;
-    case types::bearer_context_setup_request:
-      HANDLE_CODE(c.get<bearer_context_setup_request_s>().unpack(bref));
-      break;
-    case types::bearer_context_mod_request:
-      HANDLE_CODE(c.get<bearer_context_mod_request_s>().unpack(bref));
-      break;
-    case types::bearer_context_mod_required:
-      HANDLE_CODE(c.get<bearer_context_mod_required_s>().unpack(bref));
-      break;
-    case types::bearer_context_release_cmd:
-      HANDLE_CODE(c.get<bearer_context_release_cmd_s>().unpack(bref));
-      break;
-    case types::res_status_request:
-      HANDLE_CODE(c.get<res_status_request_s>().unpack(bref));
-      break;
-    case types::iab_up_tnl_address_upd:
-      HANDLE_CODE(c.get<iab_up_tnl_address_upd_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_setup_request:
-      HANDLE_CODE(c.get<bc_bearer_context_setup_request_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_mod_request:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_request_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_mod_required:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_required_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_release_cmd:
-      HANDLE_CODE(c.get<bc_bearer_context_release_cmd_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_setup_request:
-      HANDLE_CODE(c.get<mc_bearer_context_setup_request_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_mod_request:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_request_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_mod_required:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_required_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_release_cmd:
-      HANDLE_CODE(c.get<mc_bearer_context_release_cmd_s>().unpack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().unpack(bref));
-      break;
-    case types::bearer_context_release_request:
-      HANDLE_CODE(c.get<bearer_context_release_request_s>().unpack(bref));
-      break;
-    case types::bearer_context_inactivity_notif:
-      HANDLE_CODE(c.get<bearer_context_inactivity_notif_s>().unpack(bref));
-      break;
-    case types::dl_data_notif:
-      HANDLE_CODE(c.get<dl_data_notif_s>().unpack(bref));
-      break;
-    case types::ul_data_notif:
-      HANDLE_CODE(c.get<ul_data_notif_s>().unpack(bref));
-      break;
-    case types::data_usage_report:
-      HANDLE_CODE(c.get<data_usage_report_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_counter_check_request:
-      HANDLE_CODE(c.get<gnb_cu_up_counter_check_request_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_status_ind:
-      HANDLE_CODE(c.get<gnb_cu_up_status_ind_s>().unpack(bref));
-      break;
-    case types::mrdc_data_usage_report:
-      HANDLE_CODE(c.get<mrdc_data_usage_report_s>().unpack(bref));
-      break;
-    case types::deactiv_trace:
-      HANDLE_CODE(c.get<deactiv_trace_s>().unpack(bref));
-      break;
-    case types::trace_start:
-      HANDLE_CODE(c.get<trace_start_s>().unpack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().unpack(bref));
-      break;
-    case types::cell_traffic_trace:
-      HANDLE_CODE(c.get<cell_traffic_trace_s>().unpack(bref));
-      break;
-    case types::res_status_upd:
-      HANDLE_CODE(c.get<res_status_upd_s>().unpack(bref));
-      break;
-    case types::early_forwarding_sn_transfer:
-      HANDLE_CODE(c.get<early_forwarding_sn_transfer_s>().unpack(bref));
-      break;
-    case types::gnb_cu_cp_meas_results_info:
-      HANDLE_CODE(c.get<gnb_cu_cp_meas_results_info_s>().unpack(bref));
-      break;
-    case types::iabpsk_notif:
-      HANDLE_CODE(c.get<iabpsk_notif_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_release_request:
-      HANDLE_CODE(c.get<bc_bearer_context_release_request_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_release_request:
-      HANDLE_CODE(c.get<mc_bearer_context_release_request_s>().unpack(bref));
-      break;
-    case types::mc_bearer_notif:
-      HANDLE_CODE(c.get<mc_bearer_notif_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* e1ap_elem_procs_o::init_msg_c::types_opts::to_string() const
-{
-  static const char* names[] = {"Reset",
-                                "GNB-CU-UP-E1SetupRequest",
-                                "GNB-CU-CP-E1SetupRequest",
-                                "GNB-CU-UP-ConfigurationUpdate",
-                                "GNB-CU-CP-ConfigurationUpdate",
-                                "E1ReleaseRequest",
-                                "BearerContextSetupRequest",
-                                "BearerContextModificationRequest",
-                                "BearerContextModificationRequired",
-                                "BearerContextReleaseCommand",
-                                "ResourceStatusRequest",
-                                "IAB-UPTNLAddressUpdate",
-                                "BCBearerContextSetupRequest",
-                                "BCBearerContextModificationRequest",
-                                "BCBearerContextModificationRequired",
-                                "BCBearerContextReleaseCommand",
-                                "MCBearerContextSetupRequest",
-                                "MCBearerContextModificationRequest",
-                                "MCBearerContextModificationRequired",
-                                "MCBearerContextReleaseCommand",
-                                "ErrorIndication",
-                                "BearerContextReleaseRequest",
-                                "BearerContextInactivityNotification",
-                                "DLDataNotification",
-                                "ULDataNotification",
-                                "DataUsageReport",
-                                "GNB-CU-UP-CounterCheckRequest",
-                                "GNB-CU-UP-StatusIndication",
-                                "MRDC-DataUsageReport",
-                                "DeactivateTrace",
-                                "TraceStart",
-                                "PrivateMessage",
-                                "CellTrafficTrace",
-                                "ResourceStatusUpdate",
-                                "EarlyForwardingSNTransfer",
-                                "GNB-CU-CPMeasurementResultsInformation",
-                                "IABPSKNotification",
-                                "BCBearerContextReleaseRequest",
-                                "MCBearerContextReleaseRequest",
-                                "MCBearerNotification"};
-  return convert_enum_idx(names, 40, value, "e1ap_elem_procs_o::init_msg_c::types");
-}
+static const char*           enum_names_e1ap_elem_procs_o_init_msg_c_types_values[] = {"Reset",
+                                                                                       "GNB-CU-UP-E1SetupRequest",
+                                                                                       "GNB-CU-CP-E1SetupRequest",
+                                                                                       "GNB-CU-UP-ConfigurationUpdate",
+                                                                                       "GNB-CU-CP-ConfigurationUpdate",
+                                                                                       "E1ReleaseRequest",
+                                                                                       "BearerContextSetupRequest",
+                                                                                       "BearerContextModificationRequest",
+                                                                                       "BearerContextModificationRequired",
+                                                                                       "BearerContextReleaseCommand",
+                                                                                       "ResourceStatusRequest",
+                                                                                       "IAB-UPTNLAddressUpdate",
+                                                                                       "BCBearerContextSetupRequest",
+                                                                                       "BCBearerContextModificationRequest",
+                                                                                       "BCBearerContextModificationRequired",
+                                                                                       "BCBearerContextReleaseCommand",
+                                                                                       "MCBearerContextSetupRequest",
+                                                                                       "MCBearerContextModificationRequest",
+                                                                                       "MCBearerContextModificationRequired",
+                                                                                       "MCBearerContextReleaseCommand",
+                                                                                       "ErrorIndication",
+                                                                                       "BearerContextReleaseRequest",
+                                                                                       "BearerContextInactivityNotification",
+                                                                                       "DLDataNotification",
+                                                                                       "ULDataNotification",
+                                                                                       "DataUsageReport",
+                                                                                       "GNB-CU-UP-CounterCheckRequest",
+                                                                                       "GNB-CU-UP-StatusIndication",
+                                                                                       "MRDC-DataUsageReport",
+                                                                                       "DeactivateTrace",
+                                                                                       "TraceStart",
+                                                                                       "PrivateMessage",
+                                                                                       "CellTrafficTrace",
+                                                                                       "ResourceStatusUpdate",
+                                                                                       "EarlyForwardingSNTransfer",
+                                                                                       "GNB-CU-CPMeasurementResultsInformation",
+                                                                                       "IABPSKNotification",
+                                                                                       "BCBearerContextReleaseRequest",
+                                                                                       "MCBearerContextReleaseRequest",
+                                                                                       "MCBearerNotification"};
+const asn1::table::enum_desc e1ap_elem_procs_o::init_msg_c::types_opts::desc        = {
+    enum_names_e1ap_elem_procs_o_init_msg_c_types_values,
+    40,
+    "e1ap_elem_procs_o::init_msg_c::types"};
 
 // SuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_e1ap_elem_procs_o_successful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_e1_setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_cp_e1_setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_cfg_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_cp_cfg_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e1_release_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_mod_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_mod_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_release_complete_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_up_tnl_address_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_mod_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_mod_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_release_complete_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_mod_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_mod_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_release_complete_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_e1ap_elem_procs_o_successful_outcome_c_names[] = {
+    {"ResetAcknowledge", nullptr},
+    {"GNB-CU-UP-E1SetupResponse", nullptr},
+    {"GNB-CU-CP-E1SetupResponse", nullptr},
+    {"GNB-CU-UP-ConfigurationUpdateAcknowledge", nullptr},
+    {"GNB-CU-CP-ConfigurationUpdateAcknowledge", nullptr},
+    {"E1ReleaseResponse", nullptr},
+    {"BearerContextSetupResponse", nullptr},
+    {"BearerContextModificationResponse", nullptr},
+    {"BearerContextModificationConfirm", nullptr},
+    {"BearerContextReleaseComplete", nullptr},
+    {"ResourceStatusResponse", nullptr},
+    {"IAB-UPTNLAddressUpdateAcknowledge", nullptr},
+    {"BCBearerContextSetupResponse", nullptr},
+    {"BCBearerContextModificationResponse", nullptr},
+    {"BCBearerContextModificationConfirm", nullptr},
+    {"BCBearerContextReleaseComplete", nullptr},
+    {"MCBearerContextSetupResponse", nullptr},
+    {"MCBearerContextModificationResponse", nullptr},
+    {"MCBearerContextModificationConfirm", nullptr},
+    {"MCBearerContextReleaseComplete", nullptr}};
+const asn1::table::choice_desc e1ap_elem_procs_o::successful_outcome_c::desc = {
+    asn1::table::enum_int_type<e1ap_elem_procs_o::successful_outcome_c::types>(),
+    e1ap_elem_procs_o::successful_outcome_c::types::nof_types,
+    e1ap_elem_procs_o::successful_outcome_c::types::nof_exts,
+    e1ap_elem_procs_o::successful_outcome_c::types::has_ext,
+    true,
+    choice_table_e1ap_elem_procs_o_successful_outcome_c_alternatives,
+    &asn1::table::choice_set<e1ap_elem_procs_o::successful_outcome_c>,
+    choice_table_e1ap_elem_procs_o_successful_outcome_c_names,
+    "e1ap_elem_procs_o::successful_outcome_c",
+    offsetof(e1ap_elem_procs_o::successful_outcome_c, type_),
+    offsetof(e1ap_elem_procs_o::successful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void e1ap_elem_procs_o::successful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::reset_ack:
-      c = reset_ack_s{};
-      break;
-    case types::gnb_cu_up_e1_setup_resp:
-      c = gnb_cu_up_e1_setup_resp_s{};
-      break;
-    case types::gnb_cu_cp_e1_setup_resp:
-      c = gnb_cu_cp_e1_setup_resp_s{};
-      break;
-    case types::gnb_cu_up_cfg_upd_ack:
-      c = gnb_cu_up_cfg_upd_ack_s{};
-      break;
-    case types::gnb_cu_cp_cfg_upd_ack:
-      c = gnb_cu_cp_cfg_upd_ack_s{};
-      break;
-    case types::e1_release_resp:
-      c = e1_release_resp_s{};
-      break;
-    case types::bearer_context_setup_resp:
-      c = bearer_context_setup_resp_s{};
-      break;
-    case types::bearer_context_mod_resp:
-      c = bearer_context_mod_resp_s{};
-      break;
-    case types::bearer_context_mod_confirm:
-      c = bearer_context_mod_confirm_s{};
-      break;
-    case types::bearer_context_release_complete:
-      c = bearer_context_release_complete_s{};
-      break;
-    case types::res_status_resp:
-      c = res_status_resp_s{};
-      break;
-    case types::iab_up_tnl_address_upd_ack:
-      c = iab_up_tnl_address_upd_ack_s{};
-      break;
-    case types::bc_bearer_context_setup_resp:
-      c = bc_bearer_context_setup_resp_s{};
-      break;
-    case types::bc_bearer_context_mod_resp:
-      c = bc_bearer_context_mod_resp_s{};
-      break;
-    case types::bc_bearer_context_mod_confirm:
-      c = bc_bearer_context_mod_confirm_s{};
-      break;
-    case types::bc_bearer_context_release_complete:
-      c = bc_bearer_context_release_complete_s{};
-      break;
-    case types::mc_bearer_context_setup_resp:
-      c = mc_bearer_context_setup_resp_s{};
-      break;
-    case types::mc_bearer_context_mod_resp:
-      c = mc_bearer_context_mod_resp_s{};
-      break;
-    case types::mc_bearer_context_mod_confirm:
-      c = mc_bearer_context_mod_confirm_s{};
-      break;
-    case types::mc_bearer_context_release_complete:
-      c = mc_bearer_context_release_complete_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::successful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, e1ap_elem_procs_o::successful_outcome_c::desc);
 }
 reset_ack_s& e1ap_elem_procs_o::successful_outcome_c::reset_ack()
 {
@@ -1643,307 +1395,164 @@ e1ap_elem_procs_o::successful_outcome_c::mc_bearer_context_release_complete() co
   assert_choice_type(types::mc_bearer_context_release_complete, type_, "SuccessfulOutcome");
   return c.get<mc_bearer_context_release_complete_s>();
 }
-void e1ap_elem_procs_o::successful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::reset_ack:
-      j.write_fieldname("ResetAcknowledge");
-      c.get<reset_ack_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_e1_setup_resp:
-      j.write_fieldname("GNB-CU-UP-E1SetupResponse");
-      c.get<gnb_cu_up_e1_setup_resp_s>().to_json(j);
-      break;
-    case types::gnb_cu_cp_e1_setup_resp:
-      j.write_fieldname("GNB-CU-CP-E1SetupResponse");
-      c.get<gnb_cu_cp_e1_setup_resp_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_cfg_upd_ack:
-      j.write_fieldname("GNB-CU-UP-ConfigurationUpdateAcknowledge");
-      c.get<gnb_cu_up_cfg_upd_ack_s>().to_json(j);
-      break;
-    case types::gnb_cu_cp_cfg_upd_ack:
-      j.write_fieldname("GNB-CU-CP-ConfigurationUpdateAcknowledge");
-      c.get<gnb_cu_cp_cfg_upd_ack_s>().to_json(j);
-      break;
-    case types::e1_release_resp:
-      j.write_fieldname("E1ReleaseResponse");
-      c.get<e1_release_resp_s>().to_json(j);
-      break;
-    case types::bearer_context_setup_resp:
-      j.write_fieldname("BearerContextSetupResponse");
-      c.get<bearer_context_setup_resp_s>().to_json(j);
-      break;
-    case types::bearer_context_mod_resp:
-      j.write_fieldname("BearerContextModificationResponse");
-      c.get<bearer_context_mod_resp_s>().to_json(j);
-      break;
-    case types::bearer_context_mod_confirm:
-      j.write_fieldname("BearerContextModificationConfirm");
-      c.get<bearer_context_mod_confirm_s>().to_json(j);
-      break;
-    case types::bearer_context_release_complete:
-      j.write_fieldname("BearerContextReleaseComplete");
-      c.get<bearer_context_release_complete_s>().to_json(j);
-      break;
-    case types::res_status_resp:
-      j.write_fieldname("ResourceStatusResponse");
-      c.get<res_status_resp_s>().to_json(j);
-      break;
-    case types::iab_up_tnl_address_upd_ack:
-      j.write_fieldname("IAB-UPTNLAddressUpdateAcknowledge");
-      c.get<iab_up_tnl_address_upd_ack_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_setup_resp:
-      j.write_fieldname("BCBearerContextSetupResponse");
-      c.get<bc_bearer_context_setup_resp_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_mod_resp:
-      j.write_fieldname("BCBearerContextModificationResponse");
-      c.get<bc_bearer_context_mod_resp_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_mod_confirm:
-      j.write_fieldname("BCBearerContextModificationConfirm");
-      c.get<bc_bearer_context_mod_confirm_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_release_complete:
-      j.write_fieldname("BCBearerContextReleaseComplete");
-      c.get<bc_bearer_context_release_complete_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_setup_resp:
-      j.write_fieldname("MCBearerContextSetupResponse");
-      c.get<mc_bearer_context_setup_resp_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_mod_resp:
-      j.write_fieldname("MCBearerContextModificationResponse");
-      c.get<mc_bearer_context_mod_resp_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_mod_confirm:
-      j.write_fieldname("MCBearerContextModificationConfirm");
-      c.get<mc_bearer_context_mod_confirm_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_release_complete:
-      j.write_fieldname("MCBearerContextReleaseComplete");
-      c.get<mc_bearer_context_release_complete_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::successful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e1ap_elem_procs_o::successful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::reset_ack:
-      HANDLE_CODE(c.get<reset_ack_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_e1_setup_resp:
-      HANDLE_CODE(c.get<gnb_cu_up_e1_setup_resp_s>().pack(bref));
-      break;
-    case types::gnb_cu_cp_e1_setup_resp:
-      HANDLE_CODE(c.get<gnb_cu_cp_e1_setup_resp_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_cfg_upd_ack:
-      HANDLE_CODE(c.get<gnb_cu_up_cfg_upd_ack_s>().pack(bref));
-      break;
-    case types::gnb_cu_cp_cfg_upd_ack:
-      HANDLE_CODE(c.get<gnb_cu_cp_cfg_upd_ack_s>().pack(bref));
-      break;
-    case types::e1_release_resp:
-      HANDLE_CODE(c.get<e1_release_resp_s>().pack(bref));
-      break;
-    case types::bearer_context_setup_resp:
-      HANDLE_CODE(c.get<bearer_context_setup_resp_s>().pack(bref));
-      break;
-    case types::bearer_context_mod_resp:
-      HANDLE_CODE(c.get<bearer_context_mod_resp_s>().pack(bref));
-      break;
-    case types::bearer_context_mod_confirm:
-      HANDLE_CODE(c.get<bearer_context_mod_confirm_s>().pack(bref));
-      break;
-    case types::bearer_context_release_complete:
-      HANDLE_CODE(c.get<bearer_context_release_complete_s>().pack(bref));
-      break;
-    case types::res_status_resp:
-      HANDLE_CODE(c.get<res_status_resp_s>().pack(bref));
-      break;
-    case types::iab_up_tnl_address_upd_ack:
-      HANDLE_CODE(c.get<iab_up_tnl_address_upd_ack_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_setup_resp:
-      HANDLE_CODE(c.get<bc_bearer_context_setup_resp_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_mod_resp:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_resp_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_mod_confirm:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_confirm_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_release_complete:
-      HANDLE_CODE(c.get<bc_bearer_context_release_complete_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_setup_resp:
-      HANDLE_CODE(c.get<mc_bearer_context_setup_resp_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_mod_resp:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_resp_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_mod_confirm:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_confirm_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_release_complete:
-      HANDLE_CODE(c.get<mc_bearer_context_release_complete_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e1ap_elem_procs_o::successful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::reset_ack:
-      HANDLE_CODE(c.get<reset_ack_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_e1_setup_resp:
-      HANDLE_CODE(c.get<gnb_cu_up_e1_setup_resp_s>().unpack(bref));
-      break;
-    case types::gnb_cu_cp_e1_setup_resp:
-      HANDLE_CODE(c.get<gnb_cu_cp_e1_setup_resp_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_cfg_upd_ack:
-      HANDLE_CODE(c.get<gnb_cu_up_cfg_upd_ack_s>().unpack(bref));
-      break;
-    case types::gnb_cu_cp_cfg_upd_ack:
-      HANDLE_CODE(c.get<gnb_cu_cp_cfg_upd_ack_s>().unpack(bref));
-      break;
-    case types::e1_release_resp:
-      HANDLE_CODE(c.get<e1_release_resp_s>().unpack(bref));
-      break;
-    case types::bearer_context_setup_resp:
-      HANDLE_CODE(c.get<bearer_context_setup_resp_s>().unpack(bref));
-      break;
-    case types::bearer_context_mod_resp:
-      HANDLE_CODE(c.get<bearer_context_mod_resp_s>().unpack(bref));
-      break;
-    case types::bearer_context_mod_confirm:
-      HANDLE_CODE(c.get<bearer_context_mod_confirm_s>().unpack(bref));
-      break;
-    case types::bearer_context_release_complete:
-      HANDLE_CODE(c.get<bearer_context_release_complete_s>().unpack(bref));
-      break;
-    case types::res_status_resp:
-      HANDLE_CODE(c.get<res_status_resp_s>().unpack(bref));
-      break;
-    case types::iab_up_tnl_address_upd_ack:
-      HANDLE_CODE(c.get<iab_up_tnl_address_upd_ack_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_setup_resp:
-      HANDLE_CODE(c.get<bc_bearer_context_setup_resp_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_mod_resp:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_resp_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_mod_confirm:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_confirm_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_release_complete:
-      HANDLE_CODE(c.get<bc_bearer_context_release_complete_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_setup_resp:
-      HANDLE_CODE(c.get<mc_bearer_context_setup_resp_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_mod_resp:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_resp_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_mod_confirm:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_confirm_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_release_complete:
-      HANDLE_CODE(c.get<mc_bearer_context_release_complete_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* e1ap_elem_procs_o::successful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"ResetAcknowledge",
-                                "GNB-CU-UP-E1SetupResponse",
-                                "GNB-CU-CP-E1SetupResponse",
-                                "GNB-CU-UP-ConfigurationUpdateAcknowledge",
-                                "GNB-CU-CP-ConfigurationUpdateAcknowledge",
-                                "E1ReleaseResponse",
-                                "BearerContextSetupResponse",
-                                "BearerContextModificationResponse",
-                                "BearerContextModificationConfirm",
-                                "BearerContextReleaseComplete",
-                                "ResourceStatusResponse",
-                                "IAB-UPTNLAddressUpdateAcknowledge",
-                                "BCBearerContextSetupResponse",
-                                "BCBearerContextModificationResponse",
-                                "BCBearerContextModificationConfirm",
-                                "BCBearerContextReleaseComplete",
-                                "MCBearerContextSetupResponse",
-                                "MCBearerContextModificationResponse",
-                                "MCBearerContextModificationConfirm",
-                                "MCBearerContextReleaseComplete"};
-  return convert_enum_idx(names, 20, value, "e1ap_elem_procs_o::successful_outcome_c::types");
-}
+static const char* enum_names_e1ap_elem_procs_o_successful_outcome_c_types_values[] = {
+    "ResetAcknowledge",
+    "GNB-CU-UP-E1SetupResponse",
+    "GNB-CU-CP-E1SetupResponse",
+    "GNB-CU-UP-ConfigurationUpdateAcknowledge",
+    "GNB-CU-CP-ConfigurationUpdateAcknowledge",
+    "E1ReleaseResponse",
+    "BearerContextSetupResponse",
+    "BearerContextModificationResponse",
+    "BearerContextModificationConfirm",
+    "BearerContextReleaseComplete",
+    "ResourceStatusResponse",
+    "IAB-UPTNLAddressUpdateAcknowledge",
+    "BCBearerContextSetupResponse",
+    "BCBearerContextModificationResponse",
+    "BCBearerContextModificationConfirm",
+    "BCBearerContextReleaseComplete",
+    "MCBearerContextSetupResponse",
+    "MCBearerContextModificationResponse",
+    "MCBearerContextModificationConfirm",
+    "MCBearerContextReleaseComplete"};
+const asn1::table::enum_desc e1ap_elem_procs_o::successful_outcome_c::types_opts::desc = {
+    enum_names_e1ap_elem_procs_o_successful_outcome_c_types_values,
+    20,
+    "e1ap_elem_procs_o::successful_outcome_c::types"};
 
 // UnsuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_e1ap_elem_procs_o_unsuccessful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_e1_setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_cp_e1_setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_up_cfg_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<gnb_cu_cp_cfg_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bearer_context_mod_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_up_tnl_address_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<bc_bearer_context_mod_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mc_bearer_context_mod_fail_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_e1ap_elem_procs_o_unsuccessful_outcome_c_names[] = {
+    {"GNB-CU-UP-E1SetupFailure", nullptr},
+    {"GNB-CU-CP-E1SetupFailure", nullptr},
+    {"GNB-CU-UP-ConfigurationUpdateFailure", nullptr},
+    {"GNB-CU-CP-ConfigurationUpdateFailure", nullptr},
+    {"BearerContextSetupFailure", nullptr},
+    {"BearerContextModificationFailure", nullptr},
+    {"ResourceStatusFailure", nullptr},
+    {"IAB-UPTNLAddressUpdateFailure", nullptr},
+    {"BCBearerContextSetupFailure", nullptr},
+    {"BCBearerContextModificationFailure", nullptr},
+    {"MCBearerContextSetupFailure", nullptr},
+    {"MCBearerContextModificationFailure", nullptr}};
+const asn1::table::choice_desc e1ap_elem_procs_o::unsuccessful_outcome_c::desc = {
+    asn1::table::enum_int_type<e1ap_elem_procs_o::unsuccessful_outcome_c::types>(),
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nof_types,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::nof_exts,
+    e1ap_elem_procs_o::unsuccessful_outcome_c::types::has_ext,
+    true,
+    choice_table_e1ap_elem_procs_o_unsuccessful_outcome_c_alternatives,
+    &asn1::table::choice_set<e1ap_elem_procs_o::unsuccessful_outcome_c>,
+    choice_table_e1ap_elem_procs_o_unsuccessful_outcome_c_names,
+    "e1ap_elem_procs_o::unsuccessful_outcome_c",
+    offsetof(e1ap_elem_procs_o::unsuccessful_outcome_c, type_),
+    offsetof(e1ap_elem_procs_o::unsuccessful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void e1ap_elem_procs_o::unsuccessful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::gnb_cu_up_e1_setup_fail:
-      c = gnb_cu_up_e1_setup_fail_s{};
-      break;
-    case types::gnb_cu_cp_e1_setup_fail:
-      c = gnb_cu_cp_e1_setup_fail_s{};
-      break;
-    case types::gnb_cu_up_cfg_upd_fail:
-      c = gnb_cu_up_cfg_upd_fail_s{};
-      break;
-    case types::gnb_cu_cp_cfg_upd_fail:
-      c = gnb_cu_cp_cfg_upd_fail_s{};
-      break;
-    case types::bearer_context_setup_fail:
-      c = bearer_context_setup_fail_s{};
-      break;
-    case types::bearer_context_mod_fail:
-      c = bearer_context_mod_fail_s{};
-      break;
-    case types::res_status_fail:
-      c = res_status_fail_s{};
-      break;
-    case types::iab_up_tnl_address_upd_fail:
-      c = iab_up_tnl_address_upd_fail_s{};
-      break;
-    case types::bc_bearer_context_setup_fail:
-      c = bc_bearer_context_setup_fail_s{};
-      break;
-    case types::bc_bearer_context_mod_fail:
-      c = bc_bearer_context_mod_fail_s{};
-      break;
-    case types::mc_bearer_context_setup_fail:
-      c = mc_bearer_context_setup_fail_s{};
-      break;
-    case types::mc_bearer_context_mod_fail:
-      c = mc_bearer_context_mod_fail_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::unsuccessful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, e1ap_elem_procs_o::unsuccessful_outcome_c::desc);
 }
 gnb_cu_up_e1_setup_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::gnb_cu_up_e1_setup_fail()
 {
@@ -2065,370 +1674,197 @@ const mc_bearer_context_mod_fail_s& e1ap_elem_procs_o::unsuccessful_outcome_c::m
   assert_choice_type(types::mc_bearer_context_mod_fail, type_, "UnsuccessfulOutcome");
   return c.get<mc_bearer_context_mod_fail_s>();
 }
-void e1ap_elem_procs_o::unsuccessful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::gnb_cu_up_e1_setup_fail:
-      j.write_fieldname("GNB-CU-UP-E1SetupFailure");
-      c.get<gnb_cu_up_e1_setup_fail_s>().to_json(j);
-      break;
-    case types::gnb_cu_cp_e1_setup_fail:
-      j.write_fieldname("GNB-CU-CP-E1SetupFailure");
-      c.get<gnb_cu_cp_e1_setup_fail_s>().to_json(j);
-      break;
-    case types::gnb_cu_up_cfg_upd_fail:
-      j.write_fieldname("GNB-CU-UP-ConfigurationUpdateFailure");
-      c.get<gnb_cu_up_cfg_upd_fail_s>().to_json(j);
-      break;
-    case types::gnb_cu_cp_cfg_upd_fail:
-      j.write_fieldname("GNB-CU-CP-ConfigurationUpdateFailure");
-      c.get<gnb_cu_cp_cfg_upd_fail_s>().to_json(j);
-      break;
-    case types::bearer_context_setup_fail:
-      j.write_fieldname("BearerContextSetupFailure");
-      c.get<bearer_context_setup_fail_s>().to_json(j);
-      break;
-    case types::bearer_context_mod_fail:
-      j.write_fieldname("BearerContextModificationFailure");
-      c.get<bearer_context_mod_fail_s>().to_json(j);
-      break;
-    case types::res_status_fail:
-      j.write_fieldname("ResourceStatusFailure");
-      c.get<res_status_fail_s>().to_json(j);
-      break;
-    case types::iab_up_tnl_address_upd_fail:
-      j.write_fieldname("IAB-UPTNLAddressUpdateFailure");
-      c.get<iab_up_tnl_address_upd_fail_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_setup_fail:
-      j.write_fieldname("BCBearerContextSetupFailure");
-      c.get<bc_bearer_context_setup_fail_s>().to_json(j);
-      break;
-    case types::bc_bearer_context_mod_fail:
-      j.write_fieldname("BCBearerContextModificationFailure");
-      c.get<bc_bearer_context_mod_fail_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_setup_fail:
-      j.write_fieldname("MCBearerContextSetupFailure");
-      c.get<mc_bearer_context_setup_fail_s>().to_json(j);
-      break;
-    case types::mc_bearer_context_mod_fail:
-      j.write_fieldname("MCBearerContextModificationFailure");
-      c.get<mc_bearer_context_mod_fail_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::unsuccessful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e1ap_elem_procs_o::unsuccessful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::gnb_cu_up_e1_setup_fail:
-      HANDLE_CODE(c.get<gnb_cu_up_e1_setup_fail_s>().pack(bref));
-      break;
-    case types::gnb_cu_cp_e1_setup_fail:
-      HANDLE_CODE(c.get<gnb_cu_cp_e1_setup_fail_s>().pack(bref));
-      break;
-    case types::gnb_cu_up_cfg_upd_fail:
-      HANDLE_CODE(c.get<gnb_cu_up_cfg_upd_fail_s>().pack(bref));
-      break;
-    case types::gnb_cu_cp_cfg_upd_fail:
-      HANDLE_CODE(c.get<gnb_cu_cp_cfg_upd_fail_s>().pack(bref));
-      break;
-    case types::bearer_context_setup_fail:
-      HANDLE_CODE(c.get<bearer_context_setup_fail_s>().pack(bref));
-      break;
-    case types::bearer_context_mod_fail:
-      HANDLE_CODE(c.get<bearer_context_mod_fail_s>().pack(bref));
-      break;
-    case types::res_status_fail:
-      HANDLE_CODE(c.get<res_status_fail_s>().pack(bref));
-      break;
-    case types::iab_up_tnl_address_upd_fail:
-      HANDLE_CODE(c.get<iab_up_tnl_address_upd_fail_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_setup_fail:
-      HANDLE_CODE(c.get<bc_bearer_context_setup_fail_s>().pack(bref));
-      break;
-    case types::bc_bearer_context_mod_fail:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_fail_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_setup_fail:
-      HANDLE_CODE(c.get<mc_bearer_context_setup_fail_s>().pack(bref));
-      break;
-    case types::mc_bearer_context_mod_fail:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_fail_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e1ap_elem_procs_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::gnb_cu_up_e1_setup_fail:
-      HANDLE_CODE(c.get<gnb_cu_up_e1_setup_fail_s>().unpack(bref));
-      break;
-    case types::gnb_cu_cp_e1_setup_fail:
-      HANDLE_CODE(c.get<gnb_cu_cp_e1_setup_fail_s>().unpack(bref));
-      break;
-    case types::gnb_cu_up_cfg_upd_fail:
-      HANDLE_CODE(c.get<gnb_cu_up_cfg_upd_fail_s>().unpack(bref));
-      break;
-    case types::gnb_cu_cp_cfg_upd_fail:
-      HANDLE_CODE(c.get<gnb_cu_cp_cfg_upd_fail_s>().unpack(bref));
-      break;
-    case types::bearer_context_setup_fail:
-      HANDLE_CODE(c.get<bearer_context_setup_fail_s>().unpack(bref));
-      break;
-    case types::bearer_context_mod_fail:
-      HANDLE_CODE(c.get<bearer_context_mod_fail_s>().unpack(bref));
-      break;
-    case types::res_status_fail:
-      HANDLE_CODE(c.get<res_status_fail_s>().unpack(bref));
-      break;
-    case types::iab_up_tnl_address_upd_fail:
-      HANDLE_CODE(c.get<iab_up_tnl_address_upd_fail_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_setup_fail:
-      HANDLE_CODE(c.get<bc_bearer_context_setup_fail_s>().unpack(bref));
-      break;
-    case types::bc_bearer_context_mod_fail:
-      HANDLE_CODE(c.get<bc_bearer_context_mod_fail_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_setup_fail:
-      HANDLE_CODE(c.get<mc_bearer_context_setup_fail_s>().unpack(bref));
-      break;
-    case types::mc_bearer_context_mod_fail:
-      HANDLE_CODE(c.get<mc_bearer_context_mod_fail_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"GNB-CU-UP-E1SetupFailure",
-                                "GNB-CU-CP-E1SetupFailure",
-                                "GNB-CU-UP-ConfigurationUpdateFailure",
-                                "GNB-CU-CP-ConfigurationUpdateFailure",
-                                "BearerContextSetupFailure",
-                                "BearerContextModificationFailure",
-                                "ResourceStatusFailure",
-                                "IAB-UPTNLAddressUpdateFailure",
-                                "BCBearerContextSetupFailure",
-                                "BCBearerContextModificationFailure",
-                                "MCBearerContextSetupFailure",
-                                "MCBearerContextModificationFailure"};
-  return convert_enum_idx(names, 12, value, "e1ap_elem_procs_o::unsuccessful_outcome_c::types");
-}
+static const char* enum_names_e1ap_elem_procs_o_unsuccessful_outcome_c_types_values[] = {
+    "GNB-CU-UP-E1SetupFailure",
+    "GNB-CU-CP-E1SetupFailure",
+    "GNB-CU-UP-ConfigurationUpdateFailure",
+    "GNB-CU-CP-ConfigurationUpdateFailure",
+    "BearerContextSetupFailure",
+    "BearerContextModificationFailure",
+    "ResourceStatusFailure",
+    "IAB-UPTNLAddressUpdateFailure",
+    "BCBearerContextSetupFailure",
+    "BCBearerContextModificationFailure",
+    "MCBearerContextSetupFailure",
+    "MCBearerContextModificationFailure"};
+const asn1::table::enum_desc e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::desc = {
+    enum_names_e1ap_elem_procs_o_unsuccessful_outcome_c_types_values,
+    12,
+    "e1ap_elem_procs_o::unsuccessful_outcome_c::types"};
+
+// Columns of the object sets of E1AP-ELEMENTARY-PROCEDURE.
+enum class e1ap_elem_proc_p_column : uint32_t { init_msg, successful_outcome, unsuccessful_outcome, crit };
 
 // InitiatingMessage ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE init_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != e1ap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE init_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = e1ap_elem_procs_o::get_init_msg(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void init_msg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_init_msg_s_fields[] = {
+    {offsetof(init_msg_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(init_msg_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(init_msg_s::crit),
+                                 decltype(init_msg_s::proc_code),
+                                 e1ap_elem_procs_o::desc,
+                                 e1ap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(init_msg_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(init_msg_s::value),
+                                  decltype(init_msg_s::proc_code),
+                                  e1ap_elem_procs_o::desc,
+                                  e1ap_elem_proc_p_column::init_msg,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_init_msg_s_names[] = {{"procedureCode", nullptr},
+                                                                     {"criticality", nullptr},
+                                                                     {"value", nullptr}};
+const asn1::table::seq_desc          init_msg_s::desc =
+    {{seq_table_init_msg_s_fields, 3, UINT64_C(0x7), nullptr, 0}, false, true, nullptr, 0, seq_table_init_msg_s_names};
 bool init_msg_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not e1ap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(e1ap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = e1ap_elem_procs_o::get_crit(proc_code);
-  value     = e1ap_elem_procs_o::get_init_msg(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(e1ap_elem_procs_o::desc, e1ap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, e1ap_elem_procs_o::desc, e1ap_elem_proc_p_column::init_msg, proc_code);
   return value.type().value != e1ap_elem_procs_o::init_msg_c::types_opts::nulltype;
 }
 
 // SuccessfulOutcome ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE successful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != e1ap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE successful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = e1ap_elem_procs_o::get_successful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void successful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_successful_outcome_s_fields[] = {
+    {offsetof(successful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(successful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(successful_outcome_s::crit),
+                                 decltype(successful_outcome_s::proc_code),
+                                 e1ap_elem_procs_o::desc,
+                                 e1ap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(successful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(successful_outcome_s::value),
+                                  decltype(successful_outcome_s::proc_code),
+                                  e1ap_elem_procs_o::desc,
+                                  e1ap_elem_proc_p_column::successful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_successful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                               {"criticality", nullptr},
+                                                                               {"value", nullptr}};
+const asn1::table::seq_desc          successful_outcome_s::desc             = {
+    {seq_table_successful_outcome_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_successful_outcome_s_names};
 bool successful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not e1ap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(e1ap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = e1ap_elem_procs_o::get_crit(proc_code);
-  value     = e1ap_elem_procs_o::get_successful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(e1ap_elem_procs_o::desc, e1ap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, e1ap_elem_procs_o::desc, e1ap_elem_proc_p_column::successful_outcome, proc_code);
   return value.type().value != e1ap_elem_procs_o::successful_outcome_c::types_opts::nulltype;
 }
 
 // UnsuccessfulOutcome ::= SEQUENCE{{E1AP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE unsuccessful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != e1ap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE unsuccessful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = e1ap_elem_procs_o::get_unsuccessful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void unsuccessful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_unsuccessful_outcome_s_fields[] = {
+    {offsetof(unsuccessful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(unsuccessful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(unsuccessful_outcome_s::crit),
+                                 decltype(unsuccessful_outcome_s::proc_code),
+                                 e1ap_elem_procs_o::desc,
+                                 e1ap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(unsuccessful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(unsuccessful_outcome_s::value),
+                                  decltype(unsuccessful_outcome_s::proc_code),
+                                  e1ap_elem_procs_o::desc,
+                                  e1ap_elem_proc_p_column::unsuccessful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_unsuccessful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                                 {"criticality", nullptr},
+                                                                                 {"value", nullptr}};
+const asn1::table::seq_desc          unsuccessful_outcome_s::desc             = {
+    {seq_table_unsuccessful_outcome_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_unsuccessful_outcome_s_names};
 bool unsuccessful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not e1ap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(e1ap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = e1ap_elem_procs_o::get_crit(proc_code);
-  value     = e1ap_elem_procs_o::get_unsuccessful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(e1ap_elem_procs_o::desc, e1ap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, e1ap_elem_procs_o::desc, e1ap_elem_proc_p_column::unsuccessful_outcome, proc_code);
   return value.type().value != e1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::nulltype;
 }
 
 // E1AP-PDU ::= CHOICE
-void e1ap_pdu_c::destroy_()
-{
-  switch (type_) {
-    case types::init_msg:
-      c.destroy<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.destroy<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.destroy<unsuccessful_outcome_s>();
-      break;
-    default:
-      break;
-  }
-}
-void e1ap_pdu_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::init_msg:
-      c.init<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.init<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.init<unsuccessful_outcome_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_pdu_c");
-  }
-}
-e1ap_pdu_c::e1ap_pdu_c(const e1ap_pdu_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::init_msg:
-      c.init(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.init(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.init(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_pdu_c");
-  }
-}
-e1ap_pdu_c& e1ap_pdu_c::operator=(const e1ap_pdu_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::init_msg:
-      c.set(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.set(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.set(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_pdu_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_e1ap_pdu_c_alternatives[] = {
+    &asn1::table::alternative_ops<init_msg_s, false>::value,
+    &asn1::table::alternative_ops<successful_outcome_s, false>::value,
+    &asn1::table::alternative_ops<unsuccessful_outcome_s, false>::value};
+const asn1::table::choice_storage_desc e1ap_pdu_c::storage_desc = {choice_storage_e1ap_pdu_c_alternatives,
+                                                                   3,
+                                                                   "e1ap_pdu_c"};
 
-  return *this;
-}
 init_msg_s& e1ap_pdu_c::set_init_msg()
 {
   set(types::init_msg);
@@ -2444,70 +1880,53 @@ unsuccessful_outcome_s& e1ap_pdu_c::set_unsuccessful_outcome()
   set(types::unsuccessful_outcome);
   return c.get<unsuccessful_outcome_s>();
 }
-void e1ap_pdu_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::init_msg:
-      j.write_fieldname("initiatingMessage");
-      c.get<init_msg_s>().to_json(j);
-      break;
-    case types::successful_outcome:
-      j.write_fieldname("successfulOutcome");
-      c.get<successful_outcome_s>().to_json(j);
-      break;
-    case types::unsuccessful_outcome:
-      j.write_fieldname("unsuccessfulOutcome");
-      c.get<unsuccessful_outcome_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_pdu_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e1ap_pdu_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().pack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().pack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_pdu_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e1ap_pdu_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().unpack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().unpack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e1ap_pdu_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_e1ap_pdu_c_alternatives[] = {{0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &init_msg_s::desc},
+                                                                               {0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &successful_outcome_s::desc},
+                                                                               {0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &unsuccessful_outcome_s::desc}};
+static const asn1::table::field_name choice_table_e1ap_pdu_c_names[]        = {{"initiatingMessage", nullptr},
+                                                                               {"successfulOutcome", nullptr},
+                                                                               {"unsuccessfulOutcome", nullptr}};
+const asn1::table::choice_desc       e1ap_pdu_c::desc = {asn1::table::enum_int_type<e1ap_pdu_c::types>(),
+                                                         e1ap_pdu_c::types::nof_types,
+                                                         e1ap_pdu_c::types::nof_exts,
+                                                         e1ap_pdu_c::types::has_ext,
+                                                         true,
+                                                         choice_table_e1ap_pdu_c_alternatives,
+                                                         nullptr,
+                                                         choice_table_e1ap_pdu_c_names,
+                                                         "e1ap_pdu_c",
+                                                         offsetof(e1ap_pdu_c, c.type),
+                                                         offsetof(e1ap_pdu_c, c.value),
+                                                         false,
+                                                         &e1ap_pdu_c::storage_desc};
 
-const char* e1ap_pdu_c::types_opts::to_string() const
-{
-  static const char* names[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome"};
-  return convert_enum_idx(names, 3, value, "e1ap_pdu_c::types");
-}
+static const char*           enum_names_e1ap_pdu_c_types_values[] = {"initiatingMessage",
+                                                                     "successfulOutcome",
+                                                                     "unsuccessfulOutcome"};
+const asn1::table::enum_desc e1ap_pdu_c::types_opts::desc         = {enum_names_e1ap_pdu_c_types_values,
+                                                                     3,
+                                                                     "e1ap_pdu_c::types"};

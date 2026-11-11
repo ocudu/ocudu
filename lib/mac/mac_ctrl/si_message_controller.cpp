@@ -59,7 +59,7 @@ static byte_buffer append_pws_si_sched_info(const byte_buffer&          sib1,
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
   {
     asn1::cbit_ref bref{sib1};
-    if (msg.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+    if (asn1::unpack(msg, bref) != asn1::OCUDUASN_SUCCESS or
         msg.msg.type().value != asn1::rrc_nr::bcch_dl_sch_msg_type_c::types_opts::c1 or
         msg.msg.c1().type().value != asn1::rrc_nr::bcch_dl_sch_msg_type_c::c1_c_::types_opts::sib_type1) {
       return {};
@@ -91,7 +91,7 @@ static byte_buffer append_pws_si_sched_info(const byte_buffer&          sib1,
 
   byte_buffer   repacked;
   asn1::bit_ref bref{repacked};
-  if (msg.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg) != asn1::OCUDUASN_SUCCESS) {
     return {};
   }
   return repacked;
@@ -130,7 +130,7 @@ public:
     // Unpack initial SIB1.
     {
       asn1::cbit_ref bref{buffer};
-      auto           err = current_unpacked.unpack(bref);
+      auto           err = asn1::unpack(current_unpacked, bref);
       report_fatal_error_if_not(err == asn1::OCUDUASN_SUCCESS, "Failed to unpack SIB1 for HyperSFN-aware encoder.");
       report_fatal_error_if_not(current_unpacked.msg.type().value ==
                                         asn1::rrc_nr::bcch_dl_sch_msg_type_c::types_opts::c1 and
@@ -171,7 +171,7 @@ private:
     // Re-encode.
     byte_buffer   buf;
     asn1::bit_ref bref{buf};
-    auto          ret = current_unpacked.pack(bref);
+    auto          ret = asn1::pack(bref, current_unpacked);
     ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack SIB1 with updated HyperSFN.");
     size_t n = copy_segments(buf, current_payload);
     ocudu_assert(n <= current_payload.size(), "Encoded SIB1 payload exceeds maximum size.");

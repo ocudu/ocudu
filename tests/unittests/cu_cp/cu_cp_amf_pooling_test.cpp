@@ -444,7 +444,7 @@ TEST_F(cu_cp_amf_pooling_test, when_every_amf_rejects_the_establishment_cause_th
   ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu)) << "The UE was not rejected";
   asn1::rrc_nr::dl_ccch_msg_s ccch;
   asn1::cbit_ref              bref{f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd()->rrc_container};
-  ASSERT_EQ(ccch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ccch, bref), asn1::OCUDUASN_SUCCESS);
   ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
   ASSERT_TRUE(ccch.msg.c1().rrc_reject().crit_exts.rrc_reject().wait_time_present);
 }

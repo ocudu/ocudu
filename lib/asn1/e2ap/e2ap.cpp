@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/e2ap/e2ap.h"
+#include "ocudu/asn1/asn1_ap_codec.h"
 #include "ocudu/asn1/e2ap/e2ap_pdu_contents.h"
 
 using namespace asn1;
@@ -13,420 +14,350 @@ using namespace asn1::e2ap;
  *                                Struct Methods
  ******************************************************************************/
 
-// ProtocolIE-FieldPair{E2AP-PROTOCOL-IES-PAIR : IEsSetParam} ::= SEQUENCE{{E2AP-PROTOCOL-IES-PAIR}}
-template <class ies_set_paramT_>
-OCUDUASN_CODE protocol_ie_field_pair_s<ies_set_paramT_>::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, id, (uint32_t)0u, (uint32_t)65535u, false, true));
-  warn_assert(first_crit != ies_set_paramT_::get_first_crit(id), __func__, __LINE__);
-  HANDLE_CODE(first_crit.pack(bref));
-  HANDLE_CODE(first_value.pack(bref));
-  warn_assert(second_crit != ies_set_paramT_::get_second_crit(id), __func__, __LINE__);
-  HANDLE_CODE(second_crit.pack(bref));
-  HANDLE_CODE(second_value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-template <class ies_set_paramT_>
-OCUDUASN_CODE protocol_ie_field_pair_s<ies_set_paramT_>::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
-  HANDLE_CODE(first_crit.unpack(bref));
-  first_value = ies_set_paramT_::get_first_value(id);
-  HANDLE_CODE(first_value.unpack(bref));
-  HANDLE_CODE(second_crit.unpack(bref));
-  second_value = ies_set_paramT_::get_second_value(id);
-  HANDLE_CODE(second_value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-template <class ies_set_paramT_>
-void protocol_ie_field_pair_s<ies_set_paramT_>::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("id", id);
-  j.write_str("firstCriticality", first_crit.to_string());
-  j.write_str("secondCriticality", second_crit.to_string());
-  j.end_obj();
-}
-template <class ies_set_paramT_>
-bool protocol_ie_field_pair_s<ies_set_paramT_>::load_info_obj(const uint32_t& id_)
-{
-  if (not ies_set_paramT_::is_id_valid(id_)) {
-    return false;
-  }
-  id           = id_;
-  first_crit   = ies_set_paramT_::get_first_crit(id);
-  first_value  = ies_set_paramT_::get_first_value(id);
-  second_crit  = ies_set_paramT_::get_second_crit(id);
-  second_value = ies_set_paramT_::get_second_value(id);
-  return first_value.type().value != ies_set_paramT_::first_value_c::types_opts::nulltype and
-         second_value.type().value != ies_set_paramT_::second_value_c::types_opts::nulltype;
-}
-
 // E2AP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF E2AP-ELEMENTARY-PROCEDURE
-uint16_t e2ap_elem_procs_o::idx_to_proc_code(uint32_t idx)
-{
-  static const uint16_t names[] = {8,  17, 9,  14, 15, 20, 16, 7, 21, 4, 18, 1, 10,
-                                   11, 3,  13, 24, 22, 23, 5,  6, 19, 2, 12, 25};
-  return map_enum_number(names, 25, idx, "proc_code");
-}
-bool e2ap_elem_procs_o::is_proc_code_valid(const uint16_t& proc_code)
-{
-  static const uint16_t names[] = {8,  17, 9,  14, 15, 20, 16, 7, 21, 4, 18, 1, 10,
-                                   11, 3,  13, 24, 22, 23, 5,  6, 19, 2, 12, 25};
-  for (const auto& o : names) {
-    if (o == proc_code) {
-      return true;
-    }
-  }
-  return false;
-}
-e2ap_elem_procs_o::init_msg_c e2ap_elem_procs_o::get_init_msg(const uint16_t& proc_code)
-{
-  init_msg_c ret{};
-  switch (proc_code) {
-    case 8:
-      ret.set(init_msg_c::types::ric_sub_request);
-      break;
-    case 17:
-      ret.set(init_msg_c::types::ric_sub_audit_request);
-      break;
-    case 9:
-      ret.set(init_msg_c::types::ric_sub_delete_request);
-      break;
-    case 14:
-      ret.set(init_msg_c::types::ric_sub_mod_request);
-      break;
-    case 15:
-      ret.set(init_msg_c::types::ric_sub_mod_required);
-      break;
-    case 20:
-      ret.set(init_msg_c::types::ric_sub_state_ctrl_request);
-      break;
-    case 16:
-      ret.set(init_msg_c::types::ric_query_request);
-      break;
-    case 7:
-      ret.set(init_msg_c::types::ric_service_upd);
-      break;
-    case 21:
-      ret.set(init_msg_c::types::ric_assist_request);
-      break;
-    case 4:
-      ret.set(init_msg_c::types::ric_ctrl_request);
-      break;
-    case 18:
-      ret.set(init_msg_c::types::ric_service_load_status_request);
-      break;
-    case 1:
-      ret.set(init_msg_c::types::e2setup_request);
-      break;
-    case 10:
-      ret.set(init_msg_c::types::e2node_cfg_upd);
-      break;
-    case 11:
-      ret.set(init_msg_c::types::e2conn_upd);
-      break;
-    case 3:
-      ret.set(init_msg_c::types::reset_request);
-      break;
-    case 13:
-      ret.set(init_msg_c::types::e2_removal_request);
-      break;
-    case 24:
-      ret.set(init_msg_c::types::e2_res_status_request);
-      break;
-    case 22:
-      ret.set(init_msg_c::types::ric_assist_ind);
-      break;
-    case 23:
-      ret.set(init_msg_c::types::ric_assist_halt);
-      break;
-    case 5:
-      ret.set(init_msg_c::types::ric_ind);
-      break;
-    case 6:
-      ret.set(init_msg_c::types::ric_service_query);
-      break;
-    case 19:
-      ret.set(init_msg_c::types::ric_service_load_upd);
-      break;
-    case 2:
-      ret.set(init_msg_c::types::error_ind);
-      break;
-    case 12:
-      ret.set(init_msg_c::types::ric_sub_delete_required);
-      break;
-    case 25:
-      ret.set(init_msg_c::types::e2_res_status_upd);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-e2ap_elem_procs_o::successful_outcome_c e2ap_elem_procs_o::get_successful_outcome(const uint16_t& proc_code)
-{
-  successful_outcome_c ret{};
-  switch (proc_code) {
-    case 8:
-      ret.set(successful_outcome_c::types::ric_sub_resp);
-      break;
-    case 17:
-      ret.set(successful_outcome_c::types::ric_sub_audit_resp);
-      break;
-    case 9:
-      ret.set(successful_outcome_c::types::ric_sub_delete_resp);
-      break;
-    case 14:
-      ret.set(successful_outcome_c::types::ric_sub_mod_resp);
-      break;
-    case 15:
-      ret.set(successful_outcome_c::types::ric_sub_mod_confirm);
-      break;
-    case 20:
-      ret.set(successful_outcome_c::types::ric_sub_state_ctrl_resp);
-      break;
-    case 16:
-      ret.set(successful_outcome_c::types::ric_query_resp);
-      break;
-    case 7:
-      ret.set(successful_outcome_c::types::ric_service_upd_ack);
-      break;
-    case 21:
-      ret.set(successful_outcome_c::types::ric_assist_resp);
-      break;
-    case 4:
-      ret.set(successful_outcome_c::types::ric_ctrl_ack);
-      break;
-    case 18:
-      ret.set(successful_outcome_c::types::ric_service_load_status_resp);
-      break;
-    case 1:
-      ret.set(successful_outcome_c::types::e2setup_resp);
-      break;
-    case 10:
-      ret.set(successful_outcome_c::types::e2node_cfg_upd_ack);
-      break;
-    case 11:
-      ret.set(successful_outcome_c::types::e2conn_upd_ack);
-      break;
-    case 3:
-      ret.set(successful_outcome_c::types::reset_resp);
-      break;
-    case 13:
-      ret.set(successful_outcome_c::types::e2_removal_resp);
-      break;
-    case 24:
-      ret.set(successful_outcome_c::types::e2_res_status_resp);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-e2ap_elem_procs_o::unsuccessful_outcome_c e2ap_elem_procs_o::get_unsuccessful_outcome(const uint16_t& proc_code)
-{
-  unsuccessful_outcome_c ret{};
-  switch (proc_code) {
-    case 8:
-      ret.set(unsuccessful_outcome_c::types::ric_sub_fail);
-      break;
-    case 17:
-      ret.set(unsuccessful_outcome_c::types::ric_sub_audit_fail);
-      break;
-    case 9:
-      ret.set(unsuccessful_outcome_c::types::ric_sub_delete_fail);
-      break;
-    case 14:
-      ret.set(unsuccessful_outcome_c::types::ric_sub_mod_fail);
-      break;
-    case 15:
-      ret.set(unsuccessful_outcome_c::types::ric_sub_mod_refuse);
-      break;
-    case 20:
-      ret.set(unsuccessful_outcome_c::types::ric_sub_state_ctrl_fail);
-      break;
-    case 16:
-      ret.set(unsuccessful_outcome_c::types::ric_query_fail);
-      break;
-    case 7:
-      ret.set(unsuccessful_outcome_c::types::ric_service_upd_fail);
-      break;
-    case 21:
-      ret.set(unsuccessful_outcome_c::types::ric_assist_fail);
-      break;
-    case 4:
-      ret.set(unsuccessful_outcome_c::types::ric_ctrl_fail);
-      break;
-    case 18:
-      ret.set(unsuccessful_outcome_c::types::ric_service_load_status_fail);
-      break;
-    case 1:
-      ret.set(unsuccessful_outcome_c::types::e2setup_fail);
-      break;
-    case 10:
-      ret.set(unsuccessful_outcome_c::types::e2node_cfg_upd_fail);
-      break;
-    case 11:
-      ret.set(unsuccessful_outcome_c::types::e2conn_upd_fail);
-      break;
-    case 13:
-      ret.set(unsuccessful_outcome_c::types::e2_removal_fail);
-      break;
-    case 24:
-      ret.set(unsuccessful_outcome_c::types::e2_res_status_fail);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-crit_e e2ap_elem_procs_o::get_crit(const uint16_t& proc_code)
-{
-  switch (proc_code) {
-    case 8:
-      return crit_e::reject;
-    case 17:
-      return crit_e::reject;
-    case 9:
-      return crit_e::reject;
-    case 14:
-      return crit_e::reject;
-    case 15:
-      return crit_e::reject;
-    case 20:
-      return crit_e::reject;
-    case 16:
-      return crit_e::reject;
-    case 7:
-      return crit_e::reject;
-    case 21:
-      return crit_e::reject;
-    case 4:
-      return crit_e::reject;
-    case 18:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::reject;
-    case 10:
-      return crit_e::reject;
-    case 11:
-      return crit_e::reject;
-    case 3:
-      return crit_e::reject;
-    case 13:
-      return crit_e::reject;
-    case 24:
-      return crit_e::reject;
-    case 22:
-      return crit_e::reject;
-    case 23:
-      return crit_e::reject;
-    case 5:
-      return crit_e::ignore;
-    case 6:
-      return crit_e::ignore;
-    case 19:
-      return crit_e::ignore;
-    case 2:
-      return crit_e::ignore;
-    case 12:
-      return crit_e::ignore;
-    case 25:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return {};
-}
+static const uint32_t objset_proc_code_e2ap_elem_procs_o[] = {8,  17, 9,  14, 15, 20, 16, 7, 21, 4, 18, 1, 10,
+                                                              11, 3,  13, 24, 22, 23, 5,  6, 19, 2, 12, 25};
+static const uint8_t  objset_init_msg_e2ap_elem_procs_o[]  = {
+    e2ap_elem_procs_o::init_msg_c::types::ric_sub_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_sub_audit_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_sub_delete_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_sub_mod_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_sub_mod_required,
+    e2ap_elem_procs_o::init_msg_c::types::ric_sub_state_ctrl_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_query_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_service_upd,
+    e2ap_elem_procs_o::init_msg_c::types::ric_assist_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_ctrl_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_service_load_status_request,
+    e2ap_elem_procs_o::init_msg_c::types::e2setup_request,
+    e2ap_elem_procs_o::init_msg_c::types::e2node_cfg_upd,
+    e2ap_elem_procs_o::init_msg_c::types::e2conn_upd,
+    e2ap_elem_procs_o::init_msg_c::types::reset_request,
+    e2ap_elem_procs_o::init_msg_c::types::e2_removal_request,
+    e2ap_elem_procs_o::init_msg_c::types::e2_res_status_request,
+    e2ap_elem_procs_o::init_msg_c::types::ric_assist_ind,
+    e2ap_elem_procs_o::init_msg_c::types::ric_assist_halt,
+    e2ap_elem_procs_o::init_msg_c::types::ric_ind,
+    e2ap_elem_procs_o::init_msg_c::types::ric_service_query,
+    e2ap_elem_procs_o::init_msg_c::types::ric_service_load_upd,
+    e2ap_elem_procs_o::init_msg_c::types::error_ind,
+    e2ap_elem_procs_o::init_msg_c::types::ric_sub_delete_required,
+    e2ap_elem_procs_o::init_msg_c::types::e2_res_status_upd};
+static const uint8_t objset_successful_outcome_e2ap_elem_procs_o[] = {
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_sub_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_sub_audit_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_sub_delete_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_sub_mod_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_sub_mod_confirm,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_sub_state_ctrl_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_query_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_service_upd_ack,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_assist_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_ctrl_ack,
+    e2ap_elem_procs_o::successful_outcome_c::types::ric_service_load_status_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::e2setup_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::e2node_cfg_upd_ack,
+    e2ap_elem_procs_o::successful_outcome_c::types::e2conn_upd_ack,
+    e2ap_elem_procs_o::successful_outcome_c::types::reset_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::e2_removal_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::e2_res_status_resp,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::successful_outcome_c::types::nulltype};
+static const uint8_t objset_unsuccessful_outcome_e2ap_elem_procs_o[] = {
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_sub_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_sub_audit_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_sub_delete_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_sub_mod_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_sub_mod_refuse,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_sub_state_ctrl_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_query_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_service_upd_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_assist_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_ctrl_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::ric_service_load_status_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::e2setup_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::e2node_cfg_upd_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::e2conn_upd_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::e2_removal_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::e2_res_status_fail,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype};
+static const uint8_t objset_crit_e2ap_elem_procs_o[] = {
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::ignore, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::ignore, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore};
+static const asn1::table::objset_column objset_columns_e2ap_elem_procs_o[] = {
+    {objset_init_msg_e2ap_elem_procs_o, e2ap_elem_procs_o::init_msg_c::types::nulltype},
+    {objset_successful_outcome_e2ap_elem_procs_o, e2ap_elem_procs_o::successful_outcome_c::types::nulltype},
+    {objset_unsuccessful_outcome_e2ap_elem_procs_o, e2ap_elem_procs_o::unsuccessful_outcome_c::types::nulltype},
+    {objset_crit_e2ap_elem_procs_o, crit_e::nulltype}};
+const asn1::table::objset_desc e2ap_elem_procs_o::desc = {objset_proc_code_e2ap_elem_procs_o,
+                                                          25,
+                                                          "proc_code",
+                                                          objset_columns_e2ap_elem_procs_o};
 
 // InitiatingMessage ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_e2ap_elem_procs_o_init_msg_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_audit_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_delete_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_mod_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_state_ctrl_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_query_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_assist_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_ctrl_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_load_status_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2node_cfg_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2conn_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2_removal_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2_res_status_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_assist_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_assist_halt_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_query_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_load_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<error_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_delete_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2_res_status_upd_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_e2ap_elem_procs_o_init_msg_c_names[] = {
+    {"RICsubscriptionRequest", nullptr},
+    {"RICsubscriptionAuditRequest", nullptr},
+    {"RICsubscriptionDeleteRequest", nullptr},
+    {"RICsubscriptionModificationRequest", nullptr},
+    {"RICsubscriptionModificationRequired", nullptr},
+    {"RICsubscriptionStateControlRequest", nullptr},
+    {"RICqueryRequest", nullptr},
+    {"RICserviceUpdate", nullptr},
+    {"RICassistanceRequest", nullptr},
+    {"RICcontrolRequest", nullptr},
+    {"RICserviceLoadStatusRequest", nullptr},
+    {"E2setupRequest", nullptr},
+    {"E2nodeConfigurationUpdate", nullptr},
+    {"E2connectionUpdate", nullptr},
+    {"ResetRequest", nullptr},
+    {"E2RemovalRequest", nullptr},
+    {"E2ResourceStatusRequest", nullptr},
+    {"RICassistanceIndication", nullptr},
+    {"RICassistanceHalt", nullptr},
+    {"RICindication", nullptr},
+    {"RICserviceQuery", nullptr},
+    {"RICserviceLoadUpdate", nullptr},
+    {"ErrorIndication", nullptr},
+    {"RICsubscriptionDeleteRequired", nullptr},
+    {"E2ResourceStatusUpdate", nullptr}};
+const asn1::table::choice_desc e2ap_elem_procs_o::init_msg_c::desc = {
+    asn1::table::enum_int_type<e2ap_elem_procs_o::init_msg_c::types>(),
+    e2ap_elem_procs_o::init_msg_c::types::nof_types,
+    e2ap_elem_procs_o::init_msg_c::types::nof_exts,
+    e2ap_elem_procs_o::init_msg_c::types::has_ext,
+    true,
+    choice_table_e2ap_elem_procs_o_init_msg_c_alternatives,
+    &asn1::table::choice_set<e2ap_elem_procs_o::init_msg_c>,
+    choice_table_e2ap_elem_procs_o_init_msg_c_names,
+    "e2ap_elem_procs_o::init_msg_c",
+    offsetof(e2ap_elem_procs_o::init_msg_c, type_),
+    offsetof(e2ap_elem_procs_o::init_msg_c, c),
+    false,
+    nullptr,
+    true};
+
 void e2ap_elem_procs_o::init_msg_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ric_sub_request:
-      c = ric_sub_request_s{};
-      break;
-    case types::ric_sub_audit_request:
-      c = ric_sub_audit_request_s{};
-      break;
-    case types::ric_sub_delete_request:
-      c = ric_sub_delete_request_s{};
-      break;
-    case types::ric_sub_mod_request:
-      c = ric_sub_mod_request_s{};
-      break;
-    case types::ric_sub_mod_required:
-      c = ric_sub_mod_required_s{};
-      break;
-    case types::ric_sub_state_ctrl_request:
-      c = ric_sub_state_ctrl_request_s{};
-      break;
-    case types::ric_query_request:
-      c = ric_query_request_s{};
-      break;
-    case types::ric_service_upd:
-      c = ric_service_upd_s{};
-      break;
-    case types::ric_assist_request:
-      c = ric_assist_request_s{};
-      break;
-    case types::ric_ctrl_request:
-      c = ric_ctrl_request_s{};
-      break;
-    case types::ric_service_load_status_request:
-      c = ric_service_load_status_request_s{};
-      break;
-    case types::e2setup_request:
-      c = e2setup_request_s{};
-      break;
-    case types::e2node_cfg_upd:
-      c = e2node_cfg_upd_s{};
-      break;
-    case types::e2conn_upd:
-      c = e2conn_upd_s{};
-      break;
-    case types::reset_request:
-      c = reset_request_s{};
-      break;
-    case types::e2_removal_request:
-      c = e2_removal_request_s{};
-      break;
-    case types::e2_res_status_request:
-      c = e2_res_status_request_s{};
-      break;
-    case types::ric_assist_ind:
-      c = ric_assist_ind_s{};
-      break;
-    case types::ric_assist_halt:
-      c = ric_assist_halt_s{};
-      break;
-    case types::ric_ind:
-      c = ric_ind_s{};
-      break;
-    case types::ric_service_query:
-      c = ric_service_query_s{};
-      break;
-    case types::ric_service_load_upd:
-      c = ric_service_load_upd_s{};
-      break;
-    case types::error_ind:
-      c = error_ind_s{};
-      break;
-    case types::ric_sub_delete_required:
-      c = ric_sub_delete_required_s{};
-      break;
-    case types::e2_res_status_upd:
-      c = e2_res_status_upd_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::init_msg_c");
-  }
+  asn1::table::set_any_choice(&c, e, e2ap_elem_procs_o::init_msg_c::desc);
 }
 ric_sub_request_s& e2ap_elem_procs_o::init_msg_c::ric_sub_request()
 {
@@ -678,377 +609,213 @@ const e2_res_status_upd_s& e2ap_elem_procs_o::init_msg_c::e2_res_status_upd() co
   assert_choice_type(types::e2_res_status_upd, type_, "InitiatingMessage");
   return c.get<e2_res_status_upd_s>();
 }
-void e2ap_elem_procs_o::init_msg_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ric_sub_request:
-      j.write_fieldname("RICsubscriptionRequest");
-      c.get<ric_sub_request_s>().to_json(j);
-      break;
-    case types::ric_sub_audit_request:
-      j.write_fieldname("RICsubscriptionAuditRequest");
-      c.get<ric_sub_audit_request_s>().to_json(j);
-      break;
-    case types::ric_sub_delete_request:
-      j.write_fieldname("RICsubscriptionDeleteRequest");
-      c.get<ric_sub_delete_request_s>().to_json(j);
-      break;
-    case types::ric_sub_mod_request:
-      j.write_fieldname("RICsubscriptionModificationRequest");
-      c.get<ric_sub_mod_request_s>().to_json(j);
-      break;
-    case types::ric_sub_mod_required:
-      j.write_fieldname("RICsubscriptionModificationRequired");
-      c.get<ric_sub_mod_required_s>().to_json(j);
-      break;
-    case types::ric_sub_state_ctrl_request:
-      j.write_fieldname("RICsubscriptionStateControlRequest");
-      c.get<ric_sub_state_ctrl_request_s>().to_json(j);
-      break;
-    case types::ric_query_request:
-      j.write_fieldname("RICqueryRequest");
-      c.get<ric_query_request_s>().to_json(j);
-      break;
-    case types::ric_service_upd:
-      j.write_fieldname("RICserviceUpdate");
-      c.get<ric_service_upd_s>().to_json(j);
-      break;
-    case types::ric_assist_request:
-      j.write_fieldname("RICassistanceRequest");
-      c.get<ric_assist_request_s>().to_json(j);
-      break;
-    case types::ric_ctrl_request:
-      j.write_fieldname("RICcontrolRequest");
-      c.get<ric_ctrl_request_s>().to_json(j);
-      break;
-    case types::ric_service_load_status_request:
-      j.write_fieldname("RICserviceLoadStatusRequest");
-      c.get<ric_service_load_status_request_s>().to_json(j);
-      break;
-    case types::e2setup_request:
-      j.write_fieldname("E2setupRequest");
-      c.get<e2setup_request_s>().to_json(j);
-      break;
-    case types::e2node_cfg_upd:
-      j.write_fieldname("E2nodeConfigurationUpdate");
-      c.get<e2node_cfg_upd_s>().to_json(j);
-      break;
-    case types::e2conn_upd:
-      j.write_fieldname("E2connectionUpdate");
-      c.get<e2conn_upd_s>().to_json(j);
-      break;
-    case types::reset_request:
-      j.write_fieldname("ResetRequest");
-      c.get<reset_request_s>().to_json(j);
-      break;
-    case types::e2_removal_request:
-      j.write_fieldname("E2RemovalRequest");
-      c.get<e2_removal_request_s>().to_json(j);
-      break;
-    case types::e2_res_status_request:
-      j.write_fieldname("E2ResourceStatusRequest");
-      c.get<e2_res_status_request_s>().to_json(j);
-      break;
-    case types::ric_assist_ind:
-      j.write_fieldname("RICassistanceIndication");
-      c.get<ric_assist_ind_s>().to_json(j);
-      break;
-    case types::ric_assist_halt:
-      j.write_fieldname("RICassistanceHalt");
-      c.get<ric_assist_halt_s>().to_json(j);
-      break;
-    case types::ric_ind:
-      j.write_fieldname("RICindication");
-      c.get<ric_ind_s>().to_json(j);
-      break;
-    case types::ric_service_query:
-      j.write_fieldname("RICserviceQuery");
-      c.get<ric_service_query_s>().to_json(j);
-      break;
-    case types::ric_service_load_upd:
-      j.write_fieldname("RICserviceLoadUpdate");
-      c.get<ric_service_load_upd_s>().to_json(j);
-      break;
-    case types::error_ind:
-      j.write_fieldname("ErrorIndication");
-      c.get<error_ind_s>().to_json(j);
-      break;
-    case types::ric_sub_delete_required:
-      j.write_fieldname("RICsubscriptionDeleteRequired");
-      c.get<ric_sub_delete_required_s>().to_json(j);
-      break;
-    case types::e2_res_status_upd:
-      j.write_fieldname("E2ResourceStatusUpdate");
-      c.get<e2_res_status_upd_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::init_msg_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e2ap_elem_procs_o::init_msg_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ric_sub_request:
-      HANDLE_CODE(c.get<ric_sub_request_s>().pack(bref));
-      break;
-    case types::ric_sub_audit_request:
-      HANDLE_CODE(c.get<ric_sub_audit_request_s>().pack(bref));
-      break;
-    case types::ric_sub_delete_request:
-      HANDLE_CODE(c.get<ric_sub_delete_request_s>().pack(bref));
-      break;
-    case types::ric_sub_mod_request:
-      HANDLE_CODE(c.get<ric_sub_mod_request_s>().pack(bref));
-      break;
-    case types::ric_sub_mod_required:
-      HANDLE_CODE(c.get<ric_sub_mod_required_s>().pack(bref));
-      break;
-    case types::ric_sub_state_ctrl_request:
-      HANDLE_CODE(c.get<ric_sub_state_ctrl_request_s>().pack(bref));
-      break;
-    case types::ric_query_request:
-      HANDLE_CODE(c.get<ric_query_request_s>().pack(bref));
-      break;
-    case types::ric_service_upd:
-      HANDLE_CODE(c.get<ric_service_upd_s>().pack(bref));
-      break;
-    case types::ric_assist_request:
-      HANDLE_CODE(c.get<ric_assist_request_s>().pack(bref));
-      break;
-    case types::ric_ctrl_request:
-      HANDLE_CODE(c.get<ric_ctrl_request_s>().pack(bref));
-      break;
-    case types::ric_service_load_status_request:
-      HANDLE_CODE(c.get<ric_service_load_status_request_s>().pack(bref));
-      break;
-    case types::e2setup_request:
-      HANDLE_CODE(c.get<e2setup_request_s>().pack(bref));
-      break;
-    case types::e2node_cfg_upd:
-      HANDLE_CODE(c.get<e2node_cfg_upd_s>().pack(bref));
-      break;
-    case types::e2conn_upd:
-      HANDLE_CODE(c.get<e2conn_upd_s>().pack(bref));
-      break;
-    case types::reset_request:
-      HANDLE_CODE(c.get<reset_request_s>().pack(bref));
-      break;
-    case types::e2_removal_request:
-      HANDLE_CODE(c.get<e2_removal_request_s>().pack(bref));
-      break;
-    case types::e2_res_status_request:
-      HANDLE_CODE(c.get<e2_res_status_request_s>().pack(bref));
-      break;
-    case types::ric_assist_ind:
-      HANDLE_CODE(c.get<ric_assist_ind_s>().pack(bref));
-      break;
-    case types::ric_assist_halt:
-      HANDLE_CODE(c.get<ric_assist_halt_s>().pack(bref));
-      break;
-    case types::ric_ind:
-      HANDLE_CODE(c.get<ric_ind_s>().pack(bref));
-      break;
-    case types::ric_service_query:
-      HANDLE_CODE(c.get<ric_service_query_s>().pack(bref));
-      break;
-    case types::ric_service_load_upd:
-      HANDLE_CODE(c.get<ric_service_load_upd_s>().pack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().pack(bref));
-      break;
-    case types::ric_sub_delete_required:
-      HANDLE_CODE(c.get<ric_sub_delete_required_s>().pack(bref));
-      break;
-    case types::e2_res_status_upd:
-      HANDLE_CODE(c.get<e2_res_status_upd_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e2ap_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ric_sub_request:
-      HANDLE_CODE(c.get<ric_sub_request_s>().unpack(bref));
-      break;
-    case types::ric_sub_audit_request:
-      HANDLE_CODE(c.get<ric_sub_audit_request_s>().unpack(bref));
-      break;
-    case types::ric_sub_delete_request:
-      HANDLE_CODE(c.get<ric_sub_delete_request_s>().unpack(bref));
-      break;
-    case types::ric_sub_mod_request:
-      HANDLE_CODE(c.get<ric_sub_mod_request_s>().unpack(bref));
-      break;
-    case types::ric_sub_mod_required:
-      HANDLE_CODE(c.get<ric_sub_mod_required_s>().unpack(bref));
-      break;
-    case types::ric_sub_state_ctrl_request:
-      HANDLE_CODE(c.get<ric_sub_state_ctrl_request_s>().unpack(bref));
-      break;
-    case types::ric_query_request:
-      HANDLE_CODE(c.get<ric_query_request_s>().unpack(bref));
-      break;
-    case types::ric_service_upd:
-      HANDLE_CODE(c.get<ric_service_upd_s>().unpack(bref));
-      break;
-    case types::ric_assist_request:
-      HANDLE_CODE(c.get<ric_assist_request_s>().unpack(bref));
-      break;
-    case types::ric_ctrl_request:
-      HANDLE_CODE(c.get<ric_ctrl_request_s>().unpack(bref));
-      break;
-    case types::ric_service_load_status_request:
-      HANDLE_CODE(c.get<ric_service_load_status_request_s>().unpack(bref));
-      break;
-    case types::e2setup_request:
-      HANDLE_CODE(c.get<e2setup_request_s>().unpack(bref));
-      break;
-    case types::e2node_cfg_upd:
-      HANDLE_CODE(c.get<e2node_cfg_upd_s>().unpack(bref));
-      break;
-    case types::e2conn_upd:
-      HANDLE_CODE(c.get<e2conn_upd_s>().unpack(bref));
-      break;
-    case types::reset_request:
-      HANDLE_CODE(c.get<reset_request_s>().unpack(bref));
-      break;
-    case types::e2_removal_request:
-      HANDLE_CODE(c.get<e2_removal_request_s>().unpack(bref));
-      break;
-    case types::e2_res_status_request:
-      HANDLE_CODE(c.get<e2_res_status_request_s>().unpack(bref));
-      break;
-    case types::ric_assist_ind:
-      HANDLE_CODE(c.get<ric_assist_ind_s>().unpack(bref));
-      break;
-    case types::ric_assist_halt:
-      HANDLE_CODE(c.get<ric_assist_halt_s>().unpack(bref));
-      break;
-    case types::ric_ind:
-      HANDLE_CODE(c.get<ric_ind_s>().unpack(bref));
-      break;
-    case types::ric_service_query:
-      HANDLE_CODE(c.get<ric_service_query_s>().unpack(bref));
-      break;
-    case types::ric_service_load_upd:
-      HANDLE_CODE(c.get<ric_service_load_upd_s>().unpack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().unpack(bref));
-      break;
-    case types::ric_sub_delete_required:
-      HANDLE_CODE(c.get<ric_sub_delete_required_s>().unpack(bref));
-      break;
-    case types::e2_res_status_upd:
-      HANDLE_CODE(c.get<e2_res_status_upd_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* e2ap_elem_procs_o::init_msg_c::types_opts::to_string() const
-{
-  static const char* names[] = {"RICsubscriptionRequest",
-                                "RICsubscriptionAuditRequest",
-                                "RICsubscriptionDeleteRequest",
-                                "RICsubscriptionModificationRequest",
-                                "RICsubscriptionModificationRequired",
-                                "RICsubscriptionStateControlRequest",
-                                "RICqueryRequest",
-                                "RICserviceUpdate",
-                                "RICassistanceRequest",
-                                "RICcontrolRequest",
-                                "RICserviceLoadStatusRequest",
-                                "E2setupRequest",
-                                "E2nodeConfigurationUpdate",
-                                "E2connectionUpdate",
-                                "ResetRequest",
-                                "E2RemovalRequest",
-                                "E2ResourceStatusRequest",
-                                "RICassistanceIndication",
-                                "RICassistanceHalt",
-                                "RICindication",
-                                "RICserviceQuery",
-                                "RICserviceLoadUpdate",
-                                "ErrorIndication",
-                                "RICsubscriptionDeleteRequired",
-                                "E2ResourceStatusUpdate"};
-  return convert_enum_idx(names, 25, value, "e2ap_elem_procs_o::init_msg_c::types");
-}
+static const char*           enum_names_e2ap_elem_procs_o_init_msg_c_types_values[] = {"RICsubscriptionRequest",
+                                                                                       "RICsubscriptionAuditRequest",
+                                                                                       "RICsubscriptionDeleteRequest",
+                                                                                       "RICsubscriptionModificationRequest",
+                                                                                       "RICsubscriptionModificationRequired",
+                                                                                       "RICsubscriptionStateControlRequest",
+                                                                                       "RICqueryRequest",
+                                                                                       "RICserviceUpdate",
+                                                                                       "RICassistanceRequest",
+                                                                                       "RICcontrolRequest",
+                                                                                       "RICserviceLoadStatusRequest",
+                                                                                       "E2setupRequest",
+                                                                                       "E2nodeConfigurationUpdate",
+                                                                                       "E2connectionUpdate",
+                                                                                       "ResetRequest",
+                                                                                       "E2RemovalRequest",
+                                                                                       "E2ResourceStatusRequest",
+                                                                                       "RICassistanceIndication",
+                                                                                       "RICassistanceHalt",
+                                                                                       "RICindication",
+                                                                                       "RICserviceQuery",
+                                                                                       "RICserviceLoadUpdate",
+                                                                                       "ErrorIndication",
+                                                                                       "RICsubscriptionDeleteRequired",
+                                                                                       "E2ResourceStatusUpdate"};
+const asn1::table::enum_desc e2ap_elem_procs_o::init_msg_c::types_opts::desc        = {
+    enum_names_e2ap_elem_procs_o_init_msg_c_types_values,
+    25,
+    "e2ap_elem_procs_o::init_msg_c::types"};
 
 // SuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_e2ap_elem_procs_o_successful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_audit_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_delete_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_mod_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_mod_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_state_ctrl_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_query_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_assist_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_ctrl_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_load_status_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2node_cfg_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2conn_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2_removal_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2_res_status_resp_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_e2ap_elem_procs_o_successful_outcome_c_names[] = {
+    {"RICsubscriptionResponse", nullptr},
+    {"RICsubscriptionAuditResponse", nullptr},
+    {"RICsubscriptionDeleteResponse", nullptr},
+    {"RICsubscriptionModificationResponse", nullptr},
+    {"RICsubscriptionModificationConfirm", nullptr},
+    {"RICsubscriptionStateControlResponse", nullptr},
+    {"RICqueryResponse", nullptr},
+    {"RICserviceUpdateAcknowledge", nullptr},
+    {"RICassistanceResponse", nullptr},
+    {"RICcontrolAcknowledge", nullptr},
+    {"RICserviceLoadStatusResponse", nullptr},
+    {"E2setupResponse", nullptr},
+    {"E2nodeConfigurationUpdateAcknowledge", nullptr},
+    {"E2connectionUpdateAcknowledge", nullptr},
+    {"ResetResponse", nullptr},
+    {"E2RemovalResponse", nullptr},
+    {"E2ResourceStatusResponse", nullptr}};
+const asn1::table::choice_desc e2ap_elem_procs_o::successful_outcome_c::desc = {
+    asn1::table::enum_int_type<e2ap_elem_procs_o::successful_outcome_c::types>(),
+    e2ap_elem_procs_o::successful_outcome_c::types::nof_types,
+    e2ap_elem_procs_o::successful_outcome_c::types::nof_exts,
+    e2ap_elem_procs_o::successful_outcome_c::types::has_ext,
+    true,
+    choice_table_e2ap_elem_procs_o_successful_outcome_c_alternatives,
+    &asn1::table::choice_set<e2ap_elem_procs_o::successful_outcome_c>,
+    choice_table_e2ap_elem_procs_o_successful_outcome_c_names,
+    "e2ap_elem_procs_o::successful_outcome_c",
+    offsetof(e2ap_elem_procs_o::successful_outcome_c, type_),
+    offsetof(e2ap_elem_procs_o::successful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void e2ap_elem_procs_o::successful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ric_sub_resp:
-      c = ric_sub_resp_s{};
-      break;
-    case types::ric_sub_audit_resp:
-      c = ric_sub_audit_resp_s{};
-      break;
-    case types::ric_sub_delete_resp:
-      c = ric_sub_delete_resp_s{};
-      break;
-    case types::ric_sub_mod_resp:
-      c = ric_sub_mod_resp_s{};
-      break;
-    case types::ric_sub_mod_confirm:
-      c = ric_sub_mod_confirm_s{};
-      break;
-    case types::ric_sub_state_ctrl_resp:
-      c = ric_sub_state_ctrl_resp_s{};
-      break;
-    case types::ric_query_resp:
-      c = ric_query_resp_s{};
-      break;
-    case types::ric_service_upd_ack:
-      c = ric_service_upd_ack_s{};
-      break;
-    case types::ric_assist_resp:
-      c = ric_assist_resp_s{};
-      break;
-    case types::ric_ctrl_ack:
-      c = ric_ctrl_ack_s{};
-      break;
-    case types::ric_service_load_status_resp:
-      c = ric_service_load_status_resp_s{};
-      break;
-    case types::e2setup_resp:
-      c = e2setup_resp_s{};
-      break;
-    case types::e2node_cfg_upd_ack:
-      c = e2node_cfg_upd_ack_s{};
-      break;
-    case types::e2conn_upd_ack:
-      c = e2conn_upd_ack_s{};
-      break;
-    case types::reset_resp:
-      c = reset_resp_s{};
-      break;
-    case types::e2_removal_resp:
-      c = e2_removal_resp_s{};
-      break;
-    case types::e2_res_status_resp:
-      c = e2_res_status_resp_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::successful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, e2ap_elem_procs_o::successful_outcome_c::desc);
 }
 ric_sub_resp_s& e2ap_elem_procs_o::successful_outcome_c::ric_sub_resp()
 {
@@ -1220,286 +987,197 @@ const e2_res_status_resp_s& e2ap_elem_procs_o::successful_outcome_c::e2_res_stat
   assert_choice_type(types::e2_res_status_resp, type_, "SuccessfulOutcome");
   return c.get<e2_res_status_resp_s>();
 }
-void e2ap_elem_procs_o::successful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ric_sub_resp:
-      j.write_fieldname("RICsubscriptionResponse");
-      c.get<ric_sub_resp_s>().to_json(j);
-      break;
-    case types::ric_sub_audit_resp:
-      j.write_fieldname("RICsubscriptionAuditResponse");
-      c.get<ric_sub_audit_resp_s>().to_json(j);
-      break;
-    case types::ric_sub_delete_resp:
-      j.write_fieldname("RICsubscriptionDeleteResponse");
-      c.get<ric_sub_delete_resp_s>().to_json(j);
-      break;
-    case types::ric_sub_mod_resp:
-      j.write_fieldname("RICsubscriptionModificationResponse");
-      c.get<ric_sub_mod_resp_s>().to_json(j);
-      break;
-    case types::ric_sub_mod_confirm:
-      j.write_fieldname("RICsubscriptionModificationConfirm");
-      c.get<ric_sub_mod_confirm_s>().to_json(j);
-      break;
-    case types::ric_sub_state_ctrl_resp:
-      j.write_fieldname("RICsubscriptionStateControlResponse");
-      c.get<ric_sub_state_ctrl_resp_s>().to_json(j);
-      break;
-    case types::ric_query_resp:
-      j.write_fieldname("RICqueryResponse");
-      c.get<ric_query_resp_s>().to_json(j);
-      break;
-    case types::ric_service_upd_ack:
-      j.write_fieldname("RICserviceUpdateAcknowledge");
-      c.get<ric_service_upd_ack_s>().to_json(j);
-      break;
-    case types::ric_assist_resp:
-      j.write_fieldname("RICassistanceResponse");
-      c.get<ric_assist_resp_s>().to_json(j);
-      break;
-    case types::ric_ctrl_ack:
-      j.write_fieldname("RICcontrolAcknowledge");
-      c.get<ric_ctrl_ack_s>().to_json(j);
-      break;
-    case types::ric_service_load_status_resp:
-      j.write_fieldname("RICserviceLoadStatusResponse");
-      c.get<ric_service_load_status_resp_s>().to_json(j);
-      break;
-    case types::e2setup_resp:
-      j.write_fieldname("E2setupResponse");
-      c.get<e2setup_resp_s>().to_json(j);
-      break;
-    case types::e2node_cfg_upd_ack:
-      j.write_fieldname("E2nodeConfigurationUpdateAcknowledge");
-      c.get<e2node_cfg_upd_ack_s>().to_json(j);
-      break;
-    case types::e2conn_upd_ack:
-      j.write_fieldname("E2connectionUpdateAcknowledge");
-      c.get<e2conn_upd_ack_s>().to_json(j);
-      break;
-    case types::reset_resp:
-      j.write_fieldname("ResetResponse");
-      c.get<reset_resp_s>().to_json(j);
-      break;
-    case types::e2_removal_resp:
-      j.write_fieldname("E2RemovalResponse");
-      c.get<e2_removal_resp_s>().to_json(j);
-      break;
-    case types::e2_res_status_resp:
-      j.write_fieldname("E2ResourceStatusResponse");
-      c.get<e2_res_status_resp_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::successful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e2ap_elem_procs_o::successful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ric_sub_resp:
-      HANDLE_CODE(c.get<ric_sub_resp_s>().pack(bref));
-      break;
-    case types::ric_sub_audit_resp:
-      HANDLE_CODE(c.get<ric_sub_audit_resp_s>().pack(bref));
-      break;
-    case types::ric_sub_delete_resp:
-      HANDLE_CODE(c.get<ric_sub_delete_resp_s>().pack(bref));
-      break;
-    case types::ric_sub_mod_resp:
-      HANDLE_CODE(c.get<ric_sub_mod_resp_s>().pack(bref));
-      break;
-    case types::ric_sub_mod_confirm:
-      HANDLE_CODE(c.get<ric_sub_mod_confirm_s>().pack(bref));
-      break;
-    case types::ric_sub_state_ctrl_resp:
-      HANDLE_CODE(c.get<ric_sub_state_ctrl_resp_s>().pack(bref));
-      break;
-    case types::ric_query_resp:
-      HANDLE_CODE(c.get<ric_query_resp_s>().pack(bref));
-      break;
-    case types::ric_service_upd_ack:
-      HANDLE_CODE(c.get<ric_service_upd_ack_s>().pack(bref));
-      break;
-    case types::ric_assist_resp:
-      HANDLE_CODE(c.get<ric_assist_resp_s>().pack(bref));
-      break;
-    case types::ric_ctrl_ack:
-      HANDLE_CODE(c.get<ric_ctrl_ack_s>().pack(bref));
-      break;
-    case types::ric_service_load_status_resp:
-      HANDLE_CODE(c.get<ric_service_load_status_resp_s>().pack(bref));
-      break;
-    case types::e2setup_resp:
-      HANDLE_CODE(c.get<e2setup_resp_s>().pack(bref));
-      break;
-    case types::e2node_cfg_upd_ack:
-      HANDLE_CODE(c.get<e2node_cfg_upd_ack_s>().pack(bref));
-      break;
-    case types::e2conn_upd_ack:
-      HANDLE_CODE(c.get<e2conn_upd_ack_s>().pack(bref));
-      break;
-    case types::reset_resp:
-      HANDLE_CODE(c.get<reset_resp_s>().pack(bref));
-      break;
-    case types::e2_removal_resp:
-      HANDLE_CODE(c.get<e2_removal_resp_s>().pack(bref));
-      break;
-    case types::e2_res_status_resp:
-      HANDLE_CODE(c.get<e2_res_status_resp_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e2ap_elem_procs_o::successful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ric_sub_resp:
-      HANDLE_CODE(c.get<ric_sub_resp_s>().unpack(bref));
-      break;
-    case types::ric_sub_audit_resp:
-      HANDLE_CODE(c.get<ric_sub_audit_resp_s>().unpack(bref));
-      break;
-    case types::ric_sub_delete_resp:
-      HANDLE_CODE(c.get<ric_sub_delete_resp_s>().unpack(bref));
-      break;
-    case types::ric_sub_mod_resp:
-      HANDLE_CODE(c.get<ric_sub_mod_resp_s>().unpack(bref));
-      break;
-    case types::ric_sub_mod_confirm:
-      HANDLE_CODE(c.get<ric_sub_mod_confirm_s>().unpack(bref));
-      break;
-    case types::ric_sub_state_ctrl_resp:
-      HANDLE_CODE(c.get<ric_sub_state_ctrl_resp_s>().unpack(bref));
-      break;
-    case types::ric_query_resp:
-      HANDLE_CODE(c.get<ric_query_resp_s>().unpack(bref));
-      break;
-    case types::ric_service_upd_ack:
-      HANDLE_CODE(c.get<ric_service_upd_ack_s>().unpack(bref));
-      break;
-    case types::ric_assist_resp:
-      HANDLE_CODE(c.get<ric_assist_resp_s>().unpack(bref));
-      break;
-    case types::ric_ctrl_ack:
-      HANDLE_CODE(c.get<ric_ctrl_ack_s>().unpack(bref));
-      break;
-    case types::ric_service_load_status_resp:
-      HANDLE_CODE(c.get<ric_service_load_status_resp_s>().unpack(bref));
-      break;
-    case types::e2setup_resp:
-      HANDLE_CODE(c.get<e2setup_resp_s>().unpack(bref));
-      break;
-    case types::e2node_cfg_upd_ack:
-      HANDLE_CODE(c.get<e2node_cfg_upd_ack_s>().unpack(bref));
-      break;
-    case types::e2conn_upd_ack:
-      HANDLE_CODE(c.get<e2conn_upd_ack_s>().unpack(bref));
-      break;
-    case types::reset_resp:
-      HANDLE_CODE(c.get<reset_resp_s>().unpack(bref));
-      break;
-    case types::e2_removal_resp:
-      HANDLE_CODE(c.get<e2_removal_resp_s>().unpack(bref));
-      break;
-    case types::e2_res_status_resp:
-      HANDLE_CODE(c.get<e2_res_status_resp_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* e2ap_elem_procs_o::successful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"RICsubscriptionResponse",
-                                "RICsubscriptionAuditResponse",
-                                "RICsubscriptionDeleteResponse",
-                                "RICsubscriptionModificationResponse",
-                                "RICsubscriptionModificationConfirm",
-                                "RICsubscriptionStateControlResponse",
-                                "RICqueryResponse",
-                                "RICserviceUpdateAcknowledge",
-                                "RICassistanceResponse",
-                                "RICcontrolAcknowledge",
-                                "RICserviceLoadStatusResponse",
-                                "E2setupResponse",
-                                "E2nodeConfigurationUpdateAcknowledge",
-                                "E2connectionUpdateAcknowledge",
-                                "ResetResponse",
-                                "E2RemovalResponse",
-                                "E2ResourceStatusResponse"};
-  return convert_enum_idx(names, 17, value, "e2ap_elem_procs_o::successful_outcome_c::types");
-}
+static const char* enum_names_e2ap_elem_procs_o_successful_outcome_c_types_values[] = {
+    "RICsubscriptionResponse",
+    "RICsubscriptionAuditResponse",
+    "RICsubscriptionDeleteResponse",
+    "RICsubscriptionModificationResponse",
+    "RICsubscriptionModificationConfirm",
+    "RICsubscriptionStateControlResponse",
+    "RICqueryResponse",
+    "RICserviceUpdateAcknowledge",
+    "RICassistanceResponse",
+    "RICcontrolAcknowledge",
+    "RICserviceLoadStatusResponse",
+    "E2setupResponse",
+    "E2nodeConfigurationUpdateAcknowledge",
+    "E2connectionUpdateAcknowledge",
+    "ResetResponse",
+    "E2RemovalResponse",
+    "E2ResourceStatusResponse"};
+const asn1::table::enum_desc e2ap_elem_procs_o::successful_outcome_c::types_opts::desc = {
+    enum_names_e2ap_elem_procs_o_successful_outcome_c_types_values,
+    17,
+    "e2ap_elem_procs_o::successful_outcome_c::types"};
 
 // UnsuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_e2ap_elem_procs_o_unsuccessful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_audit_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_delete_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_mod_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_mod_refuse_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_sub_state_ctrl_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_query_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_assist_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_ctrl_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ric_service_load_status_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2node_cfg_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2conn_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2_removal_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e2_res_status_fail_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_e2ap_elem_procs_o_unsuccessful_outcome_c_names[] = {
+    {"RICsubscriptionFailure", nullptr},
+    {"RICsubscriptionAuditFailure", nullptr},
+    {"RICsubscriptionDeleteFailure", nullptr},
+    {"RICsubscriptionModificationFailure", nullptr},
+    {"RICsubscriptionModificationRefuse", nullptr},
+    {"RICsubscriptionStateControlFailure", nullptr},
+    {"RICqueryFailure", nullptr},
+    {"RICserviceUpdateFailure", nullptr},
+    {"RICassistanceFailure", nullptr},
+    {"RICcontrolFailure", nullptr},
+    {"RICserviceLoadStatusFailure", nullptr},
+    {"E2setupFailure", nullptr},
+    {"E2nodeConfigurationUpdateFailure", nullptr},
+    {"E2connectionUpdateFailure", nullptr},
+    {"E2RemovalFailure", nullptr},
+    {"E2ResourceStatusFailure", nullptr}};
+const asn1::table::choice_desc e2ap_elem_procs_o::unsuccessful_outcome_c::desc = {
+    asn1::table::enum_int_type<e2ap_elem_procs_o::unsuccessful_outcome_c::types>(),
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nof_types,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::nof_exts,
+    e2ap_elem_procs_o::unsuccessful_outcome_c::types::has_ext,
+    true,
+    choice_table_e2ap_elem_procs_o_unsuccessful_outcome_c_alternatives,
+    &asn1::table::choice_set<e2ap_elem_procs_o::unsuccessful_outcome_c>,
+    choice_table_e2ap_elem_procs_o_unsuccessful_outcome_c_names,
+    "e2ap_elem_procs_o::unsuccessful_outcome_c",
+    offsetof(e2ap_elem_procs_o::unsuccessful_outcome_c, type_),
+    offsetof(e2ap_elem_procs_o::unsuccessful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void e2ap_elem_procs_o::unsuccessful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ric_sub_fail:
-      c = ric_sub_fail_s{};
-      break;
-    case types::ric_sub_audit_fail:
-      c = ric_sub_audit_fail_s{};
-      break;
-    case types::ric_sub_delete_fail:
-      c = ric_sub_delete_fail_s{};
-      break;
-    case types::ric_sub_mod_fail:
-      c = ric_sub_mod_fail_s{};
-      break;
-    case types::ric_sub_mod_refuse:
-      c = ric_sub_mod_refuse_s{};
-      break;
-    case types::ric_sub_state_ctrl_fail:
-      c = ric_sub_state_ctrl_fail_s{};
-      break;
-    case types::ric_query_fail:
-      c = ric_query_fail_s{};
-      break;
-    case types::ric_service_upd_fail:
-      c = ric_service_upd_fail_s{};
-      break;
-    case types::ric_assist_fail:
-      c = ric_assist_fail_s{};
-      break;
-    case types::ric_ctrl_fail:
-      c = ric_ctrl_fail_s{};
-      break;
-    case types::ric_service_load_status_fail:
-      c = ric_service_load_status_fail_s{};
-      break;
-    case types::e2setup_fail:
-      c = e2setup_fail_s{};
-      break;
-    case types::e2node_cfg_upd_fail:
-      c = e2node_cfg_upd_fail_s{};
-      break;
-    case types::e2conn_upd_fail:
-      c = e2conn_upd_fail_s{};
-      break;
-    case types::e2_removal_fail:
-      c = e2_removal_fail_s{};
-      break;
-    case types::e2_res_status_fail:
-      c = e2_res_status_fail_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::unsuccessful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, e2ap_elem_procs_o::unsuccessful_outcome_c::desc);
 }
 ric_sub_fail_s& e2ap_elem_procs_o::unsuccessful_outcome_c::ric_sub_fail()
 {
@@ -1661,414 +1339,201 @@ const e2_res_status_fail_s& e2ap_elem_procs_o::unsuccessful_outcome_c::e2_res_st
   assert_choice_type(types::e2_res_status_fail, type_, "UnsuccessfulOutcome");
   return c.get<e2_res_status_fail_s>();
 }
-void e2ap_elem_procs_o::unsuccessful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ric_sub_fail:
-      j.write_fieldname("RICsubscriptionFailure");
-      c.get<ric_sub_fail_s>().to_json(j);
-      break;
-    case types::ric_sub_audit_fail:
-      j.write_fieldname("RICsubscriptionAuditFailure");
-      c.get<ric_sub_audit_fail_s>().to_json(j);
-      break;
-    case types::ric_sub_delete_fail:
-      j.write_fieldname("RICsubscriptionDeleteFailure");
-      c.get<ric_sub_delete_fail_s>().to_json(j);
-      break;
-    case types::ric_sub_mod_fail:
-      j.write_fieldname("RICsubscriptionModificationFailure");
-      c.get<ric_sub_mod_fail_s>().to_json(j);
-      break;
-    case types::ric_sub_mod_refuse:
-      j.write_fieldname("RICsubscriptionModificationRefuse");
-      c.get<ric_sub_mod_refuse_s>().to_json(j);
-      break;
-    case types::ric_sub_state_ctrl_fail:
-      j.write_fieldname("RICsubscriptionStateControlFailure");
-      c.get<ric_sub_state_ctrl_fail_s>().to_json(j);
-      break;
-    case types::ric_query_fail:
-      j.write_fieldname("RICqueryFailure");
-      c.get<ric_query_fail_s>().to_json(j);
-      break;
-    case types::ric_service_upd_fail:
-      j.write_fieldname("RICserviceUpdateFailure");
-      c.get<ric_service_upd_fail_s>().to_json(j);
-      break;
-    case types::ric_assist_fail:
-      j.write_fieldname("RICassistanceFailure");
-      c.get<ric_assist_fail_s>().to_json(j);
-      break;
-    case types::ric_ctrl_fail:
-      j.write_fieldname("RICcontrolFailure");
-      c.get<ric_ctrl_fail_s>().to_json(j);
-      break;
-    case types::ric_service_load_status_fail:
-      j.write_fieldname("RICserviceLoadStatusFailure");
-      c.get<ric_service_load_status_fail_s>().to_json(j);
-      break;
-    case types::e2setup_fail:
-      j.write_fieldname("E2setupFailure");
-      c.get<e2setup_fail_s>().to_json(j);
-      break;
-    case types::e2node_cfg_upd_fail:
-      j.write_fieldname("E2nodeConfigurationUpdateFailure");
-      c.get<e2node_cfg_upd_fail_s>().to_json(j);
-      break;
-    case types::e2conn_upd_fail:
-      j.write_fieldname("E2connectionUpdateFailure");
-      c.get<e2conn_upd_fail_s>().to_json(j);
-      break;
-    case types::e2_removal_fail:
-      j.write_fieldname("E2RemovalFailure");
-      c.get<e2_removal_fail_s>().to_json(j);
-      break;
-    case types::e2_res_status_fail:
-      j.write_fieldname("E2ResourceStatusFailure");
-      c.get<e2_res_status_fail_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::unsuccessful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e2ap_elem_procs_o::unsuccessful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ric_sub_fail:
-      HANDLE_CODE(c.get<ric_sub_fail_s>().pack(bref));
-      break;
-    case types::ric_sub_audit_fail:
-      HANDLE_CODE(c.get<ric_sub_audit_fail_s>().pack(bref));
-      break;
-    case types::ric_sub_delete_fail:
-      HANDLE_CODE(c.get<ric_sub_delete_fail_s>().pack(bref));
-      break;
-    case types::ric_sub_mod_fail:
-      HANDLE_CODE(c.get<ric_sub_mod_fail_s>().pack(bref));
-      break;
-    case types::ric_sub_mod_refuse:
-      HANDLE_CODE(c.get<ric_sub_mod_refuse_s>().pack(bref));
-      break;
-    case types::ric_sub_state_ctrl_fail:
-      HANDLE_CODE(c.get<ric_sub_state_ctrl_fail_s>().pack(bref));
-      break;
-    case types::ric_query_fail:
-      HANDLE_CODE(c.get<ric_query_fail_s>().pack(bref));
-      break;
-    case types::ric_service_upd_fail:
-      HANDLE_CODE(c.get<ric_service_upd_fail_s>().pack(bref));
-      break;
-    case types::ric_assist_fail:
-      HANDLE_CODE(c.get<ric_assist_fail_s>().pack(bref));
-      break;
-    case types::ric_ctrl_fail:
-      HANDLE_CODE(c.get<ric_ctrl_fail_s>().pack(bref));
-      break;
-    case types::ric_service_load_status_fail:
-      HANDLE_CODE(c.get<ric_service_load_status_fail_s>().pack(bref));
-      break;
-    case types::e2setup_fail:
-      HANDLE_CODE(c.get<e2setup_fail_s>().pack(bref));
-      break;
-    case types::e2node_cfg_upd_fail:
-      HANDLE_CODE(c.get<e2node_cfg_upd_fail_s>().pack(bref));
-      break;
-    case types::e2conn_upd_fail:
-      HANDLE_CODE(c.get<e2conn_upd_fail_s>().pack(bref));
-      break;
-    case types::e2_removal_fail:
-      HANDLE_CODE(c.get<e2_removal_fail_s>().pack(bref));
-      break;
-    case types::e2_res_status_fail:
-      HANDLE_CODE(c.get<e2_res_status_fail_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e2ap_elem_procs_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ric_sub_fail:
-      HANDLE_CODE(c.get<ric_sub_fail_s>().unpack(bref));
-      break;
-    case types::ric_sub_audit_fail:
-      HANDLE_CODE(c.get<ric_sub_audit_fail_s>().unpack(bref));
-      break;
-    case types::ric_sub_delete_fail:
-      HANDLE_CODE(c.get<ric_sub_delete_fail_s>().unpack(bref));
-      break;
-    case types::ric_sub_mod_fail:
-      HANDLE_CODE(c.get<ric_sub_mod_fail_s>().unpack(bref));
-      break;
-    case types::ric_sub_mod_refuse:
-      HANDLE_CODE(c.get<ric_sub_mod_refuse_s>().unpack(bref));
-      break;
-    case types::ric_sub_state_ctrl_fail:
-      HANDLE_CODE(c.get<ric_sub_state_ctrl_fail_s>().unpack(bref));
-      break;
-    case types::ric_query_fail:
-      HANDLE_CODE(c.get<ric_query_fail_s>().unpack(bref));
-      break;
-    case types::ric_service_upd_fail:
-      HANDLE_CODE(c.get<ric_service_upd_fail_s>().unpack(bref));
-      break;
-    case types::ric_assist_fail:
-      HANDLE_CODE(c.get<ric_assist_fail_s>().unpack(bref));
-      break;
-    case types::ric_ctrl_fail:
-      HANDLE_CODE(c.get<ric_ctrl_fail_s>().unpack(bref));
-      break;
-    case types::ric_service_load_status_fail:
-      HANDLE_CODE(c.get<ric_service_load_status_fail_s>().unpack(bref));
-      break;
-    case types::e2setup_fail:
-      HANDLE_CODE(c.get<e2setup_fail_s>().unpack(bref));
-      break;
-    case types::e2node_cfg_upd_fail:
-      HANDLE_CODE(c.get<e2node_cfg_upd_fail_s>().unpack(bref));
-      break;
-    case types::e2conn_upd_fail:
-      HANDLE_CODE(c.get<e2conn_upd_fail_s>().unpack(bref));
-      break;
-    case types::e2_removal_fail:
-      HANDLE_CODE(c.get<e2_removal_fail_s>().unpack(bref));
-      break;
-    case types::e2_res_status_fail:
-      HANDLE_CODE(c.get<e2_res_status_fail_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"RICsubscriptionFailure",
-                                "RICsubscriptionAuditFailure",
-                                "RICsubscriptionDeleteFailure",
-                                "RICsubscriptionModificationFailure",
-                                "RICsubscriptionModificationRefuse",
-                                "RICsubscriptionStateControlFailure",
-                                "RICqueryFailure",
-                                "RICserviceUpdateFailure",
-                                "RICassistanceFailure",
-                                "RICcontrolFailure",
-                                "RICserviceLoadStatusFailure",
-                                "E2setupFailure",
-                                "E2nodeConfigurationUpdateFailure",
-                                "E2connectionUpdateFailure",
-                                "E2RemovalFailure",
-                                "E2ResourceStatusFailure"};
-  return convert_enum_idx(names, 16, value, "e2ap_elem_procs_o::unsuccessful_outcome_c::types");
-}
+static const char* enum_names_e2ap_elem_procs_o_unsuccessful_outcome_c_types_values[] = {
+    "RICsubscriptionFailure",
+    "RICsubscriptionAuditFailure",
+    "RICsubscriptionDeleteFailure",
+    "RICsubscriptionModificationFailure",
+    "RICsubscriptionModificationRefuse",
+    "RICsubscriptionStateControlFailure",
+    "RICqueryFailure",
+    "RICserviceUpdateFailure",
+    "RICassistanceFailure",
+    "RICcontrolFailure",
+    "RICserviceLoadStatusFailure",
+    "E2setupFailure",
+    "E2nodeConfigurationUpdateFailure",
+    "E2connectionUpdateFailure",
+    "E2RemovalFailure",
+    "E2ResourceStatusFailure"};
+const asn1::table::enum_desc e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::desc = {
+    enum_names_e2ap_elem_procs_o_unsuccessful_outcome_c_types_values,
+    16,
+    "e2ap_elem_procs_o::unsuccessful_outcome_c::types"};
+
+// Columns of the object sets of E2AP-ELEMENTARY-PROCEDURE.
+enum class e2ap_elem_proc_p_column : uint32_t { init_msg, successful_outcome, unsuccessful_outcome, crit };
 
 // InitiatingMessage ::= SEQUENCE{{E2AP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE init_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != e2ap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE init_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = e2ap_elem_procs_o::get_init_msg(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void init_msg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_init_msg_s_fields[] = {
+    {offsetof(init_msg_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(init_msg_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(init_msg_s::crit),
+                                 decltype(init_msg_s::proc_code),
+                                 e2ap_elem_procs_o::desc,
+                                 e2ap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(init_msg_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(init_msg_s::value),
+                                  decltype(init_msg_s::proc_code),
+                                  e2ap_elem_procs_o::desc,
+                                  e2ap_elem_proc_p_column::init_msg,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_init_msg_s_names[] = {{"procedureCode", nullptr},
+                                                                     {"criticality", nullptr},
+                                                                     {"value", nullptr}};
+const asn1::table::seq_desc          init_msg_s::desc =
+    {{seq_table_init_msg_s_fields, 3, UINT64_C(0x7), nullptr, 0}, false, true, nullptr, 0, seq_table_init_msg_s_names};
 bool init_msg_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not e2ap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(e2ap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = e2ap_elem_procs_o::get_crit(proc_code);
-  value     = e2ap_elem_procs_o::get_init_msg(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(e2ap_elem_procs_o::desc, e2ap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, e2ap_elem_procs_o::desc, e2ap_elem_proc_p_column::init_msg, proc_code);
   return value.type().value != e2ap_elem_procs_o::init_msg_c::types_opts::nulltype;
 }
 
 // SuccessfulOutcome ::= SEQUENCE{{E2AP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE successful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != e2ap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE successful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = e2ap_elem_procs_o::get_successful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void successful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_successful_outcome_s_fields[] = {
+    {offsetof(successful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(successful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(successful_outcome_s::crit),
+                                 decltype(successful_outcome_s::proc_code),
+                                 e2ap_elem_procs_o::desc,
+                                 e2ap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(successful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(successful_outcome_s::value),
+                                  decltype(successful_outcome_s::proc_code),
+                                  e2ap_elem_procs_o::desc,
+                                  e2ap_elem_proc_p_column::successful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_successful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                               {"criticality", nullptr},
+                                                                               {"value", nullptr}};
+const asn1::table::seq_desc          successful_outcome_s::desc             = {
+    {seq_table_successful_outcome_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_successful_outcome_s_names};
 bool successful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not e2ap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(e2ap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = e2ap_elem_procs_o::get_crit(proc_code);
-  value     = e2ap_elem_procs_o::get_successful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(e2ap_elem_procs_o::desc, e2ap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, e2ap_elem_procs_o::desc, e2ap_elem_proc_p_column::successful_outcome, proc_code);
   return value.type().value != e2ap_elem_procs_o::successful_outcome_c::types_opts::nulltype;
 }
 
 // UnsuccessfulOutcome ::= SEQUENCE{{E2AP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE unsuccessful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != e2ap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE unsuccessful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = e2ap_elem_procs_o::get_unsuccessful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void unsuccessful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_unsuccessful_outcome_s_fields[] = {
+    {offsetof(unsuccessful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(unsuccessful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(unsuccessful_outcome_s::crit),
+                                 decltype(unsuccessful_outcome_s::proc_code),
+                                 e2ap_elem_procs_o::desc,
+                                 e2ap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(unsuccessful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(unsuccessful_outcome_s::value),
+                                  decltype(unsuccessful_outcome_s::proc_code),
+                                  e2ap_elem_procs_o::desc,
+                                  e2ap_elem_proc_p_column::unsuccessful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_unsuccessful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                                 {"criticality", nullptr},
+                                                                                 {"value", nullptr}};
+const asn1::table::seq_desc          unsuccessful_outcome_s::desc             = {
+    {seq_table_unsuccessful_outcome_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_unsuccessful_outcome_s_names};
 bool unsuccessful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not e2ap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(e2ap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = e2ap_elem_procs_o::get_crit(proc_code);
-  value     = e2ap_elem_procs_o::get_unsuccessful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(e2ap_elem_procs_o::desc, e2ap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, e2ap_elem_procs_o::desc, e2ap_elem_proc_p_column::unsuccessful_outcome, proc_code);
   return value.type().value != e2ap_elem_procs_o::unsuccessful_outcome_c::types_opts::nulltype;
 }
 
 // E2AP-PDU ::= CHOICE
-void e2ap_pdu_c::destroy_()
-{
-  switch (type_) {
-    case types::init_msg:
-      c.destroy<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.destroy<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.destroy<unsuccessful_outcome_s>();
-      break;
-    default:
-      break;
-  }
-}
-void e2ap_pdu_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::init_msg:
-      c.init<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.init<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.init<unsuccessful_outcome_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_pdu_c");
-  }
-}
-e2ap_pdu_c::e2ap_pdu_c(const e2ap_pdu_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::init_msg:
-      c.init(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.init(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.init(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_pdu_c");
-  }
-}
-e2ap_pdu_c& e2ap_pdu_c::operator=(const e2ap_pdu_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::init_msg:
-      c.set(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.set(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.set(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_pdu_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_e2ap_pdu_c_alternatives[] = {
+    &asn1::table::alternative_ops<init_msg_s, false>::value,
+    &asn1::table::alternative_ops<successful_outcome_s, false>::value,
+    &asn1::table::alternative_ops<unsuccessful_outcome_s, false>::value};
+const asn1::table::choice_storage_desc e2ap_pdu_c::storage_desc = {choice_storage_e2ap_pdu_c_alternatives,
+                                                                   3,
+                                                                   "e2ap_pdu_c"};
 
-  return *this;
-}
 init_msg_s& e2ap_pdu_c::set_init_msg()
 {
   set(types::init_msg);
@@ -2084,70 +1549,53 @@ unsuccessful_outcome_s& e2ap_pdu_c::set_unsuccessful_outcome()
   set(types::unsuccessful_outcome);
   return c.get<unsuccessful_outcome_s>();
 }
-void e2ap_pdu_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::init_msg:
-      j.write_fieldname("initiatingMessage");
-      c.get<init_msg_s>().to_json(j);
-      break;
-    case types::successful_outcome:
-      j.write_fieldname("successfulOutcome");
-      c.get<successful_outcome_s>().to_json(j);
-      break;
-    case types::unsuccessful_outcome:
-      j.write_fieldname("unsuccessfulOutcome");
-      c.get<unsuccessful_outcome_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_pdu_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE e2ap_pdu_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().pack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().pack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_pdu_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE e2ap_pdu_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().unpack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().unpack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "e2ap_pdu_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_e2ap_pdu_c_alternatives[] = {{0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &init_msg_s::desc},
+                                                                               {0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &successful_outcome_s::desc},
+                                                                               {0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &unsuccessful_outcome_s::desc}};
+static const asn1::table::field_name choice_table_e2ap_pdu_c_names[]        = {{"initiatingMessage", nullptr},
+                                                                               {"successfulOutcome", nullptr},
+                                                                               {"unsuccessfulOutcome", nullptr}};
+const asn1::table::choice_desc       e2ap_pdu_c::desc = {asn1::table::enum_int_type<e2ap_pdu_c::types>(),
+                                                         e2ap_pdu_c::types::nof_types,
+                                                         e2ap_pdu_c::types::nof_exts,
+                                                         e2ap_pdu_c::types::has_ext,
+                                                         true,
+                                                         choice_table_e2ap_pdu_c_alternatives,
+                                                         nullptr,
+                                                         choice_table_e2ap_pdu_c_names,
+                                                         "e2ap_pdu_c",
+                                                         offsetof(e2ap_pdu_c, c.type),
+                                                         offsetof(e2ap_pdu_c, c.value),
+                                                         false,
+                                                         &e2ap_pdu_c::storage_desc};
 
-const char* e2ap_pdu_c::types_opts::to_string() const
-{
-  static const char* names[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome"};
-  return convert_enum_idx(names, 3, value, "e2ap_pdu_c::types");
-}
+static const char*           enum_names_e2ap_pdu_c_types_values[] = {"initiatingMessage",
+                                                                     "successfulOutcome",
+                                                                     "unsuccessfulOutcome"};
+const asn1::table::enum_desc e2ap_pdu_c::types_opts::desc         = {enum_names_e2ap_pdu_c_types_values,
+                                                                     3,
+                                                                     "e2ap_pdu_c::types"};

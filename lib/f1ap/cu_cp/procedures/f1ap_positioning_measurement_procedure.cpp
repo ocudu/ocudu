@@ -8,7 +8,7 @@
 #include "f1ap_asn1_utils.h"
 #include "ocudu/adt/expected.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/asn1/f1ap/f1ap_ies.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents.h"

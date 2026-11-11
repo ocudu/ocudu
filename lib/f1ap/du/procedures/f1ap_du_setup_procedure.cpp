@@ -9,7 +9,7 @@
 #include "../f1ap_asn1_converters.h"
 #include "../f1ap_du_context.h"
 #include "ocudu/adt/format.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/f1ap/common.h"
 #include "ocudu/f1ap/f1ap_message.h"
 
@@ -90,7 +90,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   {
     byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(packed);
-    if (msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, msg.pdu) == asn1::OCUDUASN_SUCCESS) {
       captured_request = std::move(packed);
     } else {
       logger.warning("\"{}\": failed to pack F1SetupRequest", name());
@@ -176,7 +176,7 @@ f1_setup_result f1ap_du_setup_procedure::create_f1_setup_result()
     resp_msg.pdu.set_successful_outcome() = cu_pdu_response.value();
     byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(packed);
-    if (resp_msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, resp_msg.pdu) == asn1::OCUDUASN_SUCCESS) {
       success.packed_f1_setup_response = std::move(packed);
     } else {
       logger.warning("\"{}\": failed to pack F1SetupResponse", name());

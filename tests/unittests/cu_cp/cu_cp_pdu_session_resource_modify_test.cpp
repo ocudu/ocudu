@@ -618,7 +618,7 @@ TEST_F(cu_cp_pdu_session_resource_modify_test,
   {
     asn1::cbit_ref              bref{rrc_msg.value()};
     asn1::rrc_nr::dl_dcch_msg_s dcch;
-    ASSERT_EQ(dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(dcch, bref), asn1::OCUDUASN_SUCCESS);
     const auto& reconfig_ies = dcch.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
     ASSERT_TRUE(reconfig_ies.meas_cfg_present);
     ASSERT_GT(reconfig_ies.meas_cfg.meas_obj_to_add_mod_list.size(), 0U);
@@ -644,7 +644,7 @@ TEST_F(cu_cp_pdu_session_resource_modify_test,
   {
     asn1::cbit_ref              bref{rrc_msg.value()};
     asn1::rrc_nr::dl_dcch_msg_s dcch;
-    ASSERT_EQ(dcch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(dcch, bref), asn1::OCUDUASN_SUCCESS);
     const auto& reconfig_ies = dcch.msg.c1().rrc_recfg().crit_exts.rrc_recfg();
     ASSERT_TRUE(reconfig_ies.meas_cfg_present);
     EXPECT_EQ(reconfig_ies.meas_cfg.meas_obj_to_add_mod_list.size(), 0U);

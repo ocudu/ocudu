@@ -19,11 +19,11 @@ static void pack_and_unpack(T& pdu)
 {
   byte_buffer   packed;
   asn1::bit_ref packer{packed};
-  ASSERT_EQ(pdu.pack(packer), asn1::OCUDUASN_SUCCESS) << "Failed to pack the XNAP PDU";
+  ASSERT_EQ(asn1::pack(packer, pdu), asn1::OCUDUASN_SUCCESS) << "Failed to pack the XNAP PDU";
 
   pdu = {};
   asn1::cbit_ref unpacker{packed};
-  ASSERT_EQ(pdu.unpack(unpacker), asn1::OCUDUASN_SUCCESS) << "Failed to unpack the XNAP PDU";
+  ASSERT_EQ(asn1::unpack(pdu, unpacker), asn1::OCUDUASN_SUCCESS) << "Failed to unpack the XNAP PDU";
 }
 
 /// Builds an ASN.1 Retrieve UE Context Request carrying an RRC Reestablishment UE Context ID, as a peer sends it.

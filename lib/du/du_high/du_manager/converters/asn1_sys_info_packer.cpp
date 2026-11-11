@@ -58,7 +58,7 @@ byte_buffer asn1_packer::pack_mib(const du_cell_config& du_cfg)
 
   byte_buffer         buf;
   asn1::bit_ref       bref{buf};
-  asn1::OCUDUASN_CODE ret = mib.pack(bref);
+  asn1::OCUDUASN_CODE ret = asn1::pack(bref, mib);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack MIB");
 
   return buf;
@@ -595,12 +595,12 @@ byte_buffer asn1_packer::pack_sib1(const du_cell_config& du_cfg, std::string* js
   byte_buffer          buf;
   asn1::bit_ref        bref{buf};
   asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg);
-  asn1::OCUDUASN_CODE  ret  = sib1.pack(bref);
+  asn1::OCUDUASN_CODE  ret  = asn1::pack(bref, sib1);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack SIB1");
 
   if (js_str != nullptr) {
     asn1::json_writer js;
-    sib1.to_json(js);
+    asn1::to_json(js, sib1);
     *js_str = js.to_string();
   }
   return buf;
@@ -907,12 +907,12 @@ byte_buffer asn1_packer::pack_sib19(const sib19_info& sib19_params, std::string*
   byte_buffer               buf;
   asn1::bit_ref             bref{buf};
   asn1::rrc_nr::sib19_r17_s sib19 = make_asn1_rrc_cell_sib19(sib19_params);
-  asn1::OCUDUASN_CODE       ret   = sib19.pack(bref);
+  asn1::OCUDUASN_CODE       ret   = asn1::pack(bref, sib19);
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack SIB19");
 
   if (js_str != nullptr) {
     asn1::json_writer js;
-    sib19.to_json(js);
+    asn1::to_json(js, sib19);
     *js_str = js.to_string();
   }
   return buf;
@@ -1023,7 +1023,7 @@ static void pack_si_message(byte_buffer& buffer, const asn1::rrc_nr::bcch_dl_sch
 {
   // Pack into the buffer.
   asn1::bit_ref       bref{buffer};
-  asn1::OCUDUASN_CODE ret = msg.pack(bref);
+  asn1::OCUDUASN_CODE ret = asn1::pack(bref, msg);
 
   ocudu_assert(ret == asn1::OCUDUASN_SUCCESS, "Failed to pack SI message");
 }
@@ -1031,7 +1031,7 @@ static void pack_si_message(byte_buffer& buffer, const asn1::rrc_nr::bcch_dl_sch
 static std::string bcch_dl_sch_msg_to_json(const asn1::rrc_nr::bcch_dl_sch_msg_s& msg)
 {
   asn1::json_writer js;
-  msg.to_json(js);
+  asn1::to_json(js, msg);
   return js.to_string();
 }
 

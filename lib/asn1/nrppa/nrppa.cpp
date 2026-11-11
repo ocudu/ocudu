@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/nrppa/nrppa.h"
+#include "ocudu/asn1/asn1_ap_codec.h"
 #include "ocudu/asn1/nrppa/nrppa_pdu_contents.h"
 
 using namespace asn1;
@@ -14,299 +15,325 @@ using namespace asn1::nrppa;
  ******************************************************************************/
 
 // NRPPA-ELEMENTARY-PROCEDURES ::= OBJECT SET OF NRPPA-ELEMENTARY-PROCEDURE
-uint16_t nr_ppa_elem_procs_o::idx_to_proc_code(uint32_t idx)
-{
-  static const uint16_t names[] = {2, 6, 9, 11, 16, 17, 19, 20, 3, 4, 5, 0, 1, 7, 8, 10, 12, 13, 14, 15, 18, 21, 22};
-  return map_enum_number(names, 23, idx, "proc_code");
-}
-bool nr_ppa_elem_procs_o::is_proc_code_valid(const uint16_t& proc_code)
-{
-  static const uint16_t names[] = {2, 6, 9, 11, 16, 17, 19, 20, 3, 4, 5, 0, 1, 7, 8, 10, 12, 13, 14, 15, 18, 21, 22};
-  for (const auto& o : names) {
-    if (o == proc_code) {
-      return true;
-    }
-  }
-  return false;
-}
-nr_ppa_elem_procs_o::init_msg_c nr_ppa_elem_procs_o::get_init_msg(const uint16_t& proc_code)
-{
-  init_msg_c ret{};
-  switch (proc_code) {
-    case 2:
-      ret.set(init_msg_c::types::e_c_id_meas_initiation_request);
-      break;
-    case 6:
-      ret.set(init_msg_c::types::otdoa_info_request);
-      break;
-    case 9:
-      ret.set(init_msg_c::types::positioning_info_request);
-      break;
-    case 11:
-      ret.set(init_msg_c::types::meas_request);
-      break;
-    case 16:
-      ret.set(init_msg_c::types::trp_info_request);
-      break;
-    case 17:
-      ret.set(init_msg_c::types::positioning_activation_request);
-      break;
-    case 19:
-      ret.set(init_msg_c::types::prs_cfg_request);
-      break;
-    case 20:
-      ret.set(init_msg_c::types::meas_precfg_required);
-      break;
-    case 3:
-      ret.set(init_msg_c::types::e_c_id_meas_fail_ind);
-      break;
-    case 4:
-      ret.set(init_msg_c::types::e_c_id_meas_report);
-      break;
-    case 5:
-      ret.set(init_msg_c::types::e_c_id_meas_termination_cmd);
-      break;
-    case 0:
-      ret.set(init_msg_c::types::error_ind);
-      break;
-    case 1:
-      ret.set(init_msg_c::types::private_msg);
-      break;
-    case 7:
-      ret.set(init_msg_c::types::assist_info_ctrl);
-      break;
-    case 8:
-      ret.set(init_msg_c::types::assist_info_feedback);
-      break;
-    case 10:
-      ret.set(init_msg_c::types::positioning_info_upd);
-      break;
-    case 12:
-      ret.set(init_msg_c::types::meas_report);
-      break;
-    case 13:
-      ret.set(init_msg_c::types::meas_upd);
-      break;
-    case 14:
-      ret.set(init_msg_c::types::meas_abort);
-      break;
-    case 15:
-      ret.set(init_msg_c::types::meas_fail_ind);
-      break;
-    case 18:
-      ret.set(init_msg_c::types::positioning_deactivation);
-      break;
-    case 21:
-      ret.set(init_msg_c::types::meas_activation);
-      break;
-    case 22:
-      ret.set(init_msg_c::types::srs_info_reserv_notif);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-nr_ppa_elem_procs_o::successful_outcome_c nr_ppa_elem_procs_o::get_successful_outcome(const uint16_t& proc_code)
-{
-  successful_outcome_c ret{};
-  switch (proc_code) {
-    case 2:
-      ret.set(successful_outcome_c::types::e_c_id_meas_initiation_resp);
-      break;
-    case 6:
-      ret.set(successful_outcome_c::types::otdoa_info_resp);
-      break;
-    case 9:
-      ret.set(successful_outcome_c::types::positioning_info_resp);
-      break;
-    case 11:
-      ret.set(successful_outcome_c::types::meas_resp);
-      break;
-    case 16:
-      ret.set(successful_outcome_c::types::trp_info_resp);
-      break;
-    case 17:
-      ret.set(successful_outcome_c::types::positioning_activation_resp);
-      break;
-    case 19:
-      ret.set(successful_outcome_c::types::prs_cfg_resp);
-      break;
-    case 20:
-      ret.set(successful_outcome_c::types::meas_precfg_confirm);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-nr_ppa_elem_procs_o::unsuccessful_outcome_c nr_ppa_elem_procs_o::get_unsuccessful_outcome(const uint16_t& proc_code)
-{
-  unsuccessful_outcome_c ret{};
-  switch (proc_code) {
-    case 2:
-      ret.set(unsuccessful_outcome_c::types::e_c_id_meas_initiation_fail);
-      break;
-    case 6:
-      ret.set(unsuccessful_outcome_c::types::otdoa_info_fail);
-      break;
-    case 9:
-      ret.set(unsuccessful_outcome_c::types::positioning_info_fail);
-      break;
-    case 11:
-      ret.set(unsuccessful_outcome_c::types::meas_fail);
-      break;
-    case 16:
-      ret.set(unsuccessful_outcome_c::types::trp_info_fail);
-      break;
-    case 17:
-      ret.set(unsuccessful_outcome_c::types::positioning_activation_fail);
-      break;
-    case 19:
-      ret.set(unsuccessful_outcome_c::types::prs_cfg_fail);
-      break;
-    case 20:
-      ret.set(unsuccessful_outcome_c::types::meas_precfg_refuse);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-crit_e nr_ppa_elem_procs_o::get_crit(const uint16_t& proc_code)
-{
-  switch (proc_code) {
-    case 2:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    case 9:
-      return crit_e::reject;
-    case 11:
-      return crit_e::reject;
-    case 16:
-      return crit_e::reject;
-    case 17:
-      return crit_e::reject;
-    case 19:
-      return crit_e::reject;
-    case 20:
-      return crit_e::reject;
-    case 3:
-      return crit_e::ignore;
-    case 4:
-      return crit_e::ignore;
-    case 5:
-      return crit_e::reject;
-    case 0:
-      return crit_e::ignore;
-    case 1:
-      return crit_e::ignore;
-    case 7:
-      return crit_e::reject;
-    case 8:
-      return crit_e::reject;
-    case 10:
-      return crit_e::ignore;
-    case 12:
-      return crit_e::ignore;
-    case 13:
-      return crit_e::ignore;
-    case 14:
-      return crit_e::ignore;
-    case 15:
-      return crit_e::ignore;
-    case 18:
-      return crit_e::ignore;
-    case 21:
-      return crit_e::ignore;
-    case 22:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return {};
-}
+static const uint32_t objset_proc_code_nr_ppa_elem_procs_o[] = {2, 6, 9, 11, 16, 17, 19, 20, 3,  4,  5, 0,
+                                                                1, 7, 8, 10, 12, 13, 14, 15, 18, 21, 22};
+static const uint8_t  objset_init_msg_nr_ppa_elem_procs_o[]  = {
+    nr_ppa_elem_procs_o::init_msg_c::types::e_c_id_meas_initiation_request,
+    nr_ppa_elem_procs_o::init_msg_c::types::otdoa_info_request,
+    nr_ppa_elem_procs_o::init_msg_c::types::positioning_info_request,
+    nr_ppa_elem_procs_o::init_msg_c::types::meas_request,
+    nr_ppa_elem_procs_o::init_msg_c::types::trp_info_request,
+    nr_ppa_elem_procs_o::init_msg_c::types::positioning_activation_request,
+    nr_ppa_elem_procs_o::init_msg_c::types::prs_cfg_request,
+    nr_ppa_elem_procs_o::init_msg_c::types::meas_precfg_required,
+    nr_ppa_elem_procs_o::init_msg_c::types::e_c_id_meas_fail_ind,
+    nr_ppa_elem_procs_o::init_msg_c::types::e_c_id_meas_report,
+    nr_ppa_elem_procs_o::init_msg_c::types::e_c_id_meas_termination_cmd,
+    nr_ppa_elem_procs_o::init_msg_c::types::error_ind,
+    nr_ppa_elem_procs_o::init_msg_c::types::private_msg,
+    nr_ppa_elem_procs_o::init_msg_c::types::assist_info_ctrl,
+    nr_ppa_elem_procs_o::init_msg_c::types::assist_info_feedback,
+    nr_ppa_elem_procs_o::init_msg_c::types::positioning_info_upd,
+    nr_ppa_elem_procs_o::init_msg_c::types::meas_report,
+    nr_ppa_elem_procs_o::init_msg_c::types::meas_upd,
+    nr_ppa_elem_procs_o::init_msg_c::types::meas_abort,
+    nr_ppa_elem_procs_o::init_msg_c::types::meas_fail_ind,
+    nr_ppa_elem_procs_o::init_msg_c::types::positioning_deactivation,
+    nr_ppa_elem_procs_o::init_msg_c::types::meas_activation,
+    nr_ppa_elem_procs_o::init_msg_c::types::srs_info_reserv_notif};
+static const uint8_t objset_successful_outcome_nr_ppa_elem_procs_o[] = {
+    nr_ppa_elem_procs_o::successful_outcome_c::types::e_c_id_meas_initiation_resp,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::otdoa_info_resp,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::positioning_info_resp,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::meas_resp,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::trp_info_resp,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::positioning_activation_resp,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::prs_cfg_resp,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::meas_precfg_confirm,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype};
+static const uint8_t objset_unsuccessful_outcome_nr_ppa_elem_procs_o[] = {
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::e_c_id_meas_initiation_fail,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::otdoa_info_fail,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::positioning_info_fail,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::meas_fail,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::trp_info_fail,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::positioning_activation_fail,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::prs_cfg_fail,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::meas_precfg_refuse,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype};
+static const uint8_t objset_crit_nr_ppa_elem_procs_o[] = {
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::ignore,
+    crit_e::ignore, crit_e::reject, crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::reject};
+static const asn1::table::objset_column objset_columns_nr_ppa_elem_procs_o[] = {
+    {objset_init_msg_nr_ppa_elem_procs_o, nr_ppa_elem_procs_o::init_msg_c::types::nulltype},
+    {objset_successful_outcome_nr_ppa_elem_procs_o, nr_ppa_elem_procs_o::successful_outcome_c::types::nulltype},
+    {objset_unsuccessful_outcome_nr_ppa_elem_procs_o, nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nulltype},
+    {objset_crit_nr_ppa_elem_procs_o, crit_e::nulltype}};
+const asn1::table::objset_desc nr_ppa_elem_procs_o::desc = {objset_proc_code_nr_ppa_elem_procs_o,
+                                                            23,
+                                                            "proc_code",
+                                                            objset_columns_nr_ppa_elem_procs_o};
 
 // InitiatingMessage ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_nr_ppa_elem_procs_o_init_msg_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_c_id_meas_initiation_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<otdoa_info_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_info_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<trp_info_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_activation_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<prs_cfg_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_precfg_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_c_id_meas_fail_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_c_id_meas_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_c_id_meas_termination_cmd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<error_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<private_msg_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<assist_info_ctrl_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<assist_info_feedback_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_info_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_abort_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_fail_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_deactivation_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_activation_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<srs_info_reserv_notif_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_nr_ppa_elem_procs_o_init_msg_c_names[] = {
+    {"E-CIDMeasurementInitiationRequest", nullptr},
+    {"OTDOAInformationRequest", nullptr},
+    {"PositioningInformationRequest", nullptr},
+    {"MeasurementRequest", nullptr},
+    {"TRPInformationRequest", nullptr},
+    {"PositioningActivationRequest", nullptr},
+    {"PRSConfigurationRequest", nullptr},
+    {"MeasurementPreconfigurationRequired", nullptr},
+    {"E-CIDMeasurementFailureIndication", nullptr},
+    {"E-CIDMeasurementReport", nullptr},
+    {"E-CIDMeasurementTerminationCommand", nullptr},
+    {"ErrorIndication", nullptr},
+    {"PrivateMessage", nullptr},
+    {"AssistanceInformationControl", nullptr},
+    {"AssistanceInformationFeedback", nullptr},
+    {"PositioningInformationUpdate", nullptr},
+    {"MeasurementReport", nullptr},
+    {"MeasurementUpdate", nullptr},
+    {"MeasurementAbort", nullptr},
+    {"MeasurementFailureIndication", nullptr},
+    {"PositioningDeactivation", nullptr},
+    {"MeasurementActivation", nullptr},
+    {"SRSInformationReservationNotification", nullptr}};
+const asn1::table::choice_desc nr_ppa_elem_procs_o::init_msg_c::desc = {
+    asn1::table::enum_int_type<nr_ppa_elem_procs_o::init_msg_c::types>(),
+    nr_ppa_elem_procs_o::init_msg_c::types::nof_types,
+    nr_ppa_elem_procs_o::init_msg_c::types::nof_exts,
+    nr_ppa_elem_procs_o::init_msg_c::types::has_ext,
+    true,
+    choice_table_nr_ppa_elem_procs_o_init_msg_c_alternatives,
+    &asn1::table::choice_set<nr_ppa_elem_procs_o::init_msg_c>,
+    choice_table_nr_ppa_elem_procs_o_init_msg_c_names,
+    "nr_ppa_elem_procs_o::init_msg_c",
+    offsetof(nr_ppa_elem_procs_o::init_msg_c, type_),
+    offsetof(nr_ppa_elem_procs_o::init_msg_c, c),
+    false,
+    nullptr,
+    true};
+
 void nr_ppa_elem_procs_o::init_msg_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::e_c_id_meas_initiation_request:
-      c = e_c_id_meas_initiation_request_s{};
-      break;
-    case types::otdoa_info_request:
-      c = otdoa_info_request_s{};
-      break;
-    case types::positioning_info_request:
-      c = positioning_info_request_s{};
-      break;
-    case types::meas_request:
-      c = meas_request_s{};
-      break;
-    case types::trp_info_request:
-      c = trp_info_request_s{};
-      break;
-    case types::positioning_activation_request:
-      c = positioning_activation_request_s{};
-      break;
-    case types::prs_cfg_request:
-      c = prs_cfg_request_s{};
-      break;
-    case types::meas_precfg_required:
-      c = meas_precfg_required_s{};
-      break;
-    case types::e_c_id_meas_fail_ind:
-      c = e_c_id_meas_fail_ind_s{};
-      break;
-    case types::e_c_id_meas_report:
-      c = e_c_id_meas_report_s{};
-      break;
-    case types::e_c_id_meas_termination_cmd:
-      c = e_c_id_meas_termination_cmd_s{};
-      break;
-    case types::error_ind:
-      c = error_ind_s{};
-      break;
-    case types::private_msg:
-      c = private_msg_s{};
-      break;
-    case types::assist_info_ctrl:
-      c = assist_info_ctrl_s{};
-      break;
-    case types::assist_info_feedback:
-      c = assist_info_feedback_s{};
-      break;
-    case types::positioning_info_upd:
-      c = positioning_info_upd_s{};
-      break;
-    case types::meas_report:
-      c = meas_report_s{};
-      break;
-    case types::meas_upd:
-      c = meas_upd_s{};
-      break;
-    case types::meas_abort:
-      c = meas_abort_s{};
-      break;
-    case types::meas_fail_ind:
-      c = meas_fail_ind_s{};
-      break;
-    case types::positioning_deactivation:
-      c = positioning_deactivation_s{};
-      break;
-    case types::meas_activation:
-      c = meas_activation_s{};
-      break;
-    case types::srs_info_reserv_notif:
-      c = srs_info_reserv_notif_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::init_msg_c");
-  }
+  asn1::table::set_any_choice(&c, e, nr_ppa_elem_procs_o::init_msg_c::desc);
 }
 e_c_id_meas_initiation_request_s& nr_ppa_elem_procs_o::init_msg_c::e_c_id_meas_initiation_request()
 {
@@ -538,328 +565,130 @@ const srs_info_reserv_notif_s& nr_ppa_elem_procs_o::init_msg_c::srs_info_reserv_
   assert_choice_type(types::srs_info_reserv_notif, type_, "InitiatingMessage");
   return c.get<srs_info_reserv_notif_s>();
 }
-void nr_ppa_elem_procs_o::init_msg_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::e_c_id_meas_initiation_request:
-      j.write_fieldname("E-CIDMeasurementInitiationRequest");
-      c.get<e_c_id_meas_initiation_request_s>().to_json(j);
-      break;
-    case types::otdoa_info_request:
-      j.write_fieldname("OTDOAInformationRequest");
-      c.get<otdoa_info_request_s>().to_json(j);
-      break;
-    case types::positioning_info_request:
-      j.write_fieldname("PositioningInformationRequest");
-      c.get<positioning_info_request_s>().to_json(j);
-      break;
-    case types::meas_request:
-      j.write_fieldname("MeasurementRequest");
-      c.get<meas_request_s>().to_json(j);
-      break;
-    case types::trp_info_request:
-      j.write_fieldname("TRPInformationRequest");
-      c.get<trp_info_request_s>().to_json(j);
-      break;
-    case types::positioning_activation_request:
-      j.write_fieldname("PositioningActivationRequest");
-      c.get<positioning_activation_request_s>().to_json(j);
-      break;
-    case types::prs_cfg_request:
-      j.write_fieldname("PRSConfigurationRequest");
-      c.get<prs_cfg_request_s>().to_json(j);
-      break;
-    case types::meas_precfg_required:
-      j.write_fieldname("MeasurementPreconfigurationRequired");
-      c.get<meas_precfg_required_s>().to_json(j);
-      break;
-    case types::e_c_id_meas_fail_ind:
-      j.write_fieldname("E-CIDMeasurementFailureIndication");
-      c.get<e_c_id_meas_fail_ind_s>().to_json(j);
-      break;
-    case types::e_c_id_meas_report:
-      j.write_fieldname("E-CIDMeasurementReport");
-      c.get<e_c_id_meas_report_s>().to_json(j);
-      break;
-    case types::e_c_id_meas_termination_cmd:
-      j.write_fieldname("E-CIDMeasurementTerminationCommand");
-      c.get<e_c_id_meas_termination_cmd_s>().to_json(j);
-      break;
-    case types::error_ind:
-      j.write_fieldname("ErrorIndication");
-      c.get<error_ind_s>().to_json(j);
-      break;
-    case types::private_msg:
-      j.write_fieldname("PrivateMessage");
-      c.get<private_msg_s>().to_json(j);
-      break;
-    case types::assist_info_ctrl:
-      j.write_fieldname("AssistanceInformationControl");
-      c.get<assist_info_ctrl_s>().to_json(j);
-      break;
-    case types::assist_info_feedback:
-      j.write_fieldname("AssistanceInformationFeedback");
-      c.get<assist_info_feedback_s>().to_json(j);
-      break;
-    case types::positioning_info_upd:
-      j.write_fieldname("PositioningInformationUpdate");
-      c.get<positioning_info_upd_s>().to_json(j);
-      break;
-    case types::meas_report:
-      j.write_fieldname("MeasurementReport");
-      c.get<meas_report_s>().to_json(j);
-      break;
-    case types::meas_upd:
-      j.write_fieldname("MeasurementUpdate");
-      c.get<meas_upd_s>().to_json(j);
-      break;
-    case types::meas_abort:
-      j.write_fieldname("MeasurementAbort");
-      c.get<meas_abort_s>().to_json(j);
-      break;
-    case types::meas_fail_ind:
-      j.write_fieldname("MeasurementFailureIndication");
-      c.get<meas_fail_ind_s>().to_json(j);
-      break;
-    case types::positioning_deactivation:
-      j.write_fieldname("PositioningDeactivation");
-      c.get<positioning_deactivation_s>().to_json(j);
-      break;
-    case types::meas_activation:
-      j.write_fieldname("MeasurementActivation");
-      c.get<meas_activation_s>().to_json(j);
-      break;
-    case types::srs_info_reserv_notif:
-      j.write_fieldname("SRSInformationReservationNotification");
-      c.get<srs_info_reserv_notif_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::init_msg_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE nr_ppa_elem_procs_o::init_msg_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::e_c_id_meas_initiation_request:
-      HANDLE_CODE(c.get<e_c_id_meas_initiation_request_s>().pack(bref));
-      break;
-    case types::otdoa_info_request:
-      HANDLE_CODE(c.get<otdoa_info_request_s>().pack(bref));
-      break;
-    case types::positioning_info_request:
-      HANDLE_CODE(c.get<positioning_info_request_s>().pack(bref));
-      break;
-    case types::meas_request:
-      HANDLE_CODE(c.get<meas_request_s>().pack(bref));
-      break;
-    case types::trp_info_request:
-      HANDLE_CODE(c.get<trp_info_request_s>().pack(bref));
-      break;
-    case types::positioning_activation_request:
-      HANDLE_CODE(c.get<positioning_activation_request_s>().pack(bref));
-      break;
-    case types::prs_cfg_request:
-      HANDLE_CODE(c.get<prs_cfg_request_s>().pack(bref));
-      break;
-    case types::meas_precfg_required:
-      HANDLE_CODE(c.get<meas_precfg_required_s>().pack(bref));
-      break;
-    case types::e_c_id_meas_fail_ind:
-      HANDLE_CODE(c.get<e_c_id_meas_fail_ind_s>().pack(bref));
-      break;
-    case types::e_c_id_meas_report:
-      HANDLE_CODE(c.get<e_c_id_meas_report_s>().pack(bref));
-      break;
-    case types::e_c_id_meas_termination_cmd:
-      HANDLE_CODE(c.get<e_c_id_meas_termination_cmd_s>().pack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().pack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().pack(bref));
-      break;
-    case types::assist_info_ctrl:
-      HANDLE_CODE(c.get<assist_info_ctrl_s>().pack(bref));
-      break;
-    case types::assist_info_feedback:
-      HANDLE_CODE(c.get<assist_info_feedback_s>().pack(bref));
-      break;
-    case types::positioning_info_upd:
-      HANDLE_CODE(c.get<positioning_info_upd_s>().pack(bref));
-      break;
-    case types::meas_report:
-      HANDLE_CODE(c.get<meas_report_s>().pack(bref));
-      break;
-    case types::meas_upd:
-      HANDLE_CODE(c.get<meas_upd_s>().pack(bref));
-      break;
-    case types::meas_abort:
-      HANDLE_CODE(c.get<meas_abort_s>().pack(bref));
-      break;
-    case types::meas_fail_ind:
-      HANDLE_CODE(c.get<meas_fail_ind_s>().pack(bref));
-      break;
-    case types::positioning_deactivation:
-      HANDLE_CODE(c.get<positioning_deactivation_s>().pack(bref));
-      break;
-    case types::meas_activation:
-      HANDLE_CODE(c.get<meas_activation_s>().pack(bref));
-      break;
-    case types::srs_info_reserv_notif:
-      HANDLE_CODE(c.get<srs_info_reserv_notif_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_ppa_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::e_c_id_meas_initiation_request:
-      HANDLE_CODE(c.get<e_c_id_meas_initiation_request_s>().unpack(bref));
-      break;
-    case types::otdoa_info_request:
-      HANDLE_CODE(c.get<otdoa_info_request_s>().unpack(bref));
-      break;
-    case types::positioning_info_request:
-      HANDLE_CODE(c.get<positioning_info_request_s>().unpack(bref));
-      break;
-    case types::meas_request:
-      HANDLE_CODE(c.get<meas_request_s>().unpack(bref));
-      break;
-    case types::trp_info_request:
-      HANDLE_CODE(c.get<trp_info_request_s>().unpack(bref));
-      break;
-    case types::positioning_activation_request:
-      HANDLE_CODE(c.get<positioning_activation_request_s>().unpack(bref));
-      break;
-    case types::prs_cfg_request:
-      HANDLE_CODE(c.get<prs_cfg_request_s>().unpack(bref));
-      break;
-    case types::meas_precfg_required:
-      HANDLE_CODE(c.get<meas_precfg_required_s>().unpack(bref));
-      break;
-    case types::e_c_id_meas_fail_ind:
-      HANDLE_CODE(c.get<e_c_id_meas_fail_ind_s>().unpack(bref));
-      break;
-    case types::e_c_id_meas_report:
-      HANDLE_CODE(c.get<e_c_id_meas_report_s>().unpack(bref));
-      break;
-    case types::e_c_id_meas_termination_cmd:
-      HANDLE_CODE(c.get<e_c_id_meas_termination_cmd_s>().unpack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().unpack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().unpack(bref));
-      break;
-    case types::assist_info_ctrl:
-      HANDLE_CODE(c.get<assist_info_ctrl_s>().unpack(bref));
-      break;
-    case types::assist_info_feedback:
-      HANDLE_CODE(c.get<assist_info_feedback_s>().unpack(bref));
-      break;
-    case types::positioning_info_upd:
-      HANDLE_CODE(c.get<positioning_info_upd_s>().unpack(bref));
-      break;
-    case types::meas_report:
-      HANDLE_CODE(c.get<meas_report_s>().unpack(bref));
-      break;
-    case types::meas_upd:
-      HANDLE_CODE(c.get<meas_upd_s>().unpack(bref));
-      break;
-    case types::meas_abort:
-      HANDLE_CODE(c.get<meas_abort_s>().unpack(bref));
-      break;
-    case types::meas_fail_ind:
-      HANDLE_CODE(c.get<meas_fail_ind_s>().unpack(bref));
-      break;
-    case types::positioning_deactivation:
-      HANDLE_CODE(c.get<positioning_deactivation_s>().unpack(bref));
-      break;
-    case types::meas_activation:
-      HANDLE_CODE(c.get<meas_activation_s>().unpack(bref));
-      break;
-    case types::srs_info_reserv_notif:
-      HANDLE_CODE(c.get<srs_info_reserv_notif_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* nr_ppa_elem_procs_o::init_msg_c::types_opts::to_string() const
-{
-  static const char* names[] = {"E-CIDMeasurementInitiationRequest",
-                                "OTDOAInformationRequest",
-                                "PositioningInformationRequest",
-                                "MeasurementRequest",
-                                "TRPInformationRequest",
-                                "PositioningActivationRequest",
-                                "PRSConfigurationRequest",
-                                "MeasurementPreconfigurationRequired",
-                                "E-CIDMeasurementFailureIndication",
-                                "E-CIDMeasurementReport",
-                                "E-CIDMeasurementTerminationCommand",
-                                "ErrorIndication",
-                                "PrivateMessage",
-                                "AssistanceInformationControl",
-                                "AssistanceInformationFeedback",
-                                "PositioningInformationUpdate",
-                                "MeasurementReport",
-                                "MeasurementUpdate",
-                                "MeasurementAbort",
-                                "MeasurementFailureIndication",
-                                "PositioningDeactivation",
-                                "MeasurementActivation",
-                                "SRSInformationReservationNotification"};
-  return convert_enum_idx(names, 23, value, "nr_ppa_elem_procs_o::init_msg_c::types");
-}
+static const char* enum_names_nr_ppa_elem_procs_o_init_msg_c_types_values[]    = {"E-CIDMeasurementInitiationRequest",
+                                                                                  "OTDOAInformationRequest",
+                                                                                  "PositioningInformationRequest",
+                                                                                  "MeasurementRequest",
+                                                                                  "TRPInformationRequest",
+                                                                                  "PositioningActivationRequest",
+                                                                                  "PRSConfigurationRequest",
+                                                                                  "MeasurementPreconfigurationRequired",
+                                                                                  "E-CIDMeasurementFailureIndication",
+                                                                                  "E-CIDMeasurementReport",
+                                                                                  "E-CIDMeasurementTerminationCommand",
+                                                                                  "ErrorIndication",
+                                                                                  "PrivateMessage",
+                                                                                  "AssistanceInformationControl",
+                                                                                  "AssistanceInformationFeedback",
+                                                                                  "PositioningInformationUpdate",
+                                                                                  "MeasurementReport",
+                                                                                  "MeasurementUpdate",
+                                                                                  "MeasurementAbort",
+                                                                                  "MeasurementFailureIndication",
+                                                                                  "PositioningDeactivation",
+                                                                                  "MeasurementActivation",
+                                                                                  "SRSInformationReservationNotification"};
+const asn1::table::enum_desc nr_ppa_elem_procs_o::init_msg_c::types_opts::desc = {
+    enum_names_nr_ppa_elem_procs_o_init_msg_c_types_values,
+    23,
+    "nr_ppa_elem_procs_o::init_msg_c::types"};
 
 // SuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_nr_ppa_elem_procs_o_successful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_c_id_meas_initiation_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<otdoa_info_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_info_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<trp_info_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_activation_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<prs_cfg_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_precfg_confirm_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_nr_ppa_elem_procs_o_successful_outcome_c_names[] = {
+    {"E-CIDMeasurementInitiationResponse", nullptr},
+    {"OTDOAInformationResponse", nullptr},
+    {"PositioningInformationResponse", nullptr},
+    {"MeasurementResponse", nullptr},
+    {"TRPInformationResponse", nullptr},
+    {"PositioningActivationResponse", nullptr},
+    {"PRSConfigurationResponse", nullptr},
+    {"MeasurementPreconfigurationConfirm", nullptr}};
+const asn1::table::choice_desc nr_ppa_elem_procs_o::successful_outcome_c::desc = {
+    asn1::table::enum_int_type<nr_ppa_elem_procs_o::successful_outcome_c::types>(),
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nof_types,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::nof_exts,
+    nr_ppa_elem_procs_o::successful_outcome_c::types::has_ext,
+    true,
+    choice_table_nr_ppa_elem_procs_o_successful_outcome_c_alternatives,
+    &asn1::table::choice_set<nr_ppa_elem_procs_o::successful_outcome_c>,
+    choice_table_nr_ppa_elem_procs_o_successful_outcome_c_names,
+    "nr_ppa_elem_procs_o::successful_outcome_c",
+    offsetof(nr_ppa_elem_procs_o::successful_outcome_c, type_),
+    offsetof(nr_ppa_elem_procs_o::successful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void nr_ppa_elem_procs_o::successful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::e_c_id_meas_initiation_resp:
-      c = e_c_id_meas_initiation_resp_s{};
-      break;
-    case types::otdoa_info_resp:
-      c = otdoa_info_resp_s{};
-      break;
-    case types::positioning_info_resp:
-      c = positioning_info_resp_s{};
-      break;
-    case types::meas_resp:
-      c = meas_resp_s{};
-      break;
-    case types::trp_info_resp:
-      c = trp_info_resp_s{};
-      break;
-    case types::positioning_activation_resp:
-      c = positioning_activation_resp_s{};
-      break;
-    case types::prs_cfg_resp:
-      c = prs_cfg_resp_s{};
-      break;
-    case types::meas_precfg_confirm:
-      c = meas_precfg_confirm_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::successful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, nr_ppa_elem_procs_o::successful_outcome_c::desc);
 }
 e_c_id_meas_initiation_resp_s& nr_ppa_elem_procs_o::successful_outcome_c::e_c_id_meas_initiation_resp()
 {
@@ -941,163 +770,116 @@ const meas_precfg_confirm_s& nr_ppa_elem_procs_o::successful_outcome_c::meas_pre
   assert_choice_type(types::meas_precfg_confirm, type_, "SuccessfulOutcome");
   return c.get<meas_precfg_confirm_s>();
 }
-void nr_ppa_elem_procs_o::successful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::e_c_id_meas_initiation_resp:
-      j.write_fieldname("E-CIDMeasurementInitiationResponse");
-      c.get<e_c_id_meas_initiation_resp_s>().to_json(j);
-      break;
-    case types::otdoa_info_resp:
-      j.write_fieldname("OTDOAInformationResponse");
-      c.get<otdoa_info_resp_s>().to_json(j);
-      break;
-    case types::positioning_info_resp:
-      j.write_fieldname("PositioningInformationResponse");
-      c.get<positioning_info_resp_s>().to_json(j);
-      break;
-    case types::meas_resp:
-      j.write_fieldname("MeasurementResponse");
-      c.get<meas_resp_s>().to_json(j);
-      break;
-    case types::trp_info_resp:
-      j.write_fieldname("TRPInformationResponse");
-      c.get<trp_info_resp_s>().to_json(j);
-      break;
-    case types::positioning_activation_resp:
-      j.write_fieldname("PositioningActivationResponse");
-      c.get<positioning_activation_resp_s>().to_json(j);
-      break;
-    case types::prs_cfg_resp:
-      j.write_fieldname("PRSConfigurationResponse");
-      c.get<prs_cfg_resp_s>().to_json(j);
-      break;
-    case types::meas_precfg_confirm:
-      j.write_fieldname("MeasurementPreconfigurationConfirm");
-      c.get<meas_precfg_confirm_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::successful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE nr_ppa_elem_procs_o::successful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::e_c_id_meas_initiation_resp:
-      HANDLE_CODE(c.get<e_c_id_meas_initiation_resp_s>().pack(bref));
-      break;
-    case types::otdoa_info_resp:
-      HANDLE_CODE(c.get<otdoa_info_resp_s>().pack(bref));
-      break;
-    case types::positioning_info_resp:
-      HANDLE_CODE(c.get<positioning_info_resp_s>().pack(bref));
-      break;
-    case types::meas_resp:
-      HANDLE_CODE(c.get<meas_resp_s>().pack(bref));
-      break;
-    case types::trp_info_resp:
-      HANDLE_CODE(c.get<trp_info_resp_s>().pack(bref));
-      break;
-    case types::positioning_activation_resp:
-      HANDLE_CODE(c.get<positioning_activation_resp_s>().pack(bref));
-      break;
-    case types::prs_cfg_resp:
-      HANDLE_CODE(c.get<prs_cfg_resp_s>().pack(bref));
-      break;
-    case types::meas_precfg_confirm:
-      HANDLE_CODE(c.get<meas_precfg_confirm_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_ppa_elem_procs_o::successful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::e_c_id_meas_initiation_resp:
-      HANDLE_CODE(c.get<e_c_id_meas_initiation_resp_s>().unpack(bref));
-      break;
-    case types::otdoa_info_resp:
-      HANDLE_CODE(c.get<otdoa_info_resp_s>().unpack(bref));
-      break;
-    case types::positioning_info_resp:
-      HANDLE_CODE(c.get<positioning_info_resp_s>().unpack(bref));
-      break;
-    case types::meas_resp:
-      HANDLE_CODE(c.get<meas_resp_s>().unpack(bref));
-      break;
-    case types::trp_info_resp:
-      HANDLE_CODE(c.get<trp_info_resp_s>().unpack(bref));
-      break;
-    case types::positioning_activation_resp:
-      HANDLE_CODE(c.get<positioning_activation_resp_s>().unpack(bref));
-      break;
-    case types::prs_cfg_resp:
-      HANDLE_CODE(c.get<prs_cfg_resp_s>().unpack(bref));
-      break;
-    case types::meas_precfg_confirm:
-      HANDLE_CODE(c.get<meas_precfg_confirm_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* nr_ppa_elem_procs_o::successful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"E-CIDMeasurementInitiationResponse",
-                                "OTDOAInformationResponse",
-                                "PositioningInformationResponse",
-                                "MeasurementResponse",
-                                "TRPInformationResponse",
-                                "PositioningActivationResponse",
-                                "PRSConfigurationResponse",
-                                "MeasurementPreconfigurationConfirm"};
-  return convert_enum_idx(names, 8, value, "nr_ppa_elem_procs_o::successful_outcome_c::types");
-}
+static const char* enum_names_nr_ppa_elem_procs_o_successful_outcome_c_types_values[] = {
+    "E-CIDMeasurementInitiationResponse",
+    "OTDOAInformationResponse",
+    "PositioningInformationResponse",
+    "MeasurementResponse",
+    "TRPInformationResponse",
+    "PositioningActivationResponse",
+    "PRSConfigurationResponse",
+    "MeasurementPreconfigurationConfirm"};
+const asn1::table::enum_desc nr_ppa_elem_procs_o::successful_outcome_c::types_opts::desc = {
+    enum_names_nr_ppa_elem_procs_o_successful_outcome_c_types_values,
+    8,
+    "nr_ppa_elem_procs_o::successful_outcome_c::types"};
 
 // UnsuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_nr_ppa_elem_procs_o_unsuccessful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_c_id_meas_initiation_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<otdoa_info_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_info_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<trp_info_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<positioning_activation_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<prs_cfg_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<meas_precfg_refuse_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_nr_ppa_elem_procs_o_unsuccessful_outcome_c_names[] = {
+    {"E-CIDMeasurementInitiationFailure", nullptr},
+    {"OTDOAInformationFailure", nullptr},
+    {"PositioningInformationFailure", nullptr},
+    {"MeasurementFailure", nullptr},
+    {"TRPInformationFailure", nullptr},
+    {"PositioningActivationFailure", nullptr},
+    {"PRSConfigurationFailure", nullptr},
+    {"MeasurementPreconfigurationRefuse", nullptr}};
+const asn1::table::choice_desc nr_ppa_elem_procs_o::unsuccessful_outcome_c::desc = {
+    asn1::table::enum_int_type<nr_ppa_elem_procs_o::unsuccessful_outcome_c::types>(),
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nof_types,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::nof_exts,
+    nr_ppa_elem_procs_o::unsuccessful_outcome_c::types::has_ext,
+    true,
+    choice_table_nr_ppa_elem_procs_o_unsuccessful_outcome_c_alternatives,
+    &asn1::table::choice_set<nr_ppa_elem_procs_o::unsuccessful_outcome_c>,
+    choice_table_nr_ppa_elem_procs_o_unsuccessful_outcome_c_names,
+    "nr_ppa_elem_procs_o::unsuccessful_outcome_c",
+    offsetof(nr_ppa_elem_procs_o::unsuccessful_outcome_c, type_),
+    offsetof(nr_ppa_elem_procs_o::unsuccessful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void nr_ppa_elem_procs_o::unsuccessful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::e_c_id_meas_initiation_fail:
-      c = e_c_id_meas_initiation_fail_s{};
-      break;
-    case types::otdoa_info_fail:
-      c = otdoa_info_fail_s{};
-      break;
-    case types::positioning_info_fail:
-      c = positioning_info_fail_s{};
-      break;
-    case types::meas_fail:
-      c = meas_fail_s{};
-      break;
-    case types::trp_info_fail:
-      c = trp_info_fail_s{};
-      break;
-    case types::positioning_activation_fail:
-      c = positioning_activation_fail_s{};
-      break;
-    case types::prs_cfg_fail:
-      c = prs_cfg_fail_s{};
-      break;
-    case types::meas_precfg_refuse:
-      c = meas_precfg_refuse_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::unsuccessful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, nr_ppa_elem_procs_o::unsuccessful_outcome_c::desc);
 }
 e_c_id_meas_initiation_fail_s& nr_ppa_elem_procs_o::unsuccessful_outcome_c::e_c_id_meas_initiation_fail()
 {
@@ -1179,335 +961,222 @@ const meas_precfg_refuse_s& nr_ppa_elem_procs_o::unsuccessful_outcome_c::meas_pr
   assert_choice_type(types::meas_precfg_refuse, type_, "UnsuccessfulOutcome");
   return c.get<meas_precfg_refuse_s>();
 }
-void nr_ppa_elem_procs_o::unsuccessful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::e_c_id_meas_initiation_fail:
-      j.write_fieldname("E-CIDMeasurementInitiationFailure");
-      c.get<e_c_id_meas_initiation_fail_s>().to_json(j);
-      break;
-    case types::otdoa_info_fail:
-      j.write_fieldname("OTDOAInformationFailure");
-      c.get<otdoa_info_fail_s>().to_json(j);
-      break;
-    case types::positioning_info_fail:
-      j.write_fieldname("PositioningInformationFailure");
-      c.get<positioning_info_fail_s>().to_json(j);
-      break;
-    case types::meas_fail:
-      j.write_fieldname("MeasurementFailure");
-      c.get<meas_fail_s>().to_json(j);
-      break;
-    case types::trp_info_fail:
-      j.write_fieldname("TRPInformationFailure");
-      c.get<trp_info_fail_s>().to_json(j);
-      break;
-    case types::positioning_activation_fail:
-      j.write_fieldname("PositioningActivationFailure");
-      c.get<positioning_activation_fail_s>().to_json(j);
-      break;
-    case types::prs_cfg_fail:
-      j.write_fieldname("PRSConfigurationFailure");
-      c.get<prs_cfg_fail_s>().to_json(j);
-      break;
-    case types::meas_precfg_refuse:
-      j.write_fieldname("MeasurementPreconfigurationRefuse");
-      c.get<meas_precfg_refuse_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::unsuccessful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE nr_ppa_elem_procs_o::unsuccessful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::e_c_id_meas_initiation_fail:
-      HANDLE_CODE(c.get<e_c_id_meas_initiation_fail_s>().pack(bref));
-      break;
-    case types::otdoa_info_fail:
-      HANDLE_CODE(c.get<otdoa_info_fail_s>().pack(bref));
-      break;
-    case types::positioning_info_fail:
-      HANDLE_CODE(c.get<positioning_info_fail_s>().pack(bref));
-      break;
-    case types::meas_fail:
-      HANDLE_CODE(c.get<meas_fail_s>().pack(bref));
-      break;
-    case types::trp_info_fail:
-      HANDLE_CODE(c.get<trp_info_fail_s>().pack(bref));
-      break;
-    case types::positioning_activation_fail:
-      HANDLE_CODE(c.get<positioning_activation_fail_s>().pack(bref));
-      break;
-    case types::prs_cfg_fail:
-      HANDLE_CODE(c.get<prs_cfg_fail_s>().pack(bref));
-      break;
-    case types::meas_precfg_refuse:
-      HANDLE_CODE(c.get<meas_precfg_refuse_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_ppa_elem_procs_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::e_c_id_meas_initiation_fail:
-      HANDLE_CODE(c.get<e_c_id_meas_initiation_fail_s>().unpack(bref));
-      break;
-    case types::otdoa_info_fail:
-      HANDLE_CODE(c.get<otdoa_info_fail_s>().unpack(bref));
-      break;
-    case types::positioning_info_fail:
-      HANDLE_CODE(c.get<positioning_info_fail_s>().unpack(bref));
-      break;
-    case types::meas_fail:
-      HANDLE_CODE(c.get<meas_fail_s>().unpack(bref));
-      break;
-    case types::trp_info_fail:
-      HANDLE_CODE(c.get<trp_info_fail_s>().unpack(bref));
-      break;
-    case types::positioning_activation_fail:
-      HANDLE_CODE(c.get<positioning_activation_fail_s>().unpack(bref));
-      break;
-    case types::prs_cfg_fail:
-      HANDLE_CODE(c.get<prs_cfg_fail_s>().unpack(bref));
-      break;
-    case types::meas_precfg_refuse:
-      HANDLE_CODE(c.get<meas_precfg_refuse_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* nr_ppa_elem_procs_o::unsuccessful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"E-CIDMeasurementInitiationFailure",
-                                "OTDOAInformationFailure",
-                                "PositioningInformationFailure",
-                                "MeasurementFailure",
-                                "TRPInformationFailure",
-                                "PositioningActivationFailure",
-                                "PRSConfigurationFailure",
-                                "MeasurementPreconfigurationRefuse"};
-  return convert_enum_idx(names, 8, value, "nr_ppa_elem_procs_o::unsuccessful_outcome_c::types");
-}
+static const char* enum_names_nr_ppa_elem_procs_o_unsuccessful_outcome_c_types_values[] = {
+    "E-CIDMeasurementInitiationFailure",
+    "OTDOAInformationFailure",
+    "PositioningInformationFailure",
+    "MeasurementFailure",
+    "TRPInformationFailure",
+    "PositioningActivationFailure",
+    "PRSConfigurationFailure",
+    "MeasurementPreconfigurationRefuse"};
+const asn1::table::enum_desc nr_ppa_elem_procs_o::unsuccessful_outcome_c::types_opts::desc = {
+    enum_names_nr_ppa_elem_procs_o_unsuccessful_outcome_c_types_values,
+    8,
+    "nr_ppa_elem_procs_o::unsuccessful_outcome_c::types"};
+
+// Columns of the object sets of NRPPA-ELEMENTARY-PROCEDURE.
+enum class nr_ppa_elem_proc_p_column : uint32_t { init_msg, successful_outcome, unsuccessful_outcome, crit };
 
 // InitiatingMessage ::= SEQUENCE{{NRPPA-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE init_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != nr_ppa_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(pack_integer(bref, nrppatransaction_id, (uint16_t)0u, (uint16_t)32767u, false, true));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE init_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  HANDLE_CODE(unpack_integer(nrppatransaction_id, bref, (uint16_t)0u, (uint16_t)32767u, false, true));
-  value = nr_ppa_elem_procs_o::get_init_msg(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void init_msg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_int("nrppatransactionID", nrppatransaction_id);
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_init_msg_s_fields[] = {
+    {offsetof(init_msg_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(init_msg_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(init_msg_s::crit),
+                                 decltype(init_msg_s::proc_code),
+                                 nr_ppa_elem_procs_o::desc,
+                                 nr_ppa_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(init_msg_s, nrppatransaction_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(32767),
+     nullptr},
+    {offsetof(init_msg_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(init_msg_s::value),
+                                  decltype(init_msg_s::proc_code),
+                                  nr_ppa_elem_procs_o::desc,
+                                  nr_ppa_elem_proc_p_column::init_msg,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_init_msg_s_names[] = {{"procedureCode", nullptr},
+                                                                     {"criticality", nullptr},
+                                                                     {"nrppatransactionID", nullptr},
+                                                                     {"value", nullptr}};
+const asn1::table::seq_desc          init_msg_s::desc =
+    {{seq_table_init_msg_s_fields, 4, UINT64_C(0xf), nullptr, 0}, false, true, nullptr, 0, seq_table_init_msg_s_names};
 bool init_msg_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not nr_ppa_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(nr_ppa_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = nr_ppa_elem_procs_o::get_crit(proc_code);
-  value     = nr_ppa_elem_procs_o::get_init_msg(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(nr_ppa_elem_procs_o::desc, nr_ppa_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, nr_ppa_elem_procs_o::desc, nr_ppa_elem_proc_p_column::init_msg, proc_code);
   return value.type().value != nr_ppa_elem_procs_o::init_msg_c::types_opts::nulltype;
 }
 
 // SuccessfulOutcome ::= SEQUENCE{{NRPPA-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE successful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != nr_ppa_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(pack_integer(bref, nrppatransaction_id, (uint16_t)0u, (uint16_t)32767u, false, true));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE successful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  HANDLE_CODE(unpack_integer(nrppatransaction_id, bref, (uint16_t)0u, (uint16_t)32767u, false, true));
-  value = nr_ppa_elem_procs_o::get_successful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void successful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_int("nrppatransactionID", nrppatransaction_id);
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_successful_outcome_s_fields[] = {
+    {offsetof(successful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(successful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(successful_outcome_s::crit),
+                                 decltype(successful_outcome_s::proc_code),
+                                 nr_ppa_elem_procs_o::desc,
+                                 nr_ppa_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(successful_outcome_s, nrppatransaction_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(32767),
+     nullptr},
+    {offsetof(successful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(successful_outcome_s::value),
+                                  decltype(successful_outcome_s::proc_code),
+                                  nr_ppa_elem_procs_o::desc,
+                                  nr_ppa_elem_proc_p_column::successful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_successful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                               {"criticality", nullptr},
+                                                                               {"nrppatransactionID", nullptr},
+                                                                               {"value", nullptr}};
+const asn1::table::seq_desc          successful_outcome_s::desc             = {
+    {seq_table_successful_outcome_s_fields, 4, UINT64_C(0xf), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_successful_outcome_s_names};
 bool successful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not nr_ppa_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(nr_ppa_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = nr_ppa_elem_procs_o::get_crit(proc_code);
-  value     = nr_ppa_elem_procs_o::get_successful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(nr_ppa_elem_procs_o::desc, nr_ppa_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(
+      value, nr_ppa_elem_procs_o::desc, nr_ppa_elem_proc_p_column::successful_outcome, proc_code);
   return value.type().value != nr_ppa_elem_procs_o::successful_outcome_c::types_opts::nulltype;
 }
 
 // UnsuccessfulOutcome ::= SEQUENCE{{NRPPA-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE unsuccessful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != nr_ppa_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(pack_integer(bref, nrppatransaction_id, (uint16_t)0u, (uint16_t)32767u, false, true));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE unsuccessful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  HANDLE_CODE(unpack_integer(nrppatransaction_id, bref, (uint16_t)0u, (uint16_t)32767u, false, true));
-  value = nr_ppa_elem_procs_o::get_unsuccessful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void unsuccessful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_int("nrppatransactionID", nrppatransaction_id);
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_unsuccessful_outcome_s_fields[] = {
+    {offsetof(unsuccessful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(unsuccessful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(unsuccessful_outcome_s::crit),
+                                 decltype(unsuccessful_outcome_s::proc_code),
+                                 nr_ppa_elem_procs_o::desc,
+                                 nr_ppa_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(unsuccessful_outcome_s, nrppatransaction_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(32767),
+     nullptr},
+    {offsetof(unsuccessful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(unsuccessful_outcome_s::value),
+                                  decltype(unsuccessful_outcome_s::proc_code),
+                                  nr_ppa_elem_procs_o::desc,
+                                  nr_ppa_elem_proc_p_column::unsuccessful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_unsuccessful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                                 {"criticality", nullptr},
+                                                                                 {"nrppatransactionID", nullptr},
+                                                                                 {"value", nullptr}};
+const asn1::table::seq_desc          unsuccessful_outcome_s::desc             = {
+    {seq_table_unsuccessful_outcome_s_fields, 4, UINT64_C(0xf), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_unsuccessful_outcome_s_names};
 bool unsuccessful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not nr_ppa_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(nr_ppa_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = nr_ppa_elem_procs_o::get_crit(proc_code);
-  value     = nr_ppa_elem_procs_o::get_unsuccessful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(nr_ppa_elem_procs_o::desc, nr_ppa_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(
+      value, nr_ppa_elem_procs_o::desc, nr_ppa_elem_proc_p_column::unsuccessful_outcome, proc_code);
   return value.type().value != nr_ppa_elem_procs_o::unsuccessful_outcome_c::types_opts::nulltype;
 }
 
 // NRPPA-PDU ::= CHOICE
-void nr_ppa_pdu_c::destroy_()
-{
-  switch (type_) {
-    case types::init_msg:
-      c.destroy<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.destroy<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.destroy<unsuccessful_outcome_s>();
-      break;
-    default:
-      break;
-  }
-}
-void nr_ppa_pdu_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::init_msg:
-      c.init<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.init<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.init<unsuccessful_outcome_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_pdu_c");
-  }
-}
-nr_ppa_pdu_c::nr_ppa_pdu_c(const nr_ppa_pdu_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::init_msg:
-      c.init(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.init(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.init(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_pdu_c");
-  }
-}
-nr_ppa_pdu_c& nr_ppa_pdu_c::operator=(const nr_ppa_pdu_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::init_msg:
-      c.set(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.set(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.set(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_pdu_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_nr_ppa_pdu_c_alternatives[] = {
+    &asn1::table::alternative_ops<init_msg_s, false>::value,
+    &asn1::table::alternative_ops<successful_outcome_s, false>::value,
+    &asn1::table::alternative_ops<unsuccessful_outcome_s, false>::value};
+const asn1::table::choice_storage_desc nr_ppa_pdu_c::storage_desc = {choice_storage_nr_ppa_pdu_c_alternatives,
+                                                                     3,
+                                                                     "nr_ppa_pdu_c"};
 
-  return *this;
-}
 init_msg_s& nr_ppa_pdu_c::set_init_msg()
 {
   set(types::init_msg);
@@ -1523,70 +1192,53 @@ unsuccessful_outcome_s& nr_ppa_pdu_c::set_unsuccessful_outcome()
   set(types::unsuccessful_outcome);
   return c.get<unsuccessful_outcome_s>();
 }
-void nr_ppa_pdu_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::init_msg:
-      j.write_fieldname("initiatingMessage");
-      c.get<init_msg_s>().to_json(j);
-      break;
-    case types::successful_outcome:
-      j.write_fieldname("successfulOutcome");
-      c.get<successful_outcome_s>().to_json(j);
-      break;
-    case types::unsuccessful_outcome:
-      j.write_fieldname("unsuccessfulOutcome");
-      c.get<unsuccessful_outcome_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_pdu_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE nr_ppa_pdu_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().pack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().pack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_pdu_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE nr_ppa_pdu_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().unpack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().unpack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "nr_ppa_pdu_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_nr_ppa_pdu_c_alternatives[] = {{0,
+                                                                                  asn1::table::seq_field::mandatory,
+                                                                                  asn1::table::field_op::sequence,
+                                                                                  false,
+                                                                                  false,
+                                                                                  0,
+                                                                                  0,
+                                                                                  nullptr,
+                                                                                  &init_msg_s::desc},
+                                                                                 {0,
+                                                                                  asn1::table::seq_field::mandatory,
+                                                                                  asn1::table::field_op::sequence,
+                                                                                  false,
+                                                                                  false,
+                                                                                  0,
+                                                                                  0,
+                                                                                  nullptr,
+                                                                                  &successful_outcome_s::desc},
+                                                                                 {0,
+                                                                                  asn1::table::seq_field::mandatory,
+                                                                                  asn1::table::field_op::sequence,
+                                                                                  false,
+                                                                                  false,
+                                                                                  0,
+                                                                                  0,
+                                                                                  nullptr,
+                                                                                  &unsuccessful_outcome_s::desc}};
+static const asn1::table::field_name choice_table_nr_ppa_pdu_c_names[]        = {{"initiatingMessage", nullptr},
+                                                                                 {"successfulOutcome", nullptr},
+                                                                                 {"unsuccessfulOutcome", nullptr}};
+const asn1::table::choice_desc       nr_ppa_pdu_c::desc = {asn1::table::enum_int_type<nr_ppa_pdu_c::types>(),
+                                                           nr_ppa_pdu_c::types::nof_types,
+                                                           nr_ppa_pdu_c::types::nof_exts,
+                                                           nr_ppa_pdu_c::types::has_ext,
+                                                           true,
+                                                           choice_table_nr_ppa_pdu_c_alternatives,
+                                                           nullptr,
+                                                           choice_table_nr_ppa_pdu_c_names,
+                                                           "nr_ppa_pdu_c",
+                                                           offsetof(nr_ppa_pdu_c, c.type),
+                                                           offsetof(nr_ppa_pdu_c, c.value),
+                                                           false,
+                                                           &nr_ppa_pdu_c::storage_desc};
 
-const char* nr_ppa_pdu_c::types_opts::to_string() const
-{
-  static const char* names[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome"};
-  return convert_enum_idx(names, 3, value, "nr_ppa_pdu_c::types");
-}
+static const char*           enum_names_nr_ppa_pdu_c_types_values[] = {"initiatingMessage",
+                                                                       "successfulOutcome",
+                                                                       "unsuccessfulOutcome"};
+const asn1::table::enum_desc nr_ppa_pdu_c::types_opts::desc         = {enum_names_nr_ppa_pdu_c_types_values,
+                                                                       3,
+                                                                       "nr_ppa_pdu_c::types"};

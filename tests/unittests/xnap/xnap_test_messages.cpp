@@ -6,7 +6,7 @@
 #include "xnap_test_messages.h"
 #include "lib/xnap/procedures/xn_setup_procedure_asn1_helpers.h"
 #include "lib/xnap/xnap_asn1_converters.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/rrc_nr/rrc_nr.h"
 #include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap_ies.h"
@@ -26,7 +26,7 @@ static byte_buffer add_as_config_drb_mapping(const byte_buffer& packed_ho_prep)
 {
   asn1::rrc_nr::ho_prep_info_s ho_prep_info;
   asn1::cbit_ref               bref({packed_ho_prep.begin(), packed_ho_prep.end()});
-  report_fatal_error_if_not(ho_prep_info.unpack(bref) == asn1::OCUDUASN_SUCCESS,
+  report_fatal_error_if_not(asn1::unpack(ho_prep_info, bref) == asn1::OCUDUASN_SUCCESS,
                             "Failed to unpack HandoverPreparationInformation");
 
   // Build the source's RRCReconfiguration carrying the full radio bearer configuration.
@@ -46,7 +46,7 @@ static byte_buffer add_as_config_drb_mapping(const byte_buffer& packed_ho_prep)
 
   byte_buffer   packed_recfg;
   asn1::bit_ref recfg_packer{packed_recfg};
-  report_fatal_error_if_not(source_recfg.pack(recfg_packer) == asn1::OCUDUASN_SUCCESS,
+  report_fatal_error_if_not(asn1::pack(recfg_packer, source_recfg) == asn1::OCUDUASN_SUCCESS,
                             "Failed to pack AS-Config RRCReconfiguration");
 
   auto& ies                = ho_prep_info.crit_exts.c1().ho_prep_info();
@@ -55,7 +55,7 @@ static byte_buffer add_as_config_drb_mapping(const byte_buffer& packed_ho_prep)
 
   byte_buffer   repacked;
   asn1::bit_ref packer{repacked};
-  report_fatal_error_if_not(ho_prep_info.pack(packer) == asn1::OCUDUASN_SUCCESS,
+  report_fatal_error_if_not(asn1::pack(packer, ho_prep_info) == asn1::OCUDUASN_SUCCESS,
                             "Failed to pack HandoverPreparationInformation");
   return repacked;
 }

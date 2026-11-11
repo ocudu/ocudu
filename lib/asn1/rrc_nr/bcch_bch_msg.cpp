@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/bcch_bch_msg.h"
+#include "ocudu/asn1/asn1_codec.h"
 
 using namespace asn1;
 using namespace asn1::rrc_nr;
@@ -13,105 +14,144 @@ using namespace asn1::rrc_nr;
  ******************************************************************************/
 
 // PDCCH-ConfigSIB1 ::= SEQUENCE
-OCUDUASN_CODE pdcch_cfg_sib1_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, coreset_zero, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(pack_integer(bref, search_space_zero, (uint8_t)0u, (uint8_t)15u));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE pdcch_cfg_sib1_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(coreset_zero, bref, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(unpack_integer(search_space_zero, bref, (uint8_t)0u, (uint8_t)15u));
-
-  return OCUDUASN_SUCCESS;
-}
-void pdcch_cfg_sib1_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("controlResourceSetZero", coreset_zero);
-  j.write_int("searchSpaceZero", search_space_zero);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_pdcch_cfg_sib1_s_fields[] = {
+    {offsetof(pdcch_cfg_sib1_s, coreset_zero),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(pdcch_cfg_sib1_s, search_space_zero),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr}};
+static const asn1::table::field_name seq_table_pdcch_cfg_sib1_s_names[] = {{"controlResourceSetZero", nullptr},
+                                                                           {"searchSpaceZero", nullptr}};
+const asn1::table::seq_desc pdcch_cfg_sib1_s::desc = {{seq_table_pdcch_cfg_sib1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+                                                      false,
+                                                      false,
+                                                      nullptr,
+                                                      0,
+                                                      seq_table_pdcch_cfg_sib1_s_names};
 
 // MIB ::= SEQUENCE
-OCUDUASN_CODE mib_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(sys_frame_num.pack(bref));
-  HANDLE_CODE(sub_carrier_spacing_common.pack(bref));
-  HANDLE_CODE(pack_integer(bref, ssb_subcarrier_offset, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(dmrs_type_a_position.pack(bref));
-  HANDLE_CODE(pdcch_cfg_sib1.pack(bref));
-  HANDLE_CODE(cell_barred.pack(bref));
-  HANDLE_CODE(intra_freq_resel.pack(bref));
-  HANDLE_CODE(spare.pack(bref));
+static const asn1::table::seq_field seq_table_mib_s_fields[] = {
+    {offsetof(mib_s, sys_frame_num),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(mib_s::sys_frame_num), asn1::table::struct_json>::value},
+    {offsetof(mib_s, sub_carrier_spacing_common),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(mib_s::sub_carrier_spacing_common)>(),
+     decltype(mib_s::sub_carrier_spacing_common)::has_ext,
+     false,
+     decltype(mib_s::sub_carrier_spacing_common)::nof_types,
+     decltype(mib_s::sub_carrier_spacing_common)::nof_exts,
+     nullptr,
+     &mib_s::sub_carrier_spacing_common_opts::desc},
+    {offsetof(mib_s, ssb_subcarrier_offset),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(mib_s, dmrs_type_a_position),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(mib_s::dmrs_type_a_position)>(),
+     decltype(mib_s::dmrs_type_a_position)::has_ext,
+     false,
+     decltype(mib_s::dmrs_type_a_position)::nof_types,
+     decltype(mib_s::dmrs_type_a_position)::nof_exts,
+     nullptr,
+     &mib_s::dmrs_type_a_position_opts::desc},
+    {offsetof(mib_s, pdcch_cfg_sib1),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &pdcch_cfg_sib1_s::desc},
+    {offsetof(mib_s, cell_barred),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(mib_s::cell_barred)>(),
+     decltype(mib_s::cell_barred)::has_ext,
+     false,
+     decltype(mib_s::cell_barred)::nof_types,
+     decltype(mib_s::cell_barred)::nof_exts,
+     nullptr,
+     &mib_s::cell_barred_opts::desc},
+    {offsetof(mib_s, intra_freq_resel),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(mib_s::intra_freq_resel)>(),
+     decltype(mib_s::intra_freq_resel)::has_ext,
+     false,
+     decltype(mib_s::intra_freq_resel)::nof_types,
+     decltype(mib_s::intra_freq_resel)::nof_exts,
+     nullptr,
+     &mib_s::intra_freq_resel_opts::desc},
+    {offsetof(mib_s, spare),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(mib_s::spare), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_mib_s_names[] = {{"systemFrameNumber", nullptr},
+                                                                {"subCarrierSpacingCommon", nullptr},
+                                                                {"ssb-SubcarrierOffset", nullptr},
+                                                                {"dmrs-TypeA-Position", nullptr},
+                                                                {"pdcch-ConfigSIB1", nullptr},
+                                                                {"cellBarred", nullptr},
+                                                                {"intraFreqReselection", nullptr},
+                                                                {"spare", nullptr}};
+const asn1::table::seq_desc          mib_s::desc =
+    {{seq_table_mib_s_fields, 8, UINT64_C(0xff), nullptr, 0}, false, false, nullptr, 0, seq_table_mib_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE mib_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(sys_frame_num.unpack(bref));
-  HANDLE_CODE(sub_carrier_spacing_common.unpack(bref));
-  HANDLE_CODE(unpack_integer(ssb_subcarrier_offset, bref, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(dmrs_type_a_position.unpack(bref));
-  HANDLE_CODE(pdcch_cfg_sib1.unpack(bref));
-  HANDLE_CODE(cell_barred.unpack(bref));
-  HANDLE_CODE(intra_freq_resel.unpack(bref));
-  HANDLE_CODE(spare.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void mib_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("systemFrameNumber");
-  sys_frame_num.to_json(j);
-  j.write_str("subCarrierSpacingCommon", sub_carrier_spacing_common.to_string());
-  j.write_int("ssb-SubcarrierOffset", ssb_subcarrier_offset);
-  j.write_str("dmrs-TypeA-Position", dmrs_type_a_position.to_string());
-  j.write_fieldname("pdcch-ConfigSIB1");
-  pdcch_cfg_sib1.to_json(j);
-  j.write_str("cellBarred", cell_barred.to_string());
-  j.write_str("intraFreqReselection", intra_freq_resel.to_string());
-  j.write_fieldname("spare");
-  spare.to_json(j);
-  j.end_obj();
-}
-
-const char* mib_s::sub_carrier_spacing_common_opts::to_string() const
-{
-  static const char* names[] = {"scs15or60", "scs30or120"};
-  return convert_enum_idx(names, 2, value, "mib_s::sub_carrier_spacing_common_e_");
-}
+static const char*           enum_names_mib_s_sub_carrier_spacing_common_e__values[] = {"scs15or60", "scs30or120"};
+const asn1::table::enum_desc mib_s::sub_carrier_spacing_common_opts::desc            = {
+    enum_names_mib_s_sub_carrier_spacing_common_e__values,
+    2,
+    "mib_s::sub_carrier_spacing_common_e_"};
 uint8_t mib_s::sub_carrier_spacing_common_opts::to_number() const
 {
   static const uint8_t numbers[] = {15, 30};
   return map_enum_number(numbers, 2, value, "mib_s::sub_carrier_spacing_common_e_");
 }
 
-const char* mib_s::dmrs_type_a_position_opts::to_string() const
-{
-  static const char* names[] = {"pos2", "pos3"};
-  return convert_enum_idx(names, 2, value, "mib_s::dmrs_type_a_position_e_");
-}
-uint8_t mib_s::dmrs_type_a_position_opts::to_number() const
+static const char*           enum_names_mib_s_dmrs_type_a_position_e__values[] = {"pos2", "pos3"};
+const asn1::table::enum_desc mib_s::dmrs_type_a_position_opts::desc = {enum_names_mib_s_dmrs_type_a_position_e__values,
+                                                                       2,
+                                                                       "mib_s::dmrs_type_a_position_e_"};
+uint8_t                      mib_s::dmrs_type_a_position_opts::to_number() const
 {
   static const uint8_t numbers[] = {2, 3};
   return map_enum_number(numbers, 2, value, "mib_s::dmrs_type_a_position_e_");
 }
 
-const char* mib_s::cell_barred_opts::to_string() const
-{
-  static const char* names[] = {"barred", "notBarred"};
-  return convert_enum_idx(names, 2, value, "mib_s::cell_barred_e_");
-}
+static const char*           enum_names_mib_s_cell_barred_e__values[] = {"barred", "notBarred"};
+const asn1::table::enum_desc mib_s::cell_barred_opts::desc            = {enum_names_mib_s_cell_barred_e__values,
+                                                                         2,
+                                                                         "mib_s::cell_barred_e_"};
 
-const char* mib_s::intra_freq_resel_opts::to_string() const
-{
-  static const char* names[] = {"allowed", "notAllowed"};
-  return convert_enum_idx(names, 2, value, "mib_s::intra_freq_resel_e_");
-}
+static const char*           enum_names_mib_s_intra_freq_resel_e__values[] = {"allowed", "notAllowed"};
+const asn1::table::enum_desc mib_s::intra_freq_resel_opts::desc = {enum_names_mib_s_intra_freq_resel_e__values,
+                                                                   2,
+                                                                   "mib_s::intra_freq_resel_e_"};
 
 // BCCH-BCH-MessageType ::= CHOICE
 void bcch_bch_msg_type_c::set(types::options e)
@@ -127,88 +167,52 @@ void bcch_bch_msg_type_c::set_msg_class_ext()
 {
   set(types::msg_class_ext);
 }
-void bcch_bch_msg_type_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::mib:
-      j.write_fieldname("mib");
-      c.to_json(j);
-      break;
-    case types::msg_class_ext:
-      j.write_fieldname("messageClassExtension");
-      j.start_obj();
-      j.end_obj();
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_bch_msg_type_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE bcch_bch_msg_type_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::mib:
-      HANDLE_CODE(c.pack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_bch_msg_type_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE bcch_bch_msg_type_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::mib:
-      HANDLE_CODE(c.unpack(bref));
-      break;
-    case types::msg_class_ext:
-      break;
-    default:
-      log_invalid_choice_id(type_, "bcch_bch_msg_type_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_bcch_bch_msg_type_c_alternatives[] = {
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::sequence, false, false, 0, 0, nullptr, &mib_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &asn1::table::empty_sequence}};
+static const asn1::table::field_name choice_table_bcch_bch_msg_type_c_names[] = {{"mib", nullptr},
+                                                                                 {"messageClassExtension", nullptr}};
+const asn1::table::choice_desc bcch_bch_msg_type_c::desc = {asn1::table::enum_int_type<bcch_bch_msg_type_c::types>(),
+                                                            bcch_bch_msg_type_c::types::nof_types,
+                                                            bcch_bch_msg_type_c::types::nof_exts,
+                                                            bcch_bch_msg_type_c::types::has_ext,
+                                                            false,
+                                                            choice_table_bcch_bch_msg_type_c_alternatives,
+                                                            &asn1::table::choice_set<bcch_bch_msg_type_c>,
+                                                            choice_table_bcch_bch_msg_type_c_names,
+                                                            "bcch_bch_msg_type_c",
+                                                            offsetof(bcch_bch_msg_type_c, type_),
+                                                            offsetof(bcch_bch_msg_type_c, c),
+                                                            false};
 
-const char* bcch_bch_msg_type_c::types_opts::to_string() const
-{
-  static const char* names[] = {"mib", "messageClassExtension"};
-  return convert_enum_idx(names, 2, value, "bcch_bch_msg_type_c::types");
-}
+static const char*           enum_names_bcch_bch_msg_type_c_types_values[] = {"mib", "messageClassExtension"};
+const asn1::table::enum_desc bcch_bch_msg_type_c::types_opts::desc = {enum_names_bcch_bch_msg_type_c_types_values,
+                                                                      2,
+                                                                      "bcch_bch_msg_type_c::types"};
 
 // BCCH-BCH-Message ::= SEQUENCE
-OCUDUASN_CODE bcch_bch_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(msg.pack(bref));
-
-  bref.align_bytes_zero();
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE bcch_bch_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(msg.unpack(bref));
-
-  bref.align_bytes();
-
-  return OCUDUASN_SUCCESS;
-}
-void bcch_bch_msg_s::to_json(json_writer& j) const
-{
-  j.start_array();
-  j.start_obj();
-  j.start_obj("BCCH-BCH-Message");
-  j.write_fieldname("message");
-  msg.to_json(j);
-  j.end_obj();
-  j.end_obj();
-  j.end_array();
-}
+static const asn1::table::seq_field  seq_table_bcch_bch_msg_s_fields[] = {{offsetof(bcch_bch_msg_s, msg),
+                                                                           asn1::table::seq_field::mandatory,
+                                                                           asn1::table::field_op::choice,
+                                                                           false,
+                                                                           false,
+                                                                           0,
+                                                                           0,
+                                                                           nullptr,
+                                                                           &bcch_bch_msg_type_c::desc}};
+static const asn1::table::field_name seq_table_bcch_bch_msg_s_names[]  = {{"message", nullptr}};
+const asn1::table::seq_desc bcch_bch_msg_s::desc = {{seq_table_bcch_bch_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+                                                    false,
+                                                    false,
+                                                    nullptr,
+                                                    0,
+                                                    seq_table_bcch_bch_msg_s_names,
+                                                    "BCCH-BCH-Message"};

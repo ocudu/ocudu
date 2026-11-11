@@ -549,7 +549,7 @@ byte_buffer make_location_meas_info(std::initializer_list<prs_window> windows)
   }
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  report_fatal_error_if_not(info.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack LocationMeasurementInfo");
+  report_fatal_error_if_not(asn1::pack(bref, info) == asn1::OCUDUASN_SUCCESS, "Failed to pack LocationMeasurementInfo");
   return buf;
 }
 
@@ -712,7 +712,7 @@ protected:
 
     byte_buffer   buf;
     asn1::bit_ref bref{buf};
-    report_fatal_error_if_not(meas_cfg.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack measConfig");
+    report_fatal_error_if_not(asn1::pack(bref, meas_cfg) == asn1::OCUDUASN_SUCCESS, "Failed to pack measConfig");
     return mng.update(ue_cfg, buf, location_meas_info, &ue_caps);
   }
 

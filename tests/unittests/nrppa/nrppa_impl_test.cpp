@@ -130,7 +130,7 @@ static asn1::nrppa::nr_ppa_pdu_c unpack_nrppa_pdu(const byte_buffer& pdu)
 {
   asn1::nrppa::nr_ppa_pdu_c nrppa_pdu;
   asn1::cbit_ref            bref(pdu);
-  report_fatal_error_if_not(nrppa_pdu.unpack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack NRPPa-PDU");
+  report_fatal_error_if_not(asn1::unpack(nrppa_pdu, bref) == asn1::OCUDUASN_SUCCESS, "Failed to unpack NRPPa-PDU");
   return nrppa_pdu;
 }
 

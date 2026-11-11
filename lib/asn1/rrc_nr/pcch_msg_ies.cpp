@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/pcch_msg_ies.h"
+#include "ocudu/asn1/asn1_codec.h"
 
 using namespace asn1;
 using namespace asn1::rrc_nr;
@@ -13,95 +14,34 @@ using namespace asn1::rrc_nr;
  ******************************************************************************/
 
 // GroupPaging-r18 ::= SEQUENCE
-OCUDUASN_CODE group_paging_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(inactive_reception_allowed_r18_present, 1));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE group_paging_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(inactive_reception_allowed_r18_present, 1));
-
-  return OCUDUASN_SUCCESS;
-}
-void group_paging_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (inactive_reception_allowed_r18_present) {
-    j.write_str("inactiveReceptionAllowed-r18", "true");
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_group_paging_r18_s_fields[] = {
+    {0,
+     (int32_t)offsetof(group_paging_r18_s, inactive_reception_allowed_r18_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_group_paging_r18_s_names[] = {{"inactiveReceptionAllowed-r18", "true"}};
+static const asn1::table::seq_opt    seq_table_group_paging_r18_s_opts[]  = {
+    {0, (int32_t)offsetof(group_paging_r18_s, inactive_reception_allowed_r18_present)}};
+const asn1::table::seq_desc group_paging_r18_s::desc = {
+    {seq_table_group_paging_r18_s_fields, 1, UINT64_C(0x0), seq_table_group_paging_r18_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_group_paging_r18_s_names};
 
 // PagingUE-Identity ::= CHOICE
-void paging_ue_id_c::destroy_()
-{
-  switch (type_) {
-    case types::ng_5_g_s_tmsi:
-      c.destroy<fixed_bitstring<48>>();
-      break;
-    case types::full_i_rnti:
-      c.destroy<fixed_bitstring<40>>();
-      break;
-    default:
-      break;
-  }
-}
-void paging_ue_id_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::ng_5_g_s_tmsi:
-      c.init<fixed_bitstring<48>>();
-      break;
-    case types::full_i_rnti:
-      c.init<fixed_bitstring<40>>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ue_id_c");
-  }
-}
-paging_ue_id_c::paging_ue_id_c(const paging_ue_id_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ng_5_g_s_tmsi:
-      c.init(other.c.get<fixed_bitstring<48>>());
-      break;
-    case types::full_i_rnti:
-      c.init(other.c.get<fixed_bitstring<40>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ue_id_c");
-  }
-}
-paging_ue_id_c& paging_ue_id_c::operator=(const paging_ue_id_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ng_5_g_s_tmsi:
-      c.set(other.c.get<fixed_bitstring<48>>());
-      break;
-    case types::full_i_rnti:
-      c.set(other.c.get<fixed_bitstring<40>>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ue_id_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_paging_ue_id_c_alternatives[] = {
+    &asn1::table::alternative_ops<fixed_bitstring<48>, false>::value,
+    &asn1::table::alternative_ops<fixed_bitstring<40>, false>::value};
+const asn1::table::choice_storage_desc paging_ue_id_c::storage_desc = {choice_storage_paging_ue_id_c_alternatives,
+                                                                       2,
+                                                                       "paging_ue_id_c"};
 
-  return *this;
-}
 fixed_bitstring<48>& paging_ue_id_c::set_ng_5_g_s_tmsi()
 {
   set(types::ng_5_g_s_tmsi);
@@ -112,314 +52,260 @@ fixed_bitstring<40>& paging_ue_id_c::set_full_i_rnti()
   set(types::full_i_rnti);
   return c.get<fixed_bitstring<40>>();
 }
-void paging_ue_id_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ng_5_g_s_tmsi:
-      j.write_fieldname("ng-5G-S-TMSI");
-      c.get<fixed_bitstring<48>>().to_json(j);
-      break;
-    case types::full_i_rnti:
-      j.write_fieldname("fullI-RNTI");
-      c.get<fixed_bitstring<40>>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ue_id_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE paging_ue_id_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::ng_5_g_s_tmsi:
-      HANDLE_CODE(c.get<fixed_bitstring<48>>().pack(bref));
-      break;
-    case types::full_i_rnti:
-      HANDLE_CODE(c.get<fixed_bitstring<40>>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ue_id_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE paging_ue_id_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::ng_5_g_s_tmsi:
-      HANDLE_CODE(c.get<fixed_bitstring<48>>().unpack(bref));
-      break;
-    case types::full_i_rnti:
-      HANDLE_CODE(c.get<fixed_bitstring<40>>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "paging_ue_id_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_paging_ue_id_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<48>, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<fixed_bitstring<40>, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_paging_ue_id_c_names[] = {{"ng-5G-S-TMSI", nullptr},
+                                                                            {"fullI-RNTI", nullptr}};
+const asn1::table::choice_desc       paging_ue_id_c::desc = {asn1::table::enum_int_type<paging_ue_id_c::types>(),
+                                                             paging_ue_id_c::types::nof_types,
+                                                             paging_ue_id_c::types::nof_exts,
+                                                             paging_ue_id_c::types::has_ext,
+                                                             false,
+                                                             choice_table_paging_ue_id_c_alternatives,
+                                                             nullptr,
+                                                             choice_table_paging_ue_id_c_names,
+                                                             "paging_ue_id_c",
+                                                             offsetof(paging_ue_id_c, c.type),
+                                                             offsetof(paging_ue_id_c, c.value),
+                                                             false,
+                                                             &paging_ue_id_c::storage_desc};
 
-const char* paging_ue_id_c::types_opts::to_string() const
-{
-  static const char* names[] = {"ng-5G-S-TMSI", "fullI-RNTI"};
-  return convert_enum_idx(names, 2, value, "paging_ue_id_c::types");
-}
-int8_t paging_ue_id_c::types_opts::to_number() const
+static const char*           enum_names_paging_ue_id_c_types_values[] = {"ng-5G-S-TMSI", "fullI-RNTI"};
+const asn1::table::enum_desc paging_ue_id_c::types_opts::desc         = {enum_names_paging_ue_id_c_types_values,
+                                                                         2,
+                                                                         "paging_ue_id_c::types"};
+int8_t                       paging_ue_id_c::types_opts::to_number() const
 {
   static const int8_t numbers[] = {-5};
   return map_enum_number(numbers, 1, value, "paging_ue_id_c::types");
 }
 
 // PagingRecord ::= SEQUENCE
-OCUDUASN_CODE paging_record_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {false, access_type_present}));
-
-  HANDLE_CODE(ue_id.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE paging_record_s::unpack(cbit_ref& bref)
-{
-  bool ext;
-  HANDLE_CODE(unpack_bits(bref, {&ext, &access_type_present}));
-
-  HANDLE_CODE(ue_id.unpack(bref));
-
-  if (ext) {
-    ext_groups_unpacker unknown_ext_unpacker(bref);
-    HANDLE_CODE(unknown_ext_unpacker.consume_remaining_groups(bref));
-  }
-  return OCUDUASN_SUCCESS;
-}
-void paging_record_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("ue-Identity");
-  ue_id.to_json(j);
-  if (access_type_present) {
-    j.write_str("accessType", "non3GPP");
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_paging_record_s_fields[] = {
+    {offsetof(paging_record_s, ue_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &paging_ue_id_c::desc},
+    {0,
+     (int32_t)offsetof(paging_record_s, access_type_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_paging_record_s_names[] = {{"ue-Identity", nullptr},
+                                                                          {"accessType", "non3GPP"}};
+static const asn1::table::seq_opt    seq_table_paging_record_s_opts[]  = {
+    {1, (int32_t)offsetof(paging_record_s, access_type_present)}};
+const asn1::table::seq_desc paging_record_s::desc = {
+    {seq_table_paging_record_s_fields, 2, UINT64_C(0x1), seq_table_paging_record_s_opts, 1},
+    true,
+    false,
+    nullptr,
+    0,
+    seq_table_paging_record_s_names};
 
 // PagingRecord-v1700 ::= SEQUENCE
-OCUDUASN_CODE paging_record_v1700_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(paging_cause_r17_present, 1));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE paging_record_v1700_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(paging_cause_r17_present, 1));
-
-  return OCUDUASN_SUCCESS;
-}
-void paging_record_v1700_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (paging_cause_r17_present) {
-    j.write_str("pagingCause-r17", "voice");
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_paging_record_v1700_s_fields[] = {
+    {0,
+     (int32_t)offsetof(paging_record_v1700_s, paging_cause_r17_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_paging_record_v1700_s_names[] = {{"pagingCause-r17", "voice"}};
+static const asn1::table::seq_opt    seq_table_paging_record_v1700_s_opts[]  = {
+    {0, (int32_t)offsetof(paging_record_v1700_s, paging_cause_r17_present)}};
+const asn1::table::seq_desc paging_record_v1700_s::desc = {
+    {seq_table_paging_record_v1700_s_fields, 1, UINT64_C(0x0), seq_table_paging_record_v1700_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_paging_record_v1700_s_names};
 
 // PagingRecord-v1800 ::= SEQUENCE
-OCUDUASN_CODE paging_record_v1800_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(mt_sdt_present, 1));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE paging_record_v1800_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(mt_sdt_present, 1));
-
-  return OCUDUASN_SUCCESS;
-}
-void paging_record_v1800_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (mt_sdt_present) {
-    j.write_str("mt-SDT", "true");
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_paging_record_v1800_s_fields[] = {
+    {0,
+     (int32_t)offsetof(paging_record_v1800_s, mt_sdt_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_paging_record_v1800_s_names[] = {{"mt-SDT", "true"}};
+static const asn1::table::seq_opt    seq_table_paging_record_v1800_s_opts[]  = {
+    {0, (int32_t)offsetof(paging_record_v1800_s, mt_sdt_present)}};
+const asn1::table::seq_desc paging_record_v1800_s::desc = {
+    {seq_table_paging_record_v1800_s_fields, 1, UINT64_C(0x0), seq_table_paging_record_v1800_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_paging_record_v1800_s_names};
 
 // Paging-v1800-IEs ::= SEQUENCE
-OCUDUASN_CODE paging_v1800_ies_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(
-      pack_bits(bref, {paging_record_list_v1800.size() > 0, paging_group_list_v1800.size() > 0, non_crit_ext_present}));
-
-  if (paging_record_list_v1800.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, paging_record_list_v1800, 1, 32));
-  }
-  if (paging_group_list_v1800.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, paging_group_list_v1800, 1, 32));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE paging_v1800_ies_s::unpack(cbit_ref& bref)
-{
-  bool paging_record_list_v1800_present;
-  bool paging_group_list_v1800_present;
-  HANDLE_CODE(
-      unpack_bits(bref, {&paging_record_list_v1800_present, &paging_group_list_v1800_present, &non_crit_ext_present}));
-
-  if (paging_record_list_v1800_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(paging_record_list_v1800, bref, 1, 32));
-  }
-  if (paging_group_list_v1800_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(paging_group_list_v1800, bref, 1, 32));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void paging_v1800_ies_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (paging_record_list_v1800.size() > 0) {
-    j.start_array("pagingRecordList-v1800");
-    for (const auto& e1 : paging_record_list_v1800) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (paging_group_list_v1800.size() > 0) {
-    j.start_array("pagingGroupList-v1800");
-    for (const auto& e1 : paging_group_list_v1800) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (non_crit_ext_present) {
-    j.write_fieldname("nonCriticalExtension");
-    j.start_obj();
-    j.end_obj();
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_paging_v1800_ies_s_fields[] = {
+    {offsetof(paging_v1800_ies_s, paging_record_list_v1800),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(paging_v1800_ies_s::paging_record_list_v1800),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &paging_record_v1800_s::desc},
+    {offsetof(paging_v1800_ies_s, paging_group_list_v1800),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(paging_v1800_ies_s::paging_group_list_v1800),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &group_paging_r18_s::desc},
+    {0,
+     (int32_t)offsetof(paging_v1800_ies_s, non_crit_ext_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &asn1::table::empty_sequence}};
+static const asn1::table::field_name seq_table_paging_v1800_ies_s_names[] = {{"pagingRecordList-v1800", nullptr},
+                                                                             {"pagingGroupList-v1800", nullptr},
+                                                                             {"nonCriticalExtension", nullptr}};
+static const asn1::table::seq_opt    seq_table_paging_v1800_ies_s_opts[]  = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, asn1::table::seq_field::list_presence},
+    {2, (int32_t)offsetof(paging_v1800_ies_s, non_crit_ext_present)}};
+const asn1::table::seq_desc paging_v1800_ies_s::desc = {
+    {seq_table_paging_v1800_ies_s_fields, 3, UINT64_C(0x0), seq_table_paging_v1800_ies_s_opts, 3},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_paging_v1800_ies_s_names};
 
 // Paging-v1700-IEs ::= SEQUENCE
-OCUDUASN_CODE paging_v1700_ies_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(
-      pack_bits(bref, {paging_record_list_v1700.size() > 0, paging_group_list_r17.size() > 0, non_crit_ext_present}));
-
-  if (paging_record_list_v1700.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, paging_record_list_v1700, 1, 32));
-  }
-  if (paging_group_list_r17.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, paging_group_list_r17, 1, 32));
-  }
-  if (non_crit_ext_present) {
-    HANDLE_CODE(non_crit_ext.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE paging_v1700_ies_s::unpack(cbit_ref& bref)
-{
-  bool paging_record_list_v1700_present;
-  bool paging_group_list_r17_present;
-  HANDLE_CODE(
-      unpack_bits(bref, {&paging_record_list_v1700_present, &paging_group_list_r17_present, &non_crit_ext_present}));
-
-  if (paging_record_list_v1700_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(paging_record_list_v1700, bref, 1, 32));
-  }
-  if (paging_group_list_r17_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(paging_group_list_r17, bref, 1, 32));
-  }
-  if (non_crit_ext_present) {
-    HANDLE_CODE(non_crit_ext.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void paging_v1700_ies_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (paging_record_list_v1700.size() > 0) {
-    j.start_array("pagingRecordList-v1700");
-    for (const auto& e1 : paging_record_list_v1700) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (paging_group_list_r17.size() > 0) {
-    j.start_array("pagingGroupList-r17");
-    for (const auto& e1 : paging_group_list_r17) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (non_crit_ext_present) {
-    j.write_fieldname("nonCriticalExtension");
-    non_crit_ext.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_paging_v1700_ies_s_fields[] = {
+    {offsetof(paging_v1700_ies_s, paging_record_list_v1700),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(paging_v1700_ies_s::paging_record_list_v1700),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &paging_record_v1700_s::desc},
+    {offsetof(paging_v1700_ies_s, paging_group_list_r17),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(paging_v1700_ies_s::paging_group_list_r17),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &tmgi_r17_s::desc},
+    {offsetof(paging_v1700_ies_s, non_crit_ext),
+     (int32_t)offsetof(paging_v1700_ies_s, non_crit_ext_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &paging_v1800_ies_s::desc}};
+static const asn1::table::field_name seq_table_paging_v1700_ies_s_names[] = {{"pagingRecordList-v1700", nullptr},
+                                                                             {"pagingGroupList-r17", nullptr},
+                                                                             {"nonCriticalExtension", nullptr}};
+static const asn1::table::seq_opt    seq_table_paging_v1700_ies_s_opts[]  = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, asn1::table::seq_field::list_presence},
+    {2, (int32_t)offsetof(paging_v1700_ies_s, non_crit_ext_present)}};
+const asn1::table::seq_desc paging_v1700_ies_s::desc = {
+    {seq_table_paging_v1700_ies_s_fields, 3, UINT64_C(0x0), seq_table_paging_v1700_ies_s_opts, 3},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_paging_v1700_ies_s_names};
 
 // Paging ::= SEQUENCE
-OCUDUASN_CODE paging_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {paging_record_list.size() > 0, late_non_crit_ext.size() > 0, non_crit_ext_present}));
-
-  if (paging_record_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, paging_record_list, 1, 32));
-  }
-  if (late_non_crit_ext.size() > 0) {
-    HANDLE_CODE(late_non_crit_ext.pack(bref));
-  }
-  if (non_crit_ext_present) {
-    HANDLE_CODE(non_crit_ext.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE paging_s::unpack(cbit_ref& bref)
-{
-  bool paging_record_list_present;
-  bool late_non_crit_ext_present;
-  HANDLE_CODE(unpack_bits(bref, {&paging_record_list_present, &late_non_crit_ext_present, &non_crit_ext_present}));
-
-  if (paging_record_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(paging_record_list, bref, 1, 32));
-  }
-  if (late_non_crit_ext_present) {
-    HANDLE_CODE(late_non_crit_ext.unpack(bref));
-  }
-  if (non_crit_ext_present) {
-    HANDLE_CODE(non_crit_ext.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void paging_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (paging_record_list.size() > 0) {
-    j.start_array("pagingRecordList");
-    for (const auto& e1 : paging_record_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (late_non_crit_ext.size() > 0) {
-    j.write_str("lateNonCriticalExtension", late_non_crit_ext.to_string());
-  }
-  if (non_crit_ext_present) {
-    j.write_fieldname("nonCriticalExtension");
-    non_crit_ext.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_paging_s_fields[] = {
+    {offsetof(paging_s, paging_record_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::
+         item_list_codec<decltype(paging_s::paging_record_list), asn1::table::sequence_item_ops, false, true>::value,
+     &paging_record_s::desc},
+    {offsetof(paging_s, late_non_crit_ext),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::sized_object_codec<decltype(paging_s::late_non_crit_ext), asn1::table::string_json>::value},
+    {offsetof(paging_s, non_crit_ext),
+     (int32_t)offsetof(paging_s, non_crit_ext_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &paging_v1700_ies_s::desc}};
+static const asn1::table::field_name seq_table_paging_s_names[] = {{"pagingRecordList", nullptr},
+                                                                   {"lateNonCriticalExtension", nullptr},
+                                                                   {"nonCriticalExtension", nullptr}};
+static const asn1::table::seq_opt    seq_table_paging_s_opts[]  = {{0, asn1::table::seq_field::list_presence},
+                                                                   {1, asn1::table::seq_field::list_presence},
+                                                                   {2, (int32_t)offsetof(paging_s, non_crit_ext_present)}};
+const asn1::table::seq_desc paging_s::desc = {{seq_table_paging_s_fields, 3, UINT64_C(0x0), seq_table_paging_s_opts, 3},
+                                              false,
+                                              false,
+                                              nullptr,
+                                              0,
+                                              seq_table_paging_s_names};

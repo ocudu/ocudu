@@ -22,7 +22,7 @@ namespace {
 void log_f1ap_pdu(ocudulog::basic_logger& logger, const char* label, const f1ap_message& msg)
 {
   asn1::json_writer js;
-  msg.pdu.to_json(js);
+  asn1::to_json(js, msg.pdu);
   logger.info("{}: {}", label, js.to_string());
 }
 

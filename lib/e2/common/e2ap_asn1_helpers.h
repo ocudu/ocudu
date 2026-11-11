@@ -9,7 +9,7 @@
 #include "e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/e2/e2.h"
 #include "ocudu/e2/e2_node_component_config.h"
 #include "ocudu/e2/e2ap_config.h"

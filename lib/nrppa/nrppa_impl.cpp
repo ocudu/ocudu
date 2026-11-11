@@ -299,7 +299,7 @@ void nrppa_impl::handle_new_nrppa_pdu(const byte_buffer&                        
   // Parse NRPPa-PDU.
   asn1::nrppa::nr_ppa_pdu_c nrppa_msg;
   asn1::cbit_ref            bref(nrppa_pdu);
-  if (nrppa_msg.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(nrppa_msg, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.error(nrppa_pdu.begin(), nrppa_pdu.end(), "Failed to unpack NRPPa-PDU");
     return;
   }

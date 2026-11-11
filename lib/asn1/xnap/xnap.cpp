@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/xnap/xnap.h"
+#include "ocudu/asn1/asn1_ap_codec.h"
 #include "ocudu/asn1/xnap/xnap_pdu_contents.h"
 
 using namespace asn1;
@@ -13,650 +14,679 @@ using namespace asn1::xnap;
  *                                Struct Methods
  ******************************************************************************/
 
-// ProtocolIE-FieldPair{XNAP-PROTOCOL-IES-PAIR : IEsSetParam} ::= SEQUENCE{{XNAP-PROTOCOL-IES-PAIR}}
-template <class ies_set_paramT_>
-OCUDUASN_CODE protocol_ie_field_pair_s<ies_set_paramT_>::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, id, (uint32_t)0u, (uint32_t)65535u, false, true));
-  warn_assert(first_crit != ies_set_paramT_::get_first_crit(id), __func__, __LINE__);
-  HANDLE_CODE(first_crit.pack(bref));
-  HANDLE_CODE(first_value.pack(bref));
-  warn_assert(second_crit != ies_set_paramT_::get_second_crit(id), __func__, __LINE__);
-  HANDLE_CODE(second_crit.pack(bref));
-  HANDLE_CODE(second_value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-template <class ies_set_paramT_>
-OCUDUASN_CODE protocol_ie_field_pair_s<ies_set_paramT_>::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
-  HANDLE_CODE(first_crit.unpack(bref));
-  first_value = ies_set_paramT_::get_first_value(id);
-  HANDLE_CODE(first_value.unpack(bref));
-  HANDLE_CODE(second_crit.unpack(bref));
-  second_value = ies_set_paramT_::get_second_value(id);
-  HANDLE_CODE(second_value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-template <class ies_set_paramT_>
-void protocol_ie_field_pair_s<ies_set_paramT_>::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("id", id);
-  j.write_str("firstCriticality", first_crit.to_string());
-  j.write_str("secondCriticality", second_crit.to_string());
-  j.end_obj();
-}
-template <class ies_set_paramT_>
-bool protocol_ie_field_pair_s<ies_set_paramT_>::load_info_obj(const uint32_t& id_)
-{
-  if (not ies_set_paramT_::is_id_valid(id_)) {
-    return false;
-  }
-  id           = id_;
-  first_crit   = ies_set_paramT_::get_first_crit(id);
-  first_value  = ies_set_paramT_::get_first_value(id);
-  second_crit  = ies_set_paramT_::get_second_crit(id);
-  second_value = ies_set_paramT_::get_second_value(id);
-  return first_value.type().value != ies_set_paramT_::first_value_c::types_opts::nulltype and
-         second_value.type().value != ies_set_paramT_::second_value_c::types_opts::nulltype;
-}
-
 // XNAP-ELEMENTARY-PROCEDURES ::= OBJECT SET OF XNAP-ELEMENTARY-PROCEDURE
-uint16_t xnap_elem_procs_o::idx_to_proc_code(uint32_t idx)
-{
-  static const uint16_t names[] = {0,  3,  7,  9,  10, 11, 12, 14, 16, 17, 18, 25, 19, 20, 34, 36, 44, 45,
-                                   46, 49, 51, 1,  2,  4,  5,  6,  8,  13, 15, 21, 22, 23, 24, 26, 27, 28,
-                                   29, 30, 31, 32, 33, 35, 37, 38, 39, 40, 42, 43, 47, 48, 50, 52};
-  return map_enum_number(names, 52, idx, "proc_code");
-}
-bool xnap_elem_procs_o::is_proc_code_valid(const uint16_t& proc_code)
-{
-  static const uint16_t names[] = {0,  3,  7,  9,  10, 11, 12, 14, 16, 17, 18, 25, 19, 20, 34, 36, 44, 45,
-                                   46, 49, 51, 1,  2,  4,  5,  6,  8,  13, 15, 21, 22, 23, 24, 26, 27, 28,
-                                   29, 30, 31, 32, 33, 35, 37, 38, 39, 40, 42, 43, 47, 48, 50, 52};
-  for (const auto& o : names) {
-    if (o == proc_code) {
-      return true;
-    }
-  }
-  return false;
-}
-xnap_elem_procs_o::init_msg_c xnap_elem_procs_o::get_init_msg(const uint16_t& proc_code)
-{
-  init_msg_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(init_msg_c::types::ho_request);
-      break;
-    case 3:
-      ret.set(init_msg_c::types::retrieve_ue_context_request);
-      break;
-    case 7:
-      ret.set(init_msg_c::types::sn_ode_addition_request);
-      break;
-    case 9:
-      ret.set(init_msg_c::types::sn_ode_mod_request);
-      break;
-    case 10:
-      ret.set(init_msg_c::types::sn_ode_mod_required);
-      break;
-    case 11:
-      ret.set(init_msg_c::types::sn_ode_release_request);
-      break;
-    case 12:
-      ret.set(init_msg_c::types::sn_ode_release_required);
-      break;
-    case 14:
-      ret.set(init_msg_c::types::sn_ode_change_required);
-      break;
-    case 16:
-      ret.set(init_msg_c::types::xn_removal_request);
-      break;
-    case 17:
-      ret.set(init_msg_c::types::xn_setup_request);
-      break;
-    case 18:
-      ret.set(init_msg_c::types::ngran_node_cfg_upd);
-      break;
-    case 25:
-      ret.set(init_msg_c::types::e_utra_nr_cell_res_coordination_request);
-      break;
-    case 19:
-      ret.set(init_msg_c::types::cell_activation_request);
-      break;
-    case 20:
-      ret.set(init_msg_c::types::reset_request);
-      break;
-    case 34:
-      ret.set(init_msg_c::types::res_status_request);
-      break;
-    case 36:
-      ret.set(init_msg_c::types::mob_change_request);
-      break;
-    case 44:
-      ret.set(init_msg_c::types::iab_transport_migration_management_request);
-      break;
-    case 45:
-      ret.set(init_msg_c::types::iab_transport_migration_mod_request);
-      break;
-    case 46:
-      ret.set(init_msg_c::types::iab_res_coordination_request);
-      break;
-    case 49:
-      ret.set(init_msg_c::types::partial_ue_context_transfer);
-      break;
-    case 51:
-      ret.set(init_msg_c::types::data_collection_request);
-      break;
-    case 1:
-      ret.set(init_msg_c::types::sn_status_transfer);
-      break;
-    case 2:
-      ret.set(init_msg_c::types::ho_cancel);
-      break;
-    case 4:
-      ret.set(init_msg_c::types::ran_paging);
-      break;
-    case 5:
-      ret.set(init_msg_c::types::xn_u_address_ind);
-      break;
-    case 6:
-      ret.set(init_msg_c::types::ue_context_release);
-      break;
-    case 8:
-      ret.set(init_msg_c::types::sn_ode_recfg_complete);
-      break;
-    case 13:
-      ret.set(init_msg_c::types::sn_ode_counter_check_request);
-      break;
-    case 15:
-      ret.set(init_msg_c::types::rrc_transfer);
-      break;
-    case 21:
-      ret.set(init_msg_c::types::error_ind);
-      break;
-    case 22:
-      ret.set(init_msg_c::types::private_msg);
-      break;
-    case 23:
-      ret.set(init_msg_c::types::notif_ctrl_ind);
-      break;
-    case 24:
-      ret.set(init_msg_c::types::activity_notif);
-      break;
-    case 26:
-      ret.set(init_msg_c::types::secondary_rat_data_usage_report);
-      break;
-    case 27:
-      ret.set(init_msg_c::types::deactiv_trace);
-      break;
-    case 28:
-      ret.set(init_msg_c::types::trace_start);
-      break;
-    case 29:
-      ret.set(init_msg_c::types::ho_success);
-      break;
-    case 30:
-      ret.set(init_msg_c::types::conditional_ho_cancel);
-      break;
-    case 31:
-      ret.set(init_msg_c::types::early_status_transfer);
-      break;
-    case 32:
-      ret.set(init_msg_c::types::fail_ind);
-      break;
-    case 33:
-      ret.set(init_msg_c::types::ho_report);
-      break;
-    case 35:
-      ret.set(init_msg_c::types::res_status_upd);
-      break;
-    case 37:
-      ret.set(init_msg_c::types::access_and_mob_ind);
-      break;
-    case 38:
-      ret.set(init_msg_c::types::cell_traffic_trace);
-      break;
-    case 39:
-      ret.set(init_msg_c::types::ran_multicast_group_paging);
-      break;
-    case 40:
-      ret.set(init_msg_c::types::scg_fail_info_report);
-      break;
-    case 42:
-      ret.set(init_msg_c::types::scg_fail_transfer);
-      break;
-    case 43:
-      ret.set(init_msg_c::types::f1_c_traffic_transfer);
-      break;
-    case 47:
-      ret.set(init_msg_c::types::retrieve_ue_context_confirm);
-      break;
-    case 48:
-      ret.set(init_msg_c::types::cp_c_cancel);
-      break;
-    case 50:
-      ret.set(init_msg_c::types::rach_ind);
-      break;
-    case 52:
-      ret.set(init_msg_c::types::data_collection_upd);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-xnap_elem_procs_o::successful_outcome_c xnap_elem_procs_o::get_successful_outcome(const uint16_t& proc_code)
-{
-  successful_outcome_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(successful_outcome_c::types::ho_request_ack);
-      break;
-    case 3:
-      ret.set(successful_outcome_c::types::retrieve_ue_context_resp);
-      break;
-    case 7:
-      ret.set(successful_outcome_c::types::sn_ode_addition_request_ack);
-      break;
-    case 9:
-      ret.set(successful_outcome_c::types::sn_ode_mod_request_ack);
-      break;
-    case 10:
-      ret.set(successful_outcome_c::types::sn_ode_mod_confirm);
-      break;
-    case 11:
-      ret.set(successful_outcome_c::types::sn_ode_release_request_ack);
-      break;
-    case 12:
-      ret.set(successful_outcome_c::types::sn_ode_release_confirm);
-      break;
-    case 14:
-      ret.set(successful_outcome_c::types::sn_ode_change_confirm);
-      break;
-    case 16:
-      ret.set(successful_outcome_c::types::xn_removal_resp);
-      break;
-    case 17:
-      ret.set(successful_outcome_c::types::xn_setup_resp);
-      break;
-    case 18:
-      ret.set(successful_outcome_c::types::ngran_node_cfg_upd_ack);
-      break;
-    case 25:
-      ret.set(successful_outcome_c::types::e_utra_nr_cell_res_coordination_resp);
-      break;
-    case 19:
-      ret.set(successful_outcome_c::types::cell_activation_resp);
-      break;
-    case 20:
-      ret.set(successful_outcome_c::types::reset_resp);
-      break;
-    case 34:
-      ret.set(successful_outcome_c::types::res_status_resp);
-      break;
-    case 36:
-      ret.set(successful_outcome_c::types::mob_change_ack);
-      break;
-    case 44:
-      ret.set(successful_outcome_c::types::iab_transport_migration_management_resp);
-      break;
-    case 45:
-      ret.set(successful_outcome_c::types::iab_transport_migration_mod_resp);
-      break;
-    case 46:
-      ret.set(successful_outcome_c::types::iab_res_coordination_resp);
-      break;
-    case 49:
-      ret.set(successful_outcome_c::types::partial_ue_context_transfer_ack);
-      break;
-    case 51:
-      ret.set(successful_outcome_c::types::data_collection_resp);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-xnap_elem_procs_o::unsuccessful_outcome_c xnap_elem_procs_o::get_unsuccessful_outcome(const uint16_t& proc_code)
-{
-  unsuccessful_outcome_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(unsuccessful_outcome_c::types::ho_prep_fail);
-      break;
-    case 3:
-      ret.set(unsuccessful_outcome_c::types::retrieve_ue_context_fail);
-      break;
-    case 7:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_addition_request_reject);
-      break;
-    case 9:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_mod_request_reject);
-      break;
-    case 10:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_mod_refuse);
-      break;
-    case 11:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_release_reject);
-      break;
-    case 14:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_change_refuse);
-      break;
-    case 16:
-      ret.set(unsuccessful_outcome_c::types::xn_removal_fail);
-      break;
-    case 17:
-      ret.set(unsuccessful_outcome_c::types::xn_setup_fail);
-      break;
-    case 18:
-      ret.set(unsuccessful_outcome_c::types::ngran_node_cfg_upd_fail);
-      break;
-    case 19:
-      ret.set(unsuccessful_outcome_c::types::cell_activation_fail);
-      break;
-    case 34:
-      ret.set(unsuccessful_outcome_c::types::res_status_fail);
-      break;
-    case 36:
-      ret.set(unsuccessful_outcome_c::types::mob_change_fail);
-      break;
-    case 44:
-      ret.set(unsuccessful_outcome_c::types::iab_transport_migration_management_reject);
-      break;
-    case 49:
-      ret.set(unsuccessful_outcome_c::types::partial_ue_context_transfer_fail);
-      break;
-    case 51:
-      ret.set(unsuccessful_outcome_c::types::data_collection_fail);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-crit_e xnap_elem_procs_o::get_crit(const uint16_t& proc_code)
-{
-  switch (proc_code) {
-    case 0:
-      return crit_e::reject;
-    case 3:
-      return crit_e::reject;
-    case 7:
-      return crit_e::reject;
-    case 9:
-      return crit_e::reject;
-    case 10:
-      return crit_e::reject;
-    case 11:
-      return crit_e::reject;
-    case 12:
-      return crit_e::reject;
-    case 14:
-      return crit_e::reject;
-    case 16:
-      return crit_e::reject;
-    case 17:
-      return crit_e::reject;
-    case 18:
-      return crit_e::reject;
-    case 25:
-      return crit_e::reject;
-    case 19:
-      return crit_e::reject;
-    case 20:
-      return crit_e::reject;
-    case 34:
-      return crit_e::reject;
-    case 36:
-      return crit_e::reject;
-    case 44:
-      return crit_e::reject;
-    case 45:
-      return crit_e::reject;
-    case 46:
-      return crit_e::reject;
-    case 49:
-      return crit_e::reject;
-    case 51:
-      return crit_e::reject;
-    case 1:
-      return crit_e::ignore;
-    case 2:
-      return crit_e::ignore;
-    case 4:
-      return crit_e::reject;
-    case 5:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    case 8:
-      return crit_e::reject;
-    case 13:
-      return crit_e::reject;
-    case 15:
-      return crit_e::reject;
-    case 21:
-      return crit_e::ignore;
-    case 22:
-      return crit_e::ignore;
-    case 23:
-      return crit_e::ignore;
-    case 24:
-      return crit_e::ignore;
-    case 26:
-      return crit_e::reject;
-    case 27:
-      return crit_e::ignore;
-    case 28:
-      return crit_e::ignore;
-    case 29:
-      return crit_e::ignore;
-    case 30:
-      return crit_e::ignore;
-    case 31:
-      return crit_e::ignore;
-    case 32:
-      return crit_e::ignore;
-    case 33:
-      return crit_e::ignore;
-    case 35:
-      return crit_e::ignore;
-    case 37:
-      return crit_e::ignore;
-    case 38:
-      return crit_e::ignore;
-    case 39:
-      return crit_e::reject;
-    case 40:
-      return crit_e::ignore;
-    case 42:
-      return crit_e::ignore;
-    case 43:
-      return crit_e::reject;
-    case 47:
-      return crit_e::reject;
-    case 48:
-      return crit_e::ignore;
-    case 50:
-      return crit_e::ignore;
-    case 52:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return {};
-}
+static const uint32_t objset_proc_code_xnap_elem_procs_o[] = {
+    0, 3,  7,  9,  10, 11, 12, 14, 16, 17, 18, 25, 19, 20, 34, 36, 44, 45, 46, 49, 51, 1,  2,  4,  5,  6,
+    8, 13, 15, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33, 35, 37, 38, 39, 40, 42, 43, 47, 48, 50, 52};
+static const uint8_t objset_init_msg_xnap_elem_procs_o[] = {
+    xnap_elem_procs_o::init_msg_c::types::ho_request,
+    xnap_elem_procs_o::init_msg_c::types::retrieve_ue_context_request,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_addition_request,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_mod_request,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_mod_required,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_release_request,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_release_required,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_change_required,
+    xnap_elem_procs_o::init_msg_c::types::xn_removal_request,
+    xnap_elem_procs_o::init_msg_c::types::xn_setup_request,
+    xnap_elem_procs_o::init_msg_c::types::ngran_node_cfg_upd,
+    xnap_elem_procs_o::init_msg_c::types::e_utra_nr_cell_res_coordination_request,
+    xnap_elem_procs_o::init_msg_c::types::cell_activation_request,
+    xnap_elem_procs_o::init_msg_c::types::reset_request,
+    xnap_elem_procs_o::init_msg_c::types::res_status_request,
+    xnap_elem_procs_o::init_msg_c::types::mob_change_request,
+    xnap_elem_procs_o::init_msg_c::types::iab_transport_migration_management_request,
+    xnap_elem_procs_o::init_msg_c::types::iab_transport_migration_mod_request,
+    xnap_elem_procs_o::init_msg_c::types::iab_res_coordination_request,
+    xnap_elem_procs_o::init_msg_c::types::partial_ue_context_transfer,
+    xnap_elem_procs_o::init_msg_c::types::data_collection_request,
+    xnap_elem_procs_o::init_msg_c::types::sn_status_transfer,
+    xnap_elem_procs_o::init_msg_c::types::ho_cancel,
+    xnap_elem_procs_o::init_msg_c::types::ran_paging,
+    xnap_elem_procs_o::init_msg_c::types::xn_u_address_ind,
+    xnap_elem_procs_o::init_msg_c::types::ue_context_release,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_recfg_complete,
+    xnap_elem_procs_o::init_msg_c::types::sn_ode_counter_check_request,
+    xnap_elem_procs_o::init_msg_c::types::rrc_transfer,
+    xnap_elem_procs_o::init_msg_c::types::error_ind,
+    xnap_elem_procs_o::init_msg_c::types::private_msg,
+    xnap_elem_procs_o::init_msg_c::types::notif_ctrl_ind,
+    xnap_elem_procs_o::init_msg_c::types::activity_notif,
+    xnap_elem_procs_o::init_msg_c::types::secondary_rat_data_usage_report,
+    xnap_elem_procs_o::init_msg_c::types::deactiv_trace,
+    xnap_elem_procs_o::init_msg_c::types::trace_start,
+    xnap_elem_procs_o::init_msg_c::types::ho_success,
+    xnap_elem_procs_o::init_msg_c::types::conditional_ho_cancel,
+    xnap_elem_procs_o::init_msg_c::types::early_status_transfer,
+    xnap_elem_procs_o::init_msg_c::types::fail_ind,
+    xnap_elem_procs_o::init_msg_c::types::ho_report,
+    xnap_elem_procs_o::init_msg_c::types::res_status_upd,
+    xnap_elem_procs_o::init_msg_c::types::access_and_mob_ind,
+    xnap_elem_procs_o::init_msg_c::types::cell_traffic_trace,
+    xnap_elem_procs_o::init_msg_c::types::ran_multicast_group_paging,
+    xnap_elem_procs_o::init_msg_c::types::scg_fail_info_report,
+    xnap_elem_procs_o::init_msg_c::types::scg_fail_transfer,
+    xnap_elem_procs_o::init_msg_c::types::f1_c_traffic_transfer,
+    xnap_elem_procs_o::init_msg_c::types::retrieve_ue_context_confirm,
+    xnap_elem_procs_o::init_msg_c::types::cp_c_cancel,
+    xnap_elem_procs_o::init_msg_c::types::rach_ind,
+    xnap_elem_procs_o::init_msg_c::types::data_collection_upd};
+static const uint8_t objset_successful_outcome_xnap_elem_procs_o[] = {
+    xnap_elem_procs_o::successful_outcome_c::types::ho_request_ack,
+    xnap_elem_procs_o::successful_outcome_c::types::retrieve_ue_context_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::sn_ode_addition_request_ack,
+    xnap_elem_procs_o::successful_outcome_c::types::sn_ode_mod_request_ack,
+    xnap_elem_procs_o::successful_outcome_c::types::sn_ode_mod_confirm,
+    xnap_elem_procs_o::successful_outcome_c::types::sn_ode_release_request_ack,
+    xnap_elem_procs_o::successful_outcome_c::types::sn_ode_release_confirm,
+    xnap_elem_procs_o::successful_outcome_c::types::sn_ode_change_confirm,
+    xnap_elem_procs_o::successful_outcome_c::types::xn_removal_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::xn_setup_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::ngran_node_cfg_upd_ack,
+    xnap_elem_procs_o::successful_outcome_c::types::e_utra_nr_cell_res_coordination_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::cell_activation_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::reset_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::res_status_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::mob_change_ack,
+    xnap_elem_procs_o::successful_outcome_c::types::iab_transport_migration_management_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::iab_transport_migration_mod_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::iab_res_coordination_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::partial_ue_context_transfer_ack,
+    xnap_elem_procs_o::successful_outcome_c::types::data_collection_resp,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::successful_outcome_c::types::nulltype};
+static const uint8_t objset_unsuccessful_outcome_xnap_elem_procs_o[] = {
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::ho_prep_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::retrieve_ue_context_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::sn_ode_addition_request_reject,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::sn_ode_mod_request_reject,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::sn_ode_mod_refuse,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::sn_ode_release_reject,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::sn_ode_change_refuse,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::xn_removal_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::xn_setup_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::ngran_node_cfg_upd_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::cell_activation_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::res_status_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::mob_change_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::iab_transport_migration_management_reject,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::partial_ue_context_transfer_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::data_collection_fail,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype};
+static const uint8_t objset_crit_xnap_elem_procs_o[] = {
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::reject,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore};
+static const asn1::table::objset_column objset_columns_xnap_elem_procs_o[] = {
+    {objset_init_msg_xnap_elem_procs_o, xnap_elem_procs_o::init_msg_c::types::nulltype},
+    {objset_successful_outcome_xnap_elem_procs_o, xnap_elem_procs_o::successful_outcome_c::types::nulltype},
+    {objset_unsuccessful_outcome_xnap_elem_procs_o, xnap_elem_procs_o::unsuccessful_outcome_c::types::nulltype},
+    {objset_crit_xnap_elem_procs_o, crit_e::nulltype}};
+const asn1::table::objset_desc xnap_elem_procs_o::desc = {objset_proc_code_xnap_elem_procs_o,
+                                                          52,
+                                                          "proc_code",
+                                                          objset_columns_xnap_elem_procs_o};
 
 // InitiatingMessage ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_xnap_elem_procs_o_init_msg_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_addition_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_change_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_removal_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ngran_node_cfg_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_utra_nr_cell_res_coordination_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_activation_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mob_change_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_management_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_res_coordination_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<partial_ue_context_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_status_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_cancel_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ran_paging_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_u_address_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ue_context_release_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_recfg_complete_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_counter_check_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<rrc_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<error_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<private_msg_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<notif_ctrl_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<activity_notif_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<secondary_rat_data_usage_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<deactiv_trace_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<trace_start_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_success_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<conditional_ho_cancel_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<early_status_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<fail_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<access_and_mob_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_traffic_trace_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ran_multicast_group_paging_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<scg_fail_info_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<scg_fail_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<f1_c_traffic_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cp_c_cancel_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<rach_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_upd_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_xnap_elem_procs_o_init_msg_c_names[] = {
+    {"HandoverRequest", nullptr},
+    {"RetrieveUEContextRequest", nullptr},
+    {"SNodeAdditionRequest", nullptr},
+    {"SNodeModificationRequest", nullptr},
+    {"SNodeModificationRequired", nullptr},
+    {"SNodeReleaseRequest", nullptr},
+    {"SNodeReleaseRequired", nullptr},
+    {"SNodeChangeRequired", nullptr},
+    {"XnRemovalRequest", nullptr},
+    {"XnSetupRequest", nullptr},
+    {"NGRANNodeConfigurationUpdate", nullptr},
+    {"E-UTRA-NR-CellResourceCoordinationRequest", nullptr},
+    {"CellActivationRequest", nullptr},
+    {"ResetRequest", nullptr},
+    {"ResourceStatusRequest", nullptr},
+    {"MobilityChangeRequest", nullptr},
+    {"IABTransportMigrationManagementRequest", nullptr},
+    {"IABTransportMigrationModificationRequest", nullptr},
+    {"IABResourceCoordinationRequest", nullptr},
+    {"PartialUEContextTransfer", nullptr},
+    {"DataCollectionRequest", nullptr},
+    {"SNStatusTransfer", nullptr},
+    {"HandoverCancel", nullptr},
+    {"RANPaging", nullptr},
+    {"XnUAddressIndication", nullptr},
+    {"UEContextRelease", nullptr},
+    {"SNodeReconfigurationComplete", nullptr},
+    {"SNodeCounterCheckRequest", nullptr},
+    {"RRCTransfer", nullptr},
+    {"ErrorIndication", nullptr},
+    {"PrivateMessage", nullptr},
+    {"NotificationControlIndication", nullptr},
+    {"ActivityNotification", nullptr},
+    {"SecondaryRATDataUsageReport", nullptr},
+    {"DeactivateTrace", nullptr},
+    {"TraceStart", nullptr},
+    {"HandoverSuccess", nullptr},
+    {"ConditionalHandoverCancel", nullptr},
+    {"EarlyStatusTransfer", nullptr},
+    {"FailureIndication", nullptr},
+    {"HandoverReport", nullptr},
+    {"ResourceStatusUpdate", nullptr},
+    {"AccessAndMobilityIndication", nullptr},
+    {"CellTrafficTrace", nullptr},
+    {"RANMulticastGroupPaging", nullptr},
+    {"ScgFailureInformationReport", nullptr},
+    {"ScgFailureTransfer", nullptr},
+    {"F1CTrafficTransfer", nullptr},
+    {"RetrieveUEContextConfirm", nullptr},
+    {"CPCCancel", nullptr},
+    {"RachIndication", nullptr},
+    {"DataCollectionUpdate", nullptr}};
+const asn1::table::choice_desc xnap_elem_procs_o::init_msg_c::desc = {
+    asn1::table::enum_int_type<xnap_elem_procs_o::init_msg_c::types>(),
+    xnap_elem_procs_o::init_msg_c::types::nof_types,
+    xnap_elem_procs_o::init_msg_c::types::nof_exts,
+    xnap_elem_procs_o::init_msg_c::types::has_ext,
+    true,
+    choice_table_xnap_elem_procs_o_init_msg_c_alternatives,
+    &asn1::table::choice_set<xnap_elem_procs_o::init_msg_c>,
+    choice_table_xnap_elem_procs_o_init_msg_c_names,
+    "xnap_elem_procs_o::init_msg_c",
+    offsetof(xnap_elem_procs_o::init_msg_c, type_),
+    offsetof(xnap_elem_procs_o::init_msg_c, c),
+    false,
+    nullptr,
+    true};
+
 void xnap_elem_procs_o::init_msg_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ho_request:
-      c = ho_request_s{};
-      break;
-    case types::retrieve_ue_context_request:
-      c = retrieve_ue_context_request_s{};
-      break;
-    case types::sn_ode_addition_request:
-      c = sn_ode_addition_request_s{};
-      break;
-    case types::sn_ode_mod_request:
-      c = sn_ode_mod_request_s{};
-      break;
-    case types::sn_ode_mod_required:
-      c = sn_ode_mod_required_s{};
-      break;
-    case types::sn_ode_release_request:
-      c = sn_ode_release_request_s{};
-      break;
-    case types::sn_ode_release_required:
-      c = sn_ode_release_required_s{};
-      break;
-    case types::sn_ode_change_required:
-      c = sn_ode_change_required_s{};
-      break;
-    case types::xn_removal_request:
-      c = xn_removal_request_s{};
-      break;
-    case types::xn_setup_request:
-      c = xn_setup_request_s{};
-      break;
-    case types::ngran_node_cfg_upd:
-      c = ngran_node_cfg_upd_s{};
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      c = e_utra_nr_cell_res_coordination_request_s{};
-      break;
-    case types::cell_activation_request:
-      c = cell_activation_request_s{};
-      break;
-    case types::reset_request:
-      c = reset_request_s{};
-      break;
-    case types::res_status_request:
-      c = res_status_request_s{};
-      break;
-    case types::mob_change_request:
-      c = mob_change_request_s{};
-      break;
-    case types::iab_transport_migration_management_request:
-      c = iab_transport_migration_management_request_s{};
-      break;
-    case types::iab_transport_migration_mod_request:
-      c = iab_transport_migration_mod_request_s{};
-      break;
-    case types::iab_res_coordination_request:
-      c = iab_res_coordination_request_s{};
-      break;
-    case types::partial_ue_context_transfer:
-      c = partial_ue_context_transfer_s{};
-      break;
-    case types::data_collection_request:
-      c = data_collection_request_s{};
-      break;
-    case types::sn_status_transfer:
-      c = sn_status_transfer_s{};
-      break;
-    case types::ho_cancel:
-      c = ho_cancel_s{};
-      break;
-    case types::ran_paging:
-      c = ran_paging_s{};
-      break;
-    case types::xn_u_address_ind:
-      c = xn_u_address_ind_s{};
-      break;
-    case types::ue_context_release:
-      c = ue_context_release_s{};
-      break;
-    case types::sn_ode_recfg_complete:
-      c = sn_ode_recfg_complete_s{};
-      break;
-    case types::sn_ode_counter_check_request:
-      c = sn_ode_counter_check_request_s{};
-      break;
-    case types::rrc_transfer:
-      c = rrc_transfer_s{};
-      break;
-    case types::error_ind:
-      c = error_ind_s{};
-      break;
-    case types::private_msg:
-      c = private_msg_s{};
-      break;
-    case types::notif_ctrl_ind:
-      c = notif_ctrl_ind_s{};
-      break;
-    case types::activity_notif:
-      c = activity_notif_s{};
-      break;
-    case types::secondary_rat_data_usage_report:
-      c = secondary_rat_data_usage_report_s{};
-      break;
-    case types::deactiv_trace:
-      c = deactiv_trace_s{};
-      break;
-    case types::trace_start:
-      c = trace_start_s{};
-      break;
-    case types::ho_success:
-      c = ho_success_s{};
-      break;
-    case types::conditional_ho_cancel:
-      c = conditional_ho_cancel_s{};
-      break;
-    case types::early_status_transfer:
-      c = early_status_transfer_s{};
-      break;
-    case types::fail_ind:
-      c = fail_ind_s{};
-      break;
-    case types::ho_report:
-      c = ho_report_s{};
-      break;
-    case types::res_status_upd:
-      c = res_status_upd_s{};
-      break;
-    case types::access_and_mob_ind:
-      c = access_and_mob_ind_s{};
-      break;
-    case types::cell_traffic_trace:
-      c = cell_traffic_trace_s{};
-      break;
-    case types::ran_multicast_group_paging:
-      c = ran_multicast_group_paging_s{};
-      break;
-    case types::scg_fail_info_report:
-      c = scg_fail_info_report_s{};
-      break;
-    case types::scg_fail_transfer:
-      c = scg_fail_transfer_s{};
-      break;
-    case types::f1_c_traffic_transfer:
-      c = f1_c_traffic_transfer_s{};
-      break;
-    case types::retrieve_ue_context_confirm:
-      c = retrieve_ue_context_confirm_s{};
-      break;
-    case types::cp_c_cancel:
-      c = cp_c_cancel_s{};
-      break;
-    case types::rach_ind:
-      c = rach_ind_s{};
-      break;
-    case types::data_collection_upd:
-      c = data_collection_upd_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::init_msg_c");
-  }
+  asn1::table::set_any_choice(&c, e, xnap_elem_procs_o::init_msg_c::desc);
 }
 ho_request_s& xnap_elem_procs_o::init_msg_c::ho_request()
 {
@@ -1181,612 +1211,64 @@ const data_collection_upd_s& xnap_elem_procs_o::init_msg_c::data_collection_upd(
   assert_choice_type(types::data_collection_upd, type_, "InitiatingMessage");
   return c.get<data_collection_upd_s>();
 }
-void xnap_elem_procs_o::init_msg_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ho_request:
-      j.write_fieldname("HandoverRequest");
-      c.get<ho_request_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_request:
-      j.write_fieldname("RetrieveUEContextRequest");
-      c.get<retrieve_ue_context_request_s>().to_json(j);
-      break;
-    case types::sn_ode_addition_request:
-      j.write_fieldname("SNodeAdditionRequest");
-      c.get<sn_ode_addition_request_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_request:
-      j.write_fieldname("SNodeModificationRequest");
-      c.get<sn_ode_mod_request_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_required:
-      j.write_fieldname("SNodeModificationRequired");
-      c.get<sn_ode_mod_required_s>().to_json(j);
-      break;
-    case types::sn_ode_release_request:
-      j.write_fieldname("SNodeReleaseRequest");
-      c.get<sn_ode_release_request_s>().to_json(j);
-      break;
-    case types::sn_ode_release_required:
-      j.write_fieldname("SNodeReleaseRequired");
-      c.get<sn_ode_release_required_s>().to_json(j);
-      break;
-    case types::sn_ode_change_required:
-      j.write_fieldname("SNodeChangeRequired");
-      c.get<sn_ode_change_required_s>().to_json(j);
-      break;
-    case types::xn_removal_request:
-      j.write_fieldname("XnRemovalRequest");
-      c.get<xn_removal_request_s>().to_json(j);
-      break;
-    case types::xn_setup_request:
-      j.write_fieldname("XnSetupRequest");
-      c.get<xn_setup_request_s>().to_json(j);
-      break;
-    case types::ngran_node_cfg_upd:
-      j.write_fieldname("NGRANNodeConfigurationUpdate");
-      c.get<ngran_node_cfg_upd_s>().to_json(j);
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      j.write_fieldname("E-UTRA-NR-CellResourceCoordinationRequest");
-      c.get<e_utra_nr_cell_res_coordination_request_s>().to_json(j);
-      break;
-    case types::cell_activation_request:
-      j.write_fieldname("CellActivationRequest");
-      c.get<cell_activation_request_s>().to_json(j);
-      break;
-    case types::reset_request:
-      j.write_fieldname("ResetRequest");
-      c.get<reset_request_s>().to_json(j);
-      break;
-    case types::res_status_request:
-      j.write_fieldname("ResourceStatusRequest");
-      c.get<res_status_request_s>().to_json(j);
-      break;
-    case types::mob_change_request:
-      j.write_fieldname("MobilityChangeRequest");
-      c.get<mob_change_request_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_management_request:
-      j.write_fieldname("IABTransportMigrationManagementRequest");
-      c.get<iab_transport_migration_management_request_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_mod_request:
-      j.write_fieldname("IABTransportMigrationModificationRequest");
-      c.get<iab_transport_migration_mod_request_s>().to_json(j);
-      break;
-    case types::iab_res_coordination_request:
-      j.write_fieldname("IABResourceCoordinationRequest");
-      c.get<iab_res_coordination_request_s>().to_json(j);
-      break;
-    case types::partial_ue_context_transfer:
-      j.write_fieldname("PartialUEContextTransfer");
-      c.get<partial_ue_context_transfer_s>().to_json(j);
-      break;
-    case types::data_collection_request:
-      j.write_fieldname("DataCollectionRequest");
-      c.get<data_collection_request_s>().to_json(j);
-      break;
-    case types::sn_status_transfer:
-      j.write_fieldname("SNStatusTransfer");
-      c.get<sn_status_transfer_s>().to_json(j);
-      break;
-    case types::ho_cancel:
-      j.write_fieldname("HandoverCancel");
-      c.get<ho_cancel_s>().to_json(j);
-      break;
-    case types::ran_paging:
-      j.write_fieldname("RANPaging");
-      c.get<ran_paging_s>().to_json(j);
-      break;
-    case types::xn_u_address_ind:
-      j.write_fieldname("XnUAddressIndication");
-      c.get<xn_u_address_ind_s>().to_json(j);
-      break;
-    case types::ue_context_release:
-      j.write_fieldname("UEContextRelease");
-      c.get<ue_context_release_s>().to_json(j);
-      break;
-    case types::sn_ode_recfg_complete:
-      j.write_fieldname("SNodeReconfigurationComplete");
-      c.get<sn_ode_recfg_complete_s>().to_json(j);
-      break;
-    case types::sn_ode_counter_check_request:
-      j.write_fieldname("SNodeCounterCheckRequest");
-      c.get<sn_ode_counter_check_request_s>().to_json(j);
-      break;
-    case types::rrc_transfer:
-      j.write_fieldname("RRCTransfer");
-      c.get<rrc_transfer_s>().to_json(j);
-      break;
-    case types::error_ind:
-      j.write_fieldname("ErrorIndication");
-      c.get<error_ind_s>().to_json(j);
-      break;
-    case types::private_msg:
-      j.write_fieldname("PrivateMessage");
-      c.get<private_msg_s>().to_json(j);
-      break;
-    case types::notif_ctrl_ind:
-      j.write_fieldname("NotificationControlIndication");
-      c.get<notif_ctrl_ind_s>().to_json(j);
-      break;
-    case types::activity_notif:
-      j.write_fieldname("ActivityNotification");
-      c.get<activity_notif_s>().to_json(j);
-      break;
-    case types::secondary_rat_data_usage_report:
-      j.write_fieldname("SecondaryRATDataUsageReport");
-      c.get<secondary_rat_data_usage_report_s>().to_json(j);
-      break;
-    case types::deactiv_trace:
-      j.write_fieldname("DeactivateTrace");
-      c.get<deactiv_trace_s>().to_json(j);
-      break;
-    case types::trace_start:
-      j.write_fieldname("TraceStart");
-      c.get<trace_start_s>().to_json(j);
-      break;
-    case types::ho_success:
-      j.write_fieldname("HandoverSuccess");
-      c.get<ho_success_s>().to_json(j);
-      break;
-    case types::conditional_ho_cancel:
-      j.write_fieldname("ConditionalHandoverCancel");
-      c.get<conditional_ho_cancel_s>().to_json(j);
-      break;
-    case types::early_status_transfer:
-      j.write_fieldname("EarlyStatusTransfer");
-      c.get<early_status_transfer_s>().to_json(j);
-      break;
-    case types::fail_ind:
-      j.write_fieldname("FailureIndication");
-      c.get<fail_ind_s>().to_json(j);
-      break;
-    case types::ho_report:
-      j.write_fieldname("HandoverReport");
-      c.get<ho_report_s>().to_json(j);
-      break;
-    case types::res_status_upd:
-      j.write_fieldname("ResourceStatusUpdate");
-      c.get<res_status_upd_s>().to_json(j);
-      break;
-    case types::access_and_mob_ind:
-      j.write_fieldname("AccessAndMobilityIndication");
-      c.get<access_and_mob_ind_s>().to_json(j);
-      break;
-    case types::cell_traffic_trace:
-      j.write_fieldname("CellTrafficTrace");
-      c.get<cell_traffic_trace_s>().to_json(j);
-      break;
-    case types::ran_multicast_group_paging:
-      j.write_fieldname("RANMulticastGroupPaging");
-      c.get<ran_multicast_group_paging_s>().to_json(j);
-      break;
-    case types::scg_fail_info_report:
-      j.write_fieldname("ScgFailureInformationReport");
-      c.get<scg_fail_info_report_s>().to_json(j);
-      break;
-    case types::scg_fail_transfer:
-      j.write_fieldname("ScgFailureTransfer");
-      c.get<scg_fail_transfer_s>().to_json(j);
-      break;
-    case types::f1_c_traffic_transfer:
-      j.write_fieldname("F1CTrafficTransfer");
-      c.get<f1_c_traffic_transfer_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_confirm:
-      j.write_fieldname("RetrieveUEContextConfirm");
-      c.get<retrieve_ue_context_confirm_s>().to_json(j);
-      break;
-    case types::cp_c_cancel:
-      j.write_fieldname("CPCCancel");
-      c.get<cp_c_cancel_s>().to_json(j);
-      break;
-    case types::rach_ind:
-      j.write_fieldname("RachIndication");
-      c.get<rach_ind_s>().to_json(j);
-      break;
-    case types::data_collection_upd:
-      j.write_fieldname("DataCollectionUpdate");
-      c.get<data_collection_upd_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::init_msg_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_o::init_msg_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request:
-      HANDLE_CODE(c.get<ho_request_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_request:
-      HANDLE_CODE(c.get<retrieve_ue_context_request_s>().pack(bref));
-      break;
-    case types::sn_ode_addition_request:
-      HANDLE_CODE(c.get<sn_ode_addition_request_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_request:
-      HANDLE_CODE(c.get<sn_ode_mod_request_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_required:
-      HANDLE_CODE(c.get<sn_ode_mod_required_s>().pack(bref));
-      break;
-    case types::sn_ode_release_request:
-      HANDLE_CODE(c.get<sn_ode_release_request_s>().pack(bref));
-      break;
-    case types::sn_ode_release_required:
-      HANDLE_CODE(c.get<sn_ode_release_required_s>().pack(bref));
-      break;
-    case types::sn_ode_change_required:
-      HANDLE_CODE(c.get<sn_ode_change_required_s>().pack(bref));
-      break;
-    case types::xn_removal_request:
-      HANDLE_CODE(c.get<xn_removal_request_s>().pack(bref));
-      break;
-    case types::xn_setup_request:
-      HANDLE_CODE(c.get<xn_setup_request_s>().pack(bref));
-      break;
-    case types::ngran_node_cfg_upd:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_s>().pack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_request_s>().pack(bref));
-      break;
-    case types::cell_activation_request:
-      HANDLE_CODE(c.get<cell_activation_request_s>().pack(bref));
-      break;
-    case types::reset_request:
-      HANDLE_CODE(c.get<reset_request_s>().pack(bref));
-      break;
-    case types::res_status_request:
-      HANDLE_CODE(c.get<res_status_request_s>().pack(bref));
-      break;
-    case types::mob_change_request:
-      HANDLE_CODE(c.get<mob_change_request_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_management_request:
-      HANDLE_CODE(c.get<iab_transport_migration_management_request_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_mod_request:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_request_s>().pack(bref));
-      break;
-    case types::iab_res_coordination_request:
-      HANDLE_CODE(c.get<iab_res_coordination_request_s>().pack(bref));
-      break;
-    case types::partial_ue_context_transfer:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_s>().pack(bref));
-      break;
-    case types::data_collection_request:
-      HANDLE_CODE(c.get<data_collection_request_s>().pack(bref));
-      break;
-    case types::sn_status_transfer:
-      HANDLE_CODE(c.get<sn_status_transfer_s>().pack(bref));
-      break;
-    case types::ho_cancel:
-      HANDLE_CODE(c.get<ho_cancel_s>().pack(bref));
-      break;
-    case types::ran_paging:
-      HANDLE_CODE(c.get<ran_paging_s>().pack(bref));
-      break;
-    case types::xn_u_address_ind:
-      HANDLE_CODE(c.get<xn_u_address_ind_s>().pack(bref));
-      break;
-    case types::ue_context_release:
-      HANDLE_CODE(c.get<ue_context_release_s>().pack(bref));
-      break;
-    case types::sn_ode_recfg_complete:
-      HANDLE_CODE(c.get<sn_ode_recfg_complete_s>().pack(bref));
-      break;
-    case types::sn_ode_counter_check_request:
-      HANDLE_CODE(c.get<sn_ode_counter_check_request_s>().pack(bref));
-      break;
-    case types::rrc_transfer:
-      HANDLE_CODE(c.get<rrc_transfer_s>().pack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().pack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().pack(bref));
-      break;
-    case types::notif_ctrl_ind:
-      HANDLE_CODE(c.get<notif_ctrl_ind_s>().pack(bref));
-      break;
-    case types::activity_notif:
-      HANDLE_CODE(c.get<activity_notif_s>().pack(bref));
-      break;
-    case types::secondary_rat_data_usage_report:
-      HANDLE_CODE(c.get<secondary_rat_data_usage_report_s>().pack(bref));
-      break;
-    case types::deactiv_trace:
-      HANDLE_CODE(c.get<deactiv_trace_s>().pack(bref));
-      break;
-    case types::trace_start:
-      HANDLE_CODE(c.get<trace_start_s>().pack(bref));
-      break;
-    case types::ho_success:
-      HANDLE_CODE(c.get<ho_success_s>().pack(bref));
-      break;
-    case types::conditional_ho_cancel:
-      HANDLE_CODE(c.get<conditional_ho_cancel_s>().pack(bref));
-      break;
-    case types::early_status_transfer:
-      HANDLE_CODE(c.get<early_status_transfer_s>().pack(bref));
-      break;
-    case types::fail_ind:
-      HANDLE_CODE(c.get<fail_ind_s>().pack(bref));
-      break;
-    case types::ho_report:
-      HANDLE_CODE(c.get<ho_report_s>().pack(bref));
-      break;
-    case types::res_status_upd:
-      HANDLE_CODE(c.get<res_status_upd_s>().pack(bref));
-      break;
-    case types::access_and_mob_ind:
-      HANDLE_CODE(c.get<access_and_mob_ind_s>().pack(bref));
-      break;
-    case types::cell_traffic_trace:
-      HANDLE_CODE(c.get<cell_traffic_trace_s>().pack(bref));
-      break;
-    case types::ran_multicast_group_paging:
-      HANDLE_CODE(c.get<ran_multicast_group_paging_s>().pack(bref));
-      break;
-    case types::scg_fail_info_report:
-      HANDLE_CODE(c.get<scg_fail_info_report_s>().pack(bref));
-      break;
-    case types::scg_fail_transfer:
-      HANDLE_CODE(c.get<scg_fail_transfer_s>().pack(bref));
-      break;
-    case types::f1_c_traffic_transfer:
-      HANDLE_CODE(c.get<f1_c_traffic_transfer_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_confirm:
-      HANDLE_CODE(c.get<retrieve_ue_context_confirm_s>().pack(bref));
-      break;
-    case types::cp_c_cancel:
-      HANDLE_CODE(c.get<cp_c_cancel_s>().pack(bref));
-      break;
-    case types::rach_ind:
-      HANDLE_CODE(c.get<rach_ind_s>().pack(bref));
-      break;
-    case types::data_collection_upd:
-      HANDLE_CODE(c.get<data_collection_upd_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_o::init_msg_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request:
-      HANDLE_CODE(c.get<ho_request_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_request:
-      HANDLE_CODE(c.get<retrieve_ue_context_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_addition_request:
-      HANDLE_CODE(c.get<sn_ode_addition_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_request:
-      HANDLE_CODE(c.get<sn_ode_mod_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_required:
-      HANDLE_CODE(c.get<sn_ode_mod_required_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_request:
-      HANDLE_CODE(c.get<sn_ode_release_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_required:
-      HANDLE_CODE(c.get<sn_ode_release_required_s>().unpack(bref));
-      break;
-    case types::sn_ode_change_required:
-      HANDLE_CODE(c.get<sn_ode_change_required_s>().unpack(bref));
-      break;
-    case types::xn_removal_request:
-      HANDLE_CODE(c.get<xn_removal_request_s>().unpack(bref));
-      break;
-    case types::xn_setup_request:
-      HANDLE_CODE(c.get<xn_setup_request_s>().unpack(bref));
-      break;
-    case types::ngran_node_cfg_upd:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_s>().unpack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_request_s>().unpack(bref));
-      break;
-    case types::cell_activation_request:
-      HANDLE_CODE(c.get<cell_activation_request_s>().unpack(bref));
-      break;
-    case types::reset_request:
-      HANDLE_CODE(c.get<reset_request_s>().unpack(bref));
-      break;
-    case types::res_status_request:
-      HANDLE_CODE(c.get<res_status_request_s>().unpack(bref));
-      break;
-    case types::mob_change_request:
-      HANDLE_CODE(c.get<mob_change_request_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_management_request:
-      HANDLE_CODE(c.get<iab_transport_migration_management_request_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_mod_request:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_request_s>().unpack(bref));
-      break;
-    case types::iab_res_coordination_request:
-      HANDLE_CODE(c.get<iab_res_coordination_request_s>().unpack(bref));
-      break;
-    case types::partial_ue_context_transfer:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_s>().unpack(bref));
-      break;
-    case types::data_collection_request:
-      HANDLE_CODE(c.get<data_collection_request_s>().unpack(bref));
-      break;
-    case types::sn_status_transfer:
-      HANDLE_CODE(c.get<sn_status_transfer_s>().unpack(bref));
-      break;
-    case types::ho_cancel:
-      HANDLE_CODE(c.get<ho_cancel_s>().unpack(bref));
-      break;
-    case types::ran_paging:
-      HANDLE_CODE(c.get<ran_paging_s>().unpack(bref));
-      break;
-    case types::xn_u_address_ind:
-      HANDLE_CODE(c.get<xn_u_address_ind_s>().unpack(bref));
-      break;
-    case types::ue_context_release:
-      HANDLE_CODE(c.get<ue_context_release_s>().unpack(bref));
-      break;
-    case types::sn_ode_recfg_complete:
-      HANDLE_CODE(c.get<sn_ode_recfg_complete_s>().unpack(bref));
-      break;
-    case types::sn_ode_counter_check_request:
-      HANDLE_CODE(c.get<sn_ode_counter_check_request_s>().unpack(bref));
-      break;
-    case types::rrc_transfer:
-      HANDLE_CODE(c.get<rrc_transfer_s>().unpack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().unpack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().unpack(bref));
-      break;
-    case types::notif_ctrl_ind:
-      HANDLE_CODE(c.get<notif_ctrl_ind_s>().unpack(bref));
-      break;
-    case types::activity_notif:
-      HANDLE_CODE(c.get<activity_notif_s>().unpack(bref));
-      break;
-    case types::secondary_rat_data_usage_report:
-      HANDLE_CODE(c.get<secondary_rat_data_usage_report_s>().unpack(bref));
-      break;
-    case types::deactiv_trace:
-      HANDLE_CODE(c.get<deactiv_trace_s>().unpack(bref));
-      break;
-    case types::trace_start:
-      HANDLE_CODE(c.get<trace_start_s>().unpack(bref));
-      break;
-    case types::ho_success:
-      HANDLE_CODE(c.get<ho_success_s>().unpack(bref));
-      break;
-    case types::conditional_ho_cancel:
-      HANDLE_CODE(c.get<conditional_ho_cancel_s>().unpack(bref));
-      break;
-    case types::early_status_transfer:
-      HANDLE_CODE(c.get<early_status_transfer_s>().unpack(bref));
-      break;
-    case types::fail_ind:
-      HANDLE_CODE(c.get<fail_ind_s>().unpack(bref));
-      break;
-    case types::ho_report:
-      HANDLE_CODE(c.get<ho_report_s>().unpack(bref));
-      break;
-    case types::res_status_upd:
-      HANDLE_CODE(c.get<res_status_upd_s>().unpack(bref));
-      break;
-    case types::access_and_mob_ind:
-      HANDLE_CODE(c.get<access_and_mob_ind_s>().unpack(bref));
-      break;
-    case types::cell_traffic_trace:
-      HANDLE_CODE(c.get<cell_traffic_trace_s>().unpack(bref));
-      break;
-    case types::ran_multicast_group_paging:
-      HANDLE_CODE(c.get<ran_multicast_group_paging_s>().unpack(bref));
-      break;
-    case types::scg_fail_info_report:
-      HANDLE_CODE(c.get<scg_fail_info_report_s>().unpack(bref));
-      break;
-    case types::scg_fail_transfer:
-      HANDLE_CODE(c.get<scg_fail_transfer_s>().unpack(bref));
-      break;
-    case types::f1_c_traffic_transfer:
-      HANDLE_CODE(c.get<f1_c_traffic_transfer_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_confirm:
-      HANDLE_CODE(c.get<retrieve_ue_context_confirm_s>().unpack(bref));
-      break;
-    case types::cp_c_cancel:
-      HANDLE_CODE(c.get<cp_c_cancel_s>().unpack(bref));
-      break;
-    case types::rach_ind:
-      HANDLE_CODE(c.get<rach_ind_s>().unpack(bref));
-      break;
-    case types::data_collection_upd:
-      HANDLE_CODE(c.get<data_collection_upd_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::init_msg_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* xnap_elem_procs_o::init_msg_c::types_opts::to_string() const
-{
-  static const char* names[] = {"HandoverRequest",
-                                "RetrieveUEContextRequest",
-                                "SNodeAdditionRequest",
-                                "SNodeModificationRequest",
-                                "SNodeModificationRequired",
-                                "SNodeReleaseRequest",
-                                "SNodeReleaseRequired",
-                                "SNodeChangeRequired",
-                                "XnRemovalRequest",
-                                "XnSetupRequest",
-                                "NGRANNodeConfigurationUpdate",
-                                "E-UTRA-NR-CellResourceCoordinationRequest",
-                                "CellActivationRequest",
-                                "ResetRequest",
-                                "ResourceStatusRequest",
-                                "MobilityChangeRequest",
-                                "IABTransportMigrationManagementRequest",
-                                "IABTransportMigrationModificationRequest",
-                                "IABResourceCoordinationRequest",
-                                "PartialUEContextTransfer",
-                                "DataCollectionRequest",
-                                "SNStatusTransfer",
-                                "HandoverCancel",
-                                "RANPaging",
-                                "XnUAddressIndication",
-                                "UEContextRelease",
-                                "SNodeReconfigurationComplete",
-                                "SNodeCounterCheckRequest",
-                                "RRCTransfer",
-                                "ErrorIndication",
-                                "PrivateMessage",
-                                "NotificationControlIndication",
-                                "ActivityNotification",
-                                "SecondaryRATDataUsageReport",
-                                "DeactivateTrace",
-                                "TraceStart",
-                                "HandoverSuccess",
-                                "ConditionalHandoverCancel",
-                                "EarlyStatusTransfer",
-                                "FailureIndication",
-                                "HandoverReport",
-                                "ResourceStatusUpdate",
-                                "AccessAndMobilityIndication",
-                                "CellTrafficTrace",
-                                "RANMulticastGroupPaging",
-                                "ScgFailureInformationReport",
-                                "ScgFailureTransfer",
-                                "F1CTrafficTransfer",
-                                "RetrieveUEContextConfirm",
-                                "CPCCancel",
-                                "RachIndication",
-                                "DataCollectionUpdate"};
-  return convert_enum_idx(names, 52, value, "xnap_elem_procs_o::init_msg_c::types");
-}
+static const char* enum_names_xnap_elem_procs_o_init_msg_c_types_values[] = {
+    "HandoverRequest",
+    "RetrieveUEContextRequest",
+    "SNodeAdditionRequest",
+    "SNodeModificationRequest",
+    "SNodeModificationRequired",
+    "SNodeReleaseRequest",
+    "SNodeReleaseRequired",
+    "SNodeChangeRequired",
+    "XnRemovalRequest",
+    "XnSetupRequest",
+    "NGRANNodeConfigurationUpdate",
+    "E-UTRA-NR-CellResourceCoordinationRequest",
+    "CellActivationRequest",
+    "ResetRequest",
+    "ResourceStatusRequest",
+    "MobilityChangeRequest",
+    "IABTransportMigrationManagementRequest",
+    "IABTransportMigrationModificationRequest",
+    "IABResourceCoordinationRequest",
+    "PartialUEContextTransfer",
+    "DataCollectionRequest",
+    "SNStatusTransfer",
+    "HandoverCancel",
+    "RANPaging",
+    "XnUAddressIndication",
+    "UEContextRelease",
+    "SNodeReconfigurationComplete",
+    "SNodeCounterCheckRequest",
+    "RRCTransfer",
+    "ErrorIndication",
+    "PrivateMessage",
+    "NotificationControlIndication",
+    "ActivityNotification",
+    "SecondaryRATDataUsageReport",
+    "DeactivateTrace",
+    "TraceStart",
+    "HandoverSuccess",
+    "ConditionalHandoverCancel",
+    "EarlyStatusTransfer",
+    "FailureIndication",
+    "HandoverReport",
+    "ResourceStatusUpdate",
+    "AccessAndMobilityIndication",
+    "CellTrafficTrace",
+    "RANMulticastGroupPaging",
+    "ScgFailureInformationReport",
+    "ScgFailureTransfer",
+    "F1CTrafficTransfer",
+    "RetrieveUEContextConfirm",
+    "CPCCancel",
+    "RachIndication",
+    "DataCollectionUpdate"};
+const asn1::table::enum_desc xnap_elem_procs_o::init_msg_c::types_opts::desc = {
+    enum_names_xnap_elem_procs_o_init_msg_c_types_values,
+    52,
+    "xnap_elem_procs_o::init_msg_c::types"};
 uint8_t xnap_elem_procs_o::init_msg_c::types_opts::to_number() const
 {
   if (value == f1_c_traffic_transfer) {
@@ -1797,78 +1279,217 @@ uint8_t xnap_elem_procs_o::init_msg_c::types_opts::to_number() const
 }
 
 // SuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_xnap_elem_procs_o_successful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_addition_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_change_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_removal_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ngran_node_cfg_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_utra_nr_cell_res_coordination_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_activation_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mob_change_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_management_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_mod_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_res_coordination_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<partial_ue_context_transfer_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_resp_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_xnap_elem_procs_o_successful_outcome_c_names[] = {
+    {"HandoverRequestAcknowledge", nullptr},
+    {"RetrieveUEContextResponse", nullptr},
+    {"SNodeAdditionRequestAcknowledge", nullptr},
+    {"SNodeModificationRequestAcknowledge", nullptr},
+    {"SNodeModificationConfirm", nullptr},
+    {"SNodeReleaseRequestAcknowledge", nullptr},
+    {"SNodeReleaseConfirm", nullptr},
+    {"SNodeChangeConfirm", nullptr},
+    {"XnRemovalResponse", nullptr},
+    {"XnSetupResponse", nullptr},
+    {"NGRANNodeConfigurationUpdateAcknowledge", nullptr},
+    {"E-UTRA-NR-CellResourceCoordinationResponse", nullptr},
+    {"CellActivationResponse", nullptr},
+    {"ResetResponse", nullptr},
+    {"ResourceStatusResponse", nullptr},
+    {"MobilityChangeAcknowledge", nullptr},
+    {"IABTransportMigrationManagementResponse", nullptr},
+    {"IABTransportMigrationModificationResponse", nullptr},
+    {"IABResourceCoordinationResponse", nullptr},
+    {"PartialUEContextTransferAcknowledge", nullptr},
+    {"DataCollectionResponse", nullptr}};
+const asn1::table::choice_desc xnap_elem_procs_o::successful_outcome_c::desc = {
+    asn1::table::enum_int_type<xnap_elem_procs_o::successful_outcome_c::types>(),
+    xnap_elem_procs_o::successful_outcome_c::types::nof_types,
+    xnap_elem_procs_o::successful_outcome_c::types::nof_exts,
+    xnap_elem_procs_o::successful_outcome_c::types::has_ext,
+    true,
+    choice_table_xnap_elem_procs_o_successful_outcome_c_alternatives,
+    &asn1::table::choice_set<xnap_elem_procs_o::successful_outcome_c>,
+    choice_table_xnap_elem_procs_o_successful_outcome_c_names,
+    "xnap_elem_procs_o::successful_outcome_c",
+    offsetof(xnap_elem_procs_o::successful_outcome_c, type_),
+    offsetof(xnap_elem_procs_o::successful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void xnap_elem_procs_o::successful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ho_request_ack:
-      c = ho_request_ack_s{};
-      break;
-    case types::retrieve_ue_context_resp:
-      c = retrieve_ue_context_resp_s{};
-      break;
-    case types::sn_ode_addition_request_ack:
-      c = sn_ode_addition_request_ack_s{};
-      break;
-    case types::sn_ode_mod_request_ack:
-      c = sn_ode_mod_request_ack_s{};
-      break;
-    case types::sn_ode_mod_confirm:
-      c = sn_ode_mod_confirm_s{};
-      break;
-    case types::sn_ode_release_request_ack:
-      c = sn_ode_release_request_ack_s{};
-      break;
-    case types::sn_ode_release_confirm:
-      c = sn_ode_release_confirm_s{};
-      break;
-    case types::sn_ode_change_confirm:
-      c = sn_ode_change_confirm_s{};
-      break;
-    case types::xn_removal_resp:
-      c = xn_removal_resp_s{};
-      break;
-    case types::xn_setup_resp:
-      c = xn_setup_resp_s{};
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      c = ngran_node_cfg_upd_ack_s{};
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      c = e_utra_nr_cell_res_coordination_resp_s{};
-      break;
-    case types::cell_activation_resp:
-      c = cell_activation_resp_s{};
-      break;
-    case types::reset_resp:
-      c = reset_resp_s{};
-      break;
-    case types::res_status_resp:
-      c = res_status_resp_s{};
-      break;
-    case types::mob_change_ack:
-      c = mob_change_ack_s{};
-      break;
-    case types::iab_transport_migration_management_resp:
-      c = iab_transport_migration_management_resp_s{};
-      break;
-    case types::iab_transport_migration_mod_resp:
-      c = iab_transport_migration_mod_resp_s{};
-      break;
-    case types::iab_res_coordination_resp:
-      c = iab_res_coordination_resp_s{};
-      break;
-    case types::partial_ue_context_transfer_ack:
-      c = partial_ue_context_transfer_ack_s{};
-      break;
-    case types::data_collection_resp:
-      c = data_collection_resp_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::successful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, xnap_elem_procs_o::successful_outcome_c::desc);
 }
 ho_request_ack_s& xnap_elem_procs_o::successful_outcome_c::ho_request_ack()
 {
@@ -2085,330 +1706,201 @@ const data_collection_resp_s& xnap_elem_procs_o::successful_outcome_c::data_coll
   assert_choice_type(types::data_collection_resp, type_, "SuccessfulOutcome");
   return c.get<data_collection_resp_s>();
 }
-void xnap_elem_procs_o::successful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ho_request_ack:
-      j.write_fieldname("HandoverRequestAcknowledge");
-      c.get<ho_request_ack_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_resp:
-      j.write_fieldname("RetrieveUEContextResponse");
-      c.get<retrieve_ue_context_resp_s>().to_json(j);
-      break;
-    case types::sn_ode_addition_request_ack:
-      j.write_fieldname("SNodeAdditionRequestAcknowledge");
-      c.get<sn_ode_addition_request_ack_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_request_ack:
-      j.write_fieldname("SNodeModificationRequestAcknowledge");
-      c.get<sn_ode_mod_request_ack_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_confirm:
-      j.write_fieldname("SNodeModificationConfirm");
-      c.get<sn_ode_mod_confirm_s>().to_json(j);
-      break;
-    case types::sn_ode_release_request_ack:
-      j.write_fieldname("SNodeReleaseRequestAcknowledge");
-      c.get<sn_ode_release_request_ack_s>().to_json(j);
-      break;
-    case types::sn_ode_release_confirm:
-      j.write_fieldname("SNodeReleaseConfirm");
-      c.get<sn_ode_release_confirm_s>().to_json(j);
-      break;
-    case types::sn_ode_change_confirm:
-      j.write_fieldname("SNodeChangeConfirm");
-      c.get<sn_ode_change_confirm_s>().to_json(j);
-      break;
-    case types::xn_removal_resp:
-      j.write_fieldname("XnRemovalResponse");
-      c.get<xn_removal_resp_s>().to_json(j);
-      break;
-    case types::xn_setup_resp:
-      j.write_fieldname("XnSetupResponse");
-      c.get<xn_setup_resp_s>().to_json(j);
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      j.write_fieldname("NGRANNodeConfigurationUpdateAcknowledge");
-      c.get<ngran_node_cfg_upd_ack_s>().to_json(j);
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      j.write_fieldname("E-UTRA-NR-CellResourceCoordinationResponse");
-      c.get<e_utra_nr_cell_res_coordination_resp_s>().to_json(j);
-      break;
-    case types::cell_activation_resp:
-      j.write_fieldname("CellActivationResponse");
-      c.get<cell_activation_resp_s>().to_json(j);
-      break;
-    case types::reset_resp:
-      j.write_fieldname("ResetResponse");
-      c.get<reset_resp_s>().to_json(j);
-      break;
-    case types::res_status_resp:
-      j.write_fieldname("ResourceStatusResponse");
-      c.get<res_status_resp_s>().to_json(j);
-      break;
-    case types::mob_change_ack:
-      j.write_fieldname("MobilityChangeAcknowledge");
-      c.get<mob_change_ack_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_management_resp:
-      j.write_fieldname("IABTransportMigrationManagementResponse");
-      c.get<iab_transport_migration_management_resp_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_mod_resp:
-      j.write_fieldname("IABTransportMigrationModificationResponse");
-      c.get<iab_transport_migration_mod_resp_s>().to_json(j);
-      break;
-    case types::iab_res_coordination_resp:
-      j.write_fieldname("IABResourceCoordinationResponse");
-      c.get<iab_res_coordination_resp_s>().to_json(j);
-      break;
-    case types::partial_ue_context_transfer_ack:
-      j.write_fieldname("PartialUEContextTransferAcknowledge");
-      c.get<partial_ue_context_transfer_ack_s>().to_json(j);
-      break;
-    case types::data_collection_resp:
-      j.write_fieldname("DataCollectionResponse");
-      c.get<data_collection_resp_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::successful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_o::successful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request_ack:
-      HANDLE_CODE(c.get<ho_request_ack_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_resp:
-      HANDLE_CODE(c.get<retrieve_ue_context_resp_s>().pack(bref));
-      break;
-    case types::sn_ode_addition_request_ack:
-      HANDLE_CODE(c.get<sn_ode_addition_request_ack_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_request_ack:
-      HANDLE_CODE(c.get<sn_ode_mod_request_ack_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_confirm:
-      HANDLE_CODE(c.get<sn_ode_mod_confirm_s>().pack(bref));
-      break;
-    case types::sn_ode_release_request_ack:
-      HANDLE_CODE(c.get<sn_ode_release_request_ack_s>().pack(bref));
-      break;
-    case types::sn_ode_release_confirm:
-      HANDLE_CODE(c.get<sn_ode_release_confirm_s>().pack(bref));
-      break;
-    case types::sn_ode_change_confirm:
-      HANDLE_CODE(c.get<sn_ode_change_confirm_s>().pack(bref));
-      break;
-    case types::xn_removal_resp:
-      HANDLE_CODE(c.get<xn_removal_resp_s>().pack(bref));
-      break;
-    case types::xn_setup_resp:
-      HANDLE_CODE(c.get<xn_setup_resp_s>().pack(bref));
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_ack_s>().pack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_resp_s>().pack(bref));
-      break;
-    case types::cell_activation_resp:
-      HANDLE_CODE(c.get<cell_activation_resp_s>().pack(bref));
-      break;
-    case types::reset_resp:
-      HANDLE_CODE(c.get<reset_resp_s>().pack(bref));
-      break;
-    case types::res_status_resp:
-      HANDLE_CODE(c.get<res_status_resp_s>().pack(bref));
-      break;
-    case types::mob_change_ack:
-      HANDLE_CODE(c.get<mob_change_ack_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_management_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_management_resp_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_mod_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_resp_s>().pack(bref));
-      break;
-    case types::iab_res_coordination_resp:
-      HANDLE_CODE(c.get<iab_res_coordination_resp_s>().pack(bref));
-      break;
-    case types::partial_ue_context_transfer_ack:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_ack_s>().pack(bref));
-      break;
-    case types::data_collection_resp:
-      HANDLE_CODE(c.get<data_collection_resp_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_o::successful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request_ack:
-      HANDLE_CODE(c.get<ho_request_ack_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_resp:
-      HANDLE_CODE(c.get<retrieve_ue_context_resp_s>().unpack(bref));
-      break;
-    case types::sn_ode_addition_request_ack:
-      HANDLE_CODE(c.get<sn_ode_addition_request_ack_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_request_ack:
-      HANDLE_CODE(c.get<sn_ode_mod_request_ack_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_confirm:
-      HANDLE_CODE(c.get<sn_ode_mod_confirm_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_request_ack:
-      HANDLE_CODE(c.get<sn_ode_release_request_ack_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_confirm:
-      HANDLE_CODE(c.get<sn_ode_release_confirm_s>().unpack(bref));
-      break;
-    case types::sn_ode_change_confirm:
-      HANDLE_CODE(c.get<sn_ode_change_confirm_s>().unpack(bref));
-      break;
-    case types::xn_removal_resp:
-      HANDLE_CODE(c.get<xn_removal_resp_s>().unpack(bref));
-      break;
-    case types::xn_setup_resp:
-      HANDLE_CODE(c.get<xn_setup_resp_s>().unpack(bref));
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_ack_s>().unpack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_resp_s>().unpack(bref));
-      break;
-    case types::cell_activation_resp:
-      HANDLE_CODE(c.get<cell_activation_resp_s>().unpack(bref));
-      break;
-    case types::reset_resp:
-      HANDLE_CODE(c.get<reset_resp_s>().unpack(bref));
-      break;
-    case types::res_status_resp:
-      HANDLE_CODE(c.get<res_status_resp_s>().unpack(bref));
-      break;
-    case types::mob_change_ack:
-      HANDLE_CODE(c.get<mob_change_ack_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_management_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_management_resp_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_mod_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_resp_s>().unpack(bref));
-      break;
-    case types::iab_res_coordination_resp:
-      HANDLE_CODE(c.get<iab_res_coordination_resp_s>().unpack(bref));
-      break;
-    case types::partial_ue_context_transfer_ack:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_ack_s>().unpack(bref));
-      break;
-    case types::data_collection_resp:
-      HANDLE_CODE(c.get<data_collection_resp_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::successful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* xnap_elem_procs_o::successful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"HandoverRequestAcknowledge",
-                                "RetrieveUEContextResponse",
-                                "SNodeAdditionRequestAcknowledge",
-                                "SNodeModificationRequestAcknowledge",
-                                "SNodeModificationConfirm",
-                                "SNodeReleaseRequestAcknowledge",
-                                "SNodeReleaseConfirm",
-                                "SNodeChangeConfirm",
-                                "XnRemovalResponse",
-                                "XnSetupResponse",
-                                "NGRANNodeConfigurationUpdateAcknowledge",
-                                "E-UTRA-NR-CellResourceCoordinationResponse",
-                                "CellActivationResponse",
-                                "ResetResponse",
-                                "ResourceStatusResponse",
-                                "MobilityChangeAcknowledge",
-                                "IABTransportMigrationManagementResponse",
-                                "IABTransportMigrationModificationResponse",
-                                "IABResourceCoordinationResponse",
-                                "PartialUEContextTransferAcknowledge",
-                                "DataCollectionResponse"};
-  return convert_enum_idx(names, 21, value, "xnap_elem_procs_o::successful_outcome_c::types");
-}
+static const char* enum_names_xnap_elem_procs_o_successful_outcome_c_types_values[] = {
+    "HandoverRequestAcknowledge",
+    "RetrieveUEContextResponse",
+    "SNodeAdditionRequestAcknowledge",
+    "SNodeModificationRequestAcknowledge",
+    "SNodeModificationConfirm",
+    "SNodeReleaseRequestAcknowledge",
+    "SNodeReleaseConfirm",
+    "SNodeChangeConfirm",
+    "XnRemovalResponse",
+    "XnSetupResponse",
+    "NGRANNodeConfigurationUpdateAcknowledge",
+    "E-UTRA-NR-CellResourceCoordinationResponse",
+    "CellActivationResponse",
+    "ResetResponse",
+    "ResourceStatusResponse",
+    "MobilityChangeAcknowledge",
+    "IABTransportMigrationManagementResponse",
+    "IABTransportMigrationModificationResponse",
+    "IABResourceCoordinationResponse",
+    "PartialUEContextTransferAcknowledge",
+    "DataCollectionResponse"};
+const asn1::table::enum_desc xnap_elem_procs_o::successful_outcome_c::types_opts::desc = {
+    enum_names_xnap_elem_procs_o_successful_outcome_c_types_values,
+    21,
+    "xnap_elem_procs_o::successful_outcome_c::types"};
 
 // UnsuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_xnap_elem_procs_o_unsuccessful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_prep_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_addition_request_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_request_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_refuse_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_change_refuse_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_removal_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ngran_node_cfg_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_activation_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mob_change_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_management_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<partial_ue_context_transfer_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_fail_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_xnap_elem_procs_o_unsuccessful_outcome_c_names[] = {
+    {"HandoverPreparationFailure", nullptr},
+    {"RetrieveUEContextFailure", nullptr},
+    {"SNodeAdditionRequestReject", nullptr},
+    {"SNodeModificationRequestReject", nullptr},
+    {"SNodeModificationRefuse", nullptr},
+    {"SNodeReleaseReject", nullptr},
+    {"SNodeChangeRefuse", nullptr},
+    {"XnRemovalFailure", nullptr},
+    {"XnSetupFailure", nullptr},
+    {"NGRANNodeConfigurationUpdateFailure", nullptr},
+    {"CellActivationFailure", nullptr},
+    {"ResourceStatusFailure", nullptr},
+    {"MobilityChangeFailure", nullptr},
+    {"IABTransportMigrationManagementReject", nullptr},
+    {"PartialUEContextTransferFailure", nullptr},
+    {"DataCollectionFailure", nullptr}};
+const asn1::table::choice_desc xnap_elem_procs_o::unsuccessful_outcome_c::desc = {
+    asn1::table::enum_int_type<xnap_elem_procs_o::unsuccessful_outcome_c::types>(),
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nof_types,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::nof_exts,
+    xnap_elem_procs_o::unsuccessful_outcome_c::types::has_ext,
+    true,
+    choice_table_xnap_elem_procs_o_unsuccessful_outcome_c_alternatives,
+    &asn1::table::choice_set<xnap_elem_procs_o::unsuccessful_outcome_c>,
+    choice_table_xnap_elem_procs_o_unsuccessful_outcome_c_names,
+    "xnap_elem_procs_o::unsuccessful_outcome_c",
+    offsetof(xnap_elem_procs_o::unsuccessful_outcome_c, type_),
+    offsetof(xnap_elem_procs_o::unsuccessful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void xnap_elem_procs_o::unsuccessful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ho_prep_fail:
-      c = ho_prep_fail_s{};
-      break;
-    case types::retrieve_ue_context_fail:
-      c = retrieve_ue_context_fail_s{};
-      break;
-    case types::sn_ode_addition_request_reject:
-      c = sn_ode_addition_request_reject_s{};
-      break;
-    case types::sn_ode_mod_request_reject:
-      c = sn_ode_mod_request_reject_s{};
-      break;
-    case types::sn_ode_mod_refuse:
-      c = sn_ode_mod_refuse_s{};
-      break;
-    case types::sn_ode_release_reject:
-      c = sn_ode_release_reject_s{};
-      break;
-    case types::sn_ode_change_refuse:
-      c = sn_ode_change_refuse_s{};
-      break;
-    case types::xn_removal_fail:
-      c = xn_removal_fail_s{};
-      break;
-    case types::xn_setup_fail:
-      c = xn_setup_fail_s{};
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      c = ngran_node_cfg_upd_fail_s{};
-      break;
-    case types::cell_activation_fail:
-      c = cell_activation_fail_s{};
-      break;
-    case types::res_status_fail:
-      c = res_status_fail_s{};
-      break;
-    case types::mob_change_fail:
-      c = mob_change_fail_s{};
-      break;
-    case types::iab_transport_migration_management_reject:
-      c = iab_transport_migration_management_reject_s{};
-      break;
-    case types::partial_ue_context_transfer_fail:
-      c = partial_ue_context_transfer_fail_s{};
-      break;
-    case types::data_collection_fail:
-      c = data_collection_fail_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::unsuccessful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, xnap_elem_procs_o::unsuccessful_outcome_c::desc);
 }
 ho_prep_fail_s& xnap_elem_procs_o::unsuccessful_outcome_c::ho_prep_fail()
 {
@@ -2574,677 +2066,489 @@ const data_collection_fail_s& xnap_elem_procs_o::unsuccessful_outcome_c::data_co
   assert_choice_type(types::data_collection_fail, type_, "UnsuccessfulOutcome");
   return c.get<data_collection_fail_s>();
 }
-void xnap_elem_procs_o::unsuccessful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ho_prep_fail:
-      j.write_fieldname("HandoverPreparationFailure");
-      c.get<ho_prep_fail_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_fail:
-      j.write_fieldname("RetrieveUEContextFailure");
-      c.get<retrieve_ue_context_fail_s>().to_json(j);
-      break;
-    case types::sn_ode_addition_request_reject:
-      j.write_fieldname("SNodeAdditionRequestReject");
-      c.get<sn_ode_addition_request_reject_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_request_reject:
-      j.write_fieldname("SNodeModificationRequestReject");
-      c.get<sn_ode_mod_request_reject_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_refuse:
-      j.write_fieldname("SNodeModificationRefuse");
-      c.get<sn_ode_mod_refuse_s>().to_json(j);
-      break;
-    case types::sn_ode_release_reject:
-      j.write_fieldname("SNodeReleaseReject");
-      c.get<sn_ode_release_reject_s>().to_json(j);
-      break;
-    case types::sn_ode_change_refuse:
-      j.write_fieldname("SNodeChangeRefuse");
-      c.get<sn_ode_change_refuse_s>().to_json(j);
-      break;
-    case types::xn_removal_fail:
-      j.write_fieldname("XnRemovalFailure");
-      c.get<xn_removal_fail_s>().to_json(j);
-      break;
-    case types::xn_setup_fail:
-      j.write_fieldname("XnSetupFailure");
-      c.get<xn_setup_fail_s>().to_json(j);
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      j.write_fieldname("NGRANNodeConfigurationUpdateFailure");
-      c.get<ngran_node_cfg_upd_fail_s>().to_json(j);
-      break;
-    case types::cell_activation_fail:
-      j.write_fieldname("CellActivationFailure");
-      c.get<cell_activation_fail_s>().to_json(j);
-      break;
-    case types::res_status_fail:
-      j.write_fieldname("ResourceStatusFailure");
-      c.get<res_status_fail_s>().to_json(j);
-      break;
-    case types::mob_change_fail:
-      j.write_fieldname("MobilityChangeFailure");
-      c.get<mob_change_fail_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_management_reject:
-      j.write_fieldname("IABTransportMigrationManagementReject");
-      c.get<iab_transport_migration_management_reject_s>().to_json(j);
-      break;
-    case types::partial_ue_context_transfer_fail:
-      j.write_fieldname("PartialUEContextTransferFailure");
-      c.get<partial_ue_context_transfer_fail_s>().to_json(j);
-      break;
-    case types::data_collection_fail:
-      j.write_fieldname("DataCollectionFailure");
-      c.get<data_collection_fail_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::unsuccessful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_o::unsuccessful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_prep_fail:
-      HANDLE_CODE(c.get<ho_prep_fail_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_fail:
-      HANDLE_CODE(c.get<retrieve_ue_context_fail_s>().pack(bref));
-      break;
-    case types::sn_ode_addition_request_reject:
-      HANDLE_CODE(c.get<sn_ode_addition_request_reject_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_request_reject:
-      HANDLE_CODE(c.get<sn_ode_mod_request_reject_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_refuse:
-      HANDLE_CODE(c.get<sn_ode_mod_refuse_s>().pack(bref));
-      break;
-    case types::sn_ode_release_reject:
-      HANDLE_CODE(c.get<sn_ode_release_reject_s>().pack(bref));
-      break;
-    case types::sn_ode_change_refuse:
-      HANDLE_CODE(c.get<sn_ode_change_refuse_s>().pack(bref));
-      break;
-    case types::xn_removal_fail:
-      HANDLE_CODE(c.get<xn_removal_fail_s>().pack(bref));
-      break;
-    case types::xn_setup_fail:
-      HANDLE_CODE(c.get<xn_setup_fail_s>().pack(bref));
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_fail_s>().pack(bref));
-      break;
-    case types::cell_activation_fail:
-      HANDLE_CODE(c.get<cell_activation_fail_s>().pack(bref));
-      break;
-    case types::res_status_fail:
-      HANDLE_CODE(c.get<res_status_fail_s>().pack(bref));
-      break;
-    case types::mob_change_fail:
-      HANDLE_CODE(c.get<mob_change_fail_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_management_reject:
-      HANDLE_CODE(c.get<iab_transport_migration_management_reject_s>().pack(bref));
-      break;
-    case types::partial_ue_context_transfer_fail:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_fail_s>().pack(bref));
-      break;
-    case types::data_collection_fail:
-      HANDLE_CODE(c.get<data_collection_fail_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_prep_fail:
-      HANDLE_CODE(c.get<ho_prep_fail_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_fail:
-      HANDLE_CODE(c.get<retrieve_ue_context_fail_s>().unpack(bref));
-      break;
-    case types::sn_ode_addition_request_reject:
-      HANDLE_CODE(c.get<sn_ode_addition_request_reject_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_request_reject:
-      HANDLE_CODE(c.get<sn_ode_mod_request_reject_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_refuse:
-      HANDLE_CODE(c.get<sn_ode_mod_refuse_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_reject:
-      HANDLE_CODE(c.get<sn_ode_release_reject_s>().unpack(bref));
-      break;
-    case types::sn_ode_change_refuse:
-      HANDLE_CODE(c.get<sn_ode_change_refuse_s>().unpack(bref));
-      break;
-    case types::xn_removal_fail:
-      HANDLE_CODE(c.get<xn_removal_fail_s>().unpack(bref));
-      break;
-    case types::xn_setup_fail:
-      HANDLE_CODE(c.get<xn_setup_fail_s>().unpack(bref));
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_fail_s>().unpack(bref));
-      break;
-    case types::cell_activation_fail:
-      HANDLE_CODE(c.get<cell_activation_fail_s>().unpack(bref));
-      break;
-    case types::res_status_fail:
-      HANDLE_CODE(c.get<res_status_fail_s>().unpack(bref));
-      break;
-    case types::mob_change_fail:
-      HANDLE_CODE(c.get<mob_change_fail_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_management_reject:
-      HANDLE_CODE(c.get<iab_transport_migration_management_reject_s>().unpack(bref));
-      break;
-    case types::partial_ue_context_transfer_fail:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_fail_s>().unpack(bref));
-      break;
-    case types::data_collection_fail:
-      HANDLE_CODE(c.get<data_collection_fail_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* xnap_elem_procs_o::unsuccessful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"HandoverPreparationFailure",
-                                "RetrieveUEContextFailure",
-                                "SNodeAdditionRequestReject",
-                                "SNodeModificationRequestReject",
-                                "SNodeModificationRefuse",
-                                "SNodeReleaseReject",
-                                "SNodeChangeRefuse",
-                                "XnRemovalFailure",
-                                "XnSetupFailure",
-                                "NGRANNodeConfigurationUpdateFailure",
-                                "CellActivationFailure",
-                                "ResourceStatusFailure",
-                                "MobilityChangeFailure",
-                                "IABTransportMigrationManagementReject",
-                                "PartialUEContextTransferFailure",
-                                "DataCollectionFailure"};
-  return convert_enum_idx(names, 16, value, "xnap_elem_procs_o::unsuccessful_outcome_c::types");
-}
+static const char* enum_names_xnap_elem_procs_o_unsuccessful_outcome_c_types_values[] = {
+    "HandoverPreparationFailure",
+    "RetrieveUEContextFailure",
+    "SNodeAdditionRequestReject",
+    "SNodeModificationRequestReject",
+    "SNodeModificationRefuse",
+    "SNodeReleaseReject",
+    "SNodeChangeRefuse",
+    "XnRemovalFailure",
+    "XnSetupFailure",
+    "NGRANNodeConfigurationUpdateFailure",
+    "CellActivationFailure",
+    "ResourceStatusFailure",
+    "MobilityChangeFailure",
+    "IABTransportMigrationManagementReject",
+    "PartialUEContextTransferFailure",
+    "DataCollectionFailure"};
+const asn1::table::enum_desc xnap_elem_procs_o::unsuccessful_outcome_c::types_opts::desc = {
+    enum_names_xnap_elem_procs_o_unsuccessful_outcome_c_types_values,
+    16,
+    "xnap_elem_procs_o::unsuccessful_outcome_c::types"};
+
+// Columns of the object sets of XNAP-ELEMENTARY-PROCEDURE.
+enum class xnap_elem_proc_p_column : uint32_t { init_msg, successful_outcome, unsuccessful_outcome, crit };
 
 // InitiatingMessage ::= SEQUENCE{{XNAP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE init_msg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != xnap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE init_msg_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = xnap_elem_procs_o::get_init_msg(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void init_msg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_init_msg_s_fields[] = {
+    {offsetof(init_msg_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(init_msg_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(init_msg_s::crit),
+                                 decltype(init_msg_s::proc_code),
+                                 xnap_elem_procs_o::desc,
+                                 xnap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(init_msg_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(init_msg_s, proc_code) - (int64_t)offsetof(init_msg_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(init_msg_s::value),
+                                  decltype(init_msg_s::proc_code),
+                                  xnap_elem_procs_o::desc,
+                                  xnap_elem_proc_p_column::init_msg,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_init_msg_s_names[] = {{"procedureCode", nullptr},
+                                                                     {"criticality", nullptr},
+                                                                     {"value", nullptr}};
+const asn1::table::seq_desc          init_msg_s::desc =
+    {{seq_table_init_msg_s_fields, 3, UINT64_C(0x7), nullptr, 0}, false, true, nullptr, 0, seq_table_init_msg_s_names};
 bool init_msg_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not xnap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(xnap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = xnap_elem_procs_o::get_crit(proc_code);
-  value     = xnap_elem_procs_o::get_init_msg(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(xnap_elem_procs_o::desc, xnap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, xnap_elem_procs_o::desc, xnap_elem_proc_p_column::init_msg, proc_code);
   return value.type().value != xnap_elem_procs_o::init_msg_c::types_opts::nulltype;
 }
 
 // SuccessfulOutcome ::= SEQUENCE{{XNAP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE successful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != xnap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE successful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = xnap_elem_procs_o::get_successful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void successful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_successful_outcome_s_fields[] = {
+    {offsetof(successful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(successful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(successful_outcome_s::crit),
+                                 decltype(successful_outcome_s::proc_code),
+                                 xnap_elem_procs_o::desc,
+                                 xnap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(successful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(successful_outcome_s, proc_code) - (int64_t)offsetof(successful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(successful_outcome_s::value),
+                                  decltype(successful_outcome_s::proc_code),
+                                  xnap_elem_procs_o::desc,
+                                  xnap_elem_proc_p_column::successful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_successful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                               {"criticality", nullptr},
+                                                                               {"value", nullptr}};
+const asn1::table::seq_desc          successful_outcome_s::desc             = {
+    {seq_table_successful_outcome_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_successful_outcome_s_names};
 bool successful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not xnap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(xnap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = xnap_elem_procs_o::get_crit(proc_code);
-  value     = xnap_elem_procs_o::get_successful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(xnap_elem_procs_o::desc, xnap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, xnap_elem_procs_o::desc, xnap_elem_proc_p_column::successful_outcome, proc_code);
   return value.type().value != xnap_elem_procs_o::successful_outcome_c::types_opts::nulltype;
 }
 
 // UnsuccessfulOutcome ::= SEQUENCE{{XNAP-ELEMENTARY-PROCEDURE}}
-OCUDUASN_CODE unsuccessful_outcome_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, proc_code, (uint16_t)0u, (uint16_t)255u, false, true));
-  warn_assert(crit != xnap_elem_procs_o::get_crit(proc_code), __func__, __LINE__);
-  HANDLE_CODE(crit.pack(bref));
-  HANDLE_CODE(value.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE unsuccessful_outcome_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(proc_code, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(crit.unpack(bref));
-  value = xnap_elem_procs_o::get_unsuccessful_outcome(proc_code);
-  HANDLE_CODE(value.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void unsuccessful_outcome_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("procedureCode", proc_code);
-  j.write_str("criticality", crit.to_string());
-  j.write_fieldname("value");
-  value.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_unsuccessful_outcome_s_fields[] = {
+    {offsetof(unsuccessful_outcome_s, proc_code),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     true,
+     INT64_C(0),
+     UINT64_C(255),
+     nullptr},
+    {offsetof(unsuccessful_outcome_s, crit),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, crit),
+     0,
+     &asn1::table::checked_codec<decltype(unsuccessful_outcome_s::crit),
+                                 decltype(unsuccessful_outcome_s::proc_code),
+                                 xnap_elem_procs_o::desc,
+                                 xnap_elem_proc_p_column::crit,
+                                 asn1::table::string_json>::value},
+    {offsetof(unsuccessful_outcome_s, value),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     (int64_t)offsetof(unsuccessful_outcome_s, proc_code) - (int64_t)offsetof(unsuccessful_outcome_s, value),
+     0,
+     &asn1::table::selected_codec<decltype(unsuccessful_outcome_s::value),
+                                  decltype(unsuccessful_outcome_s::proc_code),
+                                  xnap_elem_procs_o::desc,
+                                  xnap_elem_proc_p_column::unsuccessful_outcome,
+                                  asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_unsuccessful_outcome_s_names[] = {{"procedureCode", nullptr},
+                                                                                 {"criticality", nullptr},
+                                                                                 {"value", nullptr}};
+const asn1::table::seq_desc          unsuccessful_outcome_s::desc             = {
+    {seq_table_unsuccessful_outcome_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    true,
+    nullptr,
+    0,
+    seq_table_unsuccessful_outcome_s_names};
 bool unsuccessful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
-  if (not xnap_elem_procs_o::is_proc_code_valid(proc_code_)) {
+  if (not asn1::table::objset_has_key(xnap_elem_procs_o::desc, proc_code_)) {
     return false;
   }
   proc_code = proc_code_;
-  crit      = xnap_elem_procs_o::get_crit(proc_code);
-  value     = xnap_elem_procs_o::get_unsuccessful_outcome(proc_code);
+  crit      = asn1::table::objset_enum<crit_e>(xnap_elem_procs_o::desc, xnap_elem_proc_p_column::crit, proc_code);
+  asn1::table::objset_select(value, xnap_elem_procs_o::desc, xnap_elem_proc_p_column::unsuccessful_outcome, proc_code);
   return value.type().value != xnap_elem_procs_o::unsuccessful_outcome_c::types_opts::nulltype;
 }
 
 // XNAP-ELEMENTARY-PROCEDURES-CLASS-1 ::= OBJECT SET OF XNAP-ELEMENTARY-PROCEDURE
-uint16_t xnap_elem_procs_class_1_o::idx_to_proc_code(uint32_t idx)
-{
-  static const uint16_t names[] = {0, 3, 7, 9, 10, 11, 12, 14, 16, 17, 18, 25, 19, 20, 34, 36, 44, 45, 46, 49, 51};
-  return map_enum_number(names, 21, idx, "proc_code");
-}
-bool xnap_elem_procs_class_1_o::is_proc_code_valid(const uint16_t& proc_code)
-{
-  static const uint16_t names[] = {0, 3, 7, 9, 10, 11, 12, 14, 16, 17, 18, 25, 19, 20, 34, 36, 44, 45, 46, 49, 51};
-  for (const auto& o : names) {
-    if (o == proc_code) {
-      return true;
-    }
-  }
-  return false;
-}
-xnap_elem_procs_class_1_o::init_msg_c xnap_elem_procs_class_1_o::get_init_msg(const uint16_t& proc_code)
-{
-  init_msg_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(init_msg_c::types::ho_request);
-      break;
-    case 3:
-      ret.set(init_msg_c::types::retrieve_ue_context_request);
-      break;
-    case 7:
-      ret.set(init_msg_c::types::sn_ode_addition_request);
-      break;
-    case 9:
-      ret.set(init_msg_c::types::sn_ode_mod_request);
-      break;
-    case 10:
-      ret.set(init_msg_c::types::sn_ode_mod_required);
-      break;
-    case 11:
-      ret.set(init_msg_c::types::sn_ode_release_request);
-      break;
-    case 12:
-      ret.set(init_msg_c::types::sn_ode_release_required);
-      break;
-    case 14:
-      ret.set(init_msg_c::types::sn_ode_change_required);
-      break;
-    case 16:
-      ret.set(init_msg_c::types::xn_removal_request);
-      break;
-    case 17:
-      ret.set(init_msg_c::types::xn_setup_request);
-      break;
-    case 18:
-      ret.set(init_msg_c::types::ngran_node_cfg_upd);
-      break;
-    case 25:
-      ret.set(init_msg_c::types::e_utra_nr_cell_res_coordination_request);
-      break;
-    case 19:
-      ret.set(init_msg_c::types::cell_activation_request);
-      break;
-    case 20:
-      ret.set(init_msg_c::types::reset_request);
-      break;
-    case 34:
-      ret.set(init_msg_c::types::res_status_request);
-      break;
-    case 36:
-      ret.set(init_msg_c::types::mob_change_request);
-      break;
-    case 44:
-      ret.set(init_msg_c::types::iab_transport_migration_management_request);
-      break;
-    case 45:
-      ret.set(init_msg_c::types::iab_transport_migration_mod_request);
-      break;
-    case 46:
-      ret.set(init_msg_c::types::iab_res_coordination_request);
-      break;
-    case 49:
-      ret.set(init_msg_c::types::partial_ue_context_transfer);
-      break;
-    case 51:
-      ret.set(init_msg_c::types::data_collection_request);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-xnap_elem_procs_class_1_o::successful_outcome_c
-xnap_elem_procs_class_1_o::get_successful_outcome(const uint16_t& proc_code)
-{
-  successful_outcome_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(successful_outcome_c::types::ho_request_ack);
-      break;
-    case 3:
-      ret.set(successful_outcome_c::types::retrieve_ue_context_resp);
-      break;
-    case 7:
-      ret.set(successful_outcome_c::types::sn_ode_addition_request_ack);
-      break;
-    case 9:
-      ret.set(successful_outcome_c::types::sn_ode_mod_request_ack);
-      break;
-    case 10:
-      ret.set(successful_outcome_c::types::sn_ode_mod_confirm);
-      break;
-    case 11:
-      ret.set(successful_outcome_c::types::sn_ode_release_request_ack);
-      break;
-    case 12:
-      ret.set(successful_outcome_c::types::sn_ode_release_confirm);
-      break;
-    case 14:
-      ret.set(successful_outcome_c::types::sn_ode_change_confirm);
-      break;
-    case 16:
-      ret.set(successful_outcome_c::types::xn_removal_resp);
-      break;
-    case 17:
-      ret.set(successful_outcome_c::types::xn_setup_resp);
-      break;
-    case 18:
-      ret.set(successful_outcome_c::types::ngran_node_cfg_upd_ack);
-      break;
-    case 25:
-      ret.set(successful_outcome_c::types::e_utra_nr_cell_res_coordination_resp);
-      break;
-    case 19:
-      ret.set(successful_outcome_c::types::cell_activation_resp);
-      break;
-    case 20:
-      ret.set(successful_outcome_c::types::reset_resp);
-      break;
-    case 34:
-      ret.set(successful_outcome_c::types::res_status_resp);
-      break;
-    case 36:
-      ret.set(successful_outcome_c::types::mob_change_ack);
-      break;
-    case 44:
-      ret.set(successful_outcome_c::types::iab_transport_migration_management_resp);
-      break;
-    case 45:
-      ret.set(successful_outcome_c::types::iab_transport_migration_mod_resp);
-      break;
-    case 46:
-      ret.set(successful_outcome_c::types::iab_res_coordination_resp);
-      break;
-    case 49:
-      ret.set(successful_outcome_c::types::partial_ue_context_transfer_ack);
-      break;
-    case 51:
-      ret.set(successful_outcome_c::types::data_collection_resp);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-xnap_elem_procs_class_1_o::unsuccessful_outcome_c
-xnap_elem_procs_class_1_o::get_unsuccessful_outcome(const uint16_t& proc_code)
-{
-  unsuccessful_outcome_c ret{};
-  switch (proc_code) {
-    case 0:
-      ret.set(unsuccessful_outcome_c::types::ho_prep_fail);
-      break;
-    case 3:
-      ret.set(unsuccessful_outcome_c::types::retrieve_ue_context_fail);
-      break;
-    case 7:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_addition_request_reject);
-      break;
-    case 9:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_mod_request_reject);
-      break;
-    case 10:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_mod_refuse);
-      break;
-    case 11:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_release_reject);
-      break;
-    case 14:
-      ret.set(unsuccessful_outcome_c::types::sn_ode_change_refuse);
-      break;
-    case 16:
-      ret.set(unsuccessful_outcome_c::types::xn_removal_fail);
-      break;
-    case 17:
-      ret.set(unsuccessful_outcome_c::types::xn_setup_fail);
-      break;
-    case 18:
-      ret.set(unsuccessful_outcome_c::types::ngran_node_cfg_upd_fail);
-      break;
-    case 19:
-      ret.set(unsuccessful_outcome_c::types::cell_activation_fail);
-      break;
-    case 34:
-      ret.set(unsuccessful_outcome_c::types::res_status_fail);
-      break;
-    case 36:
-      ret.set(unsuccessful_outcome_c::types::mob_change_fail);
-      break;
-    case 44:
-      ret.set(unsuccessful_outcome_c::types::iab_transport_migration_management_reject);
-      break;
-    case 49:
-      ret.set(unsuccessful_outcome_c::types::partial_ue_context_transfer_fail);
-      break;
-    case 51:
-      ret.set(unsuccessful_outcome_c::types::data_collection_fail);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-crit_e xnap_elem_procs_class_1_o::get_crit(const uint16_t& proc_code)
-{
-  switch (proc_code) {
-    case 0:
-      return crit_e::reject;
-    case 3:
-      return crit_e::reject;
-    case 7:
-      return crit_e::reject;
-    case 9:
-      return crit_e::reject;
-    case 10:
-      return crit_e::reject;
-    case 11:
-      return crit_e::reject;
-    case 12:
-      return crit_e::reject;
-    case 14:
-      return crit_e::reject;
-    case 16:
-      return crit_e::reject;
-    case 17:
-      return crit_e::reject;
-    case 18:
-      return crit_e::reject;
-    case 25:
-      return crit_e::reject;
-    case 19:
-      return crit_e::reject;
-    case 20:
-      return crit_e::reject;
-    case 34:
-      return crit_e::reject;
-    case 36:
-      return crit_e::reject;
-    case 44:
-      return crit_e::reject;
-    case 45:
-      return crit_e::reject;
-    case 46:
-      return crit_e::reject;
-    case 49:
-      return crit_e::reject;
-    case 51:
-      return crit_e::reject;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return {};
-}
+static const uint32_t objset_proc_code_xnap_elem_procs_class_1_o[] = {0,  3,  7,  9,  10, 11, 12, 14, 16, 17, 18,
+                                                                      25, 19, 20, 34, 36, 44, 45, 46, 49, 51};
+static const uint8_t  objset_init_msg_xnap_elem_procs_class_1_o[]  = {
+    xnap_elem_procs_class_1_o::init_msg_c::types::ho_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::retrieve_ue_context_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::sn_ode_addition_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::sn_ode_mod_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::sn_ode_mod_required,
+    xnap_elem_procs_class_1_o::init_msg_c::types::sn_ode_release_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::sn_ode_release_required,
+    xnap_elem_procs_class_1_o::init_msg_c::types::sn_ode_change_required,
+    xnap_elem_procs_class_1_o::init_msg_c::types::xn_removal_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::xn_setup_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::ngran_node_cfg_upd,
+    xnap_elem_procs_class_1_o::init_msg_c::types::e_utra_nr_cell_res_coordination_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::cell_activation_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::reset_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::res_status_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::mob_change_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::iab_transport_migration_management_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::iab_transport_migration_mod_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::iab_res_coordination_request,
+    xnap_elem_procs_class_1_o::init_msg_c::types::partial_ue_context_transfer,
+    xnap_elem_procs_class_1_o::init_msg_c::types::data_collection_request};
+static const uint8_t objset_successful_outcome_xnap_elem_procs_class_1_o[] = {
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::ho_request_ack,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::retrieve_ue_context_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::sn_ode_addition_request_ack,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::sn_ode_mod_request_ack,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::sn_ode_mod_confirm,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::sn_ode_release_request_ack,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::sn_ode_release_confirm,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::sn_ode_change_confirm,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::xn_removal_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::xn_setup_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::ngran_node_cfg_upd_ack,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::e_utra_nr_cell_res_coordination_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::cell_activation_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::reset_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::res_status_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::mob_change_ack,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::iab_transport_migration_management_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::iab_transport_migration_mod_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::iab_res_coordination_resp,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::partial_ue_context_transfer_ack,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::data_collection_resp};
+static const uint8_t objset_unsuccessful_outcome_xnap_elem_procs_class_1_o[] = {
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::ho_prep_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::retrieve_ue_context_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::sn_ode_addition_request_reject,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::sn_ode_mod_request_reject,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::sn_ode_mod_refuse,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::sn_ode_release_reject,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::sn_ode_change_refuse,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::xn_removal_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::xn_setup_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::ngran_node_cfg_upd_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::cell_activation_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::res_status_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::mob_change_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::iab_transport_migration_management_reject,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::partial_ue_context_transfer_fail,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::data_collection_fail};
+static const uint8_t objset_crit_xnap_elem_procs_class_1_o[] = {
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject};
+static const asn1::table::objset_column objset_columns_xnap_elem_procs_class_1_o[] = {
+    {objset_init_msg_xnap_elem_procs_class_1_o, xnap_elem_procs_class_1_o::init_msg_c::types::nulltype},
+    {objset_successful_outcome_xnap_elem_procs_class_1_o,
+     xnap_elem_procs_class_1_o::successful_outcome_c::types::nulltype},
+    {objset_unsuccessful_outcome_xnap_elem_procs_class_1_o,
+     xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nulltype},
+    {objset_crit_xnap_elem_procs_class_1_o, crit_e::nulltype}};
+const asn1::table::objset_desc xnap_elem_procs_class_1_o::desc = {objset_proc_code_xnap_elem_procs_class_1_o,
+                                                                  21,
+                                                                  "proc_code",
+                                                                  objset_columns_xnap_elem_procs_class_1_o};
 
 // InitiatingMessage ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_xnap_elem_procs_class_1_o_init_msg_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_addition_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_change_required_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_removal_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_setup_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ngran_node_cfg_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_utra_nr_cell_res_coordination_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_activation_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mob_change_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_management_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_mod_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_res_coordination_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<partial_ue_context_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_request_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_xnap_elem_procs_class_1_o_init_msg_c_names[] = {
+    {"HandoverRequest", nullptr},
+    {"RetrieveUEContextRequest", nullptr},
+    {"SNodeAdditionRequest", nullptr},
+    {"SNodeModificationRequest", nullptr},
+    {"SNodeModificationRequired", nullptr},
+    {"SNodeReleaseRequest", nullptr},
+    {"SNodeReleaseRequired", nullptr},
+    {"SNodeChangeRequired", nullptr},
+    {"XnRemovalRequest", nullptr},
+    {"XnSetupRequest", nullptr},
+    {"NGRANNodeConfigurationUpdate", nullptr},
+    {"E-UTRA-NR-CellResourceCoordinationRequest", nullptr},
+    {"CellActivationRequest", nullptr},
+    {"ResetRequest", nullptr},
+    {"ResourceStatusRequest", nullptr},
+    {"MobilityChangeRequest", nullptr},
+    {"IABTransportMigrationManagementRequest", nullptr},
+    {"IABTransportMigrationModificationRequest", nullptr},
+    {"IABResourceCoordinationRequest", nullptr},
+    {"PartialUEContextTransfer", nullptr},
+    {"DataCollectionRequest", nullptr}};
+const asn1::table::choice_desc xnap_elem_procs_class_1_o::init_msg_c::desc = {
+    asn1::table::enum_int_type<xnap_elem_procs_class_1_o::init_msg_c::types>(),
+    xnap_elem_procs_class_1_o::init_msg_c::types::nof_types,
+    xnap_elem_procs_class_1_o::init_msg_c::types::nof_exts,
+    xnap_elem_procs_class_1_o::init_msg_c::types::has_ext,
+    true,
+    choice_table_xnap_elem_procs_class_1_o_init_msg_c_alternatives,
+    &asn1::table::choice_set<xnap_elem_procs_class_1_o::init_msg_c>,
+    choice_table_xnap_elem_procs_class_1_o_init_msg_c_names,
+    "xnap_elem_procs_class_1_o::init_msg_c",
+    offsetof(xnap_elem_procs_class_1_o::init_msg_c, type_),
+    offsetof(xnap_elem_procs_class_1_o::init_msg_c, c),
+    false,
+    nullptr,
+    true};
+
 void xnap_elem_procs_class_1_o::init_msg_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ho_request:
-      c = ho_request_s{};
-      break;
-    case types::retrieve_ue_context_request:
-      c = retrieve_ue_context_request_s{};
-      break;
-    case types::sn_ode_addition_request:
-      c = sn_ode_addition_request_s{};
-      break;
-    case types::sn_ode_mod_request:
-      c = sn_ode_mod_request_s{};
-      break;
-    case types::sn_ode_mod_required:
-      c = sn_ode_mod_required_s{};
-      break;
-    case types::sn_ode_release_request:
-      c = sn_ode_release_request_s{};
-      break;
-    case types::sn_ode_release_required:
-      c = sn_ode_release_required_s{};
-      break;
-    case types::sn_ode_change_required:
-      c = sn_ode_change_required_s{};
-      break;
-    case types::xn_removal_request:
-      c = xn_removal_request_s{};
-      break;
-    case types::xn_setup_request:
-      c = xn_setup_request_s{};
-      break;
-    case types::ngran_node_cfg_upd:
-      c = ngran_node_cfg_upd_s{};
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      c = e_utra_nr_cell_res_coordination_request_s{};
-      break;
-    case types::cell_activation_request:
-      c = cell_activation_request_s{};
-      break;
-    case types::reset_request:
-      c = reset_request_s{};
-      break;
-    case types::res_status_request:
-      c = res_status_request_s{};
-      break;
-    case types::mob_change_request:
-      c = mob_change_request_s{};
-      break;
-    case types::iab_transport_migration_management_request:
-      c = iab_transport_migration_management_request_s{};
-      break;
-    case types::iab_transport_migration_mod_request:
-      c = iab_transport_migration_mod_request_s{};
-      break;
-    case types::iab_res_coordination_request:
-      c = iab_res_coordination_request_s{};
-      break;
-    case types::partial_ue_context_transfer:
-      c = partial_ue_context_transfer_s{};
-      break;
-    case types::data_collection_request:
-      c = data_collection_request_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::init_msg_c");
-  }
+  asn1::table::set_any_choice(&c, e, xnap_elem_procs_class_1_o::init_msg_c::desc);
 }
 ho_request_s& xnap_elem_procs_class_1_o::init_msg_c::ho_request()
 {
@@ -3461,345 +2765,246 @@ const data_collection_request_s& xnap_elem_procs_class_1_o::init_msg_c::data_col
   assert_choice_type(types::data_collection_request, type_, "InitiatingMessage");
   return c.get<data_collection_request_s>();
 }
-void xnap_elem_procs_class_1_o::init_msg_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ho_request:
-      j.write_fieldname("HandoverRequest");
-      c.get<ho_request_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_request:
-      j.write_fieldname("RetrieveUEContextRequest");
-      c.get<retrieve_ue_context_request_s>().to_json(j);
-      break;
-    case types::sn_ode_addition_request:
-      j.write_fieldname("SNodeAdditionRequest");
-      c.get<sn_ode_addition_request_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_request:
-      j.write_fieldname("SNodeModificationRequest");
-      c.get<sn_ode_mod_request_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_required:
-      j.write_fieldname("SNodeModificationRequired");
-      c.get<sn_ode_mod_required_s>().to_json(j);
-      break;
-    case types::sn_ode_release_request:
-      j.write_fieldname("SNodeReleaseRequest");
-      c.get<sn_ode_release_request_s>().to_json(j);
-      break;
-    case types::sn_ode_release_required:
-      j.write_fieldname("SNodeReleaseRequired");
-      c.get<sn_ode_release_required_s>().to_json(j);
-      break;
-    case types::sn_ode_change_required:
-      j.write_fieldname("SNodeChangeRequired");
-      c.get<sn_ode_change_required_s>().to_json(j);
-      break;
-    case types::xn_removal_request:
-      j.write_fieldname("XnRemovalRequest");
-      c.get<xn_removal_request_s>().to_json(j);
-      break;
-    case types::xn_setup_request:
-      j.write_fieldname("XnSetupRequest");
-      c.get<xn_setup_request_s>().to_json(j);
-      break;
-    case types::ngran_node_cfg_upd:
-      j.write_fieldname("NGRANNodeConfigurationUpdate");
-      c.get<ngran_node_cfg_upd_s>().to_json(j);
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      j.write_fieldname("E-UTRA-NR-CellResourceCoordinationRequest");
-      c.get<e_utra_nr_cell_res_coordination_request_s>().to_json(j);
-      break;
-    case types::cell_activation_request:
-      j.write_fieldname("CellActivationRequest");
-      c.get<cell_activation_request_s>().to_json(j);
-      break;
-    case types::reset_request:
-      j.write_fieldname("ResetRequest");
-      c.get<reset_request_s>().to_json(j);
-      break;
-    case types::res_status_request:
-      j.write_fieldname("ResourceStatusRequest");
-      c.get<res_status_request_s>().to_json(j);
-      break;
-    case types::mob_change_request:
-      j.write_fieldname("MobilityChangeRequest");
-      c.get<mob_change_request_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_management_request:
-      j.write_fieldname("IABTransportMigrationManagementRequest");
-      c.get<iab_transport_migration_management_request_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_mod_request:
-      j.write_fieldname("IABTransportMigrationModificationRequest");
-      c.get<iab_transport_migration_mod_request_s>().to_json(j);
-      break;
-    case types::iab_res_coordination_request:
-      j.write_fieldname("IABResourceCoordinationRequest");
-      c.get<iab_res_coordination_request_s>().to_json(j);
-      break;
-    case types::partial_ue_context_transfer:
-      j.write_fieldname("PartialUEContextTransfer");
-      c.get<partial_ue_context_transfer_s>().to_json(j);
-      break;
-    case types::data_collection_request:
-      j.write_fieldname("DataCollectionRequest");
-      c.get<data_collection_request_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::init_msg_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_class_1_o::init_msg_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request:
-      HANDLE_CODE(c.get<ho_request_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_request:
-      HANDLE_CODE(c.get<retrieve_ue_context_request_s>().pack(bref));
-      break;
-    case types::sn_ode_addition_request:
-      HANDLE_CODE(c.get<sn_ode_addition_request_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_request:
-      HANDLE_CODE(c.get<sn_ode_mod_request_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_required:
-      HANDLE_CODE(c.get<sn_ode_mod_required_s>().pack(bref));
-      break;
-    case types::sn_ode_release_request:
-      HANDLE_CODE(c.get<sn_ode_release_request_s>().pack(bref));
-      break;
-    case types::sn_ode_release_required:
-      HANDLE_CODE(c.get<sn_ode_release_required_s>().pack(bref));
-      break;
-    case types::sn_ode_change_required:
-      HANDLE_CODE(c.get<sn_ode_change_required_s>().pack(bref));
-      break;
-    case types::xn_removal_request:
-      HANDLE_CODE(c.get<xn_removal_request_s>().pack(bref));
-      break;
-    case types::xn_setup_request:
-      HANDLE_CODE(c.get<xn_setup_request_s>().pack(bref));
-      break;
-    case types::ngran_node_cfg_upd:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_s>().pack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_request_s>().pack(bref));
-      break;
-    case types::cell_activation_request:
-      HANDLE_CODE(c.get<cell_activation_request_s>().pack(bref));
-      break;
-    case types::reset_request:
-      HANDLE_CODE(c.get<reset_request_s>().pack(bref));
-      break;
-    case types::res_status_request:
-      HANDLE_CODE(c.get<res_status_request_s>().pack(bref));
-      break;
-    case types::mob_change_request:
-      HANDLE_CODE(c.get<mob_change_request_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_management_request:
-      HANDLE_CODE(c.get<iab_transport_migration_management_request_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_mod_request:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_request_s>().pack(bref));
-      break;
-    case types::iab_res_coordination_request:
-      HANDLE_CODE(c.get<iab_res_coordination_request_s>().pack(bref));
-      break;
-    case types::partial_ue_context_transfer:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_s>().pack(bref));
-      break;
-    case types::data_collection_request:
-      HANDLE_CODE(c.get<data_collection_request_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::init_msg_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_class_1_o::init_msg_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request:
-      HANDLE_CODE(c.get<ho_request_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_request:
-      HANDLE_CODE(c.get<retrieve_ue_context_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_addition_request:
-      HANDLE_CODE(c.get<sn_ode_addition_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_request:
-      HANDLE_CODE(c.get<sn_ode_mod_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_required:
-      HANDLE_CODE(c.get<sn_ode_mod_required_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_request:
-      HANDLE_CODE(c.get<sn_ode_release_request_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_required:
-      HANDLE_CODE(c.get<sn_ode_release_required_s>().unpack(bref));
-      break;
-    case types::sn_ode_change_required:
-      HANDLE_CODE(c.get<sn_ode_change_required_s>().unpack(bref));
-      break;
-    case types::xn_removal_request:
-      HANDLE_CODE(c.get<xn_removal_request_s>().unpack(bref));
-      break;
-    case types::xn_setup_request:
-      HANDLE_CODE(c.get<xn_setup_request_s>().unpack(bref));
-      break;
-    case types::ngran_node_cfg_upd:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_s>().unpack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_request:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_request_s>().unpack(bref));
-      break;
-    case types::cell_activation_request:
-      HANDLE_CODE(c.get<cell_activation_request_s>().unpack(bref));
-      break;
-    case types::reset_request:
-      HANDLE_CODE(c.get<reset_request_s>().unpack(bref));
-      break;
-    case types::res_status_request:
-      HANDLE_CODE(c.get<res_status_request_s>().unpack(bref));
-      break;
-    case types::mob_change_request:
-      HANDLE_CODE(c.get<mob_change_request_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_management_request:
-      HANDLE_CODE(c.get<iab_transport_migration_management_request_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_mod_request:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_request_s>().unpack(bref));
-      break;
-    case types::iab_res_coordination_request:
-      HANDLE_CODE(c.get<iab_res_coordination_request_s>().unpack(bref));
-      break;
-    case types::partial_ue_context_transfer:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_s>().unpack(bref));
-      break;
-    case types::data_collection_request:
-      HANDLE_CODE(c.get<data_collection_request_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::init_msg_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* xnap_elem_procs_class_1_o::init_msg_c::types_opts::to_string() const
-{
-  static const char* names[] = {"HandoverRequest",
-                                "RetrieveUEContextRequest",
-                                "SNodeAdditionRequest",
-                                "SNodeModificationRequest",
-                                "SNodeModificationRequired",
-                                "SNodeReleaseRequest",
-                                "SNodeReleaseRequired",
-                                "SNodeChangeRequired",
-                                "XnRemovalRequest",
-                                "XnSetupRequest",
-                                "NGRANNodeConfigurationUpdate",
-                                "E-UTRA-NR-CellResourceCoordinationRequest",
-                                "CellActivationRequest",
-                                "ResetRequest",
-                                "ResourceStatusRequest",
-                                "MobilityChangeRequest",
-                                "IABTransportMigrationManagementRequest",
-                                "IABTransportMigrationModificationRequest",
-                                "IABResourceCoordinationRequest",
-                                "PartialUEContextTransfer",
-                                "DataCollectionRequest"};
-  return convert_enum_idx(names, 21, value, "xnap_elem_procs_class_1_o::init_msg_c::types");
-}
+static const char* enum_names_xnap_elem_procs_class_1_o_init_msg_c_types_values[] = {
+    "HandoverRequest",
+    "RetrieveUEContextRequest",
+    "SNodeAdditionRequest",
+    "SNodeModificationRequest",
+    "SNodeModificationRequired",
+    "SNodeReleaseRequest",
+    "SNodeReleaseRequired",
+    "SNodeChangeRequired",
+    "XnRemovalRequest",
+    "XnSetupRequest",
+    "NGRANNodeConfigurationUpdate",
+    "E-UTRA-NR-CellResourceCoordinationRequest",
+    "CellActivationRequest",
+    "ResetRequest",
+    "ResourceStatusRequest",
+    "MobilityChangeRequest",
+    "IABTransportMigrationManagementRequest",
+    "IABTransportMigrationModificationRequest",
+    "IABResourceCoordinationRequest",
+    "PartialUEContextTransfer",
+    "DataCollectionRequest"};
+const asn1::table::enum_desc xnap_elem_procs_class_1_o::init_msg_c::types_opts::desc = {
+    enum_names_xnap_elem_procs_class_1_o_init_msg_c_types_values,
+    21,
+    "xnap_elem_procs_class_1_o::init_msg_c::types"};
 
 // SuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_xnap_elem_procs_class_1_o_successful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_addition_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_request_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_change_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_removal_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_setup_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ngran_node_cfg_upd_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<e_utra_nr_cell_res_coordination_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_activation_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<reset_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mob_change_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_management_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_mod_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_res_coordination_resp_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<partial_ue_context_transfer_ack_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_resp_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_xnap_elem_procs_class_1_o_successful_outcome_c_names[] = {
+    {"HandoverRequestAcknowledge", nullptr},
+    {"RetrieveUEContextResponse", nullptr},
+    {"SNodeAdditionRequestAcknowledge", nullptr},
+    {"SNodeModificationRequestAcknowledge", nullptr},
+    {"SNodeModificationConfirm", nullptr},
+    {"SNodeReleaseRequestAcknowledge", nullptr},
+    {"SNodeReleaseConfirm", nullptr},
+    {"SNodeChangeConfirm", nullptr},
+    {"XnRemovalResponse", nullptr},
+    {"XnSetupResponse", nullptr},
+    {"NGRANNodeConfigurationUpdateAcknowledge", nullptr},
+    {"E-UTRA-NR-CellResourceCoordinationResponse", nullptr},
+    {"CellActivationResponse", nullptr},
+    {"ResetResponse", nullptr},
+    {"ResourceStatusResponse", nullptr},
+    {"MobilityChangeAcknowledge", nullptr},
+    {"IABTransportMigrationManagementResponse", nullptr},
+    {"IABTransportMigrationModificationResponse", nullptr},
+    {"IABResourceCoordinationResponse", nullptr},
+    {"PartialUEContextTransferAcknowledge", nullptr},
+    {"DataCollectionResponse", nullptr}};
+const asn1::table::choice_desc xnap_elem_procs_class_1_o::successful_outcome_c::desc = {
+    asn1::table::enum_int_type<xnap_elem_procs_class_1_o::successful_outcome_c::types>(),
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::nof_types,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::nof_exts,
+    xnap_elem_procs_class_1_o::successful_outcome_c::types::has_ext,
+    true,
+    choice_table_xnap_elem_procs_class_1_o_successful_outcome_c_alternatives,
+    &asn1::table::choice_set<xnap_elem_procs_class_1_o::successful_outcome_c>,
+    choice_table_xnap_elem_procs_class_1_o_successful_outcome_c_names,
+    "xnap_elem_procs_class_1_o::successful_outcome_c",
+    offsetof(xnap_elem_procs_class_1_o::successful_outcome_c, type_),
+    offsetof(xnap_elem_procs_class_1_o::successful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void xnap_elem_procs_class_1_o::successful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ho_request_ack:
-      c = ho_request_ack_s{};
-      break;
-    case types::retrieve_ue_context_resp:
-      c = retrieve_ue_context_resp_s{};
-      break;
-    case types::sn_ode_addition_request_ack:
-      c = sn_ode_addition_request_ack_s{};
-      break;
-    case types::sn_ode_mod_request_ack:
-      c = sn_ode_mod_request_ack_s{};
-      break;
-    case types::sn_ode_mod_confirm:
-      c = sn_ode_mod_confirm_s{};
-      break;
-    case types::sn_ode_release_request_ack:
-      c = sn_ode_release_request_ack_s{};
-      break;
-    case types::sn_ode_release_confirm:
-      c = sn_ode_release_confirm_s{};
-      break;
-    case types::sn_ode_change_confirm:
-      c = sn_ode_change_confirm_s{};
-      break;
-    case types::xn_removal_resp:
-      c = xn_removal_resp_s{};
-      break;
-    case types::xn_setup_resp:
-      c = xn_setup_resp_s{};
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      c = ngran_node_cfg_upd_ack_s{};
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      c = e_utra_nr_cell_res_coordination_resp_s{};
-      break;
-    case types::cell_activation_resp:
-      c = cell_activation_resp_s{};
-      break;
-    case types::reset_resp:
-      c = reset_resp_s{};
-      break;
-    case types::res_status_resp:
-      c = res_status_resp_s{};
-      break;
-    case types::mob_change_ack:
-      c = mob_change_ack_s{};
-      break;
-    case types::iab_transport_migration_management_resp:
-      c = iab_transport_migration_management_resp_s{};
-      break;
-    case types::iab_transport_migration_mod_resp:
-      c = iab_transport_migration_mod_resp_s{};
-      break;
-    case types::iab_res_coordination_resp:
-      c = iab_res_coordination_resp_s{};
-      break;
-    case types::partial_ue_context_transfer_ack:
-      c = partial_ue_context_transfer_ack_s{};
-      break;
-    case types::data_collection_resp:
-      c = data_collection_resp_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::successful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, xnap_elem_procs_class_1_o::successful_outcome_c::desc);
 }
 ho_request_ack_s& xnap_elem_procs_class_1_o::successful_outcome_c::ho_request_ack()
 {
@@ -4018,330 +3223,201 @@ const data_collection_resp_s& xnap_elem_procs_class_1_o::successful_outcome_c::d
   assert_choice_type(types::data_collection_resp, type_, "SuccessfulOutcome");
   return c.get<data_collection_resp_s>();
 }
-void xnap_elem_procs_class_1_o::successful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ho_request_ack:
-      j.write_fieldname("HandoverRequestAcknowledge");
-      c.get<ho_request_ack_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_resp:
-      j.write_fieldname("RetrieveUEContextResponse");
-      c.get<retrieve_ue_context_resp_s>().to_json(j);
-      break;
-    case types::sn_ode_addition_request_ack:
-      j.write_fieldname("SNodeAdditionRequestAcknowledge");
-      c.get<sn_ode_addition_request_ack_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_request_ack:
-      j.write_fieldname("SNodeModificationRequestAcknowledge");
-      c.get<sn_ode_mod_request_ack_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_confirm:
-      j.write_fieldname("SNodeModificationConfirm");
-      c.get<sn_ode_mod_confirm_s>().to_json(j);
-      break;
-    case types::sn_ode_release_request_ack:
-      j.write_fieldname("SNodeReleaseRequestAcknowledge");
-      c.get<sn_ode_release_request_ack_s>().to_json(j);
-      break;
-    case types::sn_ode_release_confirm:
-      j.write_fieldname("SNodeReleaseConfirm");
-      c.get<sn_ode_release_confirm_s>().to_json(j);
-      break;
-    case types::sn_ode_change_confirm:
-      j.write_fieldname("SNodeChangeConfirm");
-      c.get<sn_ode_change_confirm_s>().to_json(j);
-      break;
-    case types::xn_removal_resp:
-      j.write_fieldname("XnRemovalResponse");
-      c.get<xn_removal_resp_s>().to_json(j);
-      break;
-    case types::xn_setup_resp:
-      j.write_fieldname("XnSetupResponse");
-      c.get<xn_setup_resp_s>().to_json(j);
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      j.write_fieldname("NGRANNodeConfigurationUpdateAcknowledge");
-      c.get<ngran_node_cfg_upd_ack_s>().to_json(j);
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      j.write_fieldname("E-UTRA-NR-CellResourceCoordinationResponse");
-      c.get<e_utra_nr_cell_res_coordination_resp_s>().to_json(j);
-      break;
-    case types::cell_activation_resp:
-      j.write_fieldname("CellActivationResponse");
-      c.get<cell_activation_resp_s>().to_json(j);
-      break;
-    case types::reset_resp:
-      j.write_fieldname("ResetResponse");
-      c.get<reset_resp_s>().to_json(j);
-      break;
-    case types::res_status_resp:
-      j.write_fieldname("ResourceStatusResponse");
-      c.get<res_status_resp_s>().to_json(j);
-      break;
-    case types::mob_change_ack:
-      j.write_fieldname("MobilityChangeAcknowledge");
-      c.get<mob_change_ack_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_management_resp:
-      j.write_fieldname("IABTransportMigrationManagementResponse");
-      c.get<iab_transport_migration_management_resp_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_mod_resp:
-      j.write_fieldname("IABTransportMigrationModificationResponse");
-      c.get<iab_transport_migration_mod_resp_s>().to_json(j);
-      break;
-    case types::iab_res_coordination_resp:
-      j.write_fieldname("IABResourceCoordinationResponse");
-      c.get<iab_res_coordination_resp_s>().to_json(j);
-      break;
-    case types::partial_ue_context_transfer_ack:
-      j.write_fieldname("PartialUEContextTransferAcknowledge");
-      c.get<partial_ue_context_transfer_ack_s>().to_json(j);
-      break;
-    case types::data_collection_resp:
-      j.write_fieldname("DataCollectionResponse");
-      c.get<data_collection_resp_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::successful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_class_1_o::successful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request_ack:
-      HANDLE_CODE(c.get<ho_request_ack_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_resp:
-      HANDLE_CODE(c.get<retrieve_ue_context_resp_s>().pack(bref));
-      break;
-    case types::sn_ode_addition_request_ack:
-      HANDLE_CODE(c.get<sn_ode_addition_request_ack_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_request_ack:
-      HANDLE_CODE(c.get<sn_ode_mod_request_ack_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_confirm:
-      HANDLE_CODE(c.get<sn_ode_mod_confirm_s>().pack(bref));
-      break;
-    case types::sn_ode_release_request_ack:
-      HANDLE_CODE(c.get<sn_ode_release_request_ack_s>().pack(bref));
-      break;
-    case types::sn_ode_release_confirm:
-      HANDLE_CODE(c.get<sn_ode_release_confirm_s>().pack(bref));
-      break;
-    case types::sn_ode_change_confirm:
-      HANDLE_CODE(c.get<sn_ode_change_confirm_s>().pack(bref));
-      break;
-    case types::xn_removal_resp:
-      HANDLE_CODE(c.get<xn_removal_resp_s>().pack(bref));
-      break;
-    case types::xn_setup_resp:
-      HANDLE_CODE(c.get<xn_setup_resp_s>().pack(bref));
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_ack_s>().pack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_resp_s>().pack(bref));
-      break;
-    case types::cell_activation_resp:
-      HANDLE_CODE(c.get<cell_activation_resp_s>().pack(bref));
-      break;
-    case types::reset_resp:
-      HANDLE_CODE(c.get<reset_resp_s>().pack(bref));
-      break;
-    case types::res_status_resp:
-      HANDLE_CODE(c.get<res_status_resp_s>().pack(bref));
-      break;
-    case types::mob_change_ack:
-      HANDLE_CODE(c.get<mob_change_ack_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_management_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_management_resp_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_mod_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_resp_s>().pack(bref));
-      break;
-    case types::iab_res_coordination_resp:
-      HANDLE_CODE(c.get<iab_res_coordination_resp_s>().pack(bref));
-      break;
-    case types::partial_ue_context_transfer_ack:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_ack_s>().pack(bref));
-      break;
-    case types::data_collection_resp:
-      HANDLE_CODE(c.get<data_collection_resp_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::successful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_class_1_o::successful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_request_ack:
-      HANDLE_CODE(c.get<ho_request_ack_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_resp:
-      HANDLE_CODE(c.get<retrieve_ue_context_resp_s>().unpack(bref));
-      break;
-    case types::sn_ode_addition_request_ack:
-      HANDLE_CODE(c.get<sn_ode_addition_request_ack_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_request_ack:
-      HANDLE_CODE(c.get<sn_ode_mod_request_ack_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_confirm:
-      HANDLE_CODE(c.get<sn_ode_mod_confirm_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_request_ack:
-      HANDLE_CODE(c.get<sn_ode_release_request_ack_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_confirm:
-      HANDLE_CODE(c.get<sn_ode_release_confirm_s>().unpack(bref));
-      break;
-    case types::sn_ode_change_confirm:
-      HANDLE_CODE(c.get<sn_ode_change_confirm_s>().unpack(bref));
-      break;
-    case types::xn_removal_resp:
-      HANDLE_CODE(c.get<xn_removal_resp_s>().unpack(bref));
-      break;
-    case types::xn_setup_resp:
-      HANDLE_CODE(c.get<xn_setup_resp_s>().unpack(bref));
-      break;
-    case types::ngran_node_cfg_upd_ack:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_ack_s>().unpack(bref));
-      break;
-    case types::e_utra_nr_cell_res_coordination_resp:
-      HANDLE_CODE(c.get<e_utra_nr_cell_res_coordination_resp_s>().unpack(bref));
-      break;
-    case types::cell_activation_resp:
-      HANDLE_CODE(c.get<cell_activation_resp_s>().unpack(bref));
-      break;
-    case types::reset_resp:
-      HANDLE_CODE(c.get<reset_resp_s>().unpack(bref));
-      break;
-    case types::res_status_resp:
-      HANDLE_CODE(c.get<res_status_resp_s>().unpack(bref));
-      break;
-    case types::mob_change_ack:
-      HANDLE_CODE(c.get<mob_change_ack_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_management_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_management_resp_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_mod_resp:
-      HANDLE_CODE(c.get<iab_transport_migration_mod_resp_s>().unpack(bref));
-      break;
-    case types::iab_res_coordination_resp:
-      HANDLE_CODE(c.get<iab_res_coordination_resp_s>().unpack(bref));
-      break;
-    case types::partial_ue_context_transfer_ack:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_ack_s>().unpack(bref));
-      break;
-    case types::data_collection_resp:
-      HANDLE_CODE(c.get<data_collection_resp_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::successful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* xnap_elem_procs_class_1_o::successful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"HandoverRequestAcknowledge",
-                                "RetrieveUEContextResponse",
-                                "SNodeAdditionRequestAcknowledge",
-                                "SNodeModificationRequestAcknowledge",
-                                "SNodeModificationConfirm",
-                                "SNodeReleaseRequestAcknowledge",
-                                "SNodeReleaseConfirm",
-                                "SNodeChangeConfirm",
-                                "XnRemovalResponse",
-                                "XnSetupResponse",
-                                "NGRANNodeConfigurationUpdateAcknowledge",
-                                "E-UTRA-NR-CellResourceCoordinationResponse",
-                                "CellActivationResponse",
-                                "ResetResponse",
-                                "ResourceStatusResponse",
-                                "MobilityChangeAcknowledge",
-                                "IABTransportMigrationManagementResponse",
-                                "IABTransportMigrationModificationResponse",
-                                "IABResourceCoordinationResponse",
-                                "PartialUEContextTransferAcknowledge",
-                                "DataCollectionResponse"};
-  return convert_enum_idx(names, 21, value, "xnap_elem_procs_class_1_o::successful_outcome_c::types");
-}
+static const char* enum_names_xnap_elem_procs_class_1_o_successful_outcome_c_types_values[] = {
+    "HandoverRequestAcknowledge",
+    "RetrieveUEContextResponse",
+    "SNodeAdditionRequestAcknowledge",
+    "SNodeModificationRequestAcknowledge",
+    "SNodeModificationConfirm",
+    "SNodeReleaseRequestAcknowledge",
+    "SNodeReleaseConfirm",
+    "SNodeChangeConfirm",
+    "XnRemovalResponse",
+    "XnSetupResponse",
+    "NGRANNodeConfigurationUpdateAcknowledge",
+    "E-UTRA-NR-CellResourceCoordinationResponse",
+    "CellActivationResponse",
+    "ResetResponse",
+    "ResourceStatusResponse",
+    "MobilityChangeAcknowledge",
+    "IABTransportMigrationManagementResponse",
+    "IABTransportMigrationModificationResponse",
+    "IABResourceCoordinationResponse",
+    "PartialUEContextTransferAcknowledge",
+    "DataCollectionResponse"};
+const asn1::table::enum_desc xnap_elem_procs_class_1_o::successful_outcome_c::types_opts::desc = {
+    enum_names_xnap_elem_procs_class_1_o_successful_outcome_c_types_values,
+    21,
+    "xnap_elem_procs_class_1_o::successful_outcome_c::types"};
 
 // UnsuccessfulOutcome ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_xnap_elem_procs_class_1_o_unsuccessful_outcome_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_prep_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_addition_request_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_request_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_mod_refuse_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_release_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_change_refuse_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_removal_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_setup_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ngran_node_cfg_upd_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_activation_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<mob_change_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<iab_transport_migration_management_reject_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<partial_ue_context_transfer_fail_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_fail_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_xnap_elem_procs_class_1_o_unsuccessful_outcome_c_names[] = {
+    {"HandoverPreparationFailure", nullptr},
+    {"RetrieveUEContextFailure", nullptr},
+    {"SNodeAdditionRequestReject", nullptr},
+    {"SNodeModificationRequestReject", nullptr},
+    {"SNodeModificationRefuse", nullptr},
+    {"SNodeReleaseReject", nullptr},
+    {"SNodeChangeRefuse", nullptr},
+    {"XnRemovalFailure", nullptr},
+    {"XnSetupFailure", nullptr},
+    {"NGRANNodeConfigurationUpdateFailure", nullptr},
+    {"CellActivationFailure", nullptr},
+    {"ResourceStatusFailure", nullptr},
+    {"MobilityChangeFailure", nullptr},
+    {"IABTransportMigrationManagementReject", nullptr},
+    {"PartialUEContextTransferFailure", nullptr},
+    {"DataCollectionFailure", nullptr}};
+const asn1::table::choice_desc xnap_elem_procs_class_1_o::unsuccessful_outcome_c::desc = {
+    asn1::table::enum_int_type<xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types>(),
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nof_types,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::nof_exts,
+    xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types::has_ext,
+    true,
+    choice_table_xnap_elem_procs_class_1_o_unsuccessful_outcome_c_alternatives,
+    &asn1::table::choice_set<xnap_elem_procs_class_1_o::unsuccessful_outcome_c>,
+    choice_table_xnap_elem_procs_class_1_o_unsuccessful_outcome_c_names,
+    "xnap_elem_procs_class_1_o::unsuccessful_outcome_c",
+    offsetof(xnap_elem_procs_class_1_o::unsuccessful_outcome_c, type_),
+    offsetof(xnap_elem_procs_class_1_o::unsuccessful_outcome_c, c),
+    false,
+    nullptr,
+    true};
+
 void xnap_elem_procs_class_1_o::unsuccessful_outcome_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::ho_prep_fail:
-      c = ho_prep_fail_s{};
-      break;
-    case types::retrieve_ue_context_fail:
-      c = retrieve_ue_context_fail_s{};
-      break;
-    case types::sn_ode_addition_request_reject:
-      c = sn_ode_addition_request_reject_s{};
-      break;
-    case types::sn_ode_mod_request_reject:
-      c = sn_ode_mod_request_reject_s{};
-      break;
-    case types::sn_ode_mod_refuse:
-      c = sn_ode_mod_refuse_s{};
-      break;
-    case types::sn_ode_release_reject:
-      c = sn_ode_release_reject_s{};
-      break;
-    case types::sn_ode_change_refuse:
-      c = sn_ode_change_refuse_s{};
-      break;
-    case types::xn_removal_fail:
-      c = xn_removal_fail_s{};
-      break;
-    case types::xn_setup_fail:
-      c = xn_setup_fail_s{};
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      c = ngran_node_cfg_upd_fail_s{};
-      break;
-    case types::cell_activation_fail:
-      c = cell_activation_fail_s{};
-      break;
-    case types::res_status_fail:
-      c = res_status_fail_s{};
-      break;
-    case types::mob_change_fail:
-      c = mob_change_fail_s{};
-      break;
-    case types::iab_transport_migration_management_reject:
-      c = iab_transport_migration_management_reject_s{};
-      break;
-    case types::partial_ue_context_transfer_fail:
-      c = partial_ue_context_transfer_fail_s{};
-      break;
-    case types::data_collection_fail:
-      c = data_collection_fail_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::unsuccessful_outcome_c");
-  }
+  asn1::table::set_any_choice(&c, e, xnap_elem_procs_class_1_o::unsuccessful_outcome_c::desc);
 }
 ho_prep_fail_s& xnap_elem_procs_class_1_o::unsuccessful_outcome_c::ho_prep_fail()
 {
@@ -4508,531 +3584,449 @@ const data_collection_fail_s& xnap_elem_procs_class_1_o::unsuccessful_outcome_c:
   assert_choice_type(types::data_collection_fail, type_, "UnsuccessfulOutcome");
   return c.get<data_collection_fail_s>();
 }
-void xnap_elem_procs_class_1_o::unsuccessful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ho_prep_fail:
-      j.write_fieldname("HandoverPreparationFailure");
-      c.get<ho_prep_fail_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_fail:
-      j.write_fieldname("RetrieveUEContextFailure");
-      c.get<retrieve_ue_context_fail_s>().to_json(j);
-      break;
-    case types::sn_ode_addition_request_reject:
-      j.write_fieldname("SNodeAdditionRequestReject");
-      c.get<sn_ode_addition_request_reject_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_request_reject:
-      j.write_fieldname("SNodeModificationRequestReject");
-      c.get<sn_ode_mod_request_reject_s>().to_json(j);
-      break;
-    case types::sn_ode_mod_refuse:
-      j.write_fieldname("SNodeModificationRefuse");
-      c.get<sn_ode_mod_refuse_s>().to_json(j);
-      break;
-    case types::sn_ode_release_reject:
-      j.write_fieldname("SNodeReleaseReject");
-      c.get<sn_ode_release_reject_s>().to_json(j);
-      break;
-    case types::sn_ode_change_refuse:
-      j.write_fieldname("SNodeChangeRefuse");
-      c.get<sn_ode_change_refuse_s>().to_json(j);
-      break;
-    case types::xn_removal_fail:
-      j.write_fieldname("XnRemovalFailure");
-      c.get<xn_removal_fail_s>().to_json(j);
-      break;
-    case types::xn_setup_fail:
-      j.write_fieldname("XnSetupFailure");
-      c.get<xn_setup_fail_s>().to_json(j);
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      j.write_fieldname("NGRANNodeConfigurationUpdateFailure");
-      c.get<ngran_node_cfg_upd_fail_s>().to_json(j);
-      break;
-    case types::cell_activation_fail:
-      j.write_fieldname("CellActivationFailure");
-      c.get<cell_activation_fail_s>().to_json(j);
-      break;
-    case types::res_status_fail:
-      j.write_fieldname("ResourceStatusFailure");
-      c.get<res_status_fail_s>().to_json(j);
-      break;
-    case types::mob_change_fail:
-      j.write_fieldname("MobilityChangeFailure");
-      c.get<mob_change_fail_s>().to_json(j);
-      break;
-    case types::iab_transport_migration_management_reject:
-      j.write_fieldname("IABTransportMigrationManagementReject");
-      c.get<iab_transport_migration_management_reject_s>().to_json(j);
-      break;
-    case types::partial_ue_context_transfer_fail:
-      j.write_fieldname("PartialUEContextTransferFailure");
-      c.get<partial_ue_context_transfer_fail_s>().to_json(j);
-      break;
-    case types::data_collection_fail:
-      j.write_fieldname("DataCollectionFailure");
-      c.get<data_collection_fail_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::unsuccessful_outcome_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_class_1_o::unsuccessful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_prep_fail:
-      HANDLE_CODE(c.get<ho_prep_fail_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_fail:
-      HANDLE_CODE(c.get<retrieve_ue_context_fail_s>().pack(bref));
-      break;
-    case types::sn_ode_addition_request_reject:
-      HANDLE_CODE(c.get<sn_ode_addition_request_reject_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_request_reject:
-      HANDLE_CODE(c.get<sn_ode_mod_request_reject_s>().pack(bref));
-      break;
-    case types::sn_ode_mod_refuse:
-      HANDLE_CODE(c.get<sn_ode_mod_refuse_s>().pack(bref));
-      break;
-    case types::sn_ode_release_reject:
-      HANDLE_CODE(c.get<sn_ode_release_reject_s>().pack(bref));
-      break;
-    case types::sn_ode_change_refuse:
-      HANDLE_CODE(c.get<sn_ode_change_refuse_s>().pack(bref));
-      break;
-    case types::xn_removal_fail:
-      HANDLE_CODE(c.get<xn_removal_fail_s>().pack(bref));
-      break;
-    case types::xn_setup_fail:
-      HANDLE_CODE(c.get<xn_setup_fail_s>().pack(bref));
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_fail_s>().pack(bref));
-      break;
-    case types::cell_activation_fail:
-      HANDLE_CODE(c.get<cell_activation_fail_s>().pack(bref));
-      break;
-    case types::res_status_fail:
-      HANDLE_CODE(c.get<res_status_fail_s>().pack(bref));
-      break;
-    case types::mob_change_fail:
-      HANDLE_CODE(c.get<mob_change_fail_s>().pack(bref));
-      break;
-    case types::iab_transport_migration_management_reject:
-      HANDLE_CODE(c.get<iab_transport_migration_management_reject_s>().pack(bref));
-      break;
-    case types::partial_ue_context_transfer_fail:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_fail_s>().pack(bref));
-      break;
-    case types::data_collection_fail:
-      HANDLE_CODE(c.get<data_collection_fail_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_class_1_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::ho_prep_fail:
-      HANDLE_CODE(c.get<ho_prep_fail_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_fail:
-      HANDLE_CODE(c.get<retrieve_ue_context_fail_s>().unpack(bref));
-      break;
-    case types::sn_ode_addition_request_reject:
-      HANDLE_CODE(c.get<sn_ode_addition_request_reject_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_request_reject:
-      HANDLE_CODE(c.get<sn_ode_mod_request_reject_s>().unpack(bref));
-      break;
-    case types::sn_ode_mod_refuse:
-      HANDLE_CODE(c.get<sn_ode_mod_refuse_s>().unpack(bref));
-      break;
-    case types::sn_ode_release_reject:
-      HANDLE_CODE(c.get<sn_ode_release_reject_s>().unpack(bref));
-      break;
-    case types::sn_ode_change_refuse:
-      HANDLE_CODE(c.get<sn_ode_change_refuse_s>().unpack(bref));
-      break;
-    case types::xn_removal_fail:
-      HANDLE_CODE(c.get<xn_removal_fail_s>().unpack(bref));
-      break;
-    case types::xn_setup_fail:
-      HANDLE_CODE(c.get<xn_setup_fail_s>().unpack(bref));
-      break;
-    case types::ngran_node_cfg_upd_fail:
-      HANDLE_CODE(c.get<ngran_node_cfg_upd_fail_s>().unpack(bref));
-      break;
-    case types::cell_activation_fail:
-      HANDLE_CODE(c.get<cell_activation_fail_s>().unpack(bref));
-      break;
-    case types::res_status_fail:
-      HANDLE_CODE(c.get<res_status_fail_s>().unpack(bref));
-      break;
-    case types::mob_change_fail:
-      HANDLE_CODE(c.get<mob_change_fail_s>().unpack(bref));
-      break;
-    case types::iab_transport_migration_management_reject:
-      HANDLE_CODE(c.get<iab_transport_migration_management_reject_s>().unpack(bref));
-      break;
-    case types::partial_ue_context_transfer_fail:
-      HANDLE_CODE(c.get<partial_ue_context_transfer_fail_s>().unpack(bref));
-      break;
-    case types::data_collection_fail:
-      HANDLE_CODE(c.get<data_collection_fail_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_1_o::unsuccessful_outcome_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {"HandoverPreparationFailure",
-                                "RetrieveUEContextFailure",
-                                "SNodeAdditionRequestReject",
-                                "SNodeModificationRequestReject",
-                                "SNodeModificationRefuse",
-                                "SNodeReleaseReject",
-                                "SNodeChangeRefuse",
-                                "XnRemovalFailure",
-                                "XnSetupFailure",
-                                "NGRANNodeConfigurationUpdateFailure",
-                                "CellActivationFailure",
-                                "ResourceStatusFailure",
-                                "MobilityChangeFailure",
-                                "IABTransportMigrationManagementReject",
-                                "PartialUEContextTransferFailure",
-                                "DataCollectionFailure"};
-  return convert_enum_idx(names, 16, value, "xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types");
-}
+static const char* enum_names_xnap_elem_procs_class_1_o_unsuccessful_outcome_c_types_values[] = {
+    "HandoverPreparationFailure",
+    "RetrieveUEContextFailure",
+    "SNodeAdditionRequestReject",
+    "SNodeModificationRequestReject",
+    "SNodeModificationRefuse",
+    "SNodeReleaseReject",
+    "SNodeChangeRefuse",
+    "XnRemovalFailure",
+    "XnSetupFailure",
+    "NGRANNodeConfigurationUpdateFailure",
+    "CellActivationFailure",
+    "ResourceStatusFailure",
+    "MobilityChangeFailure",
+    "IABTransportMigrationManagementReject",
+    "PartialUEContextTransferFailure",
+    "DataCollectionFailure"};
+const asn1::table::enum_desc xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types_opts::desc = {
+    enum_names_xnap_elem_procs_class_1_o_unsuccessful_outcome_c_types_values,
+    16,
+    "xnap_elem_procs_class_1_o::unsuccessful_outcome_c::types"};
 
 // XNAP-ELEMENTARY-PROCEDURES-CLASS-2 ::= OBJECT SET OF XNAP-ELEMENTARY-PROCEDURE
-uint16_t xnap_elem_procs_class_2_o::idx_to_proc_code(uint32_t idx)
-{
-  static const uint16_t names[] = {1,  2,  4,  5,  6,  8,  13, 15, 21, 22, 23, 24, 26, 27, 28, 29,
-                                   30, 31, 32, 33, 35, 37, 38, 39, 40, 42, 43, 47, 48, 50, 52};
-  return map_enum_number(names, 31, idx, "proc_code");
-}
-bool xnap_elem_procs_class_2_o::is_proc_code_valid(const uint16_t& proc_code)
-{
-  static const uint16_t names[] = {1,  2,  4,  5,  6,  8,  13, 15, 21, 22, 23, 24, 26, 27, 28, 29,
-                                   30, 31, 32, 33, 35, 37, 38, 39, 40, 42, 43, 47, 48, 50, 52};
-  for (const auto& o : names) {
-    if (o == proc_code) {
-      return true;
-    }
-  }
-  return false;
-}
-xnap_elem_procs_class_2_o::init_msg_c xnap_elem_procs_class_2_o::get_init_msg(const uint16_t& proc_code)
-{
-  init_msg_c ret{};
-  switch (proc_code) {
-    case 1:
-      ret.set(init_msg_c::types::sn_status_transfer);
-      break;
-    case 2:
-      ret.set(init_msg_c::types::ho_cancel);
-      break;
-    case 4:
-      ret.set(init_msg_c::types::ran_paging);
-      break;
-    case 5:
-      ret.set(init_msg_c::types::xn_u_address_ind);
-      break;
-    case 6:
-      ret.set(init_msg_c::types::ue_context_release);
-      break;
-    case 8:
-      ret.set(init_msg_c::types::sn_ode_recfg_complete);
-      break;
-    case 13:
-      ret.set(init_msg_c::types::sn_ode_counter_check_request);
-      break;
-    case 15:
-      ret.set(init_msg_c::types::rrc_transfer);
-      break;
-    case 21:
-      ret.set(init_msg_c::types::error_ind);
-      break;
-    case 22:
-      ret.set(init_msg_c::types::private_msg);
-      break;
-    case 23:
-      ret.set(init_msg_c::types::notif_ctrl_ind);
-      break;
-    case 24:
-      ret.set(init_msg_c::types::activity_notif);
-      break;
-    case 26:
-      ret.set(init_msg_c::types::secondary_rat_data_usage_report);
-      break;
-    case 27:
-      ret.set(init_msg_c::types::deactiv_trace);
-      break;
-    case 28:
-      ret.set(init_msg_c::types::trace_start);
-      break;
-    case 29:
-      ret.set(init_msg_c::types::ho_success);
-      break;
-    case 30:
-      ret.set(init_msg_c::types::conditional_ho_cancel);
-      break;
-    case 31:
-      ret.set(init_msg_c::types::early_status_transfer);
-      break;
-    case 32:
-      ret.set(init_msg_c::types::fail_ind);
-      break;
-    case 33:
-      ret.set(init_msg_c::types::ho_report);
-      break;
-    case 35:
-      ret.set(init_msg_c::types::res_status_upd);
-      break;
-    case 37:
-      ret.set(init_msg_c::types::access_and_mob_ind);
-      break;
-    case 38:
-      ret.set(init_msg_c::types::cell_traffic_trace);
-      break;
-    case 39:
-      ret.set(init_msg_c::types::ran_multicast_group_paging);
-      break;
-    case 40:
-      ret.set(init_msg_c::types::scg_fail_info_report);
-      break;
-    case 42:
-      ret.set(init_msg_c::types::scg_fail_transfer);
-      break;
-    case 43:
-      ret.set(init_msg_c::types::f1_c_traffic_transfer);
-      break;
-    case 47:
-      ret.set(init_msg_c::types::retrieve_ue_context_confirm);
-      break;
-    case 48:
-      ret.set(init_msg_c::types::cp_c_cancel);
-      break;
-    case 50:
-      ret.set(init_msg_c::types::rach_ind);
-      break;
-    case 52:
-      ret.set(init_msg_c::types::data_collection_upd);
-      break;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-xnap_elem_procs_class_2_o::successful_outcome_c
-xnap_elem_procs_class_2_o::get_successful_outcome(const uint16_t& proc_code)
-{
-  successful_outcome_c ret{};
-  switch (proc_code) {
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-xnap_elem_procs_class_2_o::unsuccessful_outcome_c
-xnap_elem_procs_class_2_o::get_unsuccessful_outcome(const uint16_t& proc_code)
-{
-  unsuccessful_outcome_c ret{};
-  switch (proc_code) {
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return ret;
-}
-crit_e xnap_elem_procs_class_2_o::get_crit(const uint16_t& proc_code)
-{
-  switch (proc_code) {
-    case 1:
-      return crit_e::ignore;
-    case 2:
-      return crit_e::ignore;
-    case 4:
-      return crit_e::reject;
-    case 5:
-      return crit_e::reject;
-    case 6:
-      return crit_e::reject;
-    case 8:
-      return crit_e::reject;
-    case 13:
-      return crit_e::reject;
-    case 15:
-      return crit_e::reject;
-    case 21:
-      return crit_e::ignore;
-    case 22:
-      return crit_e::ignore;
-    case 23:
-      return crit_e::ignore;
-    case 24:
-      return crit_e::ignore;
-    case 26:
-      return crit_e::reject;
-    case 27:
-      return crit_e::ignore;
-    case 28:
-      return crit_e::ignore;
-    case 29:
-      return crit_e::ignore;
-    case 30:
-      return crit_e::ignore;
-    case 31:
-      return crit_e::ignore;
-    case 32:
-      return crit_e::ignore;
-    case 33:
-      return crit_e::ignore;
-    case 35:
-      return crit_e::ignore;
-    case 37:
-      return crit_e::ignore;
-    case 38:
-      return crit_e::ignore;
-    case 39:
-      return crit_e::reject;
-    case 40:
-      return crit_e::ignore;
-    case 42:
-      return crit_e::ignore;
-    case 43:
-      return crit_e::reject;
-    case 47:
-      return crit_e::reject;
-    case 48:
-      return crit_e::ignore;
-    case 50:
-      return crit_e::ignore;
-    case 52:
-      return crit_e::ignore;
-    default:
-      asn1::log_error("The proc_code={} is not recognized", proc_code);
-  }
-  return {};
-}
+static const uint32_t objset_proc_code_xnap_elem_procs_class_2_o[] = {1,  2,  4,  5,  6,  8,  13, 15, 21, 22, 23,
+                                                                      24, 26, 27, 28, 29, 30, 31, 32, 33, 35, 37,
+                                                                      38, 39, 40, 42, 43, 47, 48, 50, 52};
+static const uint8_t  objset_init_msg_xnap_elem_procs_class_2_o[]  = {
+    xnap_elem_procs_class_2_o::init_msg_c::types::sn_status_transfer,
+    xnap_elem_procs_class_2_o::init_msg_c::types::ho_cancel,
+    xnap_elem_procs_class_2_o::init_msg_c::types::ran_paging,
+    xnap_elem_procs_class_2_o::init_msg_c::types::xn_u_address_ind,
+    xnap_elem_procs_class_2_o::init_msg_c::types::ue_context_release,
+    xnap_elem_procs_class_2_o::init_msg_c::types::sn_ode_recfg_complete,
+    xnap_elem_procs_class_2_o::init_msg_c::types::sn_ode_counter_check_request,
+    xnap_elem_procs_class_2_o::init_msg_c::types::rrc_transfer,
+    xnap_elem_procs_class_2_o::init_msg_c::types::error_ind,
+    xnap_elem_procs_class_2_o::init_msg_c::types::private_msg,
+    xnap_elem_procs_class_2_o::init_msg_c::types::notif_ctrl_ind,
+    xnap_elem_procs_class_2_o::init_msg_c::types::activity_notif,
+    xnap_elem_procs_class_2_o::init_msg_c::types::secondary_rat_data_usage_report,
+    xnap_elem_procs_class_2_o::init_msg_c::types::deactiv_trace,
+    xnap_elem_procs_class_2_o::init_msg_c::types::trace_start,
+    xnap_elem_procs_class_2_o::init_msg_c::types::ho_success,
+    xnap_elem_procs_class_2_o::init_msg_c::types::conditional_ho_cancel,
+    xnap_elem_procs_class_2_o::init_msg_c::types::early_status_transfer,
+    xnap_elem_procs_class_2_o::init_msg_c::types::fail_ind,
+    xnap_elem_procs_class_2_o::init_msg_c::types::ho_report,
+    xnap_elem_procs_class_2_o::init_msg_c::types::res_status_upd,
+    xnap_elem_procs_class_2_o::init_msg_c::types::access_and_mob_ind,
+    xnap_elem_procs_class_2_o::init_msg_c::types::cell_traffic_trace,
+    xnap_elem_procs_class_2_o::init_msg_c::types::ran_multicast_group_paging,
+    xnap_elem_procs_class_2_o::init_msg_c::types::scg_fail_info_report,
+    xnap_elem_procs_class_2_o::init_msg_c::types::scg_fail_transfer,
+    xnap_elem_procs_class_2_o::init_msg_c::types::f1_c_traffic_transfer,
+    xnap_elem_procs_class_2_o::init_msg_c::types::retrieve_ue_context_confirm,
+    xnap_elem_procs_class_2_o::init_msg_c::types::cp_c_cancel,
+    xnap_elem_procs_class_2_o::init_msg_c::types::rach_ind,
+    xnap_elem_procs_class_2_o::init_msg_c::types::data_collection_upd};
+static const uint8_t objset_successful_outcome_xnap_elem_procs_class_2_o[] = {
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype};
+static const uint8_t objset_unsuccessful_outcome_xnap_elem_procs_class_2_o[] = {
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype};
+static const uint8_t objset_crit_xnap_elem_procs_class_2_o[] = {
+    crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject, crit_e::reject,
+    crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore, crit_e::ignore,
+    crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::ignore, crit_e::ignore, crit_e::reject, crit_e::reject,
+    crit_e::ignore, crit_e::ignore, crit_e::ignore};
+static const asn1::table::objset_column objset_columns_xnap_elem_procs_class_2_o[] = {
+    {objset_init_msg_xnap_elem_procs_class_2_o, xnap_elem_procs_class_2_o::init_msg_c::types::nulltype},
+    {objset_successful_outcome_xnap_elem_procs_class_2_o,
+     xnap_elem_procs_class_2_o::successful_outcome_c::types::nulltype},
+    {objset_unsuccessful_outcome_xnap_elem_procs_class_2_o,
+     xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nulltype},
+    {objset_crit_xnap_elem_procs_class_2_o, crit_e::nulltype}};
+const asn1::table::objset_desc xnap_elem_procs_class_2_o::desc = {objset_proc_code_xnap_elem_procs_class_2_o,
+                                                                  31,
+                                                                  "proc_code",
+                                                                  objset_columns_xnap_elem_procs_class_2_o};
 
 // InitiatingMessage ::= OPEN TYPE
+static const asn1::table::seq_field choice_table_xnap_elem_procs_class_2_o_init_msg_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_status_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_cancel_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ran_paging_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<xn_u_address_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ue_context_release_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_recfg_complete_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<sn_ode_counter_check_request_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<rrc_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<error_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<private_msg_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<notif_ctrl_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<activity_notif_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<secondary_rat_data_usage_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<deactiv_trace_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<trace_start_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_success_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<conditional_ho_cancel_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<early_status_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<fail_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ho_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<res_status_upd_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<access_and_mob_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cell_traffic_trace_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<ran_multicast_group_paging_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<scg_fail_info_report_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<scg_fail_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<f1_c_traffic_transfer_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<retrieve_ue_context_confirm_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<cp_c_cancel_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<rach_ind_s, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::any_codec<data_collection_upd_s, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_xnap_elem_procs_class_2_o_init_msg_c_names[] = {
+    {"SNStatusTransfer", nullptr},
+    {"HandoverCancel", nullptr},
+    {"RANPaging", nullptr},
+    {"XnUAddressIndication", nullptr},
+    {"UEContextRelease", nullptr},
+    {"SNodeReconfigurationComplete", nullptr},
+    {"SNodeCounterCheckRequest", nullptr},
+    {"RRCTransfer", nullptr},
+    {"ErrorIndication", nullptr},
+    {"PrivateMessage", nullptr},
+    {"NotificationControlIndication", nullptr},
+    {"ActivityNotification", nullptr},
+    {"SecondaryRATDataUsageReport", nullptr},
+    {"DeactivateTrace", nullptr},
+    {"TraceStart", nullptr},
+    {"HandoverSuccess", nullptr},
+    {"ConditionalHandoverCancel", nullptr},
+    {"EarlyStatusTransfer", nullptr},
+    {"FailureIndication", nullptr},
+    {"HandoverReport", nullptr},
+    {"ResourceStatusUpdate", nullptr},
+    {"AccessAndMobilityIndication", nullptr},
+    {"CellTrafficTrace", nullptr},
+    {"RANMulticastGroupPaging", nullptr},
+    {"ScgFailureInformationReport", nullptr},
+    {"ScgFailureTransfer", nullptr},
+    {"F1CTrafficTransfer", nullptr},
+    {"RetrieveUEContextConfirm", nullptr},
+    {"CPCCancel", nullptr},
+    {"RachIndication", nullptr},
+    {"DataCollectionUpdate", nullptr}};
+const asn1::table::choice_desc xnap_elem_procs_class_2_o::init_msg_c::desc = {
+    asn1::table::enum_int_type<xnap_elem_procs_class_2_o::init_msg_c::types>(),
+    xnap_elem_procs_class_2_o::init_msg_c::types::nof_types,
+    xnap_elem_procs_class_2_o::init_msg_c::types::nof_exts,
+    xnap_elem_procs_class_2_o::init_msg_c::types::has_ext,
+    true,
+    choice_table_xnap_elem_procs_class_2_o_init_msg_c_alternatives,
+    &asn1::table::choice_set<xnap_elem_procs_class_2_o::init_msg_c>,
+    choice_table_xnap_elem_procs_class_2_o_init_msg_c_names,
+    "xnap_elem_procs_class_2_o::init_msg_c",
+    offsetof(xnap_elem_procs_class_2_o::init_msg_c, type_),
+    offsetof(xnap_elem_procs_class_2_o::init_msg_c, c),
+    false,
+    nullptr,
+    true};
+
 void xnap_elem_procs_class_2_o::init_msg_c::set(types::options e)
 {
   type_ = e;
-  switch (type_) {
-    case types::sn_status_transfer:
-      c = sn_status_transfer_s{};
-      break;
-    case types::ho_cancel:
-      c = ho_cancel_s{};
-      break;
-    case types::ran_paging:
-      c = ran_paging_s{};
-      break;
-    case types::xn_u_address_ind:
-      c = xn_u_address_ind_s{};
-      break;
-    case types::ue_context_release:
-      c = ue_context_release_s{};
-      break;
-    case types::sn_ode_recfg_complete:
-      c = sn_ode_recfg_complete_s{};
-      break;
-    case types::sn_ode_counter_check_request:
-      c = sn_ode_counter_check_request_s{};
-      break;
-    case types::rrc_transfer:
-      c = rrc_transfer_s{};
-      break;
-    case types::error_ind:
-      c = error_ind_s{};
-      break;
-    case types::private_msg:
-      c = private_msg_s{};
-      break;
-    case types::notif_ctrl_ind:
-      c = notif_ctrl_ind_s{};
-      break;
-    case types::activity_notif:
-      c = activity_notif_s{};
-      break;
-    case types::secondary_rat_data_usage_report:
-      c = secondary_rat_data_usage_report_s{};
-      break;
-    case types::deactiv_trace:
-      c = deactiv_trace_s{};
-      break;
-    case types::trace_start:
-      c = trace_start_s{};
-      break;
-    case types::ho_success:
-      c = ho_success_s{};
-      break;
-    case types::conditional_ho_cancel:
-      c = conditional_ho_cancel_s{};
-      break;
-    case types::early_status_transfer:
-      c = early_status_transfer_s{};
-      break;
-    case types::fail_ind:
-      c = fail_ind_s{};
-      break;
-    case types::ho_report:
-      c = ho_report_s{};
-      break;
-    case types::res_status_upd:
-      c = res_status_upd_s{};
-      break;
-    case types::access_and_mob_ind:
-      c = access_and_mob_ind_s{};
-      break;
-    case types::cell_traffic_trace:
-      c = cell_traffic_trace_s{};
-      break;
-    case types::ran_multicast_group_paging:
-      c = ran_multicast_group_paging_s{};
-      break;
-    case types::scg_fail_info_report:
-      c = scg_fail_info_report_s{};
-      break;
-    case types::scg_fail_transfer:
-      c = scg_fail_transfer_s{};
-      break;
-    case types::f1_c_traffic_transfer:
-      c = f1_c_traffic_transfer_s{};
-      break;
-    case types::retrieve_ue_context_confirm:
-      c = retrieve_ue_context_confirm_s{};
-      break;
-    case types::cp_c_cancel:
-      c = cp_c_cancel_s{};
-      break;
-    case types::rach_ind:
-      c = rach_ind_s{};
-      break;
-    case types::data_collection_upd:
-      c = data_collection_upd_s{};
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_2_o::init_msg_c");
-  }
+  asn1::table::set_any_choice(&c, e, xnap_elem_procs_class_2_o::init_msg_c::desc);
 }
 sn_status_transfer_s& xnap_elem_procs_class_2_o::init_msg_c::sn_status_transfer()
 {
@@ -5344,381 +4338,42 @@ const data_collection_upd_s& xnap_elem_procs_class_2_o::init_msg_c::data_collect
   assert_choice_type(types::data_collection_upd, type_, "InitiatingMessage");
   return c.get<data_collection_upd_s>();
 }
-void xnap_elem_procs_class_2_o::init_msg_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::sn_status_transfer:
-      j.write_fieldname("SNStatusTransfer");
-      c.get<sn_status_transfer_s>().to_json(j);
-      break;
-    case types::ho_cancel:
-      j.write_fieldname("HandoverCancel");
-      c.get<ho_cancel_s>().to_json(j);
-      break;
-    case types::ran_paging:
-      j.write_fieldname("RANPaging");
-      c.get<ran_paging_s>().to_json(j);
-      break;
-    case types::xn_u_address_ind:
-      j.write_fieldname("XnUAddressIndication");
-      c.get<xn_u_address_ind_s>().to_json(j);
-      break;
-    case types::ue_context_release:
-      j.write_fieldname("UEContextRelease");
-      c.get<ue_context_release_s>().to_json(j);
-      break;
-    case types::sn_ode_recfg_complete:
-      j.write_fieldname("SNodeReconfigurationComplete");
-      c.get<sn_ode_recfg_complete_s>().to_json(j);
-      break;
-    case types::sn_ode_counter_check_request:
-      j.write_fieldname("SNodeCounterCheckRequest");
-      c.get<sn_ode_counter_check_request_s>().to_json(j);
-      break;
-    case types::rrc_transfer:
-      j.write_fieldname("RRCTransfer");
-      c.get<rrc_transfer_s>().to_json(j);
-      break;
-    case types::error_ind:
-      j.write_fieldname("ErrorIndication");
-      c.get<error_ind_s>().to_json(j);
-      break;
-    case types::private_msg:
-      j.write_fieldname("PrivateMessage");
-      c.get<private_msg_s>().to_json(j);
-      break;
-    case types::notif_ctrl_ind:
-      j.write_fieldname("NotificationControlIndication");
-      c.get<notif_ctrl_ind_s>().to_json(j);
-      break;
-    case types::activity_notif:
-      j.write_fieldname("ActivityNotification");
-      c.get<activity_notif_s>().to_json(j);
-      break;
-    case types::secondary_rat_data_usage_report:
-      j.write_fieldname("SecondaryRATDataUsageReport");
-      c.get<secondary_rat_data_usage_report_s>().to_json(j);
-      break;
-    case types::deactiv_trace:
-      j.write_fieldname("DeactivateTrace");
-      c.get<deactiv_trace_s>().to_json(j);
-      break;
-    case types::trace_start:
-      j.write_fieldname("TraceStart");
-      c.get<trace_start_s>().to_json(j);
-      break;
-    case types::ho_success:
-      j.write_fieldname("HandoverSuccess");
-      c.get<ho_success_s>().to_json(j);
-      break;
-    case types::conditional_ho_cancel:
-      j.write_fieldname("ConditionalHandoverCancel");
-      c.get<conditional_ho_cancel_s>().to_json(j);
-      break;
-    case types::early_status_transfer:
-      j.write_fieldname("EarlyStatusTransfer");
-      c.get<early_status_transfer_s>().to_json(j);
-      break;
-    case types::fail_ind:
-      j.write_fieldname("FailureIndication");
-      c.get<fail_ind_s>().to_json(j);
-      break;
-    case types::ho_report:
-      j.write_fieldname("HandoverReport");
-      c.get<ho_report_s>().to_json(j);
-      break;
-    case types::res_status_upd:
-      j.write_fieldname("ResourceStatusUpdate");
-      c.get<res_status_upd_s>().to_json(j);
-      break;
-    case types::access_and_mob_ind:
-      j.write_fieldname("AccessAndMobilityIndication");
-      c.get<access_and_mob_ind_s>().to_json(j);
-      break;
-    case types::cell_traffic_trace:
-      j.write_fieldname("CellTrafficTrace");
-      c.get<cell_traffic_trace_s>().to_json(j);
-      break;
-    case types::ran_multicast_group_paging:
-      j.write_fieldname("RANMulticastGroupPaging");
-      c.get<ran_multicast_group_paging_s>().to_json(j);
-      break;
-    case types::scg_fail_info_report:
-      j.write_fieldname("ScgFailureInformationReport");
-      c.get<scg_fail_info_report_s>().to_json(j);
-      break;
-    case types::scg_fail_transfer:
-      j.write_fieldname("ScgFailureTransfer");
-      c.get<scg_fail_transfer_s>().to_json(j);
-      break;
-    case types::f1_c_traffic_transfer:
-      j.write_fieldname("F1CTrafficTransfer");
-      c.get<f1_c_traffic_transfer_s>().to_json(j);
-      break;
-    case types::retrieve_ue_context_confirm:
-      j.write_fieldname("RetrieveUEContextConfirm");
-      c.get<retrieve_ue_context_confirm_s>().to_json(j);
-      break;
-    case types::cp_c_cancel:
-      j.write_fieldname("CPCCancel");
-      c.get<cp_c_cancel_s>().to_json(j);
-      break;
-    case types::rach_ind:
-      j.write_fieldname("RachIndication");
-      c.get<rach_ind_s>().to_json(j);
-      break;
-    case types::data_collection_upd:
-      j.write_fieldname("DataCollectionUpdate");
-      c.get<data_collection_upd_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_2_o::init_msg_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_class_2_o::init_msg_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::sn_status_transfer:
-      HANDLE_CODE(c.get<sn_status_transfer_s>().pack(bref));
-      break;
-    case types::ho_cancel:
-      HANDLE_CODE(c.get<ho_cancel_s>().pack(bref));
-      break;
-    case types::ran_paging:
-      HANDLE_CODE(c.get<ran_paging_s>().pack(bref));
-      break;
-    case types::xn_u_address_ind:
-      HANDLE_CODE(c.get<xn_u_address_ind_s>().pack(bref));
-      break;
-    case types::ue_context_release:
-      HANDLE_CODE(c.get<ue_context_release_s>().pack(bref));
-      break;
-    case types::sn_ode_recfg_complete:
-      HANDLE_CODE(c.get<sn_ode_recfg_complete_s>().pack(bref));
-      break;
-    case types::sn_ode_counter_check_request:
-      HANDLE_CODE(c.get<sn_ode_counter_check_request_s>().pack(bref));
-      break;
-    case types::rrc_transfer:
-      HANDLE_CODE(c.get<rrc_transfer_s>().pack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().pack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().pack(bref));
-      break;
-    case types::notif_ctrl_ind:
-      HANDLE_CODE(c.get<notif_ctrl_ind_s>().pack(bref));
-      break;
-    case types::activity_notif:
-      HANDLE_CODE(c.get<activity_notif_s>().pack(bref));
-      break;
-    case types::secondary_rat_data_usage_report:
-      HANDLE_CODE(c.get<secondary_rat_data_usage_report_s>().pack(bref));
-      break;
-    case types::deactiv_trace:
-      HANDLE_CODE(c.get<deactiv_trace_s>().pack(bref));
-      break;
-    case types::trace_start:
-      HANDLE_CODE(c.get<trace_start_s>().pack(bref));
-      break;
-    case types::ho_success:
-      HANDLE_CODE(c.get<ho_success_s>().pack(bref));
-      break;
-    case types::conditional_ho_cancel:
-      HANDLE_CODE(c.get<conditional_ho_cancel_s>().pack(bref));
-      break;
-    case types::early_status_transfer:
-      HANDLE_CODE(c.get<early_status_transfer_s>().pack(bref));
-      break;
-    case types::fail_ind:
-      HANDLE_CODE(c.get<fail_ind_s>().pack(bref));
-      break;
-    case types::ho_report:
-      HANDLE_CODE(c.get<ho_report_s>().pack(bref));
-      break;
-    case types::res_status_upd:
-      HANDLE_CODE(c.get<res_status_upd_s>().pack(bref));
-      break;
-    case types::access_and_mob_ind:
-      HANDLE_CODE(c.get<access_and_mob_ind_s>().pack(bref));
-      break;
-    case types::cell_traffic_trace:
-      HANDLE_CODE(c.get<cell_traffic_trace_s>().pack(bref));
-      break;
-    case types::ran_multicast_group_paging:
-      HANDLE_CODE(c.get<ran_multicast_group_paging_s>().pack(bref));
-      break;
-    case types::scg_fail_info_report:
-      HANDLE_CODE(c.get<scg_fail_info_report_s>().pack(bref));
-      break;
-    case types::scg_fail_transfer:
-      HANDLE_CODE(c.get<scg_fail_transfer_s>().pack(bref));
-      break;
-    case types::f1_c_traffic_transfer:
-      HANDLE_CODE(c.get<f1_c_traffic_transfer_s>().pack(bref));
-      break;
-    case types::retrieve_ue_context_confirm:
-      HANDLE_CODE(c.get<retrieve_ue_context_confirm_s>().pack(bref));
-      break;
-    case types::cp_c_cancel:
-      HANDLE_CODE(c.get<cp_c_cancel_s>().pack(bref));
-      break;
-    case types::rach_ind:
-      HANDLE_CODE(c.get<rach_ind_s>().pack(bref));
-      break;
-    case types::data_collection_upd:
-      HANDLE_CODE(c.get<data_collection_upd_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_2_o::init_msg_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_class_2_o::init_msg_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  switch (type_) {
-    case types::sn_status_transfer:
-      HANDLE_CODE(c.get<sn_status_transfer_s>().unpack(bref));
-      break;
-    case types::ho_cancel:
-      HANDLE_CODE(c.get<ho_cancel_s>().unpack(bref));
-      break;
-    case types::ran_paging:
-      HANDLE_CODE(c.get<ran_paging_s>().unpack(bref));
-      break;
-    case types::xn_u_address_ind:
-      HANDLE_CODE(c.get<xn_u_address_ind_s>().unpack(bref));
-      break;
-    case types::ue_context_release:
-      HANDLE_CODE(c.get<ue_context_release_s>().unpack(bref));
-      break;
-    case types::sn_ode_recfg_complete:
-      HANDLE_CODE(c.get<sn_ode_recfg_complete_s>().unpack(bref));
-      break;
-    case types::sn_ode_counter_check_request:
-      HANDLE_CODE(c.get<sn_ode_counter_check_request_s>().unpack(bref));
-      break;
-    case types::rrc_transfer:
-      HANDLE_CODE(c.get<rrc_transfer_s>().unpack(bref));
-      break;
-    case types::error_ind:
-      HANDLE_CODE(c.get<error_ind_s>().unpack(bref));
-      break;
-    case types::private_msg:
-      HANDLE_CODE(c.get<private_msg_s>().unpack(bref));
-      break;
-    case types::notif_ctrl_ind:
-      HANDLE_CODE(c.get<notif_ctrl_ind_s>().unpack(bref));
-      break;
-    case types::activity_notif:
-      HANDLE_CODE(c.get<activity_notif_s>().unpack(bref));
-      break;
-    case types::secondary_rat_data_usage_report:
-      HANDLE_CODE(c.get<secondary_rat_data_usage_report_s>().unpack(bref));
-      break;
-    case types::deactiv_trace:
-      HANDLE_CODE(c.get<deactiv_trace_s>().unpack(bref));
-      break;
-    case types::trace_start:
-      HANDLE_CODE(c.get<trace_start_s>().unpack(bref));
-      break;
-    case types::ho_success:
-      HANDLE_CODE(c.get<ho_success_s>().unpack(bref));
-      break;
-    case types::conditional_ho_cancel:
-      HANDLE_CODE(c.get<conditional_ho_cancel_s>().unpack(bref));
-      break;
-    case types::early_status_transfer:
-      HANDLE_CODE(c.get<early_status_transfer_s>().unpack(bref));
-      break;
-    case types::fail_ind:
-      HANDLE_CODE(c.get<fail_ind_s>().unpack(bref));
-      break;
-    case types::ho_report:
-      HANDLE_CODE(c.get<ho_report_s>().unpack(bref));
-      break;
-    case types::res_status_upd:
-      HANDLE_CODE(c.get<res_status_upd_s>().unpack(bref));
-      break;
-    case types::access_and_mob_ind:
-      HANDLE_CODE(c.get<access_and_mob_ind_s>().unpack(bref));
-      break;
-    case types::cell_traffic_trace:
-      HANDLE_CODE(c.get<cell_traffic_trace_s>().unpack(bref));
-      break;
-    case types::ran_multicast_group_paging:
-      HANDLE_CODE(c.get<ran_multicast_group_paging_s>().unpack(bref));
-      break;
-    case types::scg_fail_info_report:
-      HANDLE_CODE(c.get<scg_fail_info_report_s>().unpack(bref));
-      break;
-    case types::scg_fail_transfer:
-      HANDLE_CODE(c.get<scg_fail_transfer_s>().unpack(bref));
-      break;
-    case types::f1_c_traffic_transfer:
-      HANDLE_CODE(c.get<f1_c_traffic_transfer_s>().unpack(bref));
-      break;
-    case types::retrieve_ue_context_confirm:
-      HANDLE_CODE(c.get<retrieve_ue_context_confirm_s>().unpack(bref));
-      break;
-    case types::cp_c_cancel:
-      HANDLE_CODE(c.get<cp_c_cancel_s>().unpack(bref));
-      break;
-    case types::rach_ind:
-      HANDLE_CODE(c.get<rach_ind_s>().unpack(bref));
-      break;
-    case types::data_collection_upd:
-      HANDLE_CODE(c.get<data_collection_upd_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_elem_procs_class_2_o::init_msg_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
 
-const char* xnap_elem_procs_class_2_o::init_msg_c::types_opts::to_string() const
-{
-  static const char* names[] = {"SNStatusTransfer",
-                                "HandoverCancel",
-                                "RANPaging",
-                                "XnUAddressIndication",
-                                "UEContextRelease",
-                                "SNodeReconfigurationComplete",
-                                "SNodeCounterCheckRequest",
-                                "RRCTransfer",
-                                "ErrorIndication",
-                                "PrivateMessage",
-                                "NotificationControlIndication",
-                                "ActivityNotification",
-                                "SecondaryRATDataUsageReport",
-                                "DeactivateTrace",
-                                "TraceStart",
-                                "HandoverSuccess",
-                                "ConditionalHandoverCancel",
-                                "EarlyStatusTransfer",
-                                "FailureIndication",
-                                "HandoverReport",
-                                "ResourceStatusUpdate",
-                                "AccessAndMobilityIndication",
-                                "CellTrafficTrace",
-                                "RANMulticastGroupPaging",
-                                "ScgFailureInformationReport",
-                                "ScgFailureTransfer",
-                                "F1CTrafficTransfer",
-                                "RetrieveUEContextConfirm",
-                                "CPCCancel",
-                                "RachIndication",
-                                "DataCollectionUpdate"};
-  return convert_enum_idx(names, 31, value, "xnap_elem_procs_class_2_o::init_msg_c::types");
-}
+static const char*           enum_names_xnap_elem_procs_class_2_o_init_msg_c_types_values[] = {"SNStatusTransfer",
+                                                                                               "HandoverCancel",
+                                                                                               "RANPaging",
+                                                                                               "XnUAddressIndication",
+                                                                                               "UEContextRelease",
+                                                                                               "SNodeReconfigurationComplete",
+                                                                                               "SNodeCounterCheckRequest",
+                                                                                               "RRCTransfer",
+                                                                                               "ErrorIndication",
+                                                                                               "PrivateMessage",
+                                                                                               "NotificationControlIndication",
+                                                                                               "ActivityNotification",
+                                                                                               "SecondaryRATDataUsageReport",
+                                                                                               "DeactivateTrace",
+                                                                                               "TraceStart",
+                                                                                               "HandoverSuccess",
+                                                                                               "ConditionalHandoverCancel",
+                                                                                               "EarlyStatusTransfer",
+                                                                                               "FailureIndication",
+                                                                                               "HandoverReport",
+                                                                                               "ResourceStatusUpdate",
+                                                                                               "AccessAndMobilityIndication",
+                                                                                               "CellTrafficTrace",
+                                                                                               "RANMulticastGroupPaging",
+                                                                                               "ScgFailureInformationReport",
+                                                                                               "ScgFailureTransfer",
+                                                                                               "F1CTrafficTransfer",
+                                                                                               "RetrieveUEContextConfirm",
+                                                                                               "CPCCancel",
+                                                                                               "RachIndication",
+                                                                                               "DataCollectionUpdate"};
+const asn1::table::enum_desc xnap_elem_procs_class_2_o::init_msg_c::types_opts::desc        = {
+    enum_names_xnap_elem_procs_class_2_o_init_msg_c_types_values,
+    31,
+    "xnap_elem_procs_class_2_o::init_msg_c::types"};
 uint8_t xnap_elem_procs_class_2_o::init_msg_c::types_opts::to_number() const
 {
   if (value == f1_c_traffic_transfer) {
@@ -5729,131 +4384,62 @@ uint8_t xnap_elem_procs_class_2_o::init_msg_c::types_opts::to_number() const
 }
 
 // SuccessfulOutcome ::= OPEN TYPE
-void xnap_elem_procs_class_2_o::successful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_class_2_o::successful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_class_2_o::successful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::field_name choice_table_xnap_elem_procs_class_2_o_successful_outcome_c_names[] = {};
+const asn1::table::choice_desc       xnap_elem_procs_class_2_o::successful_outcome_c::desc               = {
+    asn1::table::enum_int_type<xnap_elem_procs_class_2_o::successful_outcome_c::types>(),
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nof_types,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::nof_exts,
+    xnap_elem_procs_class_2_o::successful_outcome_c::types::has_ext,
+    true,
+    nullptr,
+    nullptr,
+    choice_table_xnap_elem_procs_class_2_o_successful_outcome_c_names,
+    "xnap_elem_procs_class_2_o::successful_outcome_c",
+    asn1::table::choice_desc::no_member,
+    asn1::table::choice_desc::no_member,
+    false,
+    nullptr,
+    true};
 
-const char* xnap_elem_procs_class_2_o::successful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {};
-  return convert_enum_idx(names, 0, value, "xnap_elem_procs_class_2_o::successful_outcome_c::types");
-}
+static const char*           enum_names_xnap_elem_procs_class_2_o_successful_outcome_c_types_values[] = {};
+const asn1::table::enum_desc xnap_elem_procs_class_2_o::successful_outcome_c::types_opts::desc        = {
+    enum_names_xnap_elem_procs_class_2_o_successful_outcome_c_types_values,
+    0,
+    "xnap_elem_procs_class_2_o::successful_outcome_c::types"};
 
 // UnsuccessfulOutcome ::= OPEN TYPE
-void xnap_elem_procs_class_2_o::unsuccessful_outcome_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_elem_procs_class_2_o::unsuccessful_outcome_c::pack(bit_ref& bref) const
-{
-  varlength_field_pack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_elem_procs_class_2_o::unsuccessful_outcome_c::unpack(cbit_ref& bref)
-{
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::field_name choice_table_xnap_elem_procs_class_2_o_unsuccessful_outcome_c_names[] = {};
+const asn1::table::choice_desc       xnap_elem_procs_class_2_o::unsuccessful_outcome_c::desc               = {
+    asn1::table::enum_int_type<xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types>(),
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nof_types,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::nof_exts,
+    xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types::has_ext,
+    true,
+    nullptr,
+    nullptr,
+    choice_table_xnap_elem_procs_class_2_o_unsuccessful_outcome_c_names,
+    "xnap_elem_procs_class_2_o::unsuccessful_outcome_c",
+    asn1::table::choice_desc::no_member,
+    asn1::table::choice_desc::no_member,
+    false,
+    nullptr,
+    true};
 
-const char* xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types_opts::to_string() const
-{
-  static const char* names[] = {};
-  return convert_enum_idx(names, 0, value, "xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types");
-}
+static const char*           enum_names_xnap_elem_procs_class_2_o_unsuccessful_outcome_c_types_values[] = {};
+const asn1::table::enum_desc xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types_opts::desc        = {
+    enum_names_xnap_elem_procs_class_2_o_unsuccessful_outcome_c_types_values,
+    0,
+    "xnap_elem_procs_class_2_o::unsuccessful_outcome_c::types"};
 
 // XnAP-PDU ::= CHOICE
-void xnap_pdu_c::destroy_()
-{
-  switch (type_) {
-    case types::init_msg:
-      c.destroy<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.destroy<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.destroy<unsuccessful_outcome_s>();
-      break;
-    default:
-      break;
-  }
-}
-void xnap_pdu_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::init_msg:
-      c.init<init_msg_s>();
-      break;
-    case types::successful_outcome:
-      c.init<successful_outcome_s>();
-      break;
-    case types::unsuccessful_outcome:
-      c.init<unsuccessful_outcome_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_pdu_c");
-  }
-}
-xnap_pdu_c::xnap_pdu_c(const xnap_pdu_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::init_msg:
-      c.init(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.init(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.init(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_pdu_c");
-  }
-}
-xnap_pdu_c& xnap_pdu_c::operator=(const xnap_pdu_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::init_msg:
-      c.set(other.c.get<init_msg_s>());
-      break;
-    case types::successful_outcome:
-      c.set(other.c.get<successful_outcome_s>());
-      break;
-    case types::unsuccessful_outcome:
-      c.set(other.c.get<unsuccessful_outcome_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_pdu_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_xnap_pdu_c_alternatives[] = {
+    &asn1::table::alternative_ops<init_msg_s, false>::value,
+    &asn1::table::alternative_ops<successful_outcome_s, false>::value,
+    &asn1::table::alternative_ops<unsuccessful_outcome_s, false>::value};
+const asn1::table::choice_storage_desc xnap_pdu_c::storage_desc = {choice_storage_xnap_pdu_c_alternatives,
+                                                                   3,
+                                                                   "xnap_pdu_c"};
 
-  return *this;
-}
 init_msg_s& xnap_pdu_c::set_init_msg()
 {
   set(types::init_msg);
@@ -5869,70 +4455,53 @@ unsuccessful_outcome_s& xnap_pdu_c::set_unsuccessful_outcome()
   set(types::unsuccessful_outcome);
   return c.get<unsuccessful_outcome_s>();
 }
-void xnap_pdu_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::init_msg:
-      j.write_fieldname("initiatingMessage");
-      c.get<init_msg_s>().to_json(j);
-      break;
-    case types::successful_outcome:
-      j.write_fieldname("successfulOutcome");
-      c.get<successful_outcome_s>().to_json(j);
-      break;
-    case types::unsuccessful_outcome:
-      j.write_fieldname("unsuccessfulOutcome");
-      c.get<unsuccessful_outcome_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_pdu_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE xnap_pdu_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().pack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().pack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_pdu_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE xnap_pdu_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::init_msg:
-      HANDLE_CODE(c.get<init_msg_s>().unpack(bref));
-      break;
-    case types::successful_outcome:
-      HANDLE_CODE(c.get<successful_outcome_s>().unpack(bref));
-      break;
-    case types::unsuccessful_outcome:
-      HANDLE_CODE(c.get<unsuccessful_outcome_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "xnap_pdu_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field  choice_table_xnap_pdu_c_alternatives[] = {{0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &init_msg_s::desc},
+                                                                               {0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &successful_outcome_s::desc},
+                                                                               {0,
+                                                                                asn1::table::seq_field::mandatory,
+                                                                                asn1::table::field_op::sequence,
+                                                                                false,
+                                                                                false,
+                                                                                0,
+                                                                                0,
+                                                                                nullptr,
+                                                                                &unsuccessful_outcome_s::desc}};
+static const asn1::table::field_name choice_table_xnap_pdu_c_names[]        = {{"initiatingMessage", nullptr},
+                                                                               {"successfulOutcome", nullptr},
+                                                                               {"unsuccessfulOutcome", nullptr}};
+const asn1::table::choice_desc       xnap_pdu_c::desc = {asn1::table::enum_int_type<xnap_pdu_c::types>(),
+                                                         xnap_pdu_c::types::nof_types,
+                                                         xnap_pdu_c::types::nof_exts,
+                                                         xnap_pdu_c::types::has_ext,
+                                                         true,
+                                                         choice_table_xnap_pdu_c_alternatives,
+                                                         nullptr,
+                                                         choice_table_xnap_pdu_c_names,
+                                                         "xnap_pdu_c",
+                                                         offsetof(xnap_pdu_c, c.type),
+                                                         offsetof(xnap_pdu_c, c.value),
+                                                         false,
+                                                         &xnap_pdu_c::storage_desc};
 
-const char* xnap_pdu_c::types_opts::to_string() const
-{
-  static const char* names[] = {"initiatingMessage", "successfulOutcome", "unsuccessfulOutcome"};
-  return convert_enum_idx(names, 3, value, "xnap_pdu_c::types");
-}
+static const char*           enum_names_xnap_pdu_c_types_values[] = {"initiatingMessage",
+                                                                     "successfulOutcome",
+                                                                     "unsuccessfulOutcome"};
+const asn1::table::enum_desc xnap_pdu_c::types_opts::desc         = {enum_names_xnap_pdu_c_types_values,
+                                                                     3,
+                                                                     "xnap_pdu_c::types"};

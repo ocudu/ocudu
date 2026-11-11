@@ -240,7 +240,7 @@ byte_buffer ocudu::test_helpers::get_rrc_container(const ocucp::ngap_message& ms
   if (msg.pdu.init_msg().proc_code == ASN1_NGAP_ID_HO_PREP) {
     asn1::cbit_ref bref(msg.pdu.init_msg().value.ho_required()->source_to_target_transparent_container);
     asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s asn1_transparent_container;
-    if (asn1_transparent_container.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_transparent_container, bref) != asn1::OCUDUASN_SUCCESS) {
       ocudulog::fetch_basic_logger("NGAP").error("Couldn't unpack Source to Target Transparent Container.");
       return byte_buffer{};
     }

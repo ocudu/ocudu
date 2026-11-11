@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/e2sm/e2sm.h"
 #include "ocudu/e2/e2.h"
 #include "ocudu/e2/e2sm/e2sm.h"

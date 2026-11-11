@@ -164,7 +164,7 @@ protected:
         byte_buffer::create(rrc_ue_f1ap_notifier.last_rrc_pdu.begin(), rrc_ue_f1ap_notifier.last_rrc_pdu.end()).value();
     asn1::cbit_ref              bref(rx_pdu);
     asn1::rrc_nr::dl_ccch_msg_s dl_ccch;
-    EXPECT_EQ(dl_ccch.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::unpack(dl_ccch, bref), asn1::OCUDUASN_SUCCESS);
     return dl_ccch;
   }
 

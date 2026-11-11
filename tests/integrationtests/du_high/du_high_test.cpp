@@ -414,7 +414,7 @@ TEST_F(du_high_tester, when_ue_context_modification_with_rem_drbs_is_received_th
   {
     asn1::cbit_ref                 bref{resp->du_to_cu_rrc_info.cell_group_cfg};
     asn1::rrc_nr::cell_group_cfg_s cell_grp_cfg;
-    ASSERT_EQ(cell_grp_cfg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(cell_grp_cfg, bref), asn1::OCUDUASN_SUCCESS);
     ASSERT_EQ(cell_grp_cfg.rlc_bearer_to_release_list.size(), 1);
     ASSERT_EQ(cell_grp_cfg.rlc_bearer_to_release_list[0], 4) << "DRB1 with LCID=4 should have been removed";
   }
@@ -740,7 +740,7 @@ TEST_F(du_high_cg_tester, when_ue_context_setup_with_drb_and_cg_enabled_then_cs_
   {
     asn1::cbit_ref                 bref{resp->du_to_cu_rrc_info.cell_group_cfg};
     asn1::rrc_nr::cell_group_cfg_s cell_grp_cfg;
-    ASSERT_EQ(cell_grp_cfg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(cell_grp_cfg, bref), asn1::OCUDUASN_SUCCESS);
     ASSERT_TRUE(cell_grp_cfg.phys_cell_group_cfg_present) << "PhysCellGroupConfig should be present";
     ASSERT_TRUE(cell_grp_cfg.phys_cell_group_cfg.cs_rnti_present) << "CS-RNTI should be allocated when CG is enabled";
     ASSERT_EQ(cell_grp_cfg.phys_cell_group_cfg.cs_rnti.type(), asn1::setup_release_opts::setup)
@@ -782,7 +782,7 @@ TEST_F(du_high_cg_tester, when_all_drbs_removed_then_cs_rnti_is_deallocated)
   {
     asn1::cbit_ref                 bref{resp->du_to_cu_rrc_info.cell_group_cfg};
     asn1::rrc_nr::cell_group_cfg_s cell_grp_cfg;
-    ASSERT_EQ(cell_grp_cfg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::unpack(cell_grp_cfg, bref), asn1::OCUDUASN_SUCCESS);
     ASSERT_TRUE(cell_grp_cfg.phys_cell_group_cfg_present) << "PhysCellGroupConfig should be present";
     ASSERT_TRUE(cell_grp_cfg.phys_cell_group_cfg.cs_rnti_present)
         << "CS-RNTI field should be present when CS-RNTI is deallocated";

@@ -6,7 +6,7 @@
 #include "common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/e2/e2_event_manager.h"
 #include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/async/coroutine.h"
@@ -103,7 +103,7 @@ TEST_F(e2_test_subscriber, setup_failure_without_explicit_cause_uses_unspecified
   EXPECT_EQ(cause.misc(), asn1::e2ap::cause_misc_e::unspecified);
   byte_buffer   bytes;
   asn1::bit_ref bits(bytes);
-  EXPECT_EQ(pdu.pack(bits), asn1::OCUDUASN_SUCCESS);
+  EXPECT_EQ(asn1::pack(bits, pdu), asn1::OCUDUASN_SUCCESS);
 }
 
 TEST_F(e2_test_subscriber, invalid_decoded_report_period_is_normalized_before_indication_start)
@@ -194,7 +194,7 @@ TEST_F(e2_test_subscriber, start_indication_procedure_check_contents)
 
   asn1::cbit_ref                 bref1(msg_notifier->last_e2_msg.pdu.init_msg().value.ric_ind()->ric_ind_msg);
   asn1::e2sm::e2sm_kpm_ind_msg_s ind_msg1 = {};
-  if (ind_msg1.unpack(bref1) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(ind_msg1, bref1) != asn1::OCUDUASN_SUCCESS) {
     printf("Couldn't unpack E2 PDU");
   }
   ASSERT_EQ(ind_msg1.ind_msg_formats.type(),
@@ -353,7 +353,7 @@ TEST_F(e2_test_subscriber, subscription_report_period_controls_indication_timing
     trigger.event_definition_formats.set_event_definition_format1().report_period = period.first;
     byte_buffer   trigger_bytes;
     asn1::bit_ref bits(trigger_bytes);
-    ASSERT_EQ(trigger.pack(bits), asn1::OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(bits, trigger), asn1::OCUDUASN_SUCCESS);
     request->ric_sub_details.ric_event_trigger_definition = std::move(trigger_bytes);
 
     ASSERT_TRUE(manager.handle_subscription_setup(request).success);

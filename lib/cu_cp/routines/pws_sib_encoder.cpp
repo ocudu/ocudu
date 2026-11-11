@@ -4,7 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "pws_sib_encoder.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/rrc_nr/sys_info.h"
 #include <algorithm>
 
@@ -17,7 +17,7 @@ static expected<byte_buffer> pack_sib(const SibT& sib)
 {
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  if (sib.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, sib) != asn1::OCUDUASN_SUCCESS) {
     return make_unexpected(default_error_t{});
   }
   return buf;

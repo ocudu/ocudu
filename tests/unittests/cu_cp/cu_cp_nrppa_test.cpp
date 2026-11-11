@@ -95,14 +95,14 @@ public:
     if (ngap_pdu_.pdu.init_msg().value.type() ==
         asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::options::ul_ue_associated_nrppa_transport) {
       asn1::cbit_ref bref(ngap_pdu_.pdu.init_msg().value.ul_ue_associated_nrppa_transport()->nrppa_pdu);
-      report_fatal_error_if_not(nrppa_pdu.unpack(bref) == asn1::OCUDUASN_SUCCESS,
+      report_fatal_error_if_not(asn1::unpack(nrppa_pdu, bref) == asn1::OCUDUASN_SUCCESS,
                                 "Failed to unpack UL UE associated NRPPa-PDU");
     }
 
     if (ngap_pdu_.pdu.init_msg().value.type() ==
         asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::options::ul_non_ue_associated_nrppa_transport) {
       asn1::cbit_ref bref(ngap_pdu_.pdu.init_msg().value.ul_non_ue_associated_nrppa_transport()->nrppa_pdu);
-      report_fatal_error_if_not(nrppa_pdu.unpack(bref) == asn1::OCUDUASN_SUCCESS,
+      report_fatal_error_if_not(asn1::unpack(nrppa_pdu, bref) == asn1::OCUDUASN_SUCCESS,
                                 "Failed to unpack UL non UE associated NRPPa-PDU");
     }
 

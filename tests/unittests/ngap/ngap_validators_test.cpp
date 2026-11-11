@@ -142,7 +142,7 @@ public:
 
     asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_transfer;
     asn1::cbit_ref                                       bref(asn1_item.pdu_session_res_setup_request_transfer);
-    if (asn1_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
       return false;
     }
 
@@ -272,7 +272,7 @@ public:
 
     asn1::ngap::pdu_session_res_modify_request_transfer_s asn1_transfer;
     asn1::cbit_ref                                        bref(asn1_item.pdu_session_res_modify_request_transfer);
-    if (asn1_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
       return false;
     }
 
@@ -298,7 +298,7 @@ public:
 
     asn1::ngap::pdu_session_res_modify_request_transfer_s asn1_transfer;
     asn1::cbit_ref                                        bref(asn1_item.pdu_session_res_modify_request_transfer);
-    if (asn1_transfer.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_transfer, bref) != asn1::OCUDUASN_SUCCESS) {
       return false;
     }
 

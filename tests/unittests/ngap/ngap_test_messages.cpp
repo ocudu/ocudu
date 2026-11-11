@@ -5,7 +5,7 @@
 
 #include "ngap_test_messages.h"
 #include "lib/ngap/ngap_asn1_converters.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/ngap/common.h"
 #include "ocudu/asn1/ngap/ngap_ies.h"
 #include "ocudu/asn1/ngap/ngap_pdu_contents.h"
@@ -154,7 +154,7 @@ ngap_message ocudu::ocucp::generate_reroute_nas_request(ran_ue_id_t         ran_
 
   byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
   asn1::bit_ref bref(packed);
-  report_fatal_error_if_not(initial_ue_message.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS,
+  report_fatal_error_if_not(asn1::pack(bref, initial_ue_message.pdu) == asn1::OCUDUASN_SUCCESS,
                             "Failed to pack the InitialUEMessage");
   reroute->ngap_msg = std::move(packed);
   return msg;
@@ -1114,7 +1114,7 @@ ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id
     // so set it explicitly rather than inheriting whatever the transfer above happens to carry.
     asn1::ngap::pdu_session_res_setup_request_transfer_s transfer;
     asn1::cbit_ref transfer_bref({setup_item.ho_request_transfer.begin(), setup_item.ho_request_transfer.end()});
-    report_error_if_not(transfer.unpack(transfer_bref) == asn1::OCUDUASN_SUCCESS,
+    report_error_if_not(asn1::unpack(transfer, transfer_bref) == asn1::OCUDUASN_SUCCESS,
                         "Failed to unpack Handover Request Transfer");
     transfer->data_forwarding_not_possible_present = params.data_forwarding_not_possible;
     transfer->data_forwarding_not_possible =
@@ -1177,7 +1177,7 @@ ngap_message ocudu::ocucp::generate_valid_handover_request(amf_ue_id_t amf_ue_id
 
   byte_buffer   pdu{};
   asn1::bit_ref bref{pdu};
-  if (transparent_container.pack(bref) == asn1::OCUDUASN_ERROR_ENCODE_FAIL) {
+  if (asn1::pack(bref, transparent_container) == asn1::OCUDUASN_ERROR_ENCODE_FAIL) {
     ocudulog::fetch_basic_logger("NGAP").error("Failed to pack source to target container.");
   }
   ho_request->source_to_target_transparent_container = pdu.copy();

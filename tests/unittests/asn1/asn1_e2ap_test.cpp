@@ -95,7 +95,7 @@ TEST_F(asn1_e2ap_test, when_e2_setup_correct_then_packing_successful)
 
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};
@@ -106,7 +106,7 @@ TEST_F(asn1_e2ap_test, when_e2_setup_correct_then_packing_successful)
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       bytes.data(), unpacked_len, "E1AP unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
@@ -127,7 +127,7 @@ TEST_F(asn1_e2ap_test, ric_control_request)
 
   asn1::cbit_ref         bref{buffer};
   asn1::e2ap::e2ap_pdu_c pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(pdu.type(), asn1::e2ap::e2ap_pdu_c::types_opts::init_msg);
   ASSERT_EQ(pdu.init_msg().value.type().value, asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::ric_ctrl_request);
   asn1::e2ap::ric_ctrl_request_s& ric_ctrl = pdu.init_msg().value.ric_ctrl_request();
@@ -145,7 +145,7 @@ TEST_F(asn1_e2ap_test, ric_control_failure_message)
 
   asn1::cbit_ref         bref{buffer};
   asn1::e2ap::e2ap_pdu_c pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(pdu.type(), asn1::e2ap::e2ap_pdu_c::types_opts::unsuccessful_outcome);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
@@ -160,7 +160,7 @@ TEST_F(asn1_e2ap_test, single_ie_container_skips_unknown_ignored_ies)
 
   asn1::cbit_ref         bref{buffer};
   asn1::e2ap::e2ap_pdu_c pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(pdu.init_msg().value.type().value,
             asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::e2_removal_request);
   ASSERT_EQ(pdu.init_msg().value.e2_removal_request()->transaction_id, 7);

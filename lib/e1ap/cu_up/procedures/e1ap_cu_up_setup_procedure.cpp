@@ -75,7 +75,7 @@ void e1ap_cu_up_setup_procedure::send_cu_up_e1_setup_request()
   {
     byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
     asn1::bit_ref bref(packed);
-    if (msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, msg.pdu) == asn1::OCUDUASN_SUCCESS) {
       captured_request = std::move(packed);
     } else {
       logger.log_warning("\"{}\": failed to pack E1SetupRequest", name());
@@ -148,7 +148,7 @@ cu_up_e1_setup_response e1ap_cu_up_setup_procedure::create_e1_setup_result()
       resp_msg.pdu.set_successful_outcome() = cu_cp_pdu_response.value();
       byte_buffer   packed{byte_buffer::fallback_allocation_tag{}};
       asn1::bit_ref bref(packed);
-      if (resp_msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+      if (asn1::pack(bref, resp_msg.pdu) == asn1::OCUDUASN_SUCCESS) {
         res.packed_e1_setup_response = std::move(packed);
       } else {
         logger.log_warning("\"{}\": failed to pack E1SetupResponse", name());

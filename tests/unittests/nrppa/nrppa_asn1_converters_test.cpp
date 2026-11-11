@@ -98,7 +98,7 @@ bool packs(const asn1::nrppa::trp_info_list_trp_resp_item_s_& asn1_item)
 {
   byte_buffer   buffer;
   asn1::bit_ref bref(buffer);
-  return asn1_item.pack(bref) == asn1::OCUDUASN_SUCCESS;
+  return asn1::pack(bref, asn1_item) == asn1::OCUDUASN_SUCCESS;
 }
 
 } // namespace

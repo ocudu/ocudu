@@ -70,7 +70,7 @@ rrc_timers_t ocudu::ocucp::get_timers(const asn1::f1ap::f1_setup_request_s& f1_s
   // Unpack SIB1 to store timers.
   asn1::rrc_nr::sib1_s sib1_msg;
   asn1::cbit_ref       bref2(sib1_container);
-  if (sib1_msg.unpack(bref2) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(sib1_msg, bref2) != asn1::OCUDUASN_SUCCESS) {
     report_fatal_error("Failed to unpack SIB1");
   }
   timers.t300 = std::chrono::milliseconds{sib1_msg.ue_timers_and_consts.t300.to_number()};

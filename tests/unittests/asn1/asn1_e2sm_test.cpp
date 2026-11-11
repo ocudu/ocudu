@@ -39,7 +39,7 @@ TEST_F(asn1_e2sm_test, unpack_ric_control_header)
 
   asn1::cbit_ref                 bref{buffer};
   asn1::e2sm::e2sm_rc_ctrl_hdr_s pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
@@ -56,7 +56,7 @@ TEST_F(asn1_e2sm_test, unpack_ric_control_message)
 
   asn1::cbit_ref                 bref{buffer};
   asn1::e2sm::e2sm_rc_ctrl_msg_s pdu;
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(pdu.ric_ctrl_msg_formats.type().value,
             asn1::e2sm::e2sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::types_opts::ctrl_msg_format1);
@@ -152,11 +152,11 @@ TEST_F(asn1_e2sm_test, pack_unpack_action_definition_with_negative_test_cond_val
 
   byte_buffer   buffer;
   asn1::bit_ref bref{buffer};
-  ASSERT_EQ(action_def.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, action_def), OCUDUASN_SUCCESS);
 
   e2sm_kpm_action_definition_s unpacked_action_def;
   asn1::cbit_ref               cbref{buffer};
-  ASSERT_EQ(unpacked_action_def.unpack(cbref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(unpacked_action_def, cbref), OCUDUASN_SUCCESS);
 
   const auto& unpacked_cond =
       unpacked_action_def.action_definition_formats.action_definition_format3().meas_cond_list[0].matching_cond;

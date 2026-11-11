@@ -22,7 +22,7 @@ cell_group_cfg_s unpack_cell_group_config(const byte_buffer& container)
 {
   cell_group_cfg_s cell_group;
   asn1::cbit_ref   bref(container);
-  auto             err = cell_group.unpack(bref);
+  auto             err = asn1::unpack(cell_group, bref);
   ocudu_assert(err == asn1::OCUDUASN_SUCCESS, "Failed to unpack container");
   return cell_group;
 }
@@ -76,7 +76,7 @@ protected:
     cell_group_cfg_s cell_group = unpack_cell_group_config(container);
     if (verbose) {
       asn1::json_writer js;
-      cell_group.to_json(js);
+      asn1::to_json(js, cell_group);
       fmt::print("UE Creation produced CellGroup: {}\n", js.to_string());
     }
 

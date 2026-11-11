@@ -88,11 +88,12 @@ public:
       auto& encoded = request.pdu.init_msg().value.ho_request()->source_to_target_transparent_container;
       asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s container;
       asn1::cbit_ref                                                             reader{encoded};
-      report_fatal_error_if_not(container.unpack(reader) == asn1::OCUDUASN_SUCCESS, "Invalid handover container");
+      report_fatal_error_if_not(asn1::unpack(container, reader) == asn1::OCUDUASN_SUCCESS,
+                                "Invalid handover container");
       container.rrc_container = rrc_override->copy();
       byte_buffer   packed;
       asn1::bit_ref writer{packed};
-      report_fatal_error_if_not(container.pack(writer) == asn1::OCUDUASN_SUCCESS, "Invalid handover container");
+      report_fatal_error_if_not(asn1::pack(writer, container) == asn1::OCUDUASN_SUCCESS, "Invalid handover container");
       encoded = std::move(packed);
     }
     get_amf(target_amf_idx).push_tx_pdu(request);
@@ -967,7 +968,7 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_target_allocated_fwd_tunnels_then_t
 
   asn1::ngap::ho_request_ack_transfer_s ack_transfer;
   asn1::cbit_ref                        bref(ho_request_ack->pdu_session_res_admitted_list[0].ho_request_ack_transfer);
-  ASSERT_EQ(ack_transfer.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ack_transfer, bref), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_TRUE(ack_transfer.dl_forwarding_up_tnl_info_present);
   ASSERT_FALSE(ack_transfer.ie_exts.ul_forwarding_up_tnl_info_present);
@@ -1006,7 +1007,7 @@ TEST_F(cu_cp_inter_cu_ng_handover_test, when_data_forwarding_is_not_possible_the
   const auto&                           ho_request_ack = ngap_pdu.pdu.successful_outcome().value.ho_request_ack();
   asn1::ngap::ho_request_ack_transfer_s ack_transfer;
   asn1::cbit_ref                        bref(ho_request_ack->pdu_session_res_admitted_list[0].ho_request_ack_transfer);
-  ASSERT_EQ(ack_transfer.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ack_transfer, bref), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_EQ(ack_transfer.data_forwarding_resp_drb_list.size(), 0U);
   ASSERT_FALSE(ack_transfer.dl_forwarding_up_tnl_info_present);
@@ -1276,11 +1277,11 @@ TEST_F(cu_cp_inter_cu_ng_handover_test,
   auto                         container = test_helpers::make_redcap_handover_preparation(false);
   asn1::rrc_nr::ho_prep_info_s info;
   asn1::cbit_ref               reader{container};
-  ASSERT_EQ(info.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(info, reader), asn1::OCUDUASN_SUCCESS);
   info.crit_exts.c1().ho_prep_info().ue_cap_rat_list.clear();
   byte_buffer   ordinary_container;
   asn1::bit_ref writer{ordinary_container};
-  ASSERT_EQ(info.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, info), asn1::OCUDUASN_SUCCESS);
   ASSERT_TRUE(send_handover_request_and_await_bearer_context_setup_request({}, &ordinary_container));
   const auto& drb = get_pdu_session_res_to_setup_item(e1ap_pdu).drb_to_setup_list_ng_ran[0];
   EXPECT_EQ(drb.pdcp_cfg.pdcp_sn_size_dl, asn1::e1ap::pdcp_sn_size_opts::s_neg12);

@@ -476,11 +476,11 @@ TEST_P(event_trigger_a1_a6_asn1, report_config_packs_and_unpacks)
 
   byte_buffer   packed;
   asn1::bit_ref bref{packed};
-  ASSERT_EQ(asn1_report_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, asn1_report_cfg), asn1::OCUDUASN_SUCCESS);
 
   asn1::rrc_nr::report_cfg_nr_s unpacked;
   asn1::cbit_ref                cbref{packed};
-  ASSERT_EQ(unpacked.unpack(cbref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(unpacked, cbref), asn1::OCUDUASN_SUCCESS);
 
   ASSERT_EQ(unpacked.report_type.type(), asn1::rrc_nr::report_cfg_nr_s::report_type_c_::types::event_triggered);
   const auto& ev = unpacked.report_type.event_triggered().event_id;
@@ -489,7 +489,7 @@ TEST_P(event_trigger_a1_a6_asn1, report_config_packs_and_unpacks)
 
   byte_buffer   repacked;
   asn1::bit_ref rebref{repacked};
-  ASSERT_EQ(unpacked.pack(rebref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(rebref, unpacked), asn1::OCUDUASN_SUCCESS);
   EXPECT_EQ(packed, repacked);
 }
 

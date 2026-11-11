@@ -25,7 +25,7 @@ byte_buffer ocudu::test_helpers::create_meas_timing_cfg(uint32_t carrier_freq, s
   // pack.
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
-  if (asn1_meas_timing_cfg.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, asn1_meas_timing_cfg) == asn1::OCUDUASN_SUCCESS) {
     return pdu;
   }
   return byte_buffer{};
@@ -41,7 +41,7 @@ byte_buffer ocudu::test_helpers::create_meas_timing_cfg_no_freq_and_timing()
 
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
-  if (asn1_meas_timing_cfg.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, asn1_meas_timing_cfg) == asn1::OCUDUASN_SUCCESS) {
     return pdu;
   }
   return byte_buffer{};
@@ -53,7 +53,7 @@ byte_buffer ocudu::test_helpers::create_packed_sib1(const plmn_identity& plmn, s
 
   byte_buffer   pdu;
   asn1::bit_ref bref{pdu};
-  if (sib1.pack(bref) == asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, sib1) == asn1::OCUDUASN_SUCCESS) {
     return pdu;
   }
   return byte_buffer{};

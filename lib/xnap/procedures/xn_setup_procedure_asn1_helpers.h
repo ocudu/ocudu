@@ -6,7 +6,7 @@
 #pragma once
 
 #include "../xnap_asn1_converters.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/xnap/common.h"
 #include "ocudu/asn1/xnap/xnap_pdu_contents.h"
 #include "ocudu/ran/cause/xnap_cause.h"

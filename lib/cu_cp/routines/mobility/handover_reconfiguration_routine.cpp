@@ -35,7 +35,7 @@ handover_reconfiguration_routine::handover_reconfiguration_routine(
   // Unpack MasterCellGroup to extract T304.
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
   asn1::cbit_ref                 bref(request.non_crit_ext->master_cell_group);
-  if (cell_group_cfg.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(cell_group_cfg, bref) != asn1::OCUDUASN_SUCCESS) {
     report_fatal_error("Failed to unpack MasterCellGroupCfg");
   }
   unsigned t304_ms = cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number();
@@ -45,7 +45,7 @@ handover_reconfiguration_routine::handover_reconfiguration_routine(
   // Unpack SIB1 to extract T311.
   asn1::rrc_nr::sib1_s sib1_msg;
   asn1::cbit_ref       bref2(request.non_crit_ext->ded_sib1_delivery);
-  if (sib1_msg.unpack(bref2) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(sib1_msg, bref2) != asn1::OCUDUASN_SUCCESS) {
     report_fatal_error("Failed to unpack SIB1");
   }
   unsigned t301_ms = sib1_msg.ue_timers_and_consts.t301.to_number();

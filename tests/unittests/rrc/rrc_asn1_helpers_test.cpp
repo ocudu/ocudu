@@ -6,7 +6,7 @@
 #include "lib/rrc/ue/rrc_asn1_converters.h"
 #include "lib/rrc/ue/rrc_ue_helpers.h"
 #include "tests/test_doubles/rrc/redcap_ue_capability_fixture.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/rrc_nr/ul_dcch_msg_ies.h"
 #include "ocudu/ran/five_g_s_tmsi.h"
 #include <gtest/gtest.h>
@@ -107,7 +107,7 @@ TEST(rrc_asn1_helpers_test, redcap_capabilities_retain_optional_pdcp_sn_and_drb_
   auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
   asn1::cbit_ref            reader{encoded};
-  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cap, reader), asn1::OCUDUASN_SUCCESS);
   auto          next = [](auto& value) -> auto& { return value.non_crit_ext; };
   auto&         r17  = next(next(next(next(next(next(next(next(next(next(cap))))))))));
   rrc_ue_logger logger{"RRC", {cu_cp_ue_index_t::min, to_rnti(0x4601)}};
@@ -128,7 +128,7 @@ TEST(rrc_asn1_helpers_test, optional_redcap_features_without_identity_do_not_mar
   auto                      encoded = test_helpers::make_captured_redcap_nr_capability();
   asn1::rrc_nr::ue_nr_cap_s cap;
   asn1::cbit_ref            reader{encoded};
-  ASSERT_EQ(cap.unpack(reader), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(cap, reader), asn1::OCUDUASN_SUCCESS);
   auto          next = [](auto& value) -> auto& { return value.non_crit_ext; };
   auto&         r17  = next(next(next(next(next(next(next(next(next(next(cap))))))))));
   rrc_ue_logger logger{"RRC", {cu_cp_ue_index_t::min, to_rnti(0x4601)}};

@@ -56,7 +56,7 @@ byte_buffer pack_valid_sib6_pdu()
 
   byte_buffer   buf;
   asn1::bit_ref bref{buf};
-  report_fatal_error_if_not(sib6.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack test SIB6");
+  report_fatal_error_if_not(asn1::pack(bref, sib6) == asn1::OCUDUASN_SUCCESS, "Failed to pack test SIB6");
   return buf;
 }
 

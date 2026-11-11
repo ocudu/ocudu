@@ -82,7 +82,7 @@ protected:
   {
     asn1::rrc_nr::ho_prep_info_s ho_prep_info;
     asn1::cbit_ref               bref({packed_ho_prep.begin(), packed_ho_prep.end()});
-    if (ho_prep_info.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(ho_prep_info, bref) != asn1::OCUDUASN_SUCCESS) {
       return false;
     }
     const auto& ies = ho_prep_info.crit_exts.c1().ho_prep_info();
@@ -90,7 +90,7 @@ protected:
       return false;
     }
     asn1::cbit_ref recfg_bref({ies.source_cfg.rrc_recfg.begin(), ies.source_cfg.rrc_recfg.end()});
-    return source_recfg.unpack(recfg_bref) == asn1::OCUDUASN_SUCCESS;
+    return asn1::unpack(source_recfg, recfg_bref) == asn1::OCUDUASN_SUCCESS;
   }
 };
 
@@ -142,6 +142,6 @@ TEST_F(rrc_ue_ho_prep_info_test, when_ue_has_no_drbs_then_as_config_is_absent)
 
   asn1::rrc_nr::ho_prep_info_s ho_prep_info;
   asn1::cbit_ref               bref({packed_ho_prep.begin(), packed_ho_prep.end()});
-  ASSERT_EQ(ho_prep_info.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(ho_prep_info, bref), asn1::OCUDUASN_SUCCESS);
   EXPECT_FALSE(ho_prep_info.crit_exts.c1().ho_prep_info().source_cfg_present);
 }

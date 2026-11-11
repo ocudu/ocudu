@@ -4,6 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/rrc_nr/nr_ue_variables.h"
+#include "ocudu/asn1/asn1_codec.h"
 
 using namespace asn1;
 using namespace asn1::rrc_nr;
@@ -13,73 +14,14 @@ using namespace asn1::rrc_nr;
  ******************************************************************************/
 
 // CLI-TriggeredList-r16 ::= CHOICE
-void cli_triggered_list_r16_c::destroy_()
-{
-  switch (type_) {
-    case types::srs_rsrp_triggered_list_r16:
-      c.destroy<srs_rsrp_triggered_list_r16_l>();
-      break;
-    case types::cli_rssi_triggered_list_r16:
-      c.destroy<cli_rssi_triggered_list_r16_l>();
-      break;
-    default:
-      break;
-  }
-}
-void cli_triggered_list_r16_c::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::srs_rsrp_triggered_list_r16:
-      c.init<srs_rsrp_triggered_list_r16_l>();
-      break;
-    case types::cli_rssi_triggered_list_r16:
-      c.init<cli_rssi_triggered_list_r16_l>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cli_triggered_list_r16_c");
-  }
-}
-cli_triggered_list_r16_c::cli_triggered_list_r16_c(const cli_triggered_list_r16_c& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::srs_rsrp_triggered_list_r16:
-      c.init(other.c.get<srs_rsrp_triggered_list_r16_l>());
-      break;
-    case types::cli_rssi_triggered_list_r16:
-      c.init(other.c.get<cli_rssi_triggered_list_r16_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cli_triggered_list_r16_c");
-  }
-}
-cli_triggered_list_r16_c& cli_triggered_list_r16_c::operator=(const cli_triggered_list_r16_c& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::srs_rsrp_triggered_list_r16:
-      c.set(other.c.get<srs_rsrp_triggered_list_r16_l>());
-      break;
-    case types::cli_rssi_triggered_list_r16:
-      c.set(other.c.get<cli_rssi_triggered_list_r16_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cli_triggered_list_r16_c");
-  }
+static const asn1::table::storage_ops* const choice_storage_cli_triggered_list_r16_c_alternatives[] = {
+    &asn1::table::alternative_ops<srs_rsrp_triggered_list_r16_l, false>::value,
+    &asn1::table::alternative_ops<cli_rssi_triggered_list_r16_l, false>::value};
+const asn1::table::choice_storage_desc cli_triggered_list_r16_c::storage_desc = {
+    choice_storage_cli_triggered_list_r16_c_alternatives,
+    2,
+    "cli_triggered_list_r16_c"};
 
-  return *this;
-}
 srs_rsrp_triggered_list_r16_l& cli_triggered_list_r16_c::set_srs_rsrp_triggered_list_r16()
 {
   set(types::srs_rsrp_triggered_list_r16);
@@ -90,121 +32,61 @@ cli_rssi_triggered_list_r16_l& cli_triggered_list_r16_c::set_cli_rssi_triggered_
   set(types::cli_rssi_triggered_list_r16);
   return c.get<cli_rssi_triggered_list_r16_l>();
 }
-void cli_triggered_list_r16_c::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::srs_rsrp_triggered_list_r16:
-      j.start_array("srs-RSRP-TriggeredList-r16");
-      for (const auto& e1 : c.get<srs_rsrp_triggered_list_r16_l>()) {
-        j.write_int(e1);
-      }
-      j.end_array();
-      break;
-    case types::cli_rssi_triggered_list_r16:
-      j.start_array("cli-RSSI-TriggeredList-r16");
-      for (const auto& e1 : c.get<cli_rssi_triggered_list_r16_l>()) {
-        j.write_int(e1);
-      }
-      j.end_array();
-      break;
-    default:
-      log_invalid_choice_id(type_, "cli_triggered_list_r16_c");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE cli_triggered_list_r16_c::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::srs_rsrp_triggered_list_r16:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<srs_rsrp_triggered_list_r16_l>(), 1, 32, integer_packer<uint8_t>(0, 63)));
-      break;
-    case types::cli_rssi_triggered_list_r16:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<cli_rssi_triggered_list_r16_l>(), 1, 64, integer_packer<uint8_t>(0, 63)));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cli_triggered_list_r16_c");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE cli_triggered_list_r16_c::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::srs_rsrp_triggered_list_r16:
-      HANDLE_CODE(
-          unpack_dyn_seq_of(c.get<srs_rsrp_triggered_list_r16_l>(), bref, 1, 32, integer_packer<uint8_t>(0, 63)));
-      break;
-    case types::cli_rssi_triggered_list_r16:
-      HANDLE_CODE(
-          unpack_dyn_seq_of(c.get<cli_rssi_triggered_list_r16_l>(), bref, 1, 64, integer_packer<uint8_t>(0, 63)));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cli_triggered_list_r16_c");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_cli_triggered_list_r16_c_alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::list_codec<srs_rsrp_triggered_list_r16_l,
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(63), false, false>>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::list_codec<cli_rssi_triggered_list_r16_l,
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(63), false, false>>::value}};
+static const asn1::table::field_name choice_table_cli_triggered_list_r16_c_names[] = {
+    {"srs-RSRP-TriggeredList-r16", nullptr},
+    {"cli-RSSI-TriggeredList-r16", nullptr}};
+const asn1::table::choice_desc cli_triggered_list_r16_c::desc = {
+    asn1::table::enum_int_type<cli_triggered_list_r16_c::types>(),
+    cli_triggered_list_r16_c::types::nof_types,
+    cli_triggered_list_r16_c::types::nof_exts,
+    cli_triggered_list_r16_c::types::has_ext,
+    false,
+    choice_table_cli_triggered_list_r16_c_alternatives,
+    nullptr,
+    choice_table_cli_triggered_list_r16_c_names,
+    "cli_triggered_list_r16_c",
+    offsetof(cli_triggered_list_r16_c, c.type),
+    offsetof(cli_triggered_list_r16_c, c.value),
+    false,
+    &cli_triggered_list_r16_c::storage_desc};
 
-const char* cli_triggered_list_r16_c::types_opts::to_string() const
-{
-  static const char* names[] = {"srs-RSRP-TriggeredList-r16", "cli-RSSI-TriggeredList-r16"};
-  return convert_enum_idx(names, 2, value, "cli_triggered_list_r16_c::types");
-}
+static const char*           enum_names_cli_triggered_list_r16_c_types_values[] = {"srs-RSRP-TriggeredList-r16",
+                                                                                   "cli-RSSI-TriggeredList-r16"};
+const asn1::table::enum_desc cli_triggered_list_r16_c::types_opts::desc         = {
+    enum_names_cli_triggered_list_r16_c_types_values,
+    2,
+    "cli_triggered_list_r16_c::types"};
 
-void cells_triggered_list_item_c_::destroy_() {}
-void cells_triggered_list_item_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-cells_triggered_list_item_c_::cells_triggered_list_item_c_(const cells_triggered_list_item_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::pci:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::pci_eutra:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::pci_utra_fdd_r16:
-      c.init(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cells_triggered_list_item_c_");
-  }
-}
-cells_triggered_list_item_c_& cells_triggered_list_item_c_::operator=(const cells_triggered_list_item_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::pci:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::pci_eutra:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::pci_utra_fdd_r16:
-      c.set(other.c.get<uint16_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "cells_triggered_list_item_c_");
-  }
+static const asn1::table::storage_ops* const choice_storage_cells_triggered_list_item_c__alternatives[] = {
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value,
+    &asn1::table::alternative_ops<uint16_t, true>::value};
+const asn1::table::choice_storage_desc cells_triggered_list_item_c_::storage_desc = {
+    choice_storage_cells_triggered_list_item_c__alternatives,
+    3,
+    "cells_triggered_list_item_c_"};
 
-  return *this;
-}
 uint16_t& cells_triggered_list_item_c_::set_pci()
 {
   set(types::pci);
@@ -220,371 +102,316 @@ uint16_t& cells_triggered_list_item_c_::set_pci_utra_fdd_r16()
   set(types::pci_utra_fdd_r16);
   return c.get<uint16_t>();
 }
-void cells_triggered_list_item_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::pci:
-      j.write_int("physCellId", c.get<uint16_t>());
-      break;
-    case types::pci_eutra:
-      j.write_int("physCellIdEUTRA", c.get<uint16_t>());
-      break;
-    case types::pci_utra_fdd_r16:
-      j.write_int("physCellIdUTRA-FDD-r16", c.get<uint16_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "cells_triggered_list_item_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE cells_triggered_list_item_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::pci:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)1007u));
-      break;
-    case types::pci_eutra:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)503u));
-      break;
-    case types::pci_utra_fdd_r16:
-      HANDLE_CODE(pack_integer(bref, c.get<uint16_t>(), (uint16_t)0u, (uint16_t)511u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cells_triggered_list_item_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE cells_triggered_list_item_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::pci:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)1007u));
-      break;
-    case types::pci_eutra:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)503u));
-      break;
-    case types::pci_utra_fdd_r16:
-      HANDLE_CODE(unpack_integer(c.get<uint16_t>(), bref, (uint16_t)0u, (uint16_t)511u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "cells_triggered_list_item_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_cells_triggered_list_item_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1007),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(503),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(511),
+     nullptr}};
+static const asn1::table::field_name choice_table_cells_triggered_list_item_c__names[] = {
+    {"physCellId", nullptr},
+    {"physCellIdEUTRA", nullptr},
+    {"physCellIdUTRA-FDD-r16", nullptr}};
+const asn1::table::choice_desc cells_triggered_list_item_c_::desc = {
+    asn1::table::enum_int_type<cells_triggered_list_item_c_::types>(),
+    cells_triggered_list_item_c_::types::nof_types,
+    cells_triggered_list_item_c_::types::nof_exts,
+    cells_triggered_list_item_c_::types::has_ext,
+    false,
+    choice_table_cells_triggered_list_item_c__alternatives,
+    nullptr,
+    choice_table_cells_triggered_list_item_c__names,
+    "cells_triggered_list_item_c_",
+    offsetof(cells_triggered_list_item_c_, c.type),
+    offsetof(cells_triggered_list_item_c_, c.value),
+    false,
+    &cells_triggered_list_item_c_::storage_desc};
 
-const char* cells_triggered_list_item_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"physCellId", "physCellIdEUTRA", "physCellIdUTRA-FDD-r16"};
-  return convert_enum_idx(names, 3, value, "cells_triggered_list_item_c_::types");
-}
+static const char*           enum_names_cells_triggered_list_item_c__types_values[] = {"physCellId",
+                                                                                       "physCellIdEUTRA",
+                                                                                       "physCellIdUTRA-FDD-r16"};
+const asn1::table::enum_desc cells_triggered_list_item_c_::types_opts::desc         = {
+    enum_names_cells_triggered_list_item_c__types_values,
+    3,
+    "cells_triggered_list_item_c_::types"};
 
 // SNPN-Identity-r18 ::= SEQUENCE
-OCUDUASN_CODE sn_pn_id_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(plmn_id_r18.pack(bref));
-  HANDLE_CODE(nid_r18.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE sn_pn_id_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(plmn_id_r18.unpack(bref));
-  HANDLE_CODE(nid_r18.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void sn_pn_id_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("plmn-Identity-r18");
-  plmn_id_r18.to_json(j);
-  j.write_fieldname("nid-r18");
-  nid_r18.to_json(j);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_sn_pn_id_r18_s_fields[] = {
+    {offsetof(sn_pn_id_r18_s, plmn_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &plmn_id_s::desc},
+    {offsetof(sn_pn_id_r18_s, nid_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(sn_pn_id_r18_s::nid_r18), asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_sn_pn_id_r18_s_names[] = {{"plmn-Identity-r18", nullptr},
+                                                                         {"nid-r18", nullptr}};
+const asn1::table::seq_desc sn_pn_id_r18_s::desc = {{seq_table_sn_pn_id_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+                                                    false,
+                                                    false,
+                                                    nullptr,
+                                                    0,
+                                                    seq_table_sn_pn_id_r18_s_names};
 
 // VarAppLayerIdle-r18 ::= SEQUENCE
-OCUDUASN_CODE var_app_layer_idle_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(app_layer_meas_prio_r18_present, 1));
+static const asn1::table::seq_field seq_table_var_app_layer_idle_r18_s_fields[] = {
+    {offsetof(var_app_layer_idle_r18_s, meas_cfg_app_layer_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(var_app_layer_idle_r18_s, service_type_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(var_app_layer_idle_r18_s::service_type_r18)>(),
+     decltype(var_app_layer_idle_r18_s::service_type_r18)::has_ext,
+     false,
+     decltype(var_app_layer_idle_r18_s::service_type_r18)::nof_types,
+     decltype(var_app_layer_idle_r18_s::service_type_r18)::nof_exts,
+     nullptr,
+     &var_app_layer_idle_r18_s::service_type_r18_opts::desc},
+    {offsetof(var_app_layer_idle_r18_s, app_layer_idle_inactive_cfg_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &app_layer_idle_inactive_cfg_r18_s::desc},
+    {offsetof(var_app_layer_idle_r18_s, app_layer_meas_prio_r18),
+     (int32_t)offsetof(var_app_layer_idle_r18_s, app_layer_meas_prio_r18_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(16),
+     nullptr}};
+static const asn1::table::field_name seq_table_var_app_layer_idle_r18_s_names[] = {
+    {"measConfigAppLayerId-r18", nullptr},
+    {"serviceType-r18", nullptr},
+    {"appLayerIdleInactiveConfig-r18", nullptr},
+    {"appLayerMeasPriority-r18", nullptr}};
+static const asn1::table::seq_opt seq_table_var_app_layer_idle_r18_s_opts[] = {
+    {3, (int32_t)offsetof(var_app_layer_idle_r18_s, app_layer_meas_prio_r18_present)}};
+const asn1::table::seq_desc var_app_layer_idle_r18_s::desc = {
+    {seq_table_var_app_layer_idle_r18_s_fields, 4, UINT64_C(0x7), seq_table_var_app_layer_idle_r18_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_app_layer_idle_r18_s_names};
 
-  HANDLE_CODE(pack_integer(bref, meas_cfg_app_layer_id_r18, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(service_type_r18.pack(bref));
-  HANDLE_CODE(app_layer_idle_inactive_cfg_r18.pack(bref));
-  if (app_layer_meas_prio_r18_present) {
-    HANDLE_CODE(pack_integer(bref, app_layer_meas_prio_r18, (uint8_t)1u, (uint8_t)16u));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_app_layer_idle_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(app_layer_meas_prio_r18_present, 1));
-
-  HANDLE_CODE(unpack_integer(meas_cfg_app_layer_id_r18, bref, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(service_type_r18.unpack(bref));
-  HANDLE_CODE(app_layer_idle_inactive_cfg_r18.unpack(bref));
-  if (app_layer_meas_prio_r18_present) {
-    HANDLE_CODE(unpack_integer(app_layer_meas_prio_r18, bref, (uint8_t)1u, (uint8_t)16u));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_app_layer_idle_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("measConfigAppLayerId-r18", meas_cfg_app_layer_id_r18);
-  j.write_str("serviceType-r18", service_type_r18.to_string());
-  j.write_fieldname("appLayerIdleInactiveConfig-r18");
-  app_layer_idle_inactive_cfg_r18.to_json(j);
-  if (app_layer_meas_prio_r18_present) {
-    j.write_int("appLayerMeasPriority-r18", app_layer_meas_prio_r18);
-  }
-  j.end_obj();
-}
-
-const char* var_app_layer_idle_r18_s::service_type_r18_opts::to_string() const
-{
-  static const char* names[] = {"streaming", "mtsi", "vr", "spare5", "spare4", "spare3", "spare2", "spare1"};
-  return convert_enum_idx(names, 8, value, "var_app_layer_idle_r18_s::service_type_r18_e_");
-}
+static const char* enum_names_var_app_layer_idle_r18_s_service_type_r18_e__values[] =
+    {"streaming", "mtsi", "vr", "spare5", "spare4", "spare3", "spare2", "spare1"};
+const asn1::table::enum_desc var_app_layer_idle_r18_s::service_type_r18_opts::desc = {
+    enum_names_var_app_layer_idle_r18_s_service_type_r18_e__values,
+    8,
+    "var_app_layer_idle_r18_s::service_type_r18_e_"};
 
 // VarAppLayerIdleConfig-r18 ::= SEQUENCE
-OCUDUASN_CODE var_app_layer_idle_cfg_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_dyn_seq_of(bref, app_layer_idle_cfg_list_r18, 1, 16));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_app_layer_idle_cfg_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_dyn_seq_of(app_layer_idle_cfg_list_r18, bref, 1, 16));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_app_layer_idle_cfg_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("appLayerIdleConfigList-r18");
-  for (const auto& e1 : app_layer_idle_cfg_list_r18) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_app_layer_idle_cfg_r18_s_fields[] = {
+    {offsetof(var_app_layer_idle_cfg_r18_s, app_layer_idle_cfg_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(var_app_layer_idle_cfg_r18_s::app_layer_idle_cfg_list_r18),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &var_app_layer_idle_r18_s::desc}};
+static const asn1::table::field_name seq_table_var_app_layer_idle_cfg_r18_s_names[] = {
+    {"appLayerIdleConfigList-r18", nullptr}};
+const asn1::table::seq_desc var_app_layer_idle_cfg_r18_s::desc = {
+    {seq_table_var_app_layer_idle_cfg_r18_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_app_layer_idle_cfg_r18_s_names};
 
 // VarAppLayerPLMN-List-r18 ::= SEQUENCE
-OCUDUASN_CODE var_app_layer_plmn_list_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, meas_cfg_app_layer_id_r18, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(pack_dyn_seq_of(bref, plmn_id_list_r18, 1, 16));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_app_layer_plmn_list_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(meas_cfg_app_layer_id_r18, bref, (uint8_t)0u, (uint8_t)15u));
-  HANDLE_CODE(unpack_dyn_seq_of(plmn_id_list_r18, bref, 1, 16));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_app_layer_plmn_list_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("measConfigAppLayerId-r18", meas_cfg_app_layer_id_r18);
-  j.start_array("plmn-IdentityList-r18");
-  for (const auto& e1 : plmn_id_list_r18) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_r18_s_fields[] = {
+    {offsetof(var_app_layer_plmn_list_r18_s, meas_cfg_app_layer_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(15),
+     nullptr},
+    {offsetof(var_app_layer_plmn_list_r18_s, plmn_id_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(var_app_layer_plmn_list_r18_s::plmn_id_list_r18),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &plmn_id_s::desc}};
+static const asn1::table::field_name seq_table_var_app_layer_plmn_list_r18_s_names[] = {
+    {"measConfigAppLayerId-r18", nullptr},
+    {"plmn-IdentityList-r18", nullptr}};
+const asn1::table::seq_desc var_app_layer_plmn_list_r18_s::desc = {
+    {seq_table_var_app_layer_plmn_list_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_app_layer_plmn_list_r18_s_names};
 
 // VarAppLayerPLMN-ListConfig-r18 ::= SEQUENCE
-OCUDUASN_CODE var_app_layer_plmn_list_cfg_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_dyn_seq_of(bref, plmn_cfg_list_r18, 1, 16));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_app_layer_plmn_list_cfg_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_dyn_seq_of(plmn_cfg_list_r18, bref, 1, 16));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_app_layer_plmn_list_cfg_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("plmnConfigList-r18");
-  for (const auto& e1 : plmn_cfg_list_r18) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_cfg_r18_s_fields[] = {
+    {offsetof(var_app_layer_plmn_list_cfg_r18_s, plmn_cfg_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(var_app_layer_plmn_list_cfg_r18_s::plmn_cfg_list_r18),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &var_app_layer_plmn_list_r18_s::desc}};
+static const asn1::table::field_name seq_table_var_app_layer_plmn_list_cfg_r18_s_names[] = {
+    {"plmnConfigList-r18", nullptr}};
+const asn1::table::seq_desc var_app_layer_plmn_list_cfg_r18_s::desc = {
+    {seq_table_var_app_layer_plmn_list_cfg_r18_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_app_layer_plmn_list_cfg_r18_s_names};
 
 // VarConditionalReconfig ::= SEQUENCE
-OCUDUASN_CODE var_conditional_recfg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(
-      pack_bits(bref, {cond_recfg_list.size() > 0, scpac_ref_cfg_r18.size() > 0, sk_counter_cfg_r18.size() > 0}));
-
-  if (cond_recfg_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, cond_recfg_list, 1, 8));
-  }
-  if (scpac_ref_cfg_r18.size() > 0) {
-    HANDLE_CODE(scpac_ref_cfg_r18.pack(bref));
-  }
-  if (sk_counter_cfg_r18.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, sk_counter_cfg_r18, 1, 9));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_conditional_recfg_s::unpack(cbit_ref& bref)
-{
-  bool cond_recfg_list_present;
-  bool scpac_ref_cfg_r18_present;
-  bool sk_counter_cfg_r18_present;
-  HANDLE_CODE(unpack_bits(bref, {&cond_recfg_list_present, &scpac_ref_cfg_r18_present, &sk_counter_cfg_r18_present}));
-
-  if (cond_recfg_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(cond_recfg_list, bref, 1, 8));
-  }
-  if (scpac_ref_cfg_r18_present) {
-    HANDLE_CODE(scpac_ref_cfg_r18.unpack(bref));
-  }
-  if (sk_counter_cfg_r18_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(sk_counter_cfg_r18, bref, 1, 9));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_conditional_recfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (cond_recfg_list.size() > 0) {
-    j.start_array("condReconfigList");
-    for (const auto& e1 : cond_recfg_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (scpac_ref_cfg_r18.size() > 0) {
-    j.write_str("scpac-ReferenceConfiguration-r18", scpac_ref_cfg_r18.to_string());
-  }
-  if (sk_counter_cfg_r18.size() > 0) {
-    j.start_array("sk-CounterConfiguration-r18");
-    for (const auto& e1 : sk_counter_cfg_r18) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_conditional_recfg_s_fields[] = {
+    {offsetof(var_conditional_recfg_s, cond_recfg_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::item_list_codec<decltype(var_conditional_recfg_s::cond_recfg_list),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &cond_recfg_to_add_mod_r16_s::desc},
+    {offsetof(var_conditional_recfg_s, scpac_ref_cfg_r18),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::sized_object_codec<decltype(var_conditional_recfg_s::scpac_ref_cfg_r18),
+                                      asn1::table::string_json>::value},
+    {offsetof(var_conditional_recfg_s, sk_counter_cfg_r18),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     9,
+     &asn1::table::item_list_codec<decltype(var_conditional_recfg_s::sk_counter_cfg_r18),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &sk_counter_cfg_r18_s::desc}};
+static const asn1::table::field_name seq_table_var_conditional_recfg_s_names[] = {
+    {"condReconfigList", nullptr},
+    {"scpac-ReferenceConfiguration-r18", nullptr},
+    {"sk-CounterConfiguration-r18", nullptr}};
+static const asn1::table::seq_opt seq_table_var_conditional_recfg_s_opts[] = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, asn1::table::seq_field::list_presence},
+    {2, asn1::table::seq_field::list_presence}};
+const asn1::table::seq_desc var_conditional_recfg_s::desc = {
+    {seq_table_var_conditional_recfg_s_fields, 3, UINT64_C(0x0), seq_table_var_conditional_recfg_s_opts, 3},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_conditional_recfg_s_names};
 
 // VarConnEstFailReport-r16 ::= SEQUENCE
-OCUDUASN_CODE var_conn_est_fail_report_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(conn_est_fail_report_r16.pack(bref));
-  HANDLE_CODE(network_id_r18.pack(bref));
+static const asn1::table::seq_field seq_table_var_conn_est_fail_report_r16_s_fields[] = {
+    {offsetof(var_conn_est_fail_report_r16_s, conn_est_fail_report_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &conn_est_fail_report_r16_s::desc},
+    {offsetof(var_conn_est_fail_report_r16_s, network_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_conn_est_fail_report_r16_s::network_id_r18_c_::desc}};
+static const asn1::table::field_name seq_table_var_conn_est_fail_report_r16_s_names[] = {
+    {"connEstFailReport-r16", nullptr},
+    {"networkIdentity-r18", nullptr}};
+const asn1::table::seq_desc var_conn_est_fail_report_r16_s::desc = {
+    {seq_table_var_conn_est_fail_report_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_conn_est_fail_report_r16_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_conn_est_fail_report_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(conn_est_fail_report_r16.unpack(bref));
-  HANDLE_CODE(network_id_r18.unpack(bref));
+static const asn1::table::storage_ops* const
+    choice_storage_var_conn_est_fail_report_r16_s_network_id_r18_c__alternatives[] = {
+        &asn1::table::alternative_ops<plmn_id_s, false>::value,
+        &asn1::table::alternative_ops<sn_pn_id_r18_s, false>::value};
+const asn1::table::choice_storage_desc var_conn_est_fail_report_r16_s::network_id_r18_c_::storage_desc = {
+    choice_storage_var_conn_est_fail_report_r16_s_network_id_r18_c__alternatives,
+    2,
+    "var_conn_est_fail_report_r16_s::network_id_r18_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-void var_conn_est_fail_report_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("connEstFailReport-r16");
-  conn_est_fail_report_r16.to_json(j);
-  j.write_fieldname("networkIdentity-r18");
-  network_id_r18.to_json(j);
-  j.end_obj();
-}
-
-void var_conn_est_fail_report_r16_s::network_id_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::plmn_id_r18:
-      c.destroy<plmn_id_s>();
-      break;
-    case types::snpn_id_r18:
-      c.destroy<sn_pn_id_r18_s>();
-      break;
-    default:
-      break;
-  }
-}
-void var_conn_est_fail_report_r16_s::network_id_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::plmn_id_r18:
-      c.init<plmn_id_s>();
-      break;
-    case types::snpn_id_r18:
-      c.init<sn_pn_id_r18_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_conn_est_fail_report_r16_s::network_id_r18_c_");
-  }
-}
-var_conn_est_fail_report_r16_s::network_id_r18_c_::network_id_r18_c_(
-    const var_conn_est_fail_report_r16_s::network_id_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::plmn_id_r18:
-      c.init(other.c.get<plmn_id_s>());
-      break;
-    case types::snpn_id_r18:
-      c.init(other.c.get<sn_pn_id_r18_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_conn_est_fail_report_r16_s::network_id_r18_c_");
-  }
-}
-var_conn_est_fail_report_r16_s::network_id_r18_c_& var_conn_est_fail_report_r16_s::network_id_r18_c_::operator=(
-    const var_conn_est_fail_report_r16_s::network_id_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::plmn_id_r18:
-      c.set(other.c.get<plmn_id_s>());
-      break;
-    case types::snpn_id_r18:
-      c.set(other.c.get<sn_pn_id_r18_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_conn_est_fail_report_r16_s::network_id_r18_c_");
-  }
-
-  return *this;
-}
 plmn_id_s& var_conn_est_fail_report_r16_s::network_id_r18_c_::set_plmn_id_r18()
 {
   set(types::plmn_id_r18);
@@ -595,359 +422,263 @@ sn_pn_id_r18_s& var_conn_est_fail_report_r16_s::network_id_r18_c_::set_snpn_id_r
   set(types::snpn_id_r18);
   return c.get<sn_pn_id_r18_s>();
 }
-void var_conn_est_fail_report_r16_s::network_id_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::plmn_id_r18:
-      j.write_fieldname("plmn-Identity-r18");
-      c.get<plmn_id_s>().to_json(j);
-      break;
-    case types::snpn_id_r18:
-      j.write_fieldname("snpn-Identity-r18");
-      c.get<sn_pn_id_r18_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_conn_est_fail_report_r16_s::network_id_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_conn_est_fail_report_r16_s::network_id_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::plmn_id_r18:
-      HANDLE_CODE(c.get<plmn_id_s>().pack(bref));
-      break;
-    case types::snpn_id_r18:
-      HANDLE_CODE(c.get<sn_pn_id_r18_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_conn_est_fail_report_r16_s::network_id_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_conn_est_fail_report_r16_s::network_id_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::plmn_id_r18:
-      HANDLE_CODE(c.get<plmn_id_s>().unpack(bref));
-      break;
-    case types::snpn_id_r18:
-      HANDLE_CODE(c.get<sn_pn_id_r18_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_conn_est_fail_report_r16_s::network_id_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_conn_est_fail_report_r16_s_network_id_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &plmn_id_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &sn_pn_id_r18_s::desc}};
+static const asn1::table::field_name choice_table_var_conn_est_fail_report_r16_s_network_id_r18_c__names[] = {
+    {"plmn-Identity-r18", nullptr},
+    {"snpn-Identity-r18", nullptr}};
+const asn1::table::choice_desc var_conn_est_fail_report_r16_s::network_id_r18_c_::desc = {
+    asn1::table::enum_int_type<var_conn_est_fail_report_r16_s::network_id_r18_c_::types>(),
+    var_conn_est_fail_report_r16_s::network_id_r18_c_::types::nof_types,
+    var_conn_est_fail_report_r16_s::network_id_r18_c_::types::nof_exts,
+    var_conn_est_fail_report_r16_s::network_id_r18_c_::types::has_ext,
+    false,
+    choice_table_var_conn_est_fail_report_r16_s_network_id_r18_c__alternatives,
+    nullptr,
+    choice_table_var_conn_est_fail_report_r16_s_network_id_r18_c__names,
+    "var_conn_est_fail_report_r16_s::network_id_r18_c_",
+    offsetof(var_conn_est_fail_report_r16_s::network_id_r18_c_, c.type),
+    offsetof(var_conn_est_fail_report_r16_s::network_id_r18_c_, c.value),
+    false,
+    &var_conn_est_fail_report_r16_s::network_id_r18_c_::storage_desc};
 
-const char* var_conn_est_fail_report_r16_s::network_id_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"plmn-Identity-r18", "snpn-Identity-r18"};
-  return convert_enum_idx(names, 2, value, "var_conn_est_fail_report_r16_s::network_id_r18_c_::types");
-}
+static const char* enum_names_var_conn_est_fail_report_r16_s_network_id_r18_c__types_values[]    = {"plmn-Identity-r18",
+                                                                                                    "snpn-Identity-r18"};
+const asn1::table::enum_desc var_conn_est_fail_report_r16_s::network_id_r18_c_::types_opts::desc = {
+    enum_names_var_conn_est_fail_report_r16_s_network_id_r18_c__types_values,
+    2,
+    "var_conn_est_fail_report_r16_s::network_id_r18_c_::types"};
 
 // VarConnEstFailReportList-r17 ::= SEQUENCE
-OCUDUASN_CODE var_conn_est_fail_report_list_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_dyn_seq_of(bref, conn_est_fail_report_list_r17, 1, 4));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_conn_est_fail_report_list_r17_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_dyn_seq_of(conn_est_fail_report_list_r17, bref, 1, 4));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_conn_est_fail_report_list_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("connEstFailReportList-r17");
-  for (const auto& e1 : conn_est_fail_report_list_r17) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_conn_est_fail_report_list_r17_s_fields[] = {
+    {offsetof(var_conn_est_fail_report_list_r17_s, conn_est_fail_report_list_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     4,
+     &asn1::table::item_list_codec<decltype(var_conn_est_fail_report_list_r17_s::conn_est_fail_report_list_r17),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &var_conn_est_fail_report_r16_s::desc}};
+static const asn1::table::field_name seq_table_var_conn_est_fail_report_list_r17_s_names[] = {
+    {"connEstFailReportList-r17", nullptr}};
+const asn1::table::seq_desc var_conn_est_fail_report_list_r17_s::desc = {
+    {seq_table_var_conn_est_fail_report_list_r17_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_conn_est_fail_report_list_r17_s_names};
 
 // VarEnhMeasIdleConfig-r18 ::= SEQUENCE
-OCUDUASN_CODE var_enh_meas_idle_cfg_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(meas_idle_validity_dur_r18_present, 1));
-
-  if (meas_idle_validity_dur_r18_present) {
-    HANDLE_CODE(meas_idle_validity_dur_r18.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_enh_meas_idle_cfg_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(meas_idle_validity_dur_r18_present, 1));
-
-  if (meas_idle_validity_dur_r18_present) {
-    HANDLE_CODE(meas_idle_validity_dur_r18.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_enh_meas_idle_cfg_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (meas_idle_validity_dur_r18_present) {
-    j.write_str("measIdleValidityDuration-r18", meas_idle_validity_dur_r18.to_string());
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_enh_meas_idle_cfg_r18_s_fields[] = {
+    {offsetof(var_enh_meas_idle_cfg_r18_s, meas_idle_validity_dur_r18),
+     (int32_t)offsetof(var_enh_meas_idle_cfg_r18_s, meas_idle_validity_dur_r18_present),
+     asn1::table::enum_op<decltype(var_enh_meas_idle_cfg_r18_s::meas_idle_validity_dur_r18)>(),
+     decltype(var_enh_meas_idle_cfg_r18_s::meas_idle_validity_dur_r18)::has_ext,
+     false,
+     decltype(var_enh_meas_idle_cfg_r18_s::meas_idle_validity_dur_r18)::nof_types,
+     decltype(var_enh_meas_idle_cfg_r18_s::meas_idle_validity_dur_r18)::nof_exts,
+     nullptr,
+     &meas_validity_dur_r18_opts::desc}};
+static const asn1::table::field_name seq_table_var_enh_meas_idle_cfg_r18_s_names[] = {
+    {"measIdleValidityDuration-r18", nullptr}};
+static const asn1::table::seq_opt seq_table_var_enh_meas_idle_cfg_r18_s_opts[] = {
+    {0, (int32_t)offsetof(var_enh_meas_idle_cfg_r18_s, meas_idle_validity_dur_r18_present)}};
+const asn1::table::seq_desc var_enh_meas_idle_cfg_r18_s::desc = {
+    {seq_table_var_enh_meas_idle_cfg_r18_s_fields, 1, UINT64_C(0x0), seq_table_var_enh_meas_idle_cfg_r18_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_enh_meas_idle_cfg_r18_s_names};
 
 // VarLTM-ServingCellNoResetID-r18 ::= SEQUENCE
-OCUDUASN_CODE var_ltm_serving_cell_no_reset_id_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(ltm_serving_cell_no_reset_id_r18_present, 1));
-
-  if (ltm_serving_cell_no_reset_id_r18_present) {
-    HANDLE_CODE(pack_integer(bref, ltm_serving_cell_no_reset_id_r18, (uint8_t)1u, (uint8_t)9u));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_ltm_serving_cell_no_reset_id_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(ltm_serving_cell_no_reset_id_r18_present, 1));
-
-  if (ltm_serving_cell_no_reset_id_r18_present) {
-    HANDLE_CODE(unpack_integer(ltm_serving_cell_no_reset_id_r18, bref, (uint8_t)1u, (uint8_t)9u));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_ltm_serving_cell_no_reset_id_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (ltm_serving_cell_no_reset_id_r18_present) {
-    j.write_int("ltm-ServingCellNoResetID-r18", ltm_serving_cell_no_reset_id_r18);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_ltm_serving_cell_no_reset_id_r18_s_fields[] = {
+    {offsetof(var_ltm_serving_cell_no_reset_id_r18_s, ltm_serving_cell_no_reset_id_r18),
+     (int32_t)offsetof(var_ltm_serving_cell_no_reset_id_r18_s, ltm_serving_cell_no_reset_id_r18_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(9),
+     nullptr}};
+static const asn1::table::field_name seq_table_var_ltm_serving_cell_no_reset_id_r18_s_names[] = {
+    {"ltm-ServingCellNoResetID-r18", nullptr}};
+static const asn1::table::seq_opt seq_table_var_ltm_serving_cell_no_reset_id_r18_s_opts[] = {
+    {0, (int32_t)offsetof(var_ltm_serving_cell_no_reset_id_r18_s, ltm_serving_cell_no_reset_id_r18_present)}};
+const asn1::table::seq_desc var_ltm_serving_cell_no_reset_id_r18_s::desc = {
+    {seq_table_var_ltm_serving_cell_no_reset_id_r18_s_fields,
+     1,
+     UINT64_C(0x0),
+     seq_table_var_ltm_serving_cell_no_reset_id_r18_s_opts,
+     1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_ltm_serving_cell_no_reset_id_r18_s_names};
 
 // VarLTM-ServingCellUE-MeasuredTA-ID-r18 ::= SEQUENCE
-OCUDUASN_CODE var_ltm_serving_cell_ue_measured_ta_id_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(ltm_serving_cell_ue_measured_ta_id_r18_present, 1));
-
-  if (ltm_serving_cell_ue_measured_ta_id_r18_present) {
-    HANDLE_CODE(pack_integer(bref, ltm_serving_cell_ue_measured_ta_id_r18, (uint8_t)1u, (uint8_t)9u));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_ltm_serving_cell_ue_measured_ta_id_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(ltm_serving_cell_ue_measured_ta_id_r18_present, 1));
-
-  if (ltm_serving_cell_ue_measured_ta_id_r18_present) {
-    HANDLE_CODE(unpack_integer(ltm_serving_cell_ue_measured_ta_id_r18, bref, (uint8_t)1u, (uint8_t)9u));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_ltm_serving_cell_ue_measured_ta_id_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (ltm_serving_cell_ue_measured_ta_id_r18_present) {
-    j.write_int("ltm-ServingCellUE-MeasuredTA-ID-r18", ltm_serving_cell_ue_measured_ta_id_r18);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_fields[] = {
+    {offsetof(var_ltm_serving_cell_ue_measured_ta_id_r18_s, ltm_serving_cell_ue_measured_ta_id_r18),
+     (int32_t)offsetof(var_ltm_serving_cell_ue_measured_ta_id_r18_s, ltm_serving_cell_ue_measured_ta_id_r18_present),
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(9),
+     nullptr}};
+static const asn1::table::field_name seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_names[] = {
+    {"ltm-ServingCellUE-MeasuredTA-ID-r18", nullptr}};
+static const asn1::table::seq_opt seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_opts[] = {
+    {0,
+     (int32_t)offsetof(var_ltm_serving_cell_ue_measured_ta_id_r18_s, ltm_serving_cell_ue_measured_ta_id_r18_present)}};
+const asn1::table::seq_desc var_ltm_serving_cell_ue_measured_ta_id_r18_s::desc = {
+    {seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_fields,
+     1,
+     UINT64_C(0x0),
+     seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_opts,
+     1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_names};
 
 // VarLogMeasConfig-r16 ::= SEQUENCE
-OCUDUASN_CODE var_log_meas_cfg_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref,
-                        {area_cfg_r16_present,
-                         bt_name_list_r16.size() > 0,
-                         wlan_name_list_r16.size() > 0,
-                         sensor_name_list_r16_present,
-                         early_meas_ind_r17_present,
-                         area_cfg_r17_present,
-                         area_cfg_v1800_present}));
+static const asn1::table::seq_field seq_table_var_log_meas_cfg_r16_s_fields[] = {
+    {offsetof(var_log_meas_cfg_r16_s, area_cfg_r16),
+     (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &area_cfg_r16_s::desc},
+    {offsetof(var_log_meas_cfg_r16_s, bt_name_list_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     4,
+     &asn1::table::list_codec<decltype(var_log_meas_cfg_r16_s::bt_name_list_r16), asn1::table::string_json>::value},
+    {offsetof(var_log_meas_cfg_r16_s, wlan_name_list_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     4,
+     &asn1::table::list_codec<decltype(var_log_meas_cfg_r16_s::wlan_name_list_r16), asn1::table::string_json>::value},
+    {offsetof(var_log_meas_cfg_r16_s, sensor_name_list_r16),
+     (int32_t)offsetof(var_log_meas_cfg_r16_s, sensor_name_list_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &sensor_name_list_r16_s::desc},
+    {offsetof(var_log_meas_cfg_r16_s, logging_dur_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(var_log_meas_cfg_r16_s::logging_dur_r16)>(),
+     decltype(var_log_meas_cfg_r16_s::logging_dur_r16)::has_ext,
+     false,
+     decltype(var_log_meas_cfg_r16_s::logging_dur_r16)::nof_types,
+     decltype(var_log_meas_cfg_r16_s::logging_dur_r16)::nof_exts,
+     nullptr,
+     &logging_dur_r16_opts::desc},
+    {offsetof(var_log_meas_cfg_r16_s, report_type),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_log_meas_cfg_r16_s::report_type_c_::desc},
+    {0,
+     (int32_t)offsetof(var_log_meas_cfg_r16_s, early_meas_ind_r17_present),
+     asn1::table::field_op::none,
+     false,
+     false,
+     0,
+     0,
+     nullptr},
+    {offsetof(var_log_meas_cfg_r16_s, area_cfg_r17),
+     (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_r17_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &area_cfg_r17_s::desc},
+    {offsetof(var_log_meas_cfg_r16_s, area_cfg_v1800),
+     (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_v1800_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &area_cfg_v1800_c::desc}};
+static const asn1::table::field_name seq_table_var_log_meas_cfg_r16_s_names[] = {{"areaConfiguration-r16", nullptr},
+                                                                                 {"bt-NameList-r16", nullptr},
+                                                                                 {"wlan-NameList-r16", nullptr},
+                                                                                 {"sensor-NameList-r16", nullptr},
+                                                                                 {"loggingDuration-r16", nullptr},
+                                                                                 {"reportType", nullptr},
+                                                                                 {"earlyMeasIndication-r17", "true"},
+                                                                                 {"areaConfiguration-r17", nullptr},
+                                                                                 {"areaConfiguration-v1800", nullptr}};
+static const asn1::table::seq_opt    seq_table_var_log_meas_cfg_r16_s_opts[]  = {
+    {0, (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_r16_present)},
+    {1, asn1::table::seq_field::list_presence},
+    {2, asn1::table::seq_field::list_presence},
+    {3, (int32_t)offsetof(var_log_meas_cfg_r16_s, sensor_name_list_r16_present)},
+    {6, (int32_t)offsetof(var_log_meas_cfg_r16_s, early_meas_ind_r17_present)},
+    {7, (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_r17_present)},
+    {8, (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_v1800_present)}};
+const asn1::table::seq_desc var_log_meas_cfg_r16_s::desc = {
+    {seq_table_var_log_meas_cfg_r16_s_fields, 9, UINT64_C(0x30), seq_table_var_log_meas_cfg_r16_s_opts, 7},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_log_meas_cfg_r16_s_names};
 
-  if (area_cfg_r16_present) {
-    HANDLE_CODE(area_cfg_r16.pack(bref));
-  }
-  if (bt_name_list_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, bt_name_list_r16, 1, 4));
-  }
-  if (wlan_name_list_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, wlan_name_list_r16, 1, 4));
-  }
-  if (sensor_name_list_r16_present) {
-    HANDLE_CODE(sensor_name_list_r16.pack(bref));
-  }
-  HANDLE_CODE(logging_dur_r16.pack(bref));
-  HANDLE_CODE(report_type.pack(bref));
-  if (area_cfg_r17_present) {
-    HANDLE_CODE(area_cfg_r17.pack(bref));
-  }
-  if (area_cfg_v1800_present) {
-    HANDLE_CODE(area_cfg_v1800.pack(bref));
-  }
+static const asn1::table::storage_ops* const choice_storage_var_log_meas_cfg_r16_s_report_type_c__alternatives[] = {
+    &asn1::table::alternative_ops<logged_periodical_report_cfg_r16_s, false>::value,
+    &asn1::table::alternative_ops<logged_event_trigger_cfg_r16_s, false>::value};
+const asn1::table::choice_storage_desc var_log_meas_cfg_r16_s::report_type_c_::storage_desc = {
+    choice_storage_var_log_meas_cfg_r16_s_report_type_c__alternatives,
+    2,
+    "var_log_meas_cfg_r16_s::report_type_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_log_meas_cfg_r16_s::unpack(cbit_ref& bref)
-{
-  bool bt_name_list_r16_present;
-  bool wlan_name_list_r16_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&area_cfg_r16_present,
-                           &bt_name_list_r16_present,
-                           &wlan_name_list_r16_present,
-                           &sensor_name_list_r16_present,
-                           &early_meas_ind_r17_present,
-                           &area_cfg_r17_present,
-                           &area_cfg_v1800_present}));
-
-  if (area_cfg_r16_present) {
-    HANDLE_CODE(area_cfg_r16.unpack(bref));
-  }
-  if (bt_name_list_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(bt_name_list_r16, bref, 1, 4));
-  }
-  if (wlan_name_list_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(wlan_name_list_r16, bref, 1, 4));
-  }
-  if (sensor_name_list_r16_present) {
-    HANDLE_CODE(sensor_name_list_r16.unpack(bref));
-  }
-  HANDLE_CODE(logging_dur_r16.unpack(bref));
-  HANDLE_CODE(report_type.unpack(bref));
-  if (area_cfg_r17_present) {
-    HANDLE_CODE(area_cfg_r17.unpack(bref));
-  }
-  if (area_cfg_v1800_present) {
-    HANDLE_CODE(area_cfg_v1800.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_log_meas_cfg_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (area_cfg_r16_present) {
-    j.write_fieldname("areaConfiguration-r16");
-    area_cfg_r16.to_json(j);
-  }
-  if (bt_name_list_r16.size() > 0) {
-    j.start_array("bt-NameList-r16");
-    for (const auto& e1 : bt_name_list_r16) {
-      j.write_str(e1.to_string());
-    }
-    j.end_array();
-  }
-  if (wlan_name_list_r16.size() > 0) {
-    j.start_array("wlan-NameList-r16");
-    for (const auto& e1 : wlan_name_list_r16) {
-      j.write_str(e1.to_string());
-    }
-    j.end_array();
-  }
-  if (sensor_name_list_r16_present) {
-    j.write_fieldname("sensor-NameList-r16");
-    sensor_name_list_r16.to_json(j);
-  }
-  j.write_str("loggingDuration-r16", logging_dur_r16.to_string());
-  j.write_fieldname("reportType");
-  report_type.to_json(j);
-  if (early_meas_ind_r17_present) {
-    j.write_str("earlyMeasIndication-r17", "true");
-  }
-  if (area_cfg_r17_present) {
-    j.write_fieldname("areaConfiguration-r17");
-    area_cfg_r17.to_json(j);
-  }
-  if (area_cfg_v1800_present) {
-    j.write_fieldname("areaConfiguration-v1800");
-    area_cfg_v1800.to_json(j);
-  }
-  j.end_obj();
-}
-
-void var_log_meas_cfg_r16_s::report_type_c_::destroy_()
-{
-  switch (type_) {
-    case types::periodical:
-      c.destroy<logged_periodical_report_cfg_r16_s>();
-      break;
-    case types::event_triggered:
-      c.destroy<logged_event_trigger_cfg_r16_s>();
-      break;
-    default:
-      break;
-  }
-}
-void var_log_meas_cfg_r16_s::report_type_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::periodical:
-      c.init<logged_periodical_report_cfg_r16_s>();
-      break;
-    case types::event_triggered:
-      c.init<logged_event_trigger_cfg_r16_s>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_cfg_r16_s::report_type_c_");
-  }
-}
-var_log_meas_cfg_r16_s::report_type_c_::report_type_c_(const var_log_meas_cfg_r16_s::report_type_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::periodical:
-      c.init(other.c.get<logged_periodical_report_cfg_r16_s>());
-      break;
-    case types::event_triggered:
-      c.init(other.c.get<logged_event_trigger_cfg_r16_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_cfg_r16_s::report_type_c_");
-  }
-}
-var_log_meas_cfg_r16_s::report_type_c_&
-var_log_meas_cfg_r16_s::report_type_c_::operator=(const var_log_meas_cfg_r16_s::report_type_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::periodical:
-      c.set(other.c.get<logged_periodical_report_cfg_r16_s>());
-      break;
-    case types::event_triggered:
-      c.set(other.c.get<logged_event_trigger_cfg_r16_s>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_cfg_r16_s::report_type_c_");
-  }
-
-  return *this;
-}
 logged_periodical_report_cfg_r16_s& var_log_meas_cfg_r16_s::report_type_c_::set_periodical()
 {
   set(types::periodical);
@@ -958,175 +689,132 @@ logged_event_trigger_cfg_r16_s& var_log_meas_cfg_r16_s::report_type_c_::set_even
   set(types::event_triggered);
   return c.get<logged_event_trigger_cfg_r16_s>();
 }
-void var_log_meas_cfg_r16_s::report_type_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::periodical:
-      j.write_fieldname("periodical");
-      c.get<logged_periodical_report_cfg_r16_s>().to_json(j);
-      break;
-    case types::event_triggered:
-      j.write_fieldname("eventTriggered");
-      c.get<logged_event_trigger_cfg_r16_s>().to_json(j);
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_cfg_r16_s::report_type_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_log_meas_cfg_r16_s::report_type_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::periodical:
-      HANDLE_CODE(c.get<logged_periodical_report_cfg_r16_s>().pack(bref));
-      break;
-    case types::event_triggered:
-      HANDLE_CODE(c.get<logged_event_trigger_cfg_r16_s>().pack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_cfg_r16_s::report_type_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_log_meas_cfg_r16_s::report_type_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::periodical:
-      HANDLE_CODE(c.get<logged_periodical_report_cfg_r16_s>().unpack(bref));
-      break;
-    case types::event_triggered:
-      HANDLE_CODE(c.get<logged_event_trigger_cfg_r16_s>().unpack(bref));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_cfg_r16_s::report_type_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_log_meas_cfg_r16_s_report_type_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &logged_periodical_report_cfg_r16_s::desc},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &logged_event_trigger_cfg_r16_s::desc}};
+static const asn1::table::field_name choice_table_var_log_meas_cfg_r16_s_report_type_c__names[] = {
+    {"periodical", nullptr},
+    {"eventTriggered", nullptr}};
+const asn1::table::choice_desc var_log_meas_cfg_r16_s::report_type_c_::desc = {
+    asn1::table::enum_int_type<var_log_meas_cfg_r16_s::report_type_c_::types>(),
+    var_log_meas_cfg_r16_s::report_type_c_::types::nof_types,
+    var_log_meas_cfg_r16_s::report_type_c_::types::nof_exts,
+    var_log_meas_cfg_r16_s::report_type_c_::types::has_ext,
+    false,
+    choice_table_var_log_meas_cfg_r16_s_report_type_c__alternatives,
+    nullptr,
+    choice_table_var_log_meas_cfg_r16_s_report_type_c__names,
+    "var_log_meas_cfg_r16_s::report_type_c_",
+    offsetof(var_log_meas_cfg_r16_s::report_type_c_, c.type),
+    offsetof(var_log_meas_cfg_r16_s::report_type_c_, c.value),
+    false,
+    &var_log_meas_cfg_r16_s::report_type_c_::storage_desc};
 
-const char* var_log_meas_cfg_r16_s::report_type_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"periodical", "eventTriggered"};
-  return convert_enum_idx(names, 2, value, "var_log_meas_cfg_r16_s::report_type_c_::types");
-}
+static const char* enum_names_var_log_meas_cfg_r16_s_report_type_c__types_values[] = {"periodical", "eventTriggered"};
+const asn1::table::enum_desc var_log_meas_cfg_r16_s::report_type_c_::types_opts::desc = {
+    enum_names_var_log_meas_cfg_r16_s_report_type_c__types_values,
+    2,
+    "var_log_meas_cfg_r16_s::report_type_c_::types"};
 
 // VarLogMeasReport-r16 ::= SEQUENCE
-OCUDUASN_CODE var_log_meas_report_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(absolute_time_info_r16.pack(bref));
-  HANDLE_CODE(trace_ref_r16.pack(bref));
-  HANDLE_CODE(trace_recording_session_ref_r16.pack(bref));
-  HANDLE_CODE(tce_id_r16.pack(bref));
-  HANDLE_CODE(pack_dyn_seq_of(bref, log_meas_info_list_r16, 1, 520));
-  HANDLE_CODE(id_list_r18.pack(bref));
+static const asn1::table::seq_field seq_table_var_log_meas_report_r16_s_fields[] = {
+    {offsetof(var_log_meas_report_r16_s, absolute_time_info_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(var_log_meas_report_r16_s::absolute_time_info_r16),
+                                asn1::table::struct_json>::value},
+    {offsetof(var_log_meas_report_r16_s, trace_ref_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &trace_ref_r16_s::desc},
+    {offsetof(var_log_meas_report_r16_s, trace_recording_session_ref_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(var_log_meas_report_r16_s::trace_recording_session_ref_r16),
+                                asn1::table::string_json>::value},
+    {offsetof(var_log_meas_report_r16_s, tce_id_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(var_log_meas_report_r16_s::tce_id_r16), asn1::table::string_json>::value},
+    {offsetof(var_log_meas_report_r16_s, log_meas_info_list_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     520,
+     &asn1::table::item_list_codec<decltype(var_log_meas_report_r16_s::log_meas_info_list_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &log_meas_info_r16_s::desc},
+    {0, asn1::table::seq_field::mandatory, asn1::table::field_op::none, false, false, 0, 0, nullptr},
+    {offsetof(var_log_meas_report_r16_s, id_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_log_meas_report_r16_s::id_list_r18_c_::desc}};
+static const asn1::table::field_name seq_table_var_log_meas_report_r16_s_names[] = {
+    {"absoluteTimeInfo-r16", nullptr},
+    {"traceReference-r16", nullptr},
+    {"traceRecordingSessionRef-r16", nullptr},
+    {"tce-Id-r16", nullptr},
+    {"logMeasInfoList-r16", nullptr},
+    {"sigLoggedMeasType-r17", "true"},
+    {"identityList-r18", nullptr}};
+const asn1::table::seq_desc var_log_meas_report_r16_s::desc = {
+    {seq_table_var_log_meas_report_r16_s_fields, 7, UINT64_C(0x7f), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_log_meas_report_r16_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_log_meas_report_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(absolute_time_info_r16.unpack(bref));
-  HANDLE_CODE(trace_ref_r16.unpack(bref));
-  HANDLE_CODE(trace_recording_session_ref_r16.unpack(bref));
-  HANDLE_CODE(tce_id_r16.unpack(bref));
-  HANDLE_CODE(unpack_dyn_seq_of(log_meas_info_list_r16, bref, 1, 520));
-  HANDLE_CODE(id_list_r18.unpack(bref));
+static const asn1::table::storage_ops* const choice_storage_var_log_meas_report_r16_s_id_list_r18_c__alternatives[] = {
+    &asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
+    &asn1::table::alternative_ops<sn_pn_cfg_id_list_r18_l, false>::value};
+const asn1::table::choice_storage_desc var_log_meas_report_r16_s::id_list_r18_c_::storage_desc = {
+    choice_storage_var_log_meas_report_r16_s_id_list_r18_c__alternatives,
+    2,
+    "var_log_meas_report_r16_s::id_list_r18_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-void var_log_meas_report_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("absoluteTimeInfo-r16");
-  absolute_time_info_r16.to_json(j);
-  j.write_fieldname("traceReference-r16");
-  trace_ref_r16.to_json(j);
-  j.write_str("traceRecordingSessionRef-r16", trace_recording_session_ref_r16.to_string());
-  j.write_str("tce-Id-r16", tce_id_r16.to_string());
-  j.start_array("logMeasInfoList-r16");
-  for (const auto& e1 : log_meas_info_list_r16) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.write_str("sigLoggedMeasType-r17", "true");
-  j.write_fieldname("identityList-r18");
-  id_list_r18.to_json(j);
-  j.end_obj();
-}
-
-void var_log_meas_report_r16_s::id_list_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.destroy<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_cfg_id_list_r18:
-      c.destroy<sn_pn_cfg_id_list_r18_l>();
-      break;
-    default:
-      break;
-  }
-}
-void var_log_meas_report_r16_s::id_list_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_cfg_id_list_r18:
-      c.init<sn_pn_cfg_id_list_r18_l>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_report_r16_s::id_list_r18_c_");
-  }
-}
-var_log_meas_report_r16_s::id_list_r18_c_::id_list_r18_c_(const var_log_meas_report_r16_s::id_list_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_cfg_id_list_r18:
-      c.init(other.c.get<sn_pn_cfg_id_list_r18_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_report_r16_s::id_list_r18_c_");
-  }
-}
-var_log_meas_report_r16_s::id_list_r18_c_&
-var_log_meas_report_r16_s::id_list_r18_c_::operator=(const var_log_meas_report_r16_s::id_list_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.set(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_cfg_id_list_r18:
-      c.set(other.c.get<sn_pn_cfg_id_list_r18_l>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_report_r16_s::id_list_r18_c_");
-  }
-
-  return *this;
-}
 plmn_id_list2_r16_l& var_log_meas_report_r16_s::id_list_r18_c_::set_plmn_id_list_r18()
 {
   set(types::plmn_id_list_r18);
@@ -1137,207 +825,125 @@ sn_pn_cfg_id_list_r18_l& var_log_meas_report_r16_s::id_list_r18_c_::set_snpn_cfg
   set(types::snpn_cfg_id_list_r18);
   return c.get<sn_pn_cfg_id_list_r18_l>();
 }
-void var_log_meas_report_r16_s::id_list_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      j.start_array("plmn-IdentityList-r18");
-      for (const auto& e1 : c.get<plmn_id_list2_r16_l>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    case types::snpn_cfg_id_list_r18:
-      j.start_array("snpn-ConfigID-List-r18");
-      for (const auto& e1 : c.get<sn_pn_cfg_id_list_r18_l>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_report_r16_s::id_list_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_log_meas_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
-      break;
-    case types::snpn_cfg_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<sn_pn_cfg_id_list_r18_l>(), 1, 16));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_report_r16_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_log_meas_report_r16_s::id_list_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<plmn_id_list2_r16_l>(), bref, 1, 16));
-      break;
-    case types::snpn_cfg_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<sn_pn_cfg_id_list_r18_l>(), bref, 1, 16));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_log_meas_report_r16_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_log_meas_report_r16_s_id_list_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::list_codec<sn_pn_cfg_id_list_r18_l, asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_var_log_meas_report_r16_s_id_list_r18_c__names[] = {
+    {"plmn-IdentityList-r18", nullptr},
+    {"snpn-ConfigID-List-r18", nullptr}};
+const asn1::table::choice_desc var_log_meas_report_r16_s::id_list_r18_c_::desc = {
+    asn1::table::enum_int_type<var_log_meas_report_r16_s::id_list_r18_c_::types>(),
+    var_log_meas_report_r16_s::id_list_r18_c_::types::nof_types,
+    var_log_meas_report_r16_s::id_list_r18_c_::types::nof_exts,
+    var_log_meas_report_r16_s::id_list_r18_c_::types::has_ext,
+    false,
+    choice_table_var_log_meas_report_r16_s_id_list_r18_c__alternatives,
+    nullptr,
+    choice_table_var_log_meas_report_r16_s_id_list_r18_c__names,
+    "var_log_meas_report_r16_s::id_list_r18_c_",
+    offsetof(var_log_meas_report_r16_s::id_list_r18_c_, c.type),
+    offsetof(var_log_meas_report_r16_s::id_list_r18_c_, c.value),
+    false,
+    &var_log_meas_report_r16_s::id_list_r18_c_::storage_desc};
 
-const char* var_log_meas_report_r16_s::id_list_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"plmn-IdentityList-r18", "snpn-ConfigID-List-r18"};
-  return convert_enum_idx(names, 2, value, "var_log_meas_report_r16_s::id_list_r18_c_::types");
-}
+static const char* enum_names_var_log_meas_report_r16_s_id_list_r18_c__types_values[]    = {"plmn-IdentityList-r18",
+                                                                                            "snpn-ConfigID-List-r18"};
+const asn1::table::enum_desc var_log_meas_report_r16_s::id_list_r18_c_::types_opts::desc = {
+    enum_names_var_log_meas_report_r16_s_id_list_r18_c__types_values,
+    2,
+    "var_log_meas_report_r16_s::id_list_r18_c_::types"};
 
 // VarMeasConfig ::= SEQUENCE
-OCUDUASN_CODE var_meas_cfg_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref,
-                        {meas_id_list.size() > 0,
-                         meas_obj_list.size() > 0,
-                         report_cfg_list.size() > 0,
-                         quant_cfg_present,
-                         s_measure_cfg_present}));
+static const asn1::table::seq_field seq_table_var_meas_cfg_s_fields[] = {
+    {offsetof(var_meas_cfg_s, meas_id_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::
+         item_list_codec<decltype(var_meas_cfg_s::meas_id_list), asn1::table::sequence_item_ops, false, true>::value,
+     &meas_id_to_add_mod_s::desc},
+    {offsetof(var_meas_cfg_s, meas_obj_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::
+         item_list_codec<decltype(var_meas_cfg_s::meas_obj_list), asn1::table::sequence_item_ops, false, true>::value,
+     &meas_obj_to_add_mod_s::desc},
+    {offsetof(var_meas_cfg_s, report_cfg_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::
+         item_list_codec<decltype(var_meas_cfg_s::report_cfg_list), asn1::table::sequence_item_ops, false, true>::value,
+     &report_cfg_to_add_mod_s::desc},
+    {offsetof(var_meas_cfg_s, quant_cfg),
+     (int32_t)offsetof(var_meas_cfg_s, quant_cfg_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &quant_cfg_s::desc},
+    {offsetof(var_meas_cfg_s, s_measure_cfg),
+     (int32_t)offsetof(var_meas_cfg_s, s_measure_cfg_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_meas_cfg_s::s_measure_cfg_c_::desc}};
+static const asn1::table::field_name seq_table_var_meas_cfg_s_names[] = {{"measIdList", nullptr},
+                                                                         {"measObjectList", nullptr},
+                                                                         {"reportConfigList", nullptr},
+                                                                         {"quantityConfig", nullptr},
+                                                                         {"s-MeasureConfig", nullptr}};
+static const asn1::table::seq_opt    seq_table_var_meas_cfg_s_opts[]  = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, asn1::table::seq_field::list_presence},
+    {2, asn1::table::seq_field::list_presence},
+    {3, (int32_t)offsetof(var_meas_cfg_s, quant_cfg_present)},
+    {4, (int32_t)offsetof(var_meas_cfg_s, s_measure_cfg_present)}};
+const asn1::table::seq_desc var_meas_cfg_s::desc = {
+    {seq_table_var_meas_cfg_s_fields, 5, UINT64_C(0x0), seq_table_var_meas_cfg_s_opts, 5},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_meas_cfg_s_names};
 
-  if (meas_id_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, meas_id_list, 1, 64));
-  }
-  if (meas_obj_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, meas_obj_list, 1, 64));
-  }
-  if (report_cfg_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, report_cfg_list, 1, 64));
-  }
-  if (quant_cfg_present) {
-    HANDLE_CODE(quant_cfg.pack(bref));
-  }
-  if (s_measure_cfg_present) {
-    HANDLE_CODE(s_measure_cfg.pack(bref));
-  }
+static const asn1::table::storage_ops* const choice_storage_var_meas_cfg_s_s_measure_cfg_c__alternatives[] = {
+    &asn1::table::alternative_ops<uint8_t, true>::value,
+    &asn1::table::alternative_ops<uint8_t, true>::value};
+const asn1::table::choice_storage_desc var_meas_cfg_s::s_measure_cfg_c_::storage_desc = {
+    choice_storage_var_meas_cfg_s_s_measure_cfg_c__alternatives,
+    2,
+    "var_meas_cfg_s::s_measure_cfg_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_cfg_s::unpack(cbit_ref& bref)
-{
-  bool meas_id_list_present;
-  bool meas_obj_list_present;
-  bool report_cfg_list_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&meas_id_list_present,
-                           &meas_obj_list_present,
-                           &report_cfg_list_present,
-                           &quant_cfg_present,
-                           &s_measure_cfg_present}));
-
-  if (meas_id_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(meas_id_list, bref, 1, 64));
-  }
-  if (meas_obj_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(meas_obj_list, bref, 1, 64));
-  }
-  if (report_cfg_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(report_cfg_list, bref, 1, 64));
-  }
-  if (quant_cfg_present) {
-    HANDLE_CODE(quant_cfg.unpack(bref));
-  }
-  if (s_measure_cfg_present) {
-    HANDLE_CODE(s_measure_cfg.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_meas_cfg_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (meas_id_list.size() > 0) {
-    j.start_array("measIdList");
-    for (const auto& e1 : meas_id_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (meas_obj_list.size() > 0) {
-    j.start_array("measObjectList");
-    for (const auto& e1 : meas_obj_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (report_cfg_list.size() > 0) {
-    j.start_array("reportConfigList");
-    for (const auto& e1 : report_cfg_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (quant_cfg_present) {
-    j.write_fieldname("quantityConfig");
-    quant_cfg.to_json(j);
-  }
-  if (s_measure_cfg_present) {
-    j.write_fieldname("s-MeasureConfig");
-    s_measure_cfg.to_json(j);
-  }
-  j.end_obj();
-}
-
-void var_meas_cfg_s::s_measure_cfg_c_::destroy_() {}
-void var_meas_cfg_s::s_measure_cfg_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-}
-var_meas_cfg_s::s_measure_cfg_c_::s_measure_cfg_c_(const var_meas_cfg_s::s_measure_cfg_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::ssb_rsrp:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::csi_rsrp:
-      c.init(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_meas_cfg_s::s_measure_cfg_c_");
-  }
-}
-var_meas_cfg_s::s_measure_cfg_c_&
-var_meas_cfg_s::s_measure_cfg_c_::operator=(const var_meas_cfg_s::s_measure_cfg_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::ssb_rsrp:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::csi_rsrp:
-      c.set(other.c.get<uint8_t>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_meas_cfg_s::s_measure_cfg_c_");
-  }
-
-  return *this;
-}
 uint8_t& var_meas_cfg_s::s_measure_cfg_c_::set_ssb_rsrp()
 {
   set(types::ssb_rsrp);
@@ -1348,220 +954,180 @@ uint8_t& var_meas_cfg_s::s_measure_cfg_c_::set_csi_rsrp()
   set(types::csi_rsrp);
   return c.get<uint8_t>();
 }
-void var_meas_cfg_s::s_measure_cfg_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::ssb_rsrp:
-      j.write_int("ssb-RSRP", c.get<uint8_t>());
-      break;
-    case types::csi_rsrp:
-      j.write_int("csi-RSRP", c.get<uint8_t>());
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_meas_cfg_s::s_measure_cfg_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_meas_cfg_s::s_measure_cfg_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::ssb_rsrp:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)127u));
-      break;
-    case types::csi_rsrp:
-      HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)0u, (uint8_t)127u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_meas_cfg_s::s_measure_cfg_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_cfg_s::s_measure_cfg_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::ssb_rsrp:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)127u));
-      break;
-    case types::csi_rsrp:
-      HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)0u, (uint8_t)127u));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_meas_cfg_s::s_measure_cfg_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_meas_cfg_s_s_measure_cfg_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(127),
+     nullptr},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(127),
+     nullptr}};
+static const asn1::table::field_name choice_table_var_meas_cfg_s_s_measure_cfg_c__names[] = {{"ssb-RSRP", nullptr},
+                                                                                             {"csi-RSRP", nullptr}};
+const asn1::table::choice_desc       var_meas_cfg_s::s_measure_cfg_c_::desc               = {
+    asn1::table::enum_int_type<var_meas_cfg_s::s_measure_cfg_c_::types>(),
+    var_meas_cfg_s::s_measure_cfg_c_::types::nof_types,
+    var_meas_cfg_s::s_measure_cfg_c_::types::nof_exts,
+    var_meas_cfg_s::s_measure_cfg_c_::types::has_ext,
+    false,
+    choice_table_var_meas_cfg_s_s_measure_cfg_c__alternatives,
+    nullptr,
+    choice_table_var_meas_cfg_s_s_measure_cfg_c__names,
+    "var_meas_cfg_s::s_measure_cfg_c_",
+    offsetof(var_meas_cfg_s::s_measure_cfg_c_, c.type),
+    offsetof(var_meas_cfg_s::s_measure_cfg_c_, c.value),
+    false,
+    &var_meas_cfg_s::s_measure_cfg_c_::storage_desc};
 
-const char* var_meas_cfg_s::s_measure_cfg_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"ssb-RSRP", "csi-RSRP"};
-  return convert_enum_idx(names, 2, value, "var_meas_cfg_s::s_measure_cfg_c_::types");
-}
+static const char*           enum_names_var_meas_cfg_s_s_measure_cfg_c__types_values[] = {"ssb-RSRP", "csi-RSRP"};
+const asn1::table::enum_desc var_meas_cfg_s::s_measure_cfg_c_::types_opts::desc        = {
+    enum_names_var_meas_cfg_s_s_measure_cfg_c__types_values,
+    2,
+    "var_meas_cfg_s::s_measure_cfg_c_::types"};
 
 // VarMeasConfigSL-r16 ::= SEQUENCE
-OCUDUASN_CODE var_meas_cfg_sl_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref,
-                        {sl_meas_id_list_r16.size() > 0,
-                         sl_meas_obj_list_r16.size() > 0,
-                         sl_report_cfg_list_r16.size() > 0,
-                         sl_quant_cfg_r16_present}));
-
-  if (sl_meas_id_list_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, sl_meas_id_list_r16, 1, 64));
-  }
-  if (sl_meas_obj_list_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, sl_meas_obj_list_r16, 1, 64));
-  }
-  if (sl_report_cfg_list_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, sl_report_cfg_list_r16, 1, 64));
-  }
-  if (sl_quant_cfg_r16_present) {
-    HANDLE_CODE(sl_quant_cfg_r16.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_cfg_sl_r16_s::unpack(cbit_ref& bref)
-{
-  bool sl_meas_id_list_r16_present;
-  bool sl_meas_obj_list_r16_present;
-  bool sl_report_cfg_list_r16_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&sl_meas_id_list_r16_present,
-                           &sl_meas_obj_list_r16_present,
-                           &sl_report_cfg_list_r16_present,
-                           &sl_quant_cfg_r16_present}));
-
-  if (sl_meas_id_list_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(sl_meas_id_list_r16, bref, 1, 64));
-  }
-  if (sl_meas_obj_list_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(sl_meas_obj_list_r16, bref, 1, 64));
-  }
-  if (sl_report_cfg_list_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(sl_report_cfg_list_r16, bref, 1, 64));
-  }
-  if (sl_quant_cfg_r16_present) {
-    HANDLE_CODE(sl_quant_cfg_r16.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_meas_cfg_sl_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (sl_meas_id_list_r16.size() > 0) {
-    j.start_array("sl-MeasIdList-r16");
-    for (const auto& e1 : sl_meas_id_list_r16) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (sl_meas_obj_list_r16.size() > 0) {
-    j.start_array("sl-MeasObjectList-r16");
-    for (const auto& e1 : sl_meas_obj_list_r16) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (sl_report_cfg_list_r16.size() > 0) {
-    j.start_array("sl-ReportConfigList-r16");
-    for (const auto& e1 : sl_report_cfg_list_r16) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (sl_quant_cfg_r16_present) {
-    j.write_fieldname("sl-QuantityConfig-r16");
-    sl_quant_cfg_r16.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_meas_cfg_sl_r16_s_fields[] = {
+    {offsetof(var_meas_cfg_sl_r16_s, sl_meas_id_list_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(var_meas_cfg_sl_r16_s::sl_meas_id_list_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &sl_meas_id_info_r16_s::desc},
+    {offsetof(var_meas_cfg_sl_r16_s, sl_meas_obj_list_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(var_meas_cfg_sl_r16_s::sl_meas_obj_list_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &sl_meas_obj_info_r16_s::desc},
+    {offsetof(var_meas_cfg_sl_r16_s, sl_report_cfg_list_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     64,
+     &asn1::table::item_list_codec<decltype(var_meas_cfg_sl_r16_s::sl_report_cfg_list_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &sl_report_cfg_info_r16_s::desc},
+    {offsetof(var_meas_cfg_sl_r16_s, sl_quant_cfg_r16),
+     (int32_t)offsetof(var_meas_cfg_sl_r16_s, sl_quant_cfg_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &sl_quant_cfg_r16_s::desc}};
+static const asn1::table::field_name seq_table_var_meas_cfg_sl_r16_s_names[] = {{"sl-MeasIdList-r16", nullptr},
+                                                                                {"sl-MeasObjectList-r16", nullptr},
+                                                                                {"sl-ReportConfigList-r16", nullptr},
+                                                                                {"sl-QuantityConfig-r16", nullptr}};
+static const asn1::table::seq_opt    seq_table_var_meas_cfg_sl_r16_s_opts[]  = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, asn1::table::seq_field::list_presence},
+    {2, asn1::table::seq_field::list_presence},
+    {3, (int32_t)offsetof(var_meas_cfg_sl_r16_s, sl_quant_cfg_r16_present)}};
+const asn1::table::seq_desc var_meas_cfg_sl_r16_s::desc = {
+    {seq_table_var_meas_cfg_sl_r16_s_fields, 4, UINT64_C(0x0), seq_table_var_meas_cfg_sl_r16_s_opts, 4},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_meas_cfg_sl_r16_s_names};
 
 // VarMeasIdleConfig-r16 ::= SEQUENCE
-OCUDUASN_CODE var_meas_idle_cfg_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref,
-                        {meas_idle_carrier_list_nr_r16.size() > 0,
-                         meas_idle_carrier_list_eutra_r16.size() > 0,
-                         validity_area_list_r16.size() > 0}));
+static const asn1::table::seq_field seq_table_var_meas_idle_cfg_r16_s_fields[] = {
+    {offsetof(var_meas_idle_cfg_r16_s, meas_idle_carrier_list_nr_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::item_list_codec<decltype(var_meas_idle_cfg_r16_s::meas_idle_carrier_list_nr_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &meas_idle_carrier_nr_r16_s::desc},
+    {offsetof(var_meas_idle_cfg_r16_s, meas_idle_carrier_list_eutra_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::item_list_codec<decltype(var_meas_idle_cfg_r16_s::meas_idle_carrier_list_eutra_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &meas_idle_carrier_eutra_r16_s::desc},
+    {offsetof(var_meas_idle_cfg_r16_s, meas_idle_dur_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::enum_op<decltype(var_meas_idle_cfg_r16_s::meas_idle_dur_r16)>(),
+     decltype(var_meas_idle_cfg_r16_s::meas_idle_dur_r16)::has_ext,
+     false,
+     decltype(var_meas_idle_cfg_r16_s::meas_idle_dur_r16)::nof_types,
+     decltype(var_meas_idle_cfg_r16_s::meas_idle_dur_r16)::nof_exts,
+     nullptr,
+     &var_meas_idle_cfg_r16_s::meas_idle_dur_r16_opts::desc},
+    {offsetof(var_meas_idle_cfg_r16_s, validity_area_list_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::item_list_codec<decltype(var_meas_idle_cfg_r16_s::validity_area_list_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &validity_area_r16_s::desc}};
+static const asn1::table::field_name seq_table_var_meas_idle_cfg_r16_s_names[] = {
+    {"measIdleCarrierListNR-r16", nullptr},
+    {"measIdleCarrierListEUTRA-r16", nullptr},
+    {"measIdleDuration-r16", nullptr},
+    {"validityAreaList-r16", nullptr}};
+static const asn1::table::seq_opt seq_table_var_meas_idle_cfg_r16_s_opts[] = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, asn1::table::seq_field::list_presence},
+    {3, asn1::table::seq_field::list_presence}};
+const asn1::table::seq_desc var_meas_idle_cfg_r16_s::desc = {
+    {seq_table_var_meas_idle_cfg_r16_s_fields, 4, UINT64_C(0x4), seq_table_var_meas_idle_cfg_r16_s_opts, 3},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_meas_idle_cfg_r16_s_names};
 
-  if (meas_idle_carrier_list_nr_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, meas_idle_carrier_list_nr_r16, 1, 8));
-  }
-  if (meas_idle_carrier_list_eutra_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, meas_idle_carrier_list_eutra_r16, 1, 8));
-  }
-  HANDLE_CODE(meas_idle_dur_r16.pack(bref));
-  if (validity_area_list_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, validity_area_list_r16, 1, 8));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_idle_cfg_r16_s::unpack(cbit_ref& bref)
-{
-  bool meas_idle_carrier_list_nr_r16_present;
-  bool meas_idle_carrier_list_eutra_r16_present;
-  bool validity_area_list_r16_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&meas_idle_carrier_list_nr_r16_present,
-                           &meas_idle_carrier_list_eutra_r16_present,
-                           &validity_area_list_r16_present}));
-
-  if (meas_idle_carrier_list_nr_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(meas_idle_carrier_list_nr_r16, bref, 1, 8));
-  }
-  if (meas_idle_carrier_list_eutra_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(meas_idle_carrier_list_eutra_r16, bref, 1, 8));
-  }
-  HANDLE_CODE(meas_idle_dur_r16.unpack(bref));
-  if (validity_area_list_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(validity_area_list_r16, bref, 1, 8));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_meas_idle_cfg_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (meas_idle_carrier_list_nr_r16.size() > 0) {
-    j.start_array("measIdleCarrierListNR-r16");
-    for (const auto& e1 : meas_idle_carrier_list_nr_r16) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (meas_idle_carrier_list_eutra_r16.size() > 0) {
-    j.start_array("measIdleCarrierListEUTRA-r16");
-    for (const auto& e1 : meas_idle_carrier_list_eutra_r16) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  j.write_str("measIdleDuration-r16", meas_idle_dur_r16.to_string());
-  if (validity_area_list_r16.size() > 0) {
-    j.start_array("validityAreaList-r16");
-    for (const auto& e1 : validity_area_list_r16) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  j.end_obj();
-}
-
-const char* var_meas_idle_cfg_r16_s::meas_idle_dur_r16_opts::to_string() const
-{
-  static const char* names[] = {"sec10", "sec30", "sec60", "sec120", "sec180", "sec240", "sec300", "spare"};
-  return convert_enum_idx(names, 8, value, "var_meas_idle_cfg_r16_s::meas_idle_dur_r16_e_");
-}
+static const char* enum_names_var_meas_idle_cfg_r16_s_meas_idle_dur_r16_e__values[] =
+    {"sec10", "sec30", "sec60", "sec120", "sec180", "sec240", "sec300", "spare"};
+const asn1::table::enum_desc var_meas_idle_cfg_r16_s::meas_idle_dur_r16_opts::desc = {
+    enum_names_var_meas_idle_cfg_r16_s_meas_idle_dur_r16_e__values,
+    8,
+    "var_meas_idle_cfg_r16_s::meas_idle_dur_r16_e_"};
 uint16_t var_meas_idle_cfg_r16_s::meas_idle_dur_r16_opts::to_number() const
 {
   static const uint16_t numbers[] = {10, 30, 60, 120, 180, 240, 300};
@@ -1569,418 +1135,319 @@ uint16_t var_meas_idle_cfg_r16_s::meas_idle_dur_r16_opts::to_number() const
 }
 
 // VarMeasIdleReport-r16 ::= SEQUENCE
-OCUDUASN_CODE var_meas_idle_report_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {meas_report_idle_nr_r16_present, meas_report_idle_eutra_r16_present}));
-
-  if (meas_report_idle_nr_r16_present) {
-    HANDLE_CODE(meas_report_idle_nr_r16.pack(bref));
-  }
-  if (meas_report_idle_eutra_r16_present) {
-    HANDLE_CODE(meas_report_idle_eutra_r16.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_idle_report_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_bits(bref, {&meas_report_idle_nr_r16_present, &meas_report_idle_eutra_r16_present}));
-
-  if (meas_report_idle_nr_r16_present) {
-    HANDLE_CODE(meas_report_idle_nr_r16.unpack(bref));
-  }
-  if (meas_report_idle_eutra_r16_present) {
-    HANDLE_CODE(meas_report_idle_eutra_r16.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_meas_idle_report_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (meas_report_idle_nr_r16_present) {
-    j.write_fieldname("measReportIdleNR-r16");
-    meas_report_idle_nr_r16.to_json(j);
-  }
-  if (meas_report_idle_eutra_r16_present) {
-    j.write_fieldname("measReportIdleEUTRA-r16");
-    meas_report_idle_eutra_r16.to_json(j);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_meas_idle_report_r16_s_fields[] = {
+    {offsetof(var_meas_idle_report_r16_s, meas_report_idle_nr_r16),
+     (int32_t)offsetof(var_meas_idle_report_r16_s, meas_report_idle_nr_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &meas_result_idle_nr_r16_s::desc},
+    {offsetof(var_meas_idle_report_r16_s, meas_report_idle_eutra_r16),
+     (int32_t)offsetof(var_meas_idle_report_r16_s, meas_report_idle_eutra_r16_present),
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &meas_result_idle_eutra_r16_s::desc}};
+static const asn1::table::field_name seq_table_var_meas_idle_report_r16_s_names[] = {
+    {"measReportIdleNR-r16", nullptr},
+    {"measReportIdleEUTRA-r16", nullptr}};
+static const asn1::table::seq_opt seq_table_var_meas_idle_report_r16_s_opts[] = {
+    {0, (int32_t)offsetof(var_meas_idle_report_r16_s, meas_report_idle_nr_r16_present)},
+    {1, (int32_t)offsetof(var_meas_idle_report_r16_s, meas_report_idle_eutra_r16_present)}};
+const asn1::table::seq_desc var_meas_idle_report_r16_s::desc = {
+    {seq_table_var_meas_idle_report_r16_s_fields, 2, UINT64_C(0x0), seq_table_var_meas_idle_report_r16_s_opts, 2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_meas_idle_report_r16_s_names};
 
 // VarMeasReport ::= SEQUENCE
-OCUDUASN_CODE var_meas_report_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref,
-                        {cells_triggered_list.size() > 0,
-                         cli_triggered_list_r16_present,
-                         tx_pool_meas_to_add_mod_list_nr_r16.size() > 0,
-                         relays_triggered_list_r17.size() > 0,
-                         cells_met_leaving_cond_r18.size() > 0,
-                         reported_best_neighbour_cell_r18.size() > 0}));
-
-  HANDLE_CODE(pack_integer(bref, meas_id, (uint8_t)1u, (uint8_t)64u));
-  if (cells_triggered_list.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, cells_triggered_list, 1, 32));
-  }
-  HANDLE_CODE(pack_unconstrained_integer(bref, nof_reports_sent));
-  if (cli_triggered_list_r16_present) {
-    HANDLE_CODE(cli_triggered_list_r16.pack(bref));
-  }
-  if (tx_pool_meas_to_add_mod_list_nr_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, tx_pool_meas_to_add_mod_list_nr_r16, 1, 8, integer_packer<uint8_t>(1, 16)));
-  }
-  if (relays_triggered_list_r17.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, relays_triggered_list_r17, 1, 32));
-  }
-  if (cells_met_leaving_cond_r18.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, cells_met_leaving_cond_r18, 1, 8, integer_packer<uint16_t>(0, 1007)));
-  }
-  if (reported_best_neighbour_cell_r18.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, reported_best_neighbour_cell_r18, 1, 2, integer_packer<uint16_t>(0, 1007)));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_report_s::unpack(cbit_ref& bref)
-{
-  bool cells_triggered_list_present;
-  bool tx_pool_meas_to_add_mod_list_nr_r16_present;
-  bool relays_triggered_list_r17_present;
-  bool cells_met_leaving_cond_r18_present;
-  bool reported_best_neighbour_cell_r18_present;
-  HANDLE_CODE(unpack_bits(bref,
-                          {&cells_triggered_list_present,
-                           &cli_triggered_list_r16_present,
-                           &tx_pool_meas_to_add_mod_list_nr_r16_present,
-                           &relays_triggered_list_r17_present,
-                           &cells_met_leaving_cond_r18_present,
-                           &reported_best_neighbour_cell_r18_present}));
-
-  HANDLE_CODE(unpack_integer(meas_id, bref, (uint8_t)1u, (uint8_t)64u));
-  if (cells_triggered_list_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(cells_triggered_list, bref, 1, 32));
-  }
-  HANDLE_CODE(unpack_unconstrained_integer(nof_reports_sent, bref));
-  if (cli_triggered_list_r16_present) {
-    HANDLE_CODE(cli_triggered_list_r16.unpack(bref));
-  }
-  if (tx_pool_meas_to_add_mod_list_nr_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(tx_pool_meas_to_add_mod_list_nr_r16, bref, 1, 8, integer_packer<uint8_t>(1, 16)));
-  }
-  if (relays_triggered_list_r17_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(relays_triggered_list_r17, bref, 1, 32));
-  }
-  if (cells_met_leaving_cond_r18_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(cells_met_leaving_cond_r18, bref, 1, 8, integer_packer<uint16_t>(0, 1007)));
-  }
-  if (reported_best_neighbour_cell_r18_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(reported_best_neighbour_cell_r18, bref, 1, 2, integer_packer<uint16_t>(0, 1007)));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_meas_report_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("measId", meas_id);
-  if (cells_triggered_list.size() > 0) {
-    j.start_array("cellsTriggeredList");
-    for (const auto& e1 : cells_triggered_list) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  j.write_int("numberOfReportsSent", nof_reports_sent);
-  if (cli_triggered_list_r16_present) {
-    j.write_fieldname("cli-TriggeredList-r16");
-    cli_triggered_list_r16.to_json(j);
-  }
-  if (tx_pool_meas_to_add_mod_list_nr_r16.size() > 0) {
-    j.start_array("tx-PoolMeasToAddModListNR-r16");
-    for (const auto& e1 : tx_pool_meas_to_add_mod_list_nr_r16) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  if (relays_triggered_list_r17.size() > 0) {
-    j.start_array("relaysTriggeredList-r17");
-    for (const auto& e1 : relays_triggered_list_r17) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (cells_met_leaving_cond_r18.size() > 0) {
-    j.start_array("cellsMetLeavingCond-r18");
-    for (const auto& e1 : cells_met_leaving_cond_r18) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  if (reported_best_neighbour_cell_r18.size() > 0) {
-    j.start_array("reportedBestNeighbourCell-r18");
-    for (const auto& e1 : reported_best_neighbour_cell_r18) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_meas_report_s_fields[] = {
+    {offsetof(var_meas_report_s, meas_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(64),
+     nullptr},
+    {offsetof(var_meas_report_s, cells_triggered_list),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::item_list_codec<decltype(var_meas_report_s::cells_triggered_list),
+                                   asn1::table::choice_item_ops,
+                                   false,
+                                   true>::value,
+     &cells_triggered_list_item_c_::desc},
+    {offsetof(var_meas_report_s, nof_reports_sent),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_i64,
+     false,
+     false,
+     INT64_MIN,
+     UINT64_C(9223372036854775807),
+     nullptr},
+    {offsetof(var_meas_report_s, cli_triggered_list_r16),
+     (int32_t)offsetof(var_meas_report_s, cli_triggered_list_r16_present),
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &cli_triggered_list_r16_c::desc},
+    {offsetof(var_meas_report_s, tx_pool_meas_to_add_mod_list_nr_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::list_codec<decltype(var_meas_report_s::tx_pool_meas_to_add_mod_list_nr_r16),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(1), UINT64_C(16), false, false>>::value},
+    {offsetof(var_meas_report_s, relays_triggered_list_r17),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     32,
+     &asn1::table::list_codec<decltype(var_meas_report_s::relays_triggered_list_r17), asn1::table::struct_json>::value},
+    {offsetof(var_meas_report_s, cells_met_leaving_cond_r18),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::list_codec<decltype(var_meas_report_s::cells_met_leaving_cond_r18),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(1007), false, false>>::value},
+    {offsetof(var_meas_report_s, reported_best_neighbour_cell_r18),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     2,
+     &asn1::table::list_codec<decltype(var_meas_report_s::reported_best_neighbour_cell_r18),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(1007), false, false>>::value}};
+static const asn1::table::field_name seq_table_var_meas_report_s_names[] = {{"measId", nullptr},
+                                                                            {"cellsTriggeredList", nullptr},
+                                                                            {"numberOfReportsSent", nullptr},
+                                                                            {"cli-TriggeredList-r16", nullptr},
+                                                                            {"tx-PoolMeasToAddModListNR-r16", nullptr},
+                                                                            {"relaysTriggeredList-r17", nullptr},
+                                                                            {"cellsMetLeavingCond-r18", nullptr},
+                                                                            {"reportedBestNeighbourCell-r18", nullptr}};
+static const asn1::table::seq_opt    seq_table_var_meas_report_s_opts[]  = {
+    {1, asn1::table::seq_field::list_presence},
+    {3, (int32_t)offsetof(var_meas_report_s, cli_triggered_list_r16_present)},
+    {4, asn1::table::seq_field::list_presence},
+    {5, asn1::table::seq_field::list_presence},
+    {6, asn1::table::seq_field::list_presence},
+    {7, asn1::table::seq_field::list_presence}};
+const asn1::table::seq_desc var_meas_report_s::desc = {
+    {seq_table_var_meas_report_s_fields, 8, UINT64_C(0x5), seq_table_var_meas_report_s_opts, 6},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_meas_report_s_names};
 
 // VarMeasReportSL-r16 ::= SEQUENCE
-OCUDUASN_CODE var_meas_report_sl_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(sl_freq_triggered_list_r16.size() > 0, 1));
-
-  HANDLE_CODE(pack_integer(bref, sl_meas_id_r16, (uint8_t)1u, (uint8_t)64u));
-  if (sl_freq_triggered_list_r16.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, sl_freq_triggered_list_r16, 1, 8, integer_packer<uint32_t>(0, 3279165)));
-  }
-  HANDLE_CODE(pack_unconstrained_integer(bref, sl_nof_reports_sent_r16));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_report_sl_r16_s::unpack(cbit_ref& bref)
-{
-  bool sl_freq_triggered_list_r16_present;
-  HANDLE_CODE(bref.unpack(sl_freq_triggered_list_r16_present, 1));
-
-  HANDLE_CODE(unpack_integer(sl_meas_id_r16, bref, (uint8_t)1u, (uint8_t)64u));
-  if (sl_freq_triggered_list_r16_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(sl_freq_triggered_list_r16, bref, 1, 8, integer_packer<uint32_t>(0, 3279165)));
-  }
-  HANDLE_CODE(unpack_unconstrained_integer(sl_nof_reports_sent_r16, bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_meas_report_sl_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("sl-MeasId-r16", sl_meas_id_r16);
-  if (sl_freq_triggered_list_r16.size() > 0) {
-    j.start_array("sl-FrequencyTriggeredList-r16");
-    for (const auto& e1 : sl_freq_triggered_list_r16) {
-      j.write_int(e1);
-    }
-    j.end_array();
-  }
-  j.write_int("sl-NumberOfReportsSent-r16", sl_nof_reports_sent_r16);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_meas_report_sl_r16_s_fields[] = {
+    {offsetof(var_meas_report_sl_r16_s, sl_meas_id_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(64),
+     nullptr},
+    {offsetof(var_meas_report_sl_r16_s, sl_freq_triggered_list_r16),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::list_codec<decltype(var_meas_report_sl_r16_s::sl_freq_triggered_list_r16),
+                              asn1::table::int_json,
+                              asn1::table::int_items<false, INT64_C(0), UINT64_C(3279165), false, false>>::value},
+    {offsetof(var_meas_report_sl_r16_s, sl_nof_reports_sent_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_i64,
+     false,
+     false,
+     INT64_MIN,
+     UINT64_C(9223372036854775807),
+     nullptr}};
+static const asn1::table::field_name seq_table_var_meas_report_sl_r16_s_names[] = {
+    {"sl-MeasId-r16", nullptr},
+    {"sl-FrequencyTriggeredList-r16", nullptr},
+    {"sl-NumberOfReportsSent-r16", nullptr}};
+static const asn1::table::seq_opt seq_table_var_meas_report_sl_r16_s_opts[] = {
+    {1, asn1::table::seq_field::list_presence}};
+const asn1::table::seq_desc var_meas_report_sl_r16_s::desc = {
+    {seq_table_var_meas_report_sl_r16_s_fields, 3, UINT64_C(0x5), seq_table_var_meas_report_sl_r16_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_meas_report_sl_r16_s_names};
 
 // VarMeasReselectionConfig-r18 ::= SEQUENCE
-OCUDUASN_CODE var_meas_resel_cfg_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_bits(bref, {meas_resel_carrier_list_nr_r18.size() > 0, meas_resel_validity_dur_r18_present}));
-
-  if (meas_resel_carrier_list_nr_r18.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, meas_resel_carrier_list_nr_r18, 1, 8));
-  }
-  if (meas_resel_validity_dur_r18_present) {
-    HANDLE_CODE(meas_resel_validity_dur_r18.pack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_meas_resel_cfg_r18_s::unpack(cbit_ref& bref)
-{
-  bool meas_resel_carrier_list_nr_r18_present;
-  HANDLE_CODE(unpack_bits(bref, {&meas_resel_carrier_list_nr_r18_present, &meas_resel_validity_dur_r18_present}));
-
-  if (meas_resel_carrier_list_nr_r18_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(meas_resel_carrier_list_nr_r18, bref, 1, 8));
-  }
-  if (meas_resel_validity_dur_r18_present) {
-    HANDLE_CODE(meas_resel_validity_dur_r18.unpack(bref));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_meas_resel_cfg_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (meas_resel_carrier_list_nr_r18.size() > 0) {
-    j.start_array("measReselectionCarrierListNR-r18");
-    for (const auto& e1 : meas_resel_carrier_list_nr_r18) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  if (meas_resel_validity_dur_r18_present) {
-    j.write_str("measReselectionValidityDuration-r18", meas_resel_validity_dur_r18.to_string());
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_meas_resel_cfg_r18_s_fields[] = {
+    {offsetof(var_meas_resel_cfg_r18_s, meas_resel_carrier_list_nr_r18),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::item_list_codec<decltype(var_meas_resel_cfg_r18_s::meas_resel_carrier_list_nr_r18),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &meas_resel_carrier_nr_r18_s::desc},
+    {offsetof(var_meas_resel_cfg_r18_s, meas_resel_validity_dur_r18),
+     (int32_t)offsetof(var_meas_resel_cfg_r18_s, meas_resel_validity_dur_r18_present),
+     asn1::table::enum_op<decltype(var_meas_resel_cfg_r18_s::meas_resel_validity_dur_r18)>(),
+     decltype(var_meas_resel_cfg_r18_s::meas_resel_validity_dur_r18)::has_ext,
+     false,
+     decltype(var_meas_resel_cfg_r18_s::meas_resel_validity_dur_r18)::nof_types,
+     decltype(var_meas_resel_cfg_r18_s::meas_resel_validity_dur_r18)::nof_exts,
+     nullptr,
+     &meas_validity_dur_r18_opts::desc}};
+static const asn1::table::field_name seq_table_var_meas_resel_cfg_r18_s_names[] = {
+    {"measReselectionCarrierListNR-r18", nullptr},
+    {"measReselectionValidityDuration-r18", nullptr}};
+static const asn1::table::seq_opt seq_table_var_meas_resel_cfg_r18_s_opts[] = {
+    {0, asn1::table::seq_field::list_presence},
+    {1, (int32_t)offsetof(var_meas_resel_cfg_r18_s, meas_resel_validity_dur_r18_present)}};
+const asn1::table::seq_desc var_meas_resel_cfg_r18_s::desc = {
+    {seq_table_var_meas_resel_cfg_r18_s_fields, 2, UINT64_C(0x0), seq_table_var_meas_resel_cfg_r18_s_opts, 2},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_meas_resel_cfg_r18_s_names};
 
 // VarMobilityHistoryReport-r17 ::= SEQUENCE
-OCUDUASN_CODE var_mob_history_report_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(visited_pscell_info_list_r17.size() > 0, 1));
-
-  HANDLE_CODE(pack_dyn_seq_of(bref, visited_cell_info_list_r16, 1, 16));
-  if (visited_pscell_info_list_r17.size() > 0) {
-    HANDLE_CODE(pack_dyn_seq_of(bref, visited_pscell_info_list_r17, 1, 16));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_mob_history_report_r17_s::unpack(cbit_ref& bref)
-{
-  bool visited_pscell_info_list_r17_present;
-  HANDLE_CODE(bref.unpack(visited_pscell_info_list_r17_present, 1));
-
-  HANDLE_CODE(unpack_dyn_seq_of(visited_cell_info_list_r16, bref, 1, 16));
-  if (visited_pscell_info_list_r17_present) {
-    HANDLE_CODE(unpack_dyn_seq_of(visited_pscell_info_list_r17, bref, 1, 16));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_mob_history_report_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("visitedCellInfoList-r16");
-  for (const auto& e1 : visited_cell_info_list_r16) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  if (visited_pscell_info_list_r17.size() > 0) {
-    j.start_array("visitedPSCellInfoList-r17");
-    for (const auto& e1 : visited_pscell_info_list_r17) {
-      e1.to_json(j);
-    }
-    j.end_array();
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_mob_history_report_r17_s_fields[] = {
+    {offsetof(var_mob_history_report_r17_s, visited_cell_info_list_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(var_mob_history_report_r17_s::visited_cell_info_list_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &visited_cell_info_r16_s::desc},
+    {offsetof(var_mob_history_report_r17_s, visited_pscell_info_list_r17),
+     asn1::table::seq_field::list_presence,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::item_list_codec<decltype(var_mob_history_report_r17_s::visited_pscell_info_list_r17),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &visited_pscell_info_r17_s::desc}};
+static const asn1::table::field_name seq_table_var_mob_history_report_r17_s_names[] = {
+    {"visitedCellInfoList-r16", nullptr},
+    {"visitedPSCellInfoList-r17", nullptr}};
+static const asn1::table::seq_opt seq_table_var_mob_history_report_r17_s_opts[] = {
+    {1, asn1::table::seq_field::list_presence}};
+const asn1::table::seq_desc var_mob_history_report_r17_s::desc = {
+    {seq_table_var_mob_history_report_r17_s_fields, 2, UINT64_C(0x1), seq_table_var_mob_history_report_r17_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_mob_history_report_r17_s_names};
 
 // VarPendingRNA-Update ::= SEQUENCE
-OCUDUASN_CODE var_pending_rna_upd_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(bref.pack(pending_rna_upd_present, 1));
-
-  if (pending_rna_upd_present) {
-    HANDLE_CODE(bref.pack(pending_rna_upd, 1));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_pending_rna_upd_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(bref.unpack(pending_rna_upd_present, 1));
-
-  if (pending_rna_upd_present) {
-    HANDLE_CODE(bref.unpack(pending_rna_upd, 1));
-  }
-
-  return OCUDUASN_SUCCESS;
-}
-void var_pending_rna_upd_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  if (pending_rna_upd_present) {
-    j.write_bool("pendingRNA-Update", pending_rna_upd);
-  }
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_pending_rna_upd_s_fields[] = {
+    {offsetof(var_pending_rna_upd_s, pending_rna_upd),
+     (int32_t)offsetof(var_pending_rna_upd_s, pending_rna_upd_present),
+     asn1::table::field_op::boolean,
+     false,
+     false,
+     0,
+     0,
+     nullptr}};
+static const asn1::table::field_name seq_table_var_pending_rna_upd_s_names[] = {{"pendingRNA-Update", nullptr}};
+static const asn1::table::seq_opt    seq_table_var_pending_rna_upd_s_opts[]  = {
+    {0, (int32_t)offsetof(var_pending_rna_upd_s, pending_rna_upd_present)}};
+const asn1::table::seq_desc var_pending_rna_upd_s::desc = {
+    {seq_table_var_pending_rna_upd_s_fields, 1, UINT64_C(0x0), seq_table_var_pending_rna_upd_s_opts, 1},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_pending_rna_upd_s_names};
 
 // VarRA-Report-r16 ::= SEQUENCE
-OCUDUASN_CODE var_ra_report_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_dyn_seq_of(bref, ra_report_list_r16, 1, 8));
-  HANDLE_CODE(id_list_r18.pack(bref));
+static const asn1::table::seq_field seq_table_var_ra_report_r16_s_fields[] = {
+    {offsetof(var_ra_report_r16_s, ra_report_list_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     8,
+     &asn1::table::item_list_codec<decltype(var_ra_report_r16_s::ra_report_list_r16),
+                                   asn1::table::sequence_item_ops,
+                                   false,
+                                   true>::value,
+     &ra_report_r16_s::desc},
+    {offsetof(var_ra_report_r16_s, id_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_ra_report_r16_s::id_list_r18_c_::desc}};
+static const asn1::table::field_name seq_table_var_ra_report_r16_s_names[] = {{"ra-ReportList-r16", nullptr},
+                                                                              {"identityList-r18", nullptr}};
+const asn1::table::seq_desc          var_ra_report_r16_s::desc             = {
+    {seq_table_var_ra_report_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_ra_report_r16_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_ra_report_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_dyn_seq_of(ra_report_list_r16, bref, 1, 8));
-  HANDLE_CODE(id_list_r18.unpack(bref));
+static const asn1::table::storage_ops* const choice_storage_var_ra_report_r16_s_id_list_r18_c__alternatives[] = {
+    &asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
+    &asn1::table::alternative_ops<var_ra_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_, false>::value};
+const asn1::table::choice_storage_desc var_ra_report_r16_s::id_list_r18_c_::storage_desc = {
+    choice_storage_var_ra_report_r16_s_id_list_r18_c__alternatives,
+    2,
+    "var_ra_report_r16_s::id_list_r18_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-void var_ra_report_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.start_array("ra-ReportList-r16");
-  for (const auto& e1 : ra_report_list_r16) {
-    e1.to_json(j);
-  }
-  j.end_array();
-  j.write_fieldname("identityList-r18");
-  id_list_r18.to_json(j);
-  j.end_obj();
-}
-
-void var_ra_report_r16_s::id_list_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.destroy<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.destroy<snpn_id_list_r18_l_>();
-      break;
-    default:
-      break;
-  }
-}
-void var_ra_report_r16_s::id_list_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.init<snpn_id_list_r18_l_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_ra_report_r16_s::id_list_r18_c_");
-  }
-}
-var_ra_report_r16_s::id_list_r18_c_::id_list_r18_c_(const var_ra_report_r16_s::id_list_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.init(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_ra_report_r16_s::id_list_r18_c_");
-  }
-}
-var_ra_report_r16_s::id_list_r18_c_&
-var_ra_report_r16_s::id_list_r18_c_::operator=(const var_ra_report_r16_s::id_list_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.set(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.set(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_ra_report_r16_s::id_list_r18_c_");
-  }
-
-  return *this;
-}
 plmn_id_list2_r16_l& var_ra_report_r16_s::id_list_r18_c_::set_plmn_id_list_r18()
 {
   set(types::plmn_id_list_r18);
@@ -1991,163 +1458,87 @@ var_ra_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_& var_ra_report_r16_s::i
   set(types::snpn_id_list_r18);
   return c.get<snpn_id_list_r18_l_>();
 }
-void var_ra_report_r16_s::id_list_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      j.start_array("plmn-IdentityList-r18");
-      for (const auto& e1 : c.get<plmn_id_list2_r16_l>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    case types::snpn_id_list_r18:
-      j.start_array("snpn-IdentityList-r18");
-      for (const auto& e1 : c.get<snpn_id_list_r18_l_>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_ra_report_r16_s::id_list_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_ra_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<snpn_id_list_r18_l_>(), 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_ra_report_r16_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_ra_report_r16_s::id_list_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<plmn_id_list2_r16_l>(), bref, 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<snpn_id_list_r18_l_>(), bref, 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_ra_report_r16_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_ra_report_r16_s_id_list_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     12,
+     &asn1::table::list_codec<var_ra_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_,
+                              asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_var_ra_report_r16_s_id_list_r18_c__names[] = {
+    {"plmn-IdentityList-r18", nullptr},
+    {"snpn-IdentityList-r18", nullptr}};
+const asn1::table::choice_desc var_ra_report_r16_s::id_list_r18_c_::desc = {
+    asn1::table::enum_int_type<var_ra_report_r16_s::id_list_r18_c_::types>(),
+    var_ra_report_r16_s::id_list_r18_c_::types::nof_types,
+    var_ra_report_r16_s::id_list_r18_c_::types::nof_exts,
+    var_ra_report_r16_s::id_list_r18_c_::types::has_ext,
+    false,
+    choice_table_var_ra_report_r16_s_id_list_r18_c__alternatives,
+    nullptr,
+    choice_table_var_ra_report_r16_s_id_list_r18_c__names,
+    "var_ra_report_r16_s::id_list_r18_c_",
+    offsetof(var_ra_report_r16_s::id_list_r18_c_, c.type),
+    offsetof(var_ra_report_r16_s::id_list_r18_c_, c.value),
+    false,
+    &var_ra_report_r16_s::id_list_r18_c_::storage_desc};
 
-const char* var_ra_report_r16_s::id_list_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"plmn-IdentityList-r18", "snpn-IdentityList-r18"};
-  return convert_enum_idx(names, 2, value, "var_ra_report_r16_s::id_list_r18_c_::types");
-}
+static const char*           enum_names_var_ra_report_r16_s_id_list_r18_c__types_values[] = {"plmn-IdentityList-r18",
+                                                                                             "snpn-IdentityList-r18"};
+const asn1::table::enum_desc var_ra_report_r16_s::id_list_r18_c_::types_opts::desc        = {
+    enum_names_var_ra_report_r16_s_id_list_r18_c__types_values,
+    2,
+    "var_ra_report_r16_s::id_list_r18_c_::types"};
 
 // VarRLF-Report-r16 ::= SEQUENCE
-OCUDUASN_CODE var_rlf_report_r16_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(rlf_report_r16.pack(bref));
-  HANDLE_CODE(id_list_r18.pack(bref));
+static const asn1::table::seq_field seq_table_var_rlf_report_r16_s_fields[] = {
+    {offsetof(var_rlf_report_r16_s, rlf_report_r16),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &rlf_report_r16_c::desc},
+    {offsetof(var_rlf_report_r16_s, id_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_rlf_report_r16_s::id_list_r18_c_::desc}};
+static const asn1::table::field_name seq_table_var_rlf_report_r16_s_names[] = {{"rlf-Report-r16", nullptr},
+                                                                               {"identityList-r18", nullptr}};
+const asn1::table::seq_desc          var_rlf_report_r16_s::desc             = {
+    {seq_table_var_rlf_report_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_rlf_report_r16_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_rlf_report_r16_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(rlf_report_r16.unpack(bref));
-  HANDLE_CODE(id_list_r18.unpack(bref));
+static const asn1::table::storage_ops* const choice_storage_var_rlf_report_r16_s_id_list_r18_c__alternatives[] = {
+    &asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
+    &asn1::table::alternative_ops<var_rlf_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_, false>::value};
+const asn1::table::choice_storage_desc var_rlf_report_r16_s::id_list_r18_c_::storage_desc = {
+    choice_storage_var_rlf_report_r16_s_id_list_r18_c__alternatives,
+    2,
+    "var_rlf_report_r16_s::id_list_r18_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-void var_rlf_report_r16_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("rlf-Report-r16");
-  rlf_report_r16.to_json(j);
-  j.write_fieldname("identityList-r18");
-  id_list_r18.to_json(j);
-  j.end_obj();
-}
-
-void var_rlf_report_r16_s::id_list_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.destroy<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.destroy<snpn_id_list_r18_l_>();
-      break;
-    default:
-      break;
-  }
-}
-void var_rlf_report_r16_s::id_list_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.init<snpn_id_list_r18_l_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_rlf_report_r16_s::id_list_r18_c_");
-  }
-}
-var_rlf_report_r16_s::id_list_r18_c_::id_list_r18_c_(const var_rlf_report_r16_s::id_list_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.init(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_rlf_report_r16_s::id_list_r18_c_");
-  }
-}
-var_rlf_report_r16_s::id_list_r18_c_&
-var_rlf_report_r16_s::id_list_r18_c_::operator=(const var_rlf_report_r16_s::id_list_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.set(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.set(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_rlf_report_r16_s::id_list_r18_c_");
-  }
-
-  return *this;
-}
 plmn_id_list2_r16_l& var_rlf_report_r16_s::id_list_r18_c_::set_plmn_id_list_r18()
 {
   set(types::plmn_id_list_r18);
@@ -2158,237 +1549,181 @@ var_rlf_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_& var_rlf_report_r16_s:
   set(types::snpn_id_list_r18);
   return c.get<snpn_id_list_r18_l_>();
 }
-void var_rlf_report_r16_s::id_list_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      j.start_array("plmn-IdentityList-r18");
-      for (const auto& e1 : c.get<plmn_id_list2_r16_l>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    case types::snpn_id_list_r18:
-      j.start_array("snpn-IdentityList-r18");
-      for (const auto& e1 : c.get<snpn_id_list_r18_l_>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_rlf_report_r16_s::id_list_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_rlf_report_r16_s::id_list_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<snpn_id_list_r18_l_>(), 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_rlf_report_r16_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_rlf_report_r16_s::id_list_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<plmn_id_list2_r16_l>(), bref, 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<snpn_id_list_r18_l_>(), bref, 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_rlf_report_r16_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_rlf_report_r16_s_id_list_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     12,
+     &asn1::table::list_codec<var_rlf_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_,
+                              asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_var_rlf_report_r16_s_id_list_r18_c__names[] = {
+    {"plmn-IdentityList-r18", nullptr},
+    {"snpn-IdentityList-r18", nullptr}};
+const asn1::table::choice_desc var_rlf_report_r16_s::id_list_r18_c_::desc = {
+    asn1::table::enum_int_type<var_rlf_report_r16_s::id_list_r18_c_::types>(),
+    var_rlf_report_r16_s::id_list_r18_c_::types::nof_types,
+    var_rlf_report_r16_s::id_list_r18_c_::types::nof_exts,
+    var_rlf_report_r16_s::id_list_r18_c_::types::has_ext,
+    false,
+    choice_table_var_rlf_report_r16_s_id_list_r18_c__alternatives,
+    nullptr,
+    choice_table_var_rlf_report_r16_s_id_list_r18_c__names,
+    "var_rlf_report_r16_s::id_list_r18_c_",
+    offsetof(var_rlf_report_r16_s::id_list_r18_c_, c.type),
+    offsetof(var_rlf_report_r16_s::id_list_r18_c_, c.value),
+    false,
+    &var_rlf_report_r16_s::id_list_r18_c_::storage_desc};
 
-const char* var_rlf_report_r16_s::id_list_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"plmn-IdentityList-r18", "snpn-IdentityList-r18"};
-  return convert_enum_idx(names, 2, value, "var_rlf_report_r16_s::id_list_r18_c_::types");
-}
+static const char*           enum_names_var_rlf_report_r16_s_id_list_r18_c__types_values[] = {"plmn-IdentityList-r18",
+                                                                                              "snpn-IdentityList-r18"};
+const asn1::table::enum_desc var_rlf_report_r16_s::id_list_r18_c_::types_opts::desc        = {
+    enum_names_var_rlf_report_r16_s_id_list_r18_c__types_values,
+    2,
+    "var_rlf_report_r16_s::id_list_r18_c_::types"};
 
 // VarResumeMAC-Input ::= SEQUENCE
-OCUDUASN_CODE var_resume_mac_input_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, source_pci, (uint16_t)0u, (uint16_t)1007u));
-  HANDLE_CODE(target_cell_id.pack(bref));
-  HANDLE_CODE(pack_integer(bref, source_c_rnti, (uint32_t)0u, (uint32_t)65535u));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_resume_mac_input_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(source_pci, bref, (uint16_t)0u, (uint16_t)1007u));
-  HANDLE_CODE(target_cell_id.unpack(bref));
-  HANDLE_CODE(unpack_integer(source_c_rnti, bref, (uint32_t)0u, (uint32_t)65535u));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_resume_mac_input_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("sourcePhysCellId", source_pci);
-  j.write_fieldname("targetCellIdentity");
-  target_cell_id.to_json(j);
-  j.write_int("source-c-RNTI", source_c_rnti);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_resume_mac_input_s_fields[] = {
+    {offsetof(var_resume_mac_input_s, source_pci),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1007),
+     nullptr},
+    {offsetof(var_resume_mac_input_s, target_cell_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(var_resume_mac_input_s::target_cell_id), asn1::table::struct_json>::value},
+    {offsetof(var_resume_mac_input_s, source_c_rnti),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(65535),
+     nullptr}};
+static const asn1::table::field_name seq_table_var_resume_mac_input_s_names[] = {{"sourcePhysCellId", nullptr},
+                                                                                 {"targetCellIdentity", nullptr},
+                                                                                 {"source-c-RNTI", nullptr}};
+const asn1::table::seq_desc          var_resume_mac_input_s::desc             = {
+    {seq_table_var_resume_mac_input_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_resume_mac_input_s_names};
 
 // VarServingSecurityCellSetID ::= SEQUENCE
-OCUDUASN_CODE var_serving_security_cell_set_id_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, serving_security_cell_set_id_r18, (uint8_t)1u, (uint8_t)9u));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_serving_security_cell_set_id_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(serving_security_cell_set_id_r18, bref, (uint8_t)1u, (uint8_t)9u));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_serving_security_cell_set_id_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("servingSecurityCellSetId-r18", serving_security_cell_set_id_r18);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_serving_security_cell_set_id_s_fields[] = {
+    {offsetof(var_serving_security_cell_set_id_s, serving_security_cell_set_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(1),
+     UINT64_C(9),
+     nullptr}};
+static const asn1::table::field_name seq_table_var_serving_security_cell_set_id_s_names[] = {
+    {"servingSecurityCellSetId-r18", nullptr}};
+const asn1::table::seq_desc var_serving_security_cell_set_id_s::desc = {
+    {seq_table_var_serving_security_cell_set_id_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_serving_security_cell_set_id_s_names};
 
 // VarShortMAC-Input ::= SEQUENCE
-OCUDUASN_CODE var_short_mac_input_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, source_pci, (uint16_t)0u, (uint16_t)1007u));
-  HANDLE_CODE(target_cell_id.pack(bref));
-  HANDLE_CODE(pack_integer(bref, source_c_rnti, (uint32_t)0u, (uint32_t)65535u));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_short_mac_input_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(source_pci, bref, (uint16_t)0u, (uint16_t)1007u));
-  HANDLE_CODE(target_cell_id.unpack(bref));
-  HANDLE_CODE(unpack_integer(source_c_rnti, bref, (uint32_t)0u, (uint32_t)65535u));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_short_mac_input_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("sourcePhysCellId", source_pci);
-  j.write_fieldname("targetCellIdentity");
-  target_cell_id.to_json(j);
-  j.write_int("source-c-RNTI", source_c_rnti);
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_short_mac_input_s_fields[] = {
+    {offsetof(var_short_mac_input_s, source_pci),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u16,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(1007),
+     nullptr},
+    {offsetof(var_short_mac_input_s, target_cell_id),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(var_short_mac_input_s::target_cell_id), asn1::table::struct_json>::value},
+    {offsetof(var_short_mac_input_s, source_c_rnti),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u32,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(65535),
+     nullptr}};
+static const asn1::table::field_name seq_table_var_short_mac_input_s_names[] = {{"sourcePhysCellId", nullptr},
+                                                                                {"targetCellIdentity", nullptr},
+                                                                                {"source-c-RNTI", nullptr}};
+const asn1::table::seq_desc          var_short_mac_input_s::desc             = {
+    {seq_table_var_short_mac_input_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_short_mac_input_s_names};
 
 // VarSuccessHO-Report-r17 ::= SEQUENCE
-OCUDUASN_CODE var_success_ho_report_r17_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(success_ho_report_r17.pack(bref));
-  HANDLE_CODE(id_list_r18.pack(bref));
+static const asn1::table::seq_field seq_table_var_success_ho_report_r17_s_fields[] = {
+    {offsetof(var_success_ho_report_r17_s, success_ho_report_r17),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &success_ho_report_r17_s::desc},
+    {offsetof(var_success_ho_report_r17_s, id_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_success_ho_report_r17_s::id_list_r18_c_::desc}};
+static const asn1::table::field_name seq_table_var_success_ho_report_r17_s_names[] = {{"successHO-Report-r17", nullptr},
+                                                                                      {"identityList-r18", nullptr}};
+const asn1::table::seq_desc          var_success_ho_report_r17_s::desc             = {
+    {seq_table_var_success_ho_report_r17_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_success_ho_report_r17_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_success_ho_report_r17_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(success_ho_report_r17.unpack(bref));
-  HANDLE_CODE(id_list_r18.unpack(bref));
+static const asn1::table::storage_ops* const choice_storage_var_success_ho_report_r17_s_id_list_r18_c__alternatives[] =
+    {&asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
+     &asn1::table::alternative_ops<var_success_ho_report_r17_s::id_list_r18_c_::snpn_id_list_r18_l_, false>::value};
+const asn1::table::choice_storage_desc var_success_ho_report_r17_s::id_list_r18_c_::storage_desc = {
+    choice_storage_var_success_ho_report_r17_s_id_list_r18_c__alternatives,
+    2,
+    "var_success_ho_report_r17_s::id_list_r18_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-void var_success_ho_report_r17_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("successHO-Report-r17");
-  success_ho_report_r17.to_json(j);
-  j.write_fieldname("identityList-r18");
-  id_list_r18.to_json(j);
-  j.end_obj();
-}
-
-void var_success_ho_report_r17_s::id_list_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.destroy<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.destroy<snpn_id_list_r18_l_>();
-      break;
-    default:
-      break;
-  }
-}
-void var_success_ho_report_r17_s::id_list_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.init<snpn_id_list_r18_l_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_ho_report_r17_s::id_list_r18_c_");
-  }
-}
-var_success_ho_report_r17_s::id_list_r18_c_::id_list_r18_c_(const var_success_ho_report_r17_s::id_list_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.init(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_ho_report_r17_s::id_list_r18_c_");
-  }
-}
-var_success_ho_report_r17_s::id_list_r18_c_&
-var_success_ho_report_r17_s::id_list_r18_c_::operator=(const var_success_ho_report_r17_s::id_list_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.set(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.set(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_ho_report_r17_s::id_list_r18_c_");
-  }
-
-  return *this;
-}
 plmn_id_list2_r16_l& var_success_ho_report_r17_s::id_list_r18_c_::set_plmn_id_list_r18()
 {
   set(types::plmn_id_list_r18);
@@ -2400,164 +1735,90 @@ var_success_ho_report_r17_s::id_list_r18_c_::set_snpn_id_list_r18()
   set(types::snpn_id_list_r18);
   return c.get<snpn_id_list_r18_l_>();
 }
-void var_success_ho_report_r17_s::id_list_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      j.start_array("plmn-IdentityList-r18");
-      for (const auto& e1 : c.get<plmn_id_list2_r16_l>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    case types::snpn_id_list_r18:
-      j.start_array("snpn-IdentityList-r18");
-      for (const auto& e1 : c.get<snpn_id_list_r18_l_>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_ho_report_r17_s::id_list_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_success_ho_report_r17_s::id_list_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<snpn_id_list_r18_l_>(), 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_ho_report_r17_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_success_ho_report_r17_s::id_list_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<plmn_id_list2_r16_l>(), bref, 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<snpn_id_list_r18_l_>(), bref, 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_ho_report_r17_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_success_ho_report_r17_s_id_list_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     12,
+     &asn1::table::list_codec<var_success_ho_report_r17_s::id_list_r18_c_::snpn_id_list_r18_l_,
+                              asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_var_success_ho_report_r17_s_id_list_r18_c__names[] = {
+    {"plmn-IdentityList-r18", nullptr},
+    {"snpn-IdentityList-r18", nullptr}};
+const asn1::table::choice_desc var_success_ho_report_r17_s::id_list_r18_c_::desc = {
+    asn1::table::enum_int_type<var_success_ho_report_r17_s::id_list_r18_c_::types>(),
+    var_success_ho_report_r17_s::id_list_r18_c_::types::nof_types,
+    var_success_ho_report_r17_s::id_list_r18_c_::types::nof_exts,
+    var_success_ho_report_r17_s::id_list_r18_c_::types::has_ext,
+    false,
+    choice_table_var_success_ho_report_r17_s_id_list_r18_c__alternatives,
+    nullptr,
+    choice_table_var_success_ho_report_r17_s_id_list_r18_c__names,
+    "var_success_ho_report_r17_s::id_list_r18_c_",
+    offsetof(var_success_ho_report_r17_s::id_list_r18_c_, c.type),
+    offsetof(var_success_ho_report_r17_s::id_list_r18_c_, c.value),
+    false,
+    &var_success_ho_report_r17_s::id_list_r18_c_::storage_desc};
 
-const char* var_success_ho_report_r17_s::id_list_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"plmn-IdentityList-r18", "snpn-IdentityList-r18"};
-  return convert_enum_idx(names, 2, value, "var_success_ho_report_r17_s::id_list_r18_c_::types");
-}
+static const char* enum_names_var_success_ho_report_r17_s_id_list_r18_c__types_values[]    = {"plmn-IdentityList-r18",
+                                                                                              "snpn-IdentityList-r18"};
+const asn1::table::enum_desc var_success_ho_report_r17_s::id_list_r18_c_::types_opts::desc = {
+    enum_names_var_success_ho_report_r17_s_id_list_r18_c__types_values,
+    2,
+    "var_success_ho_report_r17_s::id_list_r18_c_::types"};
 
 // VarSuccessPSCell-Report-r18 ::= SEQUENCE
-OCUDUASN_CODE var_success_pscell_report_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(success_pscell_report_r18.pack(bref));
-  HANDLE_CODE(id_list_r18.pack(bref));
+static const asn1::table::seq_field seq_table_var_success_pscell_report_r18_s_fields[] = {
+    {offsetof(var_success_pscell_report_r18_s, success_pscell_report_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &success_pscell_report_r18_s::desc},
+    {offsetof(var_success_pscell_report_r18_s, id_list_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::choice,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &var_success_pscell_report_r18_s::id_list_r18_c_::desc}};
+static const asn1::table::field_name seq_table_var_success_pscell_report_r18_s_names[] = {
+    {"successPSCell-Report-r18", nullptr},
+    {"identityList-r18", nullptr}};
+const asn1::table::seq_desc var_success_pscell_report_r18_s::desc = {
+    {seq_table_var_success_pscell_report_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_success_pscell_report_r18_s_names};
 
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_success_pscell_report_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(success_pscell_report_r18.unpack(bref));
-  HANDLE_CODE(id_list_r18.unpack(bref));
+static const asn1::table::storage_ops* const
+    choice_storage_var_success_pscell_report_r18_s_id_list_r18_c__alternatives[] = {
+        &asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
+        &asn1::table::alternative_ops<var_success_pscell_report_r18_s::id_list_r18_c_::snpn_id_list_r18_l_,
+                                      false>::value};
+const asn1::table::choice_storage_desc var_success_pscell_report_r18_s::id_list_r18_c_::storage_desc = {
+    choice_storage_var_success_pscell_report_r18_s_id_list_r18_c__alternatives,
+    2,
+    "var_success_pscell_report_r18_s::id_list_r18_c_"};
 
-  return OCUDUASN_SUCCESS;
-}
-void var_success_pscell_report_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_fieldname("successPSCell-Report-r18");
-  success_pscell_report_r18.to_json(j);
-  j.write_fieldname("identityList-r18");
-  id_list_r18.to_json(j);
-  j.end_obj();
-}
-
-void var_success_pscell_report_r18_s::id_list_r18_c_::destroy_()
-{
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.destroy<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.destroy<snpn_id_list_r18_l_>();
-      break;
-    default:
-      break;
-  }
-}
-void var_success_pscell_report_r18_s::id_list_r18_c_::set(types::options e)
-{
-  destroy_();
-  type_ = e;
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init<plmn_id_list2_r16_l>();
-      break;
-    case types::snpn_id_list_r18:
-      c.init<snpn_id_list_r18_l_>();
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_pscell_report_r18_s::id_list_r18_c_");
-  }
-}
-var_success_pscell_report_r18_s::id_list_r18_c_::id_list_r18_c_(
-    const var_success_pscell_report_r18_s::id_list_r18_c_& other)
-{
-  type_ = other.type();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.init(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.init(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_pscell_report_r18_s::id_list_r18_c_");
-  }
-}
-var_success_pscell_report_r18_s::id_list_r18_c_&
-var_success_pscell_report_r18_s::id_list_r18_c_::operator=(const var_success_pscell_report_r18_s::id_list_r18_c_& other)
-{
-  if (this == &other) {
-    return *this;
-  }
-  set(other.type());
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      c.set(other.c.get<plmn_id_list2_r16_l>());
-      break;
-    case types::snpn_id_list_r18:
-      c.set(other.c.get<snpn_id_list_r18_l_>());
-      break;
-    case types::nulltype:
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_pscell_report_r18_s::id_list_r18_c_");
-  }
-
-  return *this;
-}
 plmn_id_list2_r16_l& var_success_pscell_report_r18_s::id_list_r18_c_::set_plmn_id_list_r18()
 {
   set(types::plmn_id_list_r18);
@@ -2569,97 +1830,103 @@ var_success_pscell_report_r18_s::id_list_r18_c_::set_snpn_id_list_r18()
   set(types::snpn_id_list_r18);
   return c.get<snpn_id_list_r18_l_>();
 }
-void var_success_pscell_report_r18_s::id_list_r18_c_::to_json(json_writer& j) const
-{
-  j.start_obj();
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      j.start_array("plmn-IdentityList-r18");
-      for (const auto& e1 : c.get<plmn_id_list2_r16_l>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    case types::snpn_id_list_r18:
-      j.start_array("snpn-IdentityList-r18");
-      for (const auto& e1 : c.get<snpn_id_list_r18_l_>()) {
-        e1.to_json(j);
-      }
-      j.end_array();
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_pscell_report_r18_s::id_list_r18_c_");
-  }
-  j.end_obj();
-}
-OCUDUASN_CODE var_success_pscell_report_r18_s::id_list_r18_c_::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(type_.pack(bref));
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<plmn_id_list2_r16_l>(), 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(pack_dyn_seq_of(bref, c.get<snpn_id_list_r18_l_>(), 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_pscell_report_r18_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_success_pscell_report_r18_s::id_list_r18_c_::unpack(cbit_ref& bref)
-{
-  types e;
-  HANDLE_CODE(e.unpack(bref));
-  set(e);
-  switch (type_) {
-    case types::plmn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<plmn_id_list2_r16_l>(), bref, 1, 16));
-      break;
-    case types::snpn_id_list_r18:
-      HANDLE_CODE(unpack_dyn_seq_of(c.get<snpn_id_list_r18_l_>(), bref, 1, 12));
-      break;
-    default:
-      log_invalid_choice_id(type_, "var_success_pscell_report_r18_s::id_list_r18_c_");
-      return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return OCUDUASN_SUCCESS;
-}
+static const asn1::table::seq_field choice_table_var_success_pscell_report_r18_s_id_list_r18_c__alternatives[] = {
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     16,
+     &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
+    {0,
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     1,
+     12,
+     &asn1::table::list_codec<var_success_pscell_report_r18_s::id_list_r18_c_::snpn_id_list_r18_l_,
+                              asn1::table::struct_json>::value}};
+static const asn1::table::field_name choice_table_var_success_pscell_report_r18_s_id_list_r18_c__names[] = {
+    {"plmn-IdentityList-r18", nullptr},
+    {"snpn-IdentityList-r18", nullptr}};
+const asn1::table::choice_desc var_success_pscell_report_r18_s::id_list_r18_c_::desc = {
+    asn1::table::enum_int_type<var_success_pscell_report_r18_s::id_list_r18_c_::types>(),
+    var_success_pscell_report_r18_s::id_list_r18_c_::types::nof_types,
+    var_success_pscell_report_r18_s::id_list_r18_c_::types::nof_exts,
+    var_success_pscell_report_r18_s::id_list_r18_c_::types::has_ext,
+    false,
+    choice_table_var_success_pscell_report_r18_s_id_list_r18_c__alternatives,
+    nullptr,
+    choice_table_var_success_pscell_report_r18_s_id_list_r18_c__names,
+    "var_success_pscell_report_r18_s::id_list_r18_c_",
+    offsetof(var_success_pscell_report_r18_s::id_list_r18_c_, c.type),
+    offsetof(var_success_pscell_report_r18_s::id_list_r18_c_, c.value),
+    false,
+    &var_success_pscell_report_r18_s::id_list_r18_c_::storage_desc};
 
-const char* var_success_pscell_report_r18_s::id_list_r18_c_::types_opts::to_string() const
-{
-  static const char* names[] = {"plmn-IdentityList-r18", "snpn-IdentityList-r18"};
-  return convert_enum_idx(names, 2, value, "var_success_pscell_report_r18_s::id_list_r18_c_::types");
-}
+static const char* enum_names_var_success_pscell_report_r18_s_id_list_r18_c__types_values[] = {"plmn-IdentityList-r18",
+                                                                                               "snpn-IdentityList-r18"};
+const asn1::table::enum_desc var_success_pscell_report_r18_s::id_list_r18_c_::types_opts::desc = {
+    enum_names_var_success_pscell_report_r18_s_id_list_r18_c__types_values,
+    2,
+    "var_success_pscell_report_r18_s::id_list_r18_c_::types"};
 
 // VarTSS-Info-r18 ::= SEQUENCE
-OCUDUASN_CODE var_tss_info_r18_s::pack(bit_ref& bref) const
-{
-  HANDLE_CODE(pack_integer(bref, stored_event_id_r18, (uint8_t)0u, (uint8_t)63u));
-  HANDLE_CODE(stored_global_gnb_id_r18.plmn_id_r18.pack(bref));
-  HANDLE_CODE(stored_global_gnb_id_r18.gnb_id_r18.pack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-OCUDUASN_CODE var_tss_info_r18_s::unpack(cbit_ref& bref)
-{
-  HANDLE_CODE(unpack_integer(stored_event_id_r18, bref, (uint8_t)0u, (uint8_t)63u));
-  HANDLE_CODE(stored_global_gnb_id_r18.plmn_id_r18.unpack(bref));
-  HANDLE_CODE(stored_global_gnb_id_r18.gnb_id_r18.unpack(bref));
-
-  return OCUDUASN_SUCCESS;
-}
-void var_tss_info_r18_s::to_json(json_writer& j) const
-{
-  j.start_obj();
-  j.write_int("storedEventID-r18", stored_event_id_r18);
-  j.write_fieldname("storedGlobalGnbID-r18");
-  j.start_obj();
-  j.write_fieldname("plmn-Identity-r18");
-  stored_global_gnb_id_r18.plmn_id_r18.to_json(j);
-  j.write_fieldname("gnb-ID-r18");
-  stored_global_gnb_id_r18.gnb_id_r18.to_json(j);
-  j.end_obj();
-  j.end_obj();
-}
+static const asn1::table::seq_field seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__fields[] = {
+    {offsetof(var_tss_info_r18_s::stored_global_gnb_id_r18_s_, plmn_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &plmn_id_s::desc},
+    {offsetof(var_tss_info_r18_s::stored_global_gnb_id_r18_s_, gnb_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::codec,
+     false,
+     false,
+     0,
+     0,
+     &asn1::table::object_codec<decltype(var_tss_info_r18_s::stored_global_gnb_id_r18_s_::gnb_id_r18),
+                                asn1::table::struct_json>::value}};
+static const asn1::table::field_name seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__names[] = {
+    {"plmn-Identity-r18", nullptr},
+    {"gnb-ID-r18", nullptr}};
+static const asn1::table::seq_desc seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s_ = {
+    {seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__names};
+static const asn1::table::seq_field seq_table_var_tss_info_r18_s_fields[] = {
+    {offsetof(var_tss_info_r18_s, stored_event_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::int_u8,
+     false,
+     false,
+     INT64_C(0),
+     UINT64_C(63),
+     nullptr},
+    {offsetof(var_tss_info_r18_s, stored_global_gnb_id_r18),
+     asn1::table::seq_field::mandatory,
+     asn1::table::field_op::sequence,
+     false,
+     false,
+     0,
+     0,
+     nullptr,
+     &seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s_}};
+static const asn1::table::field_name seq_table_var_tss_info_r18_s_names[] = {{"storedEventID-r18", nullptr},
+                                                                             {"storedGlobalGnbID-r18", nullptr}};
+const asn1::table::seq_desc          var_tss_info_r18_s::desc             = {
+    {seq_table_var_tss_info_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    seq_table_var_tss_info_r18_s_names};

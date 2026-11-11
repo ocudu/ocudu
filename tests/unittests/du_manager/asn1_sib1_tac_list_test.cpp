@@ -24,7 +24,7 @@ static void pack_and_unpack_sib1(const du_cell_config& cell_cfg, asn1::rrc_nr::s
 {
   byte_buffer    buf = asn1_packer::pack_sib1(cell_cfg);
   asn1::cbit_ref bref{buf};
-  ASSERT_EQ(sib1.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(sib1, bref), asn1::OCUDUASN_SUCCESS);
 }
 
 /// A cell broadcasting \c tac_list_size TACs, led by \c du_cell_config::tac.

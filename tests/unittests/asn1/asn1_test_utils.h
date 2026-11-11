@@ -6,7 +6,7 @@
 #pragma once
 
 #include "ocudu/adt/byte_buffer.h"
-#include "ocudu/asn1/asn1_utils.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include <string>
 #include <vector>
 
@@ -33,14 +33,14 @@ asn1::OCUDUASN_CODE test_pack_roundtrip(const Msg& msg)
 {
   ocudu::byte_buffer buf;
   asn1::bit_ref      bref(buf);
-  if (msg.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg) != asn1::OCUDUASN_SUCCESS) {
     asn1::log_error_code(asn1::OCUDUASN_ERROR_ENCODE_FAIL, __FILE__, __LINE__);
     return asn1::OCUDUASN_ERROR_ENCODE_FAIL;
   }
 
   Msg            msg2;
   asn1::cbit_ref cbref(buf);
-  if (msg2.unpack(cbref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(msg2, cbref) != asn1::OCUDUASN_SUCCESS) {
     asn1::log_error_code(asn1::OCUDUASN_ERROR_DECODE_FAIL, __FILE__, __LINE__);
     return asn1::OCUDUASN_ERROR_DECODE_FAIL;
   }
@@ -51,7 +51,7 @@ asn1::OCUDUASN_CODE test_pack_roundtrip(const Msg& msg)
 
   ocudu::byte_buffer buf2;
   asn1::bit_ref      bref2(buf2);
-  if (msg2.pack(bref2) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref2, msg2) != asn1::OCUDUASN_SUCCESS) {
     asn1::log_error_code(asn1::OCUDUASN_ERROR_ENCODE_FAIL, __FILE__, __LINE__);
     return asn1::OCUDUASN_ERROR_ENCODE_FAIL;
   }
@@ -68,17 +68,17 @@ asn1::OCUDUASN_CODE test_unpack_roundtrip(const ocudu::byte_buffer& encoded)
 {
   Msg            msg;
   asn1::cbit_ref cbref(encoded);
-  if (msg.unpack(cbref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(msg, cbref) != asn1::OCUDUASN_SUCCESS) {
     asn1::log_error_code(asn1::OCUDUASN_ERROR_DECODE_FAIL, __FILE__, __LINE__);
     return asn1::OCUDUASN_ERROR_DECODE_FAIL;
   }
 
   asn1::json_writer j;
-  msg.to_json(j);
+  asn1::to_json(j, msg);
 
   ocudu::byte_buffer repacked;
   asn1::bit_ref      bref(repacked);
-  if (msg.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, msg) != asn1::OCUDUASN_SUCCESS) {
     asn1::log_error_code(asn1::OCUDUASN_ERROR_ENCODE_FAIL, __FILE__, __LINE__);
     return asn1::OCUDUASN_ERROR_ENCODE_FAIL;
   }

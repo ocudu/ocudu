@@ -76,7 +76,7 @@ public:
 
     byte_buffer   pdu;
     asn1::bit_ref bref{pdu};
-    EXPECT_EQ(meas_gap_cfg.pack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::pack(bref, meas_gap_cfg), asn1::OCUDUASN_SUCCESS);
     return pdu;
   }
 
@@ -124,7 +124,7 @@ public:
     // The DU receives the LocationMeasurementInfo of the UE unchanged.
     byte_buffer   expected_info;
     asn1::bit_ref bref{expected_info};
-    if (test_helpers::create_nr_prs_location_meas_info().pack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref, test_helpers::create_nr_prs_location_meas_info()) != asn1::OCUDUASN_SUCCESS) {
       return false;
     }
     return req->cu_to_du_rrc_info.ie_exts.location_meas_info == expected_info;
@@ -149,7 +149,7 @@ public:
     byte_buffer dl_dcch_pdu = test_helpers::extract_dl_dcch_msg(test_helpers::get_rrc_container(f1ap_pdu));
     asn1::rrc_nr::dl_dcch_msg_s dl_dcch_msg;
     asn1::cbit_ref              bref{dl_dcch_pdu};
-    if (dl_dcch_msg.unpack(bref) != asn1::OCUDUASN_SUCCESS ||
+    if (asn1::unpack(dl_dcch_msg, bref) != asn1::OCUDUASN_SUCCESS ||
         dl_dcch_msg.msg.c1().type().value != asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types_opts::rrc_recfg) {
       test_logger.error("DL RRC Message Transfer without RRC Reconfiguration");
       return std::nullopt;
@@ -319,7 +319,7 @@ TEST_F(cu_cp_location_measurement_indication_test,
   ASSERT_TRUE(req->cu_to_du_rrc_info.ie_exts.location_meas_info_present);
   byte_buffer   expected_info;
   asn1::bit_ref bref{expected_info};
-  ASSERT_EQ(test_helpers::create_nr_prs_location_meas_info().pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, test_helpers::create_nr_prs_location_meas_info()), asn1::OCUDUASN_SUCCESS);
   EXPECT_EQ(req->cu_to_du_rrc_info.ie_exts.location_meas_info, expected_info);
 }
 
@@ -369,7 +369,7 @@ TEST_F(cu_cp_location_measurement_indication_test,
   ASSERT_TRUE(req->cu_to_du_rrc_info.ie_exts.location_meas_info_present);
   byte_buffer   expected_info;
   asn1::bit_ref bref{expected_info};
-  ASSERT_EQ(test_helpers::create_nr_prs_location_meas_info().pack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, test_helpers::create_nr_prs_location_meas_info()), asn1::OCUDUASN_SUCCESS);
   EXPECT_EQ(req->cu_to_du_rrc_info.ie_exts.location_meas_info, expected_info);
 
   // The DU configures the measurement gap again.

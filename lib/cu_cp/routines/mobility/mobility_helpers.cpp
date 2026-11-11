@@ -22,7 +22,7 @@ void ocudu::ocucp::merge_old_drb_association_from_as_config(up_old_drb_associati
 
   asn1::rrc_nr::ho_prep_info_s ho_prep_info;
   asn1::cbit_ref bref({rrc_handover_preparation_information.begin(), rrc_handover_preparation_information.end()});
-  if (ho_prep_info.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(ho_prep_info, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.warning("Couldn't unpack HandoverPreparationInformation");
     return;
   }
@@ -41,7 +41,7 @@ void ocudu::ocucp::merge_old_drb_association_from_as_config(up_old_drb_associati
 
   asn1::rrc_nr::rrc_recfg_s source_recfg;
   asn1::cbit_ref            recfg_bref({ies.source_cfg.rrc_recfg.begin(), ies.source_cfg.rrc_recfg.end()});
-  if (source_recfg.unpack(recfg_bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(source_recfg, recfg_bref) != asn1::OCUDUASN_SUCCESS) {
     logger.warning("Couldn't unpack RRCReconfiguration in AS-Config");
     return;
   }
@@ -93,7 +93,7 @@ static std::optional<asn1::rrc_nr::ho_prep_info_s> unpack_handover_preparation(c
 {
   asn1::rrc_nr::ho_prep_info_s info;
   asn1::cbit_ref               reader{container};
-  if (info.unpack(reader) != asn1::OCUDUASN_SUCCESS or
+  if (asn1::unpack(info, reader) != asn1::OCUDUASN_SUCCESS or
       info.crit_exts.type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::types::c1 or
       info.crit_exts.c1().type() != asn1::rrc_nr::ho_prep_info_s::crit_exts_c_::c1_c_::types::ho_prep_info) {
     return std::nullopt;

@@ -727,14 +727,14 @@ static byte_buffer make_handover_source_config(bool     redcap,
   auto                         container = test_helpers::make_redcap_handover_preparation(true, dl_sn_bits);
   asn1::rrc_nr::ho_prep_info_s info;
   asn1::cbit_ref               reader{container};
-  report_fatal_error_if_not(info.unpack(reader) == asn1::OCUDUASN_SUCCESS, "Invalid handover fixture");
+  report_fatal_error_if_not(asn1::unpack(info, reader) == asn1::OCUDUASN_SUCCESS, "Invalid handover fixture");
   auto& ies = info.crit_exts.c1().ho_prep_info();
   if (not redcap) {
     ies.ue_cap_rat_list.clear();
   }
   asn1::rrc_nr::rrc_recfg_s recfg;
   asn1::cbit_ref            recfg_reader{ies.source_cfg.rrc_recfg};
-  report_fatal_error_if_not(recfg.unpack(recfg_reader) == asn1::OCUDUASN_SUCCESS, "Invalid source fixture");
+  report_fatal_error_if_not(asn1::unpack(recfg, recfg_reader) == asn1::OCUDUASN_SUCCESS, "Invalid source fixture");
   auto& drb                                = recfg.crit_exts.rrc_recfg().radio_bearer_cfg.drb_to_add_mod_list[0];
   drb.cn_assoc_present                     = sdap_present;
   drb.pdcp_cfg_present                     = pdcp_present;
@@ -743,11 +743,11 @@ static byte_buffer make_handover_source_config(bool     redcap,
   asn1::number_to_enum(drb.pdcp_cfg.drb.pdcp_sn_size_ul, ul_sn_bits);
   byte_buffer   packed_recfg;
   asn1::bit_ref recfg_writer{packed_recfg};
-  report_fatal_error_if_not(recfg.pack(recfg_writer) == asn1::OCUDUASN_SUCCESS, "Invalid source fixture");
+  report_fatal_error_if_not(asn1::pack(recfg_writer, recfg) == asn1::OCUDUASN_SUCCESS, "Invalid source fixture");
   ies.source_cfg.rrc_recfg = std::move(packed_recfg);
   byte_buffer   result;
   asn1::bit_ref writer{result};
-  report_fatal_error_if_not(info.pack(writer) == asn1::OCUDUASN_SUCCESS, "Invalid handover fixture");
+  report_fatal_error_if_not(asn1::pack(writer, info) == asn1::OCUDUASN_SUCCESS, "Invalid handover fixture");
   return result;
 }
 
@@ -969,14 +969,14 @@ TEST_F(up_resource_manager_test, handover_capabilities_skip_malformed_nr_contain
   list[1].ue_cap_rat_container = test_helpers::make_captured_redcap_nr_capability();
   byte_buffer   packed;
   asn1::bit_ref writer{packed};
-  ASSERT_EQ(info.pack(writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, info), asn1::OCUDUASN_SUCCESS);
   const auto caps = decode_handover_capabilities(packed);
   ASSERT_TRUE(caps.has_value());
   EXPECT_TRUE(caps->redcap.has_value());
   list.resize(1);
   byte_buffer   malformed;
   asn1::bit_ref malformed_writer{malformed};
-  ASSERT_EQ(info.pack(malformed_writer), asn1::OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(malformed_writer, info), asn1::OCUDUASN_SUCCESS);
   EXPECT_FALSE(decode_handover_capabilities(malformed).has_value());
 }
 

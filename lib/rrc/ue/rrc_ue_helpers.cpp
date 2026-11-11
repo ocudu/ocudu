@@ -27,7 +27,7 @@ void ocudu::ocucp::log_rrc_message(rrc_ue_logger&    logger,
 {
   if (logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer js;
-    msg.to_json(js);
+    asn1::to_json(js, msg);
     logger.log_debug(pdu.begin(),
                      pdu.end(),
                      "{} {} {} {} ({} B)",
@@ -122,7 +122,7 @@ rrc_ue_capabilities_t ocudu::ocucp::get_capabilities(asn1::rrc_nr::ue_nr_cap_s& 
 {
   if (logger.get_basic_logger().debug.enabled()) {
     asn1::json_writer json_writer;
-    capabilities.to_json(json_writer);
+    asn1::to_json(json_writer, capabilities);
     logger.log_debug("UE Capabilities:\n{}", json_writer.to_string().c_str());
   }
   auto decoded = decode_capabilities(capabilities);
@@ -152,7 +152,7 @@ std::optional<rrc_ue_capabilities_t> ocudu::ocucp::decode_ue_nr_capabilities(con
 {
   asn1::rrc_nr::ue_nr_cap_s decoded;
   asn1::cbit_ref            reader{container};
-  if (decoded.unpack(reader) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(decoded, reader) != asn1::OCUDUASN_SUCCESS) {
     return std::nullopt;
   }
   return decode_capabilities(decoded);
@@ -173,7 +173,7 @@ ocudu::ocucp::get_capabilities(const asn1::rrc_nr::ue_cap_rat_container_list_l& 
     asn1::rrc_nr::ue_nr_cap_s asn1_ue_nr_cap;
     {
       asn1::cbit_ref bref(asn1_ue_capability_rat_container.ue_cap_rat_container);
-      if (asn1_ue_nr_cap.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+      if (asn1::unpack(asn1_ue_nr_cap, bref) != asn1::OCUDUASN_SUCCESS) {
         logger.log_error(asn1_ue_capability_rat_container.ue_cap_rat_container.begin(),
                          asn1_ue_capability_rat_container.ue_cap_rat_container.end(),
                          "Failed to unpack UE Capabilitiy RAT container PDU");

@@ -4,10 +4,25 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "ocudu/asn1/e2sm/e2sm_ccc.h"
+#include <cstring>
 #include <sstream>
 
 using namespace asn1;
 using namespace asn1::e2sm_ccc;
+
+/// Index of the string in the names of an enum, with an error log when it is not one of them.
+static bool
+convert_enum_str(const char* array[], uint32_t nof_types, const char* str, uint32_t& enum_val, const char* enum_type)
+{
+  for (uint32_t i = 0; i < nof_types; ++i) {
+    if (std::strcmp(str, array[i]) == 0) {
+      enum_val = i;
+      return true;
+    }
+  }
+  log_error("The string '{}' is not a valid value for enum type {}.", str, enum_type);
+  return false;
+}
 
 /*******************************************************************************
  *                                Struct Methods
@@ -303,14 +318,14 @@ void asn1::e2sm_ccc::from_json(const nlohmann::ordered_json& in_j, plmn_info_s& 
 OCUDUASN_CODE r_polarization_item_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(pack_integer(bref, rpolarization_idx, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(rpolarization_type.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, rpolarization_type));
 
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE r_polarization_item_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(unpack_integer(rpolarization_idx, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(rpolarization_type.unpack(bref));
+  HANDLE_CODE(asn1::unpack(rpolarization_type, bref));
 
   return OCUDUASN_SUCCESS;
 }
@@ -353,7 +368,7 @@ bool r_polarization_item_s::rpolarization_type_opts::from_string(const std::stri
 // SleepMode ::= SEQUENCE
 OCUDUASN_CODE sleep_mode_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(sleep_mode_type.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, sleep_mode_type));
   HANDLE_CODE(pack_unconstrained_integer(bref, wakeup_dur, false, true));
   HANDLE_CODE(bref.pack(wakeup_dur_guaranteed, 1));
 
@@ -361,7 +376,7 @@ OCUDUASN_CODE sleep_mode_s::pack(bit_ref& bref) const
 }
 OCUDUASN_CODE sleep_mode_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(sleep_mode_type.unpack(bref));
+  HANDLE_CODE(asn1::unpack(sleep_mode_type, bref));
   HANDLE_CODE(unpack_unconstrained_integer(wakeup_dur, bref, false, true));
   HANDLE_CODE(bref.unpack(wakeup_dur_guaranteed, 1));
 
@@ -448,14 +463,14 @@ void asn1::e2sm_ccc::from_json(const nlohmann::ordered_json& in_j, supported_trx
 OCUDUASN_CODE t_polarization_item_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(pack_integer(bref, tpolarization_idx, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(tpolarization_type.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, tpolarization_type));
 
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE t_polarization_item_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(unpack_integer(tpolarization_idx, bref, (uint16_t)0u, (uint16_t)255u, false, true));
-  HANDLE_CODE(tpolarization_type.unpack(bref));
+  HANDLE_CODE(asn1::unpack(tpolarization_type, bref));
 
   return OCUDUASN_SUCCESS;
 }
@@ -1830,7 +1845,7 @@ OCUDUASN_CODE cycle_start_offset_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(offset_present, 1));
 
   if (periodicity_present) {
-    HANDLE_CODE(periodicity.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, periodicity));
   }
   if (offset_present) {
     HANDLE_CODE(pack_integer(bref, offset, (uint16_t)0u, (uint16_t)10239u, false, true));
@@ -1844,7 +1859,7 @@ OCUDUASN_CODE cycle_start_offset_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(offset_present, 1));
 
   if (periodicity_present) {
-    HANDLE_CODE(periodicity.unpack(bref));
+    HANDLE_CODE(asn1::unpack(periodicity, bref));
   }
   if (offset_present) {
     HANDLE_CODE(unpack_integer(offset, bref, (uint16_t)0u, (uint16_t)10239u, false, true));
@@ -1917,10 +1932,10 @@ void es_objive_c::destroy_()
 {
   switch (type_) {
     case types::target_ec:
-      c.destroy<target_ec_s_>();
+      c.get<target_ec_s_>().~target_ec_s_();
       break;
     case types::es_percentage:
-      c.destroy<es_percentage_s_>();
+      c.get<es_percentage_s_>().~es_percentage_s_();
       break;
     default:
       break;
@@ -1932,10 +1947,10 @@ void es_objive_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::target_ec:
-      c.init<target_ec_s_>();
+      new (&c.buffer) target_ec_s_();
       break;
     case types::es_percentage:
-      c.init<es_percentage_s_>();
+      new (&c.buffer) es_percentage_s_();
       break;
     case types::nulltype:
       break;
@@ -1948,10 +1963,10 @@ es_objive_c::es_objive_c(const es_objive_c& other)
   type_ = other.type();
   switch (type_) {
     case types::target_ec:
-      c.init(other.c.get<target_ec_s_>());
+      new (&c.buffer) target_ec_s_(other.c.get<target_ec_s_>());
       break;
     case types::es_percentage:
-      c.init(other.c.get<es_percentage_s_>());
+      new (&c.buffer) es_percentage_s_(other.c.get<es_percentage_s_>());
       break;
     case types::nulltype:
       break;
@@ -1967,10 +1982,10 @@ es_objive_c& es_objive_c::operator=(const es_objive_c& other)
   set(other.type());
   switch (type_) {
     case types::target_ec:
-      c.set(other.c.get<target_ec_s_>());
+      c.get<target_ec_s_>() = other.c.get<target_ec_s_>();
       break;
     case types::es_percentage:
-      c.set(other.c.get<es_percentage_s_>());
+      c.get<es_percentage_s_>() = other.c.get<es_percentage_s_>();
       break;
     case types::nulltype:
       break;
@@ -2018,7 +2033,7 @@ void es_objive_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE es_objive_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::target_ec:
       HANDLE_CODE(bref.pack(c.get<target_ec_s_>().target_ec_present, 1));
@@ -2042,7 +2057,7 @@ OCUDUASN_CODE es_objive_c::pack(bit_ref& bref) const
 OCUDUASN_CODE es_objive_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::target_ec:
@@ -2166,16 +2181,16 @@ OCUDUASN_CODE o_bwp_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(nof_rbs_present, 1));
 
   if (bwp_context_present) {
-    HANDLE_CODE(bwp_context.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, bwp_context));
   }
   if (is_init_bwp_present) {
-    HANDLE_CODE(is_init_bwp.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, is_init_bwp));
   }
   if (sub_carrier_spacing_present) {
     HANDLE_CODE(pack_unconstrained_integer(bref, sub_carrier_spacing, false, true));
   }
   if (cp_present) {
-    HANDLE_CODE(cp.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, cp));
   }
   if (start_rb_present) {
     HANDLE_CODE(pack_unconstrained_integer(bref, start_rb, false, true));
@@ -2196,16 +2211,16 @@ OCUDUASN_CODE o_bwp_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(nof_rbs_present, 1));
 
   if (bwp_context_present) {
-    HANDLE_CODE(bwp_context.unpack(bref));
+    HANDLE_CODE(asn1::unpack(bwp_context, bref));
   }
   if (is_init_bwp_present) {
-    HANDLE_CODE(is_init_bwp.unpack(bref));
+    HANDLE_CODE(asn1::unpack(is_init_bwp, bref));
   }
   if (sub_carrier_spacing_present) {
     HANDLE_CODE(unpack_unconstrained_integer(sub_carrier_spacing, bref, false, true));
   }
   if (cp_present) {
-    HANDLE_CODE(cp.unpack(bref));
+    HANDLE_CODE(asn1::unpack(cp, bref));
   }
   if (start_rb_present) {
     HANDLE_CODE(unpack_unconstrained_integer(start_rb, bref, false, true));
@@ -2301,10 +2316,10 @@ on_dur_timer_c::on_dur_timer_c(const on_dur_timer_c& other)
   type_ = other.type();
   switch (type_) {
     case types::integer:
-      c.init(other.c.get<uint8_t>());
+      new (&c.buffer) uint8_t(other.c.get<uint8_t>());
       break;
     case types::timeout:
-      c.init(other.c.get<timeout_e_>());
+      new (&c.buffer) timeout_e_(other.c.get<timeout_e_>());
       break;
     case types::nulltype:
       break;
@@ -2320,10 +2335,10 @@ on_dur_timer_c& on_dur_timer_c::operator=(const on_dur_timer_c& other)
   set(other.type());
   switch (type_) {
     case types::integer:
-      c.set(other.c.get<uint8_t>());
+      c.get<uint8_t>() = other.c.get<uint8_t>();
       break;
     case types::timeout:
-      c.set(other.c.get<timeout_e_>());
+      c.get<timeout_e_>() = other.c.get<timeout_e_>();
       break;
     case types::nulltype:
       break;
@@ -2360,13 +2375,13 @@ void on_dur_timer_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE on_dur_timer_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::integer:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)31u, false, true));
       break;
     case types::timeout:
-      HANDLE_CODE(c.get<timeout_e_>().pack(bref));
+      HANDLE_CODE(asn1::pack(bref, c.get<timeout_e_>()));
       break;
     default:
       log_invalid_choice_id(type_, "on_dur_timer_c");
@@ -2377,14 +2392,14 @@ OCUDUASN_CODE on_dur_timer_c::pack(bit_ref& bref) const
 OCUDUASN_CODE on_dur_timer_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::integer:
       HANDLE_CODE(unpack_integer(c.get<uint8_t>(), bref, (uint8_t)1u, (uint8_t)31u, false, true));
       break;
     case types::timeout:
-      HANDLE_CODE(c.get<timeout_e_>().unpack(bref));
+      HANDLE_CODE(asn1::unpack(c.get<timeout_e_>(), bref));
       break;
     default:
       log_invalid_choice_id(type_, "on_dur_timer_c");
@@ -2815,13 +2830,13 @@ OCUDUASN_CODE o_cell_dtxdrx_cfg_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_integer(bref, slot_offset, (uint8_t)0u, (uint8_t)31u, false, true));
   }
   if (cfg_type_present) {
-    HANDLE_CODE(cfg_type.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, cfg_type));
   }
   if (activation_status_present) {
-    HANDLE_CODE(activation_status.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, activation_status));
   }
   if (l1_activation_present) {
-    HANDLE_CODE(l1_activation.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, l1_activation));
   }
 
   return OCUDUASN_SUCCESS;
@@ -2845,13 +2860,13 @@ OCUDUASN_CODE o_cell_dtxdrx_cfg_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_integer(slot_offset, bref, (uint8_t)0u, (uint8_t)31u, false, true));
   }
   if (cfg_type_present) {
-    HANDLE_CODE(cfg_type.unpack(bref));
+    HANDLE_CODE(asn1::unpack(cfg_type, bref));
   }
   if (activation_status_present) {
-    HANDLE_CODE(activation_status.unpack(bref));
+    HANDLE_CODE(asn1::unpack(activation_status, bref));
   }
   if (l1_activation_present) {
-    HANDLE_CODE(l1_activation.unpack(bref));
+    HANDLE_CODE(asn1::unpack(l1_activation, bref));
   }
 
   return OCUDUASN_SUCCESS;
@@ -2993,10 +3008,10 @@ OCUDUASN_CODE o_ces_management_function_s::pack(bit_ref& bref) const
     HANDLE_CODE(bref.pack(ces_switch, 1));
   }
   if (energy_saving_state_present) {
-    HANDLE_CODE(energy_saving_state.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, energy_saving_state));
   }
   if (energy_saving_ctrl_present) {
-    HANDLE_CODE(energy_saving_ctrl.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, energy_saving_ctrl));
   }
 
   return OCUDUASN_SUCCESS;
@@ -3011,10 +3026,10 @@ OCUDUASN_CODE o_ces_management_function_s::unpack(cbit_ref& bref)
     HANDLE_CODE(bref.unpack(ces_switch, 1));
   }
   if (energy_saving_state_present) {
-    HANDLE_CODE(energy_saving_state.unpack(bref));
+    HANDLE_CODE(asn1::unpack(energy_saving_state, bref));
   }
   if (energy_saving_ctrl_present) {
-    HANDLE_CODE(energy_saving_ctrl.unpack(bref));
+    HANDLE_CODE(asn1::unpack(energy_saving_ctrl, bref));
   }
 
   return OCUDUASN_SUCCESS;
@@ -3633,7 +3648,7 @@ OCUDUASN_CODE o_nes_policy_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(perf_objive_list.size() > 0, 1));
 
   if (policy_type_present) {
-    HANDLE_CODE(policy_type.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, policy_type));
   }
   if (ant_mask_name_present) {
     HANDLE_CODE(ant_mask_name.pack(bref));
@@ -3642,10 +3657,10 @@ OCUDUASN_CODE o_nes_policy_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_unconstrained_integer(bref, ant_mask, false, true));
   }
   if (sleep_mode_present) {
-    HANDLE_CODE(sleep_mode.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, sleep_mode));
   }
   if (data_dir_present) {
-    HANDLE_CODE(data_dir.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, data_dir));
   }
   if (symbol_mask_present) {
     HANDLE_CODE(pack_integer(bref, symbol_mask, (uint16_t)0u, (uint16_t)16383u, false, true));
@@ -3680,7 +3695,7 @@ OCUDUASN_CODE o_nes_policy_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(perf_objive_list_present, 1));
 
   if (policy_type_present) {
-    HANDLE_CODE(policy_type.unpack(bref));
+    HANDLE_CODE(asn1::unpack(policy_type, bref));
   }
   if (ant_mask_name_present) {
     HANDLE_CODE(ant_mask_name.unpack(bref));
@@ -3689,10 +3704,10 @@ OCUDUASN_CODE o_nes_policy_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_unconstrained_integer(ant_mask, bref, false, true));
   }
   if (sleep_mode_present) {
-    HANDLE_CODE(sleep_mode.unpack(bref));
+    HANDLE_CODE(asn1::unpack(sleep_mode, bref));
   }
   if (data_dir_present) {
-    HANDLE_CODE(data_dir.unpack(bref));
+    HANDLE_CODE(asn1::unpack(data_dir, bref));
   }
   if (symbol_mask_present) {
     HANDLE_CODE(unpack_integer(symbol_mask, bref, (uint16_t)0u, (uint16_t)16383u, false, true));
@@ -4005,13 +4020,13 @@ OCUDUASN_CODE o_nr_cell_du_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_unconstrained_integer(bref, cell_local_id, false, true));
   }
   if (operational_state_present) {
-    HANDLE_CODE(operational_state.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, operational_state));
   }
   if (administrative_state_present) {
-    HANDLE_CODE(administrative_state.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, administrative_state));
   }
   if (cell_state_present) {
-    HANDLE_CODE(cell_state.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, cell_state));
   }
   if (plmn_info_list.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, plmn_info_list, 1, 64, true));
@@ -4094,13 +4109,13 @@ OCUDUASN_CODE o_nr_cell_du_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_unconstrained_integer(cell_local_id, bref, false, true));
   }
   if (operational_state_present) {
-    HANDLE_CODE(operational_state.unpack(bref));
+    HANDLE_CODE(asn1::unpack(operational_state, bref));
   }
   if (administrative_state_present) {
-    HANDLE_CODE(administrative_state.unpack(bref));
+    HANDLE_CODE(asn1::unpack(administrative_state, bref));
   }
   if (cell_state_present) {
-    HANDLE_CODE(cell_state.unpack(bref));
+    HANDLE_CODE(asn1::unpack(cell_state, bref));
   }
   if (plmn_info_list_present) {
     HANDLE_CODE(unpack_dyn_seq_of(plmn_info_list, bref, 1, 64, true));
@@ -4425,10 +4440,10 @@ OCUDUASN_CODE o_prb_blanking_policy_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(prb_blanking_obj_present, 1));
 
   if (policy_category_present) {
-    HANDLE_CODE(policy_category.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, policy_category));
   }
   if (link_dir_present) {
-    HANDLE_CODE(link_dir.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, link_dir));
   }
   if (start_time_present) {
     HANDLE_CODE(start_time.pack(bref));
@@ -4456,10 +4471,10 @@ OCUDUASN_CODE o_prb_blanking_policy_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(prb_blanking_obj_present, 1));
 
   if (policy_category_present) {
-    HANDLE_CODE(policy_category.unpack(bref));
+    HANDLE_CODE(asn1::unpack(policy_category, bref));
   }
   if (link_dir_present) {
-    HANDLE_CODE(link_dir.unpack(bref));
+    HANDLE_CODE(asn1::unpack(link_dir, bref));
   }
   if (start_time_present) {
     HANDLE_CODE(start_time.unpack(bref));
@@ -4610,7 +4625,7 @@ OCUDUASN_CODE o_rrm_policy_ratio_s::pack(bit_ref& bref) const
   HANDLE_CODE(bref.pack(rrm_policy_ded_ratio_present, 1));
 
   if (res_type_present) {
-    HANDLE_CODE(res_type.pack(bref));
+    HANDLE_CODE(asn1::pack(bref, res_type));
   }
   if (rrm_policy_member_list.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, rrm_policy_member_list, 1, 64, true));
@@ -4637,7 +4652,7 @@ OCUDUASN_CODE o_rrm_policy_ratio_s::unpack(cbit_ref& bref)
   HANDLE_CODE(bref.unpack(rrm_policy_ded_ratio_present, 1));
 
   if (res_type_present) {
-    HANDLE_CODE(res_type.unpack(bref));
+    HANDLE_CODE(asn1::unpack(res_type, bref));
   }
   if (rrm_policy_member_list_present) {
     HANDLE_CODE(unpack_dyn_seq_of(rrm_policy_member_list, bref, 1, 64, true));
@@ -4848,40 +4863,40 @@ void e2_sm_ccc_ran_cfg_structure_c::destroy_()
 {
   switch (type_) {
     case types::o_gnb_cu_cp_function:
-      c.destroy<o_gnb_cu_cp_function_s>();
+      c.get<o_gnb_cu_cp_function_s>().~o_gnb_cu_cp_function_s();
       break;
     case types::o_gnb_cu_up_function:
-      c.destroy<o_gnb_cu_up_function_s>();
+      c.get<o_gnb_cu_up_function_s>().~o_gnb_cu_up_function_s();
       break;
     case types::o_gnb_du_function:
-      c.destroy<o_gnb_du_function_s>();
+      c.get<o_gnb_du_function_s>().~o_gnb_du_function_s();
       break;
     case types::o_nr_cell_cu:
-      c.destroy<o_nr_cell_cu_s>();
+      c.get<o_nr_cell_cu_s>().~o_nr_cell_cu_s();
       break;
     case types::o_nr_cell_du:
-      c.destroy<o_nr_cell_du_s>();
+      c.get<o_nr_cell_du_s>().~o_nr_cell_du_s();
       break;
     case types::o_rrm_policy_ratio:
-      c.destroy<o_rrm_policy_ratio_s>();
+      c.get<o_rrm_policy_ratio_s>().~o_rrm_policy_ratio_s();
       break;
     case types::o_bwp:
-      c.destroy<o_bwp_s>();
+      c.get<o_bwp_s>().~o_bwp_s();
       break;
     case types::o_ces_management_function:
-      c.destroy<o_ces_management_function_s>();
+      c.get<o_ces_management_function_s>().~o_ces_management_function_s();
       break;
     case types::o_nes_policy:
-      c.destroy<o_nes_policy_s>();
+      c.get<o_nes_policy_s>().~o_nes_policy_s();
       break;
     case types::o_cell_dtxdrx_cfg:
-      c.destroy<o_cell_dtxdrx_cfg_s>();
+      c.get<o_cell_dtxdrx_cfg_s>().~o_cell_dtxdrx_cfg_s();
       break;
     case types::o_ru_info:
-      c.destroy<o_ru_info_s>();
+      c.get<o_ru_info_s>().~o_ru_info_s();
       break;
     case types::o_prb_blanking_policy:
-      c.destroy<o_prb_blanking_policy_s>();
+      c.get<o_prb_blanking_policy_s>().~o_prb_blanking_policy_s();
       break;
     default:
       break;
@@ -4893,40 +4908,40 @@ void e2_sm_ccc_ran_cfg_structure_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::o_gnb_cu_cp_function:
-      c.init<o_gnb_cu_cp_function_s>();
+      new (&c.buffer) o_gnb_cu_cp_function_s();
       break;
     case types::o_gnb_cu_up_function:
-      c.init<o_gnb_cu_up_function_s>();
+      new (&c.buffer) o_gnb_cu_up_function_s();
       break;
     case types::o_gnb_du_function:
-      c.init<o_gnb_du_function_s>();
+      new (&c.buffer) o_gnb_du_function_s();
       break;
     case types::o_nr_cell_cu:
-      c.init<o_nr_cell_cu_s>();
+      new (&c.buffer) o_nr_cell_cu_s();
       break;
     case types::o_nr_cell_du:
-      c.init<o_nr_cell_du_s>();
+      new (&c.buffer) o_nr_cell_du_s();
       break;
     case types::o_rrm_policy_ratio:
-      c.init<o_rrm_policy_ratio_s>();
+      new (&c.buffer) o_rrm_policy_ratio_s();
       break;
     case types::o_bwp:
-      c.init<o_bwp_s>();
+      new (&c.buffer) o_bwp_s();
       break;
     case types::o_ces_management_function:
-      c.init<o_ces_management_function_s>();
+      new (&c.buffer) o_ces_management_function_s();
       break;
     case types::o_nes_policy:
-      c.init<o_nes_policy_s>();
+      new (&c.buffer) o_nes_policy_s();
       break;
     case types::o_cell_dtxdrx_cfg:
-      c.init<o_cell_dtxdrx_cfg_s>();
+      new (&c.buffer) o_cell_dtxdrx_cfg_s();
       break;
     case types::o_ru_info:
-      c.init<o_ru_info_s>();
+      new (&c.buffer) o_ru_info_s();
       break;
     case types::o_prb_blanking_policy:
-      c.init<o_prb_blanking_policy_s>();
+      new (&c.buffer) o_prb_blanking_policy_s();
       break;
     case types::nulltype:
       break;
@@ -4939,40 +4954,40 @@ e2_sm_ccc_ran_cfg_structure_c::e2_sm_ccc_ran_cfg_structure_c(const e2_sm_ccc_ran
   type_ = other.type();
   switch (type_) {
     case types::o_gnb_cu_cp_function:
-      c.init(other.c.get<o_gnb_cu_cp_function_s>());
+      new (&c.buffer) o_gnb_cu_cp_function_s(other.c.get<o_gnb_cu_cp_function_s>());
       break;
     case types::o_gnb_cu_up_function:
-      c.init(other.c.get<o_gnb_cu_up_function_s>());
+      new (&c.buffer) o_gnb_cu_up_function_s(other.c.get<o_gnb_cu_up_function_s>());
       break;
     case types::o_gnb_du_function:
-      c.init(other.c.get<o_gnb_du_function_s>());
+      new (&c.buffer) o_gnb_du_function_s(other.c.get<o_gnb_du_function_s>());
       break;
     case types::o_nr_cell_cu:
-      c.init(other.c.get<o_nr_cell_cu_s>());
+      new (&c.buffer) o_nr_cell_cu_s(other.c.get<o_nr_cell_cu_s>());
       break;
     case types::o_nr_cell_du:
-      c.init(other.c.get<o_nr_cell_du_s>());
+      new (&c.buffer) o_nr_cell_du_s(other.c.get<o_nr_cell_du_s>());
       break;
     case types::o_rrm_policy_ratio:
-      c.init(other.c.get<o_rrm_policy_ratio_s>());
+      new (&c.buffer) o_rrm_policy_ratio_s(other.c.get<o_rrm_policy_ratio_s>());
       break;
     case types::o_bwp:
-      c.init(other.c.get<o_bwp_s>());
+      new (&c.buffer) o_bwp_s(other.c.get<o_bwp_s>());
       break;
     case types::o_ces_management_function:
-      c.init(other.c.get<o_ces_management_function_s>());
+      new (&c.buffer) o_ces_management_function_s(other.c.get<o_ces_management_function_s>());
       break;
     case types::o_nes_policy:
-      c.init(other.c.get<o_nes_policy_s>());
+      new (&c.buffer) o_nes_policy_s(other.c.get<o_nes_policy_s>());
       break;
     case types::o_cell_dtxdrx_cfg:
-      c.init(other.c.get<o_cell_dtxdrx_cfg_s>());
+      new (&c.buffer) o_cell_dtxdrx_cfg_s(other.c.get<o_cell_dtxdrx_cfg_s>());
       break;
     case types::o_ru_info:
-      c.init(other.c.get<o_ru_info_s>());
+      new (&c.buffer) o_ru_info_s(other.c.get<o_ru_info_s>());
       break;
     case types::o_prb_blanking_policy:
-      c.init(other.c.get<o_prb_blanking_policy_s>());
+      new (&c.buffer) o_prb_blanking_policy_s(other.c.get<o_prb_blanking_policy_s>());
       break;
     case types::nulltype:
       break;
@@ -4988,40 +5003,40 @@ e2_sm_ccc_ran_cfg_structure_c& e2_sm_ccc_ran_cfg_structure_c::operator=(const e2
   set(other.type());
   switch (type_) {
     case types::o_gnb_cu_cp_function:
-      c.set(other.c.get<o_gnb_cu_cp_function_s>());
+      c.get<o_gnb_cu_cp_function_s>() = other.c.get<o_gnb_cu_cp_function_s>();
       break;
     case types::o_gnb_cu_up_function:
-      c.set(other.c.get<o_gnb_cu_up_function_s>());
+      c.get<o_gnb_cu_up_function_s>() = other.c.get<o_gnb_cu_up_function_s>();
       break;
     case types::o_gnb_du_function:
-      c.set(other.c.get<o_gnb_du_function_s>());
+      c.get<o_gnb_du_function_s>() = other.c.get<o_gnb_du_function_s>();
       break;
     case types::o_nr_cell_cu:
-      c.set(other.c.get<o_nr_cell_cu_s>());
+      c.get<o_nr_cell_cu_s>() = other.c.get<o_nr_cell_cu_s>();
       break;
     case types::o_nr_cell_du:
-      c.set(other.c.get<o_nr_cell_du_s>());
+      c.get<o_nr_cell_du_s>() = other.c.get<o_nr_cell_du_s>();
       break;
     case types::o_rrm_policy_ratio:
-      c.set(other.c.get<o_rrm_policy_ratio_s>());
+      c.get<o_rrm_policy_ratio_s>() = other.c.get<o_rrm_policy_ratio_s>();
       break;
     case types::o_bwp:
-      c.set(other.c.get<o_bwp_s>());
+      c.get<o_bwp_s>() = other.c.get<o_bwp_s>();
       break;
     case types::o_ces_management_function:
-      c.set(other.c.get<o_ces_management_function_s>());
+      c.get<o_ces_management_function_s>() = other.c.get<o_ces_management_function_s>();
       break;
     case types::o_nes_policy:
-      c.set(other.c.get<o_nes_policy_s>());
+      c.get<o_nes_policy_s>() = other.c.get<o_nes_policy_s>();
       break;
     case types::o_cell_dtxdrx_cfg:
-      c.set(other.c.get<o_cell_dtxdrx_cfg_s>());
+      c.get<o_cell_dtxdrx_cfg_s>() = other.c.get<o_cell_dtxdrx_cfg_s>();
       break;
     case types::o_ru_info:
-      c.set(other.c.get<o_ru_info_s>());
+      c.get<o_ru_info_s>() = other.c.get<o_ru_info_s>();
       break;
     case types::o_prb_blanking_policy:
-      c.set(other.c.get<o_prb_blanking_policy_s>());
+      c.get<o_prb_blanking_policy_s>() = other.c.get<o_prb_blanking_policy_s>();
       break;
     case types::nulltype:
       break;
@@ -5150,7 +5165,7 @@ void e2_sm_ccc_ran_cfg_structure_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE e2_sm_ccc_ran_cfg_structure_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::o_gnb_cu_cp_function:
       HANDLE_CODE(c.get<o_gnb_cu_cp_function_s>().pack(bref));
@@ -5197,7 +5212,7 @@ OCUDUASN_CODE e2_sm_ccc_ran_cfg_structure_c::pack(bit_ref& bref) const
 OCUDUASN_CODE e2_sm_ccc_ran_cfg_structure_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::o_gnb_cu_cp_function:
@@ -5889,7 +5904,7 @@ OCUDUASN_CODE cfg_structure_failed_s::pack(bit_ref& bref) const
   HANDLE_CODE(ran_cfg_structure_name.pack(bref));
   HANDLE_CODE(old_values_of_attributes.pack(bref));
   HANDLE_CODE(requested_values_of_attributes.pack(bref));
-  HANDLE_CODE(cause.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, cause));
 
   return OCUDUASN_SUCCESS;
 }
@@ -5898,7 +5913,7 @@ OCUDUASN_CODE cfg_structure_failed_s::unpack(cbit_ref& bref)
   HANDLE_CODE(ran_cfg_structure_name.unpack(bref));
   HANDLE_CODE(old_values_of_attributes.unpack(bref));
   HANDLE_CODE(requested_values_of_attributes.unpack(bref));
-  HANDLE_CODE(cause.unpack(bref));
+  HANDLE_CODE(asn1::unpack(cause, bref));
 
   return OCUDUASN_SUCCESS;
 }
@@ -5934,7 +5949,7 @@ OCUDUASN_CODE cfg_structure_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(old_values_of_attributes_present, 1));
 
-  HANDLE_CODE(change_type.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, change_type));
   HANDLE_CODE(ran_cfg_structure_name.pack(bref));
   HANDLE_CODE(values_of_attributes.pack(bref));
   if (old_values_of_attributes_present) {
@@ -5947,7 +5962,7 @@ OCUDUASN_CODE cfg_structure_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(bref.unpack(old_values_of_attributes_present, 1));
 
-  HANDLE_CODE(change_type.unpack(bref));
+  HANDLE_CODE(asn1::unpack(change_type, bref));
   HANDLE_CODE(ran_cfg_structure_name.unpack(bref));
   HANDLE_CODE(values_of_attributes.unpack(bref));
   if (old_values_of_attributes_present) {
@@ -6174,7 +6189,7 @@ OCUDUASN_CODE ran_cfg_structure_for_adf_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(bref.pack(list_of_attributes.size() > 0, 1));
 
-  HANDLE_CODE(report_type.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, report_type));
   HANDLE_CODE(ran_cfg_structure_name.pack(bref));
   if (list_of_attributes.size() > 0) {
     HANDLE_CODE(pack_dyn_seq_of(bref, list_of_attributes, 1, 64, true));
@@ -6187,7 +6202,7 @@ OCUDUASN_CODE ran_cfg_structure_for_adf_s::unpack(cbit_ref& bref)
   bool list_of_attributes_present;
   HANDLE_CODE(bref.unpack(list_of_attributes_present, 1));
 
-  HANDLE_CODE(report_type.unpack(bref));
+  HANDLE_CODE(asn1::unpack(report_type, bref));
   HANDLE_CODE(ran_cfg_structure_name.unpack(bref));
   if (list_of_attributes_present) {
     HANDLE_CODE(unpack_dyn_seq_of(list_of_attributes, bref, 1, 64, true));
@@ -6328,10 +6343,10 @@ void cell_global_id_c::destroy_()
 {
   switch (type_) {
     case types::nr_cgi:
-      c.destroy<nr_cgi_s>();
+      c.get<nr_cgi_s>().~nr_cgi_s();
       break;
     case types::eutra_cgi:
-      c.destroy<eutra_cgi_s>();
+      c.get<eutra_cgi_s>().~eutra_cgi_s();
       break;
     default:
       break;
@@ -6343,10 +6358,10 @@ void cell_global_id_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::nr_cgi:
-      c.init<nr_cgi_s>();
+      new (&c.buffer) nr_cgi_s();
       break;
     case types::eutra_cgi:
-      c.init<eutra_cgi_s>();
+      new (&c.buffer) eutra_cgi_s();
       break;
     case types::nulltype:
       break;
@@ -6359,10 +6374,10 @@ cell_global_id_c::cell_global_id_c(const cell_global_id_c& other)
   type_ = other.type();
   switch (type_) {
     case types::nr_cgi:
-      c.init(other.c.get<nr_cgi_s>());
+      new (&c.buffer) nr_cgi_s(other.c.get<nr_cgi_s>());
       break;
     case types::eutra_cgi:
-      c.init(other.c.get<eutra_cgi_s>());
+      new (&c.buffer) eutra_cgi_s(other.c.get<eutra_cgi_s>());
       break;
     case types::nulltype:
       break;
@@ -6378,10 +6393,10 @@ cell_global_id_c& cell_global_id_c::operator=(const cell_global_id_c& other)
   set(other.type());
   switch (type_) {
     case types::nr_cgi:
-      c.set(other.c.get<nr_cgi_s>());
+      c.get<nr_cgi_s>() = other.c.get<nr_cgi_s>();
       break;
     case types::eutra_cgi:
-      c.set(other.c.get<eutra_cgi_s>());
+      c.get<eutra_cgi_s>() = other.c.get<eutra_cgi_s>();
       break;
     case types::nulltype:
       break;
@@ -6420,7 +6435,7 @@ void cell_global_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE cell_global_id_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::nr_cgi:
       HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
@@ -6437,7 +6452,7 @@ OCUDUASN_CODE cell_global_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE cell_global_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::nr_cgi:
@@ -7693,14 +7708,14 @@ void asn1::e2sm_ccc::from_json(const nlohmann::ordered_json& in_j, e2_sm_ccc_eve
 // E2SM-CCC-IndicationHeaderFormat1 ::= SEQUENCE
 OCUDUASN_CODE e2_sm_ccc_ind_hdr_format1_s::pack(bit_ref& bref) const
 {
-  HANDLE_CODE(ind_reason.pack(bref));
+  HANDLE_CODE(asn1::pack(bref, ind_reason));
   HANDLE_CODE(event_time.pack(bref));
 
   return OCUDUASN_SUCCESS;
 }
 OCUDUASN_CODE e2_sm_ccc_ind_hdr_format1_s::unpack(cbit_ref& bref)
 {
-  HANDLE_CODE(ind_reason.unpack(bref));
+  HANDLE_CODE(asn1::unpack(ind_reason, bref));
   HANDLE_CODE(event_time.unpack(bref));
 
   return OCUDUASN_SUCCESS;
@@ -8037,10 +8052,10 @@ void action_definition_format_c::destroy_()
 {
   switch (type_) {
     case types::action_definition_format1:
-      c.destroy<e2_sm_ccc_action_definition_format1_s>();
+      c.get<e2_sm_ccc_action_definition_format1_s>().~e2_sm_ccc_action_definition_format1_s();
       break;
     case types::action_definition_format2:
-      c.destroy<e2_sm_ccc_action_definition_format2_s>();
+      c.get<e2_sm_ccc_action_definition_format2_s>().~e2_sm_ccc_action_definition_format2_s();
       break;
     default:
       break;
@@ -8052,10 +8067,10 @@ void action_definition_format_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::action_definition_format1:
-      c.init<e2_sm_ccc_action_definition_format1_s>();
+      new (&c.buffer) e2_sm_ccc_action_definition_format1_s();
       break;
     case types::action_definition_format2:
-      c.init<e2_sm_ccc_action_definition_format2_s>();
+      new (&c.buffer) e2_sm_ccc_action_definition_format2_s();
       break;
     case types::nulltype:
       break;
@@ -8068,10 +8083,10 @@ action_definition_format_c::action_definition_format_c(const action_definition_f
   type_ = other.type();
   switch (type_) {
     case types::action_definition_format1:
-      c.init(other.c.get<e2_sm_ccc_action_definition_format1_s>());
+      new (&c.buffer) e2_sm_ccc_action_definition_format1_s(other.c.get<e2_sm_ccc_action_definition_format1_s>());
       break;
     case types::action_definition_format2:
-      c.init(other.c.get<e2_sm_ccc_action_definition_format2_s>());
+      new (&c.buffer) e2_sm_ccc_action_definition_format2_s(other.c.get<e2_sm_ccc_action_definition_format2_s>());
       break;
     case types::nulltype:
       break;
@@ -8087,10 +8102,10 @@ action_definition_format_c& action_definition_format_c::operator=(const action_d
   set(other.type());
   switch (type_) {
     case types::action_definition_format1:
-      c.set(other.c.get<e2_sm_ccc_action_definition_format1_s>());
+      c.get<e2_sm_ccc_action_definition_format1_s>() = other.c.get<e2_sm_ccc_action_definition_format1_s>();
       break;
     case types::action_definition_format2:
-      c.set(other.c.get<e2_sm_ccc_action_definition_format2_s>());
+      c.get<e2_sm_ccc_action_definition_format2_s>() = other.c.get<e2_sm_ccc_action_definition_format2_s>();
       break;
     case types::nulltype:
       break;
@@ -8129,7 +8144,7 @@ void action_definition_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE action_definition_format_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::action_definition_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_action_definition_format1_s>().pack(bref));
@@ -8146,7 +8161,7 @@ OCUDUASN_CODE action_definition_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE action_definition_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::action_definition_format1:
@@ -8262,10 +8277,10 @@ void ctrl_msg_format_c::destroy_()
 {
   switch (type_) {
     case types::ctrl_msg_format1:
-      c.destroy<e2_sm_ccc_ctrl_msg_format1_s>();
+      c.get<e2_sm_ccc_ctrl_msg_format1_s>().~e2_sm_ccc_ctrl_msg_format1_s();
       break;
     case types::ctrl_msg_format2:
-      c.destroy<e2_sm_ccc_ctrl_msg_format2_s>();
+      c.get<e2_sm_ccc_ctrl_msg_format2_s>().~e2_sm_ccc_ctrl_msg_format2_s();
       break;
     default:
       break;
@@ -8277,10 +8292,10 @@ void ctrl_msg_format_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::ctrl_msg_format1:
-      c.init<e2_sm_ccc_ctrl_msg_format1_s>();
+      new (&c.buffer) e2_sm_ccc_ctrl_msg_format1_s();
       break;
     case types::ctrl_msg_format2:
-      c.init<e2_sm_ccc_ctrl_msg_format2_s>();
+      new (&c.buffer) e2_sm_ccc_ctrl_msg_format2_s();
       break;
     case types::nulltype:
       break;
@@ -8293,10 +8308,10 @@ ctrl_msg_format_c::ctrl_msg_format_c(const ctrl_msg_format_c& other)
   type_ = other.type();
   switch (type_) {
     case types::ctrl_msg_format1:
-      c.init(other.c.get<e2_sm_ccc_ctrl_msg_format1_s>());
+      new (&c.buffer) e2_sm_ccc_ctrl_msg_format1_s(other.c.get<e2_sm_ccc_ctrl_msg_format1_s>());
       break;
     case types::ctrl_msg_format2:
-      c.init(other.c.get<e2_sm_ccc_ctrl_msg_format2_s>());
+      new (&c.buffer) e2_sm_ccc_ctrl_msg_format2_s(other.c.get<e2_sm_ccc_ctrl_msg_format2_s>());
       break;
     case types::nulltype:
       break;
@@ -8312,10 +8327,10 @@ ctrl_msg_format_c& ctrl_msg_format_c::operator=(const ctrl_msg_format_c& other)
   set(other.type());
   switch (type_) {
     case types::ctrl_msg_format1:
-      c.set(other.c.get<e2_sm_ccc_ctrl_msg_format1_s>());
+      c.get<e2_sm_ccc_ctrl_msg_format1_s>() = other.c.get<e2_sm_ccc_ctrl_msg_format1_s>();
       break;
     case types::ctrl_msg_format2:
-      c.set(other.c.get<e2_sm_ccc_ctrl_msg_format2_s>());
+      c.get<e2_sm_ccc_ctrl_msg_format2_s>() = other.c.get<e2_sm_ccc_ctrl_msg_format2_s>();
       break;
     case types::nulltype:
       break;
@@ -8354,7 +8369,7 @@ void ctrl_msg_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ctrl_msg_format_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::ctrl_msg_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_ctrl_msg_format1_s>().pack(bref));
@@ -8371,7 +8386,7 @@ OCUDUASN_CODE ctrl_msg_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ctrl_msg_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::ctrl_msg_format1:
@@ -8452,10 +8467,10 @@ void ctrl_outcome_format_c::destroy_()
 {
   switch (type_) {
     case types::ctrl_outcome_format1:
-      c.destroy<e2_sm_ccc_ctrl_outcome_format1_s>();
+      c.get<e2_sm_ccc_ctrl_outcome_format1_s>().~e2_sm_ccc_ctrl_outcome_format1_s();
       break;
     case types::ctrl_outcome_format2:
-      c.destroy<e2_sm_ccc_ctrl_outcome_format2_s>();
+      c.get<e2_sm_ccc_ctrl_outcome_format2_s>().~e2_sm_ccc_ctrl_outcome_format2_s();
       break;
     default:
       break;
@@ -8467,10 +8482,10 @@ void ctrl_outcome_format_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::ctrl_outcome_format1:
-      c.init<e2_sm_ccc_ctrl_outcome_format1_s>();
+      new (&c.buffer) e2_sm_ccc_ctrl_outcome_format1_s();
       break;
     case types::ctrl_outcome_format2:
-      c.init<e2_sm_ccc_ctrl_outcome_format2_s>();
+      new (&c.buffer) e2_sm_ccc_ctrl_outcome_format2_s();
       break;
     case types::nulltype:
       break;
@@ -8483,10 +8498,10 @@ ctrl_outcome_format_c::ctrl_outcome_format_c(const ctrl_outcome_format_c& other)
   type_ = other.type();
   switch (type_) {
     case types::ctrl_outcome_format1:
-      c.init(other.c.get<e2_sm_ccc_ctrl_outcome_format1_s>());
+      new (&c.buffer) e2_sm_ccc_ctrl_outcome_format1_s(other.c.get<e2_sm_ccc_ctrl_outcome_format1_s>());
       break;
     case types::ctrl_outcome_format2:
-      c.init(other.c.get<e2_sm_ccc_ctrl_outcome_format2_s>());
+      new (&c.buffer) e2_sm_ccc_ctrl_outcome_format2_s(other.c.get<e2_sm_ccc_ctrl_outcome_format2_s>());
       break;
     case types::nulltype:
       break;
@@ -8502,10 +8517,10 @@ ctrl_outcome_format_c& ctrl_outcome_format_c::operator=(const ctrl_outcome_forma
   set(other.type());
   switch (type_) {
     case types::ctrl_outcome_format1:
-      c.set(other.c.get<e2_sm_ccc_ctrl_outcome_format1_s>());
+      c.get<e2_sm_ccc_ctrl_outcome_format1_s>() = other.c.get<e2_sm_ccc_ctrl_outcome_format1_s>();
       break;
     case types::ctrl_outcome_format2:
-      c.set(other.c.get<e2_sm_ccc_ctrl_outcome_format2_s>());
+      c.get<e2_sm_ccc_ctrl_outcome_format2_s>() = other.c.get<e2_sm_ccc_ctrl_outcome_format2_s>();
       break;
     case types::nulltype:
       break;
@@ -8544,7 +8559,7 @@ void ctrl_outcome_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ctrl_outcome_format_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::ctrl_outcome_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_ctrl_outcome_format1_s>().pack(bref));
@@ -8561,7 +8576,7 @@ OCUDUASN_CODE ctrl_outcome_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ctrl_outcome_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::ctrl_outcome_format1:
@@ -8627,13 +8642,13 @@ void event_trigger_definition_format_c::destroy_()
 {
   switch (type_) {
     case types::event_trigger_definition_format1:
-      c.destroy<e2_sm_ccc_event_trigger_definition_format1_s>();
+      c.get<e2_sm_ccc_event_trigger_definition_format1_s>().~e2_sm_ccc_event_trigger_definition_format1_s();
       break;
     case types::event_trigger_definition_format2:
-      c.destroy<e2_sm_ccc_event_trigger_definition_format2_s>();
+      c.get<e2_sm_ccc_event_trigger_definition_format2_s>().~e2_sm_ccc_event_trigger_definition_format2_s();
       break;
     case types::event_trigger_definition_format3:
-      c.destroy<e2_sm_ccc_event_trigger_definition_format3_s>();
+      c.get<e2_sm_ccc_event_trigger_definition_format3_s>().~e2_sm_ccc_event_trigger_definition_format3_s();
       break;
     default:
       break;
@@ -8645,13 +8660,13 @@ void event_trigger_definition_format_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::event_trigger_definition_format1:
-      c.init<e2_sm_ccc_event_trigger_definition_format1_s>();
+      new (&c.buffer) e2_sm_ccc_event_trigger_definition_format1_s();
       break;
     case types::event_trigger_definition_format2:
-      c.init<e2_sm_ccc_event_trigger_definition_format2_s>();
+      new (&c.buffer) e2_sm_ccc_event_trigger_definition_format2_s();
       break;
     case types::event_trigger_definition_format3:
-      c.init<e2_sm_ccc_event_trigger_definition_format3_s>();
+      new (&c.buffer) e2_sm_ccc_event_trigger_definition_format3_s();
       break;
     case types::nulltype:
       break;
@@ -8664,13 +8679,16 @@ event_trigger_definition_format_c::event_trigger_definition_format_c(const event
   type_ = other.type();
   switch (type_) {
     case types::event_trigger_definition_format1:
-      c.init(other.c.get<e2_sm_ccc_event_trigger_definition_format1_s>());
+      new (&c.buffer)
+          e2_sm_ccc_event_trigger_definition_format1_s(other.c.get<e2_sm_ccc_event_trigger_definition_format1_s>());
       break;
     case types::event_trigger_definition_format2:
-      c.init(other.c.get<e2_sm_ccc_event_trigger_definition_format2_s>());
+      new (&c.buffer)
+          e2_sm_ccc_event_trigger_definition_format2_s(other.c.get<e2_sm_ccc_event_trigger_definition_format2_s>());
       break;
     case types::event_trigger_definition_format3:
-      c.init(other.c.get<e2_sm_ccc_event_trigger_definition_format3_s>());
+      new (&c.buffer)
+          e2_sm_ccc_event_trigger_definition_format3_s(other.c.get<e2_sm_ccc_event_trigger_definition_format3_s>());
       break;
     case types::nulltype:
       break;
@@ -8687,13 +8705,16 @@ event_trigger_definition_format_c::operator=(const event_trigger_definition_form
   set(other.type());
   switch (type_) {
     case types::event_trigger_definition_format1:
-      c.set(other.c.get<e2_sm_ccc_event_trigger_definition_format1_s>());
+      c.get<e2_sm_ccc_event_trigger_definition_format1_s>() =
+          other.c.get<e2_sm_ccc_event_trigger_definition_format1_s>();
       break;
     case types::event_trigger_definition_format2:
-      c.set(other.c.get<e2_sm_ccc_event_trigger_definition_format2_s>());
+      c.get<e2_sm_ccc_event_trigger_definition_format2_s>() =
+          other.c.get<e2_sm_ccc_event_trigger_definition_format2_s>();
       break;
     case types::event_trigger_definition_format3:
-      c.set(other.c.get<e2_sm_ccc_event_trigger_definition_format3_s>());
+      c.get<e2_sm_ccc_event_trigger_definition_format3_s>() =
+          other.c.get<e2_sm_ccc_event_trigger_definition_format3_s>();
       break;
     case types::nulltype:
       break;
@@ -8741,7 +8762,7 @@ void event_trigger_definition_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE event_trigger_definition_format_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::event_trigger_definition_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_event_trigger_definition_format1_s>().pack(bref));
@@ -8761,7 +8782,7 @@ OCUDUASN_CODE event_trigger_definition_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE event_trigger_definition_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::event_trigger_definition_format1:
@@ -8888,10 +8909,10 @@ void ind_msg_format_c::destroy_()
 {
   switch (type_) {
     case types::ind_msg_format1:
-      c.destroy<e2_sm_ccc_ind_msg_format1_s>();
+      c.get<e2_sm_ccc_ind_msg_format1_s>().~e2_sm_ccc_ind_msg_format1_s();
       break;
     case types::ind_msg_format2:
-      c.destroy<e2_sm_ccc_ind_msg_format2_s>();
+      c.get<e2_sm_ccc_ind_msg_format2_s>().~e2_sm_ccc_ind_msg_format2_s();
       break;
     default:
       break;
@@ -8903,10 +8924,10 @@ void ind_msg_format_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::ind_msg_format1:
-      c.init<e2_sm_ccc_ind_msg_format1_s>();
+      new (&c.buffer) e2_sm_ccc_ind_msg_format1_s();
       break;
     case types::ind_msg_format2:
-      c.init<e2_sm_ccc_ind_msg_format2_s>();
+      new (&c.buffer) e2_sm_ccc_ind_msg_format2_s();
       break;
     case types::nulltype:
       break;
@@ -8919,10 +8940,10 @@ ind_msg_format_c::ind_msg_format_c(const ind_msg_format_c& other)
   type_ = other.type();
   switch (type_) {
     case types::ind_msg_format1:
-      c.init(other.c.get<e2_sm_ccc_ind_msg_format1_s>());
+      new (&c.buffer) e2_sm_ccc_ind_msg_format1_s(other.c.get<e2_sm_ccc_ind_msg_format1_s>());
       break;
     case types::ind_msg_format2:
-      c.init(other.c.get<e2_sm_ccc_ind_msg_format2_s>());
+      new (&c.buffer) e2_sm_ccc_ind_msg_format2_s(other.c.get<e2_sm_ccc_ind_msg_format2_s>());
       break;
     case types::nulltype:
       break;
@@ -8938,10 +8959,10 @@ ind_msg_format_c& ind_msg_format_c::operator=(const ind_msg_format_c& other)
   set(other.type());
   switch (type_) {
     case types::ind_msg_format1:
-      c.set(other.c.get<e2_sm_ccc_ind_msg_format1_s>());
+      c.get<e2_sm_ccc_ind_msg_format1_s>() = other.c.get<e2_sm_ccc_ind_msg_format1_s>();
       break;
     case types::ind_msg_format2:
-      c.set(other.c.get<e2_sm_ccc_ind_msg_format2_s>());
+      c.get<e2_sm_ccc_ind_msg_format2_s>() = other.c.get<e2_sm_ccc_ind_msg_format2_s>();
       break;
     case types::nulltype:
       break;
@@ -8980,7 +9001,7 @@ void ind_msg_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ind_msg_format_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::ind_msg_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_ind_msg_format1_s>().pack(bref));
@@ -8997,7 +9018,7 @@ OCUDUASN_CODE ind_msg_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ind_msg_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::ind_msg_format1:
@@ -9063,10 +9084,10 @@ void query_definition_format_c::destroy_()
 {
   switch (type_) {
     case types::query_definition_format1:
-      c.destroy<e2_sm_ccc_query_definition_format1_s>();
+      c.get<e2_sm_ccc_query_definition_format1_s>().~e2_sm_ccc_query_definition_format1_s();
       break;
     case types::query_definition_format2:
-      c.destroy<e2_sm_ccc_query_definition_format2_s>();
+      c.get<e2_sm_ccc_query_definition_format2_s>().~e2_sm_ccc_query_definition_format2_s();
       break;
     default:
       break;
@@ -9078,10 +9099,10 @@ void query_definition_format_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::query_definition_format1:
-      c.init<e2_sm_ccc_query_definition_format1_s>();
+      new (&c.buffer) e2_sm_ccc_query_definition_format1_s();
       break;
     case types::query_definition_format2:
-      c.init<e2_sm_ccc_query_definition_format2_s>();
+      new (&c.buffer) e2_sm_ccc_query_definition_format2_s();
       break;
     case types::nulltype:
       break;
@@ -9094,10 +9115,10 @@ query_definition_format_c::query_definition_format_c(const query_definition_form
   type_ = other.type();
   switch (type_) {
     case types::query_definition_format1:
-      c.init(other.c.get<e2_sm_ccc_query_definition_format1_s>());
+      new (&c.buffer) e2_sm_ccc_query_definition_format1_s(other.c.get<e2_sm_ccc_query_definition_format1_s>());
       break;
     case types::query_definition_format2:
-      c.init(other.c.get<e2_sm_ccc_query_definition_format2_s>());
+      new (&c.buffer) e2_sm_ccc_query_definition_format2_s(other.c.get<e2_sm_ccc_query_definition_format2_s>());
       break;
     case types::nulltype:
       break;
@@ -9113,10 +9134,10 @@ query_definition_format_c& query_definition_format_c::operator=(const query_defi
   set(other.type());
   switch (type_) {
     case types::query_definition_format1:
-      c.set(other.c.get<e2_sm_ccc_query_definition_format1_s>());
+      c.get<e2_sm_ccc_query_definition_format1_s>() = other.c.get<e2_sm_ccc_query_definition_format1_s>();
       break;
     case types::query_definition_format2:
-      c.set(other.c.get<e2_sm_ccc_query_definition_format2_s>());
+      c.get<e2_sm_ccc_query_definition_format2_s>() = other.c.get<e2_sm_ccc_query_definition_format2_s>();
       break;
     case types::nulltype:
       break;
@@ -9155,7 +9176,7 @@ void query_definition_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE query_definition_format_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::query_definition_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_query_definition_format1_s>().pack(bref));
@@ -9172,7 +9193,7 @@ OCUDUASN_CODE query_definition_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE query_definition_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::query_definition_format1:
@@ -9288,10 +9309,10 @@ void query_outcome_format_c::destroy_()
 {
   switch (type_) {
     case types::query_outcome_format1:
-      c.destroy<e2_sm_ccc_query_outcome_format1_s>();
+      c.get<e2_sm_ccc_query_outcome_format1_s>().~e2_sm_ccc_query_outcome_format1_s();
       break;
     case types::query_outcome_format2:
-      c.destroy<e2_sm_ccc_query_outcome_format2_s>();
+      c.get<e2_sm_ccc_query_outcome_format2_s>().~e2_sm_ccc_query_outcome_format2_s();
       break;
     default:
       break;
@@ -9303,10 +9324,10 @@ void query_outcome_format_c::set(types::options e)
   type_ = e;
   switch (type_) {
     case types::query_outcome_format1:
-      c.init<e2_sm_ccc_query_outcome_format1_s>();
+      new (&c.buffer) e2_sm_ccc_query_outcome_format1_s();
       break;
     case types::query_outcome_format2:
-      c.init<e2_sm_ccc_query_outcome_format2_s>();
+      new (&c.buffer) e2_sm_ccc_query_outcome_format2_s();
       break;
     case types::nulltype:
       break;
@@ -9319,10 +9340,10 @@ query_outcome_format_c::query_outcome_format_c(const query_outcome_format_c& oth
   type_ = other.type();
   switch (type_) {
     case types::query_outcome_format1:
-      c.init(other.c.get<e2_sm_ccc_query_outcome_format1_s>());
+      new (&c.buffer) e2_sm_ccc_query_outcome_format1_s(other.c.get<e2_sm_ccc_query_outcome_format1_s>());
       break;
     case types::query_outcome_format2:
-      c.init(other.c.get<e2_sm_ccc_query_outcome_format2_s>());
+      new (&c.buffer) e2_sm_ccc_query_outcome_format2_s(other.c.get<e2_sm_ccc_query_outcome_format2_s>());
       break;
     case types::nulltype:
       break;
@@ -9338,10 +9359,10 @@ query_outcome_format_c& query_outcome_format_c::operator=(const query_outcome_fo
   set(other.type());
   switch (type_) {
     case types::query_outcome_format1:
-      c.set(other.c.get<e2_sm_ccc_query_outcome_format1_s>());
+      c.get<e2_sm_ccc_query_outcome_format1_s>() = other.c.get<e2_sm_ccc_query_outcome_format1_s>();
       break;
     case types::query_outcome_format2:
-      c.set(other.c.get<e2_sm_ccc_query_outcome_format2_s>());
+      c.get<e2_sm_ccc_query_outcome_format2_s>() = other.c.get<e2_sm_ccc_query_outcome_format2_s>();
       break;
     case types::nulltype:
       break;
@@ -9380,7 +9401,7 @@ void query_outcome_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE query_outcome_format_c::pack(bit_ref& bref) const
 {
-  type_.pack(bref);
+  asn1::pack(bref, type_);
   switch (type_) {
     case types::query_outcome_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_query_outcome_format1_s>().pack(bref));
@@ -9397,7 +9418,7 @@ OCUDUASN_CODE query_outcome_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE query_outcome_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  e.unpack(bref);
+  asn1::unpack(e, bref);
   set(e);
   switch (type_) {
     case types::query_outcome_format1:

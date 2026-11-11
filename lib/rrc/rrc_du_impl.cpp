@@ -58,7 +58,7 @@ rrc_du_impl::get_cell_info(const std::vector<cu_cp_du_served_cells_item>& served
 
     asn1::cbit_ref                  bref_meas{served_cell.served_cell_info.meas_timing_cfg};
     asn1::rrc_nr::meas_timing_cfg_s asn1_meas_timing_cfg;
-    if (asn1_meas_timing_cfg.unpack(bref_meas) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(asn1_meas_timing_cfg, bref_meas) != asn1::OCUDUASN_SUCCESS) {
       logger.error("nci={}: Failed to unpack Measurement Timing Config container", nci);
       continue;
     }
@@ -86,7 +86,7 @@ rrc_du_impl::get_cell_info(const std::vector<cu_cp_du_served_cells_item>& served
     // Unpack SIB1 to store timers.
     asn1::rrc_nr::sib1_s sib1_msg;
     asn1::cbit_ref       bref2(served_cell.gnb_du_sys_info.value().sib1_msg);
-    if (sib1_msg.unpack(bref2) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(sib1_msg, bref2) != asn1::OCUDUASN_SUCCESS) {
       logger.error("nci={}: Failed to unpack SIB1", nci);
       continue;
     }
@@ -190,7 +190,7 @@ std::optional<std::chrono::system_clock::time_point> rrc_du_impl::get_ref_time_r
 {
   ref_time_r16_s rrc_ref_time;
   asn1::cbit_ref bref{encoded};
-  if (rrc_ref_time.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(rrc_ref_time, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to unpack ReferenceTime-r16 container");
     return std::nullopt;
   }
@@ -212,7 +212,7 @@ std::optional<arfcn_t> rrc_du_impl::get_ssb_arfcn(const byte_buffer& encoded)
 
   meas_timing_cfg_s meas_timing_cfg;
   asn1::cbit_ref    bref{encoded};
-  if (meas_timing_cfg.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(meas_timing_cfg, bref) != asn1::OCUDUASN_SUCCESS) {
     logger.warning("Failed to unpack MeasurementTimingConfiguration container");
     return std::nullopt;
   }
@@ -261,7 +261,7 @@ std::optional<ul_ccch_msg_info_t> rrc_du_impl::parse_ul_ccch_msg(byte_buffer rrc
     ul_ccch_msg_s ul_ccch_msg;
     {
       asn1::cbit_ref bref(rrc_container);
-      if (ul_ccch_msg.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+      if (asn1::unpack(ul_ccch_msg, bref) != asn1::OCUDUASN_SUCCESS or
           ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
         logger.error(rrc_container.begin(), rrc_container.end(), "Failed to unpack CCCH UL PDU");
         return std::nullopt;
@@ -314,7 +314,7 @@ std::optional<ul_ccch_msg_info_t> rrc_du_impl::parse_ul_ccch_msg(byte_buffer rrc
   ul_ccch1_msg_s ul_ccch1_msg;
   {
     asn1::cbit_ref bref(rrc_container);
-    if (ul_ccch1_msg.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+    if (asn1::unpack(ul_ccch1_msg, bref) != asn1::OCUDUASN_SUCCESS or
         ul_ccch1_msg.msg.type().value != ul_ccch1_msg_type_c::types_opts::c1) {
       logger.error(rrc_container.begin(), rrc_container.end(), "Failed to unpack CCCH UL PDU");
       return std::nullopt;
@@ -357,14 +357,14 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
     // Unpack DU to CU container.
     asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
     asn1::cbit_ref                 bref_cell({msg.du_to_cu_container.begin(), msg.du_to_cu_container.end()});
-    if (cell_group_cfg.unpack(bref_cell) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(cell_group_cfg, bref_cell) != asn1::OCUDUASN_SUCCESS) {
       logger.error("Failed to unpack DU to CU RRC container - aborting user creation");
       return nullptr;
     }
 
     if (logger.debug.enabled()) {
       asn1::json_writer js;
-      cell_group_cfg.to_json(js);
+      asn1::to_json(js, cell_group_cfg);
       logger.debug("Containerized MasterCellGroup: {}", js.to_string());
     }
   }

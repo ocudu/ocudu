@@ -296,7 +296,7 @@ public:
     // Decode the BCCH-DL-SCH message (which wraps SIB1).
     asn1::cbit_ref                  bref{sib1_buffer};
     asn1::rrc_nr::bcch_dl_sch_msg_s bcch_msg;
-    EXPECT_EQ(bcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::unpack(bcch_msg, bref), asn1::OCUDUASN_SUCCESS);
 
     // Extract the SIB1 from the message.
     EXPECT_EQ(bcch_msg.msg.type().value, asn1::rrc_nr::bcch_dl_sch_msg_type_c::types_opts::c1);
@@ -377,7 +377,7 @@ public:
     // Decode the BCCH-DL-SCH message containing the SI message.
     asn1::cbit_ref                  bref{si_msg_buffer};
     asn1::rrc_nr::bcch_dl_sch_msg_s bcch_msg;
-    EXPECT_EQ(bcch_msg.unpack(bref), asn1::OCUDUASN_SUCCESS);
+    EXPECT_EQ(asn1::unpack(bcch_msg, bref), asn1::OCUDUASN_SUCCESS);
 
     // Extract the SystemInformation message.
     EXPECT_EQ(bcch_msg.msg.type().value, asn1::rrc_nr::bcch_dl_sch_msg_type_c::types_opts::c1);

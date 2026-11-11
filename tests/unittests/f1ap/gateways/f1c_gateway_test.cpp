@@ -186,7 +186,7 @@ static byte_buffer pack(const f1ap_message& msg)
   byte_buffer pdu;
   {
     asn1::bit_ref bref{pdu};
-    report_fatal_error_if_not(msg.pdu.pack(bref) == asn1::OCUDUASN_SUCCESS, "Failed to pack F1AP PDU");
+    report_fatal_error_if_not(asn1::pack(bref, msg.pdu) == asn1::OCUDUASN_SUCCESS, "Failed to pack F1AP PDU");
   }
   return pdu;
 }

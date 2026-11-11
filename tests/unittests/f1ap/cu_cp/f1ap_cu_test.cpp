@@ -297,7 +297,7 @@ TEST_F(f1ap_cu_test, when_f1_removal_request_without_transaction_id_received_the
 
   f1ap_message   rx_removal_request = {};
   asn1::cbit_ref bref(buffer);
-  ASSERT_NE(rx_removal_request.pdu.unpack(bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_NE(asn1::unpack(rx_removal_request.pdu, bref), asn1::OCUDUASN_SUCCESS);
 }
 
 TEST_F(f1ap_cu_test, redcap_initial_ul_rrc_identity_reaches_ue_creation)

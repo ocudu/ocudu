@@ -57,7 +57,7 @@ TEST_F(asn1_f1ap_test, unknown_ignore_ie_is_skipped_and_reject_ie_fails)
 
     byte_buffer encoded;
     bit_ref     writer(encoded);
-    ASSERT_EQ(request.pack(writer), OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(writer, request), OCUDUASN_SUCCESS);
     ASSERT_EQ(encoded[0], 0);
     ASSERT_EQ(encoded[1], 3);
 
@@ -66,7 +66,7 @@ TEST_F(asn1_f1ap_test, unknown_ignore_ie_is_skipped_and_reject_ie_fails)
     ASSERT_TRUE(with_unknown.append(uint8_t{4}));
     bit_ref extra(with_unknown);
     ASSERT_EQ(pack_integer(extra, uint32_t{1000}, uint32_t{0}, uint32_t{65535}, false, true), OCUDUASN_SUCCESS);
-    ASSERT_EQ(crit_e{criticality}.pack(extra), OCUDUASN_SUCCESS);
+    ASSERT_EQ(asn1::pack(extra, crit_e{criticality}), OCUDUASN_SUCCESS);
     ASSERT_EQ(pack_length(extra, uint32_t{1}, true), OCUDUASN_SUCCESS);
     ASSERT_EQ(extra.pack(uint8_t{0x42}, 8), OCUDUASN_SUCCESS);
     for (unsigned i = 2; i != encoded.length(); ++i) {
@@ -75,7 +75,8 @@ TEST_F(asn1_f1ap_test, unknown_ignore_ie_is_skipped_and_reject_ie_fails)
 
     asn1::f1ap::f1_setup_request_ies_container decoded;
     cbit_ref                                   reader(with_unknown);
-    EXPECT_EQ(decoded.unpack(reader), criticality == crit_e::ignore ? OCUDUASN_SUCCESS : OCUDUASN_ERROR_DECODE_FAIL);
+    EXPECT_EQ(asn1::unpack(decoded, reader),
+              criticality == crit_e::ignore ? OCUDUASN_SUCCESS : OCUDUASN_ERROR_DECODE_FAIL);
     if (criticality == crit_e::ignore) {
       EXPECT_EQ(decoded.transaction_id, 7);
       EXPECT_EQ(decoded.gnb_du_id, 1);
@@ -137,14 +138,14 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 
   ocudu::byte_buffer tx_buffer;
   asn1::bit_ref      bref(tx_buffer);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
 #if JSON_OUTPUT
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       bytes.data(), bytes.size(), "F1AP PDU unpacked ({} B): \n {}", bytes.size(), json_writer1.to_string().c_str());
 
@@ -168,14 +169,14 @@ TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
 
   ocudu::byte_buffer tx_pdu;
   asn1::bit_ref      bref(tx_pdu);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(tx_buffer.data(),
                    tx_buffer.size(),
                    "F1AP PDU unpacked ({} B): \n {}",
@@ -205,14 +206,14 @@ TEST_F(asn1_f1ap_test, when_setup_failure_correct_then_packing_successful)
 
   ocudu::byte_buffer tx_pdu;
   asn1::bit_ref      bref(tx_pdu);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
 
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 
   std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
 #if JSON_OUTPUT
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(tx_buffer.data(),
                    tx_buffer.size(),
                    "F1AP PDU unpacked ({} B): \n {}",
@@ -269,7 +270,7 @@ TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_succ
   asn1::cbit_ref         bref{rx_pdu};
   asn1::f1ap::f1ap_pdu_c pdu;
 
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(asn1::f1ap::f1ap_pdu_c::types_opts::init_msg, pdu.type());
 
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_UE_CONTEXT_SETUP);
@@ -281,7 +282,7 @@ TEST_F(asn1_f1ap_test, when_ue_context_setup_request_correct_then_unpacking_succ
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       rx_msg, unpacked_len, "F1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
@@ -308,7 +309,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_correct_then_unpacki
   asn1::cbit_ref         bref{rx_pdu};
   asn1::f1ap::f1ap_pdu_c pdu;
 
-  ASSERT_EQ(pdu.unpack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::unpack(pdu, bref), OCUDUASN_SUCCESS);
   ASSERT_EQ(pdu.type(), asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
 
   ASSERT_EQ(pdu.init_msg().proc_code, ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
@@ -320,7 +321,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_correct_then_unpacki
 #if JSON_OUTPUT
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
-  pdu.to_json(json_writer1);
+  asn1::to_json(json_writer1, pdu);
   test_logger.info(
       rx_msg, unpacked_len, "F1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
@@ -362,7 +363,7 @@ TEST_F(asn1_f1ap_test, when_initial_ul_rrc_message_transfer_packing_correct_then
 
   ocudu::byte_buffer tx_buffer;
   asn1::bit_ref      bref_tx(tx_buffer);
-  ASSERT_EQ(tx_pdu.pack(bref_tx), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref_tx, tx_pdu), OCUDUASN_SUCCESS);
 
   // compare against original TV
   ASSERT_EQ(tx_buffer.length(), sizeof(rx_msg));
@@ -395,7 +396,7 @@ TEST_F(asn1_f1ap_test, when_e_cid_measurement_initiation_request_correct_then_pa
 
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 
@@ -422,7 +423,7 @@ TEST_F(asn1_f1ap_test, when_e_cid_measurement_initiation_response_with_ul_aoa_co
 
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
-  ASSERT_EQ(pdu.pack(bref), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(bref, pdu), OCUDUASN_SUCCESS);
   ASSERT_EQ(test_pack_roundtrip(pdu), OCUDUASN_SUCCESS);
 }
 

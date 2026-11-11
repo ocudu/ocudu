@@ -180,7 +180,7 @@ inline e2_message pack_ric_control_request(ocudulog::basic_logger&              
 
   ocudu::byte_buffer ctrl_hdr_buff;
   asn1::bit_ref      bref_hdr(ctrl_hdr_buff);
-  if (ctrl_hdr.pack(bref_hdr) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_hdr, ctrl_hdr) != asn1::OCUDUASN_SUCCESS) {
     // A truncated request would be rejected whatever the test means to exercise.
     logger.error("Failed to pack E2SM RC control header");
     ADD_FAILURE() << "Failed to pack E2SM RC control header";
@@ -190,7 +190,7 @@ inline e2_message pack_ric_control_request(ocudulog::basic_logger&              
 
   ocudu::byte_buffer ctrl_msg_buff;
   asn1::bit_ref      bref_msg(ctrl_msg_buff);
-  if (ctrl_msg.pack(bref_msg) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_msg, ctrl_msg) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack E2SM RC control message");
     ADD_FAILURE() << "Failed to pack E2SM RC control message";
   }
@@ -436,7 +436,7 @@ inline e2_message generate_ric_control_request_style3_action1(ocudulog::basic_lo
 
     ocudu::byte_buffer nr_cgi_buff;
     asn1::bit_ref      bref_cgi(nr_cgi_buff);
-    if (nr_cgi.pack(bref_cgi) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::pack(bref_cgi, nr_cgi) != asn1::OCUDUASN_SUCCESS) {
       logger.error("Failed to pack NR CGI");
       ADD_FAILURE() << "Failed to pack NR CGI";
     }
@@ -482,7 +482,7 @@ inline e2_message generate_ric_control_request(ocudulog::basic_logger& logger,
 
   ocudu::byte_buffer ctrl_hdr_buff;
   asn1::bit_ref      bref_msg(ctrl_hdr_buff);
-  if (ctrl_hdr.pack(bref_msg) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_msg, ctrl_hdr) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack E2SM RC control header\n");
   }
 
@@ -506,7 +506,7 @@ inline e2_message generate_ric_control_request(ocudulog::basic_logger& logger,
 
   ocudu::byte_buffer ctrl_msg_buff;
   asn1::bit_ref      bref_msg1(ctrl_msg_buff);
-  if (ctrl_msg.pack(bref_msg1) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref_msg1, ctrl_msg) != asn1::OCUDUASN_SUCCESS) {
     logger.error("Failed to pack E2SM RC control message\n");
   }
 
@@ -886,7 +886,7 @@ generate_e2sm_kpm_ric_action(asn1::e2sm::e2sm_kpm_action_definition_s& action_de
 
   byte_buffer   buf;
   asn1::bit_ref bref(buf);
-  if (action_def.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, action_def) != asn1::OCUDUASN_SUCCESS) {
     return {};
   }
 
@@ -908,7 +908,7 @@ inline e2_message generate_e2sm_kpm_subscription_request(asn1::e2ap::ric_action_
 
   byte_buffer   buf;
   asn1::bit_ref bref(buf);
-  if (e2sm_kpm_event_trigger_def.pack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::pack(bref, e2sm_kpm_event_trigger_def) != asn1::OCUDUASN_SUCCESS) {
     return {};
   }
 

@@ -112,7 +112,7 @@ extract_broadcast_tac_list(const nr_cell_global_id_t& cgi, const byte_buffer& pa
 
   asn1::cbit_ref       bref{packed_sib1};
   asn1::rrc_nr::sib1_s sib1;
-  if (sib1.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+  if (asn1::unpack(sib1, bref) != asn1::OCUDUASN_SUCCESS) {
     ocudulog::fetch_basic_logger("CU-CP").warning(
         "nci={}: Failed to unpack the SIB1 of the served cell. Assuming the cell broadcasts a single TAC", cgi.nci);
     return tac_list;
