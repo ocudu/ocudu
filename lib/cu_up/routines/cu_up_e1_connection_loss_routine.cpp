@@ -22,7 +22,8 @@ cu_up_e1_connection_loss_routine::cu_up_e1_connection_loss_routine(
   e1ap(dependencies.e1ap),
   ue_mng(dependencies.ue_mng),
   e1_setup_notifier(dependencies.e1_setup_notifier),
-  logger(dependencies.logger)
+  logger(dependencies.logger),
+  setup_failure(std::move(cfg.setup_failure))
 {
 }
 
@@ -36,13 +37,18 @@ void cu_up_e1_connection_loss_routine::operator()(coro_context<async_task<void>>
 
   // Attempt a new E1 setup connection.
   while (not stop_command) {
-    CORO_AWAIT_VALUE(setup_result,
-                     launch_async<cu_up_setup_routine>(
-                         cu_up_setup_routine_config{.cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns},
-                         cu_up_setup_routine_dependencies{
-                             .logger = logger, .e1ap_conn_mng = e1ap, .e1_setup_notifier = e1_setup_notifier}));
-    if (setup_result.result == cu_up_setup_result::outcome::success) {
-      break;
+    if (setup_failure.has_value()) {
+      // The caller already attempted the E1 setup. Its failure must be waited out before the first retry.
+      setup_result = *std::exchange(setup_failure, std::nullopt);
+    } else {
+      CORO_AWAIT_VALUE(setup_result,
+                       launch_async<cu_up_setup_routine>(
+                           cu_up_setup_routine_config{.cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns},
+                           cu_up_setup_routine_dependencies{
+                               .logger = logger, .e1ap_conn_mng = e1ap, .e1_setup_notifier = e1_setup_notifier}));
+      if (setup_result.result == cu_up_setup_result::outcome::success) {
+        break;
+      }
     }
 
     nof_retry_waits = 1;

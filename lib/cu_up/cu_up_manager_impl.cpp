@@ -163,15 +163,23 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
   return ue_mng->remove_ue(msg.ue_index);
 }
 
-void cu_up_manager_impl::handle_e1ap_connection_drop(cu_up_e1_index_t e1_index)
+void cu_up_manager_impl::handle_e1ap_connection_drop(cu_up_e1_index_t                    e1_index,
+                                                     std::optional<e1ap_cause_t>         setup_fail_cause,
+                                                     std::optional<std::chrono::seconds> time_to_wait)
 {
   if (to_underlying(e1_index) >= e1aps.size()) {
     logger.error("e1={}: Could not handle E1 connection drop from unknown E1", fmt::underlying(e1_index));
     return;
   }
   std::reference_wrapper<e1ap_interface> e1ap = e1aps[to_underlying(e1_index)];
+  std::optional<cu_up_setup_result>      setup_failure;
+  if (setup_fail_cause.has_value()) {
+    setup_failure.emplace(
+        cu_up_setup_result{cu_up_setup_result::outcome::e1_setup_failure, *setup_fail_cause, time_to_wait});
+  }
   if (not schedule_cu_up_async_task(launch_async<cu_up_e1_connection_loss_routine>(
-          cu_up_e1_connection_loss_routine_config{.cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns},
+          cu_up_e1_connection_loss_routine_config{
+              .cu_up_id = cu_up_id, .cu_up_name = cu_up_name, .plmns = plmns, .setup_failure = setup_failure},
           cu_up_e1_connection_loss_routine_dependencies{.stop_command      = stop_command,
                                                         .e1ap              = e1ap,
                                                         .ue_mng            = *ue_mng,

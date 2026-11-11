@@ -229,20 +229,15 @@ void cu_up::start()
                                                                       .e1ap_conn_mng     = **e1ap,
                                                                       .e1_setup_notifier = e1_setup_notifier.get()}));
 
-                if (result.result != cu_up_setup_result::outcome::success) {
-                  // Keep trying in the background, so that the CU-UP does not require the CU-CP to be reachable or
-                  // to accept it on startup. Note: the connection loss handler also covers a connection that was
-                  // never established.
-                  if (result.result == cu_up_setup_result::outcome::e1_setup_failure) {
-                    logger.warning("e1={}: E1 Setup failed. Cause: {}. Retrying in the background",
-                                   fmt::underlying((*e1ap)->get_e1_index()),
-                                   result.cause);
-                    fmt::print("E1 Setup failed. Cause: {}. Retrying in the background\n", result.cause);
-                  } else {
-                    logger.info("e1={}: CU-CP is not reachable. Retrying the E1 connection in the background",
-                                fmt::underlying((*e1ap)->get_e1_index()));
-                  }
-                  cu_up_mng->handle_e1ap_connection_drop((*e1ap)->get_e1_index());
+                // Keep trying in the background, so that the CU-UP does not require the CU-CP to be reachable or to
+                // accept it on startup. Note: the connection loss handler also covers a connection that was never
+                // established, and reports a rejected E1 Setup.
+                if (result.result == cu_up_setup_result::outcome::tnl_connection_failure) {
+                  logger.info("e1={}: CU-CP is not reachable. Retrying the E1 connection in the background",
+                              fmt::underlying((*e1ap)->get_e1_index()));
+                  cu_up_mng->handle_e1ap_connection_drop((*e1ap)->get_e1_index(), std::nullopt, std::nullopt);
+                } else if (result.result == cu_up_setup_result::outcome::e1_setup_failure) {
+                  cu_up_mng->handle_e1ap_connection_drop((*e1ap)->get_e1_index(), result.cause, result.time_to_wait);
                 }
               }
 

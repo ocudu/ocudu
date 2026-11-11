@@ -53,6 +53,10 @@ public:
           auto& setup_fail                   = fail.pdu.unsuccessful_outcome().value.gnb_cu_up_e1_setup_fail();
           setup_fail->transaction_id         = msg.pdu.init_msg().value.gnb_cu_up_e1_setup_request()->transaction_id;
           setup_fail->cause.set_misc().value = cause_misc_opts::unspecified;
+          if (parent.e1_setup_time_to_wait.has_value()) {
+            setup_fail->time_to_wait_present = true;
+            setup_fail->time_to_wait.value   = *parent.e1_setup_time_to_wait;
+          }
           parent.cu_up_rx_pdu_notifier->on_new_message(fail);
           return;
         }
@@ -108,6 +112,8 @@ public:
   std::atomic<unsigned> nof_connection_requests{0};
   /// Number of E1 Setup Requests still to be answered with an E1 Setup Failure.
   std::atomic<unsigned> nof_e1_setups_to_reject{0};
+  /// Time to Wait sent in the E1 Setup Failures, if any.
+  std::optional<asn1::e1ap::time_to_wait_opts::options> e1_setup_time_to_wait;
 
 private:
   std::unique_ptr<e1ap_message_notifier> cu_up_rx_pdu_notifier;
@@ -375,9 +381,23 @@ TEST_F(cu_up_test, when_cu_cp_rejects_the_e1_setup_then_cu_up_retries_it_until_i
 
   // The retries are spaced by the retry period.
   ASSERT_TRUE(
-      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{1500}))
+      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{5000}))
       << "CU-UP did not retry the E1 Setup after it was rejected";
   ASSERT_EQ(e1ap_client.nof_connection_requests, 3U);
+}
+
+TEST_F(cu_up_test, when_cu_cp_rejects_the_e1_setup_on_startup_with_time_to_wait_then_cu_up_waits_before_retrying)
+{
+  e1ap_client.nof_e1_setups_to_reject = 1;
+  e1ap_client.e1_setup_time_to_wait   = asn1::e1ap::time_to_wait_opts::v2s;
+  init(get_default_cu_up_config(), get_default_cu_up_dependencies());
+
+  // Note: wait_until ticks the timers at most once per millisecond, so less than 2s of timer time elapse here.
+  ASSERT_FALSE(
+      wait_until([this]() { return e1ap_client.nof_connection_requests >= 2U; }, std::chrono::milliseconds{1500}))
+      << "CU-UP retried the E1 Setup before the Time to Wait elapsed";
+  ASSERT_TRUE(
+      wait_until([this]() { return e1_setup_notifier->nof_setups_completed == 1U; }, std::chrono::milliseconds{5000}));
 }
 
 TEST_F(cu_up_test, when_cu_cp_keeps_rejecting_the_e1_setup_then_cu_up_can_still_be_stopped)
@@ -385,9 +405,9 @@ TEST_F(cu_up_test, when_cu_cp_keeps_rejecting_the_e1_setup_then_cu_up_can_still_
   e1ap_client.nof_e1_setups_to_reject = 100;
   init(get_default_cu_up_config(), get_default_cu_up_dependencies());
   ASSERT_TRUE(
-      wait_until([this]() { return e1ap_client.nof_connection_requests >= 2U; }, std::chrono::milliseconds{1000}));
+      wait_until([this]() { return e1ap_client.nof_connection_requests >= 2U; }, std::chrono::milliseconds{5000}));
 
-  // The stop only waits for the current step of the backoff of the pending retry.
+  // The stop only waits for the current retry period of the pending retry.
   auto stop = std::async(std::launch::async, [this]() { cu_up->stop(); });
   ASSERT_TRUE(wait_until([&stop]() { return stop.wait_for(std::chrono::seconds{0}) == std::future_status::ready; },
                          std::chrono::milliseconds{1500}));

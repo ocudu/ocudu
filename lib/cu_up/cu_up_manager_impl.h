@@ -66,7 +66,9 @@ public:
   async_task<void> handle_bearer_context_release_command(const e1ap_bearer_context_release_command& msg) override;
 
   // See interface for documentation.
-  void handle_e1ap_connection_drop(cu_up_e1_index_t e1_index) override;
+  void handle_e1ap_connection_drop(cu_up_e1_index_t                    e1_index,
+                                   std::optional<e1ap_cause_t>         setup_fail_cause,
+                                   std::optional<std::chrono::seconds> time_to_wait) override;
 
   // See interface for documentation.
   async_task<void> handle_e1_reset(const e1ap_reset& msg) override;

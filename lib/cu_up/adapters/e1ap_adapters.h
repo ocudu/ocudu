@@ -91,7 +91,7 @@ public:
       logger.error("Connection loss detected, but no CU-UP handler present.");
       return;
     }
-    cu_up_handler->handle_e1ap_connection_drop(e1_index);
+    cu_up_handler->handle_e1ap_connection_drop(e1_index, std::nullopt, std::nullopt);
   }
 
 private:

@@ -15,6 +15,8 @@ struct cu_up_e1_connection_loss_routine_config {
   gnb_cu_up_id_t           cu_up_id;
   std::string              cu_up_name;
   std::vector<std::string> plmns;
+  /// Failed E1 setup that preceded the routine, if any. The routine waits it out before its first E1 setup attempt.
+  std::optional<cu_up_setup_result> setup_failure;
 };
 
 /// Holds the CU-CP E1 connection loss routine dependencies.
@@ -54,7 +56,9 @@ private:
   /// [Implementation-defined] Time to wait before retrying a failed E1 TNL connection or E1 Setup.
   static constexpr std::chrono::milliseconds retry_period{1000};
 
-  cu_up_setup_result setup_result;
+  /// Failed E1 setup that preceded the routine, until it is waited out.
+  std::optional<cu_up_setup_result> setup_failure;
+  cu_up_setup_result                setup_result;
   /// Number of retry periods left before the next attempt.
   unsigned nof_retry_waits = 0;
   /// Whether a failed E1 Setup was already announced in STDOUT.

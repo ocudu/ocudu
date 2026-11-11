@@ -6,7 +6,10 @@
 #pragma once
 
 #include "ocudu/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
+#include "ocudu/ran/cause/e1ap_cause.h"
 #include "ocudu/support/async/async_task.h"
+#include <chrono>
+#include <optional>
 
 namespace ocudu::ocuup {
 
@@ -37,7 +40,13 @@ public:
   /// \param[in] msg The reset message.
   virtual async_task<void> handle_e1_reset(const e1ap_reset& msg) = 0;
 
-  virtual void handle_e1ap_connection_drop(cu_up_e1_index_t e1_index) = 0;
+  /// \brief Handles the loss of the E1 connection, or a failed initial E1 setup, by retrying the E1 setup.
+  /// \param[in] e1_index E1 interface whose connection was lost.
+  /// \param[in] setup_fail_cause Cause of the E1 Setup Failure, if the CU-CP rejected the E1 setup.
+  /// \param[in] time_to_wait Time to Wait commanded in that E1 Setup Failure, if any.
+  virtual void handle_e1ap_connection_drop(cu_up_e1_index_t                    e1_index,
+                                           std::optional<e1ap_cause_t>         setup_fail_cause,
+                                           std::optional<std::chrono::seconds> time_to_wait) = 0;
 
   [[nodiscard]] virtual bool schedule_cu_up_async_task(async_task<void> task) = 0;
 
