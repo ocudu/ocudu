@@ -422,9 +422,9 @@ afl-fuzz \
     -- ./tests/fuzz/e1ap/e1ap_pdu_decoder_fuzzer @@
 ```
 
-Decodes one raw E1AP PDU per input via `e1ap_asn1_packer::handle_packed_pdu()`, which forwards only successful
-decodes to its message sink. The seeds are the `rx_msg` test vectors of `tests/unittests/asn1/asn1_e1ap_test.cpp`,
-one request and one response, with no harness prefix.
+Decodes one raw E1AP PDU per input via `e1ap_asn1_packer::handle_packed_pdu()`, which forwards only successful decodes
+to its message sink. The seeds are the `rx_msg` test vectors of `tests/unittests/asn1/asn1_e1ap_test.cpp`, one request
+and one response, with no harness prefix.
 
 ### Running in parallel (recommended)
 
@@ -575,7 +575,7 @@ docker run --rm --privileged \
             -DENABLE_BACKWARD=OFF \
             -DENABLE_WERROR=OFF
         ninja -C /build fuzz_targets
-        PATH=/build/tests/fuzz/ofh:/build/tests/fuzz/ngap:/build/tests/fuzz/rrc:/build/tests/fuzz/gtpu:\$PATH \
+        PATH=/build/tests/fuzz/ofh:/build/tests/fuzz/ngap:/build/tests/fuzz/rrc:/build/tests/fuzz/gtpu:/build/tests/fuzz/e1ap:\$PATH \
             FUZZ_OUTPUT_DIR=/findings \
             FUZZ_CORPUS_DIR=/build/tests/fuzz/corpus \
             tests/fuzz/run_fuzzers.sh
