@@ -116,8 +116,8 @@ e2_ric_control_response e2sm_ccc_asn1_packer::pack_ric_control_response(const e2
   } else {
     if (e2sm_response.ric_ctrl_outcome_present) {
       e2_control_response.failure->ric_ctrl_outcome_present = true;
-      nlohmann::ordered_json outcome_json       = std::get<ctrl_outcome_format_c>(e2sm_response.ric_ctrl_outcome);
-      e2_control_response.ack->ric_ctrl_outcome = json_to_octstring(outcome_json);
+      nlohmann::ordered_json outcome_json           = std::get<ctrl_outcome_format_c>(e2sm_response.ric_ctrl_outcome);
+      e2_control_response.failure->ric_ctrl_outcome = json_to_octstring(outcome_json);
     }
     e2_control_response.failure->cause = e2sm_response.cause;
   }

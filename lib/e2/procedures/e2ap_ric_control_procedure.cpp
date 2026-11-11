@@ -9,6 +9,15 @@ using namespace ocudu;
 using namespace asn1::e2ap;
 using namespace asn1::e2sm;
 
+/// Builds a RIC Control Failure response with the given RIC Request cause.
+static e2_ric_control_response make_ric_request_failure(cause_ric_request_e::options cause)
+{
+  e2_ric_control_response response          = {};
+  response.success                          = false;
+  response.failure->cause.set_ric_request() = cause;
+  return response;
+}
+
 e2ap_ric_control_procedure::e2ap_ric_control_procedure(const e2_ric_control_request& request_,
                                                        e2_message_notifier&          notif_,
                                                        e2sm_manager&                 e2sm_mng_,
@@ -24,6 +33,8 @@ void e2ap_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   if (!e2sm_iface) {
     logger.error("RAN function ID not supported");
+    send_e2_ric_control_failure(e2_request,
+                                make_ric_request_failure(cause_ric_request_e::options::ran_function_id_invalid));
     CORO_EARLY_RETURN();
   }
 
@@ -32,22 +43,30 @@ void e2ap_ric_control_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   if (!control_service) {
     logger.error("RIC Control Service not supported");
+    send_e2_ric_control_failure(e2_request,
+                                make_ric_request_failure(cause_ric_request_e::options::action_not_supported));
     CORO_EARLY_RETURN();
   }
 
   if (!control_service->control_request_supported(ric_ctrl_req)) {
     logger.error("RIC Control Request not supported");
+    send_e2_ric_control_failure(e2_request, make_ric_request_failure(cause_ric_request_e::options::ctrl_msg_invalid));
     CORO_EARLY_RETURN();
   }
 
   CORO_AWAIT_VALUE(e2sm_response, control_service->execute_control_request(ric_ctrl_req));
-  if (ric_ctrl_req.ric_ctrl_ack_request_present and ric_ctrl_req.ric_ctrl_ack_request) {
-    e2_response = e2sm_iface->get_e2sm_packer().pack_ric_control_response(e2sm_response);
-    if (e2_response.success) {
-      send_e2_ric_control_acknowledge(e2_request, e2_response);
-    } else {
-      send_e2_ric_control_failure(e2_request, e2_response);
-    }
+  e2_response = e2sm_iface->get_e2sm_packer().pack_ric_control_response(e2sm_response);
+  if (!e2_response.success) {
+    // The RIC Control Ack Request IE does not affect the failure.
+    // See O-RAN.WG3.TS.E2AP-R005-v09.00, Section 8.2.4.3.
+    send_e2_ric_control_failure(e2_request, e2_response);
+    CORO_EARLY_RETURN();
+  }
+
+  // Only "NoAck" suppresses the acknowledge, and an absent IE counts as "Ack".
+  // See O-RAN.WG3.TS.E2AP-R005-v09.00, Section 8.2.4.2.
+  if (!ric_ctrl_req.ric_ctrl_ack_request_present or ric_ctrl_req.ric_ctrl_ack_request) {
+    send_e2_ric_control_acknowledge(e2_request, e2_response);
   }
   CORO_RETURN();
 }
@@ -91,9 +110,9 @@ void e2ap_ric_control_procedure::send_e2_ric_control_failure(const e2_ric_contro
   }
   fail->cause                    = ctrl_response.failure->cause;
   fail->ric_ctrl_outcome_present = false;
-  if (ctrl_response.ack->ric_ctrl_outcome_present) {
+  if (ctrl_response.failure->ric_ctrl_outcome_present) {
     fail->ric_ctrl_outcome_present = true;
-    fail->ric_ctrl_outcome         = ctrl_response.ack->ric_ctrl_outcome;
+    fail->ric_ctrl_outcome         = ctrl_response.failure->ric_ctrl_outcome;
   }
   ric_notif.on_new_message(msg);
 }
