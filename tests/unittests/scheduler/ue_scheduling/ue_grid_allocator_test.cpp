@@ -1151,6 +1151,38 @@ TEST_P(ue_grid_allocator_dl_mimo_test, single_user_pdsch_uses_the_dmrs_ports_of_
   }
 }
 
+// With maxLength=2, the scheduler still transmits a single-symbol DM-RS, which DCI f1_1 signals with the rows of
+// TS 38.212 Table 7.3.1.2.2-2 that have one front-load symbol.
+TEST_P(ue_grid_allocator_dl_mimo_test, single_user_pdsch_with_dmrs_max_length_2_uses_single_symbol_dmrs)
+{
+  // TS 38.212 Table 7.3.1.2.2-2, values 0, 2, 9 and 10.
+  static constexpr std::array<unsigned, 4> expected_cdm_groups   = {1, 1, 2, 2};
+  static constexpr std::array<unsigned, 4> expected_antenna_port = {0, 2, 9, 10};
+
+  for (unsigned nof_layers = 1; nof_layers <= 4; ++nof_layers) {
+    sched_ue_creation_request_message ue_creation_req =
+        sched_config_helper::create_default_sched_ue_creation_request(cell_cfg.params);
+    ue_creation_req.ue_index = to_du_ue_index(nof_layers - 1);
+    ue_creation_req.crnti    = to_rnti(0x4601 + nof_layers - 1);
+
+    bwp_downlink_dedicated& dl_bwp = (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp;
+    dl_bwp.pdcch_cfg               = cell_cfg.bwp_res[to_bwp_id(0)].dl().ded_pdcchs[0];
+    dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->max_length = dmrs_max_length::len2;
+
+    const ue& u = add_ue(ue_creation_req);
+    report_ri(u, nof_layers);
+
+    ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], units::bytes{1000U}, false); },
+                          [&]() { return find_pdsch(u.crnti) != nullptr; }));
+    const pdsch_information& pdsch = find_pdsch(u.crnti)->pdsch_cfg;
+    ASSERT_EQ(pdsch.nof_layers, nof_layers);
+    ASSERT_EQ(pdsch.dmrs.dmrs_ports, get_su_pdsch_dmrs_ports(nof_layers));
+    ASSERT_EQ(pdsch.dmrs.num_dmrs_cdm_grps_no_data, expected_cdm_groups[nof_layers - 1]);
+    ASSERT_EQ(dci_antenna_ports(u.crnti), expected_antenna_port[nof_layers - 1]);
+    ASSERT_EQ(pdsch.codewords[0].tb_size_bytes, ue_derived_tbs(pdsch));
+  }
+}
+
 TEST_P(ue_grid_allocator_dl_mimo_test, pdsch_and_dci_use_the_dmrs_ports_of_the_grant)
 {
   const ue& u = add_ue(to_du_ue_index(0), {});

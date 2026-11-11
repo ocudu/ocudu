@@ -39,6 +39,47 @@ TEST(scheduler_cell_config_validator_test, nof_ue_contexts_above_cell_limit_is_i
   ASSERT_FALSE(validate(MAX_NOF_DU_UES_PER_CELL + 1).has_value());
 }
 
+/// Validates a cell with the given number of DL antenna ports and maximum number of DL layers.
+static error_type<std::string> validate_dl_layers(unsigned nof_dl_ports, unsigned max_dl_layers)
+{
+  sched_cell_configuration_request_message msg = sched_config_helper::make_default_sched_cell_configuration_request();
+  msg.ran.dl_carrier.nof_ant                   = nof_dl_ports;
+  msg.ran.init_bwp.pdsch.max_nof_layers        = max_dl_layers;
+  // The CSI report of a multi-port cell does not fit in the default PUCCH resources. Without CSI, only the checks on
+  // the layers apply.
+  msg.ran.init_bwp.csi.reset();
+  return config_validators::validate_sched_cell_configuration_request_message(
+      msg, config_helpers::make_default_scheduler_expert_config());
+}
+
+TEST(scheduler_cell_config_validator_test, four_dl_layers_is_valid)
+{
+  const auto result = validate_dl_layers(8, 4);
+  ASSERT_TRUE(result.has_value()) << result.error();
+}
+
+// A single codeword carries at most four layers, and the scheduler does not transmit a second codeword.
+TEST(scheduler_cell_config_validator_test, more_than_four_dl_layers_is_invalid)
+{
+  const auto result = validate_dl_layers(8, 5);
+  ASSERT_FALSE(result.has_value());
+  ASSERT_NE(result.error().find("DL layers"), std::string::npos) << result.error();
+}
+
+TEST(scheduler_cell_config_validator_test, more_dl_layers_than_dl_antenna_ports_is_invalid)
+{
+  const auto result = validate_dl_layers(2, 4);
+  ASSERT_FALSE(result.has_value());
+  ASSERT_NE(result.error().find("DL layers"), std::string::npos) << result.error();
+}
+
+TEST(scheduler_cell_config_validator_test, zero_dl_layers_is_invalid)
+{
+  const auto result = validate_dl_layers(1, 0);
+  ASSERT_FALSE(result.has_value());
+  ASSERT_NE(result.error().find("DL layers"), std::string::npos) << result.error();
+}
+
 TEST(scheduler_cell_config_validator_test, periodic_csi_report_that_does_not_fit_in_the_pucch_is_invalid)
 {
   sched_cell_configuration_request_message msg = sched_config_helper::make_default_sched_cell_configuration_request();

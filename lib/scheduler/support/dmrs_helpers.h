@@ -8,6 +8,7 @@
 #include "../config/cell_configuration.h"
 #include "ocudu/ran/dmrs/dmrs.h"
 #include "ocudu/ran/pdsch/pdsch_antenna_ports_mapping.h"
+#include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/pdsch/pdsch_dmrs_symbol_mask.h"
 #include "ocudu/scheduler/result/dmrs_info.h"
 #include "ocudu/support/error_handling.h"
@@ -59,10 +60,16 @@ inline dmrs_symbol_mask make_pdsch_dmrs_symbol_mask(const pdsch_time_domain_reso
   return pdsch_dmrs_symbol_mask_mapping_type_B_single_get(dmrscfg);
 }
 
-/// [Implementation-defined] Returns the DM-RS ports of a single-user PDSCH, i.e., antenna ports 1000 to 999 +
+/// \brief [Implementation-defined] Returns the DM-RS ports of a single-user PDSCH, i.e., antenna ports 1000 to 999 +
 /// \c nof_layers.
+///
+/// The scheduler transmits a single codeword, which carries at most four layers (see TS 38.211 Table 7.3.1.3-1).
+/// The scheduler cell configuration validator enforces this limit.
 inline dmrs_port_mask get_su_pdsch_dmrs_ports(unsigned nof_layers)
 {
+  ocudu_assert(nof_layers > 0 and nof_layers <= pdsch_constants::MAX_NOF_LAYERS_PER_CODEWORD,
+               "Invalid number of layers={} for a single-codeword PDSCH",
+               nof_layers);
   dmrs_port_mask ports(DMRS_MAX_NPORTS);
   ports.fill(0, nof_layers);
   return ports;

@@ -13,6 +13,7 @@
 #include "ocudu/ran/csi_report/csi_report_config_helpers.h"
 #include "ocudu/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "ocudu/ran/duplex_mode.h"
+#include "ocudu/ran/pdsch/pdsch_constants.h"
 #include "ocudu/ran/prach/prach_configuration.h"
 #include "ocudu/ran/prach/prach_helper.h"
 #include "ocudu/ran/prach/prach_time_mapping.h"
@@ -331,6 +332,17 @@ error_type<std::string> config_validators::validate_sched_cell_configuration_req
          "Number of UE contexts={} of cell={} is not valid",
          msg.max_nof_ue_contexts,
          msg.cell_index);
+
+  // The scheduler transmits a single codeword, which carries at most four layers (see TS 38.211 Table 7.3.1.3-1).
+  const unsigned max_dl_layers = msg.ran.init_bwp.pdsch.max_nof_layers;
+  VERIFY(max_dl_layers > 0 and max_dl_layers <= pdsch_constants::MAX_NOF_LAYERS_PER_CODEWORD,
+         "Maximum number of DL layers={} is not supported, it must be in [1, {}]",
+         max_dl_layers,
+         pdsch_constants::MAX_NOF_LAYERS_PER_CODEWORD);
+  VERIFY(max_dl_layers <= msg.ran.dl_carrier.nof_ant,
+         "Maximum number of DL layers={} exceeds the number of DL antenna ports={}",
+         max_dl_layers,
+         msg.ran.dl_carrier.nof_ant);
 
   const auto& dl_lst = msg.ran.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
   for (const auto& pdsch : dl_lst) {
