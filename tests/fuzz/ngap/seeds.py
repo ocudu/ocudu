@@ -74,6 +74,20 @@ NGAP_SEEDS = {
         "88000700010000090000"
     ),
 
+    # PDUSessionResourceSetupRequest (initiatingMessage / id-PDUSessionResourceSetup).
+    # Source: generate_valid_pdu_session_resource_setup_request_message() in ngap_test_messages.h,
+    #         packed with PDU session 1 and QoS flow 1 (5QI 9).
+    # Contains: PDU Session Aggregate Maximum Bit Rate, so the CU-CP sets up the PDU session.
+    "pdu_session_resource_setup_request": bytes.fromhex(
+        "001d0080ec000004000a00020000005500020000004a0080ca0040017d7e02e9b0a23c02"
+        "7e006801006e2e0115c211000901000631310101ff080606014a06014a2905010c02010c"
+        "2204010027db7900060820410101087b002080802110030000108106ac1503648306ac15"
+        "0364000d04ac150364001002054e251c036f61690469707634066d6e63303939066d6363"
+        "3230380467707273120140200027db430000040082000a0c3b9aca00303b9aca00008b00"
+        "0a01f07f00000100005e6c00860001000088001b00014000091c00603b9aca00303b9aca"
+        "00303b9aca00303b9aca00006e400a0c11e1a300300bebc200"
+    ),
+
     # UplinkNASTransport (initiatingMessage / id-UplinkNASTransport).
     # Source: ngap_msg[] in ul_ran_status_transfer_pack_and_unpack in asn1_ngap_test.cpp
     "uplink_nas_transport": bytes.fromhex(
