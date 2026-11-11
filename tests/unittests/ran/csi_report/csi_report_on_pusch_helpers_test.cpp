@@ -179,7 +179,7 @@ protected:
     unsigned nof_csi_rs_antenna_ports = get_precoding_codebook_antenna_ports(pmi_codebook);
 
     // The maximum rank is limited by the number of CSI-RS ports and by the codebook type, since the Type II codebook
-    // never reports a rank above two, as per TS38.214 Section 5.2.2.2.3.
+    // never reports a rank above two, as per TS 38.214 Section 5.2.2.2.3.
     unsigned max_rank = get_precoding_codebook_max_rank(pmi_codebook);
 
     // Prepare CSI report configuration.
@@ -226,7 +226,7 @@ protected:
     unsigned              nof_amplitudes_size =
         fill_nof_amplitudes(csi1_packed, nof_amplitudes, expected_unpacked_data, configuration);
 
-    // Calculate CSI Part 1 size as described in TS38.212 Table 6.3.2.1.2-3.
+    // Calculate CSI Part 1 size as described in TS 38.212 Table 6.3.2.1.2-3.
     expected_csi_report_size.part1_size =
         units::bits{cri_size + ri_size + wideband_cqi_1st_tb_size + nof_amplitudes_size};
 
@@ -345,7 +345,7 @@ private:
     return 0;
   }
 
-  /// Bit-width of one indicator of the number of non-zero wideband amplitude coefficients, as per TS38.212
+  /// Bit-width of one indicator of the number of non-zero wideband amplitude coefficients, as per TS 38.212
   /// Table 6.3.1.1.2-5. It is exclusive to the Type II codebook.
   static unsigned get_nof_amplitudes_indicator_size(const csi_report_configuration& config)
   {
@@ -359,7 +359,7 @@ private:
 
   /// \brief Number of indicators of the number of non-zero wideband amplitude coefficients present in CSI Part 1.
   ///
-  /// One indicator per layer for which the PMI can be reported, as per TS38.212 Table 6.3.2.1.2-3.
+  /// One indicator per layer for which the PMI can be reported, as per TS 38.212 Table 6.3.2.1.2-3.
   static unsigned get_nof_amplitudes_indicators(const csi_report_configuration& config)
   {
     if (!std::holds_alternative<pmi_codebook_typeII>(config.pmi_codebook) ||
@@ -392,7 +392,7 @@ private:
     return result;
   }
 
-  /// Number of beam group combinations C(N1N2,L), as per TS38.214 Table 5.2.2.2.3-1.
+  /// Number of beam group combinations C(N1N2,L), as per TS 38.214 Table 5.2.2.2.3-1.
   static unsigned get_nof_beam_group_combinations(unsigned nof_beam_groups, unsigned nof_beams)
   {
     unsigned result = 1;
@@ -419,7 +419,7 @@ private:
     return sizes.i_1_1 + sizes.i_1_2 + sizes.i_1_3 + sizes.i_2;
   }
 
-  /// Type II PMI field bit-width, as per TS38.212 Table 6.3.2.1.2-1.
+  /// Type II PMI field bit-width, as per TS 38.212 Table 6.3.2.1.2-1.
   static unsigned
   get_pmi_size(const pmi_codebook_typeII& codebook, unsigned, const typeII_nof_amplitudes& nof_amplitudes)
   {
@@ -496,14 +496,14 @@ private:
     std::uniform_int_distribution<unsigned> rank_idx_dist(0, nof_ri - 1);
     unsigned                                rank_idx = rank_idx_dist(rgen);
 
-    // Select a random rank from the allowed options given by the RI restriction bitset (see TS38.214
+    // Select a random rank from the allowed options given by the RI restriction bitset (see TS 38.214
     // Section 5.2.2.2.1.).
     unsigned rank = config.ri_restriction.get_bit_positions()[rank_idx] + 1;
 
     // The unpacked RI value indicates the chosen rank.
     unpacked.ri.emplace(rank);
 
-    // The packed RI value indicates the chosen rank index (see TS38.212 Section 6.3.1.1.2.).
+    // The packed RI value indicates the chosen rank index (see TS 38.212 Section 6.3.1.1.2.).
     packed.push_back(rank_idx, nof_ri_bits);
 
     return nof_ri_bits;
@@ -552,7 +552,7 @@ private:
     return nof_indicators * indicator_size;
   }
 
-  /// Fills the Type II PMI fields in TS38.212 Table 6.3.2.1.2-1 order, from left to right.
+  /// Fills the Type II PMI fields in TS 38.212 Table 6.3.2.1.2-1 order, from left to right.
   static void fill_pmi_typeII(csi_report_packed&           packed,
                               csi_report_data&             unpacked,
                               const pmi_codebook_typeII&   codebook,
@@ -701,7 +701,7 @@ private:
       pmi.emplace<pmi_typeI_single_panel>(type);
       unpacked.pmi.emplace(pmi);
 
-      // Pack PMI values in TS38.212 Section 6.3.2.1.2 order.
+      // Pack PMI values in TS 38.212 Section 6.3.2.1.2 order.
       packed.push_back(i_1_1, sizes.i_1_1);
       if (sizes.i_1_2 > 0) {
         packed.push_back(i_1_2, sizes.i_1_2);
@@ -821,7 +821,7 @@ TEST(csi_report_unpacking, typeII_pusch_report_from_a_fixed_bit_stream)
       pmi_codebook_typeII{pmi_codebook_single_panel_config::two_one, 2, pmi_codebook_typeII_phase_size::qpsk, false};
 
   // The maximum rank is limited by the codebook type, since the Type II codebook never reports a rank above two, as
-  // per TS38.214 Section 5.2.2.2.3.
+  // per TS 38.214 Section 5.2.2.2.3.
   unsigned max_rank = get_precoding_codebook_max_rank(pmi_codebook);
 
   // CSI report configuration. The subband configuration is absent, i.e. the report covers zero subbands.
@@ -859,7 +859,7 @@ TEST(csi_report_unpacking, typeII_pusch_report_from_a_fixed_bit_stream)
   csi_report_size report_size = get_csi_report_pusch_size(configuration);
   unsigned        part1_size  = report_size.part1_size.value();
 
-  // The CSI Part 2 size is signaled by the CSI Part 1 contents, as per TS38.212 Table 6.3.2.1.2-4.
+  // The CSI Part 2 size is signaled by the CSI Part 1 contents, as per TS 38.212 Table 6.3.2.1.2-4.
   uci_payload_type csi1_payload;
   csi1_payload.push_back(csi_packed.extract(0, part1_size), part1_size);
   unsigned part2_size = uci_part2_get_size(csi1_payload, report_size.part2_correspondence).value();

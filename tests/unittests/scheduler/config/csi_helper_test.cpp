@@ -267,7 +267,7 @@ TEST(csi_helper_test, csi_report_config_with_eight_ports_uses_type2_codebook)
   EXPECT_EQ(typeii.n1_n2_codebook_subset_restriction_value.size(), 32);
   EXPECT_EQ(typeii.n1_n2_codebook_subset_restriction_value.count(), 32);
 
-  // As per TS38.214 Section 5.2.2.2.3, the Type-II codebook supports at most two layers.
+  // As per TS 38.214 Section 5.2.2.2.3, the Type-II codebook supports at most two layers.
   EXPECT_EQ(typeii.typeii_ri_restriction.size(), 2);
   EXPECT_EQ(typeii.typeii_ri_restriction.count(), 2);
 }

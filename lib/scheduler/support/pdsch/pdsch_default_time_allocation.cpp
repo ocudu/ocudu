@@ -21,7 +21,7 @@ static constexpr pdsch_time_domain_resource_allocation PDSCH_DEFAULT_TIME_ALLOCA
 span<const pdsch_time_domain_resource_allocation>
 ocudu::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos)
 {
-  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP and DMRS pos2.
+  // TS 38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP and DMRS pos2.
   static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_normal_cp_dmrs2 = {
       {{0, sch_mapping_type::typeA, s_and_len(2, 12)},
        {0, sch_mapping_type::typeA, s_and_len(2, 10)},
@@ -40,7 +40,7 @@ ocudu::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typ
        {0, sch_mapping_type::typeB, s_and_len(4, 7)},
        {0, sch_mapping_type::typeB, s_and_len(8, 4)}}};
 
-  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP and DMRS pos3.
+  // TS 38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP and DMRS pos3.
   static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_normal_cp_dmrs3 = []() {
     std::array<pdsch_time_domain_resource_allocation, 16> table = table_normal_cp_dmrs2;
     for (unsigned row_index = 0; row_index <= 6; ++row_index) {
@@ -56,7 +56,7 @@ ocudu::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typ
     return table;
   }();
 
-  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for extended CP and DMRS pos2.
+  // TS 38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for extended CP and DMRS pos2.
   static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_extended_cp_dmrs2 = {
       {{0, sch_mapping_type::typeA, s_and_len(2, 6)},
        {0, sch_mapping_type::typeA, s_and_len(2, 10)},
@@ -75,7 +75,7 @@ ocudu::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typ
        {0, sch_mapping_type::typeB, s_and_len(4, 6)},
        {0, sch_mapping_type::typeB, s_and_len(8, 4)}}};
 
-  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for extended CP and DMRS pos3.
+  // TS 38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for extended CP and DMRS pos3.
   static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_extended_cp_dmrs3 = []() {
     std::array<pdsch_time_domain_resource_allocation, 16> table = table_extended_cp_dmrs2;
     for (unsigned row_index = 0; row_index <= 6; ++row_index) {

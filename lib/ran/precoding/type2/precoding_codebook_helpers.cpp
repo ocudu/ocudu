@@ -14,7 +14,7 @@
 
 using namespace ocudu;
 
-/// Wideband amplitude coefficients \f$p^{(1)}\f$ indexed by \f$k^{(1)}\f$, as per TS38.214 Table 5.2.2.2.3-2.
+/// Wideband amplitude coefficients \f$p^{(1)}\f$ indexed by \f$k^{(1)}\f$, as per TS 38.214 Table 5.2.2.2.3-2.
 static const auto typeII_wideband_amplitudes = to_array<float>({0.0F,
                                                                 std::sqrt(1.0F / 64),
                                                                 std::sqrt(1.0F / 32),
@@ -24,10 +24,10 @@ static const auto typeII_wideband_amplitudes = to_array<float>({0.0F,
                                                                 std::sqrt(1.0F / 2),
                                                                 1.0F});
 
-/// Subband amplitude coefficients \f$p^{(2)}\f$ indexed by \f$k^{(2)}\f$, as per TS38.214 Table 5.2.2.2.3-3.
+/// Subband amplitude coefficients \f$p^{(2)}\f$ indexed by \f$k^{(2)}\f$, as per TS 38.214 Table 5.2.2.2.3-3.
 static const auto typeII_subband_amplitudes = to_array<float>({std::sqrt(1.0F / 2), 1.0F});
 
-/// Combinatorial coefficients \f$C(x, y)\f$ as per TS38.214 Table 5.2.2.2.3-1, indexed as [x][y-1].
+/// Combinatorial coefficients \f$C(x, y)\f$ as per TS 38.214 Table 5.2.2.2.3-1, indexed as [x][y-1].
 static constexpr std::array<std::array<unsigned, max_nof_typeII_beams>, 16> combinatorial_coefficient_table = {
     {{0, 0, 0, 0},
      {1, 0, 0, 0},
@@ -46,7 +46,7 @@ static constexpr std::array<std::array<unsigned, max_nof_typeII_beams>, 16> comb
      {14, 91, 364, 1001},
      {15, 105, 455, 1365}}};
 
-/// Returns the combinatorial coefficient \f$C(x, y)\f$ from TS38.214 Table 5.2.2.2.3-1.
+/// Returns the combinatorial coefficient \f$C(x, y)\f$ from TS 38.214 Table 5.2.2.2.3-1.
 static unsigned combinatorial_coefficient(unsigned x, unsigned y)
 {
   ocudu_assert((x < combinatorial_coefficient_table.size()) && (y >= 1) && (y <= max_nof_typeII_beams),
@@ -132,7 +132,7 @@ unsigned ocudu::get_typeII_nof_total_beam_groups(const pmi_codebook_typeII& code
   unsigned nof_beams = codebook.nof_beams.value();
 
   // Number of possible beam group combinations based on the number of beams. Uses Pascal's rule combinatorial identity
-  // to find C(N1N2, L), which is not indexed in TS38.214 Table 5.2.2.2.3-1.
+  // to find C(N1N2, L), which is not indexed in TS 38.214 Table 5.2.2.2.3-1.
   unsigned nof_beam_groups_combination = combinatorial_coefficient(nof_beam_groups - 1, nof_beams) +
                                          combinatorial_coefficient(nof_beam_groups - 1, nof_beams - 1);
 

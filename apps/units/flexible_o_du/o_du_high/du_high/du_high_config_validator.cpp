@@ -437,7 +437,7 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
     return false;
   }
 
-  // Modulation and Code Scheme MCS ranges are given in TS38.214 Section 6.1.4.2.
+  // Modulation and Code Scheme MCS ranges are given in TS 38.214 Section 6.1.4.2.
   unsigned max_ue_mcs = 28;
   if ((config.mcs_table == pusch_mcs_table::qam256) || config.enable_transform_precoding) {
     max_ue_mcs = 27;
@@ -1851,7 +1851,7 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
   }
 
   // SI messages scheduled by schedulingInfoList and/or posSchedulingInfoList do not overlap
-  // with SI messages scheduled by schedulingInfoList2. See TS38.331 \c si-WindowPosition.
+  // with SI messages scheduled by schedulingInfoList2. See TS 38.331 \c si-WindowPosition.
   if (!si_window_positions.empty() && (si_window_positions[0] <= n_sched_info_list_messages)) {
     fmt::print("Any SI element in schedulingInfoList2 must be scheduled after any SI "
                "in schedulingInfoList ({}<={})\n",

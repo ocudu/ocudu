@@ -432,7 +432,7 @@ private:
   }
   unsigned ul_pending_bytes(lcg_id_t lcgid, soa::row_id lcg_rid) const
   {
-    // Note: TS38.321, 6.1.3.1 - The size of the RLC and MAC headers are not considered in the buffer size computation.
+    // Note: TS 38.321, 6.1.3.1 - The size of the RLC and MAC headers are not considered in the buffer size computation.
     return get_mac_sdu_required_bytes(add_upper_layer_header_bytes(lcgid, lc_mapper.ul_buf_st(lcg_rid).value()));
   }
 

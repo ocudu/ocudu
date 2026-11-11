@@ -16,23 +16,23 @@ namespace ocudu {
 /// Maximum number of bits per symbol.
 constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = 10;
 
-/// \brief Modulation schemes as described in TS38.211 Section 5.1.
+/// \brief Modulation schemes as described in TS 38.211 Section 5.1.
 ///
 /// Each modulation identifier is mapped to the corresponding modulation order.
 enum class modulation_scheme {
-  /// 90-degree shifting Binary Phase Shift Keying (π/2-BPSK) described in TS38.211 Section 5.1.1.
+  /// 90-degree shifting Binary Phase Shift Keying (π/2-BPSK) described in TS 38.211 Section 5.1.1.
   PI_2_BPSK = 0,
-  /// Binary Phase Shift Keying (BPSK) modulation described in TS38.211 Section 5.1.2.
+  /// Binary Phase Shift Keying (BPSK) modulation described in TS 38.211 Section 5.1.2.
   BPSK = 1,
-  /// Quadrature Phase Shift Keying (QPSK) modulation described in TS38.211 Section 5.1.3.
+  /// Quadrature Phase Shift Keying (QPSK) modulation described in TS 38.211 Section 5.1.3.
   QPSK = 2,
-  /// 16-point Quadrature Amplitude Modulation (16-QAM) described in TS38.211 Section 5.1.4.
+  /// 16-point Quadrature Amplitude Modulation (16-QAM) described in TS 38.211 Section 5.1.4.
   QAM16 = 4,
-  /// 64-point Quadrature Amplitude Modulation (64-QAM) described in TS38.211 Section 5.1.5.
+  /// 64-point Quadrature Amplitude Modulation (64-QAM) described in TS 38.211 Section 5.1.5.
   QAM64 = 6,
-  /// 256-point Quadrature Amplitude Modulation (256-QAM) described in TS38.211 Section 5.1.6.
+  /// 256-point Quadrature Amplitude Modulation (256-QAM) described in TS 38.211 Section 5.1.6.
   QAM256 = 8,
-  /// 1024-point Quadrature Amplitude Modulation (1024-QAM) described in TS38.211 Section 5.1.7 (from Release 17).
+  /// 1024-point Quadrature Amplitude Modulation (1024-QAM) described in TS 38.211 Section 5.1.7 (from Release 17).
   QAM1024 = MODULATION_MAX_BITS_PER_SYMBOL,
 };
 

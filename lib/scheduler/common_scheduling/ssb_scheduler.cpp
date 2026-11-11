@@ -236,7 +236,7 @@ void ssb_scheduler::fill_ssb_parameters(ssb_information_list  ssb_list,
   ssb_information ssb_msg = {};
 
   ssb_msg.ssb_index = ssb_idx;
-  // As per TS38.213, Section 4.1, the symbols that are passed refer to SSB burst, and can range from 0 up until 56. We
+  // As per TS 38.213, Section 4.1, the symbols that are passed refer to SSB burst, and can range from 0 up until 56. We
   // need to convert these into slot symbols, that range within [0, 14).
   ssb_msg.symbols.set(ssb_burst_symb_idx % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                       (ssb_burst_symb_idx + NOF_SSB_OFDM_SYMBOLS) % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);

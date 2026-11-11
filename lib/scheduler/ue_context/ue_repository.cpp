@@ -143,7 +143,7 @@ void ue_repository::add_ue(const ue_configuration& ue_cfg, const ue_creation_con
       st.conres_st = ue_conres_state::pending_conres_ce;
       break;
     case ue_creation_mode::two_step_success_rar:
-      // 2-step RACH successRAR: contention already resolved (TS38.321, 6.2.3a); RRC Setup still pending.
+      // 2-step RACH successRAR: contention already resolved (TS 38.321, 6.2.3a); RRC Setup still pending.
       st.config_st = ue_config_state::pending_initial_conf;
       st.conres_st = ue_conres_state::conres_completed;
       break;

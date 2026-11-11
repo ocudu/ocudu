@@ -12,7 +12,7 @@ namespace ocudu {
 
 /// \brief Calculates the ratio between the Physical Shared Channel EPRE and the DM-RS EPRE.
 ///
-/// The calculation is common for PDSCH and PUSCH, as defined in TS38.214 Table 4.1-1 and Table 6.2.2-1.
+/// The calculation is common for PDSCH and PUSCH, as defined in TS 38.214 Table 4.1-1 and Table 6.2.2-1.
 ///
 /// \param[in] nof_cdm_groups_without_data Number of CDM groups without data.
 /// \return Parameter \f$\beta_{\textup{DMRS}}\f$ in decibels.

@@ -293,7 +293,7 @@ f1ap_ue_creation_response ue_creation_procedure::create_f1ap_ue()
   if (ue_ctx->bearers.srbs().contains(srb_id_t::srb1)) {
     // If allocation of UE RAN resources was successful, the cellGroupConfig is not empty.
     // Pack SRB1 configuration that is going to be passed in the F1AP DU-to-CU-RRC-Container IE to the CU as per
-    // TS38.473, Section 8.4.1.2.
+    // TS 38.473, Section 8.4.1.2.
     calculate_cell_group_config_diff(cell_group, {}, ue_ctx->resources.value());
 
     asn1::bit_ref       bref{f1ap_msg.du_cu_rrc_container};

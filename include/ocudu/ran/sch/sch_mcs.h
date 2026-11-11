@@ -10,7 +10,7 @@
 
 namespace ocudu {
 
-/// Physical Downlink and Uplink Shared Channel Modulation and Code Scheme Index, parameter \$fI_{MCS}\$f in TS38.214
+/// Physical Downlink and Uplink Shared Channel Modulation and Code Scheme Index, parameter \$fI_{MCS}\$f in TS 38.214
 /// Section 5.1.3.1.
 using sch_mcs_index = bounded_integer<uint8_t, 0, 31>;
 

@@ -610,7 +610,7 @@ class ssb_offsets_match_sync_raster : public ::testing::TestWithParam<ssb_offset
 
 } // namespace
 
-/// \brief Checks offsetToPointA and k_SSB of \p location against TS38.211 Section 7.4.3.1.
+/// \brief Checks offsetToPointA and k_SSB of \p location against TS 38.211 Section 7.4.3.1.
 ///
 /// The two offsets must point at the lowest subcarrier of the SSB the sync raster centers on SS_ref. In FR1 both are
 /// expressed in 15kHz units and k_SSB is in {0, ..., 23}. In FR2, offsetToPointA counts 60kHz resource blocks, while

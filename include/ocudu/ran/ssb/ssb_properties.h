@@ -21,7 +21,7 @@ constexpr unsigned SSB_BW_RE = NOF_SUBCARRIERS_PER_RB * NOF_SSB_PRBS;
 /// SS/PBCH Block duration in OFDM symbols.
 constexpr unsigned NOF_SSB_SYMB = 4;
 
-/// \brief SSB periodicity in milliseconds as per TS38.331 Section 6.3.2 IE ssb-periodicityServingCell.
+/// \brief SSB periodicity in milliseconds as per TS 38.331 Section 6.3.2 IE ssb-periodicityServingCell.
 enum class ssb_periodicity : uint8_t { ms5 = 5, ms10 = 10, ms20 = 20, ms40 = 40, ms80 = 80, ms160 = 160 };
 
 /// \brief PSS EPRE to SSS EPRE for SSB, as per TS 38.213, Section 4.1.
@@ -39,7 +39,7 @@ inline float ssb_pss_to_sss_epre_to_amplitude(ssb_pss_to_sss_epre value)
   return (value == ssb_pss_to_sss_epre::dB_3) ? M_SQRT2f32 : 1.0F;
 }
 
-/// Labels for the different SS/PBCH block patterns defined in TS38.213 Section 4.1.
+/// Labels for the different SS/PBCH block patterns defined in TS 38.213 Section 4.1.
 enum class ssb_pattern_case {
   /// Case A - 15 kHz SCS, FR1: index pattern \f$\{2, 8\} + 14\cdot n\f$.
   A = 0,
@@ -108,13 +108,13 @@ inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
 /// \brief Data type used to represent the frequency offset between Point A and the lowest subcarrier of the lowest
 /// common resource block that overlaps with the SS/PBCH block.
 ///
-/// The quantity expressed in terms of this data type corresponds to \e offsetToPointA in TS38.211 Section 4.4.4.2 and
-/// it is used in TS38.211 Section 7.4.3.1 to compute \f$N_{CRB}^{SSB}\f$.
+/// The quantity expressed in terms of this data type corresponds to \e offsetToPointA in TS 38.211 Section 4.4.4.2 and
+/// it is used in TS 38.211 Section 7.4.3.1 to compute \f$N_{CRB}^{SSB}\f$.
 /// It is measured as a number of resource blocks, assuming:
 /// - 15kHz SCS for FR1, and
 /// - 60kHz SCS for FR2.
 ///
-/// The range of values is {0, ..., 2199} &mdash; see TS38.331 Section 6.3.2, Information Element \e
+/// The range of values is {0, ..., 2199} &mdash; see TS 38.331 Section 6.3.2, Information Element \e
 /// FrequencyInfoDL-SIB.
 ///
 /// The reader is referred to [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
@@ -132,7 +132,7 @@ public:
 /// \brief Data type used to represent the offset from subcarrier zero in common resource block \f$N_{CRB}^{SSB}\f$ to
 /// subcarrier zero of the SS/PBCH block.
 ///
-/// The quantity expressed in terms of this data type corresponds to \f$ k_{SSB} \f$ in TS38.211 Section 7.4.3.1. It is
+/// The quantity expressed in terms of this data type corresponds to \f$ k_{SSB} \f$ in TS 38.211 Section 7.4.3.1. It is
 /// measured as a number of subcarriers of the same spacing as the SS/PBCH block.
 ///
 /// For numerology \f$\mu\in\{0,1\}\f$:

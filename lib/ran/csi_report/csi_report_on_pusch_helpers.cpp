@@ -14,7 +14,7 @@ using namespace ocudu;
 // \brief Gets the number of <em>indicators of the number of non-zero wideband amplitude coefficients</em> present in
 // CSI Part 1.
 //
-// This is equal to the maximum number of layers according to the RI restriction, as specified in TS38.212
+// This is equal to the maximum number of layers according to the RI restriction, as specified in TS 38.212
 // Table 6.3.2.1.2-3.
 //
 // \param[in] config CSI report configuration.
@@ -31,7 +31,7 @@ static unsigned get_nof_amplitude_indicators(const csi_report_configuration& con
   return (config.ri_restriction.find_highest() >= 1) ? max_nof_typeII_layers : 1;
 }
 
-// Calculates CSI Part 1 size following TS38.212 Table 6.3.2.1.2-3.
+// Calculates CSI Part 1 size following TS 38.212 Table 6.3.2.1.2-3.
 static units::bits get_csi_report_part1_size(const csi_report_configuration& config,
                                              const ri_li_cqi_cri_sizes&      field_sizes)
 {
@@ -53,7 +53,7 @@ static units::bits get_csi_report_part1_size(const csi_report_configuration& con
   return units::bits(part1_size);
 }
 
-// Calculates CSI Part 2 size following TS38.212 Table 6.3.2.1.2-4.
+// Calculates CSI Part 2 size following TS 38.212 Table 6.3.2.1.2-4.
 static units::bits get_csi_report_part2_size(const csi_report_configuration& config,
                                              csi_report_data::ri_type        ri,
                                              const typeII_nof_amplitudes&    nof_amplitudes = {})
@@ -130,7 +130,7 @@ static std::optional<typeII_nof_amplitudes> unpack_nof_amplitudes(const csi_repo
 // \brief Fills the CSI Part 2 correspondence of a Type II CSI report.
 //
 // The Type II CSI Part 2 payload size depends on the reported rank and on the number of non-zero wideband amplitude
-// coefficients \f$M_l\f$ of each layer for which the PMI can be reported, as per TS38.212 Table 6.3.2.1.2-3.
+// coefficients \f$M_l\f$ of each layer for which the PMI can be reported, as per TS 38.212 Table 6.3.2.1.2-3.
 static void fill_typeII_part2_correspondence(csi_report_size&                result,
                                              const csi_report_configuration& config,
                                              const ri_li_cqi_cri_sizes&      part1_sizes)
@@ -182,7 +182,7 @@ static void fill_typeII_part2_correspondence(csi_report_size&                res
           nof_amplitudes.push_back(std::min(m1_value + 1, nof_coefficients));
         }
 
-        // Calculate CSI Part 2 size following TS38.212 Table 6.3.2.1.2-4.
+        // Calculate CSI Part 2 size following TS 38.212 Table 6.3.2.1.2-4.
         units::bits part2_size = get_csi_report_part2_size(config, i_rank, nof_amplitudes);
 
         entry.map.emplace_back(part2_size.value());
@@ -212,7 +212,7 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
                units::bits(csi1_packed.size()),
                csi_part1_size);
 
-  // Unpack CSI Part 1 and Part 2 bits following the order in TS38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
+  // Unpack CSI Part 1 and Part 2 bits following the order in TS 38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
   unsigned csi1_count = 0;
   unsigned csi2_count = 0;
 
@@ -335,7 +335,7 @@ csi_report_size ocudu::get_csi_report_pusch_size(const csi_report_configuration&
   ri_li_cqi_cri_sizes part1_sizes =
       get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, 1, config.nof_csi_rs_resources);
 
-  // Calculate CSI Part 1 size following TS38.212 Table 6.3.2.1.2-3.
+  // Calculate CSI Part 1 size following TS 38.212 Table 6.3.2.1.2-3.
   result.part1_size = get_csi_report_part1_size(config, part1_sizes);
 
   // Skip CSI Part 2 if there is one transmit port or no quantity is reported in CSI Part 2. The cri-RI-CQI quantity
@@ -364,13 +364,13 @@ csi_report_size ocudu::get_csi_report_pusch_size(const csi_report_configuration&
 
   // Fill the entry table in function of the RI.
   for (unsigned i_rank = 1; i_rank <= max_rank; ++i_rank) {
-    // As per TS38.214 Section 5.2.2.2.1, the RI can only indicate rank values allowed by the RI restriction bitset. If
+    // As per TS 38.214 Section 5.2.2.2.1, the RI can only indicate rank values allowed by the RI restriction bitset. If
     // the RI restriction bit corresponding to the current rank is not set, exclude the corresponding CSI Part 2 size.
     if (!config.ri_restriction.test(i_rank - 1)) {
       continue;
     }
 
-    // Calculate CSI Part 2 size following TS38.212 Table 6.3.2.1.2-4.
+    // Calculate CSI Part 2 size following TS 38.212 Table 6.3.2.1.2-4.
     units::bits part2_size = get_csi_report_part2_size(config, i_rank);
 
     entry.map.emplace_back(part2_size.value());

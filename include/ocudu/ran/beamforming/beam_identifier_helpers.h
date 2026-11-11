@@ -25,7 +25,7 @@ beam_identifier get_beam_id(antenna_topology antenna_topology, uint8_t i_port);
 
 /// \brief Convert a combination of antenna topology and a selected beam defined in the 3GPP.
 ///
-/// The 3GPP defines beams in the document TS38.214, Section 5.2.2.2, as in function of \f$\nu_{l,m}\f$ for a
+/// The 3GPP defines beams in the document TS 38.214, Section 5.2.2.2, as in function of \f$\nu_{l,m}\f$ for a
 /// combination of \f$(N_1, N_2)\f$ and \f$(O_1, O_2)\f$.
 ///
 /// In other words, each beam identifier corresponds to a set of coefficients that are mapped onto a group of transmit

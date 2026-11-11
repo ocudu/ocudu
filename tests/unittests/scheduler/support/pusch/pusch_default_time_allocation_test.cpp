@@ -51,7 +51,7 @@ static ofdm_symbol_range s_and_len(unsigned start, unsigned dur)
 // Combined parameters.
 using pusch_default_time_allocation_params = std::tuple<unsigned, subcarrier_spacing>;
 
-// Expected values from TS38.214 Table 6.1.2.1.1-2.
+// Expected values from TS 38.214 Table 6.1.2.1.1-2.
 static const std::map<pusch_default_time_allocation_params, pusch_time_domain_resource_allocation>
     pusch_default_time_allocation_A_normal = {
         {{0, subcarrier_spacing::kHz15}, {1, sch_mapping_type::typeA, s_and_len(0, 14)}},
@@ -120,7 +120,7 @@ static const std::map<pusch_default_time_allocation_params, pusch_time_domain_re
         {{15, subcarrier_spacing::kHz120}, {3 + 3, sch_mapping_type::typeA, s_and_len(0, 10)}},
 };
 
-// Expected values from TS38.214 Table 6.1.2.1.1-3.
+// Expected values from TS 38.214 Table 6.1.2.1.1-3.
 static const std::map<pusch_default_time_allocation_params, pusch_time_domain_resource_allocation>
     pusch_default_time_allocation_A_extended = {
         {{0, subcarrier_spacing::kHz15}, {1, sch_mapping_type::typeA, s_and_len(0, 8)}},

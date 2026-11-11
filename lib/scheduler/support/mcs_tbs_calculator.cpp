@@ -53,8 +53,8 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params& pusch_cfg
   // alpha_scaling_opt::f1, as this is not used.
   ulsch_info.alpha_scaling = alpha_scaling_to_float(uci_cfg != nullptr ? uci_cfg->scaling : alpha_scaling_opt::f1);
 
-  // HARQ-ACK beta offset. Which of the beta_offset to be used among the indices 1, 2, 3 is determined as per TS38.213,
-  // Section 9.3 and TS38.331, \c BetaOffsets.
+  // HARQ-ACK beta offset. Which of the beta_offset to be used among the indices 1, 2, 3 is determined as per TS 38.213,
+  // Section 9.3 and TS 38.331, \c BetaOffsets.
   // If no HARQ-ACK reporting, this value won't be used.
   if (pusch_cfg.nof_harq_ack_bits == 0) {
     ulsch_info.beta_offset_harq_ack = 0;
@@ -75,8 +75,8 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params& pusch_cfg
     }
   }
 
-  // CSI Part 1 beta offset. Which of the beta_offset to be used among the indices 1, 2 is determined as per TS38.213,
-  // Section 9.3 and TS38.331, \c BetaOffsets.
+  // CSI Part 1 beta offset. Which of the beta_offset to be used among the indices 1, 2 is determined as per TS 38.213,
+  // Section 9.3 and TS 38.331, \c BetaOffsets.
   // If no CSI Part 1 reporting, this value won't be used.
   if (pusch_cfg.nof_csi_part1_bits == 0) {
     ulsch_info.beta_offset_csi_part1 = 0;
@@ -93,8 +93,8 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params& pusch_cfg
     }
   }
 
-  // CSI Part 2 beta offset. The beta_offset to be used among the indices 1, 2 is determined as per TS38.213, Section
-  // 9.3 and TS38.331, \c BetaOffsets.
+  // CSI Part 2 beta offset. The beta_offset to be used among the indices 1, 2 is determined as per TS 38.213, Section
+  // 9.3 and TS 38.331, \c BetaOffsets.
   // If no CSI Part 2 reporting, this value won't be used.
   if (pusch_cfg.max_nof_csi_part2_bits == 0) {
     ulsch_info.beta_offset_csi_part2 = 0;
@@ -208,7 +208,7 @@ std::optional<sch_mcs_tbs> ocudu::compute_dl_mcs_tbs(const pdsch_config_params& 
                                                      bool                       contains_dc,
                                                      unsigned                   nof_csi_rs_re)
 {
-  // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
+  // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
   static constexpr double max_supported_code_rate = 0.95;
   const unsigned          dmrs_prbs               = calculate_nof_dmrs_per_rb(pdsch_params.dmrs);

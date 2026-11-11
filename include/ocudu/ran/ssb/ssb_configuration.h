@@ -163,7 +163,7 @@ struct ssb_configuration {
   ssb_offset_to_pointA offset_to_point_A;
   /// SSB periodicity.
   ssb_periodicity ssb_period;
-  /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
+  /// k_ssb or SSB SubcarrierOffest, as per TS 38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
   ssb_subcarrier_offset k_ssb;
   /// Transmitted SSB candidates and the beam that carries each of them. Determines \c ssb-PositionsInBurst.
   /// \note The beams are not honoured by the PHY yet: every SSB is transmitted on the same beam.

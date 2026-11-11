@@ -12,7 +12,7 @@
 using namespace ocudu;
 using namespace test_helpers;
 
-/// Returns the value that the rank indicator field carries for the given rank, as per TS38.212 Table 6.3.1.1.2-3.
+/// Returns the value that the rank indicator field carries for the given rank, as per TS 38.212 Table 6.3.1.1.2-3.
 static unsigned get_rank_index(const ri_restriction_type& ri_restriction, unsigned rank)
 {
   const auto  allowed = ri_restriction.get_bit_positions();
@@ -57,7 +57,7 @@ ocudu::test_helpers::pack_typeii_csi_report_pusch(const csi_report_configuration
   const ri_li_cqi_cri_sizes sizes =
       get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, values.ri, config.nof_csi_rs_resources);
 
-  // CSI Part 1, as per TS38.212 Table 6.3.2.1.2-3.
+  // CSI Part 1, as per TS 38.212 Table 6.3.2.1.2-3.
   csi_report_packed part1;
 
   // The report always selects the first CSI-RS resource.
@@ -71,7 +71,7 @@ ocudu::test_helpers::pack_typeii_csi_report_pusch(const csi_report_configuration
     part1.push_back(nof_coefficients - 1, sizes.nof_wideband_amplitudes);
   }
 
-  // CSI Part 2, as per TS38.212 Table 6.3.2.1.2-4.
+  // CSI Part 2, as per TS 38.212 Table 6.3.2.1.2-4.
   csi_report_packed part2;
 
   if (sizes.wideband_cqi_second_tb != 0) {

@@ -345,40 +345,40 @@ struct du_high_unit_pusch_config {
   /// - \f$L_{UCI}\f$ is the number of CRC bits.
   ///
   /// @{
-  /// \brief Parameter \e betaOffsetACK-Index1, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  /// \brief Parameter \e betaOffsetACK-Index1, in Information Element \c BetaOffsets, TS 38.331. Values: {0,...,15}.
   ///
   /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes up two HARQ-ACK information
   /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=24\f$ and \f$K_{OH}=1\f$.
   unsigned beta_offset_ack_idx_1 = 11;
-  /// \brief Parameter \e betaOffsetACK-Index2, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  /// \brief Parameter \e betaOffsetACK-Index2, in Information Element \c BetaOffsets, TS 38.331. Values: {0,...,15}.
   ///
   /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes up 11 HARQ-ACK information
   /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
   unsigned beta_offset_ack_idx_2 = 6;
-  /// \brief Parameter \e betaOffsetACK-Index3, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  /// \brief Parameter \e betaOffsetACK-Index3, in Information Element \c BetaOffsets, TS 38.331. Values: {0,...,15}.
   ///
   /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes more than 11 HARQ-ACK
   /// information bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
   unsigned beta_offset_ack_idx_3 = 4;
-  /// \brief Parameter \e betaOffsetCSI-Part1-Index1, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// \brief Parameter \e betaOffsetCSI-Part1-Index1, in Information Element \c BetaOffsets, TS 38.331. Values:
   /// {0,...,18}.
   ///
   /// Used for deriving \f$\beta_{\text{CSI−1}}^{offset}\f$ when the PUSCH multiplexes up to 11 CSI Part 1 information
   /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
   unsigned beta_offset_csi_p1_idx_1 = 13;
-  /// \brief Parameter \e betaOffsetCSI-Part1-Index2, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// \brief Parameter \e betaOffsetCSI-Part1-Index2, in Information Element \c BetaOffsets, TS 38.331. Values:
   /// {0,...,18}.
   ///
   /// Used for deriving \f$\beta_{\text{CSI−1}}^{offset}\f$ when the PUSCH multiplexes more than 11 CSI Part 1
   /// information bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
   unsigned beta_offset_csi_p1_idx_2 = 10;
-  /// \brief Parameter \e betaOffsetCSI-Part2-Index1, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// \brief Parameter \e betaOffsetCSI-Part2-Index1, in Information Element \c BetaOffsets, TS 38.331. Values:
   /// {0,...,18}.
   ///
   /// Used for deriving \f$\beta_{\text{CSI−2}}^{offset}\f$ when the PUSCH multiplexes up to 11 CSI Part 2 information
   /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
   unsigned beta_offset_csi_p2_idx_1 = 13;
-  /// \brief Parameter \e betaOffsetCSI-Part2-Index2, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// \brief Parameter \e betaOffsetCSI-Part2-Index2, in Information Element \c BetaOffsets, TS 38.331. Values:
   /// {0,...,18}.
   ///
   /// Used for deriving \f$\beta_{\text{CSI−2}}^{offset}\f$ when the PUSCH multiplexes more than 11 CSI Part 2
@@ -386,7 +386,7 @@ struct du_high_unit_pusch_config {
   unsigned beta_offset_csi_p2_idx_2 = 10;
   /// @}
 
-  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS38.213.
+  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
   /// Values {-6,...,8} and must be a multiple of 2.
   int msg3_delta_power = 8;
 
@@ -1135,7 +1135,7 @@ struct du_high_unit_sib_config {
 struct du_high_unit_csi_config {
   /// \brief Enable CSI-RS and CSI reporting in the cell.
   bool csi_rs_enabled = true;
-  /// \brief \c CSI-RS period in milliseconds. Limited by TS38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
+  /// \brief \c CSI-RS period in milliseconds. Limited by TS 38.214, clause 5.1.6.1.1. Values: {10, 20, 40, 80}.
   unsigned csi_rs_period_msec = 20;
   /// \brief Slot offset for measurement CSI-RS resources. If not set, it is automatically derived to avoid collisions
   /// with SSB and SIB1.
@@ -1300,7 +1300,7 @@ struct du_high_unit_rach_config {
   /// preambles per occasion, i.e. no filtering.
   unsigned backoff_indicator_max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION;
   /// \brief Requested Backoff Indicator duration, in ms, signalled in the RAR when congestion control is triggered.
-  /// Mapped to the closest value in TS38.321, Table 7.2-1.
+  /// Mapped to the closest value in TS 38.321, Table 7.2-1.
   unsigned backoff_indicator_duration_ms = 40;
   /// \c preambleReceivedTargetPower, target power at the network rx side, in dBm. Only values multiple of 2 are
   /// valid.

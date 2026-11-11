@@ -28,7 +28,7 @@ TEST(precoding_codebook_configuration_test, typeII_identifiers_cover_the_support
 
   for (pmi_codebook_single_panel_config n1_n2 :
        {pmi_codebook_single_panel_config::two_one, pmi_codebook_single_panel_config::four_one}) {
-    // As per TS38.214 Section 5.2.2.2.3, the number of beams cannot exceed N1 * N2, which is two for the (2, 1) panel
+    // As per TS 38.214 Section 5.2.2.2.3, the number of beams cannot exceed N1 * N2, which is two for the (2, 1) panel
     // topology and four for the (4, 1) one.
     unsigned max_nof_beams = (n1_n2 == pmi_codebook_single_panel_config::two_one) ? 2 : max_nof_typeII_beams;
 
@@ -49,7 +49,7 @@ TEST(precoding_codebook_configuration_test, typeII_identifiers_cover_the_support
   ASSERT_EQ(nof_typeII_codebooks, 8);
 }
 
-// Verify that the Type II codebooks report at most two layers, as per TS38.214 Section 5.2.2.2.3.
+// Verify that the Type II codebooks report at most two layers, as per TS 38.214 Section 5.2.2.2.3.
 TEST(precoding_codebook_configuration_test, typeII_codebooks_report_at_most_two_layers)
 {
   for (unsigned id = 0, id_end = pmi_codebook_id::max() + 1; id != id_end; ++id) {

@@ -14,7 +14,7 @@ namespace ocudu {
 
 /// \brief Collects the PBCH message contents for the Master Information Block (MIB) parameters.
 ///
-/// The MIB is defined by Information Element \e MIB in TS38.331 Section 6.2.2.
+/// The MIB is defined by Information Element \e MIB in TS 38.331 Section 6.2.2.
 struct pbch_mib_message {
   /// System Frame Number (0..1023). Parameter \e systemFrameNumber.
   uint32_t sfn;

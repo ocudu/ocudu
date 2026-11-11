@@ -47,7 +47,7 @@ struct dci_context_information {
   precoding_and_beamforming_info precoding_and_beamforming;
   /// Transmission power information used for this DCI.
   tx_power_pdcch_information tx_pwr;
-  /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
+  /// Parameter \f$N_{ID}\f$ used for PDCCH DMRS scrambling as per TS 38.211, 7.4.1.3.1. Values: {0, ..., 65535}.
   unsigned n_id_pdcch_dmrs;
 
   /// \brief Information relative to a PDCCH allocation decision that is used for the purpose of logging or

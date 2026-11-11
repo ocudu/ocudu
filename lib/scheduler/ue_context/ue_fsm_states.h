@@ -28,7 +28,7 @@ enum class ue_creation_mode : uint8_t {
   skip_fallback,
   /// RACH-created UE (native 4-step Msg1/Msg3, or 2-step-fallback): ConRes CE MAC CE is pending.
   msg3_rach,
-  /// RACH-created UE via 2-step RACH successRAR, which already resolved contention (TS38.321, 6.2.3a).
+  /// RACH-created UE via 2-step RACH successRAR, which already resolved contention (TS 38.321, 6.2.3a).
   two_step_success_rar,
   /// F1AP-created UE undergoing a Contention-Free RA.
   cfra,

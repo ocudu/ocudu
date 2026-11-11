@@ -133,7 +133,7 @@ public:
     if (is_elcid()) {
       return sizeof_elcid_ce(elcid_val);
     }
-    // Values taken from TS38.321, Section 6.1.3.
+    // Values taken from TS 38.321, Section 6.1.3.
     switch (lcid_val) {
       case SCELL_ACTIV_4_OCTET:
         return 4;

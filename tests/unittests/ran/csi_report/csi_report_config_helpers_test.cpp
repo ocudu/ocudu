@@ -119,7 +119,7 @@ TEST(csi_report_config_helpers, typeii_ri_restriction_is_translated)
   }
 }
 
-// As per TS38.214 Section 5.2.2.2.3, four CSI-RS ports only support two beams.
+// As per TS 38.214 Section 5.2.2.2.3, four CSI-RS ports only support two beams.
 TEST(csi_report_config_helpers, typeii_four_port_rejects_more_than_two_beams)
 {
   for (unsigned nof_beams : {3, 4}) {

@@ -13,7 +13,7 @@ namespace ocudu {
 
 /// \brief PRACH preamble formats.
 ///
-/// PRACH preamble formats are described in TS38.211 Table 6.3.3.1-1 and 6.3.3.1-2.
+/// PRACH preamble formats are described in TS 38.211 Table 6.3.3.1-1 and 6.3.3.1-2.
 enum class prach_format_type : uint8_t {
   zero = 0,
   one,
@@ -88,7 +88,7 @@ inline prach_format_type to_prach_format_type(const char* string)
 
 /// \brief Checks if the preamble format is long.
 ///
-/// Long preambles are listed in TS38.211 Table 6.3.3.1-1.
+/// Long preambles are listed in TS 38.211 Table 6.3.3.1-1.
 constexpr bool is_long_preamble(prach_format_type type)
 {
   return (type <= prach_format_type::three);
@@ -96,7 +96,7 @@ constexpr bool is_long_preamble(prach_format_type type)
 
 /// \brief Checks if the preamble format is short.
 ///
-/// Short preambles are listed in TS38.211 Table 6.3.3.1-2.
+/// Short preambles are listed in TS 38.211 Table 6.3.3.1-2.
 constexpr bool is_short_preamble(prach_format_type type)
 {
   return (type < prach_format_type::invalid) && (type >= prach_format_type::A1);
@@ -104,7 +104,7 @@ constexpr bool is_short_preamble(prach_format_type type)
 
 /// \brief Gets the PRACH time-domain occasion duration in symbols relative to the RA subcarrier spacing.
 ///
-/// Corresponds to parameter \f$N_\textup{dur}^\textup{RA}\f$ is TS38.211 Section 5.3.2. It is selected from TS38.211
+/// Corresponds to parameter \f$N_\textup{dur}^\textup{RA}\f$ is TS 38.211 Section 5.3.2. It is selected from TS 38.211
 /// Tables 6.3.3.2-2, 6.3.3.2-3 and 6.3.3.2-4.
 ///
 /// \param[in] format PRACH preamble format.

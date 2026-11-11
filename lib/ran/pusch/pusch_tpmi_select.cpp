@@ -32,7 +32,7 @@ static constexpr cf_t dot25(0.25F, 0.0F);
 static constexpr cf_t dot25j(0.0F, 0.25F);
 static constexpr cf_t zero;
 
-/// TS38.211 Table 6.3.1.5-1
+/// TS 38.211 Table 6.3.1.5-1
 static const std::array<precoding_weight_matrix, 6> codebook_1layer_2port = {
     {precoding_weight_matrix({sqrt1_2, zero}, 1, 2),
      precoding_weight_matrix({zero, sqrt1_2}, 1, 2),
@@ -41,7 +41,7 @@ static const std::array<precoding_weight_matrix, 6> codebook_1layer_2port = {
      precoding_weight_matrix({sqrt1_2, sqrt1_2j}, 1, 2),
      precoding_weight_matrix({sqrt1_2, -sqrt1_2j}, 1, 2)}};
 
-/// TS38.211 Table 6.3.1.5-3
+/// TS 38.211 Table 6.3.1.5-3
 static const std::array<precoding_weight_matrix, 28> codebook_1layer_4port = {
     {// TPMI Index 0-7
      precoding_weight_matrix({dot5, zero, zero, zero}, 1, 4),
@@ -76,13 +76,13 @@ static const std::array<precoding_weight_matrix, 28> codebook_1layer_4port = {
      precoding_weight_matrix({dot5, -dot5j, -dot5, dot5j}, 1, 4),
      precoding_weight_matrix({dot5, -dot5j, -dot5j, -dot5}, 1, 4)}};
 
-/// TS38.211 Table 6.3.1.5-4
+/// TS 38.211 Table 6.3.1.5-4
 static const std::array<precoding_weight_matrix, 3> codebook_2layer_2port = {
     {precoding_weight_matrix({sqrt1_2, zero, zero, sqrt1_2}, 2, 2),
      precoding_weight_matrix({dot5, dot5, dot5, -dot5}, 2, 2),
      precoding_weight_matrix({dot5, dot5, dot5j, -dot5j}, 2, 2)}};
 
-/// TS38.211 Table 6.3.1.5-5
+/// TS 38.211 Table 6.3.1.5-5
 static const std::array<precoding_weight_matrix, 22> codebook_2layer_4port = {{
     // TPMI Index 0-3
     precoding_weight_matrix({dot5, zero, zero, dot5, zero, zero, zero, zero}, 2, 4),
@@ -114,7 +114,7 @@ static const std::array<precoding_weight_matrix, 22> codebook_2layer_4port = {{
     precoding_weight_matrix({sqrt1_8, sqrt1_8, -sqrt1_8j, -sqrt1_8j, sqrt1_8j, -sqrt1_8j, sqrt1_8, -sqrt1_8}, 2, 4),
 }};
 
-/// TS38.211 Table 6.3.1.5-6
+/// TS 38.211 Table 6.3.1.5-6
 static const std::array<precoding_weight_matrix, 7> codebook_3layer_4port = {{
     // TPMI Index 0-3
     precoding_weight_matrix({dot5, zero, zero, zero, dot5, zero, zero, zero, dot5, zero, zero, zero}, 3, 4),
@@ -179,7 +179,7 @@ static const std::array<precoding_weight_matrix, 7> codebook_3layer_4port = {{
                             4),
 }};
 
-/// TS38.211 Table 6.3.1.5-7
+/// TS 38.211 Table 6.3.1.5-7
 static const std::array<precoding_weight_matrix, 5> codebook_4layer_4port = {{
     // TPMI Index 0-3
     precoding_weight_matrix(

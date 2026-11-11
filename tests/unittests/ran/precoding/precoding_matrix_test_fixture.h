@@ -174,7 +174,7 @@ inline std::vector<test_case_t> generate_typeI_precoding_matrix_test_cases()
 inline pmi_typeII::layer_coefficients
 generate_random_typeII_coefficients(unsigned nof_beams, unsigned n_psk, bool subband_amplitude)
 {
-  // Maximum wideband amplitude index, as per TS38.214 Table 5.2.2.2.3-2.
+  // Maximum wideband amplitude index, as per TS 38.214 Table 5.2.2.2.3-2.
   static constexpr uint8_t max_wideband_amplitude_index = 7;
 
   std::uniform_int_distribution<uint8_t> amplitude_dist(0, max_wideband_amplitude_index - 1);

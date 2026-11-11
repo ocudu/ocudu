@@ -12,7 +12,7 @@
 
 namespace ocudu::rb_helper {
 
-/// \brief Conversion of CRBs to VRBs as per TS38.211, clause 7.3.1.6.
+/// \brief Conversion of CRBs to VRBs as per TS 38.211, clause 7.3.1.6.
 /// \param crbs CRB interval to be converted to VRB interval.
 /// \param bwp_crb_start Start of the BWP CRBs.
 /// \param coreset_crb_start Start of the coreset CRBs.
@@ -31,7 +31,7 @@ inline vrb_interval crb_to_vrb_dl_non_interleaved(crb_interval  crbs,
   return vrb_interval{crbs.start() - bwp_crb_start, crbs.stop() - bwp_crb_start};
 }
 
-/// \brief Conversion of CRBs to VRBs as per TS38.211, clause 7.3.1.6.
+/// \brief Conversion of CRBs to VRBs as per TS 38.211, clause 7.3.1.6.
 /// \param crbs CRB interval to be converted to VRB interval.
 /// \param bwp_crb_start Start of the BWP CRBs.
 /// \return VRB interval.

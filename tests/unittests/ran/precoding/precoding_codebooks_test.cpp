@@ -44,7 +44,7 @@ struct codebook_typeI_single_panel_beam {
 /// \brief Calculates a layer to antenna port weights.
 ///
 /// The formula for the coefficients layer to port coefficients are given by \f$\nu _{l,m}\f$ and
-/// \f$\tilde{\nu}_{l,m}\f$ for \c layer_wights of size 2 and 4 respectively is TS38.214 Section 5.2.2.2.1.
+/// \f$\tilde{\nu}_{l,m}\f$ for \c layer_wights of size 2 and 4 respectively is TS 38.214 Section 5.2.2.2.1.
 ///
 /// \param beam_descr    Parameters that describe the beam creation.
 /// \param layer_weights Layer weights for each of the beams.

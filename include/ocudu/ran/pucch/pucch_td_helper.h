@@ -12,7 +12,7 @@ namespace ocudu::pucch_td_helper {
 /// Maximum K1 candidates in a dl-DataToUL-ACK list.
 static constexpr unsigned MAX_K1_CANDIDATES = 8;
 
-/// \brief Returns the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
+/// \brief Returns the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS 38.213, 9.1.2.1.
 inline span<const uint8_t> get_common_k1_candidates()
 {
   static constexpr std::array<uint8_t, MAX_K1_CANDIDATES> pool = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -20,7 +20,7 @@ inline span<const uint8_t> get_common_k1_candidates()
 }
 
 /// \brief Returns the common (fallback) k1 candidates for PDSCH-to-HARQ timing, given a minimum supported k1, as per
-/// TS38.213, 9.1.2.1.
+/// TS 38.213, 9.1.2.1.
 inline span<const uint8_t> get_common_k1_candidates(uint8_t min_k1)
 {
   auto all = get_common_k1_candidates();

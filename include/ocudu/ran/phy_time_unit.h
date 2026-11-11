@@ -12,7 +12,7 @@ namespace ocudu {
 
 /// \brief Physical layer time unit.
 ///
-/// This class abstracts the PHY reference time unit \f$T_c\f$ described in TS38.211 Section 4.1.
+/// This class abstracts the PHY reference time unit \f$T_c\f$ described in TS 38.211 Section 4.1.
 class phy_time_unit
 {
 private:
@@ -108,7 +108,7 @@ public:
 
   /// \brief Gets the time expressed in units of \f$T_{\textup{A}}\f$.
   ///
-  /// Conversion is performed as per TS38.213 Section 4.2, rounding to the nearest integer.
+  /// Conversion is performed as per TS 38.213 Section 4.2, rounding to the nearest integer.
   ///
   /// \param[in] scs Subcarrier spacing.
   /// \remark Used to compute the Timing Advance Command to be sent in RAR (not in MAC CE).
@@ -136,16 +136,16 @@ public:
 
   /// \brief Converts the time to an UL Relative Time of Arrival (UL-RTOA) measurement.
   ///
-  /// UL-RTOA measurements are part of the NR Positioning protocol described in TS38.455, Section 9.2.39 defines the
-  /// Information Elements for the measurement. The semantics are defined in TS38.455 Section 13.1.1.
+  /// UL-RTOA measurements are part of the NR Positioning protocol described in TS 38.455, Section 9.2.39 defines the
+  /// Information Elements for the measurement. The semantics are defined in TS 38.455 Section 13.1.1.
   ///
   /// The measurements are reported in units of \f$T_c\f$ in the range of {-985024, ... 985024}. The reporting
   /// resolution is given the parameter \f$k\f$, the resolution is defined as \f$T=T_c\times 2^k\f$.
   ///
   /// The resolution is selected from the parameter \e timingReportingGranularityFactor contained in the Information
-  /// Element \e TRPMeasurementQuantitiesList-Item in TS38.455 Section 9.3.4.
+  /// Element \e TRPMeasurementQuantitiesList-Item in TS 38.455 Section 9.3.4.
   ///
-  /// The resultant measurement is mapped to the reported values according TS38.455 Tables 13.1.1-1/2/3/5/6.
+  /// The resultant measurement is mapped to the reported values according TS 38.455 Tables 13.1.1-1/2/3/5/6.
   ///
   /// \param[in] resolution Measurement resolution, parameter \f$k\f$, in range {0, ..., 5}.
   /// \return The resultant UL-RTOA measurement report value.
@@ -262,7 +262,7 @@ public:
     return phy_time_unit(static_cast<value_type>(units_of_Tc));
   }
 
-  /// Creates a physical layer time from a timing advance command \f$T_A\f$, as per TS38.213 Section 4.2.
+  /// Creates a physical layer time from a timing advance command \f$T_A\f$, as per TS 38.213 Section 4.2.
   template <typename Integer>
   static constexpr phy_time_unit from_timing_advance(Integer units_of_Ta, subcarrier_spacing scs)
   {

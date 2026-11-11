@@ -11,9 +11,9 @@
 
 namespace ocudu {
 
-/// \brief Parameters required to receive the Sounding Reference Signals described in 3GPP TS38.211 Section 6.4.1.4.
+/// \brief Parameters required to receive the Sounding Reference Signals described in 3GPP TS 38.211 Section 6.4.1.4.
 ///
-/// Higher layer parameters mentioned in this structure are contained in the 3GPP TS38.331 Section 6.3.2 Information
+/// Higher layer parameters mentioned in this structure are contained in the 3GPP TS 38.331 Section 6.3.2 Information
 /// Element \e SRS-Resource.
 struct srs_resource_configuration {
   /// Enumeration for attributes that accept only one, two, or four.

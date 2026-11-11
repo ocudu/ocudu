@@ -13,7 +13,7 @@ namespace ocudu {
 namespace pusch_helper {
 
 /// \brief Determine CRB limits for PUSCH grant, based on BWP configs, SearchSpace type and DCI format as per
-/// TS38.214, 6.1.2.2.2.
+/// TS 38.214, 6.1.2.2.2.
 ///
 /// \param dci_type DL DCI format.
 /// \param init_ul_bwp Initial UL BWP configuration.

@@ -243,7 +243,7 @@ private:
 
   /// \brief Computes the number of PRBs and TBS required for a MsgB PDSCH carrying a mix of fallbackRAR and
   /// successRAR subPDUs. Unlike \c get_nof_pdsch_prbs_required, this is not backed by a precomputed table, since a
-  /// successRAR subPDU (TS38.321, 6.1.5a/6.2.3a) is larger than a fallbackRAR subPDU, so the required size depends
+  /// successRAR subPDU (TS 38.321, 6.1.5a/6.2.3a) is larger than a fallbackRAR subPDU, so the required size depends
   /// on the split between the two, not just the total grant count.
   sch_prbs_tbs get_nof_msgb_pdsch_prbs_required(unsigned time_res_idx,
                                                 unsigned nof_fallback_grants,
@@ -287,7 +287,7 @@ private:
   const crb_interval ra_crb_lims;
   /// Duration of a single PRACH occasion in slots.
   const unsigned prach_occasion_duration_slots;
-  /// Backoff Indicator value included in the RAR, as per TS38.321 Table 7.2-1, mapped from
+  /// Backoff Indicator value included in the RAR, as per TS 38.321 Table 7.2-1, mapped from
   /// \c scheduler_ra_expert_config::backoff_indicator_duration.
   const uint8_t backoff_indicator_value;
   /// Bitmap of CRBs that might be used for PUCCH transmissions, to avoid scheduling MSG3-PUSCH over them.

@@ -46,7 +46,7 @@ struct unique_dci_sizes_list {
 
 } // namespace
 
-// Checks that the Maximum CBG per TB value is valid, as per TS38.331 Section 6.3.2, Information Elements
+// Checks that the Maximum CBG per TB value is valid, as per TS 38.331 Section 6.3.2, Information Elements
 // PUSCH-ServingCellConfig and PDSCH-ServingCellConfig
 static bool max_cbg_tb_is_valid(unsigned max_cbg_tb)
 {
@@ -69,7 +69,7 @@ static dci_0_0_size dci_f0_0_bits_before_padding(unsigned N_rb_ul_bwp)
   // Identifier for DCI formats - 1 bit.
   ++sizes.total;
 
-  // Frequency domain resource assignment. Number of bits as per TS38.214 Section 6.1.2.2.2.
+  // Frequency domain resource assignment. Number of bits as per TS 38.214 Section 6.1.2.2.2.
   sizes.frequency_resource = units::bits(log2_ceil(N_rb_ul_bwp * (N_rb_ul_bwp + 1) / 2));
   sizes.total += sizes.frequency_resource;
 
@@ -105,7 +105,7 @@ static dci_1_0_size dci_f1_0_bits_before_padding(unsigned N_rb_dl_bwp)
   // Contribution to the DCI payload size that is fixed. It is the same number of bits for all format 1_0 variants.
   sizes.total = units::bits(28U);
 
-  // Frequency domain resource assignment. Number of bits as per TS38.214 Section 5.1.2.2.2.
+  // Frequency domain resource assignment. Number of bits as per TS 38.214 Section 5.1.2.2.2.
   sizes.frequency_resource = units::bits(log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2));
   sizes.total += sizes.frequency_resource;
 
@@ -137,13 +137,13 @@ static unsigned freq_resource_assignment_size(resource_allocation     res_alloca
   unsigned freq_resource_size = 0;
   switch (res_allocation_type) {
     case resource_allocation::resource_allocation_type_0:
-      // For resource allocation type 0, the field size is the number of UL/DL RBG, as per TS38.214 Section 6.1.2.2.1 /
+      // For resource allocation type 0, the field size is the number of UL/DL RBG, as per TS 38.214 Section 6.1.2.2.1 /
       // 5.1.2.2.1.
       freq_resource_size = nof_rb_groups.value();
       break;
     case resource_allocation::resource_allocation_type_1:
-      // For resource allocation type 1, the field size is derived from the bandwidth of the active BWP, as per TS38.212
-      // Section 7.3.1.
+      // For resource allocation type 1, the field size is derived from the bandwidth of the active BWP, as per
+      // TS 38.212 Section 7.3.1.
       freq_resource_size = log2_ceil(nof_prb_bwp * (nof_prb_bwp + 1) / 2);
       break;
     case resource_allocation::dynamic_switch:
@@ -155,7 +155,7 @@ static unsigned freq_resource_assignment_size(resource_allocation     res_alloca
   return freq_resource_size;
 }
 
-// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-2.
+// Computes the UL precoding information field size for DCI format 0_1 from TS 38.212 Table 7.3.1.1.2-2.
 static units::bits ul_precoding_info_size_4port(tx_scheme_codebook_subset codebook_subset)
 {
   using namespace units::literals;
@@ -170,7 +170,7 @@ static units::bits ul_precoding_info_size_4port(tx_scheme_codebook_subset codebo
   }
 }
 
-// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-3.
+// Computes the UL precoding information field size for DCI format 0_1 from TS 38.212 Table 7.3.1.1.2-3.
 static units::bits ul_precoding_info_size_4port_maxrank1(tx_scheme_codebook_subset codebook_subset)
 {
   using namespace units::literals;
@@ -185,7 +185,7 @@ static units::bits ul_precoding_info_size_4port_maxrank1(tx_scheme_codebook_subs
   }
 }
 
-// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-4.
+// Computes the UL precoding information field size for DCI format 0_1 from TS 38.212 Table 7.3.1.1.2-4.
 static units::bits ul_precoding_info_size_2port(tx_scheme_codebook_subset codebook_subset)
 {
   using namespace units::literals;
@@ -200,7 +200,7 @@ static units::bits ul_precoding_info_size_2port(tx_scheme_codebook_subset codebo
   return 2_bits;
 }
 
-// Computes the UL precoding information field size for DCI format 0_1 from TS38.212 Table 7.3.1.1.2-5.
+// Computes the UL precoding information field size for DCI format 0_1 from TS 38.212 Table 7.3.1.1.2-5.
 static units::bits ul_precoding_info_size_2port_maxrank1(tx_scheme_codebook_subset codebook_subset)
 {
   using namespace units::literals;
@@ -343,7 +343,7 @@ static unsigned srs_resource_indicator_size(const dci_size_config& dci_config)
 
   // SRS resource indicator size for non-codebook based transmission.
   if (std::holds_alternative<tx_scheme_non_codebook>(dci_config.pusch_tx_scheme.value())) {
-    // Derived from TS38.212 Table 7.3.1.1.2-28.
+    // Derived from TS 38.212 Table 7.3.1.1.2-28.
     switch (dci_config.nof_srs_resources) {
       case 1:
         // If only a single SRS resource is configured, the SRS resource indicator does not occupy any bit.
@@ -381,7 +381,7 @@ static dci_0_1_size dci_f0_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.bwp_indicator = units::bits(bwp_indicator_size(dci_config.nof_ul_bwp_rrc));
   sizes.total += sizes.bwp_indicator;
 
-  // Frequency domain resource assignment - number of bits as per TS38.212 Section 7.3.1.1.2.
+  // Frequency domain resource assignment - number of bits as per TS 38.212 Section 7.3.1.1.2.
   sizes.frequency_resource = units::bits(freq_resource_assignment_size(
       dci_config.pusch_res_allocation_type, dci_config.nof_ul_rb_groups, dci_config.ul_bwp_active_bw));
   sizes.total += sizes.frequency_resource;
@@ -491,7 +491,7 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
   sizes.bwp_indicator = units::bits(bwp_indicator_size(dci_config.nof_dl_bwp_rrc));
   sizes.total += sizes.bwp_indicator;
 
-  // Frequency domain resource assignment - number of bits as per TS38.212 Section 7.3.1.2.2.
+  // Frequency domain resource assignment - number of bits as per TS 38.212 Section 7.3.1.2.2.
   sizes.frequency_resource = units::bits(freq_resource_assignment_size(
       dci_config.pdsch_res_allocation_type, dci_config.nof_dl_rb_groups, dci_config.dl_bwp_active_bw));
   sizes.total += sizes.frequency_resource;
@@ -562,7 +562,7 @@ static dci_1_1_size dci_f1_1_bits_before_padding(const dci_size_config& dci_conf
   // TPC command for scheduled PUCCH - 2 bits.
   sizes.total += units::bits(2);
 
-  // PUCCH resource indicator - 3 bits as per TS38.213 Section 9.2.3.
+  // PUCCH resource indicator - 3 bits as per TS 38.213 Section 9.2.3.
   sizes.total += units::bits(3);
 
   // PDSCH to HARQ feedback timing indicator - 0, 1, 2 or 3 bits.
@@ -622,11 +622,11 @@ dci_sizes ocudu::get_dci_sizes(const dci_size_config& config)
   dci_sizes final_sizes = {};
 
   // Step 0.
-  // - Determine DCI format 0_0 monitored in a common search space according to TS38.212 Section 7.3.1.1.1 where
+  // - Determine DCI format 0_0 monitored in a common search space according to TS 38.212 Section 7.3.1.1.1 where
   // N_UL_BWP_RB is given by the size of the initial UL bandwidth part.
   const dci_0_0_size format0_0_info_bits_common = dci_f0_0_bits_before_padding(config.ul_bwp_initial_bw);
 
-  // - Determine DCI format 1_0 monitored in a common search space according to TS38.212 Section 7.3.1.2.1 where
+  // - Determine DCI format 1_0 monitored in a common search space according to TS 38.212 Section 7.3.1.2.1 where
   // N_DL_BWP_RB given by:
   //   - the size of CORESET 0 if CORESET 0 is configured for the cell
   //   - the size of initial DL bandwidth part if CORESET 0 is not configured for the cell.
@@ -644,7 +644,7 @@ dci_sizes ocudu::get_dci_sizes(const dci_size_config& config)
     // The number of padding bits is computed here, including the single bit UL/SUL field. This field is located after
     // the padding, and it must only be included if the format 1_0 payload has a larger amount of bits before the
     // padding bits than the format 0_0 payload. Therefore, the UL/SUL can be though of as a field that takes the space
-    // of the last padding bit within the format 0_0 payload, if present. See TS38.212 Sections 7.3.1.0 and 7.3.1.1.1.
+    // of the last padding bit within the format 0_0 payload, if present. See TS 38.212 Sections 7.3.1.0 and 7.3.1.1.1.
     final_sizes.format0_0_common_size.padding_incl_ul_sul =
         format1_0_info_bits_common.total - format0_0_info_bits_common.total;
 
@@ -668,11 +668,11 @@ dci_sizes ocudu::get_dci_sizes(const dci_size_config& config)
 
   // Step 1.
   if (config.dci_0_0_and_1_0_ue_ss) {
-    // - Determine DCI format 0_0 monitored in a UE-specific search space according to TS38.212 Section 7.3.1.1.1 where
+    // - Determine DCI format 0_0 monitored in a UE-specific search space according to TS 38.212 Section 7.3.1.1.1 where
     // N_UL_BWP_RB is the size of the active UL bandwidth part.
     const dci_0_0_size format0_0_info_bits_ue = dci_f0_0_bits_before_padding(config.ul_bwp_active_bw);
 
-    // - Determine DCI format 1_0 monitored in a UE-specific search space according to TS38.212 Section 7.3.1.2.1 where
+    // - Determine DCI format 1_0 monitored in a UE-specific search space according to TS 38.212 Section 7.3.1.2.1 where
     // N_DL_BWP_RB is the size of the active DL bandwidth part.
     const dci_1_0_size format1_0_info_bits_ue = dci_f1_0_bits_before_padding(config.dl_bwp_active_bw);
 
@@ -713,10 +713,10 @@ dci_sizes ocudu::get_dci_sizes(const dci_size_config& config)
 
   // Step 2.
   if (config.dci_0_1_and_1_1_ue_ss) {
-    // Determine the size of DCI format 0_1 according to TS38.212 Section 7.3.1.1.2.
+    // Determine the size of DCI format 0_1 according to TS 38.212 Section 7.3.1.1.2.
     dci_0_1_size format0_1_ue_size = dci_f0_1_bits_before_padding(config);
 
-    // Determine the size of DCI format 1_1 according to TS38.212 Section 7.3.1.2.2.
+    // Determine the size of DCI format 1_1 according to TS 38.212 Section 7.3.1.2.2.
     dci_1_1_size format1_1_ue_size = dci_f1_1_bits_before_padding(config);
 
     // - For a UE configured with supplementaryUplink in ServingCellConfig in a cell, if PUSCH is configured to be
@@ -846,7 +846,7 @@ dci_payload ocudu::dci_0_0_c_rnti_pack(const dci_0_0_c_rnti_configuration& confi
       // UL/SUL field is included if it is present in the DCI message and the number of DCI format 1_0 bits before
       // padding is larger than the number of DCI format 0_0 bits before padding.
       constexpr unsigned nof_ul_sul_bit = 1U;
-      // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+      // Padding bits, if necessary, as per TS 38.212 Section 7.3.1.0.
       payload.push_back(0x00U, config.payload_size.padding_incl_ul_sul.value() - nof_ul_sul_bit);
 
       // UL/SUL indicator - 1 bit.
@@ -896,7 +896,7 @@ dci_payload ocudu::dci_0_0_tc_rnti_pack(const dci_0_0_tc_rnti_configuration& con
                  config.N_ul_hop);
 
     // Position of the LSB bit of the hopping offset within the frequency domain resource assignment field, as per
-    // TS38.212 Section 7.3.1.1.1.
+    // TS 38.212 Section 7.3.1.1.1.
     unsigned hopping_offset_lsb_pos = frequency_resource_nof_bits.value() - config.N_ul_hop;
 
     // Frequency resource mask, to truncate the frequency resource payload before adding the hopping offset bits.
@@ -1226,7 +1226,7 @@ dci_payload ocudu::dci_0_1_pack(const dci_0_1_configuration& config)
         config.dynamic_pusch_res_allocation_type == dynamic_resource_allocation::type_0 ? 0 : 1;
 
     // The MSB bit of the frequency domain allocation field is used to indicate the resource allocation type, as per
-    // TS38.212 Section 7.3.1.1.2.
+    // TS 38.212 Section 7.3.1.1.2.
     payload.push_back(dynamic_alloc_type_indicator, 1);
 
     // The rest of the LSB bits are used to pack the frequency domain resource allocation.
@@ -1331,7 +1331,7 @@ dci_payload ocudu::dci_0_1_pack(const dci_0_1_configuration& config)
   // UL-SCH indicator - 1 bit.
   payload.push_back(config.ul_sch_indicator, 1);
 
-  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+  // Padding bits, if necessary, as per TS 38.212 Section 7.3.1.0.
   if (config.payload_size.padding.value() > 0) {
     payload.push_back(0x00U, config.payload_size.padding.value());
   }
@@ -1372,7 +1372,7 @@ dci_payload ocudu::dci_1_1_pack(const dci_1_1_configuration& config)
         config.dynamic_pdsch_res_allocation_type == dynamic_resource_allocation::type_0 ? 0 : 1;
 
     // The MSB bit of the frequency domain allocation field is used to indicate the resource allocation type, as per
-    // TS38.212 Section 7.3.1.2.2.
+    // TS 38.212 Section 7.3.1.2.2.
     payload.push_back(dynamic_alloc_type_indicator, 1);
 
     // The rest of the LSB bits are used to pack the frequency domain resource allocation.
@@ -1477,7 +1477,7 @@ dci_payload ocudu::dci_1_1_pack(const dci_1_1_configuration& config)
   // DM-RS sequence initialization - 1 bit.
   payload.push_back(config.dmrs_seq_initialization, 1);
 
-  // Padding bits, if necessary, as per TS38.212 Section 7.3.1.0.
+  // Padding bits, if necessary, as per TS 38.212 Section 7.3.1.0.
   if (config.payload_size.padding.value() > 0) {
     payload.push_back(0x00U, config.payload_size.padding.value());
   }

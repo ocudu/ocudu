@@ -22,7 +22,7 @@ using namespace ocudu;
 // Combined test parameters. MCS table and index.
 using pdsch_mcs_param = std::tuple<pdsch_mcs_table, unsigned>;
 
-// Combined expected values from TS38.211 Tables 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
+// Combined expected values from TS 38.211 Tables 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
 static const std::map<pdsch_mcs_param, std::tuple<unsigned, float, float>> pdsch_mcs_expected = {
     {{pdsch_mcs_table::qam64, 0}, {2, 120.0F, 0.2344F}},
     {{pdsch_mcs_table::qam64, 1}, {2, 157.0F, 0.3066F}},

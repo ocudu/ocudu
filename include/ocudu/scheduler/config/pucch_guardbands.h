@@ -17,7 +17,7 @@ struct ran_cell_config;
 /// \brief Computes a CRB bitmap marking all CRBs occupied by PUCCH (common + dedicated resources).
 ///
 /// \param[in] ul_bwp_crbs        CRB interval of the initial UL BWP.
-/// \param[in] pucch_res_common   Higher-layer parameter \e pucch-ResourceCommon (index into TS38.213 Table 9.2.1-1).
+/// \param[in] pucch_res_common   Higher-layer parameter \e pucch-ResourceCommon (index into TS 38.213 Table 9.2.1-1).
 /// \param[in] ded_pucch_resources Span of dedicated PUCCH resources configured for the cell.
 /// \return A CRB bitmap of size \c ul_bwp_crbs.length() with bits set for every CRB used by PUCCH.
 crb_bitmap
@@ -33,7 +33,7 @@ crb_bitmap compute_pucch_crbs(const ran_cell_config& cell_cfg);
 /// \brief Computes the CRB interval, within the UL BWP, that is free of the common PUCCH resources.
 ///
 /// \param[in] ul_bwp_crbs CRB interval of the initial UL BWP.
-/// \param[in] pucch_res_common Higher-layer parameter \e pucch-ResourceCommon (index into TS38.213 Table 9.2.1-1).
+/// \param[in] pucch_res_common Higher-layer parameter \e pucch-ResourceCommon (index into TS 38.213 Table 9.2.1-1).
 /// \return CRB interval, within \c ul_bwp_crbs, that is free of common PUCCH resources.
 crb_interval compute_available_crbs_without_common_pucch(crb_interval ul_bwp_crbs, unsigned pucch_res_common);
 

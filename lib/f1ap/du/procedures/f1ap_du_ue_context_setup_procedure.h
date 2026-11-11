@@ -13,7 +13,7 @@ namespace ocudu::odu {
 
 class f1ap_du_ue_manager;
 
-/// This procedure handles UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
+/// This procedure handles UE CONTEXT SETUP REQUEST as per TS 38.473, Section 8.3.1.
 class f1ap_du_ue_context_setup_procedure
 {
 public:

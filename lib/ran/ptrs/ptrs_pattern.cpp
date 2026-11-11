@@ -10,11 +10,11 @@ using namespace ocudu;
 
 static span<const uint8_t> get_k_re_ref(dmrs_config_type dmrs_type, ptrs_re_offset offset, unsigned nof_ports)
 {
-  // TS38.211 Table 7.4.1.2.2-1 for DM-RS Configuration type 1.
+  // TS 38.211 Table 7.4.1.2.2-1 for DM-RS Configuration type 1.
   static constexpr std::array<std::array<uint8_t, 4>, 4> k_re_ref_type1 = {
       {{0, 2, 1, 3}, {2, 4, 3, 5}, {6, 8, 7, 9}, {8, 10, 9, 11}}};
 
-  // TS38.211 Table 7.4.1.2.2-1 for DM-RS Configuration type 2.
+  // TS 38.211 Table 7.4.1.2.2-1 for DM-RS Configuration type 2.
   static constexpr std::array<std::array<uint8_t, 6>, 4> k_re_ref_type2 = {
       {{0, 1, 2, 3, 4, 5}, {1, 6, 3, 8, 5, 10}, {6, 7, 8, 9, 10, 11}, {7, 0, 9, 2, 11, 4}}};
 
@@ -94,7 +94,7 @@ ptrs_pattern ocudu::get_ptrs_pattern(const ptrs_pattern_configuration& pattern_c
   };
 
   // Activate only the RBs that contain PT-RS.
-  // The RBs allocated for the transmission are numbered from 0 to N_rb - 1 (TS38.211 Section 7.4.1.2.2). The PT-RS
+  // The RBs allocated for the transmission are numbered from 0 to N_rb - 1 (TS 38.211 Section 7.4.1.2.2). The PT-RS
   // RBs are the allocated RBs with index k_rb_ref + i * K_ptrs, regardless of gaps in the RB mask.
   pattern_config.rb_mask.for_each(
       0, pattern_config.rb_mask.size(), [K_ptrs, k_rb_ref, &out, i_rb = 0U](unsigned i_crb) mutable {

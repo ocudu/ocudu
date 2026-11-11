@@ -72,7 +72,7 @@ struct pdcch_config {
   bool operator!=(const pdcch_config& rhs) const { return !(rhs == *this); }
 };
 
-/// "PDSCH-Config" - UE-dedicated PDSCH Configuration as per TS38.331.
+/// "PDSCH-Config" - UE-dedicated PDSCH Configuration as per TS 38.331.
 struct pdsch_config {
   /// \brief Resource allocation type of to DCI format 1_1.
   /// \remark See TS 38.214, clause 5.1.2.2.
@@ -85,15 +85,15 @@ struct pdsch_config {
   enum class max_no_codeword_scheduled_by_dci { n1, n2 };
 
   /// \brief HARQ process number for DCI Format 1_1.
-  /// \remark See TS38.212, Section 7.3.1.2.2 Format 1_1.
+  /// \remark See TS 38.212, Section 7.3.1.2.2 Format 1_1.
   enum class harq_process_num_dci_1_1_size { n4 = 4, n5 = 5 };
 
   /// \brief HARQ process number for DCI Format 1_2.
-  /// \remark See TS38.212, Section 7.3.1.2.3 Format 1_2.
+  /// \remark See TS 38.212, Section 7.3.1.2.3 Format 1_2.
   enum class harq_process_num_dci_1_2_size { n0 = 0, n1 = 1, n2 = 2, n3 = 3, n4 = 4, n5 = 5 };
 
   /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
-  /// See TS38.331, \e dataScramblingIdentityPDSCH, and TS38.211, 7.3.1.1. Values: {0,...,1023}.
+  /// See TS 38.331, \e dataScramblingIdentityPDSCH, and TS 38.211, 7.3.1.1. Values: {0,...,1023}.
   std::optional<uint16_t> data_scrambling_id_pdsch;
   /// DMRS configuration for PDSCH transmissions using PDSCH mapping type A (chosen dynamically via
   /// PDSCH-TimeDomainResourceAllocation).
@@ -264,7 +264,7 @@ struct uplink_config {
   }
 };
 
-/// \c PDSCH-CodeBlockGroupTransmission, as per TS38.331.
+/// \c PDSCH-CodeBlockGroupTransmission, as per TS 38.331.
 struct pdsch_code_block_group_transmission {
   /// \c maxCodeBlockGroupsPerTransportBlock.
   /// \remark Maximum number of code-block-groups (CBGs) per TB. In case of multiple CW, the maximum CBG is 4.
@@ -281,7 +281,7 @@ struct pdsch_code_block_group_transmission {
   bool operator!=(const pdsch_code_block_group_transmission& rhs) const { return !(rhs == *this); }
 };
 
-/// \c PDSCH-ServingCellConfig, as per TS38.331.
+/// \c PDSCH-ServingCellConfig, as per TS 38.331.
 struct pdsch_serving_cell_config {
   /// \c nrofHARQ-ProcessesForPDSCH.
   enum class nof_harq_proc_for_pdsch { n2 = 2, n4 = 4, n6 = 6, n8 = 8, n10 = 10, n12 = 12, n16 = 16, n32 = 32 };
@@ -308,7 +308,7 @@ struct pdsch_serving_cell_config {
   bool operator!=(const pdsch_serving_cell_config& rhs) const { return !(rhs == *this); }
 };
 
-/// \c ServingCellConfig, as per TS38.331.
+/// \c ServingCellConfig, as per TS 38.331.
 struct serving_cell_config {
   /// DU-specific cell identifier.
   du_cell_index_t cell_index;

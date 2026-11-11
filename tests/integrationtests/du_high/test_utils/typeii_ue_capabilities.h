@@ -14,7 +14,7 @@ namespace test_helpers {
 
 /// \brief Builds a UE Capability RAT Container List that reports the Type II codebook for the given band.
 ///
-/// The DU configures the Type II codebook for a user equipment whose capabilities report it, as per TS38.331
+/// The DU configures the Type II codebook for a user equipment whose capabilities report it, as per TS 38.331
 /// \e codebookParameters. The container carries the number of beams and the number of CSI-RS ports that the cell
 /// needs, so that the DU does not fall back to the Type I codebook.
 ///

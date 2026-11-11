@@ -14,7 +14,7 @@ namespace ocudu {
 
 /// \brief Gets the number of codeblocks for a transmission containing a UCI message.
 ///
-/// The number of UCI codeblocks and codeword segmentation is described TS38.212 Section 6.3.1.2.1.
+/// The number of UCI codeblocks and codeword segmentation is described TS 38.212 Section 6.3.1.2.1.
 ///
 /// \param[in] message_length  Number of payload bits in the UCI message. Parameter \f$A\f$.
 /// \param[in] codeword_length Number of encoded bits in the codeword. Parameter \f$E\f$.
@@ -29,7 +29,7 @@ constexpr unsigned get_nof_uci_codeblocks(unsigned message_length, unsigned code
 
 /// \brief Gets the number of CRC bits per UCI codeblock.
 ///
-/// The number of CRC bits is described in TS38.212 Section 6.3.1.2.1.
+/// The number of CRC bits is described in TS 38.212 Section 6.3.1.2.1.
 ///
 /// \param[in] payload_size Number of payload bits in the UCI message. Parameter \f$A\f$.
 /// \return The CRC number of bits per codeblock. Parameter \f$L\f$.

@@ -344,7 +344,7 @@ void ocudu::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
   // See TS 38.211, 7.3.1.1. - Scrambling.
   pdsch.n_id            = cell_cfg.params.pci;
   pdsch.vrb_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
-  // See TS38.213, 10.1. - Type1-PDCCH CSS set for CRC scrambled by a TC-RNTI on the PCell.
+  // See TS 38.213, 10.1. - Type1-PDCCH CSS set for CRC scrambled by a TC-RNTI on the PCell.
   pdsch.ss_set_type = search_space_set_type::type1;
   pdsch.dci_fmt     = dci_dl_format::f1_0;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
@@ -387,7 +387,7 @@ void ocudu::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.symbols         = pdsch_cfg.symbols;
   pdsch.dmrs            = pdsch_cfg.dmrs;
   pdsch.vrb_prb_mapping = vrb_to_prb::mapping_type::non_interleaved;
-  // See TS38.213, 10.1.
+  // See TS 38.213, 10.1.
   pdsch.ss_set_type =
       not ss_info.cfg->is_common_search_space() ? search_space_set_type::ue_specific : search_space_set_type::type3;
   pdsch.dci_fmt = dci_dl_format::f1_0;
@@ -440,7 +440,7 @@ void ocudu::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   pdsch.vrb_prb_mapping = dci_cfg.vrb_prb_mapping.has_value() and dci_cfg.vrb_prb_mapping.value()
                               ? ue_cell_cfg.init_bwp().dl.pdsch().ded()->vrb_to_prb_interleaving
                               : vrb_to_prb::mapping_type::non_interleaved;
-  // See TS38.213, 10.1.
+  // See TS 38.213, 10.1.
   pdsch.ss_set_type = search_space_set_type::ue_specific;
   pdsch.dci_fmt     = dci_dl_format::f1_1;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);

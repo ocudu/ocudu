@@ -62,7 +62,7 @@ struct dl_time_domain_mapper {
   }
 
   /// \brief Retrieve the list of available PDSCH time-domain resource allocations applicable for the given DCI DL
-  /// format, as per TS38.214, clause 5.1.2.1.
+  /// format, as per TS 38.214, clause 5.1.2.1.
   /// \remark Returns the common (fallback) resources for DCI format 1_0, and the dedicated ones otherwise.
   span<const pdsch_time_domain_resource_allocation> pdsch_td_resources(dci_dl_format dci_format) const
   {

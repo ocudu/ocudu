@@ -19,7 +19,7 @@ precoding_beamforming_composite calculate_mimo_matrix(const pmi_typeI_single_pan
 /// \brief Constructs a precoding weight matrix for a given number of layers for a Type I Single-Panel antenna
 /// configuration.
 ///
-/// All weights are derived from TS38.214 Table 5.2.2.2.1-5 to 5.2.2.2.1-8, which describe CSI reporting using Type I
+/// All weights are derived from TS 38.214 Table 5.2.2.2.1-5 to 5.2.2.2.1-8, which describe CSI reporting using Type I
 /// Single-Panel codebook for one to four layers. The generated precoding weights for the first half of ports
 /// corresponds to the first polarization, while the second half of ports corresponds to the second polarization.
 ///

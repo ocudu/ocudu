@@ -11,16 +11,16 @@ namespace ocudu {
 
 /// \brief Modulation and Code Scheme table identifiers for PDSCH.
 ///
-/// The identifiers are inspired by TS38.331 Section as 6.3.2 (see field \e mcs-Table in various Information Elements).
-/// For the actual tables and the selection procedure, see TS38.214 Section 5.1.3.1.
+/// The identifiers are inspired by TS 38.331 Section as 6.3.2 (see field \e mcs-Table in various Information Elements).
+/// For the actual tables and the selection procedure, see TS 38.214 Section 5.1.3.1.
 enum class pdsch_mcs_table : uint8_t {
-  /// Identifies MCS index table 1, TS38.214 Table 5.1.3.1-1.
+  /// Identifies MCS index table 1, TS 38.214 Table 5.1.3.1-1.
   qam64 = 0,
-  /// Identifies MCS index table 2, TS38.214 Table 5.1.3.1-2.
+  /// Identifies MCS index table 2, TS 38.214 Table 5.1.3.1-2.
   qam256 = 1,
-  /// Identifies MCS index table 3, TS38.214 Table 5.1.3.1-3.
+  /// Identifies MCS index table 3, TS 38.214 Table 5.1.3.1-3.
   qam64LowSe = 2,
-  /// Identifies MCS index table 4, TS38.214 Table 5.1.3.1-4.
+  /// Identifies MCS index table 4, TS 38.214 Table 5.1.3.1-4.
   qam1024 = 3,
 };
 

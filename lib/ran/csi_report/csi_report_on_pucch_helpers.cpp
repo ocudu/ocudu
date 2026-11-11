@@ -16,7 +16,7 @@ using namespace ocudu;
 static units::bits get_csi_report_pucch_size_cri_ri_li_pmi_cqi(const csi_report_configuration& config,
                                                                csi_report_data::ri_type        ri)
 {
-  // Counts number of bits following the order in TS38.212 Table 6.3.1.1.2-7.
+  // Counts number of bits following the order in TS 38.212 Table 6.3.1.1.2-7.
   unsigned count = 0;
 
   // Gets RI, LI, CQI and CRI field sizes.
@@ -145,7 +145,7 @@ static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_repor
   ri_li_cqi_cri_sizes sizes =
       get_ri_li_cqi_cri_sizes(config.pmi_codebook, config.ri_restriction, 1U, config.nof_csi_rs_resources);
 
-  // Unpacks bits following the order in TS38.212 Table 6.3.1.1.2-7.
+  // Unpacks bits following the order in TS 38.212 Table 6.3.1.1.2-7.
   unsigned count = 0;
 
   // Extract CRI.
@@ -300,7 +300,7 @@ csi_report_size ocudu::get_csi_report_pucch_size(const csi_report_configuration&
 {
   using namespace units::literals;
 
-  // The Type II CSI reporting is restricted to PUSCH, as per TS38.214 Section 5.2.1.4.
+  // The Type II CSI reporting is restricted to PUSCH, as per TS 38.214 Section 5.2.1.4.
   ocudu_assert(!std::holds_alternative<pmi_codebook_typeII>(config.pmi_codebook),
                "Type II CSI reports are not supported on PUCCH.");
 
@@ -351,7 +351,7 @@ csi_report_size ocudu::get_csi_report_pucch_size(const csi_report_configuration&
     case csi_report_quantities::cri_ri_pmi_cqi:
     case csi_report_quantities::cri_ri_cqi:
     case csi_report_quantities::cri_ri_li_pmi_cqi: {
-      // Case for wideband PMI and CQI, TS38.214 Table 6.3.1.1.2-7.
+      // Case for wideband PMI and CQI, TS 38.214 Table 6.3.1.1.2-7.
       ocudu_assert(config.nof_reported_rs == 1,
                    "The number of reported Resource Sets (i.e., {}) must be one.",
                    config.nof_reported_rs);
@@ -400,7 +400,7 @@ bool ocudu::validate_pucch_csi_payload(const csi_report_packed& packed, const cs
     return false;
   }
 
-  // The Type II CSI reporting is restricted to PUSCH, as per TS38.214 Section 5.2.1.4.
+  // The Type II CSI reporting is restricted to PUSCH, as per TS 38.214 Section 5.2.1.4.
   if (std::holds_alternative<pmi_codebook_typeII>(config.pmi_codebook)) {
     return false;
   }
@@ -435,7 +435,7 @@ bool ocudu::validate_pucch_csi_payload(const csi_report_packed& packed, const cs
 
 csi_report_data ocudu::csi_report_unpack_pucch(const csi_report_packed& packed, const csi_report_configuration& config)
 {
-  // The Type II CSI reporting is restricted to PUSCH, as per TS38.214 Section 5.2.1.4.
+  // The Type II CSI reporting is restricted to PUSCH, as per TS 38.214 Section 5.2.1.4.
   ocudu_assert(!std::holds_alternative<pmi_codebook_typeII>(config.pmi_codebook),
                "Type II CSI reports are not supported on PUCCH.");
 

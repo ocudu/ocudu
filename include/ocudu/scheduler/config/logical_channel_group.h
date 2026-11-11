@@ -10,7 +10,7 @@
 
 namespace ocudu {
 
-/// Logical Channel Group as per TS38.331.
+/// Logical Channel Group as per TS 38.331.
 enum lcg_id_t : uint8_t { MAX_LCG_ID = 7, MAX_NOF_LCGS = 8, LCG_ID_INVALID = 8 };
 
 constexpr lcg_id_t uint_to_lcg_id(std::underlying_type_t<lcg_id_t> val)

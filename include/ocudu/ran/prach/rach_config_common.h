@@ -26,12 +26,12 @@ struct rach_config_generic {
   uint8_t prach_config_index;
   /// Msg2 RAR window length in #slots. Network configures a value < 10msec. Values: (1, 2, 4, 8, 10, 20, 40, 80).
   uint8_t ra_resp_window;
-  /// Number of PRACH occasions FDMed in one time instance as per TS38.211, clause 6.3.3.2.
+  /// Number of PRACH occasions FDMed in one time instance as per TS 38.211, clause 6.3.3.2.
   unsigned msg1_fdm = 1;
   /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0,
-  /// as per TS38.211, clause 6.3.3.2. Possible values: {0,...,MAX_NOF_PRB - 1}.
+  /// as per TS 38.211, clause 6.3.3.2. Possible values: {0,...,MAX_NOF_PRB - 1}.
   uint16_t msg1_frequency_start;
-  /// Zero-correlation zone configuration number as per TS38.331 "zeroCorrelationZoneConfig", used to derive N_{CS}.
+  /// Zero-correlation zone configuration number as per TS 38.331 "zeroCorrelationZoneConfig", used to derive N_{CS}.
   uint16_t zero_correlation_zone_config;
   /// \brief \c preambleReceivedTargetPower, part of \c RACH-ConfigGeneric, TS 38.331.
   /// Target power level at the network receiver side, in dBm. Only values multiple of 2 are valid.
@@ -120,8 +120,8 @@ struct rach_config_common {
   /// PRACH root sequence index. Values: (1..839).
   /// \remark See TS 38.211, clause 6.3.3.1.
   uint16_t prach_root_seq_index;
-  /// \brief Subcarrier spacing of PRACH as per TS38.331, "RACH-ConfigCommon". If invalid, the UE applies the SCS as
-  /// derived from the prach-ConfigurationIndex in RACH-ConfigGeneric as per TS38.211 Tables 6.3.3.1-[1-3].
+  /// \brief Subcarrier spacing of PRACH as per TS 38.331, "RACH-ConfigCommon". If invalid, the UE applies the SCS as
+  /// derived from the prach-ConfigurationIndex in RACH-ConfigGeneric as per TS 38.211 Tables 6.3.3.1-[1-3].
   subcarrier_spacing    msg1_scs;
   restricted_set_config restricted_set;
   /// Enables the transform precoder for Msg3 transmission according to clause 6.1.3 of TS 38.214.

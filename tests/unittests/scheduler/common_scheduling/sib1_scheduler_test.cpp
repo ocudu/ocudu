@@ -365,11 +365,11 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
 /// \brief Tests if any potential collision occurs between SIB1 PDCCH/PDSCH and SSB.
 ///
 /// \param[in] freq_arfcn ARFCN of point A for DL carrier.
-/// \param[in] offset_to_point_A as per TS38.211, Section 4.4.4.2.
-/// \param[in] k_ssb or ssb-SubcarrierOffset, as per TS38.211, Section 7.4.3.1.
-/// \param[in] ssb_bitmap is \c ssb-PositionsInBurst.inOneGroup, as per TS38.331, \c ServingCellConfigCommonSIB.
+/// \param[in] offset_to_point_A as per TS 38.211, Section 4.4.4.2.
+/// \param[in] k_ssb or ssb-SubcarrierOffset, as per TS 38.211, Section 7.4.3.1.
+/// \param[in] ssb_bitmap is \c ssb-PositionsInBurst.inOneGroup, as per TS 38.331, \c ServingCellConfigCommonSIB.
 /// \param[in] scs subcarrier spacing of SSB and SCScommon.
-/// \param[in] pdcch_config_sib1 is \c pdcch-ConfigSIB1, as per TS38.213, Section 13.
+/// \param[in] pdcch_config_sib1 is \c pdcch-ConfigSIB1, as per TS 38.213, Section 13.
 /// \param[in] carrier_bw_mhz corresponds to the width of this carrier in MHz. Values: 5, 10, 15, 20, 25, 30, 40,
 /// 50, 60, 70, 80, 90, 100, 200, 400.
 void test_ssb_sib1_collision(arfcn_t              freq_arfcn,

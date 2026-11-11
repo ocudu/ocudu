@@ -27,7 +27,7 @@ odu::create_test_pdu_with_bsr(du_cell_index_t cell_index, slot_point sl_rx, rnti
   // | LCG7 | LCG6 |    ...   | LCG0 |  Octet 3
   // |         Buffer Size 1         |  Octet 4
 
-  // We pass BSR=254, which according to TS38.321 is the maximum value for the LBSR size.
+  // We pass BSR=254, which according to TS 38.321 is the maximum value for the LBSR size.
   auto buf = byte_buffer::create({0x3e, 0x02, 0x01, 254});
   if (not buf.has_value()) {
     return make_unexpected(default_error_t{});

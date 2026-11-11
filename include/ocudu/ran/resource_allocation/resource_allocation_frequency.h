@@ -7,7 +7,7 @@
 
 namespace ocudu {
 
-/// \brief Describes the resource allocation in frequency domain for Type1 as per TS38.214 Section 5.1.2.2.2 for
+/// \brief Describes the resource allocation in frequency domain for Type1 as per TS 38.214 Section 5.1.2.2.2 for
 /// Downlink and Section 6.1.2.2 for Uplink.
 ///
 /// In downlink resource allocation of type 1, the resource block assignment information indicates to a scheduled UE a
@@ -43,7 +43,7 @@ struct ra_frequency_type1_configuration {
   bool operator!=(const ra_frequency_type1_configuration& rhs) const { return !(*this == rhs); }
 };
 
-/// \brief Calculates the resource indication value \f$RIV\f$ as per TS38.214 Section 5.1.2.2.2 for
+/// \brief Calculates the resource indication value \f$RIV\f$ as per TS 38.214 Section 5.1.2.2.2 for
 /// Downlink and Section 6.1.2.2 for Uplink.
 ///
 /// if \f$(L_{RB} - 1) \leq \left \lfloor N_{BWP}^{size}/2 \right \rfloor\f$, then <br>
@@ -56,7 +56,7 @@ unsigned ra_frequency_type1_get_riv(const ra_frequency_type1_configuration& conf
 /// Section 6.1.2.2 for Uplink.
 ra_frequency_type1_configuration ra_frequency_type1_from_riv(unsigned N_bwp_size, unsigned riv);
 
-/// \brief Describes the resource allocation in frequency domain for Type1 special case as per TS38.214
+/// \brief Describes the resource allocation in frequency domain for Type1 special case as per TS 38.214
 /// Section 5.1.2.2.2 for Downlink and Section 6.1.2.2 for Uplink.
 ///
 /// The special case in downlink is when the DCI size for DCI format 1_0 in USS is derived from the size of DCI format
@@ -65,8 +65,8 @@ ra_frequency_type1_configuration ra_frequency_type1_from_riv(unsigned N_bwp_size
 /// The special case in uplink is when the DCI size for DCI format 0_0 in USS is derived from the initial UL BWP but
 /// applied to another active BWP.
 ///
-/// This special cases occur when step 3 in TS38.212 Section 7.3.1.0 fails. In this case, DCI formats 0_0 and 1_0 in USS
-/// are derived as they were in CSS (step 4).
+/// This special cases occur when step 3 in TS 38.212 Section 7.3.1.0 fails. In this case, DCI formats 0_0 and 1_0 in
+/// USS are derived as they were in CSS (step 4).
 struct ra_frequency_type1_special_configuration {
   /// \brief Initial BWP size in resource blocks, parameter \f$N_{BWP}^{initial}\f$.
   ///
@@ -84,7 +84,7 @@ struct ra_frequency_type1_special_configuration {
   unsigned length_vrb;
 };
 
-/// \brief Calculates the resource indication value \f$RIV\f$ for special cases as per TS38.214 Section 5.1.2.2.2 for
+/// \brief Calculates the resource indication value \f$RIV\f$ for special cases as per TS 38.214 Section 5.1.2.2.2 for
 /// Downlink and Section 6.1.2.2 for Uplink.
 ///
 /// if \f$(L'_{RB} - 1) \leq \left \lfloor N_{BWP}^{initial}/2 \right \rfloor\f$, then <br>

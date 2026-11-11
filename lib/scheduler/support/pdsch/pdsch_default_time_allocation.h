@@ -20,8 +20,8 @@ struct bwp_downlink_dedicated;
 
 /// \brief Determines the default PDSCH time-domain resource allocation A.
 ///
-/// The time domain allocation configuration is described in TS38.214 Table 5.1.2.1.1-2 for normal cyclic prefix and
-/// TS38.214 Table 5.1.2.1.1-3 for extended cyclic prefix.
+/// The time domain allocation configuration is described in TS 38.214 Table 5.1.2.1.1-2 for normal cyclic prefix and
+/// TS 38.214 Table 5.1.2.1.1-3 for extended cyclic prefix.
 ///
 /// \param[in] cp        Cyclic prefix.
 /// \param[in] row_index Row index.

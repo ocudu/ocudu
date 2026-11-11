@@ -16,7 +16,7 @@ namespace ocudu {
 struct pdcch_type0_css_occasion_pattern1_configuration {
   /// Set to true for FR2, otherwise it uses FR1.
   bool is_fr2;
-  /// Higher layer parameter \c searchSpaceZero as per TS38.331 PDCCH-ConfigSIB1.
+  /// Higher layer parameter \c searchSpaceZero as per TS 38.331 PDCCH-ConfigSIB1.
   search_space0_index ss0_index;
   /// Number of symbols of the CORESET, \f$N_{symb}^{CORESET}\f$.
   unsigned nof_symb_coreset;
@@ -24,7 +24,7 @@ struct pdcch_type0_css_occasion_pattern1_configuration {
 
 /// \brief Describes a Type0-PDCCH CSS monitoring occasions for pattern 1.
 ///
-/// The Type0-PDCCH CSS monitoring occasions are described in TS38.213 Section 13.
+/// The Type0-PDCCH CSS monitoring occasions are described in TS 38.213 Section 13.
 ///
 /// A UE monitors PDCCH in the Type0-PDCCH CSS set over two consecutive slots starting from slot \f$n_0\f$.
 ///
@@ -49,9 +49,9 @@ struct pdcch_type0_css_occasion_pattern1_description {
   static_vector<unsigned, MAX_NOF_OCCASIONS_PER_SLOT> start_symbol;
 };
 
-/// \brief Get Type0-PDCCH CSS occasions for multiplexing pattern 1 as per TS38.213 Section 13.
+/// \brief Get Type0-PDCCH CSS occasions for multiplexing pattern 1 as per TS 38.213 Section 13.
 ///
-/// The Type0-PDCCH CSS occasions are retrieved from TS38.213 Table 13-11 for FR1 and Table 13-12 for FR2.
+/// The Type0-PDCCH CSS occasions are retrieved from TS 38.213 Table 13-11 for FR1 and Table 13-12 for FR2.
 ///
 /// An assertion is triggered if \c config is not valid.
 ///

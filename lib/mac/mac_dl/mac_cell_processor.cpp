@@ -19,7 +19,7 @@
 
 using namespace ocudu;
 
-/// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
+/// Maximum PDSH K0 value as per TS 38.331 "PDSCH-TimeDomainResourceAllocation".
 static constexpr size_t MAX_K0_DELAY = 32;
 
 mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,

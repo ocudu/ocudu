@@ -130,11 +130,11 @@ struct pusch_config {
   enum class transform_precoder : unsigned { enabled, disabled, not_set };
 
   /// \brief HARQ process number for DCI Format 0_1.
-  /// \remark See TS38.212, Section 7.3.1.1.2 Format 0_1.
+  /// \remark See TS 38.212, Section 7.3.1.1.2 Format 0_1.
   enum class harq_process_num_dci_0_1_size { n4 = 4, n5 = 5 };
 
   /// \brief HARQ process number for DCI Format 0_2.
-  /// \remark See TS38.212, Section 7.3.1.1.3 Format 0_2.
+  /// \remark See TS 38.212, Section 7.3.1.1.3 Format 0_2.
   enum class harq_process_num_dci_0_2_size { n0 = 0, n1 = 1, n2 = 2, n3 = 3, n4 = 4, n5 = 5 };
 
   /// Identifier used to initalite data scrambling (c_init) for PUSCH. If the field is absent, the UE applies the

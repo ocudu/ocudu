@@ -10,7 +10,7 @@ namespace ocudu {
 /// Maximum number of \f$k_i\f$ frequency allocation reference values, according to TS 38.211 Table 7.4.1.5.3-1.
 constexpr unsigned CSI_RS_MAX_NOF_K_INDEXES = 6;
 
-/// Maximum number of ports that can be simultaneously used for CSI-RS, detailed in the TS38.211 Table 7.4.1.5.3-1
+/// Maximum number of ports that can be simultaneously used for CSI-RS, detailed in the TS 38.211 Table 7.4.1.5.3-1
 /// Row 18.
 constexpr unsigned CSI_RS_MAX_NOF_PORTS = 32;
 

@@ -24,7 +24,7 @@ constexpr unsigned get_mac_ce_subheader_size(lcid_dl_sch_t lcid)
   return FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + (lcid.is_elcid() ? ELCID_1_OCTET_FIELD_SIZE : 0);
 }
 
-/// \brief Derive MAC SDU subheader size in bytes as per TS38.321, Section 6.1.
+/// \brief Derive MAC SDU subheader size in bytes as per TS 38.321, Section 6.1.
 constexpr unsigned get_mac_sdu_subheader_size(unsigned payload)
 {
   return payload == 0                                ? 0

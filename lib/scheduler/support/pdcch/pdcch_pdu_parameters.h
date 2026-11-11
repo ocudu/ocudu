@@ -4,7 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 /// \file
-/// \brief PDCCH Modulation and Signalling parameter derivation as per TS38.211, 7.3.2.3 and 7.4.1.3.
+/// \brief PDCCH Modulation and Signalling parameter derivation as per TS 38.211, 7.3.2.3 and 7.4.1.3.
 
 #pragma once
 
@@ -14,7 +14,7 @@
 
 namespace ocudu {
 
-/// Calculates \f$n_ID\f$ as per TS38.211 7.3.2.3.
+/// Calculates \f$n_ID\f$ as per TS 38.211 7.3.2.3.
 /// \return integer within values: {0,1,...,65535}.
 inline unsigned
 get_scrambling_n_ID(pci_t pci, const coreset_configuration& cs_cfg, const search_space_configuration& ss_cfg)
@@ -27,7 +27,7 @@ get_scrambling_n_ID(pci_t pci, const coreset_configuration& cs_cfg, const search
   return pci;
 }
 
-/// Calculates \f$n_{RNTI}\f$ as per TS38.211, 7.3.2.3.
+/// Calculates \f$n_{RNTI}\f$ as per TS 38.211, 7.3.2.3.
 /// \return integer within values: {0,1,...,65535}.
 inline unsigned
 get_scrambling_n_RNTI(rnti_t rnti, const coreset_configuration& cs_cfg, const search_space_configuration& ss_cfg)
@@ -40,7 +40,7 @@ get_scrambling_n_RNTI(rnti_t rnti, const coreset_configuration& cs_cfg, const se
   return 0;
 }
 
-/// Calculates \f$N_{ID}\f$ as per TS38.211, 7.4.1.3.1.
+/// Calculates \f$N_{ID}\f$ as per TS 38.211, 7.4.1.3.1.
 inline unsigned get_N_ID_dmrs(pci_t pci, const coreset_configuration& cs_cfg)
 {
   if (cs_cfg.get_pdcch_dmrs_scrambling_id().has_value()) {

@@ -14,7 +14,7 @@ namespace ocudu {
 
 /// \brief Maximum number of beams contained in a composite precoding matrix weights.
 ///
-/// It is derived from the structure of the 3GPP precoding matrices defined in TS38.214 Section 5.2.2.2:
+/// It is derived from the structure of the 3GPP precoding matrices defined in TS 38.214 Section 5.2.2.2:
 /// - the Type I Single-Panel codebook uses at most two spatial beams, \f$v_{l, m}\f$ and \f$v_{l', m'}\f$ with
 ///   \f$l \neq l'\f$ and \f$m \neq m'\f$, which occurs for four layers; and
 /// - the Type II codebook combines up to \f$L = 4\f$ spatial beams, as per Section 5.2.2.2.3.

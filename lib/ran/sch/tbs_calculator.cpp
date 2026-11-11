@@ -65,7 +65,7 @@ float ocudu::tbs_calculator_pdsch_get_scaling_factor(unsigned scaling)
 
 unsigned ocudu::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prime)
 {
-  // LUT indexed by nof_info_prime in bytes based on TS38.214 Table 5.1.3.2-1 where the contents are the smallest not
+  // LUT indexed by nof_info_prime in bytes based on TS 38.214 Table 5.1.3.2-1 where the contents are the smallest not
   // less than nof_info_prime.
   static constexpr std::array<uint16_t, 479> table_valid_tbs = {
       24,   24,   24,   24,   32,   40,   48,   56,   64,   72,   80,   88,   96,   104,  112,  120,  128,  136,  144,

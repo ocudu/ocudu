@@ -17,7 +17,7 @@ namespace ocudu {
 
 /// \brief Collects the necessary parameters to calculate the Uplink Shared Channel (UL-SCH) information.
 ///
-/// The parameters are described in TS38.212 Section 6.3.2.4.1.
+/// The parameters are described in TS 38.212 Section 6.3.2.4.1.
 struct ulsch_configuration {
   /// Transport block size. Set to zero if no shared channel is multiplexed.
   units::bits tbs;
@@ -29,9 +29,9 @@ struct ulsch_configuration {
   units::bits nof_csi_part1_bits;
   /// Number of CSI Part 2 bits to multiplex in the transmission. Parameter \f$O_\textup{CSI-2}\f$.
   units::bits nof_csi_part2_bits;
-  /// \brief Parameter \f$\alpha\f$ as per TS38.212 Section 6.3.2.4.
+  /// \brief Parameter \f$\alpha\f$ as per TS 38.212 Section 6.3.2.4.
   ///
-  /// Provided by the higher layer parameter \e scaling in TS38.331 Section 6.3.2, Information Element \e UCI-OnPUSCH.
+  /// Provided by the higher layer parameter \e scaling in TS 38.331 Section 6.3.2, Information Element \e UCI-OnPUSCH.
   float alpha_scaling;
   /// Parameter \f$\beta _\textup{offset} ^\textup{HARQ-ACK}\f$.
   float beta_offset_harq_ack;
@@ -59,7 +59,7 @@ struct ulsch_configuration {
 
 /// \brief Collects Uplink Shared Channel (UL-SCH) derived parameters.
 ///
-/// The parameters are described in TS38.212 Section 6.3.2.4.1.
+/// The parameters are described in TS 38.212 Section 6.3.2.4.1.
 struct ulsch_information {
   /// Shared channel (SCH) parameters.
   std::optional<sch_information> sch;

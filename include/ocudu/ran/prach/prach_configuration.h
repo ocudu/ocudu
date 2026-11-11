@@ -16,7 +16,7 @@ namespace ocudu {
 
 /// \brief Contains the PRACH configuration parameters.
 ///
-/// The parameters are used in TS38.211 Section 6.3.3.2 and they are derived from TS38.211 Tables 6.3.3.2-2, 6.3.3.2-3
+/// The parameters are used in TS 38.211 Section 6.3.3.2 and they are derived from TS 38.211 Tables 6.3.3.2-2, 6.3.3.2-3
 /// and 6.3.3.2-4.
 ///
 /// The PRACH transmission occasions are in the system frames \f$n_{SFN}\f$ that satisfy \f$n_{SFN} \bmod x = y\f$.
@@ -59,7 +59,7 @@ const prach_configuration PRACH_CONFIG_RESERVED = {prach_format_type::invalid, U
 /// \brief Gets a PRACH configuration.
 ///
 /// Arguments are considered valid if:
-/// - They are consistent with the TS38.211 Tables 6.3.3.2-2, 6.3.3.2-3 and 6.3.3.2-4, and
+/// - They are consistent with the TS 38.211 Tables 6.3.3.2-2, 6.3.3.2-3 and 6.3.3.2-4, and
 /// - the combination is implemented.
 ///
 /// Currently, not all configurations are supported.

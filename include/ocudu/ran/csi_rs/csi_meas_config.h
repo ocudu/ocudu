@@ -24,7 +24,7 @@ namespace ocudu {
 /// \remark See TS 38.331, \c CSI-RS-ResourceMapping.
 struct csi_rs_resource_mapping {
   /// \brief Frequency domain allocation within a physical resource block in accordance with TS 38.211,
-  /// clause 7.4.1.5.3, and \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping in TS38.331. Possible sizes:
+  /// clause 7.4.1.5.3, and \c frequencyDomainAllocation in \c CSI-RS-ResourceMapping in TS 38.331. Possible sizes:
   /// {row1: 4, row2: 12, row4: 3, row_other: 6}
   csi_rs::freq_allocation_mask_type fd_alloc;
   /// Number of ports. Values {1, 2, 4, 8, 12, 16, 24, 32}.
@@ -312,7 +312,7 @@ struct csi_meas_config {
   bool operator!=(const csi_meas_config& rhs) const { return !(rhs == *this); }
 };
 
-/// \brief Configuration of ZP-CSI-RS-Resource as per TS38.331.
+/// \brief Configuration of ZP-CSI-RS-Resource as per TS 38.331.
 struct zp_csi_rs_resource {
   /// ZP CSI-RS resource configuration ID.
   zp_csi_rs_res_id_t id;
@@ -330,7 +330,7 @@ struct zp_csi_rs_resource {
   bool operator!=(const zp_csi_rs_resource& other) const { return !(*this == other); }
 };
 
-/// \brief Configuration of ZP-CSI-RS-ResourceSet as per TS38.331.
+/// \brief Configuration of ZP-CSI-RS-ResourceSet as per TS 38.331.
 struct zp_csi_rs_resource_set {
   static constexpr size_t MAX_NOF_ZP_CSI_RS_RESOURCES_PER_SET = 16;
 

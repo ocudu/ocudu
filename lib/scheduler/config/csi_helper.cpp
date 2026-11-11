@@ -618,7 +618,7 @@ codebook_config::type2 csi_helper::make_type2_codebook_config(const csi_meas_con
 
   const du_type2_codebook_params& type2_params = params.csi_params.type2_codebook.value();
 
-  // As per TS38.214 Section 5.2.2.2.3, the Type-II codebook is only defined for four or more CSI-RS ports.
+  // As per TS 38.214 Section 5.2.2.2.3, the Type-II codebook is only defined for four or more CSI-RS ports.
   ocudu_assert(params.nof_ports >= 4, "The Type-II codebook requires at least four ports, given {}", params.nof_ports);
 
   // The Type-II PMI is reported in CSI Part 2, which is only multiplexed in PUSCH.
@@ -627,7 +627,7 @@ codebook_config::type2 csi_helper::make_type2_codebook_config(const csi_meas_con
 
   typeii sub_type{};
   if (params.nof_ports == 4) {
-    // As per TS38.214 Section 5.2.2.2.3, four CSI-RS ports only support two beams.
+    // As per TS 38.214 Section 5.2.2.2.3, four CSI-RS ports only support two beams.
     ocudu_assert(type2_params.nof_beams == 2,
                  "Four antenna ports only support two Type-II beams, given {}",
                  type2_params.nof_beams);
@@ -644,7 +644,7 @@ codebook_config::type2 csi_helper::make_type2_codebook_config(const csi_meas_con
   // Enable all beam combinations.
   sub_type.n1_n2_codebook_subset_restriction_value.fill(0, sub_type.n1_n2_codebook_subset_restriction_value.size());
 
-  // Limit the number of DL layers that can be requested by the UE via the Rank Indicator (RI). As per TS38.214
+  // Limit the number of DL layers that can be requested by the UE via the Rank Indicator (RI). As per TS 38.214
   // Section 5.2.2.2.3, the Type-II codebook supports at most two layers.
   sub_type.typeii_ri_restriction.resize(max_nof_typeII_layers);
   sub_type.typeii_ri_restriction.fill(0, std::min<unsigned>(params.max_nof_layers, max_nof_typeII_layers));

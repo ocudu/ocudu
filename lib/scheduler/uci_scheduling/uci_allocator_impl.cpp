@@ -38,7 +38,7 @@ static void update_uci_on_pusch_harq_offsets(uci_info::harq_info& uci_harq, cons
   // We assume the configuration contains the values for beta_offsets.
   const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
 
-  // The values of \c beta_offsets are set according to Section 9.3, TS38.213.
+  // The values of \c beta_offsets are set according to Section 9.3, TS 38.213.
   const uint16_t harq_ack_nof_bits = uci_harq.harq_ack_nof_bits;
   if (harq_ack_nof_bits <= 2) {
     uci_harq.beta_offset_harq_ack = beta_offsets.beta_offset_ack_idx_1.value();

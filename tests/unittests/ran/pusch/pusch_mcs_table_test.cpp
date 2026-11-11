@@ -32,7 +32,7 @@ using namespace ocudu;
 // Combined test parameters. MCS table and index.
 using pusch_mcs_param = std::tuple<pusch_mcs_table, unsigned, bool, bool>;
 
-// Combined expected values from TS38.211 Tables 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
+// Combined expected values from TS 38.211 Tables 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
 static const std::map<pusch_mcs_param, std::tuple<unsigned, float, float>> pusch_mcs_expected = {
     {{pusch_mcs_table::qam64, 0, false, false}, {2, 120.0F, 0.2344F}},
     {{pusch_mcs_table::qam64, 1, false, false}, {2, 157.0F, 0.3066F}},

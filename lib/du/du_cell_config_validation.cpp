@@ -77,7 +77,7 @@ static bool is_valid_enum_number(Number number)
   return asn1::number_to_enum(e, number);
 }
 
-/// Checks whether CORESET#0 table index is valid as per TS38.213, Table 13-{1,...,10}.
+/// Checks whether CORESET#0 table index is valid as per TS 38.213, Table 13-{1,...,10}.
 static check_outcome is_coreset0_ss0_idx_valid(const du_cell_config& cell_cfg)
 {
   const subcarrier_spacing scs_common = cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.scs;
@@ -89,10 +89,10 @@ static check_outcome is_coreset0_ss0_idx_valid(const du_cell_config& cell_cfg)
   // TODO: Check which table to use.
   // TODO: Add checks on minimum bandwidth.
   if (scs_common == subcarrier_spacing::kHz15 and cell_cfg.ran.ssb_cfg.scs == subcarrier_spacing::kHz15) {
-    // As per TS38.213, Table 13-1.
+    // As per TS 38.213, Table 13-1.
     CHECK_BELOW(cs0_idx.value(), 15, "CORESET#0 index table");
   } else if (scs_common == subcarrier_spacing::kHz30 and cell_cfg.ran.ssb_cfg.scs == subcarrier_spacing::kHz30) {
-    // As per TS38.213, Table 13-4.
+    // As per TS 38.213, Table 13-4.
     CHECK_BELOW(cs0_idx.value(), 16, "CORESET#0 index table");
   }
   // The remaining cases will trigger an assert in the SSB checks.
@@ -100,14 +100,14 @@ static check_outcome is_coreset0_ss0_idx_valid(const du_cell_config& cell_cfg)
   // This constraint is implementation-defined and comes from the fact that our PDCCH scheduler only schedules PDCCH
   // starting from the symbol index 0.
   if (scs_common == subcarrier_spacing::kHz15 and cell_cfg.ran.ssb_cfg.scs == subcarrier_spacing::kHz15) {
-    // As per TS38.213, Table 13-11.
+    // As per TS 38.213, Table 13-11.
     CHECK_EQ_OR_BELOW(ss0_idx.value(), 9, "SearchSpaceZero index table");
   }
 
   return {};
 }
 
-/// Checks whether CORESET#0 configuration matches the values specified in TS38.211 Section 7.3.2.2.
+/// Checks whether CORESET#0 configuration matches the values specified in TS 38.211 Section 7.3.2.2.
 static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
 {
   const coreset_configuration& cs_cfg = *cell_cfg.ran.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
@@ -403,7 +403,7 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     CHECK_EQ_OR_BELOW(ssb_cfg.k_ssb.value(), 11, "For SCS common 15kHz, k_SSB must be within the range [0, 11].");
 
     // In the following, we assume the SSB is located inside the Transmission Bandwidth Configuration of the specified
-    // band. Refer to TS38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
+    // band. Refer to TS 38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
     // We assume the Initial DL BWP ranges over the whole Transmission Bandwidth Configuration.
     unsigned nof_crbs               = cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
     unsigned offset_p_A_upper_bound = ssb_cfg.k_ssb.value() > 0 ? nof_crbs - NOF_SSB_PRBS - 1 : nof_crbs - NOF_SSB_PRBS;
@@ -420,7 +420,7 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     CHECK_TRUE(ssb_cfg.k_ssb.value() % 2 == 0, "For SCS common 30kHz, k_SSB must be an even number.");
 
     // In the following, we assume the SSB is located inside the Transmission Bandwidth Configuration of the specified
-    // band. Refer to TS38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
+    // band. Refer to TS 38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
     // We assume the Initial DL BWP ranges over the whole Transmission Bandwidth Configuration.
     unsigned nof_crbs = cell_cfg.ran.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
     unsigned offset_p_A_upper_bound =

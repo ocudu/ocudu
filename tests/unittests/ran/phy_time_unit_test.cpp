@@ -82,7 +82,7 @@ TEST(phy_time_unit_test, store_positive_seconds)
 
 TEST(phy_time_unit_test, ul_rtoa)
 {
-  // Use TS38.133 Table 13.1.1-1 entries as test points.
+  // Use TS 38.133 Table 13.1.1-1 entries as test points.
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985025).to_ul_rtoa(0), 0);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985024).to_ul_rtoa(0), 1);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985023).to_ul_rtoa(0), 2);
@@ -96,7 +96,7 @@ TEST(phy_time_unit_test, ul_rtoa)
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985024).to_ul_rtoa(0), 1970048);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985025).to_ul_rtoa(0), 1970049);
 
-  // Use TS38.133 Table 13.1.1-2 entries as test points.
+  // Use TS 38.133 Table 13.1.1-2 entries as test points.
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985025).to_ul_rtoa(1), 0);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985024).to_ul_rtoa(1), 1);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985023).to_ul_rtoa(1), 1);
@@ -117,7 +117,7 @@ TEST(phy_time_unit_test, ul_rtoa)
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985024).to_ul_rtoa(1), 985024);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985025).to_ul_rtoa(1), 985025);
 
-  // Use TS38.133 Table 13.1.1-3 entries as test points.
+  // Use TS 38.133 Table 13.1.1-3 entries as test points.
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985025).to_ul_rtoa(2), 0);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985024).to_ul_rtoa(2), 1);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985021).to_ul_rtoa(2), 1);
@@ -138,7 +138,7 @@ TEST(phy_time_unit_test, ul_rtoa)
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985024).to_ul_rtoa(2), 492512);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985025).to_ul_rtoa(2), 492513);
 
-  // Use TS38.133 Table 13.1.1-4 entries as test points.
+  // Use TS 38.133 Table 13.1.1-4 entries as test points.
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985025).to_ul_rtoa(3), 0);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985024).to_ul_rtoa(3), 1);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(-985017).to_ul_rtoa(3), 1);
@@ -159,6 +159,6 @@ TEST(phy_time_unit_test, ul_rtoa)
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985024).to_ul_rtoa(3), 246256);
   ASSERT_EQ(phy_time_unit::from_units_of_Tc(985025).to_ul_rtoa(3), 246257);
 
-  // Assume TS38.133 Tables 13.1.1-5/6 are covered from the cases above.
+  // Assume TS 38.133 Tables 13.1.1-5/6 are covered from the cases above.
   // ...
 }

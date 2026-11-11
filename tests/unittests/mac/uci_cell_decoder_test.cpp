@@ -16,7 +16,7 @@ using namespace ocudu;
 /// \brief Tests the decoding of aperiodic CSI reports on PUSCH.
 ///
 /// A two-port codebook with PMI reporting is used, so that a CSI Part 2 payload is always expected: 2 bits for rank 1
-/// and 1 bit for rank 2, as per TS38.212 Table 6.3.2.1.2-4.
+/// and 1 bit for rank 2, as per TS 38.212 Table 6.3.2.1.2-4.
 class uci_cell_decoder_aperiodic_csi_test : public ::testing::Test
 {
 protected:

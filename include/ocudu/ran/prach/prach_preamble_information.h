@@ -16,7 +16,7 @@ struct prach_configuration;
 
 /// \brief Collects PRACH preamble information parameters.
 ///
-/// The parameters are used and described in TS38.211 Section 6.3.3.1.
+/// The parameters are used and described in TS 38.211 Section 6.3.3.1.
 struct prach_preamble_information {
   /// Sequence length in frequency domain, parameter \f$L_{RA}\f$.
   unsigned sequence_length;
@@ -24,7 +24,7 @@ struct prach_preamble_information {
   prach_subcarrier_spacing scs;
   /// \brief Number of OFDM symbols.
   ///
-  /// It is given by the first multiplier that appears in the \f$N_u\f$ column, in TS38.211 Tables 6.3.3.1-1 and
+  /// It is given by the first multiplier that appears in the \f$N_u\f$ column, in TS 38.211 Tables 6.3.3.1-1 and
   /// 6.3.3.1-2.
   unsigned nof_symbols;
   /// Parameter \f$N_{CP}^{RA}\f$. Expressed in units of the reference symbol time \f$\kappa\f$.
@@ -39,7 +39,7 @@ struct prach_preamble_information {
   }
 };
 
-/// \brief Get long PRACH preamble information as per TS38.211 Table 6.3.3.1-1.
+/// \brief Get long PRACH preamble information as per TS 38.211 Table 6.3.3.1-1.
 ///
 /// An assertion is triggered if the PRACH preamble format is short.
 ///
@@ -47,7 +47,7 @@ struct prach_preamble_information {
 /// \return PRACH preamble information.
 prach_preamble_information get_prach_preamble_long_info(prach_format_type format);
 
-/// \brief Get short PRACH preamble information as per TS38.211 Table 6.3.3.1-2.
+/// \brief Get short PRACH preamble information as per TS 38.211 Table 6.3.3.1-2.
 ///
 /// An assertion is triggered if:
 /// - the PRACH preamble format is long, or

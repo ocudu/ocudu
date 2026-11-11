@@ -13,7 +13,7 @@ namespace ocudu {
 
 /// \brief UE configuration to monitor PDCCH for INT_RNTI (interruption).
 ///
-/// The identifiers are inspired by TS38.331 Section as 6.3.2 (see field \e DownlinkPreemption).
+/// The identifiers are inspired by TS 38.331 Section as 6.3.2 (see field \e DownlinkPreemption).
 struct downlink_preemption {
   /// \brief Set selection for DL-preemption indication.
   /// \remark See TS 38.213, clause 11.2.

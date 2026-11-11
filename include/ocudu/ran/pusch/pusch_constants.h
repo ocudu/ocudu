@@ -18,17 +18,17 @@ namespace pusch_constants {
 
 /// \brief Maximum number of RE per resource block in a PUSCH transmission.
 ///
-/// As per TS38.214 Section 6.1.4.2.
+/// As per TS 38.214 Section 6.1.4.2.
 constexpr unsigned MAX_NRE_PER_RB = 156;
 
 /// \brief Maximum modulation order supported on PUSCH transmissions.
 ///
-/// As per TS38.214 Section 6.1.4.1 with \c mcs-Table set to \c qam256.
+/// As per TS 38.214 Section 6.1.4.1 with \c mcs-Table set to \c qam256.
 constexpr unsigned MAX_MODULATION_ORDER = 8;
 
 /// \brief Maximum number of PUSCH transmission layers.
 ///
-/// As per TS38.211 Section 6.3.1.3.
+/// As per TS 38.211 Section 6.3.1.3.
 constexpr unsigned MAX_NOF_LAYERS = 4;
 
 /// \brief Maximum number of receive ports for receiving PUSCH.
@@ -51,7 +51,7 @@ constexpr unsigned MAX_NOF_BITS_PER_OFDM_SYMBOL =
     MAX_NOF_LAYERS * MAX_NOF_SUBCARRIERS * pusch_constants::MAX_MODULATION_ORDER;
 
 /// Maximum number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum
-/// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS38.211 Section 6.4.1.1.
+/// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS 38.211 Section 6.4.1.1.
 constexpr unsigned MAX_NOF_DMRS_SYMBOLS = 4 * 2;
 
 /// Maximum number of subcarriers carrying DM-RS in a symbol. It is at most half of the total number of subcarriers

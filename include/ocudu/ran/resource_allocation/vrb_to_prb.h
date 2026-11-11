@@ -51,7 +51,7 @@ struct configuration {
 /// \brief Creates a non-interleaved VRB-to-PRB configuration object for PDSCH transmissions scheduled by DCI Format 1_0
 /// in common SS.
 ///
-/// Implemented as per TS38.211 Section 7.3.1.6 Case 1:
+/// Implemented as per TS 38.211 Section 7.3.1.6 Case 1:
 /// - A virtual resource \f$n\f$ is mapped to the physical block \f$n + N_{start}^{CORESET}\f$.
 ///
 /// If the PDSCH is scheduled with DCI format 1_0 with the CRC scrambled by SI-RNTI in Type0-PDCCH common search space
@@ -69,7 +69,7 @@ inline configuration create_non_interleaved_common_ss(unsigned N_start_coreset)
 /// \brief Creates a non-interleaved VRB-to-PRB configuration object for PDSCH transmissions scheduled by DCI other than
 /// Format 1_0 in common SS.
 ///
-/// Implemented as per TS38.211 Section 7.3.1.6 Case 2:
+/// Implemented as per TS 38.211 Section 7.3.1.6 Case 2:
 /// - A virtual resouce \f$n\f$ is mapped to the physical block \f$n\f$.
 ///
 /// \return A non-interleaved VRB-to-PRB configuration object.
@@ -81,7 +81,7 @@ inline configuration create_non_interleaved_other()
 /// \brief Creates an interleaved VRB-to-PRB configuration for PDSCH transmissions scheduled with DCI Format 1_0 with
 /// the CRC scrambled by SI-RNTI in Type0-PDCCH common SS in CORESET0.
 ///
-/// Implemented as per TS38.211 Section 7.3.1.6 Case 3:
+/// Implemented as per TS 38.211 Section 7.3.1.6 Case 3:
 /// - the number of bundles is calculated as \f$N_{bundle}=\lceil N_{BWP,init}^{size}/L \rceil\f$,
 /// - the last RB bundle consists of \f$N_{BWP,init}^{size} \bmod L\f$ if \f$N_{BWP,init}^{size} \bmod L > 0\f$,
 /// - all other resource block bundles consist of \f$L\f$ RBs, and
@@ -110,7 +110,7 @@ inline configuration create_interleaved_coreset0(unsigned N_start_coreset, unsig
 /// \brief Creates an interleaved VRB-to-PRB configuration for PDSCH transmissions scheduled by DCI format 1_0 in any
 /// common SS except Type0-PDCCH common SS in CORESET0.
 ///
-/// Implemented as per TS38.211 Section 7.3.1.6 Case 4:
+/// Implemented as per TS 38.211 Section 7.3.1.6 Case 4:
 /// - the set of \f$N_{BWP,init}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided into
 /// \f$N_{bundle}=\lceil (N_{BWP,init}^{size} + ((N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L))/L
 /// \rceil\f$,
@@ -146,7 +146,7 @@ create_interleaved_common_ss(unsigned N_start_coreset, unsigned N_bwp_i_start, u
 
 /// \brief Creates an interleaved VRB-to-PRB configuration for all other PDSCH transmissions with interleaved mapping.
 ///
-/// Implemented as per TS38.211 Section 7.3.1.6 Case 5:
+/// Implemented as per TS 38.211 Section 7.3.1.6 Case 5:
 /// - the set of \f$N_{BWP,i}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided into
 /// \f$N_{bundle}=\lceil (N_{BWP,i}^{size} + (N_{BWP,i}^{start} \bmod L_i))/L_i \rceil\f$,
 /// - the first RB bundle consists of \f$L_i - N_{BWP,i}^{size} \bmod L_i\f$,

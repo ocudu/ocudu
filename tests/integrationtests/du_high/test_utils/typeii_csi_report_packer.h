@@ -33,7 +33,7 @@ struct typeii_csi_report_values {
   std::array<unsigned, max_nof_typeII_layers> phase = {};
 };
 
-/// \brief Packs a Type II CSI report on PUSCH, following TS38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
+/// \brief Packs a Type II CSI report on PUSCH, following TS 38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
 ///
 /// \param[in] config Report configuration. Its codebook must be Type II and its quantities must contain the PMI.
 /// \param[in] values Values that the report carries.

@@ -28,18 +28,18 @@ struct cell_config_builder_params {
   /// offsetToPointA, as per TS 38.211, Section 4.4.4.2; \ref ssb_offset_to_pointA. If not specified, a valid offset
   /// is derived.
   std::optional<ssb_offset_to_pointA> offset_to_point_a;
-  /// This is \c controlResourceSetZero, as per TS38.213, Section 13. If not specified, a valid coreset0 is derived.
+  /// This is \c controlResourceSetZero, as per TS 38.213, Section 13. If not specified, a valid coreset0 is derived.
   std::optional<coreset0_index> cs0_index;
   /// Maximum CORESET#0 duration in OFDM symbols to consider when deriving CORESET#0 index.
   uint8_t max_coreset0_duration = 2;
-  /// This is \c searchSpaceZero, as per TS38.213, Section 13.
+  /// This is \c searchSpaceZero, as per TS 38.213, Section 13.
   search_space0_index ss0_index = 0;
-  /// \brief k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}. If not
+  /// \brief k_ssb or SSB SubcarrierOffest, as per TS 38.211 Section 7.4.3.1. Possible values: {0, ..., 23}. If not
   /// specified, a valid k_ssb is derived.
   std::optional<ssb_subcarrier_offset> k_ssb;
   /// Whether to enable CSI-RS in the cell.
   bool csi_rs_enabled = true;
-  /// \brief Minimum k1 value used in the generation of the UE "dl-DataToUl-Ack", as per TS38.213, 9.1.2.1.
+  /// \brief Minimum k1 value used in the generation of the UE "dl-DataToUl-Ack", as per TS 38.213, 9.1.2.1.
   /// Possible values: {1, ..., 15}.
   uint8_t min_k1 = 4;
   /// \brief Minimum k2 value used in the generation of the UE PUSCH time-domain resources. The value of min_k2

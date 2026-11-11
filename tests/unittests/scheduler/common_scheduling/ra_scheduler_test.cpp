@@ -171,7 +171,7 @@ public:
     for (const ul_sched_info& pusch : puschs) {
       if (pusch.context.ue_index == INVALID_DU_UE_INDEX) {
         // Msg3 PUSCH. "rapid" is a MsgA-only field; if set here, the PHY will wrongly apply the MsgA
-        // descrambling sequence (TS38.211 6.3.1.1) to a regular Msg3 PUSCH and fail to decode it.
+        // descrambling sequence (TS 38.211 6.3.1.1) to a regular Msg3 PUSCH and fail to decode it.
         ASSERT_FALSE(pusch.context.rapid.has_value()) << "Msg3 PUSCH context.rapid must not be set";
       }
     }
@@ -729,7 +729,7 @@ TEST_F(ra_scheduler_backoff_only_test, all_preambles_below_threshold_yields_back
   ASSERT_EQ(tracker.nof_msg3_newtxs(), 0U) << "No preamble should have been granted a Msg3";
 }
 
-/// This test verifies that the configured Backoff Indicator duration, in ms, is mapped to its index in TS38.321,
+/// This test verifies that the configured Backoff Indicator duration, in ms, is mapped to its index in TS 38.321,
 /// Table 7.2-1. 80ms is table index 6.
 TEST_F(ra_scheduler_backoff_duration_test, duration_is_mapped_to_table_index)
 {
@@ -1203,7 +1203,7 @@ TEST_P(ra_scheduler_two_step_rach_test, when_msga_crc_ko_then_fallback_rar_and_m
   ASSERT_EQ(tracker.nof_msg3_newtxs(), 1) << "FallbackRAR must allocate a Msg3 PUSCH";
   ASSERT_TRUE(msg3_rapid_set.has_value()) << "Msg3 PUSCH was never observed in the resource grid";
   // "rapid" is a MsgA-only field; if set here, the PHY will wrongly apply the MsgA descrambling sequence
-  // (TS38.211 6.3.1.1) to this regular Msg3 PUSCH and fail to decode it.
+  // (TS 38.211 6.3.1.1) to this regular Msg3 PUSCH and fail to decode it.
   ASSERT_FALSE(*msg3_rapid_set) << "FallbackRAR Msg3 PUSCH context.rapid must not be set";
 }
 
@@ -1247,7 +1247,7 @@ TEST_P(ra_scheduler_two_step_rach_test, when_mixed_crc_outcomes_both_rar_types_s
   ASSERT_EQ(tracker.nof_msg3_newtxs(), 1) << "FallbackRAR preamble must have a Msg3 PUSCH";
 }
 
-/// TS38.213, Section 8.2A: the successRAR/fallbackRAR PDCCH (MsgB-RNTI DCI format 1_0) must carry the 2 LSBs of the
+/// TS 38.213, Section 8.2A: the successRAR/fallbackRAR PDCCH (MsgB-RNTI DCI format 1_0) must carry the 2 LSBs of the
 /// SFN where the UE transmitted PRACH whenever msgB-ResponseWindow is configured larger than 10 msec, or a
 /// MsgB-conformant UE discards the DCI/PDSCH. Otherwise, these bits are just reserved (0).
 TEST_P(ra_scheduler_two_step_rach_test, msgb_dci_carries_prach_sfn_lsbs_per_response_window_applicability)

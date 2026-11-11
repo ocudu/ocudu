@@ -39,7 +39,7 @@ unsigned ocudu::get_pucch_default_cyclic_shift(unsigned r_pucch, unsigned nof_cs
   return result;
 }
 
-/// TS38.213 Table 9.2.1-1.
+/// TS 38.213 Table 9.2.1-1.
 static const std::array<pucch_default_resource, 16> resource_table = {
     {{pucch_format::FORMAT_0, 12, 2, 0, {0, 3}},
      {pucch_format::FORMAT_0, 12, 2, 0, {0, 4, 8}},

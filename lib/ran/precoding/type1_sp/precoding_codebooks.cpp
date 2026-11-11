@@ -96,7 +96,7 @@ static void make_layer_type1_sp_mode1(precoding_weight_matrix&              resu
   }
 }
 
-/// \brief Gets the parameters \f$k_1\f$ and \f$k_2\f$ as specified in TS38.214 Table 5.2.2.2.1-3.
+/// \brief Gets the parameters \f$k_1\f$ and \f$k_2\f$ as specified in TS 38.214 Table 5.2.2.2.1-3.
 /// \return A pair of values that correspond to \f$k_1\f$ and \f$k_2\f$.
 static std::pair<unsigned, unsigned> get_k1_and_k2_2_layers(const pmi_codebook_single_panel_info& panel_info,
                                                             unsigned                              i_1_3)
@@ -174,7 +174,7 @@ static std::pair<unsigned, unsigned> get_k1_and_k2_2_layers(const pmi_codebook_s
   return {0, 0};
 }
 
-/// \brief Gets the parameters \f$k_1\f$ and \f$k_2\f$ as specified in TS38.214 Table 5.2.2.2.1-4.
+/// \brief Gets the parameters \f$k_1\f$ and \f$k_2\f$ as specified in TS 38.214 Table 5.2.2.2.1-4.
 ///
 /// Applicable to 3-layer and 4-layer CSI reporting when \f$P_\text{CSI-RS} < 16\f$.
 /// \return A pair of values that correspond to \f$k_1\f$ and \f$k_2\f$.
@@ -374,7 +374,7 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const pmi_typeI_single_panel&
 
   switch (nof_layers) {
     case 1: {
-      // Select beam parameters from TS38.214 Table 5.2.2.2.1-5 for codebook mode 1.
+      // Select beam parameters from TS 38.214 Table 5.2.2.2.1-5 for codebook mode 1.
       layer_beam_horizontal = {i_1_1};
       layer_beam_vertical   = {i_1_2};
       layer_pol             = {phi};
@@ -474,7 +474,7 @@ precoding_weight_matrix ocudu::make_type1_sp_mode1(const pmi_typeI_single_panel&
 
 /// \brief Gets the distinct beams described by a Type I Single-Panel PMI for a given number of layers.
 ///
-/// The codebook selects at most two spatial beams, as per TS38.214 Section 5.2.2.2.1, each one allocated to the two
+/// The codebook selects at most two spatial beams, as per TS 38.214 Section 5.2.2.2.1, each one allocated to the two
 /// polarizations.
 ///
 /// \param[in] pmi        Type I Single-Panel Precoding Matrix Indicator (PMI).
@@ -568,7 +568,7 @@ precoding_beamforming_composite ocudu::calculate_mimo_matrix(const pmi_typeI_sin
   for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
     // Index of the allocated beam for the layer.
     unsigned i_beam = i_layer % nof_beams;
-    // First half of the layers uses +phi, second half uses -phi, as per TS38.214 Section 5.2.2.2.1.
+    // First half of the layers uses +phi, second half uses -phi, as per TS 38.214 Section 5.2.2.2.1.
     cf_t layer_pol = (i_layer < (nof_layers + 1) / 2) ? phi : -phi;
 
     // The layer is mapped onto a single beam.

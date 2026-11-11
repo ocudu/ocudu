@@ -19,7 +19,7 @@ namespace ocudu {
 struct test_case_t {
   /// Duplex mode used (e.g., TDD, FDD).
   duplex_mode dplx_mode;
-  /// PRACH configuration index, as defined in TS38.211 Section 6.3.3.2 Tables 6.3.3.2-{2..4}.
+  /// PRACH configuration index, as defined in TS 38.211 Section 6.3.3.2 Tables 6.3.3.2-{2..4}.
   uint8_t prach_config_index;
   /// Common subcarrier spacing.
   subcarrier_spacing pusch_scs;

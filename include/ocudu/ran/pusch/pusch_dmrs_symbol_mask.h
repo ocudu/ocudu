@@ -25,7 +25,7 @@ struct pusch_dmrs_symbol_mask_mapping_type_A_single_configuration {
   ///
   /// It indicates the number of symbols between the first OFDM symbol of the slot and the last OFDM symbol of the
   /// scheduled PUSCH resources in the slot for PUSCH in OFDM symbols. It corresponds to parameter \f$l_d\f$ as
-  /// per TS38.211, Section 6.4.1.1.3.
+  /// per TS 38.211, Section 6.4.1.1.3.
   ///
   /// Possible values are {5, ..., 14}.
   bounded_integer<uint8_t, 5, 14> last_symbol;
@@ -33,7 +33,7 @@ struct pusch_dmrs_symbol_mask_mapping_type_A_single_configuration {
 
 /// \brief Calculates the DM-RS for PUSCH symbol mask for single duration.
 ///
-/// It is implemented as per TS38.211 Table 6.4.1.1.3-3.
+/// It is implemented as per TS 38.211 Table 6.4.1.1.3-3.
 ///
 /// Any configuration that is not covered in the table triggers an assertion.
 dmrs_symbol_mask pusch_dmrs_symbol_mask_mapping_type_A_single_get(

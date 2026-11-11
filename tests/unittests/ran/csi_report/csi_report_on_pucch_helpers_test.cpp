@@ -109,7 +109,7 @@ protected:
       fill_ri(packed_pucch_data, expected_unpacked, configuration);
     }
 
-    // If subband reports are enabled, apply TS38.212 Tables 6.3.1.1.2-9 and 6.3.1.1.2-10 for wideband
+    // If subband reports are enabled, apply TS 38.212 Tables 6.3.1.1.2-9 and 6.3.1.1.2-10 for wideband
     // and subband. Otherwise, keep going with the fields in Table 6.3.1.1.2-7.
     if (configuration.subband.has_value()) {
       // Pack wideband CQI in Part 1.
@@ -187,7 +187,7 @@ private:
   {
     unsigned nof_reported_rs = config.nof_reported_rs.value();
 
-    // Pack first RSRP. The RSRP value is expressed in 1 dB steps from [-140, -44] dBm, as per TS38.214
+    // Pack first RSRP. The RSRP value is expressed in 1 dB steps from [-140, -44] dBm, as per TS 38.214
     // Section 5.2.1.4.3.
     uint8_t rsrp = rgen() % (140 - 44);
     unpacked.rsrp_dBm.push_back(-140 + rsrp);
@@ -210,14 +210,14 @@ private:
     std::uniform_int_distribution<unsigned> rank_idx_dist(0, nof_ri - 1);
     unsigned                                rank_idx = rank_idx_dist(rgen);
 
-    // Select a random rank from the allowed options given by the RI restriction bitset (see TS38.214
+    // Select a random rank from the allowed options given by the RI restriction bitset (see TS 38.214
     // Section 5.2.2.2.1.).
     unsigned rank = config.ri_restriction.get_bit_positions()[rank_idx] + 1;
 
     // The unpacked RI value indicates the chosen rank.
     unpacked.ri.emplace(rank);
 
-    // The packed RI value indicates the chosen rank index (see TS38.212 Section 6.3.1.1.2.).
+    // The packed RI value indicates the chosen rank index (see TS 38.212 Section 6.3.1.1.2.).
     packed.push_back(rank_idx, nof_ri_bits);
   }
 

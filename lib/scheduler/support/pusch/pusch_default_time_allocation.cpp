@@ -21,7 +21,7 @@ static constexpr ofdm_symbol_range s_and_len(unsigned s, unsigned l)
 
 static constexpr unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spacing scs)
 {
-  // TS38.214 Table 6.1.2.1.1-4. Definition of value j.
+  // TS 38.214 Table 6.1.2.1.1-4. Definition of value j.
   constexpr std::array<unsigned, 4> values = {1, 1, 2, 3};
 
   unsigned numerology = to_numerology_value(scs);
@@ -32,7 +32,7 @@ static constexpr unsigned pusch_default_time_allocation_default_A_get_j(subcarri
 span<const pusch_time_domain_resource_allocation>
 ocudu::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarrier_spacing scs)
 {
-  // TS38.214 Table 6.1.2.1.1-2. Default PUSCH time domain resource allocation A for normal CP.
+  // TS 38.214 Table 6.1.2.1.1-2. Default PUSCH time domain resource allocation A for normal CP.
   static constexpr std::array<std::array<pusch_time_domain_resource_allocation, 16>, 4> table_normal_cp = []() {
     std::array<std::array<pusch_time_domain_resource_allocation, 16>, 4> table = {};
     table[0] = {{{0, sch_mapping_type::typeA, s_and_len(0, 14)},
@@ -63,7 +63,7 @@ ocudu::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarri
     return table;
   }();
 
-  // TS38.214 Table 6.1.2.1.1-3. Default PUSCH time domain resource allocation A for extended CP.
+  // TS 38.214 Table 6.1.2.1.1-3. Default PUSCH time domain resource allocation A for extended CP.
   static constexpr std::array<std::array<pusch_time_domain_resource_allocation, 16>, 4> table_extended_cp = []() {
     std::array<std::array<pusch_time_domain_resource_allocation, 16>, 4> table = {};
     table[0] = {{{0, sch_mapping_type::typeA, s_and_len(0, 8)},

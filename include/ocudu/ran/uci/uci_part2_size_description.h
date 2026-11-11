@@ -14,14 +14,14 @@ struct uci_part2_size_description {
   /// \brief Maximum number of parameters.
   ///
   /// The Type II codebook needs three: the rank indicator plus one indicator of the number of non-zero wideband
-  /// amplitude coefficients per layer, as per TS38.212 Table 6.3.2.1.2-3.
+  /// amplitude coefficients per layer, as per TS 38.212 Table 6.3.2.1.2-3.
   static constexpr unsigned max_nof_parameters = 3;
   /// Maximum number of Part 2 entries.
   static constexpr unsigned max_nof_entries = 2;
   /// \brief Maximum number of aggregated bits per entry.
   ///
   /// The worst case is given by the Type II codebook with four beams, adding up one rank indicator bit and two 3-bit
-  /// indicators of the number of non-zero wideband amplitude coefficients, as per TS38.212 Table 6.3.1.1.2-5.
+  /// indicators of the number of non-zero wideband amplitude coefficients, as per TS 38.212 Table 6.3.1.1.2-5.
   static constexpr unsigned max_nof_entry_bits = 7;
   /// Maximum number of Part 2 sizes per entry.
   static constexpr unsigned max_size_table = 1U << max_nof_entry_bits;

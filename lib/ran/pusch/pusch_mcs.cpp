@@ -14,7 +14,7 @@ sch_mcs_description ocudu::pusch_mcs_get_config(pusch_mcs_table table,
                                                 bool            use_transform_precoder,
                                                 bool            tp_pi2bpsk_present)
 {
-  // TS38.214 Table 6.1.4.1-1.
+  // TS 38.214 Table 6.1.4.1-1.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_1_TP = {
       {{modulation_scheme::PI_2_BPSK, 240.0F}, {modulation_scheme::PI_2_BPSK, 314.0F},
        {modulation_scheme::QPSK, 193.0F},      {modulation_scheme::QPSK, 251.0F},
@@ -33,7 +33,7 @@ sch_mcs_description ocudu::pusch_mcs_get_config(pusch_mcs_table table,
        {modulation_scheme::PI_2_BPSK, 0.0F},   {modulation_scheme::QPSK, 0.0F},
        {modulation_scheme::QAM16, 0.0F},       {modulation_scheme::QAM64, 0.0F}}};
 
-  // TS38.214 Table 6.1.4.1-2.
+  // TS 38.214 Table 6.1.4.1-2.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_2_TP = {
       {{modulation_scheme::PI_2_BPSK, 60.0F},  {modulation_scheme::PI_2_BPSK, 80.0F},
        {modulation_scheme::PI_2_BPSK, 100.0F}, {modulation_scheme::PI_2_BPSK, 128.0F},

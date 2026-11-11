@@ -68,7 +68,7 @@ dmrs_symbol_mask ocudu::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
 dmrs_symbol_mask ocudu::pdsch_dmrs_symbol_mask_mapping_type_B_single_get(
     const pdsch_dmrs_symbol_mask_mapping_type_B_single_configuration& config)
 {
-  // TS38.211 Table 7.4.1.1.2-3, columns for PDSCH mapping type B: DMRS positions relative to the first symbol of the
+  // TS 38.211 Table 7.4.1.1.2-3, columns for PDSCH mapping type B: DMRS positions relative to the first symbol of the
   // allocation, indexed by duration (2 to 13 symbols) and by dmrs-AdditionalPosition (pos0 to pos3). Unused entries
   // are zero; position 0 (l0 itself) is always present.
   static constexpr unsigned                                                         nof_durations = 12;

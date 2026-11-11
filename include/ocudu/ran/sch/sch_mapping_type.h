@@ -8,7 +8,7 @@
 namespace ocudu {
 
 /// \brief Physical shared channels Mapping Type.
-/// \remark see TS38.214 Section 5.3 for PDSCH and TS38.214 Section 6.4 for PUSCH.
+/// \remark see TS 38.214 Section 5.3 for PDSCH and TS 38.214 Section 6.4 for PUSCH.
 enum class sch_mapping_type : uint8_t {
   /// TypeA time allocation, it can start only at symbol 2 or 3 within a slot.
   typeA,

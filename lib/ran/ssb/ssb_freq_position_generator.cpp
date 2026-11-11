@@ -138,7 +138,7 @@ ssb_freq_position_generator::ssb_freq_position_generator(arfcn_t            dl_a
     max_ss0_idx = 13;
   }
 
-  // As per TS38.213, Section 4.1.
+  // As per TS 38.213, Section 4.1.
   switch (ssb_case) {
     case ssb_pattern_case::A:
     case ssb_pattern_case::invalid:

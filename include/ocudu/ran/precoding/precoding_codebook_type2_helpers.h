@@ -26,12 +26,12 @@ namespace ocudu {
 /// Maximum number of Type II spatial beams \f$L\f$.
 static constexpr unsigned max_nof_typeII_beams = 4;
 
-/// Maximum number of layers of the Type II codebook, as per TS38.214 Section 5.2.2.2.3.
+/// Maximum number of layers of the Type II codebook, as per TS 38.214 Section 5.2.2.2.3.
 static constexpr unsigned max_nof_typeII_layers = 2;
 
 /// \brief Precoding matrix of a Type II codebook.
 ///
-/// TS38.214 Section 5.2.2.2.3 limits the rank of the codebook to two, so the matrix holds fewer layers than
+/// TS 38.214 Section 5.2.2.2.3 limits the rank of the codebook to two, so the matrix holds fewer layers than
 /// \ref precoding_weight_matrix.
 using typeII_precoding_weight_matrix = precoding_weight_matrix_base<max_nof_typeII_layers>;
 
@@ -40,15 +40,15 @@ static constexpr unsigned max_nof_typeII_coefficients = 2 * max_nof_typeII_beams
 
 /// \brief Bit-width of each of the Type II wideband amplitude indices \f$k^{(1)}_{l,i}\f$.
 ///
-/// The \f$2L - 1\f$ indices other than the strongest one are reported with three bits each, as per TS38.212
-/// Table 6.3.2.1.2-1 and TS38.214 Table 5.2.2.2.3-2.
+/// The \f$2L - 1\f$ indices other than the strongest one are reported with three bits each, as per TS 38.212
+/// Table 6.3.2.1.2-1 and TS 38.214 Table 5.2.2.2.3-2.
 static constexpr unsigned nof_typeII_wideband_amplitude_bits = 3;
 
 /// \brief Bit-width of the Type II phase coefficients reported with a QPSK alphabet.
 ///
 /// When the subband amplitude reporting is enabled, the \f$M_l - \min(M_l, K^{(2)})\f$ weakest non-zero coefficients
 /// of a layer report their phase as \f$c_{l,i} \in \{0, 1, 2, 3\}\f$, whereas the \f$\min(M_l, K^{(2)})\f$
-/// strongest ones use the full \f$N_{PSK}\f$ alphabet, as per TS38.214 Section 5.2.2.2.3.
+/// strongest ones use the full \f$N_{PSK}\f$ alphabet, as per TS 38.214 Section 5.2.2.2.3.
 static constexpr unsigned nof_typeII_qpsk_phase_bits = 2;
 
 /// Number of non-zero wideband amplitude coefficients \f$M_l\f$ for each of the reported layers.
@@ -64,8 +64,9 @@ struct pmi_typeII_beam_selection {
 
 /// \brief Decodes the Type II PMI parameter \f$i_{1,1}\f$ into \f$(q_1, q_2)\f$.
 ///
-/// TS38.214 Section 5.2.2.2.3 defines \f$i_{1,1} = [q_1 q_2]\f$. As per TS38.212 CSI field mapping, the two components
-/// are packed as adjacent bit subfields with \f$q_1\f$ in the high-order bits and \f$q_2\f$ in the low-order bits.
+/// TS 38.214 Section 5.2.2.2.3 defines \f$i_{1,1} = [q_1 q_2]\f$. As per TS 38.212 CSI field mapping, the two
+/// components are packed as adjacent bit subfields with \f$q_1\f$ in the high-order bits and \f$q_2\f$ in the low-order
+/// bits.
 ///
 /// \param[in] i_1_1 Reported PMI parameter \f$i_{1,1}\f$.
 /// \param[in] o1    First-dimension oversampling factor \f$O_1\f$.
@@ -85,7 +86,7 @@ struct pmi_typeII_beam_group {
 /// \brief Decodes the Type II beam group selection index i_1_2 into the L selected beam groups.
 ///
 /// Each returned beam group is given by its two-dimensional indices \f$(n_1^{(i)}, n_2^{(i)})\f$. The decoder uses the
-/// algorithm defined in TS38.214 Section 5.2.2.2.3 (Table 5.2.2.2.3-1).
+/// algorithm defined in TS 38.214 Section 5.2.2.2.3 (Table 5.2.2.2.3-1).
 ///
 /// \param[in] i_1_2     Reported beam group selection index.
 /// \param[in] n1        Number of first-dimension beams, N1.
@@ -97,21 +98,21 @@ struct pmi_typeII_beam_group {
 static_vector<pmi_typeII_beam_group, max_nof_typeII_beams>
 get_typeII_beam_groups(unsigned i_1_2, unsigned n1, unsigned n2, unsigned nof_beams);
 
-/// \brief Type II wideband amplitude coefficient \f$p^{(1)}\f$ from index \f$k^{(1)}\f$, as per TS38.214
+/// \brief Type II wideband amplitude coefficient \f$p^{(1)}\f$ from index \f$k^{(1)}\f$, as per TS 38.214
 /// Table 5.2.2.2.3-2.
 ///
 /// \param[in] k1 Wideband amplitude index, \f$k^{(1)}\f$.
 /// \return The amplitude coefficient, \f$p^{(1)}\f$.
 float get_typeII_wideband_amplitude(unsigned k1);
 
-/// \brief Type II subband amplitude coefficient \f$p^{(2)}\f$ from index \f$k^{(2)}\f$, as per TS38.214
+/// \brief Type II subband amplitude coefficient \f$p^{(2)}\f$ from index \f$k^{(2)}\f$, as per TS 38.214
 /// Table 5.2.2.2.3-3.
 ///
 /// \param[in] k2 Subband amplitude index, \f$k^{(2)}\f$.
 /// \return The amplitude coefficient, \f$p^{(2)}\f$.
 float get_typeII_subband_amplitude(unsigned k2);
 
-/// \brief Gets the number of full resolution subband coefficients \f$K^{(2)}\f$, as per TS38.214 Table 5.2.2.2.3-4.
+/// \brief Gets the number of full resolution subband coefficients \f$K^{(2)}\f$, as per TS 38.214 Table 5.2.2.2.3-4.
 ///
 /// \param[in] nof_beams Number of combined beams, \f$L\f$.
 /// \return The number of coefficients that are reported with full resolution when the subband amplitude reporting is
@@ -126,8 +127,8 @@ inline unsigned get_typeII_nof_full_res_coefficients(unsigned nof_beams)
 /// \brief Sorts the reported Type II combining coefficients from strongest to weakest.
 ///
 /// Only the coefficients with a non-zero wideband amplitude other than the strongest one are considered, hence the
-/// number of returned indices is \f$M_l - 1\f$. As per TS38.214 Section 5.2.2.2.3, coefficients with identical wideband
-/// amplitudes are sorted with increasing coefficient index.
+/// number of returned indices is \f$M_l - 1\f$. As per TS 38.214 Section 5.2.2.2.3, coefficients with identical
+/// wideband amplitudes are sorted with increasing coefficient index.
 ///
 /// \param[in] wideband_amplitudes   Wideband amplitude indices \f$k^{(1)}_{l,i}\f$, one per beam and polarization.
 /// \param[in] strongest_coefficient Strongest coefficient index \f$i_{1,3,l}\f$.
@@ -161,7 +162,7 @@ struct pmi_typeII_param_sizes {
   unsigned i_2_2_2;
 };
 
-/// \brief Gets the PMI parameter sizes for the Type II codebook configuration as per TS38.212 Table 6.3.2.1.2-1.
+/// \brief Gets the PMI parameter sizes for the Type II codebook configuration as per TS 38.212 Table 6.3.2.1.2-1.
 ///
 /// \param[in] codebook       Type II codebook configuration.
 /// \param[in] nof_amplitudes Number of non-zero wideband amplitude coefficients \f$M_l\f$, one entry per reported
@@ -205,7 +206,7 @@ struct pmi_typeII_param_ranges {
   unsigned i_2_2_2;
 };
 
-/// \brief Gets PMI parameter ranges for \e Type-II codebook configuration as per TS38.214 Section 5.2.2.2.3.
+/// \brief Gets PMI parameter ranges for \e Type-II codebook configuration as per TS 38.214 Section 5.2.2.2.3.
 ///
 /// The range for each PMI parameter returned by this function is defined as in an exclusive range. Hence, each PMI
 /// range value indicates the number of possible values for the corresponding PMI parameter for the given panel

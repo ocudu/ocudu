@@ -739,7 +739,7 @@ static std::vector<uint8_t> encode_warning_message(const std::string& warning_me
   return encoded_warning_message;
 }
 
-/// Maximum number of segments (see TS38.331 Section 6.3.2. Information Element \e SIB7).
+/// Maximum number of segments (see TS 38.331 Section 6.3.2. Information Element \e SIB7).
 static constexpr unsigned max_nof_sib_segments = 64U;
 
 /// Generates views of each segment of the CB-Data message.

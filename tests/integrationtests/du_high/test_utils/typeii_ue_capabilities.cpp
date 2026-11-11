@@ -52,7 +52,7 @@ ocudu::test_helpers::create_typeii_ue_capability_container(nr_band band, unsigne
   band_nr_s& band_cap = ue_cap.rf_params.supported_band_list_nr[0];
   band_cap.band_nr    = static_cast<uint16_t>(band);
 
-  // Report the codebooks of the band, as per TS38.331 codebookParameters.
+  // Report the codebooks of the band, as per TS 38.331 codebookParameters.
   band_cap.mimo_params_per_band_present = true;
   // The codebook parameters belong to the first extension group of the MIMO parameters.
   if (not band_cap.mimo_params_per_band.codebook_params.is_present()) {

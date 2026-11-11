@@ -7,7 +7,7 @@
 
 namespace ocudu {
 
-/// Labels for the frequency ranges described in TS38.104 Table 5.1-1.
+/// Labels for the frequency ranges described in TS 38.104 Table 5.1-1.
 enum class frequency_range {
   /// Frequency range 1, from 410 to 7125 MHz.
   FR1 = 0,

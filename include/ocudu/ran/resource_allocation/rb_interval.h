@@ -59,7 +59,7 @@ inline crb_interval prb_to_crb(crb_interval bwp_crb_lims, prb_interval prbs)
   return crb_interval{prb_to_crb(bwp_crb_lims, prbs.start()), prb_to_crb(bwp_crb_lims, prbs.stop())};
 }
 
-/// \brief Conversion of CRBs to VRBs for a common search space and DCI format 1_0 as per TS38.211, clause 7.3.1.6.
+/// \brief Conversion of CRBs to VRBs for a common search space and DCI format 1_0 as per TS 38.211, clause 7.3.1.6.
 /// \param crbs CRB interval to be converted to VRB interval.
 /// \param coreset_crb_start Start of the coreset CRB interval.
 /// \return VRB interval.

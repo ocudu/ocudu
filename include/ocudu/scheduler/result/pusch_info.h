@@ -37,11 +37,11 @@ struct pusch_information {
   ofdm_symbol_range        symbols;
   /// \brief True if this is a PUSCH with Configured Grant.
   bool is_cg = false;
-  /// \brief For resource allocation type 1, it indicates if intra-slot frequency hopping is enabled, as per TS38.212
+  /// \brief For resource allocation type 1, it indicates if intra-slot frequency hopping is enabled, as per TS 38.212
   /// Section 7.3.1.1.
   bool intra_slot_freq_hopping;
   /// \brief Index of the first PRB after intra-slot frequency hopping, as indicated by the value of \f$RB_{start}\f$
-  /// for i=1, as per TS38.214, Section 6.3. Valid when intra_slot_freq_hopping is enabled. Values: {0,...274}.
+  /// for i=1, as per TS 38.214, Section 6.3. Valid when intra_slot_freq_hopping is enabled. Values: {0,...274}.
   uint16_t pusch_second_hop_prb;
   /// \brief The uplink Tx Direct Current location for the carrier. Only values in the value range of this field
   /// between 0 and 3299, which indicate the subcarrier index within the carrier corresponding to the numerology of the
@@ -61,19 +61,19 @@ struct pusch_information {
   bool transform_precoding;
   /// Parameter \f$n_{ID}\f$ as per TS 38.211 Section 6.3.1.1. Values: {0,...,1023}.
   uint16_t n_id;
-  /// Number of layers as per TS38.211, Section 6.3.1.3. Values: {1,...,4}.
+  /// Number of layers as per TS 38.211, Section 6.3.1.3. Values: {1,...,4}.
   uint8_t nof_layers;
-  /// DMRS configuration as per TS38.211 Section 6.4.1.1.
+  /// DMRS configuration as per TS 38.211 Section 6.4.1.1.
   dmrs_information dmrs;
-  /// \brief PUSCH DMRS ID \f$n_{ID}^{RS}\f$ as per TS38.211 Section 6.4.1.1.1.2. This field is only valid when
+  /// \brief PUSCH DMRS ID \f$n_{ID}^{RS}\f$ as per TS 38.211 Section 6.4.1.1.1.2. This field is only valid when
   /// transform_precoding is enabled. Values: {0,...,1007} (Rel-15), {0,...,65535} (Rel-16).
   uint16_t pusch_dmrs_id;
-  /// \brief PUSCH DMRS hopping mode as per TS38.211, Section 6.4.1.1.1.2. It is only valid when the transform
+  /// \brief PUSCH DMRS hopping mode as per TS 38.211, Section 6.4.1.1.1.2. It is only valid when the transform
   /// precoding for PUSCH is enabled.
   enum class dmrs_hopping_mode { no_hopping, group_hopping, sequence_hopping } dmrs_hopping_mode;
-  /// Redundancy version index (see TS38.214 Table 6.1.4). Values: {0,...,3}.
+  /// Redundancy version index (see TS 38.214 Table 6.1.4). Values: {0,...,3}.
   uint8_t rv_index;
-  /// HARQ process number as per TS38.212 Section 6.3.1.1. Values: {0,...,31}.
+  /// HARQ process number as per TS 38.212 Section 6.3.1.1. Values: {0,...,31}.
   harq_id_t harq_id;
   /// \brief Signals whether the PUSCH PDU corresponds to an initial transmission or a retransmission of a MAC PDU for
   /// this HARQ process ID for this TB. Note: Unlike NDI, new_data does not toggle to indicate new transmission,

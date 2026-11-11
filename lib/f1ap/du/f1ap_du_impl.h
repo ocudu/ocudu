@@ -43,14 +43,14 @@ public:
   bool             connect_to_cu_cp() override;
   async_task<void> disconnect_from_cu_cp() override;
 
-  // F1AP interface management procedures functions as per TS38.473, Section 8.2.
+  // F1AP interface management procedures functions as per TS 38.473, Section 8.2.
   async_task<f1_reset_acknowledgement>     handle_f1_reset_request(const f1_reset_request& req) override;
   async_task<f1_setup_result>              handle_f1_setup_request(const f1_setup_request_message& request) override;
   async_task<void>                         handle_f1_removal_request() override;
   async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override;
   bool                                     is_f1_setup() const override { return ctxt.f1c_setup; }
 
-  // F1AP RRC Message Transfer Procedure functions as per TS38.473, Section 8.4.
+  // F1AP RRC Message Transfer Procedure functions as per TS 38.473, Section 8.4.
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
 
   // F1AP message handler functions
@@ -101,19 +101,19 @@ private:
   /// \brief Handle RESET as per TS 38.473, Section 8.2.1.
   void handle_reset(const asn1::f1ap::reset_s& msg);
 
-  /// \brief Handle GNB-CU CONFIGURATION UPDATE as per TS38.473, Section 8.2.5.2.
+  /// \brief Handle GNB-CU CONFIGURATION UPDATE as per TS 38.473, Section 8.2.5.2.
   void handle_gnb_cu_configuration_update(const asn1::f1ap::gnb_cu_cfg_upd_s& msg);
 
-  /// \brief Handle UE CONTEXT SETUP REQUEST as per TS38.473, Section 8.3.1.
+  /// \brief Handle UE CONTEXT SETUP REQUEST as per TS 38.473, Section 8.3.1.
   void handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg);
 
-  /// \brief Handle UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.3.
+  /// \brief Handle UE CONTEXT MODIFICATION REQUEST as per TS 38.473, Section 8.3.3.
   void handle_ue_context_release_command(const asn1::f1ap::ue_context_release_cmd_s& msg);
 
-  /// \brief Handle UE CONTEXT MODIFICATION REQUEST as per TS38.473, Section 8.3.4.
+  /// \brief Handle UE CONTEXT MODIFICATION REQUEST as per TS 38.473, Section 8.3.4.
   void handle_ue_context_modification_request(const asn1::f1ap::ue_context_mod_request_s& msg);
 
-  /// \brief Handle DL RRC Message Transfer as per TS38.473, Section 8.4.2.2.
+  /// \brief Handle DL RRC Message Transfer as per TS 38.473, Section 8.4.2.2.
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_transfer_s& msg);
 
   bool handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue_f1ap_id_t cu_ue_id);
@@ -123,7 +123,7 @@ private:
                              std::optional<gnb_du_ue_f1ap_id_t> du_ue_id       = {},
                              std::optional<gnb_cu_ue_f1ap_id_t> cu_ue_id       = {});
 
-  /// \brief Handle Paging as per TS38.473, Section 8.7.
+  /// \brief Handle Paging as per TS 38.473, Section 8.7.
   void handle_paging_request(const asn1::f1ap::paging_s& msg);
 
   /// \brief Handle WRITE-REPLACE WARNING REQUEST as per TS 38.473, Section 8.5.1.

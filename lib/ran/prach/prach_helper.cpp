@@ -16,11 +16,11 @@ using namespace ocudu;
 error_type<std::string>
 ocudu::prach_helper::prach_config_index_is_valid(uint16_t prach_cfg_idx, frequency_range fr, duplex_mode mode)
 {
-  // Supported PRACH Configuration Index values for FDD in FR1, as per TS38.211 Table 6.3.3.2-2.
+  // Supported PRACH Configuration Index values for FDD in FR1, as per TS 38.211 Table 6.3.3.2-2.
   static constexpr auto fr1_fdd_intervals = to_array<interval<unsigned>>({{0, 108}, {147, 167}, {198, 256}});
-  // Supported PRACH Configuration Index values for TDD in FR1, as per TS38.211 Table 6.3.3.2-3.
+  // Supported PRACH Configuration Index values for TDD in FR1, as per TS 38.211 Table 6.3.3.2-3.
   static constexpr auto fr1_tdd_intervals = to_array<interval<unsigned>>({{0, 87}, {110, 133}, {145, 211}});
-  // Supported PRACH Configuration Index values for TDD in FR2, as per TS38.211 Table 6.3.3.2-4.
+  // Supported PRACH Configuration Index values for TDD in FR2, as per TS 38.211 Table 6.3.3.2-4.
   static constexpr auto fr2_tdd_intervals = to_array<interval<unsigned>>({{112, 144}});
 
   // Table 6.3.3.2-4, TS 38.211, covers FR2 whatever the duplex mode, since FR2-NTN (paired spectrum) uses it too.

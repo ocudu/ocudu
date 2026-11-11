@@ -16,7 +16,7 @@ namespace ocudu {
 /// \brief Collection of parameters required to calculate the TBS for a shared channel transmission.
 ///
 /// The configuration applies to the determination of the transport block size (TBS) for both PDSCH, as described in
-/// TS38.214 Section 5.1.3.2, and PUSCH, as described in TS38.214 Section 6.1.4.2.
+/// TS 38.214 Section 5.1.3.2, and PUSCH, as described in TS 38.214 Section 6.1.4.2.
 struct tbs_calculator_configuration {
   /// \brief Number of OFDM symbols allocated to the SCH within the slot.
   ///
@@ -62,7 +62,7 @@ struct tbs_calculator_configuration {
   unsigned nof_layers;
   /// \brief TB scaling field.
   ///
-  /// Provides the scaling factor \f$S\f$ according to TS38.214 Table 5.1.3.2-2. Possible values are {0, 1, 2}.
+  /// Provides the scaling factor \f$S\f$ according to TS 38.214 Table 5.1.3.2-2. Possible values are {0, 1, 2}.
   ///
   /// For the PDSCH assigned by a PDCCH with DCI format 1_0 with CRC scrambled by P-RNTI or RA-RNTI, the value is
   /// provided by the <em>TB scaling</em> field of the DCI. For other PDSCHs, it must be set to zero.
@@ -75,21 +75,21 @@ struct tbs_calculator_configuration {
   unsigned n_prb;
 };
 
-/// \brief Converts TB scaling field into the scaling factor S (see TS38.214 Table 5.1.3.2-2).
+/// \brief Converts TB scaling field into the scaling factor S (see TS 38.214 Table 5.1.3.2-2).
 /// \param[in] scaling TB scaling field, possible values are {0, 1, 2}.
 /// \return Scaling factor S.
 float tbs_calculator_pdsch_get_scaling_factor(unsigned scaling);
 
 /// \brief Gets the smallest TBS in bits (from TS 38.214 Table 5.1.3.2-1) greater than or equal to a given value.
 ///
-/// \param[in] nof_info_prime Quantized intermediate number of information bits, as per TS38.214 Section 5.1.3.2.
+/// \param[in] nof_info_prime Quantized intermediate number of information bits, as per TS 38.214 Section 5.1.3.2.
 /// \remark \c nof_info_prime must not be greater than 3824 bits.
-/// \return The smallest TBS from TS38.214 Table 5.1.3.2-1 that is greater than or equal to \c nof_info_prime.
+/// \return The smallest TBS from TS 38.214 Table 5.1.3.2-1 that is greater than or equal to \c nof_info_prime.
 unsigned tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prime);
 
 /// \brief Calculates the TBS for a given SCH transmission.
 ///
-/// Implemented as per TS38.214 Section 5.1.3.2.
+/// Implemented as per TS 38.214 Section 5.1.3.2.
 ///
 /// \param[in] config Configuration for the determination of the transport block size (TBS).
 /// \return The TBS in bits.

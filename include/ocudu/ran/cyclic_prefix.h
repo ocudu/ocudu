@@ -70,7 +70,7 @@ public:
            phy_time_unit::from_units_of_kappa(16).is_sample_accurate(sampling_rate_Hz);
   }
 
-  /// \brief Calculates the cyclic prefix length in samples as per TS38.211 Section 5.3.1.
+  /// \brief Calculates the cyclic prefix length in samples as per TS 38.211 Section 5.3.1.
   /// \param[in] symbol_idx Symbol index within the subframe.
   /// \param[in] scs        Subcarrier spacing numerology.
   /// \return The cyclic prefix length in PHY time units.

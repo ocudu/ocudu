@@ -43,7 +43,7 @@ struct ran_cell_config {
   bwp_builder_params init_bwp;
   /// NTN configuration for this cell. When empty, the cell operates in terrestrial mode.
   std::optional<ntn_cell_params> ntn_params;
-  /// Cell time advance offset - parameter \f$N_{TA,offset}\f$ in TS38.211 Section 4.3.3.
+  /// Cell time advance offset - parameter \f$N_{TA,offset}\f$ in TS 38.211 Section 4.3.3.
   n_ta_offset ta_offset = n_ta_offset::n0;
 };
 

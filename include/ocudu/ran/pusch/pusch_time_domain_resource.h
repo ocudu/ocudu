@@ -13,7 +13,7 @@ namespace ocudu {
 
 /// \brief Collects the PUSCH default time-domain allocation parameters.
 ///
-/// The parameters are provided by TS38.214 Tables 5.1.2.1.1-2, 5.1.2.1.1-3, 5.1.2.1.1-4 and 5.1.2.1.1-5, and in
+/// The parameters are provided by TS 38.214 Tables 5.1.2.1.1-2, 5.1.2.1.1-3, 5.1.2.1.1-4 and 5.1.2.1.1-5, and in
 /// TS 38.331.
 ///
 /// A configuration is invalid if the duration is zero.

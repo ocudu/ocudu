@@ -13,7 +13,7 @@
 
 namespace ocudu {
 
-/// Maximum number of candidates per aggregation level in a SS as per TS38.331 SearchSpace.
+/// Maximum number of candidates per aggregation level in a SS as per TS 38.331 SearchSpace.
 constexpr unsigned PDCCH_MAX_NOF_CANDIDATES_SS = 8;
 
 /// PDCCH candidate and PDCCH candidate list data types.
@@ -31,7 +31,7 @@ inline unsigned max_nof_monitored_pdcch_candidates(subcarrier_spacing scs)
 /// \brief Parameters for calculating the PDCCH lowest Control Channel Element (CCE).
 ///
 /// The parameters in this struct allow computing the PDCCH lowest CCE, for all candidates and for a Common SS,
-/// following the specifics in TS38.213 Section 10.1.
+/// following the specifics in TS 38.213 Section 10.1.
 ///
 /// Consider an active DL BWP of a serving cell with carrier indicator field \f$n_{CI}\f$. In the search space set
 /// \f$s\f$, associated with CORESET \f$p\f$ in slot \f$n_{s,f}^\mu\f$, the lowest CCE index \f$n_{CCE}\f$ corresponding
@@ -57,7 +57,7 @@ struct pdcch_candidates_common_ss_configuration {
 /// \brief Parameters for calculating the PDCCH lowest Control Channel Element (CCE).
 ///
 /// The parameters in this struct allow computing the PDCCH lowest CCE, for all candidates and for a UE-Specific SS,
-/// following the specifics in TS38.213 Section 10.1.
+/// following the specifics in TS 38.213 Section 10.1.
 ///
 /// Consider an active DL BWP of a serving cell with carrier indicator field \f$n_{CI}\f$. In the search space set
 /// \f$s\f$, associated with CORESET \f$p\f$ in slot \f$n_{s,f}^\mu\f$, the lowest CCE index \f$n_{CCE}\f$ corresponding
@@ -87,14 +87,14 @@ struct pdcch_candidates_ue_ss_configuration {
   unsigned slot_index;
 };
 
-/// \brief Generates a PDCCH candidate list for Common SS as per TS38.213 Section 10.1.
+/// \brief Generates a PDCCH candidate list for Common SS as per TS 38.213 Section 10.1.
 ///
 /// An assertion is triggered if the number of CCEs for the aggregation level exceeds the number of CCE in the CORESET.
 ///
 /// The resultant list contains the lowest CCE index of the \c config.nof_candidates.
 pdcch_candidate_list pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config);
 
-/// \brief Generates a PDCCH candidate list for UE-Specific SS as per TS38.213 Section 10.1.
+/// \brief Generates a PDCCH candidate list for UE-Specific SS as per TS 38.213 Section 10.1.
 ///
 /// An assertion is triggered if the number of candidates times the aggregation level exceeds the number of CCE in the
 /// CORESET.

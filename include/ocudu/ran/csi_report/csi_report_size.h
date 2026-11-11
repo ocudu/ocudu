@@ -15,13 +15,13 @@ namespace ocudu {
 struct csi_report_size {
   /// \brief CSI Part 1 number of bits.
   ///
-  /// It is the total number of CSI Part 1 reports described in TS38.212 Table 6.3.2.1.2-6.
+  /// It is the total number of CSI Part 1 reports described in TS 38.212 Table 6.3.2.1.2-6.
   units::bits part1_size;
 
   /// \brief CSI Part 1 correspondence to CSI Part 2 size.
   ///
   /// It provides the necessary information for calculating the CSI Part 2 reports payload size from the CSI Part 1
-  /// decoded payload. The CSI Part 2 payload is described in TS38.212 Table 6.3.2.1.2-7.
+  /// decoded payload. The CSI Part 2 payload is described in TS 38.212 Table 6.3.2.1.2-7.
   uci_part2_size_description part2_correspondence;
 
   /// \brief CSI Part 2 minimum payload size.

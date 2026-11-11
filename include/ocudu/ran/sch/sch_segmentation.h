@@ -65,7 +65,7 @@ constexpr unsigned compute_nof_codeblocks(units::bits tbs, ldpc_base_graph_type 
 
 /// \brief Computes the lifting size used to encode/decode a transport block.
 ///
-/// As per TS38.212 Section 5.2.2, the lifting size depends on the size of the transport block, on the LDPC base graph
+/// As per TS 38.212 Section 5.2.2, the lifting size depends on the size of the transport block, on the LDPC base graph
 /// and on the number of segments the transport block is split into.
 inline unsigned compute_lifting_size(units::bits tbs, ldpc_base_graph_type base_graph, unsigned nof_segments)
 {
@@ -113,7 +113,7 @@ inline unsigned compute_lifting_size(units::bits tbs, ldpc_base_graph_type base_
 
 /// \brief Computes the codeblock size for the given base graph and lifting size.
 ///
-/// As per TS38.212 Section 5.2.2, the number bits to encode is fixed for a given base graph and a given lifting size.
+/// As per TS 38.212 Section 5.2.2, the number bits to encode is fixed for a given base graph and a given lifting size.
 /// The codeblock consists of information bits, CRC bits and the number of filler bits required to match the codeblock
 /// size.
 constexpr units::bits compute_codeblock_size(ldpc_base_graph_type base_graph, unsigned lifting_size)

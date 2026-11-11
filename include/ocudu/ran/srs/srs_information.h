@@ -12,7 +12,7 @@ struct srs_resource_configuration;
 
 /// \brief Collects Sounding Reference Signal information.
 ///
-/// Contains the derived parameters that are used for the SRS sequence generation and mapping, as per TS38.211 Sections
+/// Contains the derived parameters that are used for the SRS sequence generation and mapping, as per TS 38.211 Sections
 /// 6.4.1.4.2 and 6.4.1.4.3.
 ///
 /// The parameters describe the sequence and its allocation for a certain transmission port and OFDM symbol.

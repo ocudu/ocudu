@@ -11,14 +11,14 @@ namespace ocudu {
 
 /// \brief Modulation and Code Scheme table identifiers for PUSCH.
 ///
-/// The identifiers are inspired by TS38.331 Section as 6.3.2 (see field \e mcs-Table in various Information Elements).
-/// For the actual tables and the selection procedure, see TS38.214 Section 6.1.4.1.
+/// The identifiers are inspired by TS 38.331 Section as 6.3.2 (see field \e mcs-Table in various Information Elements).
+/// For the actual tables and the selection procedure, see TS 38.214 Section 6.1.4.1.
 enum class pusch_mcs_table {
-  /// Identifies MCS index table 1, TS38.214 Table 5.1.3.1-1.
+  /// Identifies MCS index table 1, TS 38.214 Table 5.1.3.1-1.
   qam64 = 0,
-  /// Identifies MCS index table 2, TS38.214 Table 5.1.3.1-2.
+  /// Identifies MCS index table 2, TS 38.214 Table 5.1.3.1-2.
   qam256 = 1,
-  /// Identifies MCS index table 3, TS38.214 Table 5.1.3.1-3.
+  /// Identifies MCS index table 3, TS 38.214 Table 5.1.3.1-3.
   qam64LowSe = 2,
 };
 
@@ -45,7 +45,7 @@ constexpr const char* pusch_mcs_table_to_string(pusch_mcs_table table)
 /// \param[in] table                  MCS table.
 /// \param[in] index                  MCS index.
 /// \param[in] use_transform_precoder Set to true if transform precoding is enabled.
-/// \param[in] tp_pi2bpsk_present     Set to true if higher layer parameter \e tp-pi2BPSK is enabled. See TS38.331
+/// \param[in] tp_pi2bpsk_present     Set to true if higher layer parameter \e tp-pi2BPSK is enabled. See TS 38.331
 ///                                   Section 6.3.2 Information Element \e PUSCH-Config for more information.
 /// \return Modulation and Coding Scheme parameters.
 sch_mcs_description

@@ -13,7 +13,7 @@
 
 namespace ocudu {
 
-/// \brief Configuration of group and sequence hopping as described in TS38.331 PUCCH-ConfigCommon IE.
+/// \brief Configuration of group and sequence hopping as described in TS 38.331 PUCCH-ConfigCommon IE.
 enum class pucch_group_hopping {
   /// Implies neither group or sequence hopping is enabled.
   NEITHER,
@@ -33,7 +33,7 @@ inline uint8_t to_uint(pucch_res_set_id format)
   return static_cast<uint8_t>(format);
 }
 
-/// \brief PUCCH Formats as described in TS38.213 Section 9.2.
+/// \brief PUCCH Formats as described in TS 38.213 Section 9.2.
 enum class pucch_format : uint8_t { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_FORMATS };
 
 inline uint8_t to_uint(pucch_format format)
@@ -112,7 +112,7 @@ inline pucch_format pucch_f2f3f4_format(pucch_formats formats)
 }
 
 /// Defines whether the PUCCH within the current slot belongs to a PUCCH repetition. For more details, refer to
-/// TS38.213, Section 9.2.6.
+/// TS 38.213, Section 9.2.6.
 enum class pucch_repetition_tx_slot { no_multi_slot, starts, continues, ends };
 
 /// \brief Identifier of a PUCCH resource, either common or dedicated, in a single index space.

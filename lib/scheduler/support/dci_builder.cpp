@@ -50,7 +50,7 @@ static_assert(std::variant_size_v<dci_ul_info::payload_type> ==
                   static_cast<std::size_t>(dci_ul_rnti_config_type::cs_rnti_f0_1) + 1,
               "dci_ul_info::payload_type has alternatives with no matching dci_ul_rnti_config_type");
 
-/// Get PDSCH-to-HARQ-timing-indicator field as per TS38.213, 9.2.3.
+/// Get PDSCH-to-HARQ-timing-indicator field as per TS 38.213, 9.2.3.
 static unsigned get_dci_1_0_pdsch_to_harq_timing_indicator(unsigned k1)
 {
   // PDSCH-to-HARQ-timing-indicator maps to {1,2,3,4,5,6,7,8} for DCI 1_0.
@@ -58,7 +58,7 @@ static unsigned get_dci_1_0_pdsch_to_harq_timing_indicator(unsigned k1)
   return k1 - 1;
 }
 
-/// Get PDSCH-to-HARQ-timing-indicator field as per TS38.213, 9.2.3.
+/// Get PDSCH-to-HARQ-timing-indicator field as per TS 38.213, 9.2.3.
 static unsigned get_dci_1_1_pdsch_to_harq_timing_indicator(unsigned k1, span<const uint8_t> dl_data_to_ul_ack)
 {
   // PDSCH-to-HARQ-timing-indicator maps to dl-DataToUL-ACK for DCI 1_1.
@@ -76,7 +76,7 @@ void ocudu::build_dci_f1_0_si_rnti(dci_dl_info&               dci,
                                    uint8_t                    si_indicator)
 {
   dci_1_0_si_rnti_configuration& si_dci = dci.set_si_rnti_f1_0();
-  // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
+  // as per TS 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
   si_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   const vrb_interval si_vrbs =
       crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, init_dl_bwp.pdcch_common.coreset0->get_coreset_start_crb());
@@ -123,7 +123,7 @@ void ocudu::build_dci_f1_0_p_rnti(dci_dl_info& dci, const bwp_downlink_common& i
   p_dci.short_messages           = short_messages;
 }
 
-/// Builds DCI f1_0 shared by RA-RNTI and MsgB-RNTI, as per TS38.212, clause 7.3.1.2.1.
+/// Builds DCI f1_0 shared by RA-RNTI and MsgB-RNTI, as per TS 38.212, clause 7.3.1.2.1.
 static void build_dci_f1_0_ra_or_msgb_rnti(dci_dl_info&               dci,
                                            const bwp_downlink_common& init_dl_bwp,
                                            crb_interval               crbs,
@@ -132,7 +132,7 @@ static void build_dci_f1_0_ra_or_msgb_rnti(dci_dl_info&               dci,
                                            unsigned                   lsb_sfn)
 {
   dci_1_0_ra_rnti_configuration& ra_dci = dci.set_ra_rnti_f1_0();
-  // as per TS38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
+  // as per TS 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB.
   ra_dci.N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0.has_value()
                            ? init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length()
                            : init_dl_bwp.generic_params.crbs.length();
@@ -164,7 +164,7 @@ void ocudu::build_dci_f1_0_msgb_rnti(dci_dl_info&               dci,
                                      unsigned                   msgb_resp_window_ms,
                                      unsigned                   prach_sfn)
 {
-  // TS38.213, Section 8.2A: the LSBs of SFN field is only present if msgB-ResponseWindow is configured larger than
+  // TS 38.213, Section 8.2A: the LSBs of SFN field is only present if msgB-ResponseWindow is configured larger than
   // 10 msec; otherwise these bits are reserved.
   const unsigned lsb_sfn = msgb_resp_window_ms > 10 ? prach_sfn & 0b11U : 0U;
   build_dci_f1_0_ra_or_msgb_rnti(dci, init_dl_bwp, crbs, time_resource, mcs_index, lsb_sfn);
@@ -189,7 +189,7 @@ void ocudu::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
   // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB is the size of CORESET 0 for TC-RNTI.
   const crb_interval cs0_crbs = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs();
   f1_0.N_rb_dl_bwp            = cs0_crbs.length();
-  // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
+  // See TS 38.211 7.3.1.6 - Mapping from VRBs to PRBs.
   f1_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;

@@ -25,7 +25,7 @@ TEST(uci_part2_size_calculator, fix_size)
   ASSERT_EQ(csi_part2_size.value(), expected_csi_part2_size);
 }
 
-// Test two ports typical CSI report following TS38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
+// Test two ports typical CSI report following TS 38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
 //
 // CSI Part 1 consists of:
 // - CRI: not present
@@ -84,7 +84,7 @@ TEST(uci_part2_size_calculator, basic_two_ports)
   }
 }
 
-// Test four ports typical CSI report following TS38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
+// Test four ports typical CSI report following TS 38.212 Tables 6.3.2.1.2-3 and 6.3.2.1.2-4.
 //
 // CSI Part 1 consists of:
 // - CRI: not present

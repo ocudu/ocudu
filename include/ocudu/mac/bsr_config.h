@@ -4,7 +4,7 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 /// \file
-/// \brief  Logical Channel Group and UL Buffer Size format definition and levels according to 3GPP TS38.321
+/// \brief  Logical Channel Group and UL Buffer Size format definition and levels according to 3GPP TS 38.321
 /// version 15.3.0
 
 #pragma once

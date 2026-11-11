@@ -10,7 +10,7 @@ namespace ocudu {
 
 /// \brief Constructs a precoding weight matrix for one layer mapped into two transmit ports.
 ///
-/// All weights are derived from TS38.214 Table 5.2.2.2.1-1 for 1-layer CSI reporting.
+/// All weights are derived from TS 38.214 Table 5.2.2.2.1-1 for 1-layer CSI reporting.
 ///
 /// \param[in] i_codebook Codebook identifier.
 /// \return A precoding weight matrix for one layer and two ports.
@@ -18,7 +18,7 @@ precoding_weight_matrix make_one_layer_two_ports(unsigned i_codebook);
 
 /// \brief Constructs a precoding weight matrix for two layers mapped into two transmit ports.
 ///
-/// All weights are derived from TS38.214 Table 5.2.2.2.1-1 for 2-layer CSI reporting.
+/// All weights are derived from TS 38.214 Table 5.2.2.2.1-1 for 2-layer CSI reporting.
 ///
 /// \param[in] i_codebook Codebook identifier.
 /// \return A precoding weight matrix for two layers and two ports.

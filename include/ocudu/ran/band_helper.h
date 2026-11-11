@@ -136,7 +136,7 @@ arfcn_t get_ul_arfcn_from_dl_arfcn(arfcn_t dl_arfcn, std::optional<nr_band> band
 /// \return The frequency in Hz.
 double nr_arfcn_to_freq(arfcn_t nr_arfcn);
 
-/// \brief Calculates NR-ARFCN of a given frequency as per TS38.104 5.4.2.1.
+/// \brief Calculates NR-ARFCN of a given frequency as per TS 38.104 5.4.2.1.
 ///
 /// Even though the frequency-to-NR-ARFCN mapping is defined for "F_REF" as per TS 38.104 5.4.2.1, this mapping can be
 /// used also SSB frequency and Absolute Point A.

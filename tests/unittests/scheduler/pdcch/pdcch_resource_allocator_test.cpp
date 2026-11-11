@@ -118,16 +118,16 @@ protected:
     ASSERT_EQ(pdcch_ctx.n_id_pdcch_dmrs,
               cs_cfg.get_pdcch_dmrs_scrambling_id().has_value() ? *cs_cfg.get_pdcch_dmrs_scrambling_id()
                                                                 : cell_cfg.params.pci)
-        << "Invalid N_{ID} (see TS38.211, 7.4.1.3.1)";
+        << "Invalid N_{ID} (see TS 38.211, 7.4.1.3.1)";
     ASSERT_EQ(pdcch_ctx.n_rnti_pdcch_data,
               cs_cfg.get_pdcch_dmrs_scrambling_id().has_value() and (not ss_cfg.is_common_search_space())
                   ? to_underlying(u.rnti)
                   : 0)
-        << "Invalid n_{RNTI} (see TS38.211, 7.3.2.3)";
+        << "Invalid n_{RNTI} (see TS 38.211, 7.3.2.3)";
     unsigned expected_n_id = cs_cfg.get_pdcch_dmrs_scrambling_id().has_value() and (not ss_cfg.is_common_search_space())
                                  ? *cs_cfg.get_pdcch_dmrs_scrambling_id()
                                  : cell_cfg.params.pci;
-    ASSERT_EQ(pdcch_ctx.n_id_pdcch_data, expected_n_id) << "Invalid n_{ID} (see TS38.211, 7.3.2.3)";
+    ASSERT_EQ(pdcch_ctx.n_id_pdcch_data, expected_n_id) << "Invalid n_{ID} (see TS 38.211, 7.3.2.3)";
 
     // The PDCCH is neither precoded nor beamformed.
     ASSERT_TRUE(std::holds_alternative<precoding_matrix_indicator>(pdcch_ctx.precoding_and_beamforming));
@@ -474,9 +474,9 @@ TEST_F(common_pdcch_allocator_tester, single_pdcch_sib1_allocation)
   ASSERT_EQ(rnti_t::SI_RNTI, pdcch->ctx.rnti);
   ASSERT_EQ(pdcch->ctx.bwp_cfg, &cell_cfg.init_bwp.dl.cfg());
   ASSERT_EQ(*pdcch->ctx.coreset_cfg, *cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
-  ASSERT_EQ(pdcch->ctx.n_id_pdcch_dmrs, cell_cfg.params.pci) << "Invalid N_{ID} (see TS38.211, 7.4.1.3.1)";
-  ASSERT_EQ(pdcch->ctx.n_rnti_pdcch_data, 0) << "Invalid n_{RNTI} (see TS38.211, 7.3.2.3)";
-  ASSERT_EQ(pdcch->ctx.n_id_pdcch_data, cell_cfg.params.pci) << "Invalid n_{ID} (see TS38.211, 7.3.2.3)";
+  ASSERT_EQ(pdcch->ctx.n_id_pdcch_dmrs, cell_cfg.params.pci) << "Invalid N_{ID} (see TS 38.211, 7.4.1.3.1)";
+  ASSERT_EQ(pdcch->ctx.n_rnti_pdcch_data, 0) << "Invalid n_{RNTI} (see TS 38.211, 7.3.2.3)";
+  ASSERT_EQ(pdcch->ctx.n_id_pdcch_data, cell_cfg.params.pci) << "Invalid n_{ID} (see TS 38.211, 7.3.2.3)";
   ASSERT_EQ(pdcch->ctx.cces.aggr_lvl, aggregation_level::n4);
   ASSERT_EQ(pdcch->ctx.cces.ncce, 0);
   ASSERT_EQ(pdcch->ctx.starting_symbol, 0);
@@ -544,9 +544,9 @@ TEST_F(common_pdcch_allocator_tester, single_pdcch_rar_allocation)
   ASSERT_EQ(ra_rnti, pdcch->ctx.rnti);
   ASSERT_EQ(pdcch->ctx.bwp_cfg, &cell_cfg.init_bwp.dl.cfg());
   ASSERT_EQ(*pdcch->ctx.coreset_cfg, *cell_cfg.params.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
-  ASSERT_EQ(pdcch->ctx.n_id_pdcch_dmrs, cell_cfg.params.pci) << "Invalid N_{ID} (see TS38.211, 7.4.1.3.1)";
-  ASSERT_EQ(pdcch->ctx.n_rnti_pdcch_data, 0) << "Invalid n_{RNTI} (see TS38.211, 7.3.2.3)";
-  ASSERT_EQ(pdcch->ctx.n_id_pdcch_data, cell_cfg.params.pci) << "Invalid n_{ID} (see TS38.211, 7.3.2.3)";
+  ASSERT_EQ(pdcch->ctx.n_id_pdcch_dmrs, cell_cfg.params.pci) << "Invalid N_{ID} (see TS 38.211, 7.4.1.3.1)";
+  ASSERT_EQ(pdcch->ctx.n_rnti_pdcch_data, 0) << "Invalid n_{RNTI} (see TS 38.211, 7.3.2.3)";
+  ASSERT_EQ(pdcch->ctx.n_id_pdcch_data, cell_cfg.params.pci) << "Invalid n_{ID} (see TS 38.211, 7.3.2.3)";
   ASSERT_EQ(pdcch->ctx.cces.aggr_lvl, aggregation_level::n4);
   ASSERT_EQ(pdcch->ctx.cces.ncce, 0);
   ASSERT_EQ(pdcch->ctx.starting_symbol, 0);

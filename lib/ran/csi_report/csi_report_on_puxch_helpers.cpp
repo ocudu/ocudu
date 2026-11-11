@@ -91,7 +91,7 @@ struct ri_li_cqi_cri_size_calculator {
     return result;
   }
 
-  /// Calculates the field bit-widths for the Type II codebook as per TS38.212 Table 6.3.1.1.2-5.
+  /// Calculates the field bit-widths for the Type II codebook as per TS 38.212 Table 6.3.1.1.2-5.
   ri_li_cqi_cri_sizes operator()(const pmi_codebook_typeII& pmi_codebook) const
   {
     ocudu_assert(ri <= max_nof_typeII_layers,
@@ -328,7 +328,7 @@ struct pmi_unpacker {
       // Sort the layer coefficients in strength order. The vector contains the list of coefficient indices in
       // decreasing strength order, as per the wideband amplitude coefficient i_1_4, where the first element is the
       // strongest one, excluding i_1_3. Coefficients with identical wideband amplitudes keep the increasing coefficient
-      // index order, as per TS38.214 Section 5.2.2.2.3.
+      // index order, as per TS 38.214 Section 5.2.2.2.3.
       static_vector<uint8_t, max_nof_typeII_coefficients> order =
           get_typeII_coefficient_strength_order(layer.i_1_4, layer.i_1_3);
       ocudu_assert(order.size() + 1 == nof_amplitudes[i_layer],
@@ -402,7 +402,7 @@ ri_li_cqi_cri_sizes ocudu::get_ri_li_cqi_cri_sizes(const pmi_codebook_config& pm
                                                    unsigned                   nof_csi_rs_resources)
 {
   // Calculate CRI field size. The number of CSI resources in the corresponding resource set must be at least one and up
-  // to 64 (see TS38.331 Section 6.3.2, Information Element \c NZP-CSI-RS-ResourceSet).
+  // to 64 (see TS 38.331 Section 6.3.2, Information Element \c NZP-CSI-RS-ResourceSet).
   constexpr interval<unsigned, true> nof_csi_res_range(1, 64);
   ocudu_assert(nof_csi_res_range.contains(nof_csi_rs_resources),
                "The number of CSI-RS resources in the resource set, i.e., {} exceeds the valid range {}.",
@@ -425,7 +425,7 @@ csi_report_size ocudu::get_csi_report_size_cri_ssbri_rsrp(unsigned              
   unsigned             nof_reported_rs = nof_reported_rs_.value();
 
   // The CSI report comprises a CRI/SSBRI field per Resource Set (RS) - the RSRP for the first entry and
-  // differential RSRP for the rest of RS, as per TS38.214 Section 5.2.1.4.3.
+  // differential RSRP for the rest of RS, as per TS 38.214 Section 5.2.1.4.3.
   units::bits part1_size{nof_reported_rs * sizes.cri + sizes.rsrp + sizes.diff_rsrp * (nof_reported_rs - 1)};
   return {.part1_size = part1_size, .part2_correspondence = {}, .part2_min_size = 0_bits, .part2_max_size = 0_bits};
 }
@@ -488,14 +488,14 @@ csi_report_data ocudu::csi_report_unpack_cri_ssbri_rsrp(const csi_report_packed&
     offset += sizes.cri;
   }
 
-  // Unpack RSRP. The RSRP value is expressed in 1 dB steps from [-140, -44] dBm with 7-bit bitwidth, as per TS38.214
+  // Unpack RSRP. The RSRP value is expressed in 1 dB steps from [-140, -44] dBm with 7-bit bitwidth, as per TS 38.214
   // Section 5.2.1.4.3.
   int reference_rsrp = -140 + packed.extract(offset, sizes.rsrp);
   result.rsrp_dBm.push_back(reference_rsrp);
   offset += sizes.rsrp;
 
   // Unpack differential RSRP for each reported resource set. Conversion from the 4-bit field to dBm is described in
-  // TS38.214 Section 5.2.1.4.3.
+  // TS 38.214 Section 5.2.1.4.3.
   for (unsigned i = 1; i != nof_reported_rs; ++i) {
     result.rsrp_dBm.push_back(reference_rsrp - 2 * packed.extract(offset, sizes.diff_rsrp));
     offset += sizes.diff_rsrp;

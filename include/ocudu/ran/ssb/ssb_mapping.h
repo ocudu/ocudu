@@ -93,7 +93,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, ssb_id_t ssb_idx)
 ///
 /// \param[in] fr                Frequency range.
 /// \param[in] ssb_scs           SS/PBCH block subcarrier spacing.
-/// \param[in] common_scs        Higher layer parameter \e subCarrierSpacingCommon as per TS38.331 \e MIB.
+/// \param[in] common_scs        Higher layer parameter \e subCarrierSpacingCommon as per TS 38.331 \e MIB.
 /// \param[in] offset_to_pointA  Offset to Point A (see [here](\ref ssb_offset_to_pointA) for more information).
 /// \param[in] subcarrier_offset Subcarrier offset (see [here](\ref ssb_subcarrier_offset) for more information).
 /// \return The index of the lowest subcarrier of the SS/PBCH block.

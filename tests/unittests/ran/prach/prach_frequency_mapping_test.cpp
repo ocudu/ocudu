@@ -28,7 +28,7 @@ using namespace ocudu;
 // Combined parameters.
 using prach_frequency_mapping_param = std::tuple<prach_subcarrier_spacing, subcarrier_spacing>;
 
-// Expected values from TS38.211 Table 6.3.3.2-1.
+// Expected values from TS 38.211 Table 6.3.3.2-1.
 static const std::map<prach_frequency_mapping_param, prach_frequency_mapping_information>
     prach_frequency_mapping_expected = {
         {{prach_subcarrier_spacing::kHz1_25, subcarrier_spacing::kHz15}, {6, 7}},

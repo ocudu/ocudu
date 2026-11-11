@@ -112,7 +112,7 @@ struct sched_ue_config_request {
   /// if the cause is not a RRC procedure (not_rrc_proc), the UE does not need to enter fallback mode.
   enum class causes { other_rrc_proc, rrc_reconf_after_reest, not_rrc_proc };
 
-  /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
+  /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS 38.331.
   std::optional<std::vector<logical_channel_config>> lc_config_list;
   /// Configuration of the PCell and the SCells of the UE. The PCell is the first element.
   std::optional<std::vector<sched_ue_cell_config>> cells;

@@ -8,7 +8,7 @@
 using namespace ocudu;
 using namespace csi_rs;
 
-// Returns the scaling value applied to the bit position in the frequency allocation bitmap as per TS38.211
+// Returns the scaling value applied to the bit position in the frequency allocation bitmap as per TS 38.211
 // Section 7.4.1.5.3.
 static unsigned get_bitpos_scale(unsigned row)
 {

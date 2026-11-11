@@ -478,7 +478,7 @@ static void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&   
     const rar_information& rar = *rar_it;
 
     ASSERT_EQ(rar.pdsch_cfg.codewords.size(), 1);
-    const units::bytes rar_pdu_size{8}; // MAC RAR PDU subheader + length (See TS38.321, 6.1.5 and 6.2.3).
+    const units::bytes rar_pdu_size{8}; // MAC RAR PDU subheader + length (See TS 38.321, 6.1.5 and 6.2.3).
     ASSERT_GE(rar.pdsch_cfg.codewords[0].tb_size_bytes.value(), rar_pdu_size.value() * rar.grants.size());
 
     // For all RAR grants within the same RAR, check that they are consistent with the respective Msg3 PUSCHs.

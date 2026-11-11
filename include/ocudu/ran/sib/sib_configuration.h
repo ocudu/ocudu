@@ -9,7 +9,7 @@
 
 namespace ocudu {
 
-/// \brief SIB retransmission periodicity in milliseconds as per TS38.331 Section 5.2.1.
+/// \brief SIB retransmission periodicity in milliseconds as per TS 38.331 Section 5.2.1.
 /// \remark This is used for retransmission periodicity only; SIB1 periodicity is given as 160ms.
 enum class sib1_rtx_periodicity : uint8_t { ms5 = 5, ms10 = 10, ms20 = 20, ms40 = 40, ms80 = 80, ms160 = 160 };
 

@@ -245,12 +245,12 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
 {
   gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
 
-  // [TS38.473, 8.4.2.2.] If a UE-associated logical F1-connection exists, the DL RRC MESSAGE TRANSFER message shall
+  // [TS 38.473, 8.4.2.2.] If a UE-associated logical F1-connection exists, the DL RRC MESSAGE TRANSFER message shall
   // contain the gNB DU UE F1AP ID IE, which should be used by gNB-DU to lookup the stored UE context.
   f1ap_du_ue* ue = ues.find(gnb_du_ue_f1ap_id);
 
   if (ue == nullptr) {
-    // [TS38.473, 8.4.2.2.] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
+    // [TS 38.473, 8.4.2.2.] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established at reception of the DL RRC MESSAGE TRANSFER message.
     logger.warning("du_ue={}: Discarding DLRRCMessageTransfer. Cause: No UE found with the provided gNB-DU-UE-F1AP-ID",
                    fmt::underlying(gnb_du_ue_f1ap_id));
@@ -259,10 +259,10 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dl_rrc_msg_t
   }
 
   if (msg->old_gnb_du_ue_f1ap_id_present) {
-    // [TS38.473, 8.4.2.2] The DL RRC MESSAGE TRANSFER message shall include, if available, the old gNB-DU UE F1AP ID
+    // [TS 38.473, 8.4.2.2] The DL RRC MESSAGE TRANSFER message shall include, if available, the old gNB-DU UE F1AP ID
     // IE so that the gNB-DU can retrieve the existing UE context in RRC connection reestablishment procedure, as
     // defined in TS 38.401 [4].
-    // [TS38.473, 8.4.2.2] If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE
+    // [TS 38.473, 8.4.2.2] If the gNB-DU identifies the UE-associated logical F1-connection by the gNB-DU UE F1AP ID IE
     // in the DL RRC MESSAGE TRANSFER message and the old gNB-DU UE F1AP ID IE is included, it shall release the old
     // gNB-DU UE F1AP ID and the related configurations associated with the old gNB-DU UE F1AP ID.
     const gnb_du_ue_f1ap_id_t old_gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->old_gnb_du_ue_f1ap_id);
@@ -516,7 +516,7 @@ bool f1ap_du_impl::handle_rx_message_gnb_cu_ue_f1ap_id(f1ap_du_ue& ue, gnb_cu_ue
     logger.warning("Discarding message. Cause: gNB-CU UE F1AP ID={} does not match existing context",
                    fmt::underlying(gnb_cu_ue_f1ap_id));
   } else {
-    // [TS38.473, Cause IE] The action failed because the gNB-CU UE F1AP ID is either unknown, or (for a first
+    // [TS 38.473, Cause IE] The action failed because the gNB-CU UE F1AP ID is either unknown, or (for a first
     // message received at the gNB-CU) is known and already allocated to an existing context.
     cause.set_radio_network().value = cause_radio_network_opts::unknown_or_already_allocated_gnb_cu_ue_f1ap_id;
     logger.warning("Discarding message cause=gNB-CU UE F1AP ID={} is known and already allocated to an existing "

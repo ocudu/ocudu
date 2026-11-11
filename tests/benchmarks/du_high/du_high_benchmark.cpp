@@ -578,7 +578,7 @@ public:
     // Set slot point based on the SCS.
     next_sl_tx = slot_point_extended{params.scs_common, 0};
 
-    // Compute LBSR buffer size. According to TS38.321, 254 is the maximum value for the LBSR size.
+    // Compute LBSR buffer size. According to TS 38.321, 254 is the maximum value for the LBSR size.
     unsigned lbsr_buff_sz = 0;
     for (; lbsr_buff_sz < 255; ++lbsr_buff_sz) {
       if (buff_size_field_to_bytes(lbsr_buff_sz, ocudu::bsr_format::LONG_BSR) > ul_bsr_bytes) {

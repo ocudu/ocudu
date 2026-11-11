@@ -19,7 +19,7 @@
 
 namespace ocudu {
 
-/// \brief Describes part of the parameters that are encoded in the MIB payload as per TS38.331 Section 6.2.2 - MIB.
+/// \brief Describes part of the parameters that are encoded in the MIB payload as per TS 38.331 Section 6.2.2 - MIB.
 struct ssb_mib_data_pdu {
   /// Symbol position of the first DM-RS.
   dmrs_typeA_position dmrs_typeA_pos;
@@ -47,7 +47,7 @@ struct dl_ssb_pdu {
   ssb_offset_to_pointA offset_to_pointA;
   /// SS/PBCH pattern case.
   ssb_pattern_case ssb_case;
-  /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS38.213 section 4.1.
+  /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1.
   uint8_t L_max;
   /// Subcarrier spacing of the SSB.
   subcarrier_spacing scs;

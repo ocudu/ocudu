@@ -10,7 +10,7 @@ using namespace ocudu;
 
 static constexpr unsigned N_SYMB_CORESET = UINT32_MAX;
 
-/// TS38.213 Table 13-11 for FR1.
+/// TS 38.213 Table 13-11 for FR1.
 static const std::array<pdcch_type0_css_occasion_pattern1_description, 16> TABLE_FR1 = {{
     {0, 1.0, {0}},
     {0, 0.5, {0, N_SYMB_CORESET}},
@@ -30,7 +30,7 @@ static const std::array<pdcch_type0_css_occasion_pattern1_description, 16> TABLE
     {5, 1.0, {2}},
 }};
 
-/// TS38.213 Table 13-12 for FR2.
+/// TS 38.213 Table 13-12 for FR2.
 static const std::array<pdcch_type0_css_occasion_pattern1_description, 14> TABLE_FR2 = {{
     {0, 1.0, {0}},
     {0, 0.5, {0, 7}},

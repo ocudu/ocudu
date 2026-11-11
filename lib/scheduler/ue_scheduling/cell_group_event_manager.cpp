@@ -52,7 +52,7 @@ bool cell_group_event_handler_impl::handle_ue_creation(ue_config_update_event ev
 
   // Check if this UE was created via RACH and is still tracked by the RA scheduler, so its PRACH reception slot
   // can be carried over into the UE's PCell context. A 2-step RACH successRAR completion already resolved
-  // contention (TS38.321 6.2.3a), so no MAC ConRes CE is needed.
+  // contention (TS 38.321 6.2.3a), so no MAC ConRes CE is needed.
   auto                      ra_it = ra_ue_repo.find(crnti);
   std::optional<slot_point> prach_slot_rx =
       ra_it != ra_ue_repo.end() ? std::optional<slot_point>(ra_it->prach_slot_rx) : std::nullopt;
@@ -61,7 +61,7 @@ bool cell_group_event_handler_impl::handle_ue_creation(ue_config_update_event ev
   ue_creation_mode creation_mode  = ue_creation_mode::skip_fallback;
   if (is_in_fallback) {
     if (ev.get_ul_ccch_slot_rx().has_value()) {
-      // RACH-created UE. A 2-step RACH successRAR completion already resolved contention (TS38.321 6.2.3a), so
+      // RACH-created UE. A 2-step RACH successRAR completion already resolved contention (TS 38.321 6.2.3a), so
       // no MAC ConRes CE is needed; any other RACH path (native 4-step, or 2-step fallback) still needs one.
       creation_mode = ra_it != ra_ue_repo.end() and ra_it->is_msgb_success_rar()
                           ? ue_creation_mode::two_step_success_rar

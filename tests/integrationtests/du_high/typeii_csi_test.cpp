@@ -24,7 +24,7 @@ static constexpr unsigned nof_csi_rs_ports = 8;
 ///
 /// The report carries no CRI, as the cell configures a single CSI-RS resource, a one-bit rank indicator, a four-bit
 /// wideband CQI and one \f$\lceil\log_2(2L)\rceil\f$-bit indicator of the number of non-zero amplitudes per layer,
-/// as per TS38.212 Table 6.3.2.1.2-3. The sizes are stated here so that the test does not depend on the helpers that
+/// as per TS 38.212 Table 6.3.2.1.2-3. The sizes are stated here so that the test does not depend on the helpers that
 /// the packer and the DU share.
 static unsigned get_expected_csi_part1_size(unsigned nof_beams)
 {
@@ -95,7 +95,7 @@ protected:
   /// Reports a large uplink buffer, which makes the scheduler allocate PUSCH grants for the UE.
   void report_ul_buffer(rnti_t rnti)
   {
-    // Short BSR reporting the largest buffer size of LCG 0, as per TS38.321 Section 6.1.3.1.
+    // Short BSR reporting the largest buffer size of LCG 0, as per TS 38.321 Section 6.1.3.1.
     mac_rx_data_indication rx_ind{.sl_rx = next_slot.without_hyper_sfn(), .cell_index = to_du_cell_index(0)};
     rx_ind.pdus.push_back(
         mac_rx_pdu{.rnti = rnti, .harq_id = to_harq_id(0), .pdu = byte_buffer::create({0x3d, 0x1f}).value()});
@@ -236,7 +236,7 @@ protected:
         ASSERT_EQ(layer.i_1_4[i_coefficient], max_wideband_amplitude_index)
             << "Layer " << i_layer << ", coefficient " << i_coefficient;
 
-        // The phase of the strongest coefficient is fixed to zero, as per TS38.214 Section 5.2.2.2.3.
+        // The phase of the strongest coefficient is fixed to zero, as per TS 38.214 Section 5.2.2.2.3.
         const unsigned expected_phase = (i_coefficient == values.i_1_3[i_layer]) ? 0 : values.phase[i_layer];
         ASSERT_EQ(layer.i_2_1[i_coefficient], expected_phase)
             << "Layer " << i_layer << ", coefficient " << i_coefficient;

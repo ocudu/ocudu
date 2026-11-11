@@ -163,7 +163,7 @@ struct scheduler_ue_expert_config {
   /// Set boundaries, in number of RBs, for UE PUSCH grants.
   interval<unsigned> pusch_nof_rbs{1, MAX_NOF_PRBS};
   /// Direct Current (DC) offset, in number of subcarriers, used in PUSCH, by default. The gNB may supersede this DC
-  /// offset value through RRC messaging. See TS38.331 - "txDirectCurrentLocation".
+  /// offset value through RRC messaging. See TS 38.331 - "txDirectCurrentLocation".
   dc_offset_t initial_ul_dc_offset{dc_offset_t::center};
   /// Maximum number of PDSCH grants per slot.
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
@@ -266,7 +266,7 @@ struct scheduler_ra_expert_config {
   /// the RAR. Defaults to MAX_PREAMBLES_PER_PRACH_OCCASION, i.e. no filtering.
   unsigned backoff_indicator_max_preambles = MAX_PREAMBLES_PER_PRACH_OCCASION;
   /// \brief Requested Backoff Indicator duration signalled in the RAR when congestion control is triggered. Mapped
-  /// by the RA scheduler to the closest value in TS38.321, Table 7.2-1.
+  /// by the RA scheduler to the closest value in TS 38.321, Table 7.2-1.
   std::chrono::milliseconds backoff_indicator_duration{40};
   /// \brief SINR threshold, in dB, below which a CBRA Msg3 CRC KO is considered DTX, dropping its retransmissions.
   float msg3_dtx_sinr_threshold_dB = -15.0F;

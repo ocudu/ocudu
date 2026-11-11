@@ -16,7 +16,7 @@ namespace ocudu {
 /// parameter \e nrofReportedRS in IE \e CSI-ReportConfig.
 static constexpr unsigned csi_max_nof_reported_rs = 4;
 
-/// Maximum number of CSI reporting subbands. The range is deduced from TS38.214 Table 5.2.1.4-2.
+/// Maximum number of CSI reporting subbands. The range is deduced from TS 38.214 Table 5.2.1.4-2.
 static constexpr unsigned csi_max_nof_subbands = 18;
 
 /// CSI reporting configuration type.
@@ -24,13 +24,13 @@ enum class csi_report_type { periodic, aperiodic };
 
 /// \brief CSI Rank Indicator restriction type.
 ///
-/// The RI restriction field is described in TS38.331 Section 6.3.2, Information Element \e CodebookConfig. The
+/// The RI restriction field is described in TS 38.331 Section 6.3.2, Information Element \e CodebookConfig. The
 /// bit-width of this field must be equal to the number of CSI-RS transmit number of antennas.
 using ri_restriction_type = bounded_bitset<8U>;
 
 /// \brief CSI report quantities.
 ///
-/// Described in TS38.331 Section 6.3.2, Information Element \e CSI-ReportConfig.
+/// Described in TS 38.331 Section 6.3.2, Information Element \e CSI-ReportConfig.
 enum class csi_report_quantities {
   /// CSI report contains the quantities CRI, RI, PMI and wideband CQI.
   cri_ri_pmi_cqi = 0,
@@ -54,7 +54,7 @@ struct csi_report_subband_configuration {
   bool pmi;
   /// \brief Number of subbands in {5..18}.
   ///
-  /// Range deduced from TS38.214 Table 5.2.1.4-2. The minimum number of subbands is 5 and the maximum 18.
+  /// Range deduced from TS 38.214 Table 5.2.1.4-2. The minimum number of subbands is 5 and the maximum 18.
   bounded_integer<uint8_t, 5, csi_max_nof_subbands> nof_subbands;
 };
 
@@ -62,9 +62,9 @@ struct csi_report_subband_configuration {
 struct csi_report_configuration {
   /// \brief Number of CSI-RS resources in the corresponding resource set.
   ///
-  /// Corresponds to parameter \f$K^\textup{SSB}_{s}\f$ as per TS38.212 Section 6.3.1.1.2 if the report
+  /// Corresponds to parameter \f$K^\textup{SSB}_{s}\f$ as per TS 38.212 Section 6.3.1.1.2 if the report
   /// quantities is set to \c csi_report_quantities::ssb_index_rsrp. Otherwise, it corresponds to parameter
-  /// \f$K^\textup{CSI-RS}_{s}\f$ as per TS38.212 Section 6.3.1.1.2.
+  /// \f$K^\textup{CSI-RS}_{s}\f$ as per TS 38.212 Section 6.3.1.1.2.
   unsigned nof_csi_rs_resources;
   /// \brief Number of reported Resource Sets (RS).
   ///

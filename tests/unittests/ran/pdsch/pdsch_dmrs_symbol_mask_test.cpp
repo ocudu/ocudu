@@ -147,7 +147,7 @@ INSTANTIATE_TEST_SUITE_P(PdschDmrsSymbolMaskTypeASingle,
 
 } // namespace
 
-// Mapping type B, single-symbol DMRS, as per TS38.211 Table 7.4.1.1.2-3. The positions are relative to the first
+// Mapping type B, single-symbol DMRS, as per TS 38.211 Table 7.4.1.1.2-3. The positions are relative to the first
 // symbol of the allocation, which is what distinguishes this mapping from type A.
 namespace {
 
@@ -190,8 +190,8 @@ TEST_P(pdsch_dmrs_symbol_mask_type_B_test, positions_are_relative_to_the_allocat
 INSTANTIATE_TEST_SUITE_P(
     pdsch_dmrs_symbol_mask,
     pdsch_dmrs_symbol_mask_type_B_test,
-    // Every cell of the mapping type B columns of TS38.211 Table 7.4.1.1.2-3, durations 2 to 13 symbols
-    // (TS38.214 Table 5.1.2.1-1, normal cyclic prefix), dmrs-AdditionalPosition pos0 to pos3.
+    // Every cell of the mapping type B columns of TS 38.211 Table 7.4.1.1.2-3, durations 2 to 13 symbols
+    // (TS 38.214 Table 5.1.2.1-1, normal cyclic prefix), dmrs-AdditionalPosition pos0 to pos3.
     ::testing::Values(type_B_expectation{2, dmrs_additional_positions::pos0, {0}},
                       type_B_expectation{2, dmrs_additional_positions::pos1, {0}},
                       type_B_expectation{2, dmrs_additional_positions::pos2, {0}},

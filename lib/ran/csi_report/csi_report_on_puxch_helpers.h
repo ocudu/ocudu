@@ -27,7 +27,7 @@ struct cri_ssbri_rsrp_sizes {
 
 /// \brief Gets the bit-widths of the CRI, SSBRI, RSRP, and differential RSRP fields bit-widths.
 ///
-/// The bit-width of each of the fields is given in TS38.214 Table 6.3.1.1.2-6.
+/// The bit-width of each of the fields is given in TS 38.214 Table 6.3.1.1.2-6.
 ///
 /// \param[in] nof_csi_rs_resources The number of CSI-RS resources in the corresponding resource set, parameter
 ///                                 \f$K_{s}^{CSI-RS}\f$ or \f$K_{s}^{SSB}\f$ for CSI-RS or SSB resource sets
@@ -36,7 +36,7 @@ cri_ssbri_rsrp_sizes get_cri_ssbri_rsrp_sizes(unsigned nof_csi_rs_resources);
 
 /// \brief Gets the CSI report size for quantities \e cri-RSRP and \e ssb-Index-RSRP.
 ///
-/// The CSI report for these quantities is given is TS38.212 Table 6.3.1.1.2-8. The calculation is common for PUCCH and
+/// The CSI report for these quantities is given is TS 38.212 Table 6.3.1.1.2-8. The calculation is common for PUCCH and
 /// PUSCH.
 ///
 /// \param[in] nof_csi_rs_resources The number of CSI-RS resources in the corresponding resource set, parameter
@@ -64,11 +64,11 @@ precoding_matrix_indicator csi_report_unpack_pmi(const csi_report_packed&     pa
                                                  csi_report_data::ri_type     ri,
                                                  const typeII_nof_amplitudes& nof_amplitudes = {});
 
-/// Unpacks RI as per TS38.212 Section 6.3.1.1.2. and TS38.214 Section 5.2.2.2.1.
+/// Unpacks RI as per TS 38.212 Section 6.3.1.1.2. and TS 38.214 Section 5.2.2.2.1.
 csi_report_data::ri_type csi_report_unpack_ri(const csi_report_packed&   ri_packed,
                                               const ri_restriction_type& ri_restriction);
 
-/// \brief Unpacks \e cri-RSRP and \e ssb-Index-RSRP CSI reports as per TS38.212 Table 6.3.1.1.2-8.
+/// \brief Unpacks \e cri-RSRP and \e ssb-Index-RSRP CSI reports as per TS 38.212 Table 6.3.1.1.2-8.
 ///
 /// \param[in] packed               Packed CSI report.
 /// \param[in] nof_csi_rs_resources The number of CSI-RS resources in the corresponding resource set, parameter

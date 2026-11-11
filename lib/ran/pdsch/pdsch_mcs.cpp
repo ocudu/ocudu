@@ -10,7 +10,7 @@ using namespace ocudu;
 
 sch_mcs_description ocudu::pdsch_mcs_get_config(pdsch_mcs_table table_, sch_mcs_index index)
 {
-  // TS38.214 Table 5.1.3.1-1.
+  // TS 38.214 Table 5.1.3.1-1.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_1 = {
       {{modulation_scheme::QPSK, 120.0F},  {modulation_scheme::QPSK, 157.0F},  {modulation_scheme::QPSK, 193.0F},
        {modulation_scheme::QPSK, 251.0F},  {modulation_scheme::QPSK, 308.0F},  {modulation_scheme::QPSK, 379.0F},
@@ -24,7 +24,7 @@ sch_mcs_description ocudu::pdsch_mcs_get_config(pdsch_mcs_table table_, sch_mcs_
        {modulation_scheme::QAM64, 910.0F}, {modulation_scheme::QAM64, 948.0F}, {modulation_scheme::QPSK, 0.0F},
        {modulation_scheme::QAM16, 0.0F},   {modulation_scheme::QAM64, 0.0F}}};
 
-  // TS38.214 Table 5.1.3.1-2.
+  // TS 38.214 Table 5.1.3.1-2.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_2 = {
       {{modulation_scheme::QPSK, 120.0F},   {modulation_scheme::QPSK, 193.0F},   {modulation_scheme::QPSK, 308.0F},
        {modulation_scheme::QPSK, 449.0F},   {modulation_scheme::QPSK, 602.0F},   {modulation_scheme::QAM16, 378.0F},
@@ -38,7 +38,7 @@ sch_mcs_description ocudu::pdsch_mcs_get_config(pdsch_mcs_table table_, sch_mcs_
        {modulation_scheme::QAM256, 948.0F}, {modulation_scheme::QPSK, 0.0F},     {modulation_scheme::QAM16, 0.0F},
        {modulation_scheme::QAM64, 0.0F},    {modulation_scheme::QAM256, 0.0F}}};
 
-  // TS38.214 Table 5.1.3.1-3.
+  // TS 38.214 Table 5.1.3.1-3.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_3 = {
       {{modulation_scheme::QPSK, 30.0F},   {modulation_scheme::QPSK, 40.0F},   {modulation_scheme::QPSK, 50.0F},
        {modulation_scheme::QPSK, 64.0F},   {modulation_scheme::QPSK, 78.0F},   {modulation_scheme::QPSK, 99.0F},
@@ -52,7 +52,7 @@ sch_mcs_description ocudu::pdsch_mcs_get_config(pdsch_mcs_table table_, sch_mcs_
        {modulation_scheme::QAM64, 719.0F}, {modulation_scheme::QAM64, 772.0F}, {modulation_scheme::QPSK, 0.0F},
        {modulation_scheme::QAM16, 0.0F},   {modulation_scheme::QAM64, 0.0F}}};
 
-  // TS38.214 Table 5.1.3.1-4.
+  // TS 38.214 Table 5.1.3.1-4.
   static constexpr std::array<sch_mcs_description, 32> MCS_INDEX_TABLE_4 = {
       {{modulation_scheme::QPSK, 120.0F},    {modulation_scheme::QPSK, 193.0F},    {modulation_scheme::QPSK, 449.0F},
        {modulation_scheme::QAM16, 378.0F},   {modulation_scheme::QAM16, 490.0F},   {modulation_scheme::QAM16, 616.0F},

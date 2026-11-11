@@ -12,13 +12,13 @@ namespace ocudu {
 
 /// \brief Subset of PMIs addressed by TPMI, where PMIs are those supported by UEs with maximum coherence capabilities.
 ///
-/// The UE maximum coherence capability is given by TS38.331 higher layer capability parameter \e pusch-TransCoherence
-/// in TS38.331 Section 6.3.2, Information Element \e MIMO-ParametersPerBand.
+/// The UE maximum coherence capability is given by TS 38.331 higher layer capability parameter \e pusch-TransCoherence
+/// in TS 38.331 Section 6.3.2, Information Element \e MIMO-ParametersPerBand.
 ///
-/// The PUSCH transmission scheme codebook subset is given by the higher layer parameter \e codebookSubset in TS38.331
+/// The PUSCH transmission scheme codebook subset is given by the higher layer parameter \e codebookSubset in TS 38.331
 /// Section 6.3.2, Information Element \e PUSCH-Config.
 ///
-/// See TS38.214, Section 6.1.1.1 for related physical layer procedures.
+/// See TS 38.214, Section 6.1.1.1 for related physical layer procedures.
 enum class tx_scheme_codebook_subset : unsigned {
   fully_and_partial_and_non_coherent,
   partial_and_non_coherent,
@@ -51,7 +51,7 @@ struct tx_scheme_codebook {
   /// \brief PUSCH precoding codebook subset.
   ///
   /// Restricts the available PMIs to those supported by the UE, according to its coherence capabilities. Its value is
-  /// indicated by the higher layer parameter \e codebookSubset (see TS38.331 Section 6.3.2, Information Element \e
+  /// indicated by the higher layer parameter \e codebookSubset (see TS 38.331 Section 6.3.2, Information Element \e
   /// PUSCH-Config).
   tx_scheme_codebook_subset codebook_subset;
 

@@ -107,7 +107,7 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
     }
 
   } else {
-    // [TS38.473, 8.3.1.2] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
+    // [TS 38.473, 8.3.1.2] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established as part of the procedure.
     // Request the creation of a new UE context in the DU.
     CORO_AWAIT_VALUE(du_ue_create_response,

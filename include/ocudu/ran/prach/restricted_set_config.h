@@ -11,7 +11,7 @@ namespace ocudu {
 
 /// \brief PRACH Restricted set configuration.
 ///
-/// PRACH \f$N_{CS}\f$ restricted set configuration. Used for interpreting TS38.211 Tables 6.3.3.1-5 and 6.3.3.1-6.
+/// PRACH \f$N_{CS}\f$ restricted set configuration. Used for interpreting TS 38.211 Tables 6.3.3.1-5 and 6.3.3.1-6.
 enum class restricted_set_config : uint8_t { UNRESTRICTED, TYPE_A, TYPE_B };
 
 inline const char* to_string(restricted_set_config config)

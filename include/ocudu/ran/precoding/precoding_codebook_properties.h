@@ -12,9 +12,9 @@ namespace ocudu {
 
 /// \brief Single-panel PMI Codebook antenna panel configurations.
 ///
-/// The enumeration contains the possible combinations of \f$N_1, N_2\f$ given in TS38.214 Section 5.2.2.2.1.
+/// The enumeration contains the possible combinations of \f$N_1, N_2\f$ given in TS 38.214 Section 5.2.2.2.1.
 ///
-/// The value of the enumeration is mapped to each of the rows in TS38.214 Table 5.2.2.2.1-2, where the product of
+/// The value of the enumeration is mapped to each of the rows in TS 38.214 Table 5.2.2.2.1-2, where the product of
 /// \f$N_1\times N_2\f$ is equal to half the number of CSI-RS antenna ports \f$P_{CSI-RS}\f$.
 enum class pmi_codebook_single_panel_config : uint8_t {
   two_one     = 0,
@@ -41,7 +41,7 @@ enum class pmi_codebook_typeI_mode : uint8_t { one = 1, two = 2 };
 ///
 /// This parameter is given by the higher layer parameter \e phaseAlphabetSize in the Information Element
 /// \e CodebookConfig. It selects the \f$N_{PSK}\f$ alphabet used for the Type II phase combining coefficients defined
-/// in TS38.214 Section 5.2.2.2.3, namely QPSK (\f$N_{PSK}=4\f$) or 8-PSK (\f$N_{PSK}=8\f$).
+/// in TS 38.214 Section 5.2.2.2.3, namely QPSK (\f$N_{PSK}=4\f$) or 8-PSK (\f$N_{PSK}=8\f$).
 enum class pmi_codebook_typeII_phase_size : uint8_t { qpsk = 4, psk8 = 8 };
 
 /// Single-panel codebook configuration of \f$(N_1, N_2)\f$ and \f$(O_1, O_2)\f$

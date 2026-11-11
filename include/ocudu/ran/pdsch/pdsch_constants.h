@@ -18,27 +18,27 @@ namespace pdsch_constants {
 
 /// \brief Maximum number of RE per resource block in a PDSCH transmission.
 ///
-/// As per TS38.214 Section 5.1.3.2.
+/// As per TS 38.214 Section 5.1.3.2.
 constexpr unsigned MAX_NRE_PER_RB = 156;
 
 /// \brief Maximum modulation order supported on PDSCH transmissions.
 ///
-/// As per TS38.214 Section 5.1.3.1 with \c mcs-Table set to \c qam256.
+/// As per TS 38.214 Section 5.1.3.1 with \c mcs-Table set to \c qam256.
 constexpr unsigned MAX_MODULATION_ORDER = 8;
 
 /// \brief Maximum number of PDSCH transmission layers per single codeword.
 ///
-/// As per TS38.211 Table 7.3.1.3-1.
+/// As per TS 38.211 Table 7.3.1.3-1.
 constexpr unsigned MAX_NOF_LAYERS_PER_CODEWORD = 4;
 
 /// \brief Maximum number of codewords that can be contained in a PDSCH transmission.
 ///
-/// As per TS38.211 Table 7.3.1.3-1.
+/// As per TS 38.211 Table 7.3.1.3-1.
 constexpr unsigned MAX_NOF_CODEWORDS = 2;
 
 /// \brief Maximum number of PDSCH transmission layers.
 ///
-/// As per TS38.211 Table 7.3.1.3-1.
+/// As per TS 38.211 Table 7.3.1.3-1.
 constexpr unsigned MAX_NOF_LAYERS = MAX_NOF_LAYERS_PER_CODEWORD * MAX_NOF_CODEWORDS;
 
 /// \brief Maximum number of resource elements that can be mapped into a single codeword.

@@ -35,7 +35,7 @@ struct prbs_calculator_sch_config {
   unsigned nof_oh_prb;
   /// \brief Modulation and coding scheme.
   ///
-  /// The modulation scheme translates to the number of bits per RE, parameter \f$Q_m\f$, as per TS38.214,
+  /// The modulation scheme translates to the number of bits per RE, parameter \f$Q_m\f$, as per TS 38.214,
   /// Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3. Possible values are {QPSK, QAM-16, QAM-64, QAM-256}.
   sch_mcs_description mcs_descr;
   /// \brief Number of layers, parameter \f$\nu\f$.
@@ -44,7 +44,7 @@ struct prbs_calculator_sch_config {
   /// - {1...4} for one codeword, and
   /// - {5...8} for two codewords.
   unsigned nof_layers;
-  /// \brief TB scaling field as per TS38.214 Table 5.1.3.2-2, it is used to derive parameter \f$S\f$.
+  /// \brief TB scaling field as per TS 38.214 Table 5.1.3.2-2, it is used to derive parameter \f$S\f$.
   ///
   /// Possible values are {0,1,2}.
   unsigned tb_scaling_field{0};
@@ -60,8 +60,8 @@ struct sch_prbs_tbs {
 
 /// \brief Computes the required number of PRBs necessary to transmit a given payload size.
 ///
-/// This function implements the inverse procedure of the TBS calculation procedure (as per TS38.214 Section 5.1.3.2) to
-/// derive the number of PRBs from a given payload in bytes.
+/// This function implements the inverse procedure of the TBS calculation procedure (as per TS 38.214 Section 5.1.3.2)
+/// to derive the number of PRBs from a given payload in bytes.
 ///
 /// \param[in] sch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
 /// \param[in] max_nof_available_rbs is the maximum number or available of PRBs within the BWP. By default, this is set

@@ -30,7 +30,7 @@ struct test_values<vrb_alloc> {
 
 // The wire carries intra_slot_freq_hopping and pusch_second_hop_prb together, as the optional
 // fbs::VrbAlloc::vrb_second_hop_start, and only for a type-1 (contiguous VRB) allocation -- intra-slot frequency
-// hopping is only defined for resource allocation type 1, as per TS38.214 Section 6.3. Hence both are compare-only:
+// hopping is only defined for resource allocation type 1, as per TS 38.214 Section 6.3. Hence both are compare-only:
 // a sweep would set each in isolation (a second hop PRB with hopping disabled is not encoded) and would carry
 // hopping enabled forward into the type-0 instance test_values<vrb_alloc> ends on. test_values<pusch_information>
 // below appends the valid combinations instead.

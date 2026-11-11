@@ -11,7 +11,7 @@ namespace ocudu {
 
 /// \brief UE Transmit Power Control (TPC) command configuration for SRS.
 ///
-/// The identifiers are inspired by TS38.331 Section as 6.3.2 (see field \e SRS-TPC-CommandConfig).
+/// The identifiers are inspired by TS 38.331 Section as 6.3.2 (see field \e SRS-TPC-CommandConfig).
 struct srs_tpc_command_config {
   /// The starting bit position of a block within the group DCI with SRS request fields (optional) and TPC commands. The
   /// value 1 of the field corresponds to the first/left most bit of format2-3. See TS 38.212, clause 7.3.1 and

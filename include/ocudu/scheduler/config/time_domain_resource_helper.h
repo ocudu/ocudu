@@ -26,7 +26,7 @@ generate_k1_candidates(const tdd_ul_dl_config_common& tdd_cfg, uint8_t min_k1);
 static_vector<uint8_t, pucch_td_helper::MAX_K1_CANDIDATES>
 generate_k1_candidates(const std::optional<tdd_ul_dl_config_common>& tdd_cfg, uint8_t min_k1);
 
-/// \brief Generate the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS38.213, 9.1.2.1.
+/// \brief Generate the common (fallback) k1 candidates for PDSCH-to-HARQ timing, as per TS 38.213, 9.1.2.1.
 /// \remark The returned values are the fixed set {min_k1,...,8}, independent of the cell configuration.
 span<const uint8_t> generate_common_k1_candidates(uint8_t min_k1);
 

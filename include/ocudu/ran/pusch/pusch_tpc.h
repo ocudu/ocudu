@@ -12,7 +12,7 @@ namespace ocudu {
 
 /// \brief UE Transmit Power Control (TPC) command configuration for PUSCH.
 ///
-/// The identifiers are inspired by TS38.331 Section as 6.3.2 (see field \e PUSCH-TPC-CommandConfig).
+/// The identifiers are inspired by TS 38.331 Section as 6.3.2 (see field \e PUSCH-TPC-CommandConfig).
 struct pusch_tpc_command_config {
   /// An index determining the position of the first bit of TPC command inside the DCI format 2-2 payload.
   /// Values {1..15}. Field is optionally present if this serving cell is configured with a supplementary uplink (SUL).

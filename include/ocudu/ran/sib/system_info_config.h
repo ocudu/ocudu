@@ -55,7 +55,7 @@ struct sib2_info {
   t_reselection_t t_reselection_nr;
 };
 
-/// Intra-frequency cell reselection information SIB contents (see TS38.331 Section 6.3.2, Information Element \e
+/// Intra-frequency cell reselection information SIB contents (see TS 38.331 Section 6.3.2, Information Element \e
 /// SIB3).
 struct sib3_info {
   /// List of intra-frequency neighbouring cells with specific cell reselection parameters. Max size
@@ -65,7 +65,7 @@ struct sib3_info {
   std::vector<pci_range_t> intra_freq_excluded_cell_list;
 };
 
-/// Inter-frequency cell reselection information SIB contents (see TS38.331 Section 6.3.2, Information Element \e
+/// Inter-frequency cell reselection information SIB contents (see TS 38.331 Section 6.3.2, Information Element \e
 /// SIB4).
 struct sib4_info {
   /// List of neighbouring carrier frequencies and frequency specific cell reselection information. Max size
@@ -73,7 +73,7 @@ struct sib4_info {
   std::vector<inter_freq_carrier_freq_info> inter_freq_carrier_freq_list;
 };
 
-/// Intra-RAT cell reselection information SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB5).
+/// Intra-RAT cell reselection information SIB contents (see TS 38.331 Section 6.3.2, Information Element \e SIB5).
 struct sib5_info {
   /// \brief Parameter "TreselectionEUTRA" in TS 38.304.
   ///
@@ -83,24 +83,24 @@ struct sib5_info {
   std::vector<carrier_freq_eutra> carrier_freq_list_eutra;
 };
 
-/// ETWS primary notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB6).
+/// ETWS primary notification SIB contents (see TS 38.331 Section 6.3.2, Information Element \e SIB6).
 struct sib6_info {
   /// \brief Parameter "messageIdentifier".
   ///
-  /// It carries the NGAP Message Identifier IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
+  /// It carries the NGAP Message Identifier IE (see TS 38.413, Section 9.3.1.35), which is set according to the Message
   /// Identifier field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
   /// Section 9.4.3.3.4). It identifies the source and type of the warning message.
   unsigned message_id;
   /// \brief Parameter "serialNumber".
   ///
-  /// It carries the NGAP Serial Number IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
+  /// It carries the NGAP Serial Number IE (see TS 38.413, Section 9.3.1.36), which is set according to the Serial
   /// Number field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
   /// Section 9.4.3.3.3). It identifies a specific warning message from other message of the same type. It must be
   /// incremented when a new warning message is broadcast.
   unsigned serial_number;
   /// \brief Parameter "warningType".
   ///
-  /// It carries the NGAP Warning Type IE (see TS38.413, Section 9.3.1.39), which is set according to the Warning
+  /// It carries the NGAP Warning Type IE (see TS 38.413, Section 9.3.1.39), which is set according to the Warning
   /// Type field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
   /// Section 9.4.3.3.5). It identifies the type of ETWS warning between Earthquake, Tsunami, Earthquake and Tsunami and
   /// Test. It also carries the Emergency User Alert and Popup fields, which activate the audible warning and
@@ -108,57 +108,57 @@ struct sib6_info {
   unsigned warning_type;
 };
 
-/// ETWS secondary notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB7).
+/// ETWS secondary notification SIB contents (see TS 38.331 Section 6.3.2, Information Element \e SIB7).
 struct sib7_info {
   /// \brief Parameter "messageIdentifier".
   ///
-  /// It carries the Message Identifier NGAP IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
+  /// It carries the Message Identifier NGAP IE (see TS 38.413, Section 9.3.1.35), which is set according to the Message
   /// Identifier field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.1). It identifies the
   /// source and type of the warning message.
   unsigned message_id;
   /// \brief Parameter "serialNumber".
   ///
-  /// It carries the Serial Number NGAP IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
+  /// It carries the Serial Number NGAP IE (see TS 38.413, Section 9.3.1.36), which is set according to the Serial
   /// Number field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.2). It identifies a
   /// specific warning message from other message of the same type. It must be incremented when a new warning message is
   /// broadcast.
   unsigned serial_number;
   /// \brief Parameter "warningMessageSegment".
   ///
-  /// It carries a segment of the ETWS warning message contents NGAP IE defined in TS TS38.413, Section 9.3.1.41, which
+  /// It carries a segment of the ETWS warning message contents NGAP IE defined in TS TS 38.413, Section 9.3.1.41, which
   /// has the contents of a CBS message CB Data IE (See TS23.041 Section 9.4.3.2.4).
   std::string warning_message_segment;
   /// \brief Parameter "dataCodingScheme".
   ///
-  /// It carries the Data Coding Scheme NGAP IE (see TS38.413, Section 9.3.1.41), which is set according to the Data
+  /// It carries the Data Coding Scheme NGAP IE (see TS 38.413, Section 9.3.1.41), which is set according to the Data
   /// Coding Scheme field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.3). It identifies
   /// the coding and the language of the warning message as per TS23.041 Section 9.4.2.2.4.
   unsigned data_coding_scheme;
 };
 
-/// CMAS notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB8).
+/// CMAS notification SIB contents (see TS 38.331 Section 6.3.2, Information Element \e SIB8).
 struct sib8_info {
   /// \brief Parameter "messageIdentifier".
   ///
-  /// It carries the Message Identifier NGAP IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
+  /// It carries the Message Identifier NGAP IE (see TS 38.413, Section 9.3.1.35), which is set according to the Message
   /// Identifier field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.1). It identifies the
   /// source and type of the warning message.
   unsigned message_id;
   /// \brief Parameter "serialNumber".
   ///
-  /// It carries the Serial Number NGAP IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
+  /// It carries the Serial Number NGAP IE (see TS 38.413, Section 9.3.1.36), which is set according to the Serial
   /// Number field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.2). It identifies a
   /// specific warning message from other message of the same type. It must be incremented when a new warning message is
   /// broadcast.
   unsigned serial_number;
   /// \brief Parameter "warningMessageSegment".
   ///
-  /// It carries a segment of the CMAS warning message contents NGAP IE defined in TS TS38.413, Section 9.3.1.41, which
+  /// It carries a segment of the CMAS warning message contents NGAP IE defined in TS TS 38.413, Section 9.3.1.41, which
   /// has the contents of a CBS message CB Data IE (See TS23.041 Section 9.4.3.2.4).
   std::string warning_message_segment;
   /// \brief Parameter "dataCodingScheme".
   ///
-  /// It carries the Data Coding Scheme NGAP IE (see TS38.413, Section 9.3.1.41), which is set according to the Data
+  /// It carries the Data Coding Scheme NGAP IE (see TS 38.413, Section 9.3.1.41), which is set according to the Data
   /// Coding Scheme field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.3). It identifies
   /// the coding and the language of the warning message as per TS23.041 Section 9.4.2.2.4.
   unsigned data_coding_scheme;

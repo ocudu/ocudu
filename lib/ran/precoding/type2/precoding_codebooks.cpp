@@ -19,9 +19,9 @@ using namespace ocudu;
 /// The beam is added to the two polarizations of the given layer, each scaled by its own combining coefficient. The
 /// first half of the ports corresponds to the first polarization and the second half to the second polarization.
 ///
-/// This function implements the formula for \f$\nu_{l,m}\f$ given in TS38.214 Section 5.2.2.2.1, where the input
+/// This function implements the formula for \f$\nu_{l,m}\f$ given in TS 38.214 Section 5.2.2.2.1, where the input
 /// parameters \f$l\f$ and \f$m\f$ are particularized for the Type II codebook by the parameters \f$m_1\f$ and \f$m_2\f$
-/// respectively, as per TS38.214 Section 5.2.2.2.3.
+/// respectively, as per TS 38.214 Section 5.2.2.2.3.
 ///
 /// \param[in,out] result      Precoding weight matrix to accumulate into (must be zero-initialized beforehand).
 /// \param[in]     panel       Antenna panel information.
@@ -126,11 +126,11 @@ precoding_weight_matrix ocudu::make_type2(const pmi_typeII& pmi, unsigned nof_la
     static_vector<cf_t, 2 * max_nof_typeII_beams> coeffs(2 * L);
     float                                         energy = 0.0F;
     for (unsigned c = 0; c != 2 * L; ++c) {
-      // Wideband amplitude, as per TS38.214 Table 5.2.2.2.3-2.
+      // Wideband amplitude, as per TS 38.214 Table 5.2.2.2.3-2.
       float p1 = get_typeII_wideband_amplitude(coefficients.i_1_4[c]);
-      // Subband amplitude, as per TS38.214 Table 5.2.2.2.3-3. When subband amplitude is disabled, k2 = 1 (p2 = 1).
+      // Subband amplitude, as per TS 38.214 Table 5.2.2.2.3-3. When subband amplitude is disabled, k2 = 1 (p2 = 1).
       float p2 = config.subband_amplitude ? get_typeII_subband_amplitude(coefficients.i_2_2[c]) : 1.0F;
-      // Phase offset per beam and polarization, as per TS38.214 Section 5.2.2.2.3.
+      // Phase offset per beam and polarization, as per TS 38.214 Section 5.2.2.2.3.
       cf_t phi = std::polar(1.0F, TWOPI * static_cast<float>(coefficients.i_2_1[c]) / static_cast<float>(N_psk));
 
       coeffs[c] = (p1 * p2) * phi;
@@ -145,7 +145,7 @@ precoding_weight_matrix ocudu::make_type2(const pmi_typeII& pmi, unsigned nof_la
       add_beam_type2(result, panel, i_layer, m1, m2, coeffs[i], coeffs[i + L]);
     }
 
-    // Per-layer coefficient normalization, as per TS38.214 Table 5.2.2.2.3-5.
+    // Per-layer coefficient normalization, as per TS 38.214 Table 5.2.2.2.3-5.
     float layer_scaling = 1.0F / std::sqrt(energy);
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       result.set_coefficient(result.get_coefficient(i_layer, i_port) * layer_scaling, i_layer, i_port);
@@ -230,11 +230,11 @@ precoding_beamforming_composite ocudu::calculate_mimo_matrix(const pmi_typeII& p
     float                                            energy = 0.0F;
 
     for (unsigned coeff = 0; coeff != nof_coeffs; ++coeff) {
-      // Wideband amplitude, as per TS38.214 Table 5.2.2.2.3-2.
+      // Wideband amplitude, as per TS 38.214 Table 5.2.2.2.3-2.
       float p1 = get_typeII_wideband_amplitude(coefficients.i_1_4[coeff]);
-      // Subband amplitude, as per TS38.214 Table 5.2.2.2.3-3. When subband amplitude is disabled, k2 = 1 (p2 = 1).
+      // Subband amplitude, as per TS 38.214 Table 5.2.2.2.3-3. When subband amplitude is disabled, k2 = 1 (p2 = 1).
       float p2 = config.subband_amplitude ? get_typeII_subband_amplitude(coefficients.i_2_2[coeff]) : 1.0F;
-      // Phase offset per beam and polarization, as per TS38.214 Section 5.2.2.2.3.
+      // Phase offset per beam and polarization, as per TS 38.214 Section 5.2.2.2.3.
       cf_t phi = std::polar(1.0F, TWOPI * static_cast<float>(coefficients.i_2_1[coeff]) / static_cast<float>(N_psk));
 
       coeffs[coeff] = (p1 * p2) * phi;

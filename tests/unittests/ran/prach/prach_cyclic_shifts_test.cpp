@@ -38,7 +38,7 @@ using namespace ocudu;
 // Combined parameters.
 using prach_cyclic_shift_param = std::tuple<prach_subcarrier_spacing, restricted_set_config, unsigned>;
 
-// Combined expected values from TS38.211 Tables 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
+// Combined expected values from TS 38.211 Tables 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
 static const std::map<prach_cyclic_shift_param, uint16_t> prach_cyclic_shift_expected = {
     {{prach_subcarrier_spacing::kHz1_25, restricted_set_config::UNRESTRICTED, 0}, 0},
     {{prach_subcarrier_spacing::kHz1_25, restricted_set_config::UNRESTRICTED, 1}, 13},

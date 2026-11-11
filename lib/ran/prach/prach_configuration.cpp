@@ -8,7 +8,7 @@
 
 using namespace ocudu;
 
-/// TS38.211 Table 6.3.3.2-2.
+/// TS 38.211 Table 6.3.3.2-2.
 static const std::array<prach_configuration, 256> fr1_paired_table = {
     {{prach_format_type::zero, 16, {1}, {1}, 0, 0, 0, 0},
      {prach_format_type::zero, 16, {1}, {4}, 0, 0, 0, 0},
@@ -272,7 +272,7 @@ static const prach_configuration& prach_configuration_get_fr1_paired(uint8_t pra
   return fr1_paired_table[prach_config_index];
 }
 
-/// TS38.211 Table 6.3.3.2-3.
+/// TS 38.211 Table 6.3.3.2-3.
 static const std::array<prach_configuration, 263> fr1_unpaired_table = {
     {{prach_format_type::zero, 16, {1}, {9}, 0, 0, 0, 0},
      {prach_format_type::zero, 8, {1}, {9}, 0, 0, 0, 0},
@@ -543,7 +543,7 @@ static const prach_configuration& prach_configuration_get_fr1_unpaired(uint16_t 
   return fr1_unpaired_table[prach_config_index];
 }
 
-/// TS38.211 Table 6.3.3.2-4.
+/// TS 38.211 Table 6.3.3.2-4.
 static const std::array<prach_configuration, 256> fr2_unpaired = {
     {{prach_format_type::A1, 16, {1}, {4, 9, 14, 19, 24, 29, 34, 39}, 0, 2, 6, 2},
      {prach_format_type::A1, 16, {1}, {3, 7, 11, 15, 19, 23, 27, 31, 35, 39}, 0, 1, 6, 2},

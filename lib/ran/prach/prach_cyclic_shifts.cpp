@@ -15,13 +15,13 @@ uint16_t ocudu::prach_cyclic_shifts_get(prach_subcarrier_spacing prach_scs,
                                         restricted_set_config    restricted_set,
                                         unsigned                 zero_correlation_zone)
 {
-  // TS38.211 Table 6.3.3.1-5 First column.
+  // TS 38.211 Table 6.3.3.1-5 First column.
   static constexpr std::array<uint16_t, 16> NOF_CYCLIC_SHIFTS_1_25_UNRESTRICTED = {
       0, 13, 15, 18, 22, 26, 32, 38, 46, 59, 76, 93, 119, 167, 279, 419};
-  // TS38.211 Table 6.3.3.1-5 Second column.
+  // TS 38.211 Table 6.3.3.1-5 Second column.
   static constexpr std::array<uint16_t, 16> NOF_CYCLIC_SHIFTS_1_25_TYPE_A = {
       15, 18, 22, 26, 32, 38, 46, 55, 68, 82, 100, 128, 158, 202, 237, PRACH_CYCLIC_SHIFTS_RESERVED};
-  // TS38.211 Table 6.3.3.1-5 Third column.
+  // TS 38.211 Table 6.3.3.1-5 Third column.
   static constexpr std::array<uint16_t, 16> NOF_CYCLIC_SHIFTS_1_25_TYPE_B = {15,
                                                                              18,
                                                                              22,
@@ -39,13 +39,13 @@ uint16_t ocudu::prach_cyclic_shifts_get(prach_subcarrier_spacing prach_scs,
                                                                              PRACH_CYCLIC_SHIFTS_RESERVED,
                                                                              PRACH_CYCLIC_SHIFTS_RESERVED};
 
-  // TS38.211 Table 6.3.3.1-6 First column.
+  // TS 38.211 Table 6.3.3.1-6 First column.
   static constexpr std::array<uint16_t, 16> NOF_CYCLIC_SHIFTS_5_UNRESTRICTED = {
       0, 13, 26, 33, 38, 41, 49, 55, 64, 76, 93, 119, 139, 209, 279, 419};
-  // TS38.211 Table 6.3.3.1-6 Second column.
+  // TS 38.211 Table 6.3.3.1-6 Second column.
   static constexpr std::array<uint16_t, 16> NOF_CYCLIC_SHIFTS_5_TYPE_A = {
       36, 57, 72, 81, 89, 94, 103, 112, 121, 132, 137, 152, 173, 195, 216, 237};
-  // TS38.211 Table 6.3.3.1-6 Third column.
+  // TS 38.211 Table 6.3.3.1-6 Third column.
   static constexpr std::array<uint16_t, 16> NOF_CYCLIC_SHIFTS_5_TYPE_B = {36,
                                                                           57,
                                                                           60,
@@ -63,7 +63,7 @@ uint16_t ocudu::prach_cyclic_shifts_get(prach_subcarrier_spacing prach_scs,
                                                                           PRACH_CYCLIC_SHIFTS_RESERVED,
                                                                           PRACH_CYCLIC_SHIFTS_RESERVED};
 
-  // TS38.211 Table 6.3.3.1-7 First column.
+  // TS 38.211 Table 6.3.3.1-7 First column.
   static constexpr std::array<uint16_t, 16> NOF_CYCLIC_SHIFTS_OTHER_UNRESTRICTED = {
       0, 2, 4, 6, 8, 10, 12, 13, 15, 17, 19, 23, 27, 34, 46, 69};
 

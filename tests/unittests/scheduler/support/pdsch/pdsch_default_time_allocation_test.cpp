@@ -43,7 +43,7 @@ static ofdm_symbol_range s_and_len(unsigned start, unsigned dur)
   return ofdm_symbol_range(start, start + dur);
 }
 
-// Expected values from TS38.214 Table 5.1.2.1.1-2.
+// Expected values from TS 38.214 Table 5.1.2.1.1-2.
 static const std::map<pdsch_default_time_allocation_params, pdsch_time_domain_resource_allocation>
     pdsch_default_time_allocation_A_normal = {
         {{0, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 12)}},
@@ -80,7 +80,7 @@ static const std::map<pdsch_default_time_allocation_params, pdsch_time_domain_re
         {{15, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(8, 4)}},
 };
 
-// Expected values from TS38.214 Table 5.1.2.1.1-3.
+// Expected values from TS 38.214 Table 5.1.2.1.1-3.
 static const std::map<pdsch_default_time_allocation_params, pdsch_time_domain_resource_allocation>
     pdsch_default_time_allocation_A_extended = {
         {{0, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 6)}},

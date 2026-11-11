@@ -62,7 +62,7 @@ static unsigned add_ul_header_bytes(lcg_id_t lcgid, unsigned payload_bytes)
 
 TEST(mac_ce_size_test, derivation_of_mac_ce_size)
 {
-  // Note: see TS38.321, Section 6.1.3.
+  // Note: see TS 38.321, Section 6.1.3.
   ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce(), 6);
   ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::TA_CMD}.sizeof_ce(), 1);
   ASSERT_EQ(lcid_dl_sch_t{lcid_dl_sch_t::DRX_CMD}.sizeof_ce(), 0);

@@ -25,7 +25,7 @@ static constexpr float TOLERANCE_FLOATING_POINT = 1e-5;
 
 /// \brief Calculates the layer to antenna port weights for a single beam.
 ///
-/// The port coefficients follow \f$\nu _{l,m}\f$ (and \f$\tilde{\nu}_{l,m}\f$ for four layer weights) as per TS38.214
+/// The port coefficients follow \f$\nu _{l,m}\f$ (and \f$\tilde{\nu}_{l,m}\f$ for four layer weights) as per TS 38.214
 /// Section 5.2.2.2.1. For the Type II codebook, \c l and \c m are the oversampled beam indices \f$m_1 = O_1 n_1 +
 /// q_1\f$ and \f$m_2 = O_2 n_2 + q_2\f$.
 ///

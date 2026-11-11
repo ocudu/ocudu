@@ -9,7 +9,7 @@
 
 namespace ocudu {
 
-/// Labels for the BS Channel Bandwidth, described in TS38.104, Table 5.3.2-1 for FR1 and Table 5.3.2-2 for FR2.
+/// Labels for the BS Channel Bandwidth, described in TS 38.104, Table 5.3.2-1 for FR1 and Table 5.3.2-2 for FR2.
 enum class bs_channel_bandwidth {
   invalid = 0,
   MHz5    = 5,

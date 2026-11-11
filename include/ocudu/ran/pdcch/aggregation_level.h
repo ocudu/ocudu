@@ -16,7 +16,7 @@ enum class aggregation_level : uint8_t { n1 = 0, n2, n4, n8, n16 };
 /// Number of possible aggregation levels.
 const size_t NOF_AGGREGATION_LEVELS = 5;
 
-/// Calculates number of CCEs based on Aggregation Level as per TS38.211 Table 7.3.2.1-1.
+/// Calculates number of CCEs based on Aggregation Level as per TS 38.211 Table 7.3.2.1-1.
 inline unsigned to_nof_cces(aggregation_level lvl)
 {
   return 1U << static_cast<uint8_t>(lvl);

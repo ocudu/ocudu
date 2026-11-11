@@ -53,7 +53,7 @@ void f1c_srb0_du_bearer::handle_sdu(byte_buffer_chain sdu)
   execute_until_success(ctrl_exec, timers, [this, pdu = std::move(pdu)]() mutable {
     const protocol_transaction<f1ap_transaction_response> transaction = ev_manager.transactions.create_transaction();
 
-    // Pack Initial UL RRC Message Transfer as per TS38.473, Section 8.4.1.
+    // Pack Initial UL RRC Message Transfer as per TS 38.473, Section 8.4.1.
     f1ap_message msg;
     msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_INIT_UL_RRC_MSG_TRANSFER);
     asn1::f1ap::init_ul_rrc_msg_transfer_s& init_msg = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();

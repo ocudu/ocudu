@@ -96,7 +96,7 @@ csi_report_configuration ocudu::create_csi_report_configuration(const csi_meas_c
 
 bool ocudu::is_valid(const csi_report_configuration& config)
 {
-  // The number of CSI resources in the corresponding resource set must be at least one and up to 64 (see TS38.331
+  // The number of CSI resources in the corresponding resource set must be at least one and up to 64 (see TS 38.331
   // Section 6.3.2, Information Element \c NZP-CSI-RS-ResourceSet).
   constexpr interval<unsigned, true> nof_csi_res_range(1, 64);
   if (!nof_csi_res_range.contains(config.nof_csi_rs_resources)) {

@@ -11,7 +11,7 @@
 
 using namespace ocudu;
 
-/// Contains the parameters describing the antenna single-panel configurations according to TS38.214 Table 5.2.2.2.1-2.
+/// Contains the parameters describing the antenna single-panel configurations according to TS 38.214 Table 5.2.2.2.1-2.
 static constexpr auto single_panel_antenna_configurations = to_array<pmi_codebook_single_panel_info>({
     {2, 1, 4, 1},  // Row 0
     {2, 2, 4, 4},  // Row 1

@@ -16,7 +16,7 @@ namespace odu {
 
 /// \brief Derive packed cell measurementTimingConfiguration from DU cell configuration.
 /// \param[in] du_cfg DU Cell Configuration.
-/// \return byte buffer with packed cell measurementTimingConfiguration as per TS38.331.
+/// \return byte buffer with packed cell measurementTimingConfiguration as per TS 38.331.
 byte_buffer make_asn1_meas_time_cfg_buffer(const du_cell_config& du_cfg);
 
 struct f1_setup_request_message;

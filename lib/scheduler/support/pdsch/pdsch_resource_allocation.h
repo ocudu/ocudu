@@ -12,7 +12,7 @@
 namespace ocudu::pdsch_helper {
 
 /// \brief Determine CRB limits for PDSCH grant, based on BWP config, SearchSpace type and DCI format as per
-/// TS38.214, 5.1.2.2.2. and TS 38.211, 7.3.1.6.
+/// TS 38.214, 5.1.2.2.2. and TS 38.211, 7.3.1.6.
 ///
 /// \param dci_fmt DL DCI format.
 /// \param init_dl_bwp Initial DL BWP configuration.
@@ -29,7 +29,7 @@ inline crb_interval get_ra_crb_limits(dci_dl_format                     dci_fmt,
   crb_interval crbs = active_dl_bwp.crbs;
 
   if (dci_fmt == dci_dl_format::f1_0 and ss_cfg.is_common_search_space()) {
-    // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks and TS38.214, 5.1.2.2. Resource
+    // See TS 38.211, 7.3.1.6 Mapping from virtual to physical resource blocks and TS 38.214, 5.1.2.2. Resource
     // Allocation in frequency domain.
     crbs = {cs_cfg.get_coreset_start_crb(), crbs.stop()};
 
