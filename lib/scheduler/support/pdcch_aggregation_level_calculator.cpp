@@ -61,7 +61,8 @@ aggregation_level ocudu::map_cqi_to_aggregation_level(float               cqi,
                                                       span<const uint8_t> pdcch_candidates,
                                                       unsigned            nof_dci_bits)
 {
-  if (cqi > 0.0F) {
+  // A CQI below 1 has no MCS mapping, as its floor is CQI 0 (out of range).
+  if (cqi >= 1.0F) {
     const pdsch_mcs_table     mcs_table = fetch_mcs_table(cqi_table);
     const sch_mcs_description mcs_cfg   = get_mcs_config(cqi, mcs_table);
     for (unsigned aggr_lvl_index = 0; aggr_lvl_index < pdcch_candidates.size(); ++aggr_lvl_index) {

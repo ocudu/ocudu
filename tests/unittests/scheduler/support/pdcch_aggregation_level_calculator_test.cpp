@@ -45,6 +45,16 @@ TEST_F(pdcch_aggregation_level_calculation_corner_cases_tester,
   ASSERT_TRUE(aggr_lvl == ocudu::aggregation_level::n4) << fmt::format("Computed Aggregation level must be 4");
 }
 
+TEST_F(pdcch_aggregation_level_calculation_corner_cases_tester, returns_max_aggr_level_for_fractional_cqi_below_one)
+{
+  const std::array<uint8_t, 5> pdcch_candidates = {0, 0, 2, 1, 0};
+  const unsigned               dci_size_in_bits = 41;
+  const float                  cqi              = 0.7F;
+
+  const auto aggr_lvl = map_cqi_to_aggregation_level(cqi, cqi_table_t::table1, pdcch_candidates, dci_size_in_bits);
+  ASSERT_EQ(aggr_lvl, ocudu::aggregation_level::n8);
+}
+
 struct pdcch_aggregation_level_calculation_test_params {
   float                  cqi;
   cqi_table_t            cqi_table;
