@@ -23,6 +23,7 @@
 #                                     rrc_cu_cp_fuzzer
 #                                     gtpu_pdu_fuzzer
 #                                     e1ap_pdu_decoder_fuzzer
+#                                     f1ap_pdu_decoder_fuzzer
 #
 # Exit status
 # -----------
@@ -48,6 +49,7 @@ declare -A ALL_TARGETS=(
     ["rrc_cu_cp_fuzzer"]="rrc_cu_cp"
     ["gtpu_pdu_fuzzer"]="gtpu"
     ["e1ap_pdu_decoder_fuzzer"]="e1ap"
+    ["f1ap_pdu_decoder_fuzzer"]="f1ap"
 )
 
 # Optionally restrict which targets run.

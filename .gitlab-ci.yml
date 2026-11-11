@@ -745,6 +745,7 @@ fuzz:
       export PATH="$CI_PROJECT_DIR/build_fuzz/tests/fuzz/rrc:$PATH"
       export PATH="$CI_PROJECT_DIR/build_fuzz/tests/fuzz/gtpu:$PATH"
       export PATH="$CI_PROJECT_DIR/build_fuzz/tests/fuzz/e1ap:$PATH"
+      export PATH="$CI_PROJECT_DIR/build_fuzz/tests/fuzz/f1ap:$PATH"
       tests/fuzz/run_fuzzers.sh
   artifacts:
     when: always
