@@ -382,13 +382,17 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
                                    "elements and re-establishes all RLC bearers");
       src_cell_group.reset();
     }
-    auto* it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
-                            asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
-                            [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
-    if (it != asn1_cell_group.rlc_bearer_to_add_mod_list.end()) {
-      asn1_cell_group.rlc_bearer_to_add_mod_list.erase(it);
+    // For a handover, the handling of the HandoverPreparationInformation below sets the RLC bearers to re-establish,
+    // SRB1 included.
+    if (request.ho_prep_info.empty()) {
+      auto* it = std::find_if(asn1_cell_group.rlc_bearer_to_add_mod_list.begin(),
+                              asn1_cell_group.rlc_bearer_to_add_mod_list.end(),
+                              [](const auto& b) { return b.lc_ch_id == LCID_SRB1; });
+      if (it != asn1_cell_group.rlc_bearer_to_add_mod_list.end()) {
+        asn1_cell_group.rlc_bearer_to_add_mod_list.erase(it);
+      }
+      set_rlc_bearers_to_reestablish(asn1_cell_group, src_cell_group);
     }
-    set_rlc_bearers_to_reestablish(asn1_cell_group, src_cell_group);
 
   } else {
     calculate_cell_group_config_diff(asn1_cell_group, prev_ue_res_cfg, ue->resources.value(), pcell_rrm);
@@ -425,12 +429,8 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
       proc_logger.log_proc_failure("Failed to calculate ReconfigWithSync");
       return make_ue_config_failure();
     }
-    // Set all RLC bearer to reestablish for HO.
-    for (auto& b : asn1_cell_group.rlc_bearer_to_add_mod_list) {
-      b.rlc_cfg_present         = false;
-      b.mac_lc_ch_cfg_present   = false;
-      b.reestablish_rlc_present = true;
-    }
+    // Set the RLC bearers to reestablish for HO.
+    set_rlc_bearers_to_reestablish(asn1_cell_group, src_cell_group);
 
     // Fill fields with -- Cond SyncAndCellAdd.
     asn1_cell_group.sp_cell_cfg.sp_cell_cfg_ded.first_active_dl_bwp_id_present        = true;

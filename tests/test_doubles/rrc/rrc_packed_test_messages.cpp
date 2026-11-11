@@ -9,6 +9,20 @@
 
 using namespace ocudu;
 
+byte_buffer ocudu::test_helpers::create_ho_prep_info()
+{
+  asn1::rrc_nr::ho_prep_info_s ho_prep_info;
+  ho_prep_info.crit_exts.set_c1().set_ho_prep_info();
+
+  // pack.
+  byte_buffer   pdu;
+  asn1::bit_ref bref{pdu};
+  if (asn1::pack(bref, ho_prep_info) == asn1::OCUDUASN_SUCCESS) {
+    return pdu;
+  }
+  return {};
+}
+
 byte_buffer ocudu::test_helpers::create_meas_timing_cfg(uint32_t carrier_freq, subcarrier_spacing scs)
 {
   asn1::rrc_nr::meas_timing_cfg_s asn1_meas_timing_cfg;

@@ -11,6 +11,7 @@
 #include "lib/du/du_high/du_manager/procedures/ue_configuration_procedure.h"
 #include "tests/ocudu_test_requirements.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "tests/test_doubles/rrc/rrc_packed_test_messages.h"
 #include "tests/test_doubles/utils/test_rng.h"
 #include "ocudu/adt/format.h"
 #include "ocudu/asn1/rrc_nr/cell_group_config.h"
@@ -563,11 +564,61 @@ TEST_F(ue_config_tester, when_source_cell_group_is_included_then_resources_of_on
 
   // The source does not configure SRB2 and DRB1, so their RLC bearers have the complete configuration.
   ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), 2);
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list[0].lc_ch_id, LCID_SRB2);
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list[1].lc_ch_id, LCID_MIN_DRB);
   for (const auto& bearer : cell_group.rlc_bearer_to_add_mod_list) {
     ASSERT_TRUE(bearer.rlc_cfg_present);
     ASSERT_TRUE(bearer.mac_lc_ch_cfg_present);
     ASSERT_FALSE(bearer.reestablish_rlc_present);
   }
+}
+
+TEST_F(ue_config_tester,
+       when_handover_includes_source_cell_group_then_source_bearers_are_reestablished_and_source_elements_are_released)
+{
+  // The source cell group configures one PUCCH resource more than the target configuration of the UE.
+  asn1::rrc_nr::cell_group_cfg_s src_cell_group;
+  calculate_cell_group_config_diff(
+      src_cell_group, {}, test_ue->resources.value(), cell_mng.get_cell_rrm_cfg(test_ue->pcell_index));
+  auto&                     src_pucch = src_cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
+  asn1::rrc_nr::pucch_res_s extra_res = src_pucch.res_to_add_mod_list[0];
+  extra_res.pucch_res_id              = SOURCE_ONLY_PUCCH_RES_ID;
+  src_pucch.res_to_add_mod_list.push_back(extra_res);
+
+  f1ap_ue_context_update_request req =
+      create_f1ap_ue_context_update_request(test_ue->ue_index, {srb_id_t::srb2}, {drb_id_t::drb1});
+  req.spcell_id    = this->params.ran.cells[0].nr_cgi;
+  req.ho_prep_info = test_helpers::create_ho_prep_info();
+  {
+    asn1::bit_ref bref{req.source_cell_group_cfg};
+    ASSERT_EQ(asn1::pack(bref, src_cell_group), asn1::OCUDUASN_SUCCESS);
+  }
+  f1ap_ue_context_update_response res = this->configure_ue(req);
+  ASSERT_TRUE(res.result);
+  ASSERT_FALSE(res.full_config_present);
+
+  asn1::rrc_nr::cell_group_cfg_s cell_group;
+  asn1::cbit_ref                 bref(res.cell_group_cfg);
+  ASSERT_EQ(asn1::unpack(cell_group, bref), asn1::OCUDUASN_SUCCESS);
+  ASSERT_TRUE(cell_group.sp_cell_cfg.recfg_with_sync_present);
+
+  // The source configures SRB1, so SRB1 is re-established. SRB2 and DRB1 are new and have the complete configuration.
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list.size(), 3);
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list[0].lc_ch_id, LCID_SRB1);
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list[1].lc_ch_id, LCID_SRB2);
+  ASSERT_EQ(cell_group.rlc_bearer_to_add_mod_list[2].lc_ch_id, LCID_MIN_DRB);
+  for (const auto& bearer : cell_group.rlc_bearer_to_add_mod_list) {
+    const bool in_source = bearer.lc_ch_id == LCID_SRB1;
+    ASSERT_EQ(bearer.reestablish_rlc_present, in_source);
+    ASSERT_EQ(bearer.rlc_cfg_present, not in_source);
+    ASSERT_TRUE(bearer.mac_lc_ch_cfg_present);
+  }
+  ASSERT_EQ(cell_group.rlc_bearer_to_release_list.size(), 0);
+
+  // The PUCCH resource that only the source configures is released.
+  const auto& pucch = cell_group.sp_cell_cfg.sp_cell_cfg_ded.ul_cfg.init_ul_bwp.pucch_cfg.setup();
+  ASSERT_EQ(pucch.res_to_release_list.size(), 1);
+  ASSERT_EQ(pucch.res_to_release_list[0], SOURCE_ONLY_PUCCH_RES_ID);
 }
 
 TEST_F(ue_config_tester,
