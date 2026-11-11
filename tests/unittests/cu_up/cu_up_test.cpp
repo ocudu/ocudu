@@ -9,6 +9,7 @@
 #include "lib/gtpu/gtpu_teid_pool_impl.h"
 #include "ocudu/asn1/e1ap/e1ap.h"
 #include "ocudu/ran/pdcp/pdcp_sn_util.h"
+#include "ocudu/support/async/async_test_utils.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
@@ -337,6 +338,42 @@ protected:
     // Setup bearer
     e1ap_bearer_context_setup_response response =
         cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(*bearer_context_setup);
+  }
+
+  void set_sn_status()
+  {
+    // Generate BearerContextSetupRequest
+    e1ap_message asn1_bearer_context_mod_msg = generate_bearer_context_modification_request(9, 9, {0, 1});
+
+    // Convert to common type
+    e1ap_bearer_context_modification_request bearer_context_modification;
+    bearer_context_modification.ue_index = cu_up_ue_index_t{0};
+
+    ocudu::e1ap_ng_ran_bearer_context_mod_request& ng_ran_mod =
+        bearer_context_modification.ng_ran_bearer_context_mod_request.emplace();
+
+    e1ap_drb_to_modify_item_ng_ran drb_to_mod;
+    drb_to_mod.drb_id                            = drb_id_t{4};
+    ocudu::e1ap_pdcp_sn_status_info& status_info = drb_to_mod.pdcp_sn_status_info.emplace();
+    status_info.pdcp_status_transfer_dl.pdcp_sn  = 1;
+    status_info.pdcp_status_transfer_dl.hfn      = 0;
+    status_info.pdcp_status_transfer_ul          = {};
+
+    e1ap_pdu_session_res_to_modify_item pdu_session;
+    pdu_session.pdu_session_id = pdu_session_id_t{2};
+    pdu_session.drb_to_modify_list_ng_ran.emplace(drb_to_mod.drb_id, drb_to_mod);
+
+    ng_ran_mod.pdu_session_res_to_modify_list.emplace(pdu_session.pdu_session_id, pdu_session);
+    // Setup bearer
+    async_task<e1ap_bearer_context_modification_response> t =
+        cu_up->get_cu_up_manager()->handle_bearer_context_modification_request(bearer_context_modification);
+    lazy_task_launcher<e1ap_bearer_context_modification_response> t_launcher(t);
+
+    while (!t.ready()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    ASSERT_TRUE(t.ready());
+    ASSERT_TRUE(t.get().success);
   }
 
   struct upf_info_t {
@@ -689,11 +726,11 @@ TEST_F(cu_up_test, dl_data_forwarding)
 
   // Send GTP-U DL forward message. DL TEID 2 to go to forward tunnel.
   const uint8_t gtpu_ping_vec[] = {
-      0x34, 0xff, 0x00, 0x60, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, 0x02, 0x01, 0x23, 0x45, 0x00, 0x00,
-      0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0x9b, 0xfb, 0x00, 0x00, 0x40, 0x01, 0x56, 0x5a, 0xc0, 0xa8, 0x04, 0x01,
-      0xc0, 0xa8, 0x03, 0x02, 0x00, 0x00, 0xb8, 0xc0, 0x00, 0x02, 0x00, 0x01, 0x5d, 0x26, 0x77, 0x64, 0x00, 0x00,
-      0x00, 0x00, 0xb1, 0xde, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-      0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+      0x34, 0xff, 0x00, 0x65, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x03, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x45, 0x00, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0x9b, 0xfb, 0x00, 0x00, 0x40, 0x01, 0x56, 0x5a, 0xc0,
+      0xa8, 0x04, 0x01, 0xc0, 0xa8, 0x03, 0x02, 0x00, 0x00, 0xb8, 0xc0, 0x00, 0x02, 0x00, 0x01, 0x5d, 0x26, 0x77, 0x64,
+      0x00, 0x00, 0x00, 0x00, 0xb1, 0xde, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+      0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
       0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
 
   // Now that the disered buffer size is updated, we push DL PDUs
@@ -709,10 +746,16 @@ TEST_F(cu_up_test, dl_data_forwarding)
                     << ngu_cu_up_udp_cfg.bind_address << ":" << cu_up->get_ngu_bind_port().value() << "` - "
                     << ::strerror(errno);
 
-  // Check forwarded PDU SN and contents.
-  // TODO for now the PDCP adapters are disconnected, as such we check only that nothing was received.
-  std::optional<nru_dl_message> fwd_pdu = f1u_bearer.wait_tx_sdu();
-  ASSERT_FALSE(fwd_pdu.has_value());
+  // Check forwarded PDU is being buffered.
+  std::optional<nru_dl_message> empty_pdu = f1u_bearer.wait_tx_sdu();
+  ASSERT_FALSE(empty_pdu.has_value());
+
+  // Set the DRB PDCP state with the COUNT from the source.
+  // Buffered forwarded PDUs should be flushed now.
+  set_sn_status();
+
+  std::optional<nru_dl_message> fwd_sdu = f1u_bearer.wait_tx_sdu();
+  ASSERT_TRUE(empty_pdu.has_value());
 
   ::close(upf_info.sock_fd);
 }

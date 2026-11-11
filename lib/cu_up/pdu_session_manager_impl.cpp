@@ -515,7 +515,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                                                    .tx_upper  = nullptr};
       new_drb->gtpu_fwd_target = create_gtpu_tunnel_pdcp(gtpu_fwd_cfg);
 
-      // Connect PDCP to
+      // Connect GTP-U to PDCP.
       new_drb->gtpu_forwarding_to_pdcp_adapter.connect_pdcp(new_drb->pdcp->get_tx_upper_data_interface());
 
       expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
@@ -523,6 +523,10 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                        ue_dl_exec,
                                        new_drb->gtpu_fwd_target->get_rx_upper_layer_interface());
       new_drb->dispatch_queue = std::move(expected_dispatch_queue.value());
+
+      // We are now in forwarding mode. PDCP will begin buffering PDUs until the SN status status is transfered.
+      // Both forwareded PDUs and new PDUs will be buffered.
+      new_drb->pdcp->get_tx_upper_control_interface().begin_buffering();
 
       logger.log_info("Allocated DL data forwarding tunnel for {}. tnl_info={}",
                       drb_to_setup.drb_id,
@@ -697,6 +701,10 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       tx_count.sn  = drb_to_mod.pdcp_sn_status_info.value().pdcp_status_transfer_dl.pdcp_sn;
       tx_count.hfn = drb_to_mod.pdcp_sn_status_info.value().pdcp_status_transfer_dl.hfn;
       pdcp_tx_ctrl.set_count(tx_count);
+
+      // We are now leaving forwarding mode, as we have the correct state now. Stop buffering and flush the buffered
+      // SDUs. Forwareded SDUs are flushed first, fresh ones after.
+      pdcp_tx_ctrl.end_buffering();
     }
 
     // Start DL data forwarding from source UP to target.

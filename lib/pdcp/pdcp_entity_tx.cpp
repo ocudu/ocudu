@@ -151,6 +151,11 @@ void pdcp_entity_tx::end_buffering()
 {
   logger.log_debug("End SDU buffering");
   buffering = false;
+  while (not forward_buffer.empty()) {
+    forward_sdu_info fwd = std::move(forward_buffer.top());
+    forward_buffer.pop();
+    handle_sdu(std::move(fwd.buf), fwd.sn);
+  }
   while (not sdu_buffer.empty()) {
     byte_buffer buf = std::move(sdu_buffer.top());
     sdu_buffer.pop();

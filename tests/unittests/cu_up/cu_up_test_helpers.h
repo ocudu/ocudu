@@ -475,6 +475,43 @@ inline e1ap_message generate_bearer_context_setup_request(unsigned cu_cp_ue_e1ap
   return bearer_context_setup_request;
 }
 
+inline e1ap_message generate_bearer_context_modification_request(unsigned        cu_cp_ue_e1ap_id,
+                                                                 unsigned        cu_up_ue_e1ap_id,
+                                                                 pdcp_count_info count_info)
+{
+  e1ap_message bearer_context_mod_request = {};
+
+  bearer_context_mod_request.pdu.set_init_msg();
+  bearer_context_mod_request.pdu.init_msg().load_info_obj(ASN1_E1AP_ID_BEARER_CONTEXT_MOD);
+
+  auto& bearer_context_mod_req = bearer_context_mod_request.pdu.init_msg().value.bearer_context_mod_request();
+  bearer_context_mod_req->gnb_cu_cp_ue_e1ap_id = cu_cp_ue_e1ap_id;
+  bearer_context_mod_req->gnb_cu_up_ue_e1ap_id = cu_up_ue_e1ap_id;
+
+  auto& ng_ran_bearer_context_mod_req =
+      bearer_context_mod_req->sys_bearer_context_mod_request.set_ng_ran_bearer_context_mod_request();
+
+  ng_ran_bearer_context_mod_req.pdu_session_res_to_setup_mod_list_present = true;
+  auto& pdu_session_res_list = ng_ran_bearer_context_mod_req.pdu_session_res_to_setup_mod_list;
+
+  asn1::e1ap::pdu_session_res_to_setup_mod_item_s pdu_session_res_to_setup_mod_item;
+  pdu_session_res_to_setup_mod_item.pdu_session_id = 2;
+
+  asn1::e1ap::drb_to_setup_mod_item_ng_ran_s drb_to_setup_mod_item_ng_ran = {};
+  drb_to_setup_mod_item_ng_ran.drb_id                                     = 4;
+
+  drb_to_setup_mod_item_ng_ran.pdcp_sn_status_info_present                 = true;
+  drb_to_setup_mod_item_ng_ran.pdcp_sn_status_info.pdcp_status_transfer_ul = {};
+  drb_to_setup_mod_item_ng_ran.pdcp_sn_status_info.pdcp_status_transfer_dl = {
+      .pdcp_sn = count_info.sn,
+      .hfn     = count_info.hfn,
+  }; // TODO fill values.
+
+  pdu_session_res_to_setup_mod_item.drb_to_setup_mod_list_ng_ran.push_back(drb_to_setup_mod_item_ng_ran);
+  pdu_session_res_list.push_back(pdu_session_res_to_setup_mod_item);
+  return bearer_context_mod_request;
+}
+
 inline security::sec_as_config get_dummy_up_security_info()
 {
   security::sec_as_config sec_info = {};
