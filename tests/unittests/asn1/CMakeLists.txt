@@ -21,6 +21,11 @@ target_link_libraries(asn1_e1ap_test ocudu_pcap ocudu_support e1ap_asn1 ocudulog
 target_include_directories(asn1_e1ap_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(asn1_e1ap_test)
 
+add_executable(asn1_openapi_codec_test asn1_openapi_codec_test.cpp)
+target_link_libraries(asn1_openapi_codec_test e2ap_asn1 asn1_utils ocudulog ocudu_support GTest::gtest GTest::gtest_main)
+target_include_directories(asn1_openapi_codec_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(asn1_openapi_codec_test)
+
 add_executable(asn1_e2ap_test asn1_e2ap_test.cpp asn1_e2sm_test.cpp)
 target_link_libraries(asn1_e2ap_test e2ap_asn1 ocudulog ocudu_support ocudu_pcap GTest::gtest GTest::gtest_main)
 target_include_directories(asn1_e2ap_test PRIVATE ${CMAKE_SOURCE_DIR})
