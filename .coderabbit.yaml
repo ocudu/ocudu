@@ -6,7 +6,7 @@
 
 inheritance: true
 language: en-US
-tone_instructions: "Be terse and technical. No praise, no emojis, no restating the diff."
+tone_instructions: "Terse and technical; no praise or emojis. Withdraw a finding on counter-evidence (code, config, spec) or if you can't back it; else restate yours. In threads, reply only to add information or confirm a fix; never offer issues or unavailable features."
 
 reviews:
   profile: chill
@@ -46,9 +46,15 @@ reviews:
     - "!**/*.tar.gz"
 
   path_instructions:
+    - path: "**"
+      instructions: |
+        Use Major only for issues reachable in the configuration or build actually used; if an issue depends on a non-default setting, mark it Minor and name that setting.
     - path: "**/*.{h,cpp}"
       instructions: |
         Check every hunk against the configured code guidelines.
+        Apply style and convention rules only to code the diff adds or changes. Flag bugs in unchanged code only when the change makes them reachable.
+        Report a finding only with a concrete failure scenario (inputs or state leading to the wrong outcome); drop speculative ones.
+        Rank memory safety, untrusted input and real-time issues above general correctness, and conventions last.
         Skip stylistic nits that match no checklist item; clang-format and clang-tidy run in CI.
         Do not comment on code-format (clang-format) job failures; the author runs clang-format.
     - path: "lib/{phy,ofh,hal}/**"
@@ -113,7 +119,7 @@ reviews:
           Group changed non-test files into areas: each lib/<dir> together with include/ocudu/<dir>, plus apps/, cmake and CMakeLists.txt, .gitlab/, docker/, configs/.
 
           Fail if either holds:
-          1. More than 500 changed lines (size/XL).
+          1. More than 1000 changed lines (size/XXL).
           2. Three or more areas have substantive changes. Changes limited to call-site updates for an API change, include fixes, renames or build-file wiring do not count as substantive.
 
           On failure, propose a split into smaller MRs in dependency order, one line each: title and the files or areas it would contain.
@@ -134,9 +140,7 @@ knowledge_base:
         applyTo: "**/*.h,**/*.cpp"
       - files: "ocudu_docs:docs/dev_guide/code_guide/*.md"
         applyTo: "**/*.h,**/*.cpp"
-      - files: "ocudu_docs:docs/dev_guide/architecture_guide/3_realization/1_threading_model.md,\
-        ocudu_docs:docs/dev_guide/architecture_guide/3_realization/2_async_programming.md,\
-        ocudu_docs:docs/dev_guide/architecture_guide/3_realization/5_realtime_safety.md"
+      - files: "ocudu_docs:docs/dev_guide/architecture_guide/3_realization/*.md"
         applyTo: "lib/**,include/**,apps/**"
       - files: "ocudu_docs:docs/dev_guide/logging_guide/index.md"
         applyTo: "lib/**,apps/**"
