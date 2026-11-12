@@ -120,6 +120,7 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
       continue;
     }
     count += static_cast<unsigned>(next) - ueidx;
+    ocudu_sanity_check(slice_ues.contains(to_du_ue_index(next)), "UE with pending data is not a slice member");
 
     std::optional<ue_newtx_candidate> ue_candidate =
         is_dl ? parent->create_newtx_dl_candidate(slice_ues[to_du_ue_index(next)])
