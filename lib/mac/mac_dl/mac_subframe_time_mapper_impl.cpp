@@ -78,7 +78,7 @@ atomic_subframe_time_mapper::time_point atomic_subframe_time_mapper::load_time(u
     candidate += period;
   }
 
-  return time_point(std::chrono::nanoseconds(candidate));
+  return time_point(std::chrono::duration_cast<time_point::duration>(std::chrono::nanoseconds(candidate)));
 }
 
 uint64_t atomic_subframe_time_mapper::extract_sfn_sf_idx(uint64_t packed_mapping)
