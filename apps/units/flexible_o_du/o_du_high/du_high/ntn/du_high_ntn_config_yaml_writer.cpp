@@ -31,7 +31,7 @@ void ocudu::fill_ntn_config_in_yaml_schema(YAML::Node& node, const du_high_unit_
       fl_node["enable_doppler_compensation"] = serving.feeder_link_info->enable_doppler_compensation;
       fl_node["dl_freq"]                     = serving.feeder_link_info->dl_freq;
       fl_node["ul_freq"]                     = serving.feeder_link_info->ul_freq;
-      ntn_node["feeder_link_info"]           = fl_node;
+      ntn_node["feeder_link"]                = fl_node;
     }
 
     if (serving.use_state_vector) {

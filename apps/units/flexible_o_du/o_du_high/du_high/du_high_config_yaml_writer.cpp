@@ -189,6 +189,116 @@ static YAML::Node build_du_high_cmas_section(const du_high_unit_sib_config::cmas
   return node;
 }
 
+static YAML::Node build_du_high_pci_range_list(span<const pci_range_config> ranges)
+{
+  YAML::Node node;
+  for (const auto& range : ranges) {
+    YAML::Node range_node;
+    range_node["start"] = range.start;
+    range_node["size"]  = range.size;
+    node.push_back(range_node);
+  }
+  return node;
+}
+
+static YAML::Node build_du_high_sib2_section(const du_high_unit_sib_config::sib2_config& config)
+{
+  YAML::Node node;
+
+  node["q_hyst"]                    = config.q_hyst;
+  node["thresh_serving_low_p"]      = config.thresh_serving_low_p;
+  node["cell_reselection_priority"] = config.cell_reselection_priority;
+  node["q_rx_lev_min"]              = config.q_rx_lev_min;
+  node["s_intra_search_p"]          = config.s_intra_search_p;
+  node["t_reselection_nr"]          = config.t_reselection_nr;
+
+  return node;
+}
+
+static YAML::Node build_du_high_sib3_section(const du_high_unit_sib_config::sib3_config& config)
+{
+  YAML::Node node;
+
+  for (const auto& neigh : config.intra_freq_neigh_cell_list) {
+    YAML::Node neigh_node;
+    neigh_node["pci"] = neigh.pci;
+    // The offset is an int8_t, which the emitter would write as a character.
+    neigh_node["q_offset_cell"] = static_cast<int>(neigh.q_offset_cell);
+    node["intra_freq_neigh_cell_list"].push_back(neigh_node);
+  }
+  if (!config.intra_freq_excluded_cell_list.empty()) {
+    node["intra_freq_excluded_cell_list"] = build_du_high_pci_range_list(config.intra_freq_excluded_cell_list);
+  }
+
+  return node;
+}
+
+static YAML::Node build_du_high_sib4_section(const du_high_unit_sib_config::sib4_config& config)
+{
+  YAML::Node node;
+
+  for (const auto& carrier : config.inter_freq_carrier_freq_list) {
+    YAML::Node carrier_node;
+    carrier_node["arfcn"]                      = carrier.arfcn;
+    carrier_node["ssb_scs"]                    = scs_to_khz(carrier.ssb_scs);
+    carrier_node["derive_ssb_index_from_cell"] = carrier.derive_ssb_index_from_cell;
+    carrier_node["q_rx_lev_min"]               = carrier.q_rx_lev_min;
+    carrier_node["thresh_x_high_p"]            = carrier.thresh_x_high_p;
+    carrier_node["thresh_x_low_p"]             = carrier.thresh_x_low_p;
+    carrier_node["q_offset_freq"]              = carrier.q_offset_freq;
+    node["inter_freq_carrier_freq_list"].push_back(carrier_node);
+  }
+
+  return node;
+}
+
+static YAML::Node build_du_high_sib5_section(const du_high_unit_sib_config::sib5_config& config)
+{
+  YAML::Node node;
+
+  node["t_reselection_eutra"] = config.t_reselection_eutra;
+  for (const auto& carrier : config.carrier_freq_list_eutra) {
+    YAML::Node carrier_node;
+    carrier_node["earfcn"]                 = carrier.earfcn;
+    carrier_node["allowed_meas_bandwidth"] = carrier.allowed_meas_bandwidth;
+    carrier_node["presence_antenna_port1"] = carrier.presence_antenna_port1;
+    if (carrier.cell_reselection_priority.has_value()) {
+      carrier_node["cell_reselection_priority"] = carrier.cell_reselection_priority.value();
+    }
+    carrier_node["thresh_x_high"] = carrier.thresh_x_high;
+    carrier_node["thresh_x_low"]  = carrier.thresh_x_low;
+    carrier_node["q_rx_lev_min"]  = carrier.q_rx_lev_min;
+    carrier_node["q_qual_min"]    = carrier.q_qual_min;
+    carrier_node["p_max_eutra"]   = carrier.p_max_eutra;
+    node["carrier_freq_list_eutra"].push_back(carrier_node);
+  }
+
+  return node;
+}
+
+static YAML::Node build_du_high_sib16_section(const du_high_unit_sib_config::sib16_config& config)
+{
+  YAML::Node node;
+
+  for (const auto& freq : config.freq_prio_list_slicing) {
+    YAML::Node freq_node;
+    freq_node["dl_implicit_carrier_freq"] = freq.dl_implicit_carrier_freq;
+    for (const auto& slice : freq.slice_info_list) {
+      YAML::Node slice_node;
+      slice_node["nsag_id"]              = slice.nsag_id;
+      slice_node["allowed"]              = slice.allowed;
+      slice_node["reselection_priority"] = slice.reselection_priority;
+      if (!slice.cells.empty()) {
+        slice_node["cells_allowed"] = build_du_high_pci_range_list(slice.cells);
+      }
+      freq_node["slice_info_list"].push_back(slice_node);
+    }
+    node["freq_prio_list_slicing"].push_back(freq_node);
+  }
+
+  return node;
+}
+
 static YAML::Node build_du_high_sib_section(const du_high_unit_sib_config& config)
 {
   YAML::Node node;
@@ -218,6 +328,23 @@ static YAML::Node build_du_high_sib_section(const du_high_unit_sib_config& confi
     }
 
     node["si_sched_info"].push_back(si_node);
+  }
+
+  // A SIB listed in si_sched_info needs its block to be accepted on parsing.
+  if (config.sib2_cfg.has_value()) {
+    node["sib2"] = build_du_high_sib2_section(config.sib2_cfg.value());
+  }
+  if (config.sib3_cfg.has_value()) {
+    node["sib3"] = build_du_high_sib3_section(config.sib3_cfg.value());
+  }
+  if (config.sib4_cfg.has_value()) {
+    node["sib4"] = build_du_high_sib4_section(config.sib4_cfg.value());
+  }
+  if (config.sib5_cfg.has_value()) {
+    node["sib5"] = build_du_high_sib5_section(config.sib5_cfg.value());
+  }
+  if (config.sib16_cfg.has_value()) {
+    node["sib16"] = build_du_high_sib16_section(config.sib16_cfg.value());
   }
 
   if (config.etws_cfg.has_value()) {
