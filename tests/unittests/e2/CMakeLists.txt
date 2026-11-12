@@ -109,6 +109,10 @@ target_link_libraries(e2_conn_upd_procedure_test ocudulog ocudu_e2 e2ap_asn1 ocu
 target_include_directories(e2_conn_upd_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(e2_conn_upd_procedure_test)
 
+add_executable(e2sm_ccc_schema_conformance_test e2sm_ccc_schema_conformance_test.cpp)
+target_link_libraries(e2sm_ccc_schema_conformance_test e2sm_ccc_asn1 ocudulog ocudu_support GTest::gtest GTest::gtest_main)
+gtest_discover_tests(e2sm_ccc_schema_conformance_test)
+
 add_executable(asn1_e2sm_ccc_test asn1_e2sm_ccc_test.cpp)
 target_link_libraries(asn1_e2sm_ccc_test ocudulog ocudu_e2 e2ap_asn1 ocudu_pcap ocudu_support e2_test_helpers GTest::gtest GTest::gtest_main
 )
