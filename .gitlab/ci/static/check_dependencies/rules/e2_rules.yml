@@ -21,6 +21,7 @@ rules:
       - include/ocudu/asn1/*.h
       - include/ocudu/asn1/e2ap/**
       - include/ocudu/asn1/e2sm/**
+      - include/ocudu/asn1/e2sm_ccc/**
       - include/ocudu/cu_cp/**
       - include/ocudu/du/du_high/**
       - include/ocudu/e2/**

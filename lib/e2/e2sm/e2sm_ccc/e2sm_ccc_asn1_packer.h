@@ -10,6 +10,7 @@
 #include "ocudu/asn1/e2ap/e2ap.h"
 #include "ocudu/asn1/e2ap/e2ap_pdu_contents.h"
 #include "ocudu/e2/e2sm/e2sm.h"
+#include "ocudu/ocudulog/ocudulog.h"
 
 namespace ocudu {
 
@@ -37,6 +38,7 @@ public:
   bool add_e2sm_control_service(e2sm_control_service* control_service);
 
 private:
+  ocudulog::basic_logger&                   logger;
   std::map<uint32_t, e2sm_control_service*> control_services;
 };
 

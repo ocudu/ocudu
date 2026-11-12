@@ -24,9 +24,15 @@ target_compile_options(e1ap_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(e1ap_asn1 asn1_utils)
 
 # E2AP ASN1
-add_library(e2ap_asn1 STATIC e2ap/common.cpp e2ap/e2ap_ies.cpp e2ap/e2ap_pdu_contents.cpp e2ap/e2ap.cpp e2ap/e2ap_lists.cpp e2sm/common.cpp e2sm/e2sm_common_ies.cpp e2sm/e2sm_kpm_ies.cpp e2sm/e2sm.cpp e2sm/e2sm_lists.cpp e2sm/e2sm_ccc.cpp)
+add_library(e2ap_asn1 STATIC e2ap/common.cpp e2ap/e2ap_ies.cpp e2ap/e2ap_pdu_contents.cpp e2ap/e2ap.cpp e2ap/e2ap_lists.cpp e2sm/common.cpp e2sm/e2sm_common_ies.cpp e2sm/e2sm_kpm_ies.cpp e2sm/e2sm.cpp e2sm/e2sm_lists.cpp)
 target_compile_options(e2ap_asn1 PRIVATE -Os -fno-exceptions)
 target_link_libraries(e2ap_asn1 asn1_utils)
+
+# E2SM CCC ASN1
+add_library(e2sm_ccc_asn1 STATIC e2sm_ccc/e2sm_ccc.cpp e2sm_ccc/e2sm_ccc_lists.cpp
+        e2sm_ccc/e2sm_ccc_openapi.cpp)
+target_compile_options(e2sm_ccc_asn1 PRIVATE -Os -fno-exceptions)
+target_link_libraries(e2sm_ccc_asn1 asn1_utils)
 
 # NGAP ASN1
 add_library(ngap_asn1 STATIC ngap/common.cpp ngap/ngap_ies.cpp ngap/ngap_pdu_contents.cpp ngap/ngap.cpp

@@ -75,7 +75,7 @@ static odu::du_param_config_request convert_to_du_config_request(const e2sm_ric_
       rrm_policy_ratio_group rrm_policy;
       // Note: Here we use only new values.
       auto const& ran_cfg_structure = e2_cfg_struct.new_values_of_attributes.ran_cfg_structure;
-      if (ran_cfg_structure.type() == e2_sm_ccc_ran_cfg_structure_c::types::o_rrm_policy_ratio) {
+      if (ran_cfg_structure.type() == e2sm_ccc_ran_cfg_structure_c::types::o_rrm_policy_ratio) {
         // Translate resource type.
         if (ran_cfg_structure.o_rrm_policy_ratio().res_type_present) {
           if (ran_cfg_structure.o_rrm_policy_ratio().res_type.value == res_type_e::prb_dl) {

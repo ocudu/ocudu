@@ -40,9 +40,7 @@ rules:
       - apps/**
       - include/ocudu/asn1/asn1_json_utils.h
       - include/ocudu/asn1/asn1_openapi_codec.h
-      - include/ocudu/asn1/e2sm/e2sm_ccc.h
       - include/ocudu/support/json_utils.h
-      - lib/asn1/e2sm/e2sm_ccc.cpp
       - lib/e2/e2sm/e2sm_ccc/**
       - tests/integrationtests/du_high/ntn/**
       - tests/test_doubles/du_high/*

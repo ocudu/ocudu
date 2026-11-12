@@ -4,7 +4,8 @@
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
 #include "e2sm_ccc_asn1_packer.h"
-#include "ocudu/asn1/e2sm/e2sm_ccc.h"
+#include "ocudu/asn1/asn1_openapi_codec.h"
+#include "ocudu/asn1/e2sm_ccc/e2sm_ccc.h"
 
 using namespace asn1::e2ap;
 using namespace asn1::e2sm_ccc;
@@ -25,7 +26,7 @@ static asn1::unbounded_octstring<true> json_to_octstring(const nlohmann::ordered
 
   asn1::unbounded_octstring<true> octstr;
   if (not octstr.resize(json_bytes.size())) {
-    printf("Failed to pack E2SM-CCC JSON message.\n");
+    ocudulog::fetch_basic_logger("E2SM-CCC").error("Failed to pack E2SM-CCC JSON message.");
     asn1::unbounded_octstring<true> empty;
     return empty;
   }
@@ -44,7 +45,7 @@ static expected<nlohmann::ordered_json, std::string> octstring_to_json(const asn
   }
 }
 
-e2sm_ccc_asn1_packer::e2sm_ccc_asn1_packer() = default;
+e2sm_ccc_asn1_packer::e2sm_ccc_asn1_packer() : logger(ocudulog::fetch_basic_logger("E2SM-CCC")) {}
 
 bool e2sm_ccc_asn1_packer::add_e2sm_control_service(e2sm_control_service* control_service)
 {
@@ -56,7 +57,7 @@ e2sm_event_trigger_definition
 e2sm_ccc_asn1_packer::handle_packed_event_trigger_definition(const ocudu::byte_buffer& event_trigger_definition)
 {
   // TODO: add support for RIC subscriptions.
-  printf("Failure - Trigger definition handling not supported in E2SM-CCC.\n");
+  logger.error("Trigger definition handling not supported in E2SM-CCC.");
   return {};
 }
 
@@ -64,7 +65,7 @@ e2sm_action_definition
 e2sm_ccc_asn1_packer::handle_packed_e2sm_action_definition(const ocudu::byte_buffer& action_definition)
 {
   // TODO: add support for RIC subscriptions.
-  printf("Failure - Action definition handling not supported in E2SM-CCC.\n");
+  logger.error("Action definition handling not supported in E2SM-CCC.");
   return {};
 }
 
@@ -79,20 +80,40 @@ e2sm_ccc_asn1_packer::handle_packed_ric_control_request(const asn1::e2ap::ric_ct
   if (ric_control_request.ric_call_process_id_present) {
     ric_control_request.ric_call_process_id = req->ric_call_process_id.to_number();
   }
+  // A request whose header or message does not read carries no value of the service model, so it is given back
+  // without one and the procedure rejects it rather than reading a value that is not there.
   auto ctrl_hdr_json_exp = octstring_to_json(req->ric_ctrl_hdr);
-  if (ctrl_hdr_json_exp) {
-    ric_ctrl_hdr_s ric_ctrl_hdr          = ctrl_hdr_json_exp.value();
+  if (not ctrl_hdr_json_exp) {
+    logger.error("Failed to unpack E2SM-CCC Control Request Header: {}", ctrl_hdr_json_exp.error());
+    return {};
+  }
+  {
+    ric_ctrl_hdr_s              ric_ctrl_hdr;
+    asn1::openapi::read_context ctx;
+    // A control request configures the node, so a key the structure does not carry is a request the gNB cannot
+    // perform as asked. Dropping it would report an attribute written that was never applied.
+    ctx.reject_unknown_keys = true;
+    if (not asn1::openapi::from_json(ctrl_hdr_json_exp.value(), ric_ctrl_hdr, ctx)) {
+      logger.error("Failed to unpack E2SM-CCC Control Request Header at '{}'", ctx.path);
+      return {};
+    }
     ric_control_request.request_ctrl_hdr = ric_ctrl_hdr;
-  } else {
-    printf("Failed to unpack E2SM-CCC Control Request Header\n");
   }
 
   auto ctrl_msg_json_exp = octstring_to_json(req->ric_ctrl_msg);
-  if (ctrl_msg_json_exp) {
-    ric_ctrl_msg_s ric_ctrl_msg          = ctrl_msg_json_exp.value();
+  if (not ctrl_msg_json_exp) {
+    logger.error("Failed to unpack E2SM-CCC Control Request Message: {}", ctrl_msg_json_exp.error());
+    return {};
+  }
+  {
+    ric_ctrl_msg_s              ric_ctrl_msg;
+    asn1::openapi::read_context ctx;
+    ctx.reject_unknown_keys = true;
+    if (not asn1::openapi::from_json(ctrl_msg_json_exp.value(), ric_ctrl_msg, ctx)) {
+      logger.error("Failed to unpack E2SM-CCC Control Request Message at '{}'", ctx.path);
+      return {};
+    }
     ric_control_request.request_ctrl_msg = ric_ctrl_msg;
-  } else {
-    printf("Failed to unpack E2SM-CCC Control Request Message\n");
   }
 
   if (ric_control_request.ric_ctrl_ack_request_present) {
@@ -107,17 +128,30 @@ e2_ric_control_response e2sm_ccc_asn1_packer::pack_ric_control_response(const e2
   e2_ric_control_response e2_control_response = {};
   e2_control_response.success                 = e2sm_response.success;
 
+  // The outcome carries the alternative of whichever service model built the response, and it is written only when
+  // it both holds one and writes whole: an outcome the RIC cannot read says less than none at all.
+  nlohmann::ordered_json outcome_json;
+  bool                   outcome_written = false;
+  if (e2sm_response.ric_ctrl_outcome_present) {
+    const auto* ctrl_outcome = std::get_if<ctrl_outcome_format_c>(&e2sm_response.ric_ctrl_outcome);
+    if (ctrl_outcome == nullptr) {
+      logger.error("The E2SM-CCC control response holds no outcome of its own service model.");
+    } else if (not asn1::openapi::to_json(outcome_json, *ctrl_outcome)) {
+      logger.error("Failed to pack the E2SM-CCC RIC Control Outcome.");
+    } else {
+      outcome_written = true;
+    }
+  }
+
   if (e2_control_response.success) {
-    if (e2sm_response.ric_ctrl_outcome_present) {
+    if (outcome_written) {
       e2_control_response.ack->ric_ctrl_outcome_present = true;
-      nlohmann::ordered_json outcome_json       = std::get<ctrl_outcome_format_c>(e2sm_response.ric_ctrl_outcome);
-      e2_control_response.ack->ric_ctrl_outcome = json_to_octstring(outcome_json);
+      e2_control_response.ack->ric_ctrl_outcome         = json_to_octstring(outcome_json);
     }
   } else {
-    if (e2sm_response.ric_ctrl_outcome_present) {
+    if (outcome_written) {
       e2_control_response.failure->ric_ctrl_outcome_present = true;
-      nlohmann::ordered_json outcome_json           = std::get<ctrl_outcome_format_c>(e2sm_response.ric_ctrl_outcome);
-      e2_control_response.failure->ric_ctrl_outcome = json_to_octstring(outcome_json);
+      e2_control_response.failure->ric_ctrl_outcome         = json_to_octstring(outcome_json);
     }
     e2_control_response.failure->cause = e2sm_response.cause;
   }
@@ -225,6 +259,10 @@ asn1::unbounded_octstring<true> e2sm_ccc_asn1_packer::pack_ran_function_descript
   policy_ded_ctrl_style.ric_call_process_id_format_type_present = false;
   policy_ded_ctrl_style.ctrl_service_ctrl_outcome_format_type   = 2;
 
-  nlohmann::ordered_json json = ran_function_desc;
+  nlohmann::ordered_json json;
+  if (not asn1::openapi::to_json(json, ran_function_desc)) {
+    logger.error("Failed to pack the E2SM-CCC RAN function description.");
+    return {};
+  }
   return json_to_octstring(json);
 }

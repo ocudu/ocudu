@@ -47,6 +47,6 @@ set(SOURCES
 )
 
 add_library(ocudu_e2 STATIC ${SOURCES})
-target_link_libraries(ocudu_e2 e2ap_asn1 ocudu_support)
+target_link_libraries(ocudu_e2 e2ap_asn1 e2sm_ccc_asn1 ocudu_support)
 
 target_include_directories(ocudu_e2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

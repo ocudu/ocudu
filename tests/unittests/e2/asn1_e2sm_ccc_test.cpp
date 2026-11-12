@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
-#include "ocudu/asn1/e2sm/e2sm_ccc.h"
+#include "ocudu/asn1/asn1_openapi_codec.h"
+#include "ocudu/asn1/e2sm_ccc/e2sm_ccc.h"
 #include "ocudu/support/executors/task_worker.h"
 #include "ocudu/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -77,11 +78,13 @@ TEST_F(asn1_e2sm_ccc_test, simple_struct_plmn_info_s)
   plmn_info.snssai.sst         = 33;
 
   // Dump and check if equal to ref.
-  nlohmann::ordered_json j = plmn_info;
+  nlohmann::ordered_json j;
+  openapi::to_json(j, plmn_info);
   test_logger.info("nlohmann::json: \n{}", j.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(simple_struct_plmn_info_json));
 
-  plmn_info_s plmn_info_from_json = j;
+  plmn_info_s plmn_info_from_json;
+  ASSERT_TRUE(openapi::from_json(j, plmn_info_from_json));
   ASSERT_EQ(plmn_info_from_json.plmn_id_present, plmn_info.plmn_id_present);
   ASSERT_EQ(plmn_info_from_json.plmn_id.mnc_present, plmn_info.plmn_id.mnc_present);
   ASSERT_EQ(plmn_info_from_json.plmn_id.mnc.to_string(), plmn_info.plmn_id.mnc.to_string());
@@ -94,7 +97,9 @@ TEST_F(asn1_e2sm_ccc_test, simple_struct_plmn_info_s)
   ASSERT_EQ(plmn_info_from_json.snssai.sst, plmn_info.snssai.sst);
 
   // From json string.
-  plmn_info_s plmn_info_from_json_str = nlohmann::json::parse(simple_struct_plmn_info_json);
+  auto        parsed_plmn = nlohmann::ordered_json::parse(simple_struct_plmn_info_json);
+  plmn_info_s plmn_info_from_json_str;
+  ASSERT_TRUE(openapi::from_json(parsed_plmn, plmn_info_from_json_str));
   ASSERT_EQ(plmn_info_from_json_str.plmn_id_present, true);
   ASSERT_EQ(plmn_info_from_json_str.plmn_id.mnc_present, true);
   ASSERT_EQ(plmn_info_from_json_str.plmn_id.mnc.to_string(), "01");
@@ -107,7 +112,8 @@ TEST_F(asn1_e2sm_ccc_test, simple_struct_plmn_info_s)
   ASSERT_EQ(plmn_info_from_json_str.snssai.sst, 33);
 
   // Parse, dump again and check if equal to ref.
-  nlohmann::ordered_json j2 = plmn_info_from_json_str;
+  nlohmann::ordered_json j2;
+  openapi::to_json(j2, plmn_info_from_json_str);
   ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(j2.dump()));
 }
 
@@ -344,13 +350,17 @@ TEST_F(asn1_e2sm_ccc_test, test_ran_func_def)
   cell_report_style.list_of_supported_event_trigger_styles_for_report_style[1].event_trigger_style_type = 2;
 
   // Dump and check if equal to ref.
-  nlohmann::ordered_json j = ran_function_desc;
+  nlohmann::ordered_json j;
+  openapi::to_json(j, ran_function_desc);
   test_logger.info("nlohmann::json: \n{}", j.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(ran_func_def_json));
 
   // Parse, dump again and check if equal to ref.
-  ran_function_definition_s ran_desc_from_json = nlohmann::json::parse(j.dump());
-  nlohmann::ordered_json    j2                 = ran_desc_from_json;
+  auto                      parsed_ran = nlohmann::ordered_json::parse(j.dump());
+  ran_function_definition_s ran_desc_from_json;
+  ASSERT_TRUE(openapi::from_json(parsed_ran, ran_desc_from_json));
+  nlohmann::ordered_json j2;
+  openapi::to_json(j2, ran_desc_from_json);
   test_logger.info("parsed nlohmann::json: \n{}", j2.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j.dump()), remove_whitespace(j2.dump()));
 }
@@ -495,22 +505,30 @@ TEST_F(asn1_e2sm_ccc_test, test_ric_ctrl_msg)
   member2.snssai.sst         = 3;
 
   // Dump and check if equal to ref.
-  nlohmann::ordered_json j_hdr = ric_ctrl_hdr;
+  nlohmann::ordered_json j_hdr;
+  openapi::to_json(j_hdr, ric_ctrl_hdr);
   test_logger.info("nlohmann::json: \n{}", j_hdr.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_hdr.dump()), remove_whitespace(ric_ctrl_hdr_json));
 
-  nlohmann::ordered_json j_msg = ric_ctrl_msg;
+  nlohmann::ordered_json j_msg;
+  openapi::to_json(j_msg, ric_ctrl_msg);
   test_logger.info("nlohmann::json: \n{}", j_msg.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_msg.dump()), remove_whitespace(ric_ctrl_msg_json));
 
   // Parse, dump again and check if equal to ref.
-  ric_ctrl_hdr_s         ric_ctrl_hdr_from_json = nlohmann::json::parse(j_hdr.dump());
-  nlohmann::ordered_json j_hdr2                 = ric_ctrl_hdr_from_json;
+  auto           parsed_ric_ctrl_hdr_from_json = nlohmann::ordered_json::parse(j_hdr.dump());
+  ric_ctrl_hdr_s ric_ctrl_hdr_from_json;
+  ASSERT_TRUE(openapi::from_json(parsed_ric_ctrl_hdr_from_json, ric_ctrl_hdr_from_json));
+  nlohmann::ordered_json j_hdr2;
+  openapi::to_json(j_hdr2, ric_ctrl_hdr_from_json);
   test_logger.info("parsed nlohmann::json: \n{}", j_hdr2.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_hdr2.dump()), remove_whitespace(ric_ctrl_hdr_json));
 
-  ric_ctrl_msg_s         ric_ctrl_msg_from_json = nlohmann::json::parse(j_msg.dump());
-  nlohmann::ordered_json j_msg2                 = ric_ctrl_msg_from_json;
+  auto           parsed_ric_ctrl_msg_from_json = nlohmann::ordered_json::parse(j_msg.dump());
+  ric_ctrl_msg_s ric_ctrl_msg_from_json;
+  ASSERT_TRUE(openapi::from_json(parsed_ric_ctrl_msg_from_json, ric_ctrl_msg_from_json));
+  nlohmann::ordered_json j_msg2;
+  openapi::to_json(j_msg2, ric_ctrl_msg_from_json);
   test_logger.info("parsed nlohmann::json: \n{}", j_msg2.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_msg2.dump()), remove_whitespace(ric_ctrl_msg_json));
 }
@@ -576,7 +594,7 @@ TEST_F(asn1_e2sm_ccc_test, test_ric_ind_msg)
 
   ric_ind_hdr_s ric_ind_hdr;
   auto&         hdr    = ric_ind_hdr.ind_hdr_format.ind_hdr_format1();
-  hdr.ind_reason.value = e2_sm_ccc_ind_hdr_format1_s::ind_reason_opts::periodic;
+  hdr.ind_reason.value = e2sm_ccc_ind_hdr_format1_s::ind_reason_opts::periodic;
   hdr.event_time.from_string("ec2c83fdb48863be");
 
   ric_ind_msg_s ric_ind_msg;
@@ -617,22 +635,30 @@ TEST_F(asn1_e2sm_ccc_test, test_ric_ind_msg)
   member_list.snssai.sst         = 3;
 
   // Dump and check if equal to ref.
-  nlohmann::ordered_json j_hdr = ric_ind_hdr;
+  nlohmann::ordered_json j_hdr;
+  openapi::to_json(j_hdr, ric_ind_hdr);
   test_logger.info("nlohmann::json: \n{}", j_hdr.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_hdr.dump()), remove_whitespace(ric_ind_hdr_json));
 
-  nlohmann::ordered_json j_msg = ric_ind_msg;
+  nlohmann::ordered_json j_msg;
+  openapi::to_json(j_msg, ric_ind_msg);
   test_logger.info("nlohmann::json: \n{}", j_msg.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_msg.dump()), remove_whitespace(ric_ind_msg_json));
 
   // Parse, dump again and check if equal to ref.
-  ric_ind_hdr_s          hdr_from_json = nlohmann::json::parse(j_hdr.dump());
-  nlohmann::ordered_json j_hdr2        = hdr_from_json;
+  auto          parsed_hdr_from_json = nlohmann::ordered_json::parse(j_hdr.dump());
+  ric_ind_hdr_s hdr_from_json;
+  ASSERT_TRUE(openapi::from_json(parsed_hdr_from_json, hdr_from_json));
+  nlohmann::ordered_json j_hdr2;
+  openapi::to_json(j_hdr2, hdr_from_json);
   test_logger.info("parsed nlohmann::json: \n{}", j_hdr2.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_hdr2.dump()), remove_whitespace(ric_ind_hdr_json));
 
-  ric_ind_msg_s          msg_from_json = nlohmann::json::parse(j_msg.dump());
-  nlohmann::ordered_json j_msg2        = msg_from_json;
+  auto          parsed_msg_from_json = nlohmann::ordered_json::parse(j_msg.dump());
+  ric_ind_msg_s msg_from_json;
+  ASSERT_TRUE(openapi::from_json(parsed_msg_from_json, msg_from_json));
+  nlohmann::ordered_json j_msg2;
+  openapi::to_json(j_msg2, msg_from_json);
   test_logger.info("parsed nlohmann::json: \n{}", j_msg2.dump(4).c_str());
   ASSERT_EQ(remove_whitespace(j_msg2.dump()), remove_whitespace(ric_ind_msg_json));
 }
