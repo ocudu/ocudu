@@ -67,12 +67,18 @@ protected:
     return ue_res->value().cell_group.cells.at(SERVING_PCELL_IDX).serv_cell_cfg;
   }
 
-  /// Returns the maxMIMO-Layers of the UE PDSCH-ServingCellConfig.
+  /// \brief Returns the maxMIMO-Layers of the UE PDSCH-ServingCellConfig.
+  ///
+  /// The PDSCH layer limit of the scheduler must be the same value.
   unsigned max_mimo_layers() const
   {
     report_fatal_error_if_not(serv_cell_cfg().pdsch_serv_cell_cfg.has_value(), "No PDSCH-ServingCellConfig");
     report_fatal_error_if_not(serv_cell_cfg().pdsch_serv_cell_cfg->max_mimo_layers.has_value(), "No maxMIMO-Layers");
-    return *serv_cell_cfg().pdsch_serv_cell_cfg->max_mimo_layers;
+    const unsigned                 rrc_value = *serv_cell_cfg().pdsch_serv_cell_cfg->max_mimo_layers;
+    const std::optional<unsigned>& sched_value =
+        ue_res->value().cell_group.cells.at(SERVING_PCELL_IDX).bwps.front().dl.pdsch.max_nof_layers;
+    report_fatal_error_if_not(sched_value == rrc_value, "The scheduler PDSCH layer limit differs from maxMIMO-Layers");
+    return rrc_value;
   }
 
   /// Returns the ranks that the CSI reports of the UE can indicate, as per the Type-I single-panel RI restriction.

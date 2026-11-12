@@ -100,9 +100,26 @@ struct ue_uplink_bwp_config {
   }
 };
 
+/// UE-specific information related to the PDSCH configuration.
+struct ue_pdsch_config {
+  /// Maximum number of PDSCH layers of the UE in the cell, as per TS 38.331, \c maxMIMO-Layers. Absent if only the
+  /// cell limits the number of layers.
+  std::optional<unsigned> max_nof_layers;
+
+  bool operator==(const ue_pdsch_config& other) const { return max_nof_layers == other.max_nof_layers; }
+};
+
+/// UE-specific information of a DL BWP configuration.
+struct ue_downlink_bwp_config {
+  ue_pdsch_config pdsch;
+
+  bool operator==(const ue_downlink_bwp_config& other) const { return pdsch == other.pdsch; }
+};
+
 /// UE-specific configuration parameters for a given BWP.
 struct ue_bwp_config {
-  ue_uplink_bwp_config ul;
+  ue_downlink_bwp_config dl;
+  ue_uplink_bwp_config   ul;
 };
 
 } // namespace ocudu

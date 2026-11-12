@@ -559,9 +559,12 @@ protected:
     return *(*last_ue_req.cfg.cells)[0].ded->serv_cell_cfg.csi_meas_cfg;
   }
 
+  /// Sets the PDSCH layer limit of the UE and its maxMIMO-Layers, as the DU does.
   static void set_max_mimo_layers(sched_ue_creation_request_message& ue_req, unsigned max_mimo_layers)
   {
-    (*ue_req.cfg.cells)[0].ded->serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
+    ue_cell_config& ue_cell                                    = *(*ue_req.cfg.cells)[0].ded;
+    ue_cell.init_bwp().dl.pdsch.max_nof_layers                 = max_mimo_layers;
+    ue_cell.serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
   }
 
   scheduler_expert_config                  expert_cfg;

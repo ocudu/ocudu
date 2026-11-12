@@ -57,11 +57,13 @@ static void set_max_dl_nof_harqs(serving_cell_config& cell_cfg, unsigned nof_har
   }
 }
 
-static void set_max_mimo_layers(serving_cell_config& cell_cfg, unsigned max_mimo_layers)
+static void set_max_mimo_layers(ue_cell_config& cell_cfg, unsigned max_mimo_layers)
 {
-  // Set \c maxMIMO-Layers, as per TS 38.331, \c PDSCH-ServingCellConfig.
-  if (cell_cfg.pdsch_serv_cell_cfg.has_value()) {
-    cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
+  // The scheduler reads the limit from the UE BWP configuration, and RRC signals it in \c maxMIMO-Layers of
+  // \c PDSCH-ServingCellConfig (TS 38.331).
+  cell_cfg.init_bwp().dl.pdsch.max_nof_layers = max_mimo_layers;
+  if (cell_cfg.serv_cell_cfg.pdsch_serv_cell_cfg.has_value()) {
+    cell_cfg.serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers = max_mimo_layers;
   }
 }
 
@@ -128,7 +130,7 @@ void du_pdsch_resource_manager::apply_config(cell_group_config&                 
   set_pdsch_res_alloc(
       serv_cell, select_res_alloc(cell_idx, ue_caps), cell_cfg_list[cell_idx].ran.init_bwp.pdsch.rbg_sz);
   set_max_dl_nof_harqs(serv_cell, select_max_nof_harqs(cell_idx, ue_caps));
-  set_max_mimo_layers(serv_cell, select_max_mimo_layers(cell_idx, ue_caps));
+  set_max_mimo_layers(cell_grp_cfg.cells.at(SERVING_PCELL_IDX), select_max_mimo_layers(cell_idx, ue_caps));
   set_dl_dci_harq_field_size(serv_cell, select_dci_harq_field_size(cell_idx, ue_caps));
   set_dl_harq_feedback_disabled(serv_cell, select_disabled_harq_feedback(cell_idx, ue_caps));
   set_pdsch_td_alloc_list(serv_cell, select_td_alloc_list(cell_idx, ue_caps));

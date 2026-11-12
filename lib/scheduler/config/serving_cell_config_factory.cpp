@@ -331,8 +331,7 @@ static uplink_config make_default_ue_uplink_config(const ran_cell_config& cell_c
 static pdsch_serving_cell_config make_default_pdsch_serving_cell_config(const pdsch_builder_params& pdsch_params)
 {
   pdsch_serving_cell_config cfg;
-  cfg.nof_harq_proc   = static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(pdsch_params.max_harq_procs);
-  cfg.max_mimo_layers = pdsch_params.max_nof_layers;
+  cfg.nof_harq_proc = static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(pdsch_params.max_harq_procs);
   cfg.dl_harq_feedback_disabled = pdsch_params.dl_harq_feedback_disabled;
 
   return cfg;
@@ -360,6 +359,7 @@ static serving_cell_config make_default_serving_cell_config(const ran_cell_confi
 
   // > pdsch-ServingCellConfig.
   serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config(cell_cfg.init_bwp.pdsch));
+  serv_cell.pdsch_serv_cell_cfg->max_mimo_layers = ue_bwp_cfg.dl.pdsch.max_nof_layers;
 
   // > CSI-MeasConfig.
   serv_cell.csi_meas_cfg = build_csi_meas_config(cell_cfg, generate_cell_pucch_res_list(cell_cfg), ue_rrm_cfg);
@@ -384,9 +384,16 @@ static ue_rrm_config make_default_ue_rrm_cfg(const ran_cell_config& cell_cfg)
   return cfg;
 }
 
-static ue_bwp_config make_default_ue_bwp_cfg()
+static ue_bwp_config make_default_ue_bwp_cfg(const ran_cell_config& cell_cfg)
 {
   return ue_bwp_config{
+      .dl =
+          {
+              .pdsch =
+                  {
+                      .max_nof_layers = cell_cfg.init_bwp.pdsch.max_nof_layers,
+                  },
+          },
       .ul =
           {
               .pusch =
@@ -407,7 +414,7 @@ ue_cell_config ocudu::config_helpers::make_default_ue_cell_config(const ran_cell
 {
   ue_cell_config cfg{};
   cfg.rrm = make_default_ue_rrm_cfg(cell_cfg);
-  cfg.bwps.emplace_back(make_default_ue_bwp_cfg());
+  cfg.bwps.emplace_back(make_default_ue_bwp_cfg(cell_cfg));
   cfg.serv_cell_cfg = make_default_serving_cell_config(cell_cfg, cell_idx, cfg.rrm, cfg.bwps.front());
   return cfg;
 }

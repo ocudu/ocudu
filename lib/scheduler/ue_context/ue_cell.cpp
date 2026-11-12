@@ -25,11 +25,11 @@ static constexpr unsigned DEFAULT_NOF_UL_HARQS = 16;
 /// Gets the maximum number of PDSCH layers the UE is configured with, given by \c maxMIMO-Layers (TS 38.331).
 static unsigned get_max_pdsch_layers(const ue_cell_configuration& ue_cell_cfg)
 {
-  const pdsch_serving_cell_config* pdsch_serv_cell = ue_cell_cfg.pdsch_serving_cell_cfg();
-  if (pdsch_serv_cell == nullptr or not pdsch_serv_cell->max_mimo_layers.has_value()) {
+  const ue_downlink_bwp_config* ue_dl_bwp = ue_cell_cfg.init_bwp().dl.ue_cfg();
+  if (ue_dl_bwp == nullptr or not ue_dl_bwp->pdsch.max_nof_layers.has_value()) {
     return pdsch_constants::MAX_NOF_LAYERS;
   }
-  return *pdsch_serv_cell->max_mimo_layers;
+  return *ue_dl_bwp->pdsch.max_nof_layers;
 }
 
 ue_cell::ue_cell(du_ue_index_t                ue_index_,

@@ -38,15 +38,17 @@ class sched_bwp_dl_config
 {
 public:
   sched_bwp_dl_config() = default;
-  sched_bwp_dl_config(const bwp_downlink_common&    common,
-                      const bwp_downlink_dedicated* ded,
-                      const sched_pdcch_config&     pdcch_cfg_,
-                      const dl_time_domain_mapper&  dl_td_mapper_) :
+  sched_bwp_dl_config(const bwp_downlink_common&                   common,
+                      const bwp_downlink_dedicated*                ded,
+                      const std::optional<ue_downlink_bwp_config>& ue_cfg,
+                      const sched_pdcch_config&                    pdcch_cfg_,
+                      const dl_time_domain_mapper&                 dl_td_mapper_) :
     bwp_dl_common(&common),
     bwp_dl_ded(ded),
     pdcch_cfg(&pdcch_cfg_),
     dl_td_mapper_ptr(&dl_td_mapper_),
-    pdsch_cfg(common.pdsch_common, ded != nullptr and ded->pdsch_cfg.has_value() ? &*ded->pdsch_cfg : nullptr)
+    pdsch_cfg(common.pdsch_common, ded != nullptr and ded->pdsch_cfg.has_value() ? &*ded->pdsch_cfg : nullptr),
+    ue_dl_bwp_cfg(ue_cfg)
   {
   }
 
@@ -56,6 +58,8 @@ public:
 
   const sched_pdcch_config& pdcch() const { return *pdcch_cfg; }
   const sched_pdsch_config& pdsch() const { return pdsch_cfg; }
+
+  const ue_downlink_bwp_config* ue_cfg() const { return ue_dl_bwp_cfg.has_value() ? &*ue_dl_bwp_cfg : nullptr; }
 
   const dl_time_domain_mapper& td_mapper() const { return *dl_td_mapper_ptr; }
 
@@ -67,7 +71,7 @@ public:
   bool operator==(const sched_bwp_dl_config& other) const
   {
     return *bwp_dl_common == *other.bwp_dl_common and *bwp_dl_ded == *other.bwp_dl_ded and
-           *pdcch_cfg == *other.pdcch_cfg;
+           ue_dl_bwp_cfg == other.ue_dl_bwp_cfg and *pdcch_cfg == *other.pdcch_cfg;
   }
 
 private:
@@ -76,6 +80,9 @@ private:
   const sched_pdcch_config*     pdcch_cfg        = nullptr;
   const dl_time_domain_mapper*  dl_td_mapper_ptr = nullptr;
   sched_pdsch_config            pdsch_cfg;
+
+  // UE-specific DL BWP configuration.
+  std::optional<ue_downlink_bwp_config> ue_dl_bwp_cfg;
 };
 
 /// Configuration of an Uplink Bandwidth Part (BWP) including the common config and optionally the dedicated config.

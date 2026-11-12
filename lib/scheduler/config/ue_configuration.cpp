@@ -595,8 +595,8 @@ static units::bytes compute_pdsch_tbs_lbrm(const ue_cell_configuration& ue_cell_
 {
   // [Implementation-defined] Without maxMIMO-Layers, the UE derives TBS_LBRM from the maximum number of PDSCH layers it
   // supports, which the scheduler does not know.
-  const pdsch_serving_cell_config* pdsch_serv_cell_cfg = ue_cell_cfg.pdsch_serving_cell_cfg();
-  if (pdsch_serv_cell_cfg == nullptr or not pdsch_serv_cell_cfg->max_mimo_layers.has_value()) {
+  const ue_downlink_bwp_config* ue_dl_bwp = ue_cell_cfg.init_bwp().dl.ue_cfg();
+  if (ue_dl_bwp == nullptr or not ue_dl_bwp->pdsch.max_nof_layers.has_value()) {
     return tbs_lbrm_default;
   }
 
@@ -619,7 +619,7 @@ static units::bytes compute_pdsch_tbs_lbrm(const ue_cell_configuration& ue_cell_
     }
   }
 
-  return tbs_calculator_dlsch_lbrm(*pdsch_serv_cell_cfg->max_mimo_layers, max_modulation, max_nof_prbs);
+  return tbs_calculator_dlsch_lbrm(*ue_dl_bwp->pdsch.max_nof_layers, max_modulation, max_nof_prbs);
 }
 
 ue_cell_configuration::ue_cell_configuration(rnti_t                                crnti_,

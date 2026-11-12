@@ -21,9 +21,10 @@ bwp_config_pool::bwp_config_pool(const ran_cell_config&     cell_ran_cfg,
   tdd_cfg(cell_ran_cfg.tdd_cfg),
   pucch_min_k1(cell_ran_cfg.init_bwp.pucch.min_k1),
   pdcch_pool(cell_ran_cfg.pci, bwp_dl_cmn.generic_params, bwp_dl_cmn.pdcch_common, bwp_ded_res.dl),
-  common_bwp_cfg{bwp_id,
-                 sched_bwp_dl_config{bwp_dl_cmn, nullptr, pdcch_pool.init_cfg(), get_dl_td_mapper(nullptr)},
-                 sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, get_ul_td_mapper(nullptr)}}
+  common_bwp_cfg{
+      bwp_id,
+      sched_bwp_dl_config{bwp_dl_cmn, nullptr, std::nullopt, pdcch_pool.init_cfg(), get_dl_td_mapper(nullptr)},
+      sched_bwp_ul_config{bwp_ul_cmn, std::nullopt, std::nullopt, get_ul_td_mapper(nullptr)}}
 {
 }
 
@@ -45,6 +46,7 @@ sched_bwp_config bwp_config_pool::add_ded_cfg(const bwp_downlink_dedicated* dl_d
   return sched_bwp_config{bwp_id,
                           sched_bwp_dl_config{bwp_dl_cmn,
                                               dl_ptr.get(),
+                                              ue_bwp_cfg.dl,
                                               dl_ptr.has_value() and dl_ptr->pdcch_cfg.has_value()
                                                   ? pdcch_pool.ded_cfgs()[0]
                                                   : pdcch_pool.init_cfg(),

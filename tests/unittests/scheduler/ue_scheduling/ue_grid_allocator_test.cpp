@@ -392,8 +392,7 @@ TEST_P(ue_grid_allocator_default_cfg_test, ue_pdsch_uses_the_tbs_lbrm_the_ue_der
   (*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = ocudu::pdsch_mcs_table::qam256;
   ue_creation_req.ue_index                                                            = to_du_ue_index(0);
   ue_creation_req.crnti                                                               = to_rnti(0x4601);
-  const unsigned max_mimo_layers =
-      *(*ue_creation_req.cfg.cells)[0].ded->serv_cell_cfg.pdsch_serv_cell_cfg->max_mimo_layers;
+  const unsigned max_mimo_layers = *(*ue_creation_req.cfg.cells)[0].ded->init_bwp().dl.pdsch.max_nof_layers;
 
   const ue& u = add_ue(ue_creation_req);
 

@@ -69,6 +69,12 @@ unsigned precomputed_pdsch_layer_configs(unsigned nof_dl_antennas)
   if (pdsch_serv_cell != nullptr) {
     EXPECT_EQ(pdsch_serv_cell->max_mimo_layers, max_configs)
         << "RRC maxMIMO-Layers must match the resolved max DL layers for nof_dl_antennas=" << nof_dl_antennas;
+    const ue_downlink_bwp_config* ue_dl_bwp = ue_cell_cfg.init_bwp().dl.ue_cfg();
+    EXPECT_NE(ue_dl_bwp, nullptr);
+    if (ue_dl_bwp != nullptr) {
+      EXPECT_EQ(ue_dl_bwp->pdsch.max_nof_layers, pdsch_serv_cell->max_mimo_layers)
+          << "The PDSCH layer limit of the scheduler must match maxMIMO-Layers for nof_dl_antennas=" << nof_dl_antennas;
+    }
 
     // The UE derives TBS_LBRM from maxMIMO-Layers, the MCS table and the size of its BWP (TS 38.212, Section 5.4.2.1).
     EXPECT_EQ(ue_cell_cfg.init_bwp().dl.pdsch().ded()->mcs_table, pdsch_mcs_table::qam256);
