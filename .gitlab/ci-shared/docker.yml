@@ -219,11 +219,21 @@ variables:
         fi
       }
 
+      # Cosign v3 stores attestations as OCI referrers only. Tools that look for an SBOM under the
+      # older sha256-<digest>.att tag, such as the CNTi Test Suite, need this copy as well.
+      attest_image_legacy() {
+        local predicate=$1
+        local type=$2
+        cosign attest --new-bundle-format=false --use-signing-config=false \
+          --predicate "${predicate}" --type "${type}" ${IMAGE_DIGEST}
+      }
+
       attest_spdx() {
         local predicate=$1
         local type=$2
         echo "Attesting ${predicate} ($(wc -c < ${predicate}) bytes)"
         attest_image "${predicate}" "${type}"
+        attest_image_legacy "${predicate}" "${type}"
         publish_signed_file "${predicate}"
       }
 
