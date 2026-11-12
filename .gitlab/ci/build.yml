@@ -509,6 +509,11 @@ smoke cuda cached:
   extends: .smoke cuda
   stage: extended
   rules:
+    # The merge requests that carry the CUDA code come from a fork, and a fork cannot spend the
+    # GPU minutes of this project on its own. The label asks for the job, and someone starts it.
+    - if: $ON_MR_FORK && $CI_MERGE_REQUEST_LABELS =~ /ci-cuda/
+      when: manual
+      allow_failure: true
     - if: $ON_MR_FORK
       when: never
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
