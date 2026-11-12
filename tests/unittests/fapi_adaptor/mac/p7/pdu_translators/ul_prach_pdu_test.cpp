@@ -44,6 +44,13 @@ struct prach_format_param {
   unsigned          expected_nof_occasions;
 };
 
+/// Formatter for test params (the default raw byte dump would read the uninitialized padding bytes).
+void PrintTo(const prach_format_param& param, std::ostream* os)
+{
+  *os << "{format=" << static_cast<unsigned>(param.format)
+      << ", expected_nof_occasions=" << param.expected_nof_occasions << "}";
+}
+
 class mac_fapi_ul_prach_format_fixture : public ::testing::TestWithParam<prach_format_param>
 {};
 

@@ -251,6 +251,15 @@ struct vrb_mapping_param {
   vrb_mapping_kind         expected;
 };
 
+/// Formatter for test params (the default raw byte dump would read the uninitialized padding bytes).
+void PrintTo(const vrb_mapping_param& param, std::ostream* os)
+{
+  *os << "{mapping=" << static_cast<unsigned>(param.mapping)
+      << ", dci_format=" << static_cast<unsigned>(param.dci_format)
+      << ", search_space=" << static_cast<unsigned>(param.search_space) << ", in_coreset0=" << param.in_coreset0
+      << ", expected=" << static_cast<unsigned>(param.expected) << "}";
+}
+
 class mac_fapi_pdsch_vrb_mapping_fixture : public ::testing::TestWithParam<vrb_mapping_param>
 {};
 

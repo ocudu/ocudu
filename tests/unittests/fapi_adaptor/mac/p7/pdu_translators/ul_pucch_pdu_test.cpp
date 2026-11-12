@@ -264,6 +264,13 @@ struct format4_occ_param {
   unsigned         expected_m0;
 };
 
+/// Formatter for test params (the default raw byte dump would read the uninitialized padding bytes).
+void PrintTo(const format4_occ_param& param, std::ostream* os)
+{
+  *os << "{occ_length=" << static_cast<unsigned>(param.occ_length)
+      << ", occ_index=" << static_cast<unsigned>(param.occ_index) << ", expected_m0=" << param.expected_m0 << "}";
+}
+
 class mac_fapi_ul_pucch_format4_occ_fixture : public ::testing::TestWithParam<format4_occ_param>
 {};
 
