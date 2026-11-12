@@ -161,7 +161,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     byte_buffer    buf{byte_buffer::fallback_allocation_tag{}, message};
     asn1::cbit_ref bref{buf};
     ngap_message   msg{};
-    if (msg.pdu.unpack(bref) != asn1::OCUDUASN_SUCCESS) {
+    if (asn1::unpack(msg.pdu, bref) != asn1::OCUDUASN_SUCCESS) {
       continue;
     }
 

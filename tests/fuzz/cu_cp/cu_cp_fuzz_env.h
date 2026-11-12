@@ -23,6 +23,7 @@
 #include "tests/unittests/ngap/ngap_test_messages.h"
 #include "ocudu/adt/byte_buffer.h"
 #include "ocudu/adt/mutexed_mpmc_queue.h"
+#include "ocudu/asn1/asn1_dispatch.h"
 #include "ocudu/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "ocudu/asn1/ngap/common.h"
 #include "ocudu/asn1/ngap/ngap.h"
@@ -647,7 +648,7 @@ private:
 
     asn1::cbit_ref              bref{dl_dcch_pdu};
     asn1::rrc_nr::dl_dcch_msg_s dl_dcch_msg;
-    if (dl_dcch_msg.unpack(bref) != asn1::OCUDUASN_SUCCESS or
+    if (asn1::unpack(dl_dcch_msg, bref) != asn1::OCUDUASN_SUCCESS or
         dl_dcch_msg.msg.type().value != asn1::rrc_nr::dl_dcch_msg_type_c::types_opts::c1 or
         dl_dcch_msg.msg.c1().type().value != wanted) {
       return std::nullopt;
