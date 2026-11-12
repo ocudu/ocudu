@@ -362,8 +362,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   security::sec_128_as_config sec_128 = security::truncate_config(security_info);
   auto                        integrity_enabled =
       new_session.security_ind.integrity_protection_ind == integrity_protection_indication_t::not_needed
-          ? security::integrity_enabled::off
-          : security::integrity_enabled::on;
+                                 ? security::integrity_enabled::off
+                                 : security::integrity_enabled::on;
   auto ciphering_enabled =
       new_session.security_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::not_needed
           ? security::ciphering_enabled::off
@@ -482,11 +482,11 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                  .peer_addr   = xnu_addr,
                  .peer_port   = GTPU_PORT,
                  .pdcp_sn_len = new_drb->pdcp->get_tx_upper_control_interface().get_sn_size()}};
-      auto gtpu_fwd_cfg = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
-                                                            .cfg       = fwd_cfg,
-                                                            .gtpu_pcap = &xnu_gtpu_pcap,
-                                                            .rx_lower  = &new_drb->gtpu_forwarding_to_pdcp_adapter,
-                                                            .tx_upper  = nullptr};
+      auto gtpu_fwd_cfg        = gtpu_tunnel_pdcp_creation_message{.ue_index  = ue_index,
+                                                                   .cfg       = fwd_cfg,
+                                                                   .gtpu_pcap = &xnu_gtpu_pcap,
+                                                                   .rx_lower  = &new_drb->gtpu_forwarding_to_pdcp_adapter,
+                                                                   .tx_upper  = nullptr};
       new_drb->gtpu_fwd_target = create_gtpu_tunnel_pdcp(gtpu_fwd_cfg);
 
       // Connect PDCP to

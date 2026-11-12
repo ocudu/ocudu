@@ -420,9 +420,9 @@ int main(int argc, char** argv)
   if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace.enabled) {
     auto& schedtrace_cfg = o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.tracer.schedtrace;
     schedtrace_backend   = schedtrace::init(schedtrace_cfg.path,
-                                            std::chrono::milliseconds{schedtrace_cfg.flush_period_ms},
-                                            app_timers,
-                                            workers.get_trace_executor());
+                                          std::chrono::milliseconds{schedtrace_cfg.flush_period_ms},
+                                          app_timers,
+                                          workers.get_trace_executor());
   }
 
   // Create Xn-C GWs. (TODO cleanup port and PPID args with factory)
@@ -471,9 +471,9 @@ int main(int argc, char** argv)
   std::unique_ptr<gtpu_teid_pool> cu_f1u_teid_allocator = create_gtpu_allocator(cu_f1u_alloc_msg);
 
   // Create F1-U TEID allocator (DU)
-  gtpu_allocator_creation_request du_f1u_alloc_msg = {.max_nof_teids            = MAX_NOF_DU_UES * MAX_NOF_DRBS,
-                                                      .teid_release_linger_time = GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
-                                                      .timers                   = time_ctrl->get_timer_manager()};
+  gtpu_allocator_creation_request du_f1u_alloc_msg      = {.max_nof_teids            = MAX_NOF_DU_UES * MAX_NOF_DRBS,
+                                                           .teid_release_linger_time = GTPU_DEFAULT_TEID_RELEASE_LINGER_TIME,
+                                                           .timers                   = time_ctrl->get_timer_manager()};
   std::unique_ptr<gtpu_teid_pool> du_f1u_teid_allocator = create_gtpu_allocator(du_f1u_alloc_msg);
 
   // Create F1-U connector
@@ -535,17 +535,17 @@ int main(int argc, char** argv)
   // Create O-CU-UP dependencies.
   std::vector<ocuup::e1_connection_client*> e1ap_conn_client({e1_gw.get()});
   o_cu_up_unit_dependencies                 o_cuup_unit_deps{
-      .workers                = workers,
-      .e2_gw                  = *e2_gw_cu_up,
-      .metrics_notifier       = metrics_notifier_forwarder,
-      .remote_metrics_gateway = remote_server_gateway,
-      .e1ap_conn_client       = std::move(e1ap_conn_client),
-      .f1u_teid_allocator     = *cu_f1u_teid_allocator,
-      .f1u_gateway            = f1u_conn->get_f1u_cu_up_gateway(),
-      .ngu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
-      .xnu_gtpu_pcap          = *cu_up_dlt_pcaps.xnu,
-      .timers                 = *cu_timers,
-      .io_brk                 = *epoll_broker,
+                      .workers                = workers,
+                      .e2_gw                  = *e2_gw_cu_up,
+                      .metrics_notifier       = metrics_notifier_forwarder,
+                      .remote_metrics_gateway = remote_server_gateway,
+                      .e1ap_conn_client       = std::move(e1ap_conn_client),
+                      .f1u_teid_allocator     = *cu_f1u_teid_allocator,
+                      .f1u_gateway            = f1u_conn->get_f1u_cu_up_gateway(),
+                      .ngu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
+                      .xnu_gtpu_pcap          = *cu_up_dlt_pcaps.xnu,
+                      .timers                 = *cu_timers,
+                      .io_brk                 = *epoll_broker,
   };
 
   // Create O-CU-UP.

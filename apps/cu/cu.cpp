@@ -496,17 +496,17 @@ int main(int argc, char** argv)
   // Create O-CU-UP dependencies.
   std::vector<ocuup::e1_connection_client*> e1ap_conn_client({e1_gw.get()});
   o_cu_up_unit_dependencies                 o_cuup_unit_deps{
-      .workers                = workers,
-      .e2_gw                  = *e2_gw_cu_up,
-      .metrics_notifier       = metrics_notifier_forwarder,
-      .remote_metrics_gateway = remote_server_gateway,
-      .e1ap_conn_client       = std::move(e1ap_conn_client),
-      .f1u_teid_allocator     = *cu_f1u_teid_allocator,
-      .f1u_gateway            = *cu_f1u_conn,
-      .ngu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
-      .xnu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
-      .timers                 = app_timers,
-      .io_brk                 = *epoll_broker,
+                      .workers                = workers,
+                      .e2_gw                  = *e2_gw_cu_up,
+                      .metrics_notifier       = metrics_notifier_forwarder,
+                      .remote_metrics_gateway = remote_server_gateway,
+                      .e1ap_conn_client       = std::move(e1ap_conn_client),
+                      .f1u_teid_allocator     = *cu_f1u_teid_allocator,
+                      .f1u_gateway            = *cu_f1u_conn,
+                      .ngu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
+                      .xnu_gtpu_pcap          = *cu_up_dlt_pcaps.ngu,
+                      .timers                 = app_timers,
+                      .io_brk                 = *epoll_broker,
   };
 
   // Create O-CU-UP.
