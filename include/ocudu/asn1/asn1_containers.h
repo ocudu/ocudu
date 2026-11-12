@@ -274,7 +274,7 @@ public:
   {
     return std::equal(data(), data() + size(), other.data(), other.data() + other.size());
   }
-  void resize(uint32_t new_size) { current_size = new_size; }
+  void resize(uint32_t new_size) { current_size = std::min(new_size, MAX_N); }
   void clear() { resize(0); }
   void push_back(const T& elem)
   {
