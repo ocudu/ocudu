@@ -765,6 +765,11 @@ oss-fuzz build:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
     - if: $ON_MR_FORK
       when: never
+    # Run on MR pipelines that change the fuzz harnesses, which only this job and the Nightly
+    # pipeline build.
+    - if: $ON_MR
+      changes:
+        - tests/fuzz/**/*
     # Manual button on MR pipelines, to try out changes to this job (or to the OSS-Fuzz
     # build itself) before they only get exercised on the next Nightly pipeline.
     - if: $ON_MR
@@ -793,6 +798,12 @@ oss-scanner build:
     - if: $CI_PIPELINE_SCHEDULE_DESCRIPTION =~ /Nightly/
     - if: $ON_MR_FORK
       when: never
+    # Run on MR pipelines that change the fuzz harnesses or the scanner image, which only this job
+    # and the Nightly pipeline build.
+    - if: $ON_MR
+      changes:
+        - tests/fuzz/**/*
+        - .oss-scanner/**/*
     # Manual button on MR pipelines, to try out changes to the Dockerfile before they only get
     # exercised on the next Nightly pipeline.
     - if: $ON_MR

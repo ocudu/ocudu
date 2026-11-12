@@ -377,6 +377,9 @@ variables:
     ASSERT_LEVEL: NONE
     TEST_MODE: default
     MARCH: x86-64-v3
+    # Also builds the fuzz harnesses, which no other MR build job compiles, so that changes to the
+    # APIs they use are caught before they break the OSS-Fuzz and OSS Scanner builds.
+    BUILD_ARGS: "-DENABLE_FUZZTESTS=True"
 
 .smoke cuda:
   extends: .build_and_unit
