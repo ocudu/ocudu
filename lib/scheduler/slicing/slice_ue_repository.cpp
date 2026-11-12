@@ -106,9 +106,9 @@ bounded_bitset<MAX_NOF_DU_UES> slice_ue_repository::get_ues_with_pending_newtx_d
 {
   bounded_bitset<MAX_NOF_DU_UES> result = ues.get_ues_with_pending_newtx_data(slice_id, is_dl);
   // The pending bitset also flags UEs with pending CEs or SRs that may not be part of this slice.
-  bounded_bitset<MAX_NOF_DU_UES> members = ue_members;
-  members.resize(result.size());
-  result &= members;
+  // Note: UE indexes above the highest slice member are not members, so the bitset can be truncated.
+  result.resize(ue_members.size());
+  result &= ue_members;
   return result;
 }
 
