@@ -39,20 +39,20 @@ static const asn1::table::seq_field choice_table_cli_triggered_list_r16_c_altern
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::list_codec<srs_rsrp_triggered_list_r16_l,
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(63), false, false>>::value},
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{63}, false, false>>::value},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::codec,
      false,
      false,
      1,
-     64,
+     63,
      &asn1::table::list_codec<cli_rssi_triggered_list_r16_l,
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(63), false, false>>::value}};
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{63}, false, false>>::value}};
 static const asn1::table::field_name choice_table_cli_triggered_list_r16_c_names[] = {
     {"srs-RSRP-TriggeredList-r16", nullptr},
     {"cli-RSSI-TriggeredList-r16", nullptr}};
@@ -108,24 +108,24 @@ static const asn1::table::seq_field choice_table_cells_triggered_list_item_c__al
      asn1::table::field_op::int_u16,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(1007),
+     int64_t{0},
+     uint64_t{1007},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(503),
+     int64_t{0},
+     uint64_t{503},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(511),
+     int64_t{0},
+     uint64_t{511},
      nullptr}};
 static const asn1::table::field_name choice_table_cells_triggered_list_item_c__names[] = {
     {"physCellId", nullptr},
@@ -175,12 +175,12 @@ static const asn1::table::seq_field seq_table_sn_pn_id_r18_s_fields[] = {
      &asn1::table::object_codec<decltype(sn_pn_id_r18_s::nid_r18), asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_sn_pn_id_r18_s_names[] = {{"plmn-Identity-r18", nullptr},
                                                                          {"nid-r18", nullptr}};
-const asn1::table::seq_desc sn_pn_id_r18_s::desc = {{seq_table_sn_pn_id_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                    false,
-                                                    false,
-                                                    nullptr,
-                                                    0,
-                                                    seq_table_sn_pn_id_r18_s_names};
+const asn1::table::seq_desc          sn_pn_id_r18_s::desc             = {
+    {seq_table_sn_pn_id_r18_s_fields, uint64_t{0x3}, nullptr, seq_table_sn_pn_id_r18_s_names, 2, 0},
+    false,
+    false,
+    nullptr,
+    0};
 
 // VarAppLayerIdle-r18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_app_layer_idle_r18_s_fields[] = {
@@ -189,8 +189,8 @@ static const asn1::table::seq_field seq_table_var_app_layer_idle_r18_s_fields[] 
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(var_app_layer_idle_r18_s, service_type_r18),
      asn1::table::seq_field::mandatory,
@@ -215,8 +215,8 @@ static const asn1::table::seq_field seq_table_var_app_layer_idle_r18_s_fields[] 
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(1),
-     UINT64_C(16),
+     int64_t{1},
+     uint64_t{15},
      nullptr}};
 static const asn1::table::field_name seq_table_var_app_layer_idle_r18_s_names[] = {
     {"measConfigAppLayerId-r18", nullptr},
@@ -225,13 +225,16 @@ static const asn1::table::field_name seq_table_var_app_layer_idle_r18_s_names[] 
     {"appLayerMeasPriority-r18", nullptr}};
 static const asn1::table::seq_opt seq_table_var_app_layer_idle_r18_s_opts[] = {
     {3, (int32_t)offsetof(var_app_layer_idle_r18_s, app_layer_meas_prio_r18_present)}};
-const asn1::table::seq_desc var_app_layer_idle_r18_s::desc = {
-    {seq_table_var_app_layer_idle_r18_s_fields, 4, UINT64_C(0x7), seq_table_var_app_layer_idle_r18_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_app_layer_idle_r18_s_names};
+const asn1::table::seq_desc var_app_layer_idle_r18_s::desc = {{seq_table_var_app_layer_idle_r18_s_fields,
+                                                               uint64_t{0x7},
+                                                               seq_table_var_app_layer_idle_r18_s_opts,
+                                                               seq_table_var_app_layer_idle_r18_s_names,
+                                                               4,
+                                                               1},
+                                                              false,
+                                                              false,
+                                                              nullptr,
+                                                              0};
 
 static const char* enum_names_var_app_layer_idle_r18_s_service_type_r18_e__values[] =
     {"streaming", "mtsi", "vr", "spare5", "spare4", "spare3", "spare2", "spare1"};
@@ -248,7 +251,7 @@ static const asn1::table::seq_field seq_table_var_app_layer_idle_cfg_r18_s_field
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(var_app_layer_idle_cfg_r18_s::app_layer_idle_cfg_list_r18),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -256,13 +259,16 @@ static const asn1::table::seq_field seq_table_var_app_layer_idle_cfg_r18_s_field
      &var_app_layer_idle_r18_s::desc}};
 static const asn1::table::field_name seq_table_var_app_layer_idle_cfg_r18_s_names[] = {
     {"appLayerIdleConfigList-r18", nullptr}};
-const asn1::table::seq_desc var_app_layer_idle_cfg_r18_s::desc = {
-    {seq_table_var_app_layer_idle_cfg_r18_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_app_layer_idle_cfg_r18_s_names};
+const asn1::table::seq_desc var_app_layer_idle_cfg_r18_s::desc = {{seq_table_var_app_layer_idle_cfg_r18_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   nullptr,
+                                                                   seq_table_var_app_layer_idle_cfg_r18_s_names,
+                                                                   1,
+                                                                   0},
+                                                                  false,
+                                                                  false,
+                                                                  nullptr,
+                                                                  0};
 
 // VarAppLayerPLMN-List-r18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_r18_s_fields[] = {
@@ -271,8 +277,8 @@ static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_r18_s_fiel
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(var_app_layer_plmn_list_r18_s, plmn_id_list_r18),
      asn1::table::seq_field::mandatory,
@@ -280,7 +286,7 @@ static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_r18_s_fiel
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(var_app_layer_plmn_list_r18_s::plmn_id_list_r18),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -289,13 +295,16 @@ static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_r18_s_fiel
 static const asn1::table::field_name seq_table_var_app_layer_plmn_list_r18_s_names[] = {
     {"measConfigAppLayerId-r18", nullptr},
     {"plmn-IdentityList-r18", nullptr}};
-const asn1::table::seq_desc var_app_layer_plmn_list_r18_s::desc = {
-    {seq_table_var_app_layer_plmn_list_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_app_layer_plmn_list_r18_s_names};
+const asn1::table::seq_desc var_app_layer_plmn_list_r18_s::desc = {{seq_table_var_app_layer_plmn_list_r18_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    nullptr,
+                                                                    seq_table_var_app_layer_plmn_list_r18_s_names,
+                                                                    2,
+                                                                    0},
+                                                                   false,
+                                                                   false,
+                                                                   nullptr,
+                                                                   0};
 
 // VarAppLayerPLMN-ListConfig-r18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_cfg_r18_s_fields[] = {
@@ -305,7 +314,7 @@ static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_cfg_r18_s_
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(var_app_layer_plmn_list_cfg_r18_s::plmn_cfg_list_r18),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -314,12 +323,16 @@ static const asn1::table::seq_field seq_table_var_app_layer_plmn_list_cfg_r18_s_
 static const asn1::table::field_name seq_table_var_app_layer_plmn_list_cfg_r18_s_names[] = {
     {"plmnConfigList-r18", nullptr}};
 const asn1::table::seq_desc var_app_layer_plmn_list_cfg_r18_s::desc = {
-    {seq_table_var_app_layer_plmn_list_cfg_r18_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_var_app_layer_plmn_list_cfg_r18_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_var_app_layer_plmn_list_cfg_r18_s_names,
+     1,
+     0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_app_layer_plmn_list_cfg_r18_s_names};
+    0};
 
 // VarConditionalReconfig ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_conditional_recfg_s_fields[] = {
@@ -329,7 +342,7 @@ static const asn1::table::seq_field seq_table_var_conditional_recfg_s_fields[] =
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(var_conditional_recfg_s::cond_recfg_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -350,7 +363,7 @@ static const asn1::table::seq_field seq_table_var_conditional_recfg_s_fields[] =
      false,
      false,
      1,
-     9,
+     8,
      &asn1::table::item_list_codec<decltype(var_conditional_recfg_s::sk_counter_cfg_r18),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -364,13 +377,16 @@ static const asn1::table::seq_opt seq_table_var_conditional_recfg_s_opts[] = {
     {0, asn1::table::seq_field::list_presence},
     {1, asn1::table::seq_field::list_presence},
     {2, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc var_conditional_recfg_s::desc = {
-    {seq_table_var_conditional_recfg_s_fields, 3, UINT64_C(0x0), seq_table_var_conditional_recfg_s_opts, 3},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_conditional_recfg_s_names};
+const asn1::table::seq_desc var_conditional_recfg_s::desc = {{seq_table_var_conditional_recfg_s_fields,
+                                                              uint64_t{0x0},
+                                                              seq_table_var_conditional_recfg_s_opts,
+                                                              seq_table_var_conditional_recfg_s_names,
+                                                              3,
+                                                              3},
+                                                             false,
+                                                             false,
+                                                             nullptr,
+                                                             0};
 
 // VarConnEstFailReport-r16 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_conn_est_fail_report_r16_s_fields[] = {
@@ -395,13 +411,16 @@ static const asn1::table::seq_field seq_table_var_conn_est_fail_report_r16_s_fie
 static const asn1::table::field_name seq_table_var_conn_est_fail_report_r16_s_names[] = {
     {"connEstFailReport-r16", nullptr},
     {"networkIdentity-r18", nullptr}};
-const asn1::table::seq_desc var_conn_est_fail_report_r16_s::desc = {
-    {seq_table_var_conn_est_fail_report_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_conn_est_fail_report_r16_s_names};
+const asn1::table::seq_desc var_conn_est_fail_report_r16_s::desc = {{seq_table_var_conn_est_fail_report_r16_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_var_conn_est_fail_report_r16_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    false,
+                                                                    false,
+                                                                    nullptr,
+                                                                    0};
 
 static const asn1::table::storage_ops* const
     choice_storage_var_conn_est_fail_report_r16_s_network_id_r18_c__alternatives[] = {
@@ -474,7 +493,7 @@ static const asn1::table::seq_field seq_table_var_conn_est_fail_report_list_r17_
      false,
      false,
      1,
-     4,
+     3,
      &asn1::table::item_list_codec<decltype(var_conn_est_fail_report_list_r17_s::conn_est_fail_report_list_r17),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -483,12 +502,16 @@ static const asn1::table::seq_field seq_table_var_conn_est_fail_report_list_r17_
 static const asn1::table::field_name seq_table_var_conn_est_fail_report_list_r17_s_names[] = {
     {"connEstFailReportList-r17", nullptr}};
 const asn1::table::seq_desc var_conn_est_fail_report_list_r17_s::desc = {
-    {seq_table_var_conn_est_fail_report_list_r17_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_var_conn_est_fail_report_list_r17_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_var_conn_est_fail_report_list_r17_s_names,
+     1,
+     0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_conn_est_fail_report_list_r17_s_names};
+    0};
 
 // VarEnhMeasIdleConfig-r18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_enh_meas_idle_cfg_r18_s_fields[] = {
@@ -505,13 +528,16 @@ static const asn1::table::field_name seq_table_var_enh_meas_idle_cfg_r18_s_names
     {"measIdleValidityDuration-r18", nullptr}};
 static const asn1::table::seq_opt seq_table_var_enh_meas_idle_cfg_r18_s_opts[] = {
     {0, (int32_t)offsetof(var_enh_meas_idle_cfg_r18_s, meas_idle_validity_dur_r18_present)}};
-const asn1::table::seq_desc var_enh_meas_idle_cfg_r18_s::desc = {
-    {seq_table_var_enh_meas_idle_cfg_r18_s_fields, 1, UINT64_C(0x0), seq_table_var_enh_meas_idle_cfg_r18_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_enh_meas_idle_cfg_r18_s_names};
+const asn1::table::seq_desc var_enh_meas_idle_cfg_r18_s::desc = {{seq_table_var_enh_meas_idle_cfg_r18_s_fields,
+                                                                  uint64_t{0x0},
+                                                                  seq_table_var_enh_meas_idle_cfg_r18_s_opts,
+                                                                  seq_table_var_enh_meas_idle_cfg_r18_s_names,
+                                                                  1,
+                                                                  1},
+                                                                 false,
+                                                                 false,
+                                                                 nullptr,
+                                                                 0};
 
 // VarLTM-ServingCellNoResetID-r18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_ltm_serving_cell_no_reset_id_r18_s_fields[] = {
@@ -520,8 +546,8 @@ static const asn1::table::seq_field seq_table_var_ltm_serving_cell_no_reset_id_r
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(1),
-     UINT64_C(9),
+     int64_t{1},
+     uint64_t{8},
      nullptr}};
 static const asn1::table::field_name seq_table_var_ltm_serving_cell_no_reset_id_r18_s_names[] = {
     {"ltm-ServingCellNoResetID-r18", nullptr}};
@@ -529,15 +555,15 @@ static const asn1::table::seq_opt seq_table_var_ltm_serving_cell_no_reset_id_r18
     {0, (int32_t)offsetof(var_ltm_serving_cell_no_reset_id_r18_s, ltm_serving_cell_no_reset_id_r18_present)}};
 const asn1::table::seq_desc var_ltm_serving_cell_no_reset_id_r18_s::desc = {
     {seq_table_var_ltm_serving_cell_no_reset_id_r18_s_fields,
-     1,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_var_ltm_serving_cell_no_reset_id_r18_s_opts,
+     seq_table_var_ltm_serving_cell_no_reset_id_r18_s_names,
+     1,
      1},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_ltm_serving_cell_no_reset_id_r18_s_names};
+    0};
 
 // VarLTM-ServingCellUE-MeasuredTA-ID-r18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_fields[] = {
@@ -546,8 +572,8 @@ static const asn1::table::seq_field seq_table_var_ltm_serving_cell_ue_measured_t
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(1),
-     UINT64_C(9),
+     int64_t{1},
+     uint64_t{8},
      nullptr}};
 static const asn1::table::field_name seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_names[] = {
     {"ltm-ServingCellUE-MeasuredTA-ID-r18", nullptr}};
@@ -556,15 +582,15 @@ static const asn1::table::seq_opt seq_table_var_ltm_serving_cell_ue_measured_ta_
      (int32_t)offsetof(var_ltm_serving_cell_ue_measured_ta_id_r18_s, ltm_serving_cell_ue_measured_ta_id_r18_present)}};
 const asn1::table::seq_desc var_ltm_serving_cell_ue_measured_ta_id_r18_s::desc = {
     {seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_fields,
-     1,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_opts,
+     seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_names,
+     1,
      1},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_ltm_serving_cell_ue_measured_ta_id_r18_s_names};
+    0};
 
 // VarLogMeasConfig-r16 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_log_meas_cfg_r16_s_fields[] = {
@@ -583,7 +609,7 @@ static const asn1::table::seq_field seq_table_var_log_meas_cfg_r16_s_fields[] = 
      false,
      false,
      1,
-     4,
+     3,
      &asn1::table::list_codec<decltype(var_log_meas_cfg_r16_s::bt_name_list_r16), asn1::table::string_json>::value},
     {offsetof(var_log_meas_cfg_r16_s, wlan_name_list_r16),
      asn1::table::seq_field::list_presence,
@@ -591,7 +617,7 @@ static const asn1::table::seq_field seq_table_var_log_meas_cfg_r16_s_fields[] = 
      false,
      false,
      1,
-     4,
+     3,
      &asn1::table::list_codec<decltype(var_log_meas_cfg_r16_s::wlan_name_list_r16), asn1::table::string_json>::value},
     {offsetof(var_log_meas_cfg_r16_s, sensor_name_list_r16),
      (int32_t)offsetof(var_log_meas_cfg_r16_s, sensor_name_list_r16_present),
@@ -663,13 +689,16 @@ static const asn1::table::seq_opt    seq_table_var_log_meas_cfg_r16_s_opts[]  = 
     {6, (int32_t)offsetof(var_log_meas_cfg_r16_s, early_meas_ind_r17_present)},
     {7, (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_r17_present)},
     {8, (int32_t)offsetof(var_log_meas_cfg_r16_s, area_cfg_v1800_present)}};
-const asn1::table::seq_desc var_log_meas_cfg_r16_s::desc = {
-    {seq_table_var_log_meas_cfg_r16_s_fields, 9, UINT64_C(0x30), seq_table_var_log_meas_cfg_r16_s_opts, 7},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_log_meas_cfg_r16_s_names};
+const asn1::table::seq_desc var_log_meas_cfg_r16_s::desc = {{seq_table_var_log_meas_cfg_r16_s_fields,
+                                                             uint64_t{0x30},
+                                                             seq_table_var_log_meas_cfg_r16_s_opts,
+                                                             seq_table_var_log_meas_cfg_r16_s_names,
+                                                             9,
+                                                             7},
+                                                            false,
+                                                            false,
+                                                            nullptr,
+                                                            0};
 
 static const asn1::table::storage_ops* const choice_storage_var_log_meas_cfg_r16_s_report_type_c__alternatives[] = {
     &asn1::table::alternative_ops<logged_periodical_report_cfg_r16_s, false>::value,
@@ -775,7 +804,7 @@ static const asn1::table::seq_field seq_table_var_log_meas_report_r16_s_fields[]
      false,
      false,
      1,
-     520,
+     519,
      &asn1::table::item_list_codec<decltype(var_log_meas_report_r16_s::log_meas_info_list_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -799,13 +828,16 @@ static const asn1::table::field_name seq_table_var_log_meas_report_r16_s_names[]
     {"logMeasInfoList-r16", nullptr},
     {"sigLoggedMeasType-r17", "true"},
     {"identityList-r18", nullptr}};
-const asn1::table::seq_desc var_log_meas_report_r16_s::desc = {
-    {seq_table_var_log_meas_report_r16_s_fields, 7, UINT64_C(0x7f), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_log_meas_report_r16_s_names};
+const asn1::table::seq_desc var_log_meas_report_r16_s::desc = {{seq_table_var_log_meas_report_r16_s_fields,
+                                                                uint64_t{0x7f},
+                                                                nullptr,
+                                                                seq_table_var_log_meas_report_r16_s_names,
+                                                                7,
+                                                                0},
+                                                               false,
+                                                               false,
+                                                               nullptr,
+                                                               0};
 
 static const asn1::table::storage_ops* const choice_storage_var_log_meas_report_r16_s_id_list_r18_c__alternatives[] = {
     &asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
@@ -832,7 +864,7 @@ static const asn1::table::seq_field choice_table_var_log_meas_report_r16_s_id_li
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -840,7 +872,7 @@ static const asn1::table::seq_field choice_table_var_log_meas_report_r16_s_id_li
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::list_codec<sn_pn_cfg_id_list_r18_l, asn1::table::struct_json>::value}};
 static const asn1::table::field_name choice_table_var_log_meas_report_r16_s_id_list_r18_c__names[] = {
     {"plmn-IdentityList-r18", nullptr},
@@ -875,7 +907,7 @@ static const asn1::table::seq_field seq_table_var_meas_cfg_s_fields[] = {
      false,
      false,
      1,
-     64,
+     63,
      &asn1::table::
          item_list_codec<decltype(var_meas_cfg_s::meas_id_list), asn1::table::sequence_item_ops, false, true>::value,
      &meas_id_to_add_mod_s::desc},
@@ -885,7 +917,7 @@ static const asn1::table::seq_field seq_table_var_meas_cfg_s_fields[] = {
      false,
      false,
      1,
-     64,
+     63,
      &asn1::table::
          item_list_codec<decltype(var_meas_cfg_s::meas_obj_list), asn1::table::sequence_item_ops, false, true>::value,
      &meas_obj_to_add_mod_s::desc},
@@ -895,7 +927,7 @@ static const asn1::table::seq_field seq_table_var_meas_cfg_s_fields[] = {
      false,
      false,
      1,
-     64,
+     63,
      &asn1::table::
          item_list_codec<decltype(var_meas_cfg_s::report_cfg_list), asn1::table::sequence_item_ops, false, true>::value,
      &report_cfg_to_add_mod_s::desc},
@@ -928,13 +960,16 @@ static const asn1::table::seq_opt    seq_table_var_meas_cfg_s_opts[]  = {
     {2, asn1::table::seq_field::list_presence},
     {3, (int32_t)offsetof(var_meas_cfg_s, quant_cfg_present)},
     {4, (int32_t)offsetof(var_meas_cfg_s, s_measure_cfg_present)}};
-const asn1::table::seq_desc var_meas_cfg_s::desc = {
-    {seq_table_var_meas_cfg_s_fields, 5, UINT64_C(0x0), seq_table_var_meas_cfg_s_opts, 5},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_meas_cfg_s_names};
+const asn1::table::seq_desc var_meas_cfg_s::desc = {{seq_table_var_meas_cfg_s_fields,
+                                                     uint64_t{0x0},
+                                                     seq_table_var_meas_cfg_s_opts,
+                                                     seq_table_var_meas_cfg_s_names,
+                                                     5,
+                                                     5},
+                                                    false,
+                                                    false,
+                                                    nullptr,
+                                                    0};
 
 static const asn1::table::storage_ops* const choice_storage_var_meas_cfg_s_s_measure_cfg_c__alternatives[] = {
     &asn1::table::alternative_ops<uint8_t, true>::value,
@@ -960,16 +995,16 @@ static const asn1::table::seq_field choice_table_var_meas_cfg_s_s_measure_cfg_c_
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(127),
+     int64_t{0},
+     uint64_t{127},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(127),
+     int64_t{0},
+     uint64_t{127},
      nullptr}};
 static const asn1::table::field_name choice_table_var_meas_cfg_s_s_measure_cfg_c__names[] = {{"ssb-RSRP", nullptr},
                                                                                              {"csi-RSRP", nullptr}};
@@ -1002,7 +1037,7 @@ static const asn1::table::seq_field seq_table_var_meas_cfg_sl_r16_s_fields[] = {
      false,
      false,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(var_meas_cfg_sl_r16_s::sl_meas_id_list_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1014,7 +1049,7 @@ static const asn1::table::seq_field seq_table_var_meas_cfg_sl_r16_s_fields[] = {
      false,
      false,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(var_meas_cfg_sl_r16_s::sl_meas_obj_list_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1026,7 +1061,7 @@ static const asn1::table::seq_field seq_table_var_meas_cfg_sl_r16_s_fields[] = {
      false,
      false,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(var_meas_cfg_sl_r16_s::sl_report_cfg_list_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1050,13 +1085,16 @@ static const asn1::table::seq_opt    seq_table_var_meas_cfg_sl_r16_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, asn1::table::seq_field::list_presence},
     {3, (int32_t)offsetof(var_meas_cfg_sl_r16_s, sl_quant_cfg_r16_present)}};
-const asn1::table::seq_desc var_meas_cfg_sl_r16_s::desc = {
-    {seq_table_var_meas_cfg_sl_r16_s_fields, 4, UINT64_C(0x0), seq_table_var_meas_cfg_sl_r16_s_opts, 4},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_meas_cfg_sl_r16_s_names};
+const asn1::table::seq_desc var_meas_cfg_sl_r16_s::desc = {{seq_table_var_meas_cfg_sl_r16_s_fields,
+                                                            uint64_t{0x0},
+                                                            seq_table_var_meas_cfg_sl_r16_s_opts,
+                                                            seq_table_var_meas_cfg_sl_r16_s_names,
+                                                            4,
+                                                            4},
+                                                           false,
+                                                           false,
+                                                           nullptr,
+                                                           0};
 
 // VarMeasIdleConfig-r16 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_meas_idle_cfg_r16_s_fields[] = {
@@ -1066,7 +1104,7 @@ static const asn1::table::seq_field seq_table_var_meas_idle_cfg_r16_s_fields[] =
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(var_meas_idle_cfg_r16_s::meas_idle_carrier_list_nr_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1078,7 +1116,7 @@ static const asn1::table::seq_field seq_table_var_meas_idle_cfg_r16_s_fields[] =
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(var_meas_idle_cfg_r16_s::meas_idle_carrier_list_eutra_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1099,7 +1137,7 @@ static const asn1::table::seq_field seq_table_var_meas_idle_cfg_r16_s_fields[] =
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(var_meas_idle_cfg_r16_s::validity_area_list_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1114,13 +1152,16 @@ static const asn1::table::seq_opt seq_table_var_meas_idle_cfg_r16_s_opts[] = {
     {0, asn1::table::seq_field::list_presence},
     {1, asn1::table::seq_field::list_presence},
     {3, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc var_meas_idle_cfg_r16_s::desc = {
-    {seq_table_var_meas_idle_cfg_r16_s_fields, 4, UINT64_C(0x4), seq_table_var_meas_idle_cfg_r16_s_opts, 3},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_meas_idle_cfg_r16_s_names};
+const asn1::table::seq_desc var_meas_idle_cfg_r16_s::desc = {{seq_table_var_meas_idle_cfg_r16_s_fields,
+                                                              uint64_t{0x4},
+                                                              seq_table_var_meas_idle_cfg_r16_s_opts,
+                                                              seq_table_var_meas_idle_cfg_r16_s_names,
+                                                              4,
+                                                              3},
+                                                             false,
+                                                             false,
+                                                             nullptr,
+                                                             0};
 
 static const char* enum_names_var_meas_idle_cfg_r16_s_meas_idle_dur_r16_e__values[] =
     {"sec10", "sec30", "sec60", "sec120", "sec180", "sec240", "sec300", "spare"};
@@ -1160,13 +1201,16 @@ static const asn1::table::field_name seq_table_var_meas_idle_report_r16_s_names[
 static const asn1::table::seq_opt seq_table_var_meas_idle_report_r16_s_opts[] = {
     {0, (int32_t)offsetof(var_meas_idle_report_r16_s, meas_report_idle_nr_r16_present)},
     {1, (int32_t)offsetof(var_meas_idle_report_r16_s, meas_report_idle_eutra_r16_present)}};
-const asn1::table::seq_desc var_meas_idle_report_r16_s::desc = {
-    {seq_table_var_meas_idle_report_r16_s_fields, 2, UINT64_C(0x0), seq_table_var_meas_idle_report_r16_s_opts, 2},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_meas_idle_report_r16_s_names};
+const asn1::table::seq_desc var_meas_idle_report_r16_s::desc = {{seq_table_var_meas_idle_report_r16_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_var_meas_idle_report_r16_s_opts,
+                                                                 seq_table_var_meas_idle_report_r16_s_names,
+                                                                 2,
+                                                                 2},
+                                                                false,
+                                                                false,
+                                                                nullptr,
+                                                                0};
 
 // VarMeasReport ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_meas_report_s_fields[] = {
@@ -1175,8 +1219,8 @@ static const asn1::table::seq_field seq_table_var_meas_report_s_fields[] = {
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(1),
-     UINT64_C(64),
+     int64_t{1},
+     uint64_t{63},
      nullptr},
     {offsetof(var_meas_report_s, cells_triggered_list),
      asn1::table::seq_field::list_presence,
@@ -1184,7 +1228,7 @@ static const asn1::table::seq_field seq_table_var_meas_report_s_fields[] = {
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(var_meas_report_s::cells_triggered_list),
                                    asn1::table::choice_item_ops,
                                    false,
@@ -1195,8 +1239,8 @@ static const asn1::table::seq_field seq_table_var_meas_report_s_fields[] = {
      asn1::table::field_op::int_i64,
      false,
      false,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(var_meas_report_s, cli_triggered_list_r16),
      (int32_t)offsetof(var_meas_report_s, cli_triggered_list_r16_present),
@@ -1213,17 +1257,17 @@ static const asn1::table::seq_field seq_table_var_meas_report_s_fields[] = {
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::list_codec<decltype(var_meas_report_s::tx_pool_meas_to_add_mod_list_nr_r16),
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(1), UINT64_C(16), false, false>>::value},
+                              asn1::table::int_items<false, int64_t{1}, uint64_t{15}, false, false>>::value},
     {offsetof(var_meas_report_s, relays_triggered_list_r17),
      asn1::table::seq_field::list_presence,
      asn1::table::field_op::codec,
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(var_meas_report_s::relays_triggered_list_r17), asn1::table::struct_json>::value},
     {offsetof(var_meas_report_s, cells_met_leaving_cond_r18),
      asn1::table::seq_field::list_presence,
@@ -1231,20 +1275,20 @@ static const asn1::table::seq_field seq_table_var_meas_report_s_fields[] = {
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::list_codec<decltype(var_meas_report_s::cells_met_leaving_cond_r18),
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(1007), false, false>>::value},
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{1007}, false, false>>::value},
     {offsetof(var_meas_report_s, reported_best_neighbour_cell_r18),
      asn1::table::seq_field::list_presence,
      asn1::table::field_op::codec,
      false,
      false,
      1,
-     2,
+     1,
      &asn1::table::list_codec<decltype(var_meas_report_s::reported_best_neighbour_cell_r18),
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(1007), false, false>>::value}};
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{1007}, false, false>>::value}};
 static const asn1::table::field_name seq_table_var_meas_report_s_names[] = {{"measId", nullptr},
                                                                             {"cellsTriggeredList", nullptr},
                                                                             {"numberOfReportsSent", nullptr},
@@ -1260,13 +1304,16 @@ static const asn1::table::seq_opt    seq_table_var_meas_report_s_opts[]  = {
     {5, asn1::table::seq_field::list_presence},
     {6, asn1::table::seq_field::list_presence},
     {7, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc var_meas_report_s::desc = {
-    {seq_table_var_meas_report_s_fields, 8, UINT64_C(0x5), seq_table_var_meas_report_s_opts, 6},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_meas_report_s_names};
+const asn1::table::seq_desc var_meas_report_s::desc = {{seq_table_var_meas_report_s_fields,
+                                                        uint64_t{0x5},
+                                                        seq_table_var_meas_report_s_opts,
+                                                        seq_table_var_meas_report_s_names,
+                                                        8,
+                                                        6},
+                                                       false,
+                                                       false,
+                                                       nullptr,
+                                                       0};
 
 // VarMeasReportSL-r16 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_meas_report_sl_r16_s_fields[] = {
@@ -1275,8 +1322,8 @@ static const asn1::table::seq_field seq_table_var_meas_report_sl_r16_s_fields[] 
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(1),
-     UINT64_C(64),
+     int64_t{1},
+     uint64_t{63},
      nullptr},
     {offsetof(var_meas_report_sl_r16_s, sl_freq_triggered_list_r16),
      asn1::table::seq_field::list_presence,
@@ -1284,17 +1331,17 @@ static const asn1::table::seq_field seq_table_var_meas_report_sl_r16_s_fields[] 
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::list_codec<decltype(var_meas_report_sl_r16_s::sl_freq_triggered_list_r16),
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(3279165), false, false>>::value},
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{3279165}, false, false>>::value},
     {offsetof(var_meas_report_sl_r16_s, sl_nof_reports_sent_r16),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      false,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr}};
 static const asn1::table::field_name seq_table_var_meas_report_sl_r16_s_names[] = {
     {"sl-MeasId-r16", nullptr},
@@ -1302,13 +1349,16 @@ static const asn1::table::field_name seq_table_var_meas_report_sl_r16_s_names[] 
     {"sl-NumberOfReportsSent-r16", nullptr}};
 static const asn1::table::seq_opt seq_table_var_meas_report_sl_r16_s_opts[] = {
     {1, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc var_meas_report_sl_r16_s::desc = {
-    {seq_table_var_meas_report_sl_r16_s_fields, 3, UINT64_C(0x5), seq_table_var_meas_report_sl_r16_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_meas_report_sl_r16_s_names};
+const asn1::table::seq_desc var_meas_report_sl_r16_s::desc = {{seq_table_var_meas_report_sl_r16_s_fields,
+                                                               uint64_t{0x5},
+                                                               seq_table_var_meas_report_sl_r16_s_opts,
+                                                               seq_table_var_meas_report_sl_r16_s_names,
+                                                               3,
+                                                               1},
+                                                              false,
+                                                              false,
+                                                              nullptr,
+                                                              0};
 
 // VarMeasReselectionConfig-r18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_meas_resel_cfg_r18_s_fields[] = {
@@ -1318,7 +1368,7 @@ static const asn1::table::seq_field seq_table_var_meas_resel_cfg_r18_s_fields[] 
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(var_meas_resel_cfg_r18_s::meas_resel_carrier_list_nr_r18),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1339,13 +1389,16 @@ static const asn1::table::field_name seq_table_var_meas_resel_cfg_r18_s_names[] 
 static const asn1::table::seq_opt seq_table_var_meas_resel_cfg_r18_s_opts[] = {
     {0, asn1::table::seq_field::list_presence},
     {1, (int32_t)offsetof(var_meas_resel_cfg_r18_s, meas_resel_validity_dur_r18_present)}};
-const asn1::table::seq_desc var_meas_resel_cfg_r18_s::desc = {
-    {seq_table_var_meas_resel_cfg_r18_s_fields, 2, UINT64_C(0x0), seq_table_var_meas_resel_cfg_r18_s_opts, 2},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_meas_resel_cfg_r18_s_names};
+const asn1::table::seq_desc var_meas_resel_cfg_r18_s::desc = {{seq_table_var_meas_resel_cfg_r18_s_fields,
+                                                               uint64_t{0x0},
+                                                               seq_table_var_meas_resel_cfg_r18_s_opts,
+                                                               seq_table_var_meas_resel_cfg_r18_s_names,
+                                                               2,
+                                                               2},
+                                                              false,
+                                                              false,
+                                                              nullptr,
+                                                              0};
 
 // VarMobilityHistoryReport-r17 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_mob_history_report_r17_s_fields[] = {
@@ -1355,7 +1408,7 @@ static const asn1::table::seq_field seq_table_var_mob_history_report_r17_s_field
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(var_mob_history_report_r17_s::visited_cell_info_list_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1367,7 +1420,7 @@ static const asn1::table::seq_field seq_table_var_mob_history_report_r17_s_field
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(var_mob_history_report_r17_s::visited_pscell_info_list_r17),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1378,13 +1431,16 @@ static const asn1::table::field_name seq_table_var_mob_history_report_r17_s_name
     {"visitedPSCellInfoList-r17", nullptr}};
 static const asn1::table::seq_opt seq_table_var_mob_history_report_r17_s_opts[] = {
     {1, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc var_mob_history_report_r17_s::desc = {
-    {seq_table_var_mob_history_report_r17_s_fields, 2, UINT64_C(0x1), seq_table_var_mob_history_report_r17_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_mob_history_report_r17_s_names};
+const asn1::table::seq_desc var_mob_history_report_r17_s::desc = {{seq_table_var_mob_history_report_r17_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_var_mob_history_report_r17_s_opts,
+                                                                   seq_table_var_mob_history_report_r17_s_names,
+                                                                   2,
+                                                                   1},
+                                                                  false,
+                                                                  false,
+                                                                  nullptr,
+                                                                  0};
 
 // VarPendingRNA-Update ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_pending_rna_upd_s_fields[] = {
@@ -1399,13 +1455,16 @@ static const asn1::table::seq_field seq_table_var_pending_rna_upd_s_fields[] = {
 static const asn1::table::field_name seq_table_var_pending_rna_upd_s_names[] = {{"pendingRNA-Update", nullptr}};
 static const asn1::table::seq_opt    seq_table_var_pending_rna_upd_s_opts[]  = {
     {0, (int32_t)offsetof(var_pending_rna_upd_s, pending_rna_upd_present)}};
-const asn1::table::seq_desc var_pending_rna_upd_s::desc = {
-    {seq_table_var_pending_rna_upd_s_fields, 1, UINT64_C(0x0), seq_table_var_pending_rna_upd_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_pending_rna_upd_s_names};
+const asn1::table::seq_desc var_pending_rna_upd_s::desc = {{seq_table_var_pending_rna_upd_s_fields,
+                                                            uint64_t{0x0},
+                                                            seq_table_var_pending_rna_upd_s_opts,
+                                                            seq_table_var_pending_rna_upd_s_names,
+                                                            1,
+                                                            1},
+                                                           false,
+                                                           false,
+                                                           nullptr,
+                                                           0};
 
 // VarRA-Report-r16 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_ra_report_r16_s_fields[] = {
@@ -1415,7 +1474,7 @@ static const asn1::table::seq_field seq_table_var_ra_report_r16_s_fields[] = {
      false,
      false,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(var_ra_report_r16_s::ra_report_list_r16),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1433,12 +1492,11 @@ static const asn1::table::seq_field seq_table_var_ra_report_r16_s_fields[] = {
 static const asn1::table::field_name seq_table_var_ra_report_r16_s_names[] = {{"ra-ReportList-r16", nullptr},
                                                                               {"identityList-r18", nullptr}};
 const asn1::table::seq_desc          var_ra_report_r16_s::desc             = {
-    {seq_table_var_ra_report_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_var_ra_report_r16_s_fields, uint64_t{0x3}, nullptr, seq_table_var_ra_report_r16_s_names, 2, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_ra_report_r16_s_names};
+    0};
 
 static const asn1::table::storage_ops* const choice_storage_var_ra_report_r16_s_id_list_r18_c__alternatives[] = {
     &asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
@@ -1465,7 +1523,7 @@ static const asn1::table::seq_field choice_table_var_ra_report_r16_s_id_list_r18
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -1473,7 +1531,7 @@ static const asn1::table::seq_field choice_table_var_ra_report_r16_s_id_list_r18
      false,
      false,
      1,
-     12,
+     11,
      &asn1::table::list_codec<var_ra_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_,
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name choice_table_var_ra_report_r16_s_id_list_r18_c__names[] = {
@@ -1524,12 +1582,11 @@ static const asn1::table::seq_field seq_table_var_rlf_report_r16_s_fields[] = {
 static const asn1::table::field_name seq_table_var_rlf_report_r16_s_names[] = {{"rlf-Report-r16", nullptr},
                                                                                {"identityList-r18", nullptr}};
 const asn1::table::seq_desc          var_rlf_report_r16_s::desc             = {
-    {seq_table_var_rlf_report_r16_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_var_rlf_report_r16_s_fields, uint64_t{0x3}, nullptr, seq_table_var_rlf_report_r16_s_names, 2, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_rlf_report_r16_s_names};
+    0};
 
 static const asn1::table::storage_ops* const choice_storage_var_rlf_report_r16_s_id_list_r18_c__alternatives[] = {
     &asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
@@ -1556,7 +1613,7 @@ static const asn1::table::seq_field choice_table_var_rlf_report_r16_s_id_list_r1
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -1564,7 +1621,7 @@ static const asn1::table::seq_field choice_table_var_rlf_report_r16_s_id_list_r1
      false,
      false,
      1,
-     12,
+     11,
      &asn1::table::list_codec<var_rlf_report_r16_s::id_list_r18_c_::snpn_id_list_r18_l_,
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name choice_table_var_rlf_report_r16_s_id_list_r18_c__names[] = {
@@ -1599,8 +1656,8 @@ static const asn1::table::seq_field seq_table_var_resume_mac_input_s_fields[] = 
      asn1::table::field_op::int_u16,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(1007),
+     int64_t{0},
+     uint64_t{1007},
      nullptr},
     {offsetof(var_resume_mac_input_s, target_cell_id),
      asn1::table::seq_field::mandatory,
@@ -1615,19 +1672,18 @@ static const asn1::table::seq_field seq_table_var_resume_mac_input_s_fields[] = 
      asn1::table::field_op::int_u32,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr}};
 static const asn1::table::field_name seq_table_var_resume_mac_input_s_names[] = {{"sourcePhysCellId", nullptr},
                                                                                  {"targetCellIdentity", nullptr},
                                                                                  {"source-c-RNTI", nullptr}};
 const asn1::table::seq_desc          var_resume_mac_input_s::desc             = {
-    {seq_table_var_resume_mac_input_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_var_resume_mac_input_s_fields, uint64_t{0x7}, nullptr, seq_table_var_resume_mac_input_s_names, 3, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_resume_mac_input_s_names};
+    0};
 
 // VarServingSecurityCellSetID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_serving_security_cell_set_id_s_fields[] = {
@@ -1636,18 +1692,22 @@ static const asn1::table::seq_field seq_table_var_serving_security_cell_set_id_s
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(1),
-     UINT64_C(9),
+     int64_t{1},
+     uint64_t{8},
      nullptr}};
 static const asn1::table::field_name seq_table_var_serving_security_cell_set_id_s_names[] = {
     {"servingSecurityCellSetId-r18", nullptr}};
 const asn1::table::seq_desc var_serving_security_cell_set_id_s::desc = {
-    {seq_table_var_serving_security_cell_set_id_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_var_serving_security_cell_set_id_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_var_serving_security_cell_set_id_s_names,
+     1,
+     0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_serving_security_cell_set_id_s_names};
+    0};
 
 // VarShortMAC-Input ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_short_mac_input_s_fields[] = {
@@ -1656,8 +1716,8 @@ static const asn1::table::seq_field seq_table_var_short_mac_input_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(1007),
+     int64_t{0},
+     uint64_t{1007},
      nullptr},
     {offsetof(var_short_mac_input_s, target_cell_id),
      asn1::table::seq_field::mandatory,
@@ -1672,19 +1732,18 @@ static const asn1::table::seq_field seq_table_var_short_mac_input_s_fields[] = {
      asn1::table::field_op::int_u32,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr}};
 static const asn1::table::field_name seq_table_var_short_mac_input_s_names[] = {{"sourcePhysCellId", nullptr},
                                                                                 {"targetCellIdentity", nullptr},
                                                                                 {"source-c-RNTI", nullptr}};
 const asn1::table::seq_desc          var_short_mac_input_s::desc             = {
-    {seq_table_var_short_mac_input_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_var_short_mac_input_s_fields, uint64_t{0x7}, nullptr, seq_table_var_short_mac_input_s_names, 3, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_short_mac_input_s_names};
+    0};
 
 // VarSuccessHO-Report-r17 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_var_success_ho_report_r17_s_fields[] = {
@@ -1708,13 +1767,16 @@ static const asn1::table::seq_field seq_table_var_success_ho_report_r17_s_fields
      &var_success_ho_report_r17_s::id_list_r18_c_::desc}};
 static const asn1::table::field_name seq_table_var_success_ho_report_r17_s_names[] = {{"successHO-Report-r17", nullptr},
                                                                                       {"identityList-r18", nullptr}};
-const asn1::table::seq_desc          var_success_ho_report_r17_s::desc             = {
-    {seq_table_var_success_ho_report_r17_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_success_ho_report_r17_s_names};
+const asn1::table::seq_desc          var_success_ho_report_r17_s::desc = {{seq_table_var_success_ho_report_r17_s_fields,
+                                                                           uint64_t{0x3},
+                                                                           nullptr,
+                                                                           seq_table_var_success_ho_report_r17_s_names,
+                                                                           2,
+                                                                           0},
+                                                                          false,
+                                                                          false,
+                                                                          nullptr,
+                                                                          0};
 
 static const asn1::table::storage_ops* const choice_storage_var_success_ho_report_r17_s_id_list_r18_c__alternatives[] =
     {&asn1::table::alternative_ops<plmn_id_list2_r16_l, false>::value,
@@ -1742,7 +1804,7 @@ static const asn1::table::seq_field choice_table_var_success_ho_report_r17_s_id_
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -1750,7 +1812,7 @@ static const asn1::table::seq_field choice_table_var_success_ho_report_r17_s_id_
      false,
      false,
      1,
-     12,
+     11,
      &asn1::table::list_codec<var_success_ho_report_r17_s::id_list_r18_c_::snpn_id_list_r18_l_,
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name choice_table_var_success_ho_report_r17_s_id_list_r18_c__names[] = {
@@ -1801,13 +1863,16 @@ static const asn1::table::seq_field seq_table_var_success_pscell_report_r18_s_fi
 static const asn1::table::field_name seq_table_var_success_pscell_report_r18_s_names[] = {
     {"successPSCell-Report-r18", nullptr},
     {"identityList-r18", nullptr}};
-const asn1::table::seq_desc var_success_pscell_report_r18_s::desc = {
-    {seq_table_var_success_pscell_report_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_var_success_pscell_report_r18_s_names};
+const asn1::table::seq_desc var_success_pscell_report_r18_s::desc = {{seq_table_var_success_pscell_report_r18_s_fields,
+                                                                      uint64_t{0x3},
+                                                                      nullptr,
+                                                                      seq_table_var_success_pscell_report_r18_s_names,
+                                                                      2,
+                                                                      0},
+                                                                     false,
+                                                                     false,
+                                                                     nullptr,
+                                                                     0};
 
 static const asn1::table::storage_ops* const
     choice_storage_var_success_pscell_report_r18_s_id_list_r18_c__alternatives[] = {
@@ -1837,7 +1902,7 @@ static const asn1::table::seq_field choice_table_var_success_pscell_report_r18_s
      false,
      false,
      1,
-     16,
+     15,
      &asn1::table::list_codec<plmn_id_list2_r16_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -1845,7 +1910,7 @@ static const asn1::table::seq_field choice_table_var_success_pscell_report_r18_s
      false,
      false,
      1,
-     12,
+     11,
      &asn1::table::list_codec<var_success_pscell_report_r18_s::id_list_r18_c_::snpn_id_list_r18_l_,
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name choice_table_var_success_pscell_report_r18_s_id_list_r18_c__names[] = {
@@ -1897,20 +1962,24 @@ static const asn1::table::field_name seq_table_var_tss_info_r18_s_stored_global_
     {"plmn-Identity-r18", nullptr},
     {"gnb-ID-r18", nullptr}};
 static const asn1::table::seq_desc seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s_ = {
-    {seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__names,
+     2,
+     0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_tss_info_r18_s_stored_global_gnb_id_r18_s__names};
+    0};
 static const asn1::table::seq_field seq_table_var_tss_info_r18_s_fields[] = {
     {offsetof(var_tss_info_r18_s, stored_event_id_r18),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(var_tss_info_r18_s, stored_global_gnb_id_r18),
      asn1::table::seq_field::mandatory,
@@ -1924,9 +1993,8 @@ static const asn1::table::seq_field seq_table_var_tss_info_r18_s_fields[] = {
 static const asn1::table::field_name seq_table_var_tss_info_r18_s_names[] = {{"storedEventID-r18", nullptr},
                                                                              {"storedGlobalGnbID-r18", nullptr}};
 const asn1::table::seq_desc          var_tss_info_r18_s::desc             = {
-    {seq_table_var_tss_info_r18_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_var_tss_info_r18_s_fields, uint64_t{0x3}, nullptr, seq_table_var_tss_info_r18_s_names, 2, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_var_tss_info_r18_s_names};
+    0};

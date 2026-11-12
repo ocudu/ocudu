@@ -109,7 +109,7 @@ class dyn_array : private detail::dyn_array_base
   static_assert(alignof(T) <= __STDCPP_DEFAULT_NEW_ALIGNMENT__, "Over-aligned dyn_array elements are not supported");
 
 public:
-  typedef T value_type;
+  using value_type     = T;
   using iterator       = T*;
   using const_iterator = const T*;
 
@@ -233,10 +233,10 @@ private:
 template <class T>
 const detail::dyn_array_ops dyn_array<T>::ops = {
     sizeof(T),
-    std::is_trivially_default_constructible<T>::value ? nullptr : &dyn_array<T>::construct_elems,
-    std::is_trivially_copyable<T>::value ? nullptr : &dyn_array<T>::copy_elems,
-    std::is_trivially_copyable<T>::value ? nullptr : &dyn_array<T>::relocate_elems,
-    std::is_trivially_destructible<T>::value ? nullptr : &dyn_array<T>::destroy_elems};
+    std::is_trivially_default_constructible_v<T> ? nullptr : &dyn_array<T>::construct_elems,
+    std::is_trivially_copyable_v<T> ? nullptr : &dyn_array<T>::copy_elems,
+    std::is_trivially_copyable_v<T> ? nullptr : &dyn_array<T>::relocate_elems,
+    std::is_trivially_destructible_v<T> ? nullptr : &dyn_array<T>::destroy_elems};
 
 template <class T>
 bool operator==(const dyn_array<T>& lhs, const dyn_array<T>& rhs)
@@ -254,11 +254,11 @@ public:
 
   bounded_array() = default;
   explicit bounded_array(uint32_t size_) : current_size(size_) {}
-  bounded_array(const bounded_array& other) noexcept : current_size(other.size())
+  bounded_array(const bounded_array& other) noexcept(std::is_nothrow_copy_assignable_v<T>) : current_size(other.size())
   {
     std::copy(other.data(), other.data() + other.size(), data());
   }
-  bounded_array& operator=(const bounded_array& other) noexcept
+  bounded_array& operator=(const bounded_array& other) noexcept(std::is_nothrow_copy_assignable_v<T>)
   {
     if (this != &other) {
       current_size = other.size();
@@ -300,57 +300,58 @@ private:
 
 /**
  * This array does small buffer optimization. The array has a small stack (Nthres elements) to store elements. Once
- * the number of elements exceeds this stack, the array allocs on the heap.
+ * the number of elements exceeds this stack, the array allocs on the heap. A copy of the bytes of the array is a valid
+ * array.
  * @tparam T
  * @tparam Nthres number of elements T that can be stored in the stack
  */
-template <class T, uint32_t Nthres = ceil_frac((size_t)16, sizeof(T))>
+template <class T, uint32_t Nthres = ceil_frac(size_t{16}, sizeof(T))>
 class ext_array
 {
 public:
-  static const uint32_t small_buffer_size = Nthres;
-  ext_array() : size_(0), head(&small_buffer.data[0]) {}
-  explicit ext_array(uint32_t new_size) : ext_array() { resize(new_size); }
+  static constexpr uint32_t small_buffer_size = Nthres;
+  ext_array()                                 = default;
+  explicit ext_array(uint32_t new_size) { resize(new_size); }
   ext_array(const ext_array<T, Nthres>& other) : ext_array(other.size_)
   {
-    std::copy(other.head, other.head + other.size_, head);
+    std::copy(other.data(), other.data() + other.size_, data());
   }
-  ext_array(ext_array<T, Nthres>&& other) noexcept
+  ext_array(ext_array<T, Nthres>&& other) noexcept :
+    small_buffer(other.small_buffer), size_(other.size_), heap(other.heap)
   {
-    size_ = other.size();
-    if (other.is_in_small_buffer()) {
-      head = &small_buffer.data[0];
-      std::copy(other.data(), other.data() + other.size(), head);
-    } else {
-      head              = other.head;
-      small_buffer.cap_ = other.small_buffer.cap_;
-      other.head        = &other.small_buffer.data[0];
-      other.size_       = 0;
-    }
+    other.size_ = 0;
+    other.heap  = nullptr;
   }
-  ~ext_array()
+  ~ext_array() { delete[] heap; }
+  ext_array<T, Nthres>& operator=(ext_array<T, Nthres>&& other) noexcept
   {
-    if (not is_in_small_buffer()) {
-      delete[] head;
+    if (this != &other) {
+      delete[] heap;
+      small_buffer = other.small_buffer;
+      size_        = other.size_;
+      heap         = other.heap;
+      other.size_  = 0;
+      other.heap   = nullptr;
     }
+    return *this;
   }
   ext_array<T, Nthres>& operator=(const ext_array<T, Nthres>& other)
   {
     if (this != &other) {
       resize(other.size());
-      std::copy(other.data(), other.data() + other.size(), head);
+      std::copy(other.data(), other.data() + other.size(), data());
     }
     return *this;
   }
 
   uint32_t size() const { return size_; }
   uint32_t capacity() const { return is_in_small_buffer() ? Nthres : small_buffer.cap_; }
-  T&       operator[](uint32_t index) { return head[index]; }
-  const T& operator[](uint32_t index) const { return head[index]; }
-  T*       data() { return &head[0]; }
-  const T* data() const { return &head[0]; }
-  T&       back() { return head[size() - 1]; }
-  const T& back() const { return head[size() - 1]; }
+  T&       operator[](uint32_t index) { return data()[index]; }
+  const T& operator[](uint32_t index) const { return data()[index]; }
+  T*       data() { return is_in_small_buffer() ? small_buffer.data : heap; }
+  const T* data() const { return is_in_small_buffer() ? small_buffer.data : heap; }
+  T&       back() { return data()[size() - 1]; }
+  const T& back() const { return data()[size() - 1]; }
   bool     operator==(const ext_array<T, Nthres>& other) const
   {
     return other.size() == size() and std::equal(other.data(), other.data() + other.size(), data());
@@ -358,7 +359,7 @@ public:
   void push_back(const T& elem)
   {
     resize(size() + 1);
-    head[size() - 1] = elem;
+    back() = elem;
   }
   void resize(uint32_t new_size)
   {
@@ -369,25 +370,24 @@ public:
       size_ = new_size;
       return;
     }
-    T*       old_data = head;
     uint32_t newcap   = new_size + 5;
-    head              = new T[newcap];
-    std::copy(old_data, old_data + size_, head);
-    size_ = new_size;
-    if (old_data != &small_buffer.data[0]) {
-      delete[] old_data;
-    }
+    T*       new_heap = new T[newcap];
+    std::copy(data(), data() + size_, new_heap);
+    delete[] heap;
+    heap              = new_heap;
+    size_             = new_size;
     small_buffer.cap_ = newcap;
   }
-  bool is_in_small_buffer() const { return head == &small_buffer.data[0]; }
+  bool is_in_small_buffer() const { return heap == nullptr; }
 
 private:
   union {
     T        data[Nthres];
     uint32_t cap_;
   } small_buffer;
-  uint32_t size_;
-  T*       head;
+  uint32_t size_ = 0;
+  /// Elements on the heap, or null when they are in small_buffer.
+  T* heap = nullptr;
 };
 
 /*********************
@@ -417,11 +417,19 @@ public:
     }
     return *this;
   }
-  bool     operator==(const copy_ptr<T>& other) const { return *ptr == *other; }
+  /// Equal when both are absent, or both hold equal values.
+  bool operator==(const copy_ptr<T>& other) const
+  {
+    if (ptr == nullptr or other.ptr == nullptr) {
+      return ptr == other.ptr;
+    }
+    return *ptr == *other.ptr;
+  }
   T*       operator->() { return ptr; }
   const T* operator->() const { return ptr; }
-  T&       operator*() { return *ptr; }       // like pointers, don't call this if ptr==NULL
-  const T& operator*() const { return *ptr; } // like pointers, don't call this if ptr==NULL
+  /// Value held, which must be present.
+  T&       operator*() { return *ptr; }
+  const T& operator*() const { return *ptr; }
   T*       get() { return ptr; }
   const T* get() const { return ptr; }
   T*       release()
@@ -446,19 +454,14 @@ public:
   bool is_present() const { return get() != nullptr; }
 
 private:
-  void destroy_()
-  {
-    if (ptr != NULL) {
-      delete ptr;
-    }
-  }
-  T* ptr;
+  void destroy_() { delete ptr; }
+  T*   ptr;
 };
 
 template <class T>
-copy_ptr<typename std::decay<T>::type> make_copy_ptr(T&& t)
+copy_ptr<std::decay_t<T>> make_copy_ptr(T&& t)
 {
-  using T2 = typename std::decay<T>::type;
+  using T2 = std::decay_t<T>;
   return copy_ptr<T2>(new T2(std::forward<T>(t)));
 }
 
@@ -467,7 +470,9 @@ copy_ptr<typename std::decay<T>::type> make_copy_ptr(T&& t)
 *********************/
 
 template <typename Enumerated>
-void assert_choice_type(typename Enumerated::options access_type, Enumerated& current_type, const char* choice_type)
+void assert_choice_type(typename Enumerated::options access_type,
+                        const Enumerated&            current_type,
+                        const char*                  choice_type)
 {
   if (OCUDU_UNLIKELY(current_type.value != access_type)) {
     log_error("Invalid field access for choice type \"{}\" (\"{}\"!=\"{}\")",
@@ -477,40 +482,31 @@ void assert_choice_type(typename Enumerated::options access_type, Enumerated& cu
   }
 }
 
-union alignment_t {
-  char        c;
-  float       f;
-  uint32_t    i;
-  uint64_t    i2;
-  double      d;
-  long double d2;
-  uint32_t*   ptr;
-};
-
 template <std::size_t Size, std::size_t Align>
 struct choice_buffer_base_t {
-  static const std::size_t data_size  = Size;
-  static const std::size_t data_align = Align;
-  using buffer_t                      = typename std::aligned_storage<data_size, data_align>::type;
-  buffer_t buffer;
+  static constexpr std::size_t data_size  = Size;
+  static constexpr std::size_t data_align = Align;
 
-  choice_buffer_base_t() : buffer() {}
+  choice_buffer_base_t() : buffer{} {}
 
   template <typename T>
   T& get()
   {
-    return *std::launder(reinterpret_cast<T*>(&buffer));
+    return *std::launder(reinterpret_cast<T*>(buffer));
   }
   template <typename T>
   const T& get() const
   {
-    return *std::launder(reinterpret_cast<const T*>(&buffer));
+    return *std::launder(reinterpret_cast<const T*>(buffer));
   }
+
+  alignas(Align) std::byte buffer[Size];
 };
 
+/// Storage of the alternatives Ts of a CHOICE.
 template <typename... Ts>
-struct choice_buffer_t : public choice_buffer_base_t<max_size({sizeof(alignment_t), sizeof(Ts)...}),
-                                                     max_size({alignof(alignment_t), alignof(Ts)...})> {};
+struct choice_buffer_t
+  : public choice_buffer_base_t<max_size({size_t{1}, sizeof(Ts)...}), max_size({size_t{1}, alignof(Ts)...})> {};
 
 using pod_choice_buffer_t = choice_buffer_t<>;
 
@@ -533,6 +529,8 @@ void storage_destroy_choice(void* storage, uint32_t type, const choice_storage_d
 void storage_init_choice(void* storage, uint32_t type, const choice_storage_desc& desc);
 /// Stores a copy of the value of other, of the given type, in the empty storage.
 void storage_copy_choice(void* storage, const void* other, uint32_t type, const choice_storage_desc& desc);
+/// Moves the value of other, of the given type, into the empty storage, and destroys it.
+void storage_relocate_choice(void* storage, void* other, uint32_t type, const choice_storage_desc& desc);
 
 /// Active alternative and its value of a CHOICE of type Owner, whose static member storage_desc describes the
 /// alternatives.
@@ -549,6 +547,23 @@ struct choice_storage {
       storage_destroy_choice(&value, type, Owner::storage_desc);
       type = other.type;
       storage_copy_choice(&value, &other.value, type, Owner::storage_desc);
+    }
+    return *this;
+  }
+  /// Leaves other without an alternative.
+  choice_storage(choice_storage&& other) noexcept : type(other.type)
+  {
+    storage_relocate_choice(&value, &other.value, type, Owner::storage_desc);
+    other.type = Types::nulltype;
+  }
+  /// Leaves other without an alternative.
+  choice_storage& operator=(choice_storage&& other) noexcept
+  {
+    if (this != &other) {
+      storage_destroy_choice(&value, type, Owner::storage_desc);
+      type = other.type;
+      storage_relocate_choice(&value, &other.value, type, Owner::storage_desc);
+      other.type = Types::nulltype;
     }
     return *this;
   }
@@ -585,7 +600,7 @@ public:
   {
   }
 
-  template <typename T, std::enable_if_t<not std::is_same<std::decay_t<T>, choice_buffer_ptr>::value, int> = 0>
+  template <typename T, std::enable_if_t<not std::is_same_v<std::decay_t<T>, choice_buffer_ptr>, int> = 0>
   choice_buffer_ptr& operator=(T&& to_store)
   {
     obj = std::forward<T>(to_store);

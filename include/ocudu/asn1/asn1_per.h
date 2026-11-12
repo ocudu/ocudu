@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "ocudu/adt/expected.h"
 #include "ocudu/asn1/asn1_containers.h"
 #include "ocudu/support/ocudu_assert.h"
 #include <limits>
@@ -23,17 +24,12 @@ constexpr int ASN_64K = 65536;
      enum packing
 ************************/
 
-struct ValOrError {
-  uint32_t      val;
-  OCUDUASN_CODE code;
-  ValOrError() : val(0), code(OCUDUASN_SUCCESS) {}
-  ValOrError(uint32_t val_, OCUDUASN_CODE code_) : val(val_), code(code_) {}
-};
-
 OCUDUASN_CODE pack_enum(bit_ref& bref, uint32_t enum_val, uint32_t nbits);
 OCUDUASN_CODE pack_enum(bit_ref& bref, uint32_t enum_val, uint32_t nbits, uint32_t nof_noext);
 OCUDUASN_CODE pack_enum(bit_ref& bref, uint32_t e, uint32_t nof_types, uint32_t nof_exts, bool has_ext);
-ValOrError    unpack_enum(uint32_t nof_types, uint32_t nof_exts, bool has_ext, cbit_ref& bref);
+/// Unpacks the index of an ENUMERATED value.
+ocudu::expected<uint32_t, OCUDUASN_CODE>
+unpack_enum(uint32_t nof_types, uint32_t nof_exts, bool has_ext, cbit_ref& bref);
 template <typename EnumType>
 OCUDUASN_CODE pack_enum(bit_ref& bref, EnumType e)
 {
@@ -42,11 +38,12 @@ OCUDUASN_CODE pack_enum(bit_ref& bref, EnumType e)
 template <typename EnumType>
 OCUDUASN_CODE unpack_enum(EnumType& e, cbit_ref& bref)
 {
-  ValOrError ret = unpack_enum(EnumType::nof_types, EnumType::nof_exts, EnumType::has_ext, bref);
-  if (ret.code == OCUDUASN_SUCCESS) {
-    e = (typename EnumType::options)ret.val;
+  auto ret = unpack_enum(EnumType::nof_types, EnumType::nof_exts, EnumType::has_ext, bref);
+  if (not ret.has_value()) {
+    return ret.error();
   }
-  return ret.code;
+  e = static_cast<typename EnumType::options>(*ret);
+  return OCUDUASN_SUCCESS;
 }
 
 /************************
@@ -112,8 +109,8 @@ OCUDUASN_CODE unpack_unconstrained_integer(IntType& n, cbit_ref& bref, bool has_
 template <class IntType>
 struct integer_packer {
   integer_packer(IntType lb_, IntType ub_, bool has_ext_ = false, bool aligned_ = false);
-  OCUDUASN_CODE pack(bit_ref& bref, IntType n);
-  OCUDUASN_CODE unpack(IntType& n, cbit_ref& bref);
+  OCUDUASN_CODE pack(bit_ref& bref, IntType n) const;
+  OCUDUASN_CODE unpack(IntType& n, cbit_ref& bref) const;
   IntType       lb;
   IntType       ub;
   bool          has_ext;
@@ -127,13 +124,12 @@ struct integer_packer {
 struct BitPacker {
   BitPacker(uint32_t nof_bits_) : nof_bits(nof_bits_) {}
   template <typename T>
-  OCUDUASN_CODE pack(bit_ref& bref, const T& topack)
+  OCUDUASN_CODE pack(bit_ref& bref, const T& topack) const
   {
-    bref.pack(topack, nof_bits);
-    return OCUDUASN_SUCCESS;
+    return bref.pack(topack, nof_bits);
   }
   template <typename T>
-  OCUDUASN_CODE unpack(T& tounpack, cbit_ref& bref)
+  OCUDUASN_CODE unpack(T& tounpack, cbit_ref& bref) const
   {
     return bref.unpack(tounpack, nof_bits);
   }
@@ -185,8 +181,8 @@ OCUDUASN_CODE unpack_fixed_seq_of(ArrayType& item_array, cbit_ref& bref, uint32_
 
 namespace detail {
 
-using pack_item_fn   = OCUDUASN_CODE (*)(bit_ref& bref, const void* item, void* packer);
-using unpack_item_fn = OCUDUASN_CODE (*)(void* item, cbit_ref& bref, void* packer);
+using pack_item_fn   = OCUDUASN_CODE (*)(bit_ref& bref, const void* item, const void* packer);
+using unpack_item_fn = OCUDUASN_CODE (*)(void* item, cbit_ref& bref, const void* packer);
 using resize_seq_fn  = void* (*)(void* seqof, uint32_t nof_items);
 
 /// Packs the length and the items of a SEQUENCE OF stored contiguously.
@@ -198,7 +194,7 @@ OCUDUASN_CODE pack_dyn_seq_of_items(bit_ref&     bref,
                                     uint32_t     ub,
                                     bool         aligned,
                                     pack_item_fn pack_item,
-                                    void*        packer);
+                                    const void*  packer);
 
 /// Unpacks the length and the items of a SEQUENCE OF stored contiguously.
 OCUDUASN_CODE unpack_dyn_seq_of_items(void*          seqof,
@@ -209,7 +205,7 @@ OCUDUASN_CODE unpack_dyn_seq_of_items(void*          seqof,
                                       uint32_t       ub,
                                       bool           aligned,
                                       unpack_item_fn unpack_item,
-                                      void*          unpacker);
+                                      const void*    unpacker);
 
 template <class ArrayType>
 void* resize_seq_of(void* seqof, uint32_t nof_items)
@@ -238,8 +234,8 @@ OCUDUASN_CODE pack_dyn_seq_of(bit_ref&         bref,
       lb,
       ub,
       aligned,
-      [](bit_ref& b, const void* item, void* p) {
-        return static_cast<ItemPacker*>(p)->pack(b, *static_cast<const item_type*>(item));
+      [](bit_ref& b, const void* item, const void* p) {
+        return static_cast<const ItemPacker*>(p)->pack(b, *static_cast<const item_type*>(item));
       },
       &packer);
 }
@@ -257,7 +253,7 @@ OCUDUASN_CODE pack_dyn_seq_of(bit_ref& bref, const ArrayType& seqof, uint32_t lb
       ub,
       aligned,
       // asn1::pack, found by argument-dependent lookup, also packs types without pack() member.
-      [](bit_ref& b, const void* item, void*) { return pack(b, *static_cast<const item_type*>(item)); },
+      [](bit_ref& b, const void* item, const void*) { return pack(b, *static_cast<const item_type*>(item)); },
       nullptr);
 }
 
@@ -278,8 +274,8 @@ OCUDUASN_CODE unpack_dyn_seq_of(ArrayType&   seqof,
       lb,
       ub,
       aligned,
-      [](void* item, cbit_ref& b, void* p) {
-        return static_cast<ItemUnpacker*>(p)->unpack(*static_cast<item_type*>(item), b);
+      [](void* item, cbit_ref& b, const void* p) {
+        return static_cast<const ItemUnpacker*>(p)->unpack(*static_cast<item_type*>(item), b);
       },
       &unpacker);
 }
@@ -296,7 +292,7 @@ OCUDUASN_CODE unpack_dyn_seq_of(ArrayType& seqof, cbit_ref& bref, uint32_t lb, u
       lb,
       ub,
       aligned,
-      [](void* item, cbit_ref& b, void*) { return unpack(*static_cast<item_type*>(item), b); },
+      [](void* item, cbit_ref& b, const void*) { return unpack(*static_cast<item_type*>(item), b); },
       nullptr);
 }
 
@@ -347,32 +343,38 @@ private:
    Var Length Field
 *********************/
 
-class varlength_field_pack_guard
+namespace detail {
+
+/// Pads the contents of a variable length field to whole octets and packs them after their length determinant.
+OCUDUASN_CODE end_varlength_field(bit_ref& bref, bit_ref& contents, const ocudu::byte_buffer& buffer, bool aligned);
+
+} // namespace detail
+
+/// Packs a variable length field, such as an open type, whose contents pack_contents(bit_ref&) writes.
+template <class PackContents>
+OCUDUASN_CODE pack_varlength_field(bit_ref& bref, bool aligned, PackContents&& pack_contents)
 {
-public:
-  explicit varlength_field_pack_guard(bit_ref& bref, bool align_ = false);
-  ~varlength_field_pack_guard();
+  ocudu::byte_buffer buffer;
+  bit_ref            contents(buffer);
+  if (OCUDUASN_CODE ret = pack_contents(contents); ret != OCUDUASN_SUCCESS) {
+    return ret;
+  }
+  return detail::end_varlength_field(bref, contents, buffer, aligned);
+}
 
-private:
-  bit_ref            brefstart;
-  bit_ref*           bref_tracker;
-  ocudu::byte_buffer varlen_buffer;
-  bool               align;
-};
-
-class varlength_field_unpack_guard
+/// Unpacks a variable length field, such as an open type, whose contents unpack_contents(cbit_ref&) reads.
+template <class UnpackContents>
+OCUDUASN_CODE unpack_varlength_field(cbit_ref& bref, bool aligned, UnpackContents&& unpack_contents)
 {
-public:
-  explicit varlength_field_unpack_guard(cbit_ref& bref, bool align = false);
-  ~varlength_field_unpack_guard();
-
-  uint32_t length() const { return len; }
-
-private:
-  uint32_t  len = 0;
-  cbit_ref  bref0;
-  cbit_ref* bref_tracker = nullptr;
-};
+  uint32_t len = 0;
+  HANDLE_CODE(unpack_length(len, bref, aligned));
+  cbit_ref contents = bref.subview(0, len);
+  if (OCUDUASN_CODE ret = unpack_contents(contents); ret != OCUDUASN_SUCCESS) {
+    return ret;
+  }
+  // The padding bits of the contents are skipped.
+  return bref.advance_bytes(len);
+}
 
 /****************
  REAL type

@@ -11,6 +11,7 @@
 #include "fmt/format.h"
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 namespace asn1 {
 
@@ -21,10 +22,10 @@ class json_writer
 public:
   json_writer();
   void        write_fieldname(const char* fieldname);
-  void        write_str(const char* fieldname, const std::string& value);
+  void        write_str(const char* fieldname, std::string_view value);
   void        write_str(const char* fieldname, const char* value);
   void        write_str(const char* value);
-  void        write_str(const std::string& value);
+  void        write_str(std::string_view value);
   void        write_int(const char* fieldname, int64_t value);
   void        write_int(int64_t value);
   void        write_uint(const char* fieldname, uint64_t value);
@@ -44,8 +45,8 @@ public:
 private:
   json_buffer buffer;
   std::string ident;
-  enum separator_t { COMMA = 0, NEWLINE, NONE };
-  separator_t sep;
+  enum class separator { comma, newline, none };
+  separator sep;
 };
 
 } // namespace asn1

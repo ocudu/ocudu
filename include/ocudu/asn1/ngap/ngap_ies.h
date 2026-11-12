@@ -3284,7 +3284,15 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<cause_c, types, choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o>>> c;
+  asn1::table::choice_storage<cause_c,
+                              types,
+                              choice_buffer_t<cause_misc_e,
+                                              cause_nas_e,
+                                              cause_protocol_e,
+                                              cause_radio_network_e,
+                                              cause_transport_e,
+                                              protocol_ie_single_container_s<cause_ext_ies_o>>>
+      c;
 };
 
 // TypeOfError ::= ENUMERATED
@@ -3968,9 +3976,11 @@ struct clock_accuracy_c {
   protocol_ie_single_container_s<clock_accuracy_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::
-      choice_storage<clock_accuracy_c, types, choice_buffer_t<protocol_ie_single_container_s<clock_accuracy_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<
+      clock_accuracy_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<clock_accuracy_ext_ies_o>, uint32_t, uint8_t>>
+      c;
 };
 
 // ClockQualityAcceptanceCriteria-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
@@ -5114,7 +5124,10 @@ private:
   asn1::table::choice_storage<
       ecn_markingor_congestion_info_report_request_c,
       types,
-      choice_buffer_t<protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
+      choice_buffer_t<congestion_info_request_e,
+                      ecn_marking_at_ra_nr_equest_e,
+                      ecn_marking_at_up_f_request_e,
+                      protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
       c;
 };
 
@@ -5626,9 +5639,10 @@ struct meas_thres_l1_logged_mdt_c {
   protocol_ie_single_container_s<meas_thres_l1_logged_mdt_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<meas_thres_l1_logged_mdt_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<meas_thres_l1_logged_mdt_ext_ies_o>>>
+  asn1::table::choice_storage<
+      meas_thres_l1_logged_mdt_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<meas_thres_l1_logged_mdt_ext_ies_o>, uint8_t>>
       c;
 };
 
@@ -5734,10 +5748,11 @@ struct event_trigger_c {
   protocol_ie_single_container_s<event_trigger_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<
-      event_trigger_c,
-      types,
-      choice_buffer_t<event_l1_logged_mdt_cfg_s, protocol_ie_single_container_s<event_trigger_ext_ies_o>>>
+  asn1::table::choice_storage<event_trigger_c,
+                              types,
+                              choice_buffer_t<event_l1_logged_mdt_cfg_s,
+                                              out_of_coverage_e_,
+                                              protocol_ie_single_container_s<event_trigger_ext_ies_o>>>
       c;
 };
 
@@ -6950,9 +6965,10 @@ struct m1_thres_type_c {
   protocol_ie_single_container_s<m1_thres_type_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::
-      choice_storage<m1_thres_type_c, types, choice_buffer_t<protocol_ie_single_container_s<m1_thres_type_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<m1_thres_type_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<m1_thres_type_ext_ies_o>, uint8_t>>
+      c;
 };
 
 // M1ThresholdEventA2-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
@@ -7385,7 +7401,10 @@ struct sensor_name_cfg_c {
 private:
   asn1::table::choice_storage<sensor_name_cfg_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<sensor_name_cfg_ext_ies_o>>>
+                              choice_buffer_t<protocol_ie_single_container_s<sensor_name_cfg_ext_ies_o>,
+                                              ue_orientation_cfg_e_,
+                                              ue_speed_cfg_e_,
+                                              uncompensated_barometric_cfg_e_>>
       c;
 };
 
@@ -9192,9 +9211,10 @@ struct mrb_progress_info_c {
   protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<mrb_progress_info_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>>>
+  asn1::table::choice_storage<
+      mrb_progress_info_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>, uint16_t, uint32_t>>
       c;
 };
 
@@ -9502,10 +9522,11 @@ struct mbs_ngu_fail_ind_c {
   protocol_ie_single_container_s<mbs_ngu_fail_ind_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<
-      mbs_ngu_fail_ind_c,
-      types,
-      choice_buffer_t<mbs_up_fail_ind_list_l, protocol_ie_single_container_s<mbs_ngu_fail_ind_ext_ies_o>>>
+  asn1::table::choice_storage<mbs_ngu_fail_ind_c,
+                              types,
+                              choice_buffer_t<mbs_up_fail_ind_e,
+                                              mbs_up_fail_ind_list_l,
+                                              protocol_ie_single_container_s<mbs_ngu_fail_ind_ext_ies_o>>>
       c;
 };
 
@@ -10699,9 +10720,11 @@ struct overload_resp_c {
   protocol_ie_single_container_s<overload_resp_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::
-      choice_storage<overload_resp_c, types, choice_buffer_t<protocol_ie_single_container_s<overload_resp_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<
+      overload_resp_c,
+      types,
+      choice_buffer_t<overload_action_e, protocol_ie_single_container_s<overload_resp_ext_ies_o>>>
+      c;
 };
 
 // SliceOverloadItem-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-EXTENSION
@@ -13621,10 +13644,11 @@ struct reset_type_c {
   protocol_ie_single_container_s<reset_type_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<
-      reset_type_c,
-      types,
-      choice_buffer_t<protocol_ie_single_container_s<reset_type_ext_ies_o>, ue_associated_lc_ng_conn_list_l>>
+  asn1::table::choice_storage<reset_type_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<reset_type_ext_ies_o>,
+                                              reset_all_e,
+                                              ue_associated_lc_ng_conn_list_l>>
       c;
 };
 
@@ -13950,9 +13974,10 @@ struct son_info_c {
   protocol_ie_single_container_s<son_info_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<son_info_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<son_info_ext_ies_o>, son_info_reply_s>>
+  asn1::table::choice_storage<
+      son_info_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<son_info_ext_ies_o>, son_info_reply_s, son_info_request_e>>
       c;
 };
 
@@ -14764,9 +14789,10 @@ struct ue_ngap_ids_c {
   protocol_ie_single_container_s<ue_ngap_ids_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<ue_ngap_ids_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<ue_ngap_ids_ext_ies_o>, ue_ngap_id_pair_s>>
+  asn1::table::choice_storage<
+      ue_ngap_ids_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<ue_ngap_ids_ext_ies_o>, ue_ngap_id_pair_s, uint64_t>>
       c;
 };
 

@@ -238,6 +238,7 @@ private:
   asn1::table::choice_storage<ran_param_value_c,
                               types,
                               choice_buffer_t<bool,
+                                              int64_t,
                                               printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
                                               real_s,
                                               unbounded_bitstring<false, true>,
@@ -303,7 +304,10 @@ struct ran_param_testing_condition_c {
   ran_p_choice_presence_e_&   set_ran_p_choice_presence();
 
 private:
-  asn1::table::choice_storage<ran_param_testing_condition_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<ran_param_testing_condition_c,
+                              types,
+                              choice_buffer_t<ran_p_choice_comparison_e_, ran_p_choice_presence_e_>>
+      c;
 };
 
 // LogicalOR-E2SM-RC-IEs ::= ENUMERATED
@@ -3194,7 +3198,9 @@ struct e2sm_rc_service_layer_cause_c {
   cause_protocol_e&    set_protocol();
 
 private:
-  asn1::table::choice_storage<e2sm_rc_service_layer_cause_c, types, pod_choice_buffer_t> c;
+  asn1::table::
+      choice_storage<e2sm_rc_service_layer_cause_c, types, choice_buffer_t<cause_protocol_e, cause_ri_cservice_e>>
+          c;
 };
 
 } // namespace e2sm

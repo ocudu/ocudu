@@ -69,8 +69,10 @@ inline void fill_asn1_rrc_ue_capability_enquiry(asn1::rrc_nr::ue_cap_enquiry_s& 
 
   byte_buffer   filter_packed;
   asn1::bit_ref bref(filter_packed);
-  asn1::pack(bref, filter); // possible packing error fill be shown in ASN1 logs
-  ue_cap_rat_request.cap_request_filt = std::move(filter_packed);
+  // The ASN.1 library logs a packing failure, and the request then goes without a filter.
+  if (asn1::pack(bref, filter) == asn1::OCUDUASN_SUCCESS) {
+    ue_cap_rat_request.cap_request_filt = std::move(filter_packed);
+  }
 
   ue_cap_ies.ue_cap_rat_request_list.push_back(ue_cap_rat_request);
 }

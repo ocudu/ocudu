@@ -438,7 +438,7 @@ struct group_id_c {
   uint16_t& set_epc();
 
 private:
-  asn1::table::choice_storage<group_id_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<group_id_c, types, choice_buffer_t<uint16_t>> c;
 };
 
 // Interface-MessageID ::= SEQUENCE
@@ -792,7 +792,7 @@ struct qos_id_c {
   uint16_t& set_epc();
 
 private:
-  asn1::table::choice_storage<qos_id_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<qos_id_c, types, choice_buffer_t<uint16_t>> c;
 };
 
 // RANfunction-Name ::= SEQUENCE
@@ -877,7 +877,7 @@ struct rrc_msg_id_s {
     rrc_class_nr_e&  set_nr();
 
   private:
-    asn1::table::choice_storage<rrc_type_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<rrc_type_c_, types, choice_buffer_t<rrc_class_lte_e, rrc_class_nr_e>> c;
   };
 
   // member variables
@@ -935,7 +935,7 @@ struct serving_cell_arfcn_c {
   uint32_t&   set_eutra();
 
 private:
-  asn1::table::choice_storage<serving_cell_arfcn_c, types, choice_buffer_t<nr_arfcn_s>> c;
+  asn1::table::choice_storage<serving_cell_arfcn_c, types, choice_buffer_t<nr_arfcn_s, uint32_t>> c;
 };
 
 // ServingCell-PCI ::= CHOICE
@@ -975,7 +975,7 @@ struct serving_cell_pci_c {
   uint16_t& set_eutra();
 
 private:
-  asn1::table::choice_storage<serving_cell_pci_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<serving_cell_pci_c, types, choice_buffer_t<uint16_t>> c;
 };
 
 // UEID-GNB-CU-CP-F1AP-ID-Item ::= SEQUENCE

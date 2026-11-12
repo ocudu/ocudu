@@ -676,9 +676,10 @@ struct mrb_progress_info_c {
   protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<mrb_progress_info_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>>>
+  asn1::table::choice_storage<
+      mrb_progress_info_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>, uint16_t, uint32_t>>
       c;
 };
 
@@ -3308,7 +3309,14 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<cause_c, types, choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o>>> c;
+  asn1::table::choice_storage<cause_c,
+                              types,
+                              choice_buffer_t<cause_misc_e,
+                                              cause_protocol_e,
+                                              cause_radio_network_layer_e,
+                                              cause_transport_layer_e,
+                                              protocol_ie_single_container_s<cause_ext_ies_o>>>
+      c;
 };
 
 // QoSFlowwithCause-Item-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -4487,10 +4495,11 @@ struct cell_assist_info_eutra_c {
   protocol_ie_single_container_s<cell_assist_info_eutra_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      cell_assist_info_eutra_c,
-      types,
-      choice_buffer_t<limited_eutra_list_l_, protocol_ie_single_container_s<cell_assist_info_eutra_ext_ies_o>>>
+  asn1::table::choice_storage<cell_assist_info_eutra_c,
+                              types,
+                              choice_buffer_t<full_list_e_,
+                                              limited_eutra_list_l_,
+                                              protocol_ie_single_container_s<cell_assist_info_eutra_ext_ies_o>>>
       c;
 };
 
@@ -4573,7 +4582,7 @@ private:
   asn1::table::choice_storage<
       cell_assist_info_nr_c,
       types,
-      choice_buffer_t<limited_nr_list_l_, protocol_ie_single_container_s<cell_assist_info_nr_ext_ies_o>>>
+      choice_buffer_t<full_list_e_, limited_nr_list_l_, protocol_ie_single_container_s<cell_assist_info_nr_ext_ies_o>>>
       c;
 };
 
@@ -7452,7 +7461,10 @@ private:
   asn1::table::choice_storage<
       ecn_markingor_congestion_info_report_request_c,
       types,
-      choice_buffer_t<protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
+      choice_buffer_t<congestion_info_request_e,
+                      ecn_marking_at_ra_nr_equest_e,
+                      ecn_marking_at_up_f_request_e,
+                      protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
       c;
 };
 
@@ -7586,9 +7598,10 @@ struct meas_thres_l1_logged_mdt_c {
   protocol_ie_single_container_s<meas_thres_l1_logged_mdt_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<meas_thres_l1_logged_mdt_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<meas_thres_l1_logged_mdt_ext_ies_o>>>
+  asn1::table::choice_storage<
+      meas_thres_l1_logged_mdt_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<meas_thres_l1_logged_mdt_ext_ies_o>, uint8_t>>
       c;
 };
 
@@ -7694,9 +7707,10 @@ struct event_type_trigger_c {
   protocol_ie_single_container_s<event_type_trigger_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::choice_storage<event_type_trigger_c,
-                              types,
-                              choice_buffer_t<event_l1_s, protocol_ie_single_container_s<event_type_trigger_ext_ies_o>>>
+  asn1::table::choice_storage<
+      event_type_trigger_c,
+      types,
+      choice_buffer_t<event_l1_s, out_of_coverage_e_, protocol_ie_single_container_s<event_type_trigger_ext_ies_o>>>
       c;
 };
 
@@ -9273,9 +9287,10 @@ struct meas_thres_a2_c {
   protocol_ie_single_container_s<meas_thres_a2_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::
-      choice_storage<meas_thres_a2_c, types, choice_buffer_t<protocol_ie_single_container_s<meas_thres_a2_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<meas_thres_a2_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<meas_thres_a2_ext_ies_o>, uint8_t>>
+      c;
 };
 
 // M1ThresholdEventA2-ExtIEs ::= OBJECT SET OF XNAP-PROTOCOL-EXTENSION
@@ -9734,7 +9749,7 @@ struct ng_ran_cell_pci_c {
 private:
   asn1::table::choice_storage<ng_ran_cell_pci_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<ng_ran_cell_pci_ext_ies_o>>>
+                              choice_buffer_t<protocol_ie_single_container_s<ng_ran_cell_pci_ext_ies_o>, uint16_t>>
       c;
 };
 
@@ -12668,9 +12683,11 @@ struct non_up_traffic_c {
   protocol_ie_single_container_s<non_up_traffic_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::
-      choice_storage<non_up_traffic_c, types, choice_buffer_t<protocol_ie_single_container_s<non_up_traffic_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<
+      non_up_traffic_c,
+      types,
+      choice_buffer_t<non_up_traffic_type_e, protocol_ie_single_container_s<non_up_traffic_ext_ies_o>, uint8_t>>
+      c;
 };
 
 // NumberOfAntennaPorts-E-UTRA ::= ENUMERATED
@@ -12838,7 +12855,9 @@ struct pdcp_change_ind_c {
 private:
   asn1::table::choice_storage<pdcp_change_ind_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<pdcp_change_ind_ext_ies_o>>>
+                              choice_buffer_t<from_m_ng_ran_node_e_,
+                                              from_s_ng_ran_node_e_,
+                                              protocol_ie_single_container_s<pdcp_change_ind_ext_ies_o>>>
       c;
 };
 
@@ -15894,10 +15913,11 @@ struct traffic_release_type_c {
   protocol_ie_single_container_s<traffic_release_type_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      traffic_release_type_c,
-      types,
-      choice_buffer_t<protocol_ie_single_container_s<traffic_release_type_ext_ies_o>, traffic_to_be_release_list_l>>
+  asn1::table::choice_storage<traffic_release_type_c,
+                              types,
+                              choice_buffer_t<all_traffic_ind_e,
+                                              protocol_ie_single_container_s<traffic_release_type_ext_ies_o>,
+                                              traffic_to_be_release_list_l>>
       c;
 };
 

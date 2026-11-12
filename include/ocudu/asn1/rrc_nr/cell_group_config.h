@@ -81,7 +81,7 @@ struct bh_lc_ch_id_r16_c {
   uint32_t& set_bh_lc_ch_id_ext_r16();
 
 private:
-  asn1::table::choice_storage<bh_lc_ch_id_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<bh_lc_ch_id_r16_c, types, choice_buffer_t<uint32_t, uint8_t>> c;
 };
 
 // UL-AM-RLC ::= SEQUENCE
@@ -790,7 +790,7 @@ struct rlc_bearer_cfg_s {
     uint8_t& set_drb_id();
 
   private:
-    asn1::table::choice_storage<served_radio_bearer_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<served_radio_bearer_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -1067,7 +1067,7 @@ struct drx_cfg_secondary_group_r16_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<drx_on_dur_timer_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_on_dur_timer_r16_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
   struct drx_inactivity_timer_r16_opts {
     enum options {
@@ -1352,7 +1352,7 @@ struct drx_cfg_ptm_r17_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<drx_on_dur_timer_ptm_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_on_dur_timer_ptm_r17_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
   struct drx_inactivity_timer_ptm_r17_opts {
     enum options {
@@ -1693,7 +1693,7 @@ struct drx_cfg_ptm_r17_s {
     uint16_t& set_ms10240();
 
   private:
-    asn1::table::choice_storage<drx_long_cycle_start_offset_ptm_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_long_cycle_start_offset_ptm_r17_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
 
   // member variables
@@ -1747,7 +1747,7 @@ struct mbs_rnti_specific_cfg_r17_s {
     uint32_t& set_g_cs_rnti();
 
   private:
-    asn1::table::choice_storage<group_common_rnti_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<group_common_rnti_r17_c_, types, choice_buffer_t<uint32_t>> c;
   };
   struct harq_feedback_enabler_multicast_r17_opts {
     enum options { dci_enabler, enabled, nulltype } value;
@@ -2079,7 +2079,7 @@ struct drx_cfg_ext2_v1800_s {
     uint8_t& set_ms400over3();
 
   private:
-    asn1::table::choice_storage<drx_non_integer_long_cycle_start_offset_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_non_integer_long_cycle_start_offset_r18_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct short_drx_r18_s_ {
     struct drx_non_integer_short_cycle_r18_opts {
@@ -2896,7 +2896,7 @@ struct rach_less_ho_r18_s {
     uint8_t& set_ssb_idx_r18();
 
   private:
-    asn1::table::choice_storage<beam_ind_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<beam_ind_r18_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -3471,7 +3471,7 @@ struct ncr_slot_periodicity_and_slot_offset_r18_c {
   uint16_t& set_sl10240();
 
 private:
-  asn1::table::choice_storage<ncr_slot_periodicity_and_slot_offset_r18_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<ncr_slot_periodicity_and_slot_offset_r18_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // NCR-MsPeriodicityAndSlotOffset-r18 ::= CHOICE
@@ -3769,7 +3769,9 @@ struct ncr_ms_periodicity_and_slot_offset_r18_c {
   uint32_t& set_ms10240();
 
 private:
-  asn1::table::choice_storage<ncr_ms_periodicity_and_slot_offset_r18_c, types, pod_choice_buffer_t> c;
+  asn1::table::
+      choice_storage<ncr_ms_periodicity_and_slot_offset_r18_c, types, choice_buffer_t<uint16_t, uint32_t, uint8_t>>
+          c;
 };
 
 // NCR-PeriodicityAndOffset-r18 ::= CHOICE

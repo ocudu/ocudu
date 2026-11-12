@@ -31,6 +31,9 @@ struct objset_desc {
 /// Protocol IE container whose IEs consist of an id, a criticality and an open type value. The ids and criticalities
 /// are the keys and the criticality column of the object set of the IEs.
 struct ie_container_desc {
+  /// Maximum number of IEs, which the engine tracks in a mask of 64-bit words.
+  static constexpr uint32_t max_ies = 256;
+
   const uint32_t* ids;
   /// Criticality of each IE, a crit_e::options.
   const uint8_t* crits;

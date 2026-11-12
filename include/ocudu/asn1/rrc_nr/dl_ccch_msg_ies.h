@@ -513,7 +513,7 @@ struct sl_period_cg_r16_c {
   uint8_t&              set_sl_period_cg2_r16();
 
 private:
-  asn1::table::choice_storage<sl_period_cg_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<sl_period_cg_r16_c, types, choice_buffer_t<sl_period_cg1_r16_e_, uint8_t>> c;
 };
 
 // SL-CG-MaxTransNum-r16 ::= SEQUENCE
@@ -1227,7 +1227,9 @@ struct sl_res_reserve_period_r16_c {
   uint8_t&                       set_sl_res_reserve_period2_r16();
 
 private:
-  asn1::table::choice_storage<sl_res_reserve_period_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::
+      choice_storage<sl_res_reserve_period_r16_c, types, choice_buffer_t<sl_res_reserve_period1_r16_e_, uint8_t>>
+          c;
 };
 
 // SL-PriorityTxConfigIndex-v1650 ::= SEQUENCE
@@ -1689,7 +1691,7 @@ struct sl_prs_res_shared_sl_prs_rp_r18_s {
     uint8_t& set_dummy1();
 
   private:
-    asn1::table::choice_storage<sl_prs_comb_size_n_and_re_offset_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<sl_prs_comb_size_n_and_re_offset_r18_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -2046,7 +2048,10 @@ struct sl_reserv_period_allowed_ded_sl_prs_rp_r18_c {
   uint8_t&                       set_sl_res_reserve_period2_r18();
 
 private:
-  asn1::table::choice_storage<sl_reserv_period_allowed_ded_sl_prs_rp_r18_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<sl_reserv_period_allowed_ded_sl_prs_rp_r18_c,
+                              types,
+                              choice_buffer_t<sl_res_reserve_period1_r18_e_, uint8_t>>
+      c;
 };
 
 // SL-PRS-ResourceDedicatedSL-PRS-RP-r18 ::= SEQUENCE
@@ -2710,7 +2715,7 @@ struct sl_pqi_r16_c {
   sl_non_standardized_pqi_r16_s_& set_sl_non_standardized_pqi_r16();
 
 private:
-  asn1::table::choice_storage<sl_pqi_r16_c, types, choice_buffer_t<sl_non_standardized_pqi_r16_s_>> c;
+  asn1::table::choice_storage<sl_pqi_r16_c, types, choice_buffer_t<sl_non_standardized_pqi_r16_s_, uint16_t>> c;
 };
 
 // SL-QoS-Profile-r16 ::= SEQUENCE
@@ -3234,7 +3239,7 @@ struct sl_drx_gc_bc_qos_r17_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<sl_drx_gc_bc_on_dur_timer_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<sl_drx_gc_bc_on_dur_timer_r17_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
   struct sl_drx_gc_inactivity_timer_r17_opts {
     enum options {
@@ -3491,7 +3496,7 @@ struct sl_drx_cfg_uc_r17_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<sl_drx_on_dur_timer_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<sl_drx_on_dur_timer_r17_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
   struct sl_drx_inactivity_timer_r17_opts {
     enum options {
@@ -3846,7 +3851,7 @@ struct sl_drx_cfg_uc_r17_s {
     uint16_t& set_ms10240();
 
   private:
-    asn1::table::choice_storage<sl_drx_cycle_start_offset_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<sl_drx_cycle_start_offset_r17_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
 
   // member variables
@@ -3954,7 +3959,7 @@ struct sl_freq_cfg_ext_v1800_s {
     int8_t& set_sl_energy_detection_thres_offset_r18();
 
   private:
-    asn1::table::choice_storage<sl_energy_detection_cfg_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<sl_energy_detection_cfg_r18_c_, types, choice_buffer_t<int8_t>> c;
   };
 
   // member variables
@@ -4220,7 +4225,7 @@ struct sl_remote_ue_rb_id_r17_c {
   uint8_t& set_drb_id_r17();
 
 private:
-  asn1::table::choice_storage<sl_remote_ue_rb_id_r17_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<sl_remote_ue_rb_id_r17_c, types, choice_buffer_t<uint8_t>> c;
 };
 
 // SL-MappingToAddMod-r17 ::= SEQUENCE

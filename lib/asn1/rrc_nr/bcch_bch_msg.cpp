@@ -20,25 +20,25 @@ static const asn1::table::seq_field seq_table_pdcch_cfg_sib1_s_fields[] = {
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(pdcch_cfg_sib1_s, search_space_zero),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr}};
 static const asn1::table::field_name seq_table_pdcch_cfg_sib1_s_names[] = {{"controlResourceSetZero", nullptr},
                                                                            {"searchSpaceZero", nullptr}};
-const asn1::table::seq_desc pdcch_cfg_sib1_s::desc = {{seq_table_pdcch_cfg_sib1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                      false,
-                                                      false,
-                                                      nullptr,
-                                                      0,
-                                                      seq_table_pdcch_cfg_sib1_s_names};
+const asn1::table::seq_desc          pdcch_cfg_sib1_s::desc             = {
+    {seq_table_pdcch_cfg_sib1_s_fields, uint64_t{0x3}, nullptr, seq_table_pdcch_cfg_sib1_s_names, 2, 0},
+    false,
+    false,
+    nullptr,
+    0};
 
 // MIB ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mib_s_fields[] = {
@@ -64,8 +64,8 @@ static const asn1::table::seq_field seq_table_mib_s_fields[] = {
      asn1::table::field_op::int_u8,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(mib_s, dmrs_type_a_position),
      asn1::table::seq_field::mandatory,
@@ -120,7 +120,7 @@ static const asn1::table::field_name seq_table_mib_s_names[] = {{"systemFrameNum
                                                                 {"intraFreqReselection", nullptr},
                                                                 {"spare", nullptr}};
 const asn1::table::seq_desc          mib_s::desc =
-    {{seq_table_mib_s_fields, 8, UINT64_C(0xff), nullptr, 0}, false, false, nullptr, 0, seq_table_mib_s_names};
+    {{seq_table_mib_s_fields, uint64_t{0xff}, nullptr, seq_table_mib_s_names, 8, 0}, false, false, nullptr, 0};
 
 static const char*           enum_names_mib_s_sub_carrier_spacing_common_e__values[] = {"scs15or60", "scs30or120"};
 const asn1::table::enum_desc mib_s::sub_carrier_spacing_common_opts::desc            = {
@@ -209,10 +209,10 @@ static const asn1::table::seq_field  seq_table_bcch_bch_msg_s_fields[] = {{offse
                                                                            nullptr,
                                                                            &bcch_bch_msg_type_c::desc}};
 static const asn1::table::field_name seq_table_bcch_bch_msg_s_names[]  = {{"message", nullptr}};
-const asn1::table::seq_desc bcch_bch_msg_s::desc = {{seq_table_bcch_bch_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-                                                    false,
-                                                    false,
-                                                    nullptr,
-                                                    0,
-                                                    seq_table_bcch_bch_msg_s_names,
-                                                    "BCCH-BCH-Message"};
+const asn1::table::seq_desc          bcch_bch_msg_s::desc              = {
+    {seq_table_bcch_bch_msg_s_fields, uint64_t{0x1}, nullptr, seq_table_bcch_bch_msg_s_names, 1, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    "BCCH-BCH-Message"};

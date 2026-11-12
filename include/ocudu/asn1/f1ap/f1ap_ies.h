@@ -308,7 +308,9 @@ struct abort_tx_c {
   protocol_ie_single_container_s<abort_tx_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<abort_tx_c, types, choice_buffer_t<protocol_ie_single_container_s<abort_tx_ext_ies_o>>> c;
+  asn1::table::
+      choice_storage<abort_tx_c, types, choice_buffer_t<protocol_ie_single_container_s<abort_tx_ext_ies_o>, uint8_t>>
+          c;
 };
 
 // AccessPointPosition-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
@@ -1419,9 +1421,10 @@ struct start_rb_idx_c {
   protocol_ie_single_container_s<start_rb_idx_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::
-      choice_storage<start_rb_idx_c, types, choice_buffer_t<protocol_ie_single_container_s<start_rb_idx_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<start_rb_idx_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<start_rb_idx_ext_ies_o>, uint8_t>>
+      c;
 };
 
 // SRSResource-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
@@ -2698,7 +2701,7 @@ struct relative_path_delay_c {
 private:
   asn1::table::choice_storage<relative_path_delay_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<relative_path_delay_ext_ies_o>>>
+                              choice_buffer_t<protocol_ie_single_container_s<relative_path_delay_ext_ies_o>, uint16_t>>
       c;
 };
 
@@ -3525,9 +3528,10 @@ struct ref_sig_c {
   protocol_ie_single_container_s<ref_sig_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<ref_sig_c,
-                              types,
-                              choice_buffer_t<dl_prs_s, protocol_ie_single_container_s<ref_sig_ext_ies_o>, ssb_s>>
+  asn1::table::choice_storage<
+      ref_sig_c,
+      types,
+      choice_buffer_t<dl_prs_s, protocol_ie_single_container_s<ref_sig_ext_ies_o>, ssb_s, uint8_t>>
       c;
 };
 
@@ -4097,7 +4101,14 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<cause_c, types, choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o>>> c;
+  asn1::table::choice_storage<cause_c,
+                              types,
+                              choice_buffer_t<cause_misc_e,
+                                              cause_protocol_e,
+                                              cause_radio_network_e,
+                                              cause_transport_e,
+                                              protocol_ie_single_container_s<cause_ext_ies_o>>>
+      c;
 };
 
 // BHChannels-FailedToBeModified-ItemExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
@@ -4559,10 +4570,12 @@ struct bh_qos_info_c {
   protocol_ie_single_container_s<bh_qos_info_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      bh_qos_info_c,
-      types,
-      choice_buffer_t<eutran_qos_s, protocol_ie_single_container_s<bh_qos_info_ext_ies_o>, qos_flow_level_qos_params_s>>
+  asn1::table::choice_storage<bh_qos_info_c,
+                              types,
+                              choice_buffer_t<eutran_qos_s,
+                                              protocol_ie_single_container_s<bh_qos_info_ext_ies_o>,
+                                              qos_flow_level_qos_params_s,
+                                              uint8_t>>
       c;
 };
 
@@ -5136,7 +5149,10 @@ struct bw_srs_c {
   protocol_ie_single_container_s<bw_srs_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<bw_srs_c, types, choice_buffer_t<protocol_ie_single_container_s<bw_srs_ext_ies_o>>> c;
+  asn1::table::choice_storage<bw_srs_c,
+                              types,
+                              choice_buffer_t<fr1_bw_e, fr2_bw_e, protocol_ie_single_container_s<bw_srs_ext_ies_o>>>
+      c;
 };
 
 // BarringExemptionforEmerCallInfo ::= ENUMERATED
@@ -7652,7 +7668,8 @@ private:
   asn1::table::choice_storage<choice_trp_beam_ant_info_item_c,
                               types,
                               choice_buffer_t<protocol_ie_single_container_s<choice_trp_beam_info_item_ext_ies_o>,
-                                              trp_beam_ant_explicit_info_s>>
+                                              trp_beam_ant_explicit_info_s,
+                                              uint32_t>>
       c;
 };
 
@@ -7707,9 +7724,11 @@ struct clock_accuracy_c {
   protocol_ie_single_container_s<clock_accuracy_ext_ies_o>& set_choice_exts();
 
 private:
-  asn1::table::
-      choice_storage<clock_accuracy_c, types, choice_buffer_t<protocol_ie_single_container_s<clock_accuracy_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<
+      clock_accuracy_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<clock_accuracy_ext_ies_o>, uint32_t, uint8_t>>
+      c;
 };
 
 // CompleteCandidateConfigurationIndicator ::= ENUMERATED
@@ -8682,7 +8701,9 @@ private:
   asn1::table::choice_storage<
       ecn_markingor_congestion_info_report_request_c,
       types,
-      choice_buffer_t<protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
+      choice_buffer_t<congestion_info_request_e,
+                      ec_nmarking_request_e,
+                      protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
       c;
 };
 
@@ -9921,7 +9942,7 @@ struct time_stamp_slot_idx_c {
 private:
   asn1::table::choice_storage<time_stamp_slot_idx_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<time_stamp_slot_idx_ext_ies_o>>>
+                              choice_buffer_t<protocol_ie_single_container_s<time_stamp_slot_idx_ext_ies_o>, uint8_t>>
       c;
 };
 
@@ -10213,7 +10234,8 @@ private:
                               types,
                               choice_buffer_t<access_point_position_s,
                                               ngran_high_accuracy_access_point_position_s,
-                                              protocol_ie_single_container_s<ref_point_ext_ies_o>>>
+                                              protocol_ie_single_container_s<ref_point_ext_ies_o>,
+                                              uint16_t>>
       c;
 };
 
@@ -12033,9 +12055,10 @@ struct gnb_rx_tx_time_diff_meas_c {
   protocol_ie_single_container_s<gnb_rx_tx_time_diff_meas_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<gnb_rx_tx_time_diff_meas_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<gnb_rx_tx_time_diff_meas_ext_ies_o>>>
+  asn1::table::choice_storage<
+      gnb_rx_tx_time_diff_meas_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<gnb_rx_tx_time_diff_meas_ext_ies_o>, uint16_t, uint32_t>>
       c;
 };
 
@@ -13017,10 +13040,11 @@ struct ref_cfg_c {
   protocol_ie_single_container_s<ref_cfg_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      ref_cfg_c,
-      types,
-      choice_buffer_t<protocol_ie_single_container_s<ref_cfg_ext_ies_o>, unbounded_octstring<true>>>
+  asn1::table::choice_storage<ref_cfg_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<ref_cfg_ext_ies_o>,
+                                              requestfor_lower_layer_cfg_e,
+                                              unbounded_octstring<true>>>
       c;
 };
 
@@ -13184,7 +13208,9 @@ struct lo_s_n_lo_si_nformation_c {
 private:
   asn1::table::choice_storage<lo_s_n_lo_si_nformation_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<lo_s_n_lo_si_nformation_ext_ies_o>>>
+                              choice_buffer_t<lo_s_n_lo_si_ndicator_hard_e,
+                                              protocol_ie_single_container_s<lo_s_n_lo_si_nformation_ext_ies_o>,
+                                              uint8_t>>
       c;
 };
 
@@ -14101,9 +14127,10 @@ struct mrb_progress_info_c {
   protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<mrb_progress_info_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>>>
+  asn1::table::choice_storage<
+      mrb_progress_info_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_ext_ies_o>, uint16_t, uint32_t>>
       c;
 };
 
@@ -14282,9 +14309,10 @@ struct ul_rtoa_meas_item_c {
   protocol_ie_single_container_s<ul_rtoa_meas_item_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<ul_rtoa_meas_item_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<ul_rtoa_meas_item_ext_ies_o>>>
+  asn1::table::choice_storage<
+      ul_rtoa_meas_item_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<ul_rtoa_meas_item_ext_ies_o>, uint16_t, uint32_t>>
       c;
 };
 
@@ -14428,6 +14456,7 @@ private:
                               types,
                               choice_buffer_t<gnb_rx_tx_time_diff_s,
                                               protocol_ie_single_container_s<measured_results_value_ext_ies_o>,
+                                              uint8_t,
                                               ul_ao_a_s,
                                               ul_rtoa_meas_s>>
       c;
@@ -14743,9 +14772,10 @@ struct thres_idx_info_c {
   protocol_ie_single_container_s<thres_idx_info_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::
-      choice_storage<thres_idx_info_c, types, choice_buffer_t<protocol_ie_single_container_s<thres_idx_info_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<thres_idx_info_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<thres_idx_info_ext_ies_o>, uint8_t>>
+      c;
 };
 
 // ThresholdIndexSession-Item-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
@@ -15942,10 +15972,11 @@ struct pc5_rlc_ch_qos_info_c {
   protocol_ie_single_container_s<pc5_rlc_ch_qos_info_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      pc5_rlc_ch_qos_info_c,
-      types,
-      choice_buffer_t<protocol_ie_single_container_s<pc5_rlc_ch_qos_info_ext_ies_o>, qos_flow_level_qos_params_s>>
+  asn1::table::choice_storage<pc5_rlc_ch_qos_info_c,
+                              types,
+                              choice_buffer_t<pc5_ctrl_plane_traffic_type_e_,
+                                              protocol_ie_single_container_s<pc5_rlc_ch_qos_info_ext_ies_o>,
+                                              qos_flow_level_qos_params_s>>
       c;
 };
 
@@ -16129,9 +16160,10 @@ struct pdc_measured_results_value_c {
   protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<pdc_measured_results_value_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>>>
+  asn1::table::choice_storage<
+      pdc_measured_results_value_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<pdc_measured_results_value_ext_ies_o>, uint32_t>>
       c;
 };
 
@@ -17928,7 +17960,7 @@ struct rat_freq_prio_info_c {
 private:
   asn1::table::choice_storage<rat_freq_prio_info_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>>>
+                              choice_buffer_t<protocol_ie_single_container_s<rat_freq_prio_info_ext_ies_o>, uint16_t>>
       c;
 };
 
@@ -18576,7 +18608,7 @@ struct sdt_bearer_type_c {
 private:
   asn1::table::choice_storage<sdt_bearer_type_c,
                               types,
-                              choice_buffer_t<protocol_ie_single_container_s<sdt_bearer_type_ext_ies_o>>>
+                              choice_buffer_t<protocol_ie_single_container_s<sdt_bearer_type_ext_ies_o>, uint8_t>>
       c;
 };
 
@@ -18973,9 +19005,11 @@ struct sldrx_info_c {
   protocol_ie_single_container_s<sldrx_info_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::
-      choice_storage<sldrx_info_c, types, choice_buffer_t<protocol_ie_single_container_s<sldrx_info_ext_ies_o>>>
-          c;
+  asn1::table::choice_storage<
+      sldrx_info_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<sldrx_info_ext_ies_o>, sldrx_cfg_ind_e, sldrx_cycle_len_e>>
+      c;
 };
 
 // SLDRXCycleItem-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
@@ -19825,7 +19859,9 @@ private:
                                               protocol_ie_single_container_s<trp_info_type_resp_item_ext_ies_o>,
                                               prs_cfg_s,
                                               spatial_direction_info_s,
-                                              ssb_info_s>>
+                                              ssb_info_s,
+                                              uint16_t,
+                                              uint32_t>>
       c;
 };
 
@@ -19979,9 +20015,10 @@ struct time_win_dur_meas_c {
   protocol_ie_single_container_s<time_win_dur_meas_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<time_win_dur_meas_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<time_win_dur_meas_ext_ies_o>>>
+  asn1::table::choice_storage<
+      time_win_dur_meas_c,
+      types,
+      choice_buffer_t<dur_slots_e_, protocol_ie_single_container_s<time_win_dur_meas_ext_ies_o>>>
       c;
 };
 
@@ -20050,9 +20087,10 @@ struct time_win_dur_srs_c {
   protocol_ie_single_container_s<time_win_dur_srs_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<time_win_dur_srs_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<time_win_dur_srs_ext_ies_o>>>
+  asn1::table::choice_storage<
+      time_win_dur_srs_c,
+      types,
+      choice_buffer_t<dur_slots_e_, dur_symbols_e_, protocol_ie_single_container_s<time_win_dur_srs_ext_ies_o>>>
       c;
 };
 
@@ -20395,10 +20433,11 @@ struct uac_category_type_c {
   protocol_ie_single_container_s<uac_category_type_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      uac_category_type_c,
-      types,
-      choice_buffer_t<protocol_ie_single_container_s<uac_category_type_ext_ies_o>, uac_operator_defined_s>>
+  asn1::table::choice_storage<uac_category_type_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<uac_category_type_ext_ies_o>,
+                                              uac_action_e,
+                                              uac_operator_defined_s>>
       c;
 };
 
@@ -20945,10 +20984,11 @@ struct uu_rlc_ch_qos_info_c {
   protocol_ie_single_container_s<uu_rlc_ch_qos_info_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      uu_rlc_ch_qos_info_c,
-      types,
-      choice_buffer_t<protocol_ie_single_container_s<uu_rlc_ch_qos_info_ext_ies_o>, qos_flow_level_qos_params_s>>
+  asn1::table::choice_storage<uu_rlc_ch_qos_info_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<uu_rlc_ch_qos_info_ext_ies_o>,
+                                              qos_flow_level_qos_params_s,
+                                              uu_ctrl_plane_traffic_type_e_>>
       c;
 };
 

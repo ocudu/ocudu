@@ -212,7 +212,16 @@ struct cause_c {
   cause_service_layer_s& set_service_layer();
 
 private:
-  asn1::table::choice_storage<cause_c, types, choice_buffer_t<cause_service_layer_s>> c;
+  asn1::table::choice_storage<cause_c,
+                              types,
+                              choice_buffer_t<cause_e2node_e,
+                                              cause_misc_e,
+                                              cause_protocol_e,
+                                              cause_ric_request_e,
+                                              cause_ric_service_e,
+                                              cause_service_layer_s,
+                                              cause_transport_e>>
+      c;
 };
 
 // RICrequestID ::= SEQUENCE

@@ -52,13 +52,16 @@ static const asn1::table::field_name seq_table_rrc_resume_request1_ies_s_names[]
                                                                                     {"resumeMAC-I", nullptr},
                                                                                     {"resumeCause", nullptr},
                                                                                     {"spare", nullptr}};
-const asn1::table::seq_desc          rrc_resume_request1_ies_s::desc             = {
-    {seq_table_rrc_resume_request1_ies_s_fields, 4, UINT64_C(0xf), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_rrc_resume_request1_ies_s_names};
+const asn1::table::seq_desc          rrc_resume_request1_ies_s::desc = {{seq_table_rrc_resume_request1_ies_s_fields,
+                                                                         uint64_t{0xf},
+                                                                         nullptr,
+                                                                         seq_table_rrc_resume_request1_ies_s_names,
+                                                                         4,
+                                                                         0},
+                                                                        false,
+                                                                        false,
+                                                                        nullptr,
+                                                                        0};
 
 // RRCResumeRequest1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rrc_resume_request1_s_fields[] = {
@@ -73,12 +76,11 @@ static const asn1::table::seq_field seq_table_rrc_resume_request1_s_fields[] = {
      &rrc_resume_request1_ies_s::desc}};
 static const asn1::table::field_name seq_table_rrc_resume_request1_s_names[] = {{"rrcResumeRequest1", nullptr}};
 const asn1::table::seq_desc          rrc_resume_request1_s::desc             = {
-    {seq_table_rrc_resume_request1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_rrc_resume_request1_s_fields, uint64_t{0x1}, nullptr, seq_table_rrc_resume_request1_s_names, 1, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_resume_request1_s_names};
+    0};
 
 // UL-CCCH1-MessageType ::= CHOICE
 void ul_ccch1_msg_type_c::set(types::options e)
@@ -215,10 +217,10 @@ static const asn1::table::seq_field  seq_table_ul_ccch1_msg_s_fields[] = {{offse
                                                                            nullptr,
                                                                            &ul_ccch1_msg_type_c::desc}};
 static const asn1::table::field_name seq_table_ul_ccch1_msg_s_names[]  = {{"message", nullptr}};
-const asn1::table::seq_desc ul_ccch1_msg_s::desc = {{seq_table_ul_ccch1_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-                                                    false,
-                                                    false,
-                                                    nullptr,
-                                                    0,
-                                                    seq_table_ul_ccch1_msg_s_names,
-                                                    "UL-CCCH1-Message"};
+const asn1::table::seq_desc          ul_ccch1_msg_s::desc              = {
+    {seq_table_ul_ccch1_msg_s_fields, uint64_t{0x1}, nullptr, seq_table_ul_ccch1_msg_s_names, 1, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    "UL-CCCH1-Message"};

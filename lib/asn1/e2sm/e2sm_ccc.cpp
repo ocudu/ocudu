@@ -2033,7 +2033,7 @@ void es_objive_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE es_objive_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::target_ec:
       HANDLE_CODE(bref.pack(c.get<target_ec_s_>().target_ec_present, 1));
@@ -2057,7 +2057,7 @@ OCUDUASN_CODE es_objive_c::pack(bit_ref& bref) const
 OCUDUASN_CODE es_objive_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::target_ec:
@@ -2375,7 +2375,7 @@ void on_dur_timer_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE on_dur_timer_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::integer:
       HANDLE_CODE(pack_integer(bref, c.get<uint8_t>(), (uint8_t)1u, (uint8_t)31u, false, true));
@@ -2392,7 +2392,7 @@ OCUDUASN_CODE on_dur_timer_c::pack(bit_ref& bref) const
 OCUDUASN_CODE on_dur_timer_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::integer:
@@ -5165,7 +5165,7 @@ void e2_sm_ccc_ran_cfg_structure_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE e2_sm_ccc_ran_cfg_structure_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::o_gnb_cu_cp_function:
       HANDLE_CODE(c.get<o_gnb_cu_cp_function_s>().pack(bref));
@@ -5212,7 +5212,7 @@ OCUDUASN_CODE e2_sm_ccc_ran_cfg_structure_c::pack(bit_ref& bref) const
 OCUDUASN_CODE e2_sm_ccc_ran_cfg_structure_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::o_gnb_cu_cp_function:
@@ -6435,7 +6435,7 @@ void cell_global_id_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE cell_global_id_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::nr_cgi:
       HANDLE_CODE(c.get<nr_cgi_s>().pack(bref));
@@ -6452,7 +6452,7 @@ OCUDUASN_CODE cell_global_id_c::pack(bit_ref& bref) const
 OCUDUASN_CODE cell_global_id_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::nr_cgi:
@@ -8144,7 +8144,7 @@ void action_definition_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE action_definition_format_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::action_definition_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_action_definition_format1_s>().pack(bref));
@@ -8161,7 +8161,7 @@ OCUDUASN_CODE action_definition_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE action_definition_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::action_definition_format1:
@@ -8369,7 +8369,7 @@ void ctrl_msg_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ctrl_msg_format_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::ctrl_msg_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_ctrl_msg_format1_s>().pack(bref));
@@ -8386,7 +8386,7 @@ OCUDUASN_CODE ctrl_msg_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ctrl_msg_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::ctrl_msg_format1:
@@ -8559,7 +8559,7 @@ void ctrl_outcome_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ctrl_outcome_format_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::ctrl_outcome_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_ctrl_outcome_format1_s>().pack(bref));
@@ -8576,7 +8576,7 @@ OCUDUASN_CODE ctrl_outcome_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ctrl_outcome_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::ctrl_outcome_format1:
@@ -8762,7 +8762,7 @@ void event_trigger_definition_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE event_trigger_definition_format_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::event_trigger_definition_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_event_trigger_definition_format1_s>().pack(bref));
@@ -8782,7 +8782,7 @@ OCUDUASN_CODE event_trigger_definition_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE event_trigger_definition_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::event_trigger_definition_format1:
@@ -9001,7 +9001,7 @@ void ind_msg_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE ind_msg_format_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::ind_msg_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_ind_msg_format1_s>().pack(bref));
@@ -9018,7 +9018,7 @@ OCUDUASN_CODE ind_msg_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE ind_msg_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::ind_msg_format1:
@@ -9176,7 +9176,7 @@ void query_definition_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE query_definition_format_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::query_definition_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_query_definition_format1_s>().pack(bref));
@@ -9193,7 +9193,7 @@ OCUDUASN_CODE query_definition_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE query_definition_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::query_definition_format1:
@@ -9401,7 +9401,7 @@ void query_outcome_format_c::to_json(json_writer& j) const
 }
 OCUDUASN_CODE query_outcome_format_c::pack(bit_ref& bref) const
 {
-  asn1::pack(bref, type_);
+  HANDLE_CODE(asn1::pack(bref, type_));
   switch (type_) {
     case types::query_outcome_format1:
       HANDLE_CODE(c.get<e2_sm_ccc_query_outcome_format1_s>().pack(bref));
@@ -9418,7 +9418,7 @@ OCUDUASN_CODE query_outcome_format_c::pack(bit_ref& bref) const
 OCUDUASN_CODE query_outcome_format_c::unpack(cbit_ref& bref)
 {
   types e;
-  asn1::unpack(e, bref);
+  HANDLE_CODE(asn1::unpack(e, bref));
   set(e);
   switch (type_) {
     case types::query_outcome_format1:
@@ -9552,7 +9552,7 @@ OCUDUASN_CODE ran_function_definition_s::pack(bit_ref& bref) const
     HANDLE_CODE(pack_dyn_seq_of(bref, list_of_cells_for_ran_function_definition, 1, 64, true));
   }
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9571,7 +9571,7 @@ OCUDUASN_CODE ran_function_definition_s::unpack(cbit_ref& bref)
     HANDLE_CODE(unpack_dyn_seq_of(list_of_cells_for_ran_function_definition, bref, 1, 64, true));
   }
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9653,7 +9653,7 @@ OCUDUASN_CODE ric_action_definition_s::pack(bit_ref& bref) const
   HANDLE_CODE(pack_unconstrained_integer(bref, ric_style_type, false, true));
   HANDLE_CODE(action_definition_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9662,7 +9662,7 @@ OCUDUASN_CODE ric_action_definition_s::unpack(cbit_ref& bref)
   HANDLE_CODE(unpack_unconstrained_integer(ric_style_type, bref, false, true));
   HANDLE_CODE(action_definition_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9694,7 +9694,7 @@ OCUDUASN_CODE ric_ctrl_hdr_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(ctrl_hdr_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9702,7 +9702,7 @@ OCUDUASN_CODE ric_ctrl_hdr_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(ctrl_hdr_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9731,7 +9731,7 @@ OCUDUASN_CODE ric_ctrl_msg_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(ctrl_msg_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9739,7 +9739,7 @@ OCUDUASN_CODE ric_ctrl_msg_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(ctrl_msg_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9768,7 +9768,7 @@ OCUDUASN_CODE ric_ctrl_outcome_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(ctrl_outcome_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9776,7 +9776,7 @@ OCUDUASN_CODE ric_ctrl_outcome_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(ctrl_outcome_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9805,7 +9805,7 @@ OCUDUASN_CODE ric_event_trigger_definition_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(event_trigger_definition_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9813,7 +9813,7 @@ OCUDUASN_CODE ric_event_trigger_definition_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(event_trigger_definition_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9842,7 +9842,7 @@ OCUDUASN_CODE ric_ind_hdr_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(ind_hdr_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9850,7 +9850,7 @@ OCUDUASN_CODE ric_ind_hdr_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(ind_hdr_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9879,7 +9879,7 @@ OCUDUASN_CODE ric_ind_msg_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(ind_msg_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9887,7 +9887,7 @@ OCUDUASN_CODE ric_ind_msg_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(ind_msg_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9916,7 +9916,7 @@ OCUDUASN_CODE ric_query_definition_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(query_definition_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9924,7 +9924,7 @@ OCUDUASN_CODE ric_query_definition_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(query_definition_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9953,7 +9953,7 @@ OCUDUASN_CODE ric_query_hdr_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(query_hdr_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9961,7 +9961,7 @@ OCUDUASN_CODE ric_query_hdr_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(query_hdr_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9990,7 +9990,7 @@ OCUDUASN_CODE ric_query_outcome_s::pack(bit_ref& bref) const
 {
   HANDLE_CODE(query_outcome_format.pack(bref));
 
-  bref.align_bytes_zero();
+  HANDLE_CODE(bref.align_bytes_zero());
 
   return OCUDUASN_SUCCESS;
 }
@@ -9998,7 +9998,7 @@ OCUDUASN_CODE ric_query_outcome_s::unpack(cbit_ref& bref)
 {
   HANDLE_CODE(query_outcome_format.unpack(bref));
 
-  bref.align_bytes();
+  HANDLE_CODE(bref.align_bytes());
 
   return OCUDUASN_SUCCESS;
 }

@@ -20,16 +20,16 @@ static const asn1::table::seq_field seq_table_add_supported_format_s_fields[] = 
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(add_supported_format_s, ric_ctrl_msg_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr}};
 static const asn1::table::field_name seq_table_add_supported_format_s_names[] = {
     {"ric-ControlHeaderFormat-Type", nullptr},
@@ -40,8 +40,8 @@ static const asn1::table::seq_field seq_table_add_supported_format_s_g0_fields[]
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr}};
 static const asn1::table::field_name seq_table_add_supported_format_s_g0_names[] = {
     {"ric-ControlOutcomeFormat-Type", nullptr}};
@@ -53,26 +53,33 @@ static const asn1::table::seq_field seq_table_add_supported_format_s_g1_fields[]
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const asn1::table::field_name seq_table_add_supported_format_s_g1_names[] = {{"ric-ControlAction-ID", nullptr}};
 static const asn1::table::seq_opt    seq_table_add_supported_format_s_g1_opts[]  = {
     {0, (int32_t)offsetof(add_supported_format_s, ric_ctrl_action_id_present)}};
 static const asn1::table::seq_group seq_table_add_supported_format_s_groups[] = {
-    {{seq_table_add_supported_format_s_g0_fields, 1, UINT64_C(0x0), seq_table_add_supported_format_s_g0_opts, 1},
-     true,
-     seq_table_add_supported_format_s_g0_names},
-    {{seq_table_add_supported_format_s_g1_fields, 1, UINT64_C(0x0), seq_table_add_supported_format_s_g1_opts, 1},
-     true,
-     seq_table_add_supported_format_s_g1_names}};
+    {{seq_table_add_supported_format_s_g0_fields,
+      uint64_t{0x0},
+      seq_table_add_supported_format_s_g0_opts,
+      seq_table_add_supported_format_s_g0_names,
+      1,
+      1},
+     true},
+    {{seq_table_add_supported_format_s_g1_fields,
+      uint64_t{0x0},
+      seq_table_add_supported_format_s_g1_opts,
+      seq_table_add_supported_format_s_g1_names,
+      1,
+      1},
+     true}};
 const asn1::table::seq_desc add_supported_format_s::desc = {
-    {seq_table_add_supported_format_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_add_supported_format_s_fields, uint64_t{0x3}, nullptr, seq_table_add_supported_format_s_names, 2, 0},
     true,
     true,
     seq_table_add_supported_format_s_groups,
-    2,
-    seq_table_add_supported_format_s_names};
+    2};
 
 // RANParameter-Testing-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_testing_item_s_fields[] = {
@@ -81,8 +88,8 @@ static const asn1::table::seq_field seq_table_ran_param_testing_item_s_fields[] 
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ran_param_testing_item_s, ran_param_type),
      asn1::table::seq_field::mandatory,
@@ -95,12 +102,11 @@ static const asn1::table::seq_field seq_table_ran_param_testing_item_s_fields[] 
 static const asn1::table::field_name seq_table_ran_param_testing_item_s_names[] = {{"ranParameter-ID", nullptr},
                                                                                    {"ranParameter-Type", nullptr}};
 const asn1::table::seq_desc          ran_param_testing_item_s::desc             = {
-    {seq_table_ran_param_testing_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ran_param_testing_item_s_fields, uint64_t{0x3}, nullptr, seq_table_ran_param_testing_item_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_testing_item_s_names};
+    0};
 
 static const asn1::table::seq_field choice_table_ran_param_testing_item_s_ran_param_type_c__alternatives[] = {
     {0,
@@ -201,7 +207,7 @@ static const asn1::table::seq_field seq_table_ran_param_testing_item_choice_list
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_param_testing_item_choice_list_s::ran_param_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -210,12 +216,16 @@ static const asn1::table::seq_field seq_table_ran_param_testing_item_choice_list
 static const asn1::table::field_name seq_table_ran_param_testing_item_choice_list_s_names[] = {
     {"ranParameter-List", nullptr}};
 const asn1::table::seq_desc ran_param_testing_item_choice_list_s::desc = {
-    {seq_table_ran_param_testing_item_choice_list_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_testing_item_choice_list_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_testing_item_choice_list_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_testing_item_choice_list_s_names};
+    0};
 
 // RANParameter-Testing-Item-Choice-Structure ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_testing_item_choice_structure_s_fields[] = {
@@ -225,7 +235,7 @@ static const asn1::table::seq_field seq_table_ran_param_testing_item_choice_stru
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_param_testing_item_choice_structure_s::ran_param_structure),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -234,12 +244,16 @@ static const asn1::table::seq_field seq_table_ran_param_testing_item_choice_stru
 static const asn1::table::field_name seq_table_ran_param_testing_item_choice_structure_s_names[] = {
     {"ranParameter-Structure", nullptr}};
 const asn1::table::seq_desc ran_param_testing_item_choice_structure_s::desc = {
-    {seq_table_ran_param_testing_item_choice_structure_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_testing_item_choice_structure_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_testing_item_choice_structure_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_testing_item_choice_structure_s_names};
+    0};
 
 // RANParameter-Value ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ran_param_value_c_alternatives[] = {
@@ -248,7 +262,7 @@ static const asn1::table::storage_ops* const choice_storage_ran_param_value_c_al
     &asn1::table::alternative_ops<real_s, false>::value,
     &asn1::table::alternative_ops<unbounded_bitstring<false, true>, false>::value,
     &asn1::table::alternative_ops<unbounded_octstring<true>, false>::value,
-    &asn1::table::alternative_ops<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>, false>::value};
+    &asn1::table::alternative_ops<printable_string<0, MAX_ASN_STRING_LENGTH, false, true>, false, false>::value};
 const asn1::table::choice_storage_desc ran_param_value_c::storage_desc = {choice_storage_ran_param_value_c_alternatives,
                                                                           6,
                                                                           "ran_param_value_c"};
@@ -290,8 +304,8 @@ static const asn1::table::seq_field choice_table_ran_param_value_c_alternatives[
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
@@ -366,12 +380,16 @@ static const asn1::table::seq_field seq_table_ran_param_testing_item_choice_elem
 static const asn1::table::field_name seq_table_ran_param_testing_item_choice_elem_true_s_names[] = {
     {"ranParameter-value", nullptr}};
 const asn1::table::seq_desc ran_param_testing_item_choice_elem_true_s::desc = {
-    {seq_table_ran_param_testing_item_choice_elem_true_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_testing_item_choice_elem_true_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_testing_item_choice_elem_true_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_testing_item_choice_elem_true_s_names};
+    0};
 
 // RANParameter-TestingCondition ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ran_param_testing_condition_c_alternatives[] = {
@@ -505,15 +523,15 @@ static const asn1::table::seq_opt seq_table_ran_param_testing_item_choice_elem_f
     {2, (int32_t)offsetof(ran_param_testing_item_choice_elem_false_s, lc_or_present)}};
 const asn1::table::seq_desc ran_param_testing_item_choice_elem_false_s::desc = {
     {seq_table_ran_param_testing_item_choice_elem_false_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ran_param_testing_item_choice_elem_false_s_opts,
+     seq_table_ran_param_testing_item_choice_elem_false_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_testing_item_choice_elem_false_s_names};
+    0};
 
 // EventTrigger-UE-Info-Item-Choice-Individual ::= SEQUENCE
 static const asn1::table::seq_field seq_table_event_trigger_ue_info_item_choice_individual_s_fields[] = {
@@ -532,7 +550,7 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_info_item_choice_
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(event_trigger_ue_info_item_choice_individual_s::ran_param_testing),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -545,15 +563,15 @@ static const asn1::table::seq_opt seq_table_event_trigger_ue_info_item_choice_in
     {1, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc event_trigger_ue_info_item_choice_individual_s::desc = {
     {seq_table_event_trigger_ue_info_item_choice_individual_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_event_trigger_ue_info_item_choice_individual_s_opts,
+     seq_table_event_trigger_ue_info_item_choice_individual_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_event_trigger_ue_info_item_choice_individual_s_names};
+    0};
 
 // EventTrigger-UE-Info-Item-Choice-Group ::= SEQUENCE
 static const asn1::table::seq_field seq_table_event_trigger_ue_info_item_choice_group_s_fields[] = {
@@ -563,7 +581,7 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_info_item_choice_
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(event_trigger_ue_info_item_choice_group_s::ran_param_testing),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -572,12 +590,16 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_info_item_choice_
 static const asn1::table::field_name seq_table_event_trigger_ue_info_item_choice_group_s_names[] = {
     {"ranParameterTesting", nullptr}};
 const asn1::table::seq_desc event_trigger_ue_info_item_choice_group_s::desc = {
-    {seq_table_event_trigger_ue_info_item_choice_group_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_event_trigger_ue_info_item_choice_group_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_event_trigger_ue_info_item_choice_group_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_event_trigger_ue_info_item_choice_group_s_names};
+    0};
 
 // UEQuery ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_query_s_fields[] = {
@@ -596,7 +618,7 @@ static const asn1::table::seq_field seq_table_ue_query_s_fields[] = {
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::
          item_list_codec<decltype(ue_query_s::ran_param_testing), asn1::table::sequence_item_ops, false, true>::value,
      &ran_param_testing_item_s::desc}};
@@ -604,12 +626,11 @@ static const asn1::table::field_name seq_table_ue_query_s_names[] = {{"partialUE
                                                                      {"ranParameterTesting", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_query_s_opts[]  = {{1, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc          ue_query_s::desc             = {
-    {seq_table_ue_query_s_fields, 2, UINT64_C(0x1), seq_table_ue_query_s_opts, 1},
+    {seq_table_ue_query_s_fields, uint64_t{0x1}, seq_table_ue_query_s_opts, seq_table_ue_query_s_names, 2, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ue_query_s_names};
+    0};
 
 // Associated-UE-Info-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_associated_ue_info_item_s_fields[] = {
@@ -618,8 +639,8 @@ static const asn1::table::seq_field seq_table_associated_ue_info_item_s_fields[]
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(associated_ue_info_item_s, ue_type),
      asn1::table::seq_field::mandatory,
@@ -644,18 +665,21 @@ static const asn1::table::field_name seq_table_associated_ue_info_item_s_names[]
                                                                                     {"logicalOR", nullptr}};
 static const asn1::table::seq_opt    seq_table_associated_ue_info_item_s_opts[]  = {
     {2, (int32_t)offsetof(associated_ue_info_item_s, lc_or_present)}};
-const asn1::table::seq_desc associated_ue_info_item_s::desc = {
-    {seq_table_associated_ue_info_item_s_fields, 3, UINT64_C(0x3), seq_table_associated_ue_info_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_associated_ue_info_item_s_names};
+const asn1::table::seq_desc associated_ue_info_item_s::desc = {{seq_table_associated_ue_info_item_s_fields,
+                                                                uint64_t{0x3},
+                                                                seq_table_associated_ue_info_item_s_opts,
+                                                                seq_table_associated_ue_info_item_s_names,
+                                                                3,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 static const asn1::table::storage_ops* const choice_storage_associated_ue_info_item_s_ue_type_c__alternatives[] = {
-    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_individual_s, false>::value,
-    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_group_s, false>::value,
-    &asn1::table::alternative_ops<ue_query_s, false>::value};
+    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_individual_s, false, false>::value,
+    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_group_s, false, false>::value,
+    &asn1::table::alternative_ops<ue_query_s, false, false>::value};
 const asn1::table::choice_storage_desc associated_ue_info_item_s::ue_type_c_::storage_desc = {
     choice_storage_associated_ue_info_item_s_ue_type_c__alternatives,
     3,
@@ -739,7 +763,7 @@ static const asn1::table::seq_field seq_table_associated_ue_info_s_fields[] = {
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(associated_ue_info_s::associated_ue_info_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -747,12 +771,11 @@ static const asn1::table::seq_field seq_table_associated_ue_info_s_fields[] = {
      &associated_ue_info_item_s::desc}};
 static const asn1::table::field_name seq_table_associated_ue_info_s_names[] = {{"associatedUEInfo-List", nullptr}};
 const asn1::table::seq_desc          associated_ue_info_s::desc             = {
-    {seq_table_associated_ue_info_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_associated_ue_info_s_fields, uint64_t{0x1}, nullptr, seq_table_associated_ue_info_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_associated_ue_info_s_names};
+    0};
 
 // RANParameter-Definition-Choice ::= CHOICE
 static const asn1::table::seq_field choice_table_ran_param_definition_choice_c_alternatives[] = {
@@ -827,12 +850,11 @@ static const asn1::table::seq_field seq_table_ran_param_definition_s_fields[] = 
 static const asn1::table::field_name seq_table_ran_param_definition_s_names[] = {
     {"ranParameter-Definition-Choice", nullptr}};
 const asn1::table::seq_desc ran_param_definition_s::desc = {
-    {seq_table_ran_param_definition_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_definition_s_fields, uint64_t{0x1}, nullptr, seq_table_ran_param_definition_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_definition_s_names};
+    0};
 
 // RANParameter-Definition-Choice-LIST-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_definition_choice_list_item_s_fields[] = {
@@ -841,8 +863,8 @@ static const asn1::table::seq_field seq_table_ran_param_definition_choice_list_i
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ran_param_definition_choice_list_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -870,15 +892,15 @@ static const asn1::table::seq_opt seq_table_ran_param_definition_choice_list_ite
     {2, (int32_t)offsetof(ran_param_definition_choice_list_item_s, ran_param_definition_present)}};
 const asn1::table::seq_desc ran_param_definition_choice_list_item_s::desc = {
     {seq_table_ran_param_definition_choice_list_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_ran_param_definition_choice_list_item_s_opts,
+     seq_table_ran_param_definition_choice_list_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_definition_choice_list_item_s_names};
+    0};
 
 // RANParameter-Definition-Choice-LIST ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_definition_choice_list_s_fields[] = {
@@ -888,7 +910,7 @@ static const asn1::table::seq_field seq_table_ran_param_definition_choice_list_s
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_param_definition_choice_list_s::ran_param_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -897,12 +919,16 @@ static const asn1::table::seq_field seq_table_ran_param_definition_choice_list_s
 static const asn1::table::field_name seq_table_ran_param_definition_choice_list_s_names[] = {
     {"ranParameter-List", nullptr}};
 const asn1::table::seq_desc ran_param_definition_choice_list_s::desc = {
-    {seq_table_ran_param_definition_choice_list_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_definition_choice_list_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_definition_choice_list_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_definition_choice_list_s_names};
+    0};
 
 // RANParameter-Definition-Choice-STRUCTURE-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_definition_choice_structure_item_s_fields[] = {
@@ -911,8 +937,8 @@ static const asn1::table::seq_field seq_table_ran_param_definition_choice_struct
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ran_param_definition_choice_structure_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -940,15 +966,15 @@ static const asn1::table::seq_opt seq_table_ran_param_definition_choice_structur
     {2, (int32_t)offsetof(ran_param_definition_choice_structure_item_s, ran_param_definition_present)}};
 const asn1::table::seq_desc ran_param_definition_choice_structure_item_s::desc = {
     {seq_table_ran_param_definition_choice_structure_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_ran_param_definition_choice_structure_item_s_opts,
+     seq_table_ran_param_definition_choice_structure_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_definition_choice_structure_item_s_names};
+    0};
 
 // RANParameter-Definition-Choice-STRUCTURE ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_definition_choice_structure_s_fields[] = {
@@ -958,7 +984,7 @@ static const asn1::table::seq_field seq_table_ran_param_definition_choice_struct
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_param_definition_choice_structure_s::ran_param_structure),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -967,12 +993,16 @@ static const asn1::table::seq_field seq_table_ran_param_definition_choice_struct
 static const asn1::table::field_name seq_table_ran_param_definition_choice_structure_s_names[] = {
     {"ranParameter-STRUCTURE", nullptr}};
 const asn1::table::seq_desc ran_param_definition_choice_structure_s::desc = {
-    {seq_table_ran_param_definition_choice_structure_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_definition_choice_structure_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_definition_choice_structure_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_definition_choice_structure_s_names};
+    0};
 
 // CallProcessBreakpoint-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_call_process_breakpoint_ran_param_item_s_fields[] = {
@@ -981,8 +1011,8 @@ static const asn1::table::seq_field seq_table_call_process_breakpoint_ran_param_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(call_process_breakpoint_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -1012,19 +1042,23 @@ static const asn1::table::seq_opt seq_table_call_process_breakpoint_ran_param_it
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_call_process_breakpoint_ran_param_item_s_groups[] = {
     {{seq_table_call_process_breakpoint_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_call_process_breakpoint_ran_param_item_s_g0_opts,
+      seq_table_call_process_breakpoint_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_call_process_breakpoint_ran_param_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc call_process_breakpoint_ran_param_item_s::desc = {
-    {seq_table_call_process_breakpoint_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_call_process_breakpoint_ran_param_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_call_process_breakpoint_ran_param_item_s_names,
+     2,
+     0},
     true,
     true,
     seq_table_call_process_breakpoint_ran_param_item_s_groups,
-    1,
-    seq_table_call_process_breakpoint_ran_param_item_s_names};
+    1};
 
 // CauseProtocol ::= ENUMERATED
 static const char*           enum_names_cause_protocol_e_values[] = {"transfer-syntax-error",
@@ -1072,8 +1106,8 @@ static const asn1::table::seq_field seq_table_cell_identif_ran_param_item_s_fiel
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(cell_identif_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -1102,19 +1136,22 @@ static const asn1::table::seq_opt seq_table_cell_identif_ran_param_item_s_g0_opt
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_cell_identif_ran_param_item_s_groups[] = {
     {{seq_table_cell_identif_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_cell_identif_ran_param_item_s_g0_opts,
+      seq_table_cell_identif_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_cell_identif_ran_param_item_s_g0_names}};
-const asn1::table::seq_desc cell_identif_ran_param_item_s::desc = {
-    {seq_table_cell_identif_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    seq_table_cell_identif_ran_param_item_s_groups,
-    1,
-    seq_table_cell_identif_ran_param_item_s_names};
+     true}};
+const asn1::table::seq_desc cell_identif_ran_param_item_s::desc = {{seq_table_cell_identif_ran_param_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    nullptr,
+                                                                    seq_table_cell_identif_ran_param_item_s_names,
+                                                                    2,
+                                                                    0},
+                                                                   true,
+                                                                   true,
+                                                                   seq_table_cell_identif_ran_param_item_s_groups,
+                                                                   1};
 
 // ControlAction-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ctrl_action_ran_param_item_s_fields[] = {
@@ -1123,8 +1160,8 @@ static const asn1::table::seq_field seq_table_ctrl_action_ran_param_item_s_field
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ctrl_action_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -1153,19 +1190,22 @@ static const asn1::table::seq_opt seq_table_ctrl_action_ran_param_item_s_g0_opts
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_ctrl_action_ran_param_item_s_groups[] = {
     {{seq_table_ctrl_action_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_ctrl_action_ran_param_item_s_g0_opts,
+      seq_table_ctrl_action_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_ctrl_action_ran_param_item_s_g0_names}};
-const asn1::table::seq_desc ctrl_action_ran_param_item_s::desc = {
-    {seq_table_ctrl_action_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    seq_table_ctrl_action_ran_param_item_s_groups,
-    1,
-    seq_table_ctrl_action_ran_param_item_s_names};
+     true}};
+const asn1::table::seq_desc ctrl_action_ran_param_item_s::desc = {{seq_table_ctrl_action_ran_param_item_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   nullptr,
+                                                                   seq_table_ctrl_action_ran_param_item_s_names,
+                                                                   2,
+                                                                   0},
+                                                                  true,
+                                                                  true,
+                                                                  seq_table_ctrl_action_ran_param_item_s_groups,
+                                                                  1};
 
 // ControlOutcome-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ctrl_outcome_ran_param_item_s_fields[] = {
@@ -1174,8 +1214,8 @@ static const asn1::table::seq_field seq_table_ctrl_outcome_ran_param_item_s_fiel
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ctrl_outcome_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -1204,19 +1244,22 @@ static const asn1::table::seq_opt seq_table_ctrl_outcome_ran_param_item_s_g0_opt
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_ctrl_outcome_ran_param_item_s_groups[] = {
     {{seq_table_ctrl_outcome_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_ctrl_outcome_ran_param_item_s_g0_opts,
+      seq_table_ctrl_outcome_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_ctrl_outcome_ran_param_item_s_g0_names}};
-const asn1::table::seq_desc ctrl_outcome_ran_param_item_s::desc = {
-    {seq_table_ctrl_outcome_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    seq_table_ctrl_outcome_ran_param_item_s_groups,
-    1,
-    seq_table_ctrl_outcome_ran_param_item_s_names};
+     true}};
+const asn1::table::seq_desc ctrl_outcome_ran_param_item_s::desc = {{seq_table_ctrl_outcome_ran_param_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    nullptr,
+                                                                    seq_table_ctrl_outcome_ran_param_item_s_names,
+                                                                    2,
+                                                                    0},
+                                                                   true,
+                                                                   true,
+                                                                   seq_table_ctrl_outcome_ran_param_item_s_groups,
+                                                                   1};
 
 // E2SM-RC-ActionDefinition-Format1-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format1_item_s_fields[] = {
@@ -1225,8 +1268,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format1_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format1_item_s_names[] = {
     {"ranParameter-ID", nullptr}};
@@ -1246,19 +1289,23 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_action_definition_format1_it
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_e2sm_rc_action_definition_format1_item_s_groups[] = {
     {{seq_table_e2sm_rc_action_definition_format1_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_e2sm_rc_action_definition_format1_item_s_g0_opts,
+      seq_table_e2sm_rc_action_definition_format1_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_e2sm_rc_action_definition_format1_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format1_item_s::desc = {
-    {seq_table_e2sm_rc_action_definition_format1_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_action_definition_format1_item_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_e2sm_rc_action_definition_format1_item_s_names,
+     1,
+     0},
     true,
     true,
     seq_table_e2sm_rc_action_definition_format1_item_s_groups,
-    1,
-    seq_table_e2sm_rc_action_definition_format1_item_s_names};
+    1};
 
 // E2SM-RC-ActionDefinition-Format1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format1_s_fields[] = {
@@ -1268,7 +1315,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format1_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_action_definition_format1_s::ran_p_to_be_reported_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1277,12 +1324,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format1_
 static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format1_s_names[] = {
     {"ranP-ToBeReported-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format1_s::desc = {
-    {seq_table_e2sm_rc_action_definition_format1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_action_definition_format1_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_e2sm_rc_action_definition_format1_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_action_definition_format1_s_names};
+    0};
 
 // RANParameter-ValueType-Choice-ElementTrue ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_value_type_choice_elem_true_s_fields[] = {
@@ -1298,12 +1349,16 @@ static const asn1::table::seq_field seq_table_ran_param_value_type_choice_elem_t
 static const asn1::table::field_name seq_table_ran_param_value_type_choice_elem_true_s_names[] = {
     {"ranParameter-value", nullptr}};
 const asn1::table::seq_desc ran_param_value_type_choice_elem_true_s::desc = {
-    {seq_table_ran_param_value_type_choice_elem_true_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_value_type_choice_elem_true_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_value_type_choice_elem_true_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_value_type_choice_elem_true_s_names};
+    0};
 
 // RANParameter-ValueType-Choice-ElementFalse ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_value_type_choice_elem_false_s_fields[] = {
@@ -1322,15 +1377,15 @@ static const asn1::table::seq_opt seq_table_ran_param_value_type_choice_elem_fal
     {0, (int32_t)offsetof(ran_param_value_type_choice_elem_false_s, ran_param_value_present)}};
 const asn1::table::seq_desc ran_param_value_type_choice_elem_false_s::desc = {
     {seq_table_ran_param_value_type_choice_elem_false_s_fields,
-     1,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_ran_param_value_type_choice_elem_false_s_opts,
+     seq_table_ran_param_value_type_choice_elem_false_s_names,
+     1,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_value_type_choice_elem_false_s_names};
+    0};
 
 // RANParameter-ValueType ::= CHOICE
 static const asn1::table::seq_field choice_table_ran_param_value_type_c_alternatives[] = {
@@ -1430,8 +1485,8 @@ static const asn1::table::seq_field seq_table_ran_param_structure_item_s_fields[
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ran_param_structure_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -1445,13 +1500,16 @@ static const asn1::table::seq_field seq_table_ran_param_structure_item_s_fields[
 static const asn1::table::field_name seq_table_ran_param_structure_item_s_names[] = {
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
-const asn1::table::seq_desc ran_param_structure_item_s::desc = {
-    {seq_table_ran_param_structure_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ran_param_structure_item_s_names};
+const asn1::table::seq_desc ran_param_structure_item_s::desc = {{seq_table_ran_param_structure_item_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 nullptr,
+                                                                 seq_table_ran_param_structure_item_s_names,
+                                                                 2,
+                                                                 0},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // RANParameter-STRUCTURE ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_structure_s_fields[] = {
@@ -1461,7 +1519,7 @@ static const asn1::table::seq_field seq_table_ran_param_structure_s_fields[] = {
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_param_structure_s::seq_of_ran_params),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1469,13 +1527,16 @@ static const asn1::table::seq_field seq_table_ran_param_structure_s_fields[] = {
      &ran_param_structure_item_s::desc}};
 static const asn1::table::field_name seq_table_ran_param_structure_s_names[] = {{"sequence-of-ranParameters", nullptr}};
 static const asn1::table::seq_opt seq_table_ran_param_structure_s_opts[] = {{0, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc       ran_param_structure_s::desc            = {
-    {seq_table_ran_param_structure_s_fields, 1, UINT64_C(0x0), seq_table_ran_param_structure_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ran_param_structure_s_names};
+const asn1::table::seq_desc       ran_param_structure_s::desc            = {{seq_table_ran_param_structure_s_fields,
+                                                                             uint64_t{0x0},
+                                                                             seq_table_ran_param_structure_s_opts,
+                                                                             seq_table_ran_param_structure_s_names,
+                                                                             1,
+                                                                             1},
+                                                                            true,
+                                                                            true,
+                                                                            nullptr,
+                                                                            0};
 
 // RANParameter-ValueType-Choice-Structure ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_value_type_choice_structure_s_fields[] = {
@@ -1491,12 +1552,16 @@ static const asn1::table::seq_field seq_table_ran_param_value_type_choice_struct
 static const asn1::table::field_name seq_table_ran_param_value_type_choice_structure_s_names[] = {
     {"ranParameter-Structure", nullptr}};
 const asn1::table::seq_desc ran_param_value_type_choice_structure_s::desc = {
-    {seq_table_ran_param_value_type_choice_structure_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_value_type_choice_structure_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_value_type_choice_structure_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_value_type_choice_structure_s_names};
+    0};
 
 // RANParameter-LIST ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_list_s_fields[] = {
@@ -1506,19 +1571,19 @@ static const asn1::table::seq_field seq_table_ran_param_list_s_fields[] = {
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_param_list_s::list_of_ran_param),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &ran_param_structure_s::desc}};
 static const asn1::table::field_name seq_table_ran_param_list_s_names[] = {{"list-of-ranParameter", nullptr}};
-const asn1::table::seq_desc ran_param_list_s::desc = {{seq_table_ran_param_list_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-                                                      true,
-                                                      true,
-                                                      nullptr,
-                                                      0,
-                                                      seq_table_ran_param_list_s_names};
+const asn1::table::seq_desc          ran_param_list_s::desc             = {
+    {seq_table_ran_param_list_s_fields, uint64_t{0x1}, nullptr, seq_table_ran_param_list_s_names, 1, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 // RANParameter-ValueType-Choice-List ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_param_value_type_choice_list_s_fields[] = {
@@ -1534,12 +1599,16 @@ static const asn1::table::seq_field seq_table_ran_param_value_type_choice_list_s
 static const asn1::table::field_name seq_table_ran_param_value_type_choice_list_s_names[] = {
     {"ranParameter-List", nullptr}};
 const asn1::table::seq_desc ran_param_value_type_choice_list_s::desc = {
-    {seq_table_ran_param_value_type_choice_list_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_param_value_type_choice_list_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_param_value_type_choice_list_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_param_value_type_choice_list_s_names};
+    0};
 
 // RIC-PolicyAction-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ric_policy_action_ran_param_item_s_fields[] = {
@@ -1548,8 +1617,8 @@ static const asn1::table::seq_field seq_table_ric_policy_action_ran_param_item_s
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ric_policy_action_ran_param_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -1564,12 +1633,16 @@ static const asn1::table::field_name seq_table_ric_policy_action_ran_param_item_
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
 const asn1::table::seq_desc ric_policy_action_ran_param_item_s::desc = {
-    {seq_table_ric_policy_action_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_policy_action_ran_param_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_ric_policy_action_ran_param_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_policy_action_ran_param_item_s_names};
+    0};
 
 // RIC-PolicyAction ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ric_policy_action_s_fields[] = {
@@ -1578,8 +1651,8 @@ static const asn1::table::seq_field seq_table_ric_policy_action_s_fields[] = {
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(ric_policy_action_s, ran_params_list),
      asn1::table::seq_field::list_presence,
@@ -1587,7 +1660,7 @@ static const asn1::table::seq_field seq_table_ric_policy_action_s_fields[] = {
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ric_policy_action_s::ran_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1609,17 +1682,23 @@ static const asn1::table::seq_field seq_table_ric_policy_action_s_g0_fields[] = 
 static const asn1::table::field_name seq_table_ric_policy_action_s_g0_names[] = {{"ric-PolicyDecision", nullptr}};
 static const asn1::table::seq_opt    seq_table_ric_policy_action_s_g0_opts[]  = {
     {0, (int32_t)offsetof(ric_policy_action_s, ric_policy_decision_present)}};
-static const asn1::table::seq_group seq_table_ric_policy_action_s_groups[] = {
-    {{seq_table_ric_policy_action_s_g0_fields, 1, UINT64_C(0x0), seq_table_ric_policy_action_s_g0_opts, 1},
-     true,
-     seq_table_ric_policy_action_s_g0_names}};
-const asn1::table::seq_desc ric_policy_action_s::desc = {
-    {seq_table_ric_policy_action_s_fields, 2, UINT64_C(0x1), seq_table_ric_policy_action_s_opts, 1},
-    true,
-    true,
-    seq_table_ric_policy_action_s_groups,
-    1,
-    seq_table_ric_policy_action_s_names};
+static const asn1::table::seq_group seq_table_ric_policy_action_s_groups[] = {{{seq_table_ric_policy_action_s_g0_fields,
+                                                                                uint64_t{0x0},
+                                                                                seq_table_ric_policy_action_s_g0_opts,
+                                                                                seq_table_ric_policy_action_s_g0_names,
+                                                                                1,
+                                                                                1},
+                                                                               true}};
+const asn1::table::seq_desc         ric_policy_action_s::desc              = {{seq_table_ric_policy_action_s_fields,
+                                                                               uint64_t{0x1},
+                                                                               seq_table_ric_policy_action_s_opts,
+                                                                               seq_table_ric_policy_action_s_names,
+                                                                               2,
+                                                                               1},
+                                                                              true,
+                                                                              true,
+                                                                              seq_table_ric_policy_action_s_groups,
+                                                                              1};
 
 static const char*           enum_names_ric_policy_action_s_ric_policy_decision_e__values[] = {"accept", "reject"};
 const asn1::table::enum_desc ric_policy_action_s::ric_policy_decision_opts::desc            = {
@@ -1644,7 +1723,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format2_
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(e2sm_rc_action_definition_format2_item_s::ric_policy_condition_definition),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1661,8 +1740,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format2_
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format2_item_s_g0_names[] = {
     {"ric-PolicyConditionID", nullptr}};
@@ -1670,23 +1749,23 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_action_definition_format2_it
     {0, (int32_t)offsetof(e2sm_rc_action_definition_format2_item_s, ric_policy_condition_id_present)}};
 static const asn1::table::seq_group seq_table_e2sm_rc_action_definition_format2_item_s_groups[] = {
     {{seq_table_e2sm_rc_action_definition_format2_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_e2sm_rc_action_definition_format2_item_s_g0_opts,
+      seq_table_e2sm_rc_action_definition_format2_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_e2sm_rc_action_definition_format2_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format2_item_s::desc = {
     {seq_table_e2sm_rc_action_definition_format2_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_e2sm_rc_action_definition_format2_item_s_opts,
+     seq_table_e2sm_rc_action_definition_format2_item_s_names,
+     2,
      1},
     true,
     true,
     seq_table_e2sm_rc_action_definition_format2_item_s_groups,
-    1,
-    seq_table_e2sm_rc_action_definition_format2_item_s_names};
+    1};
 
 // E2SM-RC-ActionDefinition-Format2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format2_s_fields[] = {
@@ -1696,7 +1775,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format2_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_action_definition_format2_s::ric_policy_conditions_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1705,12 +1784,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format2_
 static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format2_s_names[] = {
     {"ric-PolicyConditions-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format2_s::desc = {
-    {seq_table_e2sm_rc_action_definition_format2_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_action_definition_format2_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_e2sm_rc_action_definition_format2_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_action_definition_format2_s_names};
+    0};
 
 // E2SM-RC-ActionDefinition-Format3-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format3_item_s_fields[] = {
@@ -1719,8 +1802,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format3_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format3_item_s_names[] = {
     {"ranParameter-ID", nullptr}};
@@ -1740,19 +1823,23 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_action_definition_format3_it
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_e2sm_rc_action_definition_format3_item_s_groups[] = {
     {{seq_table_e2sm_rc_action_definition_format3_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_e2sm_rc_action_definition_format3_item_s_g0_opts,
+      seq_table_e2sm_rc_action_definition_format3_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_e2sm_rc_action_definition_format3_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format3_item_s::desc = {
-    {seq_table_e2sm_rc_action_definition_format3_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_action_definition_format3_item_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_e2sm_rc_action_definition_format3_item_s_names,
+     1,
+     0},
     true,
     true,
     seq_table_e2sm_rc_action_definition_format3_item_s_groups,
-    1,
-    seq_table_e2sm_rc_action_definition_format3_item_s_names};
+    1};
 
 // E2SM-RC-ActionDefinition-Format3 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format3_s_fields[] = {
@@ -1761,8 +1848,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format3_
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_action_definition_format3_s, ran_p_insert_ind_list),
      asn1::table::seq_field::mandatory,
@@ -1770,7 +1857,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format3_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_action_definition_format3_s::ran_p_insert_ind_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1793,15 +1880,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_action_definition_format3_s_
     {2, (int32_t)offsetof(e2sm_rc_action_definition_format3_s, ue_id_present)}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format3_s::desc = {
     {seq_table_e2sm_rc_action_definition_format3_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_e2sm_rc_action_definition_format3_s_opts,
+     seq_table_e2sm_rc_action_definition_format3_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_action_definition_format3_s_names};
+    0};
 
 // E2SM-RC-ActionDefinition-Format4-RANP-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_ranp_item_s_fields[] = {
@@ -1810,8 +1897,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format4_ranp_item_s_names[] = {
     {"ranParameter-ID", nullptr}};
@@ -1832,19 +1919,23 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_action_definition_format4_ra
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_e2sm_rc_action_definition_format4_ranp_item_s_groups[] = {
     {{seq_table_e2sm_rc_action_definition_format4_ranp_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_e2sm_rc_action_definition_format4_ranp_item_s_g0_opts,
+      seq_table_e2sm_rc_action_definition_format4_ranp_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_e2sm_rc_action_definition_format4_ranp_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format4_ranp_item_s::desc = {
-    {seq_table_e2sm_rc_action_definition_format4_ranp_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_action_definition_format4_ranp_item_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_e2sm_rc_action_definition_format4_ranp_item_s_names,
+     1,
+     0},
     true,
     true,
     seq_table_e2sm_rc_action_definition_format4_ranp_item_s_groups,
-    1,
-    seq_table_e2sm_rc_action_definition_format4_ranp_item_s_names};
+    1};
 
 // E2SM-RC-ActionDefinition-Format4-Indication-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_ind_item_s_fields[] = {
@@ -1853,8 +1944,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_action_definition_format4_ind_item_s, ran_p_insert_ind_list),
      asn1::table::seq_field::mandatory,
@@ -1862,7 +1953,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_action_definition_format4_ind_item_s::ran_p_insert_ind_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1872,12 +1963,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format4
     {"ric-InsertIndication-ID", nullptr},
     {"ranP-InsertIndication-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format4_ind_item_s::desc = {
-    {seq_table_e2sm_rc_action_definition_format4_ind_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_action_definition_format4_ind_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_action_definition_format4_ind_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_action_definition_format4_ind_item_s_names};
+    0};
 
 // E2SM-RC-ActionDefinition-Format4-Style-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_style_item_s_fields[] = {
@@ -1886,8 +1981,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_action_definition_format4_style_item_s, ric_insert_ind_list),
      asn1::table::seq_field::mandatory,
@@ -1895,7 +1990,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_action_definition_format4_style_item_s::ric_insert_ind_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1905,12 +2000,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_action_definition_format4
     {"requested-Insert-Style-Type", nullptr},
     {"ric-InsertIndication-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format4_style_item_s::desc = {
-    {seq_table_e2sm_rc_action_definition_format4_style_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_action_definition_format4_style_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_action_definition_format4_style_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_action_definition_format4_style_item_s_names};
+    0};
 
 // E2SM-RC-ActionDefinition-Format4 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_s_fields[] = {
@@ -1920,7 +2019,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_format4_
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_action_definition_format4_s::ric_insert_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1942,15 +2041,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_action_definition_format4_s_
     {1, (int32_t)offsetof(e2sm_rc_action_definition_format4_s, ue_id_present)}};
 const asn1::table::seq_desc e2sm_rc_action_definition_format4_s::desc = {
     {seq_table_e2sm_rc_action_definition_format4_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_e2sm_rc_action_definition_format4_s_opts,
+     seq_table_e2sm_rc_action_definition_format4_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_action_definition_format4_s_names};
+    0};
 
 // E2SM-RC-ActionDefinition ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_s_fields[] = {
@@ -1959,8 +2058,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_s_fields
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_action_definition_s, ric_action_definition_formats),
      asn1::table::seq_field::mandatory,
@@ -1974,20 +2073,23 @@ static const asn1::table::seq_field seq_table_e2sm_rc_action_definition_s_fields
 static const asn1::table::field_name seq_table_e2sm_rc_action_definition_s_names[] = {
     {"ric-Style-Type", nullptr},
     {"ric-actionDefinition-formats", nullptr}};
-const asn1::table::seq_desc e2sm_rc_action_definition_s::desc = {
-    {seq_table_e2sm_rc_action_definition_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_action_definition_s_names};
+const asn1::table::seq_desc e2sm_rc_action_definition_s::desc = {{seq_table_e2sm_rc_action_definition_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  nullptr,
+                                                                  seq_table_e2sm_rc_action_definition_s_names,
+                                                                  2,
+                                                                  0},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 static const asn1::table::storage_ops* const
     choice_storage_e2sm_rc_action_definition_s_ric_action_definition_formats_c__alternatives[] = {
-        &asn1::table::alternative_ops<e2sm_rc_action_definition_format1_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_action_definition_format2_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_action_definition_format3_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_action_definition_format4_s, false>::value};
+        &asn1::table::alternative_ops<e2sm_rc_action_definition_format1_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_action_definition_format2_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_action_definition_format3_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_action_definition_format4_s, false, false>::value};
 const asn1::table::choice_storage_desc e2sm_rc_action_definition_s::ric_action_definition_formats_c_::storage_desc = {
     choice_storage_e2sm_rc_action_definition_s_ric_action_definition_formats_c__alternatives,
     4,
@@ -2094,18 +2196,22 @@ static const asn1::table::seq_field seq_table_e2sm_rc_call_process_id_format1_s_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_call_process_id_format1_s_names[] = {
     {"ric-callProcess-ID", nullptr}};
 const asn1::table::seq_desc e2sm_rc_call_process_id_format1_s::desc = {
-    {seq_table_e2sm_rc_call_process_id_format1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_call_process_id_format1_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_e2sm_rc_call_process_id_format1_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_call_process_id_format1_s_names};
+    0};
 
 // E2SM-RC-CallProcessID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_call_process_id_s_fields[] = {
@@ -2120,13 +2226,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_call_process_id_s_fields[]
      &e2sm_rc_call_process_id_s::ric_call_process_id_formats_c_::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_call_process_id_s_names[] = {
     {"ric-callProcessID-formats", nullptr}};
-const asn1::table::seq_desc e2sm_rc_call_process_id_s::desc = {
-    {seq_table_e2sm_rc_call_process_id_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_call_process_id_s_names};
+const asn1::table::seq_desc e2sm_rc_call_process_id_s::desc = {{seq_table_e2sm_rc_call_process_id_s_fields,
+                                                                uint64_t{0x1},
+                                                                nullptr,
+                                                                seq_table_e2sm_rc_call_process_id_s_names,
+                                                                1,
+                                                                0},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 static const asn1::table::seq_field
     choice_table_e2sm_rc_call_process_id_s_ric_call_process_id_formats_c__alternatives[] = {
@@ -2183,16 +2292,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_hdr_format1_s_fields[
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_ctrl_hdr_format1_s, ric_ctrl_action_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_ctrl_hdr_format1_s, ric_ctrl_decision),
      (int32_t)offsetof(e2sm_rc_ctrl_hdr_format1_s, ric_ctrl_decision_present),
@@ -2209,13 +2318,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_hdr_format1_s_names[
                                                                                      {"ric-ControlDecision", nullptr}};
 static const asn1::table::seq_opt    seq_table_e2sm_rc_ctrl_hdr_format1_s_opts[]  = {
     {3, (int32_t)offsetof(e2sm_rc_ctrl_hdr_format1_s, ric_ctrl_decision_present)}};
-const asn1::table::seq_desc e2sm_rc_ctrl_hdr_format1_s::desc = {
-    {seq_table_e2sm_rc_ctrl_hdr_format1_s_fields, 4, UINT64_C(0x7), seq_table_e2sm_rc_ctrl_hdr_format1_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_hdr_format1_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_hdr_format1_s::desc = {{seq_table_e2sm_rc_ctrl_hdr_format1_s_fields,
+                                                                 uint64_t{0x7},
+                                                                 seq_table_e2sm_rc_ctrl_hdr_format1_s_opts,
+                                                                 seq_table_e2sm_rc_ctrl_hdr_format1_s_names,
+                                                                 4,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const char*           enum_names_e2sm_rc_ctrl_hdr_format1_s_ric_ctrl_decision_e__values[] = {"accept", "reject"};
 const asn1::table::enum_desc e2sm_rc_ctrl_hdr_format1_s::ric_ctrl_decision_opts::desc            = {
@@ -2248,13 +2360,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_hdr_format2_s_names[
 static const asn1::table::seq_opt    seq_table_e2sm_rc_ctrl_hdr_format2_s_opts[]  = {
     {0, (int32_t)offsetof(e2sm_rc_ctrl_hdr_format2_s, ue_id_present)},
     {1, (int32_t)offsetof(e2sm_rc_ctrl_hdr_format2_s, ric_ctrl_decision_present)}};
-const asn1::table::seq_desc e2sm_rc_ctrl_hdr_format2_s::desc = {
-    {seq_table_e2sm_rc_ctrl_hdr_format2_s_fields, 2, UINT64_C(0x0), seq_table_e2sm_rc_ctrl_hdr_format2_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_hdr_format2_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_hdr_format2_s::desc = {{seq_table_e2sm_rc_ctrl_hdr_format2_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_e2sm_rc_ctrl_hdr_format2_s_opts,
+                                                                 seq_table_e2sm_rc_ctrl_hdr_format2_s_names,
+                                                                 2,
+                                                                 2},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const char*           enum_names_e2sm_rc_ctrl_hdr_format2_s_ric_ctrl_decision_e__values[] = {"accept", "reject"};
 const asn1::table::enum_desc e2sm_rc_ctrl_hdr_format2_s::ric_ctrl_decision_opts::desc            = {
@@ -2269,8 +2384,8 @@ static const asn1::table::seq_field seq_table_ue_group_definition_id_item_s_fiel
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ue_group_definition_id_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -2296,13 +2411,16 @@ static const asn1::table::field_name seq_table_ue_group_definition_id_item_s_nam
     {"logicalOR", nullptr}};
 static const asn1::table::seq_opt seq_table_ue_group_definition_id_item_s_opts[] = {
     {2, (int32_t)offsetof(ue_group_definition_id_item_s, lc_or_present)}};
-const asn1::table::seq_desc ue_group_definition_id_item_s::desc = {
-    {seq_table_ue_group_definition_id_item_s_fields, 3, UINT64_C(0x3), seq_table_ue_group_definition_id_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_group_definition_id_item_s_names};
+const asn1::table::seq_desc ue_group_definition_id_item_s::desc = {{seq_table_ue_group_definition_id_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    seq_table_ue_group_definition_id_item_s_opts,
+                                                                    seq_table_ue_group_definition_id_item_s_names,
+                                                                    3,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // UE-Group-Definition ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_group_definition_s_fields[] = {
@@ -2312,7 +2430,7 @@ static const asn1::table::seq_field seq_table_ue_group_definition_s_fields[] = {
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(ue_group_definition_s::ue_group_definition_id_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2321,12 +2439,11 @@ static const asn1::table::seq_field seq_table_ue_group_definition_s_fields[] = {
 static const asn1::table::field_name seq_table_ue_group_definition_s_names[] = {
     {"ueGroupDefinitionIdentifier-LIST", nullptr}};
 const asn1::table::seq_desc ue_group_definition_s::desc = {
-    {seq_table_ue_group_definition_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ue_group_definition_s_fields, uint64_t{0x1}, nullptr, seq_table_ue_group_definition_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ue_group_definition_s_names};
+    0};
 
 // E2SM-RC-ControlHeader-Format3 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_hdr_format3_s_fields[] = {
@@ -2335,8 +2452,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_hdr_format3_s_fields[
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_ctrl_hdr_format3_s, ue_group_definition),
      asn1::table::seq_field::mandatory,
@@ -2352,28 +2469,31 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_hdr_format3_s_fields[
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_ctrl_hdr_format3_s, ric_ctrl_action_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_hdr_format3_s_names[] = {{"ue-Group-ID", nullptr},
                                                                                      {"ue-Group-Definition", nullptr},
                                                                                      {"ric-Style-Type", nullptr},
                                                                                      {"ric-ControlAction-ID", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ctrl_hdr_format3_s::desc             = {
-    {seq_table_e2sm_rc_ctrl_hdr_format3_s_fields, 4, UINT64_C(0xf), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_hdr_format3_s_names};
+const asn1::table::seq_desc          e2sm_rc_ctrl_hdr_format3_s::desc = {{seq_table_e2sm_rc_ctrl_hdr_format3_s_fields,
+                                                                          uint64_t{0xf},
+                                                                          nullptr,
+                                                                          seq_table_e2sm_rc_ctrl_hdr_format3_s_names,
+                                                                          4,
+                                                                          0},
+                                                                         true,
+                                                                         true,
+                                                                         nullptr,
+                                                                         0};
 
 // E2SM-RC-ControlHeader-Format4 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_hdr_format4_s_fields[] = {
@@ -2391,16 +2511,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_hdr_format4_s_fields[
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_ctrl_hdr_format4_s, ric_ctrl_action_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_ctrl_hdr_format4_s, ric_ctrl_decision),
      (int32_t)offsetof(e2sm_rc_ctrl_hdr_format4_s, ric_ctrl_decision_present),
@@ -2417,13 +2537,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_hdr_format4_s_names[
                                                                                      {"ric-ControlDecision", nullptr}};
 static const asn1::table::seq_opt    seq_table_e2sm_rc_ctrl_hdr_format4_s_opts[]  = {
     {3, (int32_t)offsetof(e2sm_rc_ctrl_hdr_format4_s, ric_ctrl_decision_present)}};
-const asn1::table::seq_desc e2sm_rc_ctrl_hdr_format4_s::desc = {
-    {seq_table_e2sm_rc_ctrl_hdr_format4_s_fields, 4, UINT64_C(0x7), seq_table_e2sm_rc_ctrl_hdr_format4_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_hdr_format4_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_hdr_format4_s::desc = {{seq_table_e2sm_rc_ctrl_hdr_format4_s_fields,
+                                                                 uint64_t{0x7},
+                                                                 seq_table_e2sm_rc_ctrl_hdr_format4_s_opts,
+                                                                 seq_table_e2sm_rc_ctrl_hdr_format4_s_names,
+                                                                 4,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const char*           enum_names_e2sm_rc_ctrl_hdr_format4_s_ric_ctrl_decision_e__values[] = {"accept", "reject"};
 const asn1::table::enum_desc e2sm_rc_ctrl_hdr_format4_s::ric_ctrl_decision_opts::desc            = {
@@ -2444,17 +2567,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_hdr_s_fields[] = {
      &e2sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_hdr_s_names[] = {{"ric-controlHeader-formats", nullptr}};
 const asn1::table::seq_desc          e2sm_rc_ctrl_hdr_s::desc             = {
-    {seq_table_e2sm_rc_ctrl_hdr_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_hdr_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_ctrl_hdr_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_hdr_s_names};
+    0};
 
 static const asn1::table::storage_ops* const choice_storage_e2sm_rc_ctrl_hdr_s_ric_ctrl_hdr_formats_c__alternatives[] =
     {&asn1::table::alternative_ops<e2sm_rc_ctrl_hdr_format1_s, false>::value,
      &asn1::table::alternative_ops<e2sm_rc_ctrl_hdr_format2_s, false>::value,
-     &asn1::table::alternative_ops<e2sm_rc_ctrl_hdr_format3_s, false>::value,
+     &asn1::table::alternative_ops<e2sm_rc_ctrl_hdr_format3_s, false, false>::value,
      &asn1::table::alternative_ops<e2sm_rc_ctrl_hdr_format4_s, false>::value};
 const asn1::table::choice_storage_desc e2sm_rc_ctrl_hdr_s::ric_ctrl_hdr_formats_c_::storage_desc = {
     choice_storage_e2sm_rc_ctrl_hdr_s_ric_ctrl_hdr_formats_c__alternatives,
@@ -2559,8 +2681,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format1_item_s_fi
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ctrl_msg_format1_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -2574,13 +2696,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format1_item_s_fi
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format1_item_s_names[] = {
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
-const asn1::table::seq_desc e2sm_rc_ctrl_msg_format1_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_msg_format1_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_msg_format1_item_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_msg_format1_item_s::desc = {{seq_table_e2sm_rc_ctrl_msg_format1_item_s_fields,
+                                                                      uint64_t{0x3},
+                                                                      nullptr,
+                                                                      seq_table_e2sm_rc_ctrl_msg_format1_item_s_names,
+                                                                      2,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2SM-RC-ControlMessage-Format1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format1_s_fields[] = {
@@ -2597,13 +2722,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format1_s_fields[
                                    true>::value,
      &e2sm_rc_ctrl_msg_format1_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format1_s_names[] = {{"ranP-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ctrl_msg_format1_s::desc             = {
-    {seq_table_e2sm_rc_ctrl_msg_format1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_msg_format1_s_names};
+const asn1::table::seq_desc          e2sm_rc_ctrl_msg_format1_s::desc = {{seq_table_e2sm_rc_ctrl_msg_format1_s_fields,
+                                                                          uint64_t{0x1},
+                                                                          nullptr,
+                                                                          seq_table_e2sm_rc_ctrl_msg_format1_s_names,
+                                                                          1,
+                                                                          0},
+                                                                         true,
+                                                                         true,
+                                                                         nullptr,
+                                                                         0};
 
 // E2SM-RC-ControlMessage-Format2-ControlAction-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_ctrl_action_item_s_fields[] = {
@@ -2612,8 +2740,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_ctrl_acti
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_ctrl_msg_format2_ctrl_action_item_s, ran_p_list),
      asn1::table::seq_field::mandatory,
@@ -2628,12 +2756,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format2_ctrl_act
     {"ric-ControlAction-ID", nullptr},
     {"ranP-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_msg_format2_ctrl_action_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_msg_format2_ctrl_action_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_msg_format2_ctrl_action_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ctrl_msg_format2_ctrl_action_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_msg_format2_ctrl_action_item_s_names};
+    0};
 
 // E2SM-RC-ControlMessage-Format2-Style-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_style_item_s_fields[] = {
@@ -2642,8 +2774,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_style_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_ctrl_msg_format2_style_item_s, ric_ctrl_action_list),
      asn1::table::seq_field::mandatory,
@@ -2651,7 +2783,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_style_ite
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ctrl_msg_format2_style_item_s::ric_ctrl_action_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2661,12 +2793,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format2_style_it
     {"indicated-Control-Style-Type", nullptr},
     {"ric-ControlAction-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_msg_format2_style_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_msg_format2_style_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_msg_format2_style_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ctrl_msg_format2_style_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_msg_format2_style_item_s_names};
+    0};
 
 // E2SM-RC-ControlMessage-Format2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_s_fields[] = {
@@ -2676,7 +2812,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_s_fields[
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ctrl_msg_format2_s::ric_ctrl_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2684,13 +2820,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format2_s_fields[
      &e2sm_rc_ctrl_msg_format2_style_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format2_s_names[] = {
     {"ric-ControlStyle-List", nullptr}};
-const asn1::table::seq_desc e2sm_rc_ctrl_msg_format2_s::desc = {
-    {seq_table_e2sm_rc_ctrl_msg_format2_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_msg_format2_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_msg_format2_s::desc = {{seq_table_e2sm_rc_ctrl_msg_format2_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 nullptr,
+                                                                 seq_table_e2sm_rc_ctrl_msg_format2_s_names,
+                                                                 1,
+                                                                 0},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // EntitySpecific-ranP-ControlParameters ::= SEQUENCE
 static const asn1::table::seq_field seq_table_entity_specific_ran_p_ctrl_params_s_fields[] = {
@@ -2699,8 +2838,8 @@ static const asn1::table::seq_field seq_table_entity_specific_ran_p_ctrl_params_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(entity_specific_ran_p_ctrl_params_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -2715,12 +2854,16 @@ static const asn1::table::field_name seq_table_entity_specific_ran_p_ctrl_params
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
 const asn1::table::seq_desc entity_specific_ran_p_ctrl_params_s::desc = {
-    {seq_table_entity_specific_ran_p_ctrl_params_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_entity_specific_ran_p_ctrl_params_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_entity_specific_ran_p_ctrl_params_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_entity_specific_ran_p_ctrl_params_s_names};
+    0};
 
 // E2SM-RC-EntityFilter ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_entity_filt_s_fields[] = {
@@ -2729,8 +2872,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_entity_filt_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(255),
+     int64_t{1},
+     uint64_t{254},
      nullptr},
     {offsetof(e2sm_rc_entity_filt_s, entity_filt_definition),
      asn1::table::seq_field::mandatory,
@@ -2738,7 +2881,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_entity_filt_s_fields[] = {
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(e2sm_rc_entity_filt_s::entity_filt_definition),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2750,7 +2893,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_entity_filt_s_fields[] = {
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_entity_filt_s::entity_specific_ctrl_ran_p_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2761,12 +2904,11 @@ static const asn1::table::field_name seq_table_e2sm_rc_entity_filt_s_names[] = {
     {"entityFilter-Definition", nullptr},
     {"entitySpecificControlRanP-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_entity_filt_s::desc = {
-    {seq_table_e2sm_rc_entity_filt_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_e2sm_rc_entity_filt_s_fields, uint64_t{0x7}, nullptr, seq_table_e2sm_rc_entity_filt_s_names, 3, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_entity_filt_s_names};
+    0};
 
 // EntityAgnostic-ranP-ControlParameters ::= SEQUENCE
 static const asn1::table::seq_field seq_table_entity_agnostic_ran_p_ctrl_params_s_fields[] = {
@@ -2775,8 +2917,8 @@ static const asn1::table::seq_field seq_table_entity_agnostic_ran_p_ctrl_params_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(entity_agnostic_ran_p_ctrl_params_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -2791,12 +2933,16 @@ static const asn1::table::field_name seq_table_entity_agnostic_ran_p_ctrl_params
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
 const asn1::table::seq_desc entity_agnostic_ran_p_ctrl_params_s::desc = {
-    {seq_table_entity_agnostic_ran_p_ctrl_params_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_entity_agnostic_ran_p_ctrl_params_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_entity_agnostic_ran_p_ctrl_params_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_entity_agnostic_ran_p_ctrl_params_s_names};
+    0};
 
 // E2SM-RC-ControlMessage-Format3 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format3_s_fields[] = {
@@ -2830,13 +2976,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format3_s_names[
 static const asn1::table::seq_opt seq_table_e2sm_rc_ctrl_msg_format3_s_opts[] = {
     {0, (int32_t)offsetof(e2sm_rc_ctrl_msg_format3_s, list_of_entity_filts_present)},
     {1, (int32_t)offsetof(e2sm_rc_ctrl_msg_format3_s, entity_agnostic_ctrl_ran_p_list_present)}};
-const asn1::table::seq_desc e2sm_rc_ctrl_msg_format3_s::desc = {
-    {seq_table_e2sm_rc_ctrl_msg_format3_s_fields, 2, UINT64_C(0x0), seq_table_e2sm_rc_ctrl_msg_format3_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_msg_format3_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_msg_format3_s::desc = {{seq_table_e2sm_rc_ctrl_msg_format3_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_e2sm_rc_ctrl_msg_format3_s_opts,
+                                                                 seq_table_e2sm_rc_ctrl_msg_format3_s_names,
+                                                                 2,
+                                                                 2},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // E2SM-RC-ControlMessage-Format4-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format4_item_s_fields[] = {
@@ -2845,8 +2994,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format4_item_s_fi
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ctrl_msg_format4_item_s, ran_param_definition),
      (int32_t)offsetof(e2sm_rc_ctrl_msg_format4_item_s, ran_param_definition_present),
@@ -2863,15 +3012,15 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format4_item_s_n
 static const asn1::table::seq_opt seq_table_e2sm_rc_ctrl_msg_format4_item_s_opts[] = {
     {1, (int32_t)offsetof(e2sm_rc_ctrl_msg_format4_item_s, ran_param_definition_present)}};
 const asn1::table::seq_desc e2sm_rc_ctrl_msg_format4_item_s::desc = {{seq_table_e2sm_rc_ctrl_msg_format4_item_s_fields,
-                                                                      2,
-                                                                      UINT64_C(0x1),
+                                                                      uint64_t{0x1},
                                                                       seq_table_e2sm_rc_ctrl_msg_format4_item_s_opts,
+                                                                      seq_table_e2sm_rc_ctrl_msg_format4_item_s_names,
+                                                                      2,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_e2sm_rc_ctrl_msg_format4_item_s_names};
+                                                                     0};
 
 // E2SM-RC-ControlMessage-Format4 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format4_s_fields[] = {
@@ -2888,13 +3037,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_format4_s_fields[
                                    true>::value,
      &e2sm_rc_ctrl_msg_format4_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_format4_s_names[] = {{"ranP-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ctrl_msg_format4_s::desc             = {
-    {seq_table_e2sm_rc_ctrl_msg_format4_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_msg_format4_s_names};
+const asn1::table::seq_desc          e2sm_rc_ctrl_msg_format4_s::desc = {{seq_table_e2sm_rc_ctrl_msg_format4_s_fields,
+                                                                          uint64_t{0x1},
+                                                                          nullptr,
+                                                                          seq_table_e2sm_rc_ctrl_msg_format4_s_names,
+                                                                          1,
+                                                                          0},
+                                                                         true,
+                                                                         true,
+                                                                         nullptr,
+                                                                         0};
 
 // E2SM-RC-ControlMessage ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_s_fields[] = {
@@ -2909,19 +3061,18 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_msg_s_fields[] = {
      &e2sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_msg_s_names[] = {{"ric-controlMessage-formats", nullptr}};
 const asn1::table::seq_desc          e2sm_rc_ctrl_msg_s::desc             = {
-    {seq_table_e2sm_rc_ctrl_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_msg_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_ctrl_msg_s_names, 1, 0},
     true,
     true,
     nullptr,
     0,
-    seq_table_e2sm_rc_ctrl_msg_s_names,
     "E2SM-RC-ControlMessage"};
 
 static const asn1::table::storage_ops* const choice_storage_e2sm_rc_ctrl_msg_s_ric_ctrl_msg_formats_c__alternatives[] =
-    {&asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format1_s, false>::value,
-     &asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format2_s, false>::value,
-     &asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format3_s, false>::value,
-     &asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format4_s, false>::value,
+    {&asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format1_s, false, false>::value,
+     &asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format2_s, false, false>::value,
+     &asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format3_s, false, false>::value,
+     &asn1::table::alternative_ops<e2sm_rc_ctrl_msg_format4_s, false, false>::value,
      nullptr};
 const asn1::table::choice_storage_desc e2sm_rc_ctrl_msg_s::ric_ctrl_msg_formats_c_::storage_desc = {
     choice_storage_e2sm_rc_ctrl_msg_s_ric_ctrl_msg_formats_c__alternatives,
@@ -3033,8 +3184,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format1_item_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ctrl_outcome_format1_item_s, ran_param_value),
      asn1::table::seq_field::mandatory,
@@ -3049,12 +3200,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format1_item
     {"ranParameter-ID", nullptr},
     {"ranParameter-value", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format1_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_outcome_format1_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_outcome_format1_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ctrl_outcome_format1_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format1_item_s_names};
+    0};
 
 // E2SM-RC-ControlOutcome-Format1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format1_s_fields[] = {
@@ -3071,13 +3226,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format1_s_fie
                                    true>::value,
      &e2sm_rc_ctrl_outcome_format1_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format1_s_names[] = {{"ranP-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ctrl_outcome_format1_s::desc             = {
-    {seq_table_e2sm_rc_ctrl_outcome_format1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format1_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format1_s::desc = {{seq_table_e2sm_rc_ctrl_outcome_format1_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_e2sm_rc_ctrl_outcome_format1_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // E2SM-RC-ControlOutcome-Format2-RANP-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_ranp_item_s_fields[] = {
@@ -3086,8 +3244,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_ranp_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ctrl_outcome_format2_ranp_item_s, ran_param_value),
      asn1::table::seq_field::mandatory,
@@ -3102,12 +3260,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format2_ranp
     {"ranParameter-ID", nullptr},
     {"ranParameter-value", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format2_ranp_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_outcome_format2_ranp_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_outcome_format2_ranp_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ctrl_outcome_format2_ranp_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format2_ranp_item_s_names};
+    0};
 
 // E2SM-RC-ControlOutcome-Format2-ControlOutcome-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s_fields[] = {
@@ -3116,8 +3278,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_ctrl_
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s, ran_p_list),
      asn1::table::seq_field::mandatory,
@@ -3125,7 +3287,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_ctrl_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s::ran_p_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3135,12 +3297,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format2_ctrl
     {"ric-ControlAction-ID", nullptr},
     {"ranP-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format2_ctrl_outcome_item_s_names};
+    0};
 
 // E2SM-RC-ControlOutcome-Format2-Style-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_style_item_s_fields[] = {
@@ -3149,8 +3315,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_style
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_ctrl_outcome_format2_style_item_s, ric_ctrl_outcome_list),
      asn1::table::seq_field::mandatory,
@@ -3158,7 +3324,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_style
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ctrl_outcome_format2_style_item_s::ric_ctrl_outcome_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3168,12 +3334,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format2_styl
     {"indicated-Control-Style-Type", nullptr},
     {"ric-ControlOutcome-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format2_style_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_outcome_format2_style_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_outcome_format2_style_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ctrl_outcome_format2_style_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format2_style_item_s_names};
+    0};
 
 // E2SM-RC-ControlOutcome-Format2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_s_fields[] = {
@@ -3183,7 +3353,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_s_fie
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ctrl_outcome_format2_s::ric_ctrl_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3191,13 +3361,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format2_s_fie
      &e2sm_rc_ctrl_outcome_format2_style_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format2_s_names[] = {
     {"ric-ControlStyle-List", nullptr}};
-const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format2_s::desc = {
-    {seq_table_e2sm_rc_ctrl_outcome_format2_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format2_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format2_s::desc = {{seq_table_e2sm_rc_ctrl_outcome_format2_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_e2sm_rc_ctrl_outcome_format2_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // E2SM-RC-ControlOutcome-Format3-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format3_item_s_fields[] = {
@@ -3206,8 +3379,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format3_item_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ctrl_outcome_format3_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -3222,12 +3395,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format3_item
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format3_item_s::desc = {
-    {seq_table_e2sm_rc_ctrl_outcome_format3_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_outcome_format3_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ctrl_outcome_format3_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format3_item_s_names};
+    0};
 
 // E2SM-RC-ControlOutcome-Format3 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format3_s_fields[] = {
@@ -3244,13 +3421,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_format3_s_fie
                                    true>::value,
      &e2sm_rc_ctrl_outcome_format3_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_format3_s_names[] = {{"ranP-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ctrl_outcome_format3_s::desc             = {
-    {seq_table_e2sm_rc_ctrl_outcome_format3_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_format3_s_names};
+const asn1::table::seq_desc e2sm_rc_ctrl_outcome_format3_s::desc = {{seq_table_e2sm_rc_ctrl_outcome_format3_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_e2sm_rc_ctrl_outcome_format3_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // E2SM-RC-ControlOutcome ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_s_fields[] = {
@@ -3266,18 +3446,17 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ctrl_outcome_s_fields[] = 
 static const asn1::table::field_name seq_table_e2sm_rc_ctrl_outcome_s_names[] = {
     {"ric-controlOutcome-formats", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ctrl_outcome_s::desc = {
-    {seq_table_e2sm_rc_ctrl_outcome_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_ctrl_outcome_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_ctrl_outcome_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ctrl_outcome_s_names};
+    0};
 
 static const asn1::table::storage_ops* const
     choice_storage_e2sm_rc_ctrl_outcome_s_ric_ctrl_outcome_formats_c__alternatives[] = {
-        &asn1::table::alternative_ops<e2sm_rc_ctrl_outcome_format1_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_ctrl_outcome_format2_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_ctrl_outcome_format3_s, false>::value};
+        &asn1::table::alternative_ops<e2sm_rc_ctrl_outcome_format1_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_ctrl_outcome_format2_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_ctrl_outcome_format3_s, false, false>::value};
 const asn1::table::choice_storage_desc e2sm_rc_ctrl_outcome_s::ric_ctrl_outcome_formats_c_::storage_desc = {
     choice_storage_e2sm_rc_ctrl_outcome_s_ric_ctrl_outcome_formats_c__alternatives,
     3,
@@ -3394,13 +3573,16 @@ static const asn1::table::field_name seq_table_msg_type_choice_ni_s_names[] = {{
 static const asn1::table::seq_opt    seq_table_msg_type_choice_ni_s_opts[]  = {
     {1, (int32_t)offsetof(msg_type_choice_ni_s, ni_id_present)},
     {2, (int32_t)offsetof(msg_type_choice_ni_s, ni_msg_present)}};
-const asn1::table::seq_desc msg_type_choice_ni_s::desc = {
-    {seq_table_msg_type_choice_ni_s_fields, 3, UINT64_C(0x1), seq_table_msg_type_choice_ni_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_msg_type_choice_ni_s_names};
+const asn1::table::seq_desc msg_type_choice_ni_s::desc = {{seq_table_msg_type_choice_ni_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_msg_type_choice_ni_s_opts,
+                                                           seq_table_msg_type_choice_ni_s_names,
+                                                           3,
+                                                           2},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // MessageType-Choice-RRC ::= SEQUENCE
 static const asn1::table::seq_field seq_table_msg_type_choice_rrc_s_fields[] = {
@@ -3415,12 +3597,11 @@ static const asn1::table::seq_field seq_table_msg_type_choice_rrc_s_fields[] = {
      &rrc_msg_id_s::desc}};
 static const asn1::table::field_name seq_table_msg_type_choice_rrc_s_names[] = {{"rRC-Message", nullptr}};
 const asn1::table::seq_desc          msg_type_choice_rrc_s::desc             = {
-    {seq_table_msg_type_choice_rrc_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_msg_type_choice_rrc_s_fields, uint64_t{0x1}, nullptr, seq_table_msg_type_choice_rrc_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_msg_type_choice_rrc_s_names};
+    0};
 
 // MessageType-Choice ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_msg_type_choice_c_alternatives[] = {
@@ -3486,8 +3667,8 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_info_item_s_field
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(event_trigger_ue_info_item_s, ue_type),
      asn1::table::seq_field::mandatory,
@@ -3512,17 +3693,20 @@ static const asn1::table::field_name seq_table_event_trigger_ue_info_item_s_name
                                                                                        {"logicalOR", nullptr}};
 static const asn1::table::seq_opt    seq_table_event_trigger_ue_info_item_s_opts[]  = {
     {2, (int32_t)offsetof(event_trigger_ue_info_item_s, lc_or_present)}};
-const asn1::table::seq_desc event_trigger_ue_info_item_s::desc = {
-    {seq_table_event_trigger_ue_info_item_s_fields, 3, UINT64_C(0x3), seq_table_event_trigger_ue_info_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_event_trigger_ue_info_item_s_names};
+const asn1::table::seq_desc event_trigger_ue_info_item_s::desc = {{seq_table_event_trigger_ue_info_item_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   seq_table_event_trigger_ue_info_item_s_opts,
+                                                                   seq_table_event_trigger_ue_info_item_s_names,
+                                                                   3,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 static const asn1::table::storage_ops* const choice_storage_event_trigger_ue_info_item_s_ue_type_c__alternatives[] = {
-    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_individual_s, false>::value,
-    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_group_s, false>::value};
+    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_individual_s, false, false>::value,
+    &asn1::table::alternative_ops<event_trigger_ue_info_item_choice_group_s, false, false>::value};
 const asn1::table::choice_storage_desc event_trigger_ue_info_item_s::ue_type_c_::storage_desc = {
     choice_storage_event_trigger_ue_info_item_s_ue_type_c__alternatives,
     2,
@@ -3591,7 +3775,7 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_info_s_fields[] =
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(event_trigger_ue_info_s::ue_info_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3599,12 +3783,11 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_info_s_fields[] =
      &event_trigger_ue_info_item_s::desc}};
 static const asn1::table::field_name seq_table_event_trigger_ue_info_s_names[] = {{"ueInfo-List", nullptr}};
 const asn1::table::seq_desc          event_trigger_ue_info_s::desc             = {
-    {seq_table_event_trigger_ue_info_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_event_trigger_ue_info_s_fields, uint64_t{0x1}, nullptr, seq_table_event_trigger_ue_info_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_event_trigger_ue_info_s_names};
+    0};
 
 // EventTrigger-UEevent-Info-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_event_trigger_ue_event_info_item_s_fields[] = {
@@ -3613,8 +3796,8 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_event_info_item_s
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(event_trigger_ue_event_info_item_s, lc_or),
      (int32_t)offsetof(event_trigger_ue_event_info_item_s, lc_or_present),
@@ -3631,15 +3814,15 @@ static const asn1::table::seq_opt    seq_table_event_trigger_ue_event_info_item_
     {1, (int32_t)offsetof(event_trigger_ue_event_info_item_s, lc_or_present)}};
 const asn1::table::seq_desc event_trigger_ue_event_info_item_s::desc = {
     {seq_table_event_trigger_ue_event_info_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_event_trigger_ue_event_info_item_s_opts,
+     seq_table_event_trigger_ue_event_info_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_event_trigger_ue_event_info_item_s_names};
+    0};
 
 // EventTrigger-UEevent-Info ::= SEQUENCE
 static const asn1::table::seq_field seq_table_event_trigger_ue_event_info_s_fields[] = {
@@ -3649,20 +3832,23 @@ static const asn1::table::seq_field seq_table_event_trigger_ue_event_info_s_fiel
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(event_trigger_ue_event_info_s::ue_event_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &event_trigger_ue_event_info_item_s::desc}};
 static const asn1::table::field_name seq_table_event_trigger_ue_event_info_s_names[] = {{"ueEvent-List", nullptr}};
-const asn1::table::seq_desc          event_trigger_ue_event_info_s::desc             = {
-    {seq_table_event_trigger_ue_event_info_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_event_trigger_ue_event_info_s_names};
+const asn1::table::seq_desc event_trigger_ue_event_info_s::desc = {{seq_table_event_trigger_ue_event_info_s_fields,
+                                                                    uint64_t{0x1},
+                                                                    nullptr,
+                                                                    seq_table_event_trigger_ue_event_info_s_names,
+                                                                    1,
+                                                                    0},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // E2SM-RC-EventTrigger-Format1-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format1_item_s_fields[] = {
@@ -3671,8 +3857,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format1_item
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_event_trigger_format1_item_s, msg_type),
      asn1::table::seq_field::mandatory,
@@ -3733,15 +3919,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_event_trigger_format1_item_s
     {5, (int32_t)offsetof(e2sm_rc_event_trigger_format1_item_s, lc_or_present)}};
 const asn1::table::seq_desc e2sm_rc_event_trigger_format1_item_s::desc = {
     {seq_table_e2sm_rc_event_trigger_format1_item_s_fields,
-     6,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_e2sm_rc_event_trigger_format1_item_s_opts,
+     seq_table_e2sm_rc_event_trigger_format1_item_s_names,
+     6,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_event_trigger_format1_item_s_names};
+    0};
 
 static const char* enum_names_e2sm_rc_event_trigger_format1_item_s_msg_direction_e__values[] = {"incoming", "outgoing"};
 const asn1::table::enum_desc e2sm_rc_event_trigger_format1_item_s::msg_direction_opts::desc  = {
@@ -3757,7 +3943,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format1_s_fi
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_event_trigger_format1_s::msg_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3778,15 +3964,15 @@ static const asn1::table::field_name seq_table_e2sm_rc_event_trigger_format1_s_n
 static const asn1::table::seq_opt seq_table_e2sm_rc_event_trigger_format1_s_opts[] = {
     {1, (int32_t)offsetof(e2sm_rc_event_trigger_format1_s, global_associated_ue_info_present)}};
 const asn1::table::seq_desc e2sm_rc_event_trigger_format1_s::desc = {{seq_table_e2sm_rc_event_trigger_format1_s_fields,
-                                                                      2,
-                                                                      UINT64_C(0x1),
+                                                                      uint64_t{0x1},
                                                                       seq_table_e2sm_rc_event_trigger_format1_s_opts,
+                                                                      seq_table_e2sm_rc_event_trigger_format1_s_names,
+                                                                      2,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_e2sm_rc_event_trigger_format1_s_names};
+                                                                     0};
 
 // E2SM-RC-EventTrigger-Format2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format2_s_fields[] = {
@@ -3795,16 +3981,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format2_s_fi
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_event_trigger_format2_s, ric_call_process_breakpoint_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_event_trigger_format2_s, associated_e2_node_info),
      asn1::table::seq_field::list_presence,
@@ -3812,7 +3998,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format2_s_fi
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(e2sm_rc_event_trigger_format2_s::associated_e2_node_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3836,15 +4022,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_event_trigger_format2_s_opts
     {2, asn1::table::seq_field::list_presence},
     {3, (int32_t)offsetof(e2sm_rc_event_trigger_format2_s, associated_ue_info_present)}};
 const asn1::table::seq_desc e2sm_rc_event_trigger_format2_s::desc = {{seq_table_e2sm_rc_event_trigger_format2_s_fields,
-                                                                      4,
-                                                                      UINT64_C(0x3),
+                                                                      uint64_t{0x3},
                                                                       seq_table_e2sm_rc_event_trigger_format2_s_opts,
+                                                                      seq_table_e2sm_rc_event_trigger_format2_s_names,
+                                                                      4,
                                                                       2},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_e2sm_rc_event_trigger_format2_s_names};
+                                                                     0};
 
 // EventTrigger-Cell-Info-Item-Choice-Individual ::= SEQUENCE
 static const asn1::table::seq_field seq_table_event_trigger_cell_info_item_choice_individual_s_fields[] = {
@@ -3860,12 +4046,16 @@ static const asn1::table::seq_field seq_table_event_trigger_cell_info_item_choic
 static const asn1::table::field_name seq_table_event_trigger_cell_info_item_choice_individual_s_names[] = {
     {"cellGlobalID", nullptr}};
 const asn1::table::seq_desc event_trigger_cell_info_item_choice_individual_s::desc = {
-    {seq_table_event_trigger_cell_info_item_choice_individual_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_event_trigger_cell_info_item_choice_individual_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_event_trigger_cell_info_item_choice_individual_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_event_trigger_cell_info_item_choice_individual_s_names};
+    0};
 
 // EventTrigger-Cell-Info-Item-Choice-Group ::= SEQUENCE
 static const asn1::table::seq_field seq_table_event_trigger_cell_info_item_choice_group_s_fields[] = {
@@ -3875,7 +4065,7 @@ static const asn1::table::seq_field seq_table_event_trigger_cell_info_item_choic
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(event_trigger_cell_info_item_choice_group_s::ran_param_testing),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3884,12 +4074,16 @@ static const asn1::table::seq_field seq_table_event_trigger_cell_info_item_choic
 static const asn1::table::field_name seq_table_event_trigger_cell_info_item_choice_group_s_names[] = {
     {"ranParameterTesting", nullptr}};
 const asn1::table::seq_desc event_trigger_cell_info_item_choice_group_s::desc = {
-    {seq_table_event_trigger_cell_info_item_choice_group_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_event_trigger_cell_info_item_choice_group_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_event_trigger_cell_info_item_choice_group_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_event_trigger_cell_info_item_choice_group_s_names};
+    0};
 
 // EventTrigger-Cell-Info-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_event_trigger_cell_info_item_s_fields[] = {
@@ -3898,8 +4092,8 @@ static const asn1::table::seq_field seq_table_event_trigger_cell_info_item_s_fie
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(event_trigger_cell_info_item_s, cell_type),
      asn1::table::seq_field::mandatory,
@@ -3926,19 +4120,19 @@ static const asn1::table::field_name seq_table_event_trigger_cell_info_item_s_na
 static const asn1::table::seq_opt seq_table_event_trigger_cell_info_item_s_opts[] = {
     {2, (int32_t)offsetof(event_trigger_cell_info_item_s, lc_or_present)}};
 const asn1::table::seq_desc event_trigger_cell_info_item_s::desc = {{seq_table_event_trigger_cell_info_item_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x3),
+                                                                     uint64_t{0x3},
                                                                      seq_table_event_trigger_cell_info_item_s_opts,
+                                                                     seq_table_event_trigger_cell_info_item_s_names,
+                                                                     3,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_event_trigger_cell_info_item_s_names};
+                                                                    0};
 
 static const asn1::table::storage_ops* const choice_storage_event_trigger_cell_info_item_s_cell_type_c__alternatives[] =
     {&asn1::table::alternative_ops<event_trigger_cell_info_item_choice_individual_s, false>::value,
-     &asn1::table::alternative_ops<event_trigger_cell_info_item_choice_group_s, false>::value};
+     &asn1::table::alternative_ops<event_trigger_cell_info_item_choice_group_s, false, false>::value};
 const asn1::table::choice_storage_desc event_trigger_cell_info_item_s::cell_type_c_::storage_desc = {
     choice_storage_event_trigger_cell_info_item_s_cell_type_c__alternatives,
     2,
@@ -4008,20 +4202,23 @@ static const asn1::table::seq_field seq_table_event_trigger_cell_info_s_fields[]
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(event_trigger_cell_info_s::cell_info_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &event_trigger_cell_info_item_s::desc}};
 static const asn1::table::field_name seq_table_event_trigger_cell_info_s_names[] = {{"cellInfo-List", nullptr}};
-const asn1::table::seq_desc          event_trigger_cell_info_s::desc             = {
-    {seq_table_event_trigger_cell_info_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_event_trigger_cell_info_s_names};
+const asn1::table::seq_desc          event_trigger_cell_info_s::desc = {{seq_table_event_trigger_cell_info_s_fields,
+                                                                         uint64_t{0x1},
+                                                                         nullptr,
+                                                                         seq_table_event_trigger_cell_info_s_names,
+                                                                         1,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // E2SM-RC-EventTrigger-Format3-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format3_item_s_fields[] = {
@@ -4030,16 +4227,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format3_item
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_event_trigger_format3_item_s, e2_node_info_change_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(512),
+     int64_t{1},
+     uint64_t{511},
      nullptr},
     {offsetof(e2sm_rc_event_trigger_format3_item_s, associated_cell_info),
      (int32_t)offsetof(e2sm_rc_event_trigger_format3_item_s, associated_cell_info_present),
@@ -4069,15 +4266,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_event_trigger_format3_item_s
     {3, (int32_t)offsetof(e2sm_rc_event_trigger_format3_item_s, lc_or_present)}};
 const asn1::table::seq_desc e2sm_rc_event_trigger_format3_item_s::desc = {
     {seq_table_e2sm_rc_event_trigger_format3_item_s_fields,
-     4,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_e2sm_rc_event_trigger_format3_item_s_opts,
+     seq_table_e2sm_rc_event_trigger_format3_item_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_event_trigger_format3_item_s_names};
+    0};
 
 // E2SM-RC-EventTrigger-Format3 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format3_s_fields[] = {
@@ -4087,7 +4284,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format3_s_fi
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_event_trigger_format3_s::e2_node_info_change_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4095,13 +4292,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format3_s_fi
      &e2sm_rc_event_trigger_format3_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_event_trigger_format3_s_names[] = {
     {"e2NodeInfoChange-List", nullptr}};
-const asn1::table::seq_desc e2sm_rc_event_trigger_format3_s::desc = {
-    {seq_table_e2sm_rc_event_trigger_format3_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_event_trigger_format3_s_names};
+const asn1::table::seq_desc e2sm_rc_event_trigger_format3_s::desc = {{seq_table_e2sm_rc_event_trigger_format3_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2sm_rc_event_trigger_format3_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // RRC-State ::= ENUMERATED
 static const char*           enum_names_rrc_state_e_values[] = {"rrc-connected", "rrc-inactive", "rrc-idle", "any"};
@@ -4134,15 +4334,15 @@ static const asn1::table::seq_opt seq_table_trigger_type_choice_rrc_state_item_s
     {1, (int32_t)offsetof(trigger_type_choice_rrc_state_item_s, lc_or_present)}};
 const asn1::table::seq_desc trigger_type_choice_rrc_state_item_s::desc = {
     {seq_table_trigger_type_choice_rrc_state_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_trigger_type_choice_rrc_state_item_s_opts,
+     seq_table_trigger_type_choice_rrc_state_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_trigger_type_choice_rrc_state_item_s_names};
+    0};
 
 // TriggerType-Choice-RRCstate ::= SEQUENCE
 static const asn1::table::seq_field seq_table_trigger_type_choice_rrc_state_s_fields[] = {
@@ -4152,20 +4352,23 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_rrc_state_s_fi
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(trigger_type_choice_rrc_state_s::rrc_state_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &trigger_type_choice_rrc_state_item_s::desc}};
 static const asn1::table::field_name seq_table_trigger_type_choice_rrc_state_s_names[] = {{"rrcState-List", nullptr}};
-const asn1::table::seq_desc          trigger_type_choice_rrc_state_s::desc             = {
-    {seq_table_trigger_type_choice_rrc_state_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_trigger_type_choice_rrc_state_s_names};
+const asn1::table::seq_desc trigger_type_choice_rrc_state_s::desc = {{seq_table_trigger_type_choice_rrc_state_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_trigger_type_choice_rrc_state_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // TriggerType-Choice-UEID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_trigger_type_choice_ue_id_s_fields[] = {
@@ -4174,17 +4377,20 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_ue_id_s_fields
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(512),
+     int64_t{1},
+     uint64_t{511},
      nullptr}};
 static const asn1::table::field_name seq_table_trigger_type_choice_ue_id_s_names[] = {{"ueIDchange-ID", nullptr}};
-const asn1::table::seq_desc          trigger_type_choice_ue_id_s::desc             = {
-    {seq_table_trigger_type_choice_ue_id_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_trigger_type_choice_ue_id_s_names};
+const asn1::table::seq_desc          trigger_type_choice_ue_id_s::desc = {{seq_table_trigger_type_choice_ue_id_s_fields,
+                                                                           uint64_t{0x1},
+                                                                           nullptr,
+                                                                           seq_table_trigger_type_choice_ue_id_s_names,
+                                                                           1,
+                                                                           0},
+                                                                          true,
+                                                                          true,
+                                                                          nullptr,
+                                                                          0};
 
 // TriggerType-Choice-L2state ::= SEQUENCE
 static const asn1::table::seq_field seq_table_trigger_type_choice_l2state_s_fields[] = {
@@ -4194,7 +4400,7 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_l2state_s_fiel
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(trigger_type_choice_l2state_s::associated_l2variables),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4202,13 +4408,16 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_l2state_s_fiel
      &ran_param_testing_item_s::desc}};
 static const asn1::table::field_name seq_table_trigger_type_choice_l2state_s_names[] = {
     {"associatedL2variables", nullptr}};
-const asn1::table::seq_desc trigger_type_choice_l2state_s::desc = {
-    {seq_table_trigger_type_choice_l2state_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_trigger_type_choice_l2state_s_names};
+const asn1::table::seq_desc trigger_type_choice_l2state_s::desc = {{seq_table_trigger_type_choice_l2state_s_fields,
+                                                                    uint64_t{0x1},
+                                                                    nullptr,
+                                                                    seq_table_trigger_type_choice_l2state_s_names,
+                                                                    1,
+                                                                    0},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // TriggerType-Choice-UEcontext ::= SEQUENCE
 static const asn1::table::seq_field seq_table_trigger_type_choice_ue_context_s_fields[] = {
@@ -4218,7 +4427,7 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_ue_context_s_f
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(trigger_type_choice_ue_context_s::associated_ue_ctxt_variables),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4227,12 +4436,16 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_ue_context_s_f
 static const asn1::table::field_name seq_table_trigger_type_choice_ue_context_s_names[] = {
     {"associatedUECtxtVariables", nullptr}};
 const asn1::table::seq_desc trigger_type_choice_ue_context_s::desc = {
-    {seq_table_trigger_type_choice_ue_context_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_trigger_type_choice_ue_context_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_trigger_type_choice_ue_context_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_trigger_type_choice_ue_context_s_names};
+    0};
 
 // TriggerType-Choice-MIMOandBFconfig ::= SEQUENCE
 static const asn1::table::seq_field seq_table_trigger_type_choice_mim_oand_b_fcfg_s_fields[] = {
@@ -4248,12 +4461,16 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_mim_oand_b_fcf
 static const asn1::table::field_name seq_table_trigger_type_choice_mim_oand_b_fcfg_s_names[] = {
     {"mIMOtransModeState", nullptr}};
 const asn1::table::seq_desc trigger_type_choice_mim_oand_b_fcfg_s::desc = {
-    {seq_table_trigger_type_choice_mim_oand_b_fcfg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_trigger_type_choice_mim_oand_b_fcfg_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_trigger_type_choice_mim_oand_b_fcfg_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_trigger_type_choice_mim_oand_b_fcfg_s_names};
+    0};
 
 static const char* enum_names_trigger_type_choice_mim_oand_b_fcfg_s_mim_otrans_mode_state_e__values[] = {"enabled",
                                                                                                          "disabled"};
@@ -4309,19 +4526,23 @@ static const asn1::table::seq_field seq_table_trigger_type_choice_l2_ma_csch_chg
 static const asn1::table::field_name seq_table_trigger_type_choice_l2_ma_csch_chg_s_names[] = {
     {"l2MACschChgType", nullptr}};
 const asn1::table::seq_desc trigger_type_choice_l2_ma_csch_chg_s::desc = {
-    {seq_table_trigger_type_choice_l2_ma_csch_chg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_trigger_type_choice_l2_ma_csch_chg_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_trigger_type_choice_l2_ma_csch_chg_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_trigger_type_choice_l2_ma_csch_chg_s_names};
+    0};
 
 // TriggerType-Choice ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_trigger_type_choice_c_alternatives[] = {
     &asn1::table::alternative_ops<trigger_type_choice_rrc_state_s, false>::value,
     &asn1::table::alternative_ops<trigger_type_choice_ue_id_s, false>::value,
-    &asn1::table::alternative_ops<trigger_type_choice_l2state_s, false>::value,
-    &asn1::table::alternative_ops<trigger_type_choice_ue_context_s, false>::value,
+    &asn1::table::alternative_ops<trigger_type_choice_l2state_s, false, false>::value,
+    &asn1::table::alternative_ops<trigger_type_choice_ue_context_s, false, false>::value,
     &asn1::table::alternative_ops<trigger_type_choice_l2_ma_csch_chg_s, false>::value};
 const asn1::table::choice_storage_desc trigger_type_choice_c::storage_desc = {
     choice_storage_trigger_type_choice_c_alternatives,
@@ -4436,8 +4657,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format4_item
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_event_trigger_format4_item_s, trigger_type),
      asn1::table::seq_field::mandatory,
@@ -4476,15 +4697,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_event_trigger_format4_item_s
     {3, (int32_t)offsetof(e2sm_rc_event_trigger_format4_item_s, lc_or_present)}};
 const asn1::table::seq_desc e2sm_rc_event_trigger_format4_item_s::desc = {
     {seq_table_e2sm_rc_event_trigger_format4_item_s_fields,
-     4,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_e2sm_rc_event_trigger_format4_item_s_opts,
+     seq_table_e2sm_rc_event_trigger_format4_item_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_event_trigger_format4_item_s_names};
+    0};
 
 // E2SM-RC-EventTrigger-Format4 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format4_s_fields[] = {
@@ -4494,7 +4715,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format4_s_fi
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_event_trigger_format4_s::ue_info_change_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4502,13 +4723,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_format4_s_fi
      &e2sm_rc_event_trigger_format4_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_event_trigger_format4_s_names[] = {
     {"uEInfoChange-List", nullptr}};
-const asn1::table::seq_desc e2sm_rc_event_trigger_format4_s::desc = {
-    {seq_table_e2sm_rc_event_trigger_format4_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_event_trigger_format4_s_names};
+const asn1::table::seq_desc e2sm_rc_event_trigger_format4_s::desc = {{seq_table_e2sm_rc_event_trigger_format4_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2sm_rc_event_trigger_format4_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2SM-RC-EventTrigger ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_s_fields[] = {
@@ -4524,19 +4748,18 @@ static const asn1::table::seq_field seq_table_e2sm_rc_event_trigger_s_fields[] =
 static const asn1::table::field_name seq_table_e2sm_rc_event_trigger_s_names[] = {
     {"ric-eventTrigger-formats", nullptr}};
 const asn1::table::seq_desc e2sm_rc_event_trigger_s::desc = {
-    {seq_table_e2sm_rc_event_trigger_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_event_trigger_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_event_trigger_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_event_trigger_s_names};
+    0};
 
 static const asn1::table::storage_ops* const
     choice_storage_e2sm_rc_event_trigger_s_ric_event_trigger_formats_c__alternatives[] = {
-        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format1_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format2_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format3_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format4_s, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format1_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format2_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format3_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_event_trigger_format4_s, false, false>::value,
         nullptr};
 const asn1::table::choice_storage_desc e2sm_rc_event_trigger_s::ric_event_trigger_formats_c_::storage_desc = {
     choice_storage_e2sm_rc_event_trigger_s_ric_event_trigger_formats_c__alternatives,
@@ -4649,20 +4872,23 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_hdr_format1_s_fields[]
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_hdr_format1_s_names[] = {
     {"ric-eventTriggerCondition-ID", nullptr}};
 static const asn1::table::seq_opt seq_table_e2sm_rc_ind_hdr_format1_s_opts[] = {
     {0, (int32_t)offsetof(e2sm_rc_ind_hdr_format1_s, ric_event_trigger_condition_id_present)}};
-const asn1::table::seq_desc e2sm_rc_ind_hdr_format1_s::desc = {
-    {seq_table_e2sm_rc_ind_hdr_format1_s_fields, 1, UINT64_C(0x0), seq_table_e2sm_rc_ind_hdr_format1_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_hdr_format1_s_names};
+const asn1::table::seq_desc e2sm_rc_ind_hdr_format1_s::desc = {{seq_table_e2sm_rc_ind_hdr_format1_s_fields,
+                                                                uint64_t{0x0},
+                                                                seq_table_e2sm_rc_ind_hdr_format1_s_opts,
+                                                                seq_table_e2sm_rc_ind_hdr_format1_s_names,
+                                                                1,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // E2SM-RC-IndicationHeader-Format2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_hdr_format2_s_fields[] = {
@@ -4680,28 +4906,31 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_hdr_format2_s_fields[]
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_ind_hdr_format2_s, ric_insert_ind_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_hdr_format2_s_names[] = {
     {"ueID", nullptr},
     {"ric-InsertStyle-Type", nullptr},
     {"ric-InsertIndication-ID", nullptr}};
-const asn1::table::seq_desc e2sm_rc_ind_hdr_format2_s::desc = {
-    {seq_table_e2sm_rc_ind_hdr_format2_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_hdr_format2_s_names};
+const asn1::table::seq_desc e2sm_rc_ind_hdr_format2_s::desc = {{seq_table_e2sm_rc_ind_hdr_format2_s_fields,
+                                                                uint64_t{0x7},
+                                                                nullptr,
+                                                                seq_table_e2sm_rc_ind_hdr_format2_s_names,
+                                                                3,
+                                                                0},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // E2SM-RC-IndicationHeader-Format3 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_hdr_format3_s_fields[] = {
@@ -4710,8 +4939,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_hdr_format3_s_fields[]
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_ind_hdr_format3_s, ue_id),
      (int32_t)offsetof(e2sm_rc_ind_hdr_format3_s, ue_id_present),
@@ -4728,13 +4957,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ind_hdr_format3_s_names[]
 static const asn1::table::seq_opt seq_table_e2sm_rc_ind_hdr_format3_s_opts[] = {
     {0, (int32_t)offsetof(e2sm_rc_ind_hdr_format3_s, ric_event_trigger_condition_id_present)},
     {1, (int32_t)offsetof(e2sm_rc_ind_hdr_format3_s, ue_id_present)}};
-const asn1::table::seq_desc e2sm_rc_ind_hdr_format3_s::desc = {
-    {seq_table_e2sm_rc_ind_hdr_format3_s_fields, 2, UINT64_C(0x0), seq_table_e2sm_rc_ind_hdr_format3_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_hdr_format3_s_names};
+const asn1::table::seq_desc e2sm_rc_ind_hdr_format3_s::desc = {{seq_table_e2sm_rc_ind_hdr_format3_s_fields,
+                                                                uint64_t{0x0},
+                                                                seq_table_e2sm_rc_ind_hdr_format3_s_opts,
+                                                                seq_table_e2sm_rc_ind_hdr_format3_s_names,
+                                                                2,
+                                                                2},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // E2SM-RC-IndicationHeader ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_hdr_s_fields[] = {
@@ -4749,12 +4981,11 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_hdr_s_fields[] = {
      &e2sm_rc_ind_hdr_s::ric_ind_hdr_formats_c_::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_hdr_s_names[] = {{"ric-indicationHeader-formats", nullptr}};
 const asn1::table::seq_desc          e2sm_rc_ind_hdr_s::desc             = {
-    {seq_table_e2sm_rc_ind_hdr_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_ind_hdr_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_ind_hdr_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ind_hdr_s_names};
+    0};
 
 static const asn1::table::storage_ops* const choice_storage_e2sm_rc_ind_hdr_s_ric_ind_hdr_formats_c__alternatives[] = {
     &asn1::table::alternative_ops<e2sm_rc_ind_hdr_format1_s, false>::value,
@@ -4847,8 +5078,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format1_item_s_fie
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ind_msg_format1_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -4862,13 +5093,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format1_item_s_fie
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format1_item_s_names[] = {
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
-const asn1::table::seq_desc e2sm_rc_ind_msg_format1_item_s::desc = {
-    {seq_table_e2sm_rc_ind_msg_format1_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format1_item_s_names};
+const asn1::table::seq_desc e2sm_rc_ind_msg_format1_item_s::desc = {{seq_table_e2sm_rc_ind_msg_format1_item_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_e2sm_rc_ind_msg_format1_item_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // E2SM-RC-IndicationMessage-Format1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format1_s_fields[] = {
@@ -4878,20 +5112,23 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format1_s_fields[]
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ind_msg_format1_s::ran_p_reported_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &e2sm_rc_ind_msg_format1_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format1_s_names[] = {{"ranP-Reported-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ind_msg_format1_s::desc             = {
-    {seq_table_e2sm_rc_ind_msg_format1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format1_s_names};
+const asn1::table::seq_desc          e2sm_rc_ind_msg_format1_s::desc = {{seq_table_e2sm_rc_ind_msg_format1_s_fields,
+                                                                         uint64_t{0x1},
+                                                                         nullptr,
+                                                                         seq_table_e2sm_rc_ind_msg_format1_s_names,
+                                                                         1,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // E2SM-RC-IndicationMessage-Format2-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format2_ran_param_item_s_fields[] = {
@@ -4900,8 +5137,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format2_ran_param_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ind_msg_format2_ran_param_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -4916,12 +5153,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format2_ran_param
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ind_msg_format2_ran_param_item_s::desc = {
-    {seq_table_e2sm_rc_ind_msg_format2_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ind_msg_format2_ran_param_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ind_msg_format2_ran_param_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format2_ran_param_item_s_names};
+    0};
 
 // E2SM-RC-IndicationMessage-Format2-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format2_item_s_fields[] = {
@@ -4940,7 +5181,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format2_item_s_fie
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ind_msg_format2_item_s::ran_p_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4948,13 +5189,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format2_item_s_fie
      &e2sm_rc_ind_msg_format2_ran_param_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format2_item_s_names[] = {{"ueID", nullptr},
                                                                                          {"ranP-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ind_msg_format2_item_s::desc             = {
-    {seq_table_e2sm_rc_ind_msg_format2_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format2_item_s_names};
+const asn1::table::seq_desc e2sm_rc_ind_msg_format2_item_s::desc = {{seq_table_e2sm_rc_ind_msg_format2_item_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_e2sm_rc_ind_msg_format2_item_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // E2SM-RC-IndicationMessage-Format2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format2_s_fields[] = {
@@ -4964,20 +5208,23 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format2_s_fields[]
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ind_msg_format2_s::ue_param_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &e2sm_rc_ind_msg_format2_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format2_s_names[] = {{"ueParameter-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ind_msg_format2_s::desc             = {
-    {seq_table_e2sm_rc_ind_msg_format2_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format2_s_names};
+const asn1::table::seq_desc          e2sm_rc_ind_msg_format2_s::desc = {{seq_table_e2sm_rc_ind_msg_format2_s_fields,
+                                                                         uint64_t{0x1},
+                                                                         nullptr,
+                                                                         seq_table_e2sm_rc_ind_msg_format2_s_names,
+                                                                         1,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // NeighbourCell-Item-Choice-NR ::= SEQUENCE
 static const asn1::table::seq_field seq_table_neighbour_cell_item_choice_nr_s_fields[] = {
@@ -4995,8 +5242,8 @@ static const asn1::table::seq_field seq_table_neighbour_cell_item_choice_nr_s_fi
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1007),
+     int64_t{0},
+     uint64_t{1007},
      nullptr},
     {offsetof(neighbour_cell_item_choice_nr_s, five_gs_tac),
      asn1::table::seq_field::mandatory,
@@ -5048,8 +5295,8 @@ static const asn1::table::seq_field seq_table_neighbour_cell_item_choice_nr_s_fi
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const asn1::table::field_name seq_table_neighbour_cell_item_choice_nr_s_names[] = {
     {"nR-CGI", nullptr},
@@ -5060,13 +5307,16 @@ static const asn1::table::field_name seq_table_neighbour_cell_item_choice_nr_s_n
     {"x2-Xn-established", nullptr},
     {"hO-validated", nullptr},
     {"version", nullptr}};
-const asn1::table::seq_desc neighbour_cell_item_choice_nr_s::desc = {
-    {seq_table_neighbour_cell_item_choice_nr_s_fields, 8, UINT64_C(0xff), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_neighbour_cell_item_choice_nr_s_names};
+const asn1::table::seq_desc neighbour_cell_item_choice_nr_s::desc = {{seq_table_neighbour_cell_item_choice_nr_s_fields,
+                                                                      uint64_t{0xff},
+                                                                      nullptr,
+                                                                      seq_table_neighbour_cell_item_choice_nr_s_names,
+                                                                      8,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 static const char*           enum_names_neighbour_cell_item_choice_nr_s_nr_mode_info_e__values[] = {"fdd", "tdd"};
 const asn1::table::enum_desc neighbour_cell_item_choice_nr_s::nr_mode_info_opts::desc            = {
@@ -5102,16 +5352,16 @@ static const asn1::table::seq_field seq_table_neighbour_cell_item_choice_e_utra_
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(503),
+     int64_t{0},
+     uint64_t{503},
      nullptr},
     {offsetof(neighbour_cell_item_choice_e_utra_s, eutra_arfcn),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(neighbour_cell_item_choice_e_utra_s, eutra_tac),
      asn1::table::seq_field::mandatory,
@@ -5145,8 +5395,8 @@ static const asn1::table::seq_field seq_table_neighbour_cell_item_choice_e_utra_
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const asn1::table::field_name seq_table_neighbour_cell_item_choice_e_utra_s_names[] = {
     {"eUTRA-CGI", nullptr},
@@ -5157,12 +5407,16 @@ static const asn1::table::field_name seq_table_neighbour_cell_item_choice_e_utra
     {"hO-validated", nullptr},
     {"version", nullptr}};
 const asn1::table::seq_desc neighbour_cell_item_choice_e_utra_s::desc = {
-    {seq_table_neighbour_cell_item_choice_e_utra_s_fields, 7, UINT64_C(0x7f), nullptr, 0},
+    {seq_table_neighbour_cell_item_choice_e_utra_s_fields,
+     uint64_t{0x7f},
+     nullptr,
+     seq_table_neighbour_cell_item_choice_e_utra_s_names,
+     7,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_neighbour_cell_item_choice_e_utra_s_names};
+    0};
 
 static const char* enum_names_neighbour_cell_item_choice_e_utra_s_x2_xn_established_e__values[] = {"true", "false"};
 const asn1::table::enum_desc neighbour_cell_item_choice_e_utra_s::x2_xn_established_opts::desc  = {
@@ -5262,7 +5516,7 @@ static const asn1::table::seq_field seq_table_neighbour_relation_info_s_fields[]
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(neighbour_relation_info_s::neighbour_cell_list),
                                    asn1::table::choice_item_ops,
                                    false,
@@ -5271,13 +5525,16 @@ static const asn1::table::seq_field seq_table_neighbour_relation_info_s_fields[]
 static const asn1::table::field_name seq_table_neighbour_relation_info_s_names[] = {{"servingCellPCI", nullptr},
                                                                                     {"servingCellARFCN", nullptr},
                                                                                     {"neighbourCell-List", nullptr}};
-const asn1::table::seq_desc          neighbour_relation_info_s::desc             = {
-    {seq_table_neighbour_relation_info_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_neighbour_relation_info_s_names};
+const asn1::table::seq_desc          neighbour_relation_info_s::desc = {{seq_table_neighbour_relation_info_s_fields,
+                                                                         uint64_t{0x7},
+                                                                         nullptr,
+                                                                         seq_table_neighbour_relation_info_s_names,
+                                                                         3,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // ServingCellConfigCommon ::= SEQUENCE
 static const asn1::table::seq_field seq_table_serving_cell_cfg_common_s_fields[] = {
@@ -5311,13 +5568,16 @@ static const asn1::table::seq_field seq_table_serving_cell_cfg_common_s_fields[]
 static const asn1::table::field_name seq_table_serving_cell_cfg_common_s_names[] = {{"ssbPositionsInBurst", nullptr},
                                                                                     {"ssbPeriodicity", nullptr},
                                                                                     {"ssbSubcarrierSpacing", nullptr}};
-const asn1::table::seq_desc          serving_cell_cfg_common_s::desc             = {
-    {seq_table_serving_cell_cfg_common_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_serving_cell_cfg_common_s_names};
+const asn1::table::seq_desc          serving_cell_cfg_common_s::desc = {{seq_table_serving_cell_cfg_common_s_fields,
+                                                                         uint64_t{0x7},
+                                                                         nullptr,
+                                                                         seq_table_serving_cell_cfg_common_s_names,
+                                                                         3,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 static const char* enum_names_serving_cell_cfg_common_s_ssb_periodicity_e__values[] =
     {"ms5", "ms10", "ms20", "ms40", "ms80", "ms160"};
@@ -5417,29 +5677,29 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_ind_msg_format3_item_s_g1_op
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_e2sm_rc_ind_msg_format3_item_s_groups[] = {
     {{seq_table_e2sm_rc_ind_msg_format3_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_e2sm_rc_ind_msg_format3_item_s_g0_opts,
-      1},
-     true,
-     seq_table_e2sm_rc_ind_msg_format3_item_s_g0_names},
-    {{seq_table_e2sm_rc_ind_msg_format3_item_s_g1_fields,
+      seq_table_e2sm_rc_ind_msg_format3_item_s_g0_names,
       1,
-      UINT64_C(0x0),
-      seq_table_e2sm_rc_ind_msg_format3_item_s_g1_opts,
       1},
-     true,
-     seq_table_e2sm_rc_ind_msg_format3_item_s_g1_names}};
+     true},
+    {{seq_table_e2sm_rc_ind_msg_format3_item_s_g1_fields,
+      uint64_t{0x0},
+      seq_table_e2sm_rc_ind_msg_format3_item_s_g1_opts,
+      seq_table_e2sm_rc_ind_msg_format3_item_s_g1_names,
+      1,
+      1},
+     true}};
 const asn1::table::seq_desc e2sm_rc_ind_msg_format3_item_s::desc = {{seq_table_e2sm_rc_ind_msg_format3_item_s_fields,
-                                                                     4,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_e2sm_rc_ind_msg_format3_item_s_opts,
+                                                                     seq_table_e2sm_rc_ind_msg_format3_item_s_names,
+                                                                     4,
                                                                      3},
                                                                     true,
                                                                     true,
                                                                     seq_table_e2sm_rc_ind_msg_format3_item_s_groups,
-                                                                    2,
-                                                                    seq_table_e2sm_rc_ind_msg_format3_item_s_names};
+                                                                    2};
 
 // E2SM-RC-IndicationMessage-Format3 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format3_s_fields[] = {
@@ -5449,20 +5709,23 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format3_s_fields[]
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ind_msg_format3_s::cell_info_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &e2sm_rc_ind_msg_format3_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format3_s_names[] = {{"cellInfo-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ind_msg_format3_s::desc             = {
-    {seq_table_e2sm_rc_ind_msg_format3_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format3_s_names};
+const asn1::table::seq_desc          e2sm_rc_ind_msg_format3_s::desc = {{seq_table_e2sm_rc_ind_msg_format3_s_fields,
+                                                                         uint64_t{0x1},
+                                                                         nullptr,
+                                                                         seq_table_e2sm_rc_ind_msg_format3_s_names,
+                                                                         1,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // E2SM-RC-IndicationMessage-Format5-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format5_item_s_fields[] = {
@@ -5471,8 +5734,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format5_item_s_fie
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ind_msg_format5_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -5486,13 +5749,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format5_item_s_fie
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format5_item_s_names[] = {
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
-const asn1::table::seq_desc e2sm_rc_ind_msg_format5_item_s::desc = {
-    {seq_table_e2sm_rc_ind_msg_format5_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format5_item_s_names};
+const asn1::table::seq_desc e2sm_rc_ind_msg_format5_item_s::desc = {{seq_table_e2sm_rc_ind_msg_format5_item_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_e2sm_rc_ind_msg_format5_item_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // E2SM-RC-IndicationMessage-Format5 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format5_s_fields[] = {
@@ -5509,13 +5775,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format5_s_fields[]
                                    true>::value,
      &e2sm_rc_ind_msg_format5_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format5_s_names[] = {{"ranP-Requested-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ind_msg_format5_s::desc             = {
-    {seq_table_e2sm_rc_ind_msg_format5_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format5_s_names};
+const asn1::table::seq_desc          e2sm_rc_ind_msg_format5_s::desc = {{seq_table_e2sm_rc_ind_msg_format5_s_fields,
+                                                                         uint64_t{0x1},
+                                                                         nullptr,
+                                                                         seq_table_e2sm_rc_ind_msg_format5_s_names,
+                                                                         1,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // E2SM-RC-IndicationMessage-Format6-RANP-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_ranp_item_s_fields[] = {
@@ -5524,8 +5793,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_ranp_item_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_ind_msg_format6_ranp_item_s, ran_param_value_type),
      asn1::table::seq_field::mandatory,
@@ -5540,12 +5809,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format6_ranp_item
     {"ranParameter-ID", nullptr},
     {"ranParameter-valueType", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ind_msg_format6_ranp_item_s::desc = {
-    {seq_table_e2sm_rc_ind_msg_format6_ranp_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ind_msg_format6_ranp_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ind_msg_format6_ranp_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format6_ranp_item_s_names};
+    0};
 
 // E2SM-RC-IndicationMessage-Format6-Indication-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_ind_item_s_fields[] = {
@@ -5554,8 +5827,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_ind_item_s
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(e2sm_rc_ind_msg_format6_ind_item_s, ran_p_insert_ind_list),
      asn1::table::seq_field::mandatory,
@@ -5573,12 +5846,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format6_ind_item_
     {"ric-InsertIndication-ID", nullptr},
     {"ranP-InsertIndication-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ind_msg_format6_ind_item_s::desc = {
-    {seq_table_e2sm_rc_ind_msg_format6_ind_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ind_msg_format6_ind_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ind_msg_format6_ind_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format6_ind_item_s_names};
+    0};
 
 // E2SM-RC-IndicationMessage-Format6-Style-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_style_item_s_fields[] = {
@@ -5587,8 +5864,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_style_item
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_ind_msg_format6_style_item_s, ric_insert_ind_list),
      asn1::table::seq_field::mandatory,
@@ -5596,7 +5873,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_style_item
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ind_msg_format6_style_item_s::ric_insert_ind_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5606,12 +5883,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format6_style_ite
     {"indicated-Insert-Style-Type", nullptr},
     {"ric-InsertIndication-List", nullptr}};
 const asn1::table::seq_desc e2sm_rc_ind_msg_format6_style_item_s::desc = {
-    {seq_table_e2sm_rc_ind_msg_format6_style_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2sm_rc_ind_msg_format6_style_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2sm_rc_ind_msg_format6_style_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format6_style_item_s_names};
+    0};
 
 // E2SM-RC-IndicationMessage-Format6 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_s_fields[] = {
@@ -5621,20 +5902,23 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_format6_s_fields[]
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(e2sm_rc_ind_msg_format6_s::ric_insert_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &e2sm_rc_ind_msg_format6_style_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_format6_s_names[] = {{"ric-InsertStyle-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_ind_msg_format6_s::desc             = {
-    {seq_table_e2sm_rc_ind_msg_format6_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_ind_msg_format6_s_names};
+const asn1::table::seq_desc          e2sm_rc_ind_msg_format6_s::desc = {{seq_table_e2sm_rc_ind_msg_format6_s_fields,
+                                                                         uint64_t{0x1},
+                                                                         nullptr,
+                                                                         seq_table_e2sm_rc_ind_msg_format6_s_names,
+                                                                         1,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // E2SM-RC-IndicationMessage ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_s_fields[] = {
@@ -5649,21 +5933,20 @@ static const asn1::table::seq_field seq_table_e2sm_rc_ind_msg_s_fields[] = {
      &e2sm_rc_ind_msg_s::ric_ind_msg_formats_c_::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_ind_msg_s_names[] = {{"ric-indicationMessage-formats", nullptr}};
 const asn1::table::seq_desc          e2sm_rc_ind_msg_s::desc             = {
-    {seq_table_e2sm_rc_ind_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_ind_msg_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_ind_msg_s_names, 1, 0},
     true,
     true,
     nullptr,
     0,
-    seq_table_e2sm_rc_ind_msg_s_names,
     "E2SM-RC-IndicationMessage"};
 
 static const asn1::table::storage_ops* const choice_storage_e2sm_rc_ind_msg_s_ric_ind_msg_formats_c__alternatives[] = {
-    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format1_s, false>::value,
-    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format2_s, false>::value,
+    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format1_s, false, false>::value,
+    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format2_s, false, false>::value,
     &asn1::table::alternative_ops<e2sm_rc_ind_msg_format3_s, false>::value,
     nullptr,
-    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format5_s, false>::value,
-    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format6_s, false>::value};
+    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format5_s, false, false>::value,
+    &asn1::table::alternative_ops<e2sm_rc_ind_msg_format6_s, false, false>::value};
 const asn1::table::choice_storage_desc e2sm_rc_ind_msg_s::ric_ind_msg_formats_c_::storage_desc = {
     choice_storage_e2sm_rc_ind_msg_s_ric_ind_msg_formats_c__alternatives,
     6,
@@ -5790,8 +6073,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_definition_format1_i
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_query_definition_format1_item_s, ran_param_definition),
      (int32_t)offsetof(e2sm_rc_query_definition_format1_item_s, ran_param_definition_present),
@@ -5809,15 +6092,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_query_definition_format1_ite
     {1, (int32_t)offsetof(e2sm_rc_query_definition_format1_item_s, ran_param_definition_present)}};
 const asn1::table::seq_desc e2sm_rc_query_definition_format1_item_s::desc = {
     {seq_table_e2sm_rc_query_definition_format1_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_e2sm_rc_query_definition_format1_item_s_opts,
+     seq_table_e2sm_rc_query_definition_format1_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_query_definition_format1_item_s_names};
+    0};
 
 // E2SM-RC-QueryDefinition-Format1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_definition_format1_s_fields[] = {
@@ -5827,7 +6110,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_definition_format1_s
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_query_definition_format1_s::ran_p_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5835,12 +6118,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_definition_format1_s
      &e2sm_rc_query_definition_format1_item_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_query_definition_format1_s_names[] = {{"ranP-List", nullptr}};
 const asn1::table::seq_desc          e2sm_rc_query_definition_format1_s::desc             = {
-    {seq_table_e2sm_rc_query_definition_format1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_query_definition_format1_s_fields,
+                          uint64_t{0x1},
+                          nullptr,
+                          seq_table_e2sm_rc_query_definition_format1_s_names,
+                          1,
+                          0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_query_definition_format1_s_names};
+    0};
 
 // E2SM-RC-QueryDefinition ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_definition_s_fields[] = {
@@ -5855,13 +6142,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_definition_s_fields[
      &e2sm_rc_query_definition_s::ric_query_definition_formats_c_::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_query_definition_s_names[] = {
     {"ric-queryDefinition-formats", nullptr}};
-const asn1::table::seq_desc e2sm_rc_query_definition_s::desc = {
-    {seq_table_e2sm_rc_query_definition_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_query_definition_s_names};
+const asn1::table::seq_desc e2sm_rc_query_definition_s::desc = {{seq_table_e2sm_rc_query_definition_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 nullptr,
+                                                                 seq_table_e2sm_rc_query_definition_s_names,
+                                                                 1,
+                                                                 0},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const asn1::table::seq_field
     choice_table_e2sm_rc_query_definition_s_ric_query_definition_formats_c__alternatives[] = {
@@ -5909,8 +6199,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_hdr_format1_s_fields
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(e2sm_rc_query_hdr_format1_s, associated_e2_node_info),
      asn1::table::seq_field::list_presence,
@@ -5918,7 +6208,7 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_hdr_format1_s_fields
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(e2sm_rc_query_hdr_format1_s::associated_e2_node_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5939,13 +6229,16 @@ static const asn1::table::field_name seq_table_e2sm_rc_query_hdr_format1_s_names
 static const asn1::table::seq_opt    seq_table_e2sm_rc_query_hdr_format1_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(e2sm_rc_query_hdr_format1_s, associated_ue_info_present)}};
-const asn1::table::seq_desc e2sm_rc_query_hdr_format1_s::desc = {
-    {seq_table_e2sm_rc_query_hdr_format1_s_fields, 3, UINT64_C(0x1), seq_table_e2sm_rc_query_hdr_format1_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_query_hdr_format1_s_names};
+const asn1::table::seq_desc e2sm_rc_query_hdr_format1_s::desc = {{seq_table_e2sm_rc_query_hdr_format1_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_e2sm_rc_query_hdr_format1_s_opts,
+                                                                  seq_table_e2sm_rc_query_hdr_format1_s_names,
+                                                                  3,
+                                                                  2},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // E2SM-RC-QueryHeader ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_hdr_s_fields[] = {
@@ -5960,12 +6253,11 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_hdr_s_fields[] = {
      &e2sm_rc_query_hdr_s::ric_query_hdr_formats_c_::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_query_hdr_s_names[] = {{"ric-queryHeader-formats", nullptr}};
 const asn1::table::seq_desc          e2sm_rc_query_hdr_s::desc             = {
-    {seq_table_e2sm_rc_query_hdr_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_query_hdr_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_query_hdr_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_query_hdr_s_names};
+    0};
 
 static const asn1::table::seq_field choice_table_e2sm_rc_query_hdr_s_ric_query_hdr_formats_c__alternatives[] = {
     {0,
@@ -6011,8 +6303,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format1_item
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_query_outcome_format1_item_params_s, ran_param_value_type),
      (int32_t)offsetof(e2sm_rc_query_outcome_format1_item_params_s, ran_param_value_type_present),
@@ -6030,15 +6322,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_query_outcome_format1_item_p
     {1, (int32_t)offsetof(e2sm_rc_query_outcome_format1_item_params_s, ran_param_value_type_present)}};
 const asn1::table::seq_desc e2sm_rc_query_outcome_format1_item_params_s::desc = {
     {seq_table_e2sm_rc_query_outcome_format1_item_params_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_e2sm_rc_query_outcome_format1_item_params_s_opts,
+     seq_table_e2sm_rc_query_outcome_format1_item_params_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_query_outcome_format1_item_params_s_names};
+    0};
 
 // E2SM-RC-QueryOutcome-Format1-ItemCell ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format1_item_cell_s_fields[] = {
@@ -6095,23 +6387,23 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_query_outcome_format1_item_c
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_e2sm_rc_query_outcome_format1_item_cell_s_groups[] = {
     {{seq_table_e2sm_rc_query_outcome_format1_item_cell_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_e2sm_rc_query_outcome_format1_item_cell_s_g0_opts,
+      seq_table_e2sm_rc_query_outcome_format1_item_cell_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_e2sm_rc_query_outcome_format1_item_cell_s_g0_names}};
+     true}};
 const asn1::table::seq_desc e2sm_rc_query_outcome_format1_item_cell_s::desc = {
     {seq_table_e2sm_rc_query_outcome_format1_item_cell_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_e2sm_rc_query_outcome_format1_item_cell_s_opts,
+     seq_table_e2sm_rc_query_outcome_format1_item_cell_s_names,
+     3,
      1},
     true,
     true,
     seq_table_e2sm_rc_query_outcome_format1_item_cell_s_groups,
-    1,
-    seq_table_e2sm_rc_query_outcome_format1_item_cell_s_names};
+    1};
 
 // E2SM-RC-QueryOutcome-Format1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format1_s_fields[] = {
@@ -6121,20 +6413,23 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format1_s_fi
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(e2sm_rc_query_outcome_format1_s::cell_info_list),
                                    asn1::table::sequence_item_ops,
                                    false,
                                    true>::value,
      &e2sm_rc_query_outcome_format1_item_cell_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_query_outcome_format1_s_names[] = {{"cellInfo-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_query_outcome_format1_s::desc             = {
-    {seq_table_e2sm_rc_query_outcome_format1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_query_outcome_format1_s_names};
+const asn1::table::seq_desc e2sm_rc_query_outcome_format1_s::desc = {{seq_table_e2sm_rc_query_outcome_format1_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2sm_rc_query_outcome_format1_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2SM-RC-QueryOutcome-Format2-ItemParameters ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format2_item_params_s_fields[] = {
@@ -6143,8 +6438,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format2_item
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(e2sm_rc_query_outcome_format2_item_params_s, ran_param_value_type),
      (int32_t)offsetof(e2sm_rc_query_outcome_format2_item_params_s, ran_param_value_type_present),
@@ -6162,15 +6457,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_query_outcome_format2_item_p
     {1, (int32_t)offsetof(e2sm_rc_query_outcome_format2_item_params_s, ran_param_value_type_present)}};
 const asn1::table::seq_desc e2sm_rc_query_outcome_format2_item_params_s::desc = {
     {seq_table_e2sm_rc_query_outcome_format2_item_params_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_e2sm_rc_query_outcome_format2_item_params_s_opts,
+     seq_table_e2sm_rc_query_outcome_format2_item_params_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_query_outcome_format2_item_params_s_names};
+    0};
 
 // E2SM-RC-QueryOutcome-Format2-ItemUE ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format2_item_ue_s_fields[] = {
@@ -6200,8 +6495,8 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format2_item
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const asn1::table::field_name seq_table_e2sm_rc_query_outcome_format2_item_ue_s_names[] = {
     {"ueID", nullptr},
@@ -6211,15 +6506,15 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_query_outcome_format2_item_u
     {2, (int32_t)offsetof(e2sm_rc_query_outcome_format2_item_ue_s, ue_filt_id_present)}};
 const asn1::table::seq_desc e2sm_rc_query_outcome_format2_item_ue_s::desc = {
     {seq_table_e2sm_rc_query_outcome_format2_item_ue_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_e2sm_rc_query_outcome_format2_item_ue_s_opts,
+     seq_table_e2sm_rc_query_outcome_format2_item_ue_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_query_outcome_format2_item_ue_s_names};
+    0};
 
 // E2SM-RC-QueryOutcome-Format2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format2_s_fields[] = {
@@ -6236,13 +6531,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_format2_s_fi
                                    true>::value,
      &e2sm_rc_query_outcome_format2_item_ue_s::desc}};
 static const asn1::table::field_name seq_table_e2sm_rc_query_outcome_format2_s_names[] = {{"ueInfo-List", nullptr}};
-const asn1::table::seq_desc          e2sm_rc_query_outcome_format2_s::desc             = {
-    {seq_table_e2sm_rc_query_outcome_format2_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2sm_rc_query_outcome_format2_s_names};
+const asn1::table::seq_desc e2sm_rc_query_outcome_format2_s::desc = {{seq_table_e2sm_rc_query_outcome_format2_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2sm_rc_query_outcome_format2_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2SM-RC-QueryOutcome ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_s_fields[] = {
@@ -6258,17 +6556,16 @@ static const asn1::table::seq_field seq_table_e2sm_rc_query_outcome_s_fields[] =
 static const asn1::table::field_name seq_table_e2sm_rc_query_outcome_s_names[] = {
     {"ric-queryOutcome-formats", nullptr}};
 const asn1::table::seq_desc e2sm_rc_query_outcome_s::desc = {
-    {seq_table_e2sm_rc_query_outcome_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2sm_rc_query_outcome_s_fields, uint64_t{0x1}, nullptr, seq_table_e2sm_rc_query_outcome_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2sm_rc_query_outcome_s_names};
+    0};
 
 static const asn1::table::storage_ops* const
     choice_storage_e2sm_rc_query_outcome_s_ric_query_outcome_formats_c__alternatives[] = {
-        &asn1::table::alternative_ops<e2sm_rc_query_outcome_format1_s, false>::value,
-        &asn1::table::alternative_ops<e2sm_rc_query_outcome_format2_s, false>::value};
+        &asn1::table::alternative_ops<e2sm_rc_query_outcome_format1_s, false, false>::value,
+        &asn1::table::alternative_ops<e2sm_rc_query_outcome_format2_s, false, false>::value};
 const asn1::table::choice_storage_desc e2sm_rc_query_outcome_s::ric_query_outcome_formats_c_::storage_desc = {
     choice_storage_e2sm_rc_query_outcome_s_ric_query_outcome_formats_c__alternatives,
     2,
@@ -6341,8 +6638,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_event_trigger_style_item_s, ric_event_trigger_style_name),
      asn1::table::seq_field::mandatory,
@@ -6359,20 +6656,24 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr}};
 static const asn1::table::field_name seq_table_ran_function_definition_event_trigger_style_item_s_names[] = {
     {"ric-EventTriggerStyle-Type", nullptr},
     {"ric-EventTriggerStyle-Name", nullptr},
     {"ric-EventTriggerFormat-Type", nullptr}};
 const asn1::table::seq_desc ran_function_definition_event_trigger_style_item_s::desc = {
-    {seq_table_ran_function_definition_event_trigger_style_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_ran_function_definition_event_trigger_style_item_s_fields,
+     uint64_t{0x7},
+     nullptr,
+     seq_table_ran_function_definition_event_trigger_style_item_s_names,
+     3,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_event_trigger_style_item_s_names};
+    0};
 
 // L2Parameters-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_l2_params_ran_param_item_s_fields[] = {
@@ -6381,8 +6682,8 @@ static const asn1::table::seq_field seq_table_l2_params_ran_param_item_s_fields[
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(l2_params_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -6411,19 +6712,22 @@ static const asn1::table::seq_opt seq_table_l2_params_ran_param_item_s_g0_opts[]
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_l2_params_ran_param_item_s_groups[] = {
     {{seq_table_l2_params_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_l2_params_ran_param_item_s_g0_opts,
+      seq_table_l2_params_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_l2_params_ran_param_item_s_g0_names}};
-const asn1::table::seq_desc l2_params_ran_param_item_s::desc = {
-    {seq_table_l2_params_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    seq_table_l2_params_ran_param_item_s_groups,
-    1,
-    seq_table_l2_params_ran_param_item_s_names};
+     true}};
+const asn1::table::seq_desc l2_params_ran_param_item_s::desc = {{seq_table_l2_params_ran_param_item_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 nullptr,
+                                                                 seq_table_l2_params_ran_param_item_s_names,
+                                                                 2,
+                                                                 0},
+                                                                true,
+                                                                true,
+                                                                seq_table_l2_params_ran_param_item_s_groups,
+                                                                1};
 
 // RANFunctionDefinition-EventTrigger-Breakpoint-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_event_trigger_breakpoint_item_s_fields[] = {
@@ -6432,8 +6736,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(ran_function_definition_event_trigger_breakpoint_item_s, call_process_breakpoint_name),
      asn1::table::seq_field::mandatory,
@@ -6451,7 +6755,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<
          decltype(ran_function_definition_event_trigger_breakpoint_item_s::ran_call_process_breakpoint_params_list),
          asn1::table::sequence_item_ops,
@@ -6466,15 +6770,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_event_trigge
     {2, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_event_trigger_breakpoint_item_s::desc = {
     {seq_table_ran_function_definition_event_trigger_breakpoint_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_ran_function_definition_event_trigger_breakpoint_item_s_opts,
+     seq_table_ran_function_definition_event_trigger_breakpoint_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_event_trigger_breakpoint_item_s_names};
+    0};
 
 // RANFunctionDefinition-EventTrigger-CallProcess-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_event_trigger_call_process_item_s_fields[] = {
@@ -6483,8 +6787,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(ran_function_definition_event_trigger_call_process_item_s, call_process_type_name),
      asn1::table::seq_field::mandatory,
@@ -6502,7 +6806,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<
          decltype(ran_function_definition_event_trigger_call_process_item_s::call_process_breakpoints_list),
          asn1::table::sequence_item_ops,
@@ -6514,12 +6818,16 @@ static const asn1::table::field_name seq_table_ran_function_definition_event_tri
     {"callProcessType-Name", nullptr},
     {"callProcessBreakpoints-List", nullptr}};
 const asn1::table::seq_desc ran_function_definition_event_trigger_call_process_item_s::desc = {
-    {seq_table_ran_function_definition_event_trigger_call_process_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_ran_function_definition_event_trigger_call_process_item_s_fields,
+     uint64_t{0x7},
+     nullptr,
+     seq_table_ran_function_definition_event_trigger_call_process_item_s_names,
+     3,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_event_trigger_call_process_item_s_names};
+    0};
 
 // UEIdentification-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_identif_ran_param_item_s_fields[] = {
@@ -6528,8 +6836,8 @@ static const asn1::table::seq_field seq_table_ue_identif_ran_param_item_s_fields
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(ue_identif_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -6558,19 +6866,22 @@ static const asn1::table::seq_opt seq_table_ue_identif_ran_param_item_s_g0_opts[
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_ue_identif_ran_param_item_s_groups[] = {
     {{seq_table_ue_identif_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_ue_identif_ran_param_item_s_g0_opts,
+      seq_table_ue_identif_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_ue_identif_ran_param_item_s_g0_names}};
-const asn1::table::seq_desc ue_identif_ran_param_item_s::desc = {
-    {seq_table_ue_identif_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    seq_table_ue_identif_ran_param_item_s_groups,
-    1,
-    seq_table_ue_identif_ran_param_item_s_names};
+     true}};
+const asn1::table::seq_desc ue_identif_ran_param_item_s::desc = {{seq_table_ue_identif_ran_param_item_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  nullptr,
+                                                                  seq_table_ue_identif_ran_param_item_s_names,
+                                                                  2,
+                                                                  0},
+                                                                 true,
+                                                                 true,
+                                                                 seq_table_ue_identif_ran_param_item_s_groups,
+                                                                 1};
 
 // RANFunctionDefinition-EventTrigger ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_event_trigger_s_fields[] = {
@@ -6580,7 +6891,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(ran_function_definition_event_trigger_s::ric_event_trigger_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6592,7 +6903,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_event_trigger_s::ran_l2_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6604,7 +6915,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_event_trigger_s::ran_call_process_types_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6616,7 +6927,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_event_trigger_s::ran_ue_identif_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6628,7 +6939,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_event_trig
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_event_trigger_s::ran_cell_identif_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6647,15 +6958,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_event_trigge
     {4, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_event_trigger_s::desc = {
     {seq_table_ran_function_definition_event_trigger_s_fields,
-     5,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ran_function_definition_event_trigger_s_opts,
+     seq_table_ran_function_definition_event_trigger_s_names,
+     5,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_event_trigger_s_names};
+    0};
 
 // Report-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_report_ran_param_item_s_fields[] = {
@@ -6664,8 +6975,8 @@ static const asn1::table::seq_field seq_table_report_ran_param_item_s_fields[] =
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(report_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -6692,16 +7003,19 @@ static const asn1::table::field_name seq_table_report_ran_param_item_s_g0_names[
 static const asn1::table::seq_opt seq_table_report_ran_param_item_s_g0_opts[] = {
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_report_ran_param_item_s_groups[] = {
-    {{seq_table_report_ran_param_item_s_g0_fields, 1, UINT64_C(0x0), seq_table_report_ran_param_item_s_g0_opts, 1},
-     true,
-     seq_table_report_ran_param_item_s_g0_names}};
+    {{seq_table_report_ran_param_item_s_g0_fields,
+      uint64_t{0x0},
+      seq_table_report_ran_param_item_s_g0_opts,
+      seq_table_report_ran_param_item_s_g0_names,
+      1,
+      1},
+     true}};
 const asn1::table::seq_desc report_ran_param_item_s::desc = {
-    {seq_table_report_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_report_ran_param_item_s_fields, uint64_t{0x3}, nullptr, seq_table_report_ran_param_item_s_names, 2, 0},
     true,
     true,
     seq_table_report_ran_param_item_s_groups,
-    1,
-    seq_table_report_ran_param_item_s_names};
+    1};
 
 // RANFunctionDefinition-Report-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_report_item_s_fields[] = {
@@ -6710,8 +7024,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_report_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_report_item_s, ric_report_style_name),
      asn1::table::seq_field::mandatory,
@@ -6727,32 +7041,32 @@ static const asn1::table::seq_field seq_table_ran_function_definition_report_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_report_item_s, ric_report_action_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_report_item_s, ric_ind_hdr_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_report_item_s, ric_ind_msg_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_report_item_s, ran_report_params_list),
      asn1::table::seq_field::list_presence,
@@ -6760,7 +7074,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_report_ite
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_report_item_s::ran_report_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6778,15 +7092,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_report_item_
     {6, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_report_item_s::desc = {
     {seq_table_ran_function_definition_report_item_s_fields,
-     7,
-     UINT64_C(0x3f),
+     uint64_t{0x3f},
      seq_table_ran_function_definition_report_item_s_opts,
+     seq_table_ran_function_definition_report_item_s_names,
+     7,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_report_item_s_names};
+    0};
 
 // RANFunctionDefinition-Report ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_report_s_fields[] = {
@@ -6796,7 +7110,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_report_s_f
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(ran_function_definition_report_s::ric_report_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6805,12 +7119,16 @@ static const asn1::table::seq_field seq_table_ran_function_definition_report_s_f
 static const asn1::table::field_name seq_table_ran_function_definition_report_s_names[] = {
     {"ric-ReportStyle-List", nullptr}};
 const asn1::table::seq_desc ran_function_definition_report_s::desc = {
-    {seq_table_ran_function_definition_report_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_function_definition_report_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_function_definition_report_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_report_s_names};
+    0};
 
 // InsertIndication-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_insert_ind_ran_param_item_s_fields[] = {
@@ -6819,8 +7137,8 @@ static const asn1::table::seq_field seq_table_insert_ind_ran_param_item_s_fields
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(insert_ind_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -6849,19 +7167,22 @@ static const asn1::table::seq_opt seq_table_insert_ind_ran_param_item_s_g0_opts[
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_insert_ind_ran_param_item_s_groups[] = {
     {{seq_table_insert_ind_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_insert_ind_ran_param_item_s_g0_opts,
+      seq_table_insert_ind_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_insert_ind_ran_param_item_s_g0_names}};
-const asn1::table::seq_desc insert_ind_ran_param_item_s::desc = {
-    {seq_table_insert_ind_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    seq_table_insert_ind_ran_param_item_s_groups,
-    1,
-    seq_table_insert_ind_ran_param_item_s_names};
+     true}};
+const asn1::table::seq_desc insert_ind_ran_param_item_s::desc = {{seq_table_insert_ind_ran_param_item_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  nullptr,
+                                                                  seq_table_insert_ind_ran_param_item_s_names,
+                                                                  2,
+                                                                  0},
+                                                                 true,
+                                                                 true,
+                                                                 seq_table_insert_ind_ran_param_item_s_groups,
+                                                                 1};
 
 // RANFunctionDefinition-Insert-Indication-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_insert_ind_item_s_fields[] = {
@@ -6870,8 +7191,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_ind
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(ran_function_definition_insert_ind_item_s, ric_insert_ind_name),
      asn1::table::seq_field::mandatory,
@@ -6888,7 +7209,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_ind
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_insert_ind_item_s::ran_insert_ind_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6902,15 +7223,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_insert_ind_i
     {2, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_insert_ind_item_s::desc = {
     {seq_table_ran_function_definition_insert_ind_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_ran_function_definition_insert_ind_item_s_opts,
+     seq_table_ran_function_definition_insert_ind_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_insert_ind_item_s_names};
+    0};
 
 // RANFunctionDefinition-Insert-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_insert_item_s_fields[] = {
@@ -6919,8 +7240,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_insert_item_s, ric_insert_style_name),
      asn1::table::seq_field::mandatory,
@@ -6936,16 +7257,16 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_insert_item_s, ric_action_definition_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_insert_item_s, ric_insert_ind_list),
      asn1::table::seq_field::list_presence,
@@ -6953,7 +7274,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_ite
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_insert_item_s::ric_insert_ind_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6964,24 +7285,24 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_insert_item_s, ric_ind_msg_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_insert_item_s, ric_call_process_id_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr}};
 static const asn1::table::field_name seq_table_ran_function_definition_insert_item_s_names[] = {
     {"ric-InsertStyle-Type", nullptr},
@@ -6996,15 +7317,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_insert_item_
     {4, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_insert_item_s::desc = {
     {seq_table_ran_function_definition_insert_item_s_fields,
-     8,
-     UINT64_C(0xef),
+     uint64_t{0xef},
      seq_table_ran_function_definition_insert_item_s_opts,
+     seq_table_ran_function_definition_insert_item_s_names,
+     8,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_insert_item_s_names};
+    0};
 
 // RANFunctionDefinition-Insert ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_insert_s_fields[] = {
@@ -7014,7 +7335,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_s_f
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(ran_function_definition_insert_s::ric_insert_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7023,12 +7344,16 @@ static const asn1::table::seq_field seq_table_ran_function_definition_insert_s_f
 static const asn1::table::field_name seq_table_ran_function_definition_insert_s_names[] = {
     {"ric-InsertStyle-List", nullptr}};
 const asn1::table::seq_desc ran_function_definition_insert_s::desc = {
-    {seq_table_ran_function_definition_insert_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_function_definition_insert_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_function_definition_insert_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_insert_s_names};
+    0};
 
 // RANFunctionDefinition-Control-Action-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_action_item_s_fields[] = {
@@ -7037,8 +7362,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_actio
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(ran_function_definition_ctrl_action_item_s, ric_ctrl_action_name),
      asn1::table::seq_field::mandatory,
@@ -7055,7 +7380,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_actio
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_ctrl_action_item_s::ran_ctrl_action_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7083,23 +7408,23 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_ctrl_action_
     {0, (int32_t)offsetof(ran_function_definition_ctrl_action_item_s, ue_group_ctrl_action_supported_present)}};
 static const asn1::table::seq_group seq_table_ran_function_definition_ctrl_action_item_s_groups[] = {
     {{seq_table_ran_function_definition_ctrl_action_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_ran_function_definition_ctrl_action_item_s_g0_opts,
+      seq_table_ran_function_definition_ctrl_action_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_ran_function_definition_ctrl_action_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc ran_function_definition_ctrl_action_item_s::desc = {
     {seq_table_ran_function_definition_ctrl_action_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_ran_function_definition_ctrl_action_item_s_opts,
+     seq_table_ran_function_definition_ctrl_action_item_s_names,
+     3,
      1},
     true,
     true,
     seq_table_ran_function_definition_ctrl_action_item_s_groups,
-    1,
-    seq_table_ran_function_definition_ctrl_action_item_s_names};
+    1};
 
 static const char* enum_names_ran_function_definition_ctrl_action_item_s_ue_group_ctrl_action_supported_e__values[] = {
     "true",
@@ -7116,8 +7441,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_item_
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_ctrl_item_s, ric_ctrl_style_name),
      asn1::table::seq_field::mandatory,
@@ -7134,7 +7459,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_item_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_ctrl_item_s::ric_ctrl_action_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7145,32 +7470,32 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_item_
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_ctrl_item_s, ric_ctrl_msg_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_ctrl_item_s, ric_call_process_id_format_type),
      (int32_t)offsetof(ran_function_definition_ctrl_item_s, ric_call_process_id_format_type_present),
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_ctrl_item_s, ric_ctrl_outcome_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_ctrl_item_s, ran_ctrl_outcome_params_list),
      asn1::table::seq_field::list_presence,
@@ -7178,7 +7503,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_item_
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(ran_function_definition_ctrl_item_s::ran_ctrl_outcome_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7216,23 +7541,23 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_ctrl_item_s_
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_ran_function_definition_ctrl_item_s_groups[] = {
     {{seq_table_ran_function_definition_ctrl_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_ran_function_definition_ctrl_item_s_g0_opts,
+      seq_table_ran_function_definition_ctrl_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_ran_function_definition_ctrl_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc ran_function_definition_ctrl_item_s::desc = {
     {seq_table_ran_function_definition_ctrl_item_s_fields,
-     8,
-     UINT64_C(0x5b),
+     uint64_t{0x5b},
      seq_table_ran_function_definition_ctrl_item_s_opts,
+     seq_table_ran_function_definition_ctrl_item_s_names,
+     8,
      3},
     true,
     true,
     seq_table_ran_function_definition_ctrl_item_s_groups,
-    1,
-    seq_table_ran_function_definition_ctrl_item_s_names};
+    1};
 
 // RANFunctionDefinition-Control ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_s_fields[] = {
@@ -7242,7 +7567,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_s_fie
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(ran_function_definition_ctrl_s::ric_ctrl_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7250,13 +7575,16 @@ static const asn1::table::seq_field seq_table_ran_function_definition_ctrl_s_fie
      &ran_function_definition_ctrl_item_s::desc}};
 static const asn1::table::field_name seq_table_ran_function_definition_ctrl_s_names[] = {
     {"ric-ControlStyle-List", nullptr}};
-const asn1::table::seq_desc ran_function_definition_ctrl_s::desc = {
-    {seq_table_ran_function_definition_ctrl_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ran_function_definition_ctrl_s_names};
+const asn1::table::seq_desc ran_function_definition_ctrl_s::desc = {{seq_table_ran_function_definition_ctrl_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_ran_function_definition_ctrl_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // PolicyAction-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_policy_action_ran_param_item_s_fields[] = {
@@ -7265,8 +7593,8 @@ static const asn1::table::seq_field seq_table_policy_action_ran_param_item_s_fie
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(policy_action_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -7296,19 +7624,22 @@ static const asn1::table::seq_opt seq_table_policy_action_ran_param_item_s_g0_op
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_policy_action_ran_param_item_s_groups[] = {
     {{seq_table_policy_action_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_policy_action_ran_param_item_s_g0_opts,
+      seq_table_policy_action_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_policy_action_ran_param_item_s_g0_names}};
-const asn1::table::seq_desc policy_action_ran_param_item_s::desc = {
-    {seq_table_policy_action_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    seq_table_policy_action_ran_param_item_s_groups,
-    1,
-    seq_table_policy_action_ran_param_item_s_names};
+     true}};
+const asn1::table::seq_desc policy_action_ran_param_item_s::desc = {{seq_table_policy_action_ran_param_item_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_policy_action_ran_param_item_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    seq_table_policy_action_ran_param_item_s_groups,
+                                                                    1};
 
 // PolicyCondition-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_policy_condition_ran_param_item_s_fields[] = {
@@ -7317,8 +7648,8 @@ static const asn1::table::seq_field seq_table_policy_condition_ran_param_item_s_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(policy_condition_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -7348,19 +7679,23 @@ static const asn1::table::seq_opt seq_table_policy_condition_ran_param_item_s_g0
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_policy_condition_ran_param_item_s_groups[] = {
     {{seq_table_policy_condition_ran_param_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_policy_condition_ran_param_item_s_g0_opts,
+      seq_table_policy_condition_ran_param_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_policy_condition_ran_param_item_s_g0_names}};
+     true}};
 const asn1::table::seq_desc policy_condition_ran_param_item_s::desc = {
-    {seq_table_policy_condition_ran_param_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_policy_condition_ran_param_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_policy_condition_ran_param_item_s_names,
+     2,
+     0},
     true,
     true,
     seq_table_policy_condition_ran_param_item_s_groups,
-    1,
-    seq_table_policy_condition_ran_param_item_s_names};
+    1};
 
 // RANFunctionDefinition-Policy-Action-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_policy_action_item_s_fields[] = {
@@ -7369,8 +7704,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_act
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(ran_function_definition_policy_action_item_s, ric_policy_action_name),
      asn1::table::seq_field::mandatory,
@@ -7386,8 +7721,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_act
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_policy_action_item_s, ran_policy_action_params_list),
      asn1::table::seq_field::list_presence,
@@ -7395,7 +7730,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_act
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<
          decltype(ran_function_definition_policy_action_item_s::ran_policy_action_params_list),
          asn1::table::sequence_item_ops,
@@ -7408,7 +7743,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_act
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<
          decltype(ran_function_definition_policy_action_item_s::ran_policy_condition_params_list),
          asn1::table::sequence_item_ops,
@@ -7426,15 +7761,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_policy_actio
     {4, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_policy_action_item_s::desc = {
     {seq_table_ran_function_definition_policy_action_item_s_fields,
-     5,
-     UINT64_C(0x7),
+     uint64_t{0x7},
      seq_table_ran_function_definition_policy_action_item_s_opts,
+     seq_table_ran_function_definition_policy_action_item_s_names,
+     5,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_policy_action_item_s_names};
+    0};
 
 // RANFunctionDefinition-Policy-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_policy_item_s_fields[] = {
@@ -7443,8 +7778,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_policy_item_s, ric_policy_style_name),
      asn1::table::seq_field::mandatory,
@@ -7460,8 +7795,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_ite
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_policy_item_s, ric_policy_action_list),
      asn1::table::seq_field::list_presence,
@@ -7469,7 +7804,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_ite
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_policy_item_s::ric_policy_action_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7484,15 +7819,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_policy_item_
     {3, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_policy_item_s::desc = {
     {seq_table_ran_function_definition_policy_item_s_fields,
-     4,
-     UINT64_C(0x7),
+     uint64_t{0x7},
      seq_table_ran_function_definition_policy_item_s_opts,
+     seq_table_ran_function_definition_policy_item_s_names,
+     4,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_policy_item_s_names};
+    0};
 
 // RANFunctionDefinition-Policy ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_policy_s_fields[] = {
@@ -7502,7 +7837,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_s_f
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(ran_function_definition_policy_s::ric_policy_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7511,12 +7846,16 @@ static const asn1::table::seq_field seq_table_ran_function_definition_policy_s_f
 static const asn1::table::field_name seq_table_ran_function_definition_policy_s_names[] = {
     {"ric-PolicyStyle-List", nullptr}};
 const asn1::table::seq_desc ran_function_definition_policy_s::desc = {
-    {seq_table_ran_function_definition_policy_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ran_function_definition_policy_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ran_function_definition_policy_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_policy_s_names};
+    0};
 
 // Query-RANParameter-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_query_ran_param_item_s_fields[] = {
@@ -7525,8 +7864,8 @@ static const asn1::table::seq_field seq_table_query_ran_param_item_s_fields[] = 
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4294967295),
+     int64_t{1},
+     uint64_t{4294967294},
      nullptr},
     {offsetof(query_ran_param_item_s, ran_param_name),
      asn1::table::seq_field::mandatory,
@@ -7550,13 +7889,16 @@ static const asn1::table::field_name seq_table_query_ran_param_item_s_names[] = 
                                                                                  {"ranParameter-Definition", nullptr}};
 static const asn1::table::seq_opt    seq_table_query_ran_param_item_s_opts[]  = {
     {2, (int32_t)offsetof(query_ran_param_item_s, ran_param_definition_present)}};
-const asn1::table::seq_desc query_ran_param_item_s::desc = {
-    {seq_table_query_ran_param_item_s_fields, 3, UINT64_C(0x3), seq_table_query_ran_param_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_query_ran_param_item_s_names};
+const asn1::table::seq_desc query_ran_param_item_s::desc = {{seq_table_query_ran_param_item_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_query_ran_param_item_s_opts,
+                                                             seq_table_query_ran_param_item_s_names,
+                                                             3,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // RANFunctionDefinition-Query-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_query_item_s_fields[] = {
@@ -7565,8 +7907,8 @@ static const asn1::table::seq_field seq_table_ran_function_definition_query_item
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_query_item_s, ric_query_style_name),
      asn1::table::seq_field::mandatory,
@@ -7582,24 +7924,24 @@ static const asn1::table::seq_field seq_table_ran_function_definition_query_item
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_query_item_s, ric_query_definition_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_query_item_s, ric_query_outcome_format_type),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(ran_function_definition_query_item_s, ran_query_params_list),
      asn1::table::seq_field::list_presence,
@@ -7607,7 +7949,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_query_item
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ran_function_definition_query_item_s::ran_query_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7624,15 +7966,15 @@ static const asn1::table::seq_opt seq_table_ran_function_definition_query_item_s
     {5, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_definition_query_item_s::desc = {
     {seq_table_ran_function_definition_query_item_s_fields,
-     6,
-     UINT64_C(0x1f),
+     uint64_t{0x1f},
      seq_table_ran_function_definition_query_item_s_opts,
+     seq_table_ran_function_definition_query_item_s_names,
+     6,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_definition_query_item_s_names};
+    0};
 
 // RANFunctionDefinition-Query ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_function_definition_query_s_fields[] = {
@@ -7642,7 +7984,7 @@ static const asn1::table::seq_field seq_table_ran_function_definition_query_s_fi
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<decltype(ran_function_definition_query_s::ric_query_style_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -7650,13 +7992,16 @@ static const asn1::table::seq_field seq_table_ran_function_definition_query_s_fi
      &ran_function_definition_query_item_s::desc}};
 static const asn1::table::field_name seq_table_ran_function_definition_query_s_names[] = {
     {"ric-QueryStyle-List", nullptr}};
-const asn1::table::seq_desc ran_function_definition_query_s::desc = {
-    {seq_table_ran_function_definition_query_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ran_function_definition_query_s_names};
+const asn1::table::seq_desc ran_function_definition_query_s::desc = {{seq_table_ran_function_definition_query_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_ran_function_definition_query_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2SM-RC-RANFunctionDefinition ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2sm_rc_ran_function_definition_s_fields[] = {
@@ -7743,23 +8088,23 @@ static const asn1::table::seq_opt seq_table_e2sm_rc_ran_function_definition_s_g0
     {0, asn1::table::seq_field::ptr_presence}};
 static const asn1::table::seq_group seq_table_e2sm_rc_ran_function_definition_s_groups[] = {
     {{seq_table_e2sm_rc_ran_function_definition_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_e2sm_rc_ran_function_definition_s_g0_opts,
+      seq_table_e2sm_rc_ran_function_definition_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_e2sm_rc_ran_function_definition_s_g0_names}};
+     true}};
 const asn1::table::seq_desc e2sm_rc_ran_function_definition_s::desc = {
     {seq_table_e2sm_rc_ran_function_definition_s_fields,
-     6,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_e2sm_rc_ran_function_definition_s_opts,
+     seq_table_e2sm_rc_ran_function_definition_s_names,
+     6,
      5},
     true,
     true,
     seq_table_e2sm_rc_ran_function_definition_s_groups,
-    1,
-    seq_table_e2sm_rc_ran_function_definition_s_names};
+    1};
 
 // E2SM-RC-ServiceLayerCause ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_e2sm_rc_service_layer_cause_c_alternatives[] = {

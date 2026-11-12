@@ -733,7 +733,7 @@ struct srs_periodicity_and_offset_c {
   uint16_t& set_sl2560();
 
 private:
-  asn1::table::choice_storage<srs_periodicity_and_offset_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<srs_periodicity_and_offset_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // SRS-SpatialRelationInfo ::= SEQUENCE
@@ -789,7 +789,7 @@ struct srs_spatial_relation_info_s {
     srs_s_&  set_srs();
 
   private:
-    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<srs_s_>> c;
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<srs_s_, uint8_t>> c;
   };
 
   // member variables
@@ -864,7 +864,7 @@ struct spatial_relation_info_pdc_r17_s {
     srs_s_&  set_srs();
 
   private:
-    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<srs_s_>> c;
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<srs_s_, uint8_t>> c;
   };
 
   // member variables
@@ -1113,7 +1113,7 @@ struct srs_res_s {
       uint8_t& set_start_rb_idx_and_freq_scaling_factor4_r17();
 
     private:
-      asn1::table::choice_storage<start_rb_idx_f_scaling_r17_c_, types, pod_choice_buffer_t> c;
+      asn1::table::choice_storage<start_rb_idx_f_scaling_r17_c_, types, choice_buffer_t<uint8_t>> c;
     };
 
     // member variables
@@ -1160,7 +1160,7 @@ struct srs_res_s {
     uint8_t& set_srs_dl_or_joint_tci_state();
 
   private:
-    asn1::table::choice_storage<srs_tci_state_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<srs_tci_state_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct srs_dl_or_joint_tci_state_v1730_s_ {
     serving_cell_and_bwp_id_r17_s cell_and_bwp_r17;

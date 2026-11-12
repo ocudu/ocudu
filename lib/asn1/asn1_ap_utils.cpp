@@ -39,13 +39,11 @@ const table::objset_desc          detail::empty_objset_table = {nullptr, 0, "id"
 
 static OCUDUASN_CODE pack_empty_obj_set_item(bit_ref& bref, const void*)
 {
-  varlength_field_pack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
+  return pack_varlength_field(bref, true, [](bit_ref&) { return OCUDUASN_SUCCESS; });
 }
 static OCUDUASN_CODE unpack_empty_obj_set_item(void*, cbit_ref& bref)
 {
-  varlength_field_unpack_guard varlen_scope(bref, true);
-  return OCUDUASN_SUCCESS;
+  return unpack_varlength_field(bref, true, [](cbit_ref&) { return OCUDUASN_SUCCESS; });
 }
 static void empty_obj_set_item_to_json(json_writer& j, const void*)
 {

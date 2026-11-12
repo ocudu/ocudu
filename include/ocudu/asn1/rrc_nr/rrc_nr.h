@@ -1939,7 +1939,7 @@ struct early_ul_sync_cfg_r18_s {
     uint8_t&  set_l139();
 
   private:
-    asn1::table::choice_storage<prach_root_seq_idx_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<prach_root_seq_idx_r18_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct n_timing_advance_offset_r18_opts {
     enum options { n0, n25600, n39936, spare1, nulltype } value;
@@ -2339,7 +2339,7 @@ struct mrb_rlc_cfg_multicast_r18_s {
     uint32_t& set_lc_ch_id_ext_r18();
 
   private:
-    asn1::table::choice_storage<lc_ch_id_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<lc_ch_id_r18_c_, types, choice_buffer_t<uint32_t, uint8_t>> c;
   };
   struct sn_field_len_r18_opts {
     enum options { size6, size12, nulltype } value;
@@ -2478,7 +2478,7 @@ struct mtch_ssb_map_win_cycle_offset_r17_c {
   uint16_t& set_ms256();
 
 private:
-  asn1::table::choice_storage<mtch_ssb_map_win_cycle_offset_r17_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<mtch_ssb_map_win_cycle_offset_r17_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // MTCH-SSB-MappingWindowList-r17 ::= SEQUENCE (SIZE (1..16)) OF MTCH-SSB-MappingWindowCycleOffset-r17
@@ -3189,7 +3189,7 @@ struct trs_res_set_r17_s {
     asn1::table::choice_storage<
         scrambling_id_info_r17_c_,
         types,
-        choice_buffer_t<scrambling_id_per_res_list_with2_r17_l_, scrambling_id_per_res_list_with4_r17_l_>>
+        choice_buffer_t<scrambling_id_per_res_list_with2_r17_l_, scrambling_id_per_res_list_with4_r17_l_, uint16_t>>
         c;
   };
   struct periodicity_and_offset_r17_c_ {
@@ -3251,7 +3251,7 @@ struct trs_res_set_r17_s {
     uint8_t& set_slots80();
 
   private:
-    asn1::table::choice_storage<periodicity_and_offset_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<periodicity_and_offset_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct nrof_res_r17_opts {
     enum options { n2, n4, nulltype } value;
@@ -3383,7 +3383,7 @@ struct trs_res_set_r18_s {
     asn1::table::choice_storage<
         scrambling_id_info_r18_c_,
         types,
-        choice_buffer_t<scrambling_id_per_res_list_with2_r18_l_, scrambling_id_per_res_list_with4_r18_l_>>
+        choice_buffer_t<scrambling_id_per_res_list_with2_r18_l_, scrambling_id_per_res_list_with4_r18_l_, uint16_t>>
         c;
   };
   struct periodicity_and_offset_r18_c_ {
@@ -3478,7 +3478,7 @@ struct trs_res_set_r18_s {
     uint16_t& set_slots640();
 
   private:
-    asn1::table::choice_storage<periodicity_and_offset_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<periodicity_and_offset_r18_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct nrof_res_r18_opts {
     enum options { n2, n4, nulltype } value;

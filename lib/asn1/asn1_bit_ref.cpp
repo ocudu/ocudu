@@ -41,7 +41,7 @@ void log_error_code(OCUDUASN_CODE code, const char* filename, int line)
       log_error("[{}][{}] Decoding failure.", filename, line);
       break;
     default:
-      log_warning("[{}][{}] OCUDUASN_CODE={} not recognized.", filename, line, (int)code);
+      log_warning("[{}][{}] OCUDUASN_CODE={} not recognized.", filename, line, static_cast<int>(code));
   }
 }
 
@@ -51,7 +51,7 @@ void log_error_code(OCUDUASN_CODE code, const char* filename, int line)
 
 void log_invalid_choice_id(uint32_t val, const char* choice_type)
 {
-  log_error("Invalid choice id={} for choice type {}", (size_t)val, choice_type);
+  log_error("Invalid choice id={} for choice type {}", static_cast<size_t>(val), choice_type);
 }
 
 /*********************
@@ -152,7 +152,8 @@ OCUDUASN_CODE bit_ref::align_bytes_zero()
 cbit_ref cbit_ref::subview(uint32_t offset_bytes, uint32_t len_bytes) const
 {
   const uint32_t buffer_rem_bytes = buffer.end() - it;
-  const uint32_t nof_bytes_needed = len_bytes + ((offset != 0) ? 1 : 0); // account for the last bits in the last byte.
+  // A view that starts mid byte reads the last bits from one more byte.
+  const uint32_t nof_bytes_needed = len_bytes + ((offset != 0) ? 1 : 0);
   if (offset_bytes + nof_bytes_needed > buffer_rem_bytes) {
     log_error("subview: Buffer size limit was achieved");
     return cbit_ref(ocudu::byte_buffer_view{});
@@ -171,7 +172,7 @@ int cbit_ref::distance_bytes() const
 
 int cbit_ref::distance() const
 {
-  return (int)offset + 8 * static_cast<int>(it - buffer.begin());
+  return static_cast<int>(offset) + 8 * static_cast<int>(it - buffer.begin());
 }
 
 int cbit_ref::distance(const cbit_ref& other) const

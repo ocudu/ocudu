@@ -338,10 +338,10 @@ static const asn1::table::seq_field  seq_table_dl_dcch_msg_s_fields[] = {{offset
                                                                           nullptr,
                                                                           &dl_dcch_msg_type_c::desc}};
 static const asn1::table::field_name seq_table_dl_dcch_msg_s_names[]  = {{"message", nullptr}};
-const asn1::table::seq_desc dl_dcch_msg_s::desc = {{seq_table_dl_dcch_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-                                                   false,
-                                                   false,
-                                                   nullptr,
-                                                   0,
-                                                   seq_table_dl_dcch_msg_s_names,
-                                                   "DL-DCCH-Message"};
+const asn1::table::seq_desc          dl_dcch_msg_s::desc              = {
+    {seq_table_dl_dcch_msg_s_fields, uint64_t{0x1}, nullptr, seq_table_dl_dcch_msg_s_names, 1, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    "DL-DCCH-Message"};

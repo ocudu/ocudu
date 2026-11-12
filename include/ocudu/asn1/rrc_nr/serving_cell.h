@@ -511,7 +511,7 @@ struct pcch_cfg_s {
     uint8_t& set_one_sixteenth_t();
 
   private:
-    asn1::table::choice_storage<nand_paging_frame_offset_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<nand_paging_frame_offset_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct ns_opts {
     enum options { four, two, one, nulltype } value;
@@ -1124,7 +1124,7 @@ struct csi_associated_report_cfg_info_s {
     uint8_t&       set_csi_ssb_res_set();
 
   private:
-    asn1::table::choice_storage<res_for_ch_c_, types, choice_buffer_t<nzp_csi_rs_s_>> c;
+    asn1::table::choice_storage<res_for_ch_c_, types, choice_buffer_t<nzp_csi_rs_s_, uint8_t>> c;
   };
   struct res_for_ch2_r17_c_ {
     struct nzp_csi_rs2_r17_s_ {
@@ -1169,7 +1169,7 @@ struct csi_associated_report_cfg_info_s {
     uint8_t&            set_csi_ssb_res_set2_r17();
 
   private:
-    asn1::table::choice_storage<res_for_ch2_r17_c_, types, choice_buffer_t<nzp_csi_rs2_r17_s_>> c;
+    asn1::table::choice_storage<res_for_ch2_r17_c_, types, choice_buffer_t<nzp_csi_rs2_r17_s_, uint8_t>> c;
   };
   struct res_for_ch_td_cp_r18_s_ {
     bool    res_set3_td_cp_r18_present = false;
@@ -1225,7 +1225,9 @@ struct csi_associated_report_cfg_info_s {
     per_res_r18_l_& set_per_res_r18();
 
   private:
-    asn1::table::choice_storage<apply_indicated_tci_state_r18_c_, types, choice_buffer_t<per_res_r18_l_>> c;
+    asn1::table::
+        choice_storage<apply_indicated_tci_state_r18_c_, types, choice_buffer_t<per_res_r18_l_, per_set_r18_e_>>
+            c;
   };
   struct apply_indicated_tci_state2_r18_c_ {
     struct per_set_r18_opts {
@@ -1276,7 +1278,9 @@ struct csi_associated_report_cfg_info_s {
     per_res_r18_l_& set_per_res_r18();
 
   private:
-    asn1::table::choice_storage<apply_indicated_tci_state2_r18_c_, types, choice_buffer_t<per_res_r18_l_>> c;
+    asn1::table::
+        choice_storage<apply_indicated_tci_state2_r18_c_, types, choice_buffer_t<per_res_r18_l_, per_set_r18_e_>>
+            c;
   };
 
   // member variables
@@ -1704,7 +1708,7 @@ struct csi_report_periodicity_and_offset_c {
   uint16_t& set_slots320();
 
 private:
-  asn1::table::choice_storage<csi_report_periodicity_and_offset_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<csi_report_periodicity_and_offset_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // PUCCH-CSI-Resource ::= SEQUENCE
@@ -5761,7 +5765,7 @@ struct cell_dtx_drx_cfg_r18_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<cell_dtx_drx_on_dur_timer_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<cell_dtx_drx_on_dur_timer_r18_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
   struct cell_dtx_drx_cycle_start_offset_r18_c_ {
     struct types_opts {
@@ -6020,7 +6024,7 @@ struct cell_dtx_drx_cfg_r18_s {
     uint16_t& set_ms10240();
 
   private:
-    asn1::table::choice_storage<cell_dtx_drx_cycle_start_offset_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<cell_dtx_drx_cycle_start_offset_r18_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct cell_dtx_drx_cfg_type_r18_opts {
     enum options { dtx, drx, dtxdrx, nulltype } value;
@@ -6791,7 +6795,7 @@ struct ch_access_cfg_r16_s {
     int8_t& set_energy_detection_thres_offset_r16();
 
   private:
-    asn1::table::choice_storage<energy_detection_cfg_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<energy_detection_cfg_r16_c_, types, choice_buffer_t<int8_t>> c;
   };
 
   // member variables
@@ -7028,7 +7032,7 @@ struct nr_dl_prs_periodicity_and_res_set_slot_offset_r17_c {
     uint16_t& set_n10240_r17();
 
   private:
-    asn1::table::choice_storage<scs15_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs15_r17_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct scs30_r17_c_ {
     struct types_opts {
@@ -7252,7 +7256,7 @@ struct nr_dl_prs_periodicity_and_res_set_slot_offset_r17_c {
     uint16_t& set_n20480_r17();
 
   private:
-    asn1::table::choice_storage<scs30_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs30_r17_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct scs60_r17_c_ {
     struct types_opts {
@@ -7476,7 +7480,7 @@ struct nr_dl_prs_periodicity_and_res_set_slot_offset_r17_c {
     uint16_t& set_n40960_r17();
 
   private:
-    asn1::table::choice_storage<scs60_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs60_r17_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct scs120_r17_c_ {
     struct types_opts {
@@ -7700,7 +7704,7 @@ struct nr_dl_prs_periodicity_and_res_set_slot_offset_r17_c {
     uint32_t& set_n81920_r17();
 
   private:
-    asn1::table::choice_storage<scs120_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs120_r17_c_, types, choice_buffer_t<uint16_t, uint32_t, uint8_t>> c;
   };
   struct types_opts {
     enum options { scs15_r17, scs30_r17, scs60_r17, scs120_r17, /*...*/ nulltype } value;
@@ -7884,7 +7888,7 @@ struct nr_dl_prs_res_r17_s {
     uint8_t& set_n12_r17();
 
   private:
-    asn1::table::choice_storage<dl_prs_comb_size_n_and_re_offset_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<dl_prs_comb_size_n_and_re_offset_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -8452,7 +8456,7 @@ struct serving_cell_cfg_s {
     int8_t& set_ref_scs120_k_hz();
 
   private:
-    asn1::table::choice_storage<ca_slot_offset_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ca_slot_offset_r16_c_, types, choice_buffer_t<int8_t>> c;
   };
   using intra_cell_guard_bands_dl_list_r16_l_ = dyn_array<intra_cell_guard_bands_per_scs_r16_s>;
   using intra_cell_guard_bands_ul_list_r16_l_ = dyn_array<intra_cell_guard_bands_per_scs_r16_s>;

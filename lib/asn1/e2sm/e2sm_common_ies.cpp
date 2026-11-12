@@ -19,8 +19,8 @@ static const asn1::table::seq_field  choice_table_beam_id_c_alternatives[] = {{0
                                                                                asn1::table::field_op::int_u8,
                                                                                false,
                                                                                true,
-                                                                               INT64_C(0),
-                                                                               UINT64_C(63),
+                                                                               int64_t{0},
+                                                                               uint64_t{63},
                                                                                nullptr}};
 static const asn1::table::field_name choice_table_beam_id_c_names[]        = {{"nR-Beam-ID", nullptr}};
 const asn1::table::choice_desc       beam_id_c::desc = {asn1::table::enum_int_type<beam_id_c::types>(),
@@ -60,7 +60,7 @@ static const asn1::table::seq_field seq_table_nr_cgi_s_fields[] = {
 static const asn1::table::field_name seq_table_nr_cgi_s_names[] = {{"pLMNIdentity", nullptr},
                                                                    {"nRCellIdentity", nullptr}};
 const asn1::table::seq_desc          nr_cgi_s::desc =
-    {{seq_table_nr_cgi_s_fields, 2, UINT64_C(0x3), nullptr, 0}, true, true, nullptr, 0, seq_table_nr_cgi_s_names};
+    {{seq_table_nr_cgi_s_fields, uint64_t{0x3}, nullptr, seq_table_nr_cgi_s_names, 2, 0}, true, true, nullptr, 0};
 
 // EUTRA-CGI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_eutra_cgi_s_fields[] = {
@@ -83,7 +83,7 @@ static const asn1::table::seq_field seq_table_eutra_cgi_s_fields[] = {
 static const asn1::table::field_name seq_table_eutra_cgi_s_names[] = {{"pLMNIdentity", nullptr},
                                                                       {"eUTRACellIdentity", nullptr}};
 const asn1::table::seq_desc          eutra_cgi_s::desc =
-    {{seq_table_eutra_cgi_s_fields, 2, UINT64_C(0x3), nullptr, 0}, true, true, nullptr, 0, seq_table_eutra_cgi_s_names};
+    {{seq_table_eutra_cgi_s_fields, uint64_t{0x3}, nullptr, seq_table_eutra_cgi_s_names, 2, 0}, true, true, nullptr, 0};
 
 // CGI ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_cgi_c_alternatives[] = {
@@ -143,8 +143,8 @@ static const asn1::table::seq_field  seq_table_cell_rnti_s_fields[] = {{offsetof
                                                                         asn1::table::field_op::int_u32,
                                                                         false,
                                                                         true,
-                                                                        INT64_C(0),
-                                                                        UINT64_C(65535),
+                                                                        int64_t{0},
+                                                                        uint64_t{65535},
                                                                         nullptr},
                                                                        {offsetof(cell_rnti_s, cell_global_id),
                                                                         asn1::table::seq_field::mandatory,
@@ -157,7 +157,7 @@ static const asn1::table::seq_field  seq_table_cell_rnti_s_fields[] = {{offsetof
                                                                         &cgi_c::desc}};
 static const asn1::table::field_name seq_table_cell_rnti_s_names[] = {{"c-RNTI", nullptr}, {"cell-Global-ID", nullptr}};
 const asn1::table::seq_desc          cell_rnti_s::desc =
-    {{seq_table_cell_rnti_s_fields, 2, UINT64_C(0x3), nullptr, 0}, true, true, nullptr, 0, seq_table_cell_rnti_s_names};
+    {{seq_table_cell_rnti_s_fields, uint64_t{0x3}, nullptr, seq_table_cell_rnti_s_names, 2, 0}, true, true, nullptr, 0};
 
 // GUAMI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_guami_s_fields[] = {
@@ -198,7 +198,7 @@ static const asn1::table::field_name seq_table_guami_s_names[] = {{"pLMNIdentity
                                                                   {"aMFSetID", nullptr},
                                                                   {"aMFPointer", nullptr}};
 const asn1::table::seq_desc          guami_s::desc =
-    {{seq_table_guami_s_fields, 4, UINT64_C(0xf), nullptr, 0}, true, true, nullptr, 0, seq_table_guami_s_names};
+    {{seq_table_guami_s_fields, uint64_t{0xf}, nullptr, seq_table_guami_s_names, 4, 0}, true, true, nullptr, 0};
 
 // GUMMEI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_gummei_s_fields[] = {
@@ -230,7 +230,7 @@ static const asn1::table::field_name seq_table_gummei_s_names[] = {{"pLMN-Identi
                                                                    {"mME-Group-ID", nullptr},
                                                                    {"mME-Code", nullptr}};
 const asn1::table::seq_desc          gummei_s::desc =
-    {{seq_table_gummei_s_fields, 3, UINT64_C(0x7), nullptr, 0}, true, true, nullptr, 0, seq_table_gummei_s_names};
+    {{seq_table_gummei_s_fields, uint64_t{0x7}, nullptr, seq_table_gummei_s_names, 3, 0}, true, true, nullptr, 0};
 
 // CoreCPID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_core_cp_id_c_alternatives[] = {
@@ -414,17 +414,16 @@ static const asn1::table::seq_field seq_table_freq_band_nr_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(1024),
+     int64_t{1},
+     uint64_t{1023},
      nullptr}};
 static const asn1::table::field_name seq_table_freq_band_nr_item_s_names[] = {{"freqBandIndicatorNr", nullptr}};
 const asn1::table::seq_desc          freq_band_nr_item_s::desc             = {
-    {seq_table_freq_band_nr_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_freq_band_nr_item_s_fields, uint64_t{0x1}, nullptr, seq_table_freq_band_nr_item_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_freq_band_nr_item_s_names};
+    0};
 
 // GNB-ID ::= CHOICE
 static const asn1::table::seq_field choice_table_gnb_id_c_alternatives[] = {
@@ -474,12 +473,12 @@ static const asn1::table::seq_field seq_table_global_enb_id_s_fields[] = {
      &enb_id_c::desc}};
 static const asn1::table::field_name seq_table_global_enb_id_s_names[] = {{"pLMNIdentity", nullptr},
                                                                           {"eNB-ID", nullptr}};
-const asn1::table::seq_desc global_enb_id_s::desc = {{seq_table_global_enb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                     true,
-                                                     true,
-                                                     nullptr,
-                                                     0,
-                                                     seq_table_global_enb_id_s_names};
+const asn1::table::seq_desc          global_enb_id_s::desc             = {
+    {seq_table_global_enb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_global_enb_id_s_names, 2, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 // GlobalGNB-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_global_gnb_id_s_fields[] = {
@@ -502,12 +501,12 @@ static const asn1::table::seq_field seq_table_global_gnb_id_s_fields[] = {
      &gnb_id_c::desc}};
 static const asn1::table::field_name seq_table_global_gnb_id_s_names[] = {{"pLMNIdentity", nullptr},
                                                                           {"gNB-ID", nullptr}};
-const asn1::table::seq_desc global_gnb_id_s::desc = {{seq_table_global_gnb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                     true,
-                                                     true,
-                                                     nullptr,
-                                                     0,
-                                                     seq_table_global_gnb_id_s_names};
+const asn1::table::seq_desc          global_gnb_id_s::desc             = {
+    {seq_table_global_gnb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_global_gnb_id_s_names, 2, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 // NgENB-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ng_enb_id_c_alternatives[] = {
@@ -602,12 +601,11 @@ static const asn1::table::seq_field seq_table_global_ng_enb_id_s_fields[] = {
 static const asn1::table::field_name seq_table_global_ng_enb_id_s_names[] = {{"pLMNIdentity", nullptr},
                                                                              {"ngENB-ID", nullptr}};
 const asn1::table::seq_desc          global_ng_enb_id_s::desc             = {
-    {seq_table_global_ng_enb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_global_ng_enb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_global_ng_enb_id_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_global_ng_enb_id_s_names};
+    0};
 
 // GlobalNGRANNodeID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_global_ngran_node_id_c_alternatives[] = {
@@ -691,12 +689,11 @@ static const asn1::table::seq_field seq_table_globalen_gnb_id_s_fields[] = {
 static const asn1::table::field_name seq_table_globalen_gnb_id_s_names[] = {{"pLMN-Identity", nullptr},
                                                                             {"en-gNB-ID", nullptr}};
 const asn1::table::seq_desc          globalen_gnb_id_s::desc             = {
-    {seq_table_globalen_gnb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_globalen_gnb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_globalen_gnb_id_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_globalen_gnb_id_s_names};
+    0};
 
 // GroupID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_group_id_c_alternatives[] = {
@@ -721,16 +718,16 @@ static const asn1::table::seq_field  choice_table_group_id_c_alternatives[] = {{
                                                                                 asn1::table::field_op::int_u16,
                                                                                 true,
                                                                                 true,
-                                                                                INT64_C(0),
-                                                                                UINT64_C(255),
+                                                                                int64_t{0},
+                                                                                uint64_t{255},
                                                                                 nullptr},
                                                                                {0,
                                                                                 asn1::table::seq_field::mandatory,
                                                                                 asn1::table::field_op::int_u16,
                                                                                 false,
                                                                                 true,
-                                                                                INT64_C(0),
-                                                                                UINT64_C(255),
+                                                                                int64_t{0},
+                                                                                uint64_t{255},
                                                                                 nullptr}};
 static const asn1::table::field_name choice_table_group_id_c_names[]        = {{"fiveGC", nullptr}, {"ePC", nullptr}};
 const asn1::table::choice_desc       group_id_c::desc = {asn1::table::enum_int_type<group_id_c::types>(),
@@ -764,8 +761,8 @@ static const asn1::table::seq_field seq_table_interface_msg_id_s_fields[] = {
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(interface_msg_id_s, msg_type),
      asn1::table::seq_field::mandatory,
@@ -779,12 +776,11 @@ static const asn1::table::seq_field seq_table_interface_msg_id_s_fields[] = {
 static const asn1::table::field_name seq_table_interface_msg_id_s_names[] = {{"interfaceProcedureID", nullptr},
                                                                              {"messageType", nullptr}};
 const asn1::table::seq_desc          interface_msg_id_s::desc             = {
-    {seq_table_interface_msg_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_interface_msg_id_s_fields, uint64_t{0x3}, nullptr, seq_table_interface_msg_id_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_msg_id_s_names};
+    0};
 
 static const char*           enum_names_interface_msg_id_s_msg_type_e__values[] = {"initiatingMessage",
                                                                                    "successfulOutcome",
@@ -809,18 +805,17 @@ static const asn1::table::seq_field seq_table_interface_id_e1_s_fields[] = {{off
                                                                              asn1::table::field_op::int_u64,
                                                                              false,
                                                                              true,
-                                                                             INT64_C(0),
-                                                                             UINT64_C(68719476735),
+                                                                             int64_t{0},
+                                                                             uint64_t{68719476735},
                                                                              nullptr}};
 static const asn1::table::field_name seq_table_interface_id_e1_s_names[] = {{"globalGNB-ID", nullptr},
                                                                             {"gNB-CU-UP-ID", nullptr}};
 const asn1::table::seq_desc          interface_id_e1_s::desc             = {
-    {seq_table_interface_id_e1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_interface_id_e1_s_fields, uint64_t{0x3}, nullptr, seq_table_interface_id_e1_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_id_e1_s_names};
+    0};
 
 // InterfaceID-F1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_interface_id_f1_s_fields[] = {{offsetof(interface_id_f1_s, global_gnb_id),
@@ -837,18 +832,17 @@ static const asn1::table::seq_field seq_table_interface_id_f1_s_fields[] = {{off
                                                                              asn1::table::field_op::int_u64,
                                                                              false,
                                                                              true,
-                                                                             INT64_C(0),
-                                                                             UINT64_C(68719476735),
+                                                                             int64_t{0},
+                                                                             uint64_t{68719476735},
                                                                              nullptr}};
 static const asn1::table::field_name seq_table_interface_id_f1_s_names[] = {{"globalGNB-ID", nullptr},
                                                                             {"gNB-DU-ID", nullptr}};
 const asn1::table::seq_desc          interface_id_f1_s::desc             = {
-    {seq_table_interface_id_f1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_interface_id_f1_s_fields, uint64_t{0x3}, nullptr, seq_table_interface_id_f1_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_id_f1_s_names};
+    0};
 
 // InterfaceID-NG ::= SEQUENCE
 static const asn1::table::seq_field  seq_table_interface_id_ng_s_fields[] = {{offsetof(interface_id_ng_s, guami),
@@ -862,12 +856,11 @@ static const asn1::table::seq_field  seq_table_interface_id_ng_s_fields[] = {{of
                                                                               &guami_s::desc}};
 static const asn1::table::field_name seq_table_interface_id_ng_s_names[]  = {{"guami", nullptr}};
 const asn1::table::seq_desc          interface_id_ng_s::desc              = {
-    {seq_table_interface_id_ng_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_interface_id_ng_s_fields, uint64_t{0x1}, nullptr, seq_table_interface_id_ng_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_id_ng_s_names};
+    0};
 
 // InterfaceID-S1 ::= SEQUENCE
 static const asn1::table::seq_field  seq_table_interface_id_s1_s_fields[] = {{offsetof(interface_id_s1_s, gummei),
@@ -881,12 +874,11 @@ static const asn1::table::seq_field  seq_table_interface_id_s1_s_fields[] = {{of
                                                                               &gummei_s::desc}};
 static const asn1::table::field_name seq_table_interface_id_s1_s_names[]  = {{"gUMMEI", nullptr}};
 const asn1::table::seq_desc          interface_id_s1_s::desc              = {
-    {seq_table_interface_id_s1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_interface_id_s1_s_fields, uint64_t{0x1}, nullptr, seq_table_interface_id_s1_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_id_s1_s_names};
+    0};
 
 // InterfaceID-W1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_interface_id_w1_s_fields[] = {
@@ -904,18 +896,17 @@ static const asn1::table::seq_field seq_table_interface_id_w1_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr}};
 static const asn1::table::field_name seq_table_interface_id_w1_s_names[] = {{"global-ng-eNB-ID", nullptr},
                                                                             {"ng-eNB-DU-ID", nullptr}};
 const asn1::table::seq_desc          interface_id_w1_s::desc             = {
-    {seq_table_interface_id_w1_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_interface_id_w1_s_fields, uint64_t{0x3}, nullptr, seq_table_interface_id_w1_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_id_w1_s_names};
+    0};
 
 // InterfaceID-X2 ::= SEQUENCE
 static const asn1::table::seq_field  seq_table_interface_id_x2_s_fields[] = {{offsetof(interface_id_x2_s, node_type),
@@ -929,12 +920,11 @@ static const asn1::table::seq_field  seq_table_interface_id_x2_s_fields[] = {{of
                                                                               &interface_id_x2_s::node_type_c_::desc}};
 static const asn1::table::field_name seq_table_interface_id_x2_s_names[]  = {{"nodeType", nullptr}};
 const asn1::table::seq_desc          interface_id_x2_s::desc              = {
-    {seq_table_interface_id_x2_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_interface_id_x2_s_fields, uint64_t{0x1}, nullptr, seq_table_interface_id_x2_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_id_x2_s_names};
+    0};
 
 static const asn1::table::storage_ops* const choice_storage_interface_id_x2_s_node_type_c__alternatives[] = {
     &asn1::table::alternative_ops<global_enb_id_s, false>::value,
@@ -1010,12 +1000,11 @@ static const asn1::table::seq_field seq_table_interface_id_xn_s_fields[] = {
      &global_ngran_node_id_c::desc}};
 static const asn1::table::field_name seq_table_interface_id_xn_s_names[] = {{"global-NG-RAN-ID", nullptr}};
 const asn1::table::seq_desc          interface_id_xn_s::desc             = {
-    {seq_table_interface_id_xn_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_interface_id_xn_s_fields, uint64_t{0x1}, nullptr, seq_table_interface_id_xn_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_interface_id_xn_s_names};
+    0};
 
 // InterfaceIdentifier ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_interface_id_c_alternatives[] = {
@@ -1164,12 +1153,12 @@ static const asn1::table::seq_field  seq_table_nr_arfcn_s_fields[] = {{offsetof(
                                                                        asn1::table::field_op::int_u32,
                                                                        false,
                                                                        true,
-                                                                       INT64_C(0),
-                                                                       UINT64_C(3279165),
+                                                                       int64_t{0},
+                                                                       uint64_t{3279165},
                                                                        nullptr}};
 static const asn1::table::field_name seq_table_nr_arfcn_s_names[]  = {{"nRARFCN", nullptr}};
 const asn1::table::seq_desc          nr_arfcn_s::desc =
-    {{seq_table_nr_arfcn_s_fields, 1, UINT64_C(0x1), nullptr, 0}, true, true, nullptr, 0, seq_table_nr_arfcn_s_names};
+    {{seq_table_nr_arfcn_s_fields, uint64_t{0x1}, nullptr, seq_table_nr_arfcn_s_names, 1, 0}, true, true, nullptr, 0};
 
 // SupportedSULFreqBandItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_supported_sul_freq_band_item_s_fields[] = {
@@ -1178,18 +1167,21 @@ static const asn1::table::seq_field seq_table_supported_sul_freq_band_item_s_fie
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(1024),
+     int64_t{1},
+     uint64_t{1023},
      nullptr}};
 static const asn1::table::field_name seq_table_supported_sul_freq_band_item_s_names[] = {
     {"freqBandIndicatorNr", nullptr}};
-const asn1::table::seq_desc supported_sul_freq_band_item_s::desc = {
-    {seq_table_supported_sul_freq_band_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_supported_sul_freq_band_item_s_names};
+const asn1::table::seq_desc supported_sul_freq_band_item_s::desc = {{seq_table_supported_sul_freq_band_item_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_supported_sul_freq_band_item_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // NRFrequencyBandItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_nr_freq_band_item_s_fields[] = {
@@ -1198,8 +1190,8 @@ static const asn1::table::seq_field seq_table_nr_freq_band_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(1024),
+     int64_t{1},
+     uint64_t{1023},
      nullptr},
     {offsetof(nr_freq_band_item_s, supported_sul_band_list),
      asn1::table::seq_field::mandatory,
@@ -1216,12 +1208,11 @@ static const asn1::table::seq_field seq_table_nr_freq_band_item_s_fields[] = {
 static const asn1::table::field_name seq_table_nr_freq_band_item_s_names[] = {{"freqBandIndicatorNr", nullptr},
                                                                               {"supportedSULBandList", nullptr}};
 const asn1::table::seq_desc          nr_freq_band_item_s::desc             = {
-    {seq_table_nr_freq_band_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_nr_freq_band_item_s_fields, uint64_t{0x3}, nullptr, seq_table_nr_freq_band_item_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_nr_freq_band_item_s_names};
+    0};
 
 // NRFrequencyShift7p5khz ::= ENUMERATED
 static const char*           enum_names_nr_freq_shift7p5khz_e_values[] = {"false", "true"};
@@ -1246,7 +1237,7 @@ static const asn1::table::seq_field seq_table_nr_freq_info_s_fields[] = {
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::
          item_list_codec<decltype(nr_freq_info_s::freq_band_list), asn1::table::sequence_item_ops, false, true>::value,
      &nr_freq_band_item_s::desc},
@@ -1264,13 +1255,16 @@ static const asn1::table::field_name seq_table_nr_freq_info_s_names[] = {{"nrARF
                                                                          {"frequencyShift7p5khz", nullptr}};
 static const asn1::table::seq_opt    seq_table_nr_freq_info_s_opts[]  = {
     {2, (int32_t)offsetof(nr_freq_info_s, freq_shift7p5khz_present)}};
-const asn1::table::seq_desc nr_freq_info_s::desc = {
-    {seq_table_nr_freq_info_s_fields, 3, UINT64_C(0x3), seq_table_nr_freq_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nr_freq_info_s_names};
+const asn1::table::seq_desc nr_freq_info_s::desc = {{seq_table_nr_freq_info_s_fields,
+                                                     uint64_t{0x3},
+                                                     seq_table_nr_freq_info_s_opts,
+                                                     seq_table_nr_freq_info_s_names,
+                                                     3,
+                                                     1},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 // PartialUEID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_partial_ue_id_s_fields[] = {
@@ -1279,8 +1273,8 @@ static const asn1::table::seq_field seq_table_partial_ue_id_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1099511627775),
+     int64_t{0},
+     uint64_t{1099511627775},
      nullptr},
     {offsetof(partial_ue_id_s, guami),
      (int32_t)offsetof(partial_ue_id_s, guami_present),
@@ -1296,16 +1290,16 @@ static const asn1::table::seq_field seq_table_partial_ue_id_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(partial_ue_id_s, gnb_cu_cp_ue_e1ap_id),
      (int32_t)offsetof(partial_ue_id_s, gnb_cu_cp_ue_e1ap_id_present),
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(partial_ue_id_s, ran_ue_id),
      (int32_t)offsetof(partial_ue_id_s, ran_ue_id_present),
@@ -1320,8 +1314,8 @@ static const asn1::table::seq_field seq_table_partial_ue_id_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(partial_ue_id_s, global_ng_ran_node_id),
      (int32_t)offsetof(partial_ue_id_s, global_ng_ran_node_id_present),
@@ -1346,24 +1340,24 @@ static const asn1::table::seq_field seq_table_partial_ue_id_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(partial_ue_id_s, m_enb_ue_x2ap_id),
      (int32_t)offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_present),
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_ext),
      (int32_t)offsetof(partial_ue_id_s, m_enb_ue_x2ap_id_ext_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(partial_ue_id_s, global_enb_id),
      (int32_t)offsetof(partial_ue_id_s, global_enb_id_present),
@@ -1379,8 +1373,8 @@ static const asn1::table::seq_field seq_table_partial_ue_id_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(partial_ue_id_s, gummei),
      (int32_t)offsetof(partial_ue_id_s, gummei_present),
@@ -1420,13 +1414,16 @@ static const asn1::table::seq_opt    seq_table_partial_ue_id_s_opts[]  = {
     {11, (int32_t)offsetof(partial_ue_id_s, global_enb_id_present)},
     {12, (int32_t)offsetof(partial_ue_id_s, mme_ue_s1ap_id_present)},
     {13, (int32_t)offsetof(partial_ue_id_s, gummei_present)}};
-const asn1::table::seq_desc partial_ue_id_s::desc = {
-    {seq_table_partial_ue_id_s_fields, 14, UINT64_C(0x0), seq_table_partial_ue_id_s_opts, 14},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_partial_ue_id_s_names};
+const asn1::table::seq_desc partial_ue_id_s::desc = {{seq_table_partial_ue_id_s_fields,
+                                                      uint64_t{0x0},
+                                                      seq_table_partial_ue_id_s_opts,
+                                                      seq_table_partial_ue_id_s_names,
+                                                      14,
+                                                      14},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // QoSID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_qos_id_c_alternatives[] = {
@@ -1449,16 +1446,16 @@ static const asn1::table::seq_field  choice_table_qos_id_c_alternatives[] = {{0,
                                                                               asn1::table::field_op::int_u16,
                                                                               true,
                                                                               true,
-                                                                              INT64_C(0),
-                                                                              UINT64_C(255),
+                                                                              int64_t{0},
+                                                                              uint64_t{255},
                                                                               nullptr},
                                                                              {0,
                                                                               asn1::table::seq_field::mandatory,
                                                                               asn1::table::field_op::int_u16,
                                                                               false,
                                                                               true,
-                                                                              INT64_C(0),
-                                                                              UINT64_C(255),
+                                                                              int64_t{0},
+                                                                              uint64_t{255},
                                                                               nullptr}};
 static const asn1::table::field_name choice_table_qos_id_c_names[]        = {{"fiveGC", nullptr}, {"ePC", nullptr}};
 const asn1::table::choice_desc       qos_id_c::desc = {asn1::table::enum_int_type<qos_id_c::types>(),
@@ -1517,8 +1514,8 @@ static const asn1::table::seq_field seq_table_ra_nfunction_name_s_fields[] = {
      asn1::table::field_op::int_i64,
      false,
      true,
-     INT64_MIN,
-     UINT64_C(9223372036854775807),
+     std::numeric_limits<int64_t>::min(),
+     uint64_t{18446744073709551615U},
      nullptr}};
 static const asn1::table::field_name seq_table_ra_nfunction_name_s_names[] = {{"ranFunction-ShortName", nullptr},
                                                                               {"ranFunction-E2SM-OID", nullptr},
@@ -1526,13 +1523,16 @@ static const asn1::table::field_name seq_table_ra_nfunction_name_s_names[] = {{"
                                                                               {"ranFunction-Instance", nullptr}};
 static const asn1::table::seq_opt    seq_table_ra_nfunction_name_s_opts[]  = {
     {3, (int32_t)offsetof(ra_nfunction_name_s, ran_function_instance_present)}};
-const asn1::table::seq_desc ra_nfunction_name_s::desc = {
-    {seq_table_ra_nfunction_name_s_fields, 4, UINT64_C(0x7), seq_table_ra_nfunction_name_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ra_nfunction_name_s_names};
+const asn1::table::seq_desc ra_nfunction_name_s::desc = {{seq_table_ra_nfunction_name_s_fields,
+                                                          uint64_t{0x7},
+                                                          seq_table_ra_nfunction_name_s_opts,
+                                                          seq_table_ra_nfunction_name_s_names,
+                                                          4,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // RRCclass-LTE ::= ENUMERATED
 static const char*           enum_names_rrc_class_lte_e_values[] = {"bCCH-BCH",
@@ -1577,16 +1577,16 @@ static const asn1::table::seq_field  seq_table_rrc_msg_id_s_fields[] = {{offseto
                                                                          asn1::table::field_op::int_i64,
                                                                          false,
                                                                          true,
-                                                                         INT64_MIN,
-                                                                         UINT64_C(9223372036854775807),
+                                                                         std::numeric_limits<int64_t>::min(),
+                                                                         uint64_t{18446744073709551615U},
                                                                          nullptr}};
 static const asn1::table::field_name seq_table_rrc_msg_id_s_names[]  = {{"rrcType", nullptr}, {"messageID", nullptr}};
-const asn1::table::seq_desc rrc_msg_id_s::desc = {{seq_table_rrc_msg_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                  true,
-                                                  true,
-                                                  nullptr,
-                                                  0,
-                                                  seq_table_rrc_msg_id_s_names};
+const asn1::table::seq_desc          rrc_msg_id_s::desc              = {
+    {seq_table_rrc_msg_id_s_fields, uint64_t{0x3}, nullptr, seq_table_rrc_msg_id_s_names, 2, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 static const asn1::table::storage_ops* const choice_storage_rrc_msg_id_s_rrc_type_c__alternatives[] = {
     &asn1::table::alternative_ops<rrc_class_lte_e, true>::value,
@@ -1669,12 +1669,11 @@ static const asn1::table::seq_field seq_table_s_nssai_s_fields[] = {
 static const asn1::table::field_name seq_table_s_nssai_s_names[] = {{"sST", nullptr}, {"sD", nullptr}};
 static const asn1::table::seq_opt    seq_table_s_nssai_s_opts[]  = {{1, (int32_t)offsetof(s_nssai_s, sd_present)}};
 const asn1::table::seq_desc          s_nssai_s::desc             = {
-    {seq_table_s_nssai_s_fields, 2, UINT64_C(0x1), seq_table_s_nssai_s_opts, 1},
+    {seq_table_s_nssai_s_fields, uint64_t{0x1}, seq_table_s_nssai_s_opts, seq_table_s_nssai_s_names, 2, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_s_nssai_s_names};
+    0};
 
 // ServingCell-ARFCN ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_serving_cell_arfcn_c_alternatives[] = {
@@ -1710,8 +1709,8 @@ static const asn1::table::seq_field choice_table_serving_cell_arfcn_c_alternativ
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr}};
 static const asn1::table::field_name choice_table_serving_cell_arfcn_c_names[] = {{"nR", nullptr}, {"eUTRA", nullptr}};
 const asn1::table::choice_desc serving_cell_arfcn_c::desc = {asn1::table::enum_int_type<serving_cell_arfcn_c::types>(),
@@ -1758,16 +1757,16 @@ static const asn1::table::seq_field choice_table_serving_cell_pci_c_alternatives
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1007),
+     int64_t{0},
+     uint64_t{1007},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(503),
+     int64_t{0},
+     uint64_t{503},
      nullptr}};
 static const asn1::table::field_name choice_table_serving_cell_pci_c_names[] = {{"nR", nullptr}, {"eUTRA", nullptr}};
 const asn1::table::choice_desc serving_cell_pci_c::desc = {asn1::table::enum_int_type<serving_cell_pci_c::types>(),
@@ -1796,18 +1795,21 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_fie
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr}};
 static const asn1::table::field_name seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_names[] = {
     {"gNB-CU-UE-F1AP-ID", nullptr}};
-const asn1::table::seq_desc ue_id_gnb_cu_cp_f1ap_id_item_s::desc = {
-    {seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_names};
+const asn1::table::seq_desc ue_id_gnb_cu_cp_f1ap_id_item_s::desc = {{seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_ue_id_gnb_cu_cp_f1ap_id_item_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // UEID-GNB-CU-CP-E1AP-ID-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_fields[] = {
@@ -1816,18 +1818,21 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_fie
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr}};
 static const asn1::table::field_name seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_names[] = {
     {"gNB-CU-CP-UE-E1AP-ID", nullptr}};
-const asn1::table::seq_desc ue_id_gnb_cu_cp_e1ap_id_item_s::desc = {
-    {seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_names};
+const asn1::table::seq_desc ue_id_gnb_cu_cp_e1ap_id_item_s::desc = {{seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_ue_id_gnb_cu_cp_e1ap_id_item_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // UEID-GNB ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_gnb_s_fields[] = {
@@ -1836,8 +1841,8 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1099511627775),
+     int64_t{0},
+     uint64_t{1099511627775},
      nullptr},
     {offsetof(ue_id_gnb_s, guami),
      asn1::table::seq_field::mandatory,
@@ -1854,7 +1859,7 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_s_fields[] = {
      false,
      true,
      1,
-     4,
+     3,
      &asn1::table::item_list_codec<decltype(ue_id_gnb_s::gnb_cu_ue_f1ap_id_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1866,7 +1871,7 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_s_fields[] = {
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ue_id_gnb_s::gnb_cu_cp_ue_e1ap_id_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1885,8 +1890,8 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_id_gnb_s, global_gnb_id),
      (int32_t)offsetof(ue_id_gnb_s, global_gnb_id_present),
@@ -1934,20 +1939,26 @@ static const asn1::table::seq_field  seq_table_ue_id_gnb_s_g1_fields[] = {
       &cell_rnti_s::desc}};
 static const asn1::table::field_name seq_table_ue_id_gnb_s_g1_names[] = {{"cell-RNTI", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_id_gnb_s_g1_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
-static const asn1::table::seq_group  seq_table_ue_id_gnb_s_groups[]   = {
-    {{seq_table_ue_id_gnb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_gnb_s_g0_opts, 1},
-        true,
-        seq_table_ue_id_gnb_s_g0_names},
-    {{seq_table_ue_id_gnb_s_g1_fields, 1, UINT64_C(0x0), seq_table_ue_id_gnb_s_g1_opts, 1},
-        true,
-        seq_table_ue_id_gnb_s_g1_names}};
-const asn1::table::seq_desc ue_id_gnb_s::desc = {
-    {seq_table_ue_id_gnb_s_fields, 7, UINT64_C(0x3), seq_table_ue_id_gnb_s_opts, 5},
+static const asn1::table::seq_group  seq_table_ue_id_gnb_s_groups[]   = {{{seq_table_ue_id_gnb_s_g0_fields,
+                                                                           uint64_t{0x0},
+                                                                           seq_table_ue_id_gnb_s_g0_opts,
+                                                                           seq_table_ue_id_gnb_s_g0_names,
+                                                                           1,
+                                                                           1},
+                                                                          true},
+                                                                         {{seq_table_ue_id_gnb_s_g1_fields,
+                                                                           uint64_t{0x0},
+                                                                           seq_table_ue_id_gnb_s_g1_opts,
+                                                                           seq_table_ue_id_gnb_s_g1_names,
+                                                                           1,
+                                                                           1},
+                                                                          true}};
+const asn1::table::seq_desc          ue_id_gnb_s::desc                = {
+    {seq_table_ue_id_gnb_s_fields, uint64_t{0x3}, seq_table_ue_id_gnb_s_opts, seq_table_ue_id_gnb_s_names, 7, 5},
     true,
     true,
     seq_table_ue_id_gnb_s_groups,
-    2,
-    seq_table_ue_id_gnb_s_names};
+    2};
 
 // UEID-GNB-DU ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_gnb_du_s_fields[] = {
@@ -1956,8 +1967,8 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_du_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_id_gnb_du_s, ran_ue_id),
      (int32_t)offsetof(ue_id_gnb_du_s, ran_ue_id_present),
@@ -1983,17 +1994,23 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_du_s_g0_fields[] = {
      &cell_rnti_s::desc}};
 static const asn1::table::field_name seq_table_ue_id_gnb_du_s_g0_names[] = {{"cell-RNTI", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_id_gnb_du_s_g0_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
-static const asn1::table::seq_group  seq_table_ue_id_gnb_du_s_groups[]   = {
-    {{seq_table_ue_id_gnb_du_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_gnb_du_s_g0_opts, 1},
-        true,
-        seq_table_ue_id_gnb_du_s_g0_names}};
-const asn1::table::seq_desc ue_id_gnb_du_s::desc = {
-    {seq_table_ue_id_gnb_du_s_fields, 2, UINT64_C(0x1), seq_table_ue_id_gnb_du_s_opts, 1},
-    true,
-    true,
-    seq_table_ue_id_gnb_du_s_groups,
-    1,
-    seq_table_ue_id_gnb_du_s_names};
+static const asn1::table::seq_group  seq_table_ue_id_gnb_du_s_groups[]   = {{{seq_table_ue_id_gnb_du_s_g0_fields,
+                                                                              uint64_t{0x0},
+                                                                              seq_table_ue_id_gnb_du_s_g0_opts,
+                                                                              seq_table_ue_id_gnb_du_s_g0_names,
+                                                                              1,
+                                                                              1},
+                                                                             true}};
+const asn1::table::seq_desc          ue_id_gnb_du_s::desc                = {{seq_table_ue_id_gnb_du_s_fields,
+                                                                             uint64_t{0x1},
+                                                                             seq_table_ue_id_gnb_du_s_opts,
+                                                                             seq_table_ue_id_gnb_du_s_names,
+                                                                             2,
+                                                                             1},
+                                                                            true,
+                                                                            true,
+                                                                            seq_table_ue_id_gnb_du_s_groups,
+                                                                            1};
 
 // UEID-GNB-CU-UP ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_gnb_cu_up_s_fields[] = {
@@ -2002,8 +2019,8 @@ static const asn1::table::seq_field seq_table_ue_id_gnb_cu_up_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_id_gnb_cu_up_s, ran_ue_id),
      (int32_t)offsetof(ue_id_gnb_cu_up_s, ran_ue_id_present),
@@ -2017,13 +2034,16 @@ static const asn1::table::field_name seq_table_ue_id_gnb_cu_up_s_names[] = {{"gN
                                                                             {"ran-UEID", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_id_gnb_cu_up_s_opts[]  = {
     {1, (int32_t)offsetof(ue_id_gnb_cu_up_s, ran_ue_id_present)}};
-const asn1::table::seq_desc ue_id_gnb_cu_up_s::desc = {
-    {seq_table_ue_id_gnb_cu_up_s_fields, 2, UINT64_C(0x1), seq_table_ue_id_gnb_cu_up_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_id_gnb_cu_up_s_names};
+const asn1::table::seq_desc ue_id_gnb_cu_up_s::desc = {{seq_table_ue_id_gnb_cu_up_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_ue_id_gnb_cu_up_s_opts,
+                                                        seq_table_ue_id_gnb_cu_up_s_names,
+                                                        2,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // UEID-NG-ENB ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_ng_enb_s_fields[] = {
@@ -2032,8 +2052,8 @@ static const asn1::table::seq_field seq_table_ue_id_ng_enb_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1099511627775),
+     int64_t{0},
+     uint64_t{1099511627775},
      nullptr},
     {offsetof(ue_id_ng_enb_s, guami),
      asn1::table::seq_field::mandatory,
@@ -2049,16 +2069,16 @@ static const asn1::table::seq_field seq_table_ue_id_ng_enb_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_id_ng_enb_s, m_ng_ran_ue_xnap_id),
      (int32_t)offsetof(ue_id_ng_enb_s, m_ng_ran_ue_xnap_id_present),
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_id_ng_enb_s, global_ng_enb_id),
      (int32_t)offsetof(ue_id_ng_enb_s, global_ng_enb_id_present),
@@ -2102,20 +2122,30 @@ static const asn1::table::seq_field  seq_table_ue_id_ng_enb_s_g1_fields[] = {
       &cell_rnti_s::desc}};
 static const asn1::table::field_name seq_table_ue_id_ng_enb_s_g1_names[] = {{"cell-RNTI", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_id_ng_enb_s_g1_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
-static const asn1::table::seq_group  seq_table_ue_id_ng_enb_s_groups[]   = {
-    {{seq_table_ue_id_ng_enb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_ng_enb_s_g0_opts, 1},
-        true,
-        seq_table_ue_id_ng_enb_s_g0_names},
-    {{seq_table_ue_id_ng_enb_s_g1_fields, 1, UINT64_C(0x0), seq_table_ue_id_ng_enb_s_g1_opts, 1},
-        true,
-        seq_table_ue_id_ng_enb_s_g1_names}};
-const asn1::table::seq_desc ue_id_ng_enb_s::desc = {
-    {seq_table_ue_id_ng_enb_s_fields, 5, UINT64_C(0x3), seq_table_ue_id_ng_enb_s_opts, 3},
-    true,
-    true,
-    seq_table_ue_id_ng_enb_s_groups,
-    2,
-    seq_table_ue_id_ng_enb_s_names};
+static const asn1::table::seq_group  seq_table_ue_id_ng_enb_s_groups[]   = {{{seq_table_ue_id_ng_enb_s_g0_fields,
+                                                                              uint64_t{0x0},
+                                                                              seq_table_ue_id_ng_enb_s_g0_opts,
+                                                                              seq_table_ue_id_ng_enb_s_g0_names,
+                                                                              1,
+                                                                              1},
+                                                                             true},
+                                                                            {{seq_table_ue_id_ng_enb_s_g1_fields,
+                                                                              uint64_t{0x0},
+                                                                              seq_table_ue_id_ng_enb_s_g1_opts,
+                                                                              seq_table_ue_id_ng_enb_s_g1_names,
+                                                                              1,
+                                                                              1},
+                                                                             true}};
+const asn1::table::seq_desc          ue_id_ng_enb_s::desc                = {{seq_table_ue_id_ng_enb_s_fields,
+                                                                             uint64_t{0x3},
+                                                                             seq_table_ue_id_ng_enb_s_opts,
+                                                                             seq_table_ue_id_ng_enb_s_names,
+                                                                             5,
+                                                                             3},
+                                                                            true,
+                                                                            true,
+                                                                            seq_table_ue_id_ng_enb_s_groups,
+                                                                            2};
 
 // UEID-NG-ENB-DU ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_ng_enb_du_s_fields[] = {
@@ -2124,8 +2154,8 @@ static const asn1::table::seq_field seq_table_ue_id_ng_enb_du_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr}};
 static const asn1::table::field_name seq_table_ue_id_ng_enb_du_s_names[]     = {{"ng-eNB-CU-UE-W1AP-ID", nullptr}};
 static const asn1::table::seq_field  seq_table_ue_id_ng_enb_du_s_g0_fields[] = {
@@ -2140,17 +2170,19 @@ static const asn1::table::seq_field  seq_table_ue_id_ng_enb_du_s_g0_fields[] = {
       &cell_rnti_s::desc}};
 static const asn1::table::field_name seq_table_ue_id_ng_enb_du_s_g0_names[] = {{"cell-RNTI", nullptr}};
 static const asn1::table::seq_opt   seq_table_ue_id_ng_enb_du_s_g0_opts[] = {{0, asn1::table::seq_field::ptr_presence}};
-static const asn1::table::seq_group seq_table_ue_id_ng_enb_du_s_groups[]  = {
-    {{seq_table_ue_id_ng_enb_du_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_ng_enb_du_s_g0_opts, 1},
-      true,
-      seq_table_ue_id_ng_enb_du_s_g0_names}};
-const asn1::table::seq_desc ue_id_ng_enb_du_s::desc = {
-    {seq_table_ue_id_ng_enb_du_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+static const asn1::table::seq_group seq_table_ue_id_ng_enb_du_s_groups[]  = {{{seq_table_ue_id_ng_enb_du_s_g0_fields,
+                                                                               uint64_t{0x0},
+                                                                               seq_table_ue_id_ng_enb_du_s_g0_opts,
+                                                                               seq_table_ue_id_ng_enb_du_s_g0_names,
+                                                                               1,
+                                                                               1},
+                                                                              true}};
+const asn1::table::seq_desc         ue_id_ng_enb_du_s::desc               = {
+    {seq_table_ue_id_ng_enb_du_s_fields, uint64_t{0x1}, nullptr, seq_table_ue_id_ng_enb_du_s_names, 1, 0},
     true,
     true,
     seq_table_ue_id_ng_enb_du_s_groups,
-    1,
-    seq_table_ue_id_ng_enb_du_s_names};
+    1};
 
 // UEID-EN-GNB ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_en_gnb_s_fields[] = {
@@ -2159,16 +2191,16 @@ static const asn1::table::seq_field seq_table_ue_id_en_gnb_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ue_id_en_gnb_s, m_enb_ue_x2ap_id_ext),
      (int32_t)offsetof(ue_id_en_gnb_s, m_enb_ue_x2ap_id_ext_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ue_id_en_gnb_s, global_enb_id),
      asn1::table::seq_field::mandatory,
@@ -2184,8 +2216,8 @@ static const asn1::table::seq_field seq_table_ue_id_en_gnb_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_id_en_gnb_s, gnb_cu_cp_ue_e1ap_id_list),
      asn1::table::seq_field::list_presence,
@@ -2193,7 +2225,7 @@ static const asn1::table::seq_field seq_table_ue_id_en_gnb_s_fields[] = {
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(ue_id_en_gnb_s::gnb_cu_cp_ue_e1ap_id_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2230,17 +2262,23 @@ static const asn1::table::seq_field seq_table_ue_id_en_gnb_s_g0_fields[] = {
      &cell_rnti_s::desc}};
 static const asn1::table::field_name seq_table_ue_id_en_gnb_s_g0_names[] = {{"cell-RNTI", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_id_en_gnb_s_g0_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
-static const asn1::table::seq_group  seq_table_ue_id_en_gnb_s_groups[]   = {
-    {{seq_table_ue_id_en_gnb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_en_gnb_s_g0_opts, 1},
-        true,
-        seq_table_ue_id_en_gnb_s_g0_names}};
-const asn1::table::seq_desc ue_id_en_gnb_s::desc = {
-    {seq_table_ue_id_en_gnb_s_fields, 6, UINT64_C(0x5), seq_table_ue_id_en_gnb_s_opts, 4},
-    true,
-    true,
-    seq_table_ue_id_en_gnb_s_groups,
-    1,
-    seq_table_ue_id_en_gnb_s_names};
+static const asn1::table::seq_group  seq_table_ue_id_en_gnb_s_groups[]   = {{{seq_table_ue_id_en_gnb_s_g0_fields,
+                                                                              uint64_t{0x0},
+                                                                              seq_table_ue_id_en_gnb_s_g0_opts,
+                                                                              seq_table_ue_id_en_gnb_s_g0_names,
+                                                                              1,
+                                                                              1},
+                                                                             true}};
+const asn1::table::seq_desc          ue_id_en_gnb_s::desc                = {{seq_table_ue_id_en_gnb_s_fields,
+                                                                             uint64_t{0x5},
+                                                                             seq_table_ue_id_en_gnb_s_opts,
+                                                                             seq_table_ue_id_en_gnb_s_names,
+                                                                             6,
+                                                                             4},
+                                                                            true,
+                                                                            true,
+                                                                            seq_table_ue_id_en_gnb_s_groups,
+                                                                            1};
 
 // UEID-ENB ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_id_enb_s_fields[] = {
@@ -2249,8 +2287,8 @@ static const asn1::table::seq_field seq_table_ue_id_enb_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_id_enb_s, gummei),
      asn1::table::seq_field::mandatory,
@@ -2266,16 +2304,16 @@ static const asn1::table::seq_field seq_table_ue_id_enb_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ue_id_enb_s, m_enb_ue_x2ap_id_ext),
      (int32_t)offsetof(ue_id_enb_s, m_enb_ue_x2ap_id_ext_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ue_id_enb_s, global_enb_id),
      (int32_t)offsetof(ue_id_enb_s, global_enb_id_present),
@@ -2307,17 +2345,19 @@ static const asn1::table::seq_field seq_table_ue_id_enb_s_g0_fields[] = {
      &cell_rnti_s::desc}};
 static const asn1::table::field_name seq_table_ue_id_enb_s_g0_names[] = {{"cell-RNTI", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_id_enb_s_g0_opts[]  = {{0, asn1::table::seq_field::ptr_presence}};
-static const asn1::table::seq_group  seq_table_ue_id_enb_s_groups[]   = {
-    {{seq_table_ue_id_enb_s_g0_fields, 1, UINT64_C(0x0), seq_table_ue_id_enb_s_g0_opts, 1},
-        true,
-        seq_table_ue_id_enb_s_g0_names}};
-const asn1::table::seq_desc ue_id_enb_s::desc = {
-    {seq_table_ue_id_enb_s_fields, 5, UINT64_C(0x3), seq_table_ue_id_enb_s_opts, 3},
+static const asn1::table::seq_group  seq_table_ue_id_enb_s_groups[]   = {{{seq_table_ue_id_enb_s_g0_fields,
+                                                                           uint64_t{0x0},
+                                                                           seq_table_ue_id_enb_s_g0_opts,
+                                                                           seq_table_ue_id_enb_s_g0_names,
+                                                                           1,
+                                                                           1},
+                                                                          true}};
+const asn1::table::seq_desc          ue_id_enb_s::desc                = {
+    {seq_table_ue_id_enb_s_fields, uint64_t{0x3}, seq_table_ue_id_enb_s_opts, seq_table_ue_id_enb_s_names, 5, 3},
     true,
     true,
     seq_table_ue_id_enb_s_groups,
-    1,
-    seq_table_ue_id_enb_s_names};
+    1};
 
 // UEID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ue_id_c_alternatives[] = {

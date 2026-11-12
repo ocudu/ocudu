@@ -26,13 +26,16 @@ static const asn1::table::seq_field seq_table_group_paging_r18_s_fields[] = {
 static const asn1::table::field_name seq_table_group_paging_r18_s_names[] = {{"inactiveReceptionAllowed-r18", "true"}};
 static const asn1::table::seq_opt    seq_table_group_paging_r18_s_opts[]  = {
     {0, (int32_t)offsetof(group_paging_r18_s, inactive_reception_allowed_r18_present)}};
-const asn1::table::seq_desc group_paging_r18_s::desc = {
-    {seq_table_group_paging_r18_s_fields, 1, UINT64_C(0x0), seq_table_group_paging_r18_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_group_paging_r18_s_names};
+const asn1::table::seq_desc group_paging_r18_s::desc = {{seq_table_group_paging_r18_s_fields,
+                                                         uint64_t{0x0},
+                                                         seq_table_group_paging_r18_s_opts,
+                                                         seq_table_group_paging_r18_s_names,
+                                                         1,
+                                                         1},
+                                                        false,
+                                                        false,
+                                                        nullptr,
+                                                        0};
 
 // PagingUE-Identity ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_paging_ue_id_c_alternatives[] = {
@@ -118,13 +121,16 @@ static const asn1::table::field_name seq_table_paging_record_s_names[] = {{"ue-I
                                                                           {"accessType", "non3GPP"}};
 static const asn1::table::seq_opt    seq_table_paging_record_s_opts[]  = {
     {1, (int32_t)offsetof(paging_record_s, access_type_present)}};
-const asn1::table::seq_desc paging_record_s::desc = {
-    {seq_table_paging_record_s_fields, 2, UINT64_C(0x1), seq_table_paging_record_s_opts, 1},
-    true,
-    false,
-    nullptr,
-    0,
-    seq_table_paging_record_s_names};
+const asn1::table::seq_desc paging_record_s::desc = {{seq_table_paging_record_s_fields,
+                                                      uint64_t{0x1},
+                                                      seq_table_paging_record_s_opts,
+                                                      seq_table_paging_record_s_names,
+                                                      2,
+                                                      1},
+                                                     true,
+                                                     false,
+                                                     nullptr,
+                                                     0};
 
 // PagingRecord-v1700 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_paging_record_v1700_s_fields[] = {
@@ -139,13 +145,16 @@ static const asn1::table::seq_field seq_table_paging_record_v1700_s_fields[] = {
 static const asn1::table::field_name seq_table_paging_record_v1700_s_names[] = {{"pagingCause-r17", "voice"}};
 static const asn1::table::seq_opt    seq_table_paging_record_v1700_s_opts[]  = {
     {0, (int32_t)offsetof(paging_record_v1700_s, paging_cause_r17_present)}};
-const asn1::table::seq_desc paging_record_v1700_s::desc = {
-    {seq_table_paging_record_v1700_s_fields, 1, UINT64_C(0x0), seq_table_paging_record_v1700_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_paging_record_v1700_s_names};
+const asn1::table::seq_desc paging_record_v1700_s::desc = {{seq_table_paging_record_v1700_s_fields,
+                                                            uint64_t{0x0},
+                                                            seq_table_paging_record_v1700_s_opts,
+                                                            seq_table_paging_record_v1700_s_names,
+                                                            1,
+                                                            1},
+                                                           false,
+                                                           false,
+                                                           nullptr,
+                                                           0};
 
 // PagingRecord-v1800 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_paging_record_v1800_s_fields[] = {
@@ -160,13 +169,16 @@ static const asn1::table::seq_field seq_table_paging_record_v1800_s_fields[] = {
 static const asn1::table::field_name seq_table_paging_record_v1800_s_names[] = {{"mt-SDT", "true"}};
 static const asn1::table::seq_opt    seq_table_paging_record_v1800_s_opts[]  = {
     {0, (int32_t)offsetof(paging_record_v1800_s, mt_sdt_present)}};
-const asn1::table::seq_desc paging_record_v1800_s::desc = {
-    {seq_table_paging_record_v1800_s_fields, 1, UINT64_C(0x0), seq_table_paging_record_v1800_s_opts, 1},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_paging_record_v1800_s_names};
+const asn1::table::seq_desc paging_record_v1800_s::desc = {{seq_table_paging_record_v1800_s_fields,
+                                                            uint64_t{0x0},
+                                                            seq_table_paging_record_v1800_s_opts,
+                                                            seq_table_paging_record_v1800_s_names,
+                                                            1,
+                                                            1},
+                                                           false,
+                                                           false,
+                                                           nullptr,
+                                                           0};
 
 // Paging-v1800-IEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_paging_v1800_ies_s_fields[] = {
@@ -176,7 +188,7 @@ static const asn1::table::seq_field seq_table_paging_v1800_ies_s_fields[] = {
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(paging_v1800_ies_s::paging_record_list_v1800),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -188,7 +200,7 @@ static const asn1::table::seq_field seq_table_paging_v1800_ies_s_fields[] = {
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(paging_v1800_ies_s::paging_group_list_v1800),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -210,13 +222,16 @@ static const asn1::table::seq_opt    seq_table_paging_v1800_ies_s_opts[]  = {
     {0, asn1::table::seq_field::list_presence},
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(paging_v1800_ies_s, non_crit_ext_present)}};
-const asn1::table::seq_desc paging_v1800_ies_s::desc = {
-    {seq_table_paging_v1800_ies_s_fields, 3, UINT64_C(0x0), seq_table_paging_v1800_ies_s_opts, 3},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_paging_v1800_ies_s_names};
+const asn1::table::seq_desc paging_v1800_ies_s::desc = {{seq_table_paging_v1800_ies_s_fields,
+                                                         uint64_t{0x0},
+                                                         seq_table_paging_v1800_ies_s_opts,
+                                                         seq_table_paging_v1800_ies_s_names,
+                                                         3,
+                                                         3},
+                                                        false,
+                                                        false,
+                                                        nullptr,
+                                                        0};
 
 // Paging-v1700-IEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_paging_v1700_ies_s_fields[] = {
@@ -226,7 +241,7 @@ static const asn1::table::seq_field seq_table_paging_v1700_ies_s_fields[] = {
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(paging_v1700_ies_s::paging_record_list_v1700),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -238,7 +253,7 @@ static const asn1::table::seq_field seq_table_paging_v1700_ies_s_fields[] = {
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(paging_v1700_ies_s::paging_group_list_r17),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -260,13 +275,16 @@ static const asn1::table::seq_opt    seq_table_paging_v1700_ies_s_opts[]  = {
     {0, asn1::table::seq_field::list_presence},
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(paging_v1700_ies_s, non_crit_ext_present)}};
-const asn1::table::seq_desc paging_v1700_ies_s::desc = {
-    {seq_table_paging_v1700_ies_s_fields, 3, UINT64_C(0x0), seq_table_paging_v1700_ies_s_opts, 3},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_paging_v1700_ies_s_names};
+const asn1::table::seq_desc paging_v1700_ies_s::desc = {{seq_table_paging_v1700_ies_s_fields,
+                                                         uint64_t{0x0},
+                                                         seq_table_paging_v1700_ies_s_opts,
+                                                         seq_table_paging_v1700_ies_s_names,
+                                                         3,
+                                                         3},
+                                                        false,
+                                                        false,
+                                                        nullptr,
+                                                        0};
 
 // Paging ::= SEQUENCE
 static const asn1::table::seq_field seq_table_paging_s_fields[] = {
@@ -276,7 +294,7 @@ static const asn1::table::seq_field seq_table_paging_s_fields[] = {
      false,
      false,
      1,
-     32,
+     31,
      &asn1::table::
          item_list_codec<decltype(paging_s::paging_record_list), asn1::table::sequence_item_ops, false, true>::value,
      &paging_record_s::desc},
@@ -303,9 +321,9 @@ static const asn1::table::field_name seq_table_paging_s_names[] = {{"pagingRecor
 static const asn1::table::seq_opt    seq_table_paging_s_opts[]  = {{0, asn1::table::seq_field::list_presence},
                                                                    {1, asn1::table::seq_field::list_presence},
                                                                    {2, (int32_t)offsetof(paging_s, non_crit_ext_present)}};
-const asn1::table::seq_desc paging_s::desc = {{seq_table_paging_s_fields, 3, UINT64_C(0x0), seq_table_paging_s_opts, 3},
-                                              false,
-                                              false,
-                                              nullptr,
-                                              0,
-                                              seq_table_paging_s_names};
+const asn1::table::seq_desc          paging_s::desc             = {
+    {seq_table_paging_s_fields, uint64_t{0x0}, seq_table_paging_s_opts, seq_table_paging_s_names, 3, 3},
+    false,
+    false,
+    nullptr,
+    0};

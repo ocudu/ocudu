@@ -16,6 +16,7 @@
 #include <cstring>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -39,10 +40,10 @@ template <class ItemType>
 ItemType map_enum_number(ItemType* array, uint32_t nof_types, uint32_t enum_val, const char* enum_type);
 
 template <class EnumType>
-bool string_to_enum(EnumType& e, const std::string& s)
+bool string_to_enum(EnumType& e, std::string_view s)
 {
   for (uint32_t i = 0; i < EnumType::nof_types; ++i) {
-    e = (typename EnumType::options)i;
+    e = static_cast<typename EnumType::options>(i);
     if (e.to_string() == s) {
       return true;
     }
@@ -53,7 +54,7 @@ template <class EnumType, class NumberType>
 bool number_to_enum(EnumType& e, NumberType val)
 {
   for (uint32_t i = 0; i != e.nof_types; ++i) {
-    e = (typename EnumType::options)i;
+    e = static_cast<typename EnumType::options>(i);
     if (e.to_number() == val) {
       return true;
     }
@@ -67,7 +68,7 @@ bool float_number_to_enum(EnumType& e, NumberType val, NumberType precision)
   static_assert(std::is_floating_point_v<decltype(std::declval<EnumType>().to_number())>,
                 "Expected float or double to_number()");
   for (uint32_t i = 0; i != e.nof_types; ++i) {
-    e = (typename EnumType::options)i;
+    e = static_cast<typename EnumType::options>(i);
     if (std::abs(e.to_number() - val) < precision) {
       return true;
     }
@@ -80,7 +81,7 @@ void bool_to_enum(EnumType& e, bool s)
   ocudu_assert(e.nof_types == 1, "Can't convert enum with too many values");
 
   if (s) {
-    e = (typename EnumType::options)0;
+    e = static_cast<typename EnumType::options>(0);
   } else {
     e = EnumType::nulltype;
   }
@@ -90,7 +91,7 @@ bool enum_to_bool(EnumType& e)
 {
   ocudu_assert(e.nof_types == 1, "Can't convert enum with too many values");
 
-  return !(bool)e;
+  return not static_cast<bool>(e);
 }
 
 namespace table {
@@ -121,8 +122,8 @@ template <class EnumType, bool E = false, uint32_t M = 0>
 class enumerated : public EnumType
 {
 public:
-  static const uint32_t nof_types = EnumType::nulltype, nof_exts = M;
-  static const bool     has_ext = E;
+  static constexpr uint32_t nof_types = EnumType::nulltype, nof_exts = M;
+  static constexpr bool     has_ext = E;
 
   enumerated() { EnumType::value = EnumType::nulltype; }
   enumerated(typename EnumType::options enumerated_option_val) { EnumType::value = enumerated_option_val; }
@@ -168,9 +169,9 @@ template <class IntType,
 class integer
 {
 public:
-  static const IntType ub = UB, lb = LB;
-  static const bool    has_ext = Ext, is_aligned = Al;
-  IntType              value;
+  static constexpr IntType ub = UB, lb = LB;
+  static constexpr bool    has_ext = Ext, is_aligned = Al;
+  IntType                  value;
   integer() = default;
   integer(IntType value_) : value(value_) {}
   operator IntType() const { return value; }
@@ -198,10 +199,10 @@ std::string to_hex_string(ocudu::span<const uint8_t> buf);
 std::string to_hex_string(const ocudu::byte_buffer& buf);
 
 /// Convert std::string of hexadecimal numbers to span of bytes.
-unsigned hex_string_to_octets(ocudu::span<uint8_t> buf, const std::string& str);
+unsigned hex_string_to_octets(ocudu::span<uint8_t> buf, std::string_view str);
 
 /// Append std::string of hexadecimal numbers to byte_buffer.
-void append_hex_string(ocudu::byte_buffer& buf, const std::string& str);
+void append_hex_string(ocudu::byte_buffer& buf, std::string_view str);
 
 } // namespace octet_string_helper
 
@@ -232,10 +233,10 @@ public:
 
   static uint32_t              size() { return N; }
   std::string                  to_string() const { return octet_string_helper::to_hex_string(octets_); }
-  fixed_octstring<N, aligned>& from_string(const std::string& hexstr)
+  fixed_octstring<N, aligned>& from_string(std::string_view hexstr)
   {
     if (hexstr.size() != 2 * N) {
-      log_error("The provided hex string size is not valid ({}!=2*{}).", hexstr.size(), (size_t)N);
+      log_error("The provided hex string size is not valid ({}!=2*{}).", hexstr.size(), size_t{N});
     } else {
       octet_string_helper::hex_string_to_octets(octets_, hexstr);
     }
@@ -257,14 +258,14 @@ public:
   OCUDUASN_CODE pack(bit_ref& bref) const
   {
     if (aligned and N > 2) {
-      bref.align_bytes_zero();
+      HANDLE_CODE(bref.align_bytes_zero());
     }
     return bref.pack_bytes(octets_);
   }
   OCUDUASN_CODE unpack(cbit_ref& bref)
   {
     if (aligned and N > 2) {
-      bref.align_bytes();
+      HANDLE_CODE(bref.align_bytes());
     }
     return bref.unpack_bytes(octets_);
   }
@@ -298,10 +299,10 @@ public:
   {
     return octet_string_helper::to_hex_string(ocudu::span<const uint8_t>{data(), size()});
   }
-  bounded_octstring<LB, UB, aligned>& from_string(const std::string& hexstr)
+  bounded_octstring<LB, UB, aligned>& from_string(std::string_view hexstr)
   {
     if (hexstr.size() > 2 * UB) {
-      log_error("The provided hex string size is not valid ({}>2*{}).", hexstr.size(), (size_t)UB);
+      log_error("The provided hex string size is not valid ({}>2*{}).", hexstr.size(), size_t{UB});
     } else {
       resize(hexstr.size() / 2);
       octet_string_helper::hex_string_to_octets(ocudu::span<uint8_t>{octets_.data(), octets_.size()}, hexstr);
@@ -344,10 +345,10 @@ template <bool Al = false>
 class unbounded_octstring : public ocudu::byte_buffer
 {
 public:
-  static const bool aligned = Al;
-  using value_type          = byte_buffer::value_type;
-  using iterator            = byte_buffer::iterator;
-  using const_iterator      = byte_buffer::const_iterator;
+  static constexpr bool aligned = Al;
+  using value_type              = byte_buffer::value_type;
+  using iterator                = byte_buffer::iterator;
+  using const_iterator          = byte_buffer::const_iterator;
 
   using ocudu::byte_buffer::byte_buffer;
   unbounded_octstring(byte_buffer other) noexcept : ocudu::byte_buffer(std::move(other)) {}
@@ -365,7 +366,7 @@ public:
   size_t size() const { return this->length(); }
 
   std::string              to_string() const;
-  unbounded_octstring<Al>& from_string(const std::string& hexstr);
+  unbounded_octstring<Al>& from_string(std::string_view hexstr);
   unbounded_octstring<Al>& from_bytes(ocudu::span<const uint8_t> bytes);
 
   uint64_t                 to_number() const;
@@ -397,7 +398,7 @@ inline void set(uint8_t* ptr, uint32_t idx, bool value)
   if (value) {
     ptr[byte_idx] |= (1u << offset);
   } else {
-    ptr[byte_idx] &= ((uint16_t)(1u << 8u) - 1u) - (1u << offset);
+    ptr[byte_idx] &= (static_cast<uint16_t>(1u << 8u) - 1u) - (1u << offset);
   }
 }
 OCUDUASN_CODE
@@ -431,15 +432,14 @@ class bitstring
   using this_type = bitstring<LB, UB, ext, aligned>;
 
 public:
-  static const uint32_t lb = LB, ub = UB;
-  static const bool     has_ext = ext, is_aligned = aligned;
+  static constexpr uint32_t lb = LB, ub = UB;
+  static constexpr bool     has_ext = ext, is_aligned = aligned;
 
   bitstring() { resize(lb); }
   explicit bitstring(uint32_t siz_) { resize(siz_); }
-  explicit bitstring(const std::string& s)
+  explicit bitstring(std::string_view s)
   {
     resize(s.size());
-    std::memset(&octets_[0], 0, nof_octets());
     for (uint32_t i = 0; i < s.size(); ++i)
       set(s.size() - i - 1, s[i] == '1');
   }
@@ -455,7 +455,7 @@ public:
   {
     nof_bits = new_size;
     octets_.resize(nof_octets());
-    std::memset(data(), 0, nof_octets()); // resize always resets content
+    std::fill_n(data(), nof_octets(), 0);
   }
 
   // comparison
@@ -463,17 +463,20 @@ public:
   {
     return length() == other.length() and std::equal(data(), data() + nof_octets(), other.data());
   }
-  bool operator==(const char* other_str) const
+  bool operator==(std::string_view other_str) const
   {
-    return strlen(other_str) == length() and (*this) == this_type{}.from_string(other_str);
+    return other_str.size() == length() and (*this) == this_type{}.from_string(other_str);
   }
 
   // string conversion
   std::string to_string() const { return bitstring_utils::to_string(data(), length()); }
-  this_type&  from_string(const std::string& s)
+  this_type&  from_string(std::string_view s)
   {
     if (s.size() < lb or s.size() > ub) {
-      log_error("The provided string size={} is not withing the bounds [{}, {}]", s.size(), uint32_t(lb), uint32_t(ub));
+      log_error("The provided string size={} is not within the bounds [{}, {}]",
+                s.size(),
+                static_cast<uint32_t>(lb),
+                static_cast<uint32_t>(ub));
     } else {
       resize(s.size());
       for (uint32_t i = 0; i < s.size(); ++i) {
@@ -487,9 +490,12 @@ public:
   uint64_t   to_number() const { return bitstring_utils::to_number(data(), length()); }
   this_type& from_number(uint64_t val)
   {
-    auto nof_bits_ = std::max((uint32_t)std::ceil(std::log2(std::max(val, (uint64_t)1u))), LB);
+    auto nof_bits_ = std::max(static_cast<uint32_t>(std::ceil(std::log2(std::max(val, uint64_t{1})))), LB);
     if (nof_bits_ > UB) {
-      log_error("The provided bitstring value {} does not fit the bounds [{}, {}]", val, uint32_t(lb), uint32_t(ub));
+      log_error("The provided bitstring value {} does not fit the bounds [{}, {}]",
+                val,
+                static_cast<uint32_t>(lb),
+                static_cast<uint32_t>(ub));
       return *this;
     }
     resize(nof_bits_);
@@ -500,7 +506,10 @@ public:
   this_type& from_number(uint64_t val, uint32_t nof_bits_)
   {
     if (nof_bits_ > UB) {
-      log_error("The provided bitstring value {} does not fit the bounds [{}, {}]", val, uint32_t(lb), uint32_t(ub));
+      log_error("The provided bitstring value {} does not fit the bounds [{}, {}]",
+                val,
+                static_cast<uint32_t>(lb),
+                static_cast<uint32_t>(ub));
       return *this;
     }
     resize(nof_bits_);
@@ -527,7 +536,7 @@ public:
   void to_json(json_writer& j) const;
 
 private:
-  static const uint32_t          stack_size = (UB == std::numeric_limits<uint32_t>::max()) ? 4 : ceil_frac(ub, 8u);
+  static constexpr uint32_t      stack_size = (UB == std::numeric_limits<uint32_t>::max()) ? 4 : ceil_frac(ub, 8u);
   ext_array<uint8_t, stack_size> octets_;
   uint32_t                       nof_bits = 0;
 };
@@ -593,7 +602,7 @@ public:
   void          resize(std::size_t newsize) { str.resize(newsize); }
   std::size_t   size() const { return str.size(); }
   std::string   to_string() const { return str; }
-  void          from_string(const std::string& s) { str = s; }
+  void          from_string(std::string_view s) { str = s; }
 
 private:
   std::string str;

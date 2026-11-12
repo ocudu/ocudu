@@ -65,7 +65,7 @@ struct bin_range_value_c {
   real_s&  set_value_real();
 
 private:
-  asn1::table::choice_storage<bin_range_value_c, types, choice_buffer_t<real_s>> c;
+  asn1::table::choice_storage<bin_range_value_c, types, choice_buffer_t<int64_t, real_s>> c;
 };
 
 // BinRangeItem ::= SEQUENCE
@@ -128,7 +128,7 @@ struct meas_type_c {
   uint32_t&                             set_meas_id();
 
 private:
-  asn1::table::choice_storage<meas_type_c, types, choice_buffer_t<printable_string<1, 150, true, true>>> c;
+  asn1::table::choice_storage<meas_type_c, types, choice_buffer_t<printable_string<1, 150, true, true>, uint32_t>> c;
 };
 
 // DistMeasurementBinRangeItem ::= SEQUENCE
@@ -367,6 +367,7 @@ private:
   asn1::table::choice_storage<test_cond_value_c,
                               types,
                               choice_buffer_t<bool,
+                                              int64_t,
                                               printable_string<0, MAX_ASN_STRING_LENGTH, false, true>,
                                               real_s,
                                               unbounded_bitstring<false, true>,
@@ -654,7 +655,20 @@ struct test_cond_type_c {
   snssai_e_&   set_snssai();
 
 private:
-  asn1::table::choice_storage<test_cond_type_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<test_cond_type_c,
+                              types,
+                              choice_buffer_t<ambr_e_,
+                                              cqi_e_,
+                                              five_qi_e_,
+                                              gbr_e_,
+                                              is_cat_m_e_,
+                                              is_stat_e_,
+                                              qci_e_,
+                                              rsrp_e_,
+                                              rsrq_e_,
+                                              snssai_e_,
+                                              ul_r_srp_e_>>
+      c;
 };
 
 // TestCond-Expression ::= ENUMERATED
@@ -1337,7 +1351,7 @@ struct meas_record_item_c {
   void      set_not_satisfied();
 
 private:
-  asn1::table::choice_storage<meas_record_item_c, types, choice_buffer_t<real_s>> c;
+  asn1::table::choice_storage<meas_record_item_c, types, choice_buffer_t<real_s, uint64_t>> c;
 };
 
 // MeasurementRecord ::= SEQUENCE (SIZE (1..2147483647)) OF MeasurementRecordItem
@@ -1442,7 +1456,9 @@ struct matching_ue_id_per_gp_item_s {
     matching_ue_id_list_per_gp_l& set_one_or_more_ue_matched();
 
   private:
-    asn1::table::choice_storage<matched_per_gp_c_, types, choice_buffer_t<matching_ue_id_list_per_gp_l>> c;
+    asn1::table::
+        choice_storage<matched_per_gp_c_, types, choice_buffer_t<matching_ue_id_list_per_gp_l, no_ue_matched_e_>>
+            c;
   };
 
   // member variables

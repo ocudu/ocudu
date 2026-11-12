@@ -23,8 +23,8 @@ static const asn1::table::seq_field ie_table_e2_removal_fail_ies_container_value
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2_removal_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -70,8 +70,8 @@ static const asn1::table::seq_field ie_table_e2_removal_request_ies_container_va
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const int32_t ie_table_e2_removal_request_ies_container_presences[]  = {asn1::table::seq_field::mandatory};
 const asn1::table::ie_container_desc e2_removal_request_ies_container::desc = {
@@ -96,8 +96,8 @@ static const asn1::table::seq_field ie_table_e2_removal_resp_ies_container_value
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2_removal_resp_ies_container, crit_diagnostics),
      (int32_t)offsetof(e2_removal_resp_ies_container, crit_diagnostics_present),
@@ -137,24 +137,24 @@ static const asn1::table::seq_field ie_table_e2_res_status_fail_ies_container_va
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2_res_status_fail_ies_container, ric_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(e2_res_status_fail_ies_container, e2node_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(e2_res_status_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -203,24 +203,24 @@ static const asn1::table::seq_field ie_table_e2_res_status_request_ies_container
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2_res_status_request_ies_container, ric_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(e2_res_status_request_ies_container, e2node_load_meas_id),
      (int32_t)offsetof(e2_res_status_request_ies_container, e2node_load_meas_id_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(e2_res_status_request_ies_container, regist_request_e2),
      asn1::table::seq_field::mandatory,
@@ -281,24 +281,24 @@ static const asn1::table::seq_field ie_table_e2_res_status_resp_ies_container_va
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2_res_status_resp_ies_container, ric_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(e2_res_status_resp_ies_container, e2node_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(e2_res_status_resp_ies_container, crit_diagnostics),
      (int32_t)offsetof(e2_res_status_resp_ies_container, crit_diagnostics_present),
@@ -340,24 +340,24 @@ static const asn1::table::seq_field ie_table_e2_res_status_upd_ies_container_val
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2_res_status_upd_ies_container, ric_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(e2_res_status_upd_ies_container, e2node_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {0,
      (int32_t)offsetof(e2_res_status_upd_ies_container, tnl_capacity_ind_present),
@@ -415,13 +415,16 @@ static const asn1::table::seq_field seq_table_e2conn_setup_failed_item_s_fields[
      &cause_c::desc}};
 static const asn1::table::field_name seq_table_e2conn_setup_failed_item_s_names[] = {{"tnlInformation", nullptr},
                                                                                      {"cause", nullptr}};
-const asn1::table::seq_desc          e2conn_setup_failed_item_s::desc             = {
-    {seq_table_e2conn_setup_failed_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2conn_setup_failed_item_s_names};
+const asn1::table::seq_desc          e2conn_setup_failed_item_s::desc = {{seq_table_e2conn_setup_failed_item_s_fields,
+                                                                          uint64_t{0x3},
+                                                                          nullptr,
+                                                                          seq_table_e2conn_setup_failed_item_s_names,
+                                                                          2,
+                                                                          0},
+                                                                         true,
+                                                                         true,
+                                                                         nullptr,
+                                                                         0};
 
 // E2connectionSetupFailed-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2conn_setup_failed_item_ies_o[]    = {41};
@@ -501,12 +504,11 @@ static const asn1::table::seq_field seq_table_e2conn_upd_item_s_fields[] = {
 static const asn1::table::field_name seq_table_e2conn_upd_item_s_names[] = {{"tnlInformation", nullptr},
                                                                             {"tnlUsage", nullptr}};
 const asn1::table::seq_desc          e2conn_upd_item_s::desc             = {
-    {seq_table_e2conn_upd_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2conn_upd_item_s_fields, uint64_t{0x3}, nullptr, seq_table_e2conn_upd_item_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2conn_upd_item_s_names};
+    0};
 
 // E2connectionUpdate-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2conn_upd_item_ies_o[]    = {43};
@@ -575,12 +577,11 @@ static const asn1::table::seq_field seq_table_e2conn_upd_rem_item_s_fields[] = {
      &tnl_info_s::desc}};
 static const asn1::table::field_name seq_table_e2conn_upd_rem_item_s_names[] = {{"tnlInformation", nullptr}};
 const asn1::table::seq_desc          e2conn_upd_rem_item_s::desc             = {
-    {seq_table_e2conn_upd_rem_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_e2conn_upd_rem_item_s_fields, uint64_t{0x1}, nullptr, seq_table_e2conn_upd_rem_item_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2conn_upd_rem_item_s_names};
+    0};
 
 // E2connectionUpdateRemove-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2conn_upd_rem_item_ies_o[]    = {47};
@@ -647,8 +648,8 @@ static const asn1::table::seq_field ie_table_e2conn_upd_ies_container_values[] =
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2conn_upd_ies_container, e2conn_upd_add),
      (int32_t)offsetof(e2conn_upd_ies_container, e2conn_upd_add_present),
@@ -656,7 +657,7 @@ static const asn1::table::seq_field ie_table_e2conn_upd_ies_container_values[] =
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(e2conn_upd_ies_container::e2conn_upd_add), asn1::table::struct_json>::value},
     {offsetof(e2conn_upd_ies_container, e2conn_upd_rem),
      (int32_t)offsetof(e2conn_upd_ies_container, e2conn_upd_rem_present),
@@ -664,7 +665,7 @@ static const asn1::table::seq_field ie_table_e2conn_upd_ies_container_values[] =
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(e2conn_upd_ies_container::e2conn_upd_rem), asn1::table::struct_json>::value},
     {offsetof(e2conn_upd_ies_container, e2conn_upd_modify),
      (int32_t)offsetof(e2conn_upd_ies_container, e2conn_upd_modify_present),
@@ -672,7 +673,7 @@ static const asn1::table::seq_field ie_table_e2conn_upd_ies_container_values[] =
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(e2conn_upd_ies_container::e2conn_upd_modify), asn1::table::struct_json>::value}};
 static const int32_t ie_table_e2conn_upd_ies_container_presences[] = {
     asn1::table::seq_field::mandatory,
@@ -700,8 +701,8 @@ static const asn1::table::seq_field ie_table_e2conn_upd_ack_ies_container_values
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2conn_upd_ack_ies_container, e2conn_setup),
      (int32_t)offsetof(e2conn_upd_ack_ies_container, e2conn_setup_present),
@@ -709,7 +710,7 @@ static const asn1::table::seq_field ie_table_e2conn_upd_ack_ies_container_values
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(e2conn_upd_ack_ies_container::e2conn_setup), asn1::table::struct_json>::value},
     {offsetof(e2conn_upd_ack_ies_container, e2conn_setup_failed),
      (int32_t)offsetof(e2conn_upd_ack_ies_container, e2conn_setup_failed_present),
@@ -717,7 +718,7 @@ static const asn1::table::seq_field ie_table_e2conn_upd_ack_ies_container_values
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(e2conn_upd_ack_ies_container::e2conn_setup_failed),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_e2conn_upd_ack_ies_container_presences[] = {
@@ -749,8 +750,8 @@ static const asn1::table::seq_field ie_table_e2conn_upd_fail_ies_container_value
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2conn_upd_fail_ies_container, cause),
      (int32_t)offsetof(e2conn_upd_fail_ies_container, cause_present),
@@ -830,12 +831,16 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_addition_ite
     {"e2nodeComponentID", nullptr},
     {"e2nodeComponentConfiguration", nullptr}};
 const asn1::table::seq_desc e2node_component_cfg_addition_item_s::desc = {
-    {seq_table_e2node_component_cfg_addition_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_e2node_component_cfg_addition_item_s_fields,
+     uint64_t{0x7},
+     nullptr,
+     seq_table_e2node_component_cfg_addition_item_s_names,
+     3,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2node_component_cfg_addition_item_s_names};
+    0};
 
 // E2nodeComponentConfigAddition-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2node_component_cfg_addition_item_ies_o[]    = {51};
@@ -929,12 +934,16 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_addition_ack
     {"e2nodeComponentID", nullptr},
     {"e2nodeComponentConfigurationAck", nullptr}};
 const asn1::table::seq_desc e2node_component_cfg_addition_ack_item_s::desc = {
-    {seq_table_e2node_component_cfg_addition_ack_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_e2node_component_cfg_addition_ack_item_s_fields,
+     uint64_t{0x7},
+     nullptr,
+     seq_table_e2node_component_cfg_addition_ack_item_s_names,
+     3,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2node_component_cfg_addition_ack_item_s_names};
+    0};
 
 // E2nodeComponentConfigAdditionAck-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2node_component_cfg_addition_ack_item_ies_o[]    = {53};
@@ -1018,12 +1027,16 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_removal_item
     {"e2nodeComponentInterfaceType", nullptr},
     {"e2nodeComponentID", nullptr}};
 const asn1::table::seq_desc e2node_component_cfg_removal_item_s::desc = {
-    {seq_table_e2node_component_cfg_removal_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2node_component_cfg_removal_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_e2node_component_cfg_removal_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2node_component_cfg_removal_item_s_names};
+    0};
 
 // E2nodeComponentConfigRemoval-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2node_component_cfg_removal_item_ies_o[]    = {55};
@@ -1117,12 +1130,16 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_removal_ack_
     {"e2nodeComponentID", nullptr},
     {"e2nodeComponentConfigurationAck", nullptr}};
 const asn1::table::seq_desc e2node_component_cfg_removal_ack_item_s::desc = {
-    {seq_table_e2node_component_cfg_removal_ack_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_e2node_component_cfg_removal_ack_item_s_fields,
+     uint64_t{0x7},
+     nullptr,
+     seq_table_e2node_component_cfg_removal_ack_item_s_names,
+     3,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2node_component_cfg_removal_ack_item_s_names};
+    0};
 
 // E2nodeComponentConfigRemovalAck-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2node_component_cfg_removal_ack_item_ies_o[]    = {57};
@@ -1215,13 +1232,16 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_upd_item_s_n
     {"e2nodeComponentInterfaceType", nullptr},
     {"e2nodeComponentID", nullptr},
     {"e2nodeComponentConfiguration", nullptr}};
-const asn1::table::seq_desc e2node_component_cfg_upd_item_s::desc = {
-    {seq_table_e2node_component_cfg_upd_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_cfg_upd_item_s_names};
+const asn1::table::seq_desc e2node_component_cfg_upd_item_s::desc = {{seq_table_e2node_component_cfg_upd_item_s_fields,
+                                                                      uint64_t{0x7},
+                                                                      nullptr,
+                                                                      seq_table_e2node_component_cfg_upd_item_s_names,
+                                                                      3,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2nodeComponentConfigUpdate-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2node_component_cfg_upd_item_ies_o[]    = {34};
@@ -1311,12 +1331,16 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_upd_ack_item
     {"e2nodeComponentID", nullptr},
     {"e2nodeComponentConfigurationAck", nullptr}};
 const asn1::table::seq_desc e2node_component_cfg_upd_ack_item_s::desc = {
-    {seq_table_e2node_component_cfg_upd_ack_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_e2node_component_cfg_upd_ack_item_s_fields,
+     uint64_t{0x7},
+     nullptr,
+     seq_table_e2node_component_cfg_upd_ack_item_s_names,
+     3,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2node_component_cfg_upd_ack_item_s_names};
+    0};
 
 // E2nodeComponentConfigUpdateAck-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2node_component_cfg_upd_ack_item_ies_o[]    = {36};
@@ -1399,13 +1423,16 @@ static const asn1::table::seq_field seq_table_e2node_tnl_assoc_removal_item_s_fi
 static const asn1::table::field_name seq_table_e2node_tnl_assoc_removal_item_s_names[] = {
     {"tnlInformation", nullptr},
     {"tnlInformationRIC", nullptr}};
-const asn1::table::seq_desc e2node_tnl_assoc_removal_item_s::desc = {
-    {seq_table_e2node_tnl_assoc_removal_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_tnl_assoc_removal_item_s_names};
+const asn1::table::seq_desc e2node_tnl_assoc_removal_item_s::desc = {{seq_table_e2node_tnl_assoc_removal_item_s_fields,
+                                                                      uint64_t{0x3},
+                                                                      nullptr,
+                                                                      seq_table_e2node_tnl_assoc_removal_item_s_names,
+                                                                      2,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2nodeTNLassociationRemoval-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_e2node_tnl_assoc_removal_item_ies_o[]    = {59};
@@ -1472,8 +1499,8 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ies_container_values
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2node_cfg_upd_ies_container, global_e2node_id),
      (int32_t)offsetof(e2node_cfg_upd_ies_container, global_e2node_id_present),
@@ -1490,7 +1517,7 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ies_container_values
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2node_cfg_upd_ies_container::e2node_component_cfg_addition),
                               asn1::table::struct_json>::value},
     {offsetof(e2node_cfg_upd_ies_container, e2node_component_cfg_upd),
@@ -1499,7 +1526,7 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ies_container_values
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2node_cfg_upd_ies_container::e2node_component_cfg_upd),
                               asn1::table::struct_json>::value},
     {offsetof(e2node_cfg_upd_ies_container, e2node_component_cfg_removal),
@@ -1508,7 +1535,7 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ies_container_values
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2node_cfg_upd_ies_container::e2node_component_cfg_removal),
                               asn1::table::struct_json>::value},
     {offsetof(e2node_cfg_upd_ies_container, e2node_tnl_assoc_removal),
@@ -1517,7 +1544,7 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ies_container_values
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(e2node_cfg_upd_ies_container::e2node_tnl_assoc_removal),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_e2node_cfg_upd_ies_container_presences[] = {
@@ -1552,8 +1579,8 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ack_ies_container_va
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2node_cfg_upd_ack_ies_container, e2node_component_cfg_addition_ack),
      (int32_t)offsetof(e2node_cfg_upd_ack_ies_container, e2node_component_cfg_addition_ack_present),
@@ -1561,7 +1588,7 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ack_ies_container_va
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2node_cfg_upd_ack_ies_container::e2node_component_cfg_addition_ack),
                               asn1::table::struct_json>::value},
     {offsetof(e2node_cfg_upd_ack_ies_container, e2node_component_cfg_upd_ack),
@@ -1570,7 +1597,7 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ack_ies_container_va
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2node_cfg_upd_ack_ies_container::e2node_component_cfg_upd_ack),
                               asn1::table::struct_json>::value},
     {offsetof(e2node_cfg_upd_ack_ies_container, e2node_component_cfg_removal_ack),
@@ -1579,7 +1606,7 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_ack_ies_container_va
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2node_cfg_upd_ack_ies_container::e2node_component_cfg_removal_ack),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_e2node_cfg_upd_ack_ies_container_presences[] = {
@@ -1612,8 +1639,8 @@ static const asn1::table::seq_field ie_table_e2node_cfg_upd_fail_ies_container_v
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2node_cfg_upd_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -1673,8 +1700,8 @@ static const asn1::table::seq_field ie_table_e2setup_fail_ies_container_values[]
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2setup_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -1736,8 +1763,8 @@ static const asn1::table::seq_field seq_table_ran_function_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_item_s, ran_function_definition),
      asn1::table::seq_field::mandatory,
@@ -1753,8 +1780,8 @@ static const asn1::table::seq_field seq_table_ran_function_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_item_s, ran_function_o_id),
      asn1::table::seq_field::mandatory,
@@ -1769,12 +1796,11 @@ static const asn1::table::field_name seq_table_ran_function_item_s_names[] = {{"
                                                                               {"ranFunctionRevision", nullptr},
                                                                               {"ranFunctionOID", nullptr}};
 const asn1::table::seq_desc          ran_function_item_s::desc             = {
-    {seq_table_ran_function_item_s_fields, 4, UINT64_C(0xf), nullptr, 0},
+    {seq_table_ran_function_item_s_fields, uint64_t{0xf}, nullptr, seq_table_ran_function_item_s_names, 4, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_item_s_names};
+    0};
 
 // RANfunction-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_item_ies_o[]    = {8};
@@ -1839,8 +1865,8 @@ static const asn1::table::seq_field ie_table_e2setup_request_ies_container_value
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2setup_request_ies_container, global_e2node_id),
      asn1::table::seq_field::mandatory,
@@ -1857,7 +1883,7 @@ static const asn1::table::seq_field ie_table_e2setup_request_ies_container_value
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(e2setup_request_ies_container::ran_functions_added),
                               asn1::table::struct_json>::value},
     {offsetof(e2setup_request_ies_container, e2node_component_cfg_addition),
@@ -1866,7 +1892,7 @@ static const asn1::table::seq_field ie_table_e2setup_request_ies_container_value
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2setup_request_ies_container::e2node_component_cfg_addition),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_e2setup_request_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
@@ -1892,26 +1918,25 @@ static const asn1::table::seq_field seq_table_ran_function_id_item_s_fields[] = 
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_id_item_s, ran_function_revision),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr}};
 static const asn1::table::field_name seq_table_ran_function_id_item_s_names[] = {{"ranFunctionID", nullptr},
                                                                                  {"ranFunctionRevision", nullptr}};
 const asn1::table::seq_desc          ran_function_id_item_s::desc             = {
-    {seq_table_ran_function_id_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ran_function_id_item_s_fields, uint64_t{0x3}, nullptr, seq_table_ran_function_id_item_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_id_item_s_names};
+    0};
 
 // RANfunctionID-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_id_item_ies_o[]    = {6};
@@ -1970,8 +1995,8 @@ static const asn1::table::seq_field seq_table_ran_function_id_cause_item_s_field
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_id_cause_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -1984,13 +2009,16 @@ static const asn1::table::seq_field seq_table_ran_function_id_cause_item_s_field
      &cause_c::desc}};
 static const asn1::table::field_name seq_table_ran_function_id_cause_item_s_names[] = {{"ranFunctionID", nullptr},
                                                                                        {"cause", nullptr}};
-const asn1::table::seq_desc          ran_function_id_cause_item_s::desc             = {
-    {seq_table_ran_function_id_cause_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ran_function_id_cause_item_s_names};
+const asn1::table::seq_desc ran_function_id_cause_item_s::desc = {{seq_table_ran_function_id_cause_item_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   nullptr,
+                                                                   seq_table_ran_function_id_cause_item_s_names,
+                                                                   2,
+                                                                   0},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // RANfunctionIDcause-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_id_cause_item_ies_o[]    = {7};
@@ -2047,8 +2075,8 @@ static const asn1::table::seq_field seq_table_ran_function_accept_modified_item_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_accept_modified_item_s, rev_ran_function_definition),
      asn1::table::seq_field::mandatory,
@@ -2064,20 +2092,24 @@ static const asn1::table::seq_field seq_table_ran_function_accept_modified_item_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr}};
 static const asn1::table::field_name seq_table_ran_function_accept_modified_item_s_names[] = {
     {"ranFunctionID", nullptr},
     {"revRanFunctionDefinition", nullptr},
     {"ranFunctionRevision", nullptr}};
 const asn1::table::seq_desc ran_function_accept_modified_item_s::desc = {
-    {seq_table_ran_function_accept_modified_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_ran_function_accept_modified_item_s_fields,
+     uint64_t{0x7},
+     nullptr,
+     seq_table_ran_function_accept_modified_item_s_names,
+     3,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_accept_modified_item_s_names};
+    0};
 
 // RANfunction-AcceptModified-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_accept_modified_item_ies_o[]    = {139};
@@ -2143,8 +2175,8 @@ static const asn1::table::seq_field ie_table_e2setup_resp_ies_container_values[]
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(e2setup_resp_ies_container, global_ric_id),
      asn1::table::seq_field::mandatory,
@@ -2161,7 +2193,7 @@ static const asn1::table::seq_field ie_table_e2setup_resp_ies_container_values[]
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(e2setup_resp_ies_container::ran_functions_accepted),
                               asn1::table::struct_json>::value},
     {offsetof(e2setup_resp_ies_container, ran_functions_rejected),
@@ -2170,7 +2202,7 @@ static const asn1::table::seq_field ie_table_e2setup_resp_ies_container_values[]
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(e2setup_resp_ies_container::ran_functions_rejected),
                               asn1::table::struct_json>::value},
     {offsetof(e2setup_resp_ies_container, e2node_component_cfg_addition_ack),
@@ -2179,7 +2211,7 @@ static const asn1::table::seq_field ie_table_e2setup_resp_ies_container_values[]
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(e2setup_resp_ies_container::e2node_component_cfg_addition_ack),
                               asn1::table::struct_json>::value},
     {offsetof(e2setup_resp_ies_container, ran_functions_accept_modified_list),
@@ -2188,7 +2220,7 @@ static const asn1::table::seq_field ie_table_e2setup_resp_ies_container_values[]
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(e2setup_resp_ies_container::ran_functions_accept_modified_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_e2setup_resp_ies_container_presences[] = {
@@ -2223,8 +2255,8 @@ static const asn1::table::seq_field ie_table_error_ind_ies_container_values[] = 
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(error_ind_ies_container, ric_request_id),
      (int32_t)offsetof(error_ind_ies_container, ric_request_id_present),
@@ -2240,8 +2272,8 @@ static const asn1::table::seq_field ie_table_error_ind_ies_container_values[] = 
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(error_ind_ies_container, cause),
      (int32_t)offsetof(error_ind_ies_container, cause_present),
@@ -2285,8 +2317,8 @@ static const asn1::table::seq_field seq_table_ric_action_load_item_s_fields[] = 
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_load_item_s, ric_action_load_info),
      asn1::table::seq_field::mandatory,
@@ -2300,12 +2332,11 @@ static const asn1::table::seq_field seq_table_ric_action_load_item_s_fields[] = 
 static const asn1::table::field_name seq_table_ric_action_load_item_s_names[] = {{"ricActionID", nullptr},
                                                                                  {"ricActionLoadInformation", nullptr}};
 const asn1::table::seq_desc          ric_action_load_item_s::desc             = {
-    {seq_table_ric_action_load_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_load_item_s_fields, uint64_t{0x3}, nullptr, seq_table_ric_action_load_item_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_load_item_s_names};
+    0};
 
 // RICactionLoad-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_load_item_ies_o[]    = {114};
@@ -2383,7 +2414,7 @@ static const asn1::table::seq_field seq_table_ric_sub_load_item_ie_s_fields[] = 
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(ric_sub_load_item_ie_s::ric_action_load_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ric_sub_load_item_ie_s_names[] = {
@@ -2393,13 +2424,16 @@ static const asn1::table::field_name seq_table_ric_sub_load_item_ie_s_names[] = 
 static const asn1::table::seq_opt seq_table_ric_sub_load_item_ie_s_opts[] = {
     {1, (int32_t)offsetof(ric_sub_load_item_ie_s, ric_sub_load_info_present)},
     {2, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc ric_sub_load_item_ie_s::desc = {
-    {seq_table_ric_sub_load_item_ie_s_fields, 3, UINT64_C(0x1), seq_table_ric_sub_load_item_ie_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_sub_load_item_ie_s_names};
+const asn1::table::seq_desc ric_sub_load_item_ie_s::desc = {{seq_table_ric_sub_load_item_ie_s_fields,
+                                                             uint64_t{0x1},
+                                                             seq_table_ric_sub_load_item_ie_s_opts,
+                                                             seq_table_ric_sub_load_item_ie_s_names,
+                                                             3,
+                                                             2},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // RICsubscriptionLoad-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_sub_load_item_ies_o[]    = {118};
@@ -2458,8 +2492,8 @@ static const asn1::table::seq_field seq_table_ran_function_load_item_s_fields[] 
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_load_item_s, ran_function_load_info),
      (int32_t)offsetof(ran_function_load_item_s, ran_function_load_info_present),
@@ -2485,7 +2519,7 @@ static const asn1::table::seq_field seq_table_ran_function_load_item_s_fields[] 
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ran_function_load_item_s::ric_sub_load_list), asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ran_function_load_item_s_names[] = {
     {"ranFunctionID", nullptr},
@@ -2496,13 +2530,16 @@ static const asn1::table::seq_opt seq_table_ran_function_load_item_s_opts[] = {
     {1, (int32_t)offsetof(ran_function_load_item_s, ran_function_load_info_present)},
     {2, (int32_t)offsetof(ran_function_load_item_s, ric_service_load_info_present)},
     {3, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc ran_function_load_item_s::desc = {
-    {seq_table_ran_function_load_item_s_fields, 4, UINT64_C(0x1), seq_table_ran_function_load_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ran_function_load_item_s_names};
+const asn1::table::seq_desc ran_function_load_item_s::desc = {{seq_table_ran_function_load_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_ran_function_load_item_s_opts,
+                                                               seq_table_ran_function_load_item_s_names,
+                                                               4,
+                                                               3},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // RANfunctionLoad-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_load_item_ies_o[]    = {106};
@@ -2561,8 +2598,8 @@ static const asn1::table::seq_field seq_table_ric_action_load_confirm_item_s_fie
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_load_confirm_item_s, ric_action_load_confirm),
      asn1::table::seq_field::mandatory,
@@ -2576,13 +2613,16 @@ static const asn1::table::seq_field seq_table_ric_action_load_confirm_item_s_fie
 static const asn1::table::field_name seq_table_ric_action_load_confirm_item_s_names[] = {
     {"ricActionID", nullptr},
     {"ricActionLoadConfirm", nullptr}};
-const asn1::table::seq_desc ric_action_load_confirm_item_s::desc = {
-    {seq_table_ric_action_load_confirm_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_action_load_confirm_item_s_names};
+const asn1::table::seq_desc ric_action_load_confirm_item_s::desc = {{seq_table_ric_action_load_confirm_item_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_ric_action_load_confirm_item_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // RICactionLoadConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_load_confirm_item_ies_o[]    = {115};
@@ -2658,7 +2698,7 @@ static const asn1::table::seq_field seq_table_ric_sub_load_confirm_item_ie_s_fie
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(ric_sub_load_confirm_item_ie_s::ric_action_load_confirm_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ric_sub_load_confirm_item_ie_s_names[] = {
@@ -2669,15 +2709,15 @@ static const asn1::table::seq_opt seq_table_ric_sub_load_confirm_item_ie_s_opts[
     {1, (int32_t)offsetof(ric_sub_load_confirm_item_ie_s, ric_sub_load_confirm_present)},
     {2, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ric_sub_load_confirm_item_ie_s::desc = {{seq_table_ric_sub_load_confirm_item_ie_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_ric_sub_load_confirm_item_ie_s_opts,
+                                                                     seq_table_ric_sub_load_confirm_item_ie_s_names,
+                                                                     3,
                                                                      2},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_ric_sub_load_confirm_item_ie_s_names};
+                                                                    0};
 
 // RICsubscriptionLoadConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_sub_load_confirm_item_ies_o[]    = {119};
@@ -2737,8 +2777,8 @@ static const asn1::table::seq_field seq_table_ran_function_load_confirm_item_s_f
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_load_confirm_item_s, ran_function_load_confirm),
      (int32_t)offsetof(ran_function_load_confirm_item_s, ran_function_load_confirm_present),
@@ -2764,7 +2804,7 @@ static const asn1::table::seq_field seq_table_ran_function_load_confirm_item_s_f
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ran_function_load_confirm_item_s::ric_sub_load_confirm_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ran_function_load_confirm_item_s_names[] = {
@@ -2778,15 +2818,15 @@ static const asn1::table::seq_opt seq_table_ran_function_load_confirm_item_s_opt
     {3, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_load_confirm_item_s::desc = {
     {seq_table_ran_function_load_confirm_item_s_fields,
-     4,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ran_function_load_confirm_item_s_opts,
+     seq_table_ran_function_load_confirm_item_s_names,
+     4,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_load_confirm_item_s_names};
+    0};
 
 // RANfunctionLoadConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_load_confirm_item_ies_o[]    = {108};
@@ -2844,8 +2884,8 @@ static const asn1::table::seq_field seq_table_ric_action_load_request_item_s_fie
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_load_request_item_s, ric_action_load_request),
      asn1::table::seq_field::mandatory,
@@ -2859,13 +2899,16 @@ static const asn1::table::seq_field seq_table_ric_action_load_request_item_s_fie
 static const asn1::table::field_name seq_table_ric_action_load_request_item_s_names[] = {
     {"ricActionID", nullptr},
     {"ricActionLoadRequest", nullptr}};
-const asn1::table::seq_desc ric_action_load_request_item_s::desc = {
-    {seq_table_ric_action_load_request_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_action_load_request_item_s_names};
+const asn1::table::seq_desc ric_action_load_request_item_s::desc = {{seq_table_ric_action_load_request_item_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_ric_action_load_request_item_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // RICactionLoadRequest-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_load_request_item_ies_o[]    = {116};
@@ -2941,7 +2984,7 @@ static const asn1::table::seq_field seq_table_ric_sub_load_request_item_ie_s_fie
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(ric_sub_load_request_item_ie_s::ric_action_load_request_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ric_sub_load_request_item_ie_s_names[] = {
@@ -2952,15 +2995,15 @@ static const asn1::table::seq_opt seq_table_ric_sub_load_request_item_ie_s_opts[
     {1, (int32_t)offsetof(ric_sub_load_request_item_ie_s, ric_sub_load_request_present)},
     {2, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ric_sub_load_request_item_ie_s::desc = {{seq_table_ric_sub_load_request_item_ie_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_ric_sub_load_request_item_ie_s_opts,
+                                                                     seq_table_ric_sub_load_request_item_ie_s_names,
+                                                                     3,
                                                                      2},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_ric_sub_load_request_item_ie_s_names};
+                                                                    0};
 
 // RICsubscriptionLoadRequest-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_sub_load_request_item_ies_o[]    = {120};
@@ -3020,8 +3063,8 @@ static const asn1::table::seq_field seq_table_ran_function_load_request_item_s_f
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_load_request_item_s, ran_function_load_request),
      (int32_t)offsetof(ran_function_load_request_item_s, ran_function_load_request_present),
@@ -3047,7 +3090,7 @@ static const asn1::table::seq_field seq_table_ran_function_load_request_item_s_f
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ran_function_load_request_item_s::ric_sub_load_request_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ran_function_load_request_item_s_names[] = {
@@ -3061,15 +3104,15 @@ static const asn1::table::seq_opt seq_table_ran_function_load_request_item_s_opt
     {3, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_load_request_item_s::desc = {
     {seq_table_ran_function_load_request_item_s_fields,
-     4,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ran_function_load_request_item_s_opts,
+     seq_table_ran_function_load_request_item_s_names,
+     4,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_load_request_item_s_names};
+    0};
 
 // RANfunctionLoadRequest-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_load_request_item_ies_o[]    = {110};
@@ -3127,17 +3170,16 @@ static const asn1::table::seq_field seq_table_ric_action_list_item_s_fields[] = 
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_list_item_s_names[] = {{"ricActionID", nullptr}};
 const asn1::table::seq_desc          ric_action_list_item_s::desc             = {
-    {seq_table_ric_action_list_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ric_action_list_item_s_fields, uint64_t{0x1}, nullptr, seq_table_ric_action_list_item_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_list_item_s_names};
+    0};
 
 // RICaction-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_item_ies_o[]    = {125};
@@ -3206,18 +3248,21 @@ static const asn1::table::seq_field seq_table_ric_sub_list_item_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(ric_sub_list_item_s::ric_action_list), asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ric_sub_list_item_s_names[] = {{"ricRequestID", nullptr},
                                                                               {"ricAction-list", nullptr}};
 static const asn1::table::seq_opt seq_table_ric_sub_list_item_s_opts[] = {{1, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc       ric_sub_list_item_s::desc            = {
-    {seq_table_ric_sub_list_item_s_fields, 2, UINT64_C(0x1), seq_table_ric_sub_list_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_sub_list_item_s_names};
+const asn1::table::seq_desc       ric_sub_list_item_s::desc            = {{seq_table_ric_sub_list_item_s_fields,
+                                                                           uint64_t{0x1},
+                                                                           seq_table_ric_sub_list_item_s_opts,
+                                                                           seq_table_ric_sub_list_item_s_names,
+                                                                           2,
+                                                                           1},
+                                                                          true,
+                                                                          true,
+                                                                          nullptr,
+                                                                          0};
 
 // RICsubscriptionList-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_sub_list_item_ies_o[]    = {126};
@@ -3276,8 +3321,8 @@ static const asn1::table::seq_field seq_table_ran_function_state_confirm_item_s_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_state_confirm_item_s, ric_sub_suspended_list),
      asn1::table::seq_field::list_presence,
@@ -3285,7 +3330,7 @@ static const asn1::table::seq_field seq_table_ran_function_state_confirm_item_s_
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ran_function_state_confirm_item_s::ric_sub_suspended_list),
                               asn1::table::struct_json>::value},
     {offsetof(ran_function_state_confirm_item_s, ric_sub_resumed_list),
@@ -3294,7 +3339,7 @@ static const asn1::table::seq_field seq_table_ran_function_state_confirm_item_s_
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ran_function_state_confirm_item_s::ric_sub_resumed_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ran_function_state_confirm_item_s_names[] = {
@@ -3306,15 +3351,15 @@ static const asn1::table::seq_opt seq_table_ran_function_state_confirm_item_s_op
     {2, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_state_confirm_item_s::desc = {
     {seq_table_ran_function_state_confirm_item_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ran_function_state_confirm_item_s_opts,
+     seq_table_ran_function_state_confirm_item_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_function_state_confirm_item_s_names};
+    0};
 
 // RANfunctionStateConfirm-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_state_confirm_item_ies_o[]    = {121};
@@ -3373,8 +3418,8 @@ static const asn1::table::seq_field seq_table_ran_function_state_ctrl_item_s_fie
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ran_function_state_ctrl_item_s, ric_sub_to_be_suspended_list),
      asn1::table::seq_field::list_presence,
@@ -3382,7 +3427,7 @@ static const asn1::table::seq_field seq_table_ran_function_state_ctrl_item_s_fie
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ran_function_state_ctrl_item_s::ric_sub_to_be_suspended_list),
                               asn1::table::struct_json>::value},
     {offsetof(ran_function_state_ctrl_item_s, ric_sub_to_be_resumed_list),
@@ -3391,7 +3436,7 @@ static const asn1::table::seq_field seq_table_ran_function_state_ctrl_item_s_fie
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ran_function_state_ctrl_item_s::ric_sub_to_be_resumed_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ran_function_state_ctrl_item_s_names[] = {
@@ -3402,15 +3447,15 @@ static const asn1::table::seq_opt seq_table_ran_function_state_ctrl_item_s_opts[
     {1, asn1::table::seq_field::list_presence},
     {2, asn1::table::seq_field::list_presence}};
 const asn1::table::seq_desc ran_function_state_ctrl_item_s::desc = {{seq_table_ran_function_state_ctrl_item_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_ran_function_state_ctrl_item_s_opts,
+                                                                     seq_table_ran_function_state_ctrl_item_s_names,
+                                                                     3,
                                                                      2},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_ran_function_state_ctrl_item_s_names};
+                                                                    0};
 
 // RANfunctionStateControl-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ran_function_state_ctrl_item_ies_o[]    = {123};
@@ -3468,17 +3513,20 @@ static const asn1::table::seq_field seq_table_ric_action_added_for_mod_item_s_fi
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_added_for_mod_item_s_names[] = {{"ricActionID", nullptr}};
-const asn1::table::seq_desc          ric_action_added_for_mod_item_s::desc             = {
-    {seq_table_ric_action_added_for_mod_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_action_added_for_mod_item_s_names};
+const asn1::table::seq_desc ric_action_added_for_mod_item_s::desc = {{seq_table_ric_action_added_for_mod_item_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_ric_action_added_for_mod_item_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // RICaction-AddedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_added_for_mod_item_ies_o[]    = {80};
@@ -3536,17 +3584,20 @@ static const asn1::table::seq_field seq_table_ric_action_admitted_item_s_fields[
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_admitted_item_s_names[] = {{"ricActionID", nullptr}};
-const asn1::table::seq_desc          ric_action_admitted_item_s::desc             = {
-    {seq_table_ric_action_admitted_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_action_admitted_item_s_names};
+const asn1::table::seq_desc          ric_action_admitted_item_s::desc = {{seq_table_ric_action_admitted_item_s_fields,
+                                                                          uint64_t{0x1},
+                                                                          nullptr,
+                                                                          seq_table_ric_action_admitted_item_s_names,
+                                                                          1,
+                                                                          0},
+                                                                         true,
+                                                                         true,
+                                                                         nullptr,
+                                                                         0};
 
 // RICaction-Admitted-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_admitted_item_ies_o[]    = {14};
@@ -3605,17 +3656,21 @@ static const asn1::table::seq_field seq_table_ric_action_confirmed_for_mod_item_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_confirmed_for_mod_item_s_names[] = {{"ricActionID", nullptr}};
 const asn1::table::seq_desc          ric_action_confirmed_for_mod_item_s::desc             = {
-    {seq_table_ric_action_confirmed_for_mod_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ric_action_confirmed_for_mod_item_s_fields,
+                          uint64_t{0x1},
+                          nullptr,
+                          seq_table_ric_action_confirmed_for_mod_item_s_names,
+                          1,
+                          0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_confirmed_for_mod_item_s_names};
+    0};
 
 // RICaction-ConfirmedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_confirmed_for_mod_item_ies_o[]    = {88};
@@ -3677,18 +3732,22 @@ static const asn1::table::seq_field seq_table_ric_action_confirmed_for_removal_i
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_confirmed_for_removal_item_s_names[] = {
     {"ricActionID", nullptr}};
 const asn1::table::seq_desc ric_action_confirmed_for_removal_item_s::desc = {
-    {seq_table_ric_action_confirmed_for_removal_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ric_action_confirmed_for_removal_item_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ric_action_confirmed_for_removal_item_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_confirmed_for_removal_item_s_names};
+    0};
 
 // RICaction-ConfirmedForRemoval-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_confirmed_for_removal_item_ies_o[]    = {92};
@@ -3750,8 +3809,8 @@ static const asn1::table::seq_field seq_table_ric_action_failed_to_be_added_for_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_failed_to_be_added_for_mod_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -3766,12 +3825,16 @@ static const asn1::table::field_name seq_table_ric_action_failed_to_be_added_for
     {"ricActionID", nullptr},
     {"cause", nullptr}};
 const asn1::table::seq_desc ric_action_failed_to_be_added_for_mod_item_s::desc = {
-    {seq_table_ric_action_failed_to_be_added_for_mod_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_failed_to_be_added_for_mod_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_ric_action_failed_to_be_added_for_mod_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_failed_to_be_added_for_mod_item_s_names};
+    0};
 
 // RICaction-FailedToBeAddedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_failed_to_be_added_for_mod_item_ies_o[]    = {82};
@@ -3834,8 +3897,8 @@ static const asn1::table::seq_field seq_table_ric_action_failed_to_be_modified_f
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_failed_to_be_modified_for_mod_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -3850,12 +3913,16 @@ static const asn1::table::field_name seq_table_ric_action_failed_to_be_modified_
     {"ricActionID", nullptr},
     {"cause", nullptr}};
 const asn1::table::seq_desc ric_action_failed_to_be_modified_for_mod_item_s::desc = {
-    {seq_table_ric_action_failed_to_be_modified_for_mod_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_failed_to_be_modified_for_mod_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_ric_action_failed_to_be_modified_for_mod_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_failed_to_be_modified_for_mod_item_s_names};
+    0};
 
 // RICaction-FailedToBeModifiedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_failed_to_be_modified_for_mod_item_ies_o[]    = {78};
@@ -3918,8 +3985,8 @@ static const asn1::table::seq_field seq_table_ric_action_failed_to_be_remd_for_m
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_failed_to_be_remd_for_mod_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -3934,12 +4001,16 @@ static const asn1::table::field_name seq_table_ric_action_failed_to_be_remd_for_
     {"ricActionID", nullptr},
     {"cause", nullptr}};
 const asn1::table::seq_desc ric_action_failed_to_be_remd_for_mod_item_s::desc = {
-    {seq_table_ric_action_failed_to_be_remd_for_mod_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_failed_to_be_remd_for_mod_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_ric_action_failed_to_be_remd_for_mod_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_failed_to_be_remd_for_mod_item_s_names};
+    0};
 
 // RICaction-FailedToBeRemovedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_failed_to_be_remd_for_mod_item_ies_o[]    = {74};
@@ -4002,17 +4073,21 @@ static const asn1::table::seq_field seq_table_ric_action_modified_for_mod_item_s
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_modified_for_mod_item_s_names[] = {{"ricActionID", nullptr}};
 const asn1::table::seq_desc          ric_action_modified_for_mod_item_s::desc             = {
-    {seq_table_ric_action_modified_for_mod_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ric_action_modified_for_mod_item_s_fields,
+                          uint64_t{0x1},
+                          nullptr,
+                          seq_table_ric_action_modified_for_mod_item_s_names,
+                          1,
+                          0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_modified_for_mod_item_s_names};
+    0};
 
 // RICaction-ModifiedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_modified_for_mod_item_ies_o[]    = {76};
@@ -4071,8 +4146,8 @@ static const asn1::table::seq_field seq_table_ric_action_not_admitted_item_s_fie
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_not_admitted_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -4085,13 +4160,16 @@ static const asn1::table::seq_field seq_table_ric_action_not_admitted_item_s_fie
      &cause_c::desc}};
 static const asn1::table::field_name seq_table_ric_action_not_admitted_item_s_names[] = {{"ricActionID", nullptr},
                                                                                          {"cause", nullptr}};
-const asn1::table::seq_desc          ric_action_not_admitted_item_s::desc             = {
-    {seq_table_ric_action_not_admitted_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_action_not_admitted_item_s_names};
+const asn1::table::seq_desc ric_action_not_admitted_item_s::desc = {{seq_table_ric_action_not_admitted_item_s_fields,
+                                                                     uint64_t{0x3},
+                                                                     nullptr,
+                                                                     seq_table_ric_action_not_admitted_item_s_names,
+                                                                     2,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // RICaction-NotAdmitted-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_not_admitted_item_ies_o[]    = {16};
@@ -4149,8 +4227,8 @@ static const asn1::table::seq_field seq_table_ric_action_refused_to_be_modified_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_refused_to_be_modified_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -4165,12 +4243,16 @@ static const asn1::table::field_name seq_table_ric_action_refused_to_be_modified
     {"ricActionID", nullptr},
     {"cause", nullptr}};
 const asn1::table::seq_desc ric_action_refused_to_be_modified_item_s::desc = {
-    {seq_table_ric_action_refused_to_be_modified_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_refused_to_be_modified_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_ric_action_refused_to_be_modified_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_refused_to_be_modified_item_s_names};
+    0};
 
 // RICaction-RefusedToBeModified-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_refused_to_be_modified_item_ies_o[]    = {90};
@@ -4232,8 +4314,8 @@ static const asn1::table::seq_field seq_table_ric_action_refused_to_be_remd_item
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_refused_to_be_remd_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -4247,12 +4329,16 @@ static const asn1::table::seq_field seq_table_ric_action_refused_to_be_remd_item
 static const asn1::table::field_name seq_table_ric_action_refused_to_be_remd_item_s_names[] = {{"ricActionID", nullptr},
                                                                                                {"cause", nullptr}};
 const asn1::table::seq_desc          ric_action_refused_to_be_remd_item_s::desc             = {
-    {seq_table_ric_action_refused_to_be_remd_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_refused_to_be_remd_item_s_fields,
+                          uint64_t{0x3},
+                          nullptr,
+                          seq_table_ric_action_refused_to_be_remd_item_s_names,
+                          2,
+                          0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_refused_to_be_remd_item_s_names};
+    0};
 
 // RICaction-RefusedToBeRemoved-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_refused_to_be_remd_item_ies_o[]    = {94};
@@ -4314,17 +4400,20 @@ static const asn1::table::seq_field seq_table_ric_action_remd_for_mod_item_s_fie
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_remd_for_mod_item_s_names[] = {{"ricActionID", nullptr}};
-const asn1::table::seq_desc          ric_action_remd_for_mod_item_s::desc             = {
-    {seq_table_ric_action_remd_for_mod_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_action_remd_for_mod_item_s_names};
+const asn1::table::seq_desc ric_action_remd_for_mod_item_s::desc = {{seq_table_ric_action_remd_for_mod_item_s_fields,
+                                                                     uint64_t{0x1},
+                                                                     nullptr,
+                                                                     seq_table_ric_action_remd_for_mod_item_s_names,
+                                                                     1,
+                                                                     0},
+                                                                    true,
+                                                                    true,
+                                                                    nullptr,
+                                                                    0};
 
 // RICaction-RemovedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_remd_for_mod_item_ies_o[]    = {72};
@@ -4382,8 +4471,8 @@ static const asn1::table::seq_field seq_table_ric_action_required_to_be_modified
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_required_to_be_modified_item_s, ric_time_to_wait),
      asn1::table::seq_field::mandatory,
@@ -4398,12 +4487,16 @@ static const asn1::table::field_name seq_table_ric_action_required_to_be_modifie
     {"ricActionID", nullptr},
     {"ricTimeToWait", nullptr}};
 const asn1::table::seq_desc ric_action_required_to_be_modified_item_s::desc = {
-    {seq_table_ric_action_required_to_be_modified_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_required_to_be_modified_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_ric_action_required_to_be_modified_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_required_to_be_modified_item_s_names};
+    0};
 
 // RICaction-RequiredToBeModified-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_required_to_be_modified_item_ies_o[]    = {84};
@@ -4465,8 +4558,8 @@ static const asn1::table::seq_field seq_table_ric_action_required_to_be_remd_ite
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_required_to_be_remd_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -4481,12 +4574,16 @@ static const asn1::table::field_name seq_table_ric_action_required_to_be_remd_it
     {"ricActionID", nullptr},
     {"cause", nullptr}};
 const asn1::table::seq_desc ric_action_required_to_be_remd_item_s::desc = {
-    {seq_table_ric_action_required_to_be_remd_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_action_required_to_be_remd_item_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_ric_action_required_to_be_remd_item_s_names,
+     2,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_required_to_be_remd_item_s_names};
+    0};
 
 // RICaction-RequiredToBeRemoved-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_required_to_be_remd_item_ies_o[]    = {86};
@@ -4548,8 +4645,8 @@ static const asn1::table::seq_field seq_table_ric_action_to_be_added_for_mod_ite
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_to_be_added_for_mod_item_s, ric_action_type),
      asn1::table::seq_field::mandatory,
@@ -4574,8 +4671,8 @@ static const asn1::table::seq_field seq_table_ric_action_to_be_added_for_mod_ite
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_to_be_added_for_mod_item_s, ric_subsequent_action),
      (int32_t)offsetof(ric_action_to_be_added_for_mod_item_s, ric_subsequent_action_present),
@@ -4596,15 +4693,15 @@ static const asn1::table::seq_opt seq_table_ric_action_to_be_added_for_mod_item_
     {4, (int32_t)offsetof(ric_action_to_be_added_for_mod_item_s, ric_subsequent_action_present)}};
 const asn1::table::seq_desc ric_action_to_be_added_for_mod_item_s::desc = {
     {seq_table_ric_action_to_be_added_for_mod_item_s_fields,
-     5,
-     UINT64_C(0xf),
+     uint64_t{0xf},
      seq_table_ric_action_to_be_added_for_mod_item_s_opts,
+     seq_table_ric_action_to_be_added_for_mod_item_s_names,
+     5,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_to_be_added_for_mod_item_s_names};
+    0};
 
 // RICaction-ToBeAddedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_to_be_added_for_mod_item_ies_o[]    = {70};
@@ -4666,8 +4763,8 @@ static const asn1::table::seq_field seq_table_ric_action_to_be_modified_for_mod_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_to_be_modified_for_mod_item_s, ric_action_definition),
      asn1::table::seq_field::list_presence,
@@ -4683,8 +4780,8 @@ static const asn1::table::seq_field seq_table_ric_action_to_be_modified_for_mod_
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_to_be_modified_for_mod_item_s, ric_subsequent_action),
      (int32_t)offsetof(ric_action_to_be_modified_for_mod_item_s, ric_subsequent_action_present),
@@ -4706,15 +4803,15 @@ static const asn1::table::seq_opt seq_table_ric_action_to_be_modified_for_mod_it
     {3, (int32_t)offsetof(ric_action_to_be_modified_for_mod_item_s, ric_subsequent_action_present)}};
 const asn1::table::seq_desc ric_action_to_be_modified_for_mod_item_s::desc = {
     {seq_table_ric_action_to_be_modified_for_mod_item_s_fields,
-     4,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ric_action_to_be_modified_for_mod_item_s_opts,
+     seq_table_ric_action_to_be_modified_for_mod_item_s_names,
+     4,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_to_be_modified_for_mod_item_s_names};
+    0};
 
 // RICaction-ToBeModifiedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_to_be_modified_for_mod_item_ies_o[]    = {68};
@@ -4776,18 +4873,22 @@ static const asn1::table::seq_field seq_table_ric_action_to_be_remd_for_mod_item
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_to_be_remd_for_mod_item_s_names[] = {
     {"ricActionID", nullptr}};
 const asn1::table::seq_desc ric_action_to_be_remd_for_mod_item_s::desc = {
-    {seq_table_ric_action_to_be_remd_for_mod_item_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_ric_action_to_be_remd_for_mod_item_s_fields,
+     uint64_t{0x1},
+     nullptr,
+     seq_table_ric_action_to_be_remd_for_mod_item_s_names,
+     1,
+     0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_action_to_be_remd_for_mod_item_s_names};
+    0};
 
 // RICaction-ToBeRemovedForModification-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_to_be_remd_for_mod_item_ies_o[]    = {66};
@@ -4849,8 +4950,8 @@ static const asn1::table::seq_field seq_table_ric_action_to_be_setup_item_s_fiel
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_action_to_be_setup_item_s, ric_action_type),
      asn1::table::seq_field::mandatory,
@@ -4893,8 +4994,8 @@ static const asn1::table::seq_field seq_table_ric_action_to_be_setup_item_s_g0_f
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_action_to_be_setup_item_s_g0_names[] = {
     {"ricActionExecutionOrder", nullptr}};
@@ -4902,19 +5003,22 @@ static const asn1::table::seq_opt seq_table_ric_action_to_be_setup_item_s_g0_opt
     {0, (int32_t)offsetof(ric_action_to_be_setup_item_s, ric_action_execution_order_present)}};
 static const asn1::table::seq_group seq_table_ric_action_to_be_setup_item_s_groups[] = {
     {{seq_table_ric_action_to_be_setup_item_s_g0_fields,
-      1,
-      UINT64_C(0x0),
+      uint64_t{0x0},
       seq_table_ric_action_to_be_setup_item_s_g0_opts,
+      seq_table_ric_action_to_be_setup_item_s_g0_names,
+      1,
       1},
-     true,
-     seq_table_ric_action_to_be_setup_item_s_g0_names}};
-const asn1::table::seq_desc ric_action_to_be_setup_item_s::desc = {
-    {seq_table_ric_action_to_be_setup_item_s_fields, 4, UINT64_C(0x3), seq_table_ric_action_to_be_setup_item_s_opts, 2},
-    true,
-    true,
-    seq_table_ric_action_to_be_setup_item_s_groups,
-    1,
-    seq_table_ric_action_to_be_setup_item_s_names};
+     true}};
+const asn1::table::seq_desc ric_action_to_be_setup_item_s::desc = {{seq_table_ric_action_to_be_setup_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    seq_table_ric_action_to_be_setup_item_s_opts,
+                                                                    seq_table_ric_action_to_be_setup_item_s_names,
+                                                                    4,
+                                                                    2},
+                                                                   true,
+                                                                   true,
+                                                                   seq_table_ric_action_to_be_setup_item_s_groups,
+                                                                   1};
 
 // RICaction-ToBeSetup-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_action_to_be_setup_item_ies_o[]    = {19};
@@ -5061,8 +5165,8 @@ static const asn1::table::seq_field ie_table_ric_assist_ind_ies_container_values
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(ric_assist_ind_ies_container, ric_assist_hdr),
      asn1::table::seq_field::mandatory,
@@ -5148,8 +5252,8 @@ static const asn1::table::seq_field ie_table_ric_assist_request_ies_container_va
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr}};
 static const int32_t ie_table_ric_assist_request_ies_container_presences[] = {
     asn1::table::seq_field::mandatory,
@@ -5238,8 +5342,8 @@ static const asn1::table::seq_field ie_table_ric_ctrl_ack_ies_container_values[]
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_ctrl_ack_ies_container, ric_call_process_id),
      (int32_t)offsetof(ric_ctrl_ack_ies_container, ric_call_process_id_present),
@@ -5295,8 +5399,8 @@ static const asn1::table::seq_field ie_table_ric_ctrl_fail_ies_container_values[
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_ctrl_fail_ies_container, ric_call_process_id),
      (int32_t)offsetof(ric_ctrl_fail_ies_container, ric_call_process_id_present),
@@ -5373,8 +5477,8 @@ static const asn1::table::seq_field ie_table_ric_ctrl_request_ies_container_valu
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_ctrl_request_ies_container, ric_call_process_id),
      (int32_t)offsetof(ric_ctrl_request_ies_container, ric_call_process_id_present),
@@ -5457,24 +5561,24 @@ static const asn1::table::seq_field ie_table_ric_ind_ies_container_values[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_ind_ies_container, ric_action_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_ind_ies_container, ric_ind_sn),
      (int32_t)offsetof(ric_ind_ies_container, ric_ind_sn_present),
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(ric_ind_ies_container, ric_ind_type),
      asn1::table::seq_field::mandatory,
@@ -5552,8 +5656,8 @@ static const asn1::table::seq_field ie_table_ric_query_fail_ies_container_values
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_query_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -5612,8 +5716,8 @@ static const asn1::table::seq_field ie_table_ric_query_request_ies_container_val
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_query_request_ies_container, ric_query_hdr),
      asn1::table::seq_field::mandatory,
@@ -5668,8 +5772,8 @@ static const asn1::table::seq_field ie_table_ric_query_resp_ies_container_values
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_query_resp_ies_container, ric_query_outcome),
      asn1::table::seq_field::mandatory,
@@ -5708,16 +5812,16 @@ static const asn1::table::seq_field ie_table_ric_service_load_status_fail_ies_co
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_status_fail_ies_container, e2node_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_status_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -5768,16 +5872,16 @@ static const asn1::table::seq_field ie_table_ric_service_load_status_request_ies
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_status_request_ies_container, e2node_load_meas_id),
      (int32_t)offsetof(ric_service_load_status_request_ies_container, e2node_load_meas_id_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_status_request_ies_container, regist_request),
      asn1::table::seq_field::mandatory,
@@ -5794,7 +5898,7 @@ static const asn1::table::seq_field ie_table_ric_service_load_status_request_ies
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_load_status_request_ies_container::ran_function_load_request_list),
                               asn1::table::struct_json>::value},
     {offsetof(ric_service_load_status_request_ies_container, report_periodicity),
@@ -5836,16 +5940,16 @@ static const asn1::table::seq_field ie_table_ric_service_load_status_resp_ies_co
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_status_resp_ies_container, e2node_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_status_resp_ies_container, ran_function_load_confirm_list),
      (int32_t)offsetof(ric_service_load_status_resp_ies_container, ran_function_load_confirm_list_present),
@@ -5853,7 +5957,7 @@ static const asn1::table::seq_field ie_table_ric_service_load_status_resp_ies_co
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_load_status_resp_ies_container::ran_function_load_confirm_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_service_load_status_resp_ies_container_presences[] = {
@@ -5882,16 +5986,16 @@ static const asn1::table::seq_field ie_table_ric_service_load_upd_ies_container_
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_upd_ies_container, e2node_load_meas_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(4095),
+     int64_t{1},
+     uint64_t{4094},
      nullptr},
     {offsetof(ric_service_load_upd_ies_container, ran_function_load_list),
      asn1::table::seq_field::mandatory,
@@ -5899,7 +6003,7 @@ static const asn1::table::seq_field ie_table_ric_service_load_upd_ies_container_
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_load_upd_ies_container::ran_function_load_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_service_load_upd_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
@@ -5927,8 +6031,8 @@ static const asn1::table::seq_field ie_table_ric_service_query_ies_container_val
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_service_query_ies_container, ran_functions_accepted),
      (int32_t)offsetof(ric_service_query_ies_container, ran_functions_accepted_present),
@@ -5936,7 +6040,7 @@ static const asn1::table::seq_field ie_table_ric_service_query_ies_container_val
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_query_ies_container::ran_functions_accepted),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_service_query_ies_container_presences[] = {
@@ -5967,8 +6071,8 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ies_container_value
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_service_upd_ies_container, ran_functions_added),
      (int32_t)offsetof(ric_service_upd_ies_container, ran_functions_added_present),
@@ -5976,7 +6080,7 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ies_container_value
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_upd_ies_container::ran_functions_added),
                               asn1::table::struct_json>::value},
     {offsetof(ric_service_upd_ies_container, ran_functions_modified),
@@ -5985,7 +6089,7 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ies_container_value
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_upd_ies_container::ran_functions_modified),
                               asn1::table::struct_json>::value},
     {offsetof(ric_service_upd_ies_container, ran_functions_deleted),
@@ -5994,7 +6098,7 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ies_container_value
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_upd_ies_container::ran_functions_deleted),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_service_upd_ies_container_presences[] = {
@@ -6027,8 +6131,8 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ack_ies_container_v
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_service_upd_ack_ies_container, ran_functions_accepted),
      (int32_t)offsetof(ric_service_upd_ack_ies_container, ran_functions_accepted_present),
@@ -6036,7 +6140,7 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ack_ies_container_v
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_upd_ack_ies_container::ran_functions_accepted),
                               asn1::table::struct_json>::value},
     {offsetof(ric_service_upd_ack_ies_container, ran_functions_rejected),
@@ -6045,7 +6149,7 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ack_ies_container_v
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_upd_ack_ies_container::ran_functions_rejected),
                               asn1::table::struct_json>::value},
     {offsetof(ric_service_upd_ack_ies_container, ran_functions_accept_modified_list),
@@ -6054,7 +6158,7 @@ static const asn1::table::seq_field ie_table_ric_service_upd_ack_ies_container_v
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_service_upd_ack_ies_container::ran_functions_accept_modified_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_service_upd_ack_ies_container_presences[] = {
@@ -6087,8 +6191,8 @@ static const asn1::table::seq_field ie_table_ric_service_upd_fail_ies_container_
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(ric_service_upd_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -6150,8 +6254,8 @@ static const asn1::table::seq_field seq_table_ric_sub_with_cause_item_s_fields[]
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_with_cause_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -6165,13 +6269,16 @@ static const asn1::table::seq_field seq_table_ric_sub_with_cause_item_s_fields[]
 static const asn1::table::field_name seq_table_ric_sub_with_cause_item_s_names[] = {{"ricRequestID", nullptr},
                                                                                     {"ranFunctionID", nullptr},
                                                                                     {"cause", nullptr}};
-const asn1::table::seq_desc          ric_sub_with_cause_item_s::desc             = {
-    {seq_table_ric_sub_with_cause_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_sub_with_cause_item_s_names};
+const asn1::table::seq_desc          ric_sub_with_cause_item_s::desc = {{seq_table_ric_sub_with_cause_item_s_fields,
+                                                                         uint64_t{0x7},
+                                                                         nullptr,
+                                                                         seq_table_ric_sub_with_cause_item_s_names,
+                                                                         3,
+                                                                         0},
+                                                                        true,
+                                                                        true,
+                                                                        nullptr,
+                                                                        0};
 
 // RICsubscription-withCause-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_sub_with_cause_item_ies_o[]    = {61};
@@ -6239,18 +6346,17 @@ static const asn1::table::seq_field seq_table_ric_sub_audit_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_sub_audit_item_s_names[] = {{"ricRequestID", nullptr},
                                                                                {"ranFunctionID", nullptr}};
 const asn1::table::seq_desc          ric_sub_audit_item_s::desc             = {
-    {seq_table_ric_sub_audit_item_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_sub_audit_item_s_fields, uint64_t{0x3}, nullptr, seq_table_ric_sub_audit_item_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_sub_audit_item_s_names};
+    0};
 
 // RICsubscriptionAudit-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_sub_audit_item_ies_o[]    = {100};
@@ -6318,8 +6424,8 @@ static const asn1::table::seq_field seq_table_ric_sub_audit_action_item_s_fields
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_audit_action_item_s, ric_action_admitted_list),
      asn1::table::seq_field::mandatory,
@@ -6327,20 +6433,23 @@ static const asn1::table::seq_field seq_table_ric_sub_audit_action_item_s_fields
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(ric_sub_audit_action_item_s::ric_action_admitted_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ric_sub_audit_action_item_s_names[] = {
     {"ricRequestID", nullptr},
     {"ranFunctionID", nullptr},
     {"ricAction-Admitted-List", nullptr}};
-const asn1::table::seq_desc ric_sub_audit_action_item_s::desc = {
-    {seq_table_ric_sub_audit_action_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_sub_audit_action_item_s_names};
+const asn1::table::seq_desc ric_sub_audit_action_item_s::desc = {{seq_table_ric_sub_audit_action_item_s_fields,
+                                                                  uint64_t{0x7},
+                                                                  nullptr,
+                                                                  seq_table_ric_sub_audit_action_item_s_names,
+                                                                  3,
+                                                                  0},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // RICsubscriptionAuditAction-ItemIEs ::= OBJECT SET OF E2AP-PROTOCOL-IES
 static const uint32_t objset_id_ric_sub_audit_action_item_ies_o[]    = {101};
@@ -6470,7 +6579,7 @@ static const asn1::table::seq_field ie_table_ric_sub_audit_request_ies_container
      false,
      true,
      1,
-     2147483648,
+     2147483647,
      &asn1::table::list_codec<decltype(ric_sub_audit_request_ies_container::ric_sub_audit_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_sub_audit_request_ies_container_presences[] = {
@@ -6512,7 +6621,7 @@ static const asn1::table::seq_field ie_table_ric_sub_audit_resp_ies_container_va
      false,
      true,
      1,
-     2147483648,
+     2147483647,
      &asn1::table::list_codec<decltype(ric_sub_audit_resp_ies_container::ric_sub_audit_confirmed_list),
                               asn1::table::struct_json>::value},
     {offsetof(ric_sub_audit_resp_ies_container, ric_sub_audit_unkown_list),
@@ -6521,7 +6630,7 @@ static const asn1::table::seq_field ie_table_ric_sub_audit_resp_ies_container_va
      false,
      true,
      1,
-     2147483648,
+     2147483647,
      &asn1::table::list_codec<decltype(ric_sub_audit_resp_ies_container::ric_sub_audit_unkown_list),
                               asn1::table::struct_json>::value},
     {offsetof(ric_sub_audit_resp_ies_container, ric_sub_audit_missing_list),
@@ -6530,7 +6639,7 @@ static const asn1::table::seq_field ie_table_ric_sub_audit_resp_ies_container_va
      false,
      true,
      1,
-     2147483648,
+     2147483647,
      &asn1::table::list_codec<decltype(ric_sub_audit_resp_ies_container::ric_sub_audit_missing_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_sub_audit_resp_ies_container_presences[] = {
@@ -6572,8 +6681,8 @@ static const asn1::table::seq_field ie_table_ric_sub_delete_fail_ies_container_v
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_delete_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -6629,8 +6738,8 @@ static const asn1::table::seq_field ie_table_ric_sub_delete_request_ies_containe
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr}};
 static const int32_t ie_table_ric_sub_delete_request_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
                                                                                    asn1::table::seq_field::mandatory};
@@ -6657,7 +6766,7 @@ static const asn1::table::seq_field ie_table_ric_sub_delete_required_ies_contain
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::list_codec<decltype(ric_sub_delete_required_ies_container::ric_sub_to_be_remd),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_sub_delete_required_ies_container_presences[]  = {asn1::table::seq_field::mandatory};
@@ -6692,8 +6801,8 @@ static const asn1::table::seq_field ie_table_ric_sub_delete_resp_ies_container_v
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr}};
 static const int32_t ie_table_ric_sub_delete_resp_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
                                                                                 asn1::table::seq_field::mandatory};
@@ -6726,18 +6835,17 @@ static const asn1::table::seq_field seq_table_ric_sub_details_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(ric_sub_details_s::ric_action_to_be_setup_list),
                               asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_ric_sub_details_s_names[] = {{"ricEventTriggerDefinition", nullptr},
                                                                             {"ricAction-ToBeSetup-List", nullptr}};
 const asn1::table::seq_desc          ric_sub_details_s::desc             = {
-    {seq_table_ric_sub_details_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_sub_details_s_fields, uint64_t{0x3}, nullptr, seq_table_ric_sub_details_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_sub_details_s_names};
+    0};
 
 static const uint32_t objset_id_ric_sub_fail_ies_o[]   = {29, 5, 1, 2};
 static const uint8_t  objset_crit_ric_sub_fail_ies_o[] = {crit_e::reject,
@@ -6761,8 +6869,8 @@ static const asn1::table::seq_field ie_table_ric_sub_fail_ies_container_values[]
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -6818,8 +6926,8 @@ static const asn1::table::seq_field ie_table_ric_sub_mod_confirm_ies_container_v
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_mod_confirm_ies_container, ric_actions_confirmed_for_mod_list),
      (int32_t)offsetof(ric_sub_mod_confirm_ies_container, ric_actions_confirmed_for_mod_list_present),
@@ -6898,8 +7006,8 @@ static const asn1::table::seq_field ie_table_ric_sub_mod_fail_ies_container_valu
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_mod_fail_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -6958,8 +7066,8 @@ static const asn1::table::seq_field ie_table_ric_sub_mod_refuse_ies_container_va
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_mod_refuse_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -7016,8 +7124,8 @@ static const asn1::table::seq_field ie_table_ric_sub_mod_request_ies_container_v
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_mod_request_ies_container, ric_event_trigger_definition_to_be_modified),
      (int32_t)offsetof(ric_sub_mod_request_ies_container, ric_event_trigger_definition_to_be_modified_present),
@@ -7097,8 +7205,8 @@ static const asn1::table::seq_field ie_table_ric_sub_mod_required_ies_container_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_mod_required_ies_container, ric_actions_required_to_be_modified_list),
      (int32_t)offsetof(ric_sub_mod_required_ies_container, ric_actions_required_to_be_modified_list_present),
@@ -7161,8 +7269,8 @@ static const asn1::table::seq_field ie_table_ric_sub_mod_resp_ies_container_valu
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_mod_resp_ies_container, ric_actions_remd_for_mod_list),
      (int32_t)offsetof(ric_sub_mod_resp_ies_container, ric_actions_remd_for_mod_list_present),
@@ -7262,8 +7370,8 @@ static const asn1::table::seq_field ie_table_ric_sub_request_ies_container_value
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_request_ies_container, ric_sub_details),
      asn1::table::seq_field::mandatory,
@@ -7332,8 +7440,8 @@ static const asn1::table::seq_field ie_table_ric_sub_resp_ies_container_values[]
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(ric_sub_resp_ies_container, ric_actions_admitted),
      asn1::table::seq_field::mandatory,
@@ -7341,7 +7449,7 @@ static const asn1::table::seq_field ie_table_ric_sub_resp_ies_container_values[]
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(ric_sub_resp_ies_container::ric_actions_admitted),
                               asn1::table::struct_json>::value},
     {offsetof(ric_sub_resp_ies_container, ric_actions_not_admitted),
@@ -7437,7 +7545,7 @@ static const asn1::table::seq_field ie_table_ric_sub_state_ctrl_request_ies_cont
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_sub_state_ctrl_request_ies_container::ran_function_state_ctrl_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_sub_state_ctrl_request_ies_container_presences[] = {
@@ -7475,7 +7583,7 @@ static const asn1::table::seq_field ie_table_ric_sub_state_ctrl_resp_ies_contain
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(ric_sub_state_ctrl_resp_ies_container::ran_function_state_confirm_list),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_ric_sub_state_ctrl_resp_ies_container_presences[]  = {asn1::table::seq_field::mandatory,
@@ -7502,8 +7610,8 @@ static const asn1::table::seq_field ie_table_reset_request_ies_container_values[
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(reset_request_ies_container, cause),
      asn1::table::seq_field::mandatory,
@@ -7538,8 +7646,8 @@ static const asn1::table::seq_field ie_table_reset_resp_ies_container_values[] =
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(reset_resp_ies_container, crit_diagnostics),
      (int32_t)offsetof(reset_resp_ies_container, crit_diagnostics_present),

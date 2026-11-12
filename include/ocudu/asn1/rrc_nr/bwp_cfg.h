@@ -203,9 +203,10 @@ struct srs_pos_res_set_r16_s {
     dl_prs_info_r16_s&    set_dl_prs_r16();
 
   private:
-    asn1::table::
-        choice_storage<pathloss_ref_rs_pos_r16_c_, types, choice_buffer_t<dl_prs_info_r16_s, ssb_info_ncell_r16_s>>
-            c;
+    asn1::table::choice_storage<pathloss_ref_rs_pos_r16_c_,
+                                types,
+                                choice_buffer_t<dl_prs_info_r16_s, ssb_info_ncell_r16_s, uint8_t>>
+        c;
   };
 
   // member variables
@@ -484,7 +485,7 @@ struct srs_periodicity_and_offset_r16_c {
   uint32_t& set_sl81920();
 
 private:
-  asn1::table::choice_storage<srs_periodicity_and_offset_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<srs_periodicity_and_offset_r16_c, types, choice_buffer_t<uint16_t, uint32_t, uint8_t>> c;
 };
 
 // SRS-PeriodicityAndOffsetExt-r16 ::= CHOICE
@@ -547,7 +548,7 @@ struct srs_periodicity_and_offset_ext_r16_c {
   uint16_t& set_sl20480();
 
 private:
-  asn1::table::choice_storage<srs_periodicity_and_offset_ext_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<srs_periodicity_and_offset_ext_r16_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // SRS-SpatialRelationInfoPos-r16 ::= CHOICE
@@ -591,7 +592,7 @@ struct srs_spatial_relation_info_pos_r16_c {
           uint8_t& set_srs_pos_res_id_r16();
 
         private:
-          asn1::table::choice_storage<res_sel_r16_c_, types, pod_choice_buffer_t> c;
+          asn1::table::choice_storage<res_sel_r16_c_, types, choice_buffer_t<uint8_t>> c;
         };
 
         // member variables
@@ -644,7 +645,7 @@ struct srs_spatial_relation_info_pos_r16_c {
       srs_spatial_relation_r16_s_& set_srs_spatial_relation_r16();
 
     private:
-      asn1::table::choice_storage<ref_sig_r16_c_, types, choice_buffer_t<srs_spatial_relation_r16_s_>> c;
+      asn1::table::choice_storage<ref_sig_r16_c_, types, choice_buffer_t<srs_spatial_relation_r16_s_, uint8_t>> c;
     };
 
     // member variables
@@ -1505,7 +1506,10 @@ struct rach_cfg_common_s {
     uint8_t&       set_sixteen();
 
   private:
-    asn1::table::choice_storage<ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_,
+                                types,
+                                choice_buffer_t<one_e_, one_eighth_e_, one_fourth_e_, one_half_e_, two_e_, uint8_t>>
+        c;
   };
   struct group_bcfg_s_ {
     struct ra_msg3_size_group_a_opts {
@@ -1590,7 +1594,7 @@ struct rach_cfg_common_s {
     uint8_t&  set_l139();
 
   private:
-    asn1::table::choice_storage<prach_root_seq_idx_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<prach_root_seq_idx_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct restricted_set_cfg_opts {
     enum options { unrestricted_set, restricted_set_type_a, restricted_set_type_b, nulltype } value;
@@ -1639,7 +1643,7 @@ struct rach_cfg_common_s {
     uint16_t& set_l1151();
 
   private:
-    asn1::table::choice_storage<prach_root_seq_idx_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<prach_root_seq_idx_r16_c_, types, choice_buffer_t<uint16_t>> c;
   };
   using feature_combination_preambs_list_r17_l_ = dyn_array<feature_combination_preambs_r17_s>;
 
@@ -1919,7 +1923,9 @@ struct rach_cfg_common_two_step_ra_r16_s {
     uint8_t&       set_sixteen();
 
   private:
-    asn1::table::choice_storage<msg_a_ssb_per_rach_occasion_and_cb_preambs_per_ssb_r16_c_, types, pod_choice_buffer_t>
+    asn1::table::choice_storage<msg_a_ssb_per_rach_occasion_and_cb_preambs_per_ssb_r16_c_,
+                                types,
+                                choice_buffer_t<one_e_, one_eighth_e_, one_fourth_e_, one_half_e_, two_e_, uint8_t>>
         c;
   };
   struct msg_a_prach_root_seq_idx_r16_c_ {
@@ -1981,7 +1987,7 @@ struct rach_cfg_common_two_step_ra_r16_s {
     uint16_t& set_l1151();
 
   private:
-    asn1::table::choice_storage<msg_a_prach_root_seq_idx_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<msg_a_prach_root_seq_idx_r16_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct msg_a_trans_max_r16_opts {
     enum options { n1, n2, n4, n6, n8, n10, n20, n50, n100, n200, nulltype } value;
@@ -2315,7 +2321,7 @@ struct rate_match_pattern_s {
     uint8_t&    set_coreset();
 
   private:
-    asn1::table::choice_storage<pattern_type_c_, types, choice_buffer_t<bitmaps_s_>> c;
+    asn1::table::choice_storage<pattern_type_c_, types, choice_buffer_t<bitmaps_s_, uint8_t>> c;
   };
   struct dummy_opts {
     enum options { dyn, semi_static, nulltype } value;
@@ -2625,7 +2631,7 @@ struct search_space_s {
     uint16_t& set_sl2560();
 
   private:
-    asn1::table::choice_storage<monitoring_slot_periodicity_and_offset_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<monitoring_slot_periodicity_and_offset_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct nrof_candidates_s_ {
     struct aggregation_level1_opts {
@@ -3115,7 +3121,9 @@ struct search_space_ext_v1700_s {
     uint16_t& set_sl20480();
 
   private:
-    asn1::table::choice_storage<monitoring_slot_periodicity_and_offset_v1710_c_, types, pod_choice_buffer_t> c;
+    asn1::table::
+        choice_storage<monitoring_slot_periodicity_and_offset_v1710_c_, types, choice_buffer_t<uint16_t, uint8_t>>
+            c;
   };
   struct monitoring_slots_within_slot_group_r17_c_ {
     struct types_opts {
@@ -3515,7 +3523,7 @@ struct pdcch_cfg_common_s {
     uint8_t&        set_existing_search_space();
 
   private:
-    asn1::table::choice_storage<sdt_search_space_r17_c_, types, choice_buffer_t<search_space_s>> c;
+    asn1::table::choice_storage<sdt_search_space_r17_c_, types, choice_buffer_t<search_space_s, uint8_t>> c;
   };
   using common_search_space_list_ext2_r17_l_ = dyn_array<search_space_ext_v1700_s>;
   struct first_pdcch_monitoring_occasion_of_po_v1710_c_ {
@@ -4021,7 +4029,7 @@ struct rach_cfg_two_ta_r18_s {
     uint16_t& set_l1151();
 
   private:
-    asn1::table::choice_storage<prach_root_seq_idx_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<prach_root_seq_idx_r18_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct two_ta_restricted_set_cfg_r18_opts {
     enum options { unrestricted_set, restricted_set_type_a, restricted_set_type_b, nulltype } value;
@@ -4434,7 +4442,7 @@ struct qcl_info_s {
     uint8_t& set_ssb();
 
   private:
-    asn1::table::choice_storage<ref_sig_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct qcl_type_opts {
     enum options { type_a, type_b, type_c, type_d, nulltype } value;
@@ -4521,7 +4529,7 @@ struct rate_match_pattern_group_item_c_ {
   uint8_t& set_bwp_level();
 
 private:
-  asn1::table::choice_storage<rate_match_pattern_group_item_c_, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<rate_match_pattern_group_item_c_, types, choice_buffer_t<uint8_t>> c;
 };
 
 // RateMatchPatternGroup ::= SEQUENCE (SIZE (1..8)) OF RateMatchPatternGroup-item
@@ -4839,7 +4847,7 @@ struct csi_res_periodicity_and_offset_c {
   uint16_t& set_slots640();
 
 private:
-  asn1::table::choice_storage<csi_res_periodicity_and_offset_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<csi_res_periodicity_and_offset_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // ZP-CSI-RS-Resource ::= SEQUENCE
@@ -5562,7 +5570,7 @@ struct radio_link_monitoring_rs_s {
     uint8_t& set_csi_rs_idx();
 
   private:
-    asn1::table::choice_storage<detection_res_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<detection_res_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -5612,7 +5620,7 @@ struct beam_link_monitoring_rs_r17_s {
     uint8_t& set_csi_rs_idx();
 
   private:
-    asn1::table::choice_storage<detection_res_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<detection_res_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -5749,7 +5757,7 @@ struct candidate_beam_rs_r16_s {
     uint8_t& set_csi_rs_r16();
 
   private:
-    asn1::table::choice_storage<candidate_beam_cfg_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<candidate_beam_cfg_r16_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -6020,7 +6028,7 @@ struct dl_ppw_periodicity_and_start_slot_r17_c {
     uint16_t& set_n10240();
 
   private:
-    asn1::table::choice_storage<scs15_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs15_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct scs30_c_ {
     struct types_opts {
@@ -6244,7 +6252,7 @@ struct dl_ppw_periodicity_and_start_slot_r17_c {
     uint16_t& set_n20480();
 
   private:
-    asn1::table::choice_storage<scs30_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs30_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct scs60_c_ {
     struct types_opts {
@@ -6468,7 +6476,7 @@ struct dl_ppw_periodicity_and_start_slot_r17_c {
     uint16_t& set_n40960();
 
   private:
-    asn1::table::choice_storage<scs60_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs60_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct scs120_c_ {
     struct types_opts {
@@ -6692,7 +6700,7 @@ struct dl_ppw_periodicity_and_start_slot_r17_c {
     uint32_t& set_n81920();
 
   private:
-    asn1::table::choice_storage<scs120_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scs120_c_, types, choice_buffer_t<uint16_t, uint32_t, uint8_t>> c;
   };
   struct types_opts {
     enum options { scs15, scs30, scs60, scs120, /*...*/ nulltype } value;
@@ -7263,7 +7271,7 @@ struct sched_request_res_cfg_s {
     uint16_t& set_sl640();
 
   private:
-    asn1::table::choice_storage<periodicity_and_offset_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<periodicity_and_offset_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
 
   // member variables
@@ -7334,7 +7342,7 @@ struct pucch_spatial_relation_info_s {
     pucch_srs_s& set_srs();
 
   private:
-    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<pucch_srs_s>> c;
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<pucch_srs_s, uint8_t>> c;
   };
   struct closed_loop_idx_opts {
     enum options { i0, i1, nulltype } value;
@@ -7402,7 +7410,7 @@ struct pucch_pathloss_ref_rs_s {
     uint8_t& set_csi_rs_idx();
 
   private:
-    asn1::table::choice_storage<ref_sig_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -7450,7 +7458,7 @@ struct pucch_pathloss_ref_rs_r16_s {
     uint8_t& set_csi_rs_idx_r16();
 
   private:
-    asn1::table::choice_storage<ref_sig_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_r16_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -7535,7 +7543,7 @@ struct pucch_res_ext_v1610_s {
       uint8_t& set_scs30();
 
     private:
-      asn1::table::choice_storage<interlace0_r16_c_, types, pod_choice_buffer_t> c;
+      asn1::table::choice_storage<interlace0_r16_c_, types, choice_buffer_t<uint8_t>> c;
     };
 
     // member variables
@@ -7601,7 +7609,7 @@ struct pucch_res_ext_v1610_s {
     occ_v1610_s_& set_occ_v1610();
 
   private:
-    asn1::table::choice_storage<format_v1610_c_, types, choice_buffer_t<occ_v1610_s_>> c;
+    asn1::table::choice_storage<format_v1610_c_, types, choice_buffer_t<occ_v1610_s_, uint8_t>> c;
   };
   struct format_v1700_s_ {
     uint8_t nrof_prbs_r17 = 1;
@@ -7791,7 +7799,7 @@ struct sched_request_res_cfg_ext_v1700_s {
     uint16_t& set_sl5120();
 
   private:
-    asn1::table::choice_storage<periodicity_and_offset_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<periodicity_and_offset_r17_c_, types, choice_buffer_t<uint16_t>> c;
   };
 
   // member variables
@@ -7892,7 +7900,9 @@ struct pucch_cfg_s {
     extended_cp_r16_e_& set_extended_cp_r16();
 
   private:
-    asn1::table::choice_storage<subslot_len_for_pucch_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::
+        choice_storage<subslot_len_for_pucch_r16_c_, types, choice_buffer_t<extended_cp_r16_e_, normal_cp_r16_e_>>
+            c;
   };
   using spatial_relation_info_to_add_mod_list_size_ext_v1610_l_ = dyn_array<pucch_spatial_relation_info_s>;
   using spatial_relation_info_to_release_list_size_ext_v1610_l_ = dyn_array<uint8_t>;
@@ -8152,7 +8162,7 @@ struct pusch_pathloss_ref_rs_s {
     uint8_t& set_csi_rs_idx();
 
   private:
-    asn1::table::choice_storage<ref_sig_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -8664,7 +8674,7 @@ struct pusch_pathloss_ref_rs_r16_s {
     uint8_t& set_csi_rs_idx_r16();
 
   private:
-    asn1::table::choice_storage<ref_sig_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_r16_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -8926,7 +8936,7 @@ struct mpe_res_r17_s {
     uint8_t& set_ssb_res_r17();
 
   private:
-    asn1::table::choice_storage<mpe_ref_sig_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<mpe_ref_sig_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -9143,7 +9153,9 @@ struct pusch_cfg_s {
     pusch_rep_type_b_e_& set_pusch_rep_type_b();
 
   private:
-    asn1::table::choice_storage<freq_hop_dci_0_2_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::
+        choice_storage<freq_hop_dci_0_2_r16_c_, types, choice_buffer_t<pusch_rep_type_a_e_, pusch_rep_type_b_e_>>
+            c;
   };
   struct codebook_subset_dci_0_2_r16_opts {
     enum options { fully_and_partial_and_non_coherent, partial_and_non_coherent, non_coherent, nulltype } value;
@@ -10216,7 +10228,7 @@ struct pathloss_ref_rs_cfg_c {
   uint8_t& set_csi_rs_idx();
 
 private:
-  asn1::table::choice_storage<pathloss_ref_rs_cfg_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<pathloss_ref_rs_cfg_c, types, choice_buffer_t<uint8_t>> c;
 };
 
 // PathlossReferenceRS-r16 ::= SEQUENCE
@@ -10575,7 +10587,7 @@ struct tci_ul_state_r17_s {
     uint8_t& set_srs_r17();
 
   private:
-    asn1::table::choice_storage<ref_sig_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct tag_id_ptr_r18_opts {
     enum options { n0, n1, nulltype } value;
@@ -10644,7 +10656,7 @@ struct pathloss_ref_rs_r17_s {
     uint8_t& set_csi_rs_idx();
 
   private:
-    asn1::table::choice_storage<ref_sig_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables

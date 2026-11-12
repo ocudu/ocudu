@@ -16,12 +16,24 @@ using namespace ocudu;
 
 #define JSON_OUTPUT 0
 
+/// Sink of the ASN1 logger, which keeps its entries for the tests to check.
+static log_sink_message_spy& asn1_log_spy()
+{
+  static log_sink_message_spy* spy = [] {
+    ocudulog::install_custom_sink(log_sink_message_spy::name(),
+                                  std::make_unique<log_sink_message_spy>(ocudulog::get_default_log_formatter()));
+    return static_cast<log_sink_message_spy*>(ocudulog::find_sink(log_sink_message_spy::name()));
+  }();
+  return *spy;
+}
+
 class asn1_f1ap_test : public ::testing::Test
 {
 protected:
   asn1_f1ap_test()
   {
-    ocudulog::fetch_basic_logger("ASN1").set_level(ocudulog::basic_levels::debug);
+    // The sink is bound to the logger when the logger is first fetched.
+    ocudulog::fetch_basic_logger("ASN1", asn1_log_spy(), false).set_level(ocudulog::basic_levels::debug);
     ocudulog::fetch_basic_logger("ASN1").set_hex_dump_max_size(-1);
 
     test_logger.set_level(ocudulog::basic_levels::debug);
@@ -82,6 +94,73 @@ TEST_F(asn1_f1ap_test, unknown_ignore_ie_is_skipped_and_reject_ie_fails)
       EXPECT_EQ(decoded.gnb_du_id, 1);
     }
   }
+}
+
+TEST_F(asn1_f1ap_test, repeated_mandatory_ie_fails_to_decode)
+{
+  asn1::f1ap::f1_setup_request_ies_container request;
+  request.transaction_id = 7;
+  request.gnb_du_id      = 1;
+  request.gnb_du_rrc_version.latest_rrc_version.from_number(1);
+  byte_buffer encoded;
+  bit_ref     writer(encoded);
+  ASSERT_EQ(asn1::pack(writer, request), OCUDUASN_SUCCESS);
+  // The Transaction ID IE comes first: its id, criticality, value length and value.
+  ASSERT_EQ(encoded[3], 78);
+  unsigned ie_end = 6 + encoded[5];
+
+  // Three Transaction ID IEs, as many IEs as the mandatory IEs of the F1 Setup Request.
+  byte_buffer repeated;
+  ASSERT_TRUE(repeated.append(encoded[0]));
+  ASSERT_TRUE(repeated.append(encoded[1]));
+  for (unsigned i = 0; i != 3; ++i) {
+    for (unsigned b = 2; b != ie_end; ++b) {
+      ASSERT_TRUE(repeated.append(encoded[b]));
+    }
+  }
+
+  asn1_log_spy().reset();
+  asn1::f1ap::f1_setup_request_ies_container decoded;
+  cbit_ref                                   reader(repeated);
+  EXPECT_EQ(asn1::unpack(decoded, reader), OCUDUASN_ERROR_DECODE_FAIL);
+  EXPECT_TRUE(asn1_log_spy().has_message("The IE id=78 is repeated"));
+}
+
+TEST_F(asn1_f1ap_test, decoding_failure_logs_the_field_ie_and_alternative_it_went_through)
+{
+  // An RRC Version IE whose value says that it has extensions, but ends before them.
+  byte_buffer encoded;
+  bit_ref     writer(encoded);
+  ASSERT_EQ(writer.pack(uint32_t{3}, 16), OCUDUASN_SUCCESS);
+  ASSERT_EQ(pack_integer(writer, uint32_t{171}, uint32_t{0}, uint32_t{65535}, false, true), OCUDUASN_SUCCESS);
+  ASSERT_EQ(asn1::pack(writer, crit_e{crit_e::reject}), OCUDUASN_SUCCESS);
+  ASSERT_EQ(pack_length(writer, uint32_t{1}, true), OCUDUASN_SUCCESS);
+  // The presence bit of the extensions, then the 3 bits of the latest RRC version.
+  ASSERT_EQ(writer.pack(uint8_t{0x80}, 8), OCUDUASN_SUCCESS);
+
+  asn1_log_spy().reset();
+  asn1::f1ap::f1_setup_request_ies_container decoded;
+  cbit_ref                                   reader(encoded);
+  EXPECT_EQ(asn1::unpack(decoded, reader), OCUDUASN_ERROR_DECODE_FAIL);
+  EXPECT_TRUE(asn1_log_spy().has_message("Decoding failure in field iE-Extensions"));
+  EXPECT_TRUE(asn1_log_spy().has_message("Decoding failure in IE id=171"));
+
+  // A truncated F1 Setup Request PDU.
+  asn1::f1ap::f1ap_pdu_c pdu;
+  pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  auto& request          = *pdu.init_msg().value.f1_setup_request();
+  request.transaction_id = 7;
+  request.gnb_du_id      = 1;
+  request.gnb_du_rrc_version.latest_rrc_version.from_number(1);
+  byte_buffer pdu_encoded;
+  bit_ref     pdu_writer(pdu_encoded);
+  ASSERT_EQ(asn1::pack(pdu_writer, pdu), OCUDUASN_SUCCESS);
+  pdu_encoded.trim_tail(1);
+
+  asn1::f1ap::f1ap_pdu_c decoded_pdu;
+  cbit_ref               pdu_reader(pdu_encoded);
+  EXPECT_EQ(asn1::unpack(decoded_pdu, pdu_reader), OCUDUASN_ERROR_DECODE_FAIL);
+  EXPECT_TRUE(asn1_log_spy().has_message("Decoding failure in alternative initiatingMessage of f1ap_pdu_c"));
 }
 
 // initiating message F1SetupRequest
@@ -154,6 +233,29 @@ TEST_F(asn1_f1ap_test, when_setup_message_correct_then_packing_successful)
 }
 
 // successful outcome F1SetupResponse
+TEST_F(asn1_f1ap_test, moved_pdu_keeps_the_values_of_its_choices)
+{
+  static_assert(std::is_nothrow_move_constructible_v<asn1::f1ap::f1ap_pdu_c>);
+  static_assert(std::is_nothrow_move_assignable_v<asn1::f1ap::f1ap_pdu_c>);
+
+  asn1::f1ap::f1ap_pdu_c pdu;
+  pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  auto& setup_req                             = pdu.init_msg().value.f1_setup_request();
+  setup_req->gnb_du_served_cells_list_present = true;
+  setup_req->gnb_du_served_cells_list.resize(2);
+  const void* cells = setup_req->gnb_du_served_cells_list.data();
+
+  // A move takes the list of the alternative instead of copying it.
+  asn1::f1ap::f1ap_pdu_c moved(std::move(pdu));
+  ASSERT_EQ(cells, moved.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.data());
+  ASSERT_EQ(asn1::f1ap::f1ap_pdu_c::types::nulltype, pdu.type().value);
+
+  asn1::f1ap::f1ap_pdu_c assigned;
+  assigned = std::move(moved);
+  ASSERT_EQ(cells, assigned.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.data());
+  ASSERT_EQ(2, assigned.init_msg().value.f1_setup_request()->gnb_du_served_cells_list.size());
+}
+
 TEST_F(asn1_f1ap_test, when_setup_response_correct_then_packing_successful)
 {
   asn1::f1ap::f1ap_pdu_c pdu;

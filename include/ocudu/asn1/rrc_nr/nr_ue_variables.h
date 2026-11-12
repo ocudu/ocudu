@@ -116,7 +116,7 @@ struct cells_triggered_list_item_c_ {
   uint16_t& set_pci_utra_fdd_r16();
 
 private:
-  asn1::table::choice_storage<cells_triggered_list_item_c_, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<cells_triggered_list_item_c_, types, choice_buffer_t<uint16_t>> c;
 };
 
 // CellsTriggeredList ::= SEQUENCE (SIZE (1..32)) OF CellsTriggeredList-item
@@ -426,7 +426,7 @@ struct var_meas_cfg_s {
     uint8_t& set_csi_rsrp();
 
   private:
-    asn1::table::choice_storage<s_measure_cfg_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<s_measure_cfg_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables

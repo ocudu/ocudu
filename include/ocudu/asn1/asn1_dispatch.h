@@ -72,6 +72,13 @@ template <typename T>
 struct has_to_json_member<T, std::void_t<decltype(std::declval<const T&>().to_json(std::declval<json_writer&>()))>>
   : std::true_type {};
 
+template <typename T>
+inline constexpr bool has_pack_member_v = has_pack_member<T>::value;
+template <typename T>
+inline constexpr bool has_unpack_member_v = has_unpack_member<T>::value;
+template <typename T>
+inline constexpr bool has_to_json_member_v = has_to_json_member<T>::value;
+
 } // namespace detail
 
 /// Packs the value with its pack() member.
@@ -81,7 +88,7 @@ inline auto pack(bit_ref& bref, const T& obj) -> decltype(obj.pack(bref))
   return obj.pack(bref);
 }
 /// Packs the value of a generated type without pack() member through the table of its codecs.
-template <typename T, std::enable_if_t<not detail::has_pack_member<T>::value, int> = 0>
+template <typename T, std::enable_if_t<not detail::has_pack_member_v<T>, int> = 0>
 inline auto pack(bit_ref& bref, const T& obj) -> decltype(table::pack_value(bref, &obj, T::desc))
 {
   return table::pack_value(bref, &obj, T::desc);
@@ -93,7 +100,7 @@ inline auto unpack(T& obj, cbit_ref& bref) -> decltype(obj.unpack(bref))
   return obj.unpack(bref);
 }
 /// Unpacks the value of a generated type without unpack() member through the table of its codecs.
-template <typename T, std::enable_if_t<not detail::has_unpack_member<T>::value, int> = 0>
+template <typename T, std::enable_if_t<not detail::has_unpack_member_v<T>, int> = 0>
 inline auto unpack(T& obj, cbit_ref& bref) -> decltype(table::unpack_value(&obj, bref, T::desc))
 {
   return table::unpack_value(&obj, bref, T::desc);
@@ -106,7 +113,7 @@ inline auto to_json(json_writer& j, const T& obj) -> decltype(obj.to_json(j))
   obj.to_json(j);
 }
 /// Writes the value of a generated type without to_json() member through the table of its codecs.
-template <typename T, std::enable_if_t<not detail::has_to_json_member<T>::value, int> = 0>
+template <typename T, std::enable_if_t<not detail::has_to_json_member_v<T>, int> = 0>
 inline auto to_json(json_writer& j, const T& obj) -> decltype(table::to_json_value(j, &obj, T::desc))
 {
   table::to_json_value(j, &obj, T::desc);
@@ -136,9 +143,15 @@ inline void to_json(json_writer& j, const integer<IntType, LB, UB, Ext, Al>& obj
   }
 }
 
-inline void to_json(json_writer& j, int64_t number)
+template <class IntType, std::enable_if_t<std::is_integral_v<IntType>, int> = 0>
+inline void to_json(json_writer& j, IntType number)
 {
-  j.write_int(number);
+  // Values of unsigned 64-bit integers may not fit in the int64_t of write_int.
+  if constexpr (std::is_unsigned_v<IntType> and sizeof(IntType) == sizeof(uint64_t)) {
+    j.write_uint(number);
+  } else {
+    j.write_int(number);
+  }
 }
 
 template <typename T>

@@ -318,7 +318,7 @@ struct meas_trigger_quant_offset_c {
   int8_t& set_sinr();
 
 private:
-  asn1::table::choice_storage<meas_trigger_quant_offset_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<meas_trigger_quant_offset_c, types, choice_buffer_t<int8_t>> c;
 };
 
 // MeasTriggerQuantity ::= CHOICE
@@ -369,7 +369,7 @@ struct meas_trigger_quant_c {
   uint8_t& set_sinr();
 
 private:
-  asn1::table::choice_storage<meas_trigger_quant_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<meas_trigger_quant_c, types, choice_buffer_t<uint8_t>> c;
 };
 
 // NR-RS-Type ::= ENUMERATED
@@ -727,7 +727,7 @@ struct mu_si_m_gap_info_r17_s {
     uint16_t& set_ms5120_r17();
 
   private:
-    asn1::table::choice_storage<musim_gap_repeat_and_offset_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<musim_gap_repeat_and_offset_r17_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
 
   // member variables
@@ -1494,7 +1494,7 @@ struct meas_trigger_quant_cli_r16_c {
   uint8_t& set_cli_rssi_r16();
 
 private:
-  asn1::table::choice_storage<meas_trigger_quant_cli_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<meas_trigger_quant_cli_r16_c, types, choice_buffer_t<uint8_t>> c;
 };
 
 // CLI-EventTriggerConfig-r16 ::= SEQUENCE
@@ -1823,7 +1823,7 @@ struct csi_rs_res_mob_s {
     uint16_t& set_ms40();
 
   private:
-    asn1::table::choice_storage<slot_cfg_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<slot_cfg_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct associated_ssb_s_ {
     uint8_t ssb_idx            = 0;
@@ -1938,7 +1938,7 @@ struct csi_rs_res_mob_s {
     uint16_t& set_ms40();
 
   private:
-    asn1::table::choice_storage<slot_cfg_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<slot_cfg_r17_c_, types, choice_buffer_t<uint16_t>> c;
   };
 
   // member variables
@@ -2648,7 +2648,7 @@ struct rssi_periodicity_and_offset_r16_c {
   uint16_t& set_s1640();
 
 private:
-  asn1::table::choice_storage<rssi_periodicity_and_offset_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<rssi_periodicity_and_offset_r16_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // RSSI-ResourceConfigCLI-r16 ::= SEQUENCE
@@ -2733,7 +2733,7 @@ struct ltm_qcl_info_r18_s {
     uint8_t& set_csi_rs_idx();
 
   private:
-    asn1::table::choice_storage<ref_sig_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_r18_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct qcl_type_r18_opts {
     enum options { type_a, type_b, type_c, type_d, nulltype } value;
@@ -2814,7 +2814,7 @@ struct candidate_tci_ul_state_r18_s {
     uint8_t& set_csi_rs_idx();
 
   private:
-    asn1::table::choice_storage<ref_sig_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ref_sig_r18_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct tag_id_ptr_r18_opts {
     enum options { n0, n1, nulltype } value;
@@ -3045,7 +3045,7 @@ struct clock_quality_metrics_r18_s {
     uint8_t&  set_idx();
 
   private:
-    asn1::table::choice_storage<clock_accuracy_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<clock_accuracy_r18_c_, types, choice_buffer_t<uint32_t, uint8_t>> c;
   };
   struct parent_time_source_r18_opts {
     enum options {
@@ -3488,7 +3488,7 @@ struct ssb_mtc3_r16_s {
     uint16_t& set_sf1280_r16();
 
   private:
-    asn1::table::choice_storage<periodicity_and_offset_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<periodicity_and_offset_r16_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct dur_r16_opts {
     enum options { sf1, sf2, sf3, sf4, sf5, nulltype } value;
@@ -4058,7 +4058,7 @@ struct meas_trigger_quant_eutra_c {
   uint8_t& set_sinr();
 
 private:
-  asn1::table::choice_storage<meas_trigger_quant_eutra_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<meas_trigger_quant_eutra_c, types, choice_buffer_t<uint8_t>> c;
 };
 
 // MeasTriggerQuantityUTRA-FDD-r16 ::= CHOICE
@@ -4099,7 +4099,7 @@ struct meas_trigger_quant_utra_fdd_r16_c {
   uint8_t& set_utra_fdd_ec_n0_r16();
 
 private:
-  asn1::table::choice_storage<meas_trigger_quant_utra_fdd_r16_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<meas_trigger_quant_utra_fdd_r16_c, types, choice_buffer_t<int8_t, uint8_t>> c;
 };
 
 // EventTriggerConfigInterRAT ::= SEQUENCE
@@ -4889,7 +4889,7 @@ struct meas_win_cfg_r18_s {
     uint8_t& set_periodicity_ms80_r18();
 
   private:
-    asn1::table::choice_storage<win_offset_periodicity_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<win_offset_periodicity_r18_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct win_dur_r18_opts {
     enum options { ms2, ms5, ms5dot5, spare1, nulltype } value;
@@ -4946,7 +4946,7 @@ struct meas_cfg_s {
     uint8_t& set_csi_rsrp();
 
   private:
-    asn1::table::choice_storage<s_measure_cfg_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<s_measure_cfg_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -7088,7 +7088,9 @@ struct dl_info_transfer_v1800_ies_s {
     clock_quality_acceptance_status_r18_e_& set_clock_quality_acceptance_status_r18();
 
   private:
-    asn1::table::choice_storage<clock_quality_details_level_r18_c_, types, choice_buffer_t<clock_quality_metrics_r18_s>>
+    asn1::table::choice_storage<clock_quality_details_level_r18_c_,
+                                types,
+                                choice_buffer_t<clock_quality_acceptance_status_r18_e_, clock_quality_metrics_r18_s>>
         c;
   };
 

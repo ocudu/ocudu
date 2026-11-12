@@ -17,7 +17,62 @@ namespace asn1 {
   table-driven SEQUENCE
 ************************/
 
+/// Returns the failure of a nested value, which the engine logs where it happens, with the field, alternative or IE
+/// that it went through.
+#define RETURN_ON_FAILURE(ret)                                                                                         \
+  do {                                                                                                                 \
+    OCUDUASN_CODE code_ = (ret);                                                                                       \
+    if (code_ != OCUDUASN_SUCCESS) {                                                                                   \
+      return code_;                                                                                                    \
+    }                                                                                                                  \
+  } while (0)
+
 namespace {
+
+/// Kind of a failure, for the log.
+const char* failure_kind(OCUDUASN_CODE code)
+{
+  return code == OCUDUASN_ERROR_ENCODE_FAIL ? "Encoding" : "Decoding";
+}
+
+/// Logs the field of a SEQUENCE that a failure went through, so that the log tells where the failure happened.
+[[gnu::cold]] [[gnu::noinline]] OCUDUASN_CODE
+field_failure(OCUDUASN_CODE code, const table::field_name* names, uint32_t idx)
+{
+  if (names != nullptr and names[idx].name != nullptr) {
+    log_error("{} failure in field {}", failure_kind(code), names[idx].name);
+  } else {
+    log_error("{} failure in field number {}", failure_kind(code), idx);
+  }
+  return code;
+}
+
+/// Logs the alternative of a CHOICE that a failure went through.
+[[gnu::cold]] [[gnu::noinline]] OCUDUASN_CODE
+alternative_failure(OCUDUASN_CODE code, const table::choice_desc& desc, uint32_t type_idx)
+{
+  const char* choice = desc.name != nullptr ? desc.name : "a CHOICE";
+  if (desc.names != nullptr and desc.names[type_idx].name != nullptr) {
+    log_error("{} failure in alternative {} of {}", failure_kind(code), desc.names[type_idx].name, choice);
+  } else {
+    log_error("{} failure in alternative number {} of {}", failure_kind(code), type_idx, choice);
+  }
+  return code;
+}
+
+/// Logs the item of a list that a failure went through.
+[[gnu::cold]] [[gnu::noinline]] OCUDUASN_CODE item_failure(OCUDUASN_CODE code, uint32_t idx)
+{
+  log_error("{} failure in item {} of a list", failure_kind(code), idx);
+  return code;
+}
+
+/// Logs the IE of a container that a failure went through.
+[[gnu::cold]] [[gnu::noinline]] OCUDUASN_CODE ie_failure(OCUDUASN_CODE code, uint32_t id)
+{
+  log_error("{} failure in IE id={}", failure_kind(code), id);
+  return code;
+}
 
 /// Number of bits of a constrained whole number whose largest offset from its lower bound is max_offset.
 OCUDU_FORCE_INLINE uint32_t offset_bits(uint64_t max_offset)
@@ -30,9 +85,8 @@ template <class T>
 OCUDU_FORCE_INLINE bool is_bit_field_int(T lb, T ub, const table::seq_field& f)
 {
   // Type limits of signed integers stand for absent bounds.
-  bool bounded =
-      std::is_unsigned<T>::value or (lb != std::numeric_limits<T>::min() and ub != std::numeric_limits<T>::max());
-  return not f.has_ext and bounded and lb <= ub and (not f.aligned or (uint64_t) ub - (uint64_t)lb < 255);
+  bool bounded = std::is_unsigned_v<T> or (lb != std::numeric_limits<T>::min() and ub != std::numeric_limits<T>::max());
+  return not f.has_ext and bounded and (not f.aligned or f.range < 255);
 }
 
 template <class T>
@@ -40,10 +94,11 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE pack_int_field(bit_ref& bref, const void* field
 {
   T n  = *static_cast<const T*>(field);
   T lb = static_cast<T>(f.lb);
-  T ub = static_cast<T>(f.ub);
-  // A value in range of a bit field integer, the common case, inline.
-  if (is_bit_field_int(lb, ub, f) and n >= lb and n <= ub) {
-    return bref.pack((uint64_t)n - (uint64_t)lb, offset_bits((uint64_t)ub - (uint64_t)lb));
+  T ub = static_cast<T>(f.ub());
+  // A value in range of a bit field integer, the common case, inline. Values below lb wrap above the range.
+  uint64_t offset = static_cast<uint64_t>(n) - static_cast<uint64_t>(lb);
+  if (is_bit_field_int(lb, ub, f) and offset <= f.range) {
+    return bref.pack(offset, offset_bits(f.range));
   }
   return pack_integer(bref, n, lb, ub, f.has_ext, f.aligned);
 }
@@ -52,8 +107,10 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE pack_int_field(bit_ref& bref, const void* field
 template <class T>
 OCUDUASN_CODE int_out_of_bounds(T lb, uint64_t offset, T ub)
 {
-  log_error(
-      "The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)((uint64_t)lb + offset), (long)ub);
+  log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met",
+            static_cast<long>(lb),
+            static_cast<long>(static_cast<uint64_t>(lb) + offset),
+            static_cast<long>(ub));
   return OCUDUASN_ERROR_DECODE_FAIL;
 }
 
@@ -61,15 +118,15 @@ template <class T>
 OCUDU_FORCE_INLINE OCUDUASN_CODE unpack_int_field(void* field, cbit_ref& bref, const table::seq_field& f)
 {
   T lb = static_cast<T>(f.lb);
-  T ub = static_cast<T>(f.ub);
+  T ub = static_cast<T>(f.ub());
   if (is_bit_field_int(lb, ub, f)) {
-    uint64_t max_offset = (uint64_t)ub - (uint64_t)lb;
+    uint64_t max_offset = f.range;
     uint64_t offset     = 0;
     HANDLE_CODE(bref.unpack(offset, offset_bits(max_offset)));
     if (offset > max_offset) {
       return int_out_of_bounds(lb, offset, ub);
     }
-    *static_cast<T*>(field) = static_cast<T>((uint64_t)lb + offset);
+    *static_cast<T*>(field) = static_cast<T>(static_cast<uint64_t>(lb) + offset);
     return OCUDUASN_SUCCESS;
   }
   return unpack_integer(*static_cast<T*>(field), bref, lb, ub, f.has_ext, f.aligned);
@@ -90,7 +147,9 @@ pack_enum_value(bit_ref& bref, uint32_t e, uint32_t nof_types, uint32_t nof_exts
 /// Logs a decoded ENUMERATED value out of range.
 OCUDUASN_CODE enum_out_of_range(uint32_t e, uint32_t nof_types)
 {
-  log_error("The provided enum is not within the range of possible values ({}>={})", (unsigned)e, (unsigned)nof_types);
+  log_error("The provided enum is not within the range of possible values ({}>={})",
+            static_cast<unsigned>(e),
+            static_cast<unsigned>(nof_types));
   return OCUDUASN_ERROR_DECODE_FAIL;
 }
 
@@ -153,7 +212,7 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE pack_enum_field(bit_ref& bref, const void* fiel
   return pack_enum_value(bref,
                          static_cast<uint32_t>(*static_cast<const T*>(field)),
                          static_cast<uint32_t>(f.lb),
-                         static_cast<uint32_t>(f.ub),
+                         static_cast<uint32_t>(f.range),
                          f.has_ext);
 }
 
@@ -161,7 +220,7 @@ template <class T>
 OCUDU_FORCE_INLINE OCUDUASN_CODE unpack_enum_field(void* field, cbit_ref& bref, const table::seq_field& f)
 {
   uint32_t e = 0;
-  HANDLE_CODE(unpack_enum_value(e, bref, static_cast<uint32_t>(f.lb), static_cast<uint32_t>(f.ub), f.has_ext));
+  HANDLE_CODE(unpack_enum_value(e, bref, static_cast<uint32_t>(f.lb), static_cast<uint32_t>(f.range), f.has_ext));
   *static_cast<T*>(field) = static_cast<T>(e);
   return OCUDUASN_SUCCESS;
 }
@@ -182,7 +241,7 @@ const void* field_value(const void* field, const table::seq_field& f)
 }
 void* field_value(void* field, const table::seq_field& f)
 {
-  return f.codec != nullptr and f.codec->get != nullptr ? f.codec->get(field) : field;
+  return f.codec != nullptr and f.codec->get_mut != nullptr ? f.codec->get_mut(field) : field;
 }
 
 /// Whether a field holds its value in a copy_ptr.
@@ -199,7 +258,7 @@ const void* nested_value(const void* field, const table::seq_field& f)
 }
 void* nested_value(void* field, const table::seq_field& f)
 {
-  return is_ptr_field(f) ? f.codec->get(field) : field;
+  return is_ptr_field(f) ? f.codec->get_mut(field) : field;
 }
 
 /// Type member of a CHOICE that starts at start, or null when the CHOICE has a single alternative and no type.
@@ -321,9 +380,10 @@ bool is_present(const uint8_t* base, const table::seq_field& f)
 
 /// Packs the presence bits of the optional fields, then the values of the present fields, of a field set with more
 /// fields than its presence mask tracks.
-OCUDUASN_CODE
-pack_unmasked_fields(bit_ref& bref, const uint8_t* base, const table::seq_field* fields, uint32_t nof_fields)
+OCUDUASN_CODE pack_unmasked_fields(bit_ref& bref, const uint8_t* base, const table::field_set& set)
 {
+  const table::seq_field* fields     = set.fields;
+  uint32_t                nof_fields = set.nof_fields;
   for (uint32_t i = 0; i != nof_fields; ++i) {
     const table::seq_field& f = fields[i];
     if (f.presence != table::seq_field::mandatory and f.presence != table::seq_field::ptr_mandatory) {
@@ -340,16 +400,19 @@ pack_unmasked_fields(bit_ref& bref, const uint8_t* base, const table::seq_field*
       }
       continue;
     }
-    HANDLE_CODE(pack_field(bref, base + f.offset, f));
+    if (OCUDUASN_CODE ret = pack_field(bref, base + f.offset, f); ret != OCUDUASN_SUCCESS) {
+      return field_failure(ret, set.names, i);
+    }
   }
   return OCUDUASN_SUCCESS;
 }
 
 /// Unpacks the presence bits of the optional fields, then the values of the present fields, of a field set with more
 /// fields than its presence mask tracks.
-OCUDUASN_CODE
-unpack_unmasked_fields(uint8_t* base, cbit_ref& bref, const table::seq_field* fields, uint32_t nof_fields)
+OCUDUASN_CODE unpack_unmasked_fields(uint8_t* base, cbit_ref& bref, const table::field_set& set)
 {
+  const table::seq_field* fields     = set.fields;
+  uint32_t                nof_fields = set.nof_fields;
   // Presence of the optional lists, which have no presence flag, one bit per list in order.
   uint64_t list_present = 0;
   uint32_t nof_lists    = 0;
@@ -387,7 +450,9 @@ unpack_unmasked_fields(uint8_t* base, cbit_ref& bref, const table::seq_field* fi
           continue;
         }
     }
-    HANDLE_CODE(unpack_field(base + f.offset, bref, f));
+    if (OCUDUASN_CODE ret = unpack_field(base + f.offset, bref, f); ret != OCUDUASN_SUCCESS) {
+      return field_failure(ret, set.names, i);
+    }
   }
   return OCUDUASN_SUCCESS;
 }
@@ -423,7 +488,7 @@ bool any_present(const uint8_t* base, const table::field_set& set)
 OCUDU_FORCE_INLINE OCUDUASN_CODE pack_fields(bit_ref& bref, const uint8_t* base, const table::field_set& set)
 {
   if (set.nof_fields > table::field_set::max_masked_fields) {
-    return pack_unmasked_fields(bref, base, set.fields, set.nof_fields);
+    return pack_unmasked_fields(bref, base, set);
   }
   // Fields to encode, one bit per field index, and the presence bits, the first optional field in the highest bit.
   uint64_t visit = set.mandatory;
@@ -439,13 +504,16 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE pack_fields(bit_ref& bref, const uint8_t* base,
     HANDLE_CODE(bref.pack(bits, set.nof_opts));
   }
   for (; visit != 0; visit &= visit - 1) {
-    const table::seq_field& f = set.fields[__builtin_ctzll(visit)];
+    auto                    i = static_cast<uint32_t>(__builtin_ctzll(visit));
+    const table::seq_field& f = set.fields[i];
     // Another field of the extension group may be present while this one is not.
     if (f.presence == table::seq_field::ptr_mandatory and not table::ptr_present(base + f.offset)) {
       log_error("Mandatory field of an extension group is missing");
       return OCUDUASN_ERROR_ENCODE_FAIL;
     }
-    HANDLE_CODE(pack_field(bref, base + f.offset, f));
+    if (OCUDUASN_CODE ret = pack_field(bref, base + f.offset, f); ret != OCUDUASN_SUCCESS) {
+      return field_failure(ret, set.names, i);
+    }
   }
   return OCUDUASN_SUCCESS;
 }
@@ -454,7 +522,7 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE pack_fields(bit_ref& bref, const uint8_t* base,
 OCUDU_FORCE_INLINE OCUDUASN_CODE unpack_fields(uint8_t* base, cbit_ref& bref, const table::field_set& set)
 {
   if (set.nof_fields > table::field_set::max_masked_fields) {
-    return unpack_unmasked_fields(base, bref, set.fields, set.nof_fields);
+    return unpack_unmasked_fields(base, bref, set);
   }
   // Fields to decode, one bit per field index.
   uint64_t visit = set.mandatory;
@@ -476,11 +544,14 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE unpack_fields(uint8_t* base, cbit_ref& bref, co
     visit |= static_cast<uint64_t>(present) << opt.field;
   }
   for (; visit != 0; visit &= visit - 1) {
-    const table::seq_field& f = set.fields[__builtin_ctzll(visit)];
+    auto                    i = static_cast<uint32_t>(__builtin_ctzll(visit));
+    const table::seq_field& f = set.fields[i];
     if (f.presence == table::seq_field::ptr_mandatory) {
       f.codec->set_present(base + f.offset, true);
     }
-    HANDLE_CODE(unpack_field(base + f.offset, bref, f));
+    if (OCUDUASN_CODE ret = unpack_field(base + f.offset, bref, f); ret != OCUDUASN_SUCCESS) {
+      return field_failure(ret, set.names, i);
+    }
   }
   return OCUDUASN_SUCCESS;
 }
@@ -603,13 +674,14 @@ pack_ext_groups(bit_ref& bref, const uint8_t* base, const table::seq_desc& desc,
     if (((group_bits >> (desc.nof_groups - 1 - g)) & 1U) == 0) {
       continue;
     }
-    const table::seq_group&    group = desc.groups[g];
-    varlength_field_pack_guard varlen_scope(bref, desc.aligned);
-    if (group.single) {
-      HANDLE_CODE(pack_field(bref, base + group.set.fields[0].offset, group.set.fields[0]));
-    } else {
-      HANDLE_CODE(pack_fields(bref, base, group.set));
-    }
+    const table::seq_group& group = desc.groups[g];
+    RETURN_ON_FAILURE(pack_varlength_field(bref, desc.aligned, [&](bit_ref& contents) {
+      if (not group.single) {
+        return pack_fields(contents, base, group.set);
+      }
+      OCUDUASN_CODE ret = pack_field(contents, base + group.set.fields[0].offset, group.set.fields[0]);
+      return ret == OCUDUASN_SUCCESS ? ret : field_failure(ret, group.set.names, 0);
+    }));
   }
   return OCUDUASN_SUCCESS;
 }
@@ -626,9 +698,12 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE unpack_ext_groups(uint8_t* base, cbit_ref& bref
     const table::seq_group& group = desc.groups[g];
     if (group.single) {
       set_single_present(base, group.set.fields[0]);
-      HANDLE_CODE(unpack_field(base + group.set.fields[0].offset, bref, group.set.fields[0]));
+      if (OCUDUASN_CODE ret = unpack_field(base + group.set.fields[0].offset, bref, group.set.fields[0]);
+          ret != OCUDUASN_SUCCESS) {
+        return field_failure(ret, group.set.names, 0);
+      }
     } else {
-      HANDLE_CODE(unpack_fields(base, bref, group.set));
+      RETURN_ON_FAILURE(unpack_fields(base, bref, group.set));
     }
   }
   return group_unpacker.consume_remaining_groups(bref);
@@ -646,7 +721,7 @@ OCUDUASN_CODE table::pack_sequence(bit_ref& bref, const void* seq, const seq_des
   if (desc.has_ext) {
     HANDLE_CODE(bref.pack(ext, 1));
   }
-  HANDLE_CODE(pack_fields(bref, base, desc.root));
+  RETURN_ON_FAILURE(pack_fields(bref, base, desc.root));
   return ext ? pack_ext_groups(bref, base, desc, group_bits) : OCUDUASN_SUCCESS;
 }
 
@@ -657,28 +732,28 @@ OCUDUASN_CODE table::unpack_sequence(void* seq, cbit_ref& bref, const seq_desc& 
   if (desc.has_ext) {
     HANDLE_CODE(bref.unpack(ext, 1));
   }
-  HANDLE_CODE(unpack_fields(base, bref, desc.root));
+  RETURN_ON_FAILURE(unpack_fields(base, bref, desc.root));
   return ext ? unpack_ext_groups(base, bref, desc) : OCUDUASN_SUCCESS;
 }
 
-OCUDUASN_CODE table::pack_sequence_item(bit_ref& bref, const void* item, void* packer)
+OCUDUASN_CODE table::pack_sequence_item(bit_ref& bref, const void* item, const void* packer)
 {
   return pack_sequence(bref, item, *static_cast<const seq_desc*>(packer));
 }
 
-OCUDUASN_CODE table::unpack_sequence_item(void* item, cbit_ref& bref, void* unpacker)
+OCUDUASN_CODE table::unpack_sequence_item(void* item, cbit_ref& bref, const void* unpacker)
 {
   return unpack_sequence(item, bref, *static_cast<const seq_desc*>(unpacker));
 }
 
-OCUDUASN_CODE table::pack_choice_item(bit_ref& bref, const void* item, void* packer)
+OCUDUASN_CODE table::pack_choice_item(bit_ref& bref, const void* item, const void* packer)
 {
   const auto& desc  = *static_cast<const choice_desc*>(packer);
   const auto* start = static_cast<const uint8_t*>(item);
   return pack_choice(bref, choice_type_field(start, desc), start + desc.storage_offset, desc);
 }
 
-OCUDUASN_CODE table::unpack_choice_item(void* item, cbit_ref& bref, void* unpacker)
+OCUDUASN_CODE table::unpack_choice_item(void* item, cbit_ref& bref, const void* unpacker)
 {
   const auto& desc = *static_cast<const choice_desc*>(unpacker);
   return unpack_choice(item, static_cast<uint8_t*>(item) + desc.storage_offset, bref, desc);
@@ -698,14 +773,16 @@ OCUDUASN_CODE table::pack_item_list(bit_ref& bref, const void* field, const seq_
 {
   const auto& codec = *static_cast<const item_list_field_codec*>(desc.codec);
   list_view   list  = codec.view(field);
-  void*       table = const_cast<void*>(desc.nested);
+  const void* table = desc.nested;
   if (codec.resize != nullptr) {
     return detail::pack_dyn_seq_of_items(
-        bref, list.data, list.size, codec.item_size, desc.lb, desc.ub, desc.aligned, codec.pack_item, table);
+        bref, list.data, list.size, codec.item_size, desc.lb, desc.ub(), desc.aligned, codec.pack_item, table);
   }
   const auto* item = static_cast<const uint8_t*>(list.data);
   for (uint32_t i = 0; i != list.size; ++i, item += codec.item_size) {
-    HANDLE_CODE(codec.pack_item(bref, item, table));
+    if (OCUDUASN_CODE ret = codec.pack_item(bref, item, table); ret != OCUDUASN_SUCCESS) {
+      return item_failure(ret, i);
+    }
   }
   return OCUDUASN_SUCCESS;
 }
@@ -713,15 +790,17 @@ OCUDUASN_CODE table::pack_item_list(bit_ref& bref, const void* field, const seq_
 OCUDUASN_CODE table::unpack_item_list(void* field, cbit_ref& bref, const seq_field& desc)
 {
   const auto& codec = *static_cast<const item_list_field_codec*>(desc.codec);
-  void*       table = const_cast<void*>(desc.nested);
+  const void* table = desc.nested;
   if (codec.resize != nullptr) {
     return detail::unpack_dyn_seq_of_items(
-        field, codec.resize, bref, codec.item_size, desc.lb, desc.ub, desc.aligned, codec.unpack_item, table);
+        field, codec.resize, bref, codec.item_size, desc.lb, desc.ub(), desc.aligned, codec.unpack_item, table);
   }
   list_view list = codec.view(field);
-  auto*     item = static_cast<uint8_t*>(const_cast<void*>(list.data));
+  auto*     item = static_cast<uint8_t*>(codec.fixed_items(field));
   for (uint32_t i = 0; i != list.size; ++i, item += codec.item_size) {
-    HANDLE_CODE(codec.unpack_item(item, bref, table));
+    if (OCUDUASN_CODE ret = codec.unpack_item(item, bref, table); ret != OCUDUASN_SUCCESS) {
+      return item_failure(ret, i);
+    }
   }
   return OCUDUASN_SUCCESS;
 }
@@ -742,10 +821,10 @@ void table::to_json_sequence(json_writer& j, const void* seq, const seq_desc& de
 {
   const auto* base = static_cast<const uint8_t*>(seq);
   j.start_obj();
-  fields_to_json(j, base, desc.root.fields, desc.names, desc.root.nof_fields);
+  fields_to_json(j, base, desc.root.fields, desc.root.names, desc.root.nof_fields);
   for (uint32_t g = 0; g != desc.nof_groups; ++g) {
     const seq_group& group = desc.groups[g];
-    fields_to_json(j, base, group.set.fields, group.names, group.set.nof_fields);
+    fields_to_json(j, base, group.set.fields, group.set.names, group.set.nof_fields);
   }
   j.end_obj();
 }
@@ -814,16 +893,20 @@ OCUDUASN_CODE table::unpack_value(void* value, cbit_ref& bref, const ie_containe
 
 OCUDUASN_CODE table::pack_message(bit_ref& bref, const void* msg, const seq_desc& desc)
 {
-  HANDLE_CODE(pack_sequence(bref, msg, desc));
-  bref.align_bytes_zero();
-  return OCUDUASN_SUCCESS;
+  if (OCUDUASN_CODE ret = pack_sequence(bref, msg, desc); ret != OCUDUASN_SUCCESS) {
+    log_error("Encoding failure in message {}", desc.message_name != nullptr ? desc.message_name : "");
+    return ret;
+  }
+  return bref.align_bytes_zero();
 }
 
 OCUDUASN_CODE table::unpack_message(void* msg, cbit_ref& bref, const seq_desc& desc)
 {
-  HANDLE_CODE(unpack_sequence(msg, bref, desc));
-  bref.align_bytes();
-  return OCUDUASN_SUCCESS;
+  if (OCUDUASN_CODE ret = unpack_sequence(msg, bref, desc); ret != OCUDUASN_SUCCESS) {
+    log_error("Decoding failure in message {}", desc.message_name != nullptr ? desc.message_name : "");
+    return ret;
+  }
+  return bref.align_bytes();
 }
 
 void table::to_json_message(json_writer& j, const void* msg, const seq_desc& desc, const char* name)
@@ -890,6 +973,19 @@ void table::storage_copy_choice(void* storage, const void* other, uint32_t type,
   }
 }
 
+void table::storage_relocate_choice(void* storage, void* other, uint32_t type, const choice_storage_desc& desc)
+{
+  const storage_ops* ops = storage_alternative(type, desc);
+  if (ops == nullptr) {
+    return;
+  }
+  if (ops->relocate != nullptr) {
+    ops->relocate(storage, other);
+  } else {
+    std::memcpy(storage, other, ops->size);
+  }
+}
+
 void table::set_any_choice(void* storage, uint32_t type, const choice_desc& desc)
 {
   if (type < desc.nof_types) {
@@ -921,26 +1017,27 @@ static void set_choice_type(void* choice, void* value, uint32_t type, const tabl
 pack_ext_alternative(bit_ref& bref, const void* value, const table::seq_field& f, bool aligned)
 {
   // Extension alternatives are open types, even when their encoding is empty.
-  varlength_field_pack_guard varlen_scope(bref, aligned);
-  return pack_field(bref, field_value(value, f), f);
+  return pack_varlength_field(
+      bref, aligned, [&](bit_ref& contents) { return pack_field(contents, field_value(value, f), f); });
 }
 
 /// Unpacks the value of an extension alternative of a CHOICE.
 [[gnu::noinline]] static OCUDUASN_CODE
 unpack_ext_alternative(void* value, cbit_ref& bref, const table::seq_field& f, bool aligned)
 {
-  varlength_field_unpack_guard varlen_scope(bref, aligned);
-  return unpack_field(field_value(value, f), bref, f);
+  return unpack_varlength_field(
+      bref, aligned, [&](cbit_ref& contents) { return unpack_field(field_value(value, f), contents, f); });
 }
 
 OCUDUASN_CODE table::pack_choice(bit_ref& bref, const void* type, const void* value, const choice_desc& desc)
 {
   uint32_t type_idx = choice_type_idx(type, desc);
   HANDLE_CODE(pack_enum_value(bref, type_idx, desc.nof_types, desc.nof_exts, desc.has_ext));
-  if (type_idx < desc.nof_types - desc.nof_exts) {
-    return pack_field(bref, field_value(value, desc.alternatives[type_idx]), desc.alternatives[type_idx]);
-  }
-  return pack_ext_alternative(bref, value, desc.alternatives[type_idx], desc.aligned);
+  OCUDUASN_CODE ret =
+      type_idx < desc.nof_types - desc.nof_exts
+          ? pack_field(bref, field_value(value, desc.alternatives[type_idx]), desc.alternatives[type_idx])
+          : pack_ext_alternative(bref, value, desc.alternatives[type_idx], desc.aligned);
+  return ret == OCUDUASN_SUCCESS ? ret : alternative_failure(ret, desc, type_idx);
 }
 
 OCUDUASN_CODE table::unpack_choice(void* choice, void* value, cbit_ref& bref, const choice_desc& desc)
@@ -952,38 +1049,45 @@ OCUDUASN_CODE table::unpack_choice(void* choice, void* value, cbit_ref& bref, co
   } else if (desc.type_offset != choice_desc::no_member) {
     set_choice_type(choice, value, type_idx, desc);
   }
-  if (type_idx < desc.nof_types - desc.nof_exts) {
-    return unpack_field(field_value(value, desc.alternatives[type_idx]), bref, desc.alternatives[type_idx]);
-  }
-  return unpack_ext_alternative(value, bref, desc.alternatives[type_idx], desc.aligned);
+  OCUDUASN_CODE ret =
+      type_idx < desc.nof_types - desc.nof_exts
+          ? unpack_field(field_value(value, desc.alternatives[type_idx]), bref, desc.alternatives[type_idx])
+          : unpack_ext_alternative(value, bref, desc.alternatives[type_idx], desc.aligned);
+  return ret == OCUDUASN_SUCCESS ? ret : alternative_failure(ret, desc, type_idx);
 }
 
 OCUDUASN_CODE table::pack_open_type(bit_ref& bref, const void* type, const void* value, const choice_desc& desc)
 {
-  varlength_field_pack_guard varlen_scope(bref, desc.aligned);
-  if (desc.nof_types == 0) {
-    return OCUDUASN_SUCCESS;
-  }
-  uint32_t type_idx = choice_type_idx(type, desc);
-  if (type_idx >= desc.nof_types) {
-    log_invalid_choice_id(type_idx, desc.name);
-    return OCUDUASN_ERROR_ENCODE_FAIL;
-  }
-  return pack_field(bref, field_value(value, desc.alternatives[type_idx]), desc.alternatives[type_idx]);
+  return pack_varlength_field(bref, desc.aligned, [&](bit_ref& contents) {
+    if (desc.nof_types == 0) {
+      return OCUDUASN_SUCCESS;
+    }
+    uint32_t type_idx = choice_type_idx(type, desc);
+    if (type_idx >= desc.nof_types) {
+      log_invalid_choice_id(type_idx, desc.name);
+      return OCUDUASN_ERROR_ENCODE_FAIL;
+    }
+    const table::seq_field& f   = desc.alternatives[type_idx];
+    OCUDUASN_CODE           ret = pack_field(contents, field_value(value, f), f);
+    return ret == OCUDUASN_SUCCESS ? ret : alternative_failure(ret, desc, type_idx);
+  });
 }
 
 OCUDUASN_CODE table::unpack_open_type(const void* type, void* value, cbit_ref& bref, const choice_desc& desc)
 {
-  varlength_field_unpack_guard varlen_scope(bref, desc.aligned);
-  if (desc.nof_types == 0) {
-    return OCUDUASN_SUCCESS;
-  }
-  uint32_t type_idx = choice_type_idx(type, desc);
-  if (type_idx >= desc.nof_types) {
-    log_invalid_choice_id(type_idx, desc.name);
-    return OCUDUASN_ERROR_DECODE_FAIL;
-  }
-  return unpack_field(field_value(value, desc.alternatives[type_idx]), bref, desc.alternatives[type_idx]);
+  return unpack_varlength_field(bref, desc.aligned, [&](cbit_ref& contents) {
+    if (desc.nof_types == 0) {
+      return OCUDUASN_SUCCESS;
+    }
+    uint32_t type_idx = choice_type_idx(type, desc);
+    if (type_idx >= desc.nof_types) {
+      log_invalid_choice_id(type_idx, desc.name);
+      return OCUDUASN_ERROR_DECODE_FAIL;
+    }
+    const table::seq_field& f   = desc.alternatives[type_idx];
+    OCUDUASN_CODE           ret = unpack_field(field_value(value, f), contents, f);
+    return ret == OCUDUASN_SUCCESS ? ret : alternative_failure(ret, desc, type_idx);
+  });
 }
 
 void table::to_json_open_type(json_writer& j, const void* type, const void* value, const choice_desc& desc)
@@ -1070,8 +1174,7 @@ void table::to_json_choice(json_writer& j, const void* type, const void* value, 
 
 namespace {
 
-/// Number of IEs up to which pack_ie_container tracks their presence in a mask.
-constexpr uint32_t max_masked_ies = 256;
+static_assert(table::ie_container_desc::max_ies % 64 == 0, "The masks of the IEs are made of whole 64-bit words");
 
 /// Whether an IE of a container is present, given its presence: IEs are mandatory or have a presence flag.
 OCUDU_FORCE_INLINE bool ie_present(const uint8_t* base, int32_t presence)
@@ -1104,9 +1207,10 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE pack_ie(bit_ref&                        bref,
                                          uint32_t                        i)
 {
   HANDLE_CODE(pack_ie_header(bref, desc.ids[i], desc.crits[i]));
-  const table::seq_field&    value = desc.values[i];
-  varlength_field_pack_guard varlen_scope(bref, true);
-  return pack_field(bref, field_value(base + value.offset, value), value);
+  const table::seq_field& value = desc.values[i];
+  return pack_varlength_field(bref, true, [&](bit_ref& contents) {
+    return pack_field(contents, field_value(base + value.offset, value), value);
+  });
 }
 
 } // namespace
@@ -1114,23 +1218,10 @@ OCUDU_FORCE_INLINE OCUDUASN_CODE pack_ie(bit_ref&                        bref,
 OCUDUASN_CODE table::pack_ie_container(bit_ref& bref, const void* container, const ie_container_desc& desc)
 {
   const auto* base = static_cast<const uint8_t*>(container);
-  if (desc.nof_ies > max_masked_ies) {
-    uint32_t nof_ies = 0;
-    for (uint32_t i = 0; i != desc.nof_ies; ++i) {
-      nof_ies += is_present(base, desc.values[i]) ? 1 : 0;
-    }
-    HANDLE_CODE(pack_length(bref, nof_ies, desc.len_lb, desc.len_ub, desc.aligned));
-    for (uint32_t i = 0; i != desc.nof_ies; ++i) {
-      if (is_present(base, desc.values[i])) {
-        HANDLE_CODE(pack_ie(bref, base, desc, i));
-      }
-    }
-    return OCUDUASN_SUCCESS;
-  }
   // Present IEs, IE i in bit i % 64 of word i / 64.
-  std::array<uint64_t, max_masked_ies / 64> present   = {};
-  uint32_t                                  nof_ies   = 0;
-  uint32_t                                  nof_words = (desc.nof_ies + 63) / 64;
+  std::array<uint64_t, ie_container_desc::max_ies / 64> present   = {};
+  uint32_t                                              nof_ies   = 0;
+  uint32_t                                              nof_words = (desc.nof_ies + 63) / 64;
   for (uint32_t w = 0; w != nof_words; ++w) {
     // Builds each word in a register, since an update of the array per IE waits on the previous store.
     uint64_t bits = 0;
@@ -1144,7 +1235,10 @@ OCUDUASN_CODE table::pack_ie_container(bit_ref& bref, const void* container, con
   HANDLE_CODE(pack_length(bref, nof_ies, desc.len_lb, desc.len_ub, desc.aligned));
   for (uint32_t w = 0; w != nof_words; ++w) {
     for (uint64_t bits = present[w]; bits != 0; bits &= bits - 1) {
-      HANDLE_CODE(pack_ie(bref, base, desc, w * 64 + static_cast<uint32_t>(__builtin_ctzll(bits))));
+      uint32_t i = w * 64 + static_cast<uint32_t>(__builtin_ctzll(bits));
+      if (OCUDUASN_CODE ret = pack_ie(bref, base, desc, i); ret != OCUDUASN_SUCCESS) {
+        return ie_failure(ret, desc.ids[i]);
+      }
     }
   }
   return OCUDUASN_SUCCESS;
@@ -1156,6 +1250,8 @@ OCUDUASN_CODE table::unpack_ie_container(void* container, cbit_ref& bref, const 
   uint32_t nof_ies = 0;
   HANDLE_CODE(unpack_length(nof_ies, bref, desc.len_lb, desc.len_ub, desc.aligned));
   uint32_t nof_mandatory = desc.nof_mandatory;
+  // Decoded IEs, IE i in bit i % 64 of word i / 64, since a repeated IE would count twice as a mandatory one.
+  std::array<uint64_t, ie_container_desc::max_ies / 64> decoded = {};
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id;
     uint32_t crit_value;
@@ -1174,14 +1270,25 @@ OCUDUASN_CODE table::unpack_ie_container(void* container, cbit_ref& bref, const 
       HANDLE_CODE(skip_ignored_ie(bref, crit, id));
       continue;
     }
+    uint64_t idx_bit = uint64_t{1} << (idx % 64);
+    if ((decoded[idx / 64] & idx_bit) != 0) {
+      log_error("The IE id={} is repeated", id);
+      return OCUDUASN_ERROR_DECODE_FAIL;
+    }
+    decoded[idx / 64] |= idx_bit;
     const seq_field& value = desc.values[idx];
     if (value.presence >= 0) {
       *reinterpret_cast<bool*>(base + value.presence) = true;
     } else {
       nof_mandatory--;
     }
-    varlength_field_unpack_guard varlen_scope(bref, true);
-    HANDLE_CODE(unpack_field(field_value(base + value.offset, value), bref, value));
+    if (OCUDUASN_CODE ret = unpack_varlength_field(
+            bref,
+            true,
+            [&](cbit_ref& contents) { return unpack_field(field_value(base + value.offset, value), contents, value); });
+        ret != OCUDUASN_SUCCESS) {
+      return ie_failure(ret, id);
+    }
   }
   if (nof_mandatory > 0) {
     log_error("Mandatory fields are missing\n");

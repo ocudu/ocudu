@@ -276,7 +276,7 @@ struct ssb_mtc_s {
     uint8_t& set_sf160();
 
   private:
-    asn1::table::choice_storage<periodicity_and_offset_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<periodicity_and_offset_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct dur_opts {
     enum options { sf1, sf2, sf3, sf4, sf5, nulltype } value;
@@ -2119,7 +2119,7 @@ struct mcch_repeat_period_and_offset_r17_c {
   uint16_t& set_rf256_r17();
 
 private:
-  asn1::table::choice_storage<mcch_repeat_period_and_offset_r17_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<mcch_repeat_period_and_offset_r17_c, types, choice_buffer_t<uint16_t, uint8_t>> c;
 };
 
 // MCCH-Config-r17 ::= SEQUENCE
@@ -4296,7 +4296,7 @@ struct sib_type_info_v1700_s {
     type2_r17_s_& set_type2_r17();
 
   private:
-    asn1::table::choice_storage<sib_type_r17_c_, types, choice_buffer_t<type2_r17_s_>> c;
+    asn1::table::choice_storage<sib_type_r17_c_, types, choice_buffer_t<type1_r17_e_, type2_r17_s_>> c;
   };
 
   // member variables
@@ -4668,9 +4668,10 @@ struct sib1_s {
       individual_plmn_list_l_&                set_individual_plmn_list();
 
     private:
-      asn1::table::
-          choice_storage<uac_access_category1_sel_assist_info_c_, types, choice_buffer_t<individual_plmn_list_l_>>
-              c;
+      asn1::table::choice_storage<uac_access_category1_sel_assist_info_c_,
+                                  types,
+                                  choice_buffer_t<individual_plmn_list_l_, uac_access_category1_sel_assist_info_e>>
+          c;
     };
 
     // member variables

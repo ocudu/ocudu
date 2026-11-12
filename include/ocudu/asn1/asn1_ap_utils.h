@@ -14,7 +14,7 @@ struct crit_opts {
   enum options { reject, ignore, notify, nulltype } value;
   static const table::enum_desc desc;
 };
-typedef enumerated<crit_opts> crit_e;
+using crit_e = enumerated<crit_opts>;
 
 // Skips an unknown IE when its criticality is ignore.
 OCUDUASN_CODE skip_ignored_ie(cbit_ref& bref, crit_e crit, uint32_t id);
@@ -25,7 +25,7 @@ struct presence_opts {
 
   static const table::enum_desc desc;
 };
-typedef enumerated<presence_opts> presence_e;
+using presence_e = enumerated<presence_opts>;
 
 namespace table {
 
@@ -72,7 +72,7 @@ struct empty_obj_set_item_c {
     enum options { nulltype } value;
     const char* to_string() const;
   };
-  typedef enumerated<types_opts> types;
+  using types = enumerated<types_opts>;
 
   // choice methods
   types type() const { return types::nulltype; }
@@ -161,7 +161,7 @@ template <class IEItem>
 OCUDUASN_CODE pack_ie_field(bit_ref& bref, const void* value)
 {
   const auto& ie = *static_cast<const base_ie_field<IEItem>*>(value);
-  HANDLE_CODE(pack_integer(bref, ie.id(), (uint32_t)0u, (uint32_t)65535u, false, true));
+  HANDLE_CODE(pack_integer(bref, ie.id(), uint32_t{0}, uint32_t{65535}, false, true));
   HANDLE_CODE(asn1::pack(bref, ie.crit()));
   return asn1::pack(bref, ie.value());
 }
@@ -170,7 +170,7 @@ OCUDUASN_CODE unpack_ie_field(void* value, cbit_ref& bref)
 {
   auto&    ie = *static_cast<base_ie_field<IEItem>*>(value);
   uint32_t id_val;
-  HANDLE_CODE(unpack_integer(id_val, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+  HANDLE_CODE(unpack_integer(id_val, bref, uint32_t{0}, uint32_t{65535}, false, true));
   ie.set_item(id_val);
   // The criticality of the IE is the one of its object set.
   crit_e crit;
@@ -219,7 +219,7 @@ OCUDUASN_CODE unpack_empty_container(void*, cbit_ref& bref)
   for (; nof_ies > 0; --nof_ies) {
     uint32_t id = 0;
     crit_e   crit;
-    HANDLE_CODE(unpack_integer(id, bref, (uint32_t)0u, (uint32_t)65535u, false, true));
+    HANDLE_CODE(unpack_integer(id, bref, uint32_t{0}, uint32_t{65535}, false, true));
     HANDLE_CODE(asn1::unpack(crit, bref));
     HANDLE_CODE(skip_ignored_ie(bref, crit, id));
   }

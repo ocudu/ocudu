@@ -2204,10 +2204,11 @@ struct reset_type_c {
   protocol_ie_single_container_s<reset_type_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<
-      reset_type_c,
-      types,
-      choice_buffer_t<protocol_ie_single_container_s<reset_type_ext_ies_o>, ue_associated_lc_f1_conn_list_res_l>>
+  asn1::table::choice_storage<reset_type_c,
+                              types,
+                              choice_buffer_t<protocol_ie_single_container_s<reset_type_ext_ies_o>,
+                                              reset_all_e,
+                                              ue_associated_lc_f1_conn_list_res_l>>
       c;
 };
 

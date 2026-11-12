@@ -89,12 +89,11 @@ static const asn1::table::seq_field seq_table_cause_service_layer_s_fields[] = {
                                 asn1::table::string_json>::value}};
 static const asn1::table::field_name seq_table_cause_service_layer_s_names[] = {{"serviceLayerCause", nullptr}};
 const asn1::table::seq_desc          cause_service_layer_s::desc             = {
-    {seq_table_cause_service_layer_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_cause_service_layer_s_fields, uint64_t{0x1}, nullptr, seq_table_cause_service_layer_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_cause_service_layer_s_names};
+    0};
 
 // Cause ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_cause_c_alternatives[] = {
@@ -245,25 +244,25 @@ static const asn1::table::seq_field seq_table_ric_request_id_s_fields[] = {
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(ric_request_id_s, ric_instance_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_request_id_s_names[] = {{"ricRequestorID", nullptr},
                                                                            {"ricInstanceID", nullptr}};
-const asn1::table::seq_desc ric_request_id_s::desc = {{seq_table_ric_request_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                      true,
-                                                      true,
-                                                      nullptr,
-                                                      0,
-                                                      seq_table_ric_request_id_s_names};
+const asn1::table::seq_desc          ric_request_id_s::desc             = {
+    {seq_table_ric_request_id_s_fields, uint64_t{0x3}, nullptr, seq_table_ric_request_id_s_names, 2, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 // TypeOfError ::= ENUMERATED
 static const char*           enum_names_type_of_error_e_values[] = {"not-understood", "missing"};
@@ -285,8 +284,8 @@ static const asn1::table::seq_field seq_table_crit_diagnostics_ie_item_s_fields[
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(crit_diagnostics_ie_item_s, type_of_error),
      asn1::table::seq_field::mandatory,
@@ -300,13 +299,16 @@ static const asn1::table::seq_field seq_table_crit_diagnostics_ie_item_s_fields[
 static const asn1::table::field_name seq_table_crit_diagnostics_ie_item_s_names[] = {{"iECriticality", nullptr},
                                                                                      {"iE-ID", nullptr},
                                                                                      {"typeOfError", nullptr}};
-const asn1::table::seq_desc          crit_diagnostics_ie_item_s::desc             = {
-    {seq_table_crit_diagnostics_ie_item_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_crit_diagnostics_ie_item_s_names};
+const asn1::table::seq_desc          crit_diagnostics_ie_item_s::desc = {{seq_table_crit_diagnostics_ie_item_s_fields,
+                                                                          uint64_t{0x7},
+                                                                          nullptr,
+                                                                          seq_table_crit_diagnostics_ie_item_s_names,
+                                                                          3,
+                                                                          0},
+                                                                         true,
+                                                                         true,
+                                                                         nullptr,
+                                                                         0};
 
 // CriticalityDiagnostics ::= SEQUENCE
 static const asn1::table::seq_field seq_table_crit_diagnostics_s_fields[] = {
@@ -315,8 +317,8 @@ static const asn1::table::seq_field seq_table_crit_diagnostics_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(crit_diagnostics_s, trigger_msg),
      (int32_t)offsetof(crit_diagnostics_s, trigger_msg_present),
@@ -351,7 +353,7 @@ static const asn1::table::seq_field seq_table_crit_diagnostics_s_fields[] = {
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(crit_diagnostics_s::ies_crit_diagnostics),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -368,13 +370,16 @@ static const asn1::table::seq_opt    seq_table_crit_diagnostics_s_opts[]  = {
     {2, (int32_t)offsetof(crit_diagnostics_s, proc_crit_present)},
     {3, (int32_t)offsetof(crit_diagnostics_s, ric_requestor_id_present)},
     {4, asn1::table::seq_field::list_presence}};
-const asn1::table::seq_desc crit_diagnostics_s::desc = {
-    {seq_table_crit_diagnostics_s_fields, 5, UINT64_C(0x0), seq_table_crit_diagnostics_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_crit_diagnostics_s_names};
+const asn1::table::seq_desc crit_diagnostics_s::desc = {{seq_table_crit_diagnostics_s_fields,
+                                                         uint64_t{0x0},
+                                                         seq_table_crit_diagnostics_s_opts,
+                                                         seq_table_crit_diagnostics_s_names,
+                                                         5,
+                                                         5},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // E2nodeComponentConfiguration ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2node_component_cfg_s_fields[] = {
@@ -400,12 +405,11 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_s_names[] = 
     {"e2nodeComponentRequestPart", nullptr},
     {"e2nodeComponentResponsePart", nullptr}};
 const asn1::table::seq_desc e2node_component_cfg_s::desc = {
-    {seq_table_e2node_component_cfg_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_e2node_component_cfg_s_fields, uint64_t{0x3}, nullptr, seq_table_e2node_component_cfg_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_e2node_component_cfg_s_names};
+    0};
 
 // E2nodeComponentConfigurationAck ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2node_component_cfg_ack_s_fields[] = {
@@ -431,13 +435,16 @@ static const asn1::table::field_name seq_table_e2node_component_cfg_ack_s_names[
                                                                                      {"failureCause", nullptr}};
 static const asn1::table::seq_opt    seq_table_e2node_component_cfg_ack_s_opts[]  = {
     {1, (int32_t)offsetof(e2node_component_cfg_ack_s, fail_cause_present)}};
-const asn1::table::seq_desc e2node_component_cfg_ack_s::desc = {
-    {seq_table_e2node_component_cfg_ack_s_fields, 2, UINT64_C(0x1), seq_table_e2node_component_cfg_ack_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_cfg_ack_s_names};
+const asn1::table::seq_desc e2node_component_cfg_ack_s::desc = {{seq_table_e2node_component_cfg_ack_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 seq_table_e2node_component_cfg_ack_s_opts,
+                                                                 seq_table_e2node_component_cfg_ack_s_names,
+                                                                 2,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const char*           enum_names_e2node_component_cfg_ack_s_upd_outcome_e__values[] = {"success", "failure"};
 const asn1::table::enum_desc e2node_component_cfg_ack_s::upd_outcome_opts::desc            = {
@@ -456,13 +463,16 @@ static const asn1::table::seq_field seq_table_e2node_component_interface_ng_s_fi
      0,
      &asn1::table::object_codec<decltype(e2node_component_interface_ng_s::amf_name), asn1::table::string_json>::value}};
 static const asn1::table::field_name seq_table_e2node_component_interface_ng_s_names[] = {{"amf-name", nullptr}};
-const asn1::table::seq_desc          e2node_component_interface_ng_s::desc             = {
-    {seq_table_e2node_component_interface_ng_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_interface_ng_s_names};
+const asn1::table::seq_desc e2node_component_interface_ng_s::desc = {{seq_table_e2node_component_interface_ng_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2node_component_interface_ng_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // GNB-ID-Choice ::= CHOICE
 static const asn1::table::seq_field choice_table_gnb_id_choice_c_alternatives[] = {
@@ -513,12 +523,12 @@ static const asn1::table::seq_field seq_table_global_gnb_id_s_fields[] = {
      nullptr,
      &gnb_id_choice_c::desc}};
 static const asn1::table::field_name seq_table_global_gnb_id_s_names[] = {{"plmn-id", nullptr}, {"gnb-id", nullptr}};
-const asn1::table::seq_desc global_gnb_id_s::desc = {{seq_table_global_gnb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                     true,
-                                                     true,
-                                                     nullptr,
-                                                     0,
-                                                     seq_table_global_gnb_id_s_names};
+const asn1::table::seq_desc          global_gnb_id_s::desc             = {
+    {seq_table_global_gnb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_global_gnb_id_s_names, 2, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 // ENB-ID-Choice ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_enb_id_choice_c_alternatives[] = {
@@ -614,12 +624,11 @@ static const asn1::table::seq_field seq_table_globalng_enb_id_s_fields[] = {
      &enb_id_choice_c::desc}};
 static const asn1::table::field_name seq_table_globalng_enb_id_s_names[] = {{"plmn-id", nullptr}, {"enb-id", nullptr}};
 const asn1::table::seq_desc          globalng_enb_id_s::desc             = {
-    {seq_table_globalng_enb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_globalng_enb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_globalng_enb_id_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_globalng_enb_id_s_names};
+    0};
 
 // GlobalNG-RANNode-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_global_ng_ran_node_id_c_alternatives[] = {
@@ -695,13 +704,16 @@ static const asn1::table::seq_field seq_table_e2node_component_interface_xn_s_fi
      &global_ng_ran_node_id_c::desc}};
 static const asn1::table::field_name seq_table_e2node_component_interface_xn_s_names[] = {
     {"global-NG-RAN-Node-ID", nullptr}};
-const asn1::table::seq_desc e2node_component_interface_xn_s::desc = {
-    {seq_table_e2node_component_interface_xn_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_interface_xn_s_names};
+const asn1::table::seq_desc e2node_component_interface_xn_s::desc = {{seq_table_e2node_component_interface_xn_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2node_component_interface_xn_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2nodeComponentInterfaceE1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2node_component_interface_e1_s_fields[] = {
@@ -710,17 +722,20 @@ static const asn1::table::seq_field seq_table_e2node_component_interface_e1_s_fi
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr}};
 static const asn1::table::field_name seq_table_e2node_component_interface_e1_s_names[] = {{"gNB-CU-UP-ID", nullptr}};
-const asn1::table::seq_desc          e2node_component_interface_e1_s::desc             = {
-    {seq_table_e2node_component_interface_e1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_interface_e1_s_names};
+const asn1::table::seq_desc e2node_component_interface_e1_s::desc = {{seq_table_e2node_component_interface_e1_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2node_component_interface_e1_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2nodeComponentInterfaceF1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2node_component_interface_f1_s_fields[] = {
@@ -729,17 +744,20 @@ static const asn1::table::seq_field seq_table_e2node_component_interface_f1_s_fi
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr}};
 static const asn1::table::field_name seq_table_e2node_component_interface_f1_s_names[] = {{"gNB-DU-ID", nullptr}};
-const asn1::table::seq_desc          e2node_component_interface_f1_s::desc             = {
-    {seq_table_e2node_component_interface_f1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_interface_f1_s_names};
+const asn1::table::seq_desc e2node_component_interface_f1_s::desc = {{seq_table_e2node_component_interface_f1_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2node_component_interface_f1_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2nodeComponentInterfaceW1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2node_component_interface_w1_s_fields[] = {
@@ -748,17 +766,20 @@ static const asn1::table::seq_field seq_table_e2node_component_interface_w1_s_fi
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr}};
 static const asn1::table::field_name seq_table_e2node_component_interface_w1_s_names[] = {{"ng-eNB-DU-ID", nullptr}};
-const asn1::table::seq_desc          e2node_component_interface_w1_s::desc             = {
-    {seq_table_e2node_component_interface_w1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_interface_w1_s_names};
+const asn1::table::seq_desc e2node_component_interface_w1_s::desc = {{seq_table_e2node_component_interface_w1_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2node_component_interface_w1_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // E2nodeComponentInterfaceS1 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2node_component_interface_s1_s_fields[] = {
@@ -771,13 +792,16 @@ static const asn1::table::seq_field seq_table_e2node_component_interface_s1_s_fi
      0,
      &asn1::table::object_codec<decltype(e2node_component_interface_s1_s::mme_name), asn1::table::string_json>::value}};
 static const asn1::table::field_name seq_table_e2node_component_interface_s1_s_names[] = {{"mme-name", nullptr}};
-const asn1::table::seq_desc          e2node_component_interface_s1_s::desc             = {
-    {seq_table_e2node_component_interface_s1_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_e2node_component_interface_s1_s_names};
+const asn1::table::seq_desc e2node_component_interface_s1_s::desc = {{seq_table_e2node_component_interface_s1_s_fields,
+                                                                      uint64_t{0x1},
+                                                                      nullptr,
+                                                                      seq_table_e2node_component_interface_s1_s_names,
+                                                                      1,
+                                                                      0},
+                                                                     true,
+                                                                     true,
+                                                                     nullptr,
+                                                                     0};
 
 // ENB-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_enb_id_c_alternatives[] = {
@@ -885,12 +909,12 @@ static const asn1::table::seq_field seq_table_global_enb_id_s_fields[] = {
      &enb_id_c::desc}};
 static const asn1::table::field_name seq_table_global_enb_id_s_names[] = {{"pLMN-Identity", nullptr},
                                                                           {"eNB-ID", nullptr}};
-const asn1::table::seq_desc global_enb_id_s::desc = {{seq_table_global_enb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                     true,
-                                                     true,
-                                                     nullptr,
-                                                     0,
-                                                     seq_table_global_enb_id_s_names};
+const asn1::table::seq_desc          global_enb_id_s::desc             = {
+    {seq_table_global_enb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_global_enb_id_s_names, 2, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 // ENGNB-ID ::= CHOICE
 static const asn1::table::seq_field choice_table_en_gnb_id_c_alternatives[] = {
@@ -943,12 +967,11 @@ static const asn1::table::seq_field seq_table_globalen_gnb_id_s_fields[] = {
 static const asn1::table::field_name seq_table_globalen_gnb_id_s_names[] = {{"pLMN-Identity", nullptr},
                                                                             {"gNB-ID", nullptr}};
 const asn1::table::seq_desc          globalen_gnb_id_s::desc             = {
-    {seq_table_globalen_gnb_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_globalen_gnb_id_s_fields, uint64_t{0x3}, nullptr, seq_table_globalen_gnb_id_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_globalen_gnb_id_s_names};
+    0};
 
 // E2nodeComponentInterfaceX2 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_e2node_component_interface_x2_s_fields[] = {
@@ -977,24 +1000,24 @@ static const asn1::table::seq_opt seq_table_e2node_component_interface_x2_s_opts
     {0, (int32_t)offsetof(e2node_component_interface_x2_s, global_enb_id_present)},
     {1, (int32_t)offsetof(e2node_component_interface_x2_s, global_en_gnb_id_present)}};
 const asn1::table::seq_desc e2node_component_interface_x2_s::desc = {{seq_table_e2node_component_interface_x2_s_fields,
-                                                                      2,
-                                                                      UINT64_C(0x0),
+                                                                      uint64_t{0x0},
                                                                       seq_table_e2node_component_interface_x2_s_opts,
+                                                                      seq_table_e2node_component_interface_x2_s_names,
+                                                                      2,
                                                                       2},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_e2node_component_interface_x2_s_names};
+                                                                     0};
 
 // E2nodeComponentID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_e2node_component_id_c_alternatives[] = {
-    &asn1::table::alternative_ops<e2node_component_interface_ng_s, false>::value,
+    &asn1::table::alternative_ops<e2node_component_interface_ng_s, false, false>::value,
     &asn1::table::alternative_ops<e2node_component_interface_xn_s, false>::value,
     &asn1::table::alternative_ops<e2node_component_interface_e1_s, false>::value,
     &asn1::table::alternative_ops<e2node_component_interface_f1_s, false>::value,
     &asn1::table::alternative_ops<e2node_component_interface_w1_s, false>::value,
-    &asn1::table::alternative_ops<e2node_component_interface_s1_s, false>::value,
+    &asn1::table::alternative_ops<e2node_component_interface_s1_s, false, false>::value,
     &asn1::table::alternative_ops<e2node_component_interface_x2_s, false>::value};
 const asn1::table::choice_storage_desc e2node_component_id_c::storage_desc = {
     choice_storage_e2node_component_id_c_alternatives,
@@ -1166,16 +1189,16 @@ static const asn1::table::seq_field seq_table_global_e2node_gnb_id_s_fields[] = 
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr},
     {offsetof(global_e2node_gnb_id_s, gnb_du_id),
      (int32_t)offsetof(global_e2node_gnb_id_s, gnb_du_id_present),
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr}};
 static const asn1::table::field_name seq_table_global_e2node_gnb_id_s_names[] = {{"global-gNB-ID", nullptr},
                                                                                  {"global-en-gNB-ID", nullptr},
@@ -1185,13 +1208,16 @@ static const asn1::table::seq_opt    seq_table_global_e2node_gnb_id_s_opts[]  = 
     {1, (int32_t)offsetof(global_e2node_gnb_id_s, global_en_gnb_id_present)},
     {2, (int32_t)offsetof(global_e2node_gnb_id_s, gnb_cu_up_id_present)},
     {3, (int32_t)offsetof(global_e2node_gnb_id_s, gnb_du_id_present)}};
-const asn1::table::seq_desc global_e2node_gnb_id_s::desc = {
-    {seq_table_global_e2node_gnb_id_s_fields, 4, UINT64_C(0x1), seq_table_global_e2node_gnb_id_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_e2node_gnb_id_s_names};
+const asn1::table::seq_desc global_e2node_gnb_id_s::desc = {{seq_table_global_e2node_gnb_id_s_fields,
+                                                             uint64_t{0x1},
+                                                             seq_table_global_e2node_gnb_id_s_opts,
+                                                             seq_table_global_e2node_gnb_id_s_names,
+                                                             4,
+                                                             3},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // GlobalE2node-en-gNB-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_global_e2node_en_gnb_id_s_fields[] = {
@@ -1209,16 +1235,16 @@ static const asn1::table::seq_field seq_table_global_e2node_en_gnb_id_s_fields[]
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr},
     {offsetof(global_e2node_en_gnb_id_s, en_gnb_du_id),
      (int32_t)offsetof(global_e2node_en_gnb_id_s, en_gnb_du_id_present),
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr}};
 static const asn1::table::field_name seq_table_global_e2node_en_gnb_id_s_names[] = {{"global-en-gNB-ID", nullptr},
                                                                                     {"en-gNB-CU-UP-ID", nullptr},
@@ -1226,13 +1252,16 @@ static const asn1::table::field_name seq_table_global_e2node_en_gnb_id_s_names[]
 static const asn1::table::seq_opt    seq_table_global_e2node_en_gnb_id_s_opts[]  = {
     {1, (int32_t)offsetof(global_e2node_en_gnb_id_s, en_gnb_cu_up_id_present)},
     {2, (int32_t)offsetof(global_e2node_en_gnb_id_s, en_gnb_du_id_present)}};
-const asn1::table::seq_desc global_e2node_en_gnb_id_s::desc = {
-    {seq_table_global_e2node_en_gnb_id_s_fields, 3, UINT64_C(0x1), seq_table_global_e2node_en_gnb_id_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_e2node_en_gnb_id_s_names};
+const asn1::table::seq_desc global_e2node_en_gnb_id_s::desc = {{seq_table_global_e2node_en_gnb_id_s_fields,
+                                                                uint64_t{0x1},
+                                                                seq_table_global_e2node_en_gnb_id_s_opts,
+                                                                seq_table_global_e2node_en_gnb_id_s_names,
+                                                                3,
+                                                                2},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // GlobalE2node-ng-eNB-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_global_e2node_ng_enb_id_s_fields[] = {
@@ -1259,8 +1288,8 @@ static const asn1::table::seq_field seq_table_global_e2node_ng_enb_id_s_fields[]
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(68719476735),
+     int64_t{0},
+     uint64_t{68719476735},
      nullptr}};
 static const asn1::table::field_name seq_table_global_e2node_ng_enb_id_s_names[] = {{"global-ng-eNB-ID", nullptr},
                                                                                     {"global-eNB-ID", nullptr},
@@ -1268,13 +1297,16 @@ static const asn1::table::field_name seq_table_global_e2node_ng_enb_id_s_names[]
 static const asn1::table::seq_opt    seq_table_global_e2node_ng_enb_id_s_opts[]  = {
     {1, (int32_t)offsetof(global_e2node_ng_enb_id_s, global_enb_id_present)},
     {2, (int32_t)offsetof(global_e2node_ng_enb_id_s, ng_enb_du_id_present)}};
-const asn1::table::seq_desc global_e2node_ng_enb_id_s::desc = {
-    {seq_table_global_e2node_ng_enb_id_s_fields, 3, UINT64_C(0x1), seq_table_global_e2node_ng_enb_id_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_e2node_ng_enb_id_s_names};
+const asn1::table::seq_desc global_e2node_ng_enb_id_s::desc = {{seq_table_global_e2node_ng_enb_id_s_fields,
+                                                                uint64_t{0x1},
+                                                                seq_table_global_e2node_ng_enb_id_s_opts,
+                                                                seq_table_global_e2node_ng_enb_id_s_names,
+                                                                3,
+                                                                2},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // GlobalE2node-eNB-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_global_e2node_enb_id_s_fields[] = {
@@ -1289,12 +1321,11 @@ static const asn1::table::seq_field seq_table_global_e2node_enb_id_s_fields[] = 
      &global_enb_id_s::desc}};
 static const asn1::table::field_name seq_table_global_e2node_enb_id_s_names[] = {{"global-eNB-ID", nullptr}};
 const asn1::table::seq_desc          global_e2node_enb_id_s::desc             = {
-    {seq_table_global_e2node_enb_id_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_global_e2node_enb_id_s_fields, uint64_t{0x1}, nullptr, seq_table_global_e2node_enb_id_s_names, 1, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_global_e2node_enb_id_s_names};
+    0};
 
 // GlobalE2node-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_global_e2node_id_c_alternatives[] = {
@@ -1407,12 +1438,12 @@ static const asn1::table::seq_field seq_table_global_ric_id_s_fields[] = {
      &asn1::table::object_codec<decltype(global_ric_id_s::ric_id), asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_global_ric_id_s_names[] = {{"pLMN-Identity", nullptr},
                                                                           {"ric-ID", nullptr}};
-const asn1::table::seq_desc global_ric_id_s::desc = {{seq_table_global_ric_id_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-                                                     true,
-                                                     true,
-                                                     nullptr,
-                                                     0,
-                                                     seq_table_global_ric_id_s_names};
+const asn1::table::seq_desc          global_ric_id_s::desc             = {
+    {seq_table_global_ric_id_s_fields, uint64_t{0x3}, nullptr, seq_table_global_ric_id_s_names, 2, 0},
+    true,
+    true,
+    nullptr,
+    0};
 
 // ListedRecordsOnly ::= ENUMERATED
 static const char*           enum_names_listed_records_only_e_values[] = {"true"};
@@ -1460,21 +1491,24 @@ static const asn1::table::seq_field seq_table_ric_load_info_s_fields[] = {
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr}};
 static const asn1::table::field_name seq_table_ric_load_info_s_names[] = {{"loadStatus", nullptr},
                                                                           {"loadEstimate", nullptr}};
 static const asn1::table::seq_opt    seq_table_ric_load_info_s_opts[]  = {
     {0, (int32_t)offsetof(ric_load_info_s, load_status_present)},
     {1, (int32_t)offsetof(ric_load_info_s, load_estimate_present)}};
-const asn1::table::seq_desc ric_load_info_s::desc = {
-    {seq_table_ric_load_info_s_fields, 2, UINT64_C(0x0), seq_table_ric_load_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_load_info_s_names};
+const asn1::table::seq_desc ric_load_info_s::desc = {{seq_table_ric_load_info_s_fields,
+                                                      uint64_t{0x0},
+                                                      seq_table_ric_load_info_s_opts,
+                                                      seq_table_ric_load_info_s_names,
+                                                      2,
+                                                      2},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 static const char*           enum_names_ric_load_info_s_load_status_e__values[] = {"overload", "notoverload"};
 const asn1::table::enum_desc ric_load_info_s::load_status_opts::desc            = {
@@ -1547,13 +1581,16 @@ static const asn1::table::seq_opt seq_table_ric_service_load_confirm_s_opts[] = 
     {2, (int32_t)offsetof(ric_service_load_confirm_s, ric_service_ctrl_load_confirm_present)},
     {3, (int32_t)offsetof(ric_service_load_confirm_s, ric_service_policy_load_confirm_present)},
     {4, (int32_t)offsetof(ric_service_load_confirm_s, ric_service_query_load_confirm_present)}};
-const asn1::table::seq_desc ric_service_load_confirm_s::desc = {
-    {seq_table_ric_service_load_confirm_s_fields, 5, UINT64_C(0x0), seq_table_ric_service_load_confirm_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_service_load_confirm_s_names};
+const asn1::table::seq_desc ric_service_load_confirm_s::desc = {{seq_table_ric_service_load_confirm_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_ric_service_load_confirm_s_opts,
+                                                                 seq_table_ric_service_load_confirm_s_names,
+                                                                 5,
+                                                                 5},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // RICserviceLoadInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ric_service_load_info_s_fields[] = {
@@ -1614,13 +1651,16 @@ static const asn1::table::seq_opt seq_table_ric_service_load_info_s_opts[] = {
     {2, (int32_t)offsetof(ric_service_load_info_s, ric_service_ctrl_load_info_present)},
     {3, (int32_t)offsetof(ric_service_load_info_s, ric_service_policy_load_info_present)},
     {4, (int32_t)offsetof(ric_service_load_info_s, ric_service_query_load_info_present)}};
-const asn1::table::seq_desc ric_service_load_info_s::desc = {
-    {seq_table_ric_service_load_info_s_fields, 5, UINT64_C(0x0), seq_table_ric_service_load_info_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_service_load_info_s_names};
+const asn1::table::seq_desc ric_service_load_info_s::desc = {{seq_table_ric_service_load_info_s_fields,
+                                                              uint64_t{0x0},
+                                                              seq_table_ric_service_load_info_s_opts,
+                                                              seq_table_ric_service_load_info_s_names,
+                                                              5,
+                                                              5},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // RICserviceLoadRequest ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ric_service_load_request_s_fields[] = {
@@ -1681,13 +1721,16 @@ static const asn1::table::seq_opt seq_table_ric_service_load_request_s_opts[] = 
     {2, (int32_t)offsetof(ric_service_load_request_s, ric_service_ctrl_load_request_present)},
     {3, (int32_t)offsetof(ric_service_load_request_s, ric_service_policy_load_request_present)},
     {4, (int32_t)offsetof(ric_service_load_request_s, ric_service_query_load_request_present)}};
-const asn1::table::seq_desc ric_service_load_request_s::desc = {
-    {seq_table_ric_service_load_request_s_fields, 5, UINT64_C(0x0), seq_table_ric_service_load_request_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_service_load_request_s_names};
+const asn1::table::seq_desc ric_service_load_request_s::desc = {{seq_table_ric_service_load_request_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_ric_service_load_request_s_opts,
+                                                                 seq_table_ric_service_load_request_s_names,
+                                                                 5,
+                                                                 5},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // RICsubscriptionAuditFlag ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ric_sub_audit_flag_s_fields[] = {
@@ -1703,13 +1746,16 @@ static const asn1::table::seq_field seq_table_ric_sub_audit_flag_s_fields[] = {
 static const asn1::table::field_name seq_table_ric_sub_audit_flag_s_names[] = {{"listedRecordsOnly", nullptr}};
 static const asn1::table::seq_opt    seq_table_ric_sub_audit_flag_s_opts[]  = {
     {0, (int32_t)offsetof(ric_sub_audit_flag_s, listed_records_only_present)}};
-const asn1::table::seq_desc ric_sub_audit_flag_s::desc = {
-    {seq_table_ric_sub_audit_flag_s_fields, 1, UINT64_C(0x0), seq_table_ric_sub_audit_flag_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ric_sub_audit_flag_s_names};
+const asn1::table::seq_desc ric_sub_audit_flag_s::desc = {{seq_table_ric_sub_audit_flag_s_fields,
+                                                           uint64_t{0x0},
+                                                           seq_table_ric_sub_audit_flag_s_opts,
+                                                           seq_table_ric_sub_audit_flag_s_names,
+                                                           1,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // RICsubsequentActionType ::= ENUMERATED
 static const char*           enum_names_ric_subsequent_action_type_e_values[] = {"continue", "wait"};
@@ -1762,12 +1808,11 @@ static const asn1::table::seq_field seq_table_ric_subsequent_action_s_fields[] =
 static const asn1::table::field_name seq_table_ric_subsequent_action_s_names[] = {{"ricSubsequentActionType", nullptr},
                                                                                   {"ricTimeToWait", nullptr}};
 const asn1::table::seq_desc          ric_subsequent_action_s::desc             = {
-    {seq_table_ric_subsequent_action_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_ric_subsequent_action_s_fields, uint64_t{0x3}, nullptr, seq_table_ric_subsequent_action_s_names, 2, 0},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ric_subsequent_action_s_names};
+    0};
 
 // RegistrationRequest ::= ENUMERATED
 static const char*           enum_names_regist_request_e_values[] = {"start", "stop", "add"};
@@ -1822,12 +1867,11 @@ static const asn1::table::seq_field seq_table_tnl_info_s_fields[] = {
 static const asn1::table::field_name seq_table_tnl_info_s_names[] = {{"tnlAddress", nullptr}, {"tnlPort", nullptr}};
 static const asn1::table::seq_opt seq_table_tnl_info_s_opts[] = {{1, (int32_t)offsetof(tnl_info_s, tnl_port_present)}};
 const asn1::table::seq_desc       tnl_info_s::desc            = {
-    {seq_table_tnl_info_s_fields, 2, UINT64_C(0x1), seq_table_tnl_info_s_opts, 1},
+    {seq_table_tnl_info_s_fields, uint64_t{0x1}, seq_table_tnl_info_s_opts, seq_table_tnl_info_s_names, 2, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_tnl_info_s_names};
+    0};
 
 // TNLusage ::= ENUMERATED
 static const char*           enum_names_tnl_usage_e_values[] = {"ric-service", "support-function", "both"};

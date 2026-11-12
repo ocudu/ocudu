@@ -25,7 +25,7 @@ void construct_elems(const detail::dyn_array_ops& ops, void* dst, uint32_t n)
   if (ops.construct != nullptr) {
     ops.construct(dst, n);
   } else {
-    std::memset(dst, 0, size_t(n) * ops.elem_size);
+    std::memset(dst, 0, static_cast<size_t>(n) * ops.elem_size);
   }
 }
 
@@ -37,7 +37,7 @@ void copy_elems(const detail::dyn_array_ops& ops, void* dst, const void* src, ui
   if (ops.copy != nullptr) {
     ops.copy(dst, src, n);
   } else {
-    std::memcpy(dst, src, size_t(n) * ops.elem_size);
+    std::memcpy(dst, src, static_cast<size_t>(n) * ops.elem_size);
   }
 }
 
@@ -49,7 +49,7 @@ void relocate_elems(const detail::dyn_array_ops& ops, void* dst, void* src, uint
   if (ops.relocate != nullptr) {
     ops.relocate(dst, src, n);
   } else {
-    std::memmove(dst, src, size_t(n) * ops.elem_size);
+    std::memmove(dst, src, static_cast<size_t>(n) * ops.elem_size);
   }
 }
 
@@ -62,14 +62,14 @@ void destroy_elems(const detail::dyn_array_ops& ops, void* ptr, uint32_t n)
 
 void* elem_at(const detail::dyn_array_ops& ops, void* data, uint32_t idx)
 {
-  return static_cast<uint8_t*>(data) + size_t(idx) * ops.elem_size;
+  return static_cast<uint8_t*>(data) + static_cast<size_t>(idx) * ops.elem_size;
 }
 
 } // namespace
 
 void detail::dyn_array_base::reallocate(const dyn_array_ops& ops, uint32_t new_cap)
 {
-  void* new_data = new_cap > 0 ? ::operator new(size_t(new_cap) * ops.elem_size) : nullptr;
+  void* new_data = new_cap > 0 ? ::operator new(static_cast<size_t>(new_cap) * ops.elem_size) : nullptr;
   relocate_elems(ops, new_data, data_, size_);
   ::operator delete(data_);
   data_ = new_data;

@@ -16,8 +16,8 @@ using namespace asn1::rrc_nr;
 
 // UL-DCCH-MessageType ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ul_dcch_msg_type_c_alternatives[] = {
-    &asn1::table::alternative_ops<ul_dcch_msg_type_c::c1_c_, false>::value,
-    &asn1::table::alternative_ops<ul_dcch_msg_type_c::msg_class_ext_c_, false>::value};
+    &asn1::table::alternative_ops<ul_dcch_msg_type_c::c1_c_, false, false>::value,
+    &asn1::table::alternative_ops<ul_dcch_msg_type_c::msg_class_ext_c_, false, false>::value};
 const asn1::table::choice_storage_desc ul_dcch_msg_type_c::storage_desc = {
     choice_storage_ul_dcch_msg_type_c_alternatives,
     2,
@@ -670,10 +670,10 @@ static const asn1::table::seq_field  seq_table_ul_dcch_msg_s_fields[] = {{offset
                                                                           nullptr,
                                                                           &ul_dcch_msg_type_c::desc}};
 static const asn1::table::field_name seq_table_ul_dcch_msg_s_names[]  = {{"message", nullptr}};
-const asn1::table::seq_desc ul_dcch_msg_s::desc = {{seq_table_ul_dcch_msg_s_fields, 1, UINT64_C(0x1), nullptr, 0},
-                                                   false,
-                                                   false,
-                                                   nullptr,
-                                                   0,
-                                                   seq_table_ul_dcch_msg_s_names,
-                                                   "UL-DCCH-Message"};
+const asn1::table::seq_desc          ul_dcch_msg_s::desc              = {
+    {seq_table_ul_dcch_msg_s_fields, uint64_t{0x1}, nullptr, seq_table_ul_dcch_msg_s_names, 1, 0},
+    false,
+    false,
+    nullptr,
+    0,
+    "UL-DCCH-Message"};

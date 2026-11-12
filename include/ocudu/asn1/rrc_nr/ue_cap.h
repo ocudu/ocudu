@@ -158,7 +158,7 @@ struct supported_agg_bw_r17_c {
   fr2_r17_e_& set_fr2_r17();
 
 private:
-  asn1::table::choice_storage<supported_agg_bw_r17_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<supported_agg_bw_r17_c, types, choice_buffer_t<fr1_r17_e_, fr2_r17_e_>> c;
 };
 
 // SupportedBandwidth-v1700 ::= CHOICE
@@ -230,7 +230,7 @@ struct supported_bw_v1700_c {
   fr2_r17_e_& set_fr2_r17();
 
 private:
-  asn1::table::choice_storage<supported_bw_v1700_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<supported_bw_v1700_c, types, choice_buffer_t<fr1_r17_e_, fr2_r17_e_>> c;
 };
 
 // AccessStratumRelease ::= ENUMERATED
@@ -3618,7 +3618,9 @@ struct ca_params_nr_v1800_s {
     uint8_t&                    set_pdcch_monitoring_ca_non_aligned_span_r18();
 
   private:
-    asn1::table::choice_storage<pdcch_monitoring_ca_ext_r18_c_, types, choice_buffer_t<pdcch_monitoring_ca_r18_s_>> c;
+    asn1::table::
+        choice_storage<pdcch_monitoring_ca_ext_r18_c_, types, choice_buffer_t<pdcch_monitoring_ca_r18_s_, uint8_t>>
+            c;
   };
   struct pdcch_blind_detection_ca_mixed_ext_r18_c_ {
     struct pdcch_blind_detection_ca_mixed_r18_s_ {
@@ -3978,7 +3980,7 @@ struct ul_tx_switching_add_period_dual_ul_r18_s {
       uint8_t& set_band_idx_r18();
 
     private:
-      asn1::table::choice_storage<another_band_pair_or_band_r18_c_, types, pod_choice_buffer_t> c;
+      asn1::table::choice_storage<another_band_pair_or_band_r18_c_, types, choice_buffer_t<uint8_t>> c;
     };
 
     // member variables
@@ -7300,7 +7302,7 @@ struct prs_processing_cap_outside_m_gin_ppw_per_type_r17_s {
     fr2_r17_e_& set_fr2_r17();
 
   private:
-    asn1::table::choice_storage<ppw_max_num_of_dl_bw_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<ppw_max_num_of_dl_bw_r17_c_, types, choice_buffer_t<fr1_r17_e_, fr2_r17_e_>> c;
   };
 
   // member variables
@@ -7814,7 +7816,7 @@ struct lower_msd_r18_s {
     uint16_t& set_eutra();
 
   private:
-    asn1::table::choice_storage<aggressorband1_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<aggressorband1_r18_c_, types, choice_buffer_t<uint16_t>> c;
   };
   using msd_info_r18_l_ = dyn_array<msd_info_r18_s>;
 
@@ -8404,7 +8406,7 @@ struct band_nr_s {
     fr2_r17_e_& set_fr2_r17();
 
   private:
-    asn1::table::choice_storage<max_mod_order_for_multicast_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<max_mod_order_for_multicast_r17_c_, types, choice_buffer_t<fr1_r17_e_, fr2_r17_e_>> c;
   };
   struct dyn_slot_repeat_multicast_tn_non_shared_spec_ch_access_r17_opts {
     enum options { n8, n16, nulltype } value;
@@ -10073,7 +10075,7 @@ struct band_sidelink_r16_s {
       fr2_r18_e_& set_fr2_r18();
 
     private:
-      asn1::table::choice_storage<max_sl_prs_bw_r18_c_, types, pod_choice_buffer_t> c;
+      asn1::table::choice_storage<max_sl_prs_bw_r18_c_, types, choice_buffer_t<fr1_r18_e_, fr2_r18_e_>> c;
     };
     struct max_num_of_active_sl_prs_res_in_one_slot_r18_c_ {
       struct fr1_r18_opts {
@@ -10126,7 +10128,10 @@ struct band_sidelink_r16_s {
       fr2_r18_e_& set_fr2_r18();
 
     private:
-      asn1::table::choice_storage<max_num_of_active_sl_prs_res_in_one_slot_r18_c_, types, pod_choice_buffer_t> c;
+      asn1::table::choice_storage<max_num_of_active_sl_prs_res_in_one_slot_r18_c_,
+                                  types,
+                                  choice_buffer_t<fr1_r18_e_, fr2_r18_e_>>
+          c;
     };
     struct max_num_of_slots_with_active_sl_prs_res_r18_c_ {
       struct fr1_r18_opts {
@@ -10179,7 +10184,9 @@ struct band_sidelink_r16_s {
       fr2_r18_e_& set_fr2_r18();
 
     private:
-      asn1::table::choice_storage<max_num_of_slots_with_active_sl_prs_res_r18_c_, types, pod_choice_buffer_t> c;
+      asn1::table::
+          choice_storage<max_num_of_slots_with_active_sl_prs_res_r18_c_, types, choice_buffer_t<fr1_r18_e_, fr2_r18_e_>>
+              c;
     };
     struct min_time_after_endof_slot_carry_active_sl_prs_res_r18_opts {
       enum options { ms20, ms30, ms40, ms50, ms80, ms100, ms160, nulltype } value;
@@ -11600,7 +11607,10 @@ struct feature_set_dl_v1800_s {
     support_of_multiple_groups_e_& set_support_of_multiple_groups();
 
   private:
-    asn1::table::choice_storage<scell_without_ssb_inter_band_ca_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<scell_without_ssb_inter_band_ca_r18_c_,
+                                types,
+                                choice_buffer_t<support_of_multiple_groups_e_, support_of_single_group_e_>>
+        c;
   };
   using dummy_l_ = dyn_array<dummy_pdcch_rach_dl_info_r18_c>;
 
@@ -11743,7 +11753,7 @@ struct supported_bw_c {
   fr2_e_& set_fr2();
 
 private:
-  asn1::table::choice_storage<supported_bw_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<supported_bw_c, types, choice_buffer_t<fr1_e_, fr2_e_>> c;
 };
 
 // ModulationOrder ::= ENUMERATED
@@ -13404,7 +13414,11 @@ struct feature_set_ul_per_cc_v1850_s {
     scs_960k_hz_r18_e_& set_scs_960k_hz_r18();
 
   private:
-    asn1::table::choice_storage<two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<
+        two_pusch_cb_multi_dci_s_tx2_p_add_time_r18_c_,
+        types,
+        choice_buffer_t<scs_120k_hz_r18_e_, scs_480k_hz_r18_e_, scs_60k_hz_r18_e_, scs_960k_hz_r18_e_>>
+        c;
   };
   struct two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_ {
     struct scs_60k_hz_r18_opts {
@@ -13493,7 +13507,11 @@ struct feature_set_ul_per_cc_v1850_s {
     scs_960k_hz_r18_e_& set_scs_960k_hz_r18();
 
   private:
-    asn1::table::choice_storage<two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<
+        two_pusch_non_cb_multi_dci_s_tx2_p_add_time_r18_c_,
+        types,
+        choice_buffer_t<scs_120k_hz_r18_e_, scs_480k_hz_r18_e_, scs_60k_hz_r18_e_, scs_960k_hz_r18_e_>>
+        c;
   };
 
   // member variables
@@ -14805,7 +14823,7 @@ struct phy_params_common_s {
     type2_r16_e_& set_type2_r16();
 
   private:
-    asn1::table::choice_storage<bwp_switching_multi_ccs_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<bwp_switching_multi_ccs_r16_c_, types, choice_buffer_t<type1_r16_e_, type2_r16_e_>> c;
   };
   struct bwp_switching_multi_dormancy_ccs_r16_c_ {
     struct type1_r16_opts {
@@ -14858,7 +14876,9 @@ struct phy_params_common_s {
     type2_r16_e_& set_type2_r16();
 
   private:
-    asn1::table::choice_storage<bwp_switching_multi_dormancy_ccs_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::
+        choice_storage<bwp_switching_multi_dormancy_ccs_r16_c_, types, choice_buffer_t<type1_r16_e_, type2_r16_e_>>
+            c;
   };
   struct pdcch_monitoring_any_occasions_with_span_gap_cross_carrier_sch_r16_opts {
     enum options { mode2, mode3, nulltype } value;
@@ -14956,7 +14976,10 @@ struct phy_params_common_s {
     type2_r18_e_& set_type2_r18();
 
   private:
-    asn1::table::choice_storage<bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<bwp_switching_multi_dormancy_cc_dci_0_3_and_1_3_r18_c_,
+                                types,
+                                choice_buffer_t<type1_r18_e_, type2_r18_e_>>
+        c;
   };
 
   // member variables

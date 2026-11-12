@@ -11,6 +11,7 @@
 #include "ocudu/asn1/asn1_dispatch.h"
 #include <any>
 #include <cstring>
+#include <limits>
 #include <type_traits>
 
 namespace asn1 {
@@ -38,9 +39,11 @@ struct field_codec {
   void (*to_json)(json_writer& j, const char* name, const void* field, const seq_field& desc);
   /// Value that the field holds, which the engine encodes by the op of the field: the value of a copy_ptr of op
   /// sequence, or of a std::any. Null for other fields.
-  void* (*get)(const void* field) = nullptr;
+  const void* (*get)(const void* field) = nullptr;
   /// Stores a default value in a std::any field. Null for other fields.
   void (*init)(void* field) = nullptr;
+  /// Writable value that the field holds, as get. Null when get is.
+  void* (*get_mut)(void* field) = nullptr;
 };
 
 /// JSON name of a field, and the value that fields without a value write: an enumerator name, or null when absent.
@@ -78,22 +81,7 @@ enum class field_op : uint8_t {
 
 /// Field of a SEQUENCE or of one of its extension additions.
 struct seq_field {
-  /// Offset of the field from the start of the SEQUENCE.
-  uint32_t offset;
-  /// Offset of the presence flag, or one of the special values below.
-  int32_t            presence;
-  field_op           op;
-  bool               has_ext;
-  bool               aligned;
-  int64_t            lb;
-  uint64_t           ub;
-  const field_codec* codec;
-  /// Table of a field of op sequence, a seq_desc, of op choice, a choice_desc, of op ie_container, an
-  /// ie_container_desc, or of the items of a list of sequences, or the enum_desc of an ENUMERATED field without a JSON
-  /// codec. Its codec, if any, holds the presence
-  /// functions of a copy_ptr field.
-  const void* nested = nullptr;
-
+  /// Mandatory field, which has no presence flag.
   static constexpr int32_t mandatory = -1;
   /// Optional list, which is present when it is not empty.
   static constexpr int32_t list_presence = -2;
@@ -101,6 +89,27 @@ struct seq_field {
   static constexpr int32_t ptr_presence = -3;
   /// Mandatory copy_ptr field.
   static constexpr int32_t ptr_mandatory = -4;
+
+  /// Upper bound, modulo 2^64.
+  uint64_t ub() const { return static_cast<uint64_t>(lb) + range; }
+
+  /// Offset of the field from the start of the SEQUENCE.
+  uint32_t offset;
+  /// Offset of the presence flag, or one of the special values above.
+  int32_t  presence;
+  field_op op;
+  bool     has_ext;
+  bool     aligned;
+  /// Lower bound, or number of values of an ENUMERATED.
+  int64_t lb;
+  /// Upper bound minus lb, or number of extension values of an ENUMERATED.
+  uint64_t           range;
+  const field_codec* codec;
+  /// Table of a field of op sequence, a seq_desc, of op choice, a choice_desc, of op ie_container, an
+  /// ie_container_desc, or of the items of a list of sequences, or the enum_desc of an ENUMERATED field without a JSON
+  /// codec. Its codec, if any, holds the presence
+  /// functions of a copy_ptr field.
+  const void* nested = nullptr;
 };
 
 /// Optional field of a field_set, which has a presence bit.
@@ -113,16 +122,18 @@ struct seq_opt {
 
 /// Fields of a SEQUENCE or of an extension addition, in encoding order.
 struct field_set {
+  /// Number of fields up to which the engine tracks presence in a 64-bit mask.
+  static constexpr uint32_t max_masked_fields = 64;
+
   const seq_field* fields;
-  uint32_t         nof_fields;
   /// Fields without a presence bit, one bit per field index. Valid up to max_masked_fields fields.
   uint64_t mandatory;
   /// Optional fields, in encoding order.
   const seq_opt* opts;
-  uint32_t       nof_opts;
-
-  /// Number of fields up to which the engine tracks presence in a 64-bit mask.
-  static constexpr uint32_t max_masked_fields = 64;
+  /// JSON names of the fields, or null when the table does not drive the JSON of the SEQUENCE.
+  const field_name* names;
+  uint32_t          nof_fields;
+  uint32_t          nof_opts;
 };
 
 /// Extension addition: an extension group, or a single field outside of groups.
@@ -130,12 +141,13 @@ struct seq_group {
   field_set set;
   /// Whether the addition is a single field outside of groups, which encodes only its value.
   bool single;
-  /// JSON names of the fields, or null when the table does not drive the JSON of the SEQUENCE.
-  const field_name* names = nullptr;
 };
 
 /// SEQUENCE.
 struct seq_desc {
+  /// Number of extension additions up to which the engine tracks their presence in a 64-bit mask.
+  static constexpr uint32_t max_groups = 64;
+
   /// Root fields.
   field_set root;
   bool      has_ext;
@@ -143,13 +155,8 @@ struct seq_desc {
   /// Extension additions, in encoding order, at most max_groups.
   const seq_group* groups     = nullptr;
   uint32_t         nof_groups = 0;
-  /// JSON names of the root fields, or null when the table does not drive the JSON of the SEQUENCE.
-  const field_name* names = nullptr;
   /// Name of the message type, for the JSON of a message, or null for other sequences.
   const char* message_name = nullptr;
-
-  /// Number of extension additions up to which the engine tracks their presence in a 64-bit mask.
-  static constexpr uint32_t max_groups = 64;
 };
 
 OCUDUASN_CODE pack_sequence(bit_ref& bref, const void* seq, const seq_desc& desc);
@@ -165,12 +172,15 @@ OCUDUASN_CODE unpack_message(void* msg, cbit_ref& bref, const seq_desc& desc);
 void to_json_message(json_writer& j, const void* msg, const seq_desc& desc, const char* name);
 
 /// Table of a SEQUENCE without fields, which encodes nothing and writes an empty JSON object.
-inline constexpr seq_desc empty_sequence{{nullptr, 0, 0, nullptr, 0}, false, false};
+inline constexpr seq_desc empty_sequence{{nullptr, 0, nullptr, nullptr, 0, 0}, false, false};
 
 struct choice_storage_desc;
 
 /// CHOICE.
 struct choice_desc {
+  /// Offset of a member that the CHOICE does not have.
+  static constexpr uint32_t no_member = std::numeric_limits<uint32_t>::max();
+
   /// Integer type that holds the value of the type of the active alternative, an ENUMERATED.
   int_type type_itype;
   /// Number of alternatives and of extension alternatives, which come last.
@@ -197,8 +207,6 @@ struct choice_desc {
   const choice_storage_desc* storage = nullptr;
   /// Whether the CHOICE is an open type, whose alternative the object set selects and which is encoded with a length.
   bool open_type = false;
-
-  static constexpr uint32_t no_member = UINT32_MAX;
 };
 
 /// Operations on the value of one alternative of a CHOICE with choice_buffer_t storage. Null when they do nothing.
@@ -208,6 +216,9 @@ struct storage_ops {
   void (*init)(void* storage);
   /// Stores a copy of other in the storage, which holds no value. Null when a copy of the bytes of other does it.
   void (*copy)(void* storage, const void* other);
+  /// Moves other into the storage, which holds no value, and destroys other. Null when a copy of the bytes of other
+  /// does it.
+  void (*relocate)(void* storage, void* other);
   /// Size of the value.
   uint32_t size;
 };
@@ -226,6 +237,13 @@ void storage_copy(void* storage, const void* other)
 {
   new (storage) T(*static_cast<const T*>(other));
 }
+template <class T>
+void storage_relocate(void* storage, void* other)
+{
+  T& value = *static_cast<T*>(other);
+  new (storage) T(std::move(value));
+  value.~T();
+}
 /// Returns the operation Op of T, or null when Skip holds, without instantiating Op.
 template <bool Skip, class Fn, Fn Op>
 constexpr Fn storage_op()
@@ -236,13 +254,15 @@ constexpr Fn storage_op()
     return Op;
   }
 }
-/// Operations on an alternative of type T. Plain values, such as integers and enums, are not initialized.
-template <class T, bool Plain>
+/// Operations on an alternative of type T. Plain values, such as integers and enums, are not initialized. Relocatable
+/// tells that a copy of the bytes of a value is a valid value, which the old one no longer owns.
+template <class T, bool Plain, bool Relocatable = true>
 struct alternative_ops {
   static constexpr storage_ops value{
-      storage_op<std::is_trivially_destructible<T>::value, void (*)(void*), &storage_destroy<T>>(),
+      storage_op<std::is_trivially_destructible_v<T>, void (*)(void*), &storage_destroy<T>>(),
       storage_op<Plain, void (*)(void*), &storage_init<T>>(),
-      storage_op<std::is_trivially_copyable<T>::value, void (*)(void*, const void*), &storage_copy<T>>(),
+      storage_op<std::is_trivially_copyable_v<T>, void (*)(void*, const void*), &storage_copy<T>>(),
+      storage_op<Relocatable or std::is_trivially_copyable_v<T>, void (*)(void*, void*), &storage_relocate<T>>(),
       sizeof(T)};
 };
 
@@ -291,7 +311,7 @@ struct object_items {
     if constexpr (Fixed) {
       return pack_fixed_seq_of(bref, list, list.size());
     } else {
-      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub, desc.aligned);
+      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub(), desc.aligned);
     }
   }
   template <class L>
@@ -300,7 +320,7 @@ struct object_items {
     if constexpr (Fixed) {
       return unpack_fixed_seq_of(list, bref, list.size());
     } else {
-      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub, desc.aligned);
+      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub(), desc.aligned);
     }
   }
 };
@@ -319,19 +339,20 @@ template <class Item, class Prim>
 struct wrapped_int_packer {
   integer_packer<Prim> prim;
 
-  OCUDUASN_CODE pack(bit_ref& bref, const Item& item) { return prim.pack(bref, item.value); }
-  OCUDUASN_CODE unpack(Item& item, cbit_ref& bref) { return prim.unpack(item.value, bref); }
+  OCUDUASN_CODE pack(bit_ref& bref, const Item& item) const { return prim.pack(bref, item.value); }
+  OCUDUASN_CODE unpack(Item& item, cbit_ref& bref) const { return prim.unpack(item.value, bref); }
 };
 
 /// Constrained integer items of a SEQUENCE OF, with their bounds, extension marker and alignment.
-template <bool Fixed, int64_t LB, uint64_t UB, bool Ext, bool Aligned>
+template <bool Fixed, int64_t LB, uint64_t Range, bool Ext, bool Aligned>
 struct int_items {
   template <class L>
   static auto packer()
   {
     using item_type = typename L::value_type;
     using prim_type = typename int_item_prim<item_type>::type;
-    integer_packer<prim_type> prim(static_cast<prim_type>(LB), static_cast<prim_type>(UB), Ext, Aligned);
+    integer_packer<prim_type> prim(
+        static_cast<prim_type>(LB), static_cast<prim_type>(static_cast<uint64_t>(LB) + Range), Ext, Aligned);
     // The integer_packer of asn1::integer items is not instantiated, unlike those of the primitive types.
     if constexpr (std::is_same_v<item_type, prim_type>) {
       return prim;
@@ -345,7 +366,7 @@ struct int_items {
     if constexpr (Fixed) {
       return pack_fixed_seq_of(bref, list, list.size(), packer<L>());
     } else {
-      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub, packer<L>(), desc.aligned);
+      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub(), packer<L>(), desc.aligned);
     }
   }
   template <class L>
@@ -354,7 +375,7 @@ struct int_items {
     if constexpr (Fixed) {
       return unpack_fixed_seq_of(list, bref, list.size(), packer<L>());
     } else {
-      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub, packer<L>(), desc.aligned);
+      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub(), packer<L>(), desc.aligned);
     }
   }
 };
@@ -367,7 +388,7 @@ struct bool_items {
     if constexpr (Fixed) {
       return pack_fixed_seq_of(bref, list, list.size(), BitPacker(1));
     } else {
-      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub, BitPacker(1), desc.aligned);
+      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub(), BitPacker(1), desc.aligned);
     }
   }
   template <class L>
@@ -376,7 +397,7 @@ struct bool_items {
     if constexpr (Fixed) {
       return unpack_fixed_seq_of(list, bref, list.size(), BitPacker(1));
     } else {
-      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub, BitPacker(1), desc.aligned);
+      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub(), BitPacker(1), desc.aligned);
     }
   }
 };
@@ -387,7 +408,7 @@ struct inner_list_packer {
   {
     seq_field d{};
     d.lb      = LB;
-    d.ub      = UB;
+    d.range   = UB - LB;
     d.aligned = Aligned;
     return d;
   }
@@ -412,7 +433,7 @@ struct list_items {
     if constexpr (Fixed) {
       return pack_fixed_seq_of(bref, list, list.size(), packer{});
     } else {
-      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub, packer{}, desc.aligned);
+      return pack_dyn_seq_of(bref, list, desc.lb, desc.ub(), packer{}, desc.aligned);
     }
   }
   template <class L>
@@ -421,7 +442,7 @@ struct list_items {
     if constexpr (Fixed) {
       return unpack_fixed_seq_of(list, bref, list.size(), packer{});
     } else {
-      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub, packer{}, desc.aligned);
+      return unpack_dyn_seq_of(list, bref, desc.lb, desc.ub(), packer{}, desc.aligned);
     }
   }
 };
@@ -659,10 +680,10 @@ struct list_codec<T, no_json, Items> {
 
 /// Pack and unpack an item of a SEQUENCE OF with the table of the item, a seq_desc or a choice_desc, which unpacker or
 /// packer points to.
-OCUDUASN_CODE pack_sequence_item(bit_ref& bref, const void* item, void* packer);
-OCUDUASN_CODE unpack_sequence_item(void* item, cbit_ref& bref, void* unpacker);
-OCUDUASN_CODE pack_choice_item(bit_ref& bref, const void* item, void* packer);
-OCUDUASN_CODE unpack_choice_item(void* item, cbit_ref& bref, void* unpacker);
+OCUDUASN_CODE pack_sequence_item(bit_ref& bref, const void* item, const void* packer);
+OCUDUASN_CODE unpack_sequence_item(void* item, cbit_ref& bref, const void* unpacker);
+OCUDUASN_CODE pack_choice_item(bit_ref& bref, const void* item, const void* packer);
+OCUDUASN_CODE unpack_choice_item(void* item, cbit_ref& bref, const void* unpacker);
 /// Writes an item of a SEQUENCE OF as JSON with its table, a seq_desc or a choice_desc.
 void sequence_item_to_json(json_writer& j, const void* item, const void* desc);
 void choice_item_to_json(json_writer& j, const void* item, const void* desc);
@@ -694,9 +715,11 @@ struct item_list_field_codec : field_codec {
   list_view (*view)(const void* field);
   /// Resizes the list and returns its items. Null for lists of fixed size.
   void* (*resize)(void* list, uint32_t nof_items);
+  /// Writable items of a list of fixed size. Null for other lists.
+  void* (*fixed_items)(void* list);
   uint32_t item_size;
-  OCUDUASN_CODE (*pack_item)(bit_ref& bref, const void* item, void* table);
-  OCUDUASN_CODE (*unpack_item)(void* item, cbit_ref& bref, void* table);
+  OCUDUASN_CODE (*pack_item)(bit_ref& bref, const void* item, const void* table);
+  OCUDUASN_CODE (*unpack_item)(void* item, cbit_ref& bref, const void* table);
   void (*item_to_json)(json_writer& j, const void* item, const void* table);
 };
 /// Resize function of a list of type T, null for lists of fixed size.
@@ -707,6 +730,21 @@ constexpr ::asn1::detail::resize_seq_fn list_resize()
     return nullptr;
   } else {
     return &::asn1::detail::resize_seq_of<T>;
+  }
+}
+template <class T>
+void* fixed_list_items(void* field)
+{
+  return static_cast<T*>(field)->data();
+}
+/// Writable items function of a list of type T, null for lists of variable size.
+template <class T, bool Fixed>
+constexpr void* (*list_fixed_items())(void*)
+{
+  if constexpr (Fixed) {
+    return &fixed_list_items<T>;
+  } else {
+    return nullptr;
   }
 }
 OCUDUASN_CODE pack_item_list(bit_ref& bref, const void* field, const seq_field& desc);
@@ -721,6 +759,7 @@ struct item_list_codec {
       {&pack_item_list, &unpack_item_list, &list_empty<T>, nullptr, nullptr, Json ? &item_list_to_json : nullptr},
       &view_list<T>,
       list_resize<T, Fixed>(),
+      list_fixed_items<T, Fixed>(),
       sizeof(typename T::value_type),
       Ops::pack,
       Ops::unpack,
@@ -745,6 +784,20 @@ constexpr ::asn1::detail::resize_seq_fn ptr_list_resize()
     return &resize_ptr_list<T>;
   }
 }
+template <class T>
+void* ptr_list_items(void* field)
+{
+  return static_cast<copy_ptr<T>*>(field)->get()->data();
+}
+template <class T, bool Fixed>
+constexpr void* (*ptr_list_fixed_items())(void*)
+{
+  if constexpr (Fixed) {
+    return &ptr_list_items<T>;
+  } else {
+    return nullptr;
+  }
+}
 /// Codec of a copy_ptr field P that holds a SEQUENCE OF, as item_list_codec.
 template <class P, class Ops, bool Fixed, bool Json>
 struct ptr_item_list_codec;
@@ -758,6 +811,7 @@ struct ptr_item_list_codec<copy_ptr<T>, Ops, Fixed, Json> {
                                                 Json ? &item_list_to_json : nullptr},
                                                &view_ptr_list<T>,
                                                ptr_list_resize<T, Fixed>(),
+                                               ptr_list_fixed_items<T, Fixed>(),
                                                sizeof(typename T::value_type),
                                                Ops::pack,
                                                Ops::unpack,
@@ -833,21 +887,33 @@ struct any_codec<T, no_json> {
       value{&pack_any<T>, &unpack_any<T>, nullptr, nullptr, nullptr, nullptr, nullptr, &any_init<T>};
 };
 template <class T>
-void* any_get(const void* field)
+const void* any_get(const void* field)
 {
-  // Unpacking writes the value through the same accessor as packing reads it.
-  return const_cast<T*>(&static_cast<const choice_buffer_ptr*>(field)->get<T>());
+  return &static_cast<const choice_buffer_ptr*>(field)->get<T>();
+}
+template <class T>
+void* any_get_mut(void* field)
+{
+  return &static_cast<choice_buffer_ptr*>(field)->get<T>();
 }
 /// Codec of a CHOICE alternative of type T held in a choice_buffer_ptr, whose value the engine encodes by the op of
 /// the field, such as an integer, with the JSON form J of an ENUMERATED value.
 template <class T, class J = no_json>
 struct any_value_codec {
-  static constexpr field_codec
-      value{nullptr, nullptr, nullptr, nullptr, nullptr, &object_to_json<T, J>, &any_get<T>, &any_init<T>};
+  static constexpr field_codec value{nullptr,
+                                     nullptr,
+                                     nullptr,
+                                     nullptr,
+                                     nullptr,
+                                     &object_to_json<T, J>,
+                                     &any_get<T>,
+                                     &any_init<T>,
+                                     &any_get_mut<T>};
 };
 template <class T>
 struct any_value_codec<T, no_json> {
-  static constexpr field_codec value{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &any_get<T>, &any_init<T>};
+  static constexpr field_codec
+      value{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &any_get<T>, &any_init<T>, &any_get_mut<T>};
 };
 template <class T, class Items>
 OCUDUASN_CODE pack_any_list(bit_ref& bref, const void* field, const seq_field& desc)
@@ -889,18 +955,29 @@ struct any_list_codec<T, no_json, Items> {
                                      &any_init<T>};
 };
 template <class T>
-void* ptr_get(const void* field)
+const void* ptr_get(const void* field)
 {
-  // Unpacking writes the value through the same accessor as packing reads it.
-  return const_cast<T*>(static_cast<const copy_ptr<T>*>(field)->get());
+  return static_cast<const copy_ptr<T>*>(field)->get();
+}
+template <class T>
+void* ptr_get_mut(void* field)
+{
+  return static_cast<copy_ptr<T>*>(field)->get();
 }
 /// Presence of a copy_ptr field that holds a nested sequence of op sequence, which the engine encodes.
 template <class P>
 struct ptr_nested_codec;
 template <class T>
 struct ptr_nested_codec<copy_ptr<T>> {
-  static constexpr field_codec
-      value{nullptr, nullptr, nullptr, &ptr_present, &ptr_set_present<T>, nullptr, &ptr_get<T>};
+  static constexpr field_codec value{nullptr,
+                                     nullptr,
+                                     nullptr,
+                                     &ptr_present,
+                                     &ptr_set_present<T>,
+                                     nullptr,
+                                     &ptr_get<T>,
+                                     nullptr,
+                                     &ptr_get_mut<T>};
 };
 
 } // namespace table

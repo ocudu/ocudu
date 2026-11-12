@@ -118,12 +118,16 @@ static const asn1::table::field_name seq_table_rrc_pos_sys_info_request_r16_ies_
     {"requestedPosSI-List", nullptr},
     {"spare", nullptr}};
 const asn1::table::seq_desc rrc_pos_sys_info_request_r16_ies_s::desc = {
-    {seq_table_rrc_pos_sys_info_request_r16_ies_s_fields, 2, UINT64_C(0x3), nullptr, 0},
+    {seq_table_rrc_pos_sys_info_request_r16_ies_s_fields,
+     uint64_t{0x3},
+     nullptr,
+     seq_table_rrc_pos_sys_info_request_r16_ies_s_names,
+     2,
+     0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_pos_sys_info_request_r16_ies_s_names};
+    0};
 
 // ReestabUE-Identity ::= SEQUENCE
 static const asn1::table::seq_field seq_table_reestab_ue_id_s_fields[] = {
@@ -132,16 +136,16 @@ static const asn1::table::seq_field seq_table_reestab_ue_id_s_fields[] = {
      asn1::table::field_op::int_u32,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(reestab_ue_id_s, pci),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      false,
      false,
-     INT64_C(0),
-     UINT64_C(1007),
+     int64_t{0},
+     uint64_t{1007},
      nullptr},
     {offsetof(reestab_ue_id_s, short_mac_i),
      asn1::table::seq_field::mandatory,
@@ -154,12 +158,12 @@ static const asn1::table::seq_field seq_table_reestab_ue_id_s_fields[] = {
 static const asn1::table::field_name seq_table_reestab_ue_id_s_names[] = {{"c-RNTI", nullptr},
                                                                           {"physCellId", nullptr},
                                                                           {"shortMAC-I", nullptr}};
-const asn1::table::seq_desc reestab_ue_id_s::desc = {{seq_table_reestab_ue_id_s_fields, 3, UINT64_C(0x7), nullptr, 0},
-                                                     false,
-                                                     false,
-                                                     nullptr,
-                                                     0,
-                                                     seq_table_reestab_ue_id_s_names};
+const asn1::table::seq_desc          reestab_ue_id_s::desc             = {
+    {seq_table_reestab_ue_id_s_fields, uint64_t{0x7}, nullptr, seq_table_reestab_ue_id_s_names, 3, 0},
+    false,
+    false,
+    nullptr,
+    0};
 
 // ReestablishmentCause ::= ENUMERATED
 static const char*           enum_names_reest_cause_e_values[] = {"reconfigurationFailure",
@@ -200,12 +204,11 @@ static const asn1::table::field_name seq_table_rrc_reest_request_ies_s_names[] =
                                                                                   {"reestablishmentCause", nullptr},
                                                                                   {"spare", nullptr}};
 const asn1::table::seq_desc          rrc_reest_request_ies_s::desc             = {
-    {seq_table_rrc_reest_request_ies_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_rrc_reest_request_ies_s_fields, uint64_t{0x7}, nullptr, seq_table_rrc_reest_request_ies_s_names, 3, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_reest_request_ies_s_names};
+    0};
 
 // RRCReestablishmentRequest ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rrc_reest_request_s_fields[] = {
@@ -220,12 +223,11 @@ static const asn1::table::seq_field seq_table_rrc_reest_request_s_fields[] = {
      &rrc_reest_request_ies_s::desc}};
 static const asn1::table::field_name seq_table_rrc_reest_request_s_names[] = {{"rrcReestablishmentRequest", nullptr}};
 const asn1::table::seq_desc          rrc_reest_request_s::desc             = {
-    {seq_table_rrc_reest_request_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_rrc_reest_request_s_fields, uint64_t{0x1}, nullptr, seq_table_rrc_reest_request_s_names, 1, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_reest_request_s_names};
+    0};
 
 // ResumeCause ::= ENUMERATED
 static const char*           enum_names_resume_cause_e_values[] = {"emergency",
@@ -286,12 +288,11 @@ static const asn1::table::field_name seq_table_rrc_resume_request_ies_s_names[] 
                                                                                    {"resumeCause", nullptr},
                                                                                    {"spare", nullptr}};
 const asn1::table::seq_desc          rrc_resume_request_ies_s::desc             = {
-    {seq_table_rrc_resume_request_ies_s_fields, 4, UINT64_C(0xf), nullptr, 0},
+    {seq_table_rrc_resume_request_ies_s_fields, uint64_t{0xf}, nullptr, seq_table_rrc_resume_request_ies_s_names, 4, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_resume_request_ies_s_names};
+    0};
 
 // RRCResumeRequest ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rrc_resume_request_s_fields[] = {
@@ -306,12 +307,11 @@ static const asn1::table::seq_field seq_table_rrc_resume_request_s_fields[] = {
      &rrc_resume_request_ies_s::desc}};
 static const asn1::table::field_name seq_table_rrc_resume_request_s_names[] = {{"rrcResumeRequest", nullptr}};
 const asn1::table::seq_desc          rrc_resume_request_s::desc             = {
-    {seq_table_rrc_resume_request_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_rrc_resume_request_s_fields, uint64_t{0x1}, nullptr, seq_table_rrc_resume_request_s_names, 1, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_resume_request_s_names};
+    0};
 
 // RRCSetupRequest-IEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rrc_setup_request_ies_s_fields[] = {
@@ -345,12 +345,11 @@ static const asn1::table::field_name seq_table_rrc_setup_request_ies_s_names[] =
                                                                                   {"establishmentCause", nullptr},
                                                                                   {"spare", nullptr}};
 const asn1::table::seq_desc          rrc_setup_request_ies_s::desc             = {
-    {seq_table_rrc_setup_request_ies_s_fields, 3, UINT64_C(0x7), nullptr, 0},
+    {seq_table_rrc_setup_request_ies_s_fields, uint64_t{0x7}, nullptr, seq_table_rrc_setup_request_ies_s_names, 3, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_setup_request_ies_s_names};
+    0};
 
 // RRCSetupRequest ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rrc_setup_request_s_fields[] = {
@@ -365,12 +364,11 @@ static const asn1::table::seq_field seq_table_rrc_setup_request_s_fields[] = {
      &rrc_setup_request_ies_s::desc}};
 static const asn1::table::field_name seq_table_rrc_setup_request_s_names[] = {{"rrcSetupRequest", nullptr}};
 const asn1::table::seq_desc          rrc_setup_request_s::desc             = {
-    {seq_table_rrc_setup_request_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_rrc_setup_request_s_fields, uint64_t{0x1}, nullptr, seq_table_rrc_setup_request_s_names, 1, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_setup_request_s_names};
+    0};
 
 // RRCSystemInfoRequest-IEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rrc_sys_info_request_ies_s_fields[] = {
@@ -393,13 +391,16 @@ static const asn1::table::seq_field seq_table_rrc_sys_info_request_ies_s_fields[
      &asn1::table::object_codec<decltype(rrc_sys_info_request_ies_s::spare), asn1::table::struct_json>::value}};
 static const asn1::table::field_name seq_table_rrc_sys_info_request_ies_s_names[] = {{"requested-SI-List", nullptr},
                                                                                      {"spare", nullptr}};
-const asn1::table::seq_desc          rrc_sys_info_request_ies_s::desc             = {
-    {seq_table_rrc_sys_info_request_ies_s_fields, 2, UINT64_C(0x3), nullptr, 0},
-    false,
-    false,
-    nullptr,
-    0,
-    seq_table_rrc_sys_info_request_ies_s_names};
+const asn1::table::seq_desc          rrc_sys_info_request_ies_s::desc = {{seq_table_rrc_sys_info_request_ies_s_fields,
+                                                                          uint64_t{0x3},
+                                                                          nullptr,
+                                                                          seq_table_rrc_sys_info_request_ies_s_names,
+                                                                          2,
+                                                                          0},
+                                                                         false,
+                                                                         false,
+                                                                         nullptr,
+                                                                         0};
 
 // RRCSystemInfoRequest ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rrc_sys_info_request_s_fields[] = {
@@ -414,12 +415,11 @@ static const asn1::table::seq_field seq_table_rrc_sys_info_request_s_fields[] = 
      &rrc_sys_info_request_s::crit_exts_c_::desc}};
 static const asn1::table::field_name seq_table_rrc_sys_info_request_s_names[] = {{"criticalExtensions", nullptr}};
 const asn1::table::seq_desc          rrc_sys_info_request_s::desc             = {
-    {seq_table_rrc_sys_info_request_s_fields, 1, UINT64_C(0x1), nullptr, 0},
+    {seq_table_rrc_sys_info_request_s_fields, uint64_t{0x1}, nullptr, seq_table_rrc_sys_info_request_s_names, 1, 0},
     false,
     false,
     nullptr,
-    0,
-    seq_table_rrc_sys_info_request_s_names};
+    0};
 
 static const asn1::table::storage_ops* const choice_storage_rrc_sys_info_request_s_crit_exts_c__alternatives[] = {
     &asn1::table::alternative_ops<rrc_sys_info_request_ies_s, false>::value,

@@ -26,16 +26,16 @@ static const asn1::table::seq_field seq_table_a2_x_pc5_flow_bit_rates_s_fields[]
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(a2_x_pc5_flow_bit_rates_s, a2_x_max_flow_bit_rate),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(a2_x_pc5_flow_bit_rates_s, ie_exts),
      (int32_t)offsetof(a2_x_pc5_flow_bit_rates_s, ie_exts_present),
@@ -51,13 +51,16 @@ static const asn1::table::field_name seq_table_a2_x_pc5_flow_bit_rates_s_names[]
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_a2_x_pc5_flow_bit_rates_s_opts[] = {
     {2, (int32_t)offsetof(a2_x_pc5_flow_bit_rates_s, ie_exts_present)}};
-const asn1::table::seq_desc a2_x_pc5_flow_bit_rates_s::desc = {
-    {seq_table_a2_x_pc5_flow_bit_rates_s_fields, 3, UINT64_C(0x3), seq_table_a2_x_pc5_flow_bit_rates_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_a2_x_pc5_flow_bit_rates_s_names};
+const asn1::table::seq_desc a2_x_pc5_flow_bit_rates_s::desc = {{seq_table_a2_x_pc5_flow_bit_rates_s_fields,
+                                                                uint64_t{0x3},
+                                                                seq_table_a2_x_pc5_flow_bit_rates_s_opts,
+                                                                seq_table_a2_x_pc5_flow_bit_rates_s_names,
+                                                                3,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // A2X-PC5-QoS-Flow-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_a2_x_pc5_qos_flow_item_s_fields[] = {
@@ -66,8 +69,8 @@ static const asn1::table::seq_field seq_table_a2_x_pc5_qos_flow_item_s_fields[] 
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(a2_x_pc5_qos_flow_item_s, a2_x_pc5_flow_bit_rates),
      (int32_t)offsetof(a2_x_pc5_qos_flow_item_s, a2_x_pc5_flow_bit_rates_present),
@@ -103,13 +106,16 @@ static const asn1::table::seq_opt    seq_table_a2_x_pc5_qos_flow_item_s_opts[]  
     {1, (int32_t)offsetof(a2_x_pc5_qos_flow_item_s, a2_x_pc5_flow_bit_rates_present)},
     {2, (int32_t)offsetof(a2_x_pc5_qos_flow_item_s, a2_x_range_present)},
     {3, (int32_t)offsetof(a2_x_pc5_qos_flow_item_s, ie_exts_present)}};
-const asn1::table::seq_desc a2_x_pc5_qos_flow_item_s::desc = {
-    {seq_table_a2_x_pc5_qos_flow_item_s_fields, 4, UINT64_C(0x1), seq_table_a2_x_pc5_qos_flow_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_a2_x_pc5_qos_flow_item_s_names};
+const asn1::table::seq_desc a2_x_pc5_qos_flow_item_s::desc = {{seq_table_a2_x_pc5_qos_flow_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_a2_x_pc5_qos_flow_item_s_opts,
+                                                               seq_table_a2_x_pc5_qos_flow_item_s_names,
+                                                               4,
+                                                               3},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 static const char* enum_names_a2_x_pc5_qos_flow_item_s_a2_x_range_e__values[] =
     {"m50", "m80", "m180", "m200", "m350", "m400", "m500", "m700", "m1000"};
@@ -131,7 +137,7 @@ static const asn1::table::seq_field seq_table_a2_x_pc5_qos_params_s_fields[] = {
      false,
      true,
      1,
-     2048,
+     2047,
      &asn1::table::item_list_codec<decltype(a2_x_pc5_qos_params_s::a2_x_pc5_qos_flow_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -142,8 +148,8 @@ static const asn1::table::seq_field seq_table_a2_x_pc5_qos_params_s_fields[] = {
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(a2_x_pc5_qos_params_s, ie_exts),
      (int32_t)offsetof(a2_x_pc5_qos_params_s, ie_exts_present),
@@ -160,13 +166,16 @@ static const asn1::table::field_name seq_table_a2_x_pc5_qos_params_s_names[] = {
 static const asn1::table::seq_opt seq_table_a2_x_pc5_qos_params_s_opts[] = {
     {1, (int32_t)offsetof(a2_x_pc5_qos_params_s, a2_x_pc5_link_aggr_bit_rates_present)},
     {2, (int32_t)offsetof(a2_x_pc5_qos_params_s, ie_exts_present)}};
-const asn1::table::seq_desc a2_x_pc5_qos_params_s::desc = {
-    {seq_table_a2_x_pc5_qos_params_s_fields, 3, UINT64_C(0x1), seq_table_a2_x_pc5_qos_params_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_a2_x_pc5_qos_params_s_names};
+const asn1::table::seq_desc a2_x_pc5_qos_params_s::desc = {{seq_table_a2_x_pc5_qos_params_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_a2_x_pc5_qos_params_s_opts,
+                                                            seq_table_a2_x_pc5_qos_params_s_names,
+                                                            3,
+                                                            2},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // EndpointIPAddressAndPort ::= SEQUENCE
 static const asn1::table::seq_field seq_table_endpoint_ip_address_and_port_s_fields[] = {
@@ -201,15 +210,15 @@ static const asn1::table::field_name seq_table_endpoint_ip_address_and_port_s_na
 static const asn1::table::seq_opt    seq_table_endpoint_ip_address_and_port_s_opts[]  = {
     {2, (int32_t)offsetof(endpoint_ip_address_and_port_s, ie_exts_present)}};
 const asn1::table::seq_desc endpoint_ip_address_and_port_s::desc = {{seq_table_endpoint_ip_address_and_port_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x3),
+                                                                     uint64_t{0x3},
                                                                      seq_table_endpoint_ip_address_and_port_s_opts,
+                                                                     seq_table_endpoint_ip_address_and_port_s_names,
+                                                                     3,
                                                                      1},
                                                                     false,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_endpoint_ip_address_and_port_s_names};
+                                                                    0};
 
 // CPTransportLayerInformation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_cp_transport_layer_info_ext_ies_o[]    = {169};
@@ -343,13 +352,16 @@ static const asn1::table::field_name seq_table_amf_tnl_assoc_setup_item_s_names[
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_amf_tnl_assoc_setup_item_s_opts[] = {
     {1, (int32_t)offsetof(amf_tnl_assoc_setup_item_s, ie_exts_present)}};
-const asn1::table::seq_desc amf_tnl_assoc_setup_item_s::desc = {
-    {seq_table_amf_tnl_assoc_setup_item_s_fields, 2, UINT64_C(0x1), seq_table_amf_tnl_assoc_setup_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_amf_tnl_assoc_setup_item_s_names};
+const asn1::table::seq_desc amf_tnl_assoc_setup_item_s::desc = {{seq_table_amf_tnl_assoc_setup_item_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 seq_table_amf_tnl_assoc_setup_item_s_opts,
+                                                                 seq_table_amf_tnl_assoc_setup_item_s_names,
+                                                                 2,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // TNLAssociationUsage ::= ENUMERATED
 static const char*           enum_names_tnl_assoc_usage_e_values[] = {"ue", "non-ue", "both"};
@@ -380,8 +392,8 @@ static const asn1::table::seq_field seq_table_amf_tnl_assoc_to_add_item_s_fields
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(amf_tnl_assoc_to_add_item_s, ie_exts),
      (int32_t)offsetof(amf_tnl_assoc_to_add_item_s, ie_exts_present),
@@ -399,13 +411,16 @@ static const asn1::table::field_name seq_table_amf_tnl_assoc_to_add_item_s_names
 static const asn1::table::seq_opt seq_table_amf_tnl_assoc_to_add_item_s_opts[] = {
     {1, (int32_t)offsetof(amf_tnl_assoc_to_add_item_s, tnl_assoc_usage_present)},
     {3, (int32_t)offsetof(amf_tnl_assoc_to_add_item_s, ie_exts_present)}};
-const asn1::table::seq_desc amf_tnl_assoc_to_add_item_s::desc = {
-    {seq_table_amf_tnl_assoc_to_add_item_s_fields, 4, UINT64_C(0x5), seq_table_amf_tnl_assoc_to_add_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_amf_tnl_assoc_to_add_item_s_names};
+const asn1::table::seq_desc amf_tnl_assoc_to_add_item_s::desc = {{seq_table_amf_tnl_assoc_to_add_item_s_fields,
+                                                                  uint64_t{0x5},
+                                                                  seq_table_amf_tnl_assoc_to_add_item_s_opts,
+                                                                  seq_table_amf_tnl_assoc_to_add_item_s_names,
+                                                                  4,
+                                                                  2},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 static const uint32_t objset_id_amf_tnl_assoc_to_rem_item_ext_ies_o[]   = {168};
 static const uint8_t  objset_crit_amf_tnl_assoc_to_rem_item_ext_ies_o[] = {crit_e::reject};
@@ -460,13 +475,16 @@ static const asn1::table::field_name seq_table_amf_tnl_assoc_to_rem_item_s_names
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_amf_tnl_assoc_to_rem_item_s_opts[] = {
     {1, (int32_t)offsetof(amf_tnl_assoc_to_rem_item_s, ie_exts_present)}};
-const asn1::table::seq_desc amf_tnl_assoc_to_rem_item_s::desc = {
-    {seq_table_amf_tnl_assoc_to_rem_item_s_fields, 2, UINT64_C(0x1), seq_table_amf_tnl_assoc_to_rem_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_amf_tnl_assoc_to_rem_item_s_names};
+const asn1::table::seq_desc amf_tnl_assoc_to_rem_item_s::desc = {{seq_table_amf_tnl_assoc_to_rem_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_amf_tnl_assoc_to_rem_item_s_opts,
+                                                                  seq_table_amf_tnl_assoc_to_rem_item_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // AMF-TNLAssociationToUpdateItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_amf_tnl_assoc_to_upd_item_s_fields[] = {
@@ -493,8 +511,8 @@ static const asn1::table::seq_field seq_table_amf_tnl_assoc_to_upd_item_s_fields
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(amf_tnl_assoc_to_upd_item_s, ie_exts),
      (int32_t)offsetof(amf_tnl_assoc_to_upd_item_s, ie_exts_present),
@@ -513,13 +531,16 @@ static const asn1::table::seq_opt seq_table_amf_tnl_assoc_to_upd_item_s_opts[] =
     {1, (int32_t)offsetof(amf_tnl_assoc_to_upd_item_s, tnl_assoc_usage_present)},
     {2, (int32_t)offsetof(amf_tnl_assoc_to_upd_item_s, tnla_ddress_weight_factor_present)},
     {3, (int32_t)offsetof(amf_tnl_assoc_to_upd_item_s, ie_exts_present)}};
-const asn1::table::seq_desc amf_tnl_assoc_to_upd_item_s::desc = {
-    {seq_table_amf_tnl_assoc_to_upd_item_s_fields, 4, UINT64_C(0x1), seq_table_amf_tnl_assoc_to_upd_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_amf_tnl_assoc_to_upd_item_s_names};
+const asn1::table::seq_desc amf_tnl_assoc_to_upd_item_s::desc = {{seq_table_amf_tnl_assoc_to_upd_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_amf_tnl_assoc_to_upd_item_s_opts,
+                                                                  seq_table_amf_tnl_assoc_to_upd_item_s_names,
+                                                                  4,
+                                                                  3},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // GNB-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_gnb_id_c_alternatives[] = {
@@ -605,13 +626,16 @@ static const asn1::table::field_name seq_table_global_gnb_id_s_names[] = {{"pLMN
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_gnb_id_s_opts[]  = {
     {2, (int32_t)offsetof(global_gnb_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_gnb_id_s::desc = {
-    {seq_table_global_gnb_id_s_fields, 3, UINT64_C(0x3), seq_table_global_gnb_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_gnb_id_s_names};
+const asn1::table::seq_desc global_gnb_id_s::desc = {{seq_table_global_gnb_id_s_fields,
+                                                      uint64_t{0x3},
+                                                      seq_table_global_gnb_id_s_opts,
+                                                      seq_table_global_gnb_id_s_names,
+                                                      3,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // NgENB-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ng_enb_id_c_alternatives[] = {
@@ -734,13 +758,16 @@ static const asn1::table::field_name seq_table_global_ng_enb_id_s_names[] = {{"p
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_ng_enb_id_s_opts[]  = {
     {2, (int32_t)offsetof(global_ng_enb_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_ng_enb_id_s::desc = {
-    {seq_table_global_ng_enb_id_s_fields, 3, UINT64_C(0x3), seq_table_global_ng_enb_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_ng_enb_id_s_names};
+const asn1::table::seq_desc global_ng_enb_id_s::desc = {{seq_table_global_ng_enb_id_s_fields,
+                                                         uint64_t{0x3},
+                                                         seq_table_global_ng_enb_id_s_opts,
+                                                         seq_table_global_ng_enb_id_s_names,
+                                                         3,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // N3IWF-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_n3_iwf_id_c_alternatives[] = {
@@ -835,13 +862,16 @@ static const asn1::table::field_name seq_table_global_n3_iwf_id_s_names[] = {{"p
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_n3_iwf_id_s_opts[]  = {
     {2, (int32_t)offsetof(global_n3_iwf_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_n3_iwf_id_s::desc = {
-    {seq_table_global_n3_iwf_id_s_fields, 3, UINT64_C(0x3), seq_table_global_n3_iwf_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_n3_iwf_id_s_names};
+const asn1::table::seq_desc global_n3_iwf_id_s::desc = {{seq_table_global_n3_iwf_id_s_fields,
+                                                         uint64_t{0x3},
+                                                         seq_table_global_n3_iwf_id_s_opts,
+                                                         seq_table_global_n3_iwf_id_s_names,
+                                                         3,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // TNGF-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_tngf_id_c_alternatives[] = {
@@ -929,13 +959,16 @@ static const asn1::table::field_name seq_table_global_tngf_id_s_names[] = {{"pLM
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_tngf_id_s_opts[]  = {
     {2, (int32_t)offsetof(global_tngf_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_tngf_id_s::desc = {
-    {seq_table_global_tngf_id_s_fields, 3, UINT64_C(0x3), seq_table_global_tngf_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_tngf_id_s_names};
+const asn1::table::seq_desc global_tngf_id_s::desc = {{seq_table_global_tngf_id_s_fields,
+                                                       uint64_t{0x3},
+                                                       seq_table_global_tngf_id_s_opts,
+                                                       seq_table_global_tngf_id_s_names,
+                                                       3,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // TWIF-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_twif_id_c_alternatives[] = {
@@ -1023,13 +1056,16 @@ static const asn1::table::field_name seq_table_global_twif_id_s_names[] = {{"pLM
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_twif_id_s_opts[]  = {
     {2, (int32_t)offsetof(global_twif_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_twif_id_s::desc = {
-    {seq_table_global_twif_id_s_fields, 3, UINT64_C(0x3), seq_table_global_twif_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_twif_id_s_names};
+const asn1::table::seq_desc global_twif_id_s::desc = {{seq_table_global_twif_id_s_fields,
+                                                       uint64_t{0x3},
+                                                       seq_table_global_twif_id_s_opts,
+                                                       seq_table_global_twif_id_s_names,
+                                                       3,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // W-AGF-ID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_w_agf_id_c_alternatives[] = {
@@ -1119,13 +1155,16 @@ static const asn1::table::field_name seq_table_global_w_agf_id_s_names[] = {{"pL
                                                                             {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_w_agf_id_s_opts[]  = {
     {2, (int32_t)offsetof(global_w_agf_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_w_agf_id_s::desc = {
-    {seq_table_global_w_agf_id_s_fields, 3, UINT64_C(0x3), seq_table_global_w_agf_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_w_agf_id_s_names};
+const asn1::table::seq_desc global_w_agf_id_s::desc = {{seq_table_global_w_agf_id_s_fields,
+                                                        uint64_t{0x3},
+                                                        seq_table_global_w_agf_id_s_opts,
+                                                        seq_table_global_w_agf_id_s_names,
+                                                        3,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // GlobalRANNodeID-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_global_ran_node_id_ext_ies_o[]    = {240, 241, 242};
@@ -1244,7 +1283,7 @@ static const asn1::table::storage_ops* const choice_storage_global_ran_node_id_c
     &asn1::table::alternative_ops<global_gnb_id_s, false>::value,
     &asn1::table::alternative_ops<global_ng_enb_id_s, false>::value,
     &asn1::table::alternative_ops<global_n3_iwf_id_s, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<global_ran_node_id_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<global_ran_node_id_ext_ies_o>, false, false>::value};
 const asn1::table::choice_storage_desc global_ran_node_id_c::storage_desc = {
     choice_storage_global_ran_node_id_c_alternatives,
     4,
@@ -1371,16 +1410,16 @@ static const asn1::table::field_name seq_table_tai_s_names[] = {{"pLMNIdentity",
                                                                 {"tAC", nullptr},
                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_s_opts[]  = {{2, (int32_t)offsetof(tai_s, ie_exts_present)}};
-const asn1::table::seq_desc          tai_s::desc = {{seq_table_tai_s_fields, 3, UINT64_C(0x3), seq_table_tai_s_opts, 1},
-                                                    true,
-                                                    true,
-                                                    nullptr,
-                                                    0,
-                                                    seq_table_tai_s_names};
+const asn1::table::seq_desc          tai_s::desc             = {
+    {seq_table_tai_s_fields, uint64_t{0x3}, seq_table_tai_s_opts, seq_table_tai_s_names, 3, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // AMFPagingTarget ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_amf_paging_target_c_alternatives[] = {
-    &asn1::table::alternative_ops<global_ran_node_id_c, false>::value,
+    &asn1::table::alternative_ops<global_ran_node_id_c, false, false>::value,
     &asn1::table::alternative_ops<tai_s, false>::value,
     &asn1::table::alternative_ops<protocol_ie_single_container_s<amf_paging_target_ext_ies_o>, false>::value};
 const asn1::table::choice_storage_desc amf_paging_target_c::storage_desc = {
@@ -1479,13 +1518,16 @@ static const asn1::table::field_name seq_table_aun3_dev_access_info_s_names[] = 
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_aun3_dev_access_info_s_opts[] = {
     {2, (int32_t)offsetof(aun3_dev_access_info_s, ie_exts_present)}};
-const asn1::table::seq_desc aun3_dev_access_info_s::desc = {
-    {seq_table_aun3_dev_access_info_s_fields, 3, UINT64_C(0x3), seq_table_aun3_dev_access_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_aun3_dev_access_info_s_names};
+const asn1::table::seq_desc aun3_dev_access_info_s::desc = {{seq_table_aun3_dev_access_info_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_aun3_dev_access_info_s_opts,
+                                                             seq_table_aun3_dev_access_info_s_names,
+                                                             3,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 static const char*           enum_names_aun3_dev_access_info_s_aun3_dev_access_e__values[] = {"true"};
 const asn1::table::enum_desc aun3_dev_access_info_s::aun3_dev_access_opts::desc            = {
@@ -1529,12 +1571,12 @@ static const asn1::table::field_name seq_table_nr_cgi_s_names[] = {{"pLMNIdentit
                                                                    {"nRCellIdentity", nullptr},
                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_nr_cgi_s_opts[]  = {{2, (int32_t)offsetof(nr_cgi_s, ie_exts_present)}};
-const asn1::table::seq_desc nr_cgi_s::desc = {{seq_table_nr_cgi_s_fields, 3, UINT64_C(0x3), seq_table_nr_cgi_s_opts, 1},
-                                              true,
-                                              true,
-                                              nullptr,
-                                              0,
-                                              seq_table_nr_cgi_s_names};
+const asn1::table::seq_desc          nr_cgi_s::desc             = {
+    {seq_table_nr_cgi_s_fields, uint64_t{0x3}, seq_table_nr_cgi_s_opts, seq_table_nr_cgi_s_names, 3, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // EUTRA-CGI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_eutra_cgi_s_fields[] = {
@@ -1567,12 +1609,11 @@ static const asn1::table::field_name seq_table_eutra_cgi_s_names[] = {{"pLMNIden
                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_eutra_cgi_s_opts[] = {{2, (int32_t)offsetof(eutra_cgi_s, ie_exts_present)}};
 const asn1::table::seq_desc       eutra_cgi_s::desc            = {
-    {seq_table_eutra_cgi_s_fields, 3, UINT64_C(0x3), seq_table_eutra_cgi_s_opts, 1},
+    {seq_table_eutra_cgi_s_fields, uint64_t{0x3}, seq_table_eutra_cgi_s_opts, seq_table_eutra_cgi_s_names, 3, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_eutra_cgi_s_names};
+    0};
 
 // NGRAN-CGI ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ngran_cgi_c_alternatives[] = {
@@ -1660,8 +1701,8 @@ static const asn1::table::seq_field seq_table_add_cancelledlocation_report_ref_i
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(64),
+     int64_t{1},
+     uint64_t{63},
      nullptr},
     {offsetof(add_cancelledlocation_report_ref_id_item_s, ie_exts),
      (int32_t)offsetof(add_cancelledlocation_report_ref_id_item_s, ie_exts_present),
@@ -1679,15 +1720,15 @@ static const asn1::table::seq_opt seq_table_add_cancelledlocation_report_ref_id_
     {1, (int32_t)offsetof(add_cancelledlocation_report_ref_id_item_s, ie_exts_present)}};
 const asn1::table::seq_desc add_cancelledlocation_report_ref_id_item_s::desc = {
     {seq_table_add_cancelledlocation_report_ref_id_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_add_cancelledlocation_report_ref_id_item_s_opts,
+     seq_table_add_cancelledlocation_report_ref_id_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_add_cancelledlocation_report_ref_id_item_s_names};
+    0};
 
 // GTPTunnel ::= SEQUENCE
 static const asn1::table::seq_field seq_table_gtp_tunnel_s_fields[] = {
@@ -1721,12 +1762,11 @@ static const asn1::table::field_name seq_table_gtp_tunnel_s_names[] = {{"transpo
 static const asn1::table::seq_opt    seq_table_gtp_tunnel_s_opts[]  = {
     {2, (int32_t)offsetof(gtp_tunnel_s, ie_exts_present)}};
 const asn1::table::seq_desc gtp_tunnel_s::desc = {
-    {seq_table_gtp_tunnel_s_fields, 3, UINT64_C(0x3), seq_table_gtp_tunnel_s_opts, 1},
+    {seq_table_gtp_tunnel_s_fields, uint64_t{0x3}, seq_table_gtp_tunnel_s_opts, seq_table_gtp_tunnel_s_names, 3, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_gtp_tunnel_s_names};
+    0};
 
 // UPTransportLayerInformation ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_up_transport_layer_info_c_alternatives[] = {
@@ -1805,8 +1845,8 @@ static const asn1::table::seq_field ie_table_qos_flow_item_with_data_forwarding_
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(8),
+     int64_t{1},
+     uint64_t{7},
      nullptr}};
 static const int32_t ie_table_qos_flow_item_with_data_forwarding_ext_ies_container_presences[] = {
     (int32_t)offsetof(qos_flow_item_with_data_forwarding_ext_ies_container, current_qos_para_set_idx_present)};
@@ -1829,8 +1869,8 @@ static const asn1::table::seq_field seq_table_qos_flow_item_with_data_forwarding
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_item_with_data_forwarding_s, data_forwarding_accepted),
      (int32_t)offsetof(qos_flow_item_with_data_forwarding_s, data_forwarding_accepted_present),
@@ -1859,15 +1899,15 @@ static const asn1::table::seq_opt seq_table_qos_flow_item_with_data_forwarding_s
     {2, (int32_t)offsetof(qos_flow_item_with_data_forwarding_s, ie_exts_present)}};
 const asn1::table::seq_desc qos_flow_item_with_data_forwarding_s::desc = {
     {seq_table_qos_flow_item_with_data_forwarding_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_qos_flow_item_with_data_forwarding_s_opts,
+     seq_table_qos_flow_item_with_data_forwarding_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_qos_flow_item_with_data_forwarding_s_names};
+    0};
 
 static const uint32_t objset_id_add_dl_up_tnl_info_for_ho_item_ext_ies_o[]   = {183};
 static const uint8_t  objset_crit_add_dl_up_tnl_info_for_ho_item_ext_ies_o[] = {crit_e::ignore};
@@ -1914,7 +1954,7 @@ static const asn1::table::seq_field seq_table_add_dl_up_tnl_info_for_ho_item_s_f
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(add_dl_up_tnl_info_for_ho_item_s::add_qos_flow_setup_resp_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -1948,15 +1988,15 @@ static const asn1::table::seq_opt seq_table_add_dl_up_tnl_info_for_ho_item_s_opt
     {3, (int32_t)offsetof(add_dl_up_tnl_info_for_ho_item_s, ie_exts_present)}};
 const asn1::table::seq_desc add_dl_up_tnl_info_for_ho_item_s::desc = {
     {seq_table_add_dl_up_tnl_info_for_ho_item_s_fields,
-     4,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_add_dl_up_tnl_info_for_ho_item_s_opts,
+     seq_table_add_dl_up_tnl_info_for_ho_item_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_add_dl_up_tnl_info_for_ho_item_s_names};
+    0};
 
 // AdditionalQosFlowInformation ::= ENUMERATED
 static const char*           enum_names_add_qos_flow_info_e_values[] = {"more-likely"};
@@ -1987,8 +2027,8 @@ static const asn1::table::seq_field seq_table_alloc_and_retention_prio_s_fields[
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(1),
-     UINT64_C(15),
+     int64_t{1},
+     uint64_t{14},
      nullptr},
     {offsetof(alloc_and_retention_prio_s, pre_emption_cap),
      asn1::table::seq_field::mandatory,
@@ -2023,13 +2063,16 @@ static const asn1::table::field_name seq_table_alloc_and_retention_prio_s_names[
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_alloc_and_retention_prio_s_opts[] = {
     {3, (int32_t)offsetof(alloc_and_retention_prio_s, ie_exts_present)}};
-const asn1::table::seq_desc alloc_and_retention_prio_s::desc = {
-    {seq_table_alloc_and_retention_prio_s_fields, 4, UINT64_C(0x7), seq_table_alloc_and_retention_prio_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_alloc_and_retention_prio_s_names};
+const asn1::table::seq_desc alloc_and_retention_prio_s::desc = {{seq_table_alloc_and_retention_prio_s_fields,
+                                                                 uint64_t{0x7},
+                                                                 seq_table_alloc_and_retention_prio_s_opts,
+                                                                 seq_table_alloc_and_retention_prio_s_names,
+                                                                 4,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // Allowed-PNI-NPN-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_allowed_pni_npn_item_s_fields[] = {
@@ -2056,7 +2099,7 @@ static const asn1::table::seq_field seq_table_allowed_pni_npn_item_s_fields[] = 
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<decltype(allowed_pni_npn_item_s::allowed_cag_list_per_plmn),
                               asn1::table::struct_json>::value},
     {offsetof(allowed_pni_npn_item_s, ie_exts),
@@ -2073,13 +2116,16 @@ static const asn1::table::field_name seq_table_allowed_pni_npn_item_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_allowed_pni_npn_item_s_opts[]  = {
     {3, (int32_t)offsetof(allowed_pni_npn_item_s, ie_exts_present)}};
-const asn1::table::seq_desc allowed_pni_npn_item_s::desc = {
-    {seq_table_allowed_pni_npn_item_s_fields, 4, UINT64_C(0x7), seq_table_allowed_pni_npn_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_allowed_pni_npn_item_s_names};
+const asn1::table::seq_desc allowed_pni_npn_item_s::desc = {{seq_table_allowed_pni_npn_item_s_fields,
+                                                             uint64_t{0x7},
+                                                             seq_table_allowed_pni_npn_item_s_opts,
+                                                             seq_table_allowed_pni_npn_item_s_names,
+                                                             4,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 static const char* enum_names_allowed_pni_npn_item_s_pni_npn_restricted_e__values[] = {"restricted", "not-restricted"};
 const asn1::table::enum_desc allowed_pni_npn_item_s::pni_npn_restricted_opts::desc  = {
@@ -2119,12 +2165,11 @@ static const asn1::table::field_name seq_table_s_nssai_s_names[] = {{"sST", null
 static const asn1::table::seq_opt    seq_table_s_nssai_s_opts[]  = {{1, (int32_t)offsetof(s_nssai_s, sd_present)},
                                                                     {2, (int32_t)offsetof(s_nssai_s, ie_exts_present)}};
 const asn1::table::seq_desc          s_nssai_s::desc             = {
-    {seq_table_s_nssai_s_fields, 3, UINT64_C(0x1), seq_table_s_nssai_s_opts, 2},
+    {seq_table_s_nssai_s_fields, uint64_t{0x1}, seq_table_s_nssai_s_opts, seq_table_s_nssai_s_names, 3, 2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_s_nssai_s_names};
+    0};
 
 // AllowedNSSAI-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_allowed_nssai_item_s_fields[] = {
@@ -2149,13 +2194,16 @@ static const asn1::table::field_name seq_table_allowed_nssai_item_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_allowed_nssai_item_s_opts[]  = {
     {1, (int32_t)offsetof(allowed_nssai_item_s, ie_exts_present)}};
-const asn1::table::seq_desc allowed_nssai_item_s::desc = {
-    {seq_table_allowed_nssai_item_s_fields, 2, UINT64_C(0x1), seq_table_allowed_nssai_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_allowed_nssai_item_s_names};
+const asn1::table::seq_desc allowed_nssai_item_s::desc = {{seq_table_allowed_nssai_item_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_allowed_nssai_item_s_opts,
+                                                           seq_table_allowed_nssai_item_s_names,
+                                                           2,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // PacketErrorRate ::= SEQUENCE
 static const asn1::table::seq_field seq_table_packet_error_rate_s_fields[] = {
@@ -2164,16 +2212,16 @@ static const asn1::table::seq_field seq_table_packet_error_rate_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(9),
+     int64_t{0},
+     uint64_t{9},
      nullptr},
     {offsetof(packet_error_rate_s, per_exponent),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(9),
+     int64_t{0},
+     uint64_t{9},
      nullptr},
     {offsetof(packet_error_rate_s, ie_exts),
      (int32_t)offsetof(packet_error_rate_s, ie_exts_present),
@@ -2188,13 +2236,16 @@ static const asn1::table::field_name seq_table_packet_error_rate_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_packet_error_rate_s_opts[]  = {
     {2, (int32_t)offsetof(packet_error_rate_s, ie_exts_present)}};
-const asn1::table::seq_desc packet_error_rate_s::desc = {
-    {seq_table_packet_error_rate_s_fields, 3, UINT64_C(0x3), seq_table_packet_error_rate_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_packet_error_rate_s_names};
+const asn1::table::seq_desc packet_error_rate_s::desc = {{seq_table_packet_error_rate_s_fields,
+                                                          uint64_t{0x3},
+                                                          seq_table_packet_error_rate_s_opts,
+                                                          seq_table_packet_error_rate_s_names,
+                                                          3,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 static const uint32_t objset_id_alt_qos_para_set_item_ext_ies_o[]   = {432};
 static const uint8_t  objset_crit_alt_qos_para_set_item_ext_ies_o[] = {crit_e::ignore};
@@ -2206,8 +2257,8 @@ static const asn1::table::seq_field ie_table_alt_qos_para_set_item_ext_ies_conta
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr}};
 static const int32_t ie_table_alt_qos_para_set_item_ext_ies_container_presences[] = {
     (int32_t)offsetof(alt_qos_para_set_item_ext_ies_container, max_data_burst_volume_present)};
@@ -2230,32 +2281,32 @@ static const asn1::table::seq_field seq_table_alt_qos_para_set_item_s_fields[] =
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(8),
+     int64_t{1},
+     uint64_t{7},
      nullptr},
     {offsetof(alt_qos_para_set_item_s, guaranteed_flow_bit_rate_dl),
      (int32_t)offsetof(alt_qos_para_set_item_s, guaranteed_flow_bit_rate_dl_present),
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(alt_qos_para_set_item_s, guaranteed_flow_bit_rate_ul),
      (int32_t)offsetof(alt_qos_para_set_item_s, guaranteed_flow_bit_rate_ul_present),
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(alt_qos_para_set_item_s, packet_delay_budget),
      (int32_t)offsetof(alt_qos_para_set_item_s, packet_delay_budget_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(1023),
+     int64_t{0},
+     uint64_t{1023},
      nullptr},
     {offsetof(alt_qos_para_set_item_s, packet_error_rate),
      (int32_t)offsetof(alt_qos_para_set_item_s, packet_error_rate_present),
@@ -2288,13 +2339,16 @@ static const asn1::table::seq_opt seq_table_alt_qos_para_set_item_s_opts[] = {
     {3, (int32_t)offsetof(alt_qos_para_set_item_s, packet_delay_budget_present)},
     {4, (int32_t)offsetof(alt_qos_para_set_item_s, packet_error_rate_present)},
     {5, (int32_t)offsetof(alt_qos_para_set_item_s, ie_exts_present)}};
-const asn1::table::seq_desc alt_qos_para_set_item_s::desc = {
-    {seq_table_alt_qos_para_set_item_s_fields, 6, UINT64_C(0x1), seq_table_alt_qos_para_set_item_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_alt_qos_para_set_item_s_names};
+const asn1::table::seq_desc alt_qos_para_set_item_s::desc = {{seq_table_alt_qos_para_set_item_s_fields,
+                                                              uint64_t{0x1},
+                                                              seq_table_alt_qos_para_set_item_s_opts,
+                                                              seq_table_alt_qos_para_set_item_s_names,
+                                                              6,
+                                                              5},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // AreaOfInterestTAIItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_area_of_interest_tai_item_s_fields[] = {
@@ -2319,13 +2373,16 @@ static const asn1::table::field_name seq_table_area_of_interest_tai_item_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_area_of_interest_tai_item_s_opts[]  = {
     {1, (int32_t)offsetof(area_of_interest_tai_item_s, ie_exts_present)}};
-const asn1::table::seq_desc area_of_interest_tai_item_s::desc = {
-    {seq_table_area_of_interest_tai_item_s_fields, 2, UINT64_C(0x1), seq_table_area_of_interest_tai_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_area_of_interest_tai_item_s_names};
+const asn1::table::seq_desc area_of_interest_tai_item_s::desc = {{seq_table_area_of_interest_tai_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_area_of_interest_tai_item_s_opts,
+                                                                  seq_table_area_of_interest_tai_item_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // AreaOfInterestCellItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_area_of_interest_cell_item_s_fields[] = {
@@ -2350,13 +2407,16 @@ static const asn1::table::field_name seq_table_area_of_interest_cell_item_s_name
                                                                                        {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_area_of_interest_cell_item_s_opts[]  = {
     {1, (int32_t)offsetof(area_of_interest_cell_item_s, ie_exts_present)}};
-const asn1::table::seq_desc area_of_interest_cell_item_s::desc = {
-    {seq_table_area_of_interest_cell_item_s_fields, 2, UINT64_C(0x1), seq_table_area_of_interest_cell_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_area_of_interest_cell_item_s_names};
+const asn1::table::seq_desc area_of_interest_cell_item_s::desc = {{seq_table_area_of_interest_cell_item_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_area_of_interest_cell_item_s_opts,
+                                                                   seq_table_area_of_interest_cell_item_s_names,
+                                                                   2,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // AreaOfInterestRANNodeItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_area_of_interest_ran_node_item_s_fields[] = {
@@ -2383,15 +2443,15 @@ static const asn1::table::seq_opt    seq_table_area_of_interest_ran_node_item_s_
     {1, (int32_t)offsetof(area_of_interest_ran_node_item_s, ie_exts_present)}};
 const asn1::table::seq_desc area_of_interest_ran_node_item_s::desc = {
     {seq_table_area_of_interest_ran_node_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_area_of_interest_ran_node_item_s_opts,
+     seq_table_area_of_interest_ran_node_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_area_of_interest_ran_node_item_s_names};
+    0};
 
 // AreaOfInterest ::= SEQUENCE
 static const asn1::table::seq_field seq_table_area_of_interest_s_fields[] = {
@@ -2401,7 +2461,7 @@ static const asn1::table::seq_field seq_table_area_of_interest_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(area_of_interest_s::area_of_interest_tai_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2413,7 +2473,7 @@ static const asn1::table::seq_field seq_table_area_of_interest_s_fields[] = {
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(area_of_interest_s::area_of_interest_cell_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2425,7 +2485,7 @@ static const asn1::table::seq_field seq_table_area_of_interest_s_fields[] = {
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(area_of_interest_s::area_of_interest_ran_node_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2448,13 +2508,16 @@ static const asn1::table::seq_opt    seq_table_area_of_interest_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, asn1::table::seq_field::list_presence},
     {3, (int32_t)offsetof(area_of_interest_s, ie_exts_present)}};
-const asn1::table::seq_desc area_of_interest_s::desc = {
-    {seq_table_area_of_interest_s_fields, 4, UINT64_C(0x0), seq_table_area_of_interest_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_area_of_interest_s_names};
+const asn1::table::seq_desc area_of_interest_s::desc = {{seq_table_area_of_interest_s_fields,
+                                                         uint64_t{0x0},
+                                                         seq_table_area_of_interest_s_opts,
+                                                         seq_table_area_of_interest_s_names,
+                                                         4,
+                                                         4},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // AreaOfInterestItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_area_of_interest_item_s_fields[] = {
@@ -2472,8 +2535,8 @@ static const asn1::table::seq_field seq_table_area_of_interest_item_s_fields[] =
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(64),
+     int64_t{1},
+     uint64_t{63},
      nullptr},
     {offsetof(area_of_interest_item_s, ie_exts),
      (int32_t)offsetof(area_of_interest_item_s, ie_exts_present),
@@ -2489,13 +2552,16 @@ static const asn1::table::field_name seq_table_area_of_interest_item_s_names[] =
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_area_of_interest_item_s_opts[] = {
     {2, (int32_t)offsetof(area_of_interest_item_s, ie_exts_present)}};
-const asn1::table::seq_desc area_of_interest_item_s::desc = {
-    {seq_table_area_of_interest_item_s_fields, 3, UINT64_C(0x3), seq_table_area_of_interest_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_area_of_interest_item_s_names};
+const asn1::table::seq_desc area_of_interest_item_s::desc = {{seq_table_area_of_interest_item_s_fields,
+                                                              uint64_t{0x3},
+                                                              seq_table_area_of_interest_item_s_opts,
+                                                              seq_table_area_of_interest_item_s_names,
+                                                              3,
+                                                              1},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // CellBasedMDT-EUTRA ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cell_based_mdt_eutra_s_fields[] = {
@@ -2505,7 +2571,7 @@ static const asn1::table::seq_field seq_table_cell_based_mdt_eutra_s_fields[] = 
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(cell_based_mdt_eutra_s::cell_id_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2523,13 +2589,16 @@ static const asn1::table::field_name seq_table_cell_based_mdt_eutra_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_cell_based_mdt_eutra_s_opts[]  = {
     {1, (int32_t)offsetof(cell_based_mdt_eutra_s, ie_exts_present)}};
-const asn1::table::seq_desc cell_based_mdt_eutra_s::desc = {
-    {seq_table_cell_based_mdt_eutra_s_fields, 2, UINT64_C(0x1), seq_table_cell_based_mdt_eutra_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cell_based_mdt_eutra_s_names};
+const asn1::table::seq_desc cell_based_mdt_eutra_s::desc = {{seq_table_cell_based_mdt_eutra_s_fields,
+                                                             uint64_t{0x1},
+                                                             seq_table_cell_based_mdt_eutra_s_opts,
+                                                             seq_table_cell_based_mdt_eutra_s_names,
+                                                             2,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // TABasedMDT ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ta_based_mdt_s_fields[] = {
@@ -2539,7 +2608,7 @@ static const asn1::table::seq_field seq_table_ta_based_mdt_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::list_codec<decltype(ta_based_mdt_s::ta_listfor_mdt), asn1::table::string_json>::value},
     {offsetof(ta_based_mdt_s, ie_exts),
      (int32_t)offsetof(ta_based_mdt_s, ie_exts_present),
@@ -2553,13 +2622,16 @@ static const asn1::table::field_name seq_table_ta_based_mdt_s_names[] = {{"tALis
                                                                          {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ta_based_mdt_s_opts[]  = {
     {1, (int32_t)offsetof(ta_based_mdt_s, ie_exts_present)}};
-const asn1::table::seq_desc ta_based_mdt_s::desc = {
-    {seq_table_ta_based_mdt_s_fields, 2, UINT64_C(0x1), seq_table_ta_based_mdt_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ta_based_mdt_s_names};
+const asn1::table::seq_desc ta_based_mdt_s::desc = {{seq_table_ta_based_mdt_s_fields,
+                                                     uint64_t{0x1},
+                                                     seq_table_ta_based_mdt_s_opts,
+                                                     seq_table_ta_based_mdt_s_names,
+                                                     2,
+                                                     1},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 // TAIBasedMDT ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tai_based_mdt_s_fields[] = {
@@ -2569,7 +2641,7 @@ static const asn1::table::seq_field seq_table_tai_based_mdt_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(tai_based_mdt_s::tai_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2587,13 +2659,16 @@ static const asn1::table::field_name seq_table_tai_based_mdt_s_names[] = {{"tAIL
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_based_mdt_s_opts[]  = {
     {1, (int32_t)offsetof(tai_based_mdt_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_based_mdt_s::desc = {
-    {seq_table_tai_based_mdt_s_fields, 2, UINT64_C(0x1), seq_table_tai_based_mdt_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_based_mdt_s_names};
+const asn1::table::seq_desc tai_based_mdt_s::desc = {{seq_table_tai_based_mdt_s_fields,
+                                                      uint64_t{0x1},
+                                                      seq_table_tai_based_mdt_s_opts,
+                                                      seq_table_tai_based_mdt_s_names,
+                                                      2,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // AreaScopeOfMDT-EUTRA ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_area_scope_of_mdt_eutra_c_alternatives[] = {
@@ -2707,7 +2782,7 @@ static const asn1::table::seq_field seq_table_cell_based_mdt_nr_s_fields[] = {
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(cell_based_mdt_nr_s::cell_id_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2725,13 +2800,16 @@ static const asn1::table::field_name seq_table_cell_based_mdt_nr_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_cell_based_mdt_nr_s_opts[]  = {
     {1, (int32_t)offsetof(cell_based_mdt_nr_s, ie_exts_present)}};
-const asn1::table::seq_desc cell_based_mdt_nr_s::desc = {
-    {seq_table_cell_based_mdt_nr_s_fields, 2, UINT64_C(0x1), seq_table_cell_based_mdt_nr_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cell_based_mdt_nr_s_names};
+const asn1::table::seq_desc cell_based_mdt_nr_s::desc = {{seq_table_cell_based_mdt_nr_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_cell_based_mdt_nr_s_opts,
+                                                          seq_table_cell_based_mdt_nr_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // CAGListforMDTItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cag_listfor_mdt_item_s_fields[] = {
@@ -2764,13 +2842,16 @@ static const asn1::table::field_name seq_table_cag_listfor_mdt_item_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_cag_listfor_mdt_item_s_opts[]  = {
     {2, (int32_t)offsetof(cag_listfor_mdt_item_s, ie_exts_present)}};
-const asn1::table::seq_desc cag_listfor_mdt_item_s::desc = {
-    {seq_table_cag_listfor_mdt_item_s_fields, 3, UINT64_C(0x3), seq_table_cag_listfor_mdt_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cag_listfor_mdt_item_s_names};
+const asn1::table::seq_desc cag_listfor_mdt_item_s::desc = {{seq_table_cag_listfor_mdt_item_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_cag_listfor_mdt_item_s_opts,
+                                                             seq_table_cag_listfor_mdt_item_s_names,
+                                                             3,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // PNI-NPNBasedMDT ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pni_npn_based_mdt_s_fields[] = {
@@ -2780,7 +2861,7 @@ static const asn1::table::seq_field seq_table_pni_npn_based_mdt_s_fields[] = {
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(pni_npn_based_mdt_s::cag_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2798,13 +2879,16 @@ static const asn1::table::field_name seq_table_pni_npn_based_mdt_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_pni_npn_based_mdt_s_opts[]  = {
     {1, (int32_t)offsetof(pni_npn_based_mdt_s, ie_exts_present)}};
-const asn1::table::seq_desc pni_npn_based_mdt_s::desc = {
-    {seq_table_pni_npn_based_mdt_s_fields, 2, UINT64_C(0x1), seq_table_pni_npn_based_mdt_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pni_npn_based_mdt_s_names};
+const asn1::table::seq_desc pni_npn_based_mdt_s::desc = {{seq_table_pni_npn_based_mdt_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_pni_npn_based_mdt_s_opts,
+                                                          seq_table_pni_npn_based_mdt_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // SNPNCellIdListforMDTItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sn_pn_cell_id_listfor_mdt_item_s_fields[] = {
@@ -2840,15 +2924,15 @@ static const asn1::table::seq_opt    seq_table_sn_pn_cell_id_listfor_mdt_item_s_
     {2, (int32_t)offsetof(sn_pn_cell_id_listfor_mdt_item_s, ie_exts_present)}};
 const asn1::table::seq_desc sn_pn_cell_id_listfor_mdt_item_s::desc = {
     {seq_table_sn_pn_cell_id_listfor_mdt_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_sn_pn_cell_id_listfor_mdt_item_s_opts,
+     seq_table_sn_pn_cell_id_listfor_mdt_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_sn_pn_cell_id_listfor_mdt_item_s_names};
+    0};
 
 // SNPN-CellBasedMDT ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sn_pn_cell_based_mdt_s_fields[] = {
@@ -2858,7 +2942,7 @@ static const asn1::table::seq_field seq_table_sn_pn_cell_based_mdt_s_fields[] = 
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(sn_pn_cell_based_mdt_s::sn_p_ncell_id_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2876,13 +2960,16 @@ static const asn1::table::field_name seq_table_sn_pn_cell_based_mdt_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_sn_pn_cell_based_mdt_s_opts[]  = {
     {1, (int32_t)offsetof(sn_pn_cell_based_mdt_s, ie_exts_present)}};
-const asn1::table::seq_desc sn_pn_cell_based_mdt_s::desc = {
-    {seq_table_sn_pn_cell_based_mdt_s_fields, 2, UINT64_C(0x1), seq_table_sn_pn_cell_based_mdt_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sn_pn_cell_based_mdt_s_names};
+const asn1::table::seq_desc sn_pn_cell_based_mdt_s::desc = {{seq_table_sn_pn_cell_based_mdt_s_fields,
+                                                             uint64_t{0x1},
+                                                             seq_table_sn_pn_cell_based_mdt_s_opts,
+                                                             seq_table_sn_pn_cell_based_mdt_s_names,
+                                                             2,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // SNPNTAIListforMDTItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sn_pn_tai_listfor_mdt_item_s_fields[] = {
@@ -2916,13 +3003,16 @@ static const asn1::table::field_name seq_table_sn_pn_tai_listfor_mdt_item_s_name
                                                                                        {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_sn_pn_tai_listfor_mdt_item_s_opts[]  = {
     {2, (int32_t)offsetof(sn_pn_tai_listfor_mdt_item_s, ie_exts_present)}};
-const asn1::table::seq_desc sn_pn_tai_listfor_mdt_item_s::desc = {
-    {seq_table_sn_pn_tai_listfor_mdt_item_s_fields, 3, UINT64_C(0x3), seq_table_sn_pn_tai_listfor_mdt_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sn_pn_tai_listfor_mdt_item_s_names};
+const asn1::table::seq_desc sn_pn_tai_listfor_mdt_item_s::desc = {{seq_table_sn_pn_tai_listfor_mdt_item_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   seq_table_sn_pn_tai_listfor_mdt_item_s_opts,
+                                                                   seq_table_sn_pn_tai_listfor_mdt_item_s_names,
+                                                                   3,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // SNPN-TAIBasedMDT ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sn_pn_tai_based_mdt_s_fields[] = {
@@ -2932,7 +3022,7 @@ static const asn1::table::seq_field seq_table_sn_pn_tai_based_mdt_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(sn_pn_tai_based_mdt_s::sn_pn_tai_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -2950,13 +3040,16 @@ static const asn1::table::field_name seq_table_sn_pn_tai_based_mdt_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_sn_pn_tai_based_mdt_s_opts[]  = {
     {1, (int32_t)offsetof(sn_pn_tai_based_mdt_s, ie_exts_present)}};
-const asn1::table::seq_desc sn_pn_tai_based_mdt_s::desc = {
-    {seq_table_sn_pn_tai_based_mdt_s_fields, 2, UINT64_C(0x1), seq_table_sn_pn_tai_based_mdt_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sn_pn_tai_based_mdt_s_names};
+const asn1::table::seq_desc sn_pn_tai_based_mdt_s::desc = {{seq_table_sn_pn_tai_based_mdt_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_sn_pn_tai_based_mdt_s_opts,
+                                                            seq_table_sn_pn_tai_based_mdt_s_names,
+                                                            2,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // SNPNListforMDTItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sn_pn_listfor_mdt_item_s_fields[] = {
@@ -2989,13 +3082,16 @@ static const asn1::table::field_name seq_table_sn_pn_listfor_mdt_item_s_names[] 
                                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_sn_pn_listfor_mdt_item_s_opts[]  = {
     {2, (int32_t)offsetof(sn_pn_listfor_mdt_item_s, ie_exts_present)}};
-const asn1::table::seq_desc sn_pn_listfor_mdt_item_s::desc = {
-    {seq_table_sn_pn_listfor_mdt_item_s_fields, 3, UINT64_C(0x3), seq_table_sn_pn_listfor_mdt_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sn_pn_listfor_mdt_item_s_names};
+const asn1::table::seq_desc sn_pn_listfor_mdt_item_s::desc = {{seq_table_sn_pn_listfor_mdt_item_s_fields,
+                                                               uint64_t{0x3},
+                                                               seq_table_sn_pn_listfor_mdt_item_s_opts,
+                                                               seq_table_sn_pn_listfor_mdt_item_s_names,
+                                                               3,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // SNPN-BasedMDT ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sn_pn_based_mdt_s_fields[] = {
@@ -3005,7 +3101,7 @@ static const asn1::table::seq_field seq_table_sn_pn_based_mdt_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(sn_pn_based_mdt_s::sn_pn_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3023,13 +3119,16 @@ static const asn1::table::field_name seq_table_sn_pn_based_mdt_s_names[] = {{"sN
                                                                             {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_sn_pn_based_mdt_s_opts[]  = {
     {1, (int32_t)offsetof(sn_pn_based_mdt_s, ie_exts_present)}};
-const asn1::table::seq_desc sn_pn_based_mdt_s::desc = {
-    {seq_table_sn_pn_based_mdt_s_fields, 2, UINT64_C(0x1), seq_table_sn_pn_based_mdt_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sn_pn_based_mdt_s_names};
+const asn1::table::seq_desc sn_pn_based_mdt_s::desc = {{seq_table_sn_pn_based_mdt_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_sn_pn_based_mdt_s_opts,
+                                                        seq_table_sn_pn_based_mdt_s_names,
+                                                        2,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // AreaScopeOfMDT-NR-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_area_scope_of_mdt_nr_ext_ies_o[]    = {410, 411, 412, 413};
@@ -3175,7 +3274,7 @@ static const asn1::table::storage_ops* const choice_storage_area_scope_of_mdt_nr
     &asn1::table::alternative_ops<ta_based_mdt_s, false>::value,
     nullptr,
     &asn1::table::alternative_ops<tai_based_mdt_s, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<area_scope_of_mdt_nr_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<area_scope_of_mdt_nr_ext_ies_o>, false, false>::value};
 const asn1::table::choice_storage_desc area_scope_of_mdt_nr_c::storage_desc = {
     choice_storage_area_scope_of_mdt_nr_c_alternatives,
     5,
@@ -3279,8 +3378,8 @@ static const asn1::table::seq_field seq_table_nr_freq_band_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(1024),
+     int64_t{1},
+     uint64_t{1023},
      nullptr},
     {offsetof(nr_freq_band_item_s, ie_ext),
      (int32_t)offsetof(nr_freq_band_item_s, ie_ext_present),
@@ -3294,13 +3393,16 @@ static const asn1::table::field_name seq_table_nr_freq_band_item_s_names[] = {{"
                                                                               {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt    seq_table_nr_freq_band_item_s_opts[]  = {
     {1, (int32_t)offsetof(nr_freq_band_item_s, ie_ext_present)}};
-const asn1::table::seq_desc nr_freq_band_item_s::desc = {
-    {seq_table_nr_freq_band_item_s_fields, 2, UINT64_C(0x1), seq_table_nr_freq_band_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nr_freq_band_item_s_names};
+const asn1::table::seq_desc nr_freq_band_item_s::desc = {{seq_table_nr_freq_band_item_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_nr_freq_band_item_s_opts,
+                                                          seq_table_nr_freq_band_item_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // NRFrequencyInfo ::= SEQUENCE
 static const asn1::table::seq_field seq_table_nr_freq_info_s_fields[] = {
@@ -3309,8 +3411,8 @@ static const asn1::table::seq_field seq_table_nr_freq_info_s_fields[] = {
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(3279165),
+     int64_t{0},
+     uint64_t{3279165},
      nullptr},
     {offsetof(nr_freq_info_s, freq_band_list),
      asn1::table::seq_field::mandatory,
@@ -3318,7 +3420,7 @@ static const asn1::table::seq_field seq_table_nr_freq_info_s_fields[] = {
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::
          item_list_codec<decltype(nr_freq_info_s::freq_band_list), asn1::table::sequence_item_ops, false, true>::value,
      &nr_freq_band_item_s::desc},
@@ -3335,13 +3437,16 @@ static const asn1::table::field_name seq_table_nr_freq_info_s_names[] = {{"nrARF
                                                                          {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt    seq_table_nr_freq_info_s_opts[]  = {
     {2, (int32_t)offsetof(nr_freq_info_s, ie_ext_present)}};
-const asn1::table::seq_desc nr_freq_info_s::desc = {
-    {seq_table_nr_freq_info_s_fields, 3, UINT64_C(0x3), seq_table_nr_freq_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nr_freq_info_s_names};
+const asn1::table::seq_desc nr_freq_info_s::desc = {{seq_table_nr_freq_info_s_fields,
+                                                     uint64_t{0x3},
+                                                     seq_table_nr_freq_info_s_opts,
+                                                     seq_table_nr_freq_info_s_names,
+                                                     3,
+                                                     1},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 // AreaScopeOfNeighCellsItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_area_scope_of_neigh_cells_item_s_fields[] = {
@@ -3360,10 +3465,10 @@ static const asn1::table::seq_field seq_table_area_scope_of_neigh_cells_item_s_f
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::list_codec<decltype(area_scope_of_neigh_cells_item_s::pci_list_for_mdt),
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(1007), true, true>>::value},
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{1007}, true, true>>::value},
     {offsetof(area_scope_of_neigh_cells_item_s, ie_exts),
      (int32_t)offsetof(area_scope_of_neigh_cells_item_s, ie_exts_present),
      asn1::table::field_op::codec,
@@ -3380,15 +3485,15 @@ static const asn1::table::seq_opt    seq_table_area_scope_of_neigh_cells_item_s_
     {2, (int32_t)offsetof(area_scope_of_neigh_cells_item_s, ie_exts_present)}};
 const asn1::table::seq_desc area_scope_of_neigh_cells_item_s::desc = {
     {seq_table_area_scope_of_neigh_cells_item_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_area_scope_of_neigh_cells_item_s_opts,
+     seq_table_area_scope_of_neigh_cells_item_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_area_scope_of_neigh_cells_item_s_names};
+    0};
 
 // CellBasedQMC ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cell_based_qmc_s_fields[] = {
@@ -3398,7 +3503,7 @@ static const asn1::table::seq_field seq_table_cell_based_qmc_s_fields[] = {
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(cell_based_qmc_s::cell_id_listfor_qmc),
                                    asn1::table::choice_item_ops,
                                    false,
@@ -3416,13 +3521,16 @@ static const asn1::table::field_name seq_table_cell_based_qmc_s_names[] = {{"cel
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_cell_based_qmc_s_opts[]  = {
     {1, (int32_t)offsetof(cell_based_qmc_s, ie_exts_present)}};
-const asn1::table::seq_desc cell_based_qmc_s::desc = {
-    {seq_table_cell_based_qmc_s_fields, 2, UINT64_C(0x1), seq_table_cell_based_qmc_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cell_based_qmc_s_names};
+const asn1::table::seq_desc cell_based_qmc_s::desc = {{seq_table_cell_based_qmc_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_cell_based_qmc_s_opts,
+                                                       seq_table_cell_based_qmc_s_names,
+                                                       2,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // TABasedQMC ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ta_based_qmc_s_fields[] = {
@@ -3432,7 +3540,7 @@ static const asn1::table::seq_field seq_table_ta_based_qmc_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::list_codec<decltype(ta_based_qmc_s::ta_listfor_qmc), asn1::table::string_json>::value},
     {offsetof(ta_based_qmc_s, ie_exts),
      (int32_t)offsetof(ta_based_qmc_s, ie_exts_present),
@@ -3446,13 +3554,16 @@ static const asn1::table::field_name seq_table_ta_based_qmc_s_names[] = {{"tALis
                                                                          {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ta_based_qmc_s_opts[]  = {
     {1, (int32_t)offsetof(ta_based_qmc_s, ie_exts_present)}};
-const asn1::table::seq_desc ta_based_qmc_s::desc = {
-    {seq_table_ta_based_qmc_s_fields, 2, UINT64_C(0x1), seq_table_ta_based_qmc_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ta_based_qmc_s_names};
+const asn1::table::seq_desc ta_based_qmc_s::desc = {{seq_table_ta_based_qmc_s_fields,
+                                                     uint64_t{0x1},
+                                                     seq_table_ta_based_qmc_s_opts,
+                                                     seq_table_ta_based_qmc_s_names,
+                                                     2,
+                                                     1},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 // TAIBasedQMC ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tai_based_qmc_s_fields[] = {
@@ -3462,7 +3573,7 @@ static const asn1::table::seq_field seq_table_tai_based_qmc_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(tai_based_qmc_s::tai_listfor_qmc),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3480,13 +3591,16 @@ static const asn1::table::field_name seq_table_tai_based_qmc_s_names[] = {{"tAIL
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_based_qmc_s_opts[]  = {
     {1, (int32_t)offsetof(tai_based_qmc_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_based_qmc_s::desc = {
-    {seq_table_tai_based_qmc_s_fields, 2, UINT64_C(0x1), seq_table_tai_based_qmc_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_based_qmc_s_names};
+const asn1::table::seq_desc tai_based_qmc_s::desc = {{seq_table_tai_based_qmc_s_fields,
+                                                      uint64_t{0x1},
+                                                      seq_table_tai_based_qmc_s_opts,
+                                                      seq_table_tai_based_qmc_s_names,
+                                                      2,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // PLMNAreaBasedQMC ::= SEQUENCE
 static const asn1::table::seq_field seq_table_plmn_area_based_qmc_s_fields[] = {
@@ -3496,7 +3610,7 @@ static const asn1::table::seq_field seq_table_plmn_area_based_qmc_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(plmn_area_based_qmc_s::plmn_listfor_qmc), asn1::table::string_json>::value},
     {offsetof(plmn_area_based_qmc_s, ie_exts),
      (int32_t)offsetof(plmn_area_based_qmc_s, ie_exts_present),
@@ -3510,13 +3624,16 @@ static const asn1::table::field_name seq_table_plmn_area_based_qmc_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_plmn_area_based_qmc_s_opts[]  = {
     {1, (int32_t)offsetof(plmn_area_based_qmc_s, ie_exts_present)}};
-const asn1::table::seq_desc plmn_area_based_qmc_s::desc = {
-    {seq_table_plmn_area_based_qmc_s_fields, 2, UINT64_C(0x1), seq_table_plmn_area_based_qmc_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_plmn_area_based_qmc_s_names};
+const asn1::table::seq_desc plmn_area_based_qmc_s::desc = {{seq_table_plmn_area_based_qmc_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_plmn_area_based_qmc_s_opts,
+                                                            seq_table_plmn_area_based_qmc_s_names,
+                                                            2,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // AreaScopeOfQMC ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_area_scope_of_qmc_c_alternatives[] = {
@@ -3645,8 +3762,8 @@ static const asn1::table::seq_field seq_table_recommended_cell_item_s_fields[] =
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(recommended_cell_item_s, ie_exts),
      (int32_t)offsetof(recommended_cell_item_s, ie_exts_present),
@@ -3662,13 +3779,16 @@ static const asn1::table::field_name seq_table_recommended_cell_item_s_names[] =
 static const asn1::table::seq_opt    seq_table_recommended_cell_item_s_opts[]  = {
     {1, (int32_t)offsetof(recommended_cell_item_s, time_stayed_in_cell_present)},
     {2, (int32_t)offsetof(recommended_cell_item_s, ie_exts_present)}};
-const asn1::table::seq_desc recommended_cell_item_s::desc = {
-    {seq_table_recommended_cell_item_s_fields, 3, UINT64_C(0x1), seq_table_recommended_cell_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_recommended_cell_item_s_names};
+const asn1::table::seq_desc recommended_cell_item_s::desc = {{seq_table_recommended_cell_item_s_fields,
+                                                              uint64_t{0x1},
+                                                              seq_table_recommended_cell_item_s_opts,
+                                                              seq_table_recommended_cell_item_s_names,
+                                                              3,
+                                                              2},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // RecommendedCellsForPaging ::= SEQUENCE
 static const asn1::table::seq_field seq_table_recommended_cells_for_paging_s_fields[] = {
@@ -3678,7 +3798,7 @@ static const asn1::table::seq_field seq_table_recommended_cells_for_paging_s_fie
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(recommended_cells_for_paging_s::recommended_cell_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -3698,15 +3818,15 @@ static const asn1::table::field_name seq_table_recommended_cells_for_paging_s_na
 static const asn1::table::seq_opt seq_table_recommended_cells_for_paging_s_opts[] = {
     {1, (int32_t)offsetof(recommended_cells_for_paging_s, ie_exts_present)}};
 const asn1::table::seq_desc recommended_cells_for_paging_s::desc = {{seq_table_recommended_cells_for_paging_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_recommended_cells_for_paging_s_opts,
+                                                                     seq_table_recommended_cells_for_paging_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_recommended_cells_for_paging_s_names};
+                                                                    0};
 
 // AssistanceDataForRecommendedCells ::= SEQUENCE
 static const asn1::table::seq_field seq_table_assist_data_for_recommended_cells_s_fields[] = {
@@ -3735,15 +3855,15 @@ static const asn1::table::seq_opt seq_table_assist_data_for_recommended_cells_s_
     {1, (int32_t)offsetof(assist_data_for_recommended_cells_s, ie_exts_present)}};
 const asn1::table::seq_desc assist_data_for_recommended_cells_s::desc = {
     {seq_table_assist_data_for_recommended_cells_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_assist_data_for_recommended_cells_s_opts,
+     seq_table_assist_data_for_recommended_cells_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_assist_data_for_recommended_cells_s_names};
+    0};
 
 // NextPagingAreaScope ::= ENUMERATED
 static const char*           enum_names_next_paging_area_scope_e_values[] = {"same", "changed"};
@@ -3758,16 +3878,16 @@ static const asn1::table::seq_field seq_table_paging_attempt_info_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(16),
+     int64_t{1},
+     uint64_t{15},
      nullptr},
     {offsetof(paging_attempt_info_s, intended_nof_paging_attempts),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(16),
+     int64_t{1},
+     uint64_t{15},
      nullptr},
     {offsetof(paging_attempt_info_s, next_paging_area_scope),
      (int32_t)offsetof(paging_attempt_info_s, next_paging_area_scope_present),
@@ -3794,13 +3914,16 @@ static const asn1::table::field_name seq_table_paging_attempt_info_s_names[] = {
 static const asn1::table::seq_opt seq_table_paging_attempt_info_s_opts[] = {
     {2, (int32_t)offsetof(paging_attempt_info_s, next_paging_area_scope_present)},
     {3, (int32_t)offsetof(paging_attempt_info_s, ie_exts_present)}};
-const asn1::table::seq_desc paging_attempt_info_s::desc = {
-    {seq_table_paging_attempt_info_s_fields, 4, UINT64_C(0x3), seq_table_paging_attempt_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_paging_attempt_info_s_names};
+const asn1::table::seq_desc paging_attempt_info_s::desc = {{seq_table_paging_attempt_info_s_fields,
+                                                            uint64_t{0x3},
+                                                            seq_table_paging_attempt_info_s_opts,
+                                                            seq_table_paging_attempt_info_s_names,
+                                                            4,
+                                                            2},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // NPN-PagingAssistanceInformation ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_npn_paging_assist_info_c_alternatives[] = {
@@ -3828,7 +3951,7 @@ static const asn1::table::seq_field choice_table_npn_paging_assist_info_c_altern
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<allowed_pni_npn_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -3901,15 +4024,15 @@ static const asn1::table::seq_opt seq_table_paging_assis_datafor_c_ecapab_ue_s_o
     {2, (int32_t)offsetof(paging_assis_datafor_c_ecapab_ue_s, ie_exts_present)}};
 const asn1::table::seq_desc paging_assis_datafor_c_ecapab_ue_s::desc = {
     {seq_table_paging_assis_datafor_c_ecapab_ue_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_paging_assis_datafor_c_ecapab_ue_s_opts,
+     seq_table_paging_assis_datafor_c_ecapab_ue_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_paging_assis_datafor_c_ecapab_ue_s_names};
+    0};
 
 static const uint32_t objset_id_assist_data_for_paging_ext_ies_o[]   = {260, 207};
 static const uint8_t  objset_crit_assist_data_for_paging_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -3986,13 +4109,16 @@ static const asn1::table::seq_opt seq_table_assist_data_for_paging_s_opts[] = {
     {0, (int32_t)offsetof(assist_data_for_paging_s, assist_data_for_recommended_cells_present)},
     {1, (int32_t)offsetof(assist_data_for_paging_s, paging_attempt_info_present)},
     {2, (int32_t)offsetof(assist_data_for_paging_s, ie_exts_present)}};
-const asn1::table::seq_desc assist_data_for_paging_s::desc = {
-    {seq_table_assist_data_for_paging_s_fields, 3, UINT64_C(0x0), seq_table_assist_data_for_paging_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_assist_data_for_paging_s_names};
+const asn1::table::seq_desc assist_data_for_paging_s::desc = {{seq_table_assist_data_for_paging_s_fields,
+                                                               uint64_t{0x0},
+                                                               seq_table_assist_data_for_paging_s_opts,
+                                                               seq_table_assist_data_for_paging_s_names,
+                                                               3,
+                                                               3},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // AssociatedMBSQosFlowSetupRequestItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_associated_mbs_qos_flow_setup_request_item_s_fields[] = {
@@ -4001,16 +4127,16 @@ static const asn1::table::seq_field seq_table_associated_mbs_qos_flow_setup_requ
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(associated_mbs_qos_flow_setup_request_item_s, associated_unicast_qos_flow_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(associated_mbs_qos_flow_setup_request_item_s, ie_exts),
      (int32_t)offsetof(associated_mbs_qos_flow_setup_request_item_s, ie_exts_present),
@@ -4029,15 +4155,15 @@ static const asn1::table::seq_opt seq_table_associated_mbs_qos_flow_setup_reques
     {2, (int32_t)offsetof(associated_mbs_qos_flow_setup_request_item_s, ie_exts_present)}};
 const asn1::table::seq_desc associated_mbs_qos_flow_setup_request_item_s::desc = {
     {seq_table_associated_mbs_qos_flow_setup_request_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_associated_mbs_qos_flow_setup_request_item_s_opts,
+     seq_table_associated_mbs_qos_flow_setup_request_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_associated_mbs_qos_flow_setup_request_item_s_names};
+    0};
 
 // AssociatedMBSQosFlowSetuporModifyRequestItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_associated_mbs_qos_flow_setupor_modify_request_item_s_fields[] = {
@@ -4046,16 +4172,16 @@ static const asn1::table::seq_field seq_table_associated_mbs_qos_flow_setupor_mo
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(associated_mbs_qos_flow_setupor_modify_request_item_s, associated_unicast_qos_flow_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(associated_mbs_qos_flow_setupor_modify_request_item_s, ie_exts),
      (int32_t)offsetof(associated_mbs_qos_flow_setupor_modify_request_item_s, ie_exts_present),
@@ -4074,15 +4200,15 @@ static const asn1::table::seq_opt seq_table_associated_mbs_qos_flow_setupor_modi
     {2, (int32_t)offsetof(associated_mbs_qos_flow_setupor_modify_request_item_s, ie_exts_present)}};
 const asn1::table::seq_desc associated_mbs_qos_flow_setupor_modify_request_item_s::desc = {
     {seq_table_associated_mbs_qos_flow_setupor_modify_request_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_associated_mbs_qos_flow_setupor_modify_request_item_s_opts,
+     seq_table_associated_mbs_qos_flow_setupor_modify_request_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_associated_mbs_qos_flow_setupor_modify_request_item_s_names};
+    0};
 
 static const uint32_t objset_id_associated_qos_flow_item_ext_ies_o[]   = {221};
 static const uint8_t  objset_crit_associated_qos_flow_item_ext_ies_o[] = {crit_e::ignore};
@@ -4094,8 +4220,8 @@ static const asn1::table::seq_field ie_table_associated_qos_flow_item_ext_ies_co
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(8),
+     int64_t{1},
+     uint64_t{7},
      nullptr}};
 static const int32_t ie_table_associated_qos_flow_item_ext_ies_container_presences[] = {
     (int32_t)offsetof(associated_qos_flow_item_ext_ies_container, current_qos_para_set_idx_present)};
@@ -4118,8 +4244,8 @@ static const asn1::table::seq_field seq_table_associated_qos_flow_item_s_fields[
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(associated_qos_flow_item_s, qos_flow_map_ind),
      (int32_t)offsetof(associated_qos_flow_item_s, qos_flow_map_ind_present),
@@ -4146,13 +4272,16 @@ static const asn1::table::field_name seq_table_associated_qos_flow_item_s_names[
 static const asn1::table::seq_opt seq_table_associated_qos_flow_item_s_opts[] = {
     {1, (int32_t)offsetof(associated_qos_flow_item_s, qos_flow_map_ind_present)},
     {2, (int32_t)offsetof(associated_qos_flow_item_s, ie_exts_present)}};
-const asn1::table::seq_desc associated_qos_flow_item_s::desc = {
-    {seq_table_associated_qos_flow_item_s_fields, 3, UINT64_C(0x1), seq_table_associated_qos_flow_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_associated_qos_flow_item_s_names};
+const asn1::table::seq_desc associated_qos_flow_item_s::desc = {{seq_table_associated_qos_flow_item_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 seq_table_associated_qos_flow_item_s_opts,
+                                                                 seq_table_associated_qos_flow_item_s_names,
+                                                                 3,
+                                                                 2},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const char*           enum_names_associated_qos_flow_item_s_qos_flow_map_ind_e__values[] = {"ul", "dl"};
 const asn1::table::enum_desc associated_qos_flow_item_s::qos_flow_map_ind_opts::desc            = {
@@ -4205,15 +4334,15 @@ static const asn1::table::seq_opt seq_table_available_ran_visible_qo_e_metrics_s
     {2, (int32_t)offsetof(available_ran_visible_qo_e_metrics_s, ie_exts_present)}};
 const asn1::table::seq_desc available_ran_visible_qo_e_metrics_s::desc = {
     {seq_table_available_ran_visible_qo_e_metrics_s_fields,
-     3,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_available_ran_visible_qo_e_metrics_s_opts,
+     seq_table_available_ran_visible_qo_e_metrics_s_names,
+     3,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_available_ran_visible_qo_e_metrics_s_names};
+    0};
 
 static const char* enum_names_available_ran_visible_qo_e_metrics_s_application_layer_buffer_level_list_e__values[] = {
     "true"};
@@ -4272,13 +4401,16 @@ static const asn1::table::field_name seq_table_beam_meass_report_quant_s_names[]
                                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_beam_meass_report_quant_s_opts[]  = {
     {3, (int32_t)offsetof(beam_meass_report_quant_s, ie_exts_present)}};
-const asn1::table::seq_desc beam_meass_report_quant_s::desc = {
-    {seq_table_beam_meass_report_quant_s_fields, 4, UINT64_C(0x7), seq_table_beam_meass_report_quant_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_beam_meass_report_quant_s_names};
+const asn1::table::seq_desc beam_meass_report_quant_s::desc = {{seq_table_beam_meass_report_quant_s_fields,
+                                                                uint64_t{0x7},
+                                                                seq_table_beam_meass_report_quant_s_opts,
+                                                                seq_table_beam_meass_report_quant_s_names,
+                                                                4,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 static const char*           enum_names_beam_meass_report_quant_s_rsrp_e__values[] = {"true"};
 const asn1::table::enum_desc beam_meass_report_quant_s::rsrp_opts::desc            = {
@@ -4314,8 +4446,8 @@ static const asn1::table::seq_field seq_table_beam_meass_report_cfg_s_fields[] =
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(64),
+     int64_t{1},
+     uint64_t{63},
      nullptr},
     {offsetof(beam_meass_report_cfg_s, ie_exts),
      (int32_t)offsetof(beam_meass_report_cfg_s, ie_exts_present),
@@ -4333,13 +4465,16 @@ static const asn1::table::seq_opt seq_table_beam_meass_report_cfg_s_opts[] = {
     {0, (int32_t)offsetof(beam_meass_report_cfg_s, beam_meass_report_quant_present)},
     {1, (int32_t)offsetof(beam_meass_report_cfg_s, max_nrof_rs_idxes_to_report_present)},
     {2, (int32_t)offsetof(beam_meass_report_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc beam_meass_report_cfg_s::desc = {
-    {seq_table_beam_meass_report_cfg_s_fields, 3, UINT64_C(0x0), seq_table_beam_meass_report_cfg_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_beam_meass_report_cfg_s_names};
+const asn1::table::seq_desc beam_meass_report_cfg_s::desc = {{seq_table_beam_meass_report_cfg_s_fields,
+                                                              uint64_t{0x0},
+                                                              seq_table_beam_meass_report_cfg_s_opts,
+                                                              seq_table_beam_meass_report_cfg_s_names,
+                                                              3,
+                                                              3},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // BluetoothMeasConfig ::= ENUMERATED
 static const char*           enum_names_bluetooth_meas_cfg_e_values[] = {"setup"};
@@ -4371,15 +4506,15 @@ static const asn1::table::field_name seq_table_bluetooth_meas_cfg_name_item_s_na
 static const asn1::table::seq_opt    seq_table_bluetooth_meas_cfg_name_item_s_opts[]  = {
     {1, (int32_t)offsetof(bluetooth_meas_cfg_name_item_s, ie_exts_present)}};
 const asn1::table::seq_desc bluetooth_meas_cfg_name_item_s::desc = {{seq_table_bluetooth_meas_cfg_name_item_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_bluetooth_meas_cfg_name_item_s_opts,
+                                                                     seq_table_bluetooth_meas_cfg_name_item_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_bluetooth_meas_cfg_name_item_s_names};
+                                                                    0};
 
 // BluetoothMeasurementConfiguration ::= SEQUENCE
 static const asn1::table::seq_field seq_table_bluetooth_meas_cfg_s_fields[] = {
@@ -4398,7 +4533,7 @@ static const asn1::table::seq_field seq_table_bluetooth_meas_cfg_s_fields[] = {
      false,
      true,
      1,
-     4,
+     3,
      &asn1::table::item_list_codec<decltype(bluetooth_meas_cfg_s::bluetooth_meas_cfg_name_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4429,13 +4564,16 @@ static const asn1::table::seq_opt    seq_table_bluetooth_meas_cfg_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(bluetooth_meas_cfg_s, bt_rssi_present)},
     {3, (int32_t)offsetof(bluetooth_meas_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc bluetooth_meas_cfg_s::desc = {
-    {seq_table_bluetooth_meas_cfg_s_fields, 4, UINT64_C(0x1), seq_table_bluetooth_meas_cfg_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_bluetooth_meas_cfg_s_names};
+const asn1::table::seq_desc bluetooth_meas_cfg_s::desc = {{seq_table_bluetooth_meas_cfg_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_bluetooth_meas_cfg_s_opts,
+                                                           seq_table_bluetooth_meas_cfg_s_names,
+                                                           4,
+                                                           3},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 static const char*           enum_names_bluetooth_meas_cfg_s_bt_rssi_e__values[] = {"true"};
 const asn1::table::enum_desc bluetooth_meas_cfg_s::bt_rssi_opts::desc            = {
@@ -4459,8 +4597,8 @@ static const asn1::table::seq_field seq_table_cell_id_cancelled_eutra_item_s_fie
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(cell_id_cancelled_eutra_item_s, ie_exts),
      (int32_t)offsetof(cell_id_cancelled_eutra_item_s, ie_exts_present),
@@ -4477,15 +4615,15 @@ static const asn1::table::field_name seq_table_cell_id_cancelled_eutra_item_s_na
 static const asn1::table::seq_opt seq_table_cell_id_cancelled_eutra_item_s_opts[] = {
     {2, (int32_t)offsetof(cell_id_cancelled_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc cell_id_cancelled_eutra_item_s::desc = {{seq_table_cell_id_cancelled_eutra_item_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x3),
+                                                                     uint64_t{0x3},
                                                                      seq_table_cell_id_cancelled_eutra_item_s_opts,
+                                                                     seq_table_cell_id_cancelled_eutra_item_s_names,
+                                                                     3,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_cell_id_cancelled_eutra_item_s_names};
+                                                                    0};
 
 // CancelledCellsInTAI-EUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cancelled_cells_in_tai_eutra_item_s_fields[] = {
@@ -4503,8 +4641,8 @@ static const asn1::table::seq_field seq_table_cancelled_cells_in_tai_eutra_item_
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(cancelled_cells_in_tai_eutra_item_s, ie_exts),
      (int32_t)offsetof(cancelled_cells_in_tai_eutra_item_s, ie_exts_present),
@@ -4523,15 +4661,15 @@ static const asn1::table::seq_opt seq_table_cancelled_cells_in_tai_eutra_item_s_
     {2, (int32_t)offsetof(cancelled_cells_in_tai_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc cancelled_cells_in_tai_eutra_item_s::desc = {
     {seq_table_cancelled_cells_in_tai_eutra_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_cancelled_cells_in_tai_eutra_item_s_opts,
+     seq_table_cancelled_cells_in_tai_eutra_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_cancelled_cells_in_tai_eutra_item_s_names};
+    0};
 
 // TAICancelledEUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tai_cancelled_eutra_item_s_fields[] = {
@@ -4550,7 +4688,7 @@ static const asn1::table::seq_field seq_table_tai_cancelled_eutra_item_s_fields[
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(tai_cancelled_eutra_item_s::cancelled_cells_in_tai_eutra),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4570,13 +4708,16 @@ static const asn1::table::field_name seq_table_tai_cancelled_eutra_item_s_names[
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_tai_cancelled_eutra_item_s_opts[] = {
     {2, (int32_t)offsetof(tai_cancelled_eutra_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_cancelled_eutra_item_s::desc = {
-    {seq_table_tai_cancelled_eutra_item_s_fields, 3, UINT64_C(0x3), seq_table_tai_cancelled_eutra_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_cancelled_eutra_item_s_names};
+const asn1::table::seq_desc tai_cancelled_eutra_item_s::desc = {{seq_table_tai_cancelled_eutra_item_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 seq_table_tai_cancelled_eutra_item_s_opts,
+                                                                 seq_table_tai_cancelled_eutra_item_s_names,
+                                                                 3,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // CancelledCellsInEAI-EUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cancelled_cells_in_eai_eutra_item_s_fields[] = {
@@ -4594,8 +4735,8 @@ static const asn1::table::seq_field seq_table_cancelled_cells_in_eai_eutra_item_
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(cancelled_cells_in_eai_eutra_item_s, ie_exts),
      (int32_t)offsetof(cancelled_cells_in_eai_eutra_item_s, ie_exts_present),
@@ -4614,15 +4755,15 @@ static const asn1::table::seq_opt seq_table_cancelled_cells_in_eai_eutra_item_s_
     {2, (int32_t)offsetof(cancelled_cells_in_eai_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc cancelled_cells_in_eai_eutra_item_s::desc = {
     {seq_table_cancelled_cells_in_eai_eutra_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_cancelled_cells_in_eai_eutra_item_s_opts,
+     seq_table_cancelled_cells_in_eai_eutra_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_cancelled_cells_in_eai_eutra_item_s_names};
+    0};
 
 // EmergencyAreaIDCancelledEUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_emergency_area_id_cancelled_eutra_item_s_fields[] = {
@@ -4641,7 +4782,7 @@ static const asn1::table::seq_field seq_table_emergency_area_id_cancelled_eutra_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(emergency_area_id_cancelled_eutra_item_s::cancelled_cells_in_eai_eutra),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4664,15 +4805,15 @@ static const asn1::table::seq_opt seq_table_emergency_area_id_cancelled_eutra_it
     {2, (int32_t)offsetof(emergency_area_id_cancelled_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc emergency_area_id_cancelled_eutra_item_s::desc = {
     {seq_table_emergency_area_id_cancelled_eutra_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_emergency_area_id_cancelled_eutra_item_s_opts,
+     seq_table_emergency_area_id_cancelled_eutra_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_emergency_area_id_cancelled_eutra_item_s_names};
+    0};
 
 // CellIDCancelledNR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cell_id_cancelled_nr_item_s_fields[] = {
@@ -4690,8 +4831,8 @@ static const asn1::table::seq_field seq_table_cell_id_cancelled_nr_item_s_fields
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(cell_id_cancelled_nr_item_s, ie_exts),
      (int32_t)offsetof(cell_id_cancelled_nr_item_s, ie_exts_present),
@@ -4706,13 +4847,16 @@ static const asn1::table::field_name seq_table_cell_id_cancelled_nr_item_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_cell_id_cancelled_nr_item_s_opts[]  = {
     {2, (int32_t)offsetof(cell_id_cancelled_nr_item_s, ie_exts_present)}};
-const asn1::table::seq_desc cell_id_cancelled_nr_item_s::desc = {
-    {seq_table_cell_id_cancelled_nr_item_s_fields, 3, UINT64_C(0x3), seq_table_cell_id_cancelled_nr_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cell_id_cancelled_nr_item_s_names};
+const asn1::table::seq_desc cell_id_cancelled_nr_item_s::desc = {{seq_table_cell_id_cancelled_nr_item_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  seq_table_cell_id_cancelled_nr_item_s_opts,
+                                                                  seq_table_cell_id_cancelled_nr_item_s_names,
+                                                                  3,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // CancelledCellsInTAI-NR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cancelled_cells_in_tai_nr_item_s_fields[] = {
@@ -4730,8 +4874,8 @@ static const asn1::table::seq_field seq_table_cancelled_cells_in_tai_nr_item_s_f
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(cancelled_cells_in_tai_nr_item_s, ie_exts),
      (int32_t)offsetof(cancelled_cells_in_tai_nr_item_s, ie_exts_present),
@@ -4749,15 +4893,15 @@ static const asn1::table::seq_opt seq_table_cancelled_cells_in_tai_nr_item_s_opt
     {2, (int32_t)offsetof(cancelled_cells_in_tai_nr_item_s, ie_exts_present)}};
 const asn1::table::seq_desc cancelled_cells_in_tai_nr_item_s::desc = {
     {seq_table_cancelled_cells_in_tai_nr_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_cancelled_cells_in_tai_nr_item_s_opts,
+     seq_table_cancelled_cells_in_tai_nr_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_cancelled_cells_in_tai_nr_item_s_names};
+    0};
 
 // TAICancelledNR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tai_cancelled_nr_item_s_fields[] = {
@@ -4776,7 +4920,7 @@ static const asn1::table::seq_field seq_table_tai_cancelled_nr_item_s_fields[] =
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(tai_cancelled_nr_item_s::cancelled_cells_in_tai_nr),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4795,13 +4939,16 @@ static const asn1::table::field_name seq_table_tai_cancelled_nr_item_s_names[] =
                                                                                   {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_cancelled_nr_item_s_opts[]  = {
     {2, (int32_t)offsetof(tai_cancelled_nr_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_cancelled_nr_item_s::desc = {
-    {seq_table_tai_cancelled_nr_item_s_fields, 3, UINT64_C(0x3), seq_table_tai_cancelled_nr_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_cancelled_nr_item_s_names};
+const asn1::table::seq_desc tai_cancelled_nr_item_s::desc = {{seq_table_tai_cancelled_nr_item_s_fields,
+                                                              uint64_t{0x3},
+                                                              seq_table_tai_cancelled_nr_item_s_opts,
+                                                              seq_table_tai_cancelled_nr_item_s_names,
+                                                              3,
+                                                              1},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // CancelledCellsInEAI-NR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cancelled_cells_in_eai_nr_item_s_fields[] = {
@@ -4819,8 +4966,8 @@ static const asn1::table::seq_field seq_table_cancelled_cells_in_eai_nr_item_s_f
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(cancelled_cells_in_eai_nr_item_s, ie_exts),
      (int32_t)offsetof(cancelled_cells_in_eai_nr_item_s, ie_exts_present),
@@ -4838,15 +4985,15 @@ static const asn1::table::seq_opt seq_table_cancelled_cells_in_eai_nr_item_s_opt
     {2, (int32_t)offsetof(cancelled_cells_in_eai_nr_item_s, ie_exts_present)}};
 const asn1::table::seq_desc cancelled_cells_in_eai_nr_item_s::desc = {
     {seq_table_cancelled_cells_in_eai_nr_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_cancelled_cells_in_eai_nr_item_s_opts,
+     seq_table_cancelled_cells_in_eai_nr_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_cancelled_cells_in_eai_nr_item_s_names};
+    0};
 
 // EmergencyAreaIDCancelledNR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_emergency_area_id_cancelled_nr_item_s_fields[] = {
@@ -4865,7 +5012,7 @@ static const asn1::table::seq_field seq_table_emergency_area_id_cancelled_nr_ite
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(emergency_area_id_cancelled_nr_item_s::cancelled_cells_in_eai_nr),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -4888,15 +5035,15 @@ static const asn1::table::seq_opt seq_table_emergency_area_id_cancelled_nr_item_
     {2, (int32_t)offsetof(emergency_area_id_cancelled_nr_item_s, ie_exts_present)}};
 const asn1::table::seq_desc emergency_area_id_cancelled_nr_item_s::desc = {
     {seq_table_emergency_area_id_cancelled_nr_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_emergency_area_id_cancelled_nr_item_s_opts,
+     seq_table_emergency_area_id_cancelled_nr_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_emergency_area_id_cancelled_nr_item_s_names};
+    0};
 
 // BroadcastCancelledAreaList ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_broadcast_cancelled_area_list_c_alternatives[] = {
@@ -4956,7 +5103,7 @@ static const asn1::table::seq_field choice_table_broadcast_cancelled_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<cell_id_cancelled_eutra_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -4964,7 +5111,7 @@ static const asn1::table::seq_field choice_table_broadcast_cancelled_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<tai_cancelled_eutra_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -4972,7 +5119,7 @@ static const asn1::table::seq_field choice_table_broadcast_cancelled_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<emergency_area_id_cancelled_eutra_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -4980,7 +5127,7 @@ static const asn1::table::seq_field choice_table_broadcast_cancelled_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<cell_id_cancelled_nr_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -4988,7 +5135,7 @@ static const asn1::table::seq_field choice_table_broadcast_cancelled_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<tai_cancelled_nr_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -4996,7 +5143,7 @@ static const asn1::table::seq_field choice_table_broadcast_cancelled_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<emergency_area_id_cancelled_nr_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -5066,15 +5213,15 @@ static const asn1::table::field_name seq_table_cell_id_broadcast_eutra_item_s_na
 static const asn1::table::seq_opt    seq_table_cell_id_broadcast_eutra_item_s_opts[]  = {
     {1, (int32_t)offsetof(cell_id_broadcast_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc cell_id_broadcast_eutra_item_s::desc = {{seq_table_cell_id_broadcast_eutra_item_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_cell_id_broadcast_eutra_item_s_opts,
+                                                                     seq_table_cell_id_broadcast_eutra_item_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_cell_id_broadcast_eutra_item_s_names};
+                                                                    0};
 
 // CompletedCellsInTAI-EUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_completed_cells_in_tai_eutra_item_s_fields[] = {
@@ -5103,15 +5250,15 @@ static const asn1::table::seq_opt seq_table_completed_cells_in_tai_eutra_item_s_
     {1, (int32_t)offsetof(completed_cells_in_tai_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc completed_cells_in_tai_eutra_item_s::desc = {
     {seq_table_completed_cells_in_tai_eutra_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_completed_cells_in_tai_eutra_item_s_opts,
+     seq_table_completed_cells_in_tai_eutra_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_completed_cells_in_tai_eutra_item_s_names};
+    0};
 
 // TAIBroadcastEUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tai_broadcast_eutra_item_s_fields[] = {
@@ -5130,7 +5277,7 @@ static const asn1::table::seq_field seq_table_tai_broadcast_eutra_item_s_fields[
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(tai_broadcast_eutra_item_s::completed_cells_in_tai_eutra),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5150,13 +5297,16 @@ static const asn1::table::field_name seq_table_tai_broadcast_eutra_item_s_names[
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_tai_broadcast_eutra_item_s_opts[] = {
     {2, (int32_t)offsetof(tai_broadcast_eutra_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_broadcast_eutra_item_s::desc = {
-    {seq_table_tai_broadcast_eutra_item_s_fields, 3, UINT64_C(0x3), seq_table_tai_broadcast_eutra_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_broadcast_eutra_item_s_names};
+const asn1::table::seq_desc tai_broadcast_eutra_item_s::desc = {{seq_table_tai_broadcast_eutra_item_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 seq_table_tai_broadcast_eutra_item_s_opts,
+                                                                 seq_table_tai_broadcast_eutra_item_s_names,
+                                                                 3,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // CompletedCellsInEAI-EUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_completed_cells_in_eai_eutra_item_s_fields[] = {
@@ -5185,15 +5335,15 @@ static const asn1::table::seq_opt seq_table_completed_cells_in_eai_eutra_item_s_
     {1, (int32_t)offsetof(completed_cells_in_eai_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc completed_cells_in_eai_eutra_item_s::desc = {
     {seq_table_completed_cells_in_eai_eutra_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_completed_cells_in_eai_eutra_item_s_opts,
+     seq_table_completed_cells_in_eai_eutra_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_completed_cells_in_eai_eutra_item_s_names};
+    0};
 
 // EmergencyAreaIDBroadcastEUTRA-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_emergency_area_id_broadcast_eutra_item_s_fields[] = {
@@ -5212,7 +5362,7 @@ static const asn1::table::seq_field seq_table_emergency_area_id_broadcast_eutra_
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(emergency_area_id_broadcast_eutra_item_s::completed_cells_in_eai_eutra),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5235,15 +5385,15 @@ static const asn1::table::seq_opt seq_table_emergency_area_id_broadcast_eutra_it
     {2, (int32_t)offsetof(emergency_area_id_broadcast_eutra_item_s, ie_exts_present)}};
 const asn1::table::seq_desc emergency_area_id_broadcast_eutra_item_s::desc = {
     {seq_table_emergency_area_id_broadcast_eutra_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_emergency_area_id_broadcast_eutra_item_s_opts,
+     seq_table_emergency_area_id_broadcast_eutra_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_emergency_area_id_broadcast_eutra_item_s_names};
+    0};
 
 // CellIDBroadcastNR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cell_id_broadcast_nr_item_s_fields[] = {
@@ -5268,13 +5418,16 @@ static const asn1::table::field_name seq_table_cell_id_broadcast_nr_item_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_cell_id_broadcast_nr_item_s_opts[]  = {
     {1, (int32_t)offsetof(cell_id_broadcast_nr_item_s, ie_exts_present)}};
-const asn1::table::seq_desc cell_id_broadcast_nr_item_s::desc = {
-    {seq_table_cell_id_broadcast_nr_item_s_fields, 2, UINT64_C(0x1), seq_table_cell_id_broadcast_nr_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cell_id_broadcast_nr_item_s_names};
+const asn1::table::seq_desc cell_id_broadcast_nr_item_s::desc = {{seq_table_cell_id_broadcast_nr_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_cell_id_broadcast_nr_item_s_opts,
+                                                                  seq_table_cell_id_broadcast_nr_item_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // CompletedCellsInTAI-NR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_completed_cells_in_tai_nr_item_s_fields[] = {
@@ -5301,15 +5454,15 @@ static const asn1::table::seq_opt    seq_table_completed_cells_in_tai_nr_item_s_
     {1, (int32_t)offsetof(completed_cells_in_tai_nr_item_s, ie_exts_present)}};
 const asn1::table::seq_desc completed_cells_in_tai_nr_item_s::desc = {
     {seq_table_completed_cells_in_tai_nr_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_completed_cells_in_tai_nr_item_s_opts,
+     seq_table_completed_cells_in_tai_nr_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_completed_cells_in_tai_nr_item_s_names};
+    0};
 
 // TAIBroadcastNR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tai_broadcast_nr_item_s_fields[] = {
@@ -5328,7 +5481,7 @@ static const asn1::table::seq_field seq_table_tai_broadcast_nr_item_s_fields[] =
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(tai_broadcast_nr_item_s::completed_cells_in_tai_nr),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5347,13 +5500,16 @@ static const asn1::table::field_name seq_table_tai_broadcast_nr_item_s_names[] =
                                                                                   {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_broadcast_nr_item_s_opts[]  = {
     {2, (int32_t)offsetof(tai_broadcast_nr_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_broadcast_nr_item_s::desc = {
-    {seq_table_tai_broadcast_nr_item_s_fields, 3, UINT64_C(0x3), seq_table_tai_broadcast_nr_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_broadcast_nr_item_s_names};
+const asn1::table::seq_desc tai_broadcast_nr_item_s::desc = {{seq_table_tai_broadcast_nr_item_s_fields,
+                                                              uint64_t{0x3},
+                                                              seq_table_tai_broadcast_nr_item_s_opts,
+                                                              seq_table_tai_broadcast_nr_item_s_names,
+                                                              3,
+                                                              1},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // CompletedCellsInEAI-NR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_completed_cells_in_eai_nr_item_s_fields[] = {
@@ -5380,15 +5536,15 @@ static const asn1::table::seq_opt    seq_table_completed_cells_in_eai_nr_item_s_
     {1, (int32_t)offsetof(completed_cells_in_eai_nr_item_s, ie_exts_present)}};
 const asn1::table::seq_desc completed_cells_in_eai_nr_item_s::desc = {
     {seq_table_completed_cells_in_eai_nr_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_completed_cells_in_eai_nr_item_s_opts,
+     seq_table_completed_cells_in_eai_nr_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_completed_cells_in_eai_nr_item_s_names};
+    0};
 
 // EmergencyAreaIDBroadcastNR-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_emergency_area_id_broadcast_nr_item_s_fields[] = {
@@ -5407,7 +5563,7 @@ static const asn1::table::seq_field seq_table_emergency_area_id_broadcast_nr_ite
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(emergency_area_id_broadcast_nr_item_s::completed_cells_in_eai_nr),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5430,15 +5586,15 @@ static const asn1::table::seq_opt seq_table_emergency_area_id_broadcast_nr_item_
     {2, (int32_t)offsetof(emergency_area_id_broadcast_nr_item_s, ie_exts_present)}};
 const asn1::table::seq_desc emergency_area_id_broadcast_nr_item_s::desc = {
     {seq_table_emergency_area_id_broadcast_nr_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_emergency_area_id_broadcast_nr_item_s_opts,
+     seq_table_emergency_area_id_broadcast_nr_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_emergency_area_id_broadcast_nr_item_s_names};
+    0};
 
 // BroadcastCompletedAreaList ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_broadcast_completed_area_list_c_alternatives[] = {
@@ -5498,7 +5654,7 @@ static const asn1::table::seq_field choice_table_broadcast_completed_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<cell_id_broadcast_eutra_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -5506,7 +5662,7 @@ static const asn1::table::seq_field choice_table_broadcast_completed_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<tai_broadcast_eutra_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -5514,7 +5670,7 @@ static const asn1::table::seq_field choice_table_broadcast_completed_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<emergency_area_id_broadcast_eutra_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -5522,7 +5678,7 @@ static const asn1::table::seq_field choice_table_broadcast_completed_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<cell_id_broadcast_nr_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -5530,7 +5686,7 @@ static const asn1::table::seq_field choice_table_broadcast_completed_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<tai_broadcast_nr_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -5538,7 +5694,7 @@ static const asn1::table::seq_field choice_table_broadcast_completed_area_list_c
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<emergency_area_id_broadcast_nr_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -5607,13 +5763,16 @@ static const asn1::table::field_name seq_table_slice_support_item_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_slice_support_item_s_opts[]  = {
     {1, (int32_t)offsetof(slice_support_item_s, ie_exts_present)}};
-const asn1::table::seq_desc slice_support_item_s::desc = {
-    {seq_table_slice_support_item_s_fields, 2, UINT64_C(0x1), seq_table_slice_support_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_slice_support_item_s_names};
+const asn1::table::seq_desc slice_support_item_s::desc = {{seq_table_slice_support_item_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_slice_support_item_s_opts,
+                                                           seq_table_slice_support_item_s_names,
+                                                           2,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // NPN-Support ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_npn_support_c_alternatives[] = {
@@ -5679,8 +5838,8 @@ static const asn1::table::seq_field seq_table_tai_nsag_support_item_s_fields[] =
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(tai_nsag_support_item_s, nsag_slice_support_list),
      asn1::table::seq_field::mandatory,
@@ -5688,7 +5847,7 @@ static const asn1::table::seq_field seq_table_tai_nsag_support_item_s_fields[] =
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(tai_nsag_support_item_s::nsag_slice_support_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5707,13 +5866,16 @@ static const asn1::table::field_name seq_table_tai_nsag_support_item_s_names[] =
                                                                                   {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_nsag_support_item_s_opts[]  = {
     {2, (int32_t)offsetof(tai_nsag_support_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_nsag_support_item_s::desc = {
-    {seq_table_tai_nsag_support_item_s_fields, 3, UINT64_C(0x3), seq_table_tai_nsag_support_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_nsag_support_item_s_names};
+const asn1::table::seq_desc tai_nsag_support_item_s::desc = {{seq_table_tai_nsag_support_item_s_fields,
+                                                              uint64_t{0x3},
+                                                              seq_table_tai_nsag_support_item_s_opts,
+                                                              seq_table_tai_nsag_support_item_s_names,
+                                                              3,
+                                                              1},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 static const uint32_t objset_id_broadcast_plmn_item_ext_ies_o[]   = {258, 271, 353};
 static const uint8_t  objset_crit_broadcast_plmn_item_ext_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::ignore};
@@ -5735,7 +5897,7 @@ static const asn1::table::seq_field ie_table_broadcast_plmn_item_ext_ies_contain
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(broadcast_plmn_item_ext_ies_container::extended_tai_slice_support_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5747,7 +5909,7 @@ static const asn1::table::seq_field ie_table_broadcast_plmn_item_ext_ies_contain
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(broadcast_plmn_item_ext_ies_container::tai_nsag_support_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5785,7 +5947,7 @@ static const asn1::table::seq_field seq_table_broadcast_plmn_item_s_fields[] = {
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::item_list_codec<decltype(broadcast_plmn_item_s::tai_slice_support_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -5805,13 +5967,16 @@ static const asn1::table::field_name seq_table_broadcast_plmn_item_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_broadcast_plmn_item_s_opts[]  = {
     {2, (int32_t)offsetof(broadcast_plmn_item_s, ie_exts_present)}};
-const asn1::table::seq_desc broadcast_plmn_item_s::desc = {
-    {seq_table_broadcast_plmn_item_s_fields, 3, UINT64_C(0x3), seq_table_broadcast_plmn_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_broadcast_plmn_item_s_names};
+const asn1::table::seq_desc broadcast_plmn_item_s::desc = {{seq_table_broadcast_plmn_item_s_fields,
+                                                            uint64_t{0x3},
+                                                            seq_table_broadcast_plmn_item_s_opts,
+                                                            seq_table_broadcast_plmn_item_s_names,
+                                                            3,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // MBS-SessionID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_session_id_s_fields[] = {
@@ -5845,13 +6010,16 @@ static const asn1::table::field_name seq_table_mbs_session_id_s_names[] = {{"tMG
 static const asn1::table::seq_opt    seq_table_mbs_session_id_s_opts[]  = {
     {1, (int32_t)offsetof(mbs_session_id_s, nid_present)},
     {2, (int32_t)offsetof(mbs_session_id_s, ie_exts_present)}};
-const asn1::table::seq_desc mbs_session_id_s::desc = {
-    {seq_table_mbs_session_id_s_fields, 3, UINT64_C(0x1), seq_table_mbs_session_id_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mbs_session_id_s_names};
+const asn1::table::seq_desc mbs_session_id_s::desc = {{seq_table_mbs_session_id_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_mbs_session_id_s_opts,
+                                                       seq_table_mbs_session_id_s_names,
+                                                       3,
+                                                       2},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // CauseRadioNetwork ::= ENUMERATED
 static const char* enum_names_cause_radio_network_e_values[] = {
@@ -6094,8 +6262,8 @@ static const asn1::table::seq_field seq_table_crit_diagnostics_ie_item_s_fields[
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(crit_diagnostics_ie_item_s, type_of_error),
      asn1::table::seq_field::mandatory,
@@ -6120,13 +6288,16 @@ static const asn1::table::field_name seq_table_crit_diagnostics_ie_item_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_crit_diagnostics_ie_item_s_opts[]  = {
     {3, (int32_t)offsetof(crit_diagnostics_ie_item_s, ie_exts_present)}};
-const asn1::table::seq_desc crit_diagnostics_ie_item_s::desc = {
-    {seq_table_crit_diagnostics_ie_item_s_fields, 4, UINT64_C(0x7), seq_table_crit_diagnostics_ie_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_crit_diagnostics_ie_item_s_names};
+const asn1::table::seq_desc crit_diagnostics_ie_item_s::desc = {{seq_table_crit_diagnostics_ie_item_s_fields,
+                                                                 uint64_t{0x7},
+                                                                 seq_table_crit_diagnostics_ie_item_s_opts,
+                                                                 seq_table_crit_diagnostics_ie_item_s_names,
+                                                                 4,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // CriticalityDiagnostics ::= SEQUENCE
 static const asn1::table::seq_field seq_table_crit_diagnostics_s_fields[] = {
@@ -6135,8 +6306,8 @@ static const asn1::table::seq_field seq_table_crit_diagnostics_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(crit_diagnostics_s, trigger_msg),
      (int32_t)offsetof(crit_diagnostics_s, trigger_msg_present),
@@ -6162,7 +6333,7 @@ static const asn1::table::seq_field seq_table_crit_diagnostics_s_fields[] = {
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(crit_diagnostics_s::ies_crit_diagnostics),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6187,13 +6358,16 @@ static const asn1::table::seq_opt    seq_table_crit_diagnostics_s_opts[]  = {
     {2, (int32_t)offsetof(crit_diagnostics_s, proc_crit_present)},
     {3, asn1::table::seq_field::list_presence},
     {4, (int32_t)offsetof(crit_diagnostics_s, ie_exts_present)}};
-const asn1::table::seq_desc crit_diagnostics_s::desc = {
-    {seq_table_crit_diagnostics_s_fields, 5, UINT64_C(0x0), seq_table_crit_diagnostics_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_crit_diagnostics_s_names};
+const asn1::table::seq_desc crit_diagnostics_s::desc = {{seq_table_crit_diagnostics_s_fields,
+                                                         uint64_t{0x0},
+                                                         seq_table_crit_diagnostics_s_opts,
+                                                         seq_table_crit_diagnostics_s_names,
+                                                         5,
+                                                         5},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // BroadcastTransportFailureTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_broadcast_transport_fail_transfer_s_fields[] = {
@@ -6240,15 +6414,15 @@ static const asn1::table::seq_opt seq_table_broadcast_transport_fail_transfer_s_
     {3, (int32_t)offsetof(broadcast_transport_fail_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc broadcast_transport_fail_transfer_s::desc = {
     {seq_table_broadcast_transport_fail_transfer_s_fields,
-     4,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_broadcast_transport_fail_transfer_s_opts,
+     seq_table_broadcast_transport_fail_transfer_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_broadcast_transport_fail_transfer_s_names};
+    0};
 
 // MBS-SessionTNLInfoNGRANItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_session_tnl_info_ngran_item_s_fields[] = {
@@ -6257,8 +6431,8 @@ static const asn1::table::seq_field seq_table_mbs_session_tnl_info_ngran_item_s_
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_session_tnl_info_ngran_item_s, shared_ngu_unicast_tnl_info),
      (int32_t)offsetof(mbs_session_tnl_info_ngran_item_s, shared_ngu_unicast_tnl_info_present),
@@ -6287,15 +6461,15 @@ static const asn1::table::seq_opt seq_table_mbs_session_tnl_info_ngran_item_s_op
     {2, (int32_t)offsetof(mbs_session_tnl_info_ngran_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_tnl_info_ngran_item_s::desc = {
     {seq_table_mbs_session_tnl_info_ngran_item_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_mbs_session_tnl_info_ngran_item_s_opts,
+     seq_table_mbs_session_tnl_info_ngran_item_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_session_tnl_info_ngran_item_s_names};
+    0};
 
 // MBS-SessionTNLInfoNGRAN ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_mbs_session_tnl_info_ngran_c_alternatives[] = {
@@ -6338,7 +6512,7 @@ static const asn1::table::seq_field choice_table_mbs_session_tnl_info_ngran_c_al
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<mbs_session_tnl_info_ngran_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -6413,15 +6587,15 @@ static const asn1::table::seq_opt seq_table_broadcast_transport_request_transfer
     {2, (int32_t)offsetof(broadcast_transport_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc broadcast_transport_request_transfer_s::desc = {
     {seq_table_broadcast_transport_request_transfer_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_broadcast_transport_request_transfer_s_opts,
+     seq_table_broadcast_transport_request_transfer_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_broadcast_transport_request_transfer_s_names};
+    0};
 
 // BroadcastTransportResponseTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_broadcast_transport_resp_transfer_s_fields[] = {
@@ -6450,15 +6624,15 @@ static const asn1::table::seq_opt seq_table_broadcast_transport_resp_transfer_s_
     {1, (int32_t)offsetof(broadcast_transport_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc broadcast_transport_resp_transfer_s::desc = {
     {seq_table_broadcast_transport_resp_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_broadcast_transport_resp_transfer_s_opts,
+     seq_table_broadcast_transport_resp_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_broadcast_transport_resp_transfer_s_names};
+    0};
 
 // BurstArrivalTimeWindow ::= SEQUENCE
 static const asn1::table::seq_field seq_table_burst_arrival_time_win_s_fields[] = {
@@ -6467,16 +6641,16 @@ static const asn1::table::seq_field seq_table_burst_arrival_time_win_s_fields[] 
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(640000),
+     int64_t{0},
+     uint64_t{640000},
      nullptr},
     {offsetof(burst_arrival_time_win_s, burst_arrival_time_win_end),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(640000),
+     int64_t{0},
+     uint64_t{640000},
      nullptr},
     {offsetof(burst_arrival_time_win_s, ie_ext),
      (int32_t)offsetof(burst_arrival_time_win_s, ie_ext_present),
@@ -6492,13 +6666,16 @@ static const asn1::table::field_name seq_table_burst_arrival_time_win_s_names[] 
     {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt seq_table_burst_arrival_time_win_s_opts[] = {
     {2, (int32_t)offsetof(burst_arrival_time_win_s, ie_ext_present)}};
-const asn1::table::seq_desc burst_arrival_time_win_s::desc = {
-    {seq_table_burst_arrival_time_win_s_fields, 3, UINT64_C(0x3), seq_table_burst_arrival_time_win_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_burst_arrival_time_win_s_names};
+const asn1::table::seq_desc burst_arrival_time_win_s::desc = {{seq_table_burst_arrival_time_win_s_fields,
+                                                               uint64_t{0x3},
+                                                               seq_table_burst_arrival_time_win_s_opts,
+                                                               seq_table_burst_arrival_time_win_s_names,
+                                                               3,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // CEmodeBSupport-Indicator ::= ENUMERATED
 static const char*           enum_names_ce_mode_b_support_ind_e_values[] = {"supported"};
@@ -6534,16 +6711,16 @@ static const asn1::table::seq_field seq_table_expected_ue_activity_behaviour_s_f
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(181),
+     int64_t{1},
+     uint64_t{180},
      nullptr},
     {offsetof(expected_ue_activity_behaviour_s, expected_idle_period),
      (int32_t)offsetof(expected_ue_activity_behaviour_s, expected_idle_period_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(181),
+     int64_t{1},
+     uint64_t{180},
      nullptr},
     {offsetof(expected_ue_activity_behaviour_s, source_of_ue_activity_behaviour_info),
      (int32_t)offsetof(expected_ue_activity_behaviour_s, source_of_ue_activity_behaviour_info_present),
@@ -6574,15 +6751,15 @@ static const asn1::table::seq_opt seq_table_expected_ue_activity_behaviour_s_opt
     {3, (int32_t)offsetof(expected_ue_activity_behaviour_s, ie_exts_present)}};
 const asn1::table::seq_desc expected_ue_activity_behaviour_s::desc = {
     {seq_table_expected_ue_activity_behaviour_s_fields,
-     4,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_expected_ue_activity_behaviour_s_opts,
+     seq_table_expected_ue_activity_behaviour_s_names,
+     4,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_expected_ue_activity_behaviour_s_names};
+    0};
 
 // ExpectedHOInterval ::= ENUMERATED
 static const char* enum_names_expected_ho_interv_e_values[] =
@@ -6616,8 +6793,8 @@ static const asn1::table::seq_field seq_table_expected_ue_moving_trajectory_item
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(expected_ue_moving_trajectory_item_s, ie_exts),
      (int32_t)offsetof(expected_ue_moving_trajectory_item_s, ie_exts_present),
@@ -6637,15 +6814,15 @@ static const asn1::table::seq_opt seq_table_expected_ue_moving_trajectory_item_s
     {2, (int32_t)offsetof(expected_ue_moving_trajectory_item_s, ie_exts_present)}};
 const asn1::table::seq_desc expected_ue_moving_trajectory_item_s::desc = {
     {seq_table_expected_ue_moving_trajectory_item_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_expected_ue_moving_trajectory_item_s_opts,
+     seq_table_expected_ue_moving_trajectory_item_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_expected_ue_moving_trajectory_item_s_names};
+    0};
 
 // ExpectedUEBehaviour ::= SEQUENCE
 static const asn1::table::seq_field seq_table_expected_ue_behaviour_s_fields[] = {
@@ -6682,7 +6859,7 @@ static const asn1::table::seq_field seq_table_expected_ue_behaviour_s_fields[] =
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(expected_ue_behaviour_s::expected_ue_moving_trajectory),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -6708,13 +6885,16 @@ static const asn1::table::seq_opt seq_table_expected_ue_behaviour_s_opts[] = {
     {2, (int32_t)offsetof(expected_ue_behaviour_s, expected_ue_mob_present)},
     {3, asn1::table::seq_field::list_presence},
     {4, (int32_t)offsetof(expected_ue_behaviour_s, ie_exts_present)}};
-const asn1::table::seq_desc expected_ue_behaviour_s::desc = {
-    {seq_table_expected_ue_behaviour_s_fields, 5, UINT64_C(0x0), seq_table_expected_ue_behaviour_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_expected_ue_behaviour_s_names};
+const asn1::table::seq_desc expected_ue_behaviour_s::desc = {{seq_table_expected_ue_behaviour_s_fields,
+                                                              uint64_t{0x0},
+                                                              seq_table_expected_ue_behaviour_s_opts,
+                                                              seq_table_expected_ue_behaviour_s_names,
+                                                              5,
+                                                              5},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // CNAssistedRANTuning ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cn_assisted_ran_tuning_s_fields[] = {
@@ -6740,13 +6920,16 @@ static const asn1::table::field_name seq_table_cn_assisted_ran_tuning_s_names[] 
 static const asn1::table::seq_opt    seq_table_cn_assisted_ran_tuning_s_opts[]  = {
     {0, (int32_t)offsetof(cn_assisted_ran_tuning_s, expected_ue_behaviour_present)},
     {1, (int32_t)offsetof(cn_assisted_ran_tuning_s, ie_exts_present)}};
-const asn1::table::seq_desc cn_assisted_ran_tuning_s::desc = {
-    {seq_table_cn_assisted_ran_tuning_s_fields, 2, UINT64_C(0x0), seq_table_cn_assisted_ran_tuning_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cn_assisted_ran_tuning_s_names};
+const asn1::table::seq_desc cn_assisted_ran_tuning_s::desc = {{seq_table_cn_assisted_ran_tuning_s_fields,
+                                                               uint64_t{0x0},
+                                                               seq_table_cn_assisted_ran_tuning_s_opts,
+                                                               seq_table_cn_assisted_ran_tuning_s_names,
+                                                               2,
+                                                               2},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // CNTypeRestrictionsForEquivalentItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cn_type_restricts_for_equivalent_item_s_fields[] = {
@@ -6785,15 +6968,15 @@ static const asn1::table::seq_opt seq_table_cn_type_restricts_for_equivalent_ite
     {2, (int32_t)offsetof(cn_type_restricts_for_equivalent_item_s, ie_exts_present)}};
 const asn1::table::seq_desc cn_type_restricts_for_equivalent_item_s::desc = {
     {seq_table_cn_type_restricts_for_equivalent_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_cn_type_restricts_for_equivalent_item_s_opts,
+     seq_table_cn_type_restricts_for_equivalent_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_cn_type_restricts_for_equivalent_item_s_names};
+    0};
 
 static const char*           enum_names_cn_type_restricts_for_equivalent_item_s_cn_type_e__values[] = {"epc-forbidden",
                                                                                                        "fiveGC-forbidden"};
@@ -6824,16 +7007,16 @@ static const asn1::table::seq_field seq_table_count_value_for_pdcp_sn12_s_fields
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(count_value_for_pdcp_sn12_s, hfn_pdcp_sn12),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1048575),
+     int64_t{0},
+     uint64_t{1048575},
      nullptr},
     {offsetof(count_value_for_pdcp_sn12_s, ie_exts),
      (int32_t)offsetof(count_value_for_pdcp_sn12_s, ie_exts_present),
@@ -6848,13 +7031,16 @@ static const asn1::table::field_name seq_table_count_value_for_pdcp_sn12_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_count_value_for_pdcp_sn12_s_opts[]  = {
     {2, (int32_t)offsetof(count_value_for_pdcp_sn12_s, ie_exts_present)}};
-const asn1::table::seq_desc count_value_for_pdcp_sn12_s::desc = {
-    {seq_table_count_value_for_pdcp_sn12_s_fields, 3, UINT64_C(0x3), seq_table_count_value_for_pdcp_sn12_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_count_value_for_pdcp_sn12_s_names};
+const asn1::table::seq_desc count_value_for_pdcp_sn12_s::desc = {{seq_table_count_value_for_pdcp_sn12_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  seq_table_count_value_for_pdcp_sn12_s_opts,
+                                                                  seq_table_count_value_for_pdcp_sn12_s_names,
+                                                                  3,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // COUNTValueForPDCP-SN18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_count_value_for_pdcp_sn18_s_fields[] = {
@@ -6863,16 +7049,16 @@ static const asn1::table::seq_field seq_table_count_value_for_pdcp_sn18_s_fields
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(262143),
+     int64_t{0},
+     uint64_t{262143},
      nullptr},
     {offsetof(count_value_for_pdcp_sn18_s, hfn_pdcp_sn18),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(16383),
+     int64_t{0},
+     uint64_t{16383},
      nullptr},
     {offsetof(count_value_for_pdcp_sn18_s, ie_exts),
      (int32_t)offsetof(count_value_for_pdcp_sn18_s, ie_exts_present),
@@ -6887,13 +7073,16 @@ static const asn1::table::field_name seq_table_count_value_for_pdcp_sn18_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_count_value_for_pdcp_sn18_s_opts[]  = {
     {2, (int32_t)offsetof(count_value_for_pdcp_sn18_s, ie_exts_present)}};
-const asn1::table::seq_desc count_value_for_pdcp_sn18_s::desc = {
-    {seq_table_count_value_for_pdcp_sn18_s_fields, 3, UINT64_C(0x3), seq_table_count_value_for_pdcp_sn18_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_count_value_for_pdcp_sn18_s_names};
+const asn1::table::seq_desc count_value_for_pdcp_sn18_s::desc = {{seq_table_count_value_for_pdcp_sn18_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  seq_table_count_value_for_pdcp_sn18_s_opts,
+                                                                  seq_table_count_value_for_pdcp_sn18_s_names,
+                                                                  3,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // CancelAllWarningMessages ::= ENUMERATED
 static const char*           enum_names_cancel_all_warning_msgs_e_values[] = {"true"};
@@ -6924,13 +7113,16 @@ static const asn1::table::field_name seq_table_candidate_cell_id_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_candidate_cell_id_s_opts[]  = {
     {1, (int32_t)offsetof(candidate_cell_id_s, ie_exts_present)}};
-const asn1::table::seq_desc candidate_cell_id_s::desc = {
-    {seq_table_candidate_cell_id_s_fields, 2, UINT64_C(0x1), seq_table_candidate_cell_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_candidate_cell_id_s_names};
+const asn1::table::seq_desc candidate_cell_id_s::desc = {{seq_table_candidate_cell_id_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_candidate_cell_id_s_opts,
+                                                          seq_table_candidate_cell_id_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // CandidatePCI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_candidate_pci_s_fields[] = {
@@ -6939,16 +7131,16 @@ static const asn1::table::seq_field seq_table_candidate_pci_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(1007),
+     int64_t{0},
+     uint64_t{1007},
      nullptr},
     {offsetof(candidate_pci_s, candidate_nr_arfcn),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(3279165),
+     int64_t{0},
+     uint64_t{3279165},
      nullptr},
     {offsetof(candidate_pci_s, ie_exts),
      (int32_t)offsetof(candidate_pci_s, ie_exts_present),
@@ -6963,13 +7155,16 @@ static const asn1::table::field_name seq_table_candidate_pci_s_names[] = {{"cand
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_candidate_pci_s_opts[]  = {
     {2, (int32_t)offsetof(candidate_pci_s, ie_exts_present)}};
-const asn1::table::seq_desc candidate_pci_s::desc = {
-    {seq_table_candidate_pci_s_fields, 3, UINT64_C(0x3), seq_table_candidate_pci_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_candidate_pci_s_names};
+const asn1::table::seq_desc candidate_pci_s::desc = {{seq_table_candidate_pci_s_fields,
+                                                      uint64_t{0x3},
+                                                      seq_table_candidate_pci_s_opts,
+                                                      seq_table_candidate_pci_s_names,
+                                                      3,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // CandidateCell ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_candidate_cell_c_alternatives[] = {
@@ -7068,13 +7263,16 @@ static const asn1::table::field_name seq_table_candidate_cell_item_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_candidate_cell_item_s_opts[]  = {
     {1, (int32_t)offsetof(candidate_cell_item_s, ie_exts_present)}};
-const asn1::table::seq_desc candidate_cell_item_s::desc = {
-    {seq_table_candidate_cell_item_s_fields, 2, UINT64_C(0x1), seq_table_candidate_cell_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_candidate_cell_item_s_names};
+const asn1::table::seq_desc candidate_cell_item_s::desc = {{seq_table_candidate_cell_item_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_candidate_cell_item_s_opts,
+                                                            seq_table_candidate_cell_item_s_names,
+                                                            2,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // CandidateRelayUEInformationItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_candidate_relay_ue_info_item_s_fields[] = {
@@ -7101,15 +7299,15 @@ static const asn1::table::field_name seq_table_candidate_relay_ue_info_item_s_na
 static const asn1::table::seq_opt seq_table_candidate_relay_ue_info_item_s_opts[] = {
     {1, (int32_t)offsetof(candidate_relay_ue_info_item_s, ie_exts_present)}};
 const asn1::table::seq_desc candidate_relay_ue_info_item_s::desc = {{seq_table_candidate_relay_ue_info_item_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_candidate_relay_ue_info_item_s_opts,
+                                                                     seq_table_candidate_relay_ue_info_item_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_candidate_relay_ue_info_item_s_names};
+                                                                    0};
 
 // Cell-CAGInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_cell_cag_info_s_fields[] = {
@@ -7128,7 +7326,7 @@ static const asn1::table::seq_field seq_table_cell_cag_info_s_fields[] = {
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::list_codec<decltype(cell_cag_info_s::cell_cag_list), asn1::table::struct_json>::value},
     {offsetof(cell_cag_info_s, ie_exts),
      (int32_t)offsetof(cell_cag_info_s, ie_exts_present),
@@ -7143,13 +7341,16 @@ static const asn1::table::field_name seq_table_cell_cag_info_s_names[] = {{"nGRA
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_cell_cag_info_s_opts[]  = {
     {2, (int32_t)offsetof(cell_cag_info_s, ie_exts_present)}};
-const asn1::table::seq_desc cell_cag_info_s::desc = {
-    {seq_table_cell_cag_info_s_fields, 3, UINT64_C(0x3), seq_table_cell_cag_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_cell_cag_info_s_names};
+const asn1::table::seq_desc cell_cag_info_s::desc = {{seq_table_cell_cag_info_s_fields,
+                                                      uint64_t{0x3},
+                                                      seq_table_cell_cag_info_s_opts,
+                                                      seq_table_cell_cag_info_s_names,
+                                                      3,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // CellIDListForRestart ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_cell_id_list_for_restart_c_alternatives[] = {
@@ -7183,7 +7384,7 @@ static const asn1::table::seq_field choice_table_cell_id_list_for_restart_c_alte
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<eutra_cgi_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -7191,7 +7392,7 @@ static const asn1::table::seq_field choice_table_cell_id_list_for_restart_c_alte
      false,
      true,
      1,
-     16384,
+     16383,
      &asn1::table::list_codec<nr_cgi_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -7256,12 +7457,11 @@ static const asn1::table::field_name seq_table_cell_type_s_names[] = {{"cellSize
                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_cell_type_s_opts[] = {{1, (int32_t)offsetof(cell_type_s, ie_exts_present)}};
 const asn1::table::seq_desc       cell_type_s::desc            = {
-    {seq_table_cell_type_s_fields, 2, UINT64_C(0x1), seq_table_cell_type_s_opts, 1},
+    {seq_table_cell_type_s_fields, uint64_t{0x1}, seq_table_cell_type_s_opts, seq_table_cell_type_s_names, 2, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_cell_type_s_names};
+    0};
 
 // ClockAccuracy ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_clock_accuracy_c_alternatives[] = {
@@ -7293,16 +7493,16 @@ static const asn1::table::seq_field choice_table_clock_accuracy_c_alternatives[]
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(40000000),
+     int64_t{1},
+     uint64_t{39999999},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(32),
-     UINT64_C(47),
+     int64_t{32},
+     uint64_t{15},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
@@ -7380,8 +7580,8 @@ static const asn1::table::seq_field seq_table_clock_quality_acceptance_criteria_
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(40000000),
+     int64_t{1},
+     uint64_t{39999999},
      nullptr},
     {offsetof(clock_quality_acceptance_criteria_s, parent_t_ime_source),
      (int32_t)offsetof(clock_quality_acceptance_criteria_s, parent_t_ime_source_present),
@@ -7419,15 +7619,15 @@ static const asn1::table::seq_opt seq_table_clock_quality_acceptance_criteria_s_
     {6, (int32_t)offsetof(clock_quality_acceptance_criteria_s, ie_exts_present)}};
 const asn1::table::seq_desc clock_quality_acceptance_criteria_s::desc = {
     {seq_table_clock_quality_acceptance_criteria_s_fields,
-     7,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_clock_quality_acceptance_criteria_s_opts,
+     seq_table_clock_quality_acceptance_criteria_s_names,
+     7,
      7},
     true,
     true,
     nullptr,
-    0,
-    seq_table_clock_quality_acceptance_criteria_s_names};
+    0};
 
 static const char*           enum_names_clock_quality_acceptance_criteria_s_traceableto_utc_e__values[] = {"true"};
 const asn1::table::enum_desc clock_quality_acceptance_criteria_s::traceableto_utc_opts::desc            = {
@@ -7466,15 +7666,15 @@ static const asn1::table::field_name seq_table_clock_quality_acceptance_ind_s_na
 static const asn1::table::seq_opt seq_table_clock_quality_acceptance_ind_s_opts[] = {
     {1, (int32_t)offsetof(clock_quality_acceptance_ind_s, ie_exts_present)}};
 const asn1::table::seq_desc clock_quality_acceptance_ind_s::desc = {{seq_table_clock_quality_acceptance_ind_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_clock_quality_acceptance_ind_s_opts,
+                                                                     seq_table_clock_quality_acceptance_ind_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_clock_quality_acceptance_ind_s_names};
+                                                                    0};
 
 // ClockQualityDetailLevel ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_clock_quality_detail_level_c_alternatives[] = {
@@ -7573,15 +7773,15 @@ static const asn1::table::seq_opt seq_table_clock_quality_report_ctrl_info_s_opt
     {1, (int32_t)offsetof(clock_quality_report_ctrl_info_s, ie_exts_present)}};
 const asn1::table::seq_desc clock_quality_report_ctrl_info_s::desc = {
     {seq_table_clock_quality_report_ctrl_info_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_clock_quality_report_ctrl_info_s_opts,
+     seq_table_clock_quality_report_ctrl_info_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_clock_quality_report_ctrl_info_s_names};
+    0};
 
 // CompositeAvailableCapacity ::= SEQUENCE
 static const asn1::table::seq_field seq_table_composite_available_capacity_s_fields[] = {
@@ -7590,16 +7790,16 @@ static const asn1::table::seq_field seq_table_composite_available_capacity_s_fie
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(100),
+     int64_t{1},
+     uint64_t{99},
      nullptr},
     {offsetof(composite_available_capacity_s, capacity_value),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(composite_available_capacity_s, ie_exts),
      (int32_t)offsetof(composite_available_capacity_s, ie_exts_present),
@@ -7617,15 +7817,15 @@ static const asn1::table::seq_opt seq_table_composite_available_capacity_s_opts[
     {0, (int32_t)offsetof(composite_available_capacity_s, cell_capacity_class_value_present)},
     {2, (int32_t)offsetof(composite_available_capacity_s, ie_exts_present)}};
 const asn1::table::seq_desc composite_available_capacity_s::desc = {{seq_table_composite_available_capacity_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x2),
+                                                                     uint64_t{0x2},
                                                                      seq_table_composite_available_capacity_s_opts,
+                                                                     seq_table_composite_available_capacity_s_names,
+                                                                     3,
                                                                      2},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_composite_available_capacity_s_names};
+                                                                    0};
 
 // ConcurrentWarningMessageInd ::= ENUMERATED
 static const char*           enum_names_concurrent_warning_msg_ind_e_values[] = {"true"};
@@ -7755,13 +7955,16 @@ static const asn1::table::field_name seq_table_tai_list_for_inactive_item_s_name
                                                                                        {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_list_for_inactive_item_s_opts[]  = {
     {1, (int32_t)offsetof(tai_list_for_inactive_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_list_for_inactive_item_s::desc = {
-    {seq_table_tai_list_for_inactive_item_s_fields, 2, UINT64_C(0x1), seq_table_tai_list_for_inactive_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_list_for_inactive_item_s_names};
+const asn1::table::seq_desc tai_list_for_inactive_item_s::desc = {{seq_table_tai_list_for_inactive_item_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_tai_list_for_inactive_item_s_opts,
+                                                                   seq_table_tai_list_for_inactive_item_s_names,
+                                                                   2,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // EUTRA-Paging-eDRX-Cycle ::= ENUMERATED
 static const char* enum_names_eutra_paging_e_drx_cycle_e_values[] =
@@ -7827,13 +8030,16 @@ static const asn1::table::field_name seq_table_eutra_paginge_drx_info_s_names[] 
 static const asn1::table::seq_opt seq_table_eutra_paginge_drx_info_s_opts[] = {
     {1, (int32_t)offsetof(eutra_paginge_drx_info_s, eutra_paging_time_win_present)},
     {2, (int32_t)offsetof(eutra_paginge_drx_info_s, ie_exts_present)}};
-const asn1::table::seq_desc eutra_paginge_drx_info_s::desc = {
-    {seq_table_eutra_paginge_drx_info_s_fields, 3, UINT64_C(0x1), seq_table_eutra_paginge_drx_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_eutra_paginge_drx_info_s_names};
+const asn1::table::seq_desc eutra_paginge_drx_info_s::desc = {{seq_table_eutra_paginge_drx_info_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_eutra_paginge_drx_info_s_opts,
+                                                               seq_table_eutra_paginge_drx_info_s_names,
+                                                               3,
+                                                               2},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 static const uint32_t objset_id_ue_radio_cap_for_paging_ext_ies_o[]   = {214};
 static const uint8_t  objset_crit_ue_radio_cap_for_paging_ext_ies_o[] = {crit_e::ignore};
@@ -7900,13 +8106,16 @@ static const asn1::table::seq_opt seq_table_ue_radio_cap_for_paging_s_opts[] = {
     {0, asn1::table::seq_field::list_presence},
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(ue_radio_cap_for_paging_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_radio_cap_for_paging_s::desc = {
-    {seq_table_ue_radio_cap_for_paging_s_fields, 3, UINT64_C(0x0), seq_table_ue_radio_cap_for_paging_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_radio_cap_for_paging_s_names};
+const asn1::table::seq_desc ue_radio_cap_for_paging_s::desc = {{seq_table_ue_radio_cap_for_paging_s_fields,
+                                                                uint64_t{0x0},
+                                                                seq_table_ue_radio_cap_for_paging_s_opts,
+                                                                seq_table_ue_radio_cap_for_paging_s_names,
+                                                                3,
+                                                                3},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // MicoAllPLMN ::= ENUMERATED
 static const char*           enum_names_mico_all_plmn_e_values[] = {"true"};
@@ -7977,13 +8186,16 @@ static const asn1::table::field_name seq_table_nr_paginge_drx_info_s_names[] = {
 static const asn1::table::seq_opt    seq_table_nr_paginge_drx_info_s_opts[]  = {
     {1, (int32_t)offsetof(nr_paginge_drx_info_s, nr_paging_time_win_present)},
     {2, (int32_t)offsetof(nr_paginge_drx_info_s, ie_exts_present)}};
-const asn1::table::seq_desc nr_paginge_drx_info_s::desc = {
-    {seq_table_nr_paginge_drx_info_s_fields, 3, UINT64_C(0x1), seq_table_nr_paginge_drx_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nr_paginge_drx_info_s_names};
+const asn1::table::seq_desc nr_paginge_drx_info_s::desc = {{seq_table_nr_paginge_drx_info_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_nr_paginge_drx_info_s_opts,
+                                                            seq_table_nr_paginge_drx_info_s_names,
+                                                            3,
+                                                            2},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // PagingCauseIndicationForVoiceService ::= ENUMERATED
 static const char*           enum_names_paging_cause_ind_for_voice_service_e_values[] = {"supported"};
@@ -7999,8 +8211,8 @@ static const asn1::table::seq_field seq_table_pe_ip_sassist_info_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(7),
+     int64_t{0},
+     uint64_t{7},
      nullptr},
     {offsetof(pe_ip_sassist_info_s, ie_exts),
      (int32_t)offsetof(pe_ip_sassist_info_s, ie_exts_present),
@@ -8014,13 +8226,16 @@ static const asn1::table::field_name seq_table_pe_ip_sassist_info_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_pe_ip_sassist_info_s_opts[]  = {
     {1, (int32_t)offsetof(pe_ip_sassist_info_s, ie_exts_present)}};
-const asn1::table::seq_desc pe_ip_sassist_info_s::desc = {
-    {seq_table_pe_ip_sassist_info_s_fields, 2, UINT64_C(0x1), seq_table_pe_ip_sassist_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pe_ip_sassist_info_s_names};
+const asn1::table::seq_desc pe_ip_sassist_info_s::desc = {{seq_table_pe_ip_sassist_info_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_pe_ip_sassist_info_s_opts,
+                                                           seq_table_pe_ip_sassist_info_s_names,
+                                                           2,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 static const uint32_t objset_id_core_network_assist_info_for_inactive_ext_ies_o[] =
     {223, 280, 118, 282, 332, 343, 344, 365, 405};
@@ -8189,7 +8404,7 @@ static const asn1::table::seq_field seq_table_core_network_assist_info_for_inact
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(core_network_assist_info_for_inactive_s::tai_list_for_inactive),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -8228,15 +8443,15 @@ static const asn1::table::seq_opt seq_table_core_network_assist_info_for_inactiv
     {6, (int32_t)offsetof(core_network_assist_info_for_inactive_s, ie_exts_present)}};
 const asn1::table::seq_desc core_network_assist_info_for_inactive_s::desc = {
     {seq_table_core_network_assist_info_for_inactive_s_fields,
-     7,
-     UINT64_C(0x15),
+     uint64_t{0x15},
      seq_table_core_network_assist_info_for_inactive_s_opts,
+     seq_table_core_network_assist_info_for_inactive_s_names,
+     7,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_core_network_assist_info_for_inactive_s_names};
+    0};
 
 // DAPSRequestInfo ::= SEQUENCE
 static const asn1::table::seq_field seq_table_daps_request_info_s_fields[] = {
@@ -8261,13 +8476,16 @@ static const asn1::table::field_name seq_table_daps_request_info_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_daps_request_info_s_opts[]  = {
     {1, (int32_t)offsetof(daps_request_info_s, ie_exts_present)}};
-const asn1::table::seq_desc daps_request_info_s::desc = {
-    {seq_table_daps_request_info_s_fields, 2, UINT64_C(0x1), seq_table_daps_request_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_daps_request_info_s_names};
+const asn1::table::seq_desc daps_request_info_s::desc = {{seq_table_daps_request_info_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_daps_request_info_s_opts,
+                                                          seq_table_daps_request_info_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 static const char*           enum_names_daps_request_info_s_da_psi_ndicator_e__values[] = {"daps-ho-required"};
 const asn1::table::enum_desc daps_request_info_s::da_psi_ndicator_opts::desc            = {
@@ -8298,13 +8516,16 @@ static const asn1::table::field_name seq_table_daps_resp_info_s_names[] = {{"dap
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_daps_resp_info_s_opts[]  = {
     {1, (int32_t)offsetof(daps_resp_info_s, ie_exts_present)}};
-const asn1::table::seq_desc daps_resp_info_s::desc = {
-    {seq_table_daps_resp_info_s_fields, 2, UINT64_C(0x1), seq_table_daps_resp_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_daps_resp_info_s_names};
+const asn1::table::seq_desc daps_resp_info_s::desc = {{seq_table_daps_resp_info_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_daps_resp_info_s_opts,
+                                                       seq_table_daps_resp_info_s_names,
+                                                       2,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 static const char* enum_names_daps_resp_info_s_dapsrespind_e__values[] = {"daps-ho-accepted", "daps-ho-not-accepted"};
 const asn1::table::enum_desc daps_resp_info_s::dapsrespind_opts::desc  = {
@@ -8319,8 +8540,8 @@ static const asn1::table::seq_field seq_table_daps_resp_info_item_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(32),
+     int64_t{1},
+     uint64_t{31},
      nullptr},
     {offsetof(daps_resp_info_item_s, daps_resp_info),
      asn1::table::seq_field::mandatory,
@@ -8344,13 +8565,16 @@ static const asn1::table::field_name seq_table_daps_resp_info_item_s_names[] = {
                                                                                 {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt    seq_table_daps_resp_info_item_s_opts[]  = {
     {2, (int32_t)offsetof(daps_resp_info_item_s, ie_ext_present)}};
-const asn1::table::seq_desc daps_resp_info_item_s::desc = {
-    {seq_table_daps_resp_info_item_s_fields, 3, UINT64_C(0x3), seq_table_daps_resp_info_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_daps_resp_info_item_s_names};
+const asn1::table::seq_desc daps_resp_info_item_s::desc = {{seq_table_daps_resp_info_item_s_fields,
+                                                            uint64_t{0x3},
+                                                            seq_table_daps_resp_info_item_s_opts,
+                                                            seq_table_daps_resp_info_item_s_names,
+                                                            3,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // DL-CP-SecurityInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_dl_cp_security_info_s_fields[] = {
@@ -8374,13 +8598,16 @@ static const asn1::table::field_name seq_table_dl_cp_security_info_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_dl_cp_security_info_s_opts[]  = {
     {1, (int32_t)offsetof(dl_cp_security_info_s, ie_exts_present)}};
-const asn1::table::seq_desc dl_cp_security_info_s::desc = {
-    {seq_table_dl_cp_security_info_s_fields, 2, UINT64_C(0x1), seq_table_dl_cp_security_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_dl_cp_security_info_s_names};
+const asn1::table::seq_desc dl_cp_security_info_s::desc = {{seq_table_dl_cp_security_info_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_dl_cp_security_info_s_opts,
+                                                            seq_table_dl_cp_security_info_s_names,
+                                                            2,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // DL-NGU-TNLInformationReused ::= ENUMERATED
 static const char*           enum_names_dl_ngu_tnl_info_reused_e_values[] = {"true"};
@@ -8478,8 +8705,8 @@ static const asn1::table::seq_field seq_table_drbs_subject_to_dl_discarding_item
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(32),
+     int64_t{1},
+     uint64_t{31},
      nullptr},
     {offsetof(drbs_subject_to_dl_discarding_item_s, dl_count),
      asn1::table::seq_field::mandatory,
@@ -8507,15 +8734,15 @@ static const asn1::table::seq_opt seq_table_drbs_subject_to_dl_discarding_item_s
     {2, (int32_t)offsetof(drbs_subject_to_dl_discarding_item_s, ie_ext_present)}};
 const asn1::table::seq_desc drbs_subject_to_dl_discarding_item_s::desc = {
     {seq_table_drbs_subject_to_dl_discarding_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_drbs_subject_to_dl_discarding_item_s_opts,
+     seq_table_drbs_subject_to_dl_discarding_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_drbs_subject_to_dl_discarding_item_s_names};
+    0};
 
 // DLDiscarding ::= SEQUENCE
 static const asn1::table::seq_field seq_table_dl_discarding_s_fields[] = {
@@ -8525,7 +8752,7 @@ static const asn1::table::seq_field seq_table_dl_discarding_s_fields[] = {
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(dl_discarding_s::drbs_subject_to_dl_discarding),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -8543,13 +8770,16 @@ static const asn1::table::field_name seq_table_dl_discarding_s_names[] = {{"dRBs
                                                                           {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt    seq_table_dl_discarding_s_opts[]  = {
     {1, (int32_t)offsetof(dl_discarding_s, ie_ext_present)}};
-const asn1::table::seq_desc dl_discarding_s::desc = {
-    {seq_table_dl_discarding_s_fields, 2, UINT64_C(0x1), seq_table_dl_discarding_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_dl_discarding_s_names};
+const asn1::table::seq_desc dl_discarding_s::desc = {{seq_table_dl_discarding_s_fields,
+                                                      uint64_t{0x1},
+                                                      seq_table_dl_discarding_s_opts,
+                                                      seq_table_dl_discarding_s_names,
+                                                      2,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // DLForwarding ::= ENUMERATED
 static const char*           enum_names_dl_forwarding_e_values[] = {"dl-forwarding-proposed"};
@@ -8578,13 +8808,16 @@ static const asn1::table::field_name seq_table_drb_status_dl12_s_names[] = {{"dL
                                                                             {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt    seq_table_drb_status_dl12_s_opts[]  = {
     {1, (int32_t)offsetof(drb_status_dl12_s, ie_ext_present)}};
-const asn1::table::seq_desc drb_status_dl12_s::desc = {
-    {seq_table_drb_status_dl12_s_fields, 2, UINT64_C(0x1), seq_table_drb_status_dl12_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_drb_status_dl12_s_names};
+const asn1::table::seq_desc drb_status_dl12_s::desc = {{seq_table_drb_status_dl12_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_drb_status_dl12_s_opts,
+                                                        seq_table_drb_status_dl12_s_names,
+                                                        2,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // DRBStatusDL18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_drb_status_dl18_s_fields[] = {
@@ -8609,13 +8842,16 @@ static const asn1::table::field_name seq_table_drb_status_dl18_s_names[] = {{"dL
                                                                             {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt    seq_table_drb_status_dl18_s_opts[]  = {
     {1, (int32_t)offsetof(drb_status_dl18_s, ie_ext_present)}};
-const asn1::table::seq_desc drb_status_dl18_s::desc = {
-    {seq_table_drb_status_dl18_s_fields, 2, UINT64_C(0x1), seq_table_drb_status_dl18_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_drb_status_dl18_s_names};
+const asn1::table::seq_desc drb_status_dl18_s::desc = {{seq_table_drb_status_dl18_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_drb_status_dl18_s_opts,
+                                                        seq_table_drb_status_dl18_s_names,
+                                                        2,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // DRBStatusDL ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_drb_status_dl_c_alternatives[] = {
@@ -8730,13 +8966,16 @@ static const asn1::table::field_name seq_table_drb_status_ul12_s_names[] = {{"uL
 static const asn1::table::seq_opt    seq_table_drb_status_ul12_s_opts[]  = {
     {1, (int32_t)offsetof(drb_status_ul12_s, receive_status_of_ul_pdcp_sdus_present)},
     {2, (int32_t)offsetof(drb_status_ul12_s, ie_ext_present)}};
-const asn1::table::seq_desc drb_status_ul12_s::desc = {
-    {seq_table_drb_status_ul12_s_fields, 3, UINT64_C(0x1), seq_table_drb_status_ul12_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_drb_status_ul12_s_names};
+const asn1::table::seq_desc drb_status_ul12_s::desc = {{seq_table_drb_status_ul12_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_drb_status_ul12_s_opts,
+                                                        seq_table_drb_status_ul12_s_names,
+                                                        3,
+                                                        2},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // DRBStatusUL18 ::= SEQUENCE
 static const asn1::table::seq_field seq_table_drb_status_ul18_s_fields[] = {
@@ -8772,13 +9011,16 @@ static const asn1::table::field_name seq_table_drb_status_ul18_s_names[] = {{"uL
 static const asn1::table::seq_opt    seq_table_drb_status_ul18_s_opts[]  = {
     {1, (int32_t)offsetof(drb_status_ul18_s, receive_status_of_ul_pdcp_sdus_present)},
     {2, (int32_t)offsetof(drb_status_ul18_s, ie_ext_present)}};
-const asn1::table::seq_desc drb_status_ul18_s::desc = {
-    {seq_table_drb_status_ul18_s_fields, 3, UINT64_C(0x1), seq_table_drb_status_ul18_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_drb_status_ul18_s_names};
+const asn1::table::seq_desc drb_status_ul18_s::desc = {{seq_table_drb_status_ul18_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_drb_status_ul18_s_opts,
+                                                        seq_table_drb_status_ul18_s_names,
+                                                        3,
+                                                        2},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // DRBStatusUL ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_drb_status_ul_c_alternatives[] = {
@@ -8866,8 +9108,8 @@ static const asn1::table::seq_field seq_table_drbs_subject_to_early_status_trans
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(32),
+     int64_t{1},
+     uint64_t{31},
      nullptr},
     {offsetof(drbs_subject_to_early_status_transfer_item_s, first_dl_count),
      asn1::table::seq_field::mandatory,
@@ -8895,15 +9137,15 @@ static const asn1::table::seq_opt seq_table_drbs_subject_to_early_status_transfe
     {2, (int32_t)offsetof(drbs_subject_to_early_status_transfer_item_s, ie_ext_present)}};
 const asn1::table::seq_desc drbs_subject_to_early_status_transfer_item_s::desc = {
     {seq_table_drbs_subject_to_early_status_transfer_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_drbs_subject_to_early_status_transfer_item_s_opts,
+     seq_table_drbs_subject_to_early_status_transfer_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_drbs_subject_to_early_status_transfer_item_s_names};
+    0};
 
 static const uint32_t objset_id_drbs_subject_to_status_transfer_item_ext_ies_o[]   = {159};
 static const uint8_t  objset_crit_drbs_subject_to_status_transfer_item_ext_ies_o[] = {crit_e::ignore};
@@ -8918,7 +9160,7 @@ static const asn1::table::seq_field ie_table_drbs_subject_to_status_transfer_ite
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(drbs_subject_to_status_transfer_item_ext_ies_container::
                                                 old_associated_qos_flow_list_ul_endmarkerexpected),
                                    asn1::table::sequence_item_ops,
@@ -8947,8 +9189,8 @@ static const asn1::table::seq_field seq_table_drbs_subject_to_status_transfer_it
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(32),
+     int64_t{1},
+     uint64_t{31},
      nullptr},
     {offsetof(drbs_subject_to_status_transfer_item_s, drb_status_ul),
      asn1::table::seq_field::mandatory,
@@ -8983,15 +9225,15 @@ static const asn1::table::seq_opt seq_table_drbs_subject_to_status_transfer_item
     {3, (int32_t)offsetof(drbs_subject_to_status_transfer_item_s, ie_ext_present)}};
 const asn1::table::seq_desc drbs_subject_to_status_transfer_item_s::desc = {
     {seq_table_drbs_subject_to_status_transfer_item_s_fields,
-     4,
-     UINT64_C(0x7),
+     uint64_t{0x7},
      seq_table_drbs_subject_to_status_transfer_item_s_opts,
+     seq_table_drbs_subject_to_status_transfer_item_s_names,
+     4,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_drbs_subject_to_status_transfer_item_s_names};
+    0};
 
 static const uint32_t objset_id_drbs_to_qos_flows_map_item_ext_ies_o[]   = {266};
 static const uint8_t  objset_crit_drbs_to_qos_flows_map_item_ext_ies_o[] = {crit_e::ignore};
@@ -9028,8 +9270,8 @@ static const asn1::table::seq_field seq_table_drbs_to_qos_flows_map_item_s_field
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(32),
+     int64_t{1},
+     uint64_t{31},
      nullptr},
     {offsetof(drbs_to_qos_flows_map_item_s, associated_qos_flow_list),
      asn1::table::seq_field::mandatory,
@@ -9037,7 +9279,7 @@ static const asn1::table::seq_field seq_table_drbs_to_qos_flows_map_item_s_field
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(drbs_to_qos_flows_map_item_s::associated_qos_flow_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -9058,13 +9300,16 @@ static const asn1::table::field_name seq_table_drbs_to_qos_flows_map_item_s_name
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_drbs_to_qos_flows_map_item_s_opts[] = {
     {2, (int32_t)offsetof(drbs_to_qos_flows_map_item_s, ie_exts_present)}};
-const asn1::table::seq_desc drbs_to_qos_flows_map_item_s::desc = {
-    {seq_table_drbs_to_qos_flows_map_item_s_fields, 3, UINT64_C(0x3), seq_table_drbs_to_qos_flows_map_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_drbs_to_qos_flows_map_item_s_names};
+const asn1::table::seq_desc drbs_to_qos_flows_map_item_s::desc = {{seq_table_drbs_to_qos_flows_map_item_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   seq_table_drbs_to_qos_flows_map_item_s_opts,
+                                                                   seq_table_drbs_to_qos_flows_map_item_s_names,
+                                                                   3,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // DataForwardingNotPossible ::= ENUMERATED
 static const char*           enum_names_data_forwarding_not_possible_e_values[] = {"data-forwarding-not-possible"};
@@ -9080,8 +9325,8 @@ static const asn1::table::seq_field seq_table_data_forwarding_resp_drb_item_s_fi
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(32),
+     int64_t{1},
+     uint64_t{31},
      nullptr},
     {offsetof(data_forwarding_resp_drb_item_s, dl_forwarding_up_tnl_info),
      (int32_t)offsetof(data_forwarding_resp_drb_item_s, dl_forwarding_up_tnl_info_present),
@@ -9119,15 +9364,15 @@ static const asn1::table::seq_opt seq_table_data_forwarding_resp_drb_item_s_opts
     {2, (int32_t)offsetof(data_forwarding_resp_drb_item_s, ul_forwarding_up_tnl_info_present)},
     {3, (int32_t)offsetof(data_forwarding_resp_drb_item_s, ie_exts_present)}};
 const asn1::table::seq_desc data_forwarding_resp_drb_item_s::desc = {{seq_table_data_forwarding_resp_drb_item_s_fields,
-                                                                      4,
-                                                                      UINT64_C(0x1),
+                                                                      uint64_t{0x1},
                                                                       seq_table_data_forwarding_resp_drb_item_s_opts,
+                                                                      seq_table_data_forwarding_resp_drb_item_s_names,
+                                                                      4,
                                                                       3},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_data_forwarding_resp_drb_item_s_names};
+                                                                     0};
 
 // DataForwardingResponseERABListItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_data_forwarding_resp_erab_list_item_s_fields[] = {
@@ -9136,8 +9381,8 @@ static const asn1::table::seq_field seq_table_data_forwarding_resp_erab_list_ite
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(data_forwarding_resp_erab_list_item_s, dl_forwarding_up_tnl_info),
      asn1::table::seq_field::mandatory,
@@ -9165,15 +9410,15 @@ static const asn1::table::seq_opt seq_table_data_forwarding_resp_erab_list_item_
     {2, (int32_t)offsetof(data_forwarding_resp_erab_list_item_s, ie_exts_present)}};
 const asn1::table::seq_desc data_forwarding_resp_erab_list_item_s::desc = {
     {seq_table_data_forwarding_resp_erab_list_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_data_forwarding_resp_erab_list_item_s_opts,
+     seq_table_data_forwarding_resp_erab_list_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_data_forwarding_resp_erab_list_item_s_names};
+    0};
 
 // DelayCritical ::= ENUMERATED
 static const char*           enum_names_delay_crit_e_values[] = {"delay-critical", "non-delay-critical"};
@@ -9196,24 +9441,24 @@ static const asn1::table::seq_field ie_table_dyn_5qi_descriptor_ext_ies_containe
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(dyn_5qi_descriptor_ext_ies_container, cn_packet_delay_budget_dl),
      (int32_t)offsetof(dyn_5qi_descriptor_ext_ies_container, cn_packet_delay_budget_dl_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(dyn_5qi_descriptor_ext_ies_container, cn_packet_delay_budget_ul),
      (int32_t)offsetof(dyn_5qi_descriptor_ext_ies_container, cn_packet_delay_budget_ul_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const int32_t ie_table_dyn_5qi_descriptor_ext_ies_container_presences[] = {
     (int32_t)offsetof(dyn_5qi_descriptor_ext_ies_container, extended_packet_delay_budget_present),
@@ -9238,16 +9483,16 @@ static const asn1::table::seq_field seq_table_dyn_5qi_descriptor_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(127),
+     int64_t{1},
+     uint64_t{126},
      nullptr},
     {offsetof(dyn_5qi_descriptor_s, packet_delay_budget),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(1023),
+     int64_t{0},
+     uint64_t{1023},
      nullptr},
     {offsetof(dyn_5qi_descriptor_s, packet_error_rate),
      asn1::table::seq_field::mandatory,
@@ -9263,8 +9508,8 @@ static const asn1::table::seq_field seq_table_dyn_5qi_descriptor_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(dyn_5qi_descriptor_s, delay_crit),
      (int32_t)offsetof(dyn_5qi_descriptor_s, delay_crit_present),
@@ -9280,16 +9525,16 @@ static const asn1::table::seq_field seq_table_dyn_5qi_descriptor_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(dyn_5qi_descriptor_s, max_data_burst_volume),
      (int32_t)offsetof(dyn_5qi_descriptor_s, max_data_burst_volume_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(dyn_5qi_descriptor_s, ie_exts),
      (int32_t)offsetof(dyn_5qi_descriptor_s, ie_exts_present),
@@ -9314,13 +9559,16 @@ static const asn1::table::seq_opt    seq_table_dyn_5qi_descriptor_s_opts[]  = {
     {5, (int32_t)offsetof(dyn_5qi_descriptor_s, averaging_win_present)},
     {6, (int32_t)offsetof(dyn_5qi_descriptor_s, max_data_burst_volume_present)},
     {7, (int32_t)offsetof(dyn_5qi_descriptor_s, ie_exts_present)}};
-const asn1::table::seq_desc dyn_5qi_descriptor_s::desc = {
-    {seq_table_dyn_5qi_descriptor_s_fields, 8, UINT64_C(0x7), seq_table_dyn_5qi_descriptor_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_dyn_5qi_descriptor_s_names};
+const asn1::table::seq_desc dyn_5qi_descriptor_s::desc = {{seq_table_dyn_5qi_descriptor_s_fields,
+                                                           uint64_t{0x7},
+                                                           seq_table_dyn_5qi_descriptor_s_opts,
+                                                           seq_table_dyn_5qi_descriptor_s_names,
+                                                           8,
+                                                           5},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 static const uint32_t objset_id_erab_info_item_ext_ies_o[]   = {284, 354};
 static const uint8_t  objset_crit_erab_info_item_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -9367,8 +9615,8 @@ static const asn1::table::seq_field seq_table_erab_info_item_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(erab_info_item_s, dl_forwarding),
      (int32_t)offsetof(erab_info_item_s, dl_forwarding_present),
@@ -9394,13 +9642,16 @@ static const asn1::table::field_name seq_table_erab_info_item_s_names[] = {{"e-R
 static const asn1::table::seq_opt    seq_table_erab_info_item_s_opts[]  = {
     {1, (int32_t)offsetof(erab_info_item_s, dl_forwarding_present)},
     {2, (int32_t)offsetof(erab_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc erab_info_item_s::desc = {
-    {seq_table_erab_info_item_s_fields, 3, UINT64_C(0x1), seq_table_erab_info_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_erab_info_item_s_names};
+const asn1::table::seq_desc erab_info_item_s::desc = {{seq_table_erab_info_item_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_erab_info_item_s_opts,
+                                                       seq_table_erab_info_item_s_names,
+                                                       3,
+                                                       2},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // ECNMarkingAtRANRequest ::= ENUMERATED
 static const char*           enum_names_ecn_marking_at_ra_nr_equest_e_values[] = {"ul", "dl", "both", "stop"};
@@ -9520,8 +9771,8 @@ static const asn1::table::seq_field seq_table_ecn_markingor_congestion_info_repo
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(ecn_markingor_congestion_info_report_status_item_s, activation_status),
      asn1::table::seq_field::mandatory,
@@ -9549,15 +9800,15 @@ static const asn1::table::seq_opt seq_table_ecn_markingor_congestion_info_report
     {2, (int32_t)offsetof(ecn_markingor_congestion_info_report_status_item_s, ie_ext_present)}};
 const asn1::table::seq_desc ecn_markingor_congestion_info_report_status_item_s::desc = {
     {seq_table_ecn_markingor_congestion_info_report_status_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_ecn_markingor_congestion_info_report_status_item_s_opts,
+     seq_table_ecn_markingor_congestion_info_report_status_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ecn_markingor_congestion_info_report_status_item_s_names};
+    0};
 
 // EDT-Session ::= ENUMERATED
 static const char*           enum_names_edt_session_e_values[] = {"true"};
@@ -9695,12 +9946,11 @@ static const asn1::table::field_name seq_table_eps_tai_s_names[] = {{"pLMNIdenti
                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_eps_tai_s_opts[]  = {{2, (int32_t)offsetof(eps_tai_s, ie_exts_present)}};
 const asn1::table::seq_desc          eps_tai_s::desc             = {
-    {seq_table_eps_tai_s_fields, 3, UINT64_C(0x3), seq_table_eps_tai_s_opts, 1},
+    {seq_table_eps_tai_s_fields, uint64_t{0x3}, seq_table_eps_tai_s_opts, seq_table_eps_tai_s_names, 3, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_eps_tai_s_names};
+    0};
 
 // ERedCapIndication ::= ENUMERATED
 static const char*           enum_names_e_red_cap_ind_e_values[] = {"true"};
@@ -9743,15 +9993,15 @@ static const asn1::table::seq_opt seq_table_eutran_composite_available_capacity_
     {2, (int32_t)offsetof(eutran_composite_available_capacity_group_s, ie_exts_present)}};
 const asn1::table::seq_desc eutran_composite_available_capacity_group_s::desc = {
     {seq_table_eutran_composite_available_capacity_group_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_eutran_composite_available_capacity_group_s_opts,
+     seq_table_eutran_composite_available_capacity_group_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_eutran_composite_available_capacity_group_s_names};
+    0};
 
 // EUTRAN-RadioResourceStatus ::= SEQUENCE
 static const asn1::table::seq_field seq_table_eutran_rr_status_s_fields[] = {
@@ -9760,64 +10010,64 @@ static const asn1::table::seq_field seq_table_eutran_rr_status_s_fields[] = {
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, ul_gbr_prb_usage),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, dl_non_gbr_prb_usage),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, ul_non_gbr_prb_usage),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, dl_total_prb_usage),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, ul_total_prb_usage),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, dl_sched_pdcch_cce_usage),
      (int32_t)offsetof(eutran_rr_status_s, dl_sched_pdcch_cce_usage_present),
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, ul_sched_pdcch_cce_usage),
      (int32_t)offsetof(eutran_rr_status_s, ul_sched_pdcch_cce_usage_present),
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(eutran_rr_status_s, ie_exts),
      (int32_t)offsetof(eutran_rr_status_s, ie_exts_present),
@@ -9840,13 +10090,16 @@ static const asn1::table::seq_opt    seq_table_eutran_rr_status_s_opts[]  = {
     {6, (int32_t)offsetof(eutran_rr_status_s, dl_sched_pdcch_cce_usage_present)},
     {7, (int32_t)offsetof(eutran_rr_status_s, ul_sched_pdcch_cce_usage_present)},
     {8, (int32_t)offsetof(eutran_rr_status_s, ie_exts_present)}};
-const asn1::table::seq_desc eutran_rr_status_s::desc = {
-    {seq_table_eutran_rr_status_s_fields, 9, UINT64_C(0x3f), seq_table_eutran_rr_status_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_eutran_rr_status_s_names};
+const asn1::table::seq_desc eutran_rr_status_s::desc = {{seq_table_eutran_rr_status_s_fields,
+                                                         uint64_t{0x3f},
+                                                         seq_table_eutran_rr_status_s_opts,
+                                                         seq_table_eutran_rr_status_s_names,
+                                                         9,
+                                                         3},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // EUTRAN-CellReportItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_eutran_cell_report_item_s_fields[] = {
@@ -9873,16 +10126,16 @@ static const asn1::table::seq_field seq_table_eutran_cell_report_item_s_fields[]
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(16777215),
+     int64_t{0},
+     uint64_t{16777215},
      nullptr},
     {offsetof(eutran_cell_report_item_s, eutran_noof_rrc_conns),
      (int32_t)offsetof(eutran_cell_report_item_s, eutran_noof_rrc_conns_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65536),
+     int64_t{1},
+     uint64_t{65535},
      nullptr},
     {offsetof(eutran_cell_report_item_s, eutran_rr_status),
      (int32_t)offsetof(eutran_cell_report_item_s, eutran_rr_status_present),
@@ -9913,13 +10166,16 @@ static const asn1::table::seq_opt seq_table_eutran_cell_report_item_s_opts[] = {
     {3, (int32_t)offsetof(eutran_cell_report_item_s, eutran_noof_rrc_conns_present)},
     {4, (int32_t)offsetof(eutran_cell_report_item_s, eutran_rr_status_present)},
     {5, (int32_t)offsetof(eutran_cell_report_item_s, ie_exts_present)}};
-const asn1::table::seq_desc eutran_cell_report_item_s::desc = {
-    {seq_table_eutran_cell_report_item_s_fields, 6, UINT64_C(0x3), seq_table_eutran_cell_report_item_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_eutran_cell_report_item_s_names};
+const asn1::table::seq_desc eutran_cell_report_item_s::desc = {{seq_table_eutran_cell_report_item_s_fields,
+                                                                uint64_t{0x3},
+                                                                seq_table_eutran_cell_report_item_s_opts,
+                                                                seq_table_eutran_cell_report_item_s_names,
+                                                                6,
+                                                                4},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // EUTRAN-CellToReportItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_eutran_cell_to_report_item_s_fields[] = {
@@ -9944,13 +10200,16 @@ static const asn1::table::field_name seq_table_eutran_cell_to_report_item_s_name
                                                                                        {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_eutran_cell_to_report_item_s_opts[]  = {
     {1, (int32_t)offsetof(eutran_cell_to_report_item_s, ie_exts_present)}};
-const asn1::table::seq_desc eutran_cell_to_report_item_s::desc = {
-    {seq_table_eutran_cell_to_report_item_s_fields, 2, UINT64_C(0x1), seq_table_eutran_cell_to_report_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_eutran_cell_to_report_item_s_names};
+const asn1::table::seq_desc eutran_cell_to_report_item_s::desc = {{seq_table_eutran_cell_to_report_item_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_eutran_cell_to_report_item_s_opts,
+                                                                   seq_table_eutran_cell_to_report_item_s_names,
+                                                                   2,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // EUTRAN-ReportingStatusIEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_eutran_report_status_ies_s_fields[] = {
@@ -9960,7 +10219,7 @@ static const asn1::table::seq_field seq_table_eutran_report_status_ies_s_fields[
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(eutran_report_status_ies_s::eutran_cell_report_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -9978,13 +10237,16 @@ static const asn1::table::field_name seq_table_eutran_report_status_ies_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_eutran_report_status_ies_s_opts[]  = {
     {1, (int32_t)offsetof(eutran_report_status_ies_s, ie_exts_present)}};
-const asn1::table::seq_desc eutran_report_status_ies_s::desc = {
-    {seq_table_eutran_report_status_ies_s_fields, 2, UINT64_C(0x1), seq_table_eutran_report_status_ies_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_eutran_report_status_ies_s_names};
+const asn1::table::seq_desc eutran_report_status_ies_s::desc = {{seq_table_eutran_report_status_ies_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 seq_table_eutran_report_status_ies_s_opts,
+                                                                 seq_table_eutran_report_status_ies_s_names,
+                                                                 2,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // EUTRAN-ReportingSystemIEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_eutran_report_sys_ies_s_fields[] = {
@@ -9994,7 +10256,7 @@ static const asn1::table::seq_field seq_table_eutran_report_sys_ies_s_fields[] =
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(eutran_report_sys_ies_s::eutran_cell_to_report_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -10012,13 +10274,16 @@ static const asn1::table::field_name seq_table_eutran_report_sys_ies_s_names[] =
                                                                                   {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_eutran_report_sys_ies_s_opts[]  = {
     {1, (int32_t)offsetof(eutran_report_sys_ies_s, ie_exts_present)}};
-const asn1::table::seq_desc eutran_report_sys_ies_s::desc = {
-    {seq_table_eutran_report_sys_ies_s_fields, 2, UINT64_C(0x1), seq_table_eutran_report_sys_ies_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_eutran_report_sys_ies_s_names};
+const asn1::table::seq_desc eutran_report_sys_ies_s::desc = {{seq_table_eutran_report_sys_ies_s_fields,
+                                                              uint64_t{0x1},
+                                                              seq_table_eutran_report_sys_ies_s_opts,
+                                                              seq_table_eutran_report_sys_ies_s_names,
+                                                              2,
+                                                              1},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // EarlyMeasurement ::= ENUMERATED
 static const char*           enum_names_early_meas_e_values[] = {"true"};
@@ -10032,7 +10297,7 @@ static const asn1::table::seq_field seq_table_first_dl_count_s_fields[] = {
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(first_dl_count_s::drbs_subject_to_early_status_transfer),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -10051,13 +10316,16 @@ static const asn1::table::field_name seq_table_first_dl_count_s_names[] = {
     {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt seq_table_first_dl_count_s_opts[] = {
     {1, (int32_t)offsetof(first_dl_count_s, ie_ext_present)}};
-const asn1::table::seq_desc first_dl_count_s::desc = {
-    {seq_table_first_dl_count_s_fields, 2, UINT64_C(0x1), seq_table_first_dl_count_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_first_dl_count_s_names};
+const asn1::table::seq_desc first_dl_count_s::desc = {{seq_table_first_dl_count_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_first_dl_count_s_opts,
+                                                       seq_table_first_dl_count_s_names,
+                                                       2,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // ProcedureStageChoice-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_proc_stage_choice_ext_ies_o[]    = {421};
@@ -10195,15 +10463,15 @@ static const asn1::table::seq_opt seq_table_early_status_transfer_transparent_co
     {1, (int32_t)offsetof(early_status_transfer_transparent_container_s, ie_exts_present)}};
 const asn1::table::seq_desc early_status_transfer_transparent_container_s::desc = {
     {seq_table_early_status_transfer_transparent_container_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_early_status_transfer_transparent_container_s_opts,
+     seq_table_early_status_transfer_transparent_container_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_early_status_transfer_transparent_container_s_names};
+    0};
 
 // EmergencyFallbackRequestIndicator ::= ENUMERATED
 static const char*           enum_names_emergency_fallback_request_ind_e_values[] = {"emergency-fallback-requested"};
@@ -10258,13 +10526,16 @@ static const asn1::table::field_name seq_table_emergency_fallback_ind_s_names[] 
 static const asn1::table::seq_opt seq_table_emergency_fallback_ind_s_opts[] = {
     {1, (int32_t)offsetof(emergency_fallback_ind_s, emergency_service_target_cn_present)},
     {2, (int32_t)offsetof(emergency_fallback_ind_s, ie_exts_present)}};
-const asn1::table::seq_desc emergency_fallback_ind_s::desc = {
-    {seq_table_emergency_fallback_ind_s_fields, 3, UINT64_C(0x1), seq_table_emergency_fallback_ind_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_emergency_fallback_ind_s_names};
+const asn1::table::seq_desc emergency_fallback_ind_s::desc = {{seq_table_emergency_fallback_ind_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_emergency_fallback_ind_s_opts,
+                                                               seq_table_emergency_fallback_ind_s_names,
+                                                               3,
+                                                               2},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // EndIndication ::= ENUMERATED
 static const char*           enum_names_end_ind_e_values[] = {"no-further-data", "further-data-exists"};
@@ -10307,13 +10578,16 @@ static const asn1::table::field_name seq_table_equivalent_sn_p_ns_item_s_names[]
                                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_equivalent_sn_p_ns_item_s_opts[]  = {
     {2, (int32_t)offsetof(equivalent_sn_p_ns_item_s, ie_exts_present)}};
-const asn1::table::seq_desc equivalent_sn_p_ns_item_s::desc = {
-    {seq_table_equivalent_sn_p_ns_item_s_fields, 3, UINT64_C(0x3), seq_table_equivalent_sn_p_ns_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_equivalent_sn_p_ns_item_s_names};
+const asn1::table::seq_desc equivalent_sn_p_ns_item_s::desc = {{seq_table_equivalent_sn_p_ns_item_s_fields,
+                                                                uint64_t{0x3},
+                                                                seq_table_equivalent_sn_p_ns_item_s_opts,
+                                                                seq_table_equivalent_sn_p_ns_item_s_names,
+                                                                3,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // NumberOfMeasurementReportingLevels ::= ENUMERATED
 static const char*           enum_names_nof_meas_report_levels_e_values[] = {"n2", "n3", "n4", "n5", "n10", "n0"};
@@ -10333,16 +10607,16 @@ static const asn1::table::seq_field seq_table_event_based_report_ies_s_fields[] 
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(event_based_report_ies_s, intersys_res_thres_high),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(event_based_report_ies_s, nof_meas_report_levels),
      asn1::table::seq_field::mandatory,
@@ -10368,13 +10642,16 @@ static const asn1::table::field_name seq_table_event_based_report_ies_s_names[] 
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_event_based_report_ies_s_opts[] = {
     {3, (int32_t)offsetof(event_based_report_ies_s, ie_exts_present)}};
-const asn1::table::seq_desc event_based_report_ies_s::desc = {
-    {seq_table_event_based_report_ies_s_fields, 4, UINT64_C(0x7), seq_table_event_based_report_ies_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_event_based_report_ies_s_names};
+const asn1::table::seq_desc event_based_report_ies_s::desc = {{seq_table_event_based_report_ies_s_fields,
+                                                               uint64_t{0x7},
+                                                               seq_table_event_based_report_ies_s_opts,
+                                                               seq_table_event_based_report_ies_s_names,
+                                                               4,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // MeasurementThresholdL1LoggedMDT ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_meas_thres_l1_logged_mdt_c_alternatives[] = {
@@ -10407,16 +10684,16 @@ static const asn1::table::seq_field choice_table_meas_thres_l1_logged_mdt_c_alte
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(127),
+     int64_t{0},
+     uint64_t{127},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(127),
+     int64_t{0},
+     uint64_t{127},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
@@ -10495,8 +10772,8 @@ static const asn1::table::seq_field seq_table_event_l1_logged_mdt_cfg_s_fields[]
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(30),
+     int64_t{0},
+     uint64_t{30},
      nullptr},
     {offsetof(event_l1_logged_mdt_cfg_s, time_to_trigger),
      asn1::table::seq_field::mandatory,
@@ -10521,13 +10798,16 @@ static const asn1::table::field_name seq_table_event_l1_logged_mdt_cfg_s_names[]
                                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_event_l1_logged_mdt_cfg_s_opts[]  = {
     {3, (int32_t)offsetof(event_l1_logged_mdt_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc event_l1_logged_mdt_cfg_s::desc = {
-    {seq_table_event_l1_logged_mdt_cfg_s_fields, 4, UINT64_C(0x7), seq_table_event_l1_logged_mdt_cfg_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_event_l1_logged_mdt_cfg_s_names};
+const asn1::table::seq_desc event_l1_logged_mdt_cfg_s::desc = {{seq_table_event_l1_logged_mdt_cfg_s_fields,
+                                                                uint64_t{0x7},
+                                                                seq_table_event_l1_logged_mdt_cfg_s_opts,
+                                                                seq_table_event_l1_logged_mdt_cfg_s_names,
+                                                                4,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // EventTrigger ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_event_trigger_c_alternatives[] = {
@@ -10691,8 +10971,8 @@ static const asn1::table::seq_field seq_table_excess_packet_delay_thres_item_s_f
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(excess_packet_delay_thres_item_s, excess_packet_delay_thres_value),
      asn1::table::seq_field::mandatory,
@@ -10719,15 +10999,15 @@ static const asn1::table::seq_opt seq_table_excess_packet_delay_thres_item_s_opt
     {2, (int32_t)offsetof(excess_packet_delay_thres_item_s, ie_exts_present)}};
 const asn1::table::seq_desc excess_packet_delay_thres_item_s::desc = {
     {seq_table_excess_packet_delay_thres_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_excess_packet_delay_thres_item_s_opts,
+     seq_table_excess_packet_delay_thres_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_excess_packet_delay_thres_item_s_names};
+    0};
 
 // Extended-AMFName ::= SEQUENCE
 static const asn1::table::seq_field seq_table_extended_amf_name_s_fields[] = {
@@ -10763,13 +11043,16 @@ static const asn1::table::seq_opt    seq_table_extended_amf_name_s_opts[]  = {
     {0, (int32_t)offsetof(extended_amf_name_s, amf_name_visible_string_present)},
     {1, (int32_t)offsetof(extended_amf_name_s, amf_name_utf8_string_present)},
     {2, (int32_t)offsetof(extended_amf_name_s, ie_exts_present)}};
-const asn1::table::seq_desc extended_amf_name_s::desc = {
-    {seq_table_extended_amf_name_s_fields, 3, UINT64_C(0x0), seq_table_extended_amf_name_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_extended_amf_name_s_names};
+const asn1::table::seq_desc extended_amf_name_s::desc = {{seq_table_extended_amf_name_s_fields,
+                                                          uint64_t{0x0},
+                                                          seq_table_extended_amf_name_s_opts,
+                                                          seq_table_extended_amf_name_s_names,
+                                                          3,
+                                                          3},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // Extended-RANNodeName ::= SEQUENCE
 static const asn1::table::seq_field seq_table_extended_ran_node_name_s_fields[] = {
@@ -10807,13 +11090,16 @@ static const asn1::table::seq_opt seq_table_extended_ran_node_name_s_opts[] = {
     {0, (int32_t)offsetof(extended_ran_node_name_s, ran_node_name_visible_string_present)},
     {1, (int32_t)offsetof(extended_ran_node_name_s, ran_node_name_utf8_string_present)},
     {2, (int32_t)offsetof(extended_ran_node_name_s, ie_exts_present)}};
-const asn1::table::seq_desc extended_ran_node_name_s::desc = {
-    {seq_table_extended_ran_node_name_s_fields, 3, UINT64_C(0x0), seq_table_extended_ran_node_name_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_extended_ran_node_name_s_names};
+const asn1::table::seq_desc extended_ran_node_name_s::desc = {{seq_table_extended_ran_node_name_s_fields,
+                                                               uint64_t{0x0},
+                                                               seq_table_extended_ran_node_name_s_opts,
+                                                               seq_table_extended_ran_node_name_s_names,
+                                                               3,
+                                                               3},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // ExtendedRATRestrictionInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_extended_rat_restrict_info_s_fields[] = {
@@ -10849,13 +11135,16 @@ static const asn1::table::field_name seq_table_extended_rat_restrict_info_s_name
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_extended_rat_restrict_info_s_opts[] = {
     {2, (int32_t)offsetof(extended_rat_restrict_info_s, ie_exts_present)}};
-const asn1::table::seq_desc extended_rat_restrict_info_s::desc = {
-    {seq_table_extended_rat_restrict_info_s_fields, 3, UINT64_C(0x3), seq_table_extended_rat_restrict_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_extended_rat_restrict_info_s_names};
+const asn1::table::seq_desc extended_rat_restrict_info_s::desc = {{seq_table_extended_rat_restrict_info_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   seq_table_extended_rat_restrict_info_s_opts,
+                                                                   seq_table_extended_rat_restrict_info_s_names,
+                                                                   3,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // ExtendedReportIntervalMDT ::= ENUMERATED
 static const char*           enum_names_extended_report_interv_mdt_e_values[] = {"ms20480", "ms40960"};
@@ -10966,12 +11255,11 @@ static const asn1::table::field_name seq_table_fail_ind_s_names[] = {{"uERLFRepo
                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_fail_ind_s_opts[] = {{1, (int32_t)offsetof(fail_ind_s, ie_exts_present)}};
 const asn1::table::seq_desc       fail_ind_s::desc            = {
-    {seq_table_fail_ind_s_fields, 2, UINT64_C(0x1), seq_table_fail_ind_s_opts, 1},
+    {seq_table_fail_ind_s_fields, uint64_t{0x1}, seq_table_fail_ind_s_opts, seq_table_fail_ind_s_names, 2, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_fail_ind_s_names};
+    0};
 
 // FiveGProSeDirectDiscovery ::= ENUMERATED
 static const char*           enum_names_five_g_pro_se_direct_discovery_e_values[] = {"authorized", "not-authorized"};
@@ -11149,13 +11437,16 @@ static const asn1::table::seq_opt seq_table_five_g_pro_se_authorized_s_opts[] = 
     {3, (int32_t)offsetof(five_g_pro_se_authorized_s, five_g_pro_se_layer3_ue_to_network_relay_present)},
     {4, (int32_t)offsetof(five_g_pro_se_authorized_s, five_g_pro_se_layer2_remote_ue_present)},
     {5, (int32_t)offsetof(five_g_pro_se_authorized_s, ie_exts_present)}};
-const asn1::table::seq_desc five_g_pro_se_authorized_s::desc = {
-    {seq_table_five_g_pro_se_authorized_s_fields, 6, UINT64_C(0x0), seq_table_five_g_pro_se_authorized_s_opts, 6},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_five_g_pro_se_authorized_s_names};
+const asn1::table::seq_desc five_g_pro_se_authorized_s::desc = {{seq_table_five_g_pro_se_authorized_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_five_g_pro_se_authorized_s_opts,
+                                                                 seq_table_five_g_pro_se_authorized_s_names,
+                                                                 6,
+                                                                 6},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // FiveGProSePC5FlowBitRates ::= SEQUENCE
 static const asn1::table::seq_field seq_table_five_g_pro_se_pc5_flow_bit_rates_s_fields[] = {
@@ -11164,16 +11455,16 @@ static const asn1::table::seq_field seq_table_five_g_pro_se_pc5_flow_bit_rates_s
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(five_g_pro_se_pc5_flow_bit_rates_s, five_gpro_semax_flow_bit_rate),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(five_g_pro_se_pc5_flow_bit_rates_s, ie_exts),
      (int32_t)offsetof(five_g_pro_se_pc5_flow_bit_rates_s, ie_exts_present),
@@ -11192,15 +11483,15 @@ static const asn1::table::seq_opt seq_table_five_g_pro_se_pc5_flow_bit_rates_s_o
     {2, (int32_t)offsetof(five_g_pro_se_pc5_flow_bit_rates_s, ie_exts_present)}};
 const asn1::table::seq_desc five_g_pro_se_pc5_flow_bit_rates_s::desc = {
     {seq_table_five_g_pro_se_pc5_flow_bit_rates_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_five_g_pro_se_pc5_flow_bit_rates_s_opts,
+     seq_table_five_g_pro_se_pc5_flow_bit_rates_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_five_g_pro_se_pc5_flow_bit_rates_s_names};
+    0};
 
 // Range ::= ENUMERATED
 static const char* enum_names_range_e_values[] =
@@ -11219,8 +11510,8 @@ static const asn1::table::seq_field seq_table_five_g_pro_se_pc5_qos_flow_item_s_
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(five_g_pro_se_pc5_qos_flow_item_s, five_gpro_sepc5_flow_bit_rates),
      (int32_t)offsetof(five_g_pro_se_pc5_qos_flow_item_s, five_gpro_sepc5_flow_bit_rates_present),
@@ -11260,15 +11551,15 @@ static const asn1::table::seq_opt seq_table_five_g_pro_se_pc5_qos_flow_item_s_op
     {3, (int32_t)offsetof(five_g_pro_se_pc5_qos_flow_item_s, ie_exts_present)}};
 const asn1::table::seq_desc five_g_pro_se_pc5_qos_flow_item_s::desc = {
     {seq_table_five_g_pro_se_pc5_qos_flow_item_s_fields,
-     4,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_five_g_pro_se_pc5_qos_flow_item_s_opts,
+     seq_table_five_g_pro_se_pc5_qos_flow_item_s_names,
+     4,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_five_g_pro_se_pc5_qos_flow_item_s_names};
+    0};
 
 // FiveG-ProSePC5QoSParameters ::= SEQUENCE
 static const asn1::table::seq_field seq_table_five_g_pro_se_pc5_qos_params_s_fields[] = {
@@ -11278,7 +11569,7 @@ static const asn1::table::seq_field seq_table_five_g_pro_se_pc5_qos_params_s_fie
      false,
      true,
      1,
-     2048,
+     2047,
      &asn1::table::item_list_codec<decltype(five_g_pro_se_pc5_qos_params_s::five_g_pro_sepc5_qos_flow_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -11289,8 +11580,8 @@ static const asn1::table::seq_field seq_table_five_g_pro_se_pc5_qos_params_s_fie
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(five_g_pro_se_pc5_qos_params_s, ie_exts),
      (int32_t)offsetof(five_g_pro_se_pc5_qos_params_s, ie_exts_present),
@@ -11308,15 +11599,15 @@ static const asn1::table::seq_opt seq_table_five_g_pro_se_pc5_qos_params_s_opts[
     {1, (int32_t)offsetof(five_g_pro_se_pc5_qos_params_s, five_g_pro_sepc5_link_aggr_bit_rates_present)},
     {2, (int32_t)offsetof(five_g_pro_se_pc5_qos_params_s, ie_exts_present)}};
 const asn1::table::seq_desc five_g_pro_se_pc5_qos_params_s::desc = {{seq_table_five_g_pro_se_pc5_qos_params_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_five_g_pro_se_pc5_qos_params_s_opts,
+                                                                     seq_table_five_g_pro_se_pc5_qos_params_s_names,
+                                                                     3,
                                                                      2},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_five_g_pro_se_pc5_qos_params_s_names};
+                                                                    0};
 
 // FiveG-S-TMSI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_five_g_s_tmsi_s_fields[] = {
@@ -11358,13 +11649,16 @@ static const asn1::table::field_name seq_table_five_g_s_tmsi_s_names[] = {{"aMFS
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_five_g_s_tmsi_s_opts[]  = {
     {3, (int32_t)offsetof(five_g_s_tmsi_s, ie_exts_present)}};
-const asn1::table::seq_desc five_g_s_tmsi_s::desc = {
-    {seq_table_five_g_s_tmsi_s_fields, 4, UINT64_C(0x7), seq_table_five_g_s_tmsi_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_five_g_s_tmsi_s_names};
+const asn1::table::seq_desc five_g_s_tmsi_s::desc = {{seq_table_five_g_s_tmsi_s_fields,
+                                                      uint64_t{0x7},
+                                                      seq_table_five_g_s_tmsi_s_opts,
+                                                      seq_table_five_g_s_tmsi_s_names,
+                                                      4,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // NR-Paging-Long-eDRX-Cycle-for-RRC-INACTIVE ::= ENUMERATED
 static const char* enum_names_nr_paging_long_e_drx_cycle_for_rrc_inactive_e_values[] =
@@ -11433,15 +11727,15 @@ static const asn1::table::seq_opt seq_table_nr_paging_long_e_drx_info_for_rrc_in
     {2, (int32_t)offsetof(nr_paging_long_e_drx_info_for_rrc_inactive_s, ie_exts_present)}};
 const asn1::table::seq_desc nr_paging_long_e_drx_info_for_rrc_inactive_s::desc = {
     {seq_table_nr_paging_long_e_drx_info_for_rrc_inactive_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_nr_paging_long_e_drx_info_for_rrc_inactive_s_opts,
+     seq_table_nr_paging_long_e_drx_info_for_rrc_inactive_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_nr_paging_long_e_drx_info_for_rrc_inactive_s_names};
+    0};
 
 // HLComActivate ::= SEQUENCE
 static const asn1::table::seq_field seq_table_hl_com_activ_s_fields[] = {
@@ -11467,13 +11761,16 @@ static const asn1::table::field_name seq_table_hl_com_activ_s_names[] = {
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_hl_com_activ_s_opts[] = {
     {1, (int32_t)offsetof(hl_com_activ_s, ie_exts_present)}};
-const asn1::table::seq_desc hl_com_activ_s::desc = {
-    {seq_table_hl_com_activ_s_fields, 2, UINT64_C(0x1), seq_table_hl_com_activ_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_hl_com_activ_s_names};
+const asn1::table::seq_desc hl_com_activ_s::desc = {{seq_table_hl_com_activ_s_fields,
+                                                     uint64_t{0x1},
+                                                     seq_table_hl_com_activ_s_opts,
+                                                     seq_table_hl_com_activ_s_names,
+                                                     2,
+                                                     1},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 // HLComDeactivate ::= SEQUENCE
 static const asn1::table::seq_field seq_table_hl_com_deactiv_s_fields[] = {
@@ -11498,13 +11795,16 @@ static const asn1::table::field_name seq_table_hl_com_deactiv_s_names[] = {{"uER
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_hl_com_deactiv_s_opts[]  = {
     {1, (int32_t)offsetof(hl_com_deactiv_s, ie_exts_present)}};
-const asn1::table::seq_desc hl_com_deactiv_s::desc = {
-    {seq_table_hl_com_deactiv_s_fields, 2, UINT64_C(0x1), seq_table_hl_com_deactiv_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_hl_com_deactiv_s_names};
+const asn1::table::seq_desc hl_com_deactiv_s::desc = {{seq_table_hl_com_deactiv_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_hl_com_deactiv_s_opts,
+                                                       seq_table_hl_com_deactiv_s_names,
+                                                       2,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 static const char*           enum_names_hl_com_deactiv_s_ue_reachability_ind_e__values[] = {"true"};
 const asn1::table::enum_desc hl_com_deactiv_s::ue_reachability_ind_opts::desc            = {
@@ -11604,7 +11904,7 @@ static const asn1::table::seq_field seq_table_forbidden_area_info_item_s_fields[
      false,
      true,
      1,
-     4096,
+     4095,
      &asn1::table::list_codec<decltype(forbidden_area_info_item_s::forbidden_tacs), asn1::table::string_json>::value},
     {offsetof(forbidden_area_info_item_s, ie_exts),
      (int32_t)offsetof(forbidden_area_info_item_s, ie_exts_present),
@@ -11619,13 +11919,16 @@ static const asn1::table::field_name seq_table_forbidden_area_info_item_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_forbidden_area_info_item_s_opts[]  = {
     {2, (int32_t)offsetof(forbidden_area_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc forbidden_area_info_item_s::desc = {
-    {seq_table_forbidden_area_info_item_s_fields, 3, UINT64_C(0x3), seq_table_forbidden_area_info_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_forbidden_area_info_item_s_names};
+const asn1::table::seq_desc forbidden_area_info_item_s::desc = {{seq_table_forbidden_area_info_item_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 seq_table_forbidden_area_info_item_s_opts,
+                                                                 seq_table_forbidden_area_info_item_s_names,
+                                                                 3,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // GlobalENB-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_global_enb_id_s_fields[] = {
@@ -11659,13 +11962,16 @@ static const asn1::table::field_name seq_table_global_enb_id_s_names[] = {{"pLMN
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_enb_id_s_opts[]  = {
     {2, (int32_t)offsetof(global_enb_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_enb_id_s::desc = {
-    {seq_table_global_enb_id_s_fields, 3, UINT64_C(0x3), seq_table_global_enb_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_enb_id_s_names};
+const asn1::table::seq_desc global_enb_id_s::desc = {{seq_table_global_enb_id_s_fields,
+                                                      uint64_t{0x3},
+                                                      seq_table_global_enb_id_s_opts,
+                                                      seq_table_global_enb_id_s_names,
+                                                      3,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // IntersystemSONeNBID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_intersys_son_enb_id_s_fields[] = {
@@ -11700,13 +12006,16 @@ static const asn1::table::field_name seq_table_intersys_son_enb_id_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_intersys_son_enb_id_s_opts[]  = {
     {2, (int32_t)offsetof(intersys_son_enb_id_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_son_enb_id_s::desc = {
-    {seq_table_intersys_son_enb_id_s_fields, 3, UINT64_C(0x3), seq_table_intersys_son_enb_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_son_enb_id_s_names};
+const asn1::table::seq_desc intersys_son_enb_id_s::desc = {{seq_table_intersys_son_enb_id_s_fields,
+                                                            uint64_t{0x3},
+                                                            seq_table_intersys_son_enb_id_s_opts,
+                                                            seq_table_intersys_son_enb_id_s_names,
+                                                            3,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // IntersystemSONNGRANnodeID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_intersys_son_ngran_node_id_s_fields[] = {
@@ -11741,13 +12050,16 @@ static const asn1::table::field_name seq_table_intersys_son_ngran_node_id_s_name
                                                                                        {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_intersys_son_ngran_node_id_s_opts[]  = {
     {2, (int32_t)offsetof(intersys_son_ngran_node_id_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_son_ngran_node_id_s::desc = {
-    {seq_table_intersys_son_ngran_node_id_s_fields, 3, UINT64_C(0x3), seq_table_intersys_son_ngran_node_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_son_ngran_node_id_s_names};
+const asn1::table::seq_desc intersys_son_ngran_node_id_s::desc = {{seq_table_intersys_son_ngran_node_id_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   seq_table_intersys_son_ngran_node_id_s_opts,
+                                                                   seq_table_intersys_son_ngran_node_id_s_names,
+                                                                   3,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // FromEUTRANtoNGRAN ::= SEQUENCE
 static const asn1::table::seq_field seq_table_from_eutran_to_ngran_s_fields[] = {
@@ -11782,13 +12094,16 @@ static const asn1::table::field_name seq_table_from_eutran_to_ngran_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_from_eutran_to_ngran_s_opts[]  = {
     {2, (int32_t)offsetof(from_eutran_to_ngran_s, ie_exts_present)}};
-const asn1::table::seq_desc from_eutran_to_ngran_s::desc = {
-    {seq_table_from_eutran_to_ngran_s_fields, 3, UINT64_C(0x3), seq_table_from_eutran_to_ngran_s_opts, 1},
-    false,
-    true,
-    nullptr,
-    0,
-    seq_table_from_eutran_to_ngran_s_names};
+const asn1::table::seq_desc from_eutran_to_ngran_s::desc = {{seq_table_from_eutran_to_ngran_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_from_eutran_to_ngran_s_opts,
+                                                             seq_table_from_eutran_to_ngran_s_names,
+                                                             3,
+                                                             1},
+                                                            false,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // FromNGRANtoEUTRAN ::= SEQUENCE
 static const asn1::table::seq_field seq_table_from_ngran_to_eutran_s_fields[] = {
@@ -11823,13 +12138,16 @@ static const asn1::table::field_name seq_table_from_ngran_to_eutran_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_from_ngran_to_eutran_s_opts[]  = {
     {2, (int32_t)offsetof(from_ngran_to_eutran_s, ie_exts_present)}};
-const asn1::table::seq_desc from_ngran_to_eutran_s::desc = {
-    {seq_table_from_ngran_to_eutran_s_fields, 3, UINT64_C(0x3), seq_table_from_ngran_to_eutran_s_opts, 1},
-    false,
-    true,
-    nullptr,
-    0,
-    seq_table_from_ngran_to_eutran_s_names};
+const asn1::table::seq_desc from_ngran_to_eutran_s::desc = {{seq_table_from_ngran_to_eutran_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_from_ngran_to_eutran_s_opts,
+                                                             seq_table_from_ngran_to_eutran_s_names,
+                                                             3,
+                                                             1},
+                                                            false,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // NotificationControl ::= ENUMERATED
 static const char*           enum_names_notif_ctrl_e_values[] = {"notification-requested"};
@@ -11846,7 +12164,7 @@ static const asn1::table::seq_field ie_table_gbr_qos_info_ext_ies_container_valu
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(gbr_qos_info_ext_ies_container::alt_qos_para_set_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -11873,32 +12191,32 @@ static const asn1::table::seq_field seq_table_gbr_qos_info_s_fields[] = {
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(gbr_qos_info_s, max_flow_bit_rate_ul),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(gbr_qos_info_s, guaranteed_flow_bit_rate_dl),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(gbr_qos_info_s, guaranteed_flow_bit_rate_ul),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(gbr_qos_info_s, notif_ctrl),
      (int32_t)offsetof(gbr_qos_info_s, notif_ctrl_present),
@@ -11914,16 +12232,16 @@ static const asn1::table::seq_field seq_table_gbr_qos_info_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(1000),
+     int64_t{0},
+     uint64_t{1000},
      nullptr},
     {offsetof(gbr_qos_info_s, max_packet_loss_rate_ul),
      (int32_t)offsetof(gbr_qos_info_s, max_packet_loss_rate_ul_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(1000),
+     int64_t{0},
+     uint64_t{1000},
      nullptr},
     {offsetof(gbr_qos_info_s, ie_exts),
      (int32_t)offsetof(gbr_qos_info_s, ie_exts_present),
@@ -11947,13 +12265,16 @@ static const asn1::table::seq_opt    seq_table_gbr_qos_info_s_opts[]  = {
     {5, (int32_t)offsetof(gbr_qos_info_s, max_packet_loss_rate_dl_present)},
     {6, (int32_t)offsetof(gbr_qos_info_s, max_packet_loss_rate_ul_present)},
     {7, (int32_t)offsetof(gbr_qos_info_s, ie_exts_present)}};
-const asn1::table::seq_desc gbr_qos_info_s::desc = {
-    {seq_table_gbr_qos_info_s_fields, 8, UINT64_C(0xf), seq_table_gbr_qos_info_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_gbr_qos_info_s_names};
+const asn1::table::seq_desc gbr_qos_info_s::desc = {{seq_table_gbr_qos_info_s_fields,
+                                                     uint64_t{0xf},
+                                                     seq_table_gbr_qos_info_s_opts,
+                                                     seq_table_gbr_qos_info_s_names,
+                                                     8,
+                                                     4},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 // GUAMI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_guami_s_fields[] = {
@@ -12003,12 +12324,12 @@ static const asn1::table::field_name seq_table_guami_s_names[] = {{"pLMNIdentity
                                                                   {"aMFPointer", nullptr},
                                                                   {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_guami_s_opts[]  = {{4, (int32_t)offsetof(guami_s, ie_exts_present)}};
-const asn1::table::seq_desc guami_s::desc = {{seq_table_guami_s_fields, 5, UINT64_C(0xf), seq_table_guami_s_opts, 1},
-                                             true,
-                                             true,
-                                             nullptr,
-                                             0,
-                                             seq_table_guami_s_names};
+const asn1::table::seq_desc          guami_s::desc             = {
+    {seq_table_guami_s_fields, uint64_t{0xf}, seq_table_guami_s_opts, seq_table_guami_s_names, 5, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // GUAMIType ::= ENUMERATED
 static const char*           enum_names_guami_type_e_values[] = {"native", "mapped"};
@@ -12046,13 +12367,16 @@ static const asn1::table::field_name seq_table_global_cable_id_new_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_global_cable_id_new_s_opts[]  = {
     {2, (int32_t)offsetof(global_cable_id_new_s, ie_exts_present)}};
-const asn1::table::seq_desc global_cable_id_new_s::desc = {
-    {seq_table_global_cable_id_new_s_fields, 3, UINT64_C(0x3), seq_table_global_cable_id_new_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_cable_id_new_s_names};
+const asn1::table::seq_desc global_cable_id_new_s::desc = {{seq_table_global_cable_id_new_s_fields,
+                                                            uint64_t{0x3},
+                                                            seq_table_global_cable_id_new_s_opts,
+                                                            seq_table_global_cable_id_new_s_names,
+                                                            3,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // LineType ::= ENUMERATED
 static const char*           enum_names_line_type_e_values[] = {"dsl", "pon"};
@@ -12120,13 +12444,16 @@ static const asn1::table::field_name seq_table_global_line_id_s_names[] = {{"glo
 static const asn1::table::seq_opt    seq_table_global_line_id_s_opts[]  = {
     {1, (int32_t)offsetof(global_line_id_s, line_type_present)},
     {2, (int32_t)offsetof(global_line_id_s, ie_exts_present)}};
-const asn1::table::seq_desc global_line_id_s::desc = {
-    {seq_table_global_line_id_s_fields, 3, UINT64_C(0x1), seq_table_global_line_id_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_global_line_id_s_names};
+const asn1::table::seq_desc global_line_id_s::desc = {{seq_table_global_line_id_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_global_line_id_s_opts,
+                                                       seq_table_global_line_id_s_names,
+                                                       3,
+                                                       2},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 static const uint32_t objset_id_hfc_node_id_new_ext_ies_o[]   = {275};
 static const uint8_t  objset_crit_hfc_node_id_new_ext_ies_o[] = {crit_e::ignore};
@@ -12189,13 +12516,16 @@ static const asn1::table::field_name seq_table_hfc_node_id_new_s_names[] = {{"hF
                                                                             {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_hfc_node_id_new_s_opts[]  = {
     {2, (int32_t)offsetof(hfc_node_id_new_s, ie_exts_present)}};
-const asn1::table::seq_desc hfc_node_id_new_s::desc = {
-    {seq_table_hfc_node_id_new_s_fields, 3, UINT64_C(0x3), seq_table_hfc_node_id_new_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_hfc_node_id_new_s_names};
+const asn1::table::seq_desc hfc_node_id_new_s::desc = {{seq_table_hfc_node_id_new_s_fields,
+                                                        uint64_t{0x3},
+                                                        seq_table_hfc_node_id_new_s_opts,
+                                                        seq_table_hfc_node_id_new_s_names,
+                                                        3,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 static const uint32_t objset_id_ho_report_ext_ies_o[]   = {366, 385, 386};
 static const uint8_t  objset_crit_ho_report_ext_ies_o[] = {crit_e::ignore, crit_e::ignore, crit_e::ignore};
@@ -12225,8 +12555,8 @@ static const asn1::table::seq_field ie_table_ho_report_ext_ies_container_values[
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(172800),
+     int64_t{0},
+     uint64_t{172800},
      nullptr}};
 static const int32_t ie_table_ho_report_ext_ies_container_presences[] = {
     (int32_t)offsetof(ho_report_ext_ies_container, extended_mob_info_present),
@@ -12352,12 +12682,11 @@ static const asn1::table::seq_opt    seq_table_ho_report_s_opts[]  = {
     {8, (int32_t)offsetof(ho_report_s, ue_rlf_report_container_present)},
     {9, (int32_t)offsetof(ho_report_s, ie_exts_present)}};
 const asn1::table::seq_desc ho_report_s::desc = {
-    {seq_table_ho_report_s_fields, 10, UINT64_C(0xf), seq_table_ho_report_s_opts, 6},
+    {seq_table_ho_report_s_fields, uint64_t{0xf}, seq_table_ho_report_s_opts, seq_table_ho_report_s_names, 10, 6},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ho_report_s_names};
+    0};
 
 static const char*           enum_names_ho_report_s_ho_report_type_e__values[] = {"ho-too-early",
                                                                                   "ho-to-wrong-cell",
@@ -12373,8 +12702,8 @@ static const asn1::table::seq_field seq_table_qos_flow_to_be_forwarded_item_s_fi
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_to_be_forwarded_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_to_be_forwarded_item_s, ie_exts_present),
@@ -12390,15 +12719,15 @@ static const asn1::table::field_name seq_table_qos_flow_to_be_forwarded_item_s_n
 static const asn1::table::seq_opt seq_table_qos_flow_to_be_forwarded_item_s_opts[] = {
     {1, (int32_t)offsetof(qos_flow_to_be_forwarded_item_s, ie_exts_present)}};
 const asn1::table::seq_desc qos_flow_to_be_forwarded_item_s::desc = {{seq_table_qos_flow_to_be_forwarded_item_s_fields,
-                                                                      2,
-                                                                      UINT64_C(0x1),
+                                                                      uint64_t{0x1},
                                                                       seq_table_qos_flow_to_be_forwarded_item_s_opts,
+                                                                      seq_table_qos_flow_to_be_forwarded_item_s_names,
+                                                                      2,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_qos_flow_to_be_forwarded_item_s_names};
+                                                                     0};
 
 // QosFlowPerTNLInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qos_flow_per_tnl_info_s_fields[] = {
@@ -12417,7 +12746,7 @@ static const asn1::table::seq_field seq_table_qos_flow_per_tnl_info_s_fields[] =
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(qos_flow_per_tnl_info_s::associated_qos_flow_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12437,13 +12766,16 @@ static const asn1::table::field_name seq_table_qos_flow_per_tnl_info_s_names[] =
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_qos_flow_per_tnl_info_s_opts[] = {
     {2, (int32_t)offsetof(qos_flow_per_tnl_info_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_per_tnl_info_s::desc = {
-    {seq_table_qos_flow_per_tnl_info_s_fields, 3, UINT64_C(0x3), seq_table_qos_flow_per_tnl_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_per_tnl_info_s_names};
+const asn1::table::seq_desc qos_flow_per_tnl_info_s::desc = {{seq_table_qos_flow_per_tnl_info_s_fields,
+                                                              uint64_t{0x3},
+                                                              seq_table_qos_flow_per_tnl_info_s_opts,
+                                                              seq_table_qos_flow_per_tnl_info_s_names,
+                                                              3,
+                                                              1},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // QosFlowPerTNLInformationItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qos_flow_per_tnl_info_item_s_fields[] = {
@@ -12469,13 +12801,16 @@ static const asn1::table::field_name seq_table_qos_flow_per_tnl_info_item_s_name
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_qos_flow_per_tnl_info_item_s_opts[] = {
     {1, (int32_t)offsetof(qos_flow_per_tnl_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_per_tnl_info_item_s::desc = {
-    {seq_table_qos_flow_per_tnl_info_item_s_fields, 2, UINT64_C(0x1), seq_table_qos_flow_per_tnl_info_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_per_tnl_info_item_s_names};
+const asn1::table::seq_desc qos_flow_per_tnl_info_item_s::desc = {{seq_table_qos_flow_per_tnl_info_item_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_qos_flow_per_tnl_info_item_s_opts,
+                                                                   seq_table_qos_flow_per_tnl_info_item_s_names,
+                                                                   2,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 static const uint32_t objset_id_up_transport_layer_info_item_ext_ies_o[]   = {166};
 static const uint8_t  objset_crit_up_transport_layer_info_item_ext_ies_o[] = {crit_e::ignore};
@@ -12531,15 +12866,15 @@ static const asn1::table::field_name seq_table_up_transport_layer_info_item_s_na
 static const asn1::table::seq_opt seq_table_up_transport_layer_info_item_s_opts[] = {
     {1, (int32_t)offsetof(up_transport_layer_info_item_s, ie_exts_present)}};
 const asn1::table::seq_desc up_transport_layer_info_item_s::desc = {{seq_table_up_transport_layer_info_item_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_up_transport_layer_info_item_s_opts,
+                                                                     seq_table_up_transport_layer_info_item_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_up_transport_layer_info_item_s_names};
+                                                                    0};
 
 // QosFlowWithCauseItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qos_flow_with_cause_item_s_fields[] = {
@@ -12548,8 +12883,8 @@ static const asn1::table::seq_field seq_table_qos_flow_with_cause_item_s_fields[
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_with_cause_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -12573,13 +12908,16 @@ static const asn1::table::field_name seq_table_qos_flow_with_cause_item_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_qos_flow_with_cause_item_s_opts[]  = {
     {2, (int32_t)offsetof(qos_flow_with_cause_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_with_cause_item_s::desc = {
-    {seq_table_qos_flow_with_cause_item_s_fields, 3, UINT64_C(0x3), seq_table_qos_flow_with_cause_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_with_cause_item_s_names};
+const asn1::table::seq_desc qos_flow_with_cause_item_s::desc = {{seq_table_qos_flow_with_cause_item_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 seq_table_qos_flow_with_cause_item_s_opts,
+                                                                 seq_table_qos_flow_with_cause_item_s_names,
+                                                                 3,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const uint32_t objset_id_ho_cmd_transfer_ext_ies_o[]   = {152, 164, 172, 249, 283};
 static const uint8_t  objset_crit_ho_cmd_transfer_ext_ies_o[] = {crit_e::ignore,
@@ -12596,7 +12934,7 @@ static const asn1::table::seq_field ie_table_ho_cmd_transfer_ext_ies_container_v
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(ho_cmd_transfer_ext_ies_container::add_dl_forwarding_up_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12617,7 +12955,7 @@ static const asn1::table::seq_field ie_table_ho_cmd_transfer_ext_ies_container_v
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(ho_cmd_transfer_ext_ies_container::add_ul_forwarding_up_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12629,7 +12967,7 @@ static const asn1::table::seq_field ie_table_ho_cmd_transfer_ext_ies_container_v
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(ho_cmd_transfer_ext_ies_container::data_forwarding_resp_erab_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12641,7 +12979,7 @@ static const asn1::table::seq_field ie_table_ho_cmd_transfer_ext_ies_container_v
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(ho_cmd_transfer_ext_ies_container::qos_flow_failed_to_setup_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12682,7 +13020,7 @@ static const asn1::table::seq_field seq_table_ho_cmd_transfer_s_fields[] = {
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(ho_cmd_transfer_s::qos_flow_to_be_forwarded_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12694,7 +13032,7 @@ static const asn1::table::seq_field seq_table_ho_cmd_transfer_s_fields[] = {
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(ho_cmd_transfer_s::data_forwarding_resp_drb_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12718,13 +13056,16 @@ static const asn1::table::seq_opt    seq_table_ho_cmd_transfer_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, asn1::table::seq_field::list_presence},
     {3, (int32_t)offsetof(ho_cmd_transfer_s, ie_exts_present)}};
-const asn1::table::seq_desc ho_cmd_transfer_s::desc = {
-    {seq_table_ho_cmd_transfer_s_fields, 4, UINT64_C(0x0), seq_table_ho_cmd_transfer_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ho_cmd_transfer_s_names};
+const asn1::table::seq_desc ho_cmd_transfer_s::desc = {{seq_table_ho_cmd_transfer_s_fields,
+                                                        uint64_t{0x0},
+                                                        seq_table_ho_cmd_transfer_s_opts,
+                                                        seq_table_ho_cmd_transfer_s_names,
+                                                        4,
+                                                        4},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // HandoverFlag ::= ENUMERATED
 static const char*           enum_names_ho_flag_e_values[] = {"handover-preparation"};
@@ -12754,15 +13095,15 @@ static const asn1::table::field_name seq_table_ho_prep_unsuccessful_transfer_s_n
 static const asn1::table::seq_opt    seq_table_ho_prep_unsuccessful_transfer_s_opts[]  = {
     {1, (int32_t)offsetof(ho_prep_unsuccessful_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc ho_prep_unsuccessful_transfer_s::desc = {{seq_table_ho_prep_unsuccessful_transfer_s_fields,
-                                                                      2,
-                                                                      UINT64_C(0x1),
+                                                                      uint64_t{0x1},
                                                                       seq_table_ho_prep_unsuccessful_transfer_s_opts,
+                                                                      seq_table_ho_prep_unsuccessful_transfer_s_names,
+                                                                      2,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_ho_prep_unsuccessful_transfer_s_names};
+                                                                     0};
 
 // IntegrityProtectionResult ::= ENUMERATED
 static const char*           enum_names_integrity_protection_result_e_values[] = {"performed", "not-performed"};
@@ -12804,13 +13145,16 @@ static const asn1::table::field_name seq_table_security_result_s_names[] = {
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_security_result_s_opts[] = {
     {2, (int32_t)offsetof(security_result_s, ie_exts_present)}};
-const asn1::table::seq_desc security_result_s::desc = {
-    {seq_table_security_result_s_fields, 3, UINT64_C(0x3), seq_table_security_result_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_security_result_s_names};
+const asn1::table::seq_desc security_result_s::desc = {{seq_table_security_result_s_fields,
+                                                        uint64_t{0x3},
+                                                        seq_table_security_result_s_opts,
+                                                        seq_table_security_result_s_names,
+                                                        3,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // RSN ::= ENUMERATED
 static const char*           enum_names_r_sn_e_values[] = {"v1", "v2"};
@@ -12831,8 +13175,8 @@ static const asn1::table::seq_field ie_table_redundant_pdu_session_info_ext_ies_
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr}};
 static const int32_t ie_table_redundant_pdu_session_info_ext_ies_container_presences[] = {
     (int32_t)offsetof(redundant_pdu_session_info_ext_ies_container, pdu_session_pair_id_present)};
@@ -12872,13 +13216,16 @@ static const asn1::table::field_name seq_table_redundant_pdu_session_info_s_name
                                                                                        {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_redundant_pdu_session_info_s_opts[]  = {
     {1, (int32_t)offsetof(redundant_pdu_session_info_s, ie_exts_present)}};
-const asn1::table::seq_desc redundant_pdu_session_info_s::desc = {
-    {seq_table_redundant_pdu_session_info_s_fields, 2, UINT64_C(0x1), seq_table_redundant_pdu_session_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_redundant_pdu_session_info_s_names};
+const asn1::table::seq_desc redundant_pdu_session_info_s::desc = {{seq_table_redundant_pdu_session_info_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_redundant_pdu_session_info_s_opts,
+                                                                   seq_table_redundant_pdu_session_info_s_names,
+                                                                   2,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // MBS-SupportIndicator ::= ENUMERATED
 static const char*           enum_names_mbs_support_ind_e_values[] = {"multicast-supported",
@@ -12911,7 +13258,7 @@ static const asn1::table::seq_field ie_table_ho_request_ack_transfer_ext_ies_con
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(ho_request_ack_transfer_ext_ies_container::add_dl_up_tnl_info_for_ho_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12932,7 +13279,7 @@ static const asn1::table::seq_field ie_table_ho_request_ack_transfer_ext_ies_con
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(ho_request_ack_transfer_ext_ies_container::add_ul_forwarding_up_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -12944,7 +13291,7 @@ static const asn1::table::seq_field ie_table_ho_request_ack_transfer_ext_ies_con
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(ho_request_ack_transfer_ext_ies_container::data_forwarding_resp_erab_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -13001,7 +13348,7 @@ static const asn1::table::seq_field ie_table_ho_request_ack_transfer_ext_ies_con
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(ho_request_ack_transfer_ext_ies_container::ecn_markingor_congestion_info_report_status),
          asn1::table::sequence_item_ops,
@@ -13066,7 +13413,7 @@ static const asn1::table::seq_field seq_table_ho_request_ack_transfer_s_fields[]
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(ho_request_ack_transfer_s::qos_flow_setup_resp_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -13078,7 +13425,7 @@ static const asn1::table::seq_field seq_table_ho_request_ack_transfer_s_fields[]
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(ho_request_ack_transfer_s::qos_flow_failed_to_setup_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -13090,7 +13437,7 @@ static const asn1::table::seq_field seq_table_ho_request_ack_transfer_s_fields[]
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(ho_request_ack_transfer_s::data_forwarding_resp_drb_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -13119,13 +13466,16 @@ static const asn1::table::seq_opt seq_table_ho_request_ack_transfer_s_opts[] = {
     {4, asn1::table::seq_field::list_presence},
     {5, asn1::table::seq_field::list_presence},
     {6, (int32_t)offsetof(ho_request_ack_transfer_s, ie_exts_present)}};
-const asn1::table::seq_desc ho_request_ack_transfer_s::desc = {
-    {seq_table_ho_request_ack_transfer_s_fields, 7, UINT64_C(0x9), seq_table_ho_request_ack_transfer_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ho_request_ack_transfer_s_names};
+const asn1::table::seq_desc ho_request_ack_transfer_s::desc = {{seq_table_ho_request_ack_transfer_s_fields,
+                                                                uint64_t{0x9},
+                                                                seq_table_ho_request_ack_transfer_s_opts,
+                                                                seq_table_ho_request_ack_transfer_s_names,
+                                                                7,
+                                                                5},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // HandoverRequiredTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ho_required_transfer_s_fields[] = {
@@ -13152,13 +13502,16 @@ static const asn1::table::field_name seq_table_ho_required_transfer_s_names[] = 
 static const asn1::table::seq_opt seq_table_ho_required_transfer_s_opts[] = {
     {0, (int32_t)offsetof(ho_required_transfer_s, direct_forwarding_path_availability_present)},
     {1, (int32_t)offsetof(ho_required_transfer_s, ie_exts_present)}};
-const asn1::table::seq_desc ho_required_transfer_s::desc = {
-    {seq_table_ho_required_transfer_s_fields, 2, UINT64_C(0x0), seq_table_ho_required_transfer_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ho_required_transfer_s_names};
+const asn1::table::seq_desc ho_required_transfer_s::desc = {{seq_table_ho_required_transfer_s_fields,
+                                                             uint64_t{0x0},
+                                                             seq_table_ho_required_transfer_s_opts,
+                                                             seq_table_ho_required_transfer_s_names,
+                                                             2,
+                                                             2},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // HandoverResourceAllocationUnsuccessfulTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ho_res_alloc_unsuccessful_transfer_s_fields[] = {
@@ -13198,15 +13551,15 @@ static const asn1::table::seq_opt seq_table_ho_res_alloc_unsuccessful_transfer_s
     {2, (int32_t)offsetof(ho_res_alloc_unsuccessful_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc ho_res_alloc_unsuccessful_transfer_s::desc = {
     {seq_table_ho_res_alloc_unsuccessful_transfer_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ho_res_alloc_unsuccessful_transfer_s_opts,
+     seq_table_ho_res_alloc_unsuccessful_transfer_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ho_res_alloc_unsuccessful_transfer_s_names};
+    0};
 
 // HandoverType ::= ENUMERATED
 static const char* enum_names_handov_type_e_values[] = {"intra5gs", "fivegs-to-eps", "eps-to-5gs", "fivegs-to-utran"};
@@ -13274,24 +13627,24 @@ static const asn1::table::seq_field choice_table_m1_thres_type_c_alternatives[] 
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(127),
+     int64_t{0},
+     uint64_t{127},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(127),
+     int64_t{0},
+     uint64_t{127},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(127),
+     int64_t{0},
+     uint64_t{127},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
@@ -13351,13 +13704,16 @@ static const asn1::table::field_name seq_table_m1_thres_event_a2_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_m1_thres_event_a2_s_opts[]  = {
     {1, (int32_t)offsetof(m1_thres_event_a2_s, ie_exts_present)}};
-const asn1::table::seq_desc m1_thres_event_a2_s::desc = {
-    {seq_table_m1_thres_event_a2_s_fields, 2, UINT64_C(0x1), seq_table_m1_thres_event_a2_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_m1_thres_event_a2_s_names};
+const asn1::table::seq_desc m1_thres_event_a2_s::desc = {{seq_table_m1_thres_event_a2_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_m1_thres_event_a2_s_opts,
+                                                          seq_table_m1_thres_event_a2_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // ReportIntervalMDT ::= ENUMERATED
 static const char*           enum_names_report_interv_mdt_e_values[] = {"ms120",
@@ -13455,13 +13811,16 @@ static const asn1::table::field_name seq_table_m1_periodic_report_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_m1_periodic_report_s_opts[]  = {
     {2, (int32_t)offsetof(m1_periodic_report_s, ie_exts_present)}};
-const asn1::table::seq_desc m1_periodic_report_s::desc = {
-    {seq_table_m1_periodic_report_s_fields, 3, UINT64_C(0x3), seq_table_m1_periodic_report_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_m1_periodic_report_s_names};
+const asn1::table::seq_desc m1_periodic_report_s::desc = {{seq_table_m1_periodic_report_s_fields,
+                                                           uint64_t{0x3},
+                                                           seq_table_m1_periodic_report_s_opts,
+                                                           seq_table_m1_periodic_report_s_names,
+                                                           3,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // IncludeBeamMeasurementsIndication ::= ENUMERATED
 static const char*           enum_names_include_beam_meass_ind_e_values[] = {"true"};
@@ -13552,12 +13911,12 @@ static const asn1::table::seq_opt    seq_table_m1_cfg_s_opts[]  = {
     {1, (int32_t)offsetof(m1_cfg_s, m1thres_event_a2_present)},
     {2, (int32_t)offsetof(m1_cfg_s, m1periodic_report_present)},
     {3, (int32_t)offsetof(m1_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc m1_cfg_s::desc = {{seq_table_m1_cfg_s_fields, 4, UINT64_C(0x1), seq_table_m1_cfg_s_opts, 3},
-                                              true,
-                                              true,
-                                              nullptr,
-                                              0,
-                                              seq_table_m1_cfg_s_names};
+const asn1::table::seq_desc m1_cfg_s::desc = {
+    {seq_table_m1_cfg_s_fields, uint64_t{0x1}, seq_table_m1_cfg_s_opts, seq_table_m1_cfg_s_names, 4, 3},
+    true,
+    true,
+    nullptr,
+    0};
 
 // M4period ::= ENUMERATED
 static const char*           enum_names_m4period_e_values[] = {"ms1024", "ms2048", "ms5120", "ms10240", "min1"};
@@ -13644,12 +14003,12 @@ static const asn1::table::field_name seq_table_m4_cfg_s_names[] = {{"m4period", 
                                                                    {"m4-links-to-log", nullptr},
                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_m4_cfg_s_opts[]  = {{2, (int32_t)offsetof(m4_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc m4_cfg_s::desc = {{seq_table_m4_cfg_s_fields, 3, UINT64_C(0x3), seq_table_m4_cfg_s_opts, 1},
-                                              true,
-                                              true,
-                                              nullptr,
-                                              0,
-                                              seq_table_m4_cfg_s_names};
+const asn1::table::seq_desc          m4_cfg_s::desc             = {
+    {seq_table_m4_cfg_s_fields, uint64_t{0x3}, seq_table_m4_cfg_s_opts, seq_table_m4_cfg_s_names, 3, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // M5period ::= ENUMERATED
 static const char*           enum_names_m5period_e_values[] = {"ms1024", "ms2048", "ms5120", "ms10240", "min1"};
@@ -13732,12 +14091,12 @@ static const asn1::table::field_name seq_table_m5_cfg_s_names[] = {{"m5period", 
                                                                    {"m5-links-to-log", nullptr},
                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_m5_cfg_s_opts[]  = {{2, (int32_t)offsetof(m5_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc m5_cfg_s::desc = {{seq_table_m5_cfg_s_fields, 3, UINT64_C(0x3), seq_table_m5_cfg_s_opts, 1},
-                                              true,
-                                              true,
-                                              nullptr,
-                                              0,
-                                              seq_table_m5_cfg_s_names};
+const asn1::table::seq_desc          m5_cfg_s::desc             = {
+    {seq_table_m5_cfg_s_fields, uint64_t{0x3}, seq_table_m5_cfg_s_opts, seq_table_m5_cfg_s_names, 3, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // M6report-Interval ::= ENUMERATED
 static const char*           enum_names_m6report_interv_e_values[] = {"ms120",
@@ -13795,7 +14154,7 @@ static const asn1::table::seq_field ie_table_m6_cfg_ext_ies_container_values[] =
      false,
      true,
      1,
-     255,
+     254,
      &asn1::table::item_list_codec<decltype(m6_cfg_ext_ies_container::excess_packet_delay_thres_cfg),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -13848,12 +14207,12 @@ static const asn1::table::field_name seq_table_m6_cfg_s_names[] = {{"m6report-In
                                                                    {"m6-links-to-log", nullptr},
                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_m6_cfg_s_opts[]  = {{2, (int32_t)offsetof(m6_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc m6_cfg_s::desc = {{seq_table_m6_cfg_s_fields, 3, UINT64_C(0x3), seq_table_m6_cfg_s_opts, 1},
-                                              true,
-                                              true,
-                                              nullptr,
-                                              0,
-                                              seq_table_m6_cfg_s_names};
+const asn1::table::seq_desc          m6_cfg_s::desc             = {
+    {seq_table_m6_cfg_s_fields, uint64_t{0x3}, seq_table_m6_cfg_s_opts, seq_table_m6_cfg_s_names, 3, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // M7ReportAmountMDT ::= ENUMERATED
 static const char* enum_names_m7_report_amount_mdt_e_values[] =
@@ -13901,8 +14260,8 @@ static const asn1::table::seq_field seq_table_m7_cfg_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(60),
+     int64_t{1},
+     uint64_t{59},
      nullptr},
     {offsetof(m7_cfg_s, m7_links_to_log),
      asn1::table::seq_field::mandatory,
@@ -13926,12 +14285,12 @@ static const asn1::table::field_name seq_table_m7_cfg_s_names[] = {{"m7period", 
                                                                    {"m7-links-to-log", nullptr},
                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_m7_cfg_s_opts[]  = {{2, (int32_t)offsetof(m7_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc m7_cfg_s::desc = {{seq_table_m7_cfg_s_fields, 3, UINT64_C(0x3), seq_table_m7_cfg_s_opts, 1},
-                                              true,
-                                              true,
-                                              nullptr,
-                                              0,
-                                              seq_table_m7_cfg_s_names};
+const asn1::table::seq_desc          m7_cfg_s::desc             = {
+    {seq_table_m7_cfg_s_fields, uint64_t{0x3}, seq_table_m7_cfg_s_opts, seq_table_m7_cfg_s_names, 3, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // WLANMeasConfig ::= ENUMERATED
 static const char*           enum_names_wlan_meas_cfg_e_values[] = {"setup"};
@@ -13959,13 +14318,16 @@ static const asn1::table::field_name seq_table_wlan_meas_cfg_name_item_s_names[]
                                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_wlan_meas_cfg_name_item_s_opts[]  = {
     {1, (int32_t)offsetof(wlan_meas_cfg_name_item_s, ie_exts_present)}};
-const asn1::table::seq_desc wlan_meas_cfg_name_item_s::desc = {
-    {seq_table_wlan_meas_cfg_name_item_s_fields, 2, UINT64_C(0x1), seq_table_wlan_meas_cfg_name_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_wlan_meas_cfg_name_item_s_names};
+const asn1::table::seq_desc wlan_meas_cfg_name_item_s::desc = {{seq_table_wlan_meas_cfg_name_item_s_fields,
+                                                                uint64_t{0x1},
+                                                                seq_table_wlan_meas_cfg_name_item_s_opts,
+                                                                seq_table_wlan_meas_cfg_name_item_s_names,
+                                                                2,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // WLANMeasurementConfiguration ::= SEQUENCE
 static const asn1::table::seq_field seq_table_wlan_meas_cfg_s_fields[] = {
@@ -13984,7 +14346,7 @@ static const asn1::table::seq_field seq_table_wlan_meas_cfg_s_fields[] = {
      false,
      true,
      1,
-     4,
+     3,
      &asn1::table::item_list_codec<decltype(wlan_meas_cfg_s::wlan_meas_cfg_name_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -14026,13 +14388,16 @@ static const asn1::table::seq_opt    seq_table_wlan_meas_cfg_s_opts[]  = {
     {2, (int32_t)offsetof(wlan_meas_cfg_s, wlan_rssi_present)},
     {3, (int32_t)offsetof(wlan_meas_cfg_s, wlan_rtt_present)},
     {4, (int32_t)offsetof(wlan_meas_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc wlan_meas_cfg_s::desc = {
-    {seq_table_wlan_meas_cfg_s_fields, 5, UINT64_C(0x1), seq_table_wlan_meas_cfg_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_wlan_meas_cfg_s_names};
+const asn1::table::seq_desc wlan_meas_cfg_s::desc = {{seq_table_wlan_meas_cfg_s_fields,
+                                                      uint64_t{0x1},
+                                                      seq_table_wlan_meas_cfg_s_opts,
+                                                      seq_table_wlan_meas_cfg_s_names,
+                                                      5,
+                                                      4},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 static const char*           enum_names_wlan_meas_cfg_s_wlan_rssi_e__values[] = {"true"};
 const asn1::table::enum_desc wlan_meas_cfg_s::wlan_rssi_opts::desc = {enum_names_wlan_meas_cfg_s_wlan_rssi_e__values,
@@ -14066,13 +14431,16 @@ static const asn1::table::field_name seq_table_mdt_location_info_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_mdt_location_info_s_opts[]  = {
     {1, (int32_t)offsetof(mdt_location_info_s, ie_exts_present)}};
-const asn1::table::seq_desc mdt_location_info_s::desc = {
-    {seq_table_mdt_location_info_s_fields, 2, UINT64_C(0x1), seq_table_mdt_location_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mdt_location_info_s_names};
+const asn1::table::seq_desc mdt_location_info_s::desc = {{seq_table_mdt_location_info_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_mdt_location_info_s_opts,
+                                                          seq_table_mdt_location_info_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // SensorMeasConfig ::= ENUMERATED
 static const char*           enum_names_sensor_meas_cfg_e_values[] = {"setup"};
@@ -14213,13 +14581,16 @@ static const asn1::table::field_name seq_table_sensor_meas_cfg_name_item_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_sensor_meas_cfg_name_item_s_opts[]  = {
     {1, (int32_t)offsetof(sensor_meas_cfg_name_item_s, ie_exts_present)}};
-const asn1::table::seq_desc sensor_meas_cfg_name_item_s::desc = {
-    {seq_table_sensor_meas_cfg_name_item_s_fields, 2, UINT64_C(0x1), seq_table_sensor_meas_cfg_name_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sensor_meas_cfg_name_item_s_names};
+const asn1::table::seq_desc sensor_meas_cfg_name_item_s::desc = {{seq_table_sensor_meas_cfg_name_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_sensor_meas_cfg_name_item_s_opts,
+                                                                  seq_table_sensor_meas_cfg_name_item_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // SensorMeasurementConfiguration ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sensor_meas_cfg_s_fields[] = {
@@ -14238,7 +14609,7 @@ static const asn1::table::seq_field seq_table_sensor_meas_cfg_s_fields[] = {
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(sensor_meas_cfg_s::sensor_meas_cfg_name_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -14258,13 +14629,16 @@ static const asn1::table::field_name seq_table_sensor_meas_cfg_s_names[] = {{"se
 static const asn1::table::seq_opt    seq_table_sensor_meas_cfg_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(sensor_meas_cfg_s, ie_exts_present)}};
-const asn1::table::seq_desc sensor_meas_cfg_s::desc = {
-    {seq_table_sensor_meas_cfg_s_fields, 3, UINT64_C(0x1), seq_table_sensor_meas_cfg_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sensor_meas_cfg_s_names};
+const asn1::table::seq_desc sensor_meas_cfg_s::desc = {{seq_table_sensor_meas_cfg_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_sensor_meas_cfg_s_opts,
+                                                        seq_table_sensor_meas_cfg_s_names,
+                                                        3,
+                                                        2},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // ImmediateMDTNr ::= SEQUENCE
 static const asn1::table::seq_field seq_table_immediate_mdt_nr_s_fields[] = {
@@ -14388,13 +14762,16 @@ static const asn1::table::seq_opt seq_table_immediate_mdt_nr_s_opts[] = {
     {8, (int32_t)offsetof(immediate_mdt_nr_s, mdt_location_info_present)},
     {9, (int32_t)offsetof(immediate_mdt_nr_s, sensor_meas_cfg_present)},
     {10, (int32_t)offsetof(immediate_mdt_nr_s, ie_exts_present)}};
-const asn1::table::seq_desc immediate_mdt_nr_s::desc = {
-    {seq_table_immediate_mdt_nr_s_fields, 11, UINT64_C(0x1), seq_table_immediate_mdt_nr_s_opts, 10},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_immediate_mdt_nr_s_names};
+const asn1::table::seq_desc immediate_mdt_nr_s::desc = {{seq_table_immediate_mdt_nr_s_fields,
+                                                         uint64_t{0x1},
+                                                         seq_table_immediate_mdt_nr_s_opts,
+                                                         seq_table_immediate_mdt_nr_s_names,
+                                                         11,
+                                                         10},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // RecommendedRANNodeItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_recommended_ran_node_item_s_fields[] = {
@@ -14419,13 +14796,16 @@ static const asn1::table::field_name seq_table_recommended_ran_node_item_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_recommended_ran_node_item_s_opts[]  = {
     {1, (int32_t)offsetof(recommended_ran_node_item_s, ie_exts_present)}};
-const asn1::table::seq_desc recommended_ran_node_item_s::desc = {
-    {seq_table_recommended_ran_node_item_s_fields, 2, UINT64_C(0x1), seq_table_recommended_ran_node_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_recommended_ran_node_item_s_names};
+const asn1::table::seq_desc recommended_ran_node_item_s::desc = {{seq_table_recommended_ran_node_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_recommended_ran_node_item_s_opts,
+                                                                  seq_table_recommended_ran_node_item_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // RecommendedRANNodesForPaging ::= SEQUENCE
 static const asn1::table::seq_field seq_table_recommended_ran_nodes_for_paging_s_fields[] = {
@@ -14435,7 +14815,7 @@ static const asn1::table::seq_field seq_table_recommended_ran_nodes_for_paging_s
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(recommended_ran_nodes_for_paging_s::recommended_ran_node_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -14457,15 +14837,15 @@ static const asn1::table::seq_opt seq_table_recommended_ran_nodes_for_paging_s_o
     {1, (int32_t)offsetof(recommended_ran_nodes_for_paging_s, ie_exts_present)}};
 const asn1::table::seq_desc recommended_ran_nodes_for_paging_s::desc = {
     {seq_table_recommended_ran_nodes_for_paging_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_recommended_ran_nodes_for_paging_s_opts,
+     seq_table_recommended_ran_nodes_for_paging_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_recommended_ran_nodes_for_paging_s_names};
+    0};
 
 // InfoOnRecommendedCellsAndRANNodesForPaging ::= SEQUENCE
 static const asn1::table::seq_field seq_table_info_on_recommended_cells_and_ran_nodes_for_paging_s_fields[] = {
@@ -14504,15 +14884,15 @@ static const asn1::table::seq_opt seq_table_info_on_recommended_cells_and_ran_no
     {2, (int32_t)offsetof(info_on_recommended_cells_and_ran_nodes_for_paging_s, ie_exts_present)}};
 const asn1::table::seq_desc info_on_recommended_cells_and_ran_nodes_for_paging_s::desc = {
     {seq_table_info_on_recommended_cells_and_ran_nodes_for_paging_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_info_on_recommended_cells_and_ran_nodes_for_paging_s_opts,
+     seq_table_info_on_recommended_cells_and_ran_nodes_for_paging_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_info_on_recommended_cells_and_ran_nodes_for_paging_s_names};
+    0};
 
 // IntegrityProtectionIndication ::= ENUMERATED
 static const char*           enum_names_integrity_protection_ind_e_values[] = {"required", "preferred", "not-needed"};
@@ -14544,13 +14924,16 @@ static const asn1::table::field_name seq_table_inter_sys_fail_ind_s_names[] = {{
 static const asn1::table::seq_opt    seq_table_inter_sys_fail_ind_s_opts[]  = {
     {0, (int32_t)offsetof(inter_sys_fail_ind_s, ue_rlf_report_container_present)},
     {1, (int32_t)offsetof(inter_sys_fail_ind_s, ie_exts_present)}};
-const asn1::table::seq_desc inter_sys_fail_ind_s::desc = {
-    {seq_table_inter_sys_fail_ind_s_fields, 2, UINT64_C(0x0), seq_table_inter_sys_fail_ind_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_inter_sys_fail_ind_s_names};
+const asn1::table::seq_desc inter_sys_fail_ind_s::desc = {{seq_table_inter_sys_fail_ind_s_fields,
+                                                           uint64_t{0x0},
+                                                           seq_table_inter_sys_fail_ind_s_opts,
+                                                           seq_table_inter_sys_fail_ind_s_names,
+                                                           2,
+                                                           2},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // TooearlyIntersystemHO ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tooearly_intersys_ho_s_fields[] = {
@@ -14596,13 +14979,16 @@ static const asn1::table::field_name seq_table_tooearly_intersys_ho_s_names[] = 
 static const asn1::table::seq_opt    seq_table_tooearly_intersys_ho_s_opts[]  = {
     {2, (int32_t)offsetof(tooearly_intersys_ho_s, ue_rlf_report_container_present)},
     {3, (int32_t)offsetof(tooearly_intersys_ho_s, ie_exts_present)}};
-const asn1::table::seq_desc tooearly_intersys_ho_s::desc = {
-    {seq_table_tooearly_intersys_ho_s_fields, 4, UINT64_C(0x3), seq_table_tooearly_intersys_ho_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tooearly_intersys_ho_s_names};
+const asn1::table::seq_desc tooearly_intersys_ho_s::desc = {{seq_table_tooearly_intersys_ho_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_tooearly_intersys_ho_s_opts,
+                                                             seq_table_tooearly_intersys_ho_s_names,
+                                                             4,
+                                                             2},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // IntersystemUnnecessaryHO ::= SEQUENCE
 static const asn1::table::seq_field seq_table_intersys_unnecessary_ho_s_fields[] = {
@@ -14639,7 +15025,7 @@ static const asn1::table::seq_field seq_table_intersys_unnecessary_ho_s_fields[]
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(intersys_unnecessary_ho_s::candidate_cell_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -14660,13 +15046,16 @@ static const asn1::table::field_name seq_table_intersys_unnecessary_ho_s_names[]
                                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_intersys_unnecessary_ho_s_opts[]  = {
     {4, (int32_t)offsetof(intersys_unnecessary_ho_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_unnecessary_ho_s::desc = {
-    {seq_table_intersys_unnecessary_ho_s_fields, 5, UINT64_C(0xf), seq_table_intersys_unnecessary_ho_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_unnecessary_ho_s_names};
+const asn1::table::seq_desc intersys_unnecessary_ho_s::desc = {{seq_table_intersys_unnecessary_ho_s_fields,
+                                                                uint64_t{0xf},
+                                                                seq_table_intersys_unnecessary_ho_s_opts,
+                                                                seq_table_intersys_unnecessary_ho_s_names,
+                                                                5,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 static const char*           enum_names_intersys_unnecessary_ho_s_early_iratho_e__values[] = {"true", "false"};
 const asn1::table::enum_desc intersys_unnecessary_ho_s::early_iratho_opts::desc            = {
@@ -14733,15 +15122,15 @@ static const asn1::table::seq_opt seq_table_intersys_mob_failfor_voice_fallback_
     {4, (int32_t)offsetof(intersys_mob_failfor_voice_fallback_s, ie_exts_present)}};
 const asn1::table::seq_desc intersys_mob_failfor_voice_fallback_s::desc = {
     {seq_table_intersys_mob_failfor_voice_fallback_s_fields,
-     5,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_intersys_mob_failfor_voice_fallback_s_opts,
+     seq_table_intersys_mob_failfor_voice_fallback_s_names,
+     5,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_intersys_mob_failfor_voice_fallback_s_names};
+    0};
 
 // InterSystemHandoverReportType-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_inter_sys_ho_report_type_ext_ies_o[]    = {384};
@@ -14895,13 +15284,16 @@ static const asn1::table::field_name seq_table_inter_sys_ho_report_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_inter_sys_ho_report_s_opts[]  = {
     {1, (int32_t)offsetof(inter_sys_ho_report_s, ie_exts_present)}};
-const asn1::table::seq_desc inter_sys_ho_report_s::desc = {
-    {seq_table_inter_sys_ho_report_s_fields, 2, UINT64_C(0x1), seq_table_inter_sys_ho_report_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_inter_sys_ho_report_s_names};
+const asn1::table::seq_desc inter_sys_ho_report_s::desc = {{seq_table_inter_sys_ho_report_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_inter_sys_ho_report_s_opts,
+                                                            seq_table_inter_sys_ho_report_s_names,
+                                                            2,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // IntersystemCellActivationReply ::= SEQUENCE
 static const asn1::table::seq_field seq_table_intersys_cell_activation_reply_s_fields[] = {
@@ -14911,7 +15303,7 @@ static const asn1::table::seq_field seq_table_intersys_cell_activation_reply_s_f
      false,
      true,
      1,
-     16384,
+     16383,
      &asn1::table::item_list_codec<decltype(intersys_cell_activation_reply_s::activ_cell_list),
                                    asn1::table::choice_item_ops,
                                    false,
@@ -14922,8 +15314,8 @@ static const asn1::table::seq_field seq_table_intersys_cell_activation_reply_s_f
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(16384),
+     int64_t{0},
+     uint64_t{16384},
      nullptr},
     {offsetof(intersys_cell_activation_reply_s, ie_exts),
      (int32_t)offsetof(intersys_cell_activation_reply_s, ie_exts_present),
@@ -14941,15 +15333,15 @@ static const asn1::table::seq_opt seq_table_intersys_cell_activation_reply_s_opt
     {2, (int32_t)offsetof(intersys_cell_activation_reply_s, ie_exts_present)}};
 const asn1::table::seq_desc intersys_cell_activation_reply_s::desc = {
     {seq_table_intersys_cell_activation_reply_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_intersys_cell_activation_reply_s_opts,
+     seq_table_intersys_cell_activation_reply_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_intersys_cell_activation_reply_s_names};
+    0};
 
 // IntersystemCellActivationRequest ::= SEQUENCE
 static const asn1::table::seq_field seq_table_intersys_cell_activation_request_s_fields[] = {
@@ -14958,8 +15350,8 @@ static const asn1::table::seq_field seq_table_intersys_cell_activation_request_s
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(16384),
+     int64_t{0},
+     uint64_t{16384},
      nullptr},
     {offsetof(intersys_cell_activation_request_s, cells_to_activ_list),
      asn1::table::seq_field::mandatory,
@@ -14967,7 +15359,7 @@ static const asn1::table::seq_field seq_table_intersys_cell_activation_request_s
      false,
      true,
      1,
-     16384,
+     16383,
      &asn1::table::item_list_codec<decltype(intersys_cell_activation_request_s::cells_to_activ_list),
                                    asn1::table::choice_item_ops,
                                    false,
@@ -14990,15 +15382,15 @@ static const asn1::table::seq_opt seq_table_intersys_cell_activation_request_s_o
     {2, (int32_t)offsetof(intersys_cell_activation_request_s, ie_exts_present)}};
 const asn1::table::seq_desc intersys_cell_activation_request_s::desc = {
     {seq_table_intersys_cell_activation_request_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_intersys_cell_activation_request_s_opts,
+     seq_table_intersys_cell_activation_request_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_intersys_cell_activation_request_s_names};
+    0};
 
 // NotificationCell-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_notif_cell_item_s_fields[] = {
@@ -15033,13 +15425,16 @@ static const asn1::table::field_name seq_table_notif_cell_item_s_names[] = {{"nG
                                                                             {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_notif_cell_item_s_opts[]  = {
     {2, (int32_t)offsetof(notif_cell_item_s, ie_exts_present)}};
-const asn1::table::seq_desc notif_cell_item_s::desc = {
-    {seq_table_notif_cell_item_s_fields, 3, UINT64_C(0x3), seq_table_notif_cell_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_notif_cell_item_s_names};
+const asn1::table::seq_desc notif_cell_item_s::desc = {{seq_table_notif_cell_item_s_fields,
+                                                        uint64_t{0x3},
+                                                        seq_table_notif_cell_item_s_opts,
+                                                        seq_table_notif_cell_item_s_names,
+                                                        3,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 static const char*           enum_names_notif_cell_item_s_notify_flag_e__values[] = {"activated", "deactivated"};
 const asn1::table::enum_desc notif_cell_item_s::notify_flag_opts::desc            = {
@@ -15055,7 +15450,7 @@ static const asn1::table::seq_field seq_table_intersys_cell_state_ind_s_fields[]
      false,
      true,
      1,
-     16384,
+     16383,
      &asn1::table::item_list_codec<decltype(intersys_cell_state_ind_s::notif_cell_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -15073,13 +15468,16 @@ static const asn1::table::field_name seq_table_intersys_cell_state_ind_s_names[]
                                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_intersys_cell_state_ind_s_opts[]  = {
     {1, (int32_t)offsetof(intersys_cell_state_ind_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_cell_state_ind_s::desc = {
-    {seq_table_intersys_cell_state_ind_s_fields, 2, UINT64_C(0x1), seq_table_intersys_cell_state_ind_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_cell_state_ind_s_names};
+const asn1::table::seq_desc intersys_cell_state_ind_s::desc = {{seq_table_intersys_cell_state_ind_s_fields,
+                                                                uint64_t{0x1},
+                                                                seq_table_intersys_cell_state_ind_s_opts,
+                                                                seq_table_intersys_cell_state_ind_s_names,
+                                                                2,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // NGRAN-CellToReportItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ngran_cell_to_report_item_s_fields[] = {
@@ -15104,13 +15502,16 @@ static const asn1::table::field_name seq_table_ngran_cell_to_report_item_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ngran_cell_to_report_item_s_opts[]  = {
     {1, (int32_t)offsetof(ngran_cell_to_report_item_s, ie_exts_present)}};
-const asn1::table::seq_desc ngran_cell_to_report_item_s::desc = {
-    {seq_table_ngran_cell_to_report_item_s_fields, 2, UINT64_C(0x1), seq_table_ngran_cell_to_report_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ngran_cell_to_report_item_s_names};
+const asn1::table::seq_desc ngran_cell_to_report_item_s::desc = {{seq_table_ngran_cell_to_report_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_ngran_cell_to_report_item_s_opts,
+                                                                  seq_table_ngran_cell_to_report_item_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // NGRAN-ReportingSystemIEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ngran_report_sys_ies_s_fields[] = {
@@ -15120,7 +15521,7 @@ static const asn1::table::seq_field seq_table_ngran_report_sys_ies_s_fields[] = 
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(ngran_report_sys_ies_s::ngran_cell_to_report_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -15138,13 +15539,16 @@ static const asn1::table::field_name seq_table_ngran_report_sys_ies_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ngran_report_sys_ies_s_opts[]  = {
     {1, (int32_t)offsetof(ngran_report_sys_ies_s, ie_exts_present)}};
-const asn1::table::seq_desc ngran_report_sys_ies_s::desc = {
-    {seq_table_ngran_report_sys_ies_s_fields, 2, UINT64_C(0x1), seq_table_ngran_report_sys_ies_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ngran_report_sys_ies_s_names};
+const asn1::table::seq_desc ngran_report_sys_ies_s::desc = {{seq_table_ngran_report_sys_ies_s_fields,
+                                                             uint64_t{0x1},
+                                                             seq_table_ngran_report_sys_ies_s_opts,
+                                                             seq_table_ngran_report_sys_ies_s_names,
+                                                             2,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // ReportingSystem ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_report_sys_c_alternatives[] = {
@@ -15250,13 +15654,16 @@ static const asn1::table::field_name seq_table_intersys_res_status_reply_s_names
                                                                                       {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_intersys_res_status_reply_s_opts[]  = {
     {1, (int32_t)offsetof(intersys_res_status_reply_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_res_status_reply_s::desc = {
-    {seq_table_intersys_res_status_reply_s_fields, 2, UINT64_C(0x1), seq_table_intersys_res_status_reply_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_res_status_reply_s_names};
+const asn1::table::seq_desc intersys_res_status_reply_s::desc = {{seq_table_intersys_res_status_reply_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_intersys_res_status_reply_s_opts,
+                                                                  seq_table_intersys_res_status_reply_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // NGRAN-RadioResourceStatus ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ngran_rr_status_s_fields[] = {
@@ -15265,48 +15672,48 @@ static const asn1::table::seq_field seq_table_ngran_rr_status_s_fields[] = {
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(ngran_rr_status_s, ul_gbr_prb_usage_for_mimo),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(ngran_rr_status_s, dl_non_gbr_prb_usage_for_mimo),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(ngran_rr_status_s, ul_non_gbr_prb_usage_for_mimo),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(ngran_rr_status_s, dl_total_prb_usage_for_mimo),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(ngran_rr_status_s, ul_total_prb_usage_for_mimo),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(100),
+     int64_t{0},
+     uint64_t{100},
      nullptr},
     {offsetof(ngran_rr_status_s, ie_exts),
      (int32_t)offsetof(ngran_rr_status_s, ie_exts_present),
@@ -15325,13 +15732,16 @@ static const asn1::table::field_name seq_table_ngran_rr_status_s_names[] = {{"dL
                                                                             {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ngran_rr_status_s_opts[]  = {
     {6, (int32_t)offsetof(ngran_rr_status_s, ie_exts_present)}};
-const asn1::table::seq_desc ngran_rr_status_s::desc = {
-    {seq_table_ngran_rr_status_s_fields, 7, UINT64_C(0x3f), seq_table_ngran_rr_status_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ngran_rr_status_s_names};
+const asn1::table::seq_desc ngran_rr_status_s::desc = {{seq_table_ngran_rr_status_s_fields,
+                                                        uint64_t{0x3f},
+                                                        seq_table_ngran_rr_status_s_opts,
+                                                        seq_table_ngran_rr_status_s_names,
+                                                        7,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // NGRAN-CellReportItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ngran_cell_report_item_s_fields[] = {
@@ -15358,16 +15768,16 @@ static const asn1::table::seq_field seq_table_ngran_cell_report_item_s_fields[] 
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(16777215),
+     int64_t{0},
+     uint64_t{16777215},
      nullptr},
     {offsetof(ngran_cell_report_item_s, ngran_noof_rrc_conns),
      (int32_t)offsetof(ngran_cell_report_item_s, ngran_noof_rrc_conns_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65536),
+     int64_t{1},
+     uint64_t{65535},
      nullptr},
     {offsetof(ngran_cell_report_item_s, ngran_rr_status),
      (int32_t)offsetof(ngran_cell_report_item_s, ngran_rr_status_present),
@@ -15398,13 +15808,16 @@ static const asn1::table::seq_opt seq_table_ngran_cell_report_item_s_opts[] = {
     {3, (int32_t)offsetof(ngran_cell_report_item_s, ngran_noof_rrc_conns_present)},
     {4, (int32_t)offsetof(ngran_cell_report_item_s, ngran_rr_status_present)},
     {5, (int32_t)offsetof(ngran_cell_report_item_s, ie_exts_present)}};
-const asn1::table::seq_desc ngran_cell_report_item_s::desc = {
-    {seq_table_ngran_cell_report_item_s_fields, 6, UINT64_C(0x3), seq_table_ngran_cell_report_item_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ngran_cell_report_item_s_names};
+const asn1::table::seq_desc ngran_cell_report_item_s::desc = {{seq_table_ngran_cell_report_item_s_fields,
+                                                               uint64_t{0x3},
+                                                               seq_table_ngran_cell_report_item_s_opts,
+                                                               seq_table_ngran_cell_report_item_s_names,
+                                                               6,
+                                                               4},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // NGRAN-ReportingStatusIEs ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ngran_report_status_ies_s_fields[] = {
@@ -15414,7 +15827,7 @@ static const asn1::table::seq_field seq_table_ngran_report_status_ies_s_fields[]
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(ngran_report_status_ies_s::ngran_cell_report_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -15432,13 +15845,16 @@ static const asn1::table::field_name seq_table_ngran_report_status_ies_s_names[]
                                                                                     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ngran_report_status_ies_s_opts[]  = {
     {1, (int32_t)offsetof(ngran_report_status_ies_s, ie_exts_present)}};
-const asn1::table::seq_desc ngran_report_status_ies_s::desc = {
-    {seq_table_ngran_report_status_ies_s_fields, 2, UINT64_C(0x1), seq_table_ngran_report_status_ies_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ngran_report_status_ies_s_names};
+const asn1::table::seq_desc ngran_report_status_ies_s::desc = {{seq_table_ngran_report_status_ies_s_fields,
+                                                                uint64_t{0x1},
+                                                                seq_table_ngran_report_status_ies_s_opts,
+                                                                seq_table_ngran_report_status_ies_s_names,
+                                                                2,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // ResourceStatusReportingSystem ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_res_status_report_sys_c_alternatives[] = {
@@ -15543,13 +15959,16 @@ static const asn1::table::field_name seq_table_intersys_res_status_report_s_name
                                                                                        {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_intersys_res_status_report_s_opts[]  = {
     {1, (int32_t)offsetof(intersys_res_status_report_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_res_status_report_s::desc = {
-    {seq_table_intersys_res_status_report_s_fields, 2, UINT64_C(0x1), seq_table_intersys_res_status_report_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_res_status_report_s_names};
+const asn1::table::seq_desc intersys_res_status_report_s::desc = {{seq_table_intersys_res_status_report_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_intersys_res_status_report_s_opts,
+                                                                   seq_table_intersys_res_status_report_s_names,
+                                                                   2,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // ReportingPeriodicity ::= ENUMERATED
 static const char* enum_names_report_periodicity_e_values[] =
@@ -15597,13 +16016,16 @@ static const asn1::table::field_name seq_table_periodic_report_ies_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_periodic_report_ies_s_opts[]  = {
     {1, (int32_t)offsetof(periodic_report_ies_s, ie_exts_present)}};
-const asn1::table::seq_desc periodic_report_ies_s::desc = {
-    {seq_table_periodic_report_ies_s_fields, 2, UINT64_C(0x1), seq_table_periodic_report_ies_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_periodic_report_ies_s_names};
+const asn1::table::seq_desc periodic_report_ies_s::desc = {{seq_table_periodic_report_ies_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_periodic_report_ies_s_opts,
+                                                            seq_table_periodic_report_ies_s_names,
+                                                            2,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // ReportType ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_report_type_c_alternatives[] = {
@@ -15725,18 +16147,21 @@ static const asn1::table::field_name seq_table_intersys_res_status_request_s_nam
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_intersys_res_status_request_s_opts[] = {
     {3, (int32_t)offsetof(intersys_res_status_request_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_res_status_request_s::desc = {
-    {seq_table_intersys_res_status_request_s_fields, 4, UINT64_C(0x7), seq_table_intersys_res_status_request_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_res_status_request_s_names};
+const asn1::table::seq_desc intersys_res_status_request_s::desc = {{seq_table_intersys_res_status_request_s_fields,
+                                                                    uint64_t{0x7},
+                                                                    seq_table_intersys_res_status_request_s_opts,
+                                                                    seq_table_intersys_res_status_request_s_names,
+                                                                    4,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // IntersystemSONTransferType ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_intersys_son_transfer_type_c_alternatives[] = {
-    &asn1::table::alternative_ops<from_eutran_to_ngran_s, false>::value,
-    &asn1::table::alternative_ops<from_ngran_to_eutran_s, false>::value,
+    &asn1::table::alternative_ops<from_eutran_to_ngran_s, false, false>::value,
+    &asn1::table::alternative_ops<from_ngran_to_eutran_s, false, false>::value,
     &asn1::table::alternative_ops<protocol_ie_single_container_s<intersys_son_transfer_type_ext_ies_o>, false>::value};
 const asn1::table::choice_storage_desc intersys_son_transfer_type_c::storage_desc = {
     choice_storage_intersys_son_transfer_type_c_alternatives,
@@ -15905,7 +16330,8 @@ const asn1::table::enum_desc intersys_son_info_report_ext_ies_o::value_c::types_
 static const asn1::table::storage_ops* const choice_storage_intersys_son_info_report_c_alternatives[] = {
     &asn1::table::alternative_ops<inter_sys_ho_report_s, false>::value,
     &asn1::table::alternative_ops<inter_sys_fail_ind_s, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<intersys_son_info_report_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<intersys_son_info_report_ext_ies_o>, false, false>::
+        value};
 const asn1::table::choice_storage_desc intersys_son_info_report_c::storage_desc = {
     choice_storage_intersys_son_info_report_c_alternatives,
     3,
@@ -16229,8 +16655,8 @@ const asn1::table::enum_desc intersys_son_info_ext_ies_o::value_c::types_opts::d
 
 // IntersystemSONInformation ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_intersys_son_info_c_alternatives[] = {
-    &asn1::table::alternative_ops<intersys_son_info_report_c, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<intersys_son_info_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<intersys_son_info_report_c, false, false>::value,
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<intersys_son_info_ext_ies_o>, false, false>::value};
 const asn1::table::choice_storage_desc intersys_son_info_c::storage_desc = {
     choice_storage_intersys_son_info_c_alternatives,
     2,
@@ -16322,13 +16748,16 @@ static const asn1::table::field_name seq_table_intersys_son_cfg_transfer_s_names
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_intersys_son_cfg_transfer_s_opts[] = {
     {2, (int32_t)offsetof(intersys_son_cfg_transfer_s, ie_exts_present)}};
-const asn1::table::seq_desc intersys_son_cfg_transfer_s::desc = {
-    {seq_table_intersys_son_cfg_transfer_s_fields, 3, UINT64_C(0x3), seq_table_intersys_son_cfg_transfer_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_intersys_son_cfg_transfer_s_names};
+const asn1::table::seq_desc intersys_son_cfg_transfer_s::desc = {{seq_table_intersys_son_cfg_transfer_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  seq_table_intersys_son_cfg_transfer_s_opts,
+                                                                  seq_table_intersys_son_cfg_transfer_s_names,
+                                                                  3,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // LAI ::= SEQUENCE
 static const asn1::table::seq_field seq_table_lai_s_fields[] = {
@@ -16360,12 +16789,12 @@ static const asn1::table::field_name seq_table_lai_s_names[] = {{"pLMNidentity",
                                                                 {"lAC", nullptr},
                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_lai_s_opts[]  = {{2, (int32_t)offsetof(lai_s, ie_exts_present)}};
-const asn1::table::seq_desc          lai_s::desc = {{seq_table_lai_s_fields, 3, UINT64_C(0x3), seq_table_lai_s_opts, 1},
-                                                    true,
-                                                    true,
-                                                    nullptr,
-                                                    0,
-                                                    seq_table_lai_s_names};
+const asn1::table::seq_desc          lai_s::desc             = {
+    {seq_table_lai_s_fields, uint64_t{0x3}, seq_table_lai_s_opts, seq_table_lai_s_names, 3, 1},
+    true,
+    true,
+    nullptr,
+    0};
 
 // LTE-A2X-ServicesAuthorized ::= SEQUENCE
 static const asn1::table::seq_field seq_table_lte_a2_x_services_authorized_s_fields[] = {
@@ -16404,15 +16833,15 @@ static const asn1::table::seq_opt seq_table_lte_a2_x_services_authorized_s_opts[
     {1, (int32_t)offsetof(lte_a2_x_services_authorized_s, aerial_ctrller_ue_present)},
     {2, (int32_t)offsetof(lte_a2_x_services_authorized_s, ie_exts_present)}};
 const asn1::table::seq_desc lte_a2_x_services_authorized_s::desc = {{seq_table_lte_a2_x_services_authorized_s_fields,
-                                                                     3,
-                                                                     UINT64_C(0x0),
+                                                                     uint64_t{0x0},
                                                                      seq_table_lte_a2_x_services_authorized_s_opts,
+                                                                     seq_table_lte_a2_x_services_authorized_s_names,
+                                                                     3,
                                                                      3},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_lte_a2_x_services_authorized_s_names};
+                                                                    0};
 
 static const char* enum_names_lte_a2_x_services_authorized_s_aerial_ue_e__values[] = {"authorized", "not-authorized"};
 const asn1::table::enum_desc lte_a2_x_services_authorized_s::aerial_ue_opts::desc  = {
@@ -16438,8 +16867,8 @@ static const asn1::table::seq_field seq_table_lte_ue_sidelink_aggr_max_bitrate_s
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(lte_ue_sidelink_aggr_max_bitrate_s, ie_exts),
      (int32_t)offsetof(lte_ue_sidelink_aggr_max_bitrate_s, ie_exts_present),
@@ -16457,15 +16886,15 @@ static const asn1::table::seq_opt seq_table_lte_ue_sidelink_aggr_max_bitrate_s_o
     {1, (int32_t)offsetof(lte_ue_sidelink_aggr_max_bitrate_s, ie_exts_present)}};
 const asn1::table::seq_desc lte_ue_sidelink_aggr_max_bitrate_s::desc = {
     {seq_table_lte_ue_sidelink_aggr_max_bitrate_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_lte_ue_sidelink_aggr_max_bitrate_s_opts,
+     seq_table_lte_ue_sidelink_aggr_max_bitrate_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_lte_ue_sidelink_aggr_max_bitrate_s_names};
+    0};
 
 // VehicleUE ::= ENUMERATED
 static const char*           enum_names_vehicle_ue_e_values[] = {"authorized", "not-authorized"};
@@ -16510,13 +16939,16 @@ static const asn1::table::seq_opt    seq_table_ltev2x_services_authorized_s_opts
     {0, (int32_t)offsetof(ltev2x_services_authorized_s, vehicle_ue_present)},
     {1, (int32_t)offsetof(ltev2x_services_authorized_s, pedestrian_ue_present)},
     {2, (int32_t)offsetof(ltev2x_services_authorized_s, ie_exts_present)}};
-const asn1::table::seq_desc ltev2x_services_authorized_s::desc = {
-    {seq_table_ltev2x_services_authorized_s_fields, 3, UINT64_C(0x0), seq_table_ltev2x_services_authorized_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ltev2x_services_authorized_s_names};
+const asn1::table::seq_desc ltev2x_services_authorized_s::desc = {{seq_table_ltev2x_services_authorized_s_fields,
+                                                                   uint64_t{0x0},
+                                                                   seq_table_ltev2x_services_authorized_s_opts,
+                                                                   seq_table_ltev2x_services_authorized_s_names,
+                                                                   3,
+                                                                   3},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // LastVisitedPSCellInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_last_visited_pscell_info_s_fields[] = {
@@ -16534,8 +16966,8 @@ static const asn1::table::seq_field seq_table_last_visited_pscell_info_s_fields[
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(40950),
+     int64_t{0},
+     uint64_t{40950},
      nullptr},
     {offsetof(last_visited_pscell_info_s, ie_exts),
      (int32_t)offsetof(last_visited_pscell_info_s, ie_exts_present),
@@ -16551,13 +16983,16 @@ static const asn1::table::field_name seq_table_last_visited_pscell_info_s_names[
 static const asn1::table::seq_opt    seq_table_last_visited_pscell_info_s_opts[]  = {
     {0, (int32_t)offsetof(last_visited_pscell_info_s, pscell_id_present)},
     {2, (int32_t)offsetof(last_visited_pscell_info_s, ie_exts_present)}};
-const asn1::table::seq_desc last_visited_pscell_info_s::desc = {
-    {seq_table_last_visited_pscell_info_s_fields, 3, UINT64_C(0x2), seq_table_last_visited_pscell_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_last_visited_pscell_info_s_names};
+const asn1::table::seq_desc last_visited_pscell_info_s::desc = {{seq_table_last_visited_pscell_info_s_fields,
+                                                                 uint64_t{0x2},
+                                                                 seq_table_last_visited_pscell_info_s_opts,
+                                                                 seq_table_last_visited_pscell_info_s_names,
+                                                                 3,
+                                                                 2},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const uint32_t objset_id_last_visited_ngran_cell_info_ext_ies_o[]   = {289};
 static const uint8_t  objset_crit_last_visited_ngran_cell_info_ext_ies_o[] = {crit_e::ignore};
@@ -16570,7 +17005,7 @@ static const asn1::table::seq_field ie_table_last_visited_ngran_cell_info_ext_ie
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(last_visited_ngran_cell_info_ext_ies_container::last_visited_pscell_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -16615,16 +17050,16 @@ static const asn1::table::seq_field seq_table_last_visited_ngran_cell_info_s_fie
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(last_visited_ngran_cell_info_s, time_ue_stayed_in_cell_enhanced_granularity),
      (int32_t)offsetof(last_visited_ngran_cell_info_s, time_ue_stayed_in_cell_enhanced_granularity_present),
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(40950),
+     int64_t{0},
+     uint64_t{40950},
      nullptr},
     {offsetof(last_visited_ngran_cell_info_s, ho_cause_value),
      (int32_t)offsetof(last_visited_ngran_cell_info_s, ho_cause_value_present),
@@ -16656,15 +17091,15 @@ static const asn1::table::seq_opt seq_table_last_visited_ngran_cell_info_s_opts[
     {4, (int32_t)offsetof(last_visited_ngran_cell_info_s, ho_cause_value_present)},
     {5, (int32_t)offsetof(last_visited_ngran_cell_info_s, ie_exts_present)}};
 const asn1::table::seq_desc last_visited_ngran_cell_info_s::desc = {{seq_table_last_visited_ngran_cell_info_s_fields,
-                                                                     6,
-                                                                     UINT64_C(0x7),
+                                                                     uint64_t{0x7},
                                                                      seq_table_last_visited_ngran_cell_info_s_opts,
+                                                                     seq_table_last_visited_ngran_cell_info_s_names,
+                                                                     6,
                                                                      3},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_last_visited_ngran_cell_info_s_names};
+                                                                    0};
 
 // LastVisitedCellInformation ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_last_visited_cell_info_c_alternatives[] = {
@@ -16800,13 +17235,16 @@ static const asn1::table::field_name seq_table_last_visited_cell_item_s_names[] 
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_last_visited_cell_item_s_opts[] = {
     {1, (int32_t)offsetof(last_visited_cell_item_s, ie_exts_present)}};
-const asn1::table::seq_desc last_visited_cell_item_s::desc = {
-    {seq_table_last_visited_cell_item_s_fields, 2, UINT64_C(0x1), seq_table_last_visited_cell_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_last_visited_cell_item_s_names};
+const asn1::table::seq_desc last_visited_cell_item_s::desc = {{seq_table_last_visited_cell_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_last_visited_cell_item_s_opts,
+                                                               seq_table_last_visited_cell_item_s_names,
+                                                               2,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // LocationReportingAdditionalInfo ::= ENUMERATED
 static const char*           enum_names_location_report_add_info_e_values[] = {"includePSCell"};
@@ -16839,7 +17277,7 @@ static const asn1::table::seq_field ie_table_location_report_request_type_ext_ie
      false,
      true,
      1,
-     63,
+     62,
      &asn1::table::item_list_codec<
          decltype(location_report_request_type_ext_ies_container::add_cancelledlocation_report_ref_id_list),
          asn1::table::sequence_item_ops,
@@ -16888,7 +17326,7 @@ static const asn1::table::seq_field seq_table_location_report_request_type_s_fie
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(location_report_request_type_s::area_of_interest_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -16899,8 +17337,8 @@ static const asn1::table::seq_field seq_table_location_report_request_type_s_fie
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(64),
+     int64_t{1},
+     uint64_t{63},
      nullptr},
     {offsetof(location_report_request_type_s, ie_exts),
      (int32_t)offsetof(location_report_request_type_s, ie_exts_present),
@@ -16922,15 +17360,15 @@ static const asn1::table::seq_opt seq_table_location_report_request_type_s_opts[
     {3, (int32_t)offsetof(location_report_request_type_s, location_report_ref_id_to_be_cancelled_present)},
     {4, (int32_t)offsetof(location_report_request_type_s, ie_exts_present)}};
 const asn1::table::seq_desc location_report_request_type_s::desc = {{seq_table_location_report_request_type_s_fields,
-                                                                     5,
-                                                                     UINT64_C(0x3),
+                                                                     uint64_t{0x3},
                                                                      seq_table_location_report_request_type_s_opts,
+                                                                     seq_table_location_report_request_type_s_names,
+                                                                     5,
                                                                      3},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_location_report_request_type_s_names};
+                                                                    0};
 
 // LoggingInterval ::= ENUMERATED
 static const char* enum_names_logging_interv_e_values[] =
@@ -17107,7 +17545,7 @@ static const asn1::table::seq_field seq_table_logged_mdt_nr_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(logged_mdt_nr_s::area_scope_of_neigh_cells_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -17137,13 +17575,16 @@ static const asn1::table::seq_opt seq_table_logged_mdt_nr_s_opts[] = {
     {5, (int32_t)offsetof(logged_mdt_nr_s, sensor_meas_cfg_present)},
     {6, asn1::table::seq_field::list_presence},
     {7, (int32_t)offsetof(logged_mdt_nr_s, ie_exts_present)}};
-const asn1::table::seq_desc logged_mdt_nr_s::desc = {
-    {seq_table_logged_mdt_nr_s_fields, 8, UINT64_C(0x7), seq_table_logged_mdt_nr_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_logged_mdt_nr_s_names};
+const asn1::table::seq_desc logged_mdt_nr_s::desc = {{seq_table_logged_mdt_nr_s_fields,
+                                                      uint64_t{0x7},
+                                                      seq_table_logged_mdt_nr_s_opts,
+                                                      seq_table_logged_mdt_nr_s_names,
+                                                      8,
+                                                      5},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // MBS-ServiceAreaInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_service_area_info_s_fields[] = {
@@ -17153,7 +17594,7 @@ static const asn1::table::seq_field seq_table_mbs_service_area_info_s_fields[] =
      false,
      true,
      1,
-     8192,
+     8191,
      &asn1::table::item_list_codec<decltype(mbs_service_area_info_s::mbs_service_area_cell_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -17165,7 +17606,7 @@ static const asn1::table::seq_field seq_table_mbs_service_area_info_s_fields[] =
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::item_list_codec<decltype(mbs_service_area_info_s::mbs_service_area_tai_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -17186,13 +17627,16 @@ static const asn1::table::seq_opt    seq_table_mbs_service_area_info_s_opts[]  =
     {0, asn1::table::seq_field::list_presence},
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(mbs_service_area_info_s, ie_exts_present)}};
-const asn1::table::seq_desc mbs_service_area_info_s::desc = {
-    {seq_table_mbs_service_area_info_s_fields, 3, UINT64_C(0x0), seq_table_mbs_service_area_info_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mbs_service_area_info_s_names};
+const asn1::table::seq_desc mbs_service_area_info_s::desc = {{seq_table_mbs_service_area_info_s_fields,
+                                                              uint64_t{0x0},
+                                                              seq_table_mbs_service_area_info_s_opts,
+                                                              seq_table_mbs_service_area_info_s_names,
+                                                              3,
+                                                              3},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 // MBS-ServiceAreaInformationItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_service_area_info_item_s_fields[] = {
@@ -17201,8 +17645,8 @@ static const asn1::table::seq_field seq_table_mbs_service_area_info_item_s_field
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_service_area_info_item_s, mbs_service_area_info),
      asn1::table::seq_field::mandatory,
@@ -17227,13 +17671,16 @@ static const asn1::table::field_name seq_table_mbs_service_area_info_item_s_name
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_mbs_service_area_info_item_s_opts[] = {
     {2, (int32_t)offsetof(mbs_service_area_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc mbs_service_area_info_item_s::desc = {
-    {seq_table_mbs_service_area_info_item_s_fields, 3, UINT64_C(0x3), seq_table_mbs_service_area_info_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mbs_service_area_info_item_s_names};
+const asn1::table::seq_desc mbs_service_area_info_item_s::desc = {{seq_table_mbs_service_area_info_item_s_fields,
+                                                                   uint64_t{0x3},
+                                                                   seq_table_mbs_service_area_info_item_s_opts,
+                                                                   seq_table_mbs_service_area_info_item_s_names,
+                                                                   3,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // MBS-ServiceArea ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_mbs_service_area_c_alternatives[] = {
@@ -17276,7 +17723,7 @@ static const asn1::table::seq_field choice_table_mbs_service_area_c_alternatives
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<mbs_service_area_info_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -17321,16 +17768,16 @@ static const asn1::table::seq_field ie_table_non_dyn_5qi_descriptor_ext_ies_cont
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(non_dyn_5qi_descriptor_ext_ies_container, cn_packet_delay_budget_ul),
      (int32_t)offsetof(non_dyn_5qi_descriptor_ext_ies_container, cn_packet_delay_budget_ul_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const int32_t ie_table_non_dyn_5qi_descriptor_ext_ies_container_presences[] = {
     (int32_t)offsetof(non_dyn_5qi_descriptor_ext_ies_container, cn_packet_delay_budget_dl_present),
@@ -17354,32 +17801,32 @@ static const asn1::table::seq_field seq_table_non_dyn_5qi_descriptor_s_fields[] 
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(non_dyn_5qi_descriptor_s, prio_level_qos),
      (int32_t)offsetof(non_dyn_5qi_descriptor_s, prio_level_qos_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(127),
+     int64_t{1},
+     uint64_t{126},
      nullptr},
     {offsetof(non_dyn_5qi_descriptor_s, averaging_win),
      (int32_t)offsetof(non_dyn_5qi_descriptor_s, averaging_win_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(non_dyn_5qi_descriptor_s, max_data_burst_volume),
      (int32_t)offsetof(non_dyn_5qi_descriptor_s, max_data_burst_volume_present),
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(non_dyn_5qi_descriptor_s, ie_exts),
      (int32_t)offsetof(non_dyn_5qi_descriptor_s, ie_exts_present),
@@ -17400,13 +17847,16 @@ static const asn1::table::seq_opt    seq_table_non_dyn_5qi_descriptor_s_opts[]  
     {2, (int32_t)offsetof(non_dyn_5qi_descriptor_s, averaging_win_present)},
     {3, (int32_t)offsetof(non_dyn_5qi_descriptor_s, max_data_burst_volume_present)},
     {4, (int32_t)offsetof(non_dyn_5qi_descriptor_s, ie_exts_present)}};
-const asn1::table::seq_desc non_dyn_5qi_descriptor_s::desc = {
-    {seq_table_non_dyn_5qi_descriptor_s_fields, 5, UINT64_C(0x1), seq_table_non_dyn_5qi_descriptor_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_non_dyn_5qi_descriptor_s_names};
+const asn1::table::seq_desc non_dyn_5qi_descriptor_s::desc = {{seq_table_non_dyn_5qi_descriptor_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_non_dyn_5qi_descriptor_s_opts,
+                                                               seq_table_non_dyn_5qi_descriptor_s_names,
+                                                               5,
+                                                               4},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // QosCharacteristics ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_qos_characteristics_c_alternatives[] = {
@@ -17505,8 +17955,8 @@ static const asn1::table::seq_field seq_table_pdu_set_qos_info_s_fields[] = {
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(pdu_set_qos_info_s, pdu_set_error_rate),
      (int32_t)offsetof(pdu_set_qos_info_s, pdu_set_error_rate_present),
@@ -17544,13 +17994,16 @@ static const asn1::table::seq_opt seq_table_pdu_set_qos_info_s_opts[] = {
     {1, (int32_t)offsetof(pdu_set_qos_info_s, pdu_set_error_rate_present)},
     {2, (int32_t)offsetof(pdu_set_qos_info_s, pdu_set_integrated_handling_info_present)},
     {3, (int32_t)offsetof(pdu_set_qos_info_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_set_qos_info_s::desc = {
-    {seq_table_pdu_set_qos_info_s_fields, 4, UINT64_C(0x0), seq_table_pdu_set_qos_info_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_set_qos_info_s_names};
+const asn1::table::seq_desc pdu_set_qos_info_s::desc = {{seq_table_pdu_set_qos_info_s_fields,
+                                                         uint64_t{0x0},
+                                                         seq_table_pdu_set_qos_info_s_opts,
+                                                         seq_table_pdu_set_qos_info_s_names,
+                                                         4,
+                                                         4},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 static const char* enum_names_pdu_set_qos_info_s_pdu_set_integrated_handling_info_e__values[] = {"true", "false"};
 const asn1::table::enum_desc pdu_set_qos_info_s::pdu_set_integrated_handling_info_opts::desc  = {
@@ -17593,13 +18046,16 @@ static const asn1::table::seq_opt    seq_table_pdu_set_qos_params_s_opts[]  = {
     {0, (int32_t)offsetof(pdu_set_qos_params_s, ul_pdu_set_qos_info_present)},
     {1, (int32_t)offsetof(pdu_set_qos_params_s, dl_pdu_set_qos_info_present)},
     {2, (int32_t)offsetof(pdu_set_qos_params_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_set_qos_params_s::desc = {
-    {seq_table_pdu_set_qos_params_s_fields, 3, UINT64_C(0x0), seq_table_pdu_set_qos_params_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_set_qos_params_s_names};
+const asn1::table::seq_desc pdu_set_qos_params_s::desc = {{seq_table_pdu_set_qos_params_s_fields,
+                                                           uint64_t{0x0},
+                                                           seq_table_pdu_set_qos_params_s_opts,
+                                                           seq_table_pdu_set_qos_params_s_names,
+                                                           3,
+                                                           3},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 static const uint32_t objset_id_qos_flow_level_qos_params_ext_ies_o[]   = {181, 276, 422};
 static const uint8_t  objset_crit_qos_flow_level_qos_params_ext_ies_o[] = {crit_e::ignore,
@@ -17622,8 +18078,8 @@ static const asn1::table::seq_field ie_table_qos_flow_level_qos_params_ext_ies_c
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(1800),
+     int64_t{1},
+     uint64_t{1799},
      nullptr},
     {offsetof(qos_flow_level_qos_params_ext_ies_container, pdu_set_qos_params),
      (int32_t)offsetof(qos_flow_level_qos_params_ext_ies_container, pdu_set_qos_params_present),
@@ -17718,13 +18174,16 @@ static const asn1::table::seq_opt seq_table_qos_flow_level_qos_params_s_opts[] =
     {3, (int32_t)offsetof(qos_flow_level_qos_params_s, reflective_qos_attribute_present)},
     {4, (int32_t)offsetof(qos_flow_level_qos_params_s, add_qos_flow_info_present)},
     {5, (int32_t)offsetof(qos_flow_level_qos_params_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_level_qos_params_s::desc = {
-    {seq_table_qos_flow_level_qos_params_s_fields, 6, UINT64_C(0x3), seq_table_qos_flow_level_qos_params_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_level_qos_params_s_names};
+const asn1::table::seq_desc qos_flow_level_qos_params_s::desc = {{seq_table_qos_flow_level_qos_params_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  seq_table_qos_flow_level_qos_params_s_opts,
+                                                                  seq_table_qos_flow_level_qos_params_s_names,
+                                                                  6,
+                                                                  4},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // MBS-QoSFlowsToBeSetupItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_qos_flows_to_be_setup_item_s_fields[] = {
@@ -17733,8 +18192,8 @@ static const asn1::table::seq_field seq_table_mbs_qos_flows_to_be_setup_item_s_f
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(mbs_qos_flows_to_be_setup_item_s, mb_sqos_flow_level_qos_params),
      asn1::table::seq_field::mandatory,
@@ -17761,15 +18220,15 @@ static const asn1::table::seq_opt seq_table_mbs_qos_flows_to_be_setup_item_s_opt
     {2, (int32_t)offsetof(mbs_qos_flows_to_be_setup_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_qos_flows_to_be_setup_item_s::desc = {
     {seq_table_mbs_qos_flows_to_be_setup_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_mbs_qos_flows_to_be_setup_item_s_opts,
+     seq_table_mbs_qos_flows_to_be_setup_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_qos_flows_to_be_setup_item_s_names};
+    0};
 
 // MRB-ProgressInformation ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_mrb_progress_info_c_alternatives[] = {
@@ -17802,16 +18261,16 @@ static const asn1::table::seq_field choice_table_mrb_progress_info_c_alternative
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(262143),
+     int64_t{0},
+     uint64_t{262143},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
@@ -17858,8 +18317,8 @@ static const asn1::table::seq_field seq_table_mbs_mapand_data_forwarding_request
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(512),
+     int64_t{1},
+     uint64_t{511},
      nullptr},
     {offsetof(mbs_mapand_data_forwarding_request_item_s, mbs_qos_flow_list),
      asn1::table::seq_field::mandatory,
@@ -17867,10 +18326,10 @@ static const asn1::table::seq_field seq_table_mbs_mapand_data_forwarding_request
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::list_codec<decltype(mbs_mapand_data_forwarding_request_item_s::mbs_qos_flow_list),
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(63), true, true>>::value},
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{63}, true, true>>::value},
     {offsetof(mbs_mapand_data_forwarding_request_item_s, mrb_progress_info),
      (int32_t)offsetof(mbs_mapand_data_forwarding_request_item_s, mrb_progress_info_present),
      asn1::table::field_op::choice,
@@ -17899,15 +18358,15 @@ static const asn1::table::seq_opt seq_table_mbs_mapand_data_forwarding_request_i
     {3, (int32_t)offsetof(mbs_mapand_data_forwarding_request_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_mapand_data_forwarding_request_item_s::desc = {
     {seq_table_mbs_mapand_data_forwarding_request_item_s_fields,
-     4,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_mbs_mapand_data_forwarding_request_item_s_opts,
+     seq_table_mbs_mapand_data_forwarding_request_item_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_mapand_data_forwarding_request_item_s_names};
+    0};
 
 // MBS-ActiveSessionInformation-SourcetoTargetItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_active_session_info_sourceto_target_item_s_fields[] = {
@@ -17925,8 +18384,8 @@ static const asn1::table::seq_field seq_table_mbs_active_session_info_sourceto_t
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_active_session_info_sourceto_target_item_s, mbs_service_area),
      (int32_t)offsetof(mbs_active_session_info_sourceto_target_item_s, mbs_service_area_present),
@@ -17943,7 +18402,7 @@ static const asn1::table::seq_field seq_table_mbs_active_session_info_sourceto_t
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(mbs_active_session_info_sourceto_target_item_s::mbs_qos_flows_to_be_setup_list),
          asn1::table::sequence_item_ops,
@@ -17956,7 +18415,7 @@ static const asn1::table::seq_field seq_table_mbs_active_session_info_sourceto_t
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(mbs_active_session_info_sourceto_target_item_s::mbs_mapand_data_forwarding_request_list),
          asn1::table::sequence_item_ops,
@@ -17986,15 +18445,15 @@ static const asn1::table::seq_opt seq_table_mbs_active_session_info_sourceto_tar
     {5, (int32_t)offsetof(mbs_active_session_info_sourceto_target_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_active_session_info_sourceto_target_item_s::desc = {
     {seq_table_mbs_active_session_info_sourceto_target_item_s_fields,
-     6,
-     UINT64_C(0x9),
+     uint64_t{0x9},
      seq_table_mbs_active_session_info_sourceto_target_item_s_opts,
+     seq_table_mbs_active_session_info_sourceto_target_item_s_names,
+     6,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_active_session_info_sourceto_target_item_s_names};
+    0};
 
 // MBS-DataForwardingResponseMRBItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_data_forwarding_resp_mrb_item_s_fields[] = {
@@ -18003,8 +18462,8 @@ static const asn1::table::seq_field seq_table_mbs_data_forwarding_resp_mrb_item_
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(512),
+     int64_t{1},
+     uint64_t{511},
      nullptr},
     {offsetof(mbs_data_forwarding_resp_mrb_item_s, dl_forwarding_up_tnl_info),
      asn1::table::seq_field::mandatory,
@@ -18043,15 +18502,15 @@ static const asn1::table::seq_opt seq_table_mbs_data_forwarding_resp_mrb_item_s_
     {3, (int32_t)offsetof(mbs_data_forwarding_resp_mrb_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_data_forwarding_resp_mrb_item_s::desc = {
     {seq_table_mbs_data_forwarding_resp_mrb_item_s_fields,
-     4,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_mbs_data_forwarding_resp_mrb_item_s_opts,
+     seq_table_mbs_data_forwarding_resp_mrb_item_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_data_forwarding_resp_mrb_item_s_names};
+    0};
 
 // MBS-ActiveSessionInformation-TargettoSourceItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_active_session_info_targetto_source_item_s_fields[] = {
@@ -18070,7 +18529,7 @@ static const asn1::table::seq_field seq_table_mbs_active_session_info_targetto_s
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(mbs_active_session_info_targetto_source_item_s::mbs_data_forwarding_resp_mrb_list),
          asn1::table::sequence_item_ops,
@@ -18095,15 +18554,15 @@ static const asn1::table::seq_opt seq_table_mbs_active_session_info_targetto_sou
     {2, (int32_t)offsetof(mbs_active_session_info_targetto_source_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_active_session_info_targetto_source_item_s::desc = {
     {seq_table_mbs_active_session_info_targetto_source_item_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_mbs_active_session_info_targetto_source_item_s_opts,
+     seq_table_mbs_active_session_info_targetto_source_item_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_active_session_info_targetto_source_item_s_names};
+    0};
 
 // MBS-AssistanceInformation ::= ENUMERATED
 static const char*           enum_names_mbs_assist_info_e_values[] = {"true"};
@@ -18125,8 +18584,8 @@ static const asn1::table::seq_field seq_table_mbs_distribution_release_request_t
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_distribution_release_request_transfer_s, shared_ngu_unicast_tnl_info),
      (int32_t)offsetof(mbs_distribution_release_request_transfer_s, shared_ngu_unicast_tnl_info_present),
@@ -18167,15 +18626,15 @@ static const asn1::table::seq_opt seq_table_mbs_distribution_release_request_tra
     {4, (int32_t)offsetof(mbs_distribution_release_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_distribution_release_request_transfer_s::desc = {
     {seq_table_mbs_distribution_release_request_transfer_s_fields,
-     5,
-     UINT64_C(0x9),
+     uint64_t{0x9},
      seq_table_mbs_distribution_release_request_transfer_s_opts,
+     seq_table_mbs_distribution_release_request_transfer_s_names,
+     5,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_distribution_release_request_transfer_s_names};
+    0};
 
 // TAIMBSSupportItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tai_mbs_support_item_s_fields[] = {
@@ -18200,13 +18659,16 @@ static const asn1::table::field_name seq_table_tai_mbs_support_item_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_mbs_support_item_s_opts[]  = {
     {1, (int32_t)offsetof(tai_mbs_support_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_mbs_support_item_s::desc = {
-    {seq_table_tai_mbs_support_item_s_fields, 2, UINT64_C(0x1), seq_table_tai_mbs_support_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_mbs_support_item_s_names};
+const asn1::table::seq_desc tai_mbs_support_item_s::desc = {{seq_table_tai_mbs_support_item_s_fields,
+                                                             uint64_t{0x1},
+                                                             seq_table_tai_mbs_support_item_s_opts,
+                                                             seq_table_tai_mbs_support_item_s_names,
+                                                             2,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 static const uint32_t objset_id_mbs_distribution_setup_request_transfer_ext_ies_o[]   = {441};
 static const uint8_t  objset_crit_mbs_distribution_setup_request_transfer_ext_ies_o[] = {crit_e::ignore};
@@ -18219,7 +18681,7 @@ static const asn1::table::seq_field ie_table_mbs_distribution_setup_request_tran
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<
          decltype(mbs_distribution_setup_request_transfer_ext_ies_container::tai_mbs_support_list),
          asn1::table::sequence_item_ops,
@@ -18256,8 +18718,8 @@ static const asn1::table::seq_field seq_table_mbs_distribution_setup_request_tra
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_distribution_setup_request_transfer_s, shared_ngu_unicast_tnl_info),
      (int32_t)offsetof(mbs_distribution_setup_request_transfer_s, shared_ngu_unicast_tnl_info_present),
@@ -18288,15 +18750,15 @@ static const asn1::table::seq_opt seq_table_mbs_distribution_setup_request_trans
     {3, (int32_t)offsetof(mbs_distribution_setup_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_distribution_setup_request_transfer_s::desc = {
     {seq_table_mbs_distribution_setup_request_transfer_s_fields,
-     4,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_mbs_distribution_setup_request_transfer_s_opts,
+     seq_table_mbs_distribution_setup_request_transfer_s_names,
+     4,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_distribution_setup_request_transfer_s_names};
+    0};
 
 // SharedNGU-MulticastTNLInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_shared_ngu_multicast_tnl_info_s_fields[] = {
@@ -18342,15 +18804,15 @@ static const asn1::table::field_name seq_table_shared_ngu_multicast_tnl_info_s_n
 static const asn1::table::seq_opt seq_table_shared_ngu_multicast_tnl_info_s_opts[] = {
     {3, (int32_t)offsetof(shared_ngu_multicast_tnl_info_s, ie_exts_present)}};
 const asn1::table::seq_desc shared_ngu_multicast_tnl_info_s::desc = {{seq_table_shared_ngu_multicast_tnl_info_s_fields,
-                                                                      4,
-                                                                      UINT64_C(0x7),
+                                                                      uint64_t{0x7},
                                                                       seq_table_shared_ngu_multicast_tnl_info_s_opts,
+                                                                      seq_table_shared_ngu_multicast_tnl_info_s_names,
+                                                                      4,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_shared_ngu_multicast_tnl_info_s_names};
+                                                                     0};
 
 // MBSSessionStatus ::= ENUMERATED
 static const char*           enum_names_mbs_session_status_e_values[] = {"activated", "deactivated"};
@@ -18374,8 +18836,8 @@ static const asn1::table::seq_field seq_table_mbs_distribution_setup_resp_transf
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_distribution_setup_resp_transfer_s, shared_ngu_multicast_tnl_info),
      (int32_t)offsetof(mbs_distribution_setup_resp_transfer_s, shared_ngu_multicast_tnl_info_present),
@@ -18392,7 +18854,7 @@ static const asn1::table::seq_field seq_table_mbs_distribution_setup_resp_transf
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(mbs_distribution_setup_resp_transfer_s::mbs_qos_flows_to_be_setup_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -18440,15 +18902,15 @@ static const asn1::table::seq_opt seq_table_mbs_distribution_setup_resp_transfer
     {6, (int32_t)offsetof(mbs_distribution_setup_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_distribution_setup_resp_transfer_s::desc = {
     {seq_table_mbs_distribution_setup_resp_transfer_s_fields,
-     7,
-     UINT64_C(0x19),
+     uint64_t{0x19},
      seq_table_mbs_distribution_setup_resp_transfer_s_opts,
+     seq_table_mbs_distribution_setup_resp_transfer_s_names,
+     7,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_distribution_setup_resp_transfer_s_names};
+    0};
 
 // MBS-DistributionSetupUnsuccessfulTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_distribution_setup_unsuccessful_transfer_s_fields[] = {
@@ -18466,8 +18928,8 @@ static const asn1::table::seq_field seq_table_mbs_distribution_setup_unsuccessfu
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_distribution_setup_unsuccessful_transfer_s, cause),
      asn1::table::seq_field::mandatory,
@@ -18508,15 +18970,15 @@ static const asn1::table::seq_opt seq_table_mbs_distribution_setup_unsuccessful_
     {4, (int32_t)offsetof(mbs_distribution_setup_unsuccessful_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_distribution_setup_unsuccessful_transfer_s::desc = {
     {seq_table_mbs_distribution_setup_unsuccessful_transfer_s_fields,
-     5,
-     UINT64_C(0x5),
+     uint64_t{0x5},
      seq_table_mbs_distribution_setup_unsuccessful_transfer_s_opts,
+     seq_table_mbs_distribution_setup_unsuccessful_transfer_s_names,
+     5,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_distribution_setup_unsuccessful_transfer_s_names};
+    0};
 
 // MBS-UP-FailureIndication ::= ENUMERATED
 static const char*           enum_names_mbs_up_fail_ind_e_values[] = {"ng-u-path-failure-detected"};
@@ -18529,8 +18991,8 @@ static const asn1::table::seq_field seq_table_mbs_up_fail_ind_item_s_fields[] = 
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_up_fail_ind_item_s, mbs_up_fail_ind),
      asn1::table::seq_field::mandatory,
@@ -18554,13 +19016,16 @@ static const asn1::table::field_name seq_table_mbs_up_fail_ind_item_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_mbs_up_fail_ind_item_s_opts[]  = {
     {2, (int32_t)offsetof(mbs_up_fail_ind_item_s, ie_exts_present)}};
-const asn1::table::seq_desc mbs_up_fail_ind_item_s::desc = {
-    {seq_table_mbs_up_fail_ind_item_s_fields, 3, UINT64_C(0x3), seq_table_mbs_up_fail_ind_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mbs_up_fail_ind_item_s_names};
+const asn1::table::seq_desc mbs_up_fail_ind_item_s::desc = {{seq_table_mbs_up_fail_ind_item_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_mbs_up_fail_ind_item_s_opts,
+                                                             seq_table_mbs_up_fail_ind_item_s_names,
+                                                             3,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // MBS-NGUFailureIndication ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_mbs_ngu_fail_ind_c_alternatives[] = {
@@ -18603,7 +19068,7 @@ static const asn1::table::seq_field choice_table_mbs_ngu_fail_ind_c_alternatives
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<mbs_up_fail_ind_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -18645,8 +19110,8 @@ static const asn1::table::seq_field seq_table_mbs_session_tnl_info5_gc_item_s_fi
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_session_tnl_info5_gc_item_s, shared_ngu_multicast_tnl_info),
      asn1::table::seq_field::mandatory,
@@ -18672,15 +19137,15 @@ static const asn1::table::field_name seq_table_mbs_session_tnl_info5_gc_item_s_n
 static const asn1::table::seq_opt seq_table_mbs_session_tnl_info5_gc_item_s_opts[] = {
     {2, (int32_t)offsetof(mbs_session_tnl_info5_gc_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_tnl_info5_gc_item_s::desc = {{seq_table_mbs_session_tnl_info5_gc_item_s_fields,
-                                                                      3,
-                                                                      UINT64_C(0x3),
+                                                                      uint64_t{0x3},
                                                                       seq_table_mbs_session_tnl_info5_gc_item_s_opts,
+                                                                      seq_table_mbs_session_tnl_info5_gc_item_s_names,
+                                                                      3,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_mbs_session_tnl_info5_gc_item_s_names};
+                                                                     0};
 
 // MBS-SessionTNLInfo5GC ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_mbs_session_tnl_info5_gc_c_alternatives[] = {
@@ -18723,7 +19188,7 @@ static const asn1::table::seq_field choice_table_mbs_session_tnl_info5_gc_c_alte
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<mbs_session_tnl_info5_gc_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -18783,8 +19248,8 @@ static const asn1::table::seq_field seq_table_mbs_session_failedto_setup_item_s_
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_session_failedto_setup_item_s, cause),
      asn1::table::seq_field::mandatory,
@@ -18811,15 +19276,15 @@ static const asn1::table::seq_opt seq_table_mbs_session_failedto_setup_item_s_op
     {3, (int32_t)offsetof(mbs_session_failedto_setup_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_failedto_setup_item_s::desc = {
     {seq_table_mbs_session_failedto_setup_item_s_fields,
-     4,
-     UINT64_C(0x5),
+     uint64_t{0x5},
      seq_table_mbs_session_failedto_setup_item_s_opts,
+     seq_table_mbs_session_failedto_setup_item_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_session_failedto_setup_item_s_names};
+    0};
 
 // MBSSessionReleaseResponseTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_session_release_resp_transfer_s_fields[] = {
@@ -18849,15 +19314,15 @@ static const asn1::table::seq_opt seq_table_mbs_session_release_resp_transfer_s_
     {1, (int32_t)offsetof(mbs_session_release_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_release_resp_transfer_s::desc = {
     {seq_table_mbs_session_release_resp_transfer_s_fields,
-     2,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_mbs_session_release_resp_transfer_s_opts,
+     seq_table_mbs_session_release_resp_transfer_s_names,
+     2,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_session_release_resp_transfer_s_names};
+    0};
 
 // MBSSessionSetupOrModFailureTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_session_setup_or_mod_fail_transfer_s_fields[] = {
@@ -18897,15 +19362,15 @@ static const asn1::table::seq_opt seq_table_mbs_session_setup_or_mod_fail_transf
     {2, (int32_t)offsetof(mbs_session_setup_or_mod_fail_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_setup_or_mod_fail_transfer_s::desc = {
     {seq_table_mbs_session_setup_or_mod_fail_transfer_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_mbs_session_setup_or_mod_fail_transfer_s_opts,
+     seq_table_mbs_session_setup_or_mod_fail_transfer_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_session_setup_or_mod_fail_transfer_s_names};
+    0};
 
 // SupportedUEType ::= ENUMERATED
 static const char*           enum_names_supported_ue_type_e_values[] = {"non-RedCap-eRedCap-UE", "redCap-eRedCap-UE"};
@@ -18937,7 +19402,7 @@ static const asn1::table::seq_field ie_table_mbs_session_setup_or_mod_request_tr
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(mbs_session_setup_or_mod_request_transfer_ies_container::mbs_qos_flows_to_be_setup_mod_list),
          asn1::table::sequence_item_ops,
@@ -18950,7 +19415,7 @@ static const asn1::table::seq_field ie_table_mbs_session_setup_or_mod_request_tr
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::list_codec<
          decltype(mbs_session_setup_or_mod_request_transfer_ies_container::mbs_session_fsa_id_list),
          asn1::table::string_json>::value},
@@ -18960,7 +19425,7 @@ static const asn1::table::seq_field ie_table_mbs_session_setup_or_mod_request_tr
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::list_codec<decltype(mbs_session_setup_or_mod_request_transfer_ies_container::supported_ue_type_list),
                               asn1::table::string_json>::value},
     {offsetof(mbs_session_setup_or_mod_request_transfer_ies_container, mbs_ngu_fail_ind),
@@ -19018,15 +19483,15 @@ static const asn1::table::seq_opt seq_table_mbs_session_setup_or_mod_resp_transf
     {1, (int32_t)offsetof(mbs_session_setup_or_mod_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_setup_or_mod_resp_transfer_s::desc = {
     {seq_table_mbs_session_setup_or_mod_resp_transfer_s_fields,
-     2,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_mbs_session_setup_or_mod_resp_transfer_s_opts,
+     seq_table_mbs_session_setup_or_mod_resp_transfer_s_names,
+     2,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_session_setup_or_mod_resp_transfer_s_names};
+    0};
 
 static const uint32_t objset_id_mbs_session_setup_request_item_ext_ies_o[]   = {416};
 static const uint8_t  objset_crit_mbs_session_setup_request_item_ext_ies_o[] = {crit_e::ignore};
@@ -19072,8 +19537,8 @@ static const asn1::table::seq_field seq_table_mbs_session_setup_request_item_s_f
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_session_setup_request_item_s, associated_mbs_qos_flow_setup_request_list),
      asn1::table::seq_field::list_presence,
@@ -19081,7 +19546,7 @@ static const asn1::table::seq_field seq_table_mbs_session_setup_request_item_s_f
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(mbs_session_setup_request_item_s::associated_mbs_qos_flow_setup_request_list),
          asn1::table::sequence_item_ops,
@@ -19108,15 +19573,15 @@ static const asn1::table::seq_opt seq_table_mbs_session_setup_request_item_s_opt
     {3, (int32_t)offsetof(mbs_session_setup_request_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_setup_request_item_s::desc = {
     {seq_table_mbs_session_setup_request_item_s_fields,
-     4,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_mbs_session_setup_request_item_s_opts,
+     seq_table_mbs_session_setup_request_item_s_names,
+     4,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_session_setup_request_item_s_names};
+    0};
 
 // MBSSessionSetupResponseItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_session_setup_resp_item_s_fields[] = {
@@ -19134,8 +19599,8 @@ static const asn1::table::seq_field seq_table_mbs_session_setup_resp_item_s_fiel
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_session_setup_resp_item_s, ie_exts),
      (int32_t)offsetof(mbs_session_setup_resp_item_s, ie_exts_present),
@@ -19151,13 +19616,16 @@ static const asn1::table::field_name seq_table_mbs_session_setup_resp_item_s_nam
 static const asn1::table::seq_opt    seq_table_mbs_session_setup_resp_item_s_opts[]  = {
     {1, (int32_t)offsetof(mbs_session_setup_resp_item_s, mbs_area_session_id_present)},
     {2, (int32_t)offsetof(mbs_session_setup_resp_item_s, ie_exts_present)}};
-const asn1::table::seq_desc mbs_session_setup_resp_item_s::desc = {
-    {seq_table_mbs_session_setup_resp_item_s_fields, 3, UINT64_C(0x1), seq_table_mbs_session_setup_resp_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mbs_session_setup_resp_item_s_names};
+const asn1::table::seq_desc mbs_session_setup_resp_item_s::desc = {{seq_table_mbs_session_setup_resp_item_s_fields,
+                                                                    uint64_t{0x1},
+                                                                    seq_table_mbs_session_setup_resp_item_s_opts,
+                                                                    seq_table_mbs_session_setup_resp_item_s_names,
+                                                                    3,
+                                                                    2},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 static const uint32_t objset_id_mbs_session_setupor_modify_request_item_ext_ies_o[]   = {416};
 static const uint8_t  objset_crit_mbs_session_setupor_modify_request_item_ext_ies_o[] = {crit_e::ignore};
@@ -19203,8 +19671,8 @@ static const asn1::table::seq_field seq_table_mbs_session_setupor_modify_request
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(mbs_session_setupor_modify_request_item_s, associated_mbs_qos_flow_setupor_modify_request_list),
      asn1::table::seq_field::list_presence,
@@ -19212,7 +19680,7 @@ static const asn1::table::seq_field seq_table_mbs_session_setupor_modify_request
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(mbs_session_setupor_modify_request_item_s::associated_mbs_qos_flow_setupor_modify_request_list),
          asn1::table::sequence_item_ops,
@@ -19225,7 +19693,7 @@ static const asn1::table::seq_field seq_table_mbs_session_setupor_modify_request
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(mbs_session_setupor_modify_request_item_s::mbs_qos_flow_to_release_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -19253,15 +19721,15 @@ static const asn1::table::seq_opt seq_table_mbs_session_setupor_modify_request_i
     {4, (int32_t)offsetof(mbs_session_setupor_modify_request_item_s, ie_exts_present)}};
 const asn1::table::seq_desc mbs_session_setupor_modify_request_item_s::desc = {
     {seq_table_mbs_session_setupor_modify_request_item_s_fields,
-     5,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_mbs_session_setupor_modify_request_item_s_opts,
+     seq_table_mbs_session_setupor_modify_request_item_s_names,
+     5,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mbs_session_setupor_modify_request_item_s_names};
+    0};
 
 // MBSSessionToReleaseItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mbs_session_to_release_item_s_fields[] = {
@@ -19296,13 +19764,16 @@ static const asn1::table::field_name seq_table_mbs_session_to_release_item_s_nam
                                                                                         {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_mbs_session_to_release_item_s_opts[]  = {
     {2, (int32_t)offsetof(mbs_session_to_release_item_s, ie_exts_present)}};
-const asn1::table::seq_desc mbs_session_to_release_item_s::desc = {
-    {seq_table_mbs_session_to_release_item_s_fields, 3, UINT64_C(0x3), seq_table_mbs_session_to_release_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mbs_session_to_release_item_s_names};
+const asn1::table::seq_desc mbs_session_to_release_item_s::desc = {{seq_table_mbs_session_to_release_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    seq_table_mbs_session_to_release_item_s_opts,
+                                                                    seq_table_mbs_session_to_release_item_s_names,
+                                                                    3,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // MDT-Activation ::= ENUMERATED
 static const char*           enum_names_mdt_activation_e_values[] = {"immediate-MDT-only",
@@ -19449,7 +19920,7 @@ static const asn1::table::seq_field seq_table_pni_npn_area_scopeof_mdt_s_fields[
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(pni_npn_area_scopeof_mdt_s::cag_listfor_mdt),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -19467,13 +19938,16 @@ static const asn1::table::field_name seq_table_pni_npn_area_scopeof_mdt_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_pni_npn_area_scopeof_mdt_s_opts[]  = {
     {1, (int32_t)offsetof(pni_npn_area_scopeof_mdt_s, ie_exts_present)}};
-const asn1::table::seq_desc pni_npn_area_scopeof_mdt_s::desc = {
-    {seq_table_pni_npn_area_scopeof_mdt_s_fields, 2, UINT64_C(0x1), seq_table_pni_npn_area_scopeof_mdt_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pni_npn_area_scopeof_mdt_s_names};
+const asn1::table::seq_desc pni_npn_area_scopeof_mdt_s::desc = {{seq_table_pni_npn_area_scopeof_mdt_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 seq_table_pni_npn_area_scopeof_mdt_s_opts,
+                                                                 seq_table_pni_npn_area_scopeof_mdt_s_names,
+                                                                 2,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const uint32_t objset_id_mdt_cfg_nr_ext_ies_o[]   = {409};
 static const uint8_t  objset_crit_mdt_cfg_nr_ext_ies_o[] = {crit_e::ignore};
@@ -19538,7 +20012,7 @@ static const asn1::table::seq_field seq_table_mdt_cfg_nr_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(mdt_cfg_nr_s::sig_based_mdt_plmn_list), asn1::table::string_json>::value},
     {offsetof(mdt_cfg_nr_s, ie_exts),
      (int32_t)offsetof(mdt_cfg_nr_s, ie_exts_present),
@@ -19558,12 +20032,11 @@ static const asn1::table::seq_opt    seq_table_mdt_cfg_nr_s_opts[]  = {
     {3, asn1::table::seq_field::list_presence},
     {4, (int32_t)offsetof(mdt_cfg_nr_s, ie_exts_present)}};
 const asn1::table::seq_desc mdt_cfg_nr_s::desc = {
-    {seq_table_mdt_cfg_nr_s_fields, 5, UINT64_C(0x7), seq_table_mdt_cfg_nr_s_opts, 2},
+    {seq_table_mdt_cfg_nr_s_fields, uint64_t{0x7}, seq_table_mdt_cfg_nr_s_opts, seq_table_mdt_cfg_nr_s_names, 5, 2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mdt_cfg_nr_s_names};
+    0};
 
 // MDT-Configuration-EUTRA ::= SEQUENCE
 static const asn1::table::seq_field seq_table_mdt_cfg_eutra_s_fields[] = {
@@ -19599,7 +20072,7 @@ static const asn1::table::seq_field seq_table_mdt_cfg_eutra_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(mdt_cfg_eutra_s::sig_based_mdt_plmn_list), asn1::table::string_json>::value},
     {offsetof(mdt_cfg_eutra_s, ie_exts),
      (int32_t)offsetof(mdt_cfg_eutra_s, ie_exts_present),
@@ -19617,13 +20090,16 @@ static const asn1::table::field_name seq_table_mdt_cfg_eutra_s_names[] = {{"mdt-
 static const asn1::table::seq_opt    seq_table_mdt_cfg_eutra_s_opts[]  = {
     {3, asn1::table::seq_field::list_presence},
     {4, (int32_t)offsetof(mdt_cfg_eutra_s, ie_exts_present)}};
-const asn1::table::seq_desc mdt_cfg_eutra_s::desc = {
-    {seq_table_mdt_cfg_eutra_s_fields, 5, UINT64_C(0x7), seq_table_mdt_cfg_eutra_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mdt_cfg_eutra_s_names};
+const asn1::table::seq_desc mdt_cfg_eutra_s::desc = {{seq_table_mdt_cfg_eutra_s_fields,
+                                                      uint64_t{0x7},
+                                                      seq_table_mdt_cfg_eutra_s_opts,
+                                                      seq_table_mdt_cfg_eutra_s_names,
+                                                      5,
+                                                      2},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // MN-only-MDT-collection ::= ENUMERATED
 static const char*           enum_names_mn_only_mdt_collection_e_values[] = {"mn-only"};
@@ -19695,12 +20171,11 @@ static const asn1::table::seq_opt    seq_table_mdt_cfg_s_opts[]  = {
     {1, (int32_t)offsetof(mdt_cfg_s, mdt_cfg_eutra_present)},
     {2, (int32_t)offsetof(mdt_cfg_s, ie_exts_present)}};
 const asn1::table::seq_desc mdt_cfg_s::desc = {
-    {seq_table_mdt_cfg_s_fields, 3, UINT64_C(0x0), seq_table_mdt_cfg_s_opts, 3},
+    {seq_table_mdt_cfg_s_fields, uint64_t{0x0}, seq_table_mdt_cfg_s_opts, seq_table_mdt_cfg_s_names, 3, 3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mdt_cfg_s_names};
+    0};
 
 // MaximumIntegrityProtectedDataRate ::= ENUMERATED
 static const char* enum_names_max_integrity_protected_data_rate_e_values[] = {"bitrate64kbs", "maximum-UE-rate"};
@@ -19757,15 +20232,15 @@ static const asn1::table::seq_opt seq_table_mobile_iab_mt_user_location_info_s_o
     {2, (int32_t)offsetof(mobile_iab_mt_user_location_info_s, ie_exts_present)}};
 const asn1::table::seq_desc mobile_iab_mt_user_location_info_s::desc = {
     {seq_table_mobile_iab_mt_user_location_info_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_mobile_iab_mt_user_location_info_s_opts,
+     seq_table_mobile_iab_mt_user_location_info_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_mobile_iab_mt_user_location_info_s_names};
+    0};
 
 // MobileIAB-Supported ::= ENUMERATED
 static const char*           enum_names_mobile_iab_supported_e_values[] = {"true"};
@@ -19839,13 +20314,16 @@ static const asn1::table::field_name seq_table_rat_restricts_item_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_rat_restricts_item_s_opts[]  = {
     {2, (int32_t)offsetof(rat_restricts_item_s, ie_exts_present)}};
-const asn1::table::seq_desc rat_restricts_item_s::desc = {
-    {seq_table_rat_restricts_item_s_fields, 3, UINT64_C(0x3), seq_table_rat_restricts_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_rat_restricts_item_s_names};
+const asn1::table::seq_desc rat_restricts_item_s::desc = {{seq_table_rat_restricts_item_s_fields,
+                                                           uint64_t{0x3},
+                                                           seq_table_rat_restricts_item_s_opts,
+                                                           seq_table_rat_restricts_item_s_names,
+                                                           3,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // ServiceAreaInformation-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_service_area_info_item_s_fields[] = {
@@ -19863,7 +20341,7 @@ static const asn1::table::seq_field seq_table_service_area_info_item_s_fields[] 
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(service_area_info_item_s::allowed_tacs), asn1::table::string_json>::value},
     {offsetof(service_area_info_item_s, not_allowed_tacs),
      asn1::table::seq_field::list_presence,
@@ -19871,7 +20349,7 @@ static const asn1::table::seq_field seq_table_service_area_info_item_s_fields[] 
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(service_area_info_item_s::not_allowed_tacs), asn1::table::string_json>::value},
     {offsetof(service_area_info_item_s, ie_exts),
      (int32_t)offsetof(service_area_info_item_s, ie_exts_present),
@@ -19889,13 +20367,16 @@ static const asn1::table::seq_opt    seq_table_service_area_info_item_s_opts[]  
     {1, asn1::table::seq_field::list_presence},
     {2, asn1::table::seq_field::list_presence},
     {3, (int32_t)offsetof(service_area_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc service_area_info_item_s::desc = {
-    {seq_table_service_area_info_item_s_fields, 4, UINT64_C(0x1), seq_table_service_area_info_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_service_area_info_item_s_names};
+const asn1::table::seq_desc service_area_info_item_s::desc = {{seq_table_service_area_info_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_service_area_info_item_s_opts,
+                                                               seq_table_service_area_info_item_s_names,
+                                                               4,
+                                                               3},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 static const uint32_t objset_id_sn_pn_mob_info_ext_ies_o[]   = {370};
 static const uint8_t  objset_crit_sn_pn_mob_info_ext_ies_o[] = {crit_e::reject};
@@ -19908,7 +20389,7 @@ static const asn1::table::seq_field ie_table_sn_pn_mob_info_ext_ies_container_va
      false,
      true,
      1,
-     15,
+     14,
      &asn1::table::item_list_codec<decltype(sn_pn_mob_info_ext_ies_container::equivalent_sn_p_ns_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -19951,13 +20432,16 @@ static const asn1::table::field_name seq_table_sn_pn_mob_info_s_names[] = {{"ser
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_sn_pn_mob_info_s_opts[]  = {
     {1, (int32_t)offsetof(sn_pn_mob_info_s, ie_exts_present)}};
-const asn1::table::seq_desc sn_pn_mob_info_s::desc = {
-    {seq_table_sn_pn_mob_info_s_fields, 2, UINT64_C(0x1), seq_table_sn_pn_mob_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sn_pn_mob_info_s_names};
+const asn1::table::seq_desc sn_pn_mob_info_s::desc = {{seq_table_sn_pn_mob_info_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_sn_pn_mob_info_s_opts,
+                                                       seq_table_sn_pn_mob_info_s_names,
+                                                       2,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // PNI-NPN-MobilityInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pni_npn_mob_info_s_fields[] = {
@@ -19967,7 +20451,7 @@ static const asn1::table::seq_field seq_table_pni_npn_mob_info_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(pni_npn_mob_info_s::allowed_pni_npi_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -19985,13 +20469,16 @@ static const asn1::table::field_name seq_table_pni_npn_mob_info_s_names[] = {{"a
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_pni_npn_mob_info_s_opts[]  = {
     {1, (int32_t)offsetof(pni_npn_mob_info_s, ie_exts_present)}};
-const asn1::table::seq_desc pni_npn_mob_info_s::desc = {
-    {seq_table_pni_npn_mob_info_s_fields, 2, UINT64_C(0x1), seq_table_pni_npn_mob_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pni_npn_mob_info_s_names};
+const asn1::table::seq_desc pni_npn_mob_info_s::desc = {{seq_table_pni_npn_mob_info_s_fields,
+                                                         uint64_t{0x1},
+                                                         seq_table_pni_npn_mob_info_s_opts,
+                                                         seq_table_pni_npn_mob_info_s_names,
+                                                         2,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // NPN-MobilityInformation ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_npn_mob_info_c_alternatives[] = {
@@ -20101,7 +20588,7 @@ static const asn1::table::seq_field ie_table_mob_restrict_list_ext_ies_container
      false,
      true,
      1,
-     15,
+     14,
      &asn1::table::item_list_codec<decltype(mob_restrict_list_ext_ies_container::cn_type_restricts_for_equivalent),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -20149,7 +20636,7 @@ static const asn1::table::seq_field seq_table_mob_restrict_list_s_fields[] = {
      false,
      true,
      1,
-     15,
+     14,
      &asn1::table::list_codec<decltype(mob_restrict_list_s::equivalent_plmns), asn1::table::string_json>::value},
     {offsetof(mob_restrict_list_s, rat_restricts),
      asn1::table::seq_field::list_presence,
@@ -20157,7 +20644,7 @@ static const asn1::table::seq_field seq_table_mob_restrict_list_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(mob_restrict_list_s::rat_restricts),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -20169,7 +20656,7 @@ static const asn1::table::seq_field seq_table_mob_restrict_list_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(mob_restrict_list_s::forbidden_area_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -20181,7 +20668,7 @@ static const asn1::table::seq_field seq_table_mob_restrict_list_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(mob_restrict_list_s::service_area_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -20208,13 +20695,16 @@ static const asn1::table::seq_opt    seq_table_mob_restrict_list_s_opts[]  = {
     {3, asn1::table::seq_field::list_presence},
     {4, asn1::table::seq_field::list_presence},
     {5, (int32_t)offsetof(mob_restrict_list_s, ie_exts_present)}};
-const asn1::table::seq_desc mob_restrict_list_s::desc = {
-    {seq_table_mob_restrict_list_s_fields, 6, UINT64_C(0x1), seq_table_mob_restrict_list_s_opts, 5},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_mob_restrict_list_s_names};
+const asn1::table::seq_desc mob_restrict_list_s::desc = {{seq_table_mob_restrict_list_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_mob_restrict_list_s_opts,
+                                                          seq_table_mob_restrict_list_s_names,
+                                                          6,
+                                                          5},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // MulticastGroupPagingArea ::= SEQUENCE
 static const asn1::table::seq_field seq_table_multicast_group_paging_area_s_fields[] = {
@@ -20224,7 +20714,7 @@ static const asn1::table::seq_field seq_table_multicast_group_paging_area_s_fiel
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(multicast_group_paging_area_s::mbs_area_tai_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -20242,13 +20732,16 @@ static const asn1::table::field_name seq_table_multicast_group_paging_area_s_nam
                                                                                         {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_multicast_group_paging_area_s_opts[]  = {
     {1, (int32_t)offsetof(multicast_group_paging_area_s, ie_exts_present)}};
-const asn1::table::seq_desc multicast_group_paging_area_s::desc = {
-    {seq_table_multicast_group_paging_area_s_fields, 2, UINT64_C(0x1), seq_table_multicast_group_paging_area_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_multicast_group_paging_area_s_names};
+const asn1::table::seq_desc multicast_group_paging_area_s::desc = {{seq_table_multicast_group_paging_area_s_fields,
+                                                                    uint64_t{0x1},
+                                                                    seq_table_multicast_group_paging_area_s_opts,
+                                                                    seq_table_multicast_group_paging_area_s_names,
+                                                                    2,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // UE-PagingItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_paging_item_s_fields[] = {
@@ -20284,13 +20777,16 @@ static const asn1::table::field_name seq_table_ue_paging_item_s_names[] = {{"uEI
 static const asn1::table::seq_opt    seq_table_ue_paging_item_s_opts[]  = {
     {1, (int32_t)offsetof(ue_paging_item_s, paging_drx_present)},
     {2, (int32_t)offsetof(ue_paging_item_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_paging_item_s::desc = {
-    {seq_table_ue_paging_item_s_fields, 3, UINT64_C(0x1), seq_table_ue_paging_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_paging_item_s_names};
+const asn1::table::seq_desc ue_paging_item_s::desc = {{seq_table_ue_paging_item_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_ue_paging_item_s_opts,
+                                                       seq_table_ue_paging_item_s_names,
+                                                       3,
+                                                       2},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // MulticastGroupPagingAreaItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_multicast_group_paging_area_item_s_fields[] = {
@@ -20309,7 +20805,7 @@ static const asn1::table::seq_field seq_table_multicast_group_paging_area_item_s
      false,
      true,
      1,
-     4096,
+     4095,
      &asn1::table::item_list_codec<decltype(multicast_group_paging_area_item_s::ue_paging_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -20333,15 +20829,15 @@ static const asn1::table::seq_opt seq_table_multicast_group_paging_area_item_s_o
     {2, (int32_t)offsetof(multicast_group_paging_area_item_s, ie_exts_present)}};
 const asn1::table::seq_desc multicast_group_paging_area_item_s::desc = {
     {seq_table_multicast_group_paging_area_item_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_multicast_group_paging_area_item_s_opts,
+     seq_table_multicast_group_paging_area_item_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_multicast_group_paging_area_item_s_names};
+    0};
 
 // MulticastSessionActivationRequestTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_multicast_session_activation_request_transfer_s_fields[] = {
@@ -20370,15 +20866,15 @@ static const asn1::table::seq_opt seq_table_multicast_session_activation_request
     {1, (int32_t)offsetof(multicast_session_activation_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc multicast_session_activation_request_transfer_s::desc = {
     {seq_table_multicast_session_activation_request_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_multicast_session_activation_request_transfer_s_opts,
+     seq_table_multicast_session_activation_request_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_multicast_session_activation_request_transfer_s_names};
+    0};
 
 // MulticastSessionDeactivationRequestTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_multicast_session_deactivation_request_transfer_s_fields[] = {
@@ -20407,15 +20903,15 @@ static const asn1::table::seq_opt seq_table_multicast_session_deactivation_reque
     {1, (int32_t)offsetof(multicast_session_deactivation_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc multicast_session_deactivation_request_transfer_s::desc = {
     {seq_table_multicast_session_deactivation_request_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_multicast_session_deactivation_request_transfer_s_opts,
+     seq_table_multicast_session_deactivation_request_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_multicast_session_deactivation_request_transfer_s_names};
+    0};
 
 static const uint32_t objset_id_multicast_session_upd_request_transfer_ies_o[]   = {299, 298, 297, 351, 352};
 static const uint8_t  objset_crit_multicast_session_upd_request_transfer_ies_o[] = {crit_e::reject,
@@ -20451,7 +20947,7 @@ static const asn1::table::seq_field ie_table_multicast_session_upd_request_trans
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(multicast_session_upd_request_transfer_ies_container::mbs_qos_flows_to_be_setup_mod_list),
          asn1::table::sequence_item_ops,
@@ -20464,7 +20960,7 @@ static const asn1::table::seq_field ie_table_multicast_session_upd_request_trans
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(multicast_session_upd_request_transfer_ies_container::mbs_qos_flow_to_release_list),
          asn1::table::sequence_item_ops,
@@ -20505,16 +21001,16 @@ static const asn1::table::seq_field seq_table_n6_jitter_info_s_fields[] = {
      asn1::table::field_op::int_i16,
      false,
      true,
-     INT64_C(-127),
-     UINT64_C(127),
+     int64_t{-127},
+     uint64_t{254},
      nullptr},
     {offsetof(n6_jitter_info_s, n6_jitter_upper_bound),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_i16,
      false,
      true,
-     INT64_C(-127),
-     UINT64_C(127),
+     int64_t{-127},
+     uint64_t{254},
      nullptr},
     {offsetof(n6_jitter_info_s, ie_exts),
      (int32_t)offsetof(n6_jitter_info_s, ie_exts_present),
@@ -20529,13 +21025,16 @@ static const asn1::table::field_name seq_table_n6_jitter_info_s_names[] = {{"n6J
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_n6_jitter_info_s_opts[]  = {
     {2, (int32_t)offsetof(n6_jitter_info_s, ie_exts_present)}};
-const asn1::table::seq_desc n6_jitter_info_s::desc = {
-    {seq_table_n6_jitter_info_s_fields, 3, UINT64_C(0x3), seq_table_n6_jitter_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_n6_jitter_info_s_names};
+const asn1::table::seq_desc n6_jitter_info_s::desc = {{seq_table_n6_jitter_info_s_fields,
+                                                       uint64_t{0x3},
+                                                       seq_table_n6_jitter_info_s_opts,
+                                                       seq_table_n6_jitter_info_s_names,
+                                                       3,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // NB-IoT-DefaultPagingDRX ::= ENUMERATED
 static const char*           enum_names_nb_iot_default_paging_drx_e_values[] = {"rf128", "rf256", "rf512", "rf1024"};
@@ -20607,13 +21106,16 @@ static const asn1::table::field_name seq_table_nb_iot_paging_e_drx_info_s_names[
 static const asn1::table::seq_opt seq_table_nb_iot_paging_e_drx_info_s_opts[] = {
     {1, (int32_t)offsetof(nb_iot_paging_e_drx_info_s, nb_iot_paging_time_win_present)},
     {2, (int32_t)offsetof(nb_iot_paging_e_drx_info_s, ie_exts_present)}};
-const asn1::table::seq_desc nb_iot_paging_e_drx_info_s::desc = {
-    {seq_table_nb_iot_paging_e_drx_info_s_fields, 3, UINT64_C(0x1), seq_table_nb_iot_paging_e_drx_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nb_iot_paging_e_drx_info_s_names};
+const asn1::table::seq_desc nb_iot_paging_e_drx_info_s::desc = {{seq_table_nb_iot_paging_e_drx_info_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 seq_table_nb_iot_paging_e_drx_info_s_opts,
+                                                                 seq_table_nb_iot_paging_e_drx_info_s_names,
+                                                                 3,
+                                                                 2},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // NB-IoT-PagingDRX ::= ENUMERATED
 static const char* enum_names_nb_iot_paging_drx_e_values[] = {"rf32", "rf64", "rf128", "rf256", "rf512", "rf1024"};
@@ -20633,8 +21135,8 @@ static const asn1::table::seq_field seq_table_ngap_ie_support_info_request_item_
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(ngap_ie_support_info_request_item_s, ie_exts),
      (int32_t)offsetof(ngap_ie_support_info_request_item_s, ie_exts_present),
@@ -20652,15 +21154,15 @@ static const asn1::table::seq_opt seq_table_ngap_ie_support_info_request_item_s_
     {1, (int32_t)offsetof(ngap_ie_support_info_request_item_s, ie_exts_present)}};
 const asn1::table::seq_desc ngap_ie_support_info_request_item_s::desc = {
     {seq_table_ngap_ie_support_info_request_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ngap_ie_support_info_request_item_s_opts,
+     seq_table_ngap_ie_support_info_request_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ngap_ie_support_info_request_item_s_names};
+    0};
 
 // NGAPIESupportInformationResponseItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ngap_ie_support_info_resp_item_s_fields[] = {
@@ -20669,8 +21171,8 @@ static const asn1::table::seq_field seq_table_ngap_ie_support_info_resp_item_s_f
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(65535),
+     int64_t{0},
+     uint64_t{65535},
      nullptr},
     {offsetof(ngap_ie_support_info_resp_item_s, ngap_protocol_ie_support_info),
      asn1::table::seq_field::mandatory,
@@ -20707,15 +21209,15 @@ static const asn1::table::seq_opt seq_table_ngap_ie_support_info_resp_item_s_opt
     {3, (int32_t)offsetof(ngap_ie_support_info_resp_item_s, ie_exts_present)}};
 const asn1::table::seq_desc ngap_ie_support_info_resp_item_s::desc = {
     {seq_table_ngap_ie_support_info_resp_item_s_fields,
-     4,
-     UINT64_C(0x7),
+     uint64_t{0x7},
      seq_table_ngap_ie_support_info_resp_item_s_opts,
+     seq_table_ngap_ie_support_info_resp_item_s_names,
+     4,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ngap_ie_support_info_resp_item_s_names};
+    0};
 
 static const char* enum_names_ngap_ie_support_info_resp_item_s_ngap_protocol_ie_support_info_e__values[] = {
     "supported",
@@ -20768,13 +21270,16 @@ static const asn1::table::field_name seq_table_ngran_tnl_assoc_to_rem_item_s_nam
 static const asn1::table::seq_opt seq_table_ngran_tnl_assoc_to_rem_item_s_opts[] = {
     {1, (int32_t)offsetof(ngran_tnl_assoc_to_rem_item_s, tnl_assoc_transport_layer_address_amf_present)},
     {2, (int32_t)offsetof(ngran_tnl_assoc_to_rem_item_s, ie_exts_present)}};
-const asn1::table::seq_desc ngran_tnl_assoc_to_rem_item_s::desc = {
-    {seq_table_ngran_tnl_assoc_to_rem_item_s_fields, 3, UINT64_C(0x1), seq_table_ngran_tnl_assoc_to_rem_item_s_opts, 2},
-    false,
-    true,
-    nullptr,
-    0,
-    seq_table_ngran_tnl_assoc_to_rem_item_s_names};
+const asn1::table::seq_desc ngran_tnl_assoc_to_rem_item_s::desc = {{seq_table_ngran_tnl_assoc_to_rem_item_s_fields,
+                                                                    uint64_t{0x1},
+                                                                    seq_table_ngran_tnl_assoc_to_rem_item_s_opts,
+                                                                    seq_table_ngran_tnl_assoc_to_rem_item_s_names,
+                                                                    3,
+                                                                    2},
+                                                                   false,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // NPN-AccessInformation ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_npn_access_info_c_alternatives[] = {
@@ -20801,7 +21306,7 @@ static const asn1::table::seq_field choice_table_npn_access_info_c_alternatives[
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::list_codec<cell_cag_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -20868,13 +21373,16 @@ static const asn1::table::seq_opt    seq_table_nr_a2_x_services_authorized_s_opt
     {0, (int32_t)offsetof(nr_a2_x_services_authorized_s, aerial_ue_present)},
     {1, (int32_t)offsetof(nr_a2_x_services_authorized_s, aerial_ctrller_ue_present)},
     {2, (int32_t)offsetof(nr_a2_x_services_authorized_s, ie_exts_present)}};
-const asn1::table::seq_desc nr_a2_x_services_authorized_s::desc = {
-    {seq_table_nr_a2_x_services_authorized_s_fields, 3, UINT64_C(0x0), seq_table_nr_a2_x_services_authorized_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nr_a2_x_services_authorized_s_names};
+const asn1::table::seq_desc nr_a2_x_services_authorized_s::desc = {{seq_table_nr_a2_x_services_authorized_s_fields,
+                                                                    uint64_t{0x0},
+                                                                    seq_table_nr_a2_x_services_authorized_s_opts,
+                                                                    seq_table_nr_a2_x_services_authorized_s_names,
+                                                                    3,
+                                                                    3},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 static const char* enum_names_nr_a2_x_services_authorized_s_aerial_ue_e__values[] = {"authorized", "not-authorized"};
 const asn1::table::enum_desc nr_a2_x_services_authorized_s::aerial_ue_opts::desc  = {
@@ -20905,7 +21413,7 @@ static const asn1::table::seq_field seq_table_nr_ntn_tai_info_s_fields[] = {
      false,
      true,
      1,
-     12,
+     11,
      &asn1::table::list_codec<decltype(nr_ntn_tai_info_s::tac_list_in_nr_ntn), asn1::table::string_json>::value},
     {offsetof(nr_ntn_tai_info_s, ue_location_derived_tac_in_nr_ntn),
      (int32_t)offsetof(nr_ntn_tai_info_s, ue_location_derived_tac_in_nr_ntn_present),
@@ -20931,13 +21439,16 @@ static const asn1::table::field_name seq_table_nr_ntn_tai_info_s_names[] = {{"se
 static const asn1::table::seq_opt    seq_table_nr_ntn_tai_info_s_opts[]  = {
     {2, (int32_t)offsetof(nr_ntn_tai_info_s, ue_location_derived_tac_in_nr_ntn_present)},
     {3, (int32_t)offsetof(nr_ntn_tai_info_s, ie_exts_present)}};
-const asn1::table::seq_desc nr_ntn_tai_info_s::desc = {
-    {seq_table_nr_ntn_tai_info_s_fields, 4, UINT64_C(0x3), seq_table_nr_ntn_tai_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nr_ntn_tai_info_s_names};
+const asn1::table::seq_desc nr_ntn_tai_info_s::desc = {{seq_table_nr_ntn_tai_info_s_fields,
+                                                        uint64_t{0x3},
+                                                        seq_table_nr_ntn_tai_info_s_opts,
+                                                        seq_table_nr_ntn_tai_info_s_names,
+                                                        4,
+                                                        2},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // NRUESidelinkAggregateMaximumBitrate ::= SEQUENCE
 static const asn1::table::seq_field seq_table_nr_ue_sidelink_aggr_max_bitrate_s_fields[] = {
@@ -20946,8 +21457,8 @@ static const asn1::table::seq_field seq_table_nr_ue_sidelink_aggr_max_bitrate_s_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(nr_ue_sidelink_aggr_max_bitrate_s, ie_exts),
      (int32_t)offsetof(nr_ue_sidelink_aggr_max_bitrate_s, ie_exts_present),
@@ -20965,15 +21476,15 @@ static const asn1::table::seq_opt seq_table_nr_ue_sidelink_aggr_max_bitrate_s_op
     {1, (int32_t)offsetof(nr_ue_sidelink_aggr_max_bitrate_s, ie_exts_present)}};
 const asn1::table::seq_desc nr_ue_sidelink_aggr_max_bitrate_s::desc = {
     {seq_table_nr_ue_sidelink_aggr_max_bitrate_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_nr_ue_sidelink_aggr_max_bitrate_s_opts,
+     seq_table_nr_ue_sidelink_aggr_max_bitrate_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_nr_ue_sidelink_aggr_max_bitrate_s_names};
+    0};
 
 // NRV2XServicesAuthorized ::= SEQUENCE
 static const asn1::table::seq_field seq_table_nr_v2x_services_authorized_s_fields[] = {
@@ -21010,13 +21521,16 @@ static const asn1::table::seq_opt    seq_table_nr_v2x_services_authorized_s_opts
     {0, (int32_t)offsetof(nr_v2x_services_authorized_s, vehicle_ue_present)},
     {1, (int32_t)offsetof(nr_v2x_services_authorized_s, pedestrian_ue_present)},
     {2, (int32_t)offsetof(nr_v2x_services_authorized_s, ie_exts_present)}};
-const asn1::table::seq_desc nr_v2x_services_authorized_s::desc = {
-    {seq_table_nr_v2x_services_authorized_s_fields, 3, UINT64_C(0x0), seq_table_nr_v2x_services_authorized_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_nr_v2x_services_authorized_s_names};
+const asn1::table::seq_desc nr_v2x_services_authorized_s::desc = {{seq_table_nr_v2x_services_authorized_s_fields,
+                                                                   uint64_t{0x0},
+                                                                   seq_table_nr_v2x_services_authorized_s_opts,
+                                                                   seq_table_nr_v2x_services_authorized_s_names,
+                                                                   3,
+                                                                   3},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // NetworkControlledRepeaterAuthorized ::= ENUMERATED
 static const char*           enum_names_network_ctrl_repeater_authorized_e_values[] = {"authorized", "not-authorized"};
@@ -21142,13 +21656,16 @@ static const asn1::table::field_name seq_table_slice_overload_item_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_slice_overload_item_s_opts[]  = {
     {1, (int32_t)offsetof(slice_overload_item_s, ie_exts_present)}};
-const asn1::table::seq_desc slice_overload_item_s::desc = {
-    {seq_table_slice_overload_item_s_fields, 2, UINT64_C(0x1), seq_table_slice_overload_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_slice_overload_item_s_names};
+const asn1::table::seq_desc slice_overload_item_s::desc = {{seq_table_slice_overload_item_s_fields,
+                                                            uint64_t{0x1},
+                                                            seq_table_slice_overload_item_s_opts,
+                                                            seq_table_slice_overload_item_s_names,
+                                                            2,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // OverloadStartNSSAIItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_overload_start_nssai_item_s_fields[] = {
@@ -21158,7 +21675,7 @@ static const asn1::table::seq_field seq_table_overload_start_nssai_item_s_fields
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::item_list_codec<decltype(overload_start_nssai_item_s::slice_overload_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -21178,8 +21695,8 @@ static const asn1::table::seq_field seq_table_overload_start_nssai_item_s_fields
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(1),
-     UINT64_C(99),
+     int64_t{1},
+     uint64_t{98},
      nullptr},
     {offsetof(overload_start_nssai_item_s, ie_exts),
      (int32_t)offsetof(overload_start_nssai_item_s, ie_exts_present),
@@ -21198,13 +21715,16 @@ static const asn1::table::seq_opt seq_table_overload_start_nssai_item_s_opts[] =
     {1, (int32_t)offsetof(overload_start_nssai_item_s, slice_overload_resp_present)},
     {2, (int32_t)offsetof(overload_start_nssai_item_s, slice_traffic_load_reduction_ind_present)},
     {3, (int32_t)offsetof(overload_start_nssai_item_s, ie_exts_present)}};
-const asn1::table::seq_desc overload_start_nssai_item_s::desc = {
-    {seq_table_overload_start_nssai_item_s_fields, 4, UINT64_C(0x1), seq_table_overload_start_nssai_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_overload_start_nssai_item_s_names};
+const asn1::table::seq_desc overload_start_nssai_item_s::desc = {{seq_table_overload_start_nssai_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_overload_start_nssai_item_s_opts,
+                                                                  seq_table_overload_start_nssai_item_s_names,
+                                                                  4,
+                                                                  3},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // PC5FlowBitRates ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pc5_flow_bit_rates_s_fields[] = {
@@ -21213,16 +21733,16 @@ static const asn1::table::seq_field seq_table_pc5_flow_bit_rates_s_fields[] = {
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(pc5_flow_bit_rates_s, max_flow_bit_rate),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(pc5_flow_bit_rates_s, ie_exts),
      (int32_t)offsetof(pc5_flow_bit_rates_s, ie_exts_present),
@@ -21237,13 +21757,16 @@ static const asn1::table::field_name seq_table_pc5_flow_bit_rates_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_pc5_flow_bit_rates_s_opts[]  = {
     {2, (int32_t)offsetof(pc5_flow_bit_rates_s, ie_exts_present)}};
-const asn1::table::seq_desc pc5_flow_bit_rates_s::desc = {
-    {seq_table_pc5_flow_bit_rates_s_fields, 3, UINT64_C(0x3), seq_table_pc5_flow_bit_rates_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pc5_flow_bit_rates_s_names};
+const asn1::table::seq_desc pc5_flow_bit_rates_s::desc = {{seq_table_pc5_flow_bit_rates_s_fields,
+                                                           uint64_t{0x3},
+                                                           seq_table_pc5_flow_bit_rates_s_opts,
+                                                           seq_table_pc5_flow_bit_rates_s_names,
+                                                           3,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // PC5QoSFlowItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pc5_qos_flow_item_s_fields[] = {
@@ -21252,8 +21775,8 @@ static const asn1::table::seq_field seq_table_pc5_qos_flow_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pc5_qos_flow_item_s, pc5_flow_bit_rates),
      (int32_t)offsetof(pc5_qos_flow_item_s, pc5_flow_bit_rates_present),
@@ -21289,13 +21812,16 @@ static const asn1::table::seq_opt    seq_table_pc5_qos_flow_item_s_opts[]  = {
     {1, (int32_t)offsetof(pc5_qos_flow_item_s, pc5_flow_bit_rates_present)},
     {2, (int32_t)offsetof(pc5_qos_flow_item_s, range_present)},
     {3, (int32_t)offsetof(pc5_qos_flow_item_s, ie_exts_present)}};
-const asn1::table::seq_desc pc5_qos_flow_item_s::desc = {
-    {seq_table_pc5_qos_flow_item_s_fields, 4, UINT64_C(0x1), seq_table_pc5_qos_flow_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pc5_qos_flow_item_s_names};
+const asn1::table::seq_desc pc5_qos_flow_item_s::desc = {{seq_table_pc5_qos_flow_item_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_pc5_qos_flow_item_s_opts,
+                                                          seq_table_pc5_qos_flow_item_s_names,
+                                                          4,
+                                                          3},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // PC5QoSParameters ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pc5_qos_params_s_fields[] = {
@@ -21305,7 +21831,7 @@ static const asn1::table::seq_field seq_table_pc5_qos_params_s_fields[] = {
      false,
      true,
      1,
-     2048,
+     2047,
      &asn1::table::item_list_codec<decltype(pc5_qos_params_s::pc5_qos_flow_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -21316,8 +21842,8 @@ static const asn1::table::seq_field seq_table_pc5_qos_params_s_fields[] = {
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(pc5_qos_params_s, ie_exts),
      (int32_t)offsetof(pc5_qos_params_s, ie_exts_present),
@@ -21333,13 +21859,16 @@ static const asn1::table::field_name seq_table_pc5_qos_params_s_names[] = {{"pc5
 static const asn1::table::seq_opt    seq_table_pc5_qos_params_s_opts[]  = {
     {1, (int32_t)offsetof(pc5_qos_params_s, pc5_link_aggr_bit_rates_present)},
     {2, (int32_t)offsetof(pc5_qos_params_s, ie_exts_present)}};
-const asn1::table::seq_desc pc5_qos_params_s::desc = {
-    {seq_table_pc5_qos_params_s_fields, 3, UINT64_C(0x1), seq_table_pc5_qos_params_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pc5_qos_params_s_names};
+const asn1::table::seq_desc pc5_qos_params_s::desc = {{seq_table_pc5_qos_params_s_fields,
+                                                       uint64_t{0x1},
+                                                       seq_table_pc5_qos_params_s_opts,
+                                                       seq_table_pc5_qos_params_s_names,
+                                                       3,
+                                                       2},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // PDUSessionAggregateMaximumBitRate ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_aggr_max_bit_rate_s_fields[] = {
@@ -21348,16 +21877,16 @@ static const asn1::table::seq_field seq_table_pdu_session_aggr_max_bit_rate_s_fi
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(pdu_session_aggr_max_bit_rate_s, pdu_session_aggr_max_bit_rate_ul),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(pdu_session_aggr_max_bit_rate_s, ie_exts),
      (int32_t)offsetof(pdu_session_aggr_max_bit_rate_s, ie_exts_present),
@@ -21374,15 +21903,15 @@ static const asn1::table::field_name seq_table_pdu_session_aggr_max_bit_rate_s_n
 static const asn1::table::seq_opt seq_table_pdu_session_aggr_max_bit_rate_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_aggr_max_bit_rate_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_aggr_max_bit_rate_s::desc = {{seq_table_pdu_session_aggr_max_bit_rate_s_fields,
-                                                                      3,
-                                                                      UINT64_C(0x3),
+                                                                      uint64_t{0x3},
                                                                       seq_table_pdu_session_aggr_max_bit_rate_s_opts,
+                                                                      seq_table_pdu_session_aggr_max_bit_rate_s_names,
+                                                                      3,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_pdu_session_aggr_max_bit_rate_s_names};
+                                                                     0};
 
 // PagingPolicyDifferentiationItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_paging_policy_diff_item_s_fields[] = {
@@ -21391,16 +21920,16 @@ static const asn1::table::seq_field seq_table_paging_policy_diff_item_s_fields[]
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(paging_policy_diff_item_s, paging_policy_ind),
      (int32_t)offsetof(paging_policy_diff_item_s, paging_policy_ind_present),
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(7),
+     int64_t{0},
+     uint64_t{7},
      nullptr},
     {offsetof(paging_policy_diff_item_s, alloc_and_retention_prio),
      (int32_t)offsetof(paging_policy_diff_item_s, alloc_and_retention_prio_present),
@@ -21416,16 +21945,16 @@ static const asn1::table::seq_field seq_table_paging_policy_diff_item_s_fields[]
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(paging_policy_diff_item_s, dl_data_size),
      (int32_t)offsetof(paging_policy_diff_item_s, dl_data_size_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(96000),
+     int64_t{0},
+     uint64_t{96000},
      nullptr},
     {offsetof(paging_policy_diff_item_s, ie_exts),
      (int32_t)offsetof(paging_policy_diff_item_s, ie_exts_present),
@@ -21449,13 +21978,16 @@ static const asn1::table::seq_opt seq_table_paging_policy_diff_item_s_opts[] = {
     {3, (int32_t)offsetof(paging_policy_diff_item_s, five_qi_present)},
     {4, (int32_t)offsetof(paging_policy_diff_item_s, dl_data_size_present)},
     {5, (int32_t)offsetof(paging_policy_diff_item_s, ie_exts_present)}};
-const asn1::table::seq_desc paging_policy_diff_item_s::desc = {
-    {seq_table_paging_policy_diff_item_s_fields, 6, UINT64_C(0x0), seq_table_paging_policy_diff_item_s_opts, 6},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_paging_policy_diff_item_s_names};
+const asn1::table::seq_desc paging_policy_diff_item_s::desc = {{seq_table_paging_policy_diff_item_s_fields,
+                                                                uint64_t{0x0},
+                                                                seq_table_paging_policy_diff_item_s_opts,
+                                                                seq_table_paging_policy_diff_item_s_names,
+                                                                6,
+                                                                6},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // PDUSessionForPagingItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_for_paging_item_s_fields[] = {
@@ -21464,8 +21996,8 @@ static const asn1::table::seq_field seq_table_pdu_session_for_paging_item_s_fiel
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_for_paging_item_s, paging_policy_diff_list),
      asn1::table::seq_field::mandatory,
@@ -21473,7 +22005,7 @@ static const asn1::table::seq_field seq_table_pdu_session_for_paging_item_s_fiel
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_for_paging_item_s::paging_policy_diff_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -21493,13 +22025,16 @@ static const asn1::table::field_name seq_table_pdu_session_for_paging_item_s_nam
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_pdu_session_for_paging_item_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_for_paging_item_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_session_for_paging_item_s::desc = {
-    {seq_table_pdu_session_for_paging_item_s_fields, 3, UINT64_C(0x3), seq_table_pdu_session_for_paging_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_session_for_paging_item_s_names};
+const asn1::table::seq_desc pdu_session_for_paging_item_s::desc = {{seq_table_pdu_session_for_paging_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    seq_table_pdu_session_for_paging_item_s_opts,
+                                                                    seq_table_pdu_session_for_paging_item_s_names,
+                                                                    3,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // PDUSessionListMTCommHReq-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_list_mt_comm_h_req_item_s_fields[] = {
@@ -21508,8 +22043,8 @@ static const asn1::table::seq_field seq_table_pdu_session_list_mt_comm_h_req_ite
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_list_mt_comm_h_req_item_s, ie_exts),
      (int32_t)offsetof(pdu_session_list_mt_comm_h_req_item_s, ie_exts_present),
@@ -21527,15 +22062,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_list_mt_comm_h_req_item_
     {1, (int32_t)offsetof(pdu_session_list_mt_comm_h_req_item_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_list_mt_comm_h_req_item_s::desc = {
     {seq_table_pdu_session_list_mt_comm_h_req_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_list_mt_comm_h_req_item_s_opts,
+     seq_table_pdu_session_list_mt_comm_h_req_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_list_mt_comm_h_req_item_s_names};
+    0};
 
 // PDUSessionResourceAdmittedItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_admitted_item_s_fields[] = {
@@ -21544,8 +22079,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_admitted_item_s_fi
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_admitted_item_s, ho_request_ack_transfer),
      asn1::table::seq_field::mandatory,
@@ -21571,15 +22106,15 @@ static const asn1::table::field_name seq_table_pdu_session_res_admitted_item_s_n
 static const asn1::table::seq_opt seq_table_pdu_session_res_admitted_item_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_res_admitted_item_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_admitted_item_s::desc = {{seq_table_pdu_session_res_admitted_item_s_fields,
-                                                                      3,
-                                                                      UINT64_C(0x3),
+                                                                      uint64_t{0x3},
                                                                       seq_table_pdu_session_res_admitted_item_s_opts,
+                                                                      seq_table_pdu_session_res_admitted_item_s_names,
+                                                                      3,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_pdu_session_res_admitted_item_s_names};
+                                                                     0};
 
 // PDUSessionResourceFailedToModifyItemModCfm ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_modify_item_mod_cfm_s_fields[] = {
@@ -21588,8 +22123,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_modify_i
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_modify_item_mod_cfm_s, pdu_session_res_modify_ind_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -21618,15 +22153,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_modify_ite
     {2, (int32_t)offsetof(pdu_session_res_failed_to_modify_item_mod_cfm_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_modify_item_mod_cfm_s::desc = {
     {seq_table_pdu_session_res_failed_to_modify_item_mod_cfm_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_modify_item_mod_cfm_s_opts,
+     seq_table_pdu_session_res_failed_to_modify_item_mod_cfm_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_modify_item_mod_cfm_s_names};
+    0};
 
 // PDUSessionResourceFailedToModifyItemModRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_modify_item_mod_res_s_fields[] = {
@@ -21635,8 +22170,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_modify_i
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_modify_item_mod_res_s, pdu_session_res_modify_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -21665,15 +22200,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_modify_ite
     {2, (int32_t)offsetof(pdu_session_res_failed_to_modify_item_mod_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_modify_item_mod_res_s::desc = {
     {seq_table_pdu_session_res_failed_to_modify_item_mod_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_modify_item_mod_res_s_opts,
+     seq_table_pdu_session_res_failed_to_modify_item_mod_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_modify_item_mod_res_s_names};
+    0};
 
 // PDUSessionResourceFailedToResumeItemRESReq ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_resume_item_res_req_s_fields[] = {
@@ -21682,8 +22217,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_resume_i
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_resume_item_res_req_s, cause),
      asn1::table::seq_field::mandatory,
@@ -21711,15 +22246,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_resume_ite
     {2, (int32_t)offsetof(pdu_session_res_failed_to_resume_item_res_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_resume_item_res_req_s::desc = {
     {seq_table_pdu_session_res_failed_to_resume_item_res_req_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_resume_item_res_req_s_opts,
+     seq_table_pdu_session_res_failed_to_resume_item_res_req_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_resume_item_res_req_s_names};
+    0};
 
 // PDUSessionResourceFailedToResumeItemRESRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_resume_item_res_res_s_fields[] = {
@@ -21728,8 +22263,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_resume_i
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_resume_item_res_res_s, cause),
      asn1::table::seq_field::mandatory,
@@ -21757,15 +22292,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_resume_ite
     {2, (int32_t)offsetof(pdu_session_res_failed_to_resume_item_res_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_resume_item_res_res_s::desc = {
     {seq_table_pdu_session_res_failed_to_resume_item_res_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_resume_item_res_res_s_opts,
+     seq_table_pdu_session_res_failed_to_resume_item_res_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_resume_item_res_res_s_names};
+    0};
 
 // PDUSessionResourceFailedToSetupItemCxtFail ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_item_cxt_fail_s_fields[] = {
@@ -21774,8 +22309,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_it
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_setup_item_cxt_fail_s, pdu_session_res_setup_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -21804,15 +22339,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_setup_item
     {2, (int32_t)offsetof(pdu_session_res_failed_to_setup_item_cxt_fail_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_setup_item_cxt_fail_s::desc = {
     {seq_table_pdu_session_res_failed_to_setup_item_cxt_fail_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_setup_item_cxt_fail_s_opts,
+     seq_table_pdu_session_res_failed_to_setup_item_cxt_fail_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_setup_item_cxt_fail_s_names};
+    0};
 
 // PDUSessionResourceFailedToSetupItemCxtRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_item_cxt_res_s_fields[] = {
@@ -21821,8 +22356,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_it
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_setup_item_cxt_res_s, pdu_session_res_setup_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -21851,15 +22386,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_setup_item
     {2, (int32_t)offsetof(pdu_session_res_failed_to_setup_item_cxt_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_setup_item_cxt_res_s::desc = {
     {seq_table_pdu_session_res_failed_to_setup_item_cxt_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_setup_item_cxt_res_s_opts,
+     seq_table_pdu_session_res_failed_to_setup_item_cxt_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_setup_item_cxt_res_s_names};
+    0};
 
 // PDUSessionResourceFailedToSetupItemHOAck ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_item_ho_ack_s_fields[] = {
@@ -21868,8 +22403,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_it
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_setup_item_ho_ack_s, ho_res_alloc_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -21898,15 +22433,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_setup_item
     {2, (int32_t)offsetof(pdu_session_res_failed_to_setup_item_ho_ack_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_setup_item_ho_ack_s::desc = {
     {seq_table_pdu_session_res_failed_to_setup_item_ho_ack_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_setup_item_ho_ack_s_opts,
+     seq_table_pdu_session_res_failed_to_setup_item_ho_ack_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_setup_item_ho_ack_s_names};
+    0};
 
 // PDUSessionResourceFailedToSetupItemPSReq ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_item_ps_req_s_fields[] = {
@@ -21915,8 +22450,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_it
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_setup_item_ps_req_s, path_switch_request_setup_failed_transfer),
      asn1::table::seq_field::mandatory,
@@ -21945,15 +22480,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_setup_item
     {2, (int32_t)offsetof(pdu_session_res_failed_to_setup_item_ps_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_setup_item_ps_req_s::desc = {
     {seq_table_pdu_session_res_failed_to_setup_item_ps_req_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_setup_item_ps_req_s_opts,
+     seq_table_pdu_session_res_failed_to_setup_item_ps_req_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_setup_item_ps_req_s_names};
+    0};
 
 // PDUSessionResourceFailedToSetupItemSURes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_item_su_res_s_fields[] = {
@@ -21962,8 +22497,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_failed_to_setup_it
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_failed_to_setup_item_su_res_s, pdu_session_res_setup_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -21992,15 +22527,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_failed_to_setup_item
     {2, (int32_t)offsetof(pdu_session_res_failed_to_setup_item_su_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_failed_to_setup_item_su_res_s::desc = {
     {seq_table_pdu_session_res_failed_to_setup_item_su_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_failed_to_setup_item_su_res_s_opts,
+     seq_table_pdu_session_res_failed_to_setup_item_su_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_failed_to_setup_item_su_res_s_names};
+    0};
 
 // PDUSessionResourceHandoverItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_ho_item_s_fields[] = {
@@ -22009,8 +22544,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_ho_item_s_fields[]
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_ho_item_s, ho_cmd_transfer),
      asn1::table::seq_field::mandatory,
@@ -22034,13 +22569,16 @@ static const asn1::table::field_name seq_table_pdu_session_res_ho_item_s_names[]
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_pdu_session_res_ho_item_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_res_ho_item_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_session_res_ho_item_s::desc = {
-    {seq_table_pdu_session_res_ho_item_s_fields, 3, UINT64_C(0x3), seq_table_pdu_session_res_ho_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_session_res_ho_item_s_names};
+const asn1::table::seq_desc pdu_session_res_ho_item_s::desc = {{seq_table_pdu_session_res_ho_item_s_fields,
+                                                                uint64_t{0x3},
+                                                                seq_table_pdu_session_res_ho_item_s_opts,
+                                                                seq_table_pdu_session_res_ho_item_s_names,
+                                                                3,
+                                                                1},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // ULForwarding ::= ENUMERATED
 static const char*           enum_names_ul_forwarding_e_values[] = {"ul-forwarding-proposed"};
@@ -22101,8 +22639,8 @@ static const asn1::table::seq_field seq_table_qos_flow_info_item_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_info_item_s, dl_forwarding),
      (int32_t)offsetof(qos_flow_info_item_s, dl_forwarding_present),
@@ -22128,13 +22666,16 @@ static const asn1::table::field_name seq_table_qos_flow_info_item_s_names[] = {{
 static const asn1::table::seq_opt    seq_table_qos_flow_info_item_s_opts[]  = {
     {1, (int32_t)offsetof(qos_flow_info_item_s, dl_forwarding_present)},
     {2, (int32_t)offsetof(qos_flow_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_info_item_s::desc = {
-    {seq_table_qos_flow_info_item_s_fields, 3, UINT64_C(0x1), seq_table_qos_flow_info_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_info_item_s_names};
+const asn1::table::seq_desc qos_flow_info_item_s::desc = {{seq_table_qos_flow_info_item_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_qos_flow_info_item_s_opts,
+                                                           seq_table_qos_flow_info_item_s_names,
+                                                           3,
+                                                           2},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // PDUSessionResourceInformationItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_info_item_s_fields[] = {
@@ -22143,8 +22684,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_info_item_s_fields
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_info_item_s, qos_flow_info_list),
      asn1::table::seq_field::mandatory,
@@ -22152,7 +22693,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_info_item_s_fields
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_info_item_s::qos_flow_info_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22164,7 +22705,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_info_item_s_fields
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<decltype(pdu_session_res_info_item_s::drbs_to_qos_flows_map_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22186,13 +22727,16 @@ static const asn1::table::field_name seq_table_pdu_session_res_info_item_s_names
 static const asn1::table::seq_opt seq_table_pdu_session_res_info_item_s_opts[] = {
     {2, asn1::table::seq_field::list_presence},
     {3, (int32_t)offsetof(pdu_session_res_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_session_res_info_item_s::desc = {
-    {seq_table_pdu_session_res_info_item_s_fields, 4, UINT64_C(0x3), seq_table_pdu_session_res_info_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_session_res_info_item_s_names};
+const asn1::table::seq_desc pdu_session_res_info_item_s::desc = {{seq_table_pdu_session_res_info_item_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  seq_table_pdu_session_res_info_item_s_opts,
+                                                                  seq_table_pdu_session_res_info_item_s_names,
+                                                                  4,
+                                                                  2},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 static const uint32_t objset_id_pdu_session_res_item_cxt_rel_cpl_ext_ies_o[]   = {145};
 static const uint8_t  objset_crit_pdu_session_res_item_cxt_rel_cpl_ext_ies_o[] = {crit_e::ignore};
@@ -22232,8 +22776,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_item_cxt_rel_cpl_s
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_item_cxt_rel_cpl_s, ie_exts),
      (int32_t)offsetof(pdu_session_res_item_cxt_rel_cpl_s, ie_exts_present),
@@ -22251,15 +22795,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_item_cxt_rel_cpl_s_o
     {1, (int32_t)offsetof(pdu_session_res_item_cxt_rel_cpl_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_item_cxt_rel_cpl_s::desc = {
     {seq_table_pdu_session_res_item_cxt_rel_cpl_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_item_cxt_rel_cpl_s_opts,
+     seq_table_pdu_session_res_item_cxt_rel_cpl_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_item_cxt_rel_cpl_s_names};
+    0};
 
 // PDUSessionResourceItemCxtRelReq ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_item_cxt_rel_req_s_fields[] = {
@@ -22268,8 +22812,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_item_cxt_rel_req_s
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_item_cxt_rel_req_s, ie_exts),
      (int32_t)offsetof(pdu_session_res_item_cxt_rel_req_s, ie_exts_present),
@@ -22287,15 +22831,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_item_cxt_rel_req_s_o
     {1, (int32_t)offsetof(pdu_session_res_item_cxt_rel_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_item_cxt_rel_req_s::desc = {
     {seq_table_pdu_session_res_item_cxt_rel_req_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_item_cxt_rel_req_s_opts,
+     seq_table_pdu_session_res_item_cxt_rel_req_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_item_cxt_rel_req_s_names};
+    0};
 
 // PDUSessionResourceItemHORqd ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_item_ho_rqd_s_fields[] = {
@@ -22304,8 +22848,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_item_ho_rqd_s_fiel
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_item_ho_rqd_s, ho_required_transfer),
      asn1::table::seq_field::mandatory,
@@ -22330,13 +22874,16 @@ static const asn1::table::field_name seq_table_pdu_session_res_item_ho_rqd_s_nam
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_pdu_session_res_item_ho_rqd_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_res_item_ho_rqd_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_session_res_item_ho_rqd_s::desc = {
-    {seq_table_pdu_session_res_item_ho_rqd_s_fields, 3, UINT64_C(0x3), seq_table_pdu_session_res_item_ho_rqd_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_session_res_item_ho_rqd_s_names};
+const asn1::table::seq_desc pdu_session_res_item_ho_rqd_s::desc = {{seq_table_pdu_session_res_item_ho_rqd_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    seq_table_pdu_session_res_item_ho_rqd_s_opts,
+                                                                    seq_table_pdu_session_res_item_ho_rqd_s_names,
+                                                                    3,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // QosFlowModifyConfirmItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qos_flow_modify_confirm_item_s_fields[] = {
@@ -22345,8 +22892,8 @@ static const asn1::table::seq_field seq_table_qos_flow_modify_confirm_item_s_fie
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_modify_confirm_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_modify_confirm_item_s, ie_exts_present),
@@ -22361,15 +22908,15 @@ static const asn1::table::field_name seq_table_qos_flow_modify_confirm_item_s_na
 static const asn1::table::seq_opt    seq_table_qos_flow_modify_confirm_item_s_opts[]  = {
     {1, (int32_t)offsetof(qos_flow_modify_confirm_item_s, ie_exts_present)}};
 const asn1::table::seq_desc qos_flow_modify_confirm_item_s::desc = {{seq_table_qos_flow_modify_confirm_item_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_qos_flow_modify_confirm_item_s_opts,
+                                                                     seq_table_qos_flow_modify_confirm_item_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_qos_flow_modify_confirm_item_s_names};
+                                                                    0};
 
 // UPTransportLayerInformationPairItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_up_transport_layer_info_pair_item_s_fields[] = {
@@ -22408,15 +22955,15 @@ static const asn1::table::seq_opt seq_table_up_transport_layer_info_pair_item_s_
     {2, (int32_t)offsetof(up_transport_layer_info_pair_item_s, ie_exts_present)}};
 const asn1::table::seq_desc up_transport_layer_info_pair_item_s::desc = {
     {seq_table_up_transport_layer_info_pair_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_up_transport_layer_info_pair_item_s_opts,
+     seq_table_up_transport_layer_info_pair_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_up_transport_layer_info_pair_item_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_modify_confirm_transfer_ext_ies_o[]  = {195, 185};
 static const uint8_t objset_crit_pdu_session_res_modify_confirm_transfer_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -22439,7 +22986,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_confirm_tran
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_confirm_transfer_ext_ies_container::add_redundant_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -22470,7 +23017,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_confirm_tra
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_modify_confirm_transfer_s::qos_flow_modify_confirm_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22491,7 +23038,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_confirm_tra
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(pdu_session_res_modify_confirm_transfer_s::add_ng_u_up_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22503,7 +23050,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_confirm_tra
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_modify_confirm_transfer_s::qos_flow_failed_to_modify_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22530,15 +23077,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_confirm_trans
     {4, (int32_t)offsetof(pdu_session_res_modify_confirm_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_confirm_transfer_s::desc = {
     {seq_table_pdu_session_res_modify_confirm_transfer_s_fields,
-     5,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_modify_confirm_transfer_s_opts,
+     seq_table_pdu_session_res_modify_confirm_transfer_s_names,
+     5,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_confirm_transfer_s_names};
+    0};
 
 // VolumeTimedReport-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_volume_timed_report_item_s_fields[] = {
@@ -22564,16 +23111,16 @@ static const asn1::table::seq_field seq_table_volume_timed_report_item_s_fields[
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(18446744073709551615),
+     int64_t{0},
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(volume_timed_report_item_s, usage_count_dl),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(18446744073709551615),
+     int64_t{0},
+     uint64_t{18446744073709551615U},
      nullptr},
     {offsetof(volume_timed_report_item_s, ie_exts),
      (int32_t)offsetof(volume_timed_report_item_s, ie_exts_present),
@@ -22590,13 +23137,16 @@ static const asn1::table::field_name seq_table_volume_timed_report_item_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_volume_timed_report_item_s_opts[]  = {
     {4, (int32_t)offsetof(volume_timed_report_item_s, ie_exts_present)}};
-const asn1::table::seq_desc volume_timed_report_item_s::desc = {
-    {seq_table_volume_timed_report_item_s_fields, 5, UINT64_C(0xf), seq_table_volume_timed_report_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_volume_timed_report_item_s_names};
+const asn1::table::seq_desc volume_timed_report_item_s::desc = {{seq_table_volume_timed_report_item_s_fields,
+                                                                 uint64_t{0xf},
+                                                                 seq_table_volume_timed_report_item_s_opts,
+                                                                 seq_table_volume_timed_report_item_s_names,
+                                                                 5,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // PDUSessionUsageReport ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_usage_report_s_fields[] = {
@@ -22615,7 +23165,7 @@ static const asn1::table::seq_field seq_table_pdu_session_usage_report_s_fields[
      false,
      true,
      1,
-     2,
+     1,
      &asn1::table::item_list_codec<decltype(pdu_session_usage_report_s::pdu_session_timed_report_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22635,13 +23185,16 @@ static const asn1::table::field_name seq_table_pdu_session_usage_report_s_names[
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_pdu_session_usage_report_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_usage_report_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_session_usage_report_s::desc = {
-    {seq_table_pdu_session_usage_report_s_fields, 3, UINT64_C(0x3), seq_table_pdu_session_usage_report_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_session_usage_report_s_names};
+const asn1::table::seq_desc pdu_session_usage_report_s::desc = {{seq_table_pdu_session_usage_report_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 seq_table_pdu_session_usage_report_s_opts,
+                                                                 seq_table_pdu_session_usage_report_s_names,
+                                                                 3,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const char*           enum_names_pdu_session_usage_report_s_rat_type_e__values[] = {"nr",
                                                                                            "eutra",
@@ -22659,8 +23212,8 @@ static const asn1::table::seq_field seq_table_qos_flows_usage_report_item_s_fiel
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flows_usage_report_item_s, rat_type),
      asn1::table::seq_field::mandatory,
@@ -22677,7 +23230,7 @@ static const asn1::table::seq_field seq_table_qos_flows_usage_report_item_s_fiel
      false,
      true,
      1,
-     2,
+     1,
      &asn1::table::item_list_codec<decltype(qos_flows_usage_report_item_s::qos_flows_timed_report_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22698,13 +23251,16 @@ static const asn1::table::field_name seq_table_qos_flows_usage_report_item_s_nam
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_qos_flows_usage_report_item_s_opts[] = {
     {3, (int32_t)offsetof(qos_flows_usage_report_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flows_usage_report_item_s::desc = {
-    {seq_table_qos_flows_usage_report_item_s_fields, 4, UINT64_C(0x7), seq_table_qos_flows_usage_report_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flows_usage_report_item_s_names};
+const asn1::table::seq_desc qos_flows_usage_report_item_s::desc = {{seq_table_qos_flows_usage_report_item_s_fields,
+                                                                    uint64_t{0x7},
+                                                                    seq_table_qos_flows_usage_report_item_s_opts,
+                                                                    seq_table_qos_flows_usage_report_item_s_names,
+                                                                    4,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 static const char*           enum_names_qos_flows_usage_report_item_s_rat_type_e__values[] = {"nr",
                                                                                               "eutra",
@@ -22732,7 +23288,7 @@ static const asn1::table::seq_field seq_table_secondary_rat_usage_info_s_fields[
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(secondary_rat_usage_info_s::qos_flows_usage_report_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22754,13 +23310,16 @@ static const asn1::table::seq_opt seq_table_secondary_rat_usage_info_s_opts[] = 
     {0, (int32_t)offsetof(secondary_rat_usage_info_s, pdu_session_usage_report_present)},
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(secondary_rat_usage_info_s, ie_ext_present)}};
-const asn1::table::seq_desc secondary_rat_usage_info_s::desc = {
-    {seq_table_secondary_rat_usage_info_s_fields, 3, UINT64_C(0x0), seq_table_secondary_rat_usage_info_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_secondary_rat_usage_info_s_names};
+const asn1::table::seq_desc secondary_rat_usage_info_s::desc = {{seq_table_secondary_rat_usage_info_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_secondary_rat_usage_info_s_opts,
+                                                                 seq_table_secondary_rat_usage_info_s_names,
+                                                                 3,
+                                                                 3},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const uint32_t objset_id_pdu_session_res_modify_ind_transfer_ext_ies_o[] = {144, 156, 193, 184, 27, 426};
 static const uint8_t  objset_crit_pdu_session_res_modify_ind_transfer_ext_ies_o[] =
@@ -22803,7 +23362,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_ind_transfer
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_ind_transfer_ext_ies_container::add_redundant_dl_qos_flow_per_tnl_info),
          asn1::table::sequence_item_ops,
@@ -22826,7 +23385,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_ind_transfer
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_ind_transfer_ext_ies_container::ecn_markingor_congestion_info_report_status),
          asn1::table::sequence_item_ops,
@@ -22872,7 +23431,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_ind_transfe
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(pdu_session_res_modify_ind_transfer_s::add_dl_qos_flow_per_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -22896,15 +23455,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_ind_transfer_
     {2, (int32_t)offsetof(pdu_session_res_modify_ind_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_ind_transfer_s::desc = {
     {seq_table_pdu_session_res_modify_ind_transfer_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_modify_ind_transfer_s_opts,
+     seq_table_pdu_session_res_modify_ind_transfer_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_ind_transfer_s_names};
+    0};
 
 // PDUSessionResourceModifyIndicationUnsuccessfulTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_modify_ind_unsuccessful_transfer_s_fields[] = {
@@ -22933,15 +23492,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_ind_unsuccess
     {1, (int32_t)offsetof(pdu_session_res_modify_ind_unsuccessful_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_ind_unsuccessful_transfer_s::desc = {
     {seq_table_pdu_session_res_modify_ind_unsuccessful_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_modify_ind_unsuccessful_transfer_s_opts,
+     seq_table_pdu_session_res_modify_ind_unsuccessful_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_ind_unsuccessful_transfer_s_names};
+    0};
 
 // PDUSessionResourceModifyItemModCfm ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_modify_item_mod_cfm_s_fields[] = {
@@ -22950,8 +23509,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_item_mod_cf
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_modify_item_mod_cfm_s, pdu_session_res_modify_confirm_transfer),
      asn1::table::seq_field::mandatory,
@@ -22980,15 +23539,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_item_mod_cfm_
     {2, (int32_t)offsetof(pdu_session_res_modify_item_mod_cfm_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_item_mod_cfm_s::desc = {
     {seq_table_pdu_session_res_modify_item_mod_cfm_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_modify_item_mod_cfm_s_opts,
+     seq_table_pdu_session_res_modify_item_mod_cfm_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_item_mod_cfm_s_names};
+    0};
 
 // PDUSessionResourceModifyItemModInd ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_modify_item_mod_ind_s_fields[] = {
@@ -22997,8 +23556,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_item_mod_in
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_modify_item_mod_ind_s, pdu_session_res_modify_ind_transfer),
      asn1::table::seq_field::mandatory,
@@ -23026,15 +23585,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_item_mod_ind_
     {2, (int32_t)offsetof(pdu_session_res_modify_item_mod_ind_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_item_mod_ind_s::desc = {
     {seq_table_pdu_session_res_modify_item_mod_ind_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_modify_item_mod_ind_s_opts,
+     seq_table_pdu_session_res_modify_item_mod_ind_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_item_mod_ind_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_modify_item_mod_req_ext_ies_o[]   = {148, 281};
 static const uint8_t  objset_crit_pdu_session_res_modify_item_mod_req_ext_ies_o[] = {crit_e::reject, crit_e::ignore};
@@ -23083,8 +23642,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_item_mod_re
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_modify_item_mod_req_s, nas_pdu),
      asn1::table::seq_field::list_presence,
@@ -23124,15 +23683,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_item_mod_req_
     {3, (int32_t)offsetof(pdu_session_res_modify_item_mod_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_item_mod_req_s::desc = {
     {seq_table_pdu_session_res_modify_item_mod_req_s_fields,
-     4,
-     UINT64_C(0x5),
+     uint64_t{0x5},
      seq_table_pdu_session_res_modify_item_mod_req_s_opts,
+     seq_table_pdu_session_res_modify_item_mod_req_s_names,
+     4,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_item_mod_req_s_names};
+    0};
 
 // PDUSessionResourceModifyItemModRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_modify_item_mod_res_s_fields[] = {
@@ -23141,8 +23700,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_item_mod_re
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_modify_item_mod_res_s, pdu_session_res_modify_resp_transfer),
      asn1::table::seq_field::mandatory,
@@ -23170,15 +23729,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_item_mod_res_
     {2, (int32_t)offsetof(pdu_session_res_modify_item_mod_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_item_mod_res_s::desc = {
     {seq_table_pdu_session_res_modify_item_mod_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_modify_item_mod_res_s_opts,
+     seq_table_pdu_session_res_modify_item_mod_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_item_mod_res_s_names};
+    0};
 
 static const uint32_t objset_id_ul_ngu_up_tnl_modify_item_ext_ies_o[]   = {195, 192};
 static const uint8_t  objset_crit_ul_ngu_up_tnl_modify_item_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -23253,13 +23812,16 @@ static const asn1::table::field_name seq_table_ul_ngu_up_tnl_modify_item_s_names
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_ul_ngu_up_tnl_modify_item_s_opts[] = {
     {2, (int32_t)offsetof(ul_ngu_up_tnl_modify_item_s, ie_exts_present)}};
-const asn1::table::seq_desc ul_ngu_up_tnl_modify_item_s::desc = {
-    {seq_table_ul_ngu_up_tnl_modify_item_s_fields, 3, UINT64_C(0x3), seq_table_ul_ngu_up_tnl_modify_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ul_ngu_up_tnl_modify_item_s_names};
+const asn1::table::seq_desc ul_ngu_up_tnl_modify_item_s::desc = {{seq_table_ul_ngu_up_tnl_modify_item_s_fields,
+                                                                  uint64_t{0x3},
+                                                                  seq_table_ul_ngu_up_tnl_modify_item_s_opts,
+                                                                  seq_table_ul_ngu_up_tnl_modify_item_s_names,
+                                                                  3,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // PeriodicityBound ::= SEQUENCE
 static const asn1::table::seq_field seq_table_periodicity_bound_s_fields[] = {
@@ -23268,16 +23830,16 @@ static const asn1::table::seq_field seq_table_periodicity_bound_s_fields[] = {
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(640000),
+     int64_t{0},
+     uint64_t{640000},
      nullptr},
     {offsetof(periodicity_bound_s, periodicity_upper_bound),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(640000),
+     int64_t{0},
+     uint64_t{640000},
      nullptr},
     {offsetof(periodicity_bound_s, ie_exts),
      (int32_t)offsetof(periodicity_bound_s, ie_exts_present),
@@ -23292,13 +23854,16 @@ static const asn1::table::field_name seq_table_periodicity_bound_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_periodicity_bound_s_opts[]  = {
     {2, (int32_t)offsetof(periodicity_bound_s, ie_exts_present)}};
-const asn1::table::seq_desc periodicity_bound_s::desc = {
-    {seq_table_periodicity_bound_s_fields, 3, UINT64_C(0x3), seq_table_periodicity_bound_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_periodicity_bound_s_names};
+const asn1::table::seq_desc periodicity_bound_s::desc = {{seq_table_periodicity_bound_s_fields,
+                                                          uint64_t{0x3},
+                                                          seq_table_periodicity_bound_s_opts,
+                                                          seq_table_periodicity_bound_s_names,
+                                                          3,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // PeriodicityRange ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_periodicity_range_c_alternatives[] = {
@@ -23341,10 +23906,10 @@ static const asn1::table::seq_field choice_table_periodicity_range_c_alternative
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::list_codec<allowed_periodicity_list_l,
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(640000), true, true>>::value},
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{640000}, true, true>>::value},
     {0,
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::codec,
@@ -23413,13 +23978,16 @@ static const asn1::table::field_name seq_table_ra_nfeedbacktype_proactive_s_name
 static const asn1::table::seq_opt seq_table_ra_nfeedbacktype_proactive_s_opts[] = {
     {1, (int32_t)offsetof(ra_nfeedbacktype_proactive_s, periodicity_range_present)},
     {2, (int32_t)offsetof(ra_nfeedbacktype_proactive_s, ie_ext_present)}};
-const asn1::table::seq_desc ra_nfeedbacktype_proactive_s::desc = {
-    {seq_table_ra_nfeedbacktype_proactive_s_fields, 3, UINT64_C(0x1), seq_table_ra_nfeedbacktype_proactive_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ra_nfeedbacktype_proactive_s_names};
+const asn1::table::seq_desc ra_nfeedbacktype_proactive_s::desc = {{seq_table_ra_nfeedbacktype_proactive_s_fields,
+                                                                   uint64_t{0x1},
+                                                                   seq_table_ra_nfeedbacktype_proactive_s_opts,
+                                                                   seq_table_ra_nfeedbacktype_proactive_s_names,
+                                                                   3,
+                                                                   2},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // RANfeedbacktype-reactive ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ra_nfeedbacktype_reactive_s_fields[] = {
@@ -23445,13 +24013,16 @@ static const asn1::table::field_name seq_table_ra_nfeedbacktype_reactive_s_names
     {"iE-Extension", nullptr}};
 static const asn1::table::seq_opt seq_table_ra_nfeedbacktype_reactive_s_opts[] = {
     {1, (int32_t)offsetof(ra_nfeedbacktype_reactive_s, ie_ext_present)}};
-const asn1::table::seq_desc ra_nfeedbacktype_reactive_s::desc = {
-    {seq_table_ra_nfeedbacktype_reactive_s_fields, 2, UINT64_C(0x1), seq_table_ra_nfeedbacktype_reactive_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ra_nfeedbacktype_reactive_s_names};
+const asn1::table::seq_desc ra_nfeedbacktype_reactive_s::desc = {{seq_table_ra_nfeedbacktype_reactive_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_ra_nfeedbacktype_reactive_s_opts,
+                                                                  seq_table_ra_nfeedbacktype_reactive_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 static const char*           enum_names_ra_nfeedbacktype_reactive_s_cap_for_bat_adaptation_e__values[] = {"true"};
 const asn1::table::enum_desc ra_nfeedbacktype_reactive_s::cap_for_bat_adaptation_opts::desc            = {
@@ -23544,8 +24115,8 @@ static const asn1::table::seq_field ie_table_tsc_assist_info_ext_ies_container_v
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(1920000),
+     int64_t{0},
+     uint64_t{1920000},
      nullptr},
     {offsetof(tsc_assist_info_ext_ies_container, ra_nfeedbacktype),
      (int32_t)offsetof(tsc_assist_info_ext_ies_container, ra_nfeedbacktype_present),
@@ -23588,8 +24159,8 @@ static const asn1::table::seq_field seq_table_tsc_assist_info_s_fields[] = {
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(640000),
+     int64_t{0},
+     uint64_t{640000},
      nullptr},
     {offsetof(tsc_assist_info_s, burst_arrival_time),
      asn1::table::seq_field::list_presence,
@@ -23615,13 +24186,16 @@ static const asn1::table::field_name seq_table_tsc_assist_info_s_names[] = {{"pe
 static const asn1::table::seq_opt    seq_table_tsc_assist_info_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(tsc_assist_info_s, ie_exts_present)}};
-const asn1::table::seq_desc tsc_assist_info_s::desc = {
-    {seq_table_tsc_assist_info_s_fields, 3, UINT64_C(0x1), seq_table_tsc_assist_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tsc_assist_info_s_names};
+const asn1::table::seq_desc tsc_assist_info_s::desc = {{seq_table_tsc_assist_info_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_tsc_assist_info_s_opts,
+                                                        seq_table_tsc_assist_info_s_names,
+                                                        3,
+                                                        2},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // TSCTrafficCharacteristics ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tsc_traffic_characteristics_s_fields[] = {
@@ -23659,13 +24233,16 @@ static const asn1::table::seq_opt seq_table_tsc_traffic_characteristics_s_opts[]
     {0, (int32_t)offsetof(tsc_traffic_characteristics_s, tsc_assist_info_dl_present)},
     {1, (int32_t)offsetof(tsc_traffic_characteristics_s, tsc_assist_info_ul_present)},
     {2, (int32_t)offsetof(tsc_traffic_characteristics_s, ie_exts_present)}};
-const asn1::table::seq_desc tsc_traffic_characteristics_s::desc = {
-    {seq_table_tsc_traffic_characteristics_s_fields, 3, UINT64_C(0x0), seq_table_tsc_traffic_characteristics_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tsc_traffic_characteristics_s_names};
+const asn1::table::seq_desc tsc_traffic_characteristics_s::desc = {{seq_table_tsc_traffic_characteristics_s_fields,
+                                                                    uint64_t{0x0},
+                                                                    seq_table_tsc_traffic_characteristics_s_opts,
+                                                                    seq_table_tsc_traffic_characteristics_s_names,
+                                                                    3,
+                                                                    3},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // RedundantQosFlowIndicator ::= ENUMERATED
 static const char*           enum_names_redundant_qos_flow_ind_e_values[] = {"true", "false"};
@@ -23754,8 +24331,8 @@ static const asn1::table::seq_field seq_table_qos_flow_add_or_modify_request_ite
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_add_or_modify_request_item_s, qos_flow_level_qos_params),
      (int32_t)offsetof(qos_flow_add_or_modify_request_item_s, qos_flow_level_qos_params_present),
@@ -23771,8 +24348,8 @@ static const asn1::table::seq_field seq_table_qos_flow_add_or_modify_request_ite
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(qos_flow_add_or_modify_request_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_add_or_modify_request_item_s, ie_exts_present),
@@ -23794,15 +24371,15 @@ static const asn1::table::seq_opt seq_table_qos_flow_add_or_modify_request_item_
     {3, (int32_t)offsetof(qos_flow_add_or_modify_request_item_s, ie_exts_present)}};
 const asn1::table::seq_desc qos_flow_add_or_modify_request_item_s::desc = {
     {seq_table_qos_flow_add_or_modify_request_item_s_fields,
-     4,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_qos_flow_add_or_modify_request_item_s_opts,
+     seq_table_qos_flow_add_or_modify_request_item_s_names,
+     4,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_qos_flow_add_or_modify_request_item_s_names};
+    0};
 
 static const uint32_t objset_id_security_ind_ext_ies_o[]   = {151};
 static const uint8_t  objset_crit_security_ind_ext_ies_o[] = {crit_e::ignore};
@@ -23878,13 +24455,16 @@ static const asn1::table::field_name seq_table_security_ind_s_names[] = {
 static const asn1::table::seq_opt seq_table_security_ind_s_opts[] = {
     {2, (int32_t)offsetof(security_ind_s, max_integrity_protected_data_rate_ul_present)},
     {3, (int32_t)offsetof(security_ind_s, ie_exts_present)}};
-const asn1::table::seq_desc security_ind_s::desc = {
-    {seq_table_security_ind_s_fields, 4, UINT64_C(0x3), seq_table_security_ind_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_security_ind_s_names};
+const asn1::table::seq_desc security_ind_s::desc = {{seq_table_security_ind_s_fields,
+                                                     uint64_t{0x3},
+                                                     seq_table_security_ind_s_opts,
+                                                     seq_table_security_ind_s_names,
+                                                     4,
+                                                     2},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 // UserPlaneFailureType ::= ENUMERATED
 static const char* enum_names_user_plane_fail_type_e_values[] = {"gtp-u-error-indication-received", "up-path-failure"};
@@ -23935,13 +24515,16 @@ static const asn1::table::field_name seq_table_user_plane_fail_ind_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_user_plane_fail_ind_s_opts[]  = {
     {3, (int32_t)offsetof(user_plane_fail_ind_s, ie_exts_present)}};
-const asn1::table::seq_desc user_plane_fail_ind_s::desc = {
-    {seq_table_user_plane_fail_ind_s_fields, 4, UINT64_C(0x7), seq_table_user_plane_fail_ind_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_user_plane_fail_ind_s_names};
+const asn1::table::seq_desc user_plane_fail_ind_s::desc = {{seq_table_user_plane_fail_ind_s_fields,
+                                                            uint64_t{0x7},
+                                                            seq_table_user_plane_fail_ind_s_opts,
+                                                            seq_table_user_plane_fail_ind_s_names,
+                                                            4,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 static const uint32_t objset_id_pdu_session_res_modify_request_transfer_ies_o[] =
     {130, 140, 129, 135, 137, 126, 166, 186, 190, 195, 138, 319, 317, 435};
@@ -23977,7 +24560,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      false,
      true,
      1,
-     4,
+     3,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_request_transfer_ies_container::ul_ngu_up_tnl_modify_list),
          asn1::table::sequence_item_ops,
@@ -23989,8 +24572,8 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(256),
+     int64_t{1},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_modify_request_transfer_ies_container, qos_flow_add_or_modify_request_list),
      (int32_t)offsetof(pdu_session_res_modify_request_transfer_ies_container,
@@ -23999,7 +24582,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_request_transfer_ies_container::qos_flow_add_or_modify_request_list),
          asn1::table::sequence_item_ops,
@@ -24012,7 +24595,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_request_transfer_ies_container::qos_flow_to_release_list),
          asn1::table::sequence_item_ops,
@@ -24025,7 +24608,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_request_transfer_ies_container::add_ul_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -24048,7 +24631,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_request_transfer_ies_container::add_redundant_ul_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -24091,7 +24674,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_request_transfer_ies_container::mbs_session_setupor_modify_request_list),
          asn1::table::sequence_item_ops,
@@ -24104,7 +24687,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_request_tran
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_request_transfer_ies_container::mbs_session_to_release_list),
          asn1::table::sequence_item_ops,
@@ -24156,16 +24739,16 @@ static const asn1::table::seq_field seq_table_tsc_feedback_info_s_fields[] = {
      asn1::table::field_op::int_i32,
      true,
      true,
-     INT64_C(-640000),
-     UINT64_C(640000),
+     int64_t{-640000},
+     uint64_t{1280000},
      nullptr},
     {offsetof(tsc_feedback_info_s, adjusted_periodicity),
      (int32_t)offsetof(tsc_feedback_info_s, adjusted_periodicity_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(640000),
+     int64_t{0},
+     uint64_t{640000},
      nullptr},
     {offsetof(tsc_feedback_info_s, ie_exts),
      (int32_t)offsetof(tsc_feedback_info_s, ie_exts_present),
@@ -24181,13 +24764,16 @@ static const asn1::table::field_name seq_table_tsc_feedback_info_s_names[] = {{"
 static const asn1::table::seq_opt    seq_table_tsc_feedback_info_s_opts[]  = {
     {1, (int32_t)offsetof(tsc_feedback_info_s, adjusted_periodicity_present)},
     {2, (int32_t)offsetof(tsc_feedback_info_s, ie_exts_present)}};
-const asn1::table::seq_desc tsc_feedback_info_s::desc = {
-    {seq_table_tsc_feedback_info_s_fields, 3, UINT64_C(0x1), seq_table_tsc_feedback_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tsc_feedback_info_s_names};
+const asn1::table::seq_desc tsc_feedback_info_s::desc = {{seq_table_tsc_feedback_info_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_tsc_feedback_info_s_opts,
+                                                          seq_table_tsc_feedback_info_s_names,
+                                                          3,
+                                                          2},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // TSCTrafficCharacteristicsFeedback ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tsc_traffic_characteristics_feedback_s_fields[] = {
@@ -24228,15 +24814,15 @@ static const asn1::table::seq_opt seq_table_tsc_traffic_characteristics_feedback
     {2, (int32_t)offsetof(tsc_traffic_characteristics_feedback_s, ie_exts_present)}};
 const asn1::table::seq_desc tsc_traffic_characteristics_feedback_s::desc = {
     {seq_table_tsc_traffic_characteristics_feedback_s_fields,
-     3,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_tsc_traffic_characteristics_feedback_s_opts,
+     seq_table_tsc_traffic_characteristics_feedback_s_names,
+     3,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_tsc_traffic_characteristics_feedback_s_names};
+    0};
 
 static const uint32_t objset_id_qos_flow_add_or_modify_resp_item_ext_ies_o[]   = {221, 393, 395, 128, 396};
 static const uint8_t  objset_crit_qos_flow_add_or_modify_resp_item_ext_ies_o[] = {crit_e::ignore,
@@ -24252,8 +24838,8 @@ static const asn1::table::seq_field ie_table_qos_flow_add_or_modify_resp_item_ex
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(8),
+     int64_t{1},
+     uint64_t{7},
      nullptr},
     {offsetof(qos_flow_add_or_modify_resp_item_ext_ies_container, tsc_traffic_characteristics_feedback),
      (int32_t)offsetof(qos_flow_add_or_modify_resp_item_ext_ies_container,
@@ -24288,8 +24874,8 @@ static const asn1::table::seq_field ie_table_qos_flow_add_or_modify_resp_item_ex
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr}};
 static const int32_t ie_table_qos_flow_add_or_modify_resp_item_ext_ies_container_presences[] = {
     (int32_t)offsetof(qos_flow_add_or_modify_resp_item_ext_ies_container, current_qos_para_set_idx_present),
@@ -24316,8 +24902,8 @@ static const asn1::table::seq_field seq_table_qos_flow_add_or_modify_resp_item_s
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_add_or_modify_resp_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_add_or_modify_resp_item_s, ie_exts_present),
@@ -24335,15 +24921,15 @@ static const asn1::table::seq_opt seq_table_qos_flow_add_or_modify_resp_item_s_o
     {1, (int32_t)offsetof(qos_flow_add_or_modify_resp_item_s, ie_exts_present)}};
 const asn1::table::seq_desc qos_flow_add_or_modify_resp_item_s::desc = {
     {seq_table_qos_flow_add_or_modify_resp_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_qos_flow_add_or_modify_resp_item_s_opts,
+     seq_table_qos_flow_add_or_modify_resp_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_qos_flow_add_or_modify_resp_item_s_names};
+    0};
 
 // UserPlaneFailureIndicationReport ::= ENUMERATED
 static const char*           enum_names_user_plane_fail_ind_report_e_values[] = {"qos-flows-and-tunnel-to-be-released",
@@ -24376,7 +24962,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_resp_transfe
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_resp_transfer_ext_ies_container::add_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -24408,7 +24994,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_resp_transfe
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_resp_transfer_ext_ies_container::add_redundant_dl_qos_flow_per_tnl_info),
          asn1::table::sequence_item_ops,
@@ -24421,7 +25007,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_resp_transfe
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_resp_transfer_ext_ies_container::add_redundant_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -24453,7 +25039,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_resp_transfe
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_resp_transfer_ext_ies_container::mbs_session_setupor_modify_resp_list),
          asn1::table::sequence_item_ops,
@@ -24467,7 +25053,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_resp_transfe
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_resp_transfer_ext_ies_container::mbs_session_failedto_setupor_modify_list),
          asn1::table::sequence_item_ops,
@@ -24481,7 +25067,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_modify_resp_transfe
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_resp_transfer_ext_ies_container::ecn_markingor_congestion_info_report_status),
          asn1::table::sequence_item_ops,
@@ -24563,7 +25149,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_resp_transf
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_modify_resp_transfer_s::qos_flow_add_or_modify_resp_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -24575,7 +25161,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_resp_transf
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(pdu_session_res_modify_resp_transfer_s::add_dl_qos_flow_per_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -24587,7 +25173,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_modify_resp_transf
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_modify_resp_transfer_s::qos_flow_failed_to_add_or_modify_list),
          asn1::table::sequence_item_ops,
@@ -24619,15 +25205,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_resp_transfer
     {5, (int32_t)offsetof(pdu_session_res_modify_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_resp_transfer_s::desc = {
     {seq_table_pdu_session_res_modify_resp_transfer_s_fields,
-     6,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_pdu_session_res_modify_resp_transfer_s_opts,
+     seq_table_pdu_session_res_modify_resp_transfer_s_names,
+     6,
      6},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_resp_transfer_s_names};
+    0};
 
 // PDUSessionResourceModifyUnsuccessfulTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_modify_unsuccessful_transfer_s_fields[] = {
@@ -24667,15 +25253,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_modify_unsuccessful_
     {2, (int32_t)offsetof(pdu_session_res_modify_unsuccessful_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_modify_unsuccessful_transfer_s::desc = {
     {seq_table_pdu_session_res_modify_unsuccessful_transfer_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_modify_unsuccessful_transfer_s_opts,
+     seq_table_pdu_session_res_modify_unsuccessful_transfer_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_modify_unsuccessful_transfer_s_names};
+    0};
 
 // PDUSessionResourceNotifyItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_notify_item_s_fields[] = {
@@ -24684,8 +25270,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_notify_item_s_fiel
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_notify_item_s, pdu_session_res_notify_transfer),
      asn1::table::seq_field::mandatory,
@@ -24710,13 +25296,16 @@ static const asn1::table::field_name seq_table_pdu_session_res_notify_item_s_nam
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_pdu_session_res_notify_item_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_res_notify_item_s, ie_exts_present)}};
-const asn1::table::seq_desc pdu_session_res_notify_item_s::desc = {
-    {seq_table_pdu_session_res_notify_item_s_fields, 3, UINT64_C(0x3), seq_table_pdu_session_res_notify_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_pdu_session_res_notify_item_s_names};
+const asn1::table::seq_desc pdu_session_res_notify_item_s::desc = {{seq_table_pdu_session_res_notify_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    seq_table_pdu_session_res_notify_item_s_opts,
+                                                                    seq_table_pdu_session_res_notify_item_s_names,
+                                                                    3,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // UserPlaneErrorIndicator ::= ENUMERATED
 static const char*           enum_names_user_plane_error_ind_e_values[] = {"gTP-U-error-indication-received"};
@@ -24790,15 +25379,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_notify_released_tran
     {1, (int32_t)offsetof(pdu_session_res_notify_released_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_notify_released_transfer_s::desc = {
     {seq_table_pdu_session_res_notify_released_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_notify_released_transfer_s_opts,
+     seq_table_pdu_session_res_notify_released_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_notify_released_transfer_s_names};
+    0};
 
 static const uint32_t objset_id_qos_flow_notify_item_ext_ies_o[]   = {221, 393};
 static const uint8_t  objset_crit_qos_flow_notify_item_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -24810,8 +25399,8 @@ static const asn1::table::seq_field ie_table_qos_flow_notify_item_ext_ies_contai
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(8),
+     int64_t{0},
+     uint64_t{8},
      nullptr},
     {offsetof(qos_flow_notify_item_ext_ies_container, tsc_traffic_characteristics_feedback),
      (int32_t)offsetof(qos_flow_notify_item_ext_ies_container, tsc_traffic_characteristics_feedback_present),
@@ -24844,8 +25433,8 @@ static const asn1::table::seq_field seq_table_qos_flow_notify_item_s_fields[] = 
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_notify_item_s, notif_cause),
      asn1::table::seq_field::mandatory,
@@ -24870,13 +25459,16 @@ static const asn1::table::field_name seq_table_qos_flow_notify_item_s_names[] = 
                                                                                  {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_qos_flow_notify_item_s_opts[]  = {
     {2, (int32_t)offsetof(qos_flow_notify_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_notify_item_s::desc = {
-    {seq_table_qos_flow_notify_item_s_fields, 3, UINT64_C(0x3), seq_table_qos_flow_notify_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_notify_item_s_names};
+const asn1::table::seq_desc qos_flow_notify_item_s::desc = {{seq_table_qos_flow_notify_item_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_qos_flow_notify_item_s_opts,
+                                                             seq_table_qos_flow_notify_item_s_names,
+                                                             3,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // QosFlowFeedbackItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qos_flow_feedback_item_s_fields[] = {
@@ -24885,8 +25477,8 @@ static const asn1::table::seq_field seq_table_qos_flow_feedback_item_s_fields[] 
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_feedback_item_s, upd_feedback),
      (int32_t)offsetof(qos_flow_feedback_item_s, upd_feedback_present),
@@ -24901,16 +25493,16 @@ static const asn1::table::seq_field seq_table_qos_flow_feedback_item_s_fields[] 
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(qos_flow_feedback_item_s, cnpacket_delay_budget_ul),
      (int32_t)offsetof(qos_flow_feedback_item_s, cnpacket_delay_budget_ul_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(qos_flow_feedback_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_feedback_item_s, ie_exts_present),
@@ -24930,13 +25522,16 @@ static const asn1::table::seq_opt    seq_table_qos_flow_feedback_item_s_opts[]  
     {2, (int32_t)offsetof(qos_flow_feedback_item_s, cnpacket_delay_budget_dl_present)},
     {3, (int32_t)offsetof(qos_flow_feedback_item_s, cnpacket_delay_budget_ul_present)},
     {4, (int32_t)offsetof(qos_flow_feedback_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_feedback_item_s::desc = {
-    {seq_table_qos_flow_feedback_item_s_fields, 5, UINT64_C(0x1), seq_table_qos_flow_feedback_item_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_feedback_item_s_names};
+const asn1::table::seq_desc qos_flow_feedback_item_s::desc = {{seq_table_qos_flow_feedback_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_qos_flow_feedback_item_s_opts,
+                                                               seq_table_qos_flow_feedback_item_s_names,
+                                                               5,
+                                                               4},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 static const uint32_t objset_id_pdu_session_res_notify_transfer_ext_ies_o[]   = {144, 278};
 static const uint8_t  objset_crit_pdu_session_res_notify_transfer_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -24958,7 +25553,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_notify_transfer_ext
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_notify_transfer_ext_ies_container::qos_flow_feedback_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -24987,7 +25582,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_notify_transfer_s_
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_notify_transfer_s::qos_flow_notify_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -24999,7 +25594,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_notify_transfer_s_
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_notify_transfer_s::qos_flow_released_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -25024,15 +25619,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_notify_transfer_s_op
     {2, (int32_t)offsetof(pdu_session_res_notify_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_notify_transfer_s::desc = {
     {seq_table_pdu_session_res_notify_transfer_s_fields,
-     3,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_pdu_session_res_notify_transfer_s_opts,
+     seq_table_pdu_session_res_notify_transfer_s_names,
+     3,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_notify_transfer_s_names};
+    0};
 
 // QosFlowAdditionalInfoItemRelCom ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qos_flow_add_info_item_rel_com_s_fields[] = {
@@ -25041,8 +25636,8 @@ static const asn1::table::seq_field seq_table_qos_flow_add_info_item_rel_com_s_f
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_add_info_item_rel_com_s, dl_tl_container),
      asn1::table::seq_field::list_presence,
@@ -25070,15 +25665,15 @@ static const asn1::table::seq_opt seq_table_qos_flow_add_info_item_rel_com_s_opt
     {2, (int32_t)offsetof(qos_flow_add_info_item_rel_com_s, ie_exts_present)}};
 const asn1::table::seq_desc qos_flow_add_info_item_rel_com_s::desc = {
     {seq_table_qos_flow_add_info_item_rel_com_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_qos_flow_add_info_item_rel_com_s_opts,
+     seq_table_qos_flow_add_info_item_rel_com_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_qos_flow_add_info_item_rel_com_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_release_cmd_transfer_ext_ies_o[]   = {397};
 static const uint8_t  objset_crit_pdu_session_res_release_cmd_transfer_ext_ies_o[] = {crit_e::ignore};
@@ -25091,7 +25686,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_release_cmd_transfe
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_release_cmd_transfer_ext_ies_container::qos_flow_add_info_list),
          asn1::table::sequence_item_ops,
@@ -25139,15 +25734,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_release_cmd_transfer
     {1, (int32_t)offsetof(pdu_session_res_release_cmd_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_release_cmd_transfer_s::desc = {
     {seq_table_pdu_session_res_release_cmd_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_release_cmd_transfer_s_opts,
+     seq_table_pdu_session_res_release_cmd_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_release_cmd_transfer_s_names};
+    0};
 
 // QosFlowAdditionalInfoItemRelRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qos_flow_add_info_item_rel_res_s_fields[] = {
@@ -25156,8 +25751,8 @@ static const asn1::table::seq_field seq_table_qos_flow_add_info_item_rel_res_s_f
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_add_info_item_rel_res_s, ul_tl_container),
      asn1::table::seq_field::list_presence,
@@ -25185,15 +25780,15 @@ static const asn1::table::seq_opt seq_table_qos_flow_add_info_item_rel_res_s_opt
     {2, (int32_t)offsetof(qos_flow_add_info_item_rel_res_s, ie_exts_present)}};
 const asn1::table::seq_desc qos_flow_add_info_item_rel_res_s::desc = {
     {seq_table_qos_flow_add_info_item_rel_res_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_qos_flow_add_info_item_rel_res_s_opts,
+     seq_table_qos_flow_add_info_item_rel_res_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_qos_flow_add_info_item_rel_res_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_release_resp_transfer_ext_ies_o[]   = {144, 397};
 static const uint8_t  objset_crit_pdu_session_res_release_resp_transfer_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -25215,7 +25810,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_release_resp_transf
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_release_resp_transfer_ext_ies_container::qos_flow_add_info_list),
          asn1::table::sequence_item_ops,
@@ -25254,15 +25849,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_release_resp_transfe
     {0, (int32_t)offsetof(pdu_session_res_release_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_release_resp_transfer_s::desc = {
     {seq_table_pdu_session_res_release_resp_transfer_s_fields,
-     1,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_pdu_session_res_release_resp_transfer_s_opts,
+     seq_table_pdu_session_res_release_resp_transfer_s_names,
+     1,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_release_resp_transfer_s_names};
+    0};
 
 // PDUSessionResourceReleasedItemNot ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_released_item_not_s_fields[] = {
@@ -25271,8 +25866,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_released_item_not_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_released_item_not_s, pdu_session_res_notify_released_transfer),
      asn1::table::seq_field::mandatory,
@@ -25300,15 +25895,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_released_item_not_s_
     {2, (int32_t)offsetof(pdu_session_res_released_item_not_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_released_item_not_s::desc = {
     {seq_table_pdu_session_res_released_item_not_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_released_item_not_s_opts,
+     seq_table_pdu_session_res_released_item_not_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_released_item_not_s_names};
+    0};
 
 // PDUSessionResourceReleasedItemPSAck ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_released_item_ps_ack_s_fields[] = {
@@ -25317,8 +25912,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_released_item_ps_a
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_released_item_ps_ack_s, path_switch_request_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -25347,15 +25942,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_released_item_ps_ack
     {2, (int32_t)offsetof(pdu_session_res_released_item_ps_ack_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_released_item_ps_ack_s::desc = {
     {seq_table_pdu_session_res_released_item_ps_ack_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_released_item_ps_ack_s_opts,
+     seq_table_pdu_session_res_released_item_ps_ack_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_released_item_ps_ack_s_names};
+    0};
 
 // PDUSessionResourceReleasedItemPSFail ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_released_item_ps_fail_s_fields[] = {
@@ -25364,8 +25959,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_released_item_ps_f
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_released_item_ps_fail_s, path_switch_request_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -25394,15 +25989,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_released_item_ps_fai
     {2, (int32_t)offsetof(pdu_session_res_released_item_ps_fail_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_released_item_ps_fail_s::desc = {
     {seq_table_pdu_session_res_released_item_ps_fail_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_released_item_ps_fail_s_opts,
+     seq_table_pdu_session_res_released_item_ps_fail_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_released_item_ps_fail_s_names};
+    0};
 
 // PDUSessionResourceReleasedItemRelRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_released_item_rel_res_s_fields[] = {
@@ -25411,8 +26006,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_released_item_rel_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_released_item_rel_res_s, pdu_session_res_release_resp_transfer),
      asn1::table::seq_field::mandatory,
@@ -25441,15 +26036,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_released_item_rel_re
     {2, (int32_t)offsetof(pdu_session_res_released_item_rel_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_released_item_rel_res_s::desc = {
     {seq_table_pdu_session_res_released_item_rel_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_released_item_rel_res_s_opts,
+     seq_table_pdu_session_res_released_item_rel_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_released_item_rel_res_s_names};
+    0};
 
 // PDUSessionResourceResumeItemRESReq ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_resume_item_res_req_s_fields[] = {
@@ -25458,8 +26053,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_resume_item_res_re
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_resume_item_res_req_s, ue_context_resume_request_transfer),
      asn1::table::seq_field::mandatory,
@@ -25487,15 +26082,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_resume_item_res_req_
     {2, (int32_t)offsetof(pdu_session_res_resume_item_res_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_resume_item_res_req_s::desc = {
     {seq_table_pdu_session_res_resume_item_res_req_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_resume_item_res_req_s_opts,
+     seq_table_pdu_session_res_resume_item_res_req_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_resume_item_res_req_s_names};
+    0};
 
 // PDUSessionResourceResumeItemRESRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_resume_item_res_res_s_fields[] = {
@@ -25504,8 +26099,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_resume_item_res_re
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_resume_item_res_res_s, ue_context_resume_resp_transfer),
      asn1::table::seq_field::mandatory,
@@ -25533,15 +26128,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_resume_item_res_res_
     {2, (int32_t)offsetof(pdu_session_res_resume_item_res_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_resume_item_res_res_s::desc = {
     {seq_table_pdu_session_res_resume_item_res_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_resume_item_res_res_s_opts,
+     seq_table_pdu_session_res_resume_item_res_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_resume_item_res_res_s_names};
+    0};
 
 // PDUSessionResourceSecondaryRATUsageItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_secondary_rat_usage_item_s_fields[] = {
@@ -25550,8 +26145,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_secondary_rat_usag
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_secondary_rat_usage_item_s, secondary_rat_data_usage_report_transfer),
      asn1::table::seq_field::mandatory,
@@ -25580,15 +26175,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_secondary_rat_usage_
     {2, (int32_t)offsetof(pdu_session_res_secondary_rat_usage_item_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_secondary_rat_usage_item_s::desc = {
     {seq_table_pdu_session_res_secondary_rat_usage_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_secondary_rat_usage_item_s_opts,
+     seq_table_pdu_session_res_secondary_rat_usage_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_secondary_rat_usage_item_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_setup_item_cxt_req_ext_ies_o[]   = {281};
 static const uint8_t  objset_crit_pdu_session_res_setup_item_cxt_req_ext_ies_o[] = {crit_e::ignore};
@@ -25627,8 +26222,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_setup_item_cxt_req
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_setup_item_cxt_req_s, nas_pdu),
      asn1::table::seq_field::list_presence,
@@ -25677,15 +26272,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_setup_item_cxt_req_s
     {4, (int32_t)offsetof(pdu_session_res_setup_item_cxt_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_setup_item_cxt_req_s::desc = {
     {seq_table_pdu_session_res_setup_item_cxt_req_s_fields,
-     5,
-     UINT64_C(0xd),
+     uint64_t{0xd},
      seq_table_pdu_session_res_setup_item_cxt_req_s_opts,
+     seq_table_pdu_session_res_setup_item_cxt_req_s_names,
+     5,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_setup_item_cxt_req_s_names};
+    0};
 
 // PDUSessionResourceSetupItemCxtRes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_setup_item_cxt_res_s_fields[] = {
@@ -25694,8 +26289,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_setup_item_cxt_res
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_setup_item_cxt_res_s, pdu_session_res_setup_resp_transfer),
      asn1::table::seq_field::mandatory,
@@ -25723,15 +26318,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_setup_item_cxt_res_s
     {2, (int32_t)offsetof(pdu_session_res_setup_item_cxt_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_setup_item_cxt_res_s::desc = {
     {seq_table_pdu_session_res_setup_item_cxt_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_setup_item_cxt_res_s_opts,
+     seq_table_pdu_session_res_setup_item_cxt_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_setup_item_cxt_res_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_setup_item_ho_req_ext_ies_o[]   = {281};
 static const uint8_t  objset_crit_pdu_session_res_setup_item_ho_req_ext_ies_o[] = {crit_e::ignore};
@@ -25770,8 +26365,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_setup_item_ho_req_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_setup_item_ho_req_s, s_nssai),
      asn1::table::seq_field::mandatory,
@@ -25806,15 +26401,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_setup_item_ho_req_s_
     {3, (int32_t)offsetof(pdu_session_res_setup_item_ho_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_setup_item_ho_req_s::desc = {
     {seq_table_pdu_session_res_setup_item_ho_req_s_fields,
-     4,
-     UINT64_C(0x7),
+     uint64_t{0x7},
      seq_table_pdu_session_res_setup_item_ho_req_s_opts,
+     seq_table_pdu_session_res_setup_item_ho_req_s_names,
+     4,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_setup_item_ho_req_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_setup_item_su_req_ext_ies_o[]   = {281};
 static const uint8_t  objset_crit_pdu_session_res_setup_item_su_req_ext_ies_o[] = {crit_e::ignore};
@@ -25853,8 +26448,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_setup_item_su_req_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_setup_item_su_req_s, pdu_session_nas_pdu),
      asn1::table::seq_field::list_presence,
@@ -25903,15 +26498,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_setup_item_su_req_s_
     {4, (int32_t)offsetof(pdu_session_res_setup_item_su_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_setup_item_su_req_s::desc = {
     {seq_table_pdu_session_res_setup_item_su_req_s_fields,
-     5,
-     UINT64_C(0xd),
+     uint64_t{0xd},
      seq_table_pdu_session_res_setup_item_su_req_s_opts,
+     seq_table_pdu_session_res_setup_item_su_req_s_names,
+     5,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_setup_item_su_req_s_names};
+    0};
 
 // PDUSessionResourceSetupItemSURes ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_setup_item_su_res_s_fields[] = {
@@ -25920,8 +26515,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_setup_item_su_res_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_setup_item_su_res_s, pdu_session_res_setup_resp_transfer),
      asn1::table::seq_field::mandatory,
@@ -25949,15 +26544,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_setup_item_su_res_s_
     {2, (int32_t)offsetof(pdu_session_res_setup_item_su_res_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_setup_item_su_res_s::desc = {
     {seq_table_pdu_session_res_setup_item_su_res_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_setup_item_su_res_s_opts,
+     seq_table_pdu_session_res_setup_item_su_res_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_setup_item_su_res_s_names};
+    0};
 
 // PDUSessionType ::= ENUMERATED
 static const char* enum_names_pdu_session_type_e_values[] = {"ipv4", "ipv6", "ipv4v6", "ethernet", "unstructured"};
@@ -26024,8 +26619,8 @@ static const asn1::table::seq_field seq_table_qos_flow_setup_request_item_s_fiel
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_setup_request_item_s, qos_flow_level_qos_params),
      asn1::table::seq_field::mandatory,
@@ -26041,8 +26636,8 @@ static const asn1::table::seq_field seq_table_qos_flow_setup_request_item_s_fiel
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(qos_flow_setup_request_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_setup_request_item_s, ie_exts_present),
@@ -26061,13 +26656,16 @@ static const asn1::table::field_name seq_table_qos_flow_setup_request_item_s_nam
 static const asn1::table::seq_opt seq_table_qos_flow_setup_request_item_s_opts[] = {
     {2, (int32_t)offsetof(qos_flow_setup_request_item_s, erab_id_present)},
     {3, (int32_t)offsetof(qos_flow_setup_request_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_setup_request_item_s::desc = {
-    {seq_table_qos_flow_setup_request_item_s_fields, 4, UINT64_C(0x3), seq_table_qos_flow_setup_request_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_setup_request_item_s_names};
+const asn1::table::seq_desc qos_flow_setup_request_item_s::desc = {{seq_table_qos_flow_setup_request_item_s_fields,
+                                                                    uint64_t{0x3},
+                                                                    seq_table_qos_flow_setup_request_item_s_opts,
+                                                                    seq_table_qos_flow_setup_request_item_s_names,
+                                                                    4,
+                                                                    2},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 static const uint32_t objset_id_pdu_session_res_setup_request_transfer_ies_o[] =
     {130, 139, 126, 127, 134, 138, 129, 136, 166, 22, 195, 186, 190, 197, 318, 394};
@@ -26114,7 +26712,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_request_trans
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_request_transfer_ies_container::add_ul_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -26154,8 +26752,8 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_request_trans
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(256),
+     int64_t{1},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_setup_request_transfer_ies_container, qos_flow_setup_request_list),
      asn1::table::seq_field::mandatory,
@@ -26163,7 +26761,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_request_trans
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_request_transfer_ies_container::qos_flow_setup_request_list),
          asn1::table::sequence_item_ops,
@@ -26205,7 +26803,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_request_trans
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_request_transfer_ies_container::add_redundant_ul_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -26237,7 +26835,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_request_trans
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_request_transfer_ies_container::mbs_session_setup_request_list),
          asn1::table::sequence_item_ops,
@@ -26290,8 +26888,8 @@ static const asn1::table::seq_field seq_table_qos_flow_tsc_item_s_fields[] = {
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_tsc_item_s, tsc_traffic_characteristics_feedback),
      (int32_t)offsetof(qos_flow_tsc_item_s, tsc_traffic_characteristics_feedback_present),
@@ -26307,8 +26905,8 @@ static const asn1::table::seq_field seq_table_qos_flow_tsc_item_s_fields[] = {
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(qos_flow_tsc_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_tsc_item_s, ie_exts_present),
@@ -26327,13 +26925,16 @@ static const asn1::table::seq_opt seq_table_qos_flow_tsc_item_s_opts[] = {
     {1, (int32_t)offsetof(qos_flow_tsc_item_s, tsc_traffic_characteristics_feedback_present)},
     {2, (int32_t)offsetof(qos_flow_tsc_item_s, an_packet_delay_budget_ul_present)},
     {3, (int32_t)offsetof(qos_flow_tsc_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_tsc_item_s::desc = {
-    {seq_table_qos_flow_tsc_item_s_fields, 4, UINT64_C(0x1), seq_table_qos_flow_tsc_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_tsc_item_s_names};
+const asn1::table::seq_desc qos_flow_tsc_item_s::desc = {{seq_table_qos_flow_tsc_item_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_qos_flow_tsc_item_s_opts,
+                                                          seq_table_qos_flow_tsc_item_s_names,
+                                                          4,
+                                                          3},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 static const uint32_t objset_id_pdu_session_res_setup_resp_transfer_ext_ies_o[] =
     {193, 184, 198, 27, 309, 312, 310, 392, 395, 426, 423};
@@ -26368,7 +26969,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_resp_transfer
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_resp_transfer_ext_ies_container::add_redundant_dl_qos_flow_per_tnl_info),
          asn1::table::sequence_item_ops,
@@ -26408,7 +27009,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_resp_transfer
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_resp_transfer_ext_ies_container::mbs_session_setup_resp_list),
          asn1::table::sequence_item_ops,
@@ -26421,7 +27022,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_resp_transfer
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_resp_transfer_ext_ies_container::mbs_session_failedto_setup_list),
          asn1::table::sequence_item_ops,
@@ -26434,7 +27035,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_resp_transfer
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_setup_resp_transfer_ext_ies_container::qos_flow_tsc_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -26456,7 +27057,7 @@ static const asn1::table::seq_field ie_table_pdu_session_res_setup_resp_transfer
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(pdu_session_res_setup_resp_transfer_ext_ies_container::ecn_markingor_congestion_info_report_status),
          asn1::table::sequence_item_ops,
@@ -26516,7 +27117,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_setup_resp_transfe
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(pdu_session_res_setup_resp_transfer_s::add_dl_qos_flow_per_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -26537,7 +27138,7 @@ static const asn1::table::seq_field seq_table_pdu_session_res_setup_resp_transfe
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(pdu_session_res_setup_resp_transfer_s::qos_flow_failed_to_setup_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -26565,15 +27166,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_setup_resp_transfer_
     {4, (int32_t)offsetof(pdu_session_res_setup_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_setup_resp_transfer_s::desc = {
     {seq_table_pdu_session_res_setup_resp_transfer_s_fields,
-     5,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_setup_resp_transfer_s_opts,
+     seq_table_pdu_session_res_setup_resp_transfer_s_names,
+     5,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_setup_resp_transfer_s_names};
+    0};
 
 // PDUSessionResourceSetupUnsuccessfulTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_setup_unsuccessful_transfer_s_fields[] = {
@@ -26613,15 +27214,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_setup_unsuccessful_t
     {2, (int32_t)offsetof(pdu_session_res_setup_unsuccessful_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_setup_unsuccessful_transfer_s::desc = {
     {seq_table_pdu_session_res_setup_unsuccessful_transfer_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_pdu_session_res_setup_unsuccessful_transfer_s_opts,
+     seq_table_pdu_session_res_setup_unsuccessful_transfer_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_setup_unsuccessful_transfer_s_names};
+    0};
 
 // PDUSessionResourceSuspendItemSUSReq ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_suspend_item_sus_req_s_fields[] = {
@@ -26630,8 +27231,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_suspend_item_sus_r
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_suspend_item_sus_req_s, ue_context_suspend_request_transfer),
      asn1::table::seq_field::mandatory,
@@ -26659,15 +27260,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_suspend_item_sus_req
     {2, (int32_t)offsetof(pdu_session_res_suspend_item_sus_req_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_suspend_item_sus_req_s::desc = {
     {seq_table_pdu_session_res_suspend_item_sus_req_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_suspend_item_sus_req_s_opts,
+     seq_table_pdu_session_res_suspend_item_sus_req_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_suspend_item_sus_req_s_names};
+    0};
 
 static const uint32_t objset_id_pdu_session_res_switched_item_ext_ies_o[]   = {281};
 static const uint8_t  objset_crit_pdu_session_res_switched_item_ext_ies_o[] = {crit_e::ignore};
@@ -26706,8 +27307,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_switched_item_s_fi
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_switched_item_s, path_switch_request_ack_transfer),
      asn1::table::seq_field::mandatory,
@@ -26734,15 +27335,15 @@ static const asn1::table::field_name seq_table_pdu_session_res_switched_item_s_n
 static const asn1::table::seq_opt seq_table_pdu_session_res_switched_item_s_opts[] = {
     {2, (int32_t)offsetof(pdu_session_res_switched_item_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_switched_item_s::desc = {{seq_table_pdu_session_res_switched_item_s_fields,
-                                                                      3,
-                                                                      UINT64_C(0x3),
+                                                                      uint64_t{0x3},
                                                                       seq_table_pdu_session_res_switched_item_s_opts,
+                                                                      seq_table_pdu_session_res_switched_item_s_names,
+                                                                      3,
                                                                       1},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_pdu_session_res_switched_item_s_names};
+                                                                     0};
 
 // PDUSessionResourceToBeSwitchedDLItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_to_be_switched_dl_item_s_fields[] = {
@@ -26751,8 +27352,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_to_be_switched_dl_
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_to_be_switched_dl_item_s, path_switch_request_transfer),
      asn1::table::seq_field::mandatory,
@@ -26780,15 +27381,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_to_be_switched_dl_it
     {2, (int32_t)offsetof(pdu_session_res_to_be_switched_dl_item_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_to_be_switched_dl_item_s::desc = {
     {seq_table_pdu_session_res_to_be_switched_dl_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_to_be_switched_dl_item_s_opts,
+     seq_table_pdu_session_res_to_be_switched_dl_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_to_be_switched_dl_item_s_names};
+    0};
 
 // PDUSessionResourceToReleaseItemHOCmd ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_to_release_item_ho_cmd_s_fields[] = {
@@ -26797,8 +27398,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_to_release_item_ho
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_to_release_item_ho_cmd_s, ho_prep_unsuccessful_transfer),
      asn1::table::seq_field::mandatory,
@@ -26826,15 +27427,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_to_release_item_ho_c
     {2, (int32_t)offsetof(pdu_session_res_to_release_item_ho_cmd_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_to_release_item_ho_cmd_s::desc = {
     {seq_table_pdu_session_res_to_release_item_ho_cmd_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_to_release_item_ho_cmd_s_opts,
+     seq_table_pdu_session_res_to_release_item_ho_cmd_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_to_release_item_ho_cmd_s_names};
+    0};
 
 // PDUSessionResourceToReleaseItemRelCmd ::= SEQUENCE
 static const asn1::table::seq_field seq_table_pdu_session_res_to_release_item_rel_cmd_s_fields[] = {
@@ -26843,8 +27444,8 @@ static const asn1::table::seq_field seq_table_pdu_session_res_to_release_item_re
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(pdu_session_res_to_release_item_rel_cmd_s, pdu_session_res_release_cmd_transfer),
      asn1::table::seq_field::mandatory,
@@ -26873,15 +27474,15 @@ static const asn1::table::seq_opt seq_table_pdu_session_res_to_release_item_rel_
     {2, (int32_t)offsetof(pdu_session_res_to_release_item_rel_cmd_s, ie_exts_present)}};
 const asn1::table::seq_desc pdu_session_res_to_release_item_rel_cmd_s::desc = {
     {seq_table_pdu_session_res_to_release_item_rel_cmd_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_pdu_session_res_to_release_item_rel_cmd_s_opts,
+     seq_table_pdu_session_res_to_release_item_rel_cmd_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_pdu_session_res_to_release_item_rel_cmd_s_names};
+    0};
 
 static const uint32_t objset_id_plmn_support_item_ext_ies_o[]   = {258, 270, 325};
 static const uint8_t  objset_crit_plmn_support_item_ext_ies_o[] = {crit_e::reject, crit_e::reject, crit_e::ignore};
@@ -26903,7 +27504,7 @@ static const asn1::table::seq_field ie_table_plmn_support_item_ext_ies_container
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::item_list_codec<decltype(plmn_support_item_ext_ies_container::extended_slice_support_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -26950,7 +27551,7 @@ static const asn1::table::seq_field seq_table_plmn_support_item_s_fields[] = {
      false,
      true,
      1,
-     1024,
+     1023,
      &asn1::table::item_list_codec<decltype(plmn_support_item_s::slice_support_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -26970,13 +27571,16 @@ static const asn1::table::field_name seq_table_plmn_support_item_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_plmn_support_item_s_opts[]  = {
     {2, (int32_t)offsetof(plmn_support_item_s, ie_exts_present)}};
-const asn1::table::seq_desc plmn_support_item_s::desc = {
-    {seq_table_plmn_support_item_s_fields, 3, UINT64_C(0x3), seq_table_plmn_support_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_plmn_support_item_s_names};
+const asn1::table::seq_desc plmn_support_item_s::desc = {{seq_table_plmn_support_item_s_fields,
+                                                          uint64_t{0x3},
+                                                          seq_table_plmn_support_item_s_opts,
+                                                          seq_table_plmn_support_item_s_names,
+                                                          3,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // PWSFailedCellIDList ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_pws_failed_cell_id_list_c_alternatives[] = {
@@ -27010,7 +27614,7 @@ static const asn1::table::seq_field choice_table_pws_failed_cell_id_list_c_alter
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::list_codec<eutra_cgi_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -27018,7 +27622,7 @@ static const asn1::table::seq_field choice_table_pws_failed_cell_id_list_c_alter
      false,
      true,
      1,
-     16384,
+     16383,
      &asn1::table::list_codec<nr_cgi_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -27077,7 +27681,7 @@ static const asn1::table::seq_field seq_table_paging_policy_diff_s_fields[] = {
      false,
      true,
      1,
-     256,
+     255,
      &asn1::table::item_list_codec<decltype(paging_policy_diff_s::pdu_session_for_paging_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -27095,13 +27699,16 @@ static const asn1::table::field_name seq_table_paging_policy_diff_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_paging_policy_diff_s_opts[]  = {
     {1, (int32_t)offsetof(paging_policy_diff_s, ie_exts_present)}};
-const asn1::table::seq_desc paging_policy_diff_s::desc = {
-    {seq_table_paging_policy_diff_s_fields, 2, UINT64_C(0x1), seq_table_paging_policy_diff_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_paging_policy_diff_s_names};
+const asn1::table::seq_desc paging_policy_diff_s::desc = {{seq_table_paging_policy_diff_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_paging_policy_diff_s_opts,
+                                                           seq_table_paging_policy_diff_s_names,
+                                                           2,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // PagingPriority ::= ENUMERATED
 static const char* enum_names_paging_prio_e_values[] =
@@ -27164,15 +27771,15 @@ static const asn1::table::field_name seq_table_partially_allowed_nssai_item_s_na
 static const asn1::table::seq_opt    seq_table_partially_allowed_nssai_item_s_opts[]  = {
     {1, (int32_t)offsetof(partially_allowed_nssai_item_s, ie_exts_present)}};
 const asn1::table::seq_desc partially_allowed_nssai_item_s::desc = {{seq_table_partially_allowed_nssai_item_s_fields,
-                                                                     2,
-                                                                     UINT64_C(0x1),
+                                                                     uint64_t{0x1},
                                                                      seq_table_partially_allowed_nssai_item_s_opts,
+                                                                     seq_table_partially_allowed_nssai_item_s_names,
+                                                                     2,
                                                                      1},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_partially_allowed_nssai_item_s_names};
+                                                                    0};
 
 static const uint32_t objset_id_qos_flow_params_item_ext_ies_o[]   = {187, 188, 279};
 static const uint8_t  objset_crit_qos_flow_params_item_ext_ies_o[] = {crit_e::ignore, crit_e::ignore, crit_e::ignore};
@@ -27184,16 +27791,16 @@ static const asn1::table::seq_field ie_table_qos_flow_params_item_ext_ies_contai
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(qos_flow_params_item_ext_ies_container, cn_packet_delay_budget_ul),
      (int32_t)offsetof(qos_flow_params_item_ext_ies_container, cn_packet_delay_budget_ul_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(65535),
+     int64_t{1},
+     uint64_t{65534},
      nullptr},
     {offsetof(qos_flow_params_item_ext_ies_container, burst_arrival_time_dl),
      (int32_t)offsetof(qos_flow_params_item_ext_ies_container, burst_arrival_time_dl_present),
@@ -27227,8 +27834,8 @@ static const asn1::table::seq_field seq_table_qos_flow_params_item_s_fields[] = 
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_params_item_s, alt_qos_para_set_list),
      asn1::table::seq_field::list_presence,
@@ -27236,7 +27843,7 @@ static const asn1::table::seq_field seq_table_qos_flow_params_item_s_fields[] = 
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(qos_flow_params_item_s::alt_qos_para_set_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -27257,13 +27864,16 @@ static const asn1::table::field_name seq_table_qos_flow_params_item_s_names[] = 
 static const asn1::table::seq_opt    seq_table_qos_flow_params_item_s_opts[]  = {
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(qos_flow_params_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_params_item_s::desc = {
-    {seq_table_qos_flow_params_item_s_fields, 3, UINT64_C(0x1), seq_table_qos_flow_params_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_params_item_s_names};
+const asn1::table::seq_desc qos_flow_params_item_s::desc = {{seq_table_qos_flow_params_item_s_fields,
+                                                             uint64_t{0x1},
+                                                             seq_table_qos_flow_params_item_s_opts,
+                                                             seq_table_qos_flow_params_item_s_names,
+                                                             3,
+                                                             2},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 static const uint32_t objset_id_path_switch_request_ack_transfer_ext_ies_o[]   = {154, 195, 185, 277};
 static const uint8_t  objset_crit_path_switch_request_ack_transfer_ext_ies_o[] = {crit_e::ignore,
@@ -27279,7 +27889,7 @@ static const asn1::table::seq_field ie_table_path_switch_request_ack_transfer_ex
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<decltype(path_switch_request_ack_transfer_ext_ies_container::add_ngu_up_tnl_info),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -27300,7 +27910,7 @@ static const asn1::table::seq_field ie_table_path_switch_request_ack_transfer_ex
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(path_switch_request_ack_transfer_ext_ies_container::add_redundant_ngu_up_tnl_info),
          asn1::table::sequence_item_ops,
@@ -27313,7 +27923,7 @@ static const asn1::table::seq_field ie_table_path_switch_request_ack_transfer_ex
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(path_switch_request_ack_transfer_ext_ies_container::qos_flow_params_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -27375,15 +27985,15 @@ static const asn1::table::seq_opt seq_table_path_switch_request_ack_transfer_s_o
     {2, (int32_t)offsetof(path_switch_request_ack_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc path_switch_request_ack_transfer_s::desc = {
     {seq_table_path_switch_request_ack_transfer_s_fields,
-     3,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_path_switch_request_ack_transfer_s_opts,
+     seq_table_path_switch_request_ack_transfer_s_names,
+     3,
      3},
     true,
     true,
     nullptr,
-    0,
-    seq_table_path_switch_request_ack_transfer_s_names};
+    0};
 
 // PathSwitchRequestSetupFailedTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_path_switch_request_setup_failed_transfer_s_fields[] = {
@@ -27412,15 +28022,15 @@ static const asn1::table::seq_opt seq_table_path_switch_request_setup_failed_tra
     {1, (int32_t)offsetof(path_switch_request_setup_failed_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc path_switch_request_setup_failed_transfer_s::desc = {
     {seq_table_path_switch_request_setup_failed_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_path_switch_request_setup_failed_transfer_s_opts,
+     seq_table_path_switch_request_setup_failed_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_path_switch_request_setup_failed_transfer_s_names};
+    0};
 
 // UserPlaneSecurityInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_user_plane_security_info_s_fields[] = {
@@ -27455,13 +28065,16 @@ static const asn1::table::field_name seq_table_user_plane_security_info_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_user_plane_security_info_s_opts[]  = {
     {2, (int32_t)offsetof(user_plane_security_info_s, ie_exts_present)}};
-const asn1::table::seq_desc user_plane_security_info_s::desc = {
-    {seq_table_user_plane_security_info_s_fields, 3, UINT64_C(0x3), seq_table_user_plane_security_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_user_plane_security_info_s_names};
+const asn1::table::seq_desc user_plane_security_info_s::desc = {{seq_table_user_plane_security_info_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 seq_table_user_plane_security_info_s_opts,
+                                                                 seq_table_user_plane_security_info_s_names,
+                                                                 3,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const uint32_t objset_id_qos_flow_accepted_item_ext_ies_o[]   = {221};
 static const uint8_t  objset_crit_qos_flow_accepted_item_ext_ies_o[] = {crit_e::ignore};
@@ -27473,8 +28086,8 @@ static const asn1::table::seq_field ie_table_qos_flow_accepted_item_ext_ies_cont
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(8),
+     int64_t{1},
+     uint64_t{7},
      nullptr}};
 static const int32_t ie_table_qos_flow_accepted_item_ext_ies_container_presences[] = {
     (int32_t)offsetof(qos_flow_accepted_item_ext_ies_container, current_qos_para_set_idx_present)};
@@ -27497,8 +28110,8 @@ static const asn1::table::seq_field seq_table_qos_flow_accepted_item_s_fields[] 
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(63),
+     int64_t{0},
+     uint64_t{63},
      nullptr},
     {offsetof(qos_flow_accepted_item_s, ie_exts),
      (int32_t)offsetof(qos_flow_accepted_item_s, ie_exts_present),
@@ -27513,13 +28126,16 @@ static const asn1::table::field_name seq_table_qos_flow_accepted_item_s_names[] 
                                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_qos_flow_accepted_item_s_opts[]  = {
     {1, (int32_t)offsetof(qos_flow_accepted_item_s, ie_exts_present)}};
-const asn1::table::seq_desc qos_flow_accepted_item_s::desc = {
-    {seq_table_qos_flow_accepted_item_s_fields, 2, UINT64_C(0x1), seq_table_qos_flow_accepted_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qos_flow_accepted_item_s_names};
+const asn1::table::seq_desc qos_flow_accepted_item_s::desc = {{seq_table_qos_flow_accepted_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_qos_flow_accepted_item_s_opts,
+                                                               seq_table_qos_flow_accepted_item_s_names,
+                                                               2,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 static const uint32_t objset_id_path_switch_request_transfer_ext_ies_o[] = {155, 192, 191, 184, 198, 27, 309, 423, 426};
 static const uint8_t  objset_crit_path_switch_request_transfer_ext_ies_o[] = {crit_e::ignore,
@@ -27540,7 +28156,7 @@ static const asn1::table::seq_field ie_table_path_switch_request_transfer_ext_ie
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(path_switch_request_transfer_ext_ies_container::add_dl_qos_flow_per_tnl_info),
          asn1::table::sequence_item_ops,
@@ -27571,7 +28187,7 @@ static const asn1::table::seq_field ie_table_path_switch_request_transfer_ext_ie
      false,
      true,
      1,
-     3,
+     2,
      &asn1::table::item_list_codec<
          decltype(path_switch_request_transfer_ext_ies_container::add_redundant_dl_qos_flow_per_tnl_info),
          asn1::table::sequence_item_ops,
@@ -27621,7 +28237,7 @@ static const asn1::table::seq_field ie_table_path_switch_request_transfer_ext_ie
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<
          decltype(path_switch_request_transfer_ext_ies_container::ecn_markingor_congestion_info_report_status),
          asn1::table::sequence_item_ops,
@@ -27686,7 +28302,7 @@ static const asn1::table::seq_field seq_table_path_switch_request_transfer_s_fie
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(path_switch_request_transfer_s::qos_flow_accepted_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -27712,15 +28328,15 @@ static const asn1::table::seq_opt seq_table_path_switch_request_transfer_s_opts[
     {2, (int32_t)offsetof(path_switch_request_transfer_s, user_plane_security_info_present)},
     {4, (int32_t)offsetof(path_switch_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc path_switch_request_transfer_s::desc = {{seq_table_path_switch_request_transfer_s_fields,
-                                                                     5,
-                                                                     UINT64_C(0x9),
+                                                                     uint64_t{0x9},
                                                                      seq_table_path_switch_request_transfer_s_opts,
+                                                                     seq_table_path_switch_request_transfer_s_names,
+                                                                     5,
                                                                      3},
                                                                     true,
                                                                     true,
                                                                     nullptr,
-                                                                    0,
-                                                                    seq_table_path_switch_request_transfer_s_names};
+                                                                    0};
 
 // PathSwitchRequestUnsuccessfulTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_path_switch_request_unsuccessful_transfer_s_fields[] = {
@@ -27749,15 +28365,15 @@ static const asn1::table::seq_opt seq_table_path_switch_request_unsuccessful_tra
     {1, (int32_t)offsetof(path_switch_request_unsuccessful_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc path_switch_request_unsuccessful_transfer_s::desc = {
     {seq_table_path_switch_request_unsuccessful_transfer_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_path_switch_request_unsuccessful_transfer_s_opts,
+     seq_table_path_switch_request_unsuccessful_transfer_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_path_switch_request_unsuccessful_transfer_s_names};
+    0};
 
 // PeriodicityList ::= SEQUENCE
 static const asn1::table::seq_field seq_table_periodicity_list_s_fields[] = {
@@ -27767,10 +28383,10 @@ static const asn1::table::seq_field seq_table_periodicity_list_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::list_codec<decltype(periodicity_list_s::allowed_periodicity_list),
                               asn1::table::int_json,
-                              asn1::table::int_items<false, INT64_C(0), UINT64_C(640000), true, true>>::value},
+                              asn1::table::int_items<false, int64_t{0}, uint64_t{640000}, true, true>>::value},
     {offsetof(periodicity_list_s, ie_exts),
      (int32_t)offsetof(periodicity_list_s, ie_exts_present),
      asn1::table::field_op::codec,
@@ -27783,13 +28399,16 @@ static const asn1::table::field_name seq_table_periodicity_list_s_names[] = {{"a
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_periodicity_list_s_opts[]  = {
     {1, (int32_t)offsetof(periodicity_list_s, ie_exts_present)}};
-const asn1::table::seq_desc periodicity_list_s::desc = {
-    {seq_table_periodicity_list_s_fields, 2, UINT64_C(0x1), seq_table_periodicity_list_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_periodicity_list_s_names};
+const asn1::table::seq_desc periodicity_list_s::desc = {{seq_table_periodicity_list_s_fields,
+                                                         uint64_t{0x1},
+                                                         seq_table_periodicity_list_s_opts,
+                                                         seq_table_periodicity_list_s_names,
+                                                         2,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // PrivacyIndicator ::= ENUMERATED
 static const char*           enum_names_privacy_ind_e_values[] = {"immediate-MDT", "logged-MDT"};
@@ -27822,13 +28441,16 @@ static const asn1::table::field_name seq_table_slice_support_qmc_item_s_names[] 
                                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_slice_support_qmc_item_s_opts[]  = {
     {1, (int32_t)offsetof(slice_support_qmc_item_s, ie_exts_present)}};
-const asn1::table::seq_desc slice_support_qmc_item_s::desc = {
-    {seq_table_slice_support_qmc_item_s_fields, 2, UINT64_C(0x1), seq_table_slice_support_qmc_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_slice_support_qmc_item_s_names};
+const asn1::table::seq_desc slice_support_qmc_item_s::desc = {{seq_table_slice_support_qmc_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_slice_support_qmc_item_s_opts,
+                                                               seq_table_slice_support_qmc_item_s_names,
+                                                               2,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // QoERVQoEReportingPaths ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qo_erv_qo_e_report_paths_s_fields[] = {
@@ -27865,13 +28487,16 @@ static const asn1::table::seq_opt    seq_table_qo_erv_qo_e_report_paths_s_opts[]
     {0, (int32_t)offsetof(qo_erv_qo_e_report_paths_s, qo_e_report_path_present)},
     {1, (int32_t)offsetof(qo_erv_qo_e_report_paths_s, rv_qo_e_report_path_present)},
     {2, (int32_t)offsetof(qo_erv_qo_e_report_paths_s, ie_exts_present)}};
-const asn1::table::seq_desc qo_erv_qo_e_report_paths_s::desc = {
-    {seq_table_qo_erv_qo_e_report_paths_s_fields, 3, UINT64_C(0x0), seq_table_qo_erv_qo_e_report_paths_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qo_erv_qo_e_report_paths_s_names};
+const asn1::table::seq_desc qo_erv_qo_e_report_paths_s::desc = {{seq_table_qo_erv_qo_e_report_paths_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_qo_erv_qo_e_report_paths_s_opts,
+                                                                 seq_table_qo_erv_qo_e_report_paths_s_names,
+                                                                 3,
+                                                                 3},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const char*           enum_names_qo_erv_qo_e_report_paths_s_qo_e_report_path_e__values[] = {"srb4", "srb5"};
 const asn1::table::enum_desc qo_erv_qo_e_report_paths_s::qo_e_report_path_opts::desc            = {
@@ -27907,8 +28532,8 @@ static const asn1::table::seq_field ie_table_ue_app_layer_meas_cfg_info_ext_ies_
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(16),
+     int64_t{1},
+     uint64_t{15},
      nullptr},
     {offsetof(ue_app_layer_meas_cfg_info_ext_ies_container, mbs_comm_service_type),
      (int32_t)offsetof(ue_app_layer_meas_cfg_info_ext_ies_container, mbs_comm_service_type_present),
@@ -28004,8 +28629,8 @@ static const asn1::table::seq_field seq_table_ue_app_layer_meas_cfg_info_s_field
      asn1::table::field_op::int_u8,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(15),
+     int64_t{0},
+     uint64_t{15},
      nullptr},
     {offsetof(ue_app_layer_meas_cfg_info_s, slice_support_list_qmc),
      asn1::table::seq_field::list_presence,
@@ -28013,7 +28638,7 @@ static const asn1::table::seq_field seq_table_ue_app_layer_meas_cfg_info_s_field
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(ue_app_layer_meas_cfg_info_s::slice_support_list_qmc),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -28067,13 +28692,16 @@ static const asn1::table::seq_opt seq_table_ue_app_layer_meas_cfg_info_s_opts[] 
     {8, (int32_t)offsetof(ue_app_layer_meas_cfg_info_s, mdt_align_info_present)},
     {9, (int32_t)offsetof(ue_app_layer_meas_cfg_info_s, available_ran_visible_qo_e_metrics_present)},
     {10, (int32_t)offsetof(ue_app_layer_meas_cfg_info_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_app_layer_meas_cfg_info_s::desc = {
-    {seq_table_ue_app_layer_meas_cfg_info_s_fields, 11, UINT64_C(0xb), seq_table_ue_app_layer_meas_cfg_info_s_opts, 8},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_app_layer_meas_cfg_info_s_names};
+const asn1::table::seq_desc ue_app_layer_meas_cfg_info_s::desc = {{seq_table_ue_app_layer_meas_cfg_info_s_fields,
+                                                                   uint64_t{0xb},
+                                                                   seq_table_ue_app_layer_meas_cfg_info_s_opts,
+                                                                   seq_table_ue_app_layer_meas_cfg_info_s_names,
+                                                                   11,
+                                                                   8},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 static const char*           enum_names_ue_app_layer_meas_cfg_info_s_qo_e_meas_status_e__values[] = {"ongoing"};
 const asn1::table::enum_desc ue_app_layer_meas_cfg_info_s::qo_e_meas_status_opts::desc            = {
@@ -28105,13 +28733,16 @@ static const asn1::table::field_name seq_table_ue_app_layer_meas_info_item_s_nam
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_ue_app_layer_meas_info_item_s_opts[] = {
     {1, (int32_t)offsetof(ue_app_layer_meas_info_item_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_app_layer_meas_info_item_s::desc = {
-    {seq_table_ue_app_layer_meas_info_item_s_fields, 2, UINT64_C(0x1), seq_table_ue_app_layer_meas_info_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_app_layer_meas_info_item_s_names};
+const asn1::table::seq_desc ue_app_layer_meas_info_item_s::desc = {{seq_table_ue_app_layer_meas_info_item_s_fields,
+                                                                    uint64_t{0x1},
+                                                                    seq_table_ue_app_layer_meas_info_item_s_opts,
+                                                                    seq_table_ue_app_layer_meas_info_item_s_names,
+                                                                    2,
+                                                                    1},
+                                                                   true,
+                                                                   true,
+                                                                   nullptr,
+                                                                   0};
 
 // QMCConfigInfo ::= SEQUENCE
 static const asn1::table::seq_field seq_table_q_mcc_onfig_info_s_fields[] = {
@@ -28121,7 +28752,7 @@ static const asn1::table::seq_field seq_table_q_mcc_onfig_info_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(q_mcc_onfig_info_s::ue_app_layer_meas_info_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -28139,13 +28770,16 @@ static const asn1::table::field_name seq_table_q_mcc_onfig_info_s_names[] = {{"u
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_q_mcc_onfig_info_s_opts[]  = {
     {1, (int32_t)offsetof(q_mcc_onfig_info_s, ie_exts_present)}};
-const asn1::table::seq_desc q_mcc_onfig_info_s::desc = {
-    {seq_table_q_mcc_onfig_info_s_fields, 2, UINT64_C(0x1), seq_table_q_mcc_onfig_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_q_mcc_onfig_info_s_names};
+const asn1::table::seq_desc q_mcc_onfig_info_s::desc = {{seq_table_q_mcc_onfig_info_s_fields,
+                                                         uint64_t{0x1},
+                                                         seq_table_q_mcc_onfig_info_s_opts,
+                                                         seq_table_q_mcc_onfig_info_s_names,
+                                                         2,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // QMCDeactivation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_qmc_deactivation_s_fields[] = {
@@ -28155,7 +28789,7 @@ static const asn1::table::seq_field seq_table_qmc_deactivation_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(qmc_deactivation_s::qo_e_ref_list), asn1::table::string_json>::value},
     {offsetof(qmc_deactivation_s, ie_exts),
      (int32_t)offsetof(qmc_deactivation_s, ie_exts_present),
@@ -28169,13 +28803,16 @@ static const asn1::table::field_name seq_table_qmc_deactivation_s_names[] = {{"q
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_qmc_deactivation_s_opts[]  = {
     {1, (int32_t)offsetof(qmc_deactivation_s, ie_exts_present)}};
-const asn1::table::seq_desc qmc_deactivation_s::desc = {
-    {seq_table_qmc_deactivation_s_fields, 2, UINT64_C(0x1), seq_table_qmc_deactivation_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_qmc_deactivation_s_names};
+const asn1::table::seq_desc qmc_deactivation_s::desc = {{seq_table_qmc_deactivation_s_fields,
+                                                         uint64_t{0x1},
+                                                         seq_table_qmc_deactivation_s_opts,
+                                                         seq_table_qmc_deactivation_s_names,
+                                                         2,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // RAN-TSSRequestType ::= ENUMERATED
 static const char*           enum_names_ran_tss_request_type_e_values[] = {"start", "stop"};
@@ -28206,13 +28843,16 @@ static const asn1::table::field_name seq_table_rants_scell_item_s_names[] = {{"n
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_rants_scell_item_s_opts[]  = {
     {1, (int32_t)offsetof(rants_scell_item_s, ie_exts_present)}};
-const asn1::table::seq_desc rants_scell_item_s::desc = {
-    {seq_table_rants_scell_item_s_fields, 2, UINT64_C(0x1), seq_table_rants_scell_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_rants_scell_item_s_names};
+const asn1::table::seq_desc rants_scell_item_s::desc = {{seq_table_rants_scell_item_s_fields,
+                                                         uint64_t{0x1},
+                                                         seq_table_rants_scell_item_s_opts,
+                                                         seq_table_rants_scell_item_s_names,
+                                                         2,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // RAN-TSSScope ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ran_tss_scope_c_alternatives[] = {
@@ -28254,7 +28894,7 @@ static const asn1::table::seq_field choice_table_ran_tss_scope_c_alternatives[] 
      false,
      true,
      1,
-     16384,
+     16383,
      &asn1::table::list_codec<rants_scell_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -28295,7 +28935,7 @@ static const asn1::table::seq_field seq_table_ran_status_transfer_transparent_co
      false,
      true,
      1,
-     32,
+     31,
      &asn1::table::item_list_codec<
          decltype(ran_status_transfer_transparent_container_s::drbs_subject_to_status_transfer_list),
          asn1::table::sequence_item_ops,
@@ -28318,15 +28958,15 @@ static const asn1::table::seq_opt seq_table_ran_status_transfer_transparent_cont
     {1, (int32_t)offsetof(ran_status_transfer_transparent_container_s, ie_exts_present)}};
 const asn1::table::seq_desc ran_status_transfer_transparent_container_s::desc = {
     {seq_table_ran_status_transfer_transparent_container_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_ran_status_transfer_transparent_container_s_opts,
+     seq_table_ran_status_transfer_transparent_container_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_status_transfer_transparent_container_s_names};
+    0};
 
 // RANTimingSynchronisationStatusInfo ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ran_timing_synchronisation_status_info_s_fields[] = {
@@ -28411,15 +29051,15 @@ static const asn1::table::seq_opt seq_table_ran_timing_synchronisation_status_in
     {6, (int32_t)offsetof(ran_timing_synchronisation_status_info_s, ie_exts_present)}};
 const asn1::table::seq_desc ran_timing_synchronisation_status_info_s::desc = {
     {seq_table_ran_timing_synchronisation_status_info_s_fields,
-     7,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_ran_timing_synchronisation_status_info_s_opts,
+     seq_table_ran_timing_synchronisation_status_info_s_names,
+     7,
      7},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ran_timing_synchronisation_status_info_s_names};
+    0};
 
 static const char* enum_names_ran_timing_synchronisation_status_info_s_synchronisation_state_e__values[] = {"locked",
                                                                                                             "holdover",
@@ -28478,12 +29118,11 @@ static const asn1::table::field_name seq_table_rim_info_s_names[] = {{"targetgNB
                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_rim_info_s_opts[] = {{2, (int32_t)offsetof(rim_info_s, ie_exts_present)}};
 const asn1::table::seq_desc       rim_info_s::desc            = {
-    {seq_table_rim_info_s_fields, 3, UINT64_C(0x3), seq_table_rim_info_s_opts, 1},
+    {seq_table_rim_info_s_fields, uint64_t{0x3}, seq_table_rim_info_s_opts, seq_table_rim_info_s_names, 3, 1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_rim_info_s_names};
+    0};
 
 static const char*           enum_names_rim_info_s_rim_rs_detection_e__values[] = {"rs-detected", "rs-disappeared"};
 const asn1::table::enum_desc rim_info_s::rim_rs_detection_opts::desc            = {
@@ -28524,13 +29163,16 @@ static const asn1::table::field_name seq_table_target_ran_node_id_rim_s_names[] 
                                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_target_ran_node_id_rim_s_opts[]  = {
     {2, (int32_t)offsetof(target_ran_node_id_rim_s, ie_exts_present)}};
-const asn1::table::seq_desc target_ran_node_id_rim_s::desc = {
-    {seq_table_target_ran_node_id_rim_s_fields, 3, UINT64_C(0x3), seq_table_target_ran_node_id_rim_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_ran_node_id_rim_s_names};
+const asn1::table::seq_desc target_ran_node_id_rim_s::desc = {{seq_table_target_ran_node_id_rim_s_fields,
+                                                               uint64_t{0x3},
+                                                               seq_table_target_ran_node_id_rim_s_opts,
+                                                               seq_table_target_ran_node_id_rim_s_names,
+                                                               3,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // SourceRANNodeID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_source_ran_node_id_s_fields[] = {
@@ -28565,13 +29207,16 @@ static const asn1::table::field_name seq_table_source_ran_node_id_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_source_ran_node_id_s_opts[]  = {
     {2, (int32_t)offsetof(source_ran_node_id_s, ie_exts_present)}};
-const asn1::table::seq_desc source_ran_node_id_s::desc = {
-    {seq_table_source_ran_node_id_s_fields, 3, UINT64_C(0x3), seq_table_source_ran_node_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_source_ran_node_id_s_names};
+const asn1::table::seq_desc source_ran_node_id_s::desc = {{seq_table_source_ran_node_id_s_fields,
+                                                           uint64_t{0x3},
+                                                           seq_table_source_ran_node_id_s_opts,
+                                                           seq_table_source_ran_node_id_s_names,
+                                                           3,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // RIMInformationTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rim_info_transfer_s_fields[] = {
@@ -28616,13 +29261,16 @@ static const asn1::table::field_name seq_table_rim_info_transfer_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_rim_info_transfer_s_opts[]  = {
     {3, (int32_t)offsetof(rim_info_transfer_s, ie_exts_present)}};
-const asn1::table::seq_desc rim_info_transfer_s::desc = {
-    {seq_table_rim_info_transfer_s_fields, 4, UINT64_C(0x7), seq_table_rim_info_transfer_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_rim_info_transfer_s_names};
+const asn1::table::seq_desc rim_info_transfer_s::desc = {{seq_table_rim_info_transfer_s_fields,
+                                                          uint64_t{0x7},
+                                                          seq_table_rim_info_transfer_s_opts,
+                                                          seq_table_rim_info_transfer_s_names,
+                                                          4,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // RRCEstablishmentCause ::= ENUMERATED
 static const char*           enum_names_rrc_establishment_cause_e_values[] = {"emergency",
@@ -28661,16 +29309,16 @@ static const asn1::table::seq_field seq_table_rspp_flow_bit_rates_s_fields[] = {
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(rspp_flow_bit_rates_s, max_flow_bit_rate),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(rspp_flow_bit_rates_s, ie_exts),
      (int32_t)offsetof(rspp_flow_bit_rates_s, ie_exts_present),
@@ -28685,13 +29333,16 @@ static const asn1::table::field_name seq_table_rspp_flow_bit_rates_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_rspp_flow_bit_rates_s_opts[]  = {
     {2, (int32_t)offsetof(rspp_flow_bit_rates_s, ie_exts_present)}};
-const asn1::table::seq_desc rspp_flow_bit_rates_s::desc = {
-    {seq_table_rspp_flow_bit_rates_s_fields, 3, UINT64_C(0x3), seq_table_rspp_flow_bit_rates_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_rspp_flow_bit_rates_s_names};
+const asn1::table::seq_desc rspp_flow_bit_rates_s::desc = {{seq_table_rspp_flow_bit_rates_s_fields,
+                                                            uint64_t{0x3},
+                                                            seq_table_rspp_flow_bit_rates_s_opts,
+                                                            seq_table_rspp_flow_bit_rates_s_names,
+                                                            3,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 // RSPPQoSFlowItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_rspp_qos_flow_item_s_fields[] = {
@@ -28700,8 +29351,8 @@ static const asn1::table::seq_field seq_table_rspp_qos_flow_item_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(rspp_qos_flow_item_s, rspp_flow_bit_rates),
      (int32_t)offsetof(rspp_qos_flow_item_s, rspp_flow_bit_rates_present),
@@ -28737,13 +29388,16 @@ static const asn1::table::seq_opt    seq_table_rspp_qos_flow_item_s_opts[]  = {
     {1, (int32_t)offsetof(rspp_qos_flow_item_s, rspp_flow_bit_rates_present)},
     {2, (int32_t)offsetof(rspp_qos_flow_item_s, range_present)},
     {3, (int32_t)offsetof(rspp_qos_flow_item_s, ie_exts_present)}};
-const asn1::table::seq_desc rspp_qos_flow_item_s::desc = {
-    {seq_table_rspp_qos_flow_item_s_fields, 4, UINT64_C(0x1), seq_table_rspp_qos_flow_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_rspp_qos_flow_item_s_names};
+const asn1::table::seq_desc rspp_qos_flow_item_s::desc = {{seq_table_rspp_qos_flow_item_s_fields,
+                                                           uint64_t{0x1},
+                                                           seq_table_rspp_qos_flow_item_s_opts,
+                                                           seq_table_rspp_qos_flow_item_s_names,
+                                                           4,
+                                                           3},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // RedCapIndication ::= ENUMERATED
 static const char*           enum_names_red_cap_ind_e_values[] = {"redcap"};
@@ -28766,16 +29420,16 @@ static const asn1::table::seq_field seq_table_ue_associated_lc_ng_conn_item_s_fi
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1099511627775),
+     int64_t{0},
+     uint64_t{1099511627775},
      nullptr},
     {offsetof(ue_associated_lc_ng_conn_item_s, ran_ue_ngap_id),
      (int32_t)offsetof(ue_associated_lc_ng_conn_item_s, ran_ue_ngap_id_present),
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_associated_lc_ng_conn_item_s, ie_exts),
      (int32_t)offsetof(ue_associated_lc_ng_conn_item_s, ie_exts_present),
@@ -28793,15 +29447,15 @@ static const asn1::table::seq_opt    seq_table_ue_associated_lc_ng_conn_item_s_o
     {1, (int32_t)offsetof(ue_associated_lc_ng_conn_item_s, ran_ue_ngap_id_present)},
     {2, (int32_t)offsetof(ue_associated_lc_ng_conn_item_s, ie_exts_present)}};
 const asn1::table::seq_desc ue_associated_lc_ng_conn_item_s::desc = {{seq_table_ue_associated_lc_ng_conn_item_s_fields,
-                                                                      3,
-                                                                      UINT64_C(0x0),
+                                                                      uint64_t{0x0},
                                                                       seq_table_ue_associated_lc_ng_conn_item_s_opts,
+                                                                      seq_table_ue_associated_lc_ng_conn_item_s_names,
+                                                                      3,
                                                                       3},
                                                                      true,
                                                                      true,
                                                                      nullptr,
-                                                                     0,
-                                                                     seq_table_ue_associated_lc_ng_conn_item_s_names};
+                                                                     0};
 
 // ResetType ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_reset_type_c_alternatives[] = {
@@ -28843,7 +29497,7 @@ static const asn1::table::seq_field choice_table_reset_type_c_alternatives[] = {
      false,
      true,
      1,
-     65536,
+     65535,
      &asn1::table::list_codec<ue_associated_lc_ng_conn_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -28891,7 +29545,7 @@ static const asn1::table::seq_field seq_table_sl_positioning_ranging_qos_params_
      false,
      true,
      1,
-     2048,
+     2047,
      &asn1::table::item_list_codec<decltype(sl_positioning_ranging_qos_params_s::rspp_qos_flow_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -28902,8 +29556,8 @@ static const asn1::table::seq_field seq_table_sl_positioning_ranging_qos_params_
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(sl_positioning_ranging_qos_params_s, ie_exts),
      (int32_t)offsetof(sl_positioning_ranging_qos_params_s, ie_exts_present),
@@ -28923,15 +29577,15 @@ static const asn1::table::seq_opt seq_table_sl_positioning_ranging_qos_params_s_
     {2, (int32_t)offsetof(sl_positioning_ranging_qos_params_s, ie_exts_present)}};
 const asn1::table::seq_desc sl_positioning_ranging_qos_params_s::desc = {
     {seq_table_sl_positioning_ranging_qos_params_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_sl_positioning_ranging_qos_params_s_opts,
+     seq_table_sl_positioning_ranging_qos_params_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_sl_positioning_ranging_qos_params_s_names};
+    0};
 
 // SLPositioningRangingServiceInfo ::= SEQUENCE
 static const asn1::table::seq_field seq_table_sl_positioning_ranging_service_info_s_fields[] = {
@@ -28971,15 +29625,15 @@ static const asn1::table::seq_opt seq_table_sl_positioning_ranging_service_info_
     {2, (int32_t)offsetof(sl_positioning_ranging_service_info_s, ie_exts_present)}};
 const asn1::table::seq_desc sl_positioning_ranging_service_info_s::desc = {
     {seq_table_sl_positioning_ranging_service_info_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_sl_positioning_ranging_service_info_s_opts,
+     seq_table_sl_positioning_ranging_service_info_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_sl_positioning_ranging_service_info_s_names};
+    0};
 
 static const uint32_t objset_id_target_ran_node_id_son_ext_ies_o[]   = {45};
 static const uint8_t  objset_crit_target_ran_node_id_son_ext_ies_o[] = {crit_e::ignore};
@@ -29043,13 +29697,16 @@ static const asn1::table::field_name seq_table_target_ran_node_id_son_s_names[] 
                                                                                    {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_target_ran_node_id_son_s_opts[]  = {
     {2, (int32_t)offsetof(target_ran_node_id_son_s, ie_exts_present)}};
-const asn1::table::seq_desc target_ran_node_id_son_s::desc = {
-    {seq_table_target_ran_node_id_son_s_fields, 3, UINT64_C(0x3), seq_table_target_ran_node_id_son_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_ran_node_id_son_s_names};
+const asn1::table::seq_desc target_ran_node_id_son_s::desc = {{seq_table_target_ran_node_id_son_s_fields,
+                                                               uint64_t{0x3},
+                                                               seq_table_target_ran_node_id_son_s_opts,
+                                                               seq_table_target_ran_node_id_son_s_names,
+                                                               3,
+                                                               1},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 // SONInformationRequest ::= ENUMERATED
 static const char*           enum_names_son_info_request_e_values[] = {"xn-TNL-configuration-info"};
@@ -29068,7 +29725,7 @@ static const asn1::table::seq_field ie_table_xn_ext_tla_item_ext_ies_container_v
      false,
      true,
      1,
-     2,
+     1,
      &asn1::table::list_codec<decltype(xn_ext_tla_item_ext_ies_container::sctp_tlas),
                               asn1::table::struct_json>::value}};
 static const int32_t ie_table_xn_ext_tla_item_ext_ies_container_presences[] = {
@@ -29101,7 +29758,7 @@ static const asn1::table::seq_field seq_table_xn_ext_tla_item_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::list_codec<decltype(xn_ext_tla_item_s::gtp_tlas), asn1::table::struct_json>::value},
     {offsetof(xn_ext_tla_item_s, ie_exts),
      (int32_t)offsetof(xn_ext_tla_item_s, ie_exts_present),
@@ -29119,13 +29776,16 @@ static const asn1::table::seq_opt    seq_table_xn_ext_tla_item_s_opts[]  = {
     {0, (int32_t)offsetof(xn_ext_tla_item_s, ip_sec_tla_present)},
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(xn_ext_tla_item_s, ie_exts_present)}};
-const asn1::table::seq_desc xn_ext_tla_item_s::desc = {
-    {seq_table_xn_ext_tla_item_s_fields, 3, UINT64_C(0x0), seq_table_xn_ext_tla_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_xn_ext_tla_item_s_names};
+const asn1::table::seq_desc xn_ext_tla_item_s::desc = {{seq_table_xn_ext_tla_item_s_fields,
+                                                        uint64_t{0x0},
+                                                        seq_table_xn_ext_tla_item_s_opts,
+                                                        seq_table_xn_ext_tla_item_s_names,
+                                                        3,
+                                                        3},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // XnTNLConfigurationInfo ::= SEQUENCE
 static const asn1::table::seq_field seq_table_xn_tnl_cfg_info_s_fields[] = {
@@ -29135,7 +29795,7 @@ static const asn1::table::seq_field seq_table_xn_tnl_cfg_info_s_fields[] = {
      false,
      true,
      1,
-     2,
+     1,
      &asn1::table::list_codec<decltype(xn_tnl_cfg_info_s::xn_transport_layer_addresses),
                               asn1::table::struct_json>::value},
     {offsetof(xn_tnl_cfg_info_s, xn_extended_transport_layer_addresses),
@@ -29144,7 +29804,7 @@ static const asn1::table::seq_field seq_table_xn_tnl_cfg_info_s_fields[] = {
      false,
      true,
      1,
-     16,
+     15,
      &asn1::table::item_list_codec<decltype(xn_tnl_cfg_info_s::xn_extended_transport_layer_addresses),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -29165,13 +29825,16 @@ static const asn1::table::field_name seq_table_xn_tnl_cfg_info_s_names[] = {
 static const asn1::table::seq_opt seq_table_xn_tnl_cfg_info_s_opts[] = {
     {1, asn1::table::seq_field::list_presence},
     {2, (int32_t)offsetof(xn_tnl_cfg_info_s, ie_exts_present)}};
-const asn1::table::seq_desc xn_tnl_cfg_info_s::desc = {
-    {seq_table_xn_tnl_cfg_info_s_fields, 3, UINT64_C(0x1), seq_table_xn_tnl_cfg_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_xn_tnl_cfg_info_s_names};
+const asn1::table::seq_desc xn_tnl_cfg_info_s::desc = {{seq_table_xn_tnl_cfg_info_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_xn_tnl_cfg_info_s_opts,
+                                                        seq_table_xn_tnl_cfg_info_s_names,
+                                                        3,
+                                                        2},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // SONInformationReply ::= SEQUENCE
 static const asn1::table::seq_field seq_table_son_info_reply_s_fields[] = {
@@ -29197,13 +29860,16 @@ static const asn1::table::field_name seq_table_son_info_reply_s_names[] = {{"xnT
 static const asn1::table::seq_opt    seq_table_son_info_reply_s_opts[]  = {
     {0, (int32_t)offsetof(son_info_reply_s, xn_tnl_cfg_info_present)},
     {1, (int32_t)offsetof(son_info_reply_s, ie_exts_present)}};
-const asn1::table::seq_desc son_info_reply_s::desc = {
-    {seq_table_son_info_reply_s_fields, 2, UINT64_C(0x0), seq_table_son_info_reply_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_son_info_reply_s_names};
+const asn1::table::seq_desc son_info_reply_s::desc = {{seq_table_son_info_reply_s_fields,
+                                                       uint64_t{0x0},
+                                                       seq_table_son_info_reply_s_opts,
+                                                       seq_table_son_info_reply_s_names,
+                                                       2,
+                                                       2},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // SuccessfulHandoverReport-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_successful_ho_report_item_s_fields[] = {
@@ -29229,13 +29895,16 @@ static const asn1::table::field_name seq_table_successful_ho_report_item_s_names
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_successful_ho_report_item_s_opts[] = {
     {1, (int32_t)offsetof(successful_ho_report_item_s, ie_exts_present)}};
-const asn1::table::seq_desc successful_ho_report_item_s::desc = {
-    {seq_table_successful_ho_report_item_s_fields, 2, UINT64_C(0x1), seq_table_successful_ho_report_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_successful_ho_report_item_s_names};
+const asn1::table::seq_desc successful_ho_report_item_s::desc = {{seq_table_successful_ho_report_item_s_fields,
+                                                                  uint64_t{0x1},
+                                                                  seq_table_successful_ho_report_item_s_opts,
+                                                                  seq_table_successful_ho_report_item_s_names,
+                                                                  2,
+                                                                  1},
+                                                                 true,
+                                                                 true,
+                                                                 nullptr,
+                                                                 0};
 
 // SuccessfulPSCellChangeReport-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_successful_pscell_change_report_item_s_fields[] = {
@@ -29265,15 +29934,15 @@ static const asn1::table::seq_opt seq_table_successful_pscell_change_report_item
     {1, (int32_t)offsetof(successful_pscell_change_report_item_s, ie_exts_present)}};
 const asn1::table::seq_desc successful_pscell_change_report_item_s::desc = {
     {seq_table_successful_pscell_change_report_item_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_successful_pscell_change_report_item_s_opts,
+     seq_table_successful_pscell_change_report_item_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_successful_pscell_change_report_item_s_names};
+    0};
 
 // SONInformationReport-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_son_info_report_ext_ies_o[]    = {294, 383};
@@ -29299,7 +29968,7 @@ static const asn1::table::seq_field choice_table_son_info_report_ext_ies_o_value
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::any_list_codec<successful_ho_report_list_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -29307,7 +29976,7 @@ static const asn1::table::seq_field choice_table_son_info_report_ext_ies_o_value
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::any_list_codec<successful_pscell_change_report_list_l, asn1::table::struct_json>::value}};
 static const asn1::table::field_name choice_table_son_info_report_ext_ies_o_value_c_names[] = {
     {"SuccessfulHandoverReportList", nullptr},
@@ -29366,7 +30035,7 @@ const asn1::table::enum_desc son_info_report_ext_ies_o::value_c::types_opts::des
 static const asn1::table::storage_ops* const choice_storage_son_info_report_c_alternatives[] = {
     &asn1::table::alternative_ops<fail_ind_s, false>::value,
     &asn1::table::alternative_ops<ho_report_s, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<son_info_report_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<son_info_report_ext_ies_o>, false, false>::value};
 const asn1::table::choice_storage_desc son_info_report_c::storage_desc = {choice_storage_son_info_report_c_alternatives,
                                                                           3,
                                                                           "son_info_report_c"};
@@ -29492,7 +30161,7 @@ const asn1::table::enum_desc son_info_ext_ies_o::value_c::types_opts::desc      
 static const asn1::table::storage_ops* const choice_storage_son_info_c_alternatives[] = {
     &asn1::table::alternative_ops<son_info_request_e, true>::value,
     &asn1::table::alternative_ops<son_info_reply_s, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<son_info_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<son_info_ext_ies_o>, false, false>::value};
 const asn1::table::choice_storage_desc son_info_c::storage_desc = {choice_storage_son_info_c_alternatives,
                                                                    3,
                                                                    "son_info_c"};
@@ -29617,13 +30286,16 @@ static const asn1::table::field_name seq_table_son_cfg_transfer_s_names[] = {{"t
 static const asn1::table::seq_opt    seq_table_son_cfg_transfer_s_opts[]  = {
     {3, (int32_t)offsetof(son_cfg_transfer_s, xn_tnl_cfg_info_present)},
     {4, (int32_t)offsetof(son_cfg_transfer_s, ie_exts_present)}};
-const asn1::table::seq_desc son_cfg_transfer_s::desc = {
-    {seq_table_son_cfg_transfer_s_fields, 5, UINT64_C(0x7), seq_table_son_cfg_transfer_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_son_cfg_transfer_s_names};
+const asn1::table::seq_desc son_cfg_transfer_s::desc = {{seq_table_son_cfg_transfer_s_fields,
+                                                         uint64_t{0x7},
+                                                         seq_table_son_cfg_transfer_s_opts,
+                                                         seq_table_son_cfg_transfer_s_names,
+                                                         5,
+                                                         2},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // SRVCCOperationPossible ::= ENUMERATED
 static const char*           enum_names_srvcc_operation_possible_e_values[] = {"possible", "notPossible"};
@@ -29646,16 +30318,16 @@ static const asn1::table::seq_field seq_table_sched_communication_time_s_fields[
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(86399),
+     int64_t{0},
+     uint64_t{86399},
      nullptr},
     {offsetof(sched_communication_time_s, timeof_day_end),
      (int32_t)offsetof(sched_communication_time_s, timeof_day_end_present),
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(86399),
+     int64_t{0},
+     uint64_t{86399},
      nullptr},
     {offsetof(sched_communication_time_s, ie_exts),
      (int32_t)offsetof(sched_communication_time_s, ie_exts_present),
@@ -29674,13 +30346,16 @@ static const asn1::table::seq_opt    seq_table_sched_communication_time_s_opts[]
     {1, (int32_t)offsetof(sched_communication_time_s, timeof_day_start_present)},
     {2, (int32_t)offsetof(sched_communication_time_s, timeof_day_end_present)},
     {3, (int32_t)offsetof(sched_communication_time_s, ie_exts_present)}};
-const asn1::table::seq_desc sched_communication_time_s::desc = {
-    {seq_table_sched_communication_time_s_fields, 4, UINT64_C(0x0), seq_table_sched_communication_time_s_opts, 4},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_sched_communication_time_s_names};
+const asn1::table::seq_desc sched_communication_time_s::desc = {{seq_table_sched_communication_time_s_fields,
+                                                                 uint64_t{0x0},
+                                                                 seq_table_sched_communication_time_s_opts,
+                                                                 seq_table_sched_communication_time_s_names,
+                                                                 4,
+                                                                 4},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // SecondaryRATDataUsageReportTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_secondary_rat_data_usage_report_transfer_s_fields[] = {
@@ -29710,15 +30385,15 @@ static const asn1::table::seq_opt seq_table_secondary_rat_data_usage_report_tran
     {1, (int32_t)offsetof(secondary_rat_data_usage_report_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc secondary_rat_data_usage_report_transfer_s::desc = {
     {seq_table_secondary_rat_data_usage_report_transfer_s_fields,
-     2,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_secondary_rat_data_usage_report_transfer_s_opts,
+     seq_table_secondary_rat_data_usage_report_transfer_s_names,
+     2,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_secondary_rat_data_usage_report_transfer_s_names};
+    0};
 
 // SecurityContext ::= SEQUENCE
 static const asn1::table::seq_field seq_table_security_context_s_fields[] = {
@@ -29727,8 +30402,8 @@ static const asn1::table::seq_field seq_table_security_context_s_fields[] = {
      asn1::table::field_op::int_u8,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(7),
+     int64_t{0},
+     uint64_t{7},
      nullptr},
     {offsetof(security_context_s, next_hop_nh),
      asn1::table::seq_field::mandatory,
@@ -29751,13 +30426,16 @@ static const asn1::table::field_name seq_table_security_context_s_names[] = {{"n
                                                                              {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_security_context_s_opts[]  = {
     {2, (int32_t)offsetof(security_context_s, ie_exts_present)}};
-const asn1::table::seq_desc security_context_s::desc = {
-    {seq_table_security_context_s_fields, 3, UINT64_C(0x3), seq_table_security_context_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_security_context_s_names};
+const asn1::table::seq_desc security_context_s::desc = {{seq_table_security_context_s_fields,
+                                                         uint64_t{0x3},
+                                                         seq_table_security_context_s_opts,
+                                                         seq_table_security_context_s_names,
+                                                         3,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 static const uint32_t objset_id_served_guami_item_ext_ies_o[]   = {176, 442};
 static const uint8_t  objset_crit_served_guami_item_ext_ies_o[] = {crit_e::ignore, crit_e::ignore};
@@ -29831,13 +30509,16 @@ static const asn1::table::field_name seq_table_served_guami_item_s_names[] = {{"
 static const asn1::table::seq_opt    seq_table_served_guami_item_s_opts[]  = {
     {1, (int32_t)offsetof(served_guami_item_s, backup_amf_name_present)},
     {2, (int32_t)offsetof(served_guami_item_s, ie_exts_present)}};
-const asn1::table::seq_desc served_guami_item_s::desc = {
-    {seq_table_served_guami_item_s_fields, 3, UINT64_C(0x1), seq_table_served_guami_item_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_served_guami_item_s_names};
+const asn1::table::seq_desc served_guami_item_s::desc = {{seq_table_served_guami_item_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_served_guami_item_s_opts,
+                                                          seq_table_served_guami_item_s_names,
+                                                          3,
+                                                          2},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // UEHistoryInformationFromTheUE ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ue_history_info_from_the_ue_c_alternatives[] = {
@@ -29965,16 +30646,16 @@ static const asn1::table::seq_field seq_table_time_based_ho_info_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(549755813887),
+     int64_t{0},
+     uint64_t{549755813887},
      nullptr},
     {offsetof(time_based_ho_info_s, ho_win_dur),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(1),
-     UINT64_C(6000),
+     int64_t{1},
+     uint64_t{5999},
      nullptr},
     {offsetof(time_based_ho_info_s, ie_exts),
      (int32_t)offsetof(time_based_ho_info_s, ie_exts_present),
@@ -29989,13 +30670,16 @@ static const asn1::table::field_name seq_table_time_based_ho_info_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_time_based_ho_info_s_opts[]  = {
     {2, (int32_t)offsetof(time_based_ho_info_s, ie_exts_present)}};
-const asn1::table::seq_desc time_based_ho_info_s::desc = {
-    {seq_table_time_based_ho_info_s_fields, 3, UINT64_C(0x3), seq_table_time_based_ho_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_time_based_ho_info_s_names};
+const asn1::table::seq_desc time_based_ho_info_s::desc = {{seq_table_time_based_ho_info_s_fields,
+                                                           uint64_t{0x3},
+                                                           seq_table_time_based_ho_info_s_opts,
+                                                           seq_table_time_based_ho_info_s_names,
+                                                           3,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 static const uint32_t objset_id_source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_o[] =
     {182, 253, 286, 288, 323, 328, 355, 382, 420, 437};
@@ -30020,8 +30704,8 @@ static const asn1::table::seq_field
          asn1::table::field_op::int_u64,
          false,
          true,
-         INT64_C(0),
-         UINT64_C(4294967295),
+         int64_t{0},
+         uint64_t{4294967295},
          nullptr},
         {offsetof(source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container,
                   ue_history_info_from_the_ue),
@@ -30051,8 +30735,8 @@ static const asn1::table::seq_field
          asn1::table::field_op::int_u64,
          false,
          true,
-         INT64_C(0),
-         UINT64_C(4294967295),
+         int64_t{0},
+         uint64_t{4294967295},
          nullptr},
         {offsetof(source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container,
                   mbs_active_session_info_sourceto_target_list),
@@ -30062,7 +30746,7 @@ static const asn1::table::seq_field
          false,
          true,
          1,
-         256,
+         255,
          &asn1::table::item_list_codec<
              decltype(source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container::
                           mbs_active_session_info_sourceto_target_list),
@@ -30088,7 +30772,7 @@ static const asn1::table::seq_field
          false,
          true,
          1,
-         32,
+         31,
          &asn1::table::item_list_codec<
              decltype(source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container::
                           ngap_ie_support_info_request_list),
@@ -30104,7 +30788,7 @@ static const asn1::table::seq_field
          false,
          true,
          1,
-         32,
+         31,
          &asn1::table::item_list_codec<
              decltype(source_ngran_node_to_target_ngran_node_transparent_container_ext_ies_container::
                           candidate_relay_ue_info_list),
@@ -30186,7 +30870,7 @@ static const asn1::table::seq_field seq_table_source_ngran_node_to_target_ngran_
       false,
       true,
       1,
-      256,
+      255,
       &asn1::table::item_list_codec<
           decltype(source_ngran_node_to_target_ngran_node_transparent_container_s::pdu_session_res_info_list),
           asn1::table::sequence_item_ops,
@@ -30199,7 +30883,7 @@ static const asn1::table::seq_field seq_table_source_ngran_node_to_target_ngran_
       false,
       true,
       1,
-      256,
+      255,
       &asn1::table::item_list_codec<
           decltype(source_ngran_node_to_target_ngran_node_transparent_container_s::erab_info_list),
           asn1::table::sequence_item_ops,
@@ -30220,8 +30904,8 @@ static const asn1::table::seq_field seq_table_source_ngran_node_to_target_ngran_
       asn1::table::field_op::int_u16,
       true,
       true,
-      INT64_C(1),
-      UINT64_C(256),
+      int64_t{1},
+      uint64_t{255},
       nullptr},
      {offsetof(source_ngran_node_to_target_ngran_node_transparent_container_s, ue_history_info),
       asn1::table::seq_field::mandatory,
@@ -30229,7 +30913,7 @@ static const asn1::table::seq_field seq_table_source_ngran_node_to_target_ngran_
       false,
       true,
       1,
-      16,
+      15,
       &asn1::table::item_list_codec<
           decltype(source_ngran_node_to_target_ngran_node_transparent_container_s::ue_history_info),
           asn1::table::sequence_item_ops,
@@ -30260,15 +30944,15 @@ static const asn1::table::seq_opt seq_table_source_ngran_node_to_target_ngran_no
     {6, (int32_t)offsetof(source_ngran_node_to_target_ngran_node_transparent_container_s, ie_exts_present)}};
 const asn1::table::seq_desc source_ngran_node_to_target_ngran_node_transparent_container_s::desc = {
     {seq_table_source_ngran_node_to_target_ngran_node_transparent_container_s_fields,
-     7,
-     UINT64_C(0x29),
+     uint64_t{0x29},
      seq_table_source_ngran_node_to_target_ngran_node_transparent_container_s_opts,
+     seq_table_source_ngran_node_to_target_ngran_node_transparent_container_s_names,
+     7,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_source_ngran_node_to_target_ngran_node_transparent_container_s_names};
+    0};
 
 // SourceToTarget-AMFInformationReroute ::= SEQUENCE
 static const asn1::table::seq_field seq_table_source_to_target_amf_info_reroute_s_fields[] = {
@@ -30320,15 +31004,15 @@ static const asn1::table::seq_opt seq_table_source_to_target_amf_info_reroute_s_
     {3, (int32_t)offsetof(source_to_target_amf_info_reroute_s, ie_exts_present)}};
 const asn1::table::seq_desc source_to_target_amf_info_reroute_s::desc = {
     {seq_table_source_to_target_amf_info_reroute_s_fields,
-     4,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_source_to_target_amf_info_reroute_s_opts,
+     seq_table_source_to_target_amf_info_reroute_s_names,
+     4,
      4},
     true,
     true,
     nullptr,
-    0,
-    seq_table_source_to_target_amf_info_reroute_s_names};
+    0};
 
 static const uint32_t objset_id_supported_ta_item_ext_ies_o[]   = {272, 179};
 static const uint8_t  objset_crit_supported_ta_item_ext_ies_o[] = {crit_e::ignore, crit_e::reject};
@@ -30384,7 +31068,7 @@ static const asn1::table::seq_field seq_table_supported_ta_item_s_fields[] = {
      false,
      true,
      1,
-     12,
+     11,
      &asn1::table::item_list_codec<decltype(supported_ta_item_s::broadcast_plmn_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -30404,13 +31088,16 @@ static const asn1::table::field_name seq_table_supported_ta_item_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_supported_ta_item_s_opts[]  = {
     {2, (int32_t)offsetof(supported_ta_item_s, ie_exts_present)}};
-const asn1::table::seq_desc supported_ta_item_s::desc = {
-    {seq_table_supported_ta_item_s_fields, 3, UINT64_C(0x3), seq_table_supported_ta_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_supported_ta_item_s_names};
+const asn1::table::seq_desc supported_ta_item_s::desc = {{seq_table_supported_ta_item_s_fields,
+                                                          uint64_t{0x3},
+                                                          seq_table_supported_ta_item_s_opts,
+                                                          seq_table_supported_ta_item_s_names,
+                                                          3,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // Suspend-Request-Indication ::= ENUMERATED
 static const char*           enum_names_suspend_request_ind_e_values[] = {"suspend-requested"};
@@ -30451,13 +31138,16 @@ static const asn1::table::field_name seq_table_tai_list_for_paging_item_s_names[
                                                                                      {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tai_list_for_paging_item_s_opts[]  = {
     {1, (int32_t)offsetof(tai_list_for_paging_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tai_list_for_paging_item_s::desc = {
-    {seq_table_tai_list_for_paging_item_s_fields, 2, UINT64_C(0x1), seq_table_tai_list_for_paging_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tai_list_for_paging_item_s_names};
+const asn1::table::seq_desc tai_list_for_paging_item_s::desc = {{seq_table_tai_list_for_paging_item_s_fields,
+                                                                 uint64_t{0x1},
+                                                                 seq_table_tai_list_for_paging_item_s_opts,
+                                                                 seq_table_tai_list_for_paging_item_s_names,
+                                                                 2,
+                                                                 1},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 // TNLAssociationItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_tnl_assoc_item_s_fields[] = {
@@ -30492,13 +31182,16 @@ static const asn1::table::field_name seq_table_tnl_assoc_item_s_names[] = {{"tNL
                                                                            {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_tnl_assoc_item_s_opts[]  = {
     {2, (int32_t)offsetof(tnl_assoc_item_s, ie_exts_present)}};
-const asn1::table::seq_desc tnl_assoc_item_s::desc = {
-    {seq_table_tnl_assoc_item_s_fields, 3, UINT64_C(0x3), seq_table_tnl_assoc_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_tnl_assoc_item_s_names};
+const asn1::table::seq_desc tnl_assoc_item_s::desc = {{seq_table_tnl_assoc_item_s_fields,
+                                                       uint64_t{0x3},
+                                                       seq_table_tnl_assoc_item_s_opts,
+                                                       seq_table_tnl_assoc_item_s_names,
+                                                       3,
+                                                       1},
+                                                      true,
+                                                      true,
+                                                      nullptr,
+                                                      0};
 
 // TargetHomeENB-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_target_home_enb_id_s_fields[] = {
@@ -30541,13 +31234,16 @@ static const asn1::table::field_name seq_table_target_home_enb_id_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_target_home_enb_id_s_opts[]  = {
     {3, (int32_t)offsetof(target_home_enb_id_s, ie_exts_present)}};
-const asn1::table::seq_desc target_home_enb_id_s::desc = {
-    {seq_table_target_home_enb_id_s_fields, 4, UINT64_C(0x7), seq_table_target_home_enb_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_home_enb_id_s_names};
+const asn1::table::seq_desc target_home_enb_id_s::desc = {{seq_table_target_home_enb_id_s_fields,
+                                                           uint64_t{0x7},
+                                                           seq_table_target_home_enb_id_s_opts,
+                                                           seq_table_target_home_enb_id_s_names,
+                                                           4,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 static const uint32_t objset_id_target_ran_node_id_ext_ies_o[]   = {369};
 static const uint8_t  objset_crit_target_ran_node_id_ext_ies_o[] = {crit_e::reject};
@@ -30611,13 +31307,16 @@ static const asn1::table::field_name seq_table_target_ran_node_id_s_names[] = {{
                                                                                {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_target_ran_node_id_s_opts[]  = {
     {2, (int32_t)offsetof(target_ran_node_id_s, ie_exts_present)}};
-const asn1::table::seq_desc target_ran_node_id_s::desc = {
-    {seq_table_target_ran_node_id_s_fields, 3, UINT64_C(0x3), seq_table_target_ran_node_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_ran_node_id_s_names};
+const asn1::table::seq_desc target_ran_node_id_s::desc = {{seq_table_target_ran_node_id_s_fields,
+                                                           uint64_t{0x3},
+                                                           seq_table_target_ran_node_id_s_opts,
+                                                           seq_table_target_ran_node_id_s_names,
+                                                           3,
+                                                           1},
+                                                          true,
+                                                          true,
+                                                          nullptr,
+                                                          0};
 
 // TargeteNB-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_target_enb_id_s_fields[] = {
@@ -30652,13 +31351,16 @@ static const asn1::table::field_name seq_table_target_enb_id_s_names[] = {{"glob
                                                                           {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_target_enb_id_s_opts[]  = {
     {2, (int32_t)offsetof(target_enb_id_s, ie_exts_present)}};
-const asn1::table::seq_desc target_enb_id_s::desc = {
-    {seq_table_target_enb_id_s_fields, 3, UINT64_C(0x3), seq_table_target_enb_id_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_enb_id_s_names};
+const asn1::table::seq_desc target_enb_id_s::desc = {{seq_table_target_enb_id_s_fields,
+                                                      uint64_t{0x3},
+                                                      seq_table_target_enb_id_s_opts,
+                                                      seq_table_target_enb_id_s_names,
+                                                      3,
+                                                      1},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // TargetRNC-ID ::= SEQUENCE
 static const asn1::table::seq_field seq_table_target_rnc_id_s_fields[] = {
@@ -30676,16 +31378,16 @@ static const asn1::table::seq_field seq_table_target_rnc_id_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4095),
+     int64_t{0},
+     uint64_t{4095},
      nullptr},
     {offsetof(target_rnc_id_s, extended_rnc_id),
      (int32_t)offsetof(target_rnc_id_s, extended_rnc_id_present),
      asn1::table::field_op::int_u32,
      false,
      true,
-     INT64_C(4096),
-     UINT64_C(65535),
+     int64_t{4096},
+     uint64_t{61439},
      nullptr},
     {offsetof(target_rnc_id_s, ie_exts),
      (int32_t)offsetof(target_rnc_id_s, ie_exts_present),
@@ -30702,13 +31404,16 @@ static const asn1::table::field_name seq_table_target_rnc_id_s_names[] = {{"lAI"
 static const asn1::table::seq_opt    seq_table_target_rnc_id_s_opts[]  = {
     {2, (int32_t)offsetof(target_rnc_id_s, extended_rnc_id_present)},
     {3, (int32_t)offsetof(target_rnc_id_s, ie_exts_present)}};
-const asn1::table::seq_desc target_rnc_id_s::desc = {
-    {seq_table_target_rnc_id_s_fields, 4, UINT64_C(0x3), seq_table_target_rnc_id_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_rnc_id_s_names};
+const asn1::table::seq_desc target_rnc_id_s::desc = {{seq_table_target_rnc_id_s_fields,
+                                                      uint64_t{0x3},
+                                                      seq_table_target_rnc_id_s_opts,
+                                                      seq_table_target_rnc_id_s_names,
+                                                      4,
+                                                      2},
+                                                     true,
+                                                     true,
+                                                     nullptr,
+                                                     0};
 
 // TargetID-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_target_id_ext_ies_o[]       = {178, 364};
@@ -30797,9 +31502,9 @@ const asn1::table::enum_desc target_id_ext_ies_o::value_c::types_opts::desc = {
 
 // TargetID ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_target_id_c_alternatives[] = {
-    &asn1::table::alternative_ops<target_ran_node_id_s, false>::value,
+    &asn1::table::alternative_ops<target_ran_node_id_s, false, false>::value,
     &asn1::table::alternative_ops<target_enb_id_s, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<target_id_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<target_id_ext_ies_o>, false, false>::value};
 const asn1::table::choice_storage_desc target_id_c::storage_desc = {choice_storage_target_id_c_alternatives,
                                                                     3,
                                                                     "target_id_c"};
@@ -30883,7 +31588,7 @@ static const asn1::table::seq_field
          false,
          true,
          1,
-         32,
+         31,
          &asn1::table::item_list_codec<
              decltype(target_ngran_node_to_source_ngran_node_fail_transparent_container_ext_ies_container::
                           ngap_ie_support_info_resp_list),
@@ -30938,15 +31643,15 @@ static const asn1::table::seq_opt seq_table_target_ngran_node_to_source_ngran_no
      {1, (int32_t)offsetof(target_ngran_node_to_source_ngran_node_fail_transparent_container_s, ie_exts_present)}};
 const asn1::table::seq_desc target_ngran_node_to_source_ngran_node_fail_transparent_container_s::desc = {
     {seq_table_target_ngran_node_to_source_ngran_node_fail_transparent_container_s_fields,
-     2,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_target_ngran_node_to_source_ngran_node_fail_transparent_container_s_opts,
+     seq_table_target_ngran_node_to_source_ngran_node_fail_transparent_container_s_names,
+     2,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_target_ngran_node_to_source_ngran_node_fail_transparent_container_s_names};
+    0};
 
 static const uint32_t objset_id_target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_o[] = {267,
                                                                                                             22,
@@ -30965,7 +31670,7 @@ static const asn1::table::seq_field
          false,
          true,
          1,
-         32,
+         31,
          &asn1::table::item_list_codec<
              decltype(target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container::
                           daps_resp_info_list),
@@ -30996,7 +31701,7 @@ static const asn1::table::seq_field
          false,
          true,
          1,
-         256,
+         255,
          &asn1::table::item_list_codec<
              decltype(target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container::
                           mbs_active_session_info_targetto_source_list),
@@ -31012,7 +31717,7 @@ static const asn1::table::seq_field
          false,
          true,
          1,
-         32,
+         31,
          &asn1::table::item_list_codec<
              decltype(target_ngran_node_to_source_ngran_node_transparent_container_ext_ies_container::
                           ngap_ie_support_info_resp_list),
@@ -31070,15 +31775,15 @@ static const asn1::table::seq_opt seq_table_target_ngran_node_to_source_ngran_no
     {1, (int32_t)offsetof(target_ngran_node_to_source_ngran_node_transparent_container_s, ie_exts_present)}};
 const asn1::table::seq_desc target_ngran_node_to_source_ngran_node_transparent_container_s::desc = {
     {seq_table_target_ngran_node_to_source_ngran_node_transparent_container_s_fields,
-     2,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_target_ngran_node_to_source_ngran_node_transparent_container_s_opts,
+     seq_table_target_ngran_node_to_source_ngran_node_transparent_container_s_names,
+     2,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_target_ngran_node_to_source_ngran_node_transparent_container_s_names};
+    0};
 
 // TargetNSSAI-Item ::= SEQUENCE
 static const asn1::table::seq_field seq_table_target_nssai_item_s_fields[] = {
@@ -31103,13 +31808,16 @@ static const asn1::table::field_name seq_table_target_nssai_item_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_target_nssai_item_s_opts[]  = {
     {1, (int32_t)offsetof(target_nssai_item_s, ie_exts_present)}};
-const asn1::table::seq_desc target_nssai_item_s::desc = {
-    {seq_table_target_nssai_item_s_fields, 2, UINT64_C(0x1), seq_table_target_nssai_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_nssai_item_s_names};
+const asn1::table::seq_desc target_nssai_item_s::desc = {{seq_table_target_nssai_item_s_fields,
+                                                          uint64_t{0x1},
+                                                          seq_table_target_nssai_item_s_opts,
+                                                          seq_table_target_nssai_item_s_names,
+                                                          2,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 // TargetNSSAIInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_target_nssai_info_s_fields[] = {
@@ -31119,7 +31827,7 @@ static const asn1::table::seq_field seq_table_target_nssai_info_s_fields[] = {
      false,
      true,
      1,
-     8,
+     7,
      &asn1::table::item_list_codec<decltype(target_nssai_info_s::target_nssai),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -31130,8 +31838,8 @@ static const asn1::table::seq_field seq_table_target_nssai_info_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(256),
+     int64_t{1},
+     uint64_t{255},
      nullptr},
     {offsetof(target_nssai_info_s, ie_exts),
      (int32_t)offsetof(target_nssai_info_s, ie_exts_present),
@@ -31146,13 +31854,16 @@ static const asn1::table::field_name seq_table_target_nssai_info_s_names[] = {{"
                                                                               {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_target_nssai_info_s_opts[]  = {
     {2, (int32_t)offsetof(target_nssai_info_s, ie_exts_present)}};
-const asn1::table::seq_desc target_nssai_info_s::desc = {
-    {seq_table_target_nssai_info_s_fields, 3, UINT64_C(0x3), seq_table_target_nssai_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_target_nssai_info_s_names};
+const asn1::table::seq_desc target_nssai_info_s::desc = {{seq_table_target_nssai_info_s_fields,
+                                                          uint64_t{0x3},
+                                                          seq_table_target_nssai_info_s_opts,
+                                                          seq_table_target_nssai_info_s_names,
+                                                          3,
+                                                          1},
+                                                         true,
+                                                         true,
+                                                         nullptr,
+                                                         0};
 
 static const uint32_t objset_id_time_sync_assist_info_ext_ies_o[]   = {390};
 static const uint8_t  objset_crit_time_sync_assist_info_ext_ies_o[] = {crit_e::ignore};
@@ -31198,8 +31909,8 @@ static const asn1::table::seq_field seq_table_time_sync_assist_info_s_fields[] =
      asn1::table::field_op::int_u32,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(1000000),
+     int64_t{1},
+     uint64_t{999999},
      nullptr},
     {offsetof(time_sync_assist_info_s, ie_exts),
      (int32_t)offsetof(time_sync_assist_info_s, ie_exts_present),
@@ -31217,13 +31928,16 @@ static const asn1::table::field_name seq_table_time_sync_assist_info_s_names[] =
 static const asn1::table::seq_opt seq_table_time_sync_assist_info_s_opts[] = {
     {1, (int32_t)offsetof(time_sync_assist_info_s, uu_time_sync_error_budget_present)},
     {2, (int32_t)offsetof(time_sync_assist_info_s, ie_exts_present)}};
-const asn1::table::seq_desc time_sync_assist_info_s::desc = {
-    {seq_table_time_sync_assist_info_s_fields, 3, UINT64_C(0x1), seq_table_time_sync_assist_info_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_time_sync_assist_info_s_names};
+const asn1::table::seq_desc time_sync_assist_info_s::desc = {{seq_table_time_sync_assist_info_s_fields,
+                                                              uint64_t{0x1},
+                                                              seq_table_time_sync_assist_info_s_opts,
+                                                              seq_table_time_sync_assist_info_s_names,
+                                                              3,
+                                                              2},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 static const char* enum_names_time_sync_assist_info_s_time_distribution_ind_e__values[] = {"enabled", "disabled"};
 const asn1::table::enum_desc time_sync_assist_info_s::time_distribution_ind_opts::desc  = {
@@ -31347,13 +32061,16 @@ static const asn1::table::field_name seq_table_trace_activation_s_names[] = {
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_trace_activation_s_opts[] = {
     {4, (int32_t)offsetof(trace_activation_s, ie_exts_present)}};
-const asn1::table::seq_desc trace_activation_s::desc = {
-    {seq_table_trace_activation_s_fields, 5, UINT64_C(0xf), seq_table_trace_activation_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_trace_activation_s_names};
+const asn1::table::seq_desc trace_activation_s::desc = {{seq_table_trace_activation_s_fields,
+                                                         uint64_t{0xf},
+                                                         seq_table_trace_activation_s_opts,
+                                                         seq_table_trace_activation_s_names,
+                                                         5,
+                                                         1},
+                                                        true,
+                                                        true,
+                                                        nullptr,
+                                                        0};
 
 // UE-DifferentiationInfo ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_diff_info_s_fields[] = {
@@ -31371,8 +32088,8 @@ static const asn1::table::seq_field seq_table_ue_diff_info_s_fields[] = {
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(3600),
+     int64_t{1},
+     uint64_t{3599},
      nullptr},
     {offsetof(ue_diff_info_s, sched_communication_time),
      (int32_t)offsetof(ue_diff_info_s, sched_communication_time_present),
@@ -31433,13 +32150,16 @@ static const asn1::table::seq_opt    seq_table_ue_diff_info_s_opts[]  = {
     {4, (int32_t)offsetof(ue_diff_info_s, traffic_profile_present)},
     {5, (int32_t)offsetof(ue_diff_info_s, battery_ind_present)},
     {6, (int32_t)offsetof(ue_diff_info_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_diff_info_s::desc = {
-    {seq_table_ue_diff_info_s_fields, 7, UINT64_C(0x0), seq_table_ue_diff_info_s_opts, 7},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_diff_info_s_names};
+const asn1::table::seq_desc ue_diff_info_s::desc = {{seq_table_ue_diff_info_s_fields,
+                                                     uint64_t{0x0},
+                                                     seq_table_ue_diff_info_s_opts,
+                                                     seq_table_ue_diff_info_s_names,
+                                                     7,
+                                                     7},
+                                                    true,
+                                                    true,
+                                                    nullptr,
+                                                    0};
 
 static const char* enum_names_ue_diff_info_s_periodic_communication_ind_e__values[] = {"periodically", "ondemand"};
 const asn1::table::enum_desc ue_diff_info_s::periodic_communication_ind_opts::desc  = {
@@ -31476,16 +32196,16 @@ static const asn1::table::seq_field seq_table_ue_ngap_id_pair_s_fields[] = {
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1099511627775),
+     int64_t{0},
+     uint64_t{1099511627775},
      nullptr},
     {offsetof(ue_ngap_id_pair_s, ran_ue_ngap_id),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(4294967295),
+     int64_t{0},
+     uint64_t{4294967295},
      nullptr},
     {offsetof(ue_ngap_id_pair_s, ie_exts),
      (int32_t)offsetof(ue_ngap_id_pair_s, ie_exts_present),
@@ -31500,13 +32220,16 @@ static const asn1::table::field_name seq_table_ue_ngap_id_pair_s_names[] = {{"aM
                                                                             {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ue_ngap_id_pair_s_opts[]  = {
     {2, (int32_t)offsetof(ue_ngap_id_pair_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_ngap_id_pair_s::desc = {
-    {seq_table_ue_ngap_id_pair_s_fields, 3, UINT64_C(0x3), seq_table_ue_ngap_id_pair_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_ngap_id_pair_s_names};
+const asn1::table::seq_desc ue_ngap_id_pair_s::desc = {{seq_table_ue_ngap_id_pair_s_fields,
+                                                        uint64_t{0x3},
+                                                        seq_table_ue_ngap_id_pair_s_opts,
+                                                        seq_table_ue_ngap_id_pair_s_names,
+                                                        3,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // UE-NGAP-IDs ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ue_ngap_ids_c_alternatives[] = {
@@ -31547,8 +32270,8 @@ static const asn1::table::seq_field choice_table_ue_ngap_ids_c_alternatives[] = 
      asn1::table::field_op::int_u64,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(1099511627775),
+     int64_t{0},
+     uint64_t{1099511627775},
      nullptr},
     {0,
      asn1::table::seq_field::mandatory,
@@ -31594,16 +32317,16 @@ static const asn1::table::seq_field seq_table_ue_aggr_max_bit_rate_s_fields[] = 
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(ue_aggr_max_bit_rate_s, ue_aggr_max_bit_rate_ul),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(ue_aggr_max_bit_rate_s, ie_exts),
      (int32_t)offsetof(ue_aggr_max_bit_rate_s, ie_exts_present),
@@ -31619,13 +32342,16 @@ static const asn1::table::field_name seq_table_ue_aggr_max_bit_rate_s_names[] = 
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_ue_aggr_max_bit_rate_s_opts[] = {
     {2, (int32_t)offsetof(ue_aggr_max_bit_rate_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_aggr_max_bit_rate_s::desc = {
-    {seq_table_ue_aggr_max_bit_rate_s_fields, 3, UINT64_C(0x3), seq_table_ue_aggr_max_bit_rate_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_aggr_max_bit_rate_s_names};
+const asn1::table::seq_desc ue_aggr_max_bit_rate_s::desc = {{seq_table_ue_aggr_max_bit_rate_s_fields,
+                                                             uint64_t{0x3},
+                                                             seq_table_ue_aggr_max_bit_rate_s_opts,
+                                                             seq_table_ue_aggr_max_bit_rate_s_names,
+                                                             3,
+                                                             1},
+                                                            true,
+                                                            true,
+                                                            nullptr,
+                                                            0};
 
 // UECapabilityInfoRequest ::= ENUMERATED
 static const char*           enum_names_ue_cap_info_request_e_values[] = {"requested"};
@@ -31647,7 +32373,7 @@ static const asn1::table::seq_field seq_table_ue_context_resume_request_transfer
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(ue_context_resume_request_transfer_s::qos_flow_failed_to_resume_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -31670,15 +32396,15 @@ static const asn1::table::seq_opt seq_table_ue_context_resume_request_transfer_s
     {1, (int32_t)offsetof(ue_context_resume_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc ue_context_resume_request_transfer_s::desc = {
     {seq_table_ue_context_resume_request_transfer_s_fields,
-     2,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_ue_context_resume_request_transfer_s_opts,
+     seq_table_ue_context_resume_request_transfer_s_names,
+     2,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ue_context_resume_request_transfer_s_names};
+    0};
 
 // UEContextResumeResponseTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_context_resume_resp_transfer_s_fields[] = {
@@ -31688,7 +32414,7 @@ static const asn1::table::seq_field seq_table_ue_context_resume_resp_transfer_s_
      false,
      true,
      1,
-     64,
+     63,
      &asn1::table::item_list_codec<decltype(ue_context_resume_resp_transfer_s::qos_flow_failed_to_resume_list),
                                    asn1::table::sequence_item_ops,
                                    false,
@@ -31711,15 +32437,15 @@ static const asn1::table::seq_opt seq_table_ue_context_resume_resp_transfer_s_op
     {1, (int32_t)offsetof(ue_context_resume_resp_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc ue_context_resume_resp_transfer_s::desc = {
     {seq_table_ue_context_resume_resp_transfer_s_fields,
-     2,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_ue_context_resume_resp_transfer_s_opts,
+     seq_table_ue_context_resume_resp_transfer_s_names,
+     2,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ue_context_resume_resp_transfer_s_names};
+    0};
 
 // UEContextSuspendRequestTransfer ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_context_suspend_request_transfer_s_fields[] = {
@@ -31749,15 +32475,15 @@ static const asn1::table::seq_opt seq_table_ue_context_suspend_request_transfer_
     {1, (int32_t)offsetof(ue_context_suspend_request_transfer_s, ie_exts_present)}};
 const asn1::table::seq_desc ue_context_suspend_request_transfer_s::desc = {
     {seq_table_ue_context_suspend_request_transfer_s_fields,
-     2,
-     UINT64_C(0x0),
+     uint64_t{0x0},
      seq_table_ue_context_suspend_request_transfer_s_opts,
+     seq_table_ue_context_suspend_request_transfer_s_names,
+     2,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ue_context_suspend_request_transfer_s_names};
+    0};
 
 // UEPagingIdentity ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_ue_paging_id_c_alternatives[] = {
@@ -31833,8 +32559,8 @@ static const asn1::table::seq_field seq_table_ue_presence_in_area_of_interest_it
      asn1::table::field_op::int_u16,
      true,
      true,
-     INT64_C(1),
-     UINT64_C(64),
+     int64_t{1},
+     uint64_t{63},
      nullptr},
     {offsetof(ue_presence_in_area_of_interest_item_s, ue_presence),
      asn1::table::seq_field::mandatory,
@@ -31862,15 +32588,15 @@ static const asn1::table::seq_opt seq_table_ue_presence_in_area_of_interest_item
     {2, (int32_t)offsetof(ue_presence_in_area_of_interest_item_s, ie_exts_present)}};
 const asn1::table::seq_desc ue_presence_in_area_of_interest_item_s::desc = {
     {seq_table_ue_presence_in_area_of_interest_item_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_ue_presence_in_area_of_interest_item_s_opts,
+     seq_table_ue_presence_in_area_of_interest_item_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_ue_presence_in_area_of_interest_item_s_names};
+    0};
 
 // UERetentionInformation ::= ENUMERATED
 static const char*           enum_names_ue_retention_info_e_values[] = {"ues-retained"};
@@ -31932,13 +32658,16 @@ static const asn1::table::field_name seq_table_ue_security_cap_s_names[] = {
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_ue_security_cap_s_opts[] = {
     {4, (int32_t)offsetof(ue_security_cap_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_security_cap_s::desc = {
-    {seq_table_ue_security_cap_s_fields, 5, UINT64_C(0xf), seq_table_ue_security_cap_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_security_cap_s_names};
+const asn1::table::seq_desc ue_security_cap_s::desc = {{seq_table_ue_security_cap_s_fields,
+                                                        uint64_t{0xf},
+                                                        seq_table_ue_security_cap_s_opts,
+                                                        seq_table_ue_security_cap_s_names,
+                                                        5,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // UESliceMaximumBitRateItem ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ue_slice_max_bit_rate_item_s_fields[] = {
@@ -31956,16 +32685,16 @@ static const asn1::table::seq_field seq_table_ue_slice_max_bit_rate_item_s_field
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(ue_slice_max_bit_rate_item_s, ue_slice_max_bit_rate_ul),
      asn1::table::seq_field::mandatory,
      asn1::table::field_op::int_u64,
      true,
      true,
-     INT64_C(0),
-     UINT64_C(4000000000000),
+     int64_t{0},
+     uint64_t{4000000000000},
      nullptr},
     {offsetof(ue_slice_max_bit_rate_item_s, ie_exts),
      (int32_t)offsetof(ue_slice_max_bit_rate_item_s, ie_exts_present),
@@ -31982,13 +32711,16 @@ static const asn1::table::field_name seq_table_ue_slice_max_bit_rate_item_s_name
     {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt seq_table_ue_slice_max_bit_rate_item_s_opts[] = {
     {3, (int32_t)offsetof(ue_slice_max_bit_rate_item_s, ie_exts_present)}};
-const asn1::table::seq_desc ue_slice_max_bit_rate_item_s::desc = {
-    {seq_table_ue_slice_max_bit_rate_item_s_fields, 4, UINT64_C(0x7), seq_table_ue_slice_max_bit_rate_item_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ue_slice_max_bit_rate_item_s_names};
+const asn1::table::seq_desc ue_slice_max_bit_rate_item_s::desc = {{seq_table_ue_slice_max_bit_rate_item_s_fields,
+                                                                   uint64_t{0x7},
+                                                                   seq_table_ue_slice_max_bit_rate_item_s_opts,
+                                                                   seq_table_ue_slice_max_bit_rate_item_s_names,
+                                                                   4,
+                                                                   1},
+                                                                  true,
+                                                                  true,
+                                                                  nullptr,
+                                                                  0};
 
 // UL-CP-SecurityInformation ::= SEQUENCE
 static const asn1::table::seq_field seq_table_ul_cp_security_info_s_fields[] = {
@@ -32021,13 +32753,16 @@ static const asn1::table::field_name seq_table_ul_cp_security_info_s_names[] = {
                                                                                 {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_ul_cp_security_info_s_opts[]  = {
     {2, (int32_t)offsetof(ul_cp_security_info_s, ie_exts_present)}};
-const asn1::table::seq_desc ul_cp_security_info_s::desc = {
-    {seq_table_ul_cp_security_info_s_fields, 3, UINT64_C(0x3), seq_table_ul_cp_security_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_ul_cp_security_info_s_names};
+const asn1::table::seq_desc ul_cp_security_info_s::desc = {{seq_table_ul_cp_security_info_s_fields,
+                                                            uint64_t{0x3},
+                                                            seq_table_ul_cp_security_info_s_opts,
+                                                            seq_table_ul_cp_security_info_s_names,
+                                                            3,
+                                                            1},
+                                                           true,
+                                                           true,
+                                                           nullptr,
+                                                           0};
 
 static const uint32_t objset_id_unavailable_guami_item_ext_ies_o[]   = {442};
 static const uint8_t  objset_crit_unavailable_guami_item_ext_ies_o[] = {crit_e::ignore};
@@ -32103,13 +32838,16 @@ static const asn1::table::seq_opt seq_table_unavailable_guami_item_s_opts[] = {
     {1, (int32_t)offsetof(unavailable_guami_item_s, timer_approach_for_guami_removal_present)},
     {2, (int32_t)offsetof(unavailable_guami_item_s, backup_amf_name_present)},
     {3, (int32_t)offsetof(unavailable_guami_item_s, ie_exts_present)}};
-const asn1::table::seq_desc unavailable_guami_item_s::desc = {
-    {seq_table_unavailable_guami_item_s_fields, 4, UINT64_C(0x1), seq_table_unavailable_guami_item_s_opts, 3},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_unavailable_guami_item_s_names};
+const asn1::table::seq_desc unavailable_guami_item_s::desc = {{seq_table_unavailable_guami_item_s_fields,
+                                                               uint64_t{0x1},
+                                                               seq_table_unavailable_guami_item_s_opts,
+                                                               seq_table_unavailable_guami_item_s_names,
+                                                               4,
+                                                               3},
+                                                              true,
+                                                              true,
+                                                              nullptr,
+                                                              0};
 
 static const uint32_t objset_id_user_location_info_eutra_ext_ies_o[]   = {149};
 static const uint8_t  objset_crit_user_location_info_eutra_ext_ies_o[] = {crit_e::ignore};
@@ -32183,13 +32921,16 @@ static const asn1::table::field_name seq_table_user_location_info_eutra_s_names[
 static const asn1::table::seq_opt    seq_table_user_location_info_eutra_s_opts[]  = {
     {2, (int32_t)offsetof(user_location_info_eutra_s, time_stamp_present)},
     {3, (int32_t)offsetof(user_location_info_eutra_s, ie_exts_present)}};
-const asn1::table::seq_desc user_location_info_eutra_s::desc = {
-    {seq_table_user_location_info_eutra_s_fields, 4, UINT64_C(0x3), seq_table_user_location_info_eutra_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_user_location_info_eutra_s_names};
+const asn1::table::seq_desc user_location_info_eutra_s::desc = {{seq_table_user_location_info_eutra_s_fields,
+                                                                 uint64_t{0x3},
+                                                                 seq_table_user_location_info_eutra_s_opts,
+                                                                 seq_table_user_location_info_eutra_s_names,
+                                                                 4,
+                                                                 2},
+                                                                true,
+                                                                true,
+                                                                nullptr,
+                                                                0};
 
 static const uint32_t objset_id_user_location_info_nr_ext_ies_o[]   = {149, 263, 287, 401};
 static const uint8_t  objset_crit_user_location_info_nr_ext_ies_o[] = {crit_e::ignore,
@@ -32296,13 +33037,16 @@ static const asn1::table::field_name seq_table_user_location_info_nr_s_names[] =
 static const asn1::table::seq_opt    seq_table_user_location_info_nr_s_opts[]  = {
     {2, (int32_t)offsetof(user_location_info_nr_s, time_stamp_present)},
     {3, (int32_t)offsetof(user_location_info_nr_s, ie_exts_present)}};
-const asn1::table::seq_desc user_location_info_nr_s::desc = {
-    {seq_table_user_location_info_nr_s_fields, 4, UINT64_C(0x3), seq_table_user_location_info_nr_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_user_location_info_nr_s_names};
+const asn1::table::seq_desc user_location_info_nr_s::desc = {{seq_table_user_location_info_nr_s_fields,
+                                                              uint64_t{0x3},
+                                                              seq_table_user_location_info_nr_s_opts,
+                                                              seq_table_user_location_info_nr_s_names,
+                                                              4,
+                                                              2},
+                                                             true,
+                                                             true,
+                                                             nullptr,
+                                                             0};
 
 static const uint32_t objset_id_user_location_info_n3_iwf_with_port_num_ext_ies_o[]   = {213};
 static const uint8_t  objset_crit_user_location_info_n3_iwf_with_port_num_ext_ies_o[] = {crit_e::ignore};
@@ -32369,15 +33113,15 @@ static const asn1::table::seq_opt seq_table_user_location_info_n3_iwf_with_port_
     {2, (int32_t)offsetof(user_location_info_n3_iwf_with_port_num_s, ie_exts_present)}};
 const asn1::table::seq_desc user_location_info_n3_iwf_with_port_num_s::desc = {
     {seq_table_user_location_info_n3_iwf_with_port_num_s_fields,
-     3,
-     UINT64_C(0x3),
+     uint64_t{0x3},
      seq_table_user_location_info_n3_iwf_with_port_num_s_opts,
+     seq_table_user_location_info_n3_iwf_with_port_num_s_names,
+     3,
      1},
     true,
     true,
     nullptr,
-    0,
-    seq_table_user_location_info_n3_iwf_with_port_num_s_names};
+    0};
 
 static const uint32_t objset_id_user_location_info_tngf_ext_ies_o[]   = {213};
 static const uint8_t  objset_crit_user_location_info_tngf_ext_ies_o[] = {crit_e::ignore};
@@ -32449,13 +33193,16 @@ static const asn1::table::field_name seq_table_user_location_info_tngf_s_names[]
 static const asn1::table::seq_opt    seq_table_user_location_info_tngf_s_opts[]  = {
     {2, (int32_t)offsetof(user_location_info_tngf_s, port_num_present)},
     {3, (int32_t)offsetof(user_location_info_tngf_s, ie_exts_present)}};
-const asn1::table::seq_desc user_location_info_tngf_s::desc = {
-    {seq_table_user_location_info_tngf_s_fields, 4, UINT64_C(0x3), seq_table_user_location_info_tngf_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_user_location_info_tngf_s_names};
+const asn1::table::seq_desc user_location_info_tngf_s::desc = {{seq_table_user_location_info_tngf_s_fields,
+                                                                uint64_t{0x3},
+                                                                seq_table_user_location_info_tngf_s_opts,
+                                                                seq_table_user_location_info_tngf_s_names,
+                                                                4,
+                                                                2},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 static const uint32_t objset_id_user_location_info_twif_ext_ies_o[]   = {213};
 static const uint8_t  objset_crit_user_location_info_twif_ext_ies_o[] = {crit_e::ignore};
@@ -32527,13 +33274,16 @@ static const asn1::table::field_name seq_table_user_location_info_twif_s_names[]
 static const asn1::table::seq_opt    seq_table_user_location_info_twif_s_opts[]  = {
     {2, (int32_t)offsetof(user_location_info_twif_s, port_num_present)},
     {3, (int32_t)offsetof(user_location_info_twif_s, ie_exts_present)}};
-const asn1::table::seq_desc user_location_info_twif_s::desc = {
-    {seq_table_user_location_info_twif_s_fields, 4, UINT64_C(0x3), seq_table_user_location_info_twif_s_opts, 2},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_user_location_info_twif_s_names};
+const asn1::table::seq_desc user_location_info_twif_s::desc = {{seq_table_user_location_info_twif_s_fields,
+                                                                uint64_t{0x3},
+                                                                seq_table_user_location_info_twif_s_opts,
+                                                                seq_table_user_location_info_twif_s_names,
+                                                                4,
+                                                                2},
+                                                               true,
+                                                               true,
+                                                               nullptr,
+                                                               0};
 
 // UserLocationInformationW-AGF-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_user_location_info_w_agf_ext_ies_o[]    = {275, 362, 363};
@@ -32650,7 +33400,8 @@ const asn1::table::enum_desc user_location_info_w_agf_ext_ies_o::value_c::types_
 static const asn1::table::storage_ops* const choice_storage_user_location_info_w_agf_c_alternatives[] = {
     &asn1::table::alternative_ops<global_line_id_s, false>::value,
     &asn1::table::alternative_ops<unbounded_octstring<true>, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<user_location_info_w_agf_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<user_location_info_w_agf_ext_ies_o>, false, false>::
+        value};
 const asn1::table::choice_storage_desc user_location_info_w_agf_c::storage_desc = {
     choice_storage_user_location_info_w_agf_c_alternatives,
     3,
@@ -32762,15 +33513,15 @@ static const asn1::table::seq_opt seq_table_user_location_info_n3_iwf_without_po
     {2, (int32_t)offsetof(user_location_info_n3_iwf_without_port_num_s, ie_exts_present)}};
 const asn1::table::seq_desc user_location_info_n3_iwf_without_port_num_s::desc = {
     {seq_table_user_location_info_n3_iwf_without_port_num_s_fields,
-     3,
-     UINT64_C(0x1),
+     uint64_t{0x1},
      seq_table_user_location_info_n3_iwf_without_port_num_s_opts,
+     seq_table_user_location_info_n3_iwf_without_port_num_s_names,
+     3,
      2},
     true,
     true,
     nullptr,
-    0,
-    seq_table_user_location_info_n3_iwf_without_port_num_s_names};
+    0};
 
 // UserLocationInformation-ExtIEs ::= OBJECT SET OF NGAP-PROTOCOL-IES
 static const uint32_t objset_id_user_location_info_ext_ies_o[]    = {244, 248, 243, 439};
@@ -32925,7 +33676,7 @@ static const asn1::table::storage_ops* const choice_storage_user_location_info_c
     &asn1::table::alternative_ops<user_location_info_eutra_s, false>::value,
     &asn1::table::alternative_ops<user_location_info_nr_s, false>::value,
     &asn1::table::alternative_ops<user_location_info_n3_iwf_with_port_num_s, false>::value,
-    &asn1::table::alternative_ops<protocol_ie_single_container_s<user_location_info_ext_ies_o>, false>::value};
+    &asn1::table::alternative_ops<protocol_ie_single_container_s<user_location_info_ext_ies_o>, false, false>::value};
 const asn1::table::choice_storage_desc user_location_info_c::storage_desc = {
     choice_storage_user_location_info_c_alternatives,
     4,
@@ -33046,13 +33797,16 @@ static const asn1::table::field_name seq_table_wus_assist_info_s_names[] = {{"pa
                                                                             {"iE-Extensions", nullptr}};
 static const asn1::table::seq_opt    seq_table_wus_assist_info_s_opts[]  = {
     {1, (int32_t)offsetof(wus_assist_info_s, ie_exts_present)}};
-const asn1::table::seq_desc wus_assist_info_s::desc = {
-    {seq_table_wus_assist_info_s_fields, 2, UINT64_C(0x1), seq_table_wus_assist_info_s_opts, 1},
-    true,
-    true,
-    nullptr,
-    0,
-    seq_table_wus_assist_info_s_names};
+const asn1::table::seq_desc wus_assist_info_s::desc = {{seq_table_wus_assist_info_s_fields,
+                                                        uint64_t{0x1},
+                                                        seq_table_wus_assist_info_s_opts,
+                                                        seq_table_wus_assist_info_s_names,
+                                                        2,
+                                                        1},
+                                                       true,
+                                                       true,
+                                                       nullptr,
+                                                       0};
 
 // WarningAreaList ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_warning_area_list_c_alternatives[] = {
@@ -33098,7 +33852,7 @@ static const asn1::table::seq_field choice_table_warning_area_list_c_alternative
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<eutra_cgi_list_for_warning_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -33106,7 +33860,7 @@ static const asn1::table::seq_field choice_table_warning_area_list_c_alternative
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<nr_cgi_list_for_warning_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -33114,7 +33868,7 @@ static const asn1::table::seq_field choice_table_warning_area_list_c_alternative
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<tai_list_for_warning_l, asn1::table::struct_json>::value},
     {0,
      asn1::table::seq_field::mandatory,
@@ -33122,7 +33876,7 @@ static const asn1::table::seq_field choice_table_warning_area_list_c_alternative
      false,
      true,
      1,
-     65535,
+     65534,
      &asn1::table::list_codec<emergency_area_id_list_l, asn1::table::string_json>::value},
     {0,
      asn1::table::seq_field::mandatory,

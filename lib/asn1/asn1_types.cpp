@@ -9,7 +9,7 @@
 #include "ocudu/asn1/asn1_types.h"
 #include "asn1_internal.h"
 #include <algorithm>
-#include <cstdio>
+#include <charconv>
 #include <cstring>
 #include <vector>
 
@@ -87,7 +87,7 @@ uint64_t octet_string_helper::to_uint(ocudu::span<const uint8_t> buf)
   }
   uint64_t val = 0;
   for (unsigned i = 0; i < nbytes; ++i) {
-    val += ((uint64_t)buf[nbytes - 1 - i]) << (uint64_t)(i * 8U);
+    val += static_cast<uint64_t>(buf[nbytes - 1 - i]) << (i * 8U);
   }
   return val;
 }
@@ -116,7 +116,7 @@ void octet_string_helper::to_octet_string(ocudu::span<uint8_t> buf, uint64_t num
     return;
   }
   for (uint32_t i = 0; i < nbytes; ++i) {
-    buf[nbytes - 1 - i] = (number >> (uint64_t)(i * 8U)) & 0xffu;
+    buf[nbytes - 1 - i] = (number >> (i * 8U)) & 0xffu;
   }
 }
 
@@ -125,26 +125,36 @@ void octet_string_helper::to_octet_string(ocudu::byte_buffer& buf, uint64_t numb
   buf           = byte_buffer{byte_buffer::fallback_allocation_tag{}};
   size_t nbytes = sizeof(number);
   for (uint32_t i = 0; i < nbytes; ++i) {
-    if (not buf.append((number >> (uint64_t)((nbytes - 1 - i) * 8U)) & 0xffu)) {
+    if (not buf.append((number >> ((nbytes - 1 - i) * 8U)) & 0xffu)) {
       log_error("Failed to append octet string byte to buffer");
       return;
     }
   }
 }
 
-static void to_hex(char* cstr, uint8_t val)
+/// Writes the two lowercase hexadecimal digits of val at out.
+static void to_hex(char* out, uint8_t val)
 {
-  std::sprintf(cstr, "%02x", val);
+  static constexpr char digits[] = "0123456789abcdef";
+  out[0]                         = digits[val >> 4U];
+  out[1]                         = digits[val & 0xfU];
+}
+
+/// Value of the hexadecimal digits of str at pos, at most two.
+static uint8_t hex_octet(std::string_view str, size_t pos)
+{
+  std::string_view digits = str.substr(pos, 2);
+  uint8_t          value  = 0;
+  std::from_chars(digits.data(), digits.data() + digits.size(), value, 16);
+  return value;
 }
 
 std::string octet_string_helper::to_hex_string(ocudu::span<const uint8_t> buf)
 {
   std::string s;
   s.resize(buf.size() * 2);
-  char cstr[3];
   for (uint32_t i = 0; i < buf.size(); i++) {
-    to_hex(cstr, buf[i]);
-    s.replace(i * 2, 2, cstr);
+    to_hex(&s[i * 2], buf[i]);
   }
   return s;
 }
@@ -153,39 +163,33 @@ std::string octet_string_helper::to_hex_string(const byte_buffer& buf)
 {
   std::string s;
   s.resize(buf.length() * 2);
-  char     cstr[3];
   unsigned i = 0;
   for (uint8_t b : buf) {
-    to_hex(cstr, b);
-    s.replace(i * 2, 2, cstr);
+    to_hex(&s[i * 2], b);
     ++i;
   }
   return s;
 }
 
-unsigned octet_string_helper::hex_string_to_octets(ocudu::span<uint8_t> buf, const std::string& str)
+unsigned octet_string_helper::hex_string_to_octets(ocudu::span<uint8_t> buf, std::string_view str)
 {
-  ocudu_assert(buf.size() >= ceil_frac(str.size(), (size_t)2U), "out-of-bounds access");
+  ocudu_assert(buf.size() >= ceil_frac(str.size(), size_t{2}), "out-of-bounds access");
   if (str.size() % 2 != 0) {
     log_error("The provided hex string size={} is not a multiple of 2.", str.size());
   }
-  char cstr[] = "\0\0\0";
   for (unsigned i = 0; i < str.size(); i += 2) {
-    std::memcpy(&cstr[0], &str[i], 2);
-    buf[i / 2] = strtoul(cstr, nullptr, 16);
+    buf[i / 2] = hex_octet(str, i);
   }
   return (str.size() + 1) / 2;
 }
 
-void octet_string_helper::append_hex_string(byte_buffer& buf, const std::string& str)
+void octet_string_helper::append_hex_string(byte_buffer& buf, std::string_view str)
 {
   if (str.size() % 2 != 0) {
     log_error("The provided hex string size={} is not a multiple of 2.", str.size());
   }
-  char cstr[] = "\0\0\0";
   for (unsigned i = 0; i < str.size(); i += 2) {
-    std::memcpy(&cstr[0], &str[i], 2);
-    if (not buf.append(strtoul(cstr, nullptr, 16))) {
+    if (not buf.append(hex_octet(str, i))) {
       log_error("Failed to append octet string byte to buffer");
     }
   }
@@ -250,7 +254,7 @@ std::string unbounded_octstring<Al>::to_string() const
 }
 
 template <bool Al>
-unbounded_octstring<Al>& unbounded_octstring<Al>::from_string(const std::string& hexstr)
+unbounded_octstring<Al>& unbounded_octstring<Al>::from_string(std::string_view hexstr)
 {
   // clears previous buffer.
   *this = byte_buffer{byte_buffer::fallback_allocation_tag{}};
@@ -343,7 +347,7 @@ pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uint32_t lb, ui
     return OCUDUASN_SUCCESS;
   }
   if (is_aligned and (lb != ub or ub > 16)) {
-    bref.align_bytes_zero();
+    HANDLE_CODE(bref.align_bytes_zero());
   }
   uint32_t n_octs = ceil_frac(nbits, 8u);
   uint32_t offset = ((nbits - 1) % 8) + 1;
@@ -419,7 +423,7 @@ OCUDUASN_CODE unpack_bitfield(uint8_t* buf, cbit_ref& bref, uint32_t n, uint32_t
     return OCUDUASN_SUCCESS;
   }
   if (is_aligned and (lb != ub or ub > 16)) {
-    bref.align_bytes();
+    HANDLE_CODE(bref.align_bytes());
   }
   // unpack exactly "n" bits
   uint32_t n_octs = ceil_frac(n, 8u);
@@ -441,9 +445,10 @@ void from_number(uint8_t* ptr, uint64_t number, uint32_t nbits)
   for (uint32_t i = 0; i < nof_bytes; ++i) {
     ptr[i] = (number >> (i * 8u)) & 0xffu;
   }
-  uint32_t offset = nbits % 8; // clean up any extra set bit
+  // Clear the bits above nbits in the last byte.
+  uint32_t offset = nbits % 8;
   if (offset > 0) {
-    ptr[nof_bytes - 1] &= (uint8_t)((1u << offset) - 1u);
+    ptr[nof_bytes - 1] &= static_cast<uint8_t>((1u << offset) - 1u);
   }
 }
 
@@ -523,10 +528,10 @@ namespace asn_string_utils {
 static size_t get_nof_bits_per_char(size_t lb, size_t ub, bool aligned)
 {
   size_t N = ub - lb + 1;
-  size_t b = ceil_log2(N); // B
+  size_t b = ceil_log2(N);
   // A single-character alphabet takes no bits, aligned or not.
   if (aligned and b != 0) {
-    b = size_t{1} << ceil_log2(b); // B2
+    b = size_t{1} << ceil_log2(b);
   }
   return b;
 }

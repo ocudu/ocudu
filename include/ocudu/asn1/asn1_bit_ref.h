@@ -41,7 +41,7 @@ void invalid_enum_number(int value, const char* name);
      error handling
 ************************/
 
-enum OCUDUASN_CODE {
+enum [[nodiscard]] OCUDUASN_CODE {
   OCUDUASN_ERROR             = -3,
   OCUDUASN_ERROR_ENCODE_FAIL = -2,
   OCUDUASN_ERROR_DECODE_FAIL = -1,

@@ -825,7 +825,7 @@ struct drx_info_s {
     uint16_t& set_ms10240();
 
   private:
-    asn1::table::choice_storage<drx_long_cycle_start_offset_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_long_cycle_start_offset_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct short_drx_s_ {
     struct drx_short_cycle_opts {
@@ -991,7 +991,7 @@ struct drx_cfg_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<drx_on_dur_timer_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_on_dur_timer_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
   struct drx_inactivity_timer_opts {
     enum options {
@@ -1373,7 +1373,7 @@ struct drx_cfg_s {
     uint16_t& set_ms10240();
 
   private:
-    asn1::table::choice_storage<drx_long_cycle_start_offset_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_long_cycle_start_offset_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
   struct short_drx_s_ {
     struct drx_short_cycle_opts {
@@ -1517,7 +1517,7 @@ struct drx_info2_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<drx_on_dur_timer_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<drx_on_dur_timer_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
 
   // member variables
@@ -1961,7 +1961,7 @@ struct idc_tdm_assist_r18_s {
     milli_seconds_r18_e_& set_milli_seconds_r18();
 
   private:
-    asn1::table::choice_storage<active_dur_r18_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<active_dur_r18_c_, types, choice_buffer_t<milli_seconds_r18_e_, uint8_t>> c;
   };
 
   // member variables
@@ -2078,7 +2078,7 @@ struct plmn_id_eutra_5_gc_c {
   uint8_t&   set_plmn_idx();
 
 private:
-  asn1::table::choice_storage<plmn_id_eutra_5_gc_c, types, choice_buffer_t<plmn_id_s>> c;
+  asn1::table::choice_storage<plmn_id_eutra_5_gc_c, types, choice_buffer_t<plmn_id_s, uint8_t>> c;
 };
 
 // PLMN-IdentityList-EUTRA-5GC ::= SEQUENCE (SIZE (1..12)) OF PLMN-Identity-EUTRA-5GC
@@ -2121,7 +2121,7 @@ struct cell_id_eutra_5_gc_c {
   uint8_t&             set_cell_id_idx();
 
 private:
-  asn1::table::choice_storage<cell_id_eutra_5_gc_c, types, choice_buffer_t<fixed_bitstring<28>>> c;
+  asn1::table::choice_storage<cell_id_eutra_5_gc_c, types, choice_buffer_t<fixed_bitstring<28>, uint8_t>> c;
 };
 
 // CellAccessRelatedInfo-EUTRA-5GC ::= SEQUENCE
@@ -2771,7 +2771,7 @@ struct default_dc_location_r17_c {
   freq_component_r17_e& set_ul_and_dl();
 
 private:
-  asn1::table::choice_storage<default_dc_location_r17_c, types, pod_choice_buffer_t> c;
+  asn1::table::choice_storage<default_dc_location_r17_c, types, choice_buffer_t<freq_component_r17_e>> c;
 };
 
 // OffsetValue-r17 ::= SEQUENCE
@@ -4341,7 +4341,7 @@ struct nr_prs_meas_info_r16_s {
     uint8_t& set_ms160_r16();
 
   private:
-    asn1::table::choice_storage<nr_meas_prs_repeat_and_offset_r16_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<nr_meas_prs_repeat_and_offset_r16_c_, types, choice_buffer_t<uint8_t>> c;
   };
   struct nr_meas_prs_len_r16_opts {
     enum options { ms1dot5, ms3, ms3dot5, ms4, ms5dot5, ms6, ms10, ms20, nulltype } value;
@@ -4573,7 +4573,7 @@ struct non_serving_info_r18_s {
     cfr_location_and_bw_r18_s& set_cfr_location_and_bw_r18();
 
   private:
-    asn1::table::choice_storage<cfr_info_mbs_r18_c_, types, choice_buffer_t<cfr_location_and_bw_r18_s>> c;
+    asn1::table::choice_storage<cfr_info_mbs_r18_c_, types, choice_buffer_t<cfr_location_and_bw_r18_s, uint16_t>> c;
   };
 
   // member variables
@@ -5931,7 +5931,7 @@ struct nr_time_stamp_r17_s {
     uint8_t& set_scs120_r17();
 
   private:
-    asn1::table::choice_storage<nr_slot_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<nr_slot_r17_c_, types, choice_buffer_t<uint8_t>> c;
   };
 
   // member variables
@@ -7734,7 +7734,7 @@ struct sl_drx_cfg_uc_semi_static_r17_s {
     milli_seconds_e_& set_milli_seconds();
 
   private:
-    asn1::table::choice_storage<sl_drx_on_dur_timer_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<sl_drx_on_dur_timer_r17_c_, types, choice_buffer_t<milli_seconds_e_, uint8_t>> c;
   };
   struct sl_drx_cycle_start_offset_r17_c_ {
     struct types_opts {
@@ -7993,7 +7993,7 @@ struct sl_drx_cfg_uc_semi_static_r17_s {
     uint16_t& set_ms10240();
 
   private:
-    asn1::table::choice_storage<sl_drx_cycle_start_offset_r17_c_, types, pod_choice_buffer_t> c;
+    asn1::table::choice_storage<sl_drx_cycle_start_offset_r17_c_, types, choice_buffer_t<uint16_t, uint8_t>> c;
   };
 
   // member variables

@@ -543,7 +543,7 @@ struct drb_to_add_mod_s {
     sdap_cfg_s& set_sdap_cfg();
 
   private:
-    asn1::table::choice_storage<cn_assoc_c_, types, choice_buffer_t<sdap_cfg_s>> c;
+    asn1::table::choice_storage<cn_assoc_c_, types, choice_buffer_t<sdap_cfg_s, uint8_t>> c;
   };
 
   // member variables
@@ -645,7 +645,7 @@ struct tmgi_r17_s {
     plmn_id_s& set_explicit_value();
 
   private:
-    asn1::table::choice_storage<plmn_id_r17_c_, types, choice_buffer_t<plmn_id_s>> c;
+    asn1::table::choice_storage<plmn_id_r17_c_, types, choice_buffer_t<plmn_id_s, uint8_t>> c;
   };
 
   // member variables

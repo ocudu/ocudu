@@ -156,7 +156,8 @@ private:
                               types,
                               choice_buffer_t<drb_activity_list_l,
                                               pdu_session_res_activity_list_l,
-                                              protocol_ie_single_container_s<activity_info_ext_ies_o>>>
+                                              protocol_ie_single_container_s<activity_info_ext_ies_o>,
+                                              ue_activity_e>>
       c;
 };
 
@@ -845,7 +846,8 @@ private:
   asn1::table::choice_storage<
       bc_bearer_context_ngu_tnl_infoat_ngran_request_c,
       types,
-      choice_buffer_t<mb_sn_gu_info_at_ngran_request_list_l,
+      choice_buffer_t<mb_sn_gu_info_at_ngran_request_e,
+                      mb_sn_gu_info_at_ngran_request_list_l,
                       protocol_ie_single_container_s<bc_bearer_context_ngu_tnl_infoat_ngran_request_ext_ies_o>>>
       c;
 };
@@ -1836,7 +1838,10 @@ private:
   asn1::table::choice_storage<
       ecn_markingor_congestion_info_report_request_c,
       types,
-      choice_buffer_t<protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
+      choice_buffer_t<congestion_info_e_,
+                      ecn_markingat_ngran_e_,
+                      ecn_markingat_up_f_e_,
+                      protocol_ie_single_container_s<ecn_markingor_congestion_info_report_request_ext_ies_o>>>
       c;
 };
 
@@ -2234,7 +2239,14 @@ struct cause_c {
   protocol_ie_single_container_s<cause_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<cause_c, types, choice_buffer_t<protocol_ie_single_container_s<cause_ext_ies_o>>> c;
+  asn1::table::choice_storage<cause_c,
+                              types,
+                              choice_buffer_t<cause_misc_e,
+                                              cause_protocol_e,
+                                              cause_radio_network_e,
+                                              cause_transport_e,
+                                              protocol_ie_single_container_s<cause_ext_ies_o>>>
+      c;
 };
 
 // QoS-Flow-Failed-Item-ExtIEs ::= OBJECT SET OF E1AP-PROTOCOL-EXTENSION
@@ -5316,9 +5328,10 @@ struct mrb_progress_info_sn_s_c {
   protocol_ie_single_container_s<mrb_progress_info_sn_s_ext_ies_o>& set_choice_ext();
 
 private:
-  asn1::table::choice_storage<mrb_progress_info_sn_s_c,
-                              types,
-                              choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_sn_s_ext_ies_o>>>
+  asn1::table::choice_storage<
+      mrb_progress_info_sn_s_c,
+      types,
+      choice_buffer_t<protocol_ie_single_container_s<mrb_progress_info_sn_s_ext_ies_o>, uint16_t, uint32_t>>
       c;
 };
 

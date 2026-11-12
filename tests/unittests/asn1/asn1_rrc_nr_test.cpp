@@ -140,7 +140,7 @@ TEST_F(asn1_rrc_nr_test, when_eutra_nr_capabilities_correct_then_packing_success
   // Pack mrdc_cap
   ocudu::byte_buffer buffer;
   asn1::bit_ref      bref(buffer);
-  asn1::pack(bref, mrdc_cap);
+  ASSERT_EQ(OCUDUASN_SUCCESS, asn1::pack(bref, mrdc_cap));
 
   ASSERT_EQ(test_pack_roundtrip(mrdc_cap), OCUDUASN_SUCCESS);
 

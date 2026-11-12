@@ -137,7 +137,7 @@ struct sl_freq_cfg_common_r16_s {
       int8_t& set_sl_energy_detection_thres_offset_r18();
 
     private:
-      asn1::table::choice_storage<sl_energy_detection_cfg_r18_c_, types, pod_choice_buffer_t> c;
+      asn1::table::choice_storage<sl_energy_detection_cfg_r18_c_, types, choice_buffer_t<int8_t>> c;
     };
 
     // member variables

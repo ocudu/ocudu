@@ -986,8 +986,8 @@ static const asn1::table::seq_field seq_table_init_msg_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(init_msg_s, crit),
      asn1::table::seq_field::mandatory,
@@ -1006,8 +1006,8 @@ static const asn1::table::seq_field seq_table_init_msg_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(32767),
+     int64_t{0},
+     uint64_t{32767},
      nullptr},
     {offsetof(init_msg_s, value),
      asn1::table::seq_field::mandatory,
@@ -1026,7 +1026,7 @@ static const asn1::table::field_name seq_table_init_msg_s_names[] = {{"procedure
                                                                      {"nrppatransactionID", nullptr},
                                                                      {"value", nullptr}};
 const asn1::table::seq_desc          init_msg_s::desc =
-    {{seq_table_init_msg_s_fields, 4, UINT64_C(0xf), nullptr, 0}, false, true, nullptr, 0, seq_table_init_msg_s_names};
+    {{seq_table_init_msg_s_fields, uint64_t{0xf}, nullptr, seq_table_init_msg_s_names, 4, 0}, false, true, nullptr, 0};
 bool init_msg_s::load_info_obj(const uint16_t& proc_code_)
 {
   if (not asn1::table::objset_has_key(nr_ppa_elem_procs_o::desc, proc_code_)) {
@@ -1045,8 +1045,8 @@ static const asn1::table::seq_field seq_table_successful_outcome_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(successful_outcome_s, crit),
      asn1::table::seq_field::mandatory,
@@ -1065,8 +1065,8 @@ static const asn1::table::seq_field seq_table_successful_outcome_s_fields[] = {
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(32767),
+     int64_t{0},
+     uint64_t{32767},
      nullptr},
     {offsetof(successful_outcome_s, value),
      asn1::table::seq_field::mandatory,
@@ -1085,12 +1085,11 @@ static const asn1::table::field_name seq_table_successful_outcome_s_names[] = {{
                                                                                {"nrppatransactionID", nullptr},
                                                                                {"value", nullptr}};
 const asn1::table::seq_desc          successful_outcome_s::desc             = {
-    {seq_table_successful_outcome_s_fields, 4, UINT64_C(0xf), nullptr, 0},
+    {seq_table_successful_outcome_s_fields, uint64_t{0xf}, nullptr, seq_table_successful_outcome_s_names, 4, 0},
     false,
     true,
     nullptr,
-    0,
-    seq_table_successful_outcome_s_names};
+    0};
 bool successful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
   if (not asn1::table::objset_has_key(nr_ppa_elem_procs_o::desc, proc_code_)) {
@@ -1110,8 +1109,8 @@ static const asn1::table::seq_field seq_table_unsuccessful_outcome_s_fields[] = 
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(255),
+     int64_t{0},
+     uint64_t{255},
      nullptr},
     {offsetof(unsuccessful_outcome_s, crit),
      asn1::table::seq_field::mandatory,
@@ -1130,8 +1129,8 @@ static const asn1::table::seq_field seq_table_unsuccessful_outcome_s_fields[] = 
      asn1::table::field_op::int_u16,
      false,
      true,
-     INT64_C(0),
-     UINT64_C(32767),
+     int64_t{0},
+     uint64_t{32767},
      nullptr},
     {offsetof(unsuccessful_outcome_s, value),
      asn1::table::seq_field::mandatory,
@@ -1150,12 +1149,11 @@ static const asn1::table::field_name seq_table_unsuccessful_outcome_s_names[] = 
                                                                                  {"nrppatransactionID", nullptr},
                                                                                  {"value", nullptr}};
 const asn1::table::seq_desc          unsuccessful_outcome_s::desc             = {
-    {seq_table_unsuccessful_outcome_s_fields, 4, UINT64_C(0xf), nullptr, 0},
+    {seq_table_unsuccessful_outcome_s_fields, uint64_t{0xf}, nullptr, seq_table_unsuccessful_outcome_s_names, 4, 0},
     false,
     true,
     nullptr,
-    0,
-    seq_table_unsuccessful_outcome_s_names};
+    0};
 bool unsuccessful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 {
   if (not asn1::table::objset_has_key(nr_ppa_elem_procs_o::desc, proc_code_)) {
@@ -1170,9 +1168,9 @@ bool unsuccessful_outcome_s::load_info_obj(const uint16_t& proc_code_)
 
 // NRPPA-PDU ::= CHOICE
 static const asn1::table::storage_ops* const choice_storage_nr_ppa_pdu_c_alternatives[] = {
-    &asn1::table::alternative_ops<init_msg_s, false>::value,
-    &asn1::table::alternative_ops<successful_outcome_s, false>::value,
-    &asn1::table::alternative_ops<unsuccessful_outcome_s, false>::value};
+    &asn1::table::alternative_ops<init_msg_s, false, false>::value,
+    &asn1::table::alternative_ops<successful_outcome_s, false, false>::value,
+    &asn1::table::alternative_ops<unsuccessful_outcome_s, false, false>::value};
 const asn1::table::choice_storage_desc nr_ppa_pdu_c::storage_desc = {choice_storage_nr_ppa_pdu_c_alternatives,
                                                                      3,
                                                                      "nr_ppa_pdu_c"};
