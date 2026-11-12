@@ -108,17 +108,18 @@ struct ul_pucch_results {
   pucch_processor_result processor_result;
 
   /// \brief Creates a PUCCH result structure result produced from a discarded transmission.
-  /// \param context_     Discarded PUCCH context.
-  /// \param nof_harq_ack Number of HARQ-ACK feedback bits.
-  /// \return The PUCCH processing results without CSI measurements, and the HARQ-ACK feedback payload status is
-  /// unknown.
-  static ul_pucch_results create_discarded(const ul_pucch_context& context_, unsigned nof_harq_ack)
+  /// \param context_ Discarded PUCCH context.
+  /// \param uci_cfg  Expected number of bits of each UCI field.
+  /// \return The PUCCH processing results without CSI measurements, and an invalid UCI message with the expected
+  /// number of bits of each field.
+  static ul_pucch_results create_discarded(const ul_pucch_context&                 context_,
+                                           const pucch_uci_message::configuration& uci_cfg)
   {
     ul_pucch_results ret;
     ret.context                  = context_;
     ret.processor_result.csi     = channel_state_information();
-    ret.processor_result.message = pucch_uci_message({0, nof_harq_ack, 0, 0});
-    ret.processor_result.message.set_status(uci_status::unknown);
+    ret.processor_result.message = pucch_uci_message(uci_cfg);
+    ret.processor_result.message.set_status(uci_status::invalid);
     ret.processor_result.detection_metric = std::nullopt;
     return ret;
   }

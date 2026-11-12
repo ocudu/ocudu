@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ocudu/phy/upper/upper_phy_rx_results_notifier.h"
+#include <vector>
 
 namespace ocudu {
 
@@ -22,7 +23,11 @@ public:
 
   void on_new_pusch_results_data(const ul_pusch_results_data& result) override { ++nof_pusch_data_results; }
 
-  void on_new_pucch_results(const ul_pucch_results& result) override { ++nof_pucch_results; }
+  void on_new_pucch_results(const ul_pucch_results& result) override
+  {
+    ++nof_pucch_results;
+    pucch_results.push_back(result);
+  }
 
   void on_new_srs_results(const ul_srs_results& result) override { ++nof_srs_results; }
 
@@ -47,6 +52,9 @@ public:
 
   unsigned get_nof_srs_results() const { return nof_srs_results; }
 
+  /// Returns the captured PUCCH results in notification order.
+  const std::vector<ul_pucch_results>& get_pucch_results() const { return pucch_results; }
+
   /// Returns the last captured PUSCH UCI result (empty if none notified).
   const std::optional<ul_pusch_results_control>& get_last_pusch_uci_result() const { return last_pusch_uci_result; }
 
@@ -58,6 +66,7 @@ public:
     nof_pucch_results      = 0;
     nof_srs_results        = 0;
     last_pusch_uci_result.reset();
+    pucch_results.clear();
   }
 
 private:
@@ -67,6 +76,7 @@ private:
   unsigned                                nof_pucch_results      = 0;
   unsigned                                nof_srs_results        = 0;
   std::optional<ul_pusch_results_control> last_pusch_uci_result;
+  std::vector<ul_pucch_results>           pucch_results;
 };
 
 } // namespace ocudu

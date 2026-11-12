@@ -78,15 +78,56 @@ public:
   }
 
 protected:
-  static constexpr unsigned   max_nof_tasks_per_test_case = 5;
-  static constexpr unsigned   max_nof_prb                 = 15;
-  static constexpr unsigned   max_nof_layers              = 1;
-  static constexpr unsigned   max_nof_symbols             = 14;
-  static constexpr unsigned   pucch_f0_start_symb         = 0;
-  static constexpr unsigned   pucch_f0_nof_symb           = 1;
-  static constexpr unsigned   pusch_csi2_size             = 3;
-  static constexpr unsigned   slot_end_symbol_index       = MAX_NSYMB_PER_SLOT - 1;
-  static constexpr slot_point slot                        = {0, 9};
+  /// Asserts that every given PUCCH result is a discarded result of the fixture PDU with the same format.
+  static void assert_discarded_pucch_results(span<const ul_pucch_results> results)
+  {
+    for (const ul_pucch_results& result : results) {
+      const pucch_uci_message& message = result.processor_result.message;
+      ASSERT_EQ(message.get_status(), uci_status::invalid) << "Format " << to_string(result.context.format);
+
+      // Expected number of bits of each field.
+      pucch_uci_message::configuration uci_cfg = {};
+      switch (result.context.format) {
+        case pucch_format::FORMAT_0:
+          uci_cfg = {.nof_sr = 0, .nof_harq_ack = pucch_f0_nof_harq_ack, .nof_csi_part1 = 0, .nof_csi_part2 = 0};
+          break;
+        case pucch_format::FORMAT_1:
+          uci_cfg = {.nof_sr = 0, .nof_harq_ack = pucch_f1_nof_harq_ack, .nof_csi_part1 = 0, .nof_csi_part2 = 0};
+          break;
+        case pucch_format::FORMAT_2:
+        case pucch_format::FORMAT_3:
+        case pucch_format::FORMAT_4:
+          uci_cfg = {.nof_sr        = pucch_f2_f3_f4_nof_sr,
+                     .nof_harq_ack  = pucch_f2_f3_f4_nof_harq_ack,
+                     .nof_csi_part1 = pucch_f2_f3_f4_nof_csi_part1,
+                     .nof_csi_part2 = 0};
+          break;
+        default:
+          FAIL() << "Unexpected PUCCH format.";
+      }
+
+      const char* format = to_string(result.context.format);
+      ASSERT_EQ(message.get_expected_nof_sr_bits(), uci_cfg.nof_sr) << "Format " << format;
+      ASSERT_EQ(message.get_expected_nof_harq_ack_bits(), uci_cfg.nof_harq_ack) << "Format " << format;
+      ASSERT_EQ(message.get_expected_nof_csi_part1_bits(), uci_cfg.nof_csi_part1) << "Format " << format;
+      ASSERT_EQ(message.get_expected_nof_csi_part2_bits(), uci_cfg.nof_csi_part2) << "Format " << format;
+    }
+  }
+
+  static constexpr unsigned   max_nof_tasks_per_test_case  = 5;
+  static constexpr unsigned   max_nof_prb                  = 15;
+  static constexpr unsigned   max_nof_layers               = 1;
+  static constexpr unsigned   max_nof_symbols              = 14;
+  static constexpr unsigned   pucch_f0_start_symb          = 0;
+  static constexpr unsigned   pucch_f0_nof_symb            = 1;
+  static constexpr unsigned   pusch_csi2_size              = 3;
+  static constexpr unsigned   pucch_f0_nof_harq_ack        = 1;
+  static constexpr unsigned   pucch_f1_nof_harq_ack        = 2;
+  static constexpr unsigned   pucch_f2_f3_f4_nof_harq_ack  = 2;
+  static constexpr unsigned   pucch_f2_f3_f4_nof_sr        = 1;
+  static constexpr unsigned   pucch_f2_f3_f4_nof_csi_part1 = 7;
+  static constexpr unsigned   slot_end_symbol_index        = MAX_NSYMB_PER_SLOT - 1;
+  static constexpr slot_point slot                         = {0, 9};
 
   const uplink_pdu_slot_repository::pusch_pdu pusch_pdu = {
       .tb_size = units::bytes(8),
@@ -151,7 +192,7 @@ protected:
                                                         .nof_symbols          = pucch_f0_nof_symb,
                                                         .initial_cyclic_shift = 0,
                                                         .n_id                 = 0,
-                                                        .nof_harq_ack         = 1,
+                                                        .nof_harq_ack         = pucch_f0_nof_harq_ack,
                                                         .sr_opportunity       = true,
                                                         .ports                = {0}}};
 
@@ -169,7 +210,7 @@ protected:
                                                         .starting_prb         = 0,
                                                         .second_hop_prb       = std::nullopt,
                                                         .n_id                 = 0,
-                                                        .nof_harq_ack         = 2,
+                                                        .nof_harq_ack         = pucch_f1_nof_harq_ack,
                                                         .ports                = {0},
                                                         .initial_cyclic_shift = 0,
                                                         .nof_symbols          = 4,
@@ -190,7 +231,7 @@ protected:
                                                         .starting_prb         = 0,
                                                         .second_hop_prb       = std::nullopt,
                                                         .n_id                 = 0,
-                                                        .nof_harq_ack         = 2,
+                                                        .nof_harq_ack         = pucch_f1_nof_harq_ack,
                                                         .ports                = {0},
                                                         .initial_cyclic_shift = 2,
                                                         .nof_symbols          = 4,
@@ -216,9 +257,9 @@ protected:
                                                         .rnti               = static_cast<uint16_t>(to_rnti(0x4603)),
                                                         .n_id               = 0,
                                                         .n_id_0             = 0,
-                                                        .nof_harq_ack       = 2,
-                                                        .nof_sr             = 0,
-                                                        .nof_csi_part1      = 0,
+                                                        .nof_harq_ack       = pucch_f2_f3_f4_nof_harq_ack,
+                                                        .nof_sr             = pucch_f2_f3_f4_nof_sr,
+                                                        .nof_csi_part1      = pucch_f2_f3_f4_nof_csi_part1,
                                                         .csi_part2_size     = uci_part2_size_description(1),
                                                         .max_code_rate      = 0.5}};
 
@@ -241,9 +282,9 @@ protected:
                                                         .rnti               = static_cast<uint16_t>(to_rnti(0x4604)),
                                                         .n_id_hopping       = 0,
                                                         .n_id_scrambling    = 0,
-                                                        .nof_harq_ack       = 2,
-                                                        .nof_sr             = 0,
-                                                        .nof_csi_part1      = 0,
+                                                        .nof_harq_ack       = pucch_f2_f3_f4_nof_harq_ack,
+                                                        .nof_sr             = pucch_f2_f3_f4_nof_sr,
+                                                        .nof_csi_part1      = pucch_f2_f3_f4_nof_csi_part1,
                                                         .csi_part2_size     = uci_part2_size_description(1),
                                                         .additional_dmrs    = false,
                                                         .pi2_bpsk           = false,
@@ -268,9 +309,9 @@ protected:
                                                         .rnti               = static_cast<uint16_t>(to_rnti(0x4605)),
                                                         .n_id_hopping       = 0,
                                                         .n_id_scrambling    = 0,
-                                                        .nof_harq_ack       = 2,
-                                                        .nof_sr             = 0,
-                                                        .nof_csi_part1      = 0,
+                                                        .nof_harq_ack       = pucch_f2_f3_f4_nof_harq_ack,
+                                                        .nof_sr             = pucch_f2_f3_f4_nof_sr,
+                                                        .nof_csi_part1      = pucch_f2_f3_f4_nof_csi_part1,
                                                         .csi_part2_size     = uci_part2_size_description(1),
                                                         .additional_dmrs    = false,
                                                         .pi2_bpsk           = false,
@@ -719,6 +760,7 @@ TEST_F(UplinkProcessorFixture, pdu_fail_defer_workflow)
 
   // Validate notifiers.
   ASSERT_EQ(results_notifier.get_nof_pucch_results(), 5);
+  assert_discarded_pucch_results(results_notifier.get_pucch_results());
   ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
   ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
   ASSERT_FALSE(results_notifier.has_srs_result_been_notified());
@@ -775,6 +817,7 @@ TEST_F(UplinkProcessorFixture, discard_slot_before_first_rx)
 
   // Validate PUCCH results.
   ASSERT_EQ(results_notifier.get_nof_pucch_results(), 5);
+  assert_discarded_pucch_results(results_notifier.get_pucch_results());
 
   // Assert tap handles were not invoked.
   ASSERT_EQ(tap_spy->get_handle_ul_symbol_count(), 0);
@@ -829,6 +872,10 @@ TEST_F(UplinkProcessorFixture, invalid_first_symbol)
   ASSERT_EQ(pusch_uci->harq_ack->status, uci_status::unknown);
   ASSERT_FALSE(pusch_uci->csi1.has_value());
   ASSERT_FALSE(pusch_uci->csi2.has_value());
+
+  // Assert PUCCH PDUs were discarded.
+  ASSERT_EQ(results_notifier.get_nof_pucch_results(), 5);
+  assert_discarded_pucch_results(results_notifier.get_pucch_results());
 
   // The uplink processor shall be available again.
   ASSERT_TRUE(ul_processor->get_pdu_slot_repository(slot + 1).is_valid());
@@ -1232,6 +1279,63 @@ TEST_F(UplinkProcessorFixture, pusch_discard_after_stop)
   // Assert tap handles were not invoked.
   ASSERT_EQ(tap_spy->get_handle_ul_symbol_count(), 0);
   ASSERT_EQ(tap_spy->get_handle_quiet_grid_count(), 0);
+}
+
+TEST_F(UplinkProcessorFixture, pucch_discard_after_stop)
+{
+  // Add PDUs to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pucch_pdu(pucch_f0_pdu);
+    repository->add_pucch_pdu(pucch_f1_pdu);
+    repository->add_pucch_pdu(pucch_f2_pdu);
+    repository->add_pucch_pdu(pucch_f3_pdu);
+    repository->add_pucch_pdu(pucch_f4_pdu);
+  }
+
+  uplink_slot_processor& slot_processor = ul_processor->get_slot_processor(slot);
+
+  // Stop.
+  ul_processor->stop();
+
+  // Receive the last symbol of the slot.
+  slot_processor.handle_rx_symbol(slot_end_symbol_index, true);
+
+  // Assert no PUCCH was processed and all were reported as discarded.
+  ASSERT_FALSE(pucch_executor.has_pending_tasks());
+  ASSERT_FALSE(pucch_spy->has_format0_been_called());
+  ASSERT_FALSE(pucch_spy->has_format1_been_called());
+  ASSERT_FALSE(pucch_spy->has_format2_been_called());
+  ASSERT_FALSE(pucch_spy->has_format3_been_called());
+  ASSERT_FALSE(pucch_spy->has_format4_been_called());
+  ASSERT_EQ(results_notifier.get_nof_pucch_results(), 5);
+  assert_discarded_pucch_results(results_notifier.get_pucch_results());
+}
+
+TEST_F(UplinkProcessorFixture, pucch_discard_without_harq_ack)
+{
+  // PUCCH Format 2 carrying SR and CSI Part 1 only.
+  uplink_pdu_slot_repository::pucch_pdu pdu                                 = pucch_f2_pdu;
+  std::get<pucch_processor::format2_configuration>(pdu.config).nof_harq_ack = 0;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pucch_pdu(pdu);
+  }
+
+  // Discard the slot.
+  ul_processor->get_slot_processor(slot).discard_slot();
+
+  // Assert the PUCCH was reported as discarded with the SR and CSI Part 1 fields.
+  ASSERT_FALSE(pucch_spy->has_format2_been_called());
+  ASSERT_EQ(results_notifier.get_nof_pucch_results(), 1);
+  const pucch_uci_message& message = results_notifier.get_pucch_results().front().processor_result.message;
+  ASSERT_EQ(message.get_status(), uci_status::invalid);
+  ASSERT_EQ(message.get_expected_nof_sr_bits(), pucch_f2_f3_f4_nof_sr);
+  ASSERT_EQ(message.get_expected_nof_harq_ack_bits(), 0);
+  ASSERT_EQ(message.get_expected_nof_csi_part1_bits(), pucch_f2_f3_f4_nof_csi_part1);
+  ASSERT_EQ(message.get_expected_nof_csi_part2_bits(), 0);
 }
 
 TEST_F(UplinkProcessorFixture, simultaneous_pusch_discard_and_stop)

@@ -15,6 +15,33 @@
 
 using namespace ocudu;
 
+/// Returns the expected UCI field sizes of a PUCCH Format 0 or 1 transmission.
+static pucch_uci_message::configuration get_discarded_uci_config(unsigned nof_harq_ack)
+{
+  // The SR of Formats 0 and 1 is not part of the UCI payload, the PUCCH context carries the SR opportunity.
+  return {.nof_sr = 0, .nof_harq_ack = nof_harq_ack, .nof_csi_part1 = 0, .nof_csi_part2 = 0};
+}
+
+/// Returns the expected UCI field sizes of a PUCCH transmission.
+static pucch_uci_message::configuration get_discarded_uci_config(const uplink_pdu_slot_repository::pucch_pdu& pdu)
+{
+  return std::visit(
+      [](const auto& config) -> pucch_uci_message::configuration {
+        using config_type = std::decay_t<decltype(config)>;
+        if constexpr (std::is_same_v<config_type, pucch_processor::format0_configuration> ||
+                      std::is_same_v<config_type, pucch_processor::format1_configuration>) {
+          return get_discarded_uci_config(config.nof_harq_ack);
+        } else {
+          // The CSI Part 2 size depends on the CSI Part 1 payload, which is not decoded.
+          return {.nof_sr        = config.nof_sr,
+                  .nof_harq_ack  = config.nof_harq_ack,
+                  .nof_csi_part1 = config.nof_csi_part1,
+                  .nof_csi_part2 = 0};
+        }
+      },
+      pdu.config);
+}
+
 /// \brief Returns a PRACH detector slot configuration using the given PRACH buffer context.
 static prach_detector::configuration get_prach_dectector_config_from_prach_context(const prach_buffer_context& context)
 {
@@ -421,7 +448,8 @@ void uplink_processor_impl::process_pucch_f1(const uplink_pdu_slot_repository_im
 
         // Report control-related discarded result if HARQ-ACK feedback is present.
         if (nof_harq_ack > 0) {
-          ul_pucch_results discarded_results = ul_pucch_results::create_discarded(entry.context, nof_harq_ack);
+          ul_pucch_results discarded_results =
+              ul_pucch_results::create_discarded(entry.context, get_discarded_uci_config(nof_harq_ack));
           notifier.on_new_pucch_results(discarded_results);
         }
         continue;
@@ -497,12 +525,12 @@ void uplink_processor_impl::notify_discard_pusch(const uplink_pdu_slot_repositor
 
 void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu)
 {
-  // Select the number of HARQ-ACK feedback number of bits.
-  const unsigned nof_harq_ack = std::visit([](const auto& config) { return config.nof_harq_ack; }, pdu.config);
+  // Select the expected UCI field sizes.
+  const pucch_uci_message::configuration uci_cfg = get_discarded_uci_config(pdu);
 
-  // Report control-related discarded result if HARQ-ACK feedback is present.
-  if (nof_harq_ack > 0) {
-    ul_pucch_results discarded_results = ul_pucch_results::create_discarded(pdu.context, nof_harq_ack);
+  // Report control-related discarded result if HARQ-ACK, SR or CSI feedback is present.
+  if ((uci_cfg.nof_harq_ack > 0) || (uci_cfg.nof_sr > 0) || (uci_cfg.nof_csi_part1 > 0)) {
+    ul_pucch_results discarded_results = ul_pucch_results::create_discarded(pdu.context, uci_cfg);
     notifier.on_new_pucch_results(discarded_results);
   }
   state_machine.on_finish_processing_pdu();
@@ -518,7 +546,8 @@ void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repositor
 
     // Report control-related discarded result if HARQ-ACK feedback is present.
     if (nof_harq_ack > 0) {
-      ul_pucch_results discarded_results = ul_pucch_results::create_discarded(entry.context, nof_harq_ack);
+      ul_pucch_results discarded_results =
+          ul_pucch_results::create_discarded(entry.context, get_discarded_uci_config(nof_harq_ack));
       notifier.on_new_pucch_results(discarded_results);
     }
   }
