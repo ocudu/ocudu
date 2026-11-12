@@ -109,30 +109,27 @@ void intra_slice_scheduler::slice_ue_group_scheduler::fill_ue_candidate_group(
   const bounded_bitset<MAX_NOF_DU_UES> ues_with_data = slice_ues.get_ues_with_pending_newtx_data(is_dl);
   const unsigned                       sz            = ues_with_data.size();
   const unsigned                       start         = sz > 0 ? group_offset % sz : 0;
-  for (unsigned count = 0; count != sz;) {
-    const unsigned ueidx = (start + count) % sz;
-    // Jump to the next UE with pending data, without wrapping around.
-    const unsigned endpos = ueidx < start ? start : sz;
-    const int      next   = ues_with_data.find_lowest(ueidx, endpos, true);
-    if (next < 0) {
-      // Continue the search from the beginning of the bitset.
-      count += endpos - ueidx;
-      continue;
-    }
-    count += static_cast<unsigned>(next) - ueidx;
-    ocudu_sanity_check(slice_ues.contains(to_du_ue_index(next)), "UE with pending data is not a slice member");
 
-    std::optional<ue_newtx_candidate> ue_candidate =
-        is_dl ? parent->create_newtx_dl_candidate(slice_ues[to_du_ue_index(next)])
-              : parent->create_newtx_ul_candidate(slice_ues[to_du_ue_index(next)]);
-    if (ue_candidate.has_value()) {
-      candidates.push_back(ue_candidate.value());
-      last_candidate_count = count;
-      if (candidates.size() >= group_size) {
-        break;
+  // Adds the UEs with pending data in [begin, end) as candidates. Returns false once the group is full.
+  auto add_candidates = [&](unsigned begin, unsigned end) {
+    for (int next = begin < end ? ues_with_data.find_lowest(begin, end, true) : -1; next >= 0;
+         next     = static_cast<unsigned>(next) + 1 < end ? ues_with_data.find_lowest(next + 1, end, true) : -1) {
+      const du_ue_index_t ue_idx = to_du_ue_index(next);
+      ocudu_sanity_check(slice_ues.contains(ue_idx), "UE with pending data is not a slice member");
+      std::optional<ue_newtx_candidate> ue_candidate = is_dl ? parent->create_newtx_dl_candidate(slice_ues[ue_idx])
+                                                             : parent->create_newtx_ul_candidate(slice_ues[ue_idx]);
+      if (ue_candidate.has_value()) {
+        candidates.push_back(ue_candidate.value());
+        last_candidate_count = (static_cast<unsigned>(next) + sz - start) % sz;
+        if (candidates.size() >= group_size) {
+          return false;
+        }
       }
     }
-    ++count;
+    return true;
+  };
+  if (add_candidates(start, sz)) {
+    add_candidates(0, start);
   }
 
   // Update the next UE group offset, if the last UE index went beyond next group offset.
