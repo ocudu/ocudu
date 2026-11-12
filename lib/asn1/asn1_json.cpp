@@ -7,6 +7,8 @@
 /// \brief JSON writer.
 
 #include "ocudu/asn1/asn1_json.h"
+#include <cstring>
+#include <iterator>
 
 namespace asn1 {
 
