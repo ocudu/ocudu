@@ -66,9 +66,9 @@ static void fill_fapi_dummy_worker_manager_config(worker_manager_config&        
                                                   const o_du_high_unit_config&  odu_high_cfg,
                                                   const fapi_dummy_unit_config& fapi_dummy_cfg)
 {
-  // A free running clock runs the DU high in blocking mode, so that tasks wait instead of being dropped.
-  bool is_blocking_mode_enable =
-      fapi_dummy_cfg.clock_mode == fapi_adaptor::phy_dummy_fapi_adaptor_clock_mode::free_running;
+  // The free running clock waits for the MAC to complete each slot, so the MAC slot handling does not need to block the
+  // sector executors, which share the worker pool with the MAC.
+  bool is_blocking_mode_enable = false;
   fill_o_du_high_worker_manager_config(config, odu_high_cfg, is_blocking_mode_enable);
 
   const unsigned nof_cells = odu_high_cfg.du_high_cfg.config.cells_cfg.size();
