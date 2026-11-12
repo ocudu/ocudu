@@ -11,7 +11,9 @@
 #include "ocudu/support/ocudu_assert.h"
 #include "ocudu/support/rtsan.h"
 #include "ocudu/support/synchronization/sync_event.h"
+#include "fmt/ranges.h"
 #include <thread>
+#include <vector>
 
 using namespace ocudu;
 using namespace fapi_adaptor;
@@ -149,18 +151,37 @@ static sectors_progress get_sectors_progress(span<const std::unique_ptr<phy_dumm
   return result;
 }
 
+/// Reports a fatal error that names the sectors that did not finish the last notified slot boundary.
+[[noreturn]] static void report_stalled_sectors(span<const std::unique_ptr<phy_dummy_fapi_sector_adaptor>> sectors,
+                                                slot_point                last_notified_slot,
+                                                std::chrono::milliseconds timeout)
+{
+  std::vector<unsigned> stalled_sectors;
+  for (unsigned i_sector = 0, e = sectors.size(); i_sector != e; ++i_sector) {
+    phy_dummy_fapi_sector_adaptor::slot_boundary_progress progress = sectors[i_sector]->get_progress();
+    if (!progress.slot.valid() || progress.slot != last_notified_slot) {
+      stalled_sectors.push_back(i_sector);
+    }
+  }
+
+  report_fatal_error("PHY dummy FAPI adaptor: Sectors {} did not complete slot {} within {} ms",
+                     stalled_sectors,
+                     last_notified_slot,
+                     timeout.count());
+}
+
 void phy_dummy_fapi_adaptor_impl::run_free_running_iteration()
 {
   auto now = std::chrono::steady_clock::now();
 
   sectors_progress progress = get_sectors_progress(sectors, last_notified_slot);
 
+  if (!progress.all_done && now - last_advance_time >= free_running_timeout) {
+    report_stalled_sectors(sectors, *last_notified_slot, free_running_timeout);
+  }
+
   // Without running sectors, slot boundaries still advance at the slot rate to process START and STOP requests.
   bool advance = progress.all_done && (progress.any_running || now - last_advance_time >= slot_duration);
-  if (!progress.all_done && now - last_advance_time >= free_running_timeout) {
-    logger.warning("PHY dummy FAPI adaptor: Advancing slot {} without all sectors completing it", *last_notified_slot);
-    advance = true;
-  }
 
   if (!advance) {
     OCUDU_RTSAN_SCOPED_DISABLER(scoped_disabler);

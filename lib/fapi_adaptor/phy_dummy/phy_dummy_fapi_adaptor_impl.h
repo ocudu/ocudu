@@ -31,8 +31,8 @@ public:
 private:
   /// Minimum time between clock loop iterations.
   static constexpr std::chrono::microseconds minimum_loop_time{10};
-  /// Maximum time the free running clock waits for the sectors to complete a slot.
-  static constexpr std::chrono::milliseconds free_running_timeout{100};
+  /// Maximum time the free running clock waits for the sectors to complete a slot before reporting a fatal error.
+  static constexpr std::chrono::milliseconds free_running_timeout = std::chrono::seconds(30);
 
   /// Runs the clock loop until a stop is requested.
   void clock_loop(const rt_stop_event_token& token);
