@@ -29,7 +29,8 @@ The refactor puts each parameter at one level. Each level has a structure that h
 moved. The DU now builds the PUCCH-Config from the RRM structures (see below).
 
 - Do not read `serving_cell_config` in scheduler code.
-- Do not add a field to `serving_cell_config`. Add a new parameter to the RRM structures or to `ue_bwp_config`.
+- Do not add a field to `serving_cell_config` for a parameter that only the scheduler reads. Add the parameter to the
+  RRM structures or to `ue_bwp_config`. A new RRC field in an area that is not moved yet is the exception (see below).
 - For an area that is not moved yet, the DU still reads `serving_cell_config` to fill the ASN.1 `CellGroupConfig`
   (`calculate_cell_group_config_diff`). A change to that area stays in `serving_cell_config` until the area moves.
 
@@ -44,11 +45,13 @@ A UE has a full dedicated configuration in a cell, or no dedicated configuration
 - If the RRM cannot allocate all the resources of a cell, the DU removes the cell from `cell_group.cells`. The scheduler
   gets an empty `sched_ue_cell_config::ded`. The UE uses only the common configuration of the cell, for example to get
   an RRC Reject.
-- To show that the resources of a cell are not allocated or are released, remove the cell entry. Do not reset a field of
-  `serving_cell_config` to show this state. The fields of `serving_cell_config` are RRC data, and the refactor removes
-  that structure. For example, do not reset `csi_meas_cfg`.
-- To find a UE without dedicated configuration, read `ue_cell_configuration::has_dedicated_cfg()`. Do not read the
-  presence of a `serving_cell_config` field, for example `csi_meas_cfg.has_value()`.
+- To show that the resources of a cell are not allocated or are released, remove the cell entry from `cell_group.cells`.
+  `serving_cell_config` is a member of the cell entry, thus it is removed with the entry. Do not keep the entry and
+  reset a field of `serving_cell_config`, for example `csi_meas_cfg`. The fields of `serving_cell_config` are RRC data,
+  and the refactor removes that structure at the end.
+- To find a UE without dedicated configuration, read `ue_cell_configuration::has_dedicated_cfg()`. Do not use a field of
+  `serving_cell_config` as a flag for this state. For example, do not read `csi_meas_cfg.has_value()` to know if the UE
+  has a dedicated configuration. A field of `serving_cell_config` can be empty for other reasons.
 
 ### Put each parameter at one level
 
@@ -81,8 +84,8 @@ scheduler needs.
   (`cell_bwp_res_config`, `ue_bwp_config`). It chooses the layout of those structures for the cache.
 - The DU fills the ASN.1 messages from the RRM structures. The conversion is in the DU. The RRM structures do not hold
   RRC data.
-- Do not make an RRM structure that has the same shape as an RRC structure. Hold the values and IDs that the RRM
-  allocates. The conversion to RRC form is the work of the DU.
+- Do not make an RRM structure with the same shape as an RRC structure.
+- An RRM structure holds the values and IDs that the RRM allocates. The conversion to RRC form is the work of the DU.
 - A type that the DU and the scheduler both use goes in `include/ocudu/scheduler/rrm`, for example
   `cell_pucch_resources`.
 
@@ -90,14 +93,20 @@ scheduler needs.
 
 The scheduler reads the UE structures for each UE and each slot. Small UE structures keep the cell data in the cache.
 
-- If many UEs share the same data, put an ID or an index in the UE structure in place of a copy of that data.
+- If many UEs share the same data, put an ID or an index in the UE structure in place of a copy of that data. The ID is
+  the index of an element in a list of the cell structure, for example the resource set configuration ID in
+  `cell_pucch_resources`.
 - Do not put a value in the UE structure if all the UEs of the cell have the same value.
 
 ### Do not copy the RRC structure
 
 - Write a structure that holds only the configurations that OCUDU supports.
 - Do not add a field because the RRC message has that field.
-- Do not add an assertion to protect a field. Change the type. Then an incorrect value is not possible.
+- If possible, make the type unable to represent an invalid state. Do not rely on an assertion to protect a field. For
+  example, use an enum with the supported values, not an integer with an assertion on its range.
+- If only some combinations of values are valid, try to put the combination in one type. For example, use a
+  `std::variant` with one alternative for each valid combination. If the type needs many alternatives, it is probably
+  not a good representation. Then use a simpler type and validate the values when you create the cell or the UE.
 
 ### Do not build a UE configuration to read a cell value
 
@@ -126,32 +135,63 @@ OCUDU supports one BWP now. More than one BWP is necessary for RedCap.
 
 The test helpers are not refactored yet. Do not use the current test code as an example.
 
-### Tell the user
-
-If the user asks for a change that breaks a rule on this page, do the work. Then tell the user which rule the change
-breaks.
-
 ## Example: PUCCH
 
 The PUCCH structures show the correct split. They are not perfect, but use them as the example for new code.
 
-- `pucch_resource_builder_params` (`include/ocudu/scheduler/config/pucch_resource_builder_params.h`) holds the input
-  parameters, for example the number of resources and the format parameters.
-- `cell_pucch_resources` (`include/ocudu/scheduler/rrm/cell_pucch_resources.h`) holds the list of the dedicated PUCCH
-  resources of the cell. It holds the tables from the IDs that the RRM allocates (resource set configuration, SR, CSI)
-  to the resources. `generate_cell_pucch_res_list` fills it one time for each cell.
-- `cell_pucch_rrm_config` (`include/ocudu/scheduler/rrm/cell_rrm_config.h`) holds `cell_pucch_resources` and the PUCCH
-  values that are common to the UEs of the cell.
-- `ue_pucch_rrm_config` (`include/ocudu/scheduler/rrm/ue_rrm_config.h`) holds only IDs and offsets. It holds no copy of
-  a resource.
-- `cell_pucch_res_config` (`include/ocudu/scheduler/config/cell_bwp_res_config.h`) holds the common PUCCH resources and
-  a copy of `cell_pucch_resources`. The scheduler reads them. `ue_pucch_config` (`ue_bwp_config.h`) is the scheduler
-  copy of `ue_pucch_rrm_config`.
-- The DU builds the PUCCH-Config of a UE from `cell_pucch_resources` and `ue_pucch_rrm_config`
-  (`make_ue_pucch_res_layout` and `calculate_pucch_config_diff`). It does not read `serving_cell_config`.
+### Structures
+
+| Structure                       | Level | Used by             | Content                                       |
+| ------------------------------- | ----- | ------------------- | --------------------------------------------- |
+| `pucch_resource_builder_params` | Input | RRM (cell creation) | The number of resources, the format values.   |
+| `cell_pucch_resources`          | RRM   | RRM, DU, scheduler  | The dedicated resources and the ID tables.    |
+| `cell_pucch_rrm_config`         | RRM   | RRM, DU             | `cell_pucch_resources`, the common values.    |
+| `ue_pucch_rrm_config`           | RRM   | RRM, DU, scheduler  | The IDs and the offsets of one UE.            |
+| `cell_pucch_res_config`         | Cell  | Scheduler           | The common resources, `cell_pucch_resources`. |
+| `ue_pucch_config`               | UE    | Scheduler           | The scheduler copy of `ue_pucch_rrm_config`.  |
+
+- `pucch_resource_builder_params` is in `include/ocudu/scheduler/config/pucch_resource_builder_params.h`.
+- `cell_pucch_resources` is in `include/ocudu/scheduler/rrm/cell_pucch_resources.h`. The ID tables go from the IDs that
+  the RRM allocates (resource set configuration, SR, CSI) to the resources. It holds no RRC data.
+- `cell_pucch_rrm_config` is in `include/ocudu/scheduler/rrm/cell_rrm_config.h`. It is the PUCCH member of
+  `cell_rrm_config`, the structure that holds all the cell resources that the RRM allocates.
+- `ue_pucch_rrm_config` is in `include/ocudu/scheduler/rrm/ue_rrm_config.h`. It holds only IDs and offsets. It holds no
+  copy of any resource.
+- `cell_pucch_res_config` is in `include/ocudu/scheduler/config/cell_bwp_res_config.h`. `ue_pucch_config` is in
+  `ue_bwp_config.h`.
 - `pucch_res_id_t` (`include/ocudu/ran/pucch/pucch_mapping.h`) holds a single index over the common and the dedicated
   PUCCH resources of the cell. The UE resource ID of the ASN.1 message is the position of the resource in the UE's PUCCH
   resource list.
+
+### Why each level has an RRM structure and a scheduler structure
+
+`cell_pucch_rrm_config` and `cell_pucch_res_config` both hold `cell_pucch_resources`. `ue_pucch_rrm_config` and
+`ue_pucch_config` hold the same UE data. This is on purpose, for the cell and for the UE.
+
+- The RRM structures are what the DU sees. The DU translates them to ASN.1. They hold only what the RRM allocates.
+- The scheduler structures are what the scheduler reads for each slot. The scheduler also needs data that the RRM does
+  not allocate, for example the common PUCCH resources.
+- The two uses need different shapes. Thus the scheduler copies the RRM data into its own structures, and it can change
+  their layout for the cache without a change to the DU.
+
+Today the copies have the same content for the dedicated resources and the UE values. This is acceptable. Do not merge
+them.
+
+### Generation flow
+
+1. The input: `ran_cell_config` holds `pucch_resource_builder_params`.
+2. At the creation of a cell, the RRM calls `make_cell_rrm_config`. It calls `generate_cell_pucch_res_list` one time,
+   and fills `cell_pucch_rrm_config`, with `cell_pucch_resources` inside it.
+3. The DU keeps the `cell_rrm_config` in the cell repository. It passes a copy to the scheduler in the cell request.
+4. The scheduler calls `make_cell_bwp_res_config`. This function adds the common resources and fills
+   `cell_pucch_res_config`.
+5. For each UE, the RRM allocates the IDs and the offsets, and fills `ue_pucch_rrm_config` (in `ue_rrm_config`). It
+   reads `cell_pucch_resources` and the cell parameters (`cell_params`). It uses the cell parameters for the maximum
+   PUCCH payload and for the CSI configuration.
+6. The DU keeps `ue_rrm_config` in the UE repository. It passes it to the scheduler in the UE request. The scheduler
+   copies it to `ue_pucch_config`.
+7. The DU builds the ASN.1 `PUCCH-Config` of the UE from `cell_pucch_resources` and `ue_pucch_rrm_config`
+   (`make_ue_pucch_res_layout` and `calculate_pucch_config_diff`). It does not read `serving_cell_config`.
 
 ## Target
 

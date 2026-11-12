@@ -10,8 +10,9 @@
 
 using namespace ocudu;
 
-std::optional<csi_meas_config> config_helpers::build_csi_meas_config(const ran_cell_config& cell_cfg,
-                                                                     const ue_rrm_config&   ue_rrm_cfg)
+std::optional<csi_meas_config> config_helpers::build_csi_meas_config(const ran_cell_config&      cell_cfg,
+                                                                     const cell_pucch_resources& cell_pucch_res,
+                                                                     const ue_rrm_config&        ue_rrm_cfg)
 {
   if (not cell_cfg.init_bwp.csi.has_value()) {
     return std::nullopt;
@@ -32,7 +33,7 @@ std::optional<csi_meas_config> config_helpers::build_csi_meas_config(const ran_c
         cfg.csi_report_cfg_list[0].report_cfg_type);
     report_cfg.report_slot_offset = ue_rrm_cfg.csi.periodic_report->offset;
     report_cfg.pucch_csi_res_list.front().pucch_res_id =
-        ue_csi_res_id(cell_cfg.init_bwp.pucch.resources.res_set_size.value());
+        ue_csi_res_id(cell_pucch_res.get_harq(ue_rrm_cfg.pucch.res_set_cfg_id).set_0.size());
   }
 
   return cfg;

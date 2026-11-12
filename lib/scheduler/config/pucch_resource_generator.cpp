@@ -11,6 +11,7 @@
 #include "ocudu/ran/pucch/pucch_mapping.h"
 #include "ocudu/scheduler/config/pucch_default_resource.h"
 #include "ocudu/scheduler/config/pucch_resource_builder_params.h"
+#include "ocudu/scheduler/config/ran_cell_config.h"
 #include "ocudu/support/math/math_utils.h"
 #include "ocudu/support/ocudu_assert.h"
 #include "fmt/ranges.h"
@@ -576,4 +577,15 @@ cell_pucch_resources config_helpers::generate_cell_pucch_res_list(const pucch_re
 
   cell_res.resources = std::move(resources);
   return cell_res;
+}
+
+cell_pucch_resources config_helpers::generate_cell_pucch_res_list(const ran_cell_config& cell_cfg)
+{
+  const pucch_resource_builder_params& params = cell_cfg.init_bwp.pucch.resources;
+
+  const unsigned bwp_size_rbs     = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+  const unsigned pucch_res_common = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common;
+
+  return generate_cell_pucch_res_list(
+      params, bwp_size_rbs, get_dedicated_pucch_rb_start(params, pucch_res_common, bwp_size_rbs));
 }

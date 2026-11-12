@@ -14,12 +14,8 @@ static cell_pucch_rrm_config make_cell_pucch_rrm_config(const ran_cell_config& c
 {
   const pucch_resource_builder_params& params = cell_cfg.init_bwp.pucch.resources;
 
-  const unsigned bwp_size_rbs     = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
-  const unsigned pucch_res_common = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common;
-
   cell_pucch_rrm_config pucch;
-  pucch.res = config_helpers::generate_cell_pucch_res_list(
-      params, bwp_size_rbs, config_helpers::get_dedicated_pucch_rb_start(params, pucch_res_common, bwp_size_rbs));
+  pucch.res = config_helpers::generate_cell_pucch_res_list(cell_cfg);
 
   pucch.sr_period         = cell_cfg.init_bwp.pucch.sr_period;
   pucch.max_code_rate_234 = params.max_code_rate_234();

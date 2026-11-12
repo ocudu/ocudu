@@ -474,6 +474,21 @@ TEST_F(pucch_cfg_conversion_test, initial_setup_sends_the_whole_pucch_config)
   ASSERT_TRUE(pucch.format4_present and pucch.format4.is_setup());
 }
 
+TEST_F(pucch_cfg_conversion_test, format_3_and_4_common_params_carry_the_additional_dmrs_and_pi2_bpsk)
+{
+  cell_cfg.ran.init_bwp.pucch.resources.f2_or_f3_or_f4_params =
+      pucch_f3_params{.additional_dmrs = true, .pi2_bpsk = true};
+
+  const auto pucch = diff_pucch_cfg({}, make_ue_cfg());
+
+  ASSERT_TRUE(pucch.format3_present and pucch.format3.is_setup());
+  ASSERT_TRUE(pucch.format3.setup().add_dmrs_present);
+  ASSERT_TRUE(pucch.format3.setup().pi2_bpsk_present);
+  // The Format 2 common parameters do not carry them.
+  ASSERT_TRUE(pucch.format2_present and pucch.format2.is_setup());
+  ASSERT_FALSE(pucch.format2.setup().add_dmrs_present);
+}
+
 TEST_F(pucch_cfg_conversion_test, unchanged_pucch_config_is_not_sent)
 {
   const auto cfg        = make_ue_cfg();

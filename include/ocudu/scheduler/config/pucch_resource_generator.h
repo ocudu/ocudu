@@ -13,6 +13,7 @@
 namespace ocudu {
 
 struct serving_cell_config;
+struct ran_cell_config;
 
 namespace config_helpers {
 
@@ -60,6 +61,9 @@ generate_cell_common_pucch_res_list(unsigned pucch_res_common, unsigned bwp_size
 cell_pucch_resources generate_cell_pucch_res_list(const pucch_resource_builder_params& params,
                                                   unsigned                             bwp_size_rbs,
                                                   unsigned                             dedicated_pucch_rb_start);
+
+/// Generates the PUCCH resources of a cell from its configuration. See the overload above for the empty cases.
+cell_pucch_resources generate_cell_pucch_res_list(const ran_cell_config& cell_cfg);
 
 } // namespace config_helpers
 } // namespace ocudu

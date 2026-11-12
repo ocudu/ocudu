@@ -295,7 +295,7 @@ TEST_P(pucch_resource_generator_test, ue_pucch_config_builder_test)
         ASSERT_TRUE(is_ue_res_of(ue_sr_res_id, cell_rrm.pucch.res.get_sr(sr_res_id).res_id));
 
         // Check the CSI resource (if configured).
-        const auto csi_meas_cfg = config_helpers::build_csi_meas_config(cell_cfg, ue_rrm_cfg);
+        const auto csi_meas_cfg = config_helpers::build_csi_meas_config(cell_cfg, cell_rrm.pucch.res, ue_rrm_cfg);
         ASSERT_EQ(params.nof_cell_csi_resources != 0, csi_meas_cfg.has_value());
         std::optional<unsigned> ue_csi_res_id;
         if (params.nof_cell_csi_resources != 0) {

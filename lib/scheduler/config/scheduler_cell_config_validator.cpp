@@ -208,6 +208,7 @@ static error_type<std::string> validate_pucch_cfg_common(const sched_cell_config
   // [Implementation defined] The scheduler expects the resources from the common resource set and Resource Set ID 0 to
   // use the same format. The formats from the common resource sets are expressed in TS 38.213 Table 9.2.1-1.
   const unsigned pucch_res_common = msg.ran.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common;
+  VERIFY(pucch_res_common <= 15, "pucch_resource_common={} exceeds the maximum value 15.", pucch_res_common);
   if (msg.ran.init_bwp.pucch.resources.format_01() == pucch_format::FORMAT_0) {
     VERIFY(pucch_res_common <= 2,
            "When using PUCCH Format 0, the valid values for pucch_resource_common are {{0, 1, 2}}.");

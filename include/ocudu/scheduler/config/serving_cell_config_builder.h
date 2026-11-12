@@ -45,6 +45,8 @@ ue_pucch_res_layout make_ue_pucch_res_layout(const cell_pucch_resources& cell_re
 unsigned ue_csi_res_id(unsigned res_set_size);
 
 /// Build the CSI-MeasConfig for a given UE.
-std::optional<csi_meas_config> build_csi_meas_config(const ran_cell_config& cell_cfg, const ue_rrm_config& ue_rrm_cfg);
+std::optional<csi_meas_config> build_csi_meas_config(const ran_cell_config&      cell_cfg,
+                                                     const cell_pucch_resources& cell_pucch_res,
+                                                     const ue_rrm_config&        ue_rrm_cfg);
 
 } // namespace ocudu::config_helpers

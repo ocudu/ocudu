@@ -188,7 +188,8 @@ bool pucch_resource_manager::alloc_resources(ue_cell_config& cell_cfg)
   }
 
   // Fill the serving cell config with the CSI-related configuration.
-  serv_cell_cfg.csi_meas_cfg = config_helpers::build_csi_meas_config(cell_ctx.cell_params, cell_cfg.rrm);
+  serv_cell_cfg.csi_meas_cfg =
+      config_helpers::build_csi_meas_config(cell_ctx.cell_params, cell_ctx.pucch_res->res, cell_cfg.rrm);
 
   // Disable PUCCH repetition until \c update_resources is called with the UE's reported capabilities.
   apply_rep_factor_capabilities(cell_cfg, std::nullopt);

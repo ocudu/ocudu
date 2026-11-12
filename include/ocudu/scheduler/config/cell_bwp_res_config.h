@@ -62,7 +62,7 @@ struct cell_dl_bwp_res_config {
 struct cell_pucch_res_config {
   /// List of common PUCCH resources, indexed by \f$r_{PUCCH}\f$ (TS 38.213 Section 9.2.1).
   std::array<pucch_resource, pucch_constants::MAX_NOF_CELL_COMMON_PUCCH_RESOURCES> common;
-  /// UE-dedicated PUCCH resources, and the map from the IDs that the RRM allocates to a UE to them.
+  /// UE-dedicated resources, and a mapping from the IDs allocated by the RRM to a UE to their corresponding resources.
   cell_pucch_resources dedicated;
 
   bool operator==(const cell_pucch_res_config& other) const

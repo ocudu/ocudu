@@ -26,17 +26,19 @@ struct pucch_csi_resource_id_tag;
 using pucch_csi_resource_id =
     strong_type<uint8_t, struct pucch_csi_resource_id_tag, strong_equality, strong_increment_decrement>;
 
-/// \brief UE-dedicated PUCCH resources of a cell, and the map from the IDs that the RRM allocates to a UE to them.
+/// \brief UE-dedicated PUCCH resources of a cell, and a mapping from the IDs allocated by the RRM to a UE to their
+/// corresponding resources.
 ///
-/// The F0+F2 case adds the SR_F2 and CSI_F0 resources, which exist only when the cell uses Format 0 and Format 2
-/// together.
+/// In the F0+F2 case, each SR (F0) and CSI (F2) resource has an alternative resource of the other format with the same
+/// symbols (SR_F2, CSI_F0). The HARQ-ACK uses it, so that the UE multiplexes the UCI types on a single PUCCH. See
+/// \c make_ue_pucch_res_layout.
 struct cell_pucch_resources {
   /// Cell resources of the two HARQ-ACK PUCCH resource sets of a resource set configuration.
   struct harq_resource_set_config {
     static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> set_0;
     static_vector<pucch_res_id_t, MAX_NOF_PUCCH_RESOURCES_PER_PUCCH_RESOURCE_SET> set_1;
   };
-  /// Cell resource of an SR or CSI resource, with its alternative resource of the F0+F2 case (SR_F2 or CSI_F0).
+  /// A cell resource for SR or CSI, with its alternative resource in the F0+F2 case (SR_F2 or CSI_F0, respectively).
   struct res_with_alt {
     pucch_res_id_t                res_id;
     std::optional<pucch_res_id_t> alt_res_id;

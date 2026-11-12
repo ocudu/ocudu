@@ -362,7 +362,7 @@ static serving_cell_config make_default_serving_cell_config(const ran_cell_confi
   serv_cell.pdsch_serv_cell_cfg.emplace(make_default_pdsch_serving_cell_config(cell_cfg.init_bwp.pdsch));
 
   // > CSI-MeasConfig.
-  serv_cell.csi_meas_cfg = build_csi_meas_config(cell_cfg, ue_rrm_cfg);
+  serv_cell.csi_meas_cfg = build_csi_meas_config(cell_cfg, generate_cell_pucch_res_list(cell_cfg), ue_rrm_cfg);
 
   return serv_cell;
 }

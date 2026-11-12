@@ -1795,23 +1795,39 @@ static bool calculate_pucch_config_diff(asn1::rrc_nr::bwp_ul_ded_s&  out,
 
   // PUCCH formats. They are the same for all the UEs of the cell, so they are only sent in the initial setup.
   if (src == nullptr) {
-    const pucch_common_all_formats format_234{.max_c_rate                = cell_res.max_code_rate_234,
-                                              .simultaneous_harq_ack_csi = true};
+    const pucch_common_all_formats format_2{.max_c_rate                = cell_res.max_code_rate_234,
+                                            .simultaneous_harq_ack_csi = true};
+    pucch_common_all_formats       format_34 = format_2;
+    // The Format 3 and 4 resources of a cell have the same DM-RS and modulation configuration.
+    for (const pucch_resource& res : cell_res.res.resources) {
+      if (const auto* f3 = std::get_if<pucch_resource::f3_config>(&res.format_params)) {
+        format_34.additional_dmrs = f3->additional_dmrs;
+        format_34.pi_2_bpsk       = f3->pi_2_bpsk;
+        break;
+      }
+      if (const auto* f4 = std::get_if<pucch_resource::f4_config>(&res.format_params)) {
+        format_34.additional_dmrs = f4->additional_dmrs;
+        format_34.pi_2_bpsk       = f4->pi_2_bpsk;
+        break;
+      }
+    }
     out_pucch.format1_present = true;
     make_asn1_rrc_pucch_formats_common_param(out_pucch.format1.set_setup(), pucch_common_all_formats{});
     out_pucch.format2_present = true;
-    make_asn1_rrc_pucch_formats_common_param(out_pucch.format2.set_setup(), format_234);
+    make_asn1_rrc_pucch_formats_common_param(out_pucch.format2.set_setup(), format_2);
     out_pucch.format3_present = true;
-    make_asn1_rrc_pucch_formats_common_param(out_pucch.format3.set_setup(), format_234);
+    make_asn1_rrc_pucch_formats_common_param(out_pucch.format3.set_setup(), format_34);
     out_pucch.format4_present = true;
-    make_asn1_rrc_pucch_formats_common_param(out_pucch.format4.set_setup(), format_234);
+    make_asn1_rrc_pucch_formats_common_param(out_pucch.format4.set_setup(), format_34);
   }
 
   // SR Resource. The UE has a single SR resource, which is never released.
+  static constexpr unsigned ue_sr_res_id = 1;
+  static constexpr unsigned ue_sr_id     = 0;
   if (sr_changed) {
     out_pucch.sched_request_res_to_add_mod_list.push_back(
-        make_asn1_rrc_sr_resource(scheduling_request_resource_config{.sr_res_id    = 1,
-                                                                     .sr_id        = uint_to_sched_req_id(0),
+        make_asn1_rrc_sr_resource(scheduling_request_resource_config{.sr_res_id    = ue_sr_res_id,
+                                                                     .sr_id        = uint_to_sched_req_id(ue_sr_id),
                                                                      .period       = cell_res.sr_period,
                                                                      .offset       = dest.pucch.sr_offset,
                                                                      .pucch_res_id = dest_layout.sr_res_id}));
