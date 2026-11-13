@@ -203,14 +203,16 @@ void ue_scheduler_impl::run_slot_impl(slot_point sl_tx)
     // Run cell-specific SRB0 scheduler.
     group_cell.fallback_sched.run_slot(*group_cell.cell_res_alloc);
 
+    // Inject synthetic BSR for triggered UL grants due this slot.
+    // Note: The BSR has to be injected before the slice candidates are computed, as slices without pending data are
+    // not candidates.
+    group_cell.trig_ul_sched.run_slot(sl_tx);
+
     // Update slice context and compute slice priorities.
     group_cell.slice_sched.slot_indication(sl_tx, *group_cell.cell_res_alloc);
 
     // Update intra-slice scheduler context.
     group_cell.intra_slice_sched.slot_indication(sl_tx);
-
-    // Inject synthetic BSR for triggered UL grants due this slot.
-    group_cell.trig_ul_sched.run_slot(sl_tx);
 
     // Run slice scheduler policies.
     run_sched_strategy(cell_index);

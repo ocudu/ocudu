@@ -91,6 +91,9 @@ public:
   /// Whether any active UE in fallback has the given cell as PCell.
   bool has_fallback_ues(du_cell_index_t pcell_index) const;
 
+  /// Retrieves the HARQ processes of the given cell.
+  cell_harq_manager& get_cell_harqs(du_cell_index_t cell_index);
+
   /// Retrieves the UEs in fallback with the given PCell and with pending newTx data.
   bounded_bitset<MAX_NOF_DU_UES> get_fallback_ues_with_pending_newtx_data(du_cell_index_t pcell_index,
                                                                           bool            is_dl) const;

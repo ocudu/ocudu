@@ -24,6 +24,10 @@ static constexpr logical_channel_config create_logical_channel_config(lcid_t lci
 {
   logical_channel_config lc_ch = config_helpers::create_default_logical_channel_config(lcid);
   lc_ch.rrm_policy             = policy;
+  // Each DRB gets its own LCG, as an LCG belongs to a single slice.
+  if (lcid >= LCID_MIN_DRB) {
+    lc_ch.lc_group = uint_to_lcg_id(std::min<unsigned>(lcid - LCID_MIN_DRB + 1, MAX_LCG_ID));
+  }
   return lc_ch;
 }
 
@@ -74,7 +78,29 @@ protected:
     const ue_configuration* ue_cfg = test_cfg.add_ue(req);
     ues.add_ue(*ue_cfg, {sched_config_helper::to_ue_creation_mode(req), req.ul_ccch_slot_rx});
     slice_sched.add_ue(req.ue_index);
+    // Slices without pending data are not candidates.
+    push_pending_data(req.ue_index);
     return ue_cfg;
+  }
+
+  /// Gives pending DL and UL data to all the bearers of a UE.
+  void push_pending_data(du_ue_index_t ue_idx)
+  {
+    static constexpr unsigned pending_bytes = 100;
+    ue&                       u             = ues[ue_idx];
+    ul_bsr_indication_message bsr{to_du_cell_index(0), ue_idx, u.crnti, bsr_format::LONG_BSR, {}};
+    for (logical_channel_config_ptr lc : u.logical_channels().cfg()) {
+      if (lc->lcid == LCID_SRB0) {
+        continue;
+      }
+      u.handle_dl_buffer_state_indication(lc->lcid, pending_bytes);
+      if (std::none_of(bsr.reported_lcgs.begin(), bsr.reported_lcgs.end(), [&lc](const ul_bsr_lcg_report& r) {
+            return r.lcg_id == lc->lc_group;
+          })) {
+        bsr.reported_lcgs.push_back(ul_bsr_lcg_report{lc->lc_group, pending_bytes});
+      }
+    }
+    u.handle_bsr_indication(bsr);
   }
 
   ocudulog::basic_logger&                 logger = ocudulog::fetch_basic_logger("TEST");
@@ -215,6 +241,42 @@ TEST_F(default_slice_scheduler_test, when_ue_is_reconfigured_outside_an_rrc_proc
   }
   ASSERT_TRUE(next_dl_slice.has_value());
   ASSERT_TRUE(next_dl_slice->is_candidate(ue_idx, lcid_t::LCID_SRB1));
+}
+
+TEST_F(default_slice_scheduler_test, when_slice_ues_have_no_pending_data_then_slice_is_not_a_candidate)
+{
+  const du_ue_index_t ue_idx = to_du_ue_index(0);
+  ASSERT_NE(this->add_ue(ue_idx), nullptr);
+
+  // Flush the pending data of the UE.
+  ue& u = ues[ue_idx];
+  for (logical_channel_config_ptr lc : u.logical_channels().cfg()) {
+    u.handle_dl_buffer_state_indication(lc->lcid, 0);
+  }
+  ul_bsr_indication_message bsr{to_du_cell_index(0), ue_idx, u.crnti, bsr_format::LONG_BSR, {}};
+  for (logical_channel_config_ptr lc : u.logical_channels().cfg()) {
+    bsr.reported_lcgs.push_back(ul_bsr_lcg_report{lc->lc_group, 0});
+  }
+  u.handle_bsr_indication(bsr);
+
+  // Neither DL nor UL candidates while there is no pending data.
+  for (unsigned count = 0; count != 10; ++count) {
+    run_slot();
+    ASSERT_FALSE(slice_sched.get_next_dl_candidate().has_value());
+    ASSERT_FALSE(slice_sched.get_next_ul_candidate().has_value());
+  }
+
+  // DL data makes the slice of the bearer a DL candidate only.
+  u.handle_dl_buffer_state_indication(LCID_SRB1, 100);
+  std::optional<dl_ran_slice_candidate> next_dl_slice;
+  for (unsigned count = 0; count != 10 and not next_dl_slice.has_value(); ++count) {
+    run_slot();
+    next_dl_slice = slice_sched.get_next_dl_candidate();
+    ASSERT_FALSE(slice_sched.get_next_ul_candidate().has_value());
+  }
+  ASSERT_TRUE(next_dl_slice.has_value());
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
+  ASSERT_FALSE(slice_sched.get_next_dl_candidate().has_value());
 }
 
 TEST_F(default_slice_scheduler_test, when_deactivated_ue_gets_config_applied_then_no_channels_are_re_added_to_slices)

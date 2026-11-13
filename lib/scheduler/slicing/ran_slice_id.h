@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ocudu/adt/strong_type.h"
+#include <cstddef>
 #include <cstdint>
 
 namespace ocudu {
@@ -20,6 +21,9 @@ using ran_slice_id_t = strong_type<uint8_t,
                                    strong_conversion_to<std::size_t>>;
 
 /// RAN slice ID for slice used to schedule SRB(s) traffic.
+/// Number of values a RAN slice ID can take.
+constexpr std::size_t MAX_NOF_RAN_SLICE_IDS = 256;
+
 constexpr ran_slice_id_t SRB_RAN_SLICE_ID = ran_slice_id_t{0};
 
 /// RAN slice ID for default slice used to schedule DRB(s) traffic.

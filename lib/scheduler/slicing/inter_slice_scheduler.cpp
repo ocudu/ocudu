@@ -133,10 +133,34 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
     return;
   }
 
+  // A slice is only a candidate if it has UEs of this cell with pending newTx data or pending retxs.
+  cell_harq_manager&                    cell_harqs = ues.get_cell_harqs(cell_cfg.cell_index);
+  bounded_bitset<MAX_NOF_RAN_SLICE_IDS> dl_retx_slices(MAX_NOF_RAN_SLICE_IDS);
+  for (const dl_harq_process_handle& h : cell_harqs.pending_dl_retxs()) {
+    if (h.get_grant_params().slice_id.has_value()) {
+      dl_retx_slices.set(h.get_grant_params().slice_id->value());
+    }
+  }
+  bounded_bitset<MAX_NOF_RAN_SLICE_IDS> ul_retx_slices(MAX_NOF_RAN_SLICE_IDS);
+  for (const ul_harq_process_handle& h : cell_harqs.pending_ul_retxs()) {
+    if (h.get_grant_params().slice_id.has_value()) {
+      ul_retx_slices.set(h.get_grant_params().slice_id->value());
+    }
+  }
+  auto has_pending_tx = [this](const ran_slice_sched_context&               slice,
+                               const bounded_bitset<MAX_NOF_RAN_SLICE_IDS>& retx_slices,
+                               bool                                         is_dl) {
+    return retx_slices.test(slice.inst.id.value()) or
+           ues.get_ues_with_pending_newtx_data(slice.inst.id, cell_cfg.cell_index, is_dl).any();
+  };
+
   // Recompute the priority queues.
   const bool pdsch_enabled =
       cell_cfg.expert_cfg.ue.enable_csi_rs_pdsch_multiplexing or res_grid[0].result_reader().dl().csi_rs().empty();
   for (const auto& slice : slices) {
+    if (not has_pending_tx(slice, dl_retx_slices, true)) {
+      continue;
+    }
     // NOTE: Unlike the old \c pdsch_rb_count member, which was always 0 at this point because slot_tx had not been
     // scheduled yet, \c nof_pdsch_rbs_allocated(slot_tx) can already be non-zero here: a PDSCH repetition occasion
     // targeting slot_tx may have been recorded by an earlier slot's allocation. We must therefore query the up-to-date,
@@ -174,6 +198,9 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   const bool ue_koffsets_in_use = get_ue_koffset_cfg(cell_cfg.params.ntn_params).has_value();
 
   for (const auto& slice : slices) {
+    if (not has_pending_tx(slice, ul_retx_slices, false)) {
+      continue;
+    }
     // Koffsets to offer candidates for. A UE-specific Koffset reaches slots the cell-specific one does not, so each
     // Koffset in use needs its own candidates.
     static_vector<unsigned, MAX_NOF_NTN_KOFFSETS_PER_SLICE> koffsets{cell_cfg.ntn_cs_koffset};

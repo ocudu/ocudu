@@ -357,6 +357,11 @@ bool ue_repository::has_fallback_ues(du_cell_index_t pcell_index) const
   return cell_ues[pcell_index]->get_fallback_ue_mask().any();
 }
 
+cell_harq_manager& ue_repository::get_cell_harqs(du_cell_index_t cell_index)
+{
+  return cell_ues[cell_index]->get_cell_harqs();
+}
+
 bounded_bitset<MAX_NOF_DU_UES> ue_repository::get_fallback_ues_with_pending_newtx_data(du_cell_index_t pcell_index,
                                                                                        bool            is_dl) const
 {
