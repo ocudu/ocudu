@@ -67,7 +67,7 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::handle_bearer
     u.update_cu_up_ue_e1ap_id(int_to_gnb_cu_up_ue_e1ap_id(resp->gnb_cu_up_ue_e1ap_id));
 
     // Fill response.
-    fill_e1ap_bearer_context_setup_response(res, resp);
+    res = make_e1ap_bearer_context_setup_response(resp, logger.get_basic_logger());
 
     logger.log_info("\"{}\" finished successfully", name());
 
@@ -82,7 +82,7 @@ e1ap_bearer_context_setup_response bearer_context_setup_procedure::handle_bearer
     u.update_cu_up_ue_e1ap_id(int_to_gnb_cu_up_ue_e1ap_id(fail->gnb_cu_up_ue_e1ap_id));
 
     // Fill response with failure.
-    fill_e1ap_bearer_context_setup_response(res, fail);
+    res = make_e1ap_bearer_context_setup_response(fail);
 
     logger.log_warning("\"{}\" failed. Cause: {}", name(), get_cause_str(fail->cause));
   } else if (transaction_sink.cancelled()) {

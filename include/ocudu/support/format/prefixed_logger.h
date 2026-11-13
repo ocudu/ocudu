@@ -188,7 +188,7 @@ public:
     }
   }
 
-  ocudulog::basic_logger& get_basic_logger() { return logger; }
+  ocudulog::basic_logger& get_basic_logger() const { return logger; }
 
 private:
   template <typename... Args>

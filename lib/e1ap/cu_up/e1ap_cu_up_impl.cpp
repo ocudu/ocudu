@@ -247,9 +247,9 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const bearer_context_s
       to_underlying(cu_up_ue_e1ap_id);
 
   // Forward message to CU-UP.
-  e1ap_bearer_context_setup_request bearer_context_setup = {};
-  bearer_context_setup.e1_index                          = e1ap_cfg.e1_index;
-  if (!fill_e1ap_bearer_context_setup_request(bearer_context_setup, msg)) {
+  std::optional<e1ap_bearer_context_setup_request> bearer_context_setup =
+      make_e1ap_bearer_context_setup_request(msg, e1ap_cfg.e1_index, logger.get_basic_logger());
+  if (!bearer_context_setup.has_value()) {
     fail_cause.set_protocol() = cause_protocol_opts::semantic_error;
     logger.log_error("Sending BearerContextSetupFailure. Cause: Invalid BearerContextSetupRequest");
     // Send response.
@@ -257,8 +257,9 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const bearer_context_s
     return;
   }
 
+  bearer_context_setup->e1_index = e1ap_cfg.e1_index;
   e1ap_bearer_context_setup_response bearer_context_setup_response_msg =
-      cu_up_notifier.on_bearer_context_setup_request_received(bearer_context_setup);
+      cu_up_notifier.on_bearer_context_setup_request_received(*bearer_context_setup);
 
   if (bearer_context_setup_response_msg.ue_index == INVALID_CU_UP_UE_INDEX) {
     logger.log_error("Sending BearerContextSetupFailure. Cause: Invalid UE index");

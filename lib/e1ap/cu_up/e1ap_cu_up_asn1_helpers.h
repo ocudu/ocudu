@@ -7,6 +7,7 @@
 
 #include "../common/e1ap_asn1_converters.h"
 #include "../common/e1ap_logger.h"
+#include <optional>
 
 namespace ocudu::ocuup {
 
@@ -138,11 +139,11 @@ inline void fill_e1ap_drb_to_setup_item(e1ap_drb_to_setup_item_ng_ran&          
   drb_to_setup_item.pdcp_cfg = e1ap_asn1_to_pdcp_config(asn1_drb_to_setup_item.pdcp_cfg);
 
   // Fill cell group info.
-  e1ap_asn1_to_cell_group_info(drb_to_setup_item.cell_group_info, asn1_drb_to_setup_item.cell_group_info);
+  drb_to_setup_item.cell_group_info = e1ap_asn1_to_cell_group_info(asn1_drb_to_setup_item.cell_group_info);
 
   // Fill QoS flow info to be setup.
-  e1ap_asn1_to_flow_map_info(drb_to_setup_item.qos_flow_info_to_be_setup,
-                             asn1_drb_to_setup_item.qos_flow_info_to_be_setup);
+  drb_to_setup_item.qos_flow_info_to_be_setup =
+      e1ap_asn1_to_flow_map_info(asn1_drb_to_setup_item.qos_flow_info_to_be_setup);
 
   // Fill DRB data forwarding info request.
   if (asn1_drb_to_setup_item.drb_data_forwarding_info_request_present) {
@@ -162,9 +163,15 @@ inline void fill_e1ap_drb_to_setup_item(e1ap_drb_to_setup_item_ng_ran&          
   }
 }
 
-inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_request&                request,
-                                                   const asn1::e1ap::bearer_context_setup_request_s& asn1_request)
+[[nodiscard]] inline std::optional<e1ap_bearer_context_setup_request>
+make_e1ap_bearer_context_setup_request(const asn1::e1ap::bearer_context_setup_request_s& asn1_request,
+                                       cu_up_e1_index_t                                  e1_index,
+                                       ocudulog::basic_logger&                           logger)
 {
+  e1ap_bearer_context_setup_request request;
+
+  request.e1_index = e1_index;
+
   // Fill security info.
   request.security_info.security_algorithm.ciphering_algo =
       e1ap_asn1_to_ciphering_algorithm(asn1_request->security_info.security_algorithm.ciphering_algorithm);
@@ -210,9 +217,12 @@ inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
     pdu_session_res_item.pdu_session_id = uint_to_pdu_session_id(asn1_pdu_session_res_item.pdu_session_id);
 
     // Fill PDU session type.
-    if (!asn1_to_pdu_session_type(pdu_session_res_item.pdu_session_type, asn1_pdu_session_res_item.pdu_session_type)) {
-      return false;
+    std::optional<pdu_session_type_t> pdu_session_type =
+        asn1_to_pdu_session_type(asn1_pdu_session_res_item.pdu_session_type, logger);
+    if (!pdu_session_type) {
+      return std::nullopt;
     }
+    pdu_session_res_item.pdu_session_type = *pdu_session_type;
 
     // Fill S-NSSAI.
     pdu_session_res_item.snssai = e1ap_asn1_to_snssai(asn1_pdu_session_res_item.snssai);
@@ -222,7 +232,7 @@ inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
         asn1_to_up_transport_layer_info(asn1_pdu_session_res_item.ng_ul_up_tnl_info);
 
     // Fill security indication.
-    asn1_to_security_indication(pdu_session_res_item.security_ind, asn1_pdu_session_res_item.security_ind);
+    pdu_session_res_item.security_ind = asn1_to_security_indication(asn1_pdu_session_res_item.security_ind, logger);
 
     // Fill DRB to set up list NG-RAN.
     for (const auto& asn1_drb_to_setup_item : asn1_pdu_session_res_item.drb_to_setup_list_ng_ran) {
@@ -273,7 +283,7 @@ inline bool fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
     request.ue_inactivity_timer = std::chrono::seconds(asn1_request->ue_inactivity_timer);
   }
 
-  return true;
+  return request;
 }
 
 inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_context_setup_resp_c& asn1_response,
@@ -292,23 +302,24 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
     up_transport_layer_info_to_asn1(asn1_res_setup_item.ng_dl_up_tnl_info, res_setup_item.ng_dl_up_tnl_info);
 
     // Fill DRB Setup List NG-RAN.
-    e1ap_drb_item_list_to_asn1(asn1_res_setup_item.drb_setup_list_ng_ran, res_setup_item.drb_setup_list_ng_ran);
+    asn1_res_setup_item.drb_setup_list_ng_ran =
+        e1ap_drb_item_list_to_asn1<asn1::e1ap::drb_setup_item_ng_ran_s>(res_setup_item.drb_setup_list_ng_ran);
 
     // Fill DRB Failed List NG-RAN.
-    e1ap_drb_failed_item_list_to_asn1(asn1_res_setup_item.drb_failed_list_ng_ran,
-                                      res_setup_item.drb_failed_list_ng_ran);
+    asn1_res_setup_item.drb_failed_list_ng_ran =
+        e1ap_drb_failed_item_list_to_asn1<asn1::e1ap::drb_failed_item_ng_ran_s>(res_setup_item.drb_failed_list_ng_ran);
 
     // Fill Security Result.
     if (res_setup_item.security_result.has_value()) {
       asn1_res_setup_item.security_result_present = true;
-      security_result_to_asn1(asn1_res_setup_item.security_result, *res_setup_item.security_result);
+      asn1_res_setup_item.security_result         = security_result_to_asn1(*res_setup_item.security_result);
     }
 
     // Fill PDU Session Data Forwarding Info Response.
     if (res_setup_item.pdu_session_data_forwarding_info_resp.has_value()) {
       asn1_res_setup_item.pdu_session_data_forwarding_info_resp_present = true;
-      e1ap_data_forwarding_info_to_asn1(asn1_res_setup_item.pdu_session_data_forwarding_info_resp,
-                                        *res_setup_item.pdu_session_data_forwarding_info_resp);
+      asn1_res_setup_item.pdu_session_data_forwarding_info_resp =
+          e1ap_data_forwarding_info_to_asn1(*res_setup_item.pdu_session_data_forwarding_info_resp);
     }
 
     // Fill NG DL UP Unchanged.
@@ -339,10 +350,12 @@ inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_conte
   }
 }
 
-inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_modification_request&       request,
-                                                          const asn1::e1ap::bearer_context_mod_request_s& asn1_request,
-                                                          cu_up_ue_index_t                                ue_index)
+[[nodiscard]] inline std::optional<e1ap_bearer_context_modification_request>
+make_e1ap_bearer_context_modification_request(const asn1::e1ap::bearer_context_mod_request_s& asn1_request,
+                                              cu_up_ue_index_t                                ue_index,
+                                              ocudulog::basic_logger&                         logger)
 {
+  e1ap_bearer_context_modification_request request;
   request.ue_index = ue_index;
 
   // Fill security info.
@@ -410,17 +423,19 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
             uint_to_pdu_session_id(asn1_res_to_setup_mod_item.pdu_session_id);
 
         // Fill PDU session type.
-        if (!asn1_to_pdu_session_type(pdu_session_res_to_setup_mod_item.pdu_session_type,
-                                      asn1_res_to_setup_mod_item.pdu_session_type)) {
-          return false;
+        std::optional<pdu_session_type_t> pdu_session_type =
+            asn1_to_pdu_session_type(asn1_res_to_setup_mod_item.pdu_session_type, logger);
+        if (!pdu_session_type) {
+          return std::nullopt;
         }
+        pdu_session_res_to_setup_mod_item.pdu_session_type = *pdu_session_type;
 
         // Fill S-NSSAI.
         pdu_session_res_to_setup_mod_item.snssai = e1ap_asn1_to_snssai(asn1_res_to_setup_mod_item.snssai);
 
         // Fill security indication.
-        asn1_to_security_indication(pdu_session_res_to_setup_mod_item.security_ind,
-                                    asn1_res_to_setup_mod_item.security_ind);
+        pdu_session_res_to_setup_mod_item.security_ind =
+            asn1_to_security_indication(asn1_res_to_setup_mod_item.security_ind, logger);
 
         // Fill PDU session res ambr.
         if (asn1_res_to_setup_mod_item.pdu_session_res_ambr_present) {
@@ -458,12 +473,12 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
           drb_to_setup_mod_item_ng_ran.pdcp_cfg = e1ap_asn1_to_pdcp_config(asn1_drb_to_setup_mod_item_ng_ran.pdcp_cfg);
 
           // Fill cell group info.
-          e1ap_asn1_to_cell_group_info(drb_to_setup_mod_item_ng_ran.cell_group_info,
-                                       asn1_drb_to_setup_mod_item_ng_ran.cell_group_info);
+          drb_to_setup_mod_item_ng_ran.cell_group_info =
+              e1ap_asn1_to_cell_group_info(asn1_drb_to_setup_mod_item_ng_ran.cell_group_info);
 
           // Fill flow map info.
-          e1ap_asn1_to_flow_map_info(drb_to_setup_mod_item_ng_ran.qos_flow_info_to_be_setup,
-                                     asn1_drb_to_setup_mod_item_ng_ran.flow_map_info);
+          drb_to_setup_mod_item_ng_ran.qos_flow_info_to_be_setup =
+              e1ap_asn1_to_flow_map_info(asn1_drb_to_setup_mod_item_ng_ran.flow_map_info);
 
           // Fill DRB data forwarding info request.
           if (asn1_drb_to_setup_mod_item_ng_ran.drb_data_forwarding_info_request_present) {
@@ -628,7 +643,7 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
             drb_to_mod_item.cell_group_to_rem.push_back(cell_group_item_to_rem);
           }
           // Fill flow map info.
-          e1ap_asn1_to_flow_map_info(drb_to_mod_item.flow_map_info, asn1_drb_to_mod_item.flow_map_info);
+          drb_to_mod_item.flow_map_info = e1ap_asn1_to_flow_map_info(asn1_drb_to_mod_item.flow_map_info);
 
           // Fill DRB inactivity timer.
           if (asn1_drb_to_mod_item.drb_inactivity_timer_present) {
@@ -676,7 +691,7 @@ inline bool fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
         static_cast<e1ap_activity_notif_level>(static_cast<int>(asn1_request->activity_notif_level));
   }
 
-  return true;
+  return request;
 }
 
 inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_bearer_context_mod_resp_c& asn1_response,
@@ -697,7 +712,7 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Fill security result.
       if (res_setup_mod_item.security_result.has_value()) {
         asn1_res_setup_mod_item.security_result_present = true;
-        security_result_to_asn1(asn1_res_setup_mod_item.security_result, *res_setup_mod_item.security_result);
+        asn1_res_setup_mod_item.security_result         = security_result_to_asn1(*res_setup_mod_item.security_result);
       }
 
       // Fill NG DL UP TNL info.
@@ -706,17 +721,18 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Fill PDU session data forwarding info response.
       if (res_setup_mod_item.pdu_session_data_forwarding_info_resp.has_value()) {
         asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp_present = true;
-        e1ap_data_forwarding_info_to_asn1(asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp,
-                                          *res_setup_mod_item.pdu_session_data_forwarding_info_resp);
+        asn1_res_setup_mod_item.pdu_session_data_forwarding_info_resp =
+            e1ap_data_forwarding_info_to_asn1(*res_setup_mod_item.pdu_session_data_forwarding_info_resp);
       }
 
       // Fill DRB setup mod list NG-RAN.
-      e1ap_drb_item_list_to_asn1(asn1_res_setup_mod_item.drb_setup_mod_list_ng_ran,
-                                 res_setup_mod_item.drb_setup_list_ng_ran);
+      asn1_res_setup_mod_item.drb_setup_mod_list_ng_ran =
+          e1ap_drb_item_list_to_asn1<asn1::e1ap::drb_setup_mod_item_ng_ran_s>(res_setup_mod_item.drb_setup_list_ng_ran);
 
       // Fill DRB failed mod list NG-RAN.
-      e1ap_drb_failed_item_list_to_asn1(asn1_res_setup_mod_item.drb_failed_mod_list_ng_ran,
-                                        res_setup_mod_item.drb_failed_list_ng_ran);
+      asn1_res_setup_mod_item.drb_failed_mod_list_ng_ran =
+          e1ap_drb_failed_item_list_to_asn1<asn1::e1ap::drb_failed_mod_item_ng_ran_s>(
+              res_setup_mod_item.drb_failed_list_ng_ran);
 
       asn1_bearer_context_modification_response.pdu_session_res_setup_mod_list.push_back(asn1_res_setup_mod_item);
     }
@@ -754,22 +770,24 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       // Fill security result.
       if (res_modified_item.security_result.has_value()) {
         asn1_res_modified_item.security_result_present = true;
-        security_result_to_asn1(asn1_res_modified_item.security_result, *res_modified_item.security_result);
+        asn1_res_modified_item.security_result         = security_result_to_asn1(*res_modified_item.security_result);
       }
 
       // Fill PDU session data forwarding info response.
       if (res_modified_item.pdu_session_data_forwarding_info_resp.has_value()) {
         asn1_res_modified_item.pdu_session_data_forwarding_info_resp_present = true;
-        e1ap_data_forwarding_info_to_asn1(asn1_res_modified_item.pdu_session_data_forwarding_info_resp,
-                                          *res_modified_item.pdu_session_data_forwarding_info_resp);
+        asn1_res_modified_item.pdu_session_data_forwarding_info_resp =
+            e1ap_data_forwarding_info_to_asn1(*res_modified_item.pdu_session_data_forwarding_info_resp);
       }
 
       // Fill DRB setup list NG-RAN.
-      e1ap_drb_item_list_to_asn1(asn1_res_modified_item.drb_setup_list_ng_ran, res_modified_item.drb_setup_list_ng_ran);
+      asn1_res_modified_item.drb_setup_list_ng_ran =
+          e1ap_drb_item_list_to_asn1<asn1::e1ap::drb_setup_item_ng_ran_s>(res_modified_item.drb_setup_list_ng_ran);
 
       // Fill DRB failed list NG-RAN.
-      e1ap_drb_failed_item_list_to_asn1(asn1_res_modified_item.drb_failed_list_ng_ran,
-                                        res_modified_item.drb_failed_list_ng_ran);
+      asn1_res_modified_item.drb_failed_list_ng_ran =
+          e1ap_drb_failed_item_list_to_asn1<asn1::e1ap::drb_failed_item_ng_ran_s>(
+              res_modified_item.drb_failed_list_ng_ran);
 
       // Fill DRB modified list NG-RAN.
       for (const auto& drb_modified_item : res_modified_item.drb_modified_list_ng_ran) {
@@ -825,8 +843,9 @@ inline void fill_asn1_bearer_context_modification_response(asn1::e1ap::sys_beare
       }
 
       // Fill DRB failed to modify list NG-RAN.
-      e1ap_drb_failed_item_list_to_asn1(asn1_res_modified_item.drb_failed_to_modify_list_ng_ran,
-                                        res_modified_item.drb_failed_to_modify_list_ng_ran);
+      asn1_res_modified_item.drb_failed_to_modify_list_ng_ran =
+          e1ap_drb_failed_item_list_to_asn1<asn1::e1ap::drb_failed_to_modify_item_ng_ran_s>(
+              res_modified_item.drb_failed_to_modify_list_ng_ran);
 
       asn1_bearer_context_modification_response.pdu_session_res_modified_list.push_back(asn1_res_modified_item);
     }

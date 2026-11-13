@@ -174,25 +174,18 @@ e1ap_bearer_context_setup_response
 ocudu::ocucp::generate_e1ap_bearer_context_setup_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                           gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
-  e1ap_bearer_context_setup_response resp;
-
   e1ap_message asn1_res = generate_bearer_context_setup_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
-  fill_e1ap_bearer_context_setup_response(resp, asn1_res.pdu.successful_outcome().value.bearer_context_setup_resp());
-
-  return resp;
+  return make_e1ap_bearer_context_setup_response(asn1_res.pdu.successful_outcome().value.bearer_context_setup_resp(),
+                                                 ocudulog::fetch_basic_logger("TEST"));
 }
 
 e1ap_bearer_context_modification_response
 ocudu::ocucp::generate_e1ap_bearer_context_modification_response(gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id,
                                                                  gnb_cu_up_ue_e1ap_id_t cu_up_ue_e1ap_id)
 {
-  e1ap_bearer_context_modification_response resp;
-
   e1ap_message asn1_res = generate_bearer_context_modification_response(cu_cp_ue_e1ap_id, cu_up_ue_e1ap_id);
 
-  fill_e1ap_bearer_context_modification_response(resp,
-                                                 asn1_res.pdu.successful_outcome().value.bearer_context_mod_resp());
-
-  return resp;
+  return make_e1ap_bearer_context_modification_response(
+      asn1_res.pdu.successful_outcome().value.bearer_context_mod_resp(), ocudulog::fetch_basic_logger("TEST"));
 }

@@ -3,986 +3,304 @@
 // SPDX-License-Identifier: BSD-3-Clause-Open-MPI
 // Portions of this file may implement 3GPP specifications, which may be subject to additional licensing requirements.
 
+/// \file
+/// \brief Converters between E1AP ASN.1 types and OCUDU common E1AP types.
+
 #pragma once
 
-#include "ocudu/asn1/asn1_dispatch.h"
+#include "e1ap_asn1_converters_helpers.h"
+#include "ocudu/adt/slotted_vector.h"
+#include "ocudu/asn1/asn1_containers.h"
+#include "ocudu/asn1/asn1_types.h"
 #include "ocudu/asn1/e1ap/e1ap_ies.h"
 #include "ocudu/e1ap/common/e1ap_types.h"
+#include "ocudu/ocudulog/logger.h"
+#include "ocudu/ran/cause/common.h"
 #include "ocudu/ran/cause/e1ap_cause.h"
 #include "ocudu/ran/cu_types.h"
+#include "ocudu/ran/nr_cell_identity.h"
 #include "ocudu/ran/nr_cgi.h"
-#include "ocudu/ran/qos/qos_prio_level.h"
+#include "ocudu/ran/plmn_identity.h"
+#include "ocudu/ran/qos/qos_flow_id.h"
 #include "ocudu/ran/s_nssai.h"
-#include "ocudu/ran/sdap/sdap_config.h"
+#include "ocudu/ran/up_transport_layer_info.h"
 #include "ocudu/security/security.h"
+#include "ocudu/support/enum_utils.h"
 #include "ocudu/support/error_handling.h"
-#include <string>
+#include <cstdint>
+#include <optional>
+#include <variant>
+#include <vector>
 
 namespace ocudu {
 
 /// \brief Converts type \c ciphering_algorithm to an E1AP ASN.1 type.
-/// \param[in] ciph_algo Cyphering Algorithm object.
+///
+/// \warning The application is terminated if the ciphering algorithm is not valid.
+/// \param[in] ciph_algo Ciphering algorithm object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::ciphering_algorithm_e
-ciphering_algorithm_to_e1ap_asn1(const ocudu::security::ciphering_algorithm& ciph_algo)
+[[nodiscard]] inline asn1::e1ap::ciphering_algorithm_e
+ciphering_algorithm_to_e1ap_asn1(security::ciphering_algorithm ciph_algo)
 {
-  asn1::e1ap::ciphering_algorithm_e asn1_ciph_algo;
-
   switch (ciph_algo) {
-    case ocudu::security::ciphering_algorithm::nea0:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::nea0;
-      break;
-    case ocudu::security::ciphering_algorithm::nea1:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1;
-      break;
-    case ocudu::security::ciphering_algorithm::nea2:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2;
-      break;
-    case ocudu::security::ciphering_algorithm::nea3:
-      asn1_ciph_algo = asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
-      break;
+    case security::ciphering_algorithm::nea0:
+      return asn1::e1ap::ciphering_algorithm_opts::nea0;
+    case security::ciphering_algorithm::nea1:
+      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1;
+    case security::ciphering_algorithm::nea2:
+      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2;
+    case security::ciphering_algorithm::nea3:
+      return asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3;
     default:
       report_fatal_error("Invalid ciphering algorithm ({})", ciph_algo);
-      break;
   }
-
-  return asn1_ciph_algo;
 }
 
-/// \brief Converts E1AP ASN.1 type to type and \c ciphering_algorithm type.
-/// \param[in] asn1_ciph_algo ASN.1 Cyphering Algorithm object.
+/// \brief Converts an E1AP ASN.1 ciphering algorithm to a \c ciphering_algorithm type.
+///
+/// \warning The application is terminated if the ASN.1 ciphering algorithm is not recognized.
+/// \param[in] asn1_ciph_algo ASN.1 ciphering algorithm object.
 /// \return The \c ciphering_algorithm object where the result of the conversion is stored.
-inline ocudu::security::ciphering_algorithm
-e1ap_asn1_to_ciphering_algorithm(const asn1::e1ap::ciphering_algorithm_e& asn1_ciph_algo)
+[[nodiscard]] inline security::ciphering_algorithm
+e1ap_asn1_to_ciphering_algorithm(asn1::e1ap::ciphering_algorithm_e asn1_ciph_algo)
 {
-  ocudu::security::ciphering_algorithm ciph_algo;
-
   switch (asn1_ciph_algo) {
     case asn1::e1ap::ciphering_algorithm_opts::nea0:
-      ciph_algo = ocudu::security::ciphering_algorithm::nea0;
-      break;
+      return security::ciphering_algorithm::nea0;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea1:
-      ciph_algo = ocudu::security::ciphering_algorithm::nea1;
-      break;
+      return security::ciphering_algorithm::nea1;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea2:
-      ciph_algo = ocudu::security::ciphering_algorithm::nea2;
-      break;
+      return security::ciphering_algorithm::nea2;
     case asn1::e1ap::ciphering_algorithm_opts::c_neg128_nea3:
-      ciph_algo = ocudu::security::ciphering_algorithm::nea3;
-      break;
+      return security::ciphering_algorithm::nea3;
     default:
       report_fatal_error("Invalid ciphering algorithm ({})", fmt::underlying(asn1_ciph_algo.value));
   }
-
-  return ciph_algo;
 }
 
 /// \brief Converts type \c integrity_algorithm to an E1AP ASN.1 type.
-/// \param int_algo Integrity Protection Algorithm object.
+///
+/// \warning The application is terminated if the integrity algorithm is not valid.
+/// \param[in] int_algo Integrity Protection Algorithm object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::integrity_protection_algorithm_e
-integrity_algorithm_to_e1ap_asn1(const ocudu::security::integrity_algorithm& int_algo)
+[[nodiscard]] inline asn1::e1ap::integrity_protection_algorithm_e
+integrity_algorithm_to_e1ap_asn1(security::integrity_algorithm int_algo)
 {
-  asn1::e1ap::integrity_protection_algorithm_e asn1_int_algo = {};
-
   switch (int_algo) {
-    case ocudu::security::integrity_algorithm::nia0:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::nia0;
-      break;
-    case ocudu::security::integrity_algorithm::nia1:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1;
-      break;
-    case ocudu::security::integrity_algorithm::nia2:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2;
-      break;
-    case ocudu::security::integrity_algorithm::nia3:
-      asn1_int_algo = asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
-      break;
+    case security::integrity_algorithm::nia0:
+      return asn1::e1ap::integrity_protection_algorithm_opts::nia0;
+    case security::integrity_algorithm::nia1:
+      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1;
+    case security::integrity_algorithm::nia2:
+      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2;
+    case security::integrity_algorithm::nia3:
+      return asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3;
     default:
       report_fatal_error("Invalid integrity protection algorithm ({})", int_algo);
   }
-
-  return asn1_int_algo;
 }
 
-/// \brief Converts E1AP ASN.1 type to type and \c integrity_algorithm type.
+/// \brief Converts an E1AP ASN.1 integrity protection algorithm to an \c integrity_algorithm type.
+///
+/// \warning The application is terminated if the ASN.1 integrity protection algorithm is not recognized.
 /// \param[in] asn1_int_algo ASN.1 Integrity Protection Algorithm object.
 /// \return The \c integrity_algorithm object where the result of the conversion is stored.
-inline ocudu::security::integrity_algorithm
-e1ap_asn1_to_integrity_algorithm(const asn1::e1ap::integrity_protection_algorithm_e& asn1_int_algo)
+[[nodiscard]] inline security::integrity_algorithm
+e1ap_asn1_to_integrity_algorithm(asn1::e1ap::integrity_protection_algorithm_e asn1_int_algo)
 {
-  ocudu::security::integrity_algorithm int_algo;
-
   switch (asn1_int_algo) {
     case asn1::e1ap::integrity_protection_algorithm_opts::nia0:
-      int_algo = ocudu::security::integrity_algorithm::nia0;
-      break;
+      return security::integrity_algorithm::nia0;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia1:
-      int_algo = ocudu::security::integrity_algorithm::nia1;
-      break;
+      return security::integrity_algorithm::nia1;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia2:
-      int_algo = ocudu::security::integrity_algorithm::nia2;
-      break;
+      return security::integrity_algorithm::nia2;
     case asn1::e1ap::integrity_protection_algorithm_opts::i_neg128_nia3:
-      int_algo = ocudu::security::integrity_algorithm::nia3;
-      break;
+      return security::integrity_algorithm::nia3;
     default:
       report_fatal_error("Invalid integrity protection algorithm ({})", fmt::underlying(asn1_int_algo.value));
   }
-
-  return int_algo;
 }
 
-/// \brief Convert \c s_nssai_t type to E1AP ASN1 s-NSSAI.
-/// \param snssai The s-NSSAI type.
+/// \brief Converts \c s_nssai_t type to E1AP ASN.1 S-NSSAI.
+/// \param[in] snssai The S-NSSAI type.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(ocudu::s_nssai_t snssai)
+[[nodiscard]] inline asn1::e1ap::snssai_s snssai_to_e1ap_asn1(s_nssai_t snssai)
 {
-  asn1::e1ap::snssai_s asn1_snssai;
-  asn1_snssai.sst.from_number(snssai.sst.value());
-  if (snssai.sd.is_set()) {
-    asn1_snssai.sd_present = true;
-    asn1_snssai.sd.from_number(snssai.sd.value());
-  }
+  const slice_differentiator& sd         = snssai.sd;
+  bool                        sd_present = sd.is_set();
 
-  return asn1_snssai;
+  return asn1::e1ap::snssai_s{.sd_present      = sd_present,
+                              .ie_exts_present = false,
+                              .sst = details::number_to_fixed_octstring<details::sst_nof_octets>(snssai.sst.value()),
+                              .sd  = sd_present ? details::number_to_fixed_octstring<details::sd_nof_octets>(sd.value())
+                                                : asn1::fixed_octstring<details::sd_nof_octets, true>{},
+                              .ie_exts = asn1::e1ap::snssai_ext_ies_container{}};
 }
 
-/// \brief Convert E1AP ASN1 s-NSSAI to \c s_nssai_t type.
-/// \param asn1_snssai The E1AP ASN1 s-NSSAI.
+/// \brief Converts E1AP ASN.1 S-NSSAI to \c s_nssai_t type.
+/// \param[in] asn1_snssai The E1AP ASN.1 S-NSSAI.
 /// \return The \c s_nssai_t type object where the result of the conversion is stored.
-inline ocudu::s_nssai_t e1ap_asn1_to_snssai(asn1::e1ap::snssai_s asn1_snssai)
+[[nodiscard]] inline s_nssai_t e1ap_asn1_to_snssai(const asn1::e1ap::snssai_s& asn1_snssai)
 {
-  ocudu::s_nssai_t snssai;
-  snssai.sst = slice_service_type{(uint8_t)asn1_snssai.sst.to_number()};
-
-  if (asn1_snssai.sd_present) {
-    snssai.sd = slice_differentiator::create(asn1_snssai.sd.to_number()).value();
-  }
-
-  return snssai;
+  return s_nssai_t{.sst = slice_service_type{static_cast<uint8_t>(asn1_snssai.sst.to_number())},
+                   .sd  = asn1_snssai.sd_present ? slice_differentiator::create(asn1_snssai.sd.to_number()).value()
+                                                 : slice_differentiator{}};
 }
 
-/// \brief Convert \c nr_cell_global_id_t to E1AP ASN.1.
-/// \param[in] nr_cgi The common type nr cgi.
-/// \return The ASN.1 nr cgi.
-inline asn1::e1ap::nr_cgi_s nr_cgi_to_e1ap_asn1(const nr_cell_global_id_t& nr_cgi)
+/// \brief Converts \c nr_cell_global_id_t to E1AP ASN.1.
+/// \param[in] nr_cgi The common type NR CGI.
+/// \return The ASN.1 NR CGI.
+[[nodiscard]] inline asn1::e1ap::nr_cgi_s nr_cgi_to_e1ap_asn1(nr_cell_global_id_t nr_cgi)
 {
-  asn1::e1ap::nr_cgi_s asn1_nr_cgi;
+  auto create_nr_cell_id = [](uint64_t nr_cell_identity_value) {
+    asn1::fixed_bitstring<details::nr_cell_id_nof_bits, false, true> nr_cell_id;
+    nr_cell_id.from_number(nr_cell_identity_value);
+    return nr_cell_id;
+  };
 
-  asn1_nr_cgi.nr_cell_id.from_number(nr_cgi.nci.value());
-  asn1_nr_cgi.plmn_id = nr_cgi.plmn_id.to_bytes();
-
-  return asn1_nr_cgi;
-}
-
-inline asn1::e1ap::sdap_hdr_ul_opts::options sdap_hdr_ul_cfg_to_e1ap_asn1(sdap_hdr_ul_cfg hdr_cfg)
-{
-  asn1::e1ap::sdap_hdr_ul_opts::options asn1_hdr_ul_opts;
-
-  if (hdr_cfg == sdap_hdr_ul_cfg::absent) {
-    asn1_hdr_ul_opts = asn1::e1ap::sdap_hdr_ul_opts::absent;
-  } else {
-    asn1_hdr_ul_opts = asn1::e1ap::sdap_hdr_ul_opts::present;
-  }
-
-  return asn1_hdr_ul_opts;
-}
-
-inline asn1::e1ap::sdap_hdr_dl_opts::options sdap_hdr_dl_cfg_to_e1ap_asn1(sdap_hdr_dl_cfg hdr_cfg)
-{
-  asn1::e1ap::sdap_hdr_dl_opts::options asn1_hdr_dl_opts;
-
-  if (hdr_cfg == sdap_hdr_dl_cfg::absent) {
-    asn1_hdr_dl_opts = asn1::e1ap::sdap_hdr_dl_opts::absent;
-  } else {
-    asn1_hdr_dl_opts = asn1::e1ap::sdap_hdr_dl_opts::present;
-  }
-
-  return asn1_hdr_dl_opts;
+  return asn1::e1ap::nr_cgi_s{.ie_exts_present = false,
+                              .plmn_id =
+                                  asn1::fixed_octstring<details::plmn_id_nof_octets, true>{nr_cgi.plmn_id.to_bytes()},
+                              .nr_cell_id = create_nr_cell_id(nr_cgi.nci.value()),
+                              .ie_exts    = asn1::e1ap::nr_cgi_ext_ies_container{}};
 }
 
 /// \brief Converts type \c sdap_config to an E1AP ASN.1 type.
-/// \param sdap_cfg sdap config object.
+/// \param[in] sdap_cfg SDAP configuration object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(const sdap_config_t& sdap_cfg)
+[[nodiscard]] inline asn1::e1ap::sdap_cfg_s sdap_config_to_e1ap_asn1(const sdap_config_t& sdap_cfg)
 {
-  asn1::e1ap::sdap_cfg_s asn1_sdap_cfg;
-
-  if (sdap_cfg.default_drb) {
-    asn1_sdap_cfg.default_drb = asn1::e1ap::default_drb_opts::options::true_value;
-  } else {
-    asn1_sdap_cfg.default_drb = asn1::e1ap::default_drb_opts::options::false_value;
-  }
-
-  asn1_sdap_cfg.sdap_hdr_ul.value = sdap_hdr_ul_cfg_to_e1ap_asn1(sdap_cfg.sdap_hdr_ul);
-  asn1_sdap_cfg.sdap_hdr_dl.value = sdap_hdr_dl_cfg_to_e1ap_asn1(sdap_cfg.sdap_hdr_dl);
-
-  return asn1_sdap_cfg;
+  return asn1::e1ap::sdap_cfg_s{.ie_exts_present = false,
+                                .default_drb     = sdap_cfg.default_drb
+                                                       ? asn1::e1ap::default_drb_opts::options::true_value
+                                                       : asn1::e1ap::default_drb_opts::options::false_value,
+                                .sdap_hdr_ul     = details::sdap_hdr_ul_cfg_to_e1ap_asn1(sdap_cfg.sdap_hdr_ul),
+                                .sdap_hdr_dl     = details::sdap_hdr_dl_cfg_to_e1ap_asn1(sdap_cfg.sdap_hdr_dl),
+                                .ie_exts         = asn1::e1ap::sdap_cfg_ext_ies_container{}};
 }
 
-inline sdap_hdr_ul_cfg e1ap_asn1_to_sdap_hdr_ul_cfg(asn1::e1ap::sdap_hdr_ul_opts::options asn1_hdr_ul_opts)
+/// \brief Converts an E1AP ASN.1 SDAP configuration to a \c sdap_config_t type.
+/// \param[in] asn1_sdap_cfg E1AP ASN.1 config object.
+/// \return The \c sdap_config_t object where the result of the conversion is stored.
+[[nodiscard]] inline sdap_config_t e1ap_asn1_to_sdap_config(const asn1::e1ap::sdap_cfg_s& asn1_sdap_cfg)
 {
-  sdap_hdr_ul_cfg hdr_cfg;
-
-  switch (asn1_hdr_ul_opts) {
-    case asn1::e1ap::sdap_hdr_ul_opts::absent:
-      hdr_cfg = sdap_hdr_ul_cfg::absent;
-      break;
-    case asn1::e1ap::sdap_hdr_ul_opts::present:
-      hdr_cfg = sdap_hdr_ul_cfg::present;
-      break;
-    default:
-      ocudu_assertion_failure("Invalid SDAP-Header-UL option ({})", fmt::underlying(asn1_hdr_ul_opts));
-      hdr_cfg = {};
-  }
-
-  return hdr_cfg;
-}
-
-inline sdap_hdr_dl_cfg e1ap_asn1_to_sdap_hdr_dl_cfg(asn1::e1ap::sdap_hdr_dl_opts::options asn1_hdr_dl_opts)
-{
-  sdap_hdr_dl_cfg hdr_cfg;
-
-  switch (asn1_hdr_dl_opts) {
-    case asn1::e1ap::sdap_hdr_dl_opts::absent:
-      hdr_cfg = sdap_hdr_dl_cfg::absent;
-      break;
-    case asn1::e1ap::sdap_hdr_dl_opts::present:
-      hdr_cfg = sdap_hdr_dl_cfg::present;
-      break;
-    default:
-      ocudu_assertion_failure("Invalid SDAP-Header-DL option ({})", fmt::underlying(asn1_hdr_dl_opts));
-      hdr_cfg = {};
-  }
-
-  return hdr_cfg;
-}
-
-/// \brief Converts E1AP ASN.1 type to \c sdap_config to type.
-/// \param asn1_sdap_cfg E1AP ASN.1 config object.
-/// \return The \c sdap_config object where the result of the conversion is stored.
-inline sdap_config_t e1ap_asn1_to_sdap_config(asn1::e1ap::sdap_cfg_s asn1_sdap_cfg)
-{
-  sdap_config_t sdap_cfg;
-
-  sdap_cfg.default_drb = asn1_sdap_cfg.default_drb == asn1::e1ap::default_drb_opts::options::true_value;
-  sdap_cfg.sdap_hdr_dl = e1ap_asn1_to_sdap_hdr_dl_cfg(asn1_sdap_cfg.sdap_hdr_dl);
-  sdap_cfg.sdap_hdr_ul = e1ap_asn1_to_sdap_hdr_ul_cfg(asn1_sdap_cfg.sdap_hdr_ul);
-
-  return sdap_cfg;
-}
-
-/// \brief Converts \c rlc_mode type to an E1AP ASN.1 type.
-/// \param rlc_mod rlc_mode type.
-/// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::rlc_mode_e rlc_mode_to_asn1(ocudu::pdcp_rlc_mode rlc_mod)
-{
-  asn1::e1ap::rlc_mode_e asn1_rlc_mode = {};
-
-  switch (rlc_mod) {
-    case ocudu::pdcp_rlc_mode::um:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional;
-      break;
-    case ocudu::pdcp_rlc_mode::am:
-      asn1_rlc_mode = asn1::e1ap::rlc_mode_opts::rlc_am;
-      break;
-    default:
-      report_fatal_error("Invalid RLC mode ({})", rlc_mod);
-  }
-
-  return asn1_rlc_mode;
-}
-
-/// \brief Converts E1AP ASN.1 type to an \c rlc_mode type.
-/// \param asn1_rlc_mod E1AP ASN.1 type.
-/// \return The rlc_mode object where the result of the conversion is stored.
-inline ocudu::pdcp_rlc_mode asn1_to_rlc_mode(asn1::e1ap::rlc_mode_e asn1_rlc_mod)
-{
-  ocudu::pdcp_rlc_mode rlc_mode;
-
-  switch (asn1_rlc_mod) {
-    case asn1::e1ap::rlc_mode_opts::rlc_um_bidirectional:
-    case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_ul:
-    case asn1::e1ap::rlc_mode_opts::rlc_um_unidirectional_dl:
-      rlc_mode = ocudu::pdcp_rlc_mode::um;
-      break;
-    case asn1::e1ap::rlc_mode_opts::rlc_am:
-      rlc_mode = ocudu::pdcp_rlc_mode::am;
-      break;
-    default:
-      report_fatal_error("Invalid RLC mode: {}", asn1_rlc_mod.to_string());
-      break;
-  }
-
-  return rlc_mode;
-}
-
-/// \brief Convert PDCP SN size from enum to E1AP ASN.1.
-inline asn1::e1ap::pdcp_sn_size_e pdcp_sn_size_to_asn1(pdcp_sn_size sn_size)
-{
-  asn1::e1ap::pdcp_sn_size_e asn1_sn_size = {};
-
-  switch (sn_size) {
-    case pdcp_sn_size::size12bits:
-      asn1_sn_size = asn1::e1ap::pdcp_sn_size_e::s_neg12;
-      break;
-    case pdcp_sn_size::size18bits:
-      asn1_sn_size = asn1::e1ap::pdcp_sn_size_e::s_neg18;
-      break;
-    default:
-      report_fatal_error("Unsupported PDCP SN size. PDCP SN size={}", sn_size);
-  }
-
-  return asn1_sn_size;
-}
-
-/// \brief Convert E1AP ASN.1 to PDCP SN size.
-inline pdcp_sn_size asn1_to_pdcp_sn_size(asn1::e1ap::pdcp_sn_size_e asn1_sn_size)
-{
-  pdcp_sn_size sn_size;
-
-  switch (asn1_sn_size) {
-    case asn1::e1ap::pdcp_sn_size_e::s_neg12:
-      sn_size = pdcp_sn_size::size12bits;
-      break;
-    case asn1::e1ap::pdcp_sn_size_e::s_neg18:
-      sn_size = pdcp_sn_size::size18bits;
-      break;
-    default:
-      report_fatal_error("Unsupported PDCP SN size. PDCP SN size={}", fmt::underlying(asn1_sn_size.value));
-  }
-
-  return sn_size;
-}
-
-/// \brief Converts E1AP ASN.1 discard timer type to \c pdcp_discard_timer type.
-inline pdcp_discard_timer asn1_to_pdcp_discard_timer(asn1::e1ap::discard_timer_e asn1_discard_timer)
-{
-  pdcp_discard_timer discard_timer;
-
-  switch (asn1_discard_timer) {
-    case asn1::e1ap::discard_timer_opts::ms10:
-      discard_timer = pdcp_discard_timer::ms10;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms20:
-      discard_timer = pdcp_discard_timer::ms20;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms30:
-      discard_timer = pdcp_discard_timer::ms30;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms40:
-      discard_timer = pdcp_discard_timer::ms40;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms50:
-      discard_timer = pdcp_discard_timer::ms50;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms60:
-      discard_timer = pdcp_discard_timer::ms60;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms75:
-      discard_timer = pdcp_discard_timer::ms75;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms100:
-      discard_timer = pdcp_discard_timer::ms100;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms150:
-      discard_timer = pdcp_discard_timer::ms150;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms200:
-      discard_timer = pdcp_discard_timer::ms200;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms250:
-      discard_timer = pdcp_discard_timer::ms250;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms300:
-      discard_timer = pdcp_discard_timer::ms300;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms500:
-      discard_timer = pdcp_discard_timer::ms500;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms750:
-      discard_timer = pdcp_discard_timer::ms750;
-      break;
-    case asn1::e1ap::discard_timer_opts::ms1500:
-      discard_timer = pdcp_discard_timer::ms1500;
-      break;
-    case asn1::e1ap::discard_timer_opts::infinity:
-      discard_timer = pdcp_discard_timer::infinity;
-      break;
-    default:
-      report_fatal_error("Unsupported PDCP discard timer. PDCP discard timer={}",
-                         fmt::underlying(asn1_discard_timer.value));
-  }
-  return discard_timer;
-}
-
-/// \brief Converts \c pdcp_discard_timer type to E1AP ASN.1 discard timer type.
-inline asn1::e1ap::discard_timer_e pdcp_discard_timer_to_asn1(pdcp_discard_timer discard_timer)
-{
-  asn1::e1ap::discard_timer_e asn1_discard_timer = {};
-
-  switch (discard_timer) {
-    case pdcp_discard_timer::ms10:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms10;
-      break;
-    case pdcp_discard_timer::ms20:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms20;
-      break;
-    case pdcp_discard_timer::ms30:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms30;
-      break;
-    case pdcp_discard_timer::ms40:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms40;
-      break;
-    case pdcp_discard_timer::ms50:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms50;
-      break;
-    case pdcp_discard_timer::ms60:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms60;
-      break;
-    case pdcp_discard_timer::ms75:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms75;
-      break;
-    case pdcp_discard_timer::ms100:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms100;
-      break;
-    case pdcp_discard_timer::ms150:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms150;
-      break;
-    case pdcp_discard_timer::ms200:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms200;
-      break;
-    case pdcp_discard_timer::ms250:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms250;
-      break;
-    case pdcp_discard_timer::ms300:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms300;
-      break;
-    case pdcp_discard_timer::ms500:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms500;
-      break;
-    case pdcp_discard_timer::ms750:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms750;
-      break;
-    case pdcp_discard_timer::ms1500:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::ms1500;
-      break;
-    case pdcp_discard_timer::infinity:
-      asn1_discard_timer = asn1::e1ap::discard_timer_opts::infinity;
-      break;
-    default:
-      report_fatal_error("Unsupported PDCP discard timer. PDCP discard timer={}", discard_timer);
-  }
-
-  return asn1_discard_timer;
-}
-
-/// \brief Converts E1AP ASN.1 t-Reordering type to \c pdcp_t_reordering type.
-inline pdcp_t_reordering asn1_to_pdcp_t_reordering(asn1::e1ap::t_reordering_e asn1_t_reordering)
-{
-  pdcp_t_reordering t_reordering;
-
-  // t-Reordering
-  switch (asn1_t_reordering) {
-    case asn1::e1ap::t_reordering_e::ms0:
-      t_reordering = pdcp_t_reordering::ms0;
-      break;
-    case asn1::e1ap::t_reordering_e::ms1:
-      t_reordering = pdcp_t_reordering::ms1;
-      break;
-    case asn1::e1ap::t_reordering_e::ms2:
-      t_reordering = pdcp_t_reordering::ms2;
-      break;
-    case asn1::e1ap::t_reordering_e::ms4:
-      t_reordering = pdcp_t_reordering::ms4;
-      break;
-    case asn1::e1ap::t_reordering_e::ms5:
-      t_reordering = pdcp_t_reordering::ms5;
-      break;
-    case asn1::e1ap::t_reordering_e::ms8:
-      t_reordering = pdcp_t_reordering::ms8;
-      break;
-    case asn1::e1ap::t_reordering_e::ms10:
-      t_reordering = pdcp_t_reordering::ms10;
-      break;
-    case asn1::e1ap::t_reordering_e::ms15:
-      t_reordering = pdcp_t_reordering::ms15;
-      break;
-    case asn1::e1ap::t_reordering_e::ms20:
-      t_reordering = pdcp_t_reordering::ms20;
-      break;
-    case asn1::e1ap::t_reordering_e::ms30:
-      t_reordering = pdcp_t_reordering::ms30;
-      break;
-    case asn1::e1ap::t_reordering_e::ms40:
-      t_reordering = pdcp_t_reordering::ms40;
-      break;
-    case asn1::e1ap::t_reordering_e::ms50:
-      t_reordering = pdcp_t_reordering::ms50;
-      break;
-    case asn1::e1ap::t_reordering_e::ms60:
-      t_reordering = pdcp_t_reordering::ms60;
-      break;
-    case asn1::e1ap::t_reordering_e::ms80:
-      t_reordering = pdcp_t_reordering::ms80;
-      break;
-    case asn1::e1ap::t_reordering_e::ms100:
-      t_reordering = pdcp_t_reordering::ms100;
-      break;
-    case asn1::e1ap::t_reordering_e::ms120:
-      t_reordering = pdcp_t_reordering::ms120;
-      break;
-    case asn1::e1ap::t_reordering_e::ms140:
-      t_reordering = pdcp_t_reordering::ms140;
-      break;
-    case asn1::e1ap::t_reordering_e::ms160:
-      t_reordering = pdcp_t_reordering::ms160;
-      break;
-    case asn1::e1ap::t_reordering_e::ms180:
-      t_reordering = pdcp_t_reordering::ms180;
-      break;
-    case asn1::e1ap::t_reordering_e::ms200:
-      t_reordering = pdcp_t_reordering::ms200;
-      break;
-    case asn1::e1ap::t_reordering_e::ms220:
-      t_reordering = pdcp_t_reordering::ms220;
-      break;
-    case asn1::e1ap::t_reordering_e::ms240:
-      t_reordering = pdcp_t_reordering::ms240;
-      break;
-    case asn1::e1ap::t_reordering_e::ms260:
-      t_reordering = pdcp_t_reordering::ms260;
-      break;
-    case asn1::e1ap::t_reordering_e::ms280:
-      t_reordering = pdcp_t_reordering::ms280;
-      break;
-    case asn1::e1ap::t_reordering_e::ms300:
-      t_reordering = pdcp_t_reordering::ms300;
-      break;
-    case asn1::e1ap::t_reordering_e::ms500:
-      t_reordering = pdcp_t_reordering::ms500;
-      break;
-    case asn1::e1ap::t_reordering_e::ms750:
-      t_reordering = pdcp_t_reordering::ms750;
-      break;
-    case asn1::e1ap::t_reordering_e::ms1000:
-      t_reordering = pdcp_t_reordering::ms1000;
-      break;
-    case asn1::e1ap::t_reordering_e::ms1250:
-      t_reordering = pdcp_t_reordering::ms1250;
-      break;
-    case asn1::e1ap::t_reordering_e::ms1500:
-      t_reordering = pdcp_t_reordering::ms1500;
-      break;
-    case asn1::e1ap::t_reordering_e::ms1750:
-      t_reordering = pdcp_t_reordering::ms1750;
-      break;
-    case asn1::e1ap::t_reordering_e::ms2000:
-      t_reordering = pdcp_t_reordering::ms2000;
-      break;
-    case asn1::e1ap::t_reordering_e::ms2250:
-      t_reordering = pdcp_t_reordering::ms2250;
-      break;
-    case asn1::e1ap::t_reordering_e::ms2500:
-      t_reordering = pdcp_t_reordering::ms2500;
-      break;
-    case asn1::e1ap::t_reordering_e::ms2750:
-      t_reordering = pdcp_t_reordering::ms2750;
-      break;
-    case asn1::e1ap::t_reordering_e::ms3000:
-      t_reordering = pdcp_t_reordering::ms3000;
-      break;
-    default:
-      report_fatal_error("Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}",
-                         fmt::underlying(asn1_t_reordering.value));
-  }
-
-  return t_reordering;
-}
-
-inline asn1::e1ap::t_reordering_e pdcp_t_reordering_to_asn1(pdcp_t_reordering t_reordering)
-{
-  asn1::e1ap::t_reordering_e asn1_t_reordering = {};
-
-  switch (t_reordering) {
-    case pdcp_t_reordering::ms0:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms0;
-      break;
-    case pdcp_t_reordering::ms1:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1;
-      break;
-    case pdcp_t_reordering::ms2:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2;
-      break;
-    case pdcp_t_reordering::ms4:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms4;
-      break;
-    case pdcp_t_reordering::ms5:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms5;
-      break;
-    case pdcp_t_reordering::ms8:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms8;
-      break;
-    case pdcp_t_reordering::ms10:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms10;
-      break;
-    case pdcp_t_reordering::ms15:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms15;
-      break;
-    case pdcp_t_reordering::ms20:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms20;
-      break;
-    case pdcp_t_reordering::ms30:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms30;
-      break;
-    case pdcp_t_reordering::ms40:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms40;
-      break;
-    case pdcp_t_reordering::ms50:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms50;
-      break;
-    case pdcp_t_reordering::ms60:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms60;
-      break;
-    case pdcp_t_reordering::ms80:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms80;
-      break;
-    case pdcp_t_reordering::ms100:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms100;
-      break;
-    case pdcp_t_reordering::ms120:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms120;
-      break;
-    case pdcp_t_reordering::ms140:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms140;
-      break;
-    case pdcp_t_reordering::ms160:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms160;
-      break;
-    case pdcp_t_reordering::ms180:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms180;
-      break;
-    case pdcp_t_reordering::ms200:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms200;
-      break;
-    case pdcp_t_reordering::ms220:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms220;
-      break;
-    case pdcp_t_reordering::ms240:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms240;
-      break;
-    case pdcp_t_reordering::ms260:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms260;
-      break;
-    case pdcp_t_reordering::ms280:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms280;
-      break;
-    case pdcp_t_reordering::ms300:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms300;
-      break;
-    case pdcp_t_reordering::ms500:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms500;
-      break;
-    case pdcp_t_reordering::ms750:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms750;
-      break;
-    case pdcp_t_reordering::ms1000:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1000;
-      break;
-    case pdcp_t_reordering::ms1250:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1250;
-      break;
-    case pdcp_t_reordering::ms1500:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1500;
-      break;
-    case pdcp_t_reordering::ms1750:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms1750;
-      break;
-    case pdcp_t_reordering::ms2000:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2000;
-      break;
-    case pdcp_t_reordering::ms2250:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2250;
-      break;
-    case pdcp_t_reordering::ms2500:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2500;
-      break;
-    case pdcp_t_reordering::ms2750:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms2750;
-      break;
-    case pdcp_t_reordering::ms3000:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::ms3000;
-      break;
-    case pdcp_t_reordering::infinity:
-      asn1_t_reordering = asn1::e1ap::t_reordering_e::nulltype;
-      break;
-    default:
-      report_fatal_error("Unsupported PDCP t-reordering timer. PDCP t-reordering timer={}", t_reordering);
-  }
-
-  return asn1_t_reordering;
+  return sdap_config_t{.pdu_session = pdu_session_id_t::invalid,
+                       .sdap_hdr_dl = details::e1ap_asn1_to_sdap_hdr_dl_cfg(asn1_sdap_cfg.sdap_hdr_dl),
+                       .sdap_hdr_ul = details::e1ap_asn1_to_sdap_hdr_ul_cfg(asn1_sdap_cfg.sdap_hdr_ul),
+                       .default_drb = asn1_sdap_cfg.default_drb == asn1::e1ap::default_drb_opts::options::true_value,
+                       .mapped_qos_flows_to_add     = std::vector<qos_flow_id_t>{},
+                       .mapped_qos_flows_to_release = std::vector<qos_flow_id_t>{}};
 }
 
 /// \brief Converts type \c e1ap_pdcp_config to an E1AP ASN.1 type.
-/// \param pdcp_cfg pdcp config object.
+/// \param[in] pdcp_cfg PDCP configuration object.
 /// \return The E1AP ASN.1 object where the result of the conversion is stored.
-inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(const e1ap_pdcp_config& pdcp_cfg)
+[[nodiscard]] inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(const e1ap_pdcp_config& pdcp_cfg)
 {
-  asn1::e1ap::pdcp_cfg_s asn1_pdcp_cfg;
+  const std::optional<e1ap_rohc_config>&   rohc_config   = pdcp_cfg.rohc_config;
+  const std::optional<pdcp_discard_timer>& discard_timer = pdcp_cfg.discard_timer;
 
-  // Fill PDCP SN size DL.
-  asn1_pdcp_cfg.pdcp_sn_size_dl = pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_dl);
-
-  // Fill PDCP SN size UL.
-  asn1_pdcp_cfg.pdcp_sn_size_ul = pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_ul);
-
-  // Fill RLC mode.
-  asn1_pdcp_cfg.rlc_mode = rlc_mode_to_asn1(pdcp_cfg.rlc_mod);
-
-  // Fill ROHC params.
-  if (pdcp_cfg.rohc_config.has_value()) {
-    const auto& rohc_config           = *pdcp_cfg.rohc_config;
-    asn1_pdcp_cfg.rohc_params_present = true;
-    switch (rohc_config.rohc_type) {
-      case e1ap_rohc_type::rohc: {
-        asn1_pdcp_cfg.rohc_params.set_rohc();
-        auto& e1ap_rohc         = asn1_pdcp_cfg.rohc_params.rohc();
-        e1ap_rohc.max_c_id      = rohc_config.rohc_params.max_cid;
-        e1ap_rohc.rohc_profiles = rohc_config.rohc_params.rohc_profiles;
-        if (rohc_config.rohc_params.continue_rohc) {
-          e1ap_rohc.continue_rohc_present = true;
-          e1ap_rohc.continue_rohc         = asn1::e1ap::rohc_s::continue_rohc_opts::options::true_value;
-        }
-      } break;
-      case e1ap_rohc_type::uplink_only_rohc: {
-        asn1_pdcp_cfg.rohc_params.set_ul_only_rohc();
-        auto& e1ap_rohc         = asn1_pdcp_cfg.rohc_params.ul_only_rohc();
-        e1ap_rohc.max_c_id      = rohc_config.rohc_params.max_cid;
-        e1ap_rohc.rohc_profiles = rohc_config.rohc_params.rohc_profiles;
-        if (rohc_config.rohc_params.continue_rohc) {
-          e1ap_rohc.continue_rohc_present = true;
-          e1ap_rohc.continue_rohc         = asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::true_value;
-        }
-      } break;
-    }
-  } else {
-    asn1_pdcp_cfg.rohc_params_present = false;
-  }
-
-  // Fill t reordering timer.
-  if (pdcp_cfg.t_reordering_timer.has_value()) {
-    asn1_pdcp_cfg.t_reordering_timer_present      = true;
-    asn1_pdcp_cfg.t_reordering_timer.t_reordering = pdcp_t_reordering_to_asn1(pdcp_cfg.t_reordering_timer.value());
-  }
-
-  // Fill discard timer.
-  if (pdcp_cfg.discard_timer.has_value()) {
-    asn1_pdcp_cfg.discard_timer_present = true;
-    asn1_pdcp_cfg.discard_timer         = pdcp_discard_timer_to_asn1(pdcp_cfg.discard_timer.value());
-  }
-
-  // Fill UL data split thres.
-  if (pdcp_cfg.ul_data_split_thres.has_value()) {
-    asn1_pdcp_cfg.ul_data_split_thres_present = true;
-    asn1::number_to_enum(asn1_pdcp_cfg.ul_data_split_thres, pdcp_cfg.ul_data_split_thres.value());
-  }
-
-  // Fill PDCP dupl.
-  if (pdcp_cfg.pdcp_dupl.has_value()) {
-    asn1_pdcp_cfg.pdcp_dupl_present = true;
-    if (pdcp_cfg.pdcp_dupl.value()) {
-      asn1_pdcp_cfg.pdcp_dupl = asn1::e1ap::pdcp_dupl_opts::options::true_value;
-    } else {
-      asn1_pdcp_cfg.pdcp_dupl = asn1::e1ap::pdcp_dupl_opts::options::nulltype;
-    }
-  }
-
-  // Fill PDCP reest.
-  if (pdcp_cfg.pdcp_reest.has_value()) {
-    asn1_pdcp_cfg.pdcp_reest_present = true;
-    if (pdcp_cfg.pdcp_reest.value()) {
-      asn1_pdcp_cfg.pdcp_reest = asn1::e1ap::pdcp_reest_opts::options::true_value;
-    } else {
-      asn1_pdcp_cfg.pdcp_reest = asn1::e1ap::pdcp_reest_opts::options::nulltype;
-    }
-  }
-
-  // Fill PDCP data recovery.
-  if (pdcp_cfg.pdcp_data_recovery.has_value()) {
-    asn1_pdcp_cfg.pdcp_data_recovery_present = true;
-    if (pdcp_cfg.pdcp_data_recovery.value()) {
-      asn1_pdcp_cfg.pdcp_data_recovery = asn1::e1ap::pdcp_data_recovery_opts::options::true_value;
-    } else {
-      asn1_pdcp_cfg.pdcp_data_recovery = asn1::e1ap::pdcp_data_recovery_opts::options::nulltype;
-    }
-  }
-
-  // Fill dupl activation.
-  if (pdcp_cfg.dupl_activation.has_value()) {
-    asn1_pdcp_cfg.dupl_activation_present = true;
-    asn1_pdcp_cfg.dupl_activation =
-        static_cast<asn1::e1ap::dupl_activation_opts::options>((int)pdcp_cfg.dupl_activation.value());
-  }
-
-  // Fill out of order delivery.
-  if (pdcp_cfg.out_of_order_delivery.has_value()) {
-    asn1_pdcp_cfg.out_of_order_delivery_present = true;
-    if (pdcp_cfg.out_of_order_delivery.value()) {
-      asn1_pdcp_cfg.out_of_order_delivery = asn1::e1ap::out_of_order_delivery_opts::options::true_value;
-    } else {
-      asn1_pdcp_cfg.out_of_order_delivery = asn1::e1ap::out_of_order_delivery_opts::options::nulltype;
-    }
-  }
-
-  return asn1_pdcp_cfg;
+  return asn1::e1ap::pdcp_cfg_s{
+      .rohc_params_present           = rohc_config.has_value(),
+      .t_reordering_timer_present    = pdcp_cfg.t_reordering_timer.has_value(),
+      .discard_timer_present         = discard_timer.has_value(),
+      .ul_data_split_thres_present   = pdcp_cfg.ul_data_split_thres.has_value(),
+      .pdcp_dupl_present             = pdcp_cfg.pdcp_dupl.has_value(),
+      .pdcp_reest_present            = pdcp_cfg.pdcp_reest.has_value(),
+      .pdcp_data_recovery_present    = pdcp_cfg.pdcp_data_recovery.has_value(),
+      .dupl_activation_present       = pdcp_cfg.dupl_activation.has_value(),
+      .out_of_order_delivery_present = pdcp_cfg.out_of_order_delivery.has_value(),
+      .ie_exts_present               = false,
+      .pdcp_sn_size_ul               = details::pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_ul),
+      .pdcp_sn_size_dl               = details::pdcp_sn_size_to_asn1(pdcp_cfg.pdcp_sn_size_dl),
+      .rlc_mode                      = details::rlc_mode_to_asn1(pdcp_cfg.rlc_mod),
+      .rohc_params        = rohc_config ? details::e1ap_rohc_config_to_asn1(*rohc_config) : asn1::e1ap::rohc_params_c{},
+      .t_reordering_timer = details::pdcp_t_reordering_timer_to_asn1(pdcp_cfg.t_reordering_timer),
+      .discard_timer =
+          discard_timer ? details::pdcp_discard_timer_to_asn1(*discard_timer) : asn1::e1ap::discard_timer_e{},
+      .ul_data_split_thres = details::ul_data_split_thres_to_asn1(pdcp_cfg.ul_data_split_thres),
+      .pdcp_dupl           = details::optional_bool_to_asn1<asn1::e1ap::pdcp_dupl_e>(pdcp_cfg.pdcp_dupl),
+      .pdcp_reest          = details::optional_bool_to_asn1<asn1::e1ap::pdcp_reest_e>(pdcp_cfg.pdcp_reest),
+      .pdcp_data_recovery =
+          details::optional_bool_to_asn1<asn1::e1ap::pdcp_data_recovery_e>(pdcp_cfg.pdcp_data_recovery),
+      .dupl_activation = details::dupl_activation_to_asn1(pdcp_cfg.dupl_activation),
+      .out_of_order_delivery =
+          details::optional_bool_to_asn1<asn1::e1ap::out_of_order_delivery_e>(pdcp_cfg.out_of_order_delivery),
+      .ie_exts = details::make_empty_pdcp_cfg_ext_ies()};
 }
 
 /// \brief Converts E1AP ASN.1 type to an \c e1ap_pdcp_config type.
-/// \param asn1_pdcp_cfg E1AP ASN.1 object.
-/// \return The pdcp config object where the result of the conversion is stored.
-inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(const asn1::e1ap::pdcp_cfg_s& asn1_pdcp_cfg)
+/// \param[in] asn1_pdcp_cfg E1AP ASN.1 object.
+/// \return The PDCP configuration object where the result of the conversion is stored.
+[[nodiscard]] inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(const asn1::e1ap::pdcp_cfg_s& asn1_pdcp_cfg)
 {
-  e1ap_pdcp_config pdcp_cfg;
-
-  // Fill PDCP SN size DL.
-  pdcp_cfg.pdcp_sn_size_dl = asn1_to_pdcp_sn_size(asn1_pdcp_cfg.pdcp_sn_size_dl);
-
-  // Fill PDCP SN size UL.
-  pdcp_cfg.pdcp_sn_size_ul = asn1_to_pdcp_sn_size(asn1_pdcp_cfg.pdcp_sn_size_ul);
-
-  // Fill RLC mode.
-  pdcp_cfg.rlc_mod = asn1_to_rlc_mode(asn1_pdcp_cfg.rlc_mode);
-
-  // Fill ROHC params.
-  if (asn1_pdcp_cfg.rohc_params_present) {
-    e1ap_rohc_config rohc_config = {};
-    switch (asn1_pdcp_cfg.rohc_params.type().value) {
-      case asn1::e1ap::rohc_params_c::types_opts::rohc:
-        rohc_config.rohc_type                 = e1ap_rohc_type::rohc;
-        rohc_config.rohc_params.max_cid       = asn1_pdcp_cfg.rohc_params.rohc().max_c_id;
-        rohc_config.rohc_params.rohc_profiles = asn1_pdcp_cfg.rohc_params.rohc().rohc_profiles;
-        if (asn1_pdcp_cfg.rohc_params.rohc().continue_rohc_present) {
-          if (asn1_pdcp_cfg.rohc_params.rohc().continue_rohc ==
-              asn1::e1ap::rohc_s::continue_rohc_opts::options::true_value) {
-            rohc_config.rohc_params.continue_rohc = true;
-          } else {
-            rohc_config.rohc_params.continue_rohc = false;
-          }
-        }
-        break;
-      case asn1::e1ap::rohc_params_c::types_opts::ul_only_rohc:
-        rohc_config.rohc_type                 = e1ap_rohc_type::uplink_only_rohc;
-        rohc_config.rohc_params.max_cid       = asn1_pdcp_cfg.rohc_params.ul_only_rohc().max_c_id;
-        rohc_config.rohc_params.rohc_profiles = asn1_pdcp_cfg.rohc_params.ul_only_rohc().rohc_profiles;
-
-        if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc_present) {
-          if (asn1_pdcp_cfg.rohc_params.ul_only_rohc().continue_rohc ==
-              asn1::e1ap::ul_only_rohc_s::continue_rohc_opts::options::true_value) {
-            rohc_config.rohc_params.continue_rohc = true;
-          } else {
-            rohc_config.rohc_params.continue_rohc = false;
-          }
-        }
-        break;
-      default:
-        report_fatal_error("Cannot convert E1AP ASN.1 ROHC type {} to common type",
-                           fmt::underlying(asn1_pdcp_cfg.rohc_params.type().value));
-    }
-    pdcp_cfg.rohc_config = rohc_config;
-  }
-
-  // Fill t reordering timer.
-  if (asn1_pdcp_cfg.t_reordering_timer_present) {
-    pdcp_cfg.t_reordering_timer = asn1_to_pdcp_t_reordering(asn1_pdcp_cfg.t_reordering_timer.t_reordering);
-  }
-
-  // Fill discard timer.
-  if (asn1_pdcp_cfg.discard_timer_present) {
-    pdcp_cfg.discard_timer = asn1_to_pdcp_discard_timer(asn1_pdcp_cfg.discard_timer);
-  }
-
-  // Fill UL data split thres.
-  if (asn1_pdcp_cfg.ul_data_split_thres_present) {
-    pdcp_cfg.ul_data_split_thres = asn1_pdcp_cfg.ul_data_split_thres.to_number();
-  }
-
-  // Fill PDCP dupl.
-  if (asn1_pdcp_cfg.pdcp_dupl_present) {
-    if (asn1_pdcp_cfg.pdcp_dupl == asn1::e1ap::pdcp_dupl_opts::options::true_value) {
-      pdcp_cfg.pdcp_dupl = true;
-    } else {
-      pdcp_cfg.pdcp_dupl = false;
-    }
-  }
-
-  // Fill PDCP reest.
-  if (asn1_pdcp_cfg.pdcp_reest_present) {
-    if (asn1_pdcp_cfg.pdcp_reest == asn1::e1ap::pdcp_reest_opts::options::true_value) {
-      pdcp_cfg.pdcp_reest = true;
-    } else {
-      pdcp_cfg.pdcp_reest = false;
-    }
-  }
-
-  // Fill PDCP data recovery.
-  if (asn1_pdcp_cfg.pdcp_data_recovery_present) {
-    if (asn1_pdcp_cfg.pdcp_data_recovery == asn1::e1ap::pdcp_data_recovery_opts::options::true_value) {
-      pdcp_cfg.pdcp_data_recovery = true;
-    } else {
-      pdcp_cfg.pdcp_data_recovery = false;
-    }
-  }
-
-  // Fill dupl activation.
-  if (asn1_pdcp_cfg.dupl_activation_present) {
-    pdcp_cfg.dupl_activation = static_cast<e1ap_dupl_activation>((int)asn1_pdcp_cfg.dupl_activation);
-  }
-
-  // Fill out of order delivery.
-  if (asn1_pdcp_cfg.out_of_order_delivery_present) {
-    if (asn1_pdcp_cfg.out_of_order_delivery == asn1::e1ap::out_of_order_delivery_opts::options::true_value) {
-      pdcp_cfg.out_of_order_delivery = true;
-    } else {
-      pdcp_cfg.out_of_order_delivery = false;
-    }
-  }
-
-  return pdcp_cfg;
+  return e1ap_pdcp_config{
+      .pdcp_sn_size_ul = details::asn1_to_pdcp_sn_size(asn1_pdcp_cfg.pdcp_sn_size_ul),
+      .pdcp_sn_size_dl = details::asn1_to_pdcp_sn_size(asn1_pdcp_cfg.pdcp_sn_size_dl),
+      .rlc_mod         = details::asn1_to_rlc_mode(asn1_pdcp_cfg.rlc_mode),
+      .rohc_config     = details::convert_if_present(
+          asn1_pdcp_cfg.rohc_params_present,
+          [&asn1_pdcp_cfg] { return details::e1ap_asn1_to_rohc_config(asn1_pdcp_cfg.rohc_params); }),
+      .t_reordering_timer = details::convert_if_present(asn1_pdcp_cfg.t_reordering_timer_present,
+                                                        [&asn1_pdcp_cfg] {
+                                                          return details::asn1_to_pdcp_t_reordering(
+                                                              asn1_pdcp_cfg.t_reordering_timer.t_reordering);
+                                                        }),
+      .discard_timer      = details::convert_if_present(
+          asn1_pdcp_cfg.discard_timer_present,
+          [&asn1_pdcp_cfg] { return details::asn1_to_pdcp_discard_timer(asn1_pdcp_cfg.discard_timer); }),
+      .ul_data_split_thres =
+          details::convert_if_present(asn1_pdcp_cfg.ul_data_split_thres_present,
+                                      [&asn1_pdcp_cfg] { return asn1_pdcp_cfg.ul_data_split_thres.to_number(); }),
+      .pdcp_dupl = details::convert_if_present(
+          asn1_pdcp_cfg.pdcp_dupl_present,
+          [&asn1_pdcp_cfg] { return asn1_pdcp_cfg.pdcp_dupl == asn1::e1ap::pdcp_dupl_opts::options::true_value; }),
+      .pdcp_reest = details::convert_if_present(
+          asn1_pdcp_cfg.pdcp_reest_present,
+          [&asn1_pdcp_cfg] { return asn1_pdcp_cfg.pdcp_reest == asn1::e1ap::pdcp_reest_opts::options::true_value; }),
+      .pdcp_data_recovery = details::convert_if_present(
+          asn1_pdcp_cfg.pdcp_data_recovery_present,
+          [&asn1_pdcp_cfg] {
+            return asn1_pdcp_cfg.pdcp_data_recovery == asn1::e1ap::pdcp_data_recovery_opts::options::true_value;
+          }),
+      .dupl_activation = details::convert_if_present(asn1_pdcp_cfg.dupl_activation_present,
+                                                     [&asn1_pdcp_cfg] {
+                                                       return static_cast<e1ap_dupl_activation>(
+                                                           static_cast<int>(asn1_pdcp_cfg.dupl_activation));
+                                                     }),
+      .out_of_order_delivery =
+          details::convert_if_present(asn1_pdcp_cfg.out_of_order_delivery_present, [&asn1_pdcp_cfg] {
+            return asn1_pdcp_cfg.out_of_order_delivery == asn1::e1ap::out_of_order_delivery_opts::options::true_value;
+          })};
 }
 
-/// \brief Convert E1AP Cause to \c e1ap_cause_t type.
-/// \param e1ap_cause The E1AP Cause.
-/// \return The cause type.
-inline e1ap_cause_t asn1_to_cause(asn1::e1ap::cause_c e1ap_cause)
+/// \brief Converts E1AP Cause to \c e1ap_cause_t type.
+/// \param[in] e1ap_cause The E1AP Cause.
+/// \return The cause type. If the ASN.1 cause type is unknown, \c cause_misc_t::unspecified is returned, as the ASN.1
+/// defines no Cause extension.
+[[nodiscard]] inline e1ap_cause_t asn1_to_cause(const asn1::e1ap::cause_c& e1ap_cause)
 {
-  e1ap_cause_t cause;
-
   switch (e1ap_cause.type()) {
     case asn1::e1ap::cause_c::types_opts::radio_network:
-      cause = static_cast<e1ap_cause_radio_network_t>(e1ap_cause.radio_network().value);
-      break;
+      return static_cast<e1ap_cause_radio_network_t>(e1ap_cause.radio_network().value);
     case asn1::e1ap::cause_c::types_opts::transport:
-      cause = static_cast<e1ap_cause_transport_t>(e1ap_cause.transport().value);
-      break;
+      return static_cast<e1ap_cause_transport_t>(e1ap_cause.transport().value);
     case asn1::e1ap::cause_c::types_opts::protocol:
-      cause = static_cast<cause_protocol_t>(e1ap_cause.protocol().value);
-      break;
+      return static_cast<cause_protocol_t>(e1ap_cause.protocol().value);
     case asn1::e1ap::cause_c::types_opts::misc:
-      cause = static_cast<cause_misc_t>(e1ap_cause.misc().value);
-      break;
+      return static_cast<cause_misc_t>(e1ap_cause.misc().value);
     default:
-      // The ASN.1 defines no Cause extension. Use the unspecified cause for an unknown extension.
-      cause = cause_misc_t::unspecified;
+      return cause_misc_t::unspecified;
   }
-
-  return cause;
 }
 
-/// \brief Convert \c e1ap_cause_t type to E1AP ASN.1 cause.
-/// \param cause The e1ap_cause_t type.
+/// \brief Converts \c e1ap_cause_t type to E1AP ASN.1 cause.
+///
+/// \warning The application is terminated if the cause cannot be converted to an E1AP cause.
+/// \param[in] cause The \c e1ap_cause_t type.
 /// \return The E1AP ASN.1 cause.
-inline asn1::e1ap::cause_c cause_to_asn1(e1ap_cause_t cause)
+[[nodiscard]] inline asn1::e1ap::cause_c cause_to_asn1(e1ap_cause_t cause)
 {
   asn1::e1ap::cause_c asn1_cause;
 
@@ -1007,547 +325,428 @@ inline asn1::e1ap::cause_c cause_to_asn1(e1ap_cause_t cause)
   return asn1_cause;
 }
 
-/// \brief Convert E1AP NG DL UP Unchanged to its boolean representation
-/// \param ng_dl_up_unchanged The E1AP NG DL UP Unchanged.
+/// \brief Converts E1AP NG DL UP Unchanged to its boolean representation.
+/// \param[in] ng_dl_up_unchanged The E1AP NG DL UP Unchanged.
 /// \return The boolean representation of E1AP NG DL UP Unchanged.
-inline bool
+[[nodiscard]] inline bool
 e1ap_asn1_ng_dl_up_unchanged_to_bool(asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_e_ ng_dl_up_unchanged)
 {
   return ng_dl_up_unchanged.value ==
          asn1::e1ap::pdu_session_res_setup_item_s::ng_dl_up_unchanged_opts::options::true_value;
 }
 
-/// \brief Convert E1AP ASN.1 PDCP Count to \c e1ap_pdcp_count type.
-inline e1ap_pdcp_count e1ap_asn1_pdcp_count_to_pdcp_count(asn1::e1ap::pdcp_count_s asn1_pdcp_count)
+/// \brief Converts E1AP ASN.1 PDCP Count to \c e1ap_pdcp_count type.
+/// \param[in] asn1_pdcp_count The E1AP ASN.1 PDCP Count.
+/// \return The \c e1ap_pdcp_count object where the result of the conversion is stored.
+[[nodiscard]] inline e1ap_pdcp_count e1ap_asn1_pdcp_count_to_pdcp_count(const asn1::e1ap::pdcp_count_s& asn1_pdcp_count)
 {
-  e1ap_pdcp_count pdcp_count;
-
-  pdcp_count.hfn     = asn1_pdcp_count.hfn;
-  pdcp_count.pdcp_sn = asn1_pdcp_count.pdcp_sn;
-
-  return pdcp_count;
+  return e1ap_pdcp_count{.pdcp_sn = asn1_pdcp_count.pdcp_sn, .hfn = asn1_pdcp_count.hfn};
 }
 
-/// \brief Convert E1AP ASN.1 CGI to \c nr_cell_global_id_t type.
-inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi)
+/// \brief Converts E1AP ASN.1 CGI to \c nr_cell_global_id_t type.
+///
+/// The input is expected to hold a valid NCI and PLMN identity.
+/// \param[in] asn1_cgi The E1AP ASN.1 CGI.
+/// \return The \c nr_cell_global_id_t object where the result of the conversion is stored.
+[[nodiscard]] inline nr_cell_global_id_t e1ap_asn1_to_cgi(const asn1::e1ap::nr_cgi_s& asn1_cgi)
 {
-  nr_cell_global_id_t cgi = {};
-  cgi.nci                 = nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number()).value();
-  cgi.plmn_id             = plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes()).value();
-  return cgi;
+  return nr_cell_global_id_t(plmn_identity::from_bytes(asn1_cgi.plmn_id.to_bytes()).value(),
+                             nr_cell_identity::create(asn1_cgi.nr_cell_id.to_number()).value());
 }
 
-/// \brief Convert E1AP ASN.1 QoS Flow Map Item to \c e1ap_qos_flow_map_item type.
-inline e1ap_qos_flow_map_item
-asn1_e1ap_to_qos_flow_map_item(const asn1::e1ap::qos_flow_map_item_s& asn1_qos_flow_map_item)
+/// \brief Converts E1AP ASN.1 Cell Group Info to \c std::vector<e1ap_cell_group_info_item> type.
+/// \param[in] asn1_cell_group_info The E1AP ASN.1 Cell Group Info.
+/// \return The cell group info items where the result of the conversion is stored.
+[[nodiscard]] inline std::vector<e1ap_cell_group_info_item>
+e1ap_asn1_to_cell_group_info(const asn1::e1ap::cell_group_info_l& asn1_cell_group_info)
 {
-  e1ap_qos_flow_map_item qos_flow_map_item;
-  qos_flow_map_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_map_item.qos_flow_id);
+  std::vector<e1ap_cell_group_info_item> cell_group_info;
 
-  if (asn1_qos_flow_map_item.qos_flow_map_ind_present) {
-    qos_flow_map_item.qos_flow_map_ind =
-        static_cast<e1ap_qos_flow_map_ind>((int)asn1_qos_flow_map_item.qos_flow_map_ind);
-  }
-
-  return qos_flow_map_item;
-}
-
-/// \brief Convert E1AP ASN.1 Cell Group Info to \c std::vector<e1ap_cell_group_info_item> type.
-inline void e1ap_asn1_to_cell_group_info(std::vector<e1ap_cell_group_info_item>& cell_group_info,
-                                         const asn1::e1ap::cell_group_info_l&    asn1_cell_group_info)
-{
   for (const auto& asn1_cell_group_info_item : asn1_cell_group_info) {
-    e1ap_cell_group_info_item cell_group_info_item;
-    cell_group_info_item.cell_group_id = asn1_cell_group_info_item.cell_group_id;
-
-    if (asn1_cell_group_info_item.ul_cfg_present) {
-      cell_group_info_item.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_info_item.ul_cfg);
-    }
-
-    if (asn1_cell_group_info_item.dl_tx_stop_present) {
-      cell_group_info_item.dl_tx_stop = static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_info_item.dl_tx_stop);
-    }
-
-    if (asn1_cell_group_info_item.rat_type_present) {
-      cell_group_info_item.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_info_item.rat_type);
-    }
-
-    cell_group_info.push_back(cell_group_info_item);
+    cell_group_info.push_back(e1ap_cell_group_info_item{
+        .cell_group_id = asn1_cell_group_info_item.cell_group_id,
+        .ul_cfg        = details::convert_if_present(asn1_cell_group_info_item.ul_cfg_present,
+                                              [&asn1_cell_group_info_item] {
+                                                return static_cast<e1ap_ul_cfg>(
+                                                    static_cast<int>(asn1_cell_group_info_item.ul_cfg));
+                                              }),
+        .dl_tx_stop    = details::convert_if_present(asn1_cell_group_info_item.dl_tx_stop_present,
+                                                  [&asn1_cell_group_info_item] {
+                                                    return static_cast<e1ap_dl_tx_stop>(
+                                                        static_cast<int>(asn1_cell_group_info_item.dl_tx_stop));
+                                                  }),
+        .rat_type =
+            details::convert_if_present(asn1_cell_group_info_item.rat_type_present, [&asn1_cell_group_info_item] {
+              return static_cast<e1ap_rat_type>(static_cast<int>(asn1_cell_group_info_item.rat_type));
+            })});
   }
+
+  return cell_group_info;
 }
 
-/// \brief Convert E1AP ASN.1 QoS Flow Map Info to \c slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item>
+/// \brief Converts E1AP ASN.1 QoS Flow Map Info to \c slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item>
 /// type.
-inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item>& flow_map_info,
-                                       const asn1::e1ap::qos_flow_qos_param_list_l& ans1_flow_map_list)
+/// \param[in] asn1_flow_map_list The E1AP ASN.1 QoS Flow Map Info.
+/// \return The QoS flow map info where the result of the conversion is stored.
+[[nodiscard]] inline slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item>
+e1ap_asn1_to_flow_map_info(const asn1::e1ap::qos_flow_qos_param_list_l& asn1_flow_map_list)
 {
-  for (const auto& asn1_flow_map_item : ans1_flow_map_list) {
-    e1ap_qos_flow_qos_param_item flow_map_item;
-    flow_map_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_map_item.qos_flow_id);
-    // Fill QoS flow level params.
+  slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_qos_param_item> flow_map_info;
 
-    // Fill QoS characteristics.
-    if (asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.type() ==
-        asn1::e1ap::qos_characteristics_c::types_opts::dyn_5qi) {
-      const auto& asn1_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
-
-      dyn_5qi_descriptor dyn_5qi;
-      dyn_5qi.qos_prio_level      = qos_prio_level_t{static_cast<uint8_t>(asn1_dyn_5qi.qos_prio_level)};
-      dyn_5qi.packet_delay_budget = asn1_dyn_5qi.packet_delay_budget;
-      dyn_5qi.per.exponent        = asn1_dyn_5qi.packet_error_rate.per_exponent;
-      dyn_5qi.per.scalar          = asn1_dyn_5qi.packet_error_rate.per_scalar;
-
-      if (asn1_dyn_5qi.five_qi_present) {
-        dyn_5qi.five_qi = uint_to_five_qi(asn1_dyn_5qi.five_qi);
-      }
-      if (asn1_dyn_5qi.delay_crit_present) {
-        dyn_5qi.is_delay_critical =
-            asn1_dyn_5qi.delay_crit.value == asn1::e1ap::dyn_5qi_descriptor_s::delay_crit_opts::delay_crit;
-      }
-      if (asn1_dyn_5qi.averaging_win_present) {
-        dyn_5qi.averaging_win = asn1_dyn_5qi.averaging_win;
-      }
-      if (asn1_dyn_5qi.max_data_burst_volume_present) {
-        dyn_5qi.max_data_burst_volume = asn1_dyn_5qi.max_data_burst_volume;
-      }
-
-      flow_map_item.qos_flow_level_qos_params.qos_desc = dyn_5qi;
-    } else {
-      const auto& asn1_non_dyn_5qi = asn1_flow_map_item.qos_flow_level_qos_params.qos_characteristics.non_dyn_5qi();
-
-      non_dyn_5qi_descriptor non_dyn_5qi;
-      non_dyn_5qi.five_qi = uint_to_five_qi(asn1_non_dyn_5qi.five_qi);
-      if (asn1_non_dyn_5qi.qos_prio_level_present) {
-        non_dyn_5qi.qos_prio_level = qos_prio_level_t{static_cast<uint8_t>(asn1_non_dyn_5qi.qos_prio_level)};
-      }
-      if (asn1_non_dyn_5qi.averaging_win_present) {
-        non_dyn_5qi.averaging_win = asn1_non_dyn_5qi.averaging_win;
-      }
-      if (asn1_non_dyn_5qi.max_data_burst_volume_present) {
-        non_dyn_5qi.max_data_burst_volume = asn1_non_dyn_5qi.max_data_burst_volume;
-      }
-
-      flow_map_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi;
-    }
-
-    // Fill NR RAN alloc retention prio.
-    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention.prio_level_arp =
-        asn1_flow_map_item.qos_flow_level_qos_params.ngran_alloc_retention_prio.prio_level;
-    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention.may_trigger_preemption =
-        asn1_flow_map_item.qos_flow_level_qos_params.ngran_alloc_retention_prio.pre_emption_cap.value ==
-        asn1::e1ap::pre_emption_cap_opts::may_trigger_pre_emption;
-    flow_map_item.qos_flow_level_qos_params.ng_ran_alloc_retention.is_preemptable =
-        asn1_flow_map_item.qos_flow_level_qos_params.ngran_alloc_retention_prio.pre_emption_vulnerability.value ==
-        asn1::e1ap::pre_emption_vulnerability_opts::pre_emptable;
-
-    // Fill GBR QoS flow info.
-    if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info_present) {
-      gbr_qos_flow_information gbr_qos_flow_info;
-      gbr_qos_flow_info.max_br_dl = asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_dl;
-      gbr_qos_flow_info.max_br_ul = asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_ul;
-      gbr_qos_flow_info.gbr_dl =
-          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl;
-      gbr_qos_flow_info.gbr_ul =
-          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul;
-      if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl_present) {
-        gbr_qos_flow_info.max_packet_loss_rate_dl =
-            asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl;
-      }
-      if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul_present) {
-        gbr_qos_flow_info.max_packet_loss_rate_ul =
-            asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_ul;
-      }
-
-      flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info = gbr_qos_flow_info;
-    }
-
-    // Fill reflective QoS attribute.
-    if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
-      flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute =
-          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_attribute);
-    }
-
-    // Fill add QoS info.
-    if (asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info_present) {
-      flow_map_item.qos_flow_level_qos_params.add_qos_info =
-          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.add_qos_info);
-    }
-
-    // Fill paging policy indication.
-    if (asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_idx_present) {
-      flow_map_item.qos_flow_level_qos_params.paging_policy_ind =
-          asn1_flow_map_item.qos_flow_level_qos_params.paging_policy_idx;
-    }
-
-    // Fill reflective QoS indication.
-    if (asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind_present) {
-      flow_map_item.qos_flow_level_qos_params.reflective_qos_ind =
-          asn1::enum_to_bool(asn1_flow_map_item.qos_flow_level_qos_params.reflective_qos_ind);
-    }
-
-    // Fill QoS flow map indication.
-    if (asn1_flow_map_item.qos_flow_map_ind_present) {
-      flow_map_item.qos_flow_map_ind = static_cast<e1ap_qos_flow_map_ind>((int)asn1_flow_map_item.qos_flow_map_ind);
-    }
-    flow_map_info.emplace(uint_to_qos_flow_id(asn1_flow_map_item.qos_flow_id), flow_map_item);
+  for (const auto& asn1_flow_map_item : asn1_flow_map_list) {
+    qos_flow_id_t qos_flow_id = uint_to_qos_flow_id(asn1_flow_map_item.qos_flow_id);
+    flow_map_info.emplace(
+        qos_flow_id,
+        e1ap_qos_flow_qos_param_item{
+            .qos_flow_id = qos_flow_id,
+            .qos_flow_level_qos_params =
+                details::e1ap_asn1_to_qos_flow_level_qos_params(asn1_flow_map_item.qos_flow_level_qos_params),
+            .qos_flow_map_ind =
+                details::convert_if_present(asn1_flow_map_item.qos_flow_map_ind_present, [&asn1_flow_map_item] {
+                  return static_cast<e1ap_qos_flow_map_ind>(static_cast<int>(asn1_flow_map_item.qos_flow_map_ind));
+                })});
   }
+
+  return flow_map_info;
 }
 
-/// \brief Convert E1AP ASN.1 Data Forwarding Request to \c e1ap_data_forwarding_request type.
-inline e1ap_data_forwarding_request
-e1ap_asn1_to_data_forwarding_request(const asn1::e1ap::data_forwarding_request_e& asn1_data_forwarding_request)
-{
-  switch (asn1_data_forwarding_request) {
-    case asn1::e1ap::data_forwarding_request_opts::ul:
-      return e1ap_data_forwarding_request::ul;
-    case asn1::e1ap::data_forwarding_request_opts::dl:
-      return e1ap_data_forwarding_request::dl;
-    default:
-      return e1ap_data_forwarding_request::both;
-  }
-}
-
-/// \brief Convert \c e1ap_data_forwarding_request type to E1AP ASN.1 Data Forwarding Request.
-inline asn1::e1ap::data_forwarding_request_e
-e1ap_data_forwarding_request_to_asn1(e1ap_data_forwarding_request data_forwarding_request)
-{
-  switch (data_forwarding_request) {
-    case e1ap_data_forwarding_request::ul:
-      return asn1::e1ap::data_forwarding_request_opts::ul;
-    case e1ap_data_forwarding_request::dl:
-      return asn1::e1ap::data_forwarding_request_opts::dl;
-    default:
-      return asn1::e1ap::data_forwarding_request_opts::both;
-  }
-}
-
-/// \brief Convert E1AP ASN.1 Data Forwarding Info Request to \c e1ap_data_forwarding_info_request type
-inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_request(
+/// \brief Converts E1AP ASN.1 Data Forwarding Info Request to \c e1ap_data_forwarding_info_request type.
+/// \param[in] asn1_data_forwarding_info_request The E1AP ASN.1 Data Forwarding Info Request.
+/// \return The \c e1ap_data_forwarding_info_request object where the result of the conversion is stored.
+[[nodiscard]] inline e1ap_data_forwarding_info_request e1ap_asn1_to_data_forwarding_info_request(
     const asn1::e1ap::data_forwarding_info_request_s& asn1_data_forwarding_info_request)
 {
-  e1ap_data_forwarding_info_request data_forwarding_info_request;
-
-  // Fill DRB data forwarding info request.
-  data_forwarding_info_request.data_forwarding_request =
-      e1ap_asn1_to_data_forwarding_request(asn1_data_forwarding_info_request.data_forwarding_request);
-
-  for (const auto& asn1_qos_flows_forwarded_item :
-       asn1_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
-    e1ap_qos_flow_map_item qos_flows_forwarded_item = asn1_e1ap_to_qos_flow_map_item(asn1_qos_flows_forwarded_item);
-
-    data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.emplace(
-        uint_to_qos_flow_id(asn1_qos_flows_forwarded_item.qos_flow_id), qos_flows_forwarded_item);
-  }
-
-  return data_forwarding_info_request;
+  return e1ap_data_forwarding_info_request{
+      .data_forwarding_request =
+          details::e1ap_asn1_to_data_forwarding_request(asn1_data_forwarding_info_request.data_forwarding_request),
+      .qos_flows_forwarded_on_fwd_tunnels = details::e1ap_asn1_to_qos_flows_forwarded_on_fwd_tunnels(
+          asn1_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels)};
 }
 
-/// \brief Convert \c e1ap_data_forwarding_info_request type to E1AP ASN.1 Data Forwarding Info Request.
-inline void
-e1ap_data_forwarding_info_request_to_asn1(asn1::e1ap::data_forwarding_info_request_s& asn1_data_forwarding_info_request,
-                                          const e1ap_data_forwarding_info_request&    data_forwarding_info_request)
+/// \brief Converts \c e1ap_data_forwarding_info_request type to E1AP ASN.1 Data Forwarding Info Request.
+/// \param[in] data_forwarding_info_request The data forwarding info request.
+/// \return The E1AP ASN.1 Data Forwarding Info Request.
+[[nodiscard]] inline asn1::e1ap::data_forwarding_info_request_s
+e1ap_data_forwarding_info_request_to_asn1(const e1ap_data_forwarding_info_request& data_forwarding_info_request)
 {
-  asn1_data_forwarding_info_request.data_forwarding_request =
-      e1ap_data_forwarding_request_to_asn1(data_forwarding_info_request.data_forwarding_request);
-
-  for (const auto& qos_flow_map_item : data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels) {
-    asn1::e1ap::qos_flow_map_item_s asn1_qos_flow_map_item;
-    asn1_qos_flow_map_item.qos_flow_id = to_underlying(qos_flow_map_item.qos_flow_id);
-    if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
-      asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
-      asn1_qos_flow_map_item.qos_flow_map_ind =
-          static_cast<asn1::e1ap::qos_flow_map_ind_opts::options>((int)qos_flow_map_item.qos_flow_map_ind.value());
-    }
-    asn1_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.push_back(asn1_qos_flow_map_item);
-  }
+  return asn1::e1ap::data_forwarding_info_request_s{
+      .ie_exts_present = false,
+      .data_forwarding_request =
+          details::e1ap_data_forwarding_request_to_asn1(data_forwarding_info_request.data_forwarding_request),
+      .qos_flows_forwarded_on_fwd_tunnels =
+          details::e1ap_qos_flows_forwarded_to_asn1(data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels),
+      .ie_exts = asn1::e1ap::data_forwarding_info_request_ext_ies_container{}};
 }
 
-/// \brief Convert E1AP ASN.1 Data Forwarding Information to \c e1ap_data_forwarding_info type.
-inline e1ap_data_forwarding_info
+/// \brief Converts E1AP ASN.1 Data Forwarding Information to \c e1ap_data_forwarding_info type.
+/// \param[in] asn1_data_forwarding_info The E1AP ASN.1 Data Forwarding Information.
+/// \return The \c e1ap_data_forwarding_info object where the result of the conversion is stored.
+[[nodiscard]] inline e1ap_data_forwarding_info
 e1ap_asn1_to_data_forwarding_info(const asn1::e1ap::data_forwarding_info_s& asn1_data_forwarding_info)
 {
-  e1ap_data_forwarding_info data_forwarding_info;
-
-  if (asn1_data_forwarding_info.ul_data_forwarding_present) {
-    data_forwarding_info.ul_data_forwarding =
-        asn1_to_up_transport_layer_info(asn1_data_forwarding_info.ul_data_forwarding);
-  }
-  if (asn1_data_forwarding_info.dl_data_forwarding_present) {
-    data_forwarding_info.dl_data_forwarding =
-        asn1_to_up_transport_layer_info(asn1_data_forwarding_info.dl_data_forwarding);
-  }
-  if (asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list_present) {
-    for (const auto& asn1_qos_flow : asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list) {
-      data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list.push_back(
-          uint_to_qos_flow_id(asn1_qos_flow.qos_flow_id));
-    }
-  }
-  return data_forwarding_info;
+  return e1ap_data_forwarding_info{
+      .ul_data_forwarding = details::convert_if_present(asn1_data_forwarding_info.ul_data_forwarding_present,
+                                                        [&asn1_data_forwarding_info] {
+                                                          return asn1_to_up_transport_layer_info(
+                                                              asn1_data_forwarding_info.ul_data_forwarding);
+                                                        }),
+      .dl_data_forwarding = details::convert_if_present(asn1_data_forwarding_info.dl_data_forwarding_present,
+                                                        [&asn1_data_forwarding_info] {
+                                                          return asn1_to_up_transport_layer_info(
+                                                              asn1_data_forwarding_info.dl_data_forwarding);
+                                                        }),
+      .data_forwarding_to_ng_ran_qos_flow_info_list =
+          details::e1ap_asn1_to_data_forwarding_qos_flow_ids(asn1_data_forwarding_info.ie_exts)};
 }
 
-/// \brief Convert \c e1ap_data_forwarding_info type to E1AP ASN.1 Data Forwarding Information.
-inline void e1ap_data_forwarding_info_to_asn1(asn1::e1ap::data_forwarding_info_s& asn1_data_forwarding_info,
-                                              const e1ap_data_forwarding_info&    data_forwarding_info)
+/// \brief Converts \c e1ap_data_forwarding_info type to E1AP ASN.1 Data Forwarding Information.
+/// \param[in] data_forwarding_info The data forwarding information.
+/// \return The E1AP ASN.1 Data Forwarding Information.
+[[nodiscard]] inline asn1::e1ap::data_forwarding_info_s
+e1ap_data_forwarding_info_to_asn1(const e1ap_data_forwarding_info& data_forwarding_info)
 {
-  if (data_forwarding_info.ul_data_forwarding.has_value()) {
-    asn1_data_forwarding_info.ul_data_forwarding_present = true;
-    up_transport_layer_info_to_asn1(asn1_data_forwarding_info.ul_data_forwarding,
-                                    data_forwarding_info.ul_data_forwarding.value());
-  }
-  if (data_forwarding_info.dl_data_forwarding.has_value()) {
-    asn1_data_forwarding_info.dl_data_forwarding_present = true;
-    up_transport_layer_info_to_asn1(asn1_data_forwarding_info.dl_data_forwarding,
-                                    data_forwarding_info.dl_data_forwarding.value());
-  }
-  if (not data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list.empty()) {
-    asn1_data_forwarding_info.ie_exts_present                                             = true;
-    asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list_present = true;
-    for (qos_flow_id_t qos_flow_id : data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list) {
-      asn1::e1ap::data_forwardingto_ng_ran_qos_flow_info_list_item_s asn1_qos_flow;
-      asn1_qos_flow.qos_flow_id = to_underlying(qos_flow_id);
-      asn1_data_forwarding_info.ie_exts.data_forwardingto_ng_ran_qos_flow_info_list.push_back(asn1_qos_flow);
-    }
-  }
+  const std::optional<up_transport_layer_info>& ul_data_forwarding = data_forwarding_info.ul_data_forwarding;
+  const std::optional<up_transport_layer_info>& dl_data_forwarding = data_forwarding_info.dl_data_forwarding;
+  const std::vector<qos_flow_id_t>& qos_flow_ids = data_forwarding_info.data_forwarding_to_ng_ran_qos_flow_info_list;
+
+  return asn1::e1ap::data_forwarding_info_s{
+      .ul_data_forwarding_present = ul_data_forwarding.has_value(),
+      .dl_data_forwarding_present = dl_data_forwarding.has_value(),
+      .ie_exts_present            = !qos_flow_ids.empty(),
+      .ul_data_forwarding = ul_data_forwarding ? details::up_transport_layer_info_to_e1ap_asn1(*ul_data_forwarding)
+                                               : asn1::e1ap::up_tnl_info_c{},
+      .dl_data_forwarding = dl_data_forwarding ? details::up_transport_layer_info_to_e1ap_asn1(*dl_data_forwarding)
+                                               : asn1::e1ap::up_tnl_info_c{},
+      .ie_exts            = details::e1ap_data_forwarding_ie_exts_to_asn1(qos_flow_ids)};
 }
 
-/// \brief Convert E1AP ASN.1 PDCP SN Status Info to \c e1ap_pdcp_sn_status_info type.
-inline e1ap_pdcp_sn_status_info
+/// \brief Converts E1AP ASN.1 PDCP SN Status Info to \c e1ap_pdcp_sn_status_info type.
+/// \param[in] asn1_pdcp_sn_status_info The E1AP ASN.1 PDCP SN Status Info.
+/// \return The \c e1ap_pdcp_sn_status_info object where the result of the conversion is stored.
+[[nodiscard]] inline e1ap_pdcp_sn_status_info
 e1ap_asn1_to_pdcp_sn_status_info(const asn1::e1ap::pdcp_sn_status_info_s& asn1_pdcp_sn_status_info)
 {
-  e1ap_pdcp_sn_status_info pdcp_sn_status_info = {};
+  const asn1::e1ap::drb_b_status_transfer_s& asn1_ul = asn1_pdcp_sn_status_info.pdcp_status_transfer_ul;
 
-  pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn =
-      asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.pdcp_sn;
-  pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn =
-      asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.count_value.hfn;
-
-  if (asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu_present) {
-    pdcp_sn_status_info.pdcp_status_transfer_ul.receive_status_of_pdcp_sdu =
-        asn1_pdcp_sn_status_info.pdcp_status_transfer_ul.receive_statusof_pdcp_sdu.to_number();
-  }
-
-  pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn = asn1_pdcp_sn_status_info.pdcp_status_transfer_dl.pdcp_sn;
-  pdcp_sn_status_info.pdcp_status_transfer_dl.hfn     = asn1_pdcp_sn_status_info.pdcp_status_transfer_dl.hfn;
-
-  return pdcp_sn_status_info;
+  return e1ap_pdcp_sn_status_info{
+      .pdcp_status_transfer_ul =
+          e1ap_drb_status_transfer{
+              .count_value                = e1ap_asn1_pdcp_count_to_pdcp_count(asn1_ul.count_value),
+              .receive_status_of_pdcp_sdu = details::convert_if_present(
+                  asn1_ul.receive_statusof_pdcp_sdu_present,
+                  [&asn1_ul] { return static_cast<uint64_t>(asn1_ul.receive_statusof_pdcp_sdu.to_number()); })},
+      .pdcp_status_transfer_dl = e1ap_asn1_pdcp_count_to_pdcp_count(asn1_pdcp_sn_status_info.pdcp_status_transfer_dl)};
 }
 
+/// \brief Converts the DRB setup list of the NG-RAN to the ASN.1 DRB item list.
+/// \tparam template_asn1_item ASN.1 DRB setup item type.
+/// \param[in] drb_setup_list_ng_ran DRB setup list of the NG-RAN.
+/// \return The ASN.1 DRB item list.
 template <typename template_asn1_item>
-inline void
-e1ap_drb_item_list_to_asn1(asn1::dyn_array<template_asn1_item>&                           asn1_drb_item_list,
-                           const slotted_id_vector<drb_id_t, e1ap_drb_setup_item_ng_ran>& drb_setup_list_ng_ran)
+[[nodiscard]] inline asn1::dyn_array<template_asn1_item>
+e1ap_drb_item_list_to_asn1(const slotted_id_vector<drb_id_t, e1ap_drb_setup_item_ng_ran>& drb_setup_list_ng_ran)
 {
+  asn1::dyn_array<template_asn1_item> asn1_drb_item_list;
+
   for (const auto& drb_setup_item_ng_ran : drb_setup_list_ng_ran) {
-    template_asn1_item asn1_drb_setup_item;
+    const std::optional<e1ap_data_forwarding_info>& fwd_info_resp = drb_setup_item_ng_ran.drb_data_forwarding_info_resp;
 
-    // Fill DRB ID.
-    asn1_drb_setup_item.drb_id = to_underlying(drb_setup_item_ng_ran.drb_id);
-
-    // Fill UL UP transport params.
-    for (const auto& ul_up_transport_param : drb_setup_item_ng_ran.ul_up_transport_params) {
-      asn1::e1ap::up_params_item_s asn1_up_transport_param;
-      up_transport_layer_info_to_asn1(asn1_up_transport_param.up_tnl_info, ul_up_transport_param.up_tnl_info);
-      asn1_drb_setup_item.ul_up_transport_params.push_back(asn1_up_transport_param);
-    }
-
-    // Fill flow setup list.
-    for (const auto& qos_flow_item : drb_setup_item_ng_ran.flow_setup_list) {
-      asn1::e1ap::qos_flow_item_s asn1_flow_item;
-      asn1_flow_item.qos_flow_id = to_underlying(qos_flow_item.qos_flow_id);
-      asn1_drb_setup_item.flow_setup_list.push_back(asn1_flow_item);
-    }
-
-    // Fill flow failed list.
-    for (const auto& flow_failed_item : drb_setup_item_ng_ran.flow_failed_list) {
-      asn1::e1ap::qos_flow_failed_item_s asn1_flow_failed_item;
-      asn1_flow_failed_item.qos_flow_id = to_underlying(flow_failed_item.qos_flow_id);
-      asn1_drb_setup_item.flow_failed_list.push_back(asn1_flow_failed_item);
-    }
-
-    // Fill DRB data forwarding info response.
-    if (drb_setup_item_ng_ran.drb_data_forwarding_info_resp.has_value()) {
-      asn1_drb_setup_item.drb_data_forwarding_info_resp_present = true;
-      e1ap_data_forwarding_info_to_asn1(asn1_drb_setup_item.drb_data_forwarding_info_resp,
-                                        drb_setup_item_ng_ran.drb_data_forwarding_info_resp.value());
-    }
-
-    asn1_drb_item_list.push_back(asn1_drb_setup_item);
+    asn1_drb_item_list.push_back(template_asn1_item{
+        .drb_data_forwarding_info_resp_present = fwd_info_resp.has_value(),
+        .ie_exts_present                       = false,
+        .drb_id                                = to_underlying(drb_setup_item_ng_ran.drb_id),
+        .drb_data_forwarding_info_resp         = fwd_info_resp ? e1ap_data_forwarding_info_to_asn1(*fwd_info_resp)
+                                                               : details::make_empty_data_forwarding_info(),
+        .ul_up_transport_params = details::e1ap_up_params_to_asn1(drb_setup_item_ng_ran.ul_up_transport_params),
+        .flow_setup_list        = details::e1ap_qos_flow_setup_list_to_asn1(drb_setup_item_ng_ran.flow_setup_list),
+        .flow_failed_list       = details::e1ap_qos_flow_failed_list_to_asn1(drb_setup_item_ng_ran.flow_failed_list),
+        .ie_exts                = decltype(template_asn1_item::ie_exts){}});
   }
+
+  return asn1_drb_item_list;
 }
 
+/// \brief Converts the failed DRB list of the NG-RAN to the ASN.1 DRB item list.
+/// \tparam template_asn1_item ASN.1 DRB failed item type.
+/// \param[in] drb_failed_list_ng_ran Failed DRB list of the NG-RAN.
+/// \return The ASN.1 DRB item list.
 template <typename template_asn1_item>
-inline void e1ap_drb_failed_item_list_to_asn1(
-    asn1::dyn_array<template_asn1_item>&                            asn1_drb_item_list,
+[[nodiscard]] inline asn1::dyn_array<template_asn1_item> e1ap_drb_failed_item_list_to_asn1(
     const slotted_id_vector<drb_id_t, e1ap_drb_failed_item_ng_ran>& drb_failed_list_ng_ran)
 {
+  asn1::dyn_array<template_asn1_item> asn1_drb_item_list;
+
   for (const auto& drb_failed_item : drb_failed_list_ng_ran) {
-    template_asn1_item asn1_drb_failed_item;
-    // Fill DRB ID.
-    asn1_drb_failed_item.drb_id = to_underlying(drb_failed_item.drb_id);
-    // Fill cause.
-    asn1_drb_failed_item.cause = cause_to_asn1(drb_failed_item.cause);
-    asn1_drb_item_list.push_back(asn1_drb_failed_item);
+    asn1_drb_item_list.push_back(template_asn1_item{.ie_exts_present = false,
+                                                    .drb_id          = to_underlying(drb_failed_item.drb_id),
+                                                    .cause           = cause_to_asn1(drb_failed_item.cause),
+                                                    .ie_exts         = decltype(template_asn1_item::ie_exts){}});
   }
+
+  return asn1_drb_item_list;
 }
 
-inline activity_notification_level_t
-asn1_to_activity_notification_level(const asn1::e1ap::activity_notif_level_e& asn1_activity_notification)
+/// \brief Converts an E1AP ASN.1 activity notification level to \c activity_notification_level_t.
+///
+/// Unknown values are converted to \c activity_notification_level_t::invalid.
+/// \param[in] asn1_activity_notification The E1AP ASN.1 activity notification level.
+/// \return The activity notification level.
+[[nodiscard]] inline activity_notification_level_t
+asn1_to_activity_notification_level(asn1::e1ap::activity_notif_level_e asn1_activity_notification)
 {
-  activity_notification_level_t activity_notification_level;
-
   switch (asn1_activity_notification.value) {
     case asn1::e1ap::activity_notif_level_opts::options::drb:
-      activity_notification_level = activity_notification_level_t::drb;
-      break;
+      return activity_notification_level_t::drb;
     case asn1::e1ap::activity_notif_level_opts::options::pdu_session:
-      activity_notification_level = activity_notification_level_t::pdu_session;
-      break;
+      return activity_notification_level_t::pdu_session;
     case asn1::e1ap::activity_notif_level_opts::options::ue:
-      activity_notification_level = activity_notification_level_t::ue;
-      break;
+      return activity_notification_level_t::ue;
     default:
-      activity_notification_level = activity_notification_level_t::invalid;
-      break;
+      return activity_notification_level_t::invalid;
   }
-
-  return activity_notification_level;
 }
 
 /// \brief Converts type \c security_result_t to an ASN.1 type.
-/// \param[out] asn1obj ASN.1 object where the result of the conversion is stored.
+///
+/// \warning The application is terminated if a result cannot be converted to its E1AP counterpart.
 /// \param[in] security_result Security Result IE contents.
-inline void security_result_to_asn1(asn1::e1ap::security_result_s& asn1obj, const security_result_t& security_result)
+/// \return The ASN.1 object where the result of the conversion is stored.
+[[nodiscard]] inline asn1::e1ap::security_result_s security_result_to_asn1(security_result_t security_result)
 {
-  switch (security_result.integrity_protection_result) {
-    case integrity_protection_result_t::performed:
-    case integrity_protection_result_t::not_performed:
-      asn1obj.integrity_protection_result.value = static_cast<asn1::e1ap::integrity_protection_result_opts::options>(
-          security_result.integrity_protection_result);
-      break;
-    default:
-      report_fatal_error("Cannot convert security result to E1AP type");
-  }
+  auto integrity_protection_result_to_asn1 =
+      [](integrity_protection_result_t result) -> asn1::e1ap::integrity_protection_result_e {
+    switch (result) {
+      case integrity_protection_result_t::performed:
+      case integrity_protection_result_t::not_performed:
+        return static_cast<asn1::e1ap::integrity_protection_result_opts::options>(result);
+      default:
+        report_fatal_error("Cannot convert security result to E1AP type");
+    }
+  };
 
-  switch (security_result.confidentiality_protection_result) {
-    case confidentiality_protection_result_t::performed:
-    case confidentiality_protection_result_t::not_performed:
-      asn1obj.confidentiality_protection_result.value =
-          static_cast<asn1::e1ap::confidentiality_protection_result_opts::options>(
-              security_result.confidentiality_protection_result);
-      break;
-    default:
-      report_fatal_error("Cannot convert security result to E1AP type");
-  }
+  auto confidentiality_protection_result_to_asn1 =
+      [](confidentiality_protection_result_t result) -> asn1::e1ap::confidentiality_protection_result_e {
+    switch (result) {
+      case confidentiality_protection_result_t::performed:
+      case confidentiality_protection_result_t::not_performed:
+        return static_cast<asn1::e1ap::confidentiality_protection_result_opts::options>(result);
+      default:
+        report_fatal_error("Cannot convert security result to E1AP type");
+    }
+  };
+
+  return asn1::e1ap::security_result_s{
+      .ie_exts_present             = false,
+      .integrity_protection_result = integrity_protection_result_to_asn1(security_result.integrity_protection_result),
+      .confidentiality_protection_result =
+          confidentiality_protection_result_to_asn1(security_result.confidentiality_protection_result),
+      .ie_exts = asn1::e1ap::security_result_ext_ies_container{}};
 }
 
 /// \brief Converts ASN.1 type to \c security_result_t.
-/// \param[out] security_result Security Result IE contents.
-/// \param[in] asn1obj ASN.1 object from which the result is taken.
-inline void asn1_to_security_result(security_result_t& security_result, const asn1::e1ap::security_result_s& asn1obj)
+///
+/// If a result of the ASN.1 object cannot be converted, an error is logged and the result keeps its default value,
+/// which is performed.
+///
+/// \param[in] asn1_security_result ASN.1 object from which the result is taken.
+/// \param[in,out] logger Logger used to report the conversion errors.
+/// \return The Security Result IE contents.
+[[nodiscard]] inline security_result_t
+asn1_to_security_result(const asn1::e1ap::security_result_s& asn1_security_result, ocudulog::basic_logger& logger)
 {
-  switch (asn1obj.integrity_protection_result) {
-    case asn1::e1ap::integrity_protection_result_opts::performed:
-    case asn1::e1ap::integrity_protection_result_opts::not_performed:
-      security_result.integrity_protection_result =
-          static_cast<integrity_protection_result_t>(asn1obj.integrity_protection_result.value);
-      break;
-    default:
-      ocudulog::fetch_basic_logger("E1AP").error("Cannot convert security result to E1AP type");
-  }
+  auto asn1_to_integrity_protection_result = [&logger](asn1::e1ap::integrity_protection_result_e asn1_result) {
+    switch (asn1_result) {
+      case asn1::e1ap::integrity_protection_result_opts::performed:
+      case asn1::e1ap::integrity_protection_result_opts::not_performed:
+        return static_cast<integrity_protection_result_t>(asn1_result.value);
+      default:
+        logger.error("Cannot convert security result to E1AP type");
+        return integrity_protection_result_t{};
+    }
+  };
 
-  switch (asn1obj.confidentiality_protection_result) {
-    case asn1::e1ap::confidentiality_protection_result_opts::performed:
-    case asn1::e1ap::confidentiality_protection_result_opts::not_performed:
-      security_result.confidentiality_protection_result =
-          static_cast<confidentiality_protection_result_t>(asn1obj.confidentiality_protection_result.value);
-      break;
-    default:
-      ocudulog::fetch_basic_logger("E1AP").error("Cannot convert security result to E1AP type");
-  }
+  auto asn1_to_confidentiality_protection_result =
+      [&logger](asn1::e1ap::confidentiality_protection_result_e asn1_result) {
+        switch (asn1_result) {
+          case asn1::e1ap::confidentiality_protection_result_opts::performed:
+          case asn1::e1ap::confidentiality_protection_result_opts::not_performed:
+            return static_cast<confidentiality_protection_result_t>(asn1_result.value);
+          default:
+            logger.error("Cannot convert security result to E1AP type");
+            return confidentiality_protection_result_t{};
+        }
+      };
+
+  return security_result_t{.integrity_protection_result =
+                               asn1_to_integrity_protection_result(asn1_security_result.integrity_protection_result),
+                           .confidentiality_protection_result = asn1_to_confidentiality_protection_result(
+                               asn1_security_result.confidentiality_protection_result)};
 }
 
-/// \brief Converts type \c security_indication to an ASN.1 type.
-/// \param asn1obj ASN.1 object where the result of the conversion is stored.
-/// \param security_indication Security Indication IE contents.
-inline void security_indication_to_asn1(asn1::e1ap::security_ind_s& asn1obj, const security_indication_t& security_ind)
+/// \brief Converts type \c security_indication_t to an ASN.1 type.
+///
+/// \warning The application is terminated if an indication cannot be converted to its E1AP counterpart.
+/// \param[in] security_ind Security Indication IE contents.
+/// \return The ASN.1 object where the result of the conversion is stored.
+[[nodiscard]] inline asn1::e1ap::security_ind_s security_indication_to_asn1(security_indication_t security_ind)
 {
-  switch (security_ind.integrity_protection_ind) {
-    case integrity_protection_indication_t::not_needed:
-    case integrity_protection_indication_t::preferred:
-    case integrity_protection_indication_t::required:
-      asn1obj.integrity_protection_ind.value =
-          static_cast<asn1::e1ap::integrity_protection_ind_opts::options>(security_ind.integrity_protection_ind);
-      break;
-    default:
-      report_fatal_error("Cannot convert security indication to E1AP type");
-  }
+  auto integrity_protection_ind_to_asn1 =
+      [](integrity_protection_indication_t ind) -> asn1::e1ap::integrity_protection_ind_e {
+    switch (ind) {
+      case integrity_protection_indication_t::not_needed:
+      case integrity_protection_indication_t::preferred:
+      case integrity_protection_indication_t::required:
+        return static_cast<asn1::e1ap::integrity_protection_ind_opts::options>(ind);
+      default:
+        report_fatal_error("Cannot convert security indication to E1AP type");
+    }
+  };
 
-  switch (security_ind.confidentiality_protection_ind) {
-    case confidentiality_protection_indication_t::not_needed:
-    case confidentiality_protection_indication_t::preferred:
-    case confidentiality_protection_indication_t::required:
-      asn1obj.confidentiality_protection_ind.value =
-          static_cast<asn1::e1ap::confidentiality_protection_ind_opts::options>(
-              security_ind.confidentiality_protection_ind);
-      break;
-    default:
-      report_fatal_error("Cannot convert security indication to E1AP type");
-  }
+  auto confidentiality_protection_ind_to_asn1 =
+      [](confidentiality_protection_indication_t ind) -> asn1::e1ap::confidentiality_protection_ind_e {
+    switch (ind) {
+      case confidentiality_protection_indication_t::not_needed:
+      case confidentiality_protection_indication_t::preferred:
+      case confidentiality_protection_indication_t::required:
+        return static_cast<asn1::e1ap::confidentiality_protection_ind_opts::options>(ind);
+      default:
+        report_fatal_error("Cannot convert security indication to E1AP type");
+    }
+  };
+
+  return asn1::e1ap::security_ind_s{
+      .max_ip_datarate_present  = false,
+      .ie_exts_present          = false,
+      .integrity_protection_ind = integrity_protection_ind_to_asn1(security_ind.integrity_protection_ind),
+      .confidentiality_protection_ind =
+          confidentiality_protection_ind_to_asn1(security_ind.confidentiality_protection_ind),
+      .max_ip_datarate = asn1::e1ap::max_ip_datarate_s{.ie_exts_present = false,
+                                                       .max_ip_rate     = asn1::e1ap::max_ip_rate_e{},
+                                                       .ie_exts = asn1::e1ap::max_ip_datarate_ext_ies_container{}},
+      .ie_exts         = asn1::e1ap::security_ind_ext_ies_container{}};
 }
 
-/// \brief Converts type \c security_indication to an ASN.1 type.
-/// \param asn1obj ASN.1 object where the result of the conversion is stored.
-/// \param security_indication Security Indication IE contents.
-inline void asn1_to_security_indication(security_indication_t& security_ind, const asn1::e1ap::security_ind_s& asn1obj)
+/// \brief Converts an ASN.1 security indication to \c security_indication_t.
+///
+/// If an indication of the ASN.1 object cannot be converted, an error is logged and the indication keeps its default
+/// value, which is required.
+///
+/// \param[in] asn1_security_ind ASN.1 object from which the Security Indication IE contents are taken.
+/// \param[in,out] logger Logger used to report the conversion errors.
+/// \return The Security Indication IE contents.
+[[nodiscard]] inline security_indication_t
+asn1_to_security_indication(const asn1::e1ap::security_ind_s& asn1_security_ind, ocudulog::basic_logger& logger)
 {
-  switch (asn1obj.integrity_protection_ind) {
-    case asn1::e1ap::integrity_protection_ind_opts::not_needed:
-    case asn1::e1ap::integrity_protection_ind_opts::preferred:
-    case asn1::e1ap::integrity_protection_ind_opts::required:
-      security_ind.integrity_protection_ind =
-          static_cast<integrity_protection_indication_t>(asn1obj.integrity_protection_ind.value);
-      break;
-    default:
-      ocudulog::fetch_basic_logger("E1AP").error("Cannot convert security indication to E1AP type");
-  }
+  auto asn1_to_integrity_protection_ind = [&logger](asn1::e1ap::integrity_protection_ind_e asn1_ind) {
+    switch (asn1_ind) {
+      case asn1::e1ap::integrity_protection_ind_opts::not_needed:
+      case asn1::e1ap::integrity_protection_ind_opts::preferred:
+      case asn1::e1ap::integrity_protection_ind_opts::required:
+        return static_cast<integrity_protection_indication_t>(asn1_ind.value);
+      default:
+        logger.error("Cannot convert security indication to E1AP type");
+        return integrity_protection_indication_t::required;
+    }
+  };
 
-  switch (asn1obj.confidentiality_protection_ind) {
-    case asn1::e1ap::confidentiality_protection_ind_opts::not_needed:
-    case asn1::e1ap::confidentiality_protection_ind_opts::preferred:
-    case asn1::e1ap::confidentiality_protection_ind_opts::required:
-      security_ind.confidentiality_protection_ind =
-          static_cast<confidentiality_protection_indication_t>(asn1obj.confidentiality_protection_ind.value);
-      break;
-    default:
-      ocudulog::fetch_basic_logger("E1AP").error("Cannot convert security indication to E1AP type");
-  }
+  auto asn1_to_confidentiality_protection_ind = [&logger](asn1::e1ap::confidentiality_protection_ind_e asn1_ind) {
+    switch (asn1_ind) {
+      case asn1::e1ap::confidentiality_protection_ind_opts::not_needed:
+      case asn1::e1ap::confidentiality_protection_ind_opts::preferred:
+      case asn1::e1ap::confidentiality_protection_ind_opts::required:
+        return static_cast<confidentiality_protection_indication_t>(asn1_ind.value);
+      default:
+        logger.error("Cannot convert security indication to E1AP type");
+        return confidentiality_protection_indication_t::required;
+    }
+  };
+
+  return security_indication_t{
+      .integrity_protection_ind = asn1_to_integrity_protection_ind(asn1_security_ind.integrity_protection_ind),
+      .confidentiality_protection_ind =
+          asn1_to_confidentiality_protection_ind(asn1_security_ind.confidentiality_protection_ind)};
 }
 
 /// \brief Converts ASN.1 PDU session type to \c pdu_session_type_t.
-/// \param[out] pdu_session_type The common type PDU session type.
-/// \param[in] ans1_pdu_session_type The ASN.1 PDU session type.
-/// \return True if the conversion was successful, false otherwise.
-inline bool asn1_to_pdu_session_type(pdu_session_type_t&                   pdu_session_type,
-                                     const asn1::e1ap::pdu_session_type_e& ans1_pdu_session_type)
+/// \param[in] asn1_pdu_session_type The ASN.1 PDU session type.
+/// \param[in,out] logger Logger used to report the conversion errors.
+/// \return The common type PDU session type if the conversion was successful, \c std::nullopt otherwise.
+[[nodiscard]] inline std::optional<pdu_session_type_t>
+asn1_to_pdu_session_type(asn1::e1ap::pdu_session_type_e asn1_pdu_session_type, ocudulog::basic_logger& logger)
 {
-  switch (ans1_pdu_session_type) {
+  switch (asn1_pdu_session_type) {
     case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ipv4:
-      pdu_session_type = pdu_session_type_t::ipv4;
-      break;
+      return pdu_session_type_t::ipv4;
     case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ipv6:
-      pdu_session_type = pdu_session_type_t::ipv6;
-      break;
+      return pdu_session_type_t::ipv6;
     case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ipv4v6:
-      pdu_session_type = pdu_session_type_t::ipv4v6;
-      break;
+      return pdu_session_type_t::ipv4v6;
     case asn1::e1ap::pdu_session_type_e::pdu_session_type_opts::ethernet:
-      pdu_session_type = pdu_session_type_t::ethernet;
-      break;
+      return pdu_session_type_t::ethernet;
     default:
-      ocudulog::fetch_basic_logger("E1AP").warning("Cannot convert ASN.1 PDU session type to common type");
-      return false;
+      logger.warning("Cannot convert ASN.1 PDU session type to common type");
+      return std::nullopt;
   }
-  return true;
 }
 
 } // namespace ocudu

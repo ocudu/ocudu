@@ -53,12 +53,12 @@ bearer_context_modification_procedure::create_bearer_context_modification_result
 
   if (transaction_sink.successful()) {
     const asn1::e1ap::bearer_context_mod_resp_s& resp = transaction_sink.response();
-    fill_e1ap_bearer_context_modification_response(res, resp);
+    res = make_e1ap_bearer_context_modification_response(resp, logger.get_basic_logger());
 
     logger.log_info("\"{}\" finished successfully", name());
   } else if (transaction_sink.failed()) {
     const asn1::e1ap::bearer_context_mod_fail_s& fail = transaction_sink.failure();
-    fill_e1ap_bearer_context_modification_response(res, fail);
+    res                                               = make_e1ap_bearer_context_modification_response(fail);
 
     logger.log_warning("\"{}\" failed. Cause: {}", name(), get_cause_str(fail->cause));
   } else {

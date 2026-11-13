@@ -271,13 +271,15 @@ protected:
     e1ap_message asn1_bearer_context_setup_msg = generate_bearer_context_setup_request(9);
 
     // Convert to common type
-    e1ap_bearer_context_setup_request bearer_context_setup;
-    bearer_context_setup.e1_index = cu_up_e1_index_t{0};
-    fill_e1ap_bearer_context_setup_request(
-        bearer_context_setup, asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
+    std::optional<e1ap_bearer_context_setup_request> bearer_context_setup = make_e1ap_bearer_context_setup_request(
+        asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request(),
+        cu_up_e1_index_t::min,
+        ocudulog::fetch_basic_logger("TEST"));
+    ASSERT_TRUE(bearer_context_setup.has_value());
+    bearer_context_setup->e1_index = cu_up_e1_index_t{0};
 
     // Setup bearer
-    cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
+    cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(*bearer_context_setup);
   }
 
   void initiate_dl_desired_buffer_size(int upf_sock)
@@ -316,13 +318,12 @@ protected:
     e1ap_message asn1_bearer_context_setup_msg = generate_bearer_context_setup_request(9);
 
     // Convert to common type
-    e1ap_bearer_context_setup_request bearer_context_setup;
-    bearer_context_setup.e1_index                         = cu_up_e1_index_t{0};
-    bearer_context_setup.direct_forwarding_path_available = true;
-    fill_e1ap_bearer_context_setup_request(
-        bearer_context_setup, asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request());
+    std::optional<e1ap_bearer_context_setup_request> bearer_context_setup = make_e1ap_bearer_context_setup_request(
+        asn1_bearer_context_setup_msg.pdu.init_msg().value.bearer_context_setup_request(),
+        cu_up_e1_index_t{0},
+        ocudulog::fetch_basic_logger("TEST"));
 
-    for (e1ap_pdu_session_res_to_setup_item& pdu_session : bearer_context_setup.pdu_session_res_to_setup_list) {
+    for (e1ap_pdu_session_res_to_setup_item& pdu_session : bearer_context_setup->pdu_session_res_to_setup_list) {
       for (e1ap_drb_to_setup_item_ng_ran& drb_to_setup : pdu_session.drb_to_setup_list_ng_ran) {
         e1ap_data_forwarding_info_request                        data_fwd_req;
         slotted_id_vector<qos_flow_id_t, e1ap_qos_flow_map_item> qos_flows_forwarded_on_fwd_tunnels;
@@ -335,7 +336,7 @@ protected:
 
     // Setup bearer
     e1ap_bearer_context_setup_response response =
-        cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup);
+        cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(*bearer_context_setup);
   }
 
   struct upf_info_t {
@@ -418,11 +419,13 @@ TEST_F(cu_up_test, when_full_e1_reset_is_received_then_only_the_ues_of_that_e1_i
   for (cu_up_e1_index_t e1_index : {reset_e1_index, other_e1_index}) {
     e1ap_message asn1_msg = generate_bearer_context_setup_request(9);
 
-    e1ap_bearer_context_setup_request bearer_context_setup;
-    bearer_context_setup.e1_index = e1_index;
-    fill_e1ap_bearer_context_setup_request(bearer_context_setup,
-                                           asn1_msg.pdu.init_msg().value.bearer_context_setup_request());
-    ASSERT_TRUE(cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(bearer_context_setup).success);
+    std::optional<e1ap_bearer_context_setup_request> bearer_context_setup =
+        make_e1ap_bearer_context_setup_request(asn1_msg.pdu.init_msg().value.bearer_context_setup_request(),
+                                               cu_up_e1_index_t{0},
+                                               ocudulog::fetch_basic_logger("TEST"));
+    ASSERT_TRUE(bearer_context_setup.has_value());
+    bearer_context_setup->e1_index = e1_index;
+    ASSERT_TRUE(cu_up->get_cu_up_manager()->handle_bearer_context_setup_request(*bearer_context_setup).success);
   }
   ASSERT_EQ(cu_up->get_cu_up_manager()->get_nof_ues(), 2U);
 

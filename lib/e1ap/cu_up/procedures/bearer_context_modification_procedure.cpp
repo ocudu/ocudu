@@ -40,7 +40,12 @@ void bearer_context_modification_procedure::operator()(coro_context<async_task<v
     CORO_EARLY_RETURN();
   }
 
-  if (!fill_e1ap_bearer_context_modification_request(bearer_context_mod, request, ue_ctxt.ue_ids.ue_index)) {
+  if (std::optional<e1ap_bearer_context_modification_request> mod_request =
+          make_e1ap_bearer_context_modification_request(
+              request, ue_ctxt.ue_ids.ue_index, ue_ctxt.logger.get_basic_logger());
+      mod_request.has_value()) {
+    bearer_context_mod = std::move(*mod_request);
+  } else {
     ue_ctxt.logger.log_error(
         "Sending BearerContextModificationFailure. Cause: Invalid BearerContextModificationRequest");
     pdu_notifier.on_new_message(e1ap_msg);

@@ -191,8 +191,8 @@ inline void fill_asn1_drb_to_setup_item(asn1::e1ap::drb_to_setup_item_ng_ran_s& 
   // Fill DRB data forwarding info request.
   if (drb_to_setup_item.drb_data_forwarding_info_request.has_value()) {
     asn1_drb_to_setup_item.drb_data_forwarding_info_request_present = true;
-    e1ap_data_forwarding_info_request_to_asn1(asn1_drb_to_setup_item.drb_data_forwarding_info_request,
-                                              drb_to_setup_item.drb_data_forwarding_info_request.value());
+    asn1_drb_to_setup_item.drb_data_forwarding_info_request =
+        e1ap_data_forwarding_info_request_to_asn1(drb_to_setup_item.drb_data_forwarding_info_request.value());
   }
 
   // Fill DRB inactivity timer.
@@ -292,7 +292,7 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
                                     pdu_session_res_item.ng_ul_up_tnl_info);
 
     // Fill security indication.
-    security_indication_to_asn1(asn1_pdu_session_res_item.security_ind, pdu_session_res_item.security_ind);
+    asn1_pdu_session_res_item.security_ind = security_indication_to_asn1(pdu_session_res_item.security_ind);
 
     // Fill DRB to setup list NG RAN.
     for (const auto& drb_to_setup_item : pdu_session_res_item.drb_to_setup_list_ng_ran) {
@@ -310,8 +310,8 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
     // Fill PDU session data forwarding info request.
     if (pdu_session_res_item.pdu_session_data_forwarding_info_request.has_value()) {
       asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request_present = true;
-      e1ap_data_forwarding_info_request_to_asn1(asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request,
-                                                pdu_session_res_item.pdu_session_data_forwarding_info_request.value());
+      asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request = e1ap_data_forwarding_info_request_to_asn1(
+          pdu_session_res_item.pdu_session_data_forwarding_info_request.value());
     }
 
     // Fill PDU session inactivity timer.
@@ -369,16 +369,18 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   }
 }
 
-inline void
-fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&            res,
-                                        const asn1::e1ap::bearer_context_setup_resp_s& asn1_bearer_context_setup_resp)
+[[nodiscard]] inline e1ap_bearer_context_setup_response
+make_e1ap_bearer_context_setup_response(const asn1::e1ap::bearer_context_setup_resp_s& asn1_bearer_context_setup_resp,
+                                        ocudulog::basic_logger&                        logger)
 {
+  e1ap_bearer_context_setup_response res;
+
   // Fail if E-UTRAN bearer context setup is returned.
   if (asn1_bearer_context_setup_resp->sys_bearer_context_setup_resp.type() ==
       asn1::e1ap::sys_bearer_context_setup_resp_c::types::e_utran_bearer_context_setup_resp) {
     res.success = false;
     res.cause   = cause_protocol_t::unspecified;
-    return;
+    return res;
   } else {
     res.success = true;
 
@@ -444,8 +446,7 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
 
       // Fill security result.
       if (asn1_res_setup_item.security_result_present) {
-        res_setup_item.security_result = security_result_t{};
-        asn1_to_security_result(res_setup_item.security_result.value(), asn1_res_setup_item.security_result);
+        res_setup_item.security_result = asn1_to_security_result(asn1_res_setup_item.security_result, logger);
       }
 
       // Fill PDU session data forwarding info response.
@@ -475,17 +476,20 @@ fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&     
       }
     }
   }
+
+  return res;
 }
 
-inline void
-fill_e1ap_bearer_context_setup_response(e1ap_bearer_context_setup_response&            res,
-                                        const asn1::e1ap::bearer_context_setup_fail_s& e1ap_bearer_context_setup_fail)
+[[nodiscard]] inline e1ap_bearer_context_setup_response
+make_e1ap_bearer_context_setup_response(const asn1::e1ap::bearer_context_setup_fail_s& e1ap_bearer_context_setup_fail)
 {
+  e1ap_bearer_context_setup_response res;
   res.success = false;
   res.cause   = asn1_to_cause(e1ap_bearer_context_setup_fail->cause);
   if (e1ap_bearer_context_setup_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics.
   }
+  return res;
 }
 
 inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_context_mod_request_s&       asn1_request,
@@ -534,8 +538,8 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
 
         if (res_to_mod_item.pdu_session_data_forwarding_info.has_value()) {
           asn1_res_to_mod_item.pdu_session_data_forwarding_info_present = true;
-          e1ap_data_forwarding_info_to_asn1(asn1_res_to_mod_item.pdu_session_data_forwarding_info,
-                                            res_to_mod_item.pdu_session_data_forwarding_info.value());
+          asn1_res_to_mod_item.pdu_session_data_forwarding_info =
+              e1ap_data_forwarding_info_to_asn1(res_to_mod_item.pdu_session_data_forwarding_info.value());
         }
 
         for (const auto& drb_to_setup_item : res_to_mod_item.drb_to_setup_list_ng_ran) {
@@ -551,8 +555,8 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
 
           if (drb_to_mod_item.drb_data_forwarding_info.has_value()) {
             asn1_drb_to_mod_item.drb_data_forwarding_info_present = true;
-            e1ap_data_forwarding_info_to_asn1(asn1_drb_to_mod_item.drb_data_forwarding_info,
-                                              drb_to_mod_item.drb_data_forwarding_info.value());
+            asn1_drb_to_mod_item.drb_data_forwarding_info =
+                e1ap_data_forwarding_info_to_asn1(drb_to_mod_item.drb_data_forwarding_info.value());
           }
 
           for (const auto& dl_up_param : drb_to_mod_item.dl_up_params) {
@@ -621,7 +625,7 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
                                         res_to_setup_mod_item.ng_ul_up_tnl_info);
 
         // Fill security indication.
-        security_indication_to_asn1(asn1_res_to_setup_mod_item.security_ind, res_to_setup_mod_item.security_ind);
+        asn1_res_to_setup_mod_item.security_ind = security_indication_to_asn1(res_to_setup_mod_item.security_ind);
 
         for (const auto& drb_to_setup_mod_item : res_to_setup_mod_item.drb_to_setup_list_ng_ran) {
           asn1::e1ap::drb_to_setup_mod_item_ng_ran_s asn1_drb_to_setup_mod_item;
@@ -710,10 +714,11 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
   }
 }
 
-inline void fill_e1ap_bearer_context_modification_response(
-    e1ap_bearer_context_modification_response&   res,
-    const asn1::e1ap::bearer_context_mod_resp_s& asn1_bearer_context_modification_resp)
+[[nodiscard]] inline e1ap_bearer_context_modification_response make_e1ap_bearer_context_modification_response(
+    const asn1::e1ap::bearer_context_mod_resp_s& asn1_bearer_context_modification_resp,
+    ocudulog::basic_logger&                      logger)
 {
+  e1ap_bearer_context_modification_response res;
   res.success = true;
   if (asn1_bearer_context_modification_resp->sys_bearer_context_mod_resp_present) {
     // Fail if E-UTRAN bearer context setup is returned.
@@ -721,7 +726,7 @@ inline void fill_e1ap_bearer_context_modification_response(
         asn1::e1ap::sys_bearer_context_mod_resp_c::types::e_utran_bearer_context_mod_resp) {
       res.success = false;
       res.cause   = cause_protocol_t::unspecified;
-      return;
+      return res;
     } else {
       // Fill NG RAN bearer context modification response.
       auto& asn1_bearer_context_mod_response =
@@ -788,8 +793,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 
           // Fill security result.
           if (asn1_res_mod_item.security_result_present) {
-            res_mod_item.security_result = security_result_t{};
-            asn1_to_security_result(res_mod_item.security_result.value(), asn1_res_mod_item.security_result);
+            res_mod_item.security_result = asn1_to_security_result(asn1_res_mod_item.security_result, logger);
           }
 
           // Fill PDU session data forwarding info response.
@@ -938,8 +942,7 @@ inline void fill_e1ap_bearer_context_modification_response(
 
           // Fill security result.
           if (asn1_res_mod_item.security_result_present) {
-            res_mod_item.security_result = security_result_t{};
-            asn1_to_security_result(res_mod_item.security_result.value(), asn1_res_mod_item.security_result);
+            res_mod_item.security_result = asn1_to_security_result(asn1_res_mod_item.security_result, logger);
           }
 
           // Fill PDU session data forwarding info response.
@@ -965,17 +968,20 @@ inline void fill_e1ap_bearer_context_modification_response(
       }
     }
   }
+
+  return res;
 }
 
-inline void fill_e1ap_bearer_context_modification_response(
-    e1ap_bearer_context_modification_response&   res,
+[[nodiscard]] inline e1ap_bearer_context_modification_response make_e1ap_bearer_context_modification_response(
     const asn1::e1ap::bearer_context_mod_fail_s& asn1_bearer_context_modification_fail)
 {
+  e1ap_bearer_context_modification_response res;
   res.success = false;
   res.cause   = asn1_to_cause(asn1_bearer_context_modification_fail->cause);
   if (asn1_bearer_context_modification_fail->crit_diagnostics_present) {
     // TODO: Add crit diagnostics.
   }
+  return res;
 }
 
 inline void fill_asn1_bearer_context_release_command(asn1::e1ap::bearer_context_release_cmd_s&  asn1_command,
