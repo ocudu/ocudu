@@ -428,6 +428,8 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
   if (not ret.has_value()) {
     logger.log_error("Could not allocate ul_teid");
+    new_session.sdap->remove_mapping(drb_to_setup.drb_id);
+    new_session.drbs.erase(drb_to_setup.drb_id);
     return drb_result;
   }
   gtpu_teid_t f1u_ul_teid = ret.value();
@@ -445,6 +447,11 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   expected<std::string> bind_addr = new_drb->f1u_gw_bearer->get_bind_address();
   if (not bind_addr.has_value()) {
     logger.log_error("Could not get bind address for F1-U tunnel");
+    if (not f1u_teid_allocator.release_teid(f1u_ul_teid)) {
+      logger.log_error("Could not free F1-U ul_teid={}", f1u_ul_teid);
+    }
+    new_session.sdap->remove_mapping(drb_to_setup.drb_id);
+    new_session.drbs.erase(drb_to_setup.drb_id);
     return drb_result;
   }
   up_transport_layer_info f1u_ul_tunnel_addr(transport_layer_address::create_from_string(bind_addr.value()),
