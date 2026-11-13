@@ -754,8 +754,8 @@ TEST_F(cu_up_test, dl_data_forwarding)
   // Buffered forwarded PDUs should be flushed now.
   set_sn_status();
 
-  std::optional<nru_dl_message> fwd_sdu = f1u_bearer.wait_tx_sdu();
-  ASSERT_TRUE(empty_pdu.has_value());
+  std::optional<nru_dl_message> fwd_pdu = f1u_bearer.wait_tx_sdu();
+  ASSERT_TRUE(fwd_pdu.has_value());
 
   ::close(upf_info.sock_fd);
 }

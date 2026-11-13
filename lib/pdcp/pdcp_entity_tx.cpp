@@ -268,6 +268,15 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf, std::optional<uint32_t> forward
     return;
   }
 
+  // Update the PDCP state to the first forwarded SDU.
+  if (not fwd_state_updated and forward_sn.has_value()) {
+    st.tx_next_ack     = *forward_sn;
+    st.tx_trans        = *forward_sn;
+    st.tx_trans_crypto = *forward_sn;
+    st.tx_reord_crypto = *forward_sn;
+    fwd_state_updated  = true;
+  }
+
   trace_point                           tx_tp           = up_tracer.now();
   std::chrono::steady_clock::time_point time_of_arrival = std::chrono::steady_clock::now();
 

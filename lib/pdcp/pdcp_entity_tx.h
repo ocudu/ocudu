@@ -328,6 +328,7 @@ private:
     uint32_t    sn;
   };
   ring_buffer<forward_sdu_info> forward_buffer{2048};
+  bool                          fwd_state_updated = false;
 
   /// Apply ciphering and integrity protection to SDU+header buffer.
   /// It will pass this buffer to the crypto engine for parallization.
