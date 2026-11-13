@@ -27,7 +27,9 @@ bool loopback_buffer::write(const baseband_gateway_buffer_reader& data, baseband
   ocudu_assert(data.get_nof_channels() == buffer.get_nof_channels(),
                "Number of channels in the data does not match the buffer.");
 
-  // The TX end timestamp is only modified from this thread, a relaxed load is enough.
+  // Check that the requested samples are not in the past with respect to previous transmissions. This ensures that the
+  // last TX timestamp is never set to a smaller value. This comparison does not need to be atomic because the last TX
+  // timestamp is only updated from this thread.
   baseband_gateway_timestamp tx_end = tx_end_timestamp.load(std::memory_order_relaxed);
   report_fatal_error_if_not(
       timestamp >= tx_end,
@@ -36,7 +38,9 @@ bool loopback_buffer::write(const baseband_gateway_buffer_reader& data, baseband
       timestamp + nof_requested_samples,
       tx_end);
 
-  // The RX end timestamp never decreases. If the samples fit at the time of loading it, they keep fitting afterwards.
+  // Check that the buffer contents to be overwritten have already been read. This comparison does not need to be atomic
+  // because the last received timestamp can never be set to a smaller value. Therefore, if the condition for safe
+  // writing is met at the atomic read, it is guaranteed to be met in the future.
   baseband_gateway_timestamp rx_end    = rx_end_timestamp.load(std::memory_order_acquire);
   baseband_gateway_timestamp write_end = timestamp + nof_requested_samples;
   if (write_end > rx_end + buffer_size) {
@@ -87,15 +91,19 @@ unsigned loopback_buffer::read(baseband_gateway_buffer_writer& data, baseband_ga
   ocudu_assert(data.get_nof_channels() == buffer.get_nof_channels(),
                "Number of channels in the data does not match the buffer.");
 
-  // The RX end timestamp is only modified from this thread, a relaxed load is enough.
+  // Make sure that the requested samples are not in the past with respect to previous requests. This ensures that the
+  // last RX timestamp is never set to a smaller value. This comparison does not need to be atomic because the last RX
+  // timestamp is only updated from this thread.
   baseband_gateway_timestamp rx_end = rx_end_timestamp.load(std::memory_order_relaxed);
   report_fatal_error_if_not(timestamp >= rx_end,
                             "Attempting to read samples in the past. Timestamp: {}, last read timestamp: {}",
                             timestamp,
                             rx_end);
 
-  // The TX end timestamp never decreases. Samples available at the time of loading it remain available, and the writer
-  // cannot overwrite them before the RX end timestamp advances.
+  // Check if the requested samples have already been written to the buffer. This comparison does not need to be
+  // atomic because the last TX timestamp is never set to a smaller value. Therefore, if the condition for safe reading
+  // is met at the atomic read, it is guaranteed to be met in the future. The writer cannot overwrite the available
+  // samples before the last RX timestamp advances.
   baseband_gateway_timestamp tx_end   = tx_end_timestamp.load(std::memory_order_acquire);
   baseband_gateway_timestamp read_end = timestamp + nof_requested_samples;
   unsigned                   available =

@@ -75,7 +75,7 @@ private:
   /// Converts any given timestamp into a circular buffer index.
   unsigned get_index(baseband_gateway_timestamp timestamp) const { return timestamp % buffer.get_nof_samples(); }
 
-  /// Sets to zero the buffer samples in the timestamp range [\c begin, \c end).
+  /// Sets the buffer samples in the timestamp range [\c begin, \c end) to zero.
   void zero(baseband_gateway_timestamp begin, baseband_gateway_timestamp end);
 
   /// Internal sample buffer.

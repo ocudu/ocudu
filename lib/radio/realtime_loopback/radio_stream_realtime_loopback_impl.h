@@ -97,7 +97,10 @@ private:
   /// The receiver overflows when it lags the RF time by more samples, and the transmitter blocks when it leads the RF
   /// time by more samples.
   uint64_t max_nof_buffered_samples;
-  /// Minimum time, in samples, between passing samples to the emulated transmitter and their transmission, i.e., 10 us.
+  /// \brief Minimum time, in samples, between passing samples to the emulated transmitter and their transmission, i.e.,
+  /// 10 us.
+  ///
+  /// The transmitter emulates an underflow when it does not lead the RF time by at least this amount of samples.
   uint64_t tx_processing_delay_samples;
   /// Loopback buffer connecting the transmitter and the receiver.
   loopback_buffer buffer;

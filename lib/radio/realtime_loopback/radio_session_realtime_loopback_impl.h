@@ -25,7 +25,10 @@ public:
                                        task_executor&                    async_task_executor,
                                        radio_event_notifier&             notification_handler);
 
-  /// Creates a session that uses a custom RF clock. The clock outlives the session.
+  /// \brief Creates a session that uses a custom RF clock.
+  ///
+  /// The clock outlives the session. A custom clock overrides the realtime emulation, for example, with a deterministic
+  /// clock for testing purposes.
   radio_session_realtime_loopback_impl(const radio_configuration::radio&                    config,
                                        task_executor&                                       async_task_executor,
                                        radio_event_notifier&                                notification_handler,
